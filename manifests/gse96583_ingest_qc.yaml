@@ -1,0 +1,17 @@
+project_name: gse96583_ctrl_stim
+species: human
+input_mode: 10x_mtx
+output_dir: ./outputs/gse96583_ctrl_stim
+
+samples:
+  - sample_id: ctrl
+    path: ./data/GSE96583/ctrl
+  - sample_id: stim
+    path: ./data/GSE96583/stim
+
+qc:
+  min_features: 200
+  max_features: 6000
+  min_counts: 500
+  max_counts: 50000
+  max_percent_mt: 20

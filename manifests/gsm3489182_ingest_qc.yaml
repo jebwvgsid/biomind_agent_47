@@ -1,0 +1,13 @@
+project_name: gsm3489182_donor01
+species: human
+input_mode: 10x_h5
+sample_id: donor01
+input_path: ./data/GSM3489182/GSM3489182_Donor_01_filtered_gene_bc_matrices_h5.h5
+output_dir: ./outputs/gsm3489182_donor01
+
+qc:
+  min_features: 200
+  max_features: 7000
+  min_counts: 500
+  max_counts: 60000
+  max_percent_mt: 20

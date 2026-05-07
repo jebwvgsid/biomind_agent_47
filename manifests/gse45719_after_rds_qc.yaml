@@ -1,0 +1,14 @@
+project_name: gse45719_mm_seob
+species: mouse
+input_mode: seurat_rds
+sample_id: gse45719
+input_path: ./data/GSE45719/mm_seob.rds
+output_dir: ./outputs/gse45719_mm_seob
+mt_pattern: "^mt-"
+
+qc:
+  min_features: 200
+  max_features: 7000
+  min_counts: 500
+  max_counts: 60000
+  max_percent_mt: 15

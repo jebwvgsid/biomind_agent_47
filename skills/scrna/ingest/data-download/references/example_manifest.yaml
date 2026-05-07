@@ -1,0 +1,44 @@
+project_name: course_smoke_test
+species: human
+input_mode: public_demo
+demo_name: pbmc_small_builtin
+sample_id: demo_pbmc_small
+output_dir: /tmp/course_smoke_test
+
+qc:
+  min_features: 0
+  max_features: 5000
+  min_counts: 0
+  max_counts: 50000
+  max_percent_mt: 100
+
+preprocess:
+  method: lognorm
+  nfeatures: 2000
+  scale_features: variable
+  regress_vars: []
+
+cluster:
+  pca_npcs: 30
+  cluster_dims: "1:20"
+  resolution: 0.6
+  run_tsne: true
+
+markers:
+  only_pos: true
+  min_pct: 0.25
+  logfc_threshold: 0.25
+  top_n: 10
+
+annotation:
+  method: marker-first
+  cluster_labels: {}
+  marker_rules: {}
+
+de:
+  group_by: sample_id
+  ident_1: null
+  ident_2: null
+
+trajectory:
+  enabled: false

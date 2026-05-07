@@ -1,0 +1,13 @@
+project_name: gsm3972018_single_sample
+species: human
+input_mode: 10x_mtx
+sample_id: gsm3972018
+input_path: ./data/GSM3972018
+output_dir: ./outputs/gsm3972018_single_sample
+
+qc:
+  min_features: 200
+  max_features: 7000
+  min_counts: 500
+  max_counts: 60000
+  max_percent_mt: 20
