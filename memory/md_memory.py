@@ -24,12 +24,15 @@ logger = logging.getLogger("BioMind.MarkdownMemory")
 
 LONG_TERM_SECTIONS = [
     "User Preferences",
-    "Project Facts",
-    "Important Paths",
     "Reusable Fixes",
-    "Important Decisions",
     "Deprecated / Superseded",
 ]
+
+WIKI_CANDIDATE_LONG_TERM_SECTIONS = {
+    "Project Facts",
+    "Important Paths",
+    "Important Decisions",
+}
 
 TASK_SECTIONS = [
     "Goal",
@@ -38,6 +41,7 @@ TASK_SECTIONS = [
     "Commands and Results",
     "Errors and Fixes",
     "Artifacts",
+    "Wiki Candidates",
     "Open Questions",
     "Timeline",
 ]
@@ -54,6 +58,7 @@ class MemoryFiles:
     dreams_dir: Path
     snapshots_dir: Path
     pending_events: Path
+    wiki_candidates: Path
     dream_log: Path
     latest_snapshot: Path
 
@@ -112,6 +117,7 @@ class MarkdownMemoryManager:
             dreams_dir=root / "dreams",
             snapshots_dir=root / "dreams" / "snapshots",
             pending_events=root / "history" / "PENDING.md",
+            wiki_candidates=root / "history" / "WIKI_CANDIDATES.md",
             dream_log=root / "dreams" / "DREAM_LOG.md",
             latest_snapshot=root / "dreams" / "LATEST_SNAPSHOT.txt",
         )
@@ -138,16 +144,20 @@ class MarkdownMemoryManager:
             self.files.task_index.write_text(self._initial_task_index(), encoding="utf-8")
         if not self.files.pending_events.exists():
             self.files.pending_events.write_text("# Pending Memory Events\n", encoding="utf-8")
+        if not self.files.wiki_candidates.exists():
+            self.files.wiki_candidates.write_text("# Wiki Candidate Memory\n", encoding="utf-8")
         if not self.files.dream_log.exists():
             self.files.dream_log.write_text("# Dream Log\n", encoding="utf-8")
+        self._route_legacy_long_term_wiki_sections()
 
     @staticmethod
     def _initial_long_term() -> str:
         sections = "\n\n".join(f"## {name}\n- None recorded yet." for name in LONG_TERM_SECTIONS)
         return (
             "# BioMind Long-term Memory\n\n"
-            "This file is maintained by the memory curator. Current user input, "
-            "verified filesystem state, and latest observations override stale memory.\n\n"
+            "Compatibility long-term memory for stable user preferences and reusable operating experience. "
+            "Project facts, paths, methods, parameters, decisions, and conclusions belong in Wiki pages with evidence. "
+            "Current user input, verified filesystem state, and latest observations override stale memory.\n\n"
             f"{sections}\n"
         )
 
@@ -260,8 +270,15 @@ class MarkdownMemoryManager:
         long_term = patch.get("long_term", {})
         if isinstance(long_term, dict):
             for section, items in long_term.items():
+                bullets = _normalize_bullets(items)
+                if not bullets:
+                    continue
                 if section in LONG_TERM_SECTIONS:
-                    self._append_section_bullets(self.files.long_term, section, _normalize_bullets(items))
+                    self._append_section_bullets(self.files.long_term, section, bullets)
+                elif section in WIKI_CANDIDATE_LONG_TERM_SECTIONS:
+                    self.initialize_task(task_id)
+                    routed = [f"{section}: {bullet}" for bullet in bullets]
+                    self._append_section_bullets(self.task_path(task_id), "Wiki Candidates", routed)
 
         task_patch = patch.get("task", {})
         if isinstance(task_patch, dict):
@@ -447,6 +464,7 @@ class MarkdownMemoryManager:
             f"Long-term memory: {self.files.long_term}",
             f"Task index: {self.files.task_index}",
             f"Pending events: {self.files.pending_events}",
+            f"Wiki candidates: {self.files.wiki_candidates}",
             f"Dream log: {self.files.dream_log}",
         ]
         if task_id:
@@ -467,6 +485,49 @@ class MarkdownMemoryManager:
             f"Payload:\n{_clip(payload_text, 2500)}\n\n"
             f"Recent external messages:\n" + ("\n\n".join(message_lines) if message_lines else "None")
         )
+
+    def _route_legacy_long_term_wiki_sections(self) -> None:
+        marker = "<!-- routed_wiki_candidate_sections -->"
+        text = self.files.long_term.read_text(encoding="utf-8")
+        if marker in text:
+            return
+
+        routed: List[tuple[str, str]] = []
+        updated = text
+        for section in WIKI_CANDIDATE_LONG_TERM_SECTIONS:
+            pattern = re.compile(
+                rf"^## {re.escape(section)}\n(?P<body>.*?)(?=^## |\Z)",
+                flags=re.DOTALL | re.MULTILINE,
+            )
+            match = pattern.search(updated)
+            if not match:
+                continue
+            body = match.group("body").strip()
+            useful = [
+                line for line in body.splitlines()
+                if line.strip() and line.strip() != "- None recorded yet."
+            ]
+            if useful:
+                routed.append((section, "\n".join(useful)))
+            updated = (updated[: match.start()] + updated[match.end() :]).strip() + "\n"
+
+        if not routed:
+            return
+        if updated.startswith("# BioMind Long-term Memory"):
+            updated = updated.replace(
+                "# BioMind Long-term Memory\n",
+                f"# BioMind Long-term Memory\n{marker}\n",
+                1,
+            )
+        else:
+            updated = f"{marker}\n{updated}"
+        self.files.long_term.write_text(updated.rstrip() + "\n", encoding="utf-8")
+
+        with self.files.wiki_candidates.open("a", encoding="utf-8") as handle:
+            handle.write(f"\n\n## {_now()} - Routed legacy long-term sections\n\n")
+            handle.write("These notes were removed from Markdown long-term memory because project knowledge now belongs in Wiki pages with evidence.\n\n")
+            for section, body in routed:
+                handle.write(f"### {section}\n{body}\n\n")
 
     def _append_log(self, task_id: str, stage: str, event_text: str) -> None:
         path = self.log_path(task_id)
@@ -511,7 +572,10 @@ class MarkdownMemoryManager:
 Batch-process pending external events into Markdown memory. Do not infer hidden reasoning.
 
 Rules:
-- Long-term memory is only reusable facts, user preferences, durable paths, fixes, and decisions.
+- Long-term Markdown memory is compatibility memory only: user preferences, reusable fixes, and deprecated notes.
+- Core memory is small and stable: user preferences, agent operating rules, and project-level wiki index refs only.
+- Do not write dataset paths, sample metadata, method parameters, analysis results, or scientific conclusions into Core project facts.
+- Evidence-bearing project knowledge belongs in Wiki claims with raw/session/task/artifact evidence; put short cues in task.Wiki Candidates and use skill_suggestions if a reusable workflow emerges.
 - Task memory is an auditable summary: goal, current status, key files, commands/results, errors/fixes, artifacts, open questions.
 - Full logs already exist; do not copy noisy details.
 - Current user input, verified filesystem state, and latest observations override stale memory.
@@ -535,14 +599,18 @@ Return JSON only:
     "Deprecated / Superseded": []
   }},
   "projects": {{
-    "{self.core_project_id}": {{}}
+    "{self.core_project_id}": {{
+      "project_root": "",
+      "wiki_digest_path": "",
+      "primary_pages": "",
+      "active_dataset_pages": "",
+      "decision_pages": "",
+      "last_compiled_at": ""
+    }}
   }},
   "long_term": {{
     "User Preferences": [],
-    "Project Facts": [],
-    "Important Paths": [],
     "Reusable Fixes": [],
-    "Important Decisions": [],
     "Deprecated / Superseded": []
   }},
   "tasks": {{
@@ -553,6 +621,7 @@ Return JSON only:
       "Commands and Results": [],
       "Errors and Fixes": [],
       "Artifacts": [],
+      "Wiki Candidates": [],
       "Open Questions": []
     }}
   }},

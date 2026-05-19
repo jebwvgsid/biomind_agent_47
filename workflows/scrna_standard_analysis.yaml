@@ -1,0 +1,51 @@
+workflow_id: scrna_standard_analysis
+name: scRNA Standard Analysis
+description: Standard multi-stage single-cell RNA-seq analysis from raw input through QC, preprocessing, clustering, marker discovery, annotation, and optional contrast-level DE.
+task_types: [single_cell_rnaseq]
+triggers: [single-cell, scRNA, Seurat, standard analysis, complete analysis, 单细胞, 完整分析]
+stages:
+  - stage: data_ingest
+    title: Build initial Seurat object
+    batch_id: "1"
+    default_skill: scrna/ingest/data-download
+    inputs: [raw_count_matrix, tenx_mtx, tenx_h5, seurat_rds, sample_metadata]
+    outputs: [raw_seurat_object, sample_manifest]
+  - stage: qc_filter
+    title: QC metrics and filtering
+    batch_id: "1"
+    default_skill: scrna/qc/filter
+    inputs: [raw_seurat_object, qc_thresholds]
+    outputs: [qc_filtered_seurat_object, qc_report]
+  - stage: preprocess
+    title: Normalize, variable features, and scale
+    batch_id: "2"
+    default_skill: scrna/preprocess/basic
+    inputs: [qc_filtered_seurat_object]
+    outputs: [preprocessed_seurat_object]
+  - stage: cluster
+    title: PCA, graph clustering, and embedding
+    batch_id: "2"
+    default_skill: scrna/cluster/basic
+    inputs: [preprocessed_seurat_object]
+    outputs: [clustered_seurat_object, umap_plot]
+  - stage: marker_find
+    title: Cluster marker discovery
+    batch_id: "3"
+    default_skill: scrna/markers/find
+    inputs: [clustered_seurat_object]
+    outputs: [marker_table, marker_plots]
+  - stage: annotation
+    title: Cell-type annotation
+    batch_id: "3"
+    default_skill: scrna/annotate/basic
+    inputs: [clustered_seurat_object, marker_table, annotation_reference]
+    outputs: [annotated_seurat_object]
+    may_block_if_missing: [annotation_reference, marker_rules]
+  - stage: de_analysis
+    title: Differential expression contrast
+    batch_id: "3"
+    default_skill: scrna/de/contrast
+    inputs: [annotated_seurat_object, contrast_definition]
+    outputs: [de_table, volcano_plot]
+    optional: true
+    may_block_if_missing: [contrast_definition]

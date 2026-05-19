@@ -1,0 +1,18 @@
+workflow_id: scrna_ingest_qc
+name: scRNA Ingest QC
+description: First scRNA-seq workflow batch that verifies the Seurat runtime, ingests raw input, and runs QC filtering from a manifest.
+task_types: [single_cell_rnaseq]
+triggers: [scRNA ingest QC, data preparation, Seurat object construction, 单细胞质控, 导入质控]
+stages:
+  - stage: ingest_qc
+    title: Ingest raw scRNA input and run QC filtering
+    batch_id: "1"
+    default_skill: scrna/workflows/ingest-qc
+    inputs: [manifest_yaml, raw_count_matrix, tenx_mtx, tenx_h5, seurat_rds]
+    outputs: [raw_seurat_object, qc_filtered_seurat_object, qc_report]
+  - stage: downstream_ready_check
+    title: Confirm QC output is ready for downstream analysis
+    batch_id: "1"
+    status_hint: no_skill_needed
+    inputs: [qc_filtered_seurat_object]
+    outputs: [ready_for_preprocess]

@@ -11,18 +11,14 @@ from .settings import PathManager
 def setup_utf8_io():
     """配置 UTF-8 输入输出 (仅 Windows 需要)"""
     if sys.platform == 'win32':
-        try:
-            import io
-            # 只在 Windows 上修改编码
-            sys.stdin.reconfigure(encoding='utf-8')
-            sys.stdout.reconfigure(encoding='utf-8')
-            sys.stderr.reconfigure(encoding='utf-8')
-        except AttributeError:
-            # Python 3.6 或更早版本的后备方案
-            import io
-            sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+        for stream in (sys.stdin, sys.stdout, sys.stderr):
+            reconfigure = getattr(stream, "reconfigure", None)
+            if not callable(reconfigure):
+                continue
+            try:
+                reconfigure(encoding='utf-8')
+            except (OSError, ValueError, TypeError):
+                pass
 
 # 应用编码设置
 setup_utf8_io()

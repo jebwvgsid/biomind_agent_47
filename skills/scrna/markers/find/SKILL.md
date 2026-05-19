@@ -2,6 +2,14 @@
 name: scRNA Markers Find
 description: 对聚类后的 Seurat 对象执行 cluster marker 鉴定并导出 marker 表与概览图。Use when Codex needs a manifest-driven FindAllMarkers step after scRNA clustering.
 tags: [single-cell, scRNA, Seurat, markers, differential-expression, 单细胞, marker, 标记基因]
+task_types: [single_cell_rnaseq]
+stage_tags: [marker_find]
+inputs: [clustered_seurat_object]
+outputs: [marker_table, marker_plots]
+when_to_use:
+  - Workflow stage is marker_find.
+  - User needs FindAllMarkers-style cluster marker discovery after clustering.
+when_not_to_use: [Bulk RNA-seq, no cluster labels]
 legacy_ids: [scrna-markers-find]
 runtime:
   default_env: bio_scrna_core
@@ -9,6 +17,7 @@ runtime:
   language: r
   packages: [Seurat, yaml, ggplot2, dplyr]
   capabilities: [scrna-markers, scrna-cluster-markers]
+  install_tool: '<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>'
 ---
 
 # scRNA Markers Find
@@ -33,6 +42,17 @@ Use this skill to compute cluster markers from a clustered Seurat object.
 ```bash
 conda run -n bio_scrna_core Rscript skills/scrna/markers/find/scripts/find_markers_seurat.R --manifest /abs/path/manifest.yaml
 ```
+
+## Environment
+
+Reuse `bio_scrna_core`. If the environment is missing or package verification
+fails, delegate installation with:
+
+```text
+<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>
+```
+
+Do not inline package-manager installation commands from this skill.
 
 ## Outputs
 

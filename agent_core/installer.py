@@ -160,6 +160,7 @@ class InstallerAgent:
 1. **CODE IS MANDATORY**: You MUST output code blocks (```bash) for every action.
 2. **VERIFY FIRST**: Verify the requested runtime or tool in the target environment and WAIT for the real result.
 3. **NO FAKE SUCCESS**: Do NOT say "Ready" or output `<register_tool>` / `<register_environment>` until you see a `✅` log.
+4. **REGISTER THE REAL ENV**: If the verified tool path is inside `/envs/ENV_NAME/bin`, use `env="ENV_NAME"` in `<register_tool>` and `<register_environment>`. Do not default to `bio_tool` for an already-installed conda tool.
 </strict_anti_hallucination_rules>
 """
 
@@ -271,15 +272,17 @@ class InstallerAgent:
             for tag_attrs in re.findall(r"<register_tool\b(.*?)/?>", content, re.DOTALL):
                 attrs = {key: value for key, _, value in attr_pattern.findall(tag_attrs)}
                 cmd = attrs.get("command") or tool_name
-                env = attrs.get("env") or f"bio_{tool_name}"
                 path = attrs.get("path")
+                inferred_env = self.pm.infer_conda_env_from_path(path) if path else ""
+                env = attrs.get("env") or inferred_env or f"bio_{tool_name}"
                 try:
                     self.pm.register_existing_tool(
                         tool_name=cmd,
                         env_name=env,
                         source_path=path
                     )
-                    self.pm.bind_tool_to_environment(cmd, env)
+                    registered_env = self.pm.registry.get("tools", {}).get(cmd, {}).get("env", env)
+                    self.pm.bind_tool_to_environment(cmd, registered_env)
                     observations.append(f"<observation>✅ Tool '{cmd}' registered successfully via PackageManager. Shim created.</observation>")
                     registration_found = True
                 except Exception as e:

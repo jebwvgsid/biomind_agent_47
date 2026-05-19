@@ -2,6 +2,14 @@
 name: scRNA Environment Bootstrap
 description: 准备和验证单细胞转录组 Seurat 基础运行环境。用于 Seurat 对象构建、10x 数据读取、单细胞 QC 和基础可视化前的环境检查或首次安装。Use when the task is to provision or verify a reusable R environment for scRNA-seq workflows.
 tags: [single-cell, scRNA, Seurat, environment, QC, 单细胞]
+task_types: [single_cell_rnaseq]
+stage_tags: [environment_check]
+inputs: [conda_environment]
+outputs: [verified_scrna_runtime]
+when_to_use:
+  - Workflow stage is environment_check.
+  - User asks to provision or verify the reusable scRNA R environment.
+when_not_to_use: [Bulk RNA-seq analysis]
 legacy_ids: [scrna-env-bootstrap]
 runtime:
   default_env: bio_scrna_core
@@ -9,7 +17,7 @@ runtime:
   language: r
   packages: [Seurat, Matrix, yaml, ggplot2, patchwork, dplyr]
   capabilities: [scrna-env, scrna-ingest, scrna-qc]
-  install_command: conda create -n bio_scrna_core -c conda-forge -c bioconda r-base=4.3 r-seurat r-matrix r-yaml r-ggplot2 r-patchwork r-dplyr -y
+  install_tool: '<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>'
 ---
 
 # scRNA Environment Bootstrap
@@ -29,8 +37,8 @@ single-cell analysis begins.
   1. Run the verification script first.
   2. If verification fails, delegate installation to the install subagent.
   3. Re-run the verification script.
-- Do not inline `conda create`, `conda install`, `mamba install`, `pip install`,
-  or `R install.packages` as the main analysis step for this skill.
+- Do not inline package-manager installation commands as the main analysis step
+  for this skill.
 
 ## Quick Start
 

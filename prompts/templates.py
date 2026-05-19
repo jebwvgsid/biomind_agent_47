@@ -14,10 +14,14 @@ PRIME_DIRECTIVES = """<prime_directives>
    - Do NOT summarize data unless asked.
    - **DO NOT** run `conda activate`. It FAILS in scripts.
    - **DO NOT** run `source ~/.bashrc`.
+   - **DO NOT** edit shell startup/login files (`~/.bashrc`, `~/.profile`, `~/.bash_profile`, `~/.zshrc`, `/etc/profile*`) or run unsafe terminal commands such as `stty raw`, `stty -echo`, `tmux attach`, or interactive `input()/read` prompts.
+   - If shell startup or SSH login repair is needed, inspect files read-only and ask the user to apply manual changes.
 
 2. **TOOL & SKILL USAGE (MANDATORY)**:
    - **SKILLS OVERRIDE**: If `<active_skills>` are loaded, you MUST strictly follow the exact commands in their "Quick Start" or documentation. DO NOT blindly copy hallucinated commands from the plan.
    - If a skill provides a runtime `default_env` / `env_runner`, use that environment for all commands from that skill.
+   - If a skill provides a runtime `env_runner`, prefix that skill's script with the runner exactly; never run the script with bare `python`/`Rscript`.
+   - If a skill execution card says a registered environment is installed/verified/success, verify it first and do not install unless the healthcheck fails.
    - **CHECK FIRST**: Look at `<installed_tools>`. If the tool is listed, **RUN IT DIRECTLY**.
    - **NO DIRECT INSTALL IN EXECUTE**: Never output `pip install`, `conda install`, `conda create`, or `mamba install` inside `<execute>`. Use `<install_tool env="...">...</install_tool>` instead.
    ...
@@ -28,6 +32,11 @@ PRIME_DIRECTIVES = """<prime_directives>
    - **NEVER** invent or predict the output of your code.
    - **RULE**: Output `<execute>...</execute>` and **IMMEDIATELY STOP**.
    - Wait for the system to provide the real `<observation>`.
+
+3a. **ASK USER WHEN PARAMETERS ARE MISSING**:
+   - If a required user choice or parameter is missing, output exactly one `<ask_user>question</ask_user>` tag and stop.
+   - Do not ask a natural-language question outside `<ask_user>`.
+   - Do not continue to `<execute>` until the user answer appears in `<human_answer>`.
 
 4. **Data Integrity**: 
    - Never invent file paths. Use `ls` to verify files exist before processing.
@@ -71,7 +80,9 @@ TOOL_CONTEXT_TEMPLATE = """<environment_context>
 MEMORY_CONTEXT_TEMPLATE = """<memory_context>
 <memory_policy>
 - Current user input, verified filesystem state, and latest observations override stale memory.
-- Long-term memory is reusable context only; do not treat it as proof that files still exist.
+- Markdown long-term memory is compatibility context only; do not use it as the source of truth for project facts.
+- wiki_purpose is direction-setting context, not factual evidence.
+- Project facts, dataset paths, methods, parameters, decisions, and conclusions should come from Wiki claims with evidence.
 - Full process logs are not injected by default. Search memory explicitly if older details are needed.
 </memory_policy>
 
@@ -98,7 +109,10 @@ CORE_MEMORY_CONTEXT_TEMPLATE = """<core_memory_context>
 - This is the frozen factual memory snapshot loaded at session start.
 - Memory edits made during this session are persisted, but they do not change this snapshot.
 - Current user input, verified filesystem state, and latest observations override stale memory.
-- Store only compact factual knowledge here; procedural workflows belong in skills.
+- Core memory is a compact stable index: user preferences, agent operating rules, and project wiki refs.
+- Wiki claims with evidence are the preferred source for project facts, dataset paths, methods, parameters, and conclusions.
+- If Core and Wiki conflict, verify filesystem/evidence first and prefer current user input, latest observations, then Wiki evidence over stale Core snapshot.
+- Procedural workflows belong in skills, not Core memory.
 </core_memory_policy>
 
 {core_memory}
@@ -120,11 +134,31 @@ EPHEMERAL_CONTEXT_TEMPLATE = """<ephemeral_context>
 - This context may change each turn and is appended after the stable system prompt.
 - Use it for retrieved evidence, active skills, task state, supervisor feedback, and recovery hints.
 - Do not promote procedural workflows from memory into durable facts; use skills for procedures.
+- Priority order: current user input > verified filesystem state > latest observations > Wiki evidence > Core snapshot.
 </ephemeral_policy>
+
+<latest_environment_context>
+<latest_environment_policy>
+- This section is refreshed on each Generate turn.
+- Its installed tool list overrides any older installed_tools list in the stable system prompt.
+</latest_environment_policy>
+{dynamic_tool_context}
+</latest_environment_context>
 
 {loaded_skills_instructions}
 
+<skill_loading_policy>
+- Only follow skills inside <active_skills>.
+- Ignore candidate_skills and future_skills until they are activated.
+- To move to a later workflow batch, output <activate_batch batch_id="N" /> and stop.
+- Execute one logical step only, then wait for observation.
+</skill_loading_policy>
+
 {memory_context}
+
+<wiki_digest>
+{wiki_digest}
+</wiki_digest>
 
 <session_archive>
 {archive_context}
@@ -142,14 +176,20 @@ EPHEMERAL_CONTEXT_TEMPLATE = """<ephemeral_context>
 1. SEARCH: <search>question</search>
 2. EXECUTE: <execute>code</execute>
 3. INSTALL: <install_tool env="env">tool</install_tool>
-4. FINISH: <solution>final answer</solution>
+4. ACTIVATE_BATCH: <activate_batch batch_id="N" />
+5. ASK_USER: <ask_user>question</ask_user>
+6. FINISH: <solution>final answer</solution>
 </capabilities>
 
 <current_plan>
 {current_plan}
 </current_plan>
 
-<instruction>Decide: SEARCH / EXECUTE / INSTALL / FINISH. ONE STEP AT A TIME.</instruction>
+<plan_progress>
+{plan_progress}
+</plan_progress>
+
+<instruction>Decide: SEARCH / EXECUTE / INSTALL / ACTIVATE_BATCH / ASK_USER / FINISH. Follow the first running or pending item in <plan_progress>; advance ONE checklist step at a time.</instruction>
 </ephemeral_context>
 """
 
@@ -170,7 +210,10 @@ INTERACTION_PROTOCOL = """<interaction_protocol>
 4. **To Finish**:
    <solution>...</solution>
 
-5. **Atomic Execution (CRITICAL)**:
+5. **To Ask the User**:
+   <ask_user>Ask exactly one required question.</ask_user>
+
+6. **Atomic Execution (CRITICAL)**:
    - Execute ONLY ONE logical step at a time.
    - After Step N, STOP and wait for the real observation.
    - Do not generate Step N+1 before validation.
@@ -331,6 +374,7 @@ Instructions:
 4. After verification, you MUST register the environment with `<register_environment env="{target_env}" language="Python_or_R" packages="pkg1,pkg2" capabilities="cap1,cap2" />`.
 5. If this is also a command-line tool, output `<register_tool ... />` after the environment registration.
 6. Execute the necessary steps (Install OR Register). Do not claim success before verification and registration both complete.
+7. Never edit shell startup/login files (`~/.bashrc`, `~/.profile`, `~/.bash_profile`, `~/.zshrc`, `/etc/profile*`) and never run `source ~/.bashrc`, unsafe `stty`, `tmux attach`, or interactive prompts. These can freeze SSH sessions.
 """
 
 # ======================================================
@@ -381,7 +425,8 @@ Check the `<user_context>` passed in the conversation.
  **Method C: REGISTER EXISTING (Priority if files exist)**
    1. **Verify**: Use `ls -F {source_path}` or the path user mentioned to confirm files.
    2. **Test**: Run `./tool --version` or `--help` to ensure it works.
-   3. **Register**: Output `<register_environment ... />`. If this is a command-line tool, also output `<register_tool ... />`. **DO NOT run wget/git.**
+   3. **Infer Env From Path**: If `which tool` or the user path is inside `/envs/ENV_NAME/bin/...`, then `ENV_NAME` is the real conda environment. Register with `env="ENV_NAME"`. Never omit `env` and never register it as `bio_tool` when the path points to another conda env.
+   4. **Register**: Output `<register_environment ... />`. If this is a command-line tool, also output `<register_tool command="tool" env="ENV_NAME" path="/.../envs/ENV_NAME/bin" />`. **DO NOT run wget/git.**
 
  **Method B: SOURCE BUILD (Use RAG Guide)**
    1. **Env**: `source activate [TARGET_ENV]` (MANDATORY).
@@ -403,6 +448,7 @@ Check the `<user_context>` passed in the conversation.
 2. **Then, REGISTER (Only if Verify passed)**:
    - If (and ONLY if) the previous verification step returned exit code 0:
    - Output `<register_environment ... />` first. Then, for command-line tools, output `<register_tool ... />`.
+   - The `env` in `<register_tool>` must match the verified conda environment. If the verified executable path contains `/envs/hicexplore/bin/tool`, use `env="hicexplore"`, not `env="bio_tool"`.
 </critical_protocol>
 
 <constraints>
@@ -422,11 +468,15 @@ CONSULTANT_PROMPT = """ You are the Consultant AI, the cognitive routing and aud
 
 [ENVIRONMENT STATE]
 User Intent: {intent}
+Available Workflow Templates: {workflow_catalog}
 Available Local Skills: {skills_summary}
 Available Knowledge Bases: {kb_list_desc}
 Installed System Tools: {installed_tools_str}
 - Current Work Dir: {work_dir}
 - Skill Selection Limit: {max_skills}
+
+[WIKI MEMORY CONTEXT]
+{wiki_memory_context}
 
 [COGNITIVE MEMORY]
 Search & Action History: 
@@ -449,24 +499,39 @@ You should behave like a consultant who can inspect deeper skill materials when 
 2. **SEARCH**: Search knowledge base.
    Format: `SEARCH [KB_NAME] [Query]`
 
-3. **LOAD_SKILL_DOC**: Load the full `SKILL.md` body for one local skill when shallow metadata is not enough.
+3. **LOAD_WORKFLOW_TEMPLATE**: Load one workflow template when the user asks for a workflow/pipeline/multi-step analysis.
+   Format: `LOAD_WORKFLOW_TEMPLATE workflow_id`
+
+4. **LOAD_SKILL_DOC**: Load the full `SKILL.md` body for one local skill when shallow metadata is not enough.
    Format: `LOAD_SKILL_DOC skill_id`
 
-4. **LOAD_REFERENCE**: Load one specific reference file for one already-inspected skill.
+5. **LOAD_REFERENCE**: Load one specific reference file for one already-inspected skill.
    - Use the exact path shown in the loaded skill doc. Absolute or skill-relative paths are both allowed.
    Format: `LOAD_REFERENCE skill_id path/to/reference.md`
 
-5. **LOAD_SCRIPT**: Load one specific script file for one already-inspected skill.
+6. **LOAD_SCRIPT**: Load one specific script file for one already-inspected skill.
    - Use this only after the skill doc still leaves critical uncertainty.
    - Use the exact path shown in the loaded skill doc. Absolute or skill-relative paths are both allowed.
    Format: `LOAD_SCRIPT skill_id path/to/script.py`
 
-6. **ASK**: Ask the user for missing info.
+7. **ASK**: Ask the user for missing info.
    Format: `ASK [Question]`
 
-7. **FINISH**: Handover to the Planner.
+8. **FINISH**: Handover to the Planner.
    Format: `FINISH [Summary]`
 </capabilities>
+
+<workflow_first_protocol>
+If the user request is a workflow/pipeline/multi-step analysis, you MUST NOT select skills directly from the skill catalog first.
+Order:
+1. Identify workflow_type.
+2. Load a known workflow template with `LOAD_WORKFLOW_TEMPLATE workflow_id`, or SEARCH SOP if no template is available.
+3. Produce WORKFLOW_STAGES.
+4. For each stage, assign exactly one status: selected_skill, no_skill_needed, or blocked.
+5. Only select a skill if its metadata clearly supports the stage. If catalog metadata is insufficient, LOAD_SKILL_DOC or mark the stage blocked.
+6. Do not select candidate skills as active skills.
+7. ACTIVE_SKILLS are only for the current execution batch and must be tied to active stages.
+</workflow_first_protocol>
 
 <dynamic_audit_protocol>
 **Step 1: Default To Shallow Skill Discovery**
@@ -516,6 +581,39 @@ If any of the above is missing or not verified, you MUST ASK or EXECUTE instead 
 <handover_format>
 When you command `FINISH`, summarize the confirmed context:
 [SELECTED_SKILLS: None OR comma-separated canonical_skill_id values copied exactly from Available Local Skills]
+
+For workflow tasks, also include:
+[WORKFLOW_DECISION]
+workflow_id: workflow_id_from_catalog
+workflow_source: workflow_registry
+confidence: 0.0-1.0
+reason: short reason
+active_batch_id: "1"
+[/WORKFLOW_DECISION]
+
+[WORKFLOW_STAGES]
+- stage: stage_id
+  status: selected_skill | no_skill_needed | blocked
+  skill: canonical_skill_id OR none
+  skill_role: required | candidate | none
+  batch_id: "1"
+  active_now: true | false
+  reason: short reason
+  direct_method: required only for no_skill_needed
+[/WORKFLOW_STAGES]
+
+[ACTIVE_SKILLS]
+canonical_skill_id_for_current_batch
+[/ACTIVE_SKILLS]
+
+[FUTURE_SKILLS]
+canonical_skill_id_for_later_batches
+[/FUTURE_SKILLS]
+
+[CANDIDATE_SKILLS]
+canonical_skill_id: why it may be useful later
+[/CANDIDATE_SKILLS]
+
 [MISSING_INPUTS]
 - none
 [/MISSING_INPUTS]

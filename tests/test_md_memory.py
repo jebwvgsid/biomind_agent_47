@@ -81,9 +81,11 @@ class MarkdownMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
             pending = (root / "history" / "PENDING.md").read_text(encoding="utf-8")
 
             self.assertIn("Prefer Markdown-only memory.", long_term)
-            self.assertIn("Workspace root: D:\\work\\BioMind", long_term)
+            self.assertNotIn("Workspace root: D:\\work\\BioMind", long_term)
             self.assertIn("Build Markdown memory.", task_memory)
             self.assertIn("memory/MEMORY.md", task_memory)
+            self.assertIn("Wiki Candidates", task_memory)
+            self.assertIn("Important Paths: Workspace root: D:\\work\\BioMind", task_memory)
             self.assertIn("Observed planner event.", dream_log)
             self.assertNotIn("plan_file", pending)
 
@@ -102,6 +104,30 @@ class MarkdownMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("Do work", combined)
             self.assertNotIn("SECRET_LOG_ONLY", combined)
 
+    async def test_existing_long_term_project_sections_are_routed_to_wiki_candidates(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir) / "memory"
+            root.mkdir(parents=True)
+            (root / "MEMORY.md").write_text(
+                "# BioMind Long-term Memory\n\n"
+                "## User Preferences\n- Prefer concise answers.\n\n"
+                "## Project Facts\n- Alpha dataset lives at /data/alpha.\n\n"
+                "## Important Paths\n- Workspace root: D:\\work\\BioMind\n\n"
+                "## Reusable Fixes\n- Use --force for beta.\n",
+                encoding="utf-8",
+            )
+
+            manager = MarkdownMemoryManager(_FakeLLM({}), root)
+
+            long_term = manager.read_long_term()
+            candidates = (root / "history" / "WIKI_CANDIDATES.md").read_text(encoding="utf-8")
+            self.assertIn("Prefer concise answers.", long_term)
+            self.assertIn("Use --force for beta.", long_term)
+            self.assertNotIn("Alpha dataset lives", long_term)
+            self.assertNotIn("Workspace root", long_term)
+            self.assertIn("Alpha dataset lives at /data/alpha.", candidates)
+            self.assertIn("Workspace root: D:\\work\\BioMind", candidates)
+
     async def test_lexical_long_term_retrieval_returns_matching_chunks(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MarkdownMemoryManager(_FakeLLM({}), Path(tmpdir) / "memory")
@@ -116,28 +142,30 @@ class MarkdownMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 },
             )
 
-            result = manager.lexical_retrieve_long_term("alpha dataset", top_k=1)
+            result = manager.lexical_retrieve_long_term("beta tool", top_k=1)
+            task_memory = manager.read_task_memory("session_3")
 
-            self.assertIn("Alpha dataset lives", result)
-            self.assertNotIn("Beta tool needs", result)
+            self.assertIn("Beta tool needs", result)
+            self.assertNotIn("Alpha dataset lives", manager.read_long_term())
+            self.assertIn("Project Facts: Alpha dataset lives at /data/alpha.", task_memory)
 
     async def test_dream_restore_reverts_latest_memory_snapshot(self):
         patch = {
-            "long_term": {"Project Facts": ["Dream-only fact."]},
+            "long_term": {"Reusable Fixes": ["Dream-only fix."]},
             "task": {"Current Status": "Dreamed."},
             "task_status": "running",
-            "dream_summary": "Added dream-only fact.",
+            "dream_summary": "Added dream-only fix.",
         }
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MarkdownMemoryManager(_FakeLLM(patch), Path(tmpdir) / "memory")
             manager.append_event("session_4", "execute", payload={"stdout": "ok"})
 
             await manager.curate_pending(task_id="session_4")
-            self.assertIn("Dream-only fact.", manager.read_long_term())
+            self.assertIn("Dream-only fix.", manager.read_long_term())
 
             restore_result = manager.restore_latest_snapshot()
             self.assertIn("Restored Markdown memory snapshot", restore_result)
-            self.assertNotIn("Dream-only fact.", manager.read_long_term())
+            self.assertNotIn("Dream-only fix.", manager.read_long_term())
 
     async def test_dream_writes_facts_to_core_memory_for_future_sessions(self):
         project_id = "project_alpha"
@@ -146,6 +174,7 @@ class MarkdownMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
             "agent_memory": {"Reusable Fixes": ["Use conda run instead of conda activate."]},
             "projects": {
                 project_id: {
+                    "project_root": "/data/project_alpha",
                     "paths": {"gff": "/data/project_alpha.gff3"},
                     "defaults": {"dmr_skill": "dmr-expression-filter"},
                 }
@@ -168,8 +197,12 @@ class MarkdownMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
             frozen_before = core_store.read_core(project_id, snapshot_id="session_before")
             self.assertIn("Prefer complete runnable scripts.", frozen_before)
             self.assertIn("Use conda run instead of conda activate.", frozen_before)
-            self.assertIn("/data/project_alpha.gff3", frozen_before)
-            self.assertIn("dmr-expression-filter", frozen_before)
+            self.assertIn("/data/project_alpha", frozen_before)
+            self.assertNotIn("/data/project_alpha.gff3", frozen_before)
+            self.assertNotIn("dmr-expression-filter", frozen_before)
+            self.assertIn("paths.gff", (root / "CORE_REVIEW.md").read_text(encoding="utf-8"))
+            self.assertNotIn("dmr-expression-filter", manager.read_long_term())
+            self.assertIn("Project Facts: Project Alpha uses dmr-expression-filter", manager.read_task_memory("session_5"))
 
 
 if __name__ == "__main__":

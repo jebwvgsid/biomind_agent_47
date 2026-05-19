@@ -1,12 +1,16 @@
 from __future__ import annotations
-
-import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from .patch_validator import flatten_dict, redact_secrets
+from .policy import (
+    filter_core_project_facts,
+    lint_core_wiki_boundary,
+    read_simple_project_facts,
+    render_project_facts,
+)
 from .utils import DEFAULT_PROJECT_ID, clip_text, normalize_list, now_iso, query_terms, safe_id
 
 
@@ -14,9 +18,7 @@ USER_SECTIONS = ["Preferences", "Communication", "Workflow"]
 AGENT_SECTIONS = [
     "Environment Facts",
     "Operational Notes",
-    "Project Notes",
     "Reusable Fixes",
-    "Important Decisions",
     "Deprecated / Superseded",
 ]
 
@@ -27,16 +29,6 @@ def _now() -> str:
 
 def _clip(text: str, limit: int) -> str:
     return clip_text(text, limit)
-
-
-def _json_scalar(value: Any) -> str:
-    if value is None:
-        return '""'
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, (int, float)):
-        return str(value)
-    return json.dumps(str(value), ensure_ascii=False)
 
 
 @dataclass
@@ -75,6 +67,7 @@ class CoreMemoryStore:
         self.agent_memory = self.root / "AGENT_MEMORY.md"
         self.projects_dir = self.root / "projects"
         self.legacy_memory = self.root / "MEMORY.md"
+        self.review_file = self.root / "CORE_REVIEW.md"
         self.user_limit = user_limit
         self.agent_limit = agent_limit
         self.project_limit = project_limit
@@ -89,6 +82,8 @@ class CoreMemoryStore:
             self.user_profile.write_text(self._initial_user_profile(), encoding="utf-8")
         if not self.agent_memory.exists():
             self.agent_memory.write_text(self._initial_agent_memory(), encoding="utf-8")
+        if not self.review_file.exists():
+            self.review_file.write_text("# Core Memory Review\n", encoding="utf-8")
         self._migrate_legacy_memory()
 
     def ensure_project(self, project_id: Optional[str] = None) -> Path:
@@ -147,7 +142,18 @@ class CoreMemoryStore:
         agent_memory = patch.get("agent_memory")
         if isinstance(agent_memory, dict):
             for section, items in agent_memory.items():
-                self._append_section_bullets(self.agent_memory, str(section), self._normalize_items(items))
+                section_name = str(section)
+                normalized = self._normalize_items(items)
+                if not normalized:
+                    continue
+                if section_name not in AGENT_SECTIONS:
+                    self._append_review(
+                        fallback_project_id,
+                        {f"agent_memory.{section_name}": normalized},
+                        {f"agent_memory.{section_name}": "Project-specific or unknown agent memory should live in Wiki or task memory."},
+                    )
+                    continue
+                self._append_section_bullets(self.agent_memory, section_name, normalized)
         elif agent_memory is not None:
             self._append_section_bullets(self.agent_memory, "Operational Notes", self._normalize_items(agent_memory))
 
@@ -163,39 +169,42 @@ class CoreMemoryStore:
 
     def read_project_facts(self, project_id: Optional[str] = None) -> Dict[str, str]:
         path = self.ensure_project(project_id)
-        facts: Dict[str, str] = {}
-        for line in path.read_text(encoding="utf-8").splitlines():
-            match = re.match(r"^\s{2}([A-Za-z0-9_.-]+):\s*(.*?)\s*$", line)
-            if not match:
-                continue
-            key, raw_value = match.groups()
-            raw_value = raw_value.strip()
-            try:
-                value = json.loads(raw_value)
-            except json.JSONDecodeError:
-                value = raw_value
-            facts[key] = str(value)
-        return facts
+        return read_simple_project_facts(path)
 
     def upsert_project_facts(self, project_id: Optional[str], facts: Dict[str, Any]) -> None:
         project_id = self._resolve_project_id(project_id)
         existing = self.read_project_facts(project_id)
-        for key, value in facts.items():
-            clean_key = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(key).strip())
-            if clean_key:
-                existing[clean_key] = redact_secrets(value)
+        allowed, rejected = filter_core_project_facts(facts)
+        for key, value in allowed.items():
+            existing[key] = redact_secrets(value)
+        if rejected:
+            self._append_review(project_id, facts, rejected)
 
-        lines = [
-            f"project_id: {project_id}",
-            f"updated_at: {_now()}",
-            "facts:",
-        ]
-        if existing:
-            for key in sorted(existing):
-                lines.append(f"  {key}: {_json_scalar(existing[key])}")
-        else:
-            lines[-1] = "facts: {}"
-        self.project_path(project_id).write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+        self.project_path(project_id).write_text(
+            render_project_facts(project_id, existing, updated_at=_now()),
+            encoding="utf-8",
+        )
+
+    def lint_project_memory(
+        self,
+        project_id: Optional[str] = None,
+        wiki_claims: Optional[Sequence[Dict[str, Any]]] = None,
+    ) -> str:
+        project_id = self._resolve_project_id(project_id)
+        issues = lint_core_wiki_boundary(project_id, self.read_project_facts(project_id), wiki_claims or [])
+        if not issues:
+            return f"Core/Wiki memory lint passed for project {project_id}."
+        return "Core/Wiki memory lint found issues:\n" + "\n".join(f"- {issue}" for issue in issues)
+
+    def _append_review(self, project_id: str, facts: Dict[str, Any], rejected: Dict[str, str]) -> None:
+        with self.review_file.open("a", encoding="utf-8") as handle:
+            handle.write(f"\n\n## {_now()} - Project facts routed away from Core\n\n")
+            handle.write(f"- project_id: {project_id}\n\n")
+            for key, reason in sorted(rejected.items()):
+                handle.write(f"- {key}: {reason}\n")
+            handle.write("\n```json\n")
+            handle.write(redact_secrets(facts))
+            handle.write("\n```\n")
 
     def search(self, query: str, top_k: int = 4, project_id: Optional[str] = None) -> List[Dict[str, str]]:
         project_id = self._resolve_project_id(project_id)
@@ -238,14 +247,18 @@ class CoreMemoryStore:
     def _apply_legacy_long_term(self, legacy: Dict[str, Any]) -> None:
         section_map = {
             "User Preferences": (self.user_profile, "Preferences"),
-            "Project Facts": (self.agent_memory, "Project Notes"),
-            "Important Paths": (self.agent_memory, "Project Notes"),
             "Reusable Fixes": (self.agent_memory, "Reusable Fixes"),
-            "Important Decisions": (self.agent_memory, "Important Decisions"),
             "Deprecated / Superseded": (self.agent_memory, "Deprecated / Superseded"),
         }
         for section, items in legacy.items():
-            target, target_section = section_map.get(str(section), (self.agent_memory, "Operational Notes"))
+            if str(section) not in section_map:
+                self._append_review(
+                    self.default_project_id,
+                    {f"long_term.{section}": items},
+                    {f"long_term.{section}": "Legacy long-term project knowledge should live in Wiki or task memory."},
+                )
+                continue
+            target, target_section = section_map[str(section)]
             self._append_section_bullets(target, target_section, self._normalize_items(items))
 
     def _migrate_legacy_memory(self) -> None:
@@ -262,11 +275,15 @@ class CoreMemoryStore:
         ]
         if len("\n".join(useful_lines).strip()) < 80:
             return
-        with self.agent_memory.open("a", encoding="utf-8") as handle:
+        review_text = self.review_file.read_text(encoding="utf-8", errors="replace")
+        if marker in review_text:
+            return
+        with self.review_file.open("a", encoding="utf-8") as handle:
             handle.write(
                 f"\n\n{marker}\n"
                 "## Legacy Markdown Memory Migration\n"
-                "Review and condense these migrated notes during Dream.\n\n"
+                "Review and move durable project facts into Wiki pages with evidence. "
+                "Keep only user preferences or reusable operating notes in Core.\n\n"
                 "```text\n"
                 f"{_clip(redact_secrets(legacy_text), 3000)}\n"
                 "```\n"
@@ -286,7 +303,8 @@ class CoreMemoryStore:
         sections = "\n\n".join(f"## {section}\n- None recorded yet." for section in AGENT_SECTIONS)
         return (
             "# BioMind Agent Memory\n\n"
-            "Stable operating facts and reusable experience only. Do not store task logs here.\n\n"
+            "Stable operating facts and reusable experience only. "
+            "Do not store project facts, task logs, dataset paths, methods, parameters, decisions, or conclusions here.\n\n"
             f"{sections}\n"
         )
 

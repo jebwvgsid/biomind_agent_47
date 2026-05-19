@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import yaml
 from pathlib import Path
@@ -8,6 +9,15 @@ from typing import Any, Dict, List, Optional
 class SkillManager:
     """遵循 Agent Skills 标准的技能加载器"""
     MAX_SELECTED_SKILLS = 3
+    INSTALLED_STATUSES = {"installed", "verified", "success"}
+    STATUS_RANK = {
+        "": 0,
+        "registered": 0,
+        "broken": 0,
+        "installed": 1,
+        "verified": 2,
+        "success": 3,
+    }
     
     def __init__(self, skills_root: str):
         self.skills_root = Path(skills_root)
@@ -41,6 +51,14 @@ class SkillManager:
                 if match:
                     yaml_content = match.group(1)
                     meta = yaml.safe_load(yaml_content) or {}
+                    if isinstance(meta.get("metadata"), dict):
+                        for key in (
+                            "version", "tags", "legacy_ids", "runtime",
+                            "task_types", "stage_tags", "inputs", "outputs",
+                            "when_to_use", "when_not_to_use",
+                        ):
+                            if key not in meta and key in meta["metadata"]:
+                                meta[key] = meta["metadata"][key]
                     if "name" in meta:
                         skill_id = self._normalize_skill_key(rel_dir)
                         legacy_ids = self._build_legacy_skill_ids(meta, rel_dir)
@@ -149,6 +167,12 @@ class SkillManager:
 
     def _catalog_entry_lines(self, skill: Dict[str, Any]) -> List[str]:
         tags = ", ".join(map(str, skill.get("tags", []) or [])) or "none"
+        task_types = ", ".join(self.metadata_list(skill, "task_types")) or "none"
+        stage_tags = ", ".join(self.metadata_list(skill, "stage_tags")) or "none"
+        inputs = ", ".join(self.metadata_list(skill, "inputs")) or "none"
+        outputs = ", ".join(self.metadata_list(skill, "outputs")) or "none"
+        when_to_use = "; ".join(self.metadata_list(skill, "when_to_use")) or "none"
+        when_not_to_use = "; ".join(self.metadata_list(skill, "when_not_to_use")) or "none"
         skill_id = skill.get("_skill_id", "")
         return [
             f"- canonical_skill_id: {skill_id}",
@@ -156,6 +180,12 @@ class SkillManager:
             f"  name: {skill.get('name', 'Unknown')}",
             f"  category: {skill.get('_skill_category', 'root')}",
             f"  tags: {tags}",
+            f"  task_types: {task_types}",
+            f"  stage_tags: {stage_tags}",
+            f"  inputs: {inputs}",
+            f"  outputs: {outputs}",
+            f"  when_to_use: {when_to_use}",
+            f"  when_not_to_use: {when_not_to_use}",
             f"  has_scripts: {self._catalog_bool(bool(skill.get('_scripts')))}",
             f"  has_references: {self._catalog_bool(bool(skill.get('_references')))}",
             f"  description: {skill.get('description', 'No description')}",
@@ -214,6 +244,30 @@ class SkillManager:
             parts = re.split(r"[,\n;]+", value)
             return [part.strip() for part in parts if part.strip()]
         return [str(value).strip()] if str(value).strip() else []
+
+    def _status_rank(self, status: str) -> int:
+        return self.STATUS_RANK.get(str(status or "").lower(), 0)
+
+    def _best_status(self, existing: str, incoming: str) -> str:
+        existing = str(existing or "").lower()
+        incoming = str(incoming or "").lower()
+        return incoming if self._status_rank(incoming) > self._status_rank(existing) else (existing or incoming)
+
+    def _merge_unique(self, existing, extra) -> List[str]:
+        merged = []
+        for item in self._ensure_list(existing) + self._ensure_list(extra):
+            if item not in merged:
+                merged.append(item)
+        return merged
+
+    def metadata_list(self, skill: Dict[str, Any], key: str) -> List[str]:
+        """Return normalized list metadata from top-level or nested metadata."""
+        if not isinstance(skill, dict):
+            return []
+        value = skill.get(key)
+        if value is None and isinstance(skill.get("metadata"), dict):
+            value = skill["metadata"].get(key)
+        return self._ensure_list(value)
 
     def _runtime_packages(self, runtime: Dict[str, Any]) -> List[str]:
         return self._ensure_list(runtime.get("packages")) or self._ensure_list(runtime.get("python_packages"))
@@ -285,20 +339,26 @@ class SkillManager:
         meta = self.get_skill_meta(skill_id)
         runtime = meta.get("runtime") or {}
         canonical_id = meta.get("_skill_id", skill_id)
+        record = self.get_runtime_record(canonical_id)
         env = self.get_runtime_env(canonical_id) or runtime.get("default_env", "")
-        packages = self._runtime_packages(runtime)
+        packages = self._merge_unique(self._runtime_packages(runtime), record.get("packages"))
         language = self._runtime_language(runtime)
-        capabilities = self._runtime_capabilities(runtime, meta)
+        if not language:
+            language = str(record.get("language", "") or "").lower()
+        capabilities = self._merge_unique(self._runtime_capabilities(runtime, meta), record.get("capabilities"))
+        env_runner = record.get("env_runner") or runtime.get("env_runner", "")
+        healthcheck = record.get("healthcheck") or self.build_runtime_healthcheck(env or runtime.get("default_env", ""), runtime, meta)
         return {
             "skill_id": canonical_id,
             "default_env": runtime.get("default_env", ""),
             "env": env,
-            "env_runner": runtime.get("env_runner", ""),
+            "env_runner": env_runner,
             "language": language,
             "packages": packages,
             "capabilities": capabilities,
-            "install_command": runtime.get("install_command", ""),
-            "healthcheck": self.build_runtime_healthcheck(env or runtime.get("default_env", ""), runtime, meta),
+            "install_tool": record.get("install_tool") or runtime.get("install_tool", ""),
+            "install_command": record.get("install_command") or runtime.get("install_command", ""),
+            "healthcheck": healthcheck,
         }
 
     def get_discovery_prompt(self) -> str:
@@ -324,6 +384,10 @@ class SkillManager:
             aliases = ", ".join(self._ensure_list(skill.get("_legacy_skill_ids"))) or "none"
             scripts = ", ".join(skill.get("_scripts", [])) or "none"
             refs = ", ".join(skill.get("_references", [])) or "none"
+            task_types = ", ".join(self.metadata_list(skill, "task_types")) or "none"
+            stage_tags = ", ".join(self.metadata_list(skill, "stage_tags")) or "none"
+            inputs = ", ".join(self.metadata_list(skill, "inputs")) or "none"
+            outputs = ", ".join(self.metadata_list(skill, "outputs")) or "none"
             runtime = skill.get("runtime", {}) or {}
             record = self.get_runtime_record(skill_id)
             runtime_text = ""
@@ -349,6 +413,10 @@ class SkillManager:
                 f"  description: {desc}\n"
                 f"  category: {category}\n"
                 f"  aliases: {aliases}\n"
+                f"  task_types: {task_types}\n"
+                f"  stage_tags: {stage_tags}\n"
+                f"  inputs: {inputs}\n"
+                f"  outputs: {outputs}\n"
                 f"  absolute_dir: {skill_dir}\n"
                 f"  scripts: {scripts}\n"
                 f"  references: {refs}"
@@ -519,6 +587,7 @@ class SkillManager:
                     cards.append(f"- remembered_healthcheck: {record.get('healthcheck')}")
                 if record.get("last_success_command"):
                     cards.append(f"- last_success_command: {record.get('last_success_command')}")
+                cards.append("- install_policy: verify registered env first; install only if healthcheck fails")
             if requirements.get("default_env"):
                 cards.append(f"- default_env: {requirements.get('default_env')}")
             if requirements.get("env_runner"):
@@ -529,10 +598,16 @@ class SkillManager:
                 cards.append(f"- packages: {', '.join(map(str, requirements.get('packages')))}")
             if requirements.get("capabilities"):
                 cards.append(f"- capabilities: {', '.join(map(str, requirements.get('capabilities')))}")
+            stage_tags = self.metadata_list(meta, "stage_tags")
+            if stage_tags:
+                cards.append(f"- stage_tags: {', '.join(stage_tags)}")
+            task_types = self.metadata_list(meta, "task_types")
+            if task_types:
+                cards.append(f"- task_types: {', '.join(task_types)}")
             if requirements.get("healthcheck"):
                 cards.append(f"- healthcheck: {requirements.get('healthcheck')}")
-            if requirements.get("install_command"):
-                cards.append(f"- install_command: {requirements.get('install_command')}")
+            if requirements.get("install_tool"):
+                cards.append(f"- install_tool: {requirements.get('install_tool')}")
             if self._is_environment_bootstrap_skill(sid, runtime, meta):
                 cards.append("- install_strategy: verify first; if verification fails, delegate installation via <install_tool>; then re-verify")
                 cards.append("- planner_restriction: do not inline conda/pip/R package installation commands in the plan for this skill")
@@ -590,6 +665,184 @@ class SkillManager:
                     violations.append(f"Plan appears to invent an undocumented script name: {name}")
         return violations
 
+    def _runtime_record_from_info(self, skill_id: str, info: Dict[str, Any], env_override: str = "") -> Dict[str, Any]:
+        requirements = self.get_runtime_requirements(skill_id)
+        env = str(env_override or info.get("env") or info.get("default_env") or requirements.get("env") or "").strip()
+        language = str(info.get("language") or requirements.get("language") or "").lower()
+        env_runner = str(info.get("env_runner") or requirements.get("env_runner") or "").strip()
+        if env and not env_runner and language:
+            env_runner = f"conda run -n {env} {'Rscript' if language == 'r' else 'python'}"
+        return {
+            "skill_id": skill_id,
+            "env": env,
+            "env_runner": env_runner,
+            "language": language,
+            "packages": self._merge_unique(requirements.get("packages"), info.get("packages")),
+            "capabilities": self._merge_unique(requirements.get("capabilities"), info.get("capabilities")),
+            "healthcheck": str(info.get("healthcheck") or requirements.get("healthcheck") or "").strip(),
+            "install_tool": str(info.get("install_tool") or requirements.get("install_tool") or "").strip(),
+            "install_command": str(info.get("install_command") or requirements.get("install_command") or "").strip(),
+            "status": str(info.get("status") or "registered").lower(),
+            "notes": str(info.get("notes") or "").strip(),
+            "last_verified_at": str(info.get("last_verified_at") or "").strip(),
+        }
+
+    def _merge_runtime_record(self, skill_id: str, info: Dict[str, Any], env_override: str = "") -> bool:
+        canonical_id = self._resolve_skill_id(skill_id) or self._normalize_skill_key(skill_id)
+        if not canonical_id or not isinstance(info, dict):
+            return False
+        incoming = self._runtime_record_from_info(canonical_id, info, env_override=env_override)
+        if not incoming.get("env"):
+            return False
+        if incoming.get("status") not in self.INSTALLED_STATUSES:
+            return False
+
+        record = self.runtime_registry.setdefault("skills", {}).setdefault(canonical_id, {})
+        selected_status = self._best_status(record.get("status", "registered"), incoming.get("status", "registered"))
+        record.update({
+            "skill_id": canonical_id,
+            "env": incoming["env"] or record.get("env", ""),
+            "env_runner": incoming["env_runner"] or record.get("env_runner", ""),
+            "language": incoming["language"] or record.get("language", ""),
+            "packages": self._merge_unique(record.get("packages"), incoming.get("packages")),
+            "capabilities": self._merge_unique(record.get("capabilities"), incoming.get("capabilities")),
+            "healthcheck": incoming["healthcheck"] or record.get("healthcheck", ""),
+            "install_tool": incoming["install_tool"] or record.get("install_tool", ""),
+            "install_command": incoming["install_command"] or record.get("install_command", ""),
+            "status": selected_status,
+            "notes": incoming["notes"] or record.get("notes", ""),
+            "last_verified_at": incoming["last_verified_at"] or record.get("last_verified_at", ""),
+        })
+        return True
+
+    def _sync_record_to_package_manager(self, package_manager, skill_id: str, record: Dict[str, Any]):
+        if not package_manager or not isinstance(record, dict):
+            return
+        env = str(record.get("env") or "").strip()
+        status = str(record.get("status") or "").lower()
+        if not env or status not in self.INSTALLED_STATUSES:
+            return
+        package_manager.register_environment(
+            env_name=env,
+            purpose=f"Runtime for skill {skill_id}",
+            packages=record.get("packages"),
+            skill_id=skill_id,
+            notes=record.get("notes", ""),
+            language=record.get("language", ""),
+            capabilities=record.get("capabilities"),
+            healthcheck=record.get("healthcheck", ""),
+            status=status,
+            last_verified_at=record.get("last_verified_at", ""),
+        )
+
+    def merge_runtime_registry_data(
+        self,
+        data: Dict[str, Any],
+        package_manager=None,
+        source: str = "",
+    ) -> Dict[str, int]:
+        """Import skill/environment registry JSON and sync reusable envs to PackageManager."""
+        stats = {"skills": 0, "environments": 0}
+        if not isinstance(data, dict):
+            return stats
+
+        if package_manager and hasattr(package_manager, "merge_registry_data"):
+            package_manager.merge_registry_data(data)
+
+        for raw_skill_id, info in (data.get("skills") or {}).items():
+            if self._merge_runtime_record(str(raw_skill_id), info if isinstance(info, dict) else {}):
+                canonical_id = self._resolve_skill_id(str(raw_skill_id)) or self._normalize_skill_key(raw_skill_id)
+                self._sync_record_to_package_manager(
+                    package_manager,
+                    canonical_id,
+                    self.runtime_registry.get("skills", {}).get(canonical_id, {}),
+                )
+                stats["skills"] += 1
+
+        for env_name, info in (data.get("environments") or {}).items():
+            if not isinstance(info, dict):
+                continue
+            status = str(info.get("status") or "").lower()
+            env = str(info.get("env") or env_name or "").strip()
+            if not env or status not in self.INSTALLED_STATUSES:
+                continue
+            for skill_id in self._ensure_list(info.get("skill_ids") or info.get("skill_id")):
+                env_info = dict(info)
+                env_info["env"] = env
+                if self._merge_runtime_record(skill_id, env_info, env_override=env):
+                    canonical_id = self._resolve_skill_id(skill_id) or self._normalize_skill_key(skill_id)
+                    self._sync_record_to_package_manager(
+                        package_manager,
+                        canonical_id,
+                        self.runtime_registry.get("skills", {}).get(canonical_id, {}),
+                    )
+                    stats["skills"] += 1
+            stats["environments"] += 1
+
+        if stats["skills"]:
+            self._save_runtime_registry()
+        return stats
+
+    def sync_with_package_manager(self, package_manager) -> Dict[str, int]:
+        """Make skill runtime registry and software registry agree on reusable env records."""
+        stats = {"skills_to_package": 0, "package_to_skills": 0}
+        if not package_manager:
+            return stats
+
+        for skill_id, record in list((self.runtime_registry.get("skills") or {}).items()):
+            if str(record.get("status") or "").lower() in self.INSTALLED_STATUSES and record.get("env"):
+                self._sync_record_to_package_manager(package_manager, skill_id, record)
+                stats["skills_to_package"] += 1
+
+        for env_name, info in (getattr(package_manager, "registry", {}).get("environments") or {}).items():
+            if not isinstance(info, dict):
+                continue
+            status = str(info.get("status") or "").lower()
+            if status not in self.INSTALLED_STATUSES:
+                continue
+            for skill_id in self._ensure_list(info.get("skill_ids") or info.get("skill_id")):
+                env_info = dict(info)
+                env_info["env"] = info.get("env") or env_name
+                if self._merge_runtime_record(skill_id, env_info, env_override=str(env_info["env"])):
+                    stats["package_to_skills"] += 1
+        if stats["package_to_skills"]:
+            self._save_runtime_registry()
+        return stats
+
+    def import_runtime_registry_files(self, paths: List[str], package_manager=None) -> Dict[str, int]:
+        stats = {"files": 0, "skills": 0, "environments": 0}
+        seen = set()
+        for raw_path in paths or []:
+            if not str(raw_path or "").strip():
+                continue
+            path = Path(str(raw_path)).expanduser()
+            try:
+                path = path.resolve()
+            except Exception:
+                pass
+            if str(path) in seen or not path.is_file():
+                continue
+            seen.add(str(path))
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            merged = self.merge_runtime_registry_data(data, package_manager=package_manager, source=str(path))
+            stats["files"] += 1
+            stats["skills"] += merged.get("skills", 0)
+            stats["environments"] += merged.get("environments", 0)
+        return stats
+
+    def runtime_registry_file_candidates(self, package_manager=None) -> List[str]:
+        paths = [str(self.runtime_registry_path)]
+        registry_path = getattr(package_manager, "registry_path", None)
+        if registry_path:
+            paths.append(str(registry_path))
+        env_paths = os.getenv("BIOMIND_RUNTIME_REGISTRY_FILES", "")
+        if env_paths:
+            paths.extend(part.strip() for part in re.split(r"[,;]", env_paths) if part.strip())
+        return paths
+
     def record_environment(
         self,
         skill_id: str,
@@ -611,6 +864,8 @@ class SkillManager:
         env_runner = requirements.get("env_runner") or (
             f"conda run -n {env} {'Rscript' if selected_language == 'r' else 'python'}" if env else ""
         )
+        incoming_status = str(status or "registered").lower()
+        selected_status = "broken" if incoming_status == "broken" else self._best_status(record.get("status", "registered"), incoming_status)
         record.update({
             "skill_id": canonical_id,
             "env": env,
@@ -620,7 +875,7 @@ class SkillManager:
             "capabilities": capabilities,
             "healthcheck": healthcheck or requirements.get("healthcheck", ""),
             "install_command": install_command or requirements.get("install_command", ""),
-            "status": status,
+            "status": selected_status,
             "notes": notes,
             "last_verified_at": datetime.now().isoformat(),
         })
@@ -686,6 +941,95 @@ class SkillManager:
         scored.sort(key=lambda item: (-item[0], item[1]))
         return [skill_id for _, skill_id in scored[:max_results]]
 
+    def score_skill_for_stage(self, skill_id: str, stage: Dict[str, Any], workflow_task_types: List[str] = None) -> Dict[str, Any]:
+        """Score one skill against a workflow stage using structured metadata first."""
+        meta = self.get_skill_meta(skill_id)
+        if not meta:
+            return {"skill_id": skill_id, "score": 0, "role": "ignore", "forbidden": False, "reasons": ["unknown skill"]}
+
+        workflow_task_types = self._ensure_list(workflow_task_types)
+        stage_name = str(stage.get("stage") or stage.get("stage_id") or "").strip()
+        stage_inputs = self._ensure_list(stage.get("inputs"))
+        stage_outputs = self._ensure_list(stage.get("outputs"))
+        stage_text = " ".join([
+            stage_name,
+            str(stage.get("title", "")),
+            str(stage.get("description", "")),
+            " ".join(stage_inputs),
+            " ".join(stage_outputs),
+            " ".join(workflow_task_types),
+        ]).lower()
+
+        score = 0
+        reasons: List[str] = []
+        forbidden = False
+        stage_tags = self.metadata_list(meta, "stage_tags")
+        task_types = self.metadata_list(meta, "task_types")
+        inputs = self.metadata_list(meta, "inputs")
+        outputs = self.metadata_list(meta, "outputs")
+        when_not_to_use = self.metadata_list(meta, "when_not_to_use")
+
+        if stage_name and stage_name in stage_tags:
+            score += 40
+            reasons.append("stage_tags match")
+        elif stage_tags:
+            reasons.append("stage_tags do not match")
+
+        task_overlap = set(map(str.lower, workflow_task_types)) & set(map(str.lower, task_types))
+        if task_overlap:
+            score += 25
+            reasons.append("task_types match")
+
+        input_overlap = set(map(str.lower, stage_inputs)) & set(map(str.lower, inputs))
+        if input_overlap:
+            score += 15
+            reasons.append("inputs match")
+
+        output_overlap = set(map(str.lower, stage_outputs)) & set(map(str.lower, outputs))
+        if output_overlap:
+            score += 10
+            reasons.append("outputs match")
+
+        description_terms = [
+            str(meta.get("_skill_id", "")),
+            str(meta.get("name", "")),
+            str(meta.get("description", "")),
+            " ".join(map(str, meta.get("tags", []) or [])),
+        ]
+        description_text = " ".join(description_terms).lower()
+        if stage_name and stage_name.replace("_", " ") in description_text:
+            score += 10
+            reasons.append("description match")
+        elif stage_name and any(token and token in description_text for token in re.split(r"[_\s-]+", stage_name)):
+            score += 5
+            reasons.append("description token match")
+
+        for blocker in when_not_to_use:
+            blocker_l = blocker.lower()
+            if blocker_l and (blocker_l in stage_text or blocker_l in description_text and blocker_l in stage_text):
+                forbidden = True
+                score = -100
+                reasons.append(f"when_not_to_use hit: {blocker}")
+                break
+
+        role = "ignore"
+        if forbidden:
+            role = "forbidden"
+        elif score >= 70:
+            role = "required"
+        elif score >= 40:
+            role = "candidate"
+        return {"skill_id": meta.get("_skill_id", skill_id), "score": score, "role": role, "forbidden": forbidden, "reasons": reasons}
+
+    def match_skills_for_stage(self, stage: Dict[str, Any], workflow_task_types: List[str] = None, max_results: int = 5) -> List[Dict[str, Any]]:
+        scored = [
+            self.score_skill_for_stage(skill.get("_skill_id", ""), stage, workflow_task_types)
+            for skill in self.discovered_skills
+        ]
+        scored = [item for item in scored if item["score"] > 0 or item["forbidden"]]
+        scored.sort(key=lambda item: (-item["score"], item["skill_id"]))
+        return scored[:max_results]
+
     def _skill_match_terms(self, skill: Dict[str, Any]) -> List[str]:
         runtime = skill.get("runtime") or {}
         return [
@@ -697,6 +1041,11 @@ class SkillManager:
             skill.get("name", ""),
             skill.get("description", ""),
             " ".join(map(str, skill.get("tags", []) or [])),
+            " ".join(self.metadata_list(skill, "task_types")),
+            " ".join(self.metadata_list(skill, "stage_tags")),
+            " ".join(self.metadata_list(skill, "inputs")),
+            " ".join(self.metadata_list(skill, "outputs")),
+            " ".join(self.metadata_list(skill, "when_to_use")),
             " ".join(self._ensure_list(runtime.get("capabilities"))),
         ]
 
@@ -708,6 +1057,17 @@ class SkillManager:
             "assembly": ["组装", "hifiasm", "hifi"],
             "tad_calling": ["tad", "hicfindtads", "拓扑结构域"],
             "tad-calling": ["tad", "hicfindtads", "拓扑结构域"],
+            "differential-tad": ["差异tad", "差异 tads", "differential tad", "hicdifferentialtad"],
+            "tad-boundary-change": [
+                "tad边界改变",
+                "tad边界变化",
+                "边界改变统计",
+                "边界变化统计",
+                "boundary change",
+                "boundary shift",
+                "boundary gain",
+                "boundary loss",
+            ],
         }
         keys = self._skill_identifier_candidates(skill)
         return any(alias.lower() in text_l for key in keys for alias in aliases.get(key, []))
@@ -745,6 +1105,8 @@ class SkillManager:
         if runtime:
             lines.append("- runtime:")
             for key, value in runtime.items():
+                if key == "install_command":
+                    continue
                 if isinstance(value, list):
                     value = ", ".join(map(str, value))
                 lines.append(f"  - {key}: {value}")
@@ -864,8 +1226,29 @@ class SkillManager:
 
     def extract_skills_from_plan(self, plan_text: str) -> List[str]:
         """工具函数：从 Planner 的输出中提取它决定使用的 skill_id"""
-        # 假设 Planner 会输出格式：[SELECTED_SKILLS: skill1, skill2]
+        active = self.extract_active_skills_from_plan(plan_text)
+        if active:
+            return active
+        # Legacy fallback: Planner outputs [SELECTED_SKILLS: skill1, skill2]
         requested = self.parse_selected_skill_ids(plan_text)
         if requested:
             return self.normalize_selected_skills(requested, max_results=self.MAX_SELECTED_SKILLS)
         return[]
+
+    def extract_active_skills_from_plan(self, plan_text: str) -> List[str]:
+        return self.extract_skills_from_block(plan_text, "ACTIVE_SKILLS")
+
+    def extract_future_skills_from_plan(self, plan_text: str) -> List[str]:
+        return self.extract_skills_from_block(plan_text, "FUTURE_SKILLS")
+
+    def extract_skills_from_block(self, plan_text: str, block_name: str) -> List[str]:
+        match = re.search(rf"\[{re.escape(block_name)}\]\s*(.*?)\s*\[/{re.escape(block_name)}\]", plan_text or "", re.DOTALL | re.IGNORECASE)
+        if not match:
+            return []
+        raw_items = re.split(r"[,\n;，；]+", match.group(1))
+        selected = []
+        for item in raw_items:
+            cleaned = self._clean_selected_skill_item(item)
+            if cleaned and cleaned.lower() not in {"none", "n/a", "na", "null"}:
+                selected.append(cleaned)
+        return self.normalize_selected_skills(selected, max_results=self.MAX_SELECTED_SKILLS)

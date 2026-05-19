@@ -88,6 +88,30 @@ class RuleEngine:
         "deseq2":           r"log2.*fold|padj|basemean",
     }
 
+    NON_PROGRESS_PATTERNS = [
+        r"^\s*(?:conda\s+run\s+-n\s+\S+\s+)?(?:python(?:3)?\s+)?\S+\.py\s+(?:--help|-h)\s*$",
+        r"^\s*(?:conda\s+run\s+-n\s+\S+\s+)?\S+\s+(?:--help|-h)\s*$",
+        r"^\s*(?:ls|dir)(?:\s+[-\w]+)*(?:\s+\S+)?\s*$",
+        r"^\s*(?:which|where|type)\s+\S+\s*$",
+    ]
+
+    @classmethod
+    def is_non_progress_command(cls, code: str) -> bool:
+        lines = [
+            line.strip()
+            for line in str(code or "").splitlines()
+            if line.strip()
+            and not line.strip().startswith("#")
+            and not line.strip().startswith("set ")
+            and not line.strip().startswith("export ")
+        ]
+        if not lines:
+            return False
+        return all(
+            any(re.search(pattern, line, re.IGNORECASE) for pattern in cls.NON_PROGRESS_PATTERNS)
+            for line in lines
+        )
+
     @classmethod
     def run(cls, code: str, stdout: str, stderr: str, returncode: int) -> List[CheckResult]:
         results: List[CheckResult] = []
@@ -144,6 +168,16 @@ class RuleEngine:
                 severity="warning",
                 message="Command succeeded but produced no output",
                 suggestion="Add verbose flag (-v) or check output file directly.",
+            ))
+
+        # ── Rule 4b: 非进展命令检测 ───────────────────────────
+        if returncode == 0 and cls.is_non_progress_command(code):
+            results.append(CheckResult(
+                rule="NonProgressCommandCheck",
+                passed=False,
+                severity="warning",
+                message="Command only inspected/help-listed resources and did not run an analysis step",
+                suggestion="Use this only for explicit preflight/checklist steps; otherwise run the planned analysis command.",
             ))
 
         # ── Rule 5: 工具特异性科学验证 ───────────────────────
@@ -326,11 +360,38 @@ class SupervisorNode:
             self._cot_loggers[task_id] = ChainOfThoughtLogger(task_dir, task_id)
         return self._cot_loggers[task_id]
 
+    @staticmethod
+    def _extract_stream(content: str, label: str) -> str:
+        pattern = rf"{re.escape(label)}:[ \t]*\r?\n?(.*?)(?=\r?\nSTDOUT:|\r?\nSTDERR:|\r?\n<runtime_status>|</observation>|\r?\n</observation>|$)"
+        match = re.search(pattern, content, re.DOTALL)
+        return match.group(1).strip() if match else ""
+
+    @staticmethod
+    def _non_progress_is_allowed(plan_progress: str, current_plan: str) -> bool:
+        match = re.search(r"^Next step:\s*(.+)$", str(plan_progress or ""), re.MULTILINE | re.IGNORECASE)
+        context = (match.group(1) if match else current_plan).lower()
+        allowed_terms = (
+            "preflight",
+            "verify",
+            "verification",
+            "inspect",
+            "check",
+            "confirm",
+            "list",
+            "locate",
+            "find input",
+            "collect input",
+            "healthcheck",
+            "tool check",
+        )
+        return any(term in context for term in allowed_terms)
+
     async def run(self, state: Dict[str, Any]) -> Dict[str, Any]:
         messages = state.get("messages", [])
         task_id = state.get("task_id", "default")
         retry_count = state.get("retry_count", 0)
         current_plan = state.get("current_plan", "")
+        plan_progress = state.get("plan_progress", "")
 
         cot = self._get_cot(task_id)
 
@@ -350,10 +411,8 @@ class SupervisorNode:
                 if "❌ Failed" in content or "❌" in content:
                     returncode = 1
                 # 提取 stdout / stderr
-                if "STDOUT:" in content:
-                    stdout = content.split("STDOUT:")[-1].split("</observation>")[0].strip()
-                if "STDERR:" in content:
-                    stderr = content.split("STDERR:")[-1].split("</observation>")[0].strip()
+                stdout = self._extract_stream(content, "STDOUT")
+                stderr = self._extract_stream(content, "STDERR")
             if "<execute>" in content and not last_code:
                 match = re.search(r"<execute>(.*?)</execute>", content, re.DOTALL)
                 if match:
@@ -370,7 +429,7 @@ class SupervisorNode:
 
         errors   = [r for r in rule_results if not r.passed and r.severity == "error"]
         warnings = [r for r in rule_results if not r.passed and r.severity == "warning"]
-        passes   = [r for r in rule_results if r.passed]
+        warning_rules = {r.rule for r in warnings}
 
         # ── LLM 深度审查（仅在有问题时调用，节省 token）────
         llm_review_text = ""
@@ -391,9 +450,17 @@ class SupervisorNode:
         else:
             verdict = Verdict.WARN
 
+        if (
+            verdict == Verdict.WARN
+            and "NonProgressCommandCheck" in warning_rules
+            and not self._non_progress_is_allowed(plan_progress, current_plan)
+        ):
+            verdict = Verdict.ESCALATE if retry_count >= self.max_retries else Verdict.RETRY
+
         # 从 LLM 审查中覆盖判决（如果 LLM 说 RETRY/ESCALATE）
         if llm_review_text:
-            if "RETRY" in llm_review_text.upper() and verdict == Verdict.WARN:
+            only_empty_output_warning = bool(warnings) and warning_rules <= {"EmptyOutputCheck"}
+            if "RETRY" in llm_review_text.upper() and verdict == Verdict.WARN and not only_empty_output_warning:
                 verdict = Verdict.RETRY
             if "ESCALATE" in llm_review_text.upper():
                 verdict = Verdict.ESCALATE
@@ -415,7 +482,14 @@ class SupervisorNode:
 
         # ── 构造反馈消息注入对话 ─────────────────────────────
         feedback = self._build_feedback_message(
-            rule_results, verdict, llm_review_text, retry_count
+            rule_results,
+            verdict,
+            llm_review_text,
+            retry_count,
+            max_retries=self.max_retries,
+            last_code=last_code,
+            stdout=stdout,
+            stderr=stderr,
         )
         feedback_msg = SystemMessage(content=feedback)
 
@@ -478,6 +552,10 @@ class SupervisorNode:
         verdict: Verdict,
         llm_text: str,
         retry_count: int,
+        max_retries: int = 3,
+        last_code: str = "",
+        stdout: str = "",
+        stderr: str = "",
     ) -> str:
         errors   = [r for r in results if not r.passed and r.severity == "error"]
         warnings = [r for r in results if not r.passed and r.severity == "warning"]
@@ -493,7 +571,7 @@ class SupervisorNode:
         elif verdict == Verdict.RETRY:
             parts.append(
                 f"❌ Supervisor: Execution failed. RETRY required "
-                f"(attempt {retry_count + 1}/{3})."
+                f"(attempt {retry_count + 1}/{max_retries})."
             )
             for e in errors:
                 parts.append(f"  ERROR: {e.message}")
@@ -510,6 +588,16 @@ class SupervisorNode:
                 "🚨 Supervisor: MAX RETRIES EXCEEDED. "
                 "Escalating to user. Task cannot continue automatically."
             )
+            if last_code:
+                parts.append(f"\nLAST COMMAND:\n{last_code[:1200]}")
+            if stdout.strip():
+                parts.append(f"\nSTDOUT SUMMARY:\n{stdout[:1200]}")
+            if stderr.strip():
+                parts.append(f"\nSTDERR SUMMARY:\n{stderr[:1200]}")
+            if errors or warnings:
+                parts.append("\nSTATIC CHECKS:")
+                for item in errors + warnings:
+                    parts.append(f"  - {item.rule}: {item.message}")
             if llm_text:
                 parts.append(f"\nFINAL DIAGNOSIS:\n{llm_text}")
 

@@ -32,7 +32,7 @@ import pandas as pd
 try:
     import pyBigWig
 except ImportError:
-    print("Error: pyBigWig not installed. Run: pip install pyBigWig")
+    print('Error: pyBigWig not installed. Delegate installation with: <install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>')
     sys.exit(1)
 
 try:
@@ -40,7 +40,7 @@ try:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 except ImportError:
-    print("Error: matplotlib not installed. Run: pip install matplotlib")
+    print('Error: matplotlib not installed. Delegate installation with: <install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>')
     sys.exit(1)
 
 

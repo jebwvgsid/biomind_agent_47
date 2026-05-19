@@ -22,6 +22,15 @@ from .monitoring import (
     ErrorPattern
 )
 
+from .profiling import (
+    ProfilingCallbackHandler,
+    RunProfiler,
+    get_current_node,
+    get_current_profiler,
+    get_current_task_id,
+    timestamp_now,
+)
+
 # --- 新增 ---
 from .confirmation import (
     ConfirmationManager,
@@ -45,6 +54,12 @@ __all__ = [
     'LogCleaner',
     'ErrorRecoverySystem',
     'ErrorPattern',
+    'ProfilingCallbackHandler',
+    'RunProfiler',
+    'get_current_node',
+    'get_current_profiler',
+    'get_current_task_id',
+    'timestamp_now',
     'ConfirmationManager',
     'ConfirmationConfig',
     'RiskAnalyzer',

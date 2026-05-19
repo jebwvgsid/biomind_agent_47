@@ -1,7 +1,10 @@
 import unittest
+import tempfile
 from pathlib import Path
 
+import package_manager
 from agent_core.skill_manager import SkillManager
+from package_manager import PackageManager
 
 
 class SkillManagerSelectionTests(unittest.TestCase):
@@ -53,6 +56,66 @@ class SkillManagerSelectionTests(unittest.TestCase):
             selected,
         )
 
+    def test_catalog_exposes_workflow_matching_metadata(self):
+        catalog = self.manager.get_skill_catalog_prompt(["scrna/qc/filter"])
+
+        self.assertIn("task_types: single_cell_rnaseq", catalog)
+        self.assertIn("stage_tags: qc_filter", catalog)
+        self.assertIn("inputs:", catalog)
+        self.assertIn("outputs:", catalog)
+
+    def test_extract_skills_prefers_active_skills_block(self):
+        plan = (
+            "[SELECTED_SKILLS: scrna/preprocess/basic]\n"
+            "[ACTIVE_SKILLS]\n"
+            "scrna/ingest/data-download\n"
+            "scrna/qc/filter\n"
+            "[/ACTIVE_SKILLS]\n"
+        )
+
+        self.assertEqual(
+            self.manager.extract_skills_from_plan(plan),
+            ["scrna/ingest/data-download", "scrna/qc/filter"],
+        )
+        self.assertEqual(
+            self.manager.extract_future_skills_from_plan(
+                "[FUTURE_SKILLS]\nscrna/preprocess/basic\n[/FUTURE_SKILLS]"
+            ),
+            ["scrna/preprocess/basic"],
+        )
+
+    def test_stage_scoring_uses_structured_metadata(self):
+        stage = {
+            "stage": "qc_filter",
+            "inputs": ["raw_seurat_object"],
+            "outputs": ["qc_filtered_seurat_object"],
+        }
+
+        score = self.manager.score_skill_for_stage(
+            "scrna/qc/filter",
+            stage,
+            workflow_task_types=["single_cell_rnaseq"],
+        )
+
+        self.assertEqual(score["role"], "required")
+        self.assertGreaterEqual(score["score"], 70)
+        self.assertIn("stage_tags match", score["reasons"])
+
+    def test_stage_scoring_forbids_when_not_to_use_hits(self):
+        stage = {
+            "stage": "qc_filter",
+            "description": "Bulk RNA-seq count table QC",
+        }
+
+        score = self.manager.score_skill_for_stage(
+            "scrna/qc/filter",
+            stage,
+            workflow_task_types=["bulk_rnaseq"],
+        )
+
+        self.assertTrue(score["forbidden"])
+        self.assertEqual(score["role"], "forbidden")
+
     def test_validate_scrna_v2_canonical_skill_ids(self):
         selected = [
             "scrna/preprocess/basic",
@@ -86,6 +149,89 @@ class SkillManagerSelectionTests(unittest.TestCase):
     def test_match_scrna_de_skill(self):
         matched = self.manager.match_skills("做 ctrl vs stim 的 differential expression 差异表达", max_results=3)
         self.assertIn("scrna/de/contrast", matched)
+
+    def test_match_tad_boundary_change_skill(self):
+        matched = self.manager.match_skills("请做TAD边界改变统计，比较shared和lost boundaries", max_results=3)
+        self.assertEqual(matched[0], "genomics/chromatin/tad-boundary-change")
+
+
+class SkillRuntimeRegistryTests(unittest.TestCase):
+    def make_manager(self, root: Path) -> SkillManager:
+        skill_dir = root / "skills" / "genomics" / "chromatin" / "tad-calling"
+        skill_dir.mkdir(parents=True)
+        (skill_dir / "SKILL.md").write_text(
+            """---
+name: tad-analysis
+description: TAD calling
+runtime:
+  default_env: hicexplore
+  env_runner: conda run -n hicexplore python
+  language: python
+  packages: [hicexplorer, cooler]
+  capabilities: [tad-calling]
+  healthcheck: python -c "print('OK')"
+---
+# TAD
+""",
+            encoding="utf-8",
+        )
+        return SkillManager(str(root / "skills"))
+
+    def test_external_skill_registry_import_syncs_package_environment(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manager = self.make_manager(root)
+            package_manager.BIO_SOFTWARE_ROOT = None
+            package_manager.BIO_SOURCE_INSTALL_DIR = None
+            pm = PackageManager(work_dir=str(root / "software"))
+
+            manager.merge_runtime_registry_data(
+                {
+                    "skills": {
+                        "genomics/chromatin/tad-calling": {
+                            "env": "hicexplore",
+                            "env_runner": "conda run -n hicexplore python",
+                            "status": "verified",
+                            "healthcheck": "python -c \"print('OK')\"",
+                            "packages": ["hicexplorer", "cooler", "matplotlib"],
+                        }
+                    }
+                },
+                package_manager=pm,
+            )
+
+            self.assertEqual(manager.get_runtime_env("genomics/chromatin/tad-calling"), "hicexplore")
+            self.assertEqual(pm.registry["environments"]["hicexplore"]["status"], "verified")
+            self.assertIn("genomics/chromatin/tad-calling", pm.registry["environments"]["hicexplore"]["skill_ids"])
+
+    def test_software_registry_environment_syncs_back_to_skill_runtime(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manager = self.make_manager(root)
+            package_manager.BIO_SOFTWARE_ROOT = None
+            package_manager.BIO_SOURCE_INSTALL_DIR = None
+            pm = PackageManager(work_dir=str(root / "software"))
+
+            manager.merge_runtime_registry_data(
+                {
+                    "environments": {
+                        "hicexplore": {
+                            "status": "verified",
+                            "language": "python",
+                            "packages": ["hicexplorer", "cooler"],
+                            "capabilities": ["tad-calling"],
+                            "healthcheck": "python -c \"print('OK')\"",
+                            "skill_ids": ["genomics/chromatin/tad-calling"],
+                        }
+                    }
+                },
+                package_manager=pm,
+            )
+
+            record = manager.get_runtime_record("genomics/chromatin/tad-calling")
+            self.assertEqual(record["env"], "hicexplore")
+            self.assertEqual(record["status"], "verified")
+            self.assertEqual(record["healthcheck"], "python -c \"print('OK')\"")
 
 
 if __name__ == "__main__":

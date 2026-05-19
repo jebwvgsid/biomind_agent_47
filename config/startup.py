@@ -1,19 +1,34 @@
 import os
 import sys
 import logging
-import readline
 import glob
 import atexit
 from pathlib import Path
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 from typing import Dict, List, Optional, Any
 from .settings import PathManager, EnvironmentManager
 from . import config as sys_config
+
+try:
+    import readline
+except ImportError:
+    readline = None
 
 # ================================
 # 2. 环境变量管理 (EnvironmentManager)
 # ================================
 class EnvironmentManager:
+    @staticmethod
+    def _load_env_file(env_path: Path):
+        values = dotenv_values(env_path)
+        for key, value in values.items():
+            if not key or value is None:
+                continue
+            current = os.environ.get(key)
+            if value == "" and current:
+                continue
+            os.environ[key] = value
+
     @staticmethod
     def load_environment():
         """加载环境变量 (.env)"""
@@ -21,14 +36,14 @@ class EnvironmentManager:
         # 1. 用户当前目录下的 .env (针对特定项目的配置)
         # 2. 软件安装目录下的 .env (全局默认配置)
         env_paths = [
-            PathManager.WORK_DIR / ".env",      #当前目录
             PathManager.SYSTEM_ROOT / ".env",   #软件目录
+            PathManager.WORK_DIR / ".env",      #当前目录
         ]
         
         loaded = False
         for env_path in env_paths:
             if env_path.exists():
-                load_dotenv(env_path, override=True) # override=True 表示前面的覆盖后面的
+                EnvironmentManager._load_env_file(env_path)
                 logging.info(f"✓ Loaded environment from: {env_path}")
                 loaded = True
         
@@ -45,6 +60,7 @@ class EnvironmentManager:
             'RERANK_MODEL_ID': os.getenv('RERANK_MODEL_ID', ''),
             'DASHSCOPE_API_KEY': os.getenv('DASHSCOPE_API_KEY', ''),
             'QWEN_API_KEY': os.getenv('QWEN_API_KEY', ''), # 确保获取 Qwen Key
+            'OPENAI_API_KEY': os.getenv('OPENAI_API_KEY', ''),
             'LOG_LEVEL': os.getenv('LOG_LEVEL', 'INFO')
         }
 
@@ -115,11 +131,17 @@ class StartupCheck:
             logger.warning("⚠️ RAGFlow API Key: Missing (RAG disabled)")
             checks.append(True)  # 非致命错误
         
-        if env_vars['DASHSCOPE_API_KEY'] or env_vars['QWEN_API_KEY']:
+        llm_api_key = (
+            getattr(sys_config, 'LLM_API_KEY', '')
+            or env_vars['DASHSCOPE_API_KEY']
+            or env_vars['QWEN_API_KEY']
+            or env_vars['OPENAI_API_KEY']
+        )
+        if llm_api_key:
             logger.info("✓ LLM API Key: Present")
             checks.append(True)
         else:
-            logger.error("❌ LLM API Key: Missing (Need DASHSCOPE_API_KEY or QWEN_API_KEY)")
+            logger.error("❌ LLM API Key: Missing (Need QWEN_API_KEY, DASHSCOPE_API_KEY, or OPENAI_API_KEY)")
             checks.append(False)
         
         # 检查目录
@@ -160,7 +182,7 @@ class ReadlineConfig:
     @staticmethod
     def setup_readline():
         """配置 readline (如果可用)"""
-        if sys.platform == 'win32':
+        if sys.platform == 'win32' or readline is None:
             # Windows 通常不支持标准 readline，除非安装 pyreadline3
             # 这里简单处理，避免报错
             return False

@@ -13,7 +13,7 @@ runtime:
   default_env: bio_methylation_plot
   env_runner: conda run -n bio_methylation_plot python
   python_packages: [pyBigWig, pandas, numpy, matplotlib]
-  install_command: conda create -n bio_methylation_plot -c conda-forge -c bioconda python=3.10 pybigwig pandas numpy matplotlib -y
+  install_tool: '<install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>'
 ---
 
 # Methylation Profile Plot
@@ -46,11 +46,18 @@ This skill requires a Python 3 environment with specific data science and bioinf
 - **numpy**: For calculating binned means and handling NaN values.
 - **matplotlib**: For generating the final PNG panel plots.
 
-### Installation
+### Environment Protocol
 
-It is highly recommended to use `conda` for installation, as `pyBigWig` requires C-library dependencies (like `libcurl` and `zlib`) which can sometimes fail to compile via basic `pip`.
+Use the reusable environment `bio_methylation_plot`. If dependency verification
+fails, delegate installation instead of emitting direct package-manager
+installation commands:
 
-**Option 1: Conda (Recommended)**
+```text
+<install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>
+```
+
+After the install subagent completes, re-run the dependency check before
+plotting real data.
 
 
 ## When to Use This Skill
@@ -98,8 +105,8 @@ print("methylation plotting Python dependencies OK")
 PY
 ```
 
-If this fails, do not run the plot command yet. Install or select a Python
-environment that contains `pyBigWig`, `pandas`, `numpy`, and `matplotlib`.
+If this fails, do not run the plot command yet. Delegate dependency setup with
+`<install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>`.
 For this skill, the default reproducible environment is `bio_methylation_plot`.
 After the environment is ready, run the plotting script with:
 `conda run -n bio_methylation_plot python`.
@@ -323,11 +330,10 @@ print(pd.read_csv("gene_tpm.csv").columns.tolist())
 ```
 Then adjust your `--sample` labels to match a substring of the column names.
 
-### pyBigWig installation fails
+### pyBigWig dependency is missing
 
-```bash
-conda install -c bioconda pyBigWig   # recommended
-pip install pyBigWig                 # fallback (needs libBigWig headers)
+```text
+<install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>
 ```
 
 ### Memory error with many genes

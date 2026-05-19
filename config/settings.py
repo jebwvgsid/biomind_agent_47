@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
 # ================================
 # 1. 路径管理 
@@ -59,17 +59,28 @@ PathManager.setup_paths()
 # ================================
 class EnvironmentManager:
     @staticmethod
+    def _load_env_file(env_path: Path):
+        values = dotenv_values(env_path)
+        for key, value in values.items():
+            if not key or value is None:
+                continue
+            current = os.environ.get(key)
+            if value == "" and current:
+                continue
+            os.environ[key] = value
+
+    @staticmethod
     def load_environment():
         """加载环境变量 (.env)"""
         # 这一步非常关键：它保证了后续 config.py 能读到 .env 里的值
         env_paths = [
-            PathManager.WORK_DIR / ".env",      # 当前目录优先级最高
             PathManager.SYSTEM_ROOT / ".env",   # 软件目录默认配置
+            PathManager.WORK_DIR / ".env",      # 当前目录优先级最高
         ]
         
         for env_path in env_paths:
             if env_path.exists():
-                load_dotenv(env_path, override=True)
+                EnvironmentManager._load_env_file(env_path)
 
 # 自动加载环境 (必须在 config.py 导入前执行)
 EnvironmentManager.load_environment()

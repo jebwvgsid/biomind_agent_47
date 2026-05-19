@@ -12,14 +12,25 @@ class AgentState(TypedDict, total=False):
     stable_system_prompt: Optional[str]
     core_memory_loaded_at: Optional[str]
     current_plan: Optional[str]
+    plan_progress: Optional[str]
     selected_skills: List[str]
     selected_skills_raw: List[str]
     skill_selection_source: Optional[str]
+    workflow_id: Optional[str]
+    workflow_stages: List[dict]
+    workflow_handoff: dict
+    pending_human_question: dict
+    runtime_status: dict
+    active_batch_id: Optional[str]
+    active_skills: List[str]
+    future_skills: List[str]
+    candidate_skills: List[str]
     retry_count: int
     intent: Optional[str]
     artifacts: List[str]
     requirements_summary: str  # 存储咨询阶段确认的参数（如基因组大小、物种等）
     rag_history: List[str]     # 存储咨询阶段查到的所有知识片段
+    wiki_memory_context: str    # Consultant 阶段一次性检索到的 Wiki 上下文
     supervisor_verdict: Optional[str]
 
 # 安装子智能体状态

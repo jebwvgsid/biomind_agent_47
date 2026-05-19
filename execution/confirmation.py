@@ -8,6 +8,8 @@ import time
 from typing import Dict, Any, List, Optional
 from enum import Enum
 from dataclasses import dataclass
+from agent_core.human_io import HumanInputUnavailable, restore_terminal_state, safe_input
+from execution.shell_safety import analyze_shell_safety
 
 #--- 兼容性处理：如果没有 colorama，定义伪类 ---
 try:
@@ -113,6 +115,20 @@ class RiskAnalyzer:
 
         # 2. 扫描显式风险 (CRITICAL / HIGH / MEDIUM)
         found_explicit_risk = False
+        shell_safety_violations = analyze_shell_safety(code, language)
+        for violation in shell_safety_violations:
+            label = RiskLevel.CRITICAL if violation.severity == "critical" else RiskLevel.HIGH
+            risky_operations.append(
+                f"{label.value}: {violation.code} - {violation.message} Evidence: {violation.evidence}"
+            )
+            detected_level = label if label == RiskLevel.CRITICAL else max(
+                detected_level,
+                RiskLevel.HIGH,
+                key=lambda item: list(RiskLevel).index(item),
+            )
+            risk_score = max(risk_score, 100 if label == RiskLevel.CRITICAL else 80)
+            found_explicit_risk = True
+
         for level, patterns in RiskAnalyzer.RISK_PATTERNS.items():
             for pattern in patterns:
                 matches = re.findall(pattern, code, re.IGNORECASE)
@@ -259,7 +275,11 @@ class ConfirmationUI:
 
         try:
             # 提示符改成 Action >
-            response = input(f"\n{prompt_color}Action > {Style.RESET_ALL}").strip()
+            response = safe_input(
+                f"\n{prompt_color}Action > {Style.RESET_ALL}",
+                timeout_seconds=timeout,
+                history=False,
+            ).strip()
             
             if response.lower() in ['y', 'yes', '']:
                 return 'y'
@@ -274,7 +294,11 @@ class ConfirmationUI:
             # 🌟 核心魔法：如果用户输入了其他文字，直接把文字原样返回！
             return response
         except KeyboardInterrupt:
+            restore_terminal_state()
             raise
+        except HumanInputUnavailable:
+            restore_terminal_state()
+            return 'n'
 
 #================================
 #4. 确认管理器 (主入口)

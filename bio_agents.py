@@ -17,6 +17,7 @@ import logging
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -49,8 +50,9 @@ from execution.confirmation import ConfirmationUI, RiskLevel, ConfirmationManage
 from config.settings import PathManager
 from config.config import (
     RAGFLOW_ADDRESS, RAGFLOW_API_KEY, KB_MAP, RERANK_MODEL_ID,
-    LLM_DEFAULT_MODEL, LLM_BASE_URL, BIO_SOFTWARE_ROOT, BIO_SOURCE_INSTALL_DIR,
-    DEFAULT_PROJECT_ID,
+    LLM_API_KEY, LLM_DEFAULT_MODEL, LLM_BASE_URL, BIO_SOFTWARE_ROOT, BIO_SOURCE_INSTALL_DIR,
+    DEFAULT_PROJECT_ID, BIOMIND_WIKI_DIR, WIKI_EMBEDDING_ENABLED, WIKI_EMBEDDING_BASE_URL,
+    WIKI_EMBEDDING_API_KEY, WIKI_EMBEDDING_MODEL, WIKI_EMBEDDING_DIMENSIONS,
 )
 
 try:
@@ -60,12 +62,38 @@ except ImportError:
     from package_manager import PackageManager
 
 from agent_core.state import AgentState
+from agent_core.human_io import (
+    HumanInputUnavailable,
+    clear_waiting_state,
+    load_waiting_state,
+    resolve_input_timeout,
+    restore_terminal_state,
+    safe_input,
+    save_waiting_state,
+)
 from agent_core.installer import InstallerAgent
 from agent_core.retriever import RAGFlowRetriever
 from agent_core.router import determine_intent
 from agent_core.skill_manager import SkillManager
+from agent_core.workflow_manager import WorkflowManager, parse_workflow_handoff, validate_workflow_handoff
 from agent_core.middleware import HITLMiddleware
+from agent_core.llm_safety import deterministic_failure_solution, llm_failure_summary
+from agent_core.plan_tracker import (
+    build_plan_state,
+    default_plan_file,
+    ensure_plan_state,
+    load_plan_state,
+    mark_first_pending_running,
+    mark_plan_step_blocked,
+    mark_plan_step_done,
+    record_current_step_evidence,
+    render_plan_progress,
+    reset_plan_state,
+    save_plan_state,
+    update_plan_markdown_status,
+)
 from execution.executor import detect_script_language, normalize_script_code, run_bash_script, run_python_repl
+from execution.profiling import ProfilingCallbackHandler, RunProfiler, timestamp_now
 from execution.validator import ResultValidator
 from execution.monitoring import ExecutionMonitor, LogCleaner, ErrorRecoverySystem
 from agent_core.middleware import error_recovery_middleware
@@ -149,7 +177,11 @@ class OutputRouter:
                     # Move cursor back above the previous block + prompt, then clear.
                     print(f"\x1b[{previous_block_lines + 1}A\x1b[J", end="")
                 previous_block_lines = render()
-                cmd = input("Scroll command > ").strip().lower()
+                cmd = safe_input(
+                    "Scroll command > ",
+                    timeout_seconds=resolve_input_timeout(300),
+                    history=False,
+                ).strip().lower()
                 if cmd in {"", "q", "quit", "exit"}:
                     break
                 if cmd in {"n", "next", "j", "down", "d", " "}: 
@@ -166,7 +198,8 @@ class OutputRouter:
                     except ValueError:
                         pass
             return True
-        except (EOFError, KeyboardInterrupt):
+        except (EOFError, KeyboardInterrupt, HumanInputUnavailable):
+            restore_terminal_state()
             return True
 
     def _preview_text(self, title: str, text: str, color: str = ""):
@@ -310,6 +343,8 @@ class BioAnalystAgent:
         use_llm_supervisor: bool = True,
     ):
         self.data_path = data_path
+        self.profiler = RunProfiler(output_root=Path(data_path) / "task_outputs")
+        self.input_timeout_seconds = resolve_input_timeout()
 
         # ── PackageManager ────────────────────────────────────
         try:
@@ -324,10 +359,10 @@ class BioAnalystAgent:
             model_provider=model_provider,
             base_url=LLM_BASE_URL,
             streaming=True,
-            api_key=os.environ.get("OPENAI_API_KEY"),
-            callbacks=[VibeThinkingHandler()],
+            api_key=LLM_API_KEY,
+            callbacks=[VibeThinkingHandler(), ProfilingCallbackHandler(self.profiler)],
             temperature=0.7,
-            model_kwargs={"extra_body": {"enable_thinking": False}},
+            extra_body={"enable_thinking": False},
         )
 
         # ── 验证 & 确认 ───────────────────────────────────────
@@ -367,6 +402,22 @@ class BioAnalystAgent:
         )
         if migrated:
             logger.info("Migrated legacy runtime memory files into %s", self.runtime_memory_dir)
+        self.configured_wiki_dir: Optional[Path] = None
+        if BIOMIND_WIKI_DIR:
+            configured = Path(BIOMIND_WIKI_DIR).expanduser()
+            if not configured.is_absolute():
+                configured = Path(data_path) / configured
+            self.configured_wiki_dir = configured.resolve()
+            migrated_wiki = WikiMemoryManager.migrate_wiki_pages(
+                self.runtime_memory_dir / "wiki",
+                self.configured_wiki_dir,
+            )
+            if migrated_wiki:
+                logger.info(
+                    "Migrated %s wiki file(s) into configured wiki dir %s",
+                    len(migrated_wiki),
+                    self.configured_wiki_dir,
+                )
 
         archive_dir = self.runtime_root / "memory_archives"
         self.memory_manager = MemoryManager(
@@ -394,7 +445,16 @@ class BioAnalystAgent:
             llm=self.llm,
             memory_dir=self.runtime_memory_dir,
             default_project_id=self.default_project_id,
+            wiki_dir=self.configured_wiki_dir,
+            embedding_config={
+                "enabled": WIKI_EMBEDDING_ENABLED,
+                "base_url": WIKI_EMBEDDING_BASE_URL,
+                "api_key": WIKI_EMBEDDING_API_KEY,
+                "model": WIKI_EMBEDDING_MODEL,
+                "dimensions": WIKI_EMBEDDING_DIMENSIONS,
+            },
         )
+        self._wiki_digest_cache: Dict[str, Tuple[float, str]] = {}
 
         # ── SupervisorNode（新）───────────────────────────────
         self.supervisor_node = SupervisorNode(
@@ -404,6 +464,7 @@ class BioAnalystAgent:
             use_llm_review=use_llm_supervisor,
         )
         self._install_env_choices: Dict[str, str] = {}
+        self.runtime_status: Dict[str, Dict[str, Dict[str, Any]]] = {}
 
         # ── 子智能体 ──────────────────────────────────────────
         _installer = InstallerAgent(self.llm, work_dir=data_path, package_manager=self.pm)
@@ -415,6 +476,8 @@ class BioAnalystAgent:
             self.skill_manager = SkillManager(SKILLS_DIR)
         except Exception:
             self.skill_manager = None
+        self._sync_runtime_registries_at_startup()
+        self.workflow_manager = WorkflowManager(str(Path(__file__).resolve().parent / "workflows"))
 
         # ── 图 ────────────────────────────────────────────────
         self.checkpointer = MemorySaver()
@@ -438,6 +501,41 @@ class BioAnalystAgent:
                     task_id, step_index, 'file',
                     os.path.basename(fpath), str(fpath), str(fpath),
                 )
+
+    def _auto_task_id_for_prompt(self, prompt: Any, fallback_prefix: str = "task") -> str:
+        if isinstance(prompt, Command):
+            return ""
+        text = str(prompt or "").strip()
+        if not text:
+            return ""
+        try:
+            semantics = self.wiki_memory_manager.infer_task_semantics(
+                task_id="",
+                stage="start",
+                messages=[HumanMessage(content=text)],
+                payload={"user_query": text},
+            )
+        except Exception as exc:
+            logger.debug("Automatic task id inference failed: %s", exc)
+            semantics = {}
+        task_type = str(semantics.get("task_type") or "general")
+        analysis_type = str(semantics.get("analysis_type") or "general_analysis")
+        if task_type == "general" and analysis_type == "general_analysis":
+            return ""
+        title = str(semantics.get("task_title") or analysis_type or fallback_prefix).strip()
+        slug = re.sub(r"[^A-Za-z0-9_.-]+", "_", title).strip("._-").lower()
+        if not slug:
+            slug = f"{fallback_prefix}_{datetime.now().strftime('%Y%m%d')}"
+        slug = slug[:90].strip("._-") or fallback_prefix
+        return f"{slug}_{datetime.now().strftime('%H%M%S')}"
+
+    def _should_auto_rename_session(self, task_id: str) -> bool:
+        if not re.fullmatch(r"session_\d+", str(task_id or "")):
+            return False
+        try:
+            return not self.md_memory_manager.task_exists(task_id)
+        except Exception:
+            return True
 
     async def _observe_md_memory(
         self,
@@ -624,6 +722,32 @@ class BioAnalystAgent:
             logger.warning(f"Session archive retrieval failed for {task_id}: {e}")
             return ""
 
+    def _archive_resume_context(self, task_id: str) -> str:
+        try:
+            hits = self.session_archive.resume_events(task_id=task_id, limit=8)
+            if not hits:
+                return ""
+            return self.session_archive.format_hits(hits, title="Retrieved Session Archive for Resume")
+        except Exception as e:
+            logger.warning(f"Session archive resume retrieval failed for {task_id}: {e}")
+            return ""
+
+    def _build_resume_prompt(self, task_id: str, user_prompt: Any = "") -> str:
+        parts = []
+        md_resume = self._md_resume_context(task_id)
+        if md_resume.strip():
+            parts.append(md_resume.strip())
+        if self.state_manager:
+            state_resume = self.state_manager.resume_task(task_id)
+            if str(state_resume).strip():
+                parts.append(str(state_resume).strip())
+        archive_resume = self._archive_resume_context(task_id)
+        if archive_resume.strip():
+            parts.append(archive_resume.strip())
+        if str(user_prompt).strip():
+            parts.append(str(user_prompt).strip())
+        return "\n\n".join(parts)
+
     def _wiki_prompt_context(self, task_id: str, project_id: str, query: str) -> str:
         if not query.strip():
             return ""
@@ -637,6 +761,89 @@ class BioAnalystAgent:
             logger.warning(f"Wiki memory retrieval failed for {task_id}: {e}")
             return ""
 
+    def _wiki_memory_stage_context(
+        self,
+        task_id: str,
+        project_id: str,
+        query: str,
+        digest_chars: int = 2_000,
+        context_chars: int = 4_000,
+    ) -> str:
+        parts = []
+        digest = self._wiki_digest_prompt_context(project_id, max_chars=digest_chars)
+        if digest:
+            parts.append(f"<wiki_digest>\n{digest}\n</wiki_digest>")
+        wiki_context = self._wiki_prompt_context(task_id, project_id, query)
+        if wiki_context:
+            parts.append(f"<wiki_context>\n{self._clip_prompt_text(wiki_context, context_chars)}\n</wiki_context>")
+        if not parts:
+            return ""
+        policy = (
+            "<wiki_memory_policy>\n"
+            "- wiki_purpose is direction-setting context, not factual evidence.\n"
+            "- Wiki claims with evidence are preferred for project facts, dataset paths, methods, parameters, and conclusions.\n"
+            "- If Wiki and Core memory conflict, verify filesystem/evidence and prefer current input/latest observations over stale memory.\n"
+            "- This context is read-only; do not compile or write wiki pages during consultant/planner/generate.\n"
+            "</wiki_memory_policy>"
+        )
+        return policy + "\n\n" + "\n\n".join(parts)
+
+    def _wiki_digest_prompt_context(self, project_id: str, max_chars: int = 4_000) -> str:
+        try:
+            digest_path = self.wiki_memory_manager.digest_path(project_id)
+            if not digest_path.exists():
+                return ""
+            mtime = digest_path.stat().st_mtime
+            cache_key = str(digest_path)
+            cached = self._wiki_digest_cache.get(cache_key)
+            if cached and cached[0] == mtime:
+                return cached[1]
+
+            data = json.loads(digest_path.read_text(encoding="utf-8"))
+            text = self._format_wiki_digest(data)
+            clipped = self._clip_prompt_text(text, max_chars)
+            self._wiki_digest_cache[cache_key] = (mtime, clipped)
+            return clipped
+        except Exception as e:
+            logger.warning(f"Wiki digest load failed for project {project_id}: {e}")
+            return ""
+
+    @staticmethod
+    def _format_wiki_digest(data: Dict[str, Any]) -> str:
+        page_types = data.get("page_types") if isinstance(data.get("page_types"), dict) else {}
+        claims = data.get("high_confidence_claims")
+        if not isinstance(claims, list):
+            claims = []
+        lines = [
+            f"Project: {data.get('project_id', 'unknown')}",
+            f"Updated: {data.get('updated_at', 'unknown')}",
+            f"Pages: {data.get('page_count', 0)} | Claims: {data.get('claim_count', 0)} | Review items: {data.get('review_count', 0)}",
+            f"Entities: {data.get('entity_count', 0)} | Concepts: {data.get('concept_count', 0)} | Research queries: {data.get('research_query_count', 0)}",
+            "Page types: " + (", ".join(f"{key}={value}" for key, value in sorted(page_types.items())) or "none"),
+        ]
+        knowledge_pages = data.get("knowledge_pages")
+        if isinstance(knowledge_pages, list) and knowledge_pages:
+            lines.append("Entity/concept pages:")
+            for page in knowledge_pages[:6]:
+                if not isinstance(page, dict):
+                    continue
+                lines.append(f"- {page.get('path', '')}: {page.get('title', '')} ({page.get('type', '')})")
+        lines.append("High-confidence claims:")
+        if claims:
+            for claim in claims[:8]:
+                evidence = claim.get("evidence") if isinstance(claim, dict) else []
+                if not isinstance(evidence, list):
+                    evidence = []
+                evidence_text = ", ".join(str(item) for item in evidence[:3]) or "none"
+                lines.append(
+                    f"- {claim.get('id', 'claim')}: {claim.get('text', '')} "
+                    f"(page: {claim.get('page', 'unknown')}; evidence: {evidence_text})"
+                )
+        else:
+            lines.append("- None compiled yet.")
+        lines.append("Use wiki search/page retrieval for evidence; this digest is only a compact index.")
+        return "\n".join(lines)
+
     def _ephemeral_prompt_context(
         self,
         state: AgentState,
@@ -645,23 +852,136 @@ class BioAnalystAgent:
         loaded_skills: str,
         md_memory_context: Dict[str, str],
         wiki_context: str,
+        wiki_digest: str,
         archive_context: str,
         supervisor_context: str,
+        plan_progress: str = "",
     ) -> str:
         rag_history_list = state.get("rag_history", []) or []
         inherited_rag = "\n".join(rag_history_list)
+        work_dir = str(self.pm.work_dir if self.pm else self.data_path)
+        dynamic_tool_context = PromptManager._build_tool_context(self.pm, work_dir)
         return PromptManager.build_ephemeral_context(
             rag_context=inherited_rag,
             history=messages,
+            dynamic_tool_context=dynamic_tool_context,
             loaded_skills_instructions=loaded_skills,
             long_term_memory=md_memory_context.get("long_term_memory", ""),
             task_memory=md_memory_context.get("task_memory", ""),
             related_memory=md_memory_context.get("related_memory", ""),
             wiki_context=wiki_context,
+            wiki_digest=wiki_digest,
             archive_context=archive_context,
             supervisor_context=supervisor_context,
             current_plan=current_plan,
+            plan_progress=plan_progress,
         )
+
+    @staticmethod
+    def _generate_visible_messages(messages: List[BaseMessage]) -> List[BaseMessage]:
+        """Drop consultant-only loading artifacts before the code-generation call."""
+        filtered: List[BaseMessage] = []
+        internal_prefixes = ("LOAD_WORKFLOW_TEMPLATE", "LOAD_SKILL_DOC", "LOAD_REFERENCE", "LOAD_SCRIPT")
+        internal_tags = (
+            "<loaded_workflow_template",
+            "<loaded_skill_doc",
+            "<loaded_skill_reference",
+            "<loaded_skill_script",
+            "<load_error action=\"LOAD_",
+            "<consultant_validation_error>",
+        )
+        for message in messages:
+            content = str(getattr(message, "content", "")).strip()
+            if isinstance(message, AIMessage) and content.startswith(internal_prefixes):
+                continue
+            if isinstance(message, SystemMessage) and any(tag in content for tag in internal_tags):
+                continue
+            filtered.append(message)
+        return filtered
+
+    @staticmethod
+    def _format_workflow_handoff_for_prompt(handoff: Dict[str, Any]) -> str:
+        if not handoff:
+            return ""
+        lines = []
+        workflow_id = handoff.get("workflow_id") or "none"
+        lines.append(f"workflow_id: {workflow_id}")
+        if handoff.get("active_batch_id"):
+            lines.append(f"active_batch_id: {handoff.get('active_batch_id')}")
+        stages = handoff.get("workflow_stages") or []
+        if stages:
+            lines.append("workflow_stages:")
+            for stage in stages:
+                lines.append(
+                    "- "
+                    f"stage={stage.get('stage', '')}; "
+                    f"status={stage.get('status', '')}; "
+                    f"skill={stage.get('skill', 'none')}; "
+                    f"batch_id={stage.get('batch_id', '')}; "
+                    f"active_now={stage.get('active_now', False)}; "
+                    f"reason={stage.get('reason', '')}"
+                )
+        for key in ("active_skills", "future_skills", "candidate_skills"):
+            values = handoff.get(key) or []
+            lines.append(f"{key}: {', '.join(values) if values else 'None'}")
+        return "\n".join(lines)
+
+    def _activate_workflow_batch(self, state: AgentState, batch_id: str) -> Dict[str, Any]:
+        handoff = dict(state.get("workflow_handoff") or {})
+        stages = [dict(stage) for stage in handoff.get("workflow_stages", state.get("workflow_stages", [])) or []]
+        if not stages:
+            return {
+                "messages": [HumanMessage(content="<observation>❌ No workflow stages are available to activate.</observation>")],
+                "next_step": "generate",
+            }
+        target_batch = str(batch_id or "").strip()
+        active_skills: List[str] = []
+        future_skills: List[str] = []
+        for stage in stages:
+            stage_batch = str(stage.get("batch_id") or "").strip()
+            is_active = bool(target_batch and stage_batch == target_batch)
+            stage["active_now"] = is_active
+            if stage.get("status") == "selected_skill":
+                skill = str(stage.get("skill") or "").strip()
+                normalized = self.skill_manager.normalize_selected_skills([skill], max_results=1) if self.skill_manager else [skill]
+                skill = normalized[0] if normalized else ""
+                if is_active and skill and skill not in active_skills:
+                    active_skills.append(skill)
+                elif skill and skill not in future_skills:
+                    future_skills.append(skill)
+        if not active_skills:
+            return {
+                "messages": [HumanMessage(content=f"<observation>❌ Batch {target_batch} has no selected skills.</observation>")],
+                "next_step": "generate",
+            }
+        handoff["workflow_stages"] = stages
+        handoff["active_batch_id"] = target_batch
+        handoff["active_skills"] = active_skills
+        handoff["future_skills"] = future_skills
+        result = validate_workflow_handoff(
+            handoff,
+            self.skill_manager,
+            self.workflow_manager,
+            max_active_skills=SkillManager.MAX_SELECTED_SKILLS,
+        )
+        if result["errors"]:
+            obs = "<observation>❌ Workflow batch activation failed:\n" + "\n".join(result["errors"]) + "\n</observation>"
+            return {"messages": [HumanMessage(content=obs)], "next_step": "generate"}
+        handoff = result["handoff"]
+        obs = (
+            f"<observation>✅ Activated workflow batch {target_batch}. "
+            f"Active skills: {', '.join(handoff.get('active_skills', []))}</observation>"
+        )
+        return {
+            "messages": [HumanMessage(content=obs)],
+            "workflow_handoff": handoff,
+            "workflow_stages": handoff.get("workflow_stages", []),
+            "active_batch_id": handoff.get("active_batch_id", target_batch),
+            "active_skills": handoff.get("active_skills", []),
+            "future_skills": handoff.get("future_skills", []),
+            "selected_skills": handoff.get("active_skills", []),
+            "next_step": "generate",
+        }
 
     def _stable_prompt_paths(self, session_id: str, project_id: str) -> Tuple[Path, Path]:
         stem = self._safe_prompt_stem(f"{session_id}__{project_id}")
@@ -692,11 +1012,322 @@ class BioAnalystAgent:
             return text
         return text[:max_chars] + "\n...[truncated]"
 
+    def _ensure_plan_tracker(self, task_id: str, current_plan: Optional[str] = None) -> Dict[str, Any]:
+        plan_file = default_plan_file(self.data_path, task_id)
+        return ensure_plan_state(
+            self.data_path,
+            task_id,
+            plan_text=current_plan or "",
+            plan_file=plan_file,
+        )
+
+    def _persist_plan_tracker(self, task_id: str, state: Dict[str, Any]) -> str:
+        save_plan_state(self.data_path, task_id, state)
+        plan_file = state.get("plan_file") or str(default_plan_file(self.data_path, task_id))
+        update_plan_markdown_status(plan_file, state)
+        return render_plan_progress(state)
+
+    def _start_or_load_plan_progress(self, task_id: str, current_plan: Optional[str], evidence: str = "") -> str:
+        state = self._ensure_plan_tracker(task_id, current_plan)
+        if state.get("steps"):
+            mark_first_pending_running(state, evidence=evidence or "generate_started")
+            return self._persist_plan_tracker(task_id, state)
+        return render_plan_progress(state)
+
+    def _mark_plan_current_done(self, task_id: str, evidence: str) -> str:
+        state = load_plan_state(self.data_path, task_id)
+        if state.get("steps"):
+            mark_plan_step_done(state, evidence=evidence)
+            return self._persist_plan_tracker(task_id, state)
+        return render_plan_progress(state)
+
+    def _mark_plan_current_blocked(self, task_id: str, evidence: str) -> str:
+        state = load_plan_state(self.data_path, task_id)
+        if state.get("steps"):
+            mark_plan_step_blocked(state, evidence=evidence)
+            return self._persist_plan_tracker(task_id, state)
+        return render_plan_progress(state)
+
+    def _record_plan_current_evidence(self, task_id: str, event: str, detail: str = "") -> str:
+        state = load_plan_state(self.data_path, task_id)
+        if state.get("steps"):
+            record_current_step_evidence(state, event, detail)
+            return self._persist_plan_tracker(task_id, state)
+        return render_plan_progress(state)
+
+    def _llm_failure_response(self, stage: str, exc: BaseException, task_id: str) -> AIMessage:
+        summary = llm_failure_summary(exc, stage, task_id)
+        logger.error(summary)
+        return AIMessage(content=deterministic_failure_solution(exc, stage, task_id))
+
     def _skill_execution_context(self, skill_ids: List[str]) -> str:
         if not self.skill_manager or not skill_ids:
             return ""
         cards = self.skill_manager.get_execution_cards(skill_ids)
         return f"\n[MANDATORY SKILL EXECUTION CARDS]\n{cards}\n" if cards else ""
+
+    def _sync_runtime_registries_at_startup(self):
+        if not self.skill_manager:
+            return
+        try:
+            if self.pm:
+                self.skill_manager.sync_with_package_manager(self.pm)
+            paths = self.skill_manager.runtime_registry_file_candidates(self.pm)
+            self.skill_manager.import_runtime_registry_files(paths, package_manager=self.pm)
+            if self.pm:
+                self.skill_manager.sync_with_package_manager(self.pm)
+        except Exception as e:
+            logger.warning("Runtime registry startup sync failed: %s", e)
+
+    def _runtime_status_for_task(self, task_id: str) -> Dict[str, Dict[str, Any]]:
+        return dict(self.runtime_status.get(task_id or "default", {}))
+
+    def _runtime_cache_key(self, skill_id: str, env: str) -> str:
+        return f"{skill_id}::{env}"
+
+    def _cache_runtime_status(
+        self,
+        task_id: str,
+        skill_id: str,
+        env: str,
+        ok: bool,
+        detail: str,
+        healthcheck: str,
+        env_runner: str,
+    ):
+        bucket = self.runtime_status.setdefault(task_id or "default", {})
+        bucket[self._runtime_cache_key(skill_id, env)] = {
+            "skill_id": skill_id,
+            "env": env,
+            "ok": bool(ok),
+            "detail": detail or "",
+            "healthcheck": healthcheck or "",
+            "env_runner": env_runner or "",
+            "checked_at": datetime.now().isoformat(timespec="seconds"),
+        }
+
+    def _verify_skill_runtime(self, skill_id: str, task_id: str = "default", use_cache: bool = True) -> Tuple[bool, str, str]:
+        if not self.skill_manager or not self.pm:
+            return True, "", ""
+        requirements = self._skill_runtime_requirements(skill_id)
+        env = requirements.get("env") or requirements.get("default_env", "")
+        if not env:
+            return True, "", ""
+        cache_key = self._runtime_cache_key(skill_id, env)
+        cached = self.runtime_status.get(task_id or "default", {}).get(cache_key)
+        if use_cache and cached and cached.get("ok"):
+            return True, str(cached.get("detail") or "Cached runtime healthcheck passed."), env
+        ok, detail = self.pm.verify_environment(
+            env_name=env,
+            language=requirements.get("language", ""),
+            healthcheck=requirements.get("healthcheck", ""),
+        )
+        status = "verified" if ok else "broken"
+        self.skill_manager.record_environment(
+            skill_id,
+            env=env,
+            packages=requirements.get("packages", []),
+            install_command=requirements.get("install_command", ""),
+            status=status,
+            notes=detail or ("Environment healthcheck passed." if ok else "Environment healthcheck failed."),
+            language=requirements.get("language", ""),
+            capabilities=requirements.get("capabilities", []),
+            healthcheck=requirements.get("healthcheck", ""),
+        )
+        self._cache_runtime_status(
+            task_id,
+            skill_id,
+            env,
+            ok,
+            detail or ("OK" if ok else "Healthcheck failed."),
+            requirements.get("healthcheck", ""),
+            requirements.get("env_runner", ""),
+        )
+        return ok, detail, env
+
+    def _format_runtime_status_for_observation(self, task_id: str) -> str:
+        records = self.runtime_status.get(task_id or "default", {})
+        if not records:
+            return ""
+        lines = ["<runtime_status>"]
+        for record in records.values():
+            lines.append(
+                "- "
+                f"skill_id={record.get('skill_id', '')}; "
+                f"env={record.get('env', '')}; "
+                f"ok={record.get('ok', False)}; "
+                f"env_runner={record.get('env_runner', '')}; "
+                f"checked_at={record.get('checked_at', '')}"
+            )
+        lines.append("</runtime_status>")
+        return "\n" + "\n".join(lines)
+
+    def _selected_skill_env_runner_violation(self, code: str, selected_skills: Optional[List[str]]) -> str:
+        if not self.skill_manager or not selected_skills:
+            return ""
+        code_text = str(code or "")
+        normalized_code = code_text.replace("\\", "/")
+        code_lines = [
+            line.strip()
+            for line in code_text.splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        ]
+        for sid in self._selected_skill_ids(selected_skills):
+            requirements = self._skill_runtime_requirements(sid)
+            runner = str(requirements.get("env_runner") or "").strip()
+            if not runner or runner == "bash":
+                continue
+            env = str(requirements.get("env") or requirements.get("default_env") or "").strip()
+            meta = self.skill_manager.get_skill_meta(sid)
+            skill_dir = Path(meta.get("_skill_dir", self.skill_manager.skills_root / sid)).resolve()
+            runner_present = runner in code_text or (env and f"conda run -n {env}" in code_text)
+            for script in meta.get("_scripts", []) or []:
+                script_name = Path(script).name
+                rel_script = str(script).replace("\\", "/")
+                abs_script = str((skill_dir / script).resolve()).replace("\\", "/")
+                mentions_script = (
+                    script_name in code_text
+                    or rel_script in normalized_code
+                    or abs_script in normalized_code
+                )
+                if mentions_script and not runner_present:
+                    return (
+                        f"Selected skill `{sid}` declares env_runner `{runner}` but the generated command "
+                        f"mentions `{script_name}` without that runner. Regenerate the command as "
+                        f"`{runner} {rel_script} ...` and do not use bare `python {rel_script}`."
+                    )
+            skill_terms = " ".join([
+                " ".join(map(str, requirements.get("packages", []) or [])),
+                " ".join(map(str, requirements.get("capabilities", []) or [])),
+                " ".join(map(str, meta.get("tags", []) or [])),
+            ]).lower()
+            managed_tools = set()
+            if any(term in skill_terms for term in ["cooler", "cool", "mcool"]):
+                managed_tools.add("cooler")
+            if any(term in skill_terms for term in ["hicexplorer", "hicfindtads", "hicdifferentialtad", "hi-c"]):
+                managed_tools.update({
+                    "hicFindTADs",
+                    "hicDifferentialTAD",
+                    "hicPlotTADs",
+                    "hicConvertFormat",
+                    "hicTransform",
+                })
+            for tool in sorted(managed_tools):
+                bare_tool_re = re.compile(rf"^(?:env\s+[^;&|]+\s+)?{re.escape(tool)}(?:\s|$)")
+                if any(bare_tool_re.search(line) for line in code_lines) and not runner_present:
+                    env_prefix = f"conda run -n {env}" if env else runner.rsplit(" ", 1)[0]
+                    return (
+                        f"Selected skill `{sid}` uses managed runtime `{env or runner}` but the generated command "
+                        f"calls bare `{tool}`. Regenerate it as `{env_prefix} {tool} ...` "
+                        f"or use `{runner} -c \"...\"` for Python-based preflight. Do not ask for code review "
+                        f"on bare `{tool}` commands."
+                    )
+        return ""
+
+    def _skill_command_names(self, skill_id: str) -> set[str]:
+        if not self.skill_manager:
+            return set()
+        meta = self.skill_manager.get_skill_meta(skill_id)
+        requirements = self._skill_runtime_requirements(skill_id)
+        terms = " ".join([
+            " ".join(map(str, requirements.get("packages", []) or [])),
+            " ".join(map(str, requirements.get("capabilities", []) or [])),
+            " ".join(map(str, meta.get("tags", []) or [])),
+            " ".join(map(str, meta.get("legacy_ids", []) or [])),
+        ]).lower()
+        commands: set[str] = set()
+        if "cooler" in terms or "mcool" in terms:
+            commands.add("cooler")
+        if "hicfindtads" in terms:
+            commands.add("hicFindTADs")
+        if "hicdifferentialtad" in terms or "differential-tad" in terms:
+            commands.add("hicDifferentialTAD")
+        if "hicplottads" in terms:
+            commands.add("hicPlotTADs")
+        if "hicconvertformat" in terms:
+            commands.add("hicConvertFormat")
+        if "hictransform" in terms:
+            commands.add("hicTransform")
+        return commands
+
+    def _workflow_future_skill_violation(
+        self,
+        code: str,
+        active_skills: Optional[List[str]],
+        future_skills: Optional[List[str]],
+    ) -> str:
+        if not self.skill_manager or not future_skills:
+            return ""
+        code_text = str(code or "")
+        normalized_code = code_text.replace("\\", "/")
+        code_lines = [
+            line.strip()
+            for line in code_text.splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        ]
+        active_set = set(self._selected_skill_ids(active_skills or []))
+        active_commands = set()
+        for sid in active_set:
+            active_commands.update(self._skill_command_names(sid))
+
+        for sid in self._selected_skill_ids(future_skills):
+            if sid in active_set:
+                continue
+            meta = self.skill_manager.get_skill_meta(sid)
+            skill_dir = Path(meta.get("_skill_dir", self.skill_manager.skills_root / sid)).resolve()
+            for script in meta.get("_scripts", []) or []:
+                script_name = Path(script).name
+                rel_script = str(script).replace("\\", "/")
+                abs_script = str((skill_dir / script).resolve()).replace("\\", "/")
+                if script_name in code_text or rel_script in normalized_code or abs_script in normalized_code:
+                    return (
+                        f"Generated command mentions future-stage skill `{sid}` script `{script_name}` "
+                        "before that workflow batch is active. Finish the current active batch, then "
+                        "output the appropriate <activate_batch ... /> action before using this script."
+                    )
+            for command in sorted(self._skill_command_names(sid) - active_commands):
+                command_re = re.compile(rf"^(?:env\s+[^;&|]+\s+)?(?:conda\s+run\s+-n\s+\S+\s+)?{re.escape(command)}(?:\s|$)")
+                if any(command_re.search(line) for line in code_lines):
+                    return (
+                        f"Generated command calls `{command}` from future-stage skill `{sid}` before "
+                        "that workflow batch is active. Finish the current active batch and activate "
+                        "the next batch before running it."
+                    )
+        return ""
+
+    def _reuse_registered_runtime_for_install(
+        self,
+        selected_skills: Optional[List[str]],
+        specified_env: Optional[str],
+        task_id: str,
+    ) -> Dict[str, Any]:
+        if not self.skill_manager or not self.pm:
+            return {}
+        for sid in self._selected_skill_ids(selected_skills):
+            requirements = self._skill_runtime_requirements(sid)
+            env = requirements.get("env") or requirements.get("default_env", "")
+            if not env:
+                continue
+            if specified_env and specified_env not in {env, "default"}:
+                continue
+            runtime_record = self.skill_manager.get_runtime_record(sid)
+            pm_record = self.pm.get_environment(env)
+            if not runtime_record and not pm_record:
+                continue
+            ok, detail, verified_env = self._verify_skill_runtime(sid, task_id=task_id)
+            if ok:
+                final_res = (
+                    f"✅ Reusing registered environment '{verified_env}' for selected skill '{sid}'. "
+                    "Healthcheck passed; installation is not needed."
+                )
+                return {"ok": True, "env": verified_env, "detail": detail, "message": final_res, "skill_id": sid}
+            return {
+                "ok": False,
+                "env": verified_env or env,
+                "detail": detail or "Healthcheck failed.",
+                "skill_id": sid,
+            }
+        return {}
 
     def _skill_plan_violations(self, plan: str, selected_skills: List[str]) -> List[str]:
         if not selected_skills:
@@ -868,7 +1499,7 @@ class BioAnalystAgent:
                     status="installed",
                 )
 
-    def _ensure_skill_runtime_ready(self, selected_skills: Optional[List[str]]) -> tuple:
+    def _ensure_skill_runtime_ready(self, selected_skills: Optional[List[str]], task_id: str = "default") -> tuple:
         if not self.skill_manager or not self.pm:
             return True, ""
         for sid in self._selected_skill_ids(selected_skills):
@@ -878,23 +1509,7 @@ class BioAnalystAgent:
                 continue
             if not any([requirements.get("packages"), requirements.get("capabilities"), requirements.get("language"), requirements.get("healthcheck")]):
                 continue
-            ok, detail = self.pm.verify_environment(
-                env_name=env,
-                language=requirements.get("language", ""),
-                healthcheck=requirements.get("healthcheck", ""),
-            )
-            status = "verified" if ok else "broken"
-            self.skill_manager.record_environment(
-                sid,
-                env=env,
-                packages=requirements.get("packages", []),
-                install_command=requirements.get("install_command", ""),
-                status=status,
-                notes=detail or ("Environment healthcheck passed." if ok else "Environment healthcheck failed."),
-                language=requirements.get("language", ""),
-                capabilities=requirements.get("capabilities", []),
-                healthcheck=requirements.get("healthcheck", ""),
-            )
+            ok, detail, env = self._verify_skill_runtime(sid, task_id=task_id)
             if not ok:
                 redirect_name = requirements.get("tool_name") or self._skill_runtime_defaults(selected_skills).get("tool_name", "skill_runtime")
                 reason = detail or f"Healthcheck failed for environment {env}"
@@ -960,6 +1575,117 @@ class BioAnalystAgent:
     def _install_choice_key(self, task_id: str, tool_name: str) -> str:
         return f"{task_id}::{tool_name}"
 
+    def _profile_node(self, node_name: str, func):
+        async def wrapped(state: AgentState):
+            task_id = state.get("task_id") or state.get("session_id") or "default"
+            with self.profiler.node(task_id, node_name):
+                return await func(state)
+        return wrapped
+
+    def _record_human_wait(
+        self,
+        task_id: str,
+        prompt_type: str,
+        wait_started: float,
+        response: Any,
+        payload: Optional[Dict[str, Any]] = None,
+        started_at: Optional[str] = None,
+    ) -> None:
+        self.profiler.record_confirmation(
+            task_id=task_id,
+            prompt_type=prompt_type,
+            response=response,
+            duration_seconds=time.perf_counter() - wait_started,
+            payload=payload or {},
+            started_at=started_at,
+        )
+        self.profiler.flush(task_id)
+
+    def _prompt_user(
+        self,
+        task_id: str,
+        stage: str,
+        prompt: str,
+        payload: Optional[Dict[str, Any]] = None,
+        started_at: Optional[str] = None,
+    ) -> str:
+        """Collect human input with timeout and waiting-state persistence."""
+        try:
+            response = safe_input(
+                prompt,
+                timeout_seconds=self.input_timeout_seconds,
+                history=(stage == "interactive_prompt"),
+            )
+            clear_waiting_state(self.data_path, task_id)
+            return response
+        except HumanInputUnavailable as exc:
+            path = save_waiting_state(
+                self.data_path,
+                task_id,
+                stage=stage,
+                prompt=prompt,
+                payload=payload or {},
+                reason=type(exc).__name__,
+                timeout_seconds=self.input_timeout_seconds,
+                started_at=started_at,
+            )
+            if self.state_manager:
+                try:
+                    self.state_manager.update_task_status(task_id, "waiting_user")
+                except Exception:
+                    pass
+            restore_terminal_state()
+            print(
+                f"\n{Fore.YELLOW}⏸ Waiting for user input saved to {path}. "
+                f"Resume later with /resume {task_id}.{Style.RESET_ALL}"
+            )
+            raise
+
+    async def _aprompt_user(
+        self,
+        task_id: str,
+        stage: str,
+        prompt: str,
+        payload: Optional[Dict[str, Any]] = None,
+        started_at: Optional[str] = None,
+    ) -> str:
+        if os.name == "posix" and sys.stdin.isatty():
+            return self._prompt_user(
+                task_id,
+                stage,
+                prompt,
+                payload,
+                started_at,
+            )
+        return await asyncio.to_thread(
+            self._prompt_user,
+            task_id,
+            stage,
+            prompt,
+            payload,
+            started_at,
+        )
+
+    async def _suspend_for_human_input(
+        self,
+        task_id: str,
+        stage: str,
+        messages: List[BaseMessage],
+        payload: Dict[str, Any],
+        reason: str,
+    ) -> Dict[str, Any]:
+        content = f"⏸ Waiting for human input at {stage}: {reason}"
+        await self._observe_md_memory(
+            task_id,
+            stage,
+            messages + [HumanMessage(content=content)],
+            {"decision": "waiting_user", "payload": payload, "reason": reason},
+        )
+        return {
+            "messages": [HumanMessage(content=content)],
+            "next_step": "human_input",
+        }
+
     # ────────────────────────────────────────────────────────────
     #  图构建
     # ────────────────────────────────────────────────────────────
@@ -988,11 +1714,18 @@ class BioAnalystAgent:
                 for m in messages
                 if isinstance(m, SystemMessage) and "<consultant_validation_error>" in str(m.content)
             ]
+            task_id = state.get("task_id", "default")
+            project_id = state.get("project_id") or self.default_project_id
 
             # 内存压缩检查
-            messages, compressed = await self.memory_manager.maybe_compress(messages, state.get("task_id", "default"))
+            messages, compressed = await self.memory_manager.maybe_compress(messages, task_id)
             if compressed:
                 output.print_once("mem_compress", "🗜️ Memory compressed and archived.", Fore.YELLOW)
+            consultant_wiki_context = self._wiki_memory_stage_context(
+                task_id=task_id,
+                project_id=project_id,
+                query=consultant_context,
+            )
 
             if self.skill_manager and (len(load_actions) >= 6 or len(validation_errors) >= 3):
                 fallback_raw = []
@@ -1044,10 +1777,12 @@ class BioAnalystAgent:
                         "selected_skills_raw": list(fallback_raw),
                         "skill_selection_source": "consultant_loop_guard",
                         "requirements_summary": summary,
+                        "wiki_memory_context": consultant_wiki_context,
                         "next_step": "planner",
                     }
 
             kb_list_desc = ", ".join(KB_MAP.keys())
+            workflow_catalog = self.workflow_manager.get_workflow_catalog_prompt() if self.workflow_manager else "<workflow_catalog>\nNo workflow templates available.\n</workflow_catalog>"
             if self.skill_manager:
                 skill_tree = self.skill_manager.get_skill_tree_prompt()
                 skill_catalog = self.skill_manager.get_skill_catalog_prompt()
@@ -1067,11 +1802,24 @@ class BioAnalystAgent:
                 installed_tools_str=installed_tools_str,
                 work_dir=self.pm.work_dir if self.pm else ".",
                 max_skills=consultant_max_skills,
+                wiki_memory_context=consultant_wiki_context,
+                workflow_catalog=workflow_catalog,
             )
 
-            response = await self.llm.ainvoke([SystemMessage(content=consultant_prompt)] + messages)
+            try:
+                response = await self.llm.ainvoke([SystemMessage(content=consultant_prompt)] + messages)
+            except Exception as exc:
+                response = self._llm_failure_response("consultant", exc, task_id)
+                output.print_ai(response.content)
+                plan_progress = self._mark_plan_current_blocked(task_id, llm_failure_summary(exc, "consultant", task_id))
+                await self._finalize_md_memory(
+                    task_id,
+                    "failed",
+                    messages + [response],
+                    {"reason": llm_failure_summary(exc, "consultant", task_id), "plan_progress": plan_progress},
+                )
+                return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
             content = response.content.strip()
-            task_id = state.get("task_id", "default")
             await self._observe_md_memory(
                 task_id,
                 "consultant",
@@ -1085,9 +1833,19 @@ class BioAnalystAgent:
                 code_match = re.search(r"```(?:bash|python)?\n(.*?)```", content, re.DOTALL)
                 clean_code = code_match.group(1).strip() if code_match else content.replace("EXECUTE", "").strip()
 
+                wait_started = time.perf_counter()
+                wait_started_at = timestamp_now()
                 user_response = await asyncio.to_thread(
                     self.confirmation_manager.request_confirmation,
                     code=clean_code, language="Bash",
+                )
+                self._record_human_wait(
+                    task_id,
+                    "legacy_code_review",
+                    wait_started,
+                    user_response,
+                    {"content": clean_code},
+                    started_at=wait_started_at,
                 )
                 if user_response == 'y':
                     shim_path = self.pm.get_shim_dir_str()
@@ -1124,6 +1882,31 @@ class BioAnalystAgent:
                         "rag_history": rag_history,
                         "next_step": "consultant",
                     }
+
+            if content.startswith("LOAD_WORKFLOW_TEMPLATE"):
+                parts = content.split(maxsplit=1)
+                workflow_id = parts[1].strip() if len(parts) == 2 else ""
+                if content in load_actions:
+                    obs = (
+                        "<consultant_validation_error>\n"
+                        f"The workflow requested by `{content}` is already loaded. Use the loaded template to FINISH or ASK.\n"
+                        "</consultant_validation_error>"
+                    )
+                    return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
+                output.print_once(f"consultant_load:{content}", f"📖 Consultant loading workflow template: {workflow_id}", Fore.CYAN)
+                loaded = self.workflow_manager.load_workflow_prompt(workflow_id) if self.workflow_manager and workflow_id else ""
+                if loaded:
+                    obs = f'<loaded_workflow_template workflow_id="{workflow_id}">\n{loaded}\n</loaded_workflow_template>'
+                else:
+                    obs = (
+                        f'<load_error action="LOAD_WORKFLOW_TEMPLATE" workflow_id="{workflow_id or "unknown"}">\n'
+                        "Unable to load that workflow template. Use a workflow_id from Available Workflow Templates.\n"
+                        "</load_error>"
+                    )
+                return {
+                    "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                    "next_step": "consultant",
+                }
 
             if content.startswith("LOAD_SKILL_DOC"):
                 parts = content.split(maxsplit=1)
@@ -1213,35 +1996,87 @@ class BioAnalystAgent:
             # ASK 动作
             if content.startswith("ASK"):
                 question = content.replace("ASK", "").strip()
-                print(f"{Fore.GREEN}🗣️  {question}{Style.RESET_ALL}")
-                user_answer = interrupt(question)
                 return {
-                    "messages": [AIMessage(content=content),
-                                 HumanMessage(content=f"Answer to '{question}': {user_answer}")],
-                    "next_step": "consultant",
+                    "messages": [AIMessage(content=content)],
+                    "pending_human_question": {
+                        "type": "consultant_question",
+                        "stage": "consultant",
+                        "question": question,
+                    },
+                    "next_step": "ask_user",
                 }
 
-            # FINISH 动作
-            if content.startswith("FINISH"):
-                summary = content[len("FINISH"):].strip()
+            # FINISH 动作. Some models omit the literal FINISH prefix while still
+            # returning a complete structured handoff; accept those robustly.
+            looks_like_structured_handoff = (
+                "[WORKFLOW_DECISION]" in content
+                or "[WORKFLOW_STAGES]" in content
+                or "[SELECTED_SKILLS:" in content
+            )
+            if content.startswith("FINISH") or looks_like_structured_handoff:
+                summary = content[len("FINISH"):].strip() if content.startswith("FINISH") else content.strip()
+                workflow_handoff = parse_workflow_handoff(summary)
+                has_workflow_handoff = bool(
+                    workflow_handoff.get("workflow_id")
+                    or workflow_handoff.get("workflow_stages")
+                    or workflow_handoff.get("active_skills")
+                )
+                active_skills: List[str] = []
+                future_skills: List[str] = []
+                candidate_skills: List[str] = []
+                active_batch_id = ""
                 if self.skill_manager:
-                    if "[SELECTED_SKILLS:" not in summary:
+                    if has_workflow_handoff:
+                        validation = validate_workflow_handoff(
+                            workflow_handoff,
+                            self.skill_manager,
+                            self.workflow_manager,
+                            max_active_skills=SkillManager.MAX_SELECTED_SKILLS,
+                        )
+                        if validation["errors"]:
+                            obs = (
+                                "<consultant_validation_error>\n"
+                                "Workflow handoff is invalid:\n"
+                                + "\n".join(f"- {issue}" for issue in validation["errors"])
+                                + "\nUse LOAD_WORKFLOW_TEMPLATE, repair WORKFLOW_STAGES, and keep ACTIVE_SKILLS tied to active stages.\n"
+                                "</consultant_validation_error>"
+                            )
+                            output.print_once(
+                                f"workflow_validation:{len(validation_errors)}",
+                                "⚠️ Consultant workflow handoff failed validation; asking it to repair the stage coverage.",
+                                Fore.YELLOW,
+                            )
+                            return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
+                        workflow_handoff = validation["handoff"]
+                        active_skills = workflow_handoff.get("active_skills", [])
+                        future_skills = workflow_handoff.get("future_skills", [])
+                        candidate_skills = workflow_handoff.get("candidate_skills", [])
+                        active_batch_id = workflow_handoff.get("active_batch_id", "")
+                        raw_selected = list(active_skills)
+                        selected = list(active_skills)
+                        if validation["warnings"]:
+                            summary += (
+                                "\n[WORKFLOW_VALIDATION_WARNINGS]\n"
+                                + "\n".join(f"- {warning}" for warning in validation["warnings"])
+                                + "\n[/WORKFLOW_VALIDATION_WARNINGS]"
+                            )
+                    elif "[SELECTED_SKILLS:" not in summary:
                         obs = (
                             "<consultant_validation_error>\n"
-                            "FINISH must include a [SELECTED_SKILLS: ...] marker, even if the value is None.\n"
+                            "FINISH must include either a workflow handoff ([WORKFLOW_DECISION], [WORKFLOW_STAGES], [ACTIVE_SKILLS]) or a [SELECTED_SKILLS: ...] marker.\n"
                             "</consultant_validation_error>"
                         )
                         output.print_once(
                             f"consultant_validation:{len(validation_errors)}",
-                            "⚠️ Consultant FINISH was missing [SELECTED_SKILLS]; asking it to repair the handoff.",
+                            "⚠️ Consultant FINISH was missing skill/workflow handoff markers; asking it to repair.",
                             Fore.YELLOW,
                         )
                         return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
-
-                    raw_selected = self.skill_manager.parse_selected_skill_ids(summary)
-                    selected = self.skill_manager.normalize_selected_skills(raw_selected, max_results=consultant_max_skills)
-                    issues = self.skill_manager.validate_selected_skills(raw_selected, max_results=consultant_max_skills) if raw_selected else []
-                    if issues:
+                    else:
+                        raw_selected = self.skill_manager.parse_selected_skill_ids(summary)
+                        selected = self.skill_manager.normalize_selected_skills(raw_selected, max_results=consultant_max_skills)
+                        issues = self.skill_manager.validate_selected_skills(raw_selected, max_results=consultant_max_skills) if raw_selected else []
+                    if not has_workflow_handoff and issues:
                         repair_raw = []
                         context_l = (consultant_context + "\n" + summary).lower()
                         if any(term in context_l for term in ["导入", "ingest", "10x", "mtx", "h5"]):
@@ -1305,6 +2140,7 @@ class BioAnalystAgent:
                                 "selected_skills_raw": list(raw_selected),
                                 "skill_selection_source": "consultant_auto_repair",
                                 "requirements_summary": repaired_summary,
+                                "wiki_memory_context": consultant_wiki_context,
                                 "next_step": "planner",
                             }
                         return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
@@ -1316,13 +2152,48 @@ class BioAnalystAgent:
                     "messages": [AIMessage(content=content)],
                     "selected_skills": selected,
                     "selected_skills_raw": list(raw_selected),
+                    "active_skills": active_skills,
+                    "future_skills": future_skills,
+                    "candidate_skills": candidate_skills,
+                    "workflow_id": workflow_handoff.get("workflow_id", ""),
+                    "workflow_stages": workflow_handoff.get("workflow_stages", []),
+                    "workflow_handoff": workflow_handoff if has_workflow_handoff else {},
+                    "active_batch_id": active_batch_id,
                     "skill_selection_source": "consultant_finish",
                     "requirements_summary": summary,
+                    "wiki_memory_context": consultant_wiki_context,
                     "next_step": "planner",
                 }
             output.print_ai(content)
 
             return {"messages": [response], "next_step": "human_input"}
+
+        async def ask_user(state: AgentState):
+            task_id = state.get("task_id", "default")
+            pending = state.get("pending_human_question") or {}
+            question = str(pending.get("question") or "").strip()
+            if not question:
+                return {
+                    "messages": [SystemMessage(content="No pending human question was found.")],
+                    "pending_human_question": {},
+                    "next_step": "consultant",
+                }
+            output.print_once(
+                f"consultant_question:{task_id}:{question}",
+                f"{Fore.GREEN}🗣️  {question}{Style.RESET_ALL}",
+            )
+            user_answer = interrupt({
+                "type": pending.get("type", "consultant_question"),
+                "stage": pending.get("stage", "consultant"),
+                "question": question,
+            })
+            stage = str(pending.get("stage") or "consultant")
+            resume_step = str(pending.get("resume_step") or ("generate" if stage == "generate" else "consultant"))
+            return {
+                "messages": [HumanMessage(content=f"<human_answer stage=\"{stage}\">\nQuestion: {question}\nAnswer: {user_answer}\n</human_answer>")],
+                "pending_human_question": {},
+                "next_step": resume_step,
+            }
 
         # ════════════════════════════════════════════
         # Node 1: Planner（详细规划 + 脚本预生成）
@@ -1337,7 +2208,8 @@ class BioAnalystAgent:
 
             installed  = self.pm.list_installed_tools() if self.pm else "None"
             skill_tree = self.skill_manager.get_skill_tree_prompt() if self.skill_manager else "<skill_tree>\nNo external skills available.\n</skill_tree>"
-            selected_skills = state.get("selected_skills", []) or []
+            active_skills_state = state.get("active_skills", []) or []
+            selected_skills = active_skills_state or state.get("selected_skills", []) or []
             selected_skills_raw = state.get("selected_skills_raw", []) or list(selected_skills)
             skill_selection_source = state.get("skill_selection_source", "consultant_finish")
             skill_catalog = (
@@ -1351,74 +2223,40 @@ class BioAnalystAgent:
             skill_reference_index = self.skill_manager.get_skill_reference_index_prompt(selected_skills) if self.skill_manager else ""
             skill_execution_context = self._skill_execution_context(selected_skills)
             selected_skills_text = ", ".join(selected_skills) if selected_skills else "None"
+            workflow_handoff = state.get("workflow_handoff", {}) or {}
+            active_batch_id = state.get("active_batch_id", "") or workflow_handoff.get("active_batch_id", "")
+            future_skills = state.get("future_skills", []) or workflow_handoff.get("future_skills", []) or []
+            candidate_skills = state.get("candidate_skills", []) or workflow_handoff.get("candidate_skills", []) or []
+            workflow_handoff_text = self._format_workflow_handoff_for_prompt(workflow_handoff)
+            task_id = state.get("task_id", "default")
+            project_id = state.get("project_id") or self.default_project_id
+            planner_wiki_query = "\n".join(
+                part for part in [str(user_msg)[:1200], str(summary)[:1200]]
+                if part
+            )
+            planner_wiki_context = state.get("wiki_memory_context") or self._wiki_memory_stage_context(
+                task_id=task_id,
+                project_id=project_id,
+                query=planner_wiki_query,
+            )
 
-            # 构建详细规划 Prompt（包含脚本预生成指令）
-            detailed_plan_prompt = f"""You are the Planner for BioAnalyst V4.
-
-User Goal: {user_msg}
-{f"Consultant Summary: {summary}" if summary else ""}
-
-[ENVIRONMENT]
-Installed Tools:
-{installed}
-
-[KNOWLEDGE BASE CONTEXT]
-{rag_knowledge[:2000] if rag_knowledge else "None"}
-
-[AVAILABLE SKILLS]
-{skills_summary}
-
-[SELECTED SKILLS]
-{selected_skills_text}
-
-[ACTIVE SKILL DOCS]
-{active_skill_docs if active_skill_docs else "No skill selected. If you choose a skill, use only IDs from AVAILABLE SKILLS."}
-{skill_reference_index if skill_reference_index else ""}
-{skill_execution_context}
-
-==========================================================
-TASK: Generate a DETAILED PLAN with 3 sections:
-==========================================================
-
-You are only planning. Do NOT generate bash scripts, Python scripts, or runnable code blocks.
-Do NOT invent commands for skills. If a matching skill is present in ACTIVE SKILL DOCS,
-plan to use its documented script path and documented arguments exactly.
-
-## Section 1: Requirement Analysis
-- Input files, reference genomes, parameters needed
-- Tools required (check installed list above)
-- Estimated runtime and resource needs (RAM, CPU, disk)
-
-## Section 2: Step-by-Step Execution Plan
-For EACH step, provide:
-  Step N: [Action Name]
-    - Tool: [tool name + version if known]
-    - Execution guidance: [plain-language instruction; include an exact command only when it is copied from ACTIVE SKILL DOCS and filled with user-provided paths]
-    - Input: [expected input files/data]
-    - Output: [expected output files/format]
-    - Success criteria: [how to verify this step worked]
-    - Risk: [LOW/MEDIUM/HIGH – and why]
-
-## Section 3: Validation Checklist
-- What final outputs to verify?
-- QC metrics to check (mapping rate, coverage, etc.)?
-- Common failure modes to watch for?
-
-RULES:
-- If a tool is in Installed Tools, use it directly. DO NOT add install steps.
-- If using any skill, append: [SELECTED_SKILLS: skill_id_1, skill_id_2]
-- You may only select skill IDs listed in AVAILABLE SKILLS. Do not translate, rename, or invent skill IDs.
-- SELECTED SKILLS are already finalized. Do not add extra candidate skills beyond that set.
-- If MANDATORY SKILL EXECUTION CARDS are present, they override your prior knowledge and all plan wording.
-- If ACTIVE SKILL DOCS are present, you MUST read them and use their real script path(s). Never describe the skill as an abstract module or pre-built global command.
-- Never write "Command template" for a selected skill. Use "Execution guidance".
-- Never use placeholder wrapper commands or undocumented script names.
-- **PATH STRICTNESS**: You MUST use the EXACT absolute paths provided in the Consultant Summary. 
-- **NO GUESSING**: Do NOT guess file names or naming patterns (e.g., do not assume '.CG.bw' if the summary says '_CG.Chr10.bw'). 
-- If a required path is missing from the summary, your plan MUST include a step to find it first.
-- Skill name is not a runnable shell command unless the skill body explicitly defines such a command.
-- Do not include a "Script Skeleton" section.
-"""
+            detailed_plan_prompt = PromptManager.get_detailed_planner_prompt(
+                user_msg=str(user_msg),
+                consultant_summary=summary,
+                planner_wiki_context=planner_wiki_context,
+                installed_tools_str=installed,
+                rag_knowledge=rag_knowledge,
+                skills_summary=skills_summary,
+                selected_skills_text=selected_skills_text,
+                active_skill_docs=active_skill_docs,
+                skill_reference_index=skill_reference_index,
+                skill_execution_context=skill_execution_context,
+                workflow_handoff=workflow_handoff_text,
+                active_batch_id=str(active_batch_id or ""),
+                active_skills_text=", ".join(selected_skills) if selected_skills else "None",
+                future_skills_text=", ".join(future_skills) if future_skills else "None",
+                candidate_skills_text=", ".join(candidate_skills) if candidate_skills else "None",
+            )
 
             plan_content = ""
             violations = []
@@ -1431,7 +2269,19 @@ RULES:
                         + "\n".join(f"- {v}" for v in violations)
                         + "\nRegenerate the plan. Do not add placeholders or invented commands.\n"
                     )
-                response = await self.llm.ainvoke([HumanMessage(content=prompt_to_send)])
+                try:
+                    response = await self.llm.ainvoke([HumanMessage(content=prompt_to_send)])
+                except Exception as exc:
+                    response = self._llm_failure_response("planner", exc, task_id)
+                    output.print_ai(response.content)
+                    plan_progress = self._mark_plan_current_blocked(task_id, llm_failure_summary(exc, "planner", task_id))
+                    await self._finalize_md_memory(
+                        task_id,
+                        "failed",
+                        messages + [response],
+                        {"reason": llm_failure_summary(exc, "planner", task_id), "plan_progress": plan_progress},
+                    )
+                    return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
                 plan_content = response.content
                 violations = self._skill_plan_violations(plan_content, selected_skills)
                 if not violations:
@@ -1444,20 +2294,67 @@ RULES:
                     + "\n"
                 )
 
+            if self.skill_manager:
+                plan_active_skills = self.skill_manager.extract_active_skills_from_plan(plan_content)
+                plan_future_skills = self.skill_manager.extract_future_skills_from_plan(plan_content)
+                plan_legacy_skills = self.skill_manager.parse_selected_skill_ids(plan_content)
+                proposed_skills = plan_active_skills or (
+                    self.skill_manager.normalize_selected_skills(plan_legacy_skills)
+                    if plan_legacy_skills and not workflow_handoff
+                    else []
+                )
+                if proposed_skills:
+                    if workflow_handoff:
+                        candidate_handoff = dict(workflow_handoff)
+                        candidate_handoff["active_skills"] = proposed_skills
+                        if plan_future_skills:
+                            candidate_handoff["future_skills"] = plan_future_skills
+                        validation = validate_workflow_handoff(
+                            candidate_handoff,
+                            self.skill_manager,
+                            self.workflow_manager,
+                            max_active_skills=SkillManager.MAX_SELECTED_SKILLS,
+                        )
+                        if validation["errors"]:
+                            plan_content += (
+                                "\n\n## Workflow Skill Validation Warnings\n"
+                                "- Planner ACTIVE_SKILLS were ignored because they failed validation:\n"
+                                + "\n".join(f"  - {issue}" for issue in validation["errors"])
+                                + "\n"
+                            )
+                        else:
+                            workflow_handoff = validation["handoff"]
+                            selected_skills = workflow_handoff.get("active_skills", [])
+                            future_skills = workflow_handoff.get("future_skills", future_skills)
+                            active_batch_id = workflow_handoff.get("active_batch_id", active_batch_id)
+                            selected_skills_raw = list(selected_skills)
+                            skill_selection_source = "planner_active_skills"
+                    else:
+                        selected_skills = proposed_skills
+                        selected_skills_raw = list(proposed_skills)
+                        skill_selection_source = "planner_active_skills" if plan_active_skills else "planner_selected_skills"
+
             # 保存计划文件
-            task_id  = state.get("task_id", "default")
             plan_dir = os.path.join(self.data_path, "task_outputs", task_id)
             os.makedirs(plan_dir, exist_ok=True)
             plan_file = os.path.join(plan_dir, "plan.md")
+            plan_state = build_plan_state(task_id, plan_content, plan_file=plan_file)
+            save_plan_state(self.data_path, task_id, plan_state)
             with open(plan_file, "w", encoding="utf-8") as f:
                 f.write(
                     "# Task Plan\n"
                     f"Generated: {datetime.now().isoformat()}\n"
                     f"Selected Skills: {', '.join(selected_skills) if selected_skills else 'None'}\n"
+                    f"Workflow ID: {workflow_handoff.get('workflow_id', 'None') if workflow_handoff else 'None'}\n"
+                    f"Active Batch: {active_batch_id or 'None'}\n"
+                    f"Active Skills: {', '.join(selected_skills) if selected_skills else 'None'}\n"
+                    f"Future Skills: {', '.join(future_skills) if future_skills else 'None'}\n"
                     f"Selected Skills Raw: {', '.join(selected_skills_raw) if selected_skills_raw else 'None'}\n"
                     f"Skill Selection Source: {skill_selection_source}\n\n"
                     f"{plan_content}"
                 )
+            update_plan_markdown_status(plan_file, plan_state)
+            plan_progress = render_plan_progress(plan_state)
 
             # 写入思维链日志
             log_plan_to_cot(self.supervisor_node, task_id, plan_content)
@@ -1468,15 +2365,27 @@ RULES:
                 {
                     "plan_file": plan_file,
                     "selected_skills": selected_skills,
-                    "skill_selection_source": skill_selection_source,
-                    "plan": plan_content[:4000],
-                },
-            )
+                    "active_skills": selected_skills,
+                "workflow_id": workflow_handoff.get("workflow_id", "") if workflow_handoff else "",
+                "active_batch_id": active_batch_id,
+                "skill_selection_source": skill_selection_source,
+                "plan_progress": plan_progress,
+                "plan": plan_content[:4000],
+            },
+        )
 
             return {
                 "current_plan": plan_content,
+                "plan_progress": plan_progress,
                 "selected_skills": selected_skills,
                 "selected_skills_raw": selected_skills_raw,
+                "active_skills": selected_skills,
+                "future_skills": future_skills,
+                "candidate_skills": candidate_skills,
+                "workflow_handoff": workflow_handoff,
+                "workflow_stages": workflow_handoff.get("workflow_stages", []) if workflow_handoff else [],
+                "workflow_id": workflow_handoff.get("workflow_id", "") if workflow_handoff else "",
+                "active_batch_id": active_batch_id,
                 "skill_selection_source": skill_selection_source,
                 "messages": [AIMessage(content=f"📋 Plan ready (saved to {plan_file})")],
                 "next_step": "plan_review",
@@ -1496,6 +2405,8 @@ RULES:
             print(f"\n📊 Memory: {mem_status}")
 
             # 展示计划（限制行数避免刷屏）
+            wait_started = time.perf_counter()
+            wait_started_at = timestamp_now()
             print(f"\n{Fore.CYAN}{'='*60}")
             print(f"  📋  PLAN REVIEW  |  Task: {task_id}")
             print(f"{'='*60}{Style.RESET_ALL}")
@@ -1503,24 +2414,53 @@ RULES:
             print(f"{'─'*60}")
 
             try:
-                user_input = input(
-                    f"\n{Fore.YELLOW}Approve? [y/n/q] or type feedback > {Style.RESET_ALL}"
+                user_input = self._prompt_user(
+                    task_id,
+                    "plan_review",
+                    f"\n{Fore.YELLOW}Approve? [y/n/q] or type feedback > {Style.RESET_ALL}",
+                    payload={"content": plan[:2000]},
+                    started_at=wait_started_at,
                 ).strip()
-            except EOFError:
-                user_input = "n"
+            except HumanInputUnavailable as exc:
+                self._record_human_wait(
+                    task_id,
+                    "plan_review",
+                    wait_started,
+                    f"<waiting_user:{type(exc).__name__}>",
+                    {"content": plan[:2000]},
+                    started_at=wait_started_at,
+                )
+                return await self._suspend_for_human_input(
+                    task_id,
+                    "plan_review",
+                    messages,
+                    {"content": plan[:2000]},
+                    type(exc).__name__,
+                )
+            self._record_human_wait(
+                task_id,
+                "plan_review",
+                wait_started,
+                user_input,
+                {"content": plan[:2000]},
+                started_at=wait_started_at,
+            )
 
             il = user_input.lower()
 
             if il in ["y", "yes", ""]:
                 print(f"{Fore.GREEN}✓ Plan approved. Executing...{Style.RESET_ALL}")
+                plan_state = self._ensure_plan_tracker(task_id, plan)
+                plan_progress = self._persist_plan_tracker(task_id, plan_state) if plan_state.get("steps") else render_plan_progress(plan_state)
                 await self._observe_md_memory(
                     task_id,
                     "plan_review",
                     messages + [HumanMessage(content="Plan approved. Execute Step 1.")],
-                    {"decision": "approved", "plan_excerpt": plan[:2000]},
+                    {"decision": "approved", "plan_excerpt": plan[:2000], "plan_progress": plan_progress},
                 )
                 return {
                     "messages": [HumanMessage(content="Plan approved. Execute Step 1.")],
+                    "plan_progress": plan_progress,
                     "next_step": "generate",
                 }
             elif il in ["q", "quit", "exit"]:
@@ -1535,10 +2475,36 @@ RULES:
             else:
                 feedback = user_input if il not in ["n", "no"] else ""
                 if not feedback:
-                    feedback = input(f"{Fore.YELLOW}Feedback (Enter=auto-retry): {Style.RESET_ALL}").strip()
+                    feedback_wait_started = time.perf_counter()
+                    feedback_started_at = timestamp_now()
+                    try:
+                        feedback = self._prompt_user(
+                            task_id,
+                            "plan_review_feedback",
+                            f"{Fore.YELLOW}Feedback (Enter=auto-retry): {Style.RESET_ALL}",
+                            payload={"content": plan[:2000]},
+                            started_at=feedback_started_at,
+                        ).strip()
+                    except HumanInputUnavailable as exc:
+                        self._record_human_wait(
+                            task_id,
+                            "plan_review_feedback",
+                            feedback_wait_started,
+                            f"<waiting_user:{type(exc).__name__}>",
+                            {"content": plan[:2000]},
+                            started_at=feedback_started_at,
+                        )
+                        return await self._suspend_for_human_input(
+                            task_id,
+                            "plan_review_feedback",
+                            messages,
+                            {"content": plan[:2000]},
+                            type(exc).__name__,
+                        )
                     if not feedback:
                         feedback = "Rejected. Try a different approach."
                 print(f"{Fore.CYAN}📡 Feedback captured: {feedback}{Style.RESET_ALL}")
+                reset_plan_state(self.data_path, task_id)
                 await self._observe_md_memory(
                     task_id,
                     "plan_review",
@@ -1550,7 +2516,15 @@ RULES:
                     "current_plan": None,
                     "selected_skills": [],
                     "selected_skills_raw": [],
+                    "active_skills": [],
+                    "future_skills": [],
+                    "candidate_skills": [],
+                    "workflow_handoff": {},
+                    "workflow_stages": [],
+                    "workflow_id": "",
+                    "active_batch_id": "",
                     "skill_selection_source": "",
+                    "plan_progress": "",
                     "next_step": "planner",
                 }
 
@@ -1569,6 +2543,18 @@ RULES:
             if compressed:
                 print(f"{Fore.YELLOW}🗜️ Memory compressed mid-task.{Style.RESET_ALL}")
 
+            plan_progress = self._start_or_load_plan_progress(
+                task_id,
+                current_plan,
+                evidence="entered generate after compression check",
+            )
+            if supervisor_verdict and supervisor_verdict in ["RETRY", "WARN"]:
+                plan_progress = self._record_plan_current_evidence(
+                    task_id,
+                    "supervisor_verdict",
+                    str(supervisor_verdict),
+                )
+
             # 熔断（连续 5 次 AI 消息含错误）
             recent_errors = sum(
                 1 for m in messages[-8:]
@@ -1576,15 +2562,17 @@ RULES:
                 any(k in str(m.content) for k in ["❌", "Failed", "Error"])
             )
             if recent_errors >= 5:
+                plan_progress = self._record_plan_current_evidence(task_id, "system_aborted", "Too many recent errors.")
                 return {
                     "messages": [AIMessage(content="<solution>❌ System Aborted: Too many errors.</solution>")],
+                    "plan_progress": plan_progress,
                     "next_step": "finish",
                 }
 
             # 技能加载
             loaded_skills = ""
             if self.skill_manager and current_plan:
-                selected = state.get("selected_skills", [])
+                selected = state.get("active_skills", []) or state.get("selected_skills", [])
                 if selected:
                     loaded = self.skill_manager.load_skills_for_prompt(selected)
                     if loaded:
@@ -1604,7 +2592,8 @@ RULES:
             archive_context = self._archive_prompt_context(task_id, md_query)
             session_id = state.get("session_id") or task_id
             project_id = state.get("project_id") or self.default_project_id
-            wiki_context = self._wiki_prompt_context(task_id, project_id, md_query)
+            wiki_context = state.get("wiki_memory_context") or self._wiki_prompt_context(task_id, project_id, md_query)
+            wiki_digest = self._wiki_digest_prompt_context(project_id)
 
             # 注入 Supervisor 反馈（如果有）
             supervisor_instr = ""
@@ -1628,11 +2617,27 @@ The supervisor has flagged an issue. Please:
                 loaded_skills=loaded_skills,
                 md_memory_context=md_memory_context,
                 wiki_context=wiki_context,
+                wiki_digest=wiki_digest,
                 archive_context=archive_context,
                 supervisor_context=supervisor_instr,
+                plan_progress=plan_progress,
             )
-            call_msgs = [SystemMessage(content=stable_sys + "\n\n" + ephemeral_context)] + messages
-            response  = await self.llm.ainvoke(call_msgs)
+            visible_messages = self._generate_visible_messages(messages)
+            call_msgs = [SystemMessage(content=stable_sys + "\n\n" + ephemeral_context)] + visible_messages
+            try:
+                response  = await self.llm.ainvoke(call_msgs)
+            except Exception as exc:
+                response = self._llm_failure_response("generate", exc, task_id)
+                content = response.content
+                output.print_ai(content)
+                plan_progress = self._mark_plan_current_blocked(task_id, llm_failure_summary(exc, "generate", task_id))
+                await self._finalize_md_memory(
+                    task_id,
+                    "failed",
+                    messages + [response],
+                    {"reason": llm_failure_summary(exc, "generate", task_id), "plan_progress": plan_progress},
+                )
+                return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
             content   = response.content
 
             # 打印（去重）
@@ -1642,10 +2647,14 @@ The supervisor has flagged an issue. Please:
             search_match  = re.search(r"<search>(.*?)</search>", content, re.DOTALL)
             install_match = re.search(r"<install_tool.*?>.*?</install_tool>", content, re.DOTALL)
             execute_match = re.search(r"<execute>(.*?)</execute>", content, re.DOTALL)
+            ask_user_match = re.search(r"<ask_user>(.*?)</ask_user>", content, re.DOTALL)
             answer_match  = re.search(r"<solution>(.*?)</solution>", content, re.DOTALL)
+            activate_match = re.search(r"<activate_batch\s+batch_id=[\"']?([^\"'\s>/]+)[\"']?\s*/?>", content, re.DOTALL)
 
             generated_action = (
                 "finish" if answer_match else
+                "ask_user" if ask_user_match else
+                "activate_batch" if activate_match else
                 "install" if install_match else
                 "execute" if execute_match else
                 "search" if search_match else
@@ -1659,15 +2668,51 @@ The supervisor has flagged an issue. Please:
                     "action": generated_action,
                     "content": content[:3000],
                     "current_plan_excerpt": str(current_plan)[:1200],
+                    "plan_progress": plan_progress,
                 },
             )
             if answer_match:
+                plan_progress = self._mark_plan_current_done(
+                    task_id,
+                    f"final solution generated: {answer_match.group(1).strip()[:500]}",
+                )
                 await self._finalize_md_memory(
                     task_id,
                     "completed",
                     messages + [response],
                     {"solution": answer_match.group(1).strip()[:3000]},
                 )
+
+            if activate_match and not answer_match:
+                update = self._activate_workflow_batch(state, activate_match.group(1).strip())
+                update_messages = update.get("messages", []) if isinstance(update, dict) else []
+                update_text = "\n".join(str(getattr(msg, "content", msg)) for msg in update_messages)
+                if "✅" in update_text:
+                    plan_progress = self._mark_plan_current_done(task_id, f"activate batch success: {activate_match.group(1).strip()}")
+                else:
+                    plan_progress = self._record_plan_current_evidence(task_id, "activate_batch_failed", update_text[:1000])
+                return {
+                    **update,
+                    "messages": [response] + update.get("messages", []),
+                    "plan_progress": plan_progress,
+                    "next_step": "generate",
+                }
+
+            if ask_user_match and not answer_match:
+                question = ask_user_match.group(1).strip()
+                plan_progress = self._record_plan_current_evidence(task_id, "generate_asked_user", question[:1000])
+                return {
+                    "messages": [response],
+                    "pending_human_question": {
+                        "type": "generate_question",
+                        "stage": "generate",
+                        "question": question,
+                        "context": str(current_plan)[:1200],
+                        "resume_step": "generate",
+                    },
+                    "plan_progress": plan_progress,
+                    "next_step": "ask_user",
+                }
 
             # Active RAG
             if search_match:
@@ -1681,16 +2726,21 @@ The supervisor has flagged an issue. Please:
                         rag_result = self.retriever.retrieve(query, target_datasets=[target_kb]) or "No info found."
                     except Exception as e:
                         rag_result = f"Search error: {e}"
+                if str(rag_result).startswith("Search error:"):
+                    plan_progress = self._record_plan_current_evidence(task_id, "search_failed", rag_result[:1000])
+                else:
+                    plan_progress = self._mark_plan_current_done(task_id, f"search completed: {query[:500]}")
                 tool_msg = HumanMessage(content=f"<rag_result>\n{query}\n{rag_result}\n</rag_result>")
-                return {"messages": [response, tool_msg], "next_step": "generate"}
+                return {"messages": [response, tool_msg], "plan_progress": plan_progress, "next_step": "generate"}
 
             next_step = "generate"
             if answer_match:    next_step = "finish"
+            elif ask_user_match: next_step = "ask_user"
             elif install_match: next_step = "install_subagent"
             elif execute_match:
                 next_step = "execute" if execute_match.group(1).strip() else "generate"
 
-            return {"messages": [response], "next_step": next_step, "retry_count": 0}
+            return {"messages": [response], "plan_progress": plan_progress, "next_step": next_step}
 
         # ════════════════════════════════════════════
         # Node 3: Execute
@@ -1702,23 +2752,65 @@ The supervisor has flagged an issue. Please:
 
             match = re.search(r"<execute>(.*?)</execute>", last_message, re.DOTALL)
             if not match:
+                plan_progress = self._record_plan_current_evidence(task_id, "execute_missing_code", "No <execute> body found.")
                 return {"messages": [HumanMessage(content="<observation>❌ No code found.</observation>")],
+                        "plan_progress": plan_progress,
                         "next_step": "generate"}
 
             original_code = match.group(1).strip()
             language = detect_script_language(original_code)
             code = normalize_script_code(original_code)
-            install_redirect = self._redirect_install_command(code, state.get("current_plan", "") or "")
+            selected_skills_state = state.get("active_skills", []) or state.get("selected_skills", [])
+            future_skills_state = state.get("future_skills", []) or []
+            install_redirect = self._redirect_install_command(code, selected_skills_state)
             if install_redirect:
+                plan_progress = self._record_plan_current_evidence(task_id, "redirect_to_install", install_redirect[:1000])
                 return {
                     "messages": [AIMessage(content=install_redirect)],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
                     "next_step": "install_subagent",
+                }
+
+            future_violation = self._workflow_future_skill_violation(code, selected_skills_state, future_skills_state)
+            if future_violation:
+                plan_progress = self._record_plan_current_evidence(task_id, "future_skill_guard", future_violation[:1000])
+                obs = f"<observation>❌ Workflow skill guard blocked execution.\n{future_violation}\n</observation>"
+                return {
+                    "messages": [HumanMessage(content=obs)],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "next_step": "generate",
+                }
+
+            runner_violation = self._selected_skill_env_runner_violation(code, selected_skills_state)
+            if runner_violation:
+                plan_progress = self._record_plan_current_evidence(task_id, "skill_env_runner_guard", runner_violation[:1000])
+                obs = f"<observation>❌ Skill runtime guard blocked execution.\n{runner_violation}\n</observation>"
+                return {
+                    "messages": [HumanMessage(content=obs)],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "next_step": "generate",
                 }
 
             # 中间件审查
             action, final_code = self.middleware.review_code(code, language)
             if action == "reject":
-                return {"messages": [HumanMessage(content="<observation>❌ Rejected by user.</observation>")],
+                rejection_reason = str(final_code or "User rejected generated code.")
+                plan_progress = self._record_plan_current_evidence(
+                    task_id,
+                    "execute_rejected_by_user",
+                    rejection_reason[:1000],
+                )
+                obs = (
+                    "<observation>❌ Rejected by user.\n"
+                    f"Reason/feedback: {rejection_reason}\n"
+                    "</observation>"
+                )
+                return {"messages": [HumanMessage(content=obs)],
+                        "plan_progress": plan_progress,
+                        "runtime_status": self._runtime_status_for_task(task_id),
                         "next_step": "generate"}
             if action == "quit":
                 await self._finalize_md_memory(
@@ -1736,7 +2828,8 @@ The supervisor has flagged an issue. Please:
                     any(keyword in final_code.lower() for keyword in ['correct', '正确', 'should', '应该', 'use', '使用']):
                     # 这是指导意见，不是代码
                     feedback_msg = f"<observation>⚠️ User provided guidance:\n{final_code}\n\nPlease regenerate code based on this feedback.</observation>"
-                    return {"messages": [HumanMessage(content=feedback_msg)], "next_step": "generate"}
+                    plan_progress = self._record_plan_current_evidence(task_id, "execute_user_guidance", final_code[:1000])
+                    return {"messages": [HumanMessage(content=feedback_msg)], "plan_progress": plan_progress, "next_step": "generate"}
                 else:   
                     # 这是修改后的代码，可以执行
                     code_to_run = normalize_script_code(final_code)
@@ -1744,18 +2837,45 @@ The supervisor has flagged an issue. Please:
             else:
                 code_to_run = normalize_script_code(final_code)  # approve 的情况  
 
-            selected_skills_state = state.get("selected_skills", [])
             install_redirect = self._redirect_install_command(code_to_run, selected_skills_state)
             if install_redirect:
+                plan_progress = self._record_plan_current_evidence(task_id, "redirect_to_install", install_redirect[:1000])
                 return {
                     "messages": [AIMessage(content=install_redirect)],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
                     "next_step": "install_subagent",
                 }
 
-            runtime_ready, runtime_redirect = self._ensure_skill_runtime_ready(selected_skills_state)
+            future_violation = self._workflow_future_skill_violation(code_to_run, selected_skills_state, future_skills_state)
+            if future_violation:
+                plan_progress = self._record_plan_current_evidence(task_id, "future_skill_guard", future_violation[:1000])
+                obs = f"<observation>❌ Workflow skill guard blocked execution.\n{future_violation}\n</observation>"
+                return {
+                    "messages": [HumanMessage(content=obs)],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "next_step": "generate",
+                }
+
+            runner_violation = self._selected_skill_env_runner_violation(code_to_run, selected_skills_state)
+            if runner_violation:
+                plan_progress = self._record_plan_current_evidence(task_id, "skill_env_runner_guard", runner_violation[:1000])
+                obs = f"<observation>❌ Skill runtime guard blocked execution.\n{runner_violation}\n</observation>"
+                return {
+                    "messages": [HumanMessage(content=obs)],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "next_step": "generate",
+                }
+
+            runtime_ready, runtime_redirect = self._ensure_skill_runtime_ready(selected_skills_state, task_id=task_id)
             if not runtime_ready and runtime_redirect:
+                plan_progress = self._record_plan_current_evidence(task_id, "runtime_not_ready", runtime_redirect[:1000])
                 return {
                     "messages": [AIMessage(content=runtime_redirect)],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
                     "next_step": "install_subagent",
                 }
 
@@ -1801,13 +2921,27 @@ The supervisor has flagged an issue. Please:
 
             if returncode == 0:
                 obs = (f"<observation>\n[{language}] ✅ Success ({duration:.1f}s)\n"
-                       f"STDOUT:\n{stdout[:2000]}\n</observation>")
+                       f"STDOUT:\n{stdout[:2000]}"
+                       f"{self._format_runtime_status_for_observation(task_id)}\n</observation>")
             else:
                 obs = (f"<observation>\n[{language}] ❌ Failed ({duration:.1f}s)\n"
                        f"STDOUT:\n{stdout[:2000]}\n"
-                       f"STDERR:\n{stderr[:1000]}\n</observation>")
+                       f"STDERR:\n{stderr[:1000]}"
+                       f"{self._format_runtime_status_for_observation(task_id)}\n</observation>")
 
             output.print_observation(obs)
+            if returncode == 0:
+                plan_progress = self._record_plan_current_evidence(
+                    task_id,
+                    "execute_success",
+                    f"{script_file}\nSTDOUT:\n{stdout[:1000]}",
+                )
+            else:
+                plan_progress = self._record_plan_current_evidence(
+                    task_id,
+                    "execute_failed",
+                    f"{script_file}\nSTDERR:\n{stderr[:1000]}",
+                )
             await self._observe_md_memory(
                 task_id,
                 "execute",
@@ -1819,9 +2953,15 @@ The supervisor has flagged an issue. Please:
                     "duration_seconds": round(duration, 3),
                     "stdout": stdout[:3000],
                     "stderr": stderr[:1500],
+                    "plan_progress": plan_progress,
                 },
             )
-            return {"messages": [HumanMessage(content=obs)], "next_step": "supervisor"}
+            return {
+                "messages": [HumanMessage(content=obs)],
+                "plan_progress": plan_progress,
+                "runtime_status": self._runtime_status_for_task(task_id),
+                "next_step": "supervisor",
+            }
 
         execute_node = error_recovery_middleware(self.llm, self.retriever)(execute_logic)
 
@@ -1843,7 +2983,23 @@ The supervisor has flagged an issue. Please:
                     "supervisor_verdict": update.get("supervisor_verdict") if isinstance(update, dict) else "",
                 },
             )
+            if isinstance(update, dict):
+                verdict = str(update.get("supervisor_verdict") or "")
+                if verdict in {"PASS", "WARN"}:
+                    plan_progress = self._mark_plan_current_done(task_id, f"supervisor_verdict: {verdict}")
+                    update["plan_progress"] = plan_progress
+                elif verdict == "RETRY":
+                    plan_progress = self._record_plan_current_evidence(task_id, "supervisor_verdict", verdict)
+                    update["plan_progress"] = plan_progress
+                elif verdict == "ESCALATE":
+                    plan_progress = self._mark_plan_current_blocked(task_id, "supervisor_verdict: ESCALATE")
+                    update["plan_progress"] = plan_progress
             if isinstance(update, dict) and update.get("next_step") == "finish":
+                if not update.get("plan_progress"):
+                    update["plan_progress"] = self._mark_plan_current_blocked(
+                        task_id,
+                        f"supervisor_finished: {str(update.get('supervisor_verdict') or 'finish')}",
+                    )
                 await self._finalize_md_memory(
                     task_id,
                     "failed",
@@ -1861,7 +3017,7 @@ The supervisor has flagged an issue. Please:
             task_id  = state.get("task_id", "default")
             context_summary = state.get("requirements_summary", "No context.")
             current_plan_for_install = state.get("current_plan", "")
-            selected_for_install = state.get("selected_skills", [])
+            selected_for_install = state.get("active_skills", []) or state.get("selected_skills", [])
             if current_plan_for_install:
                 context_summary += f"\n\nCurrent approved plan:\n{current_plan_for_install[:2000]}"
             runtime_defaults = self._skill_runtime_defaults(selected_for_install)
@@ -1893,6 +3049,42 @@ The supervisor has flagged an issue. Please:
                 default_env = specified_env if specified_env and specified_env != "default" else (
                     runtime_defaults.get("env") or f"bio_{tool_name}"
                 )
+
+            registered_reuse = self._reuse_registered_runtime_for_install(
+                selected_for_install,
+                specified_env,
+                task_id,
+            )
+            if registered_reuse.get("ok"):
+                final_res = registered_reuse["message"]
+                plan_progress = self._mark_plan_current_done(task_id, final_res)
+                self._record_installed_skill_environment(selected_for_install, registered_reuse["env"], final_res)
+                await self._observe_md_memory(
+                    task_id,
+                    "install_subagent",
+                    state.get("messages", []) + [AIMessage(content=f"<observation>{final_res}</observation>")],
+                    {
+                        "tool_name": tool_name,
+                        "target_env": registered_reuse["env"],
+                        "result": final_res,
+                        "plan_progress": plan_progress,
+                        "runtime_status": self._runtime_status_for_task(task_id),
+                    },
+                )
+                return {
+                    "messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "next_step": "generate",
+                }
+            if registered_reuse and registered_reuse.get("env"):
+                default_env = registered_reuse["env"]
+                context_summary += (
+                    f"\n\n[REGISTERED RUNTIME CHECK]\n"
+                    f"- Registered environment: {registered_reuse['env']}\n"
+                    f"- Healthcheck failed: {registered_reuse.get('detail', 'unknown')}\n"
+                    f"- Repair or reinstall this same environment. Do not create a duplicate environment unless the user explicitly overrides the env name.\n"
+                )
             reuse_match = None
             if self.pm and any([
                 runtime_defaults.get("packages"),
@@ -1915,6 +3107,7 @@ The supervisor has flagged an issue. Please:
                             f"✅ Reusing existing environment '{reuse_match['env']}' for "
                             f"{', '.join(runtime_defaults.get('selected', []) or [tool_name])}."
                         )
+                        plan_progress = self._mark_plan_current_done(task_id, final_res)
                         self._record_installed_skill_environment(selected_for_install, reuse_match["env"], final_res)
                         await self._observe_md_memory(
                             task_id,
@@ -1924,10 +3117,14 @@ The supervisor has flagged an issue. Please:
                                 "tool_name": tool_name,
                                 "target_env": reuse_match["env"],
                                 "result": final_res,
+                                "plan_progress": plan_progress,
+                                "runtime_status": self._runtime_status_for_task(task_id),
                             },
                         )
                         return {
                             "messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
+                            "plan_progress": plan_progress,
+                            "runtime_status": self._runtime_status_for_task(task_id),
                             "next_step": "generate",
                         }
                     context_summary += (
@@ -2015,6 +3212,11 @@ The supervisor has flagged an issue. Please:
 
             self._record_installed_skill_environment(selected_for_install, target_env, final_res)
             self._install_env_choices.pop(choice_key, None)
+            install_success = "failed" not in str(final_res).lower() and "❌" not in str(final_res)
+            if install_success:
+                plan_progress = self._mark_plan_current_done(task_id, str(final_res)[:1000])
+            else:
+                plan_progress = self._record_plan_current_evidence(task_id, "install_failed", str(final_res)[:1000])
             await self._observe_md_memory(
                 task_id,
                 "install_subagent",
@@ -2023,34 +3225,48 @@ The supervisor has flagged an issue. Please:
                     "tool_name": tool_name,
                     "target_env": target_env,
                     "result": final_res[:3000],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
                 },
             )
 
             return {"messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
                     "next_step": "generate"}
 
         # ════════════════════════════════════════════
         # 节点注册 & 连线
         # ════════════════════════════════════════════
-        workflow.add_node("consultant",      consultant)
-        workflow.add_node("planner",         planner)
-        workflow.add_node("plan_review",     plan_review)
-        workflow.add_node("generate",        generate)
-        workflow.add_node("execute",         execute_node)
-        workflow.add_node("supervisor",      supervisor)          # ← 新节点
-        workflow.add_node("install_subagent", install_subagent)
+        workflow.add_node("consultant",      self._profile_node("consultant", consultant))
+        workflow.add_node("ask_user",        self._profile_node("ask_user", ask_user))
+        workflow.add_node("planner",         self._profile_node("planner", planner))
+        workflow.add_node("plan_review",     self._profile_node("plan_review", plan_review))
+        workflow.add_node("generate",        self._profile_node("generate", generate))
+        workflow.add_node("execute",         self._profile_node("execute", execute_node))
+        workflow.add_node("supervisor",      self._profile_node("supervisor", supervisor))          # ← 新节点
+        workflow.add_node("install_subagent", self._profile_node("install_subagent", install_subagent))
 
         workflow.add_edge(START, "consultant")
 
         def consultant_router(state):
             step = state.get("next_step")
             if step == "planner":     return "planner"
+            if step == "ask_user":    return "ask_user"
             if step == "human_input": return END
             return "consultant"
 
         workflow.add_conditional_edges("consultant", consultant_router,
-                                       ["planner", "consultant", END])
+                                       ["planner", "ask_user", "consultant", END])
 
+        def ask_user_router(state):
+            step = state.get("next_step")
+            if step == "generate": return "generate"
+            if step == "planner": return "planner"
+            return "consultant"
+
+        workflow.add_conditional_edges("ask_user", ask_user_router,
+                                       ["generate", "planner", "consultant"])
         workflow.add_edge("planner",     "plan_review")
         workflow.add_edge("install_subagent", "generate")
 
@@ -2058,6 +3274,7 @@ The supervisor has flagged an issue. Please:
             step = state.get("next_step")
             if step == "planner": return "planner"
             if step == "finish":  return END
+            if step == "human_input": return END
             return "generate"
 
         workflow.add_conditional_edges("plan_review", plan_review_router,
@@ -2066,12 +3283,13 @@ The supervisor has flagged an issue. Please:
         def generate_router(state):
             step = state.get("next_step")
             if step == "finish":         return END
+            if step == "ask_user":       return "ask_user"
             if step == "execute":        return "execute"
             if step == "install_subagent": return "install_subagent"
             return "generate"
 
         workflow.add_conditional_edges("generate", generate_router,
-                                       ["execute", "install_subagent", "generate", END])
+                                       ["ask_user", "execute", "install_subagent", "generate", END])
 
         # execute → supervisor → generate（核心新链路）
         workflow.add_edge("execute", "supervisor")
@@ -2090,6 +3308,20 @@ The supervisor has flagged an issue. Please:
     #  主运行入口
     # ────────────────────────────────────────────────────────────
 
+    def _messages_for_memory_status(self, task_id: str, config: Dict[str, Any], runner_input: Any) -> List[BaseMessage]:
+        """Return the best available message list for the memory pressure display."""
+        try:
+            snapshot = self.app.get_state(config)
+            values = snapshot.values if snapshot and snapshot.values else {}
+            messages = values.get("messages", []) if isinstance(values, dict) else []
+            if messages:
+                return list(messages)
+        except Exception:
+            pass
+        if isinstance(runner_input, dict):
+            return list(runner_input.get("messages", []) or [])
+        return []
+
     async def go(
         self,
         input_data: Any,
@@ -2097,8 +3329,10 @@ The supervisor has flagged an issue. Please:
         resume: bool = False,
     ):
         if not task_id:
-            task_id = f"task_{int(time.time())}"
+            task_id = self._auto_task_id_for_prompt(input_data) or f"task_{int(time.time())}"
         config = {"configurable": {"thread_id": task_id}}
+        self.profiler.start_task(task_id)
+        self._sync_runtime_registries_at_startup()
 
         output.reset_for_task()
 
@@ -2109,16 +3343,15 @@ The supervisor has flagged an issue. Please:
             prompt = input_data
             project_id = self.default_project_id
             stable_record = self._get_or_create_stable_prompt(task_id, project_id)
-            md_resume = self._md_resume_context(task_id) if resume else ""
             if not resume or not self.md_memory_manager.task_exists(task_id):
                 self.md_memory_manager.initialize_task(task_id, str(prompt), status="running")
             if self.state_manager:
                 if resume:
-                    prompt = md_resume + self.state_manager.resume_task(task_id) + "\n" + prompt
+                    prompt = self._build_resume_prompt(task_id, prompt)
                 else:
                     self.state_manager.create_task(task_id, prompt)
             elif resume:
-                prompt = self._md_resume_context(task_id) + "\n" + prompt
+                prompt = self._build_resume_prompt(task_id, prompt)
             runner_input = {
                 "messages": [HumanMessage(content=prompt)],
                 "task_id": task_id,
@@ -2126,14 +3359,21 @@ The supervisor has flagged an issue. Please:
                 "project_id": project_id,
                 "stable_system_prompt": stable_record["prompt"],
                 "core_memory_loaded_at": stable_record["core_memory_loaded_at"],
+                "runtime_status": self._runtime_status_for_task(task_id),
             }
             print(f"\n🚀 Task: {task_id}")
 
         # 内存状态展示
-        self.memory_manager.print_status()
+        self.memory_manager.print_status(
+            self._messages_for_memory_status(task_id, config, runner_input)
+        )
 
-        async for event in self.app.astream(runner_input, config=config):
-            pass   # 所有打印由 OutputRouter 在节点内处理，此处不重复
+        with self.profiler.task_context(task_id):
+            try:
+                async for event in self.app.astream(runner_input, config=config):
+                    pass   # 所有打印由 OutputRouter 在节点内处理，此处不重复
+            finally:
+                self.profiler.flush(task_id)
 
     # ────────────────────────────────────────────────────────────
     #  交互模式
@@ -2150,9 +3390,12 @@ Commands:
   /resume <id>        Resume task
   /memory             Show memory status
   /memory search <q>  Search Markdown memory
+  /memory lint        Check Core/Wiki memory boundary and conflicts
+  /memory promote     Promote safe wiki index refs into Core project memory
   /wiki               Show wiki memory status
   /wiki search <q>    Search LLM wiki memory
   /wiki ingest        Curate pending raw events into wiki pages
+  /wiki compile       Rebuild wiki digest and claims cache
   /wiki lint          Check wiki links and source metadata
   /wiki page <id>     Show a wiki page by path or title
   /wiki review        Show pending wiki review items
@@ -2174,9 +3417,15 @@ Commands:
         while True:
             try:
                 cwd_name  = os.path.basename(os.getcwd()) or "/"
-                user_input = await asyncio.to_thread(
-                    input, f"\n{Fore.CYAN}[{current_session_id[:20]}]{Fore.WHITE} {cwd_name}> {Style.RESET_ALL}"
-                )
+                try:
+                    user_input = await self._aprompt_user(
+                        current_session_id,
+                        "interactive_prompt",
+                        f"\n{Fore.CYAN}[{current_session_id[:20]}]{Fore.WHITE} {cwd_name}> {Style.RESET_ALL}",
+                        payload={"cwd": os.getcwd()},
+                    )
+                except HumanInputUnavailable:
+                    continue
                 user_input = user_input.strip()
                 if not user_input:
                     continue
@@ -2205,6 +3454,24 @@ Commands:
                     )
                     continue
 
+                if user_input == "/memory lint":
+                    wiki_lint = self.wiki_memory_manager.lint(project_id=self.default_project_id)
+                    core_lint = self.core_memory_store.lint_project_memory(
+                        self.default_project_id,
+                        wiki_claims=self.wiki_memory_manager.read_claims_index(self.default_project_id),
+                    )
+                    output.page_text(
+                        "Memory Lint",
+                        f"{core_lint}\n\n{wiki_lint}",
+                        Fore.CYAN,
+                    )
+                    continue
+
+                if user_input == "/memory promote":
+                    result = self.wiki_memory_manager.sync_project_index_fields(project_id=self.default_project_id)
+                    output.page_text("Memory Promote", result, Fore.CYAN)
+                    continue
+
                 if user_input.startswith("/wiki search "):
                     query = user_input.split(" ", 2)[2].strip()
                     hits = self.wiki_memory_manager.search(
@@ -2218,6 +3485,11 @@ Commands:
                 if user_input == "/wiki ingest":
                     result = await self.wiki_memory_manager.ingest_pending(project_id=self.default_project_id)
                     output.page_text("Wiki Ingest", result, Fore.CYAN)
+                    continue
+
+                if user_input == "/wiki compile":
+                    result = self.wiki_memory_manager.compile_digest(project_id=self.default_project_id)
+                    output.page_text("Wiki Compile", result, Fore.CYAN)
                     continue
 
                 if user_input == "/wiki lint":
@@ -2276,6 +3548,7 @@ Commands:
                 if user_input.startswith("/new"):
                     if self.state_manager:
                         self.state_manager.update_task_status(current_session_id, "suspended")
+                    self.profiler.finish_task(current_session_id, "suspended")
                     await self._finalize_md_memory(
                         current_session_id,
                         "interrupted",
@@ -2291,6 +3564,7 @@ Commands:
                 if user_input == "/stop":
                     if self.state_manager:
                         self.state_manager.update_task_status(current_session_id, "cancelled")
+                    self.profiler.finish_task(current_session_id, "cancelled")
                     await self._finalize_md_memory(
                         current_session_id,
                         "cancelled",
@@ -2313,7 +3587,50 @@ Commands:
                 if user_input.startswith("/resume "):
                     tid = user_input.split(" ", 1)[1].strip()
                     current_session_id = tid
-                    await self.go("", task_id=tid, resume=True)
+                    waiting = load_waiting_state(self.data_path, tid)
+                    if waiting:
+                        output.page_text(
+                            f"Waiting State | {tid}",
+                            json.dumps(waiting, ensure_ascii=False, indent=2),
+                            Fore.CYAN,
+                        )
+                    config = {"configurable": {"thread_id": tid}}
+                    snapshot = self.app.get_state(config)
+                    if snapshot.tasks and snapshot.tasks[0].interrupts:
+                        payload = snapshot.tasks[0].interrupts[0].value
+                        output.page_text(
+                            f"Pending Interrupt | {tid}",
+                            json.dumps(payload, ensure_ascii=False, indent=2)
+                            if isinstance(payload, dict)
+                            else str(payload),
+                            Fore.CYAN,
+                        )
+                        wait_started = time.perf_counter()
+                        wait_started_at = timestamp_now()
+                        try:
+                            user_response = await self._aprompt_user(
+                                tid,
+                                "resume_interrupt",
+                                f"{Fore.YELLOW}Resume response (q=quit) > {Style.RESET_ALL}",
+                                payload=payload if isinstance(payload, dict) else {"content": payload},
+                                started_at=wait_started_at,
+                            )
+                        except HumanInputUnavailable:
+                            continue
+                        self._record_human_wait(
+                            tid,
+                            "resume_interrupt",
+                            wait_started,
+                            user_response,
+                            payload if isinstance(payload, dict) else {"content": payload},
+                            started_at=wait_started_at,
+                        )
+                        if user_response.strip().lower() in ["q", "quit", "exit"]:
+                            self.profiler.finish_task(tid, "cancelled")
+                            continue
+                        await self.go(Command(resume=user_response), task_id=tid, resume=True)
+                    else:
+                        await self.go("", task_id=tid, resume=True)
                     continue
 
                 if user_input == "/debug":
@@ -2349,12 +3666,18 @@ Commands:
 
                 # ── Agent 处理（含中断循环）────────────────────
                 next_input = user_input
+                if self._should_auto_rename_session(current_session_id):
+                    suggested_session_id = self._auto_task_id_for_prompt(next_input, fallback_prefix="session")
+                    if suggested_session_id:
+                        current_session_id = suggested_session_id
+                        print(f"{Fore.GREEN}● Task title: {current_session_id}{Style.RESET_ALL}")
                 while True:
                     await self.go(next_input, task_id=current_session_id)
                     config   = {"configurable": {"thread_id": current_session_id}}
                     snapshot = self.app.get_state(config)
 
                     if not (snapshot.tasks and snapshot.tasks[0].interrupts):
+                        self.profiler.finish_task(current_session_id, "completed")
                         break
 
                     payload = snapshot.tasks[0].interrupts[0].value
@@ -2362,11 +3685,37 @@ Commands:
 
                     # 代码审查
                     if isinstance(payload, dict) and payload.get("type") == "code_review":
-                        risk = payload.get("risk", {}).get("level", "MEDIUM")
+                        risk_info = payload.get("risk", {})
+                        risk = risk_info.get("level") or risk_info.get("risk_level") or "MEDIUM"
                         print(f"\n{Fore.YELLOW}⚠️  CODE REVIEW  |  Risk: {risk}{Style.RESET_ALL}")
+                        wait_started = time.perf_counter()
+                        wait_started_at = timestamp_now()
                         output.page_text("Code Review", payload.get('content', ''), Fore.CYAN)
-                        user_response = await asyncio.to_thread(
-                            input, f"{Fore.YELLOW}[y/n/q] > {Style.RESET_ALL}"
+                        try:
+                            user_response = await self._aprompt_user(
+                                current_session_id,
+                                "code_review",
+                                f"{Fore.YELLOW}[y/Enter=run, n=reject, q=quit, e:<code>=edit, text=feedback] > {Style.RESET_ALL}",
+                                payload=payload,
+                                started_at=wait_started_at,
+                            )
+                        except HumanInputUnavailable as exc:
+                            self._record_human_wait(
+                                current_session_id,
+                                "code_review",
+                                wait_started,
+                                f"<waiting_user:{type(exc).__name__}>",
+                                payload,
+                                started_at=wait_started_at,
+                            )
+                            break
+                        self._record_human_wait(
+                            current_session_id,
+                            "code_review",
+                            wait_started,
+                            user_response,
+                            payload,
+                            started_at=wait_started_at,
                         )
 
                     # 环境选择
@@ -2377,26 +3726,113 @@ Commands:
                         print(f"\n{Fore.CYAN}🔧 Install '{tool}' → env [{dflt}]?{Style.RESET_ALL}")
                         if reason:
                             print(f"{Fore.CYAN}{reason}{Style.RESET_ALL}")
-                        user_response = await asyncio.to_thread(
-                            input, f"Target env (Enter={dflt}) > "
-                        )
+                        wait_started = time.perf_counter()
+                        wait_started_at = timestamp_now()
+                        try:
+                            user_response = await self._aprompt_user(
+                                current_session_id,
+                                "env_selection",
+                                f"Target env (Enter={dflt}) > ",
+                                payload=payload,
+                                started_at=wait_started_at,
+                            )
+                        except HumanInputUnavailable as exc:
+                            self._record_human_wait(
+                                current_session_id,
+                                "env_selection",
+                                wait_started,
+                                f"<waiting_user:{type(exc).__name__}>",
+                                payload,
+                                started_at=wait_started_at,
+                            )
+                            break
+                        raw_response = user_response
                         if not user_response.strip():
                             user_response = dflt
+                        self._record_human_wait(
+                            current_session_id,
+                            "env_selection",
+                            wait_started,
+                            raw_response,
+                            payload,
+                            started_at=wait_started_at,
+                        )
+
+                    elif isinstance(payload, dict) and payload.get("type") in {"consultant_question", "generate_question"}:
+                        wait_started = time.perf_counter()
+                        wait_started_at = timestamp_now()
+                        prompt_type = payload.get("type", "human_question")
+                        try:
+                            user_response = await self._aprompt_user(
+                                current_session_id,
+                                prompt_type,
+                                f"{Fore.YELLOW}Response (q=quit) > {Style.RESET_ALL}",
+                                payload=payload,
+                                started_at=wait_started_at,
+                            )
+                        except HumanInputUnavailable as exc:
+                            self._record_human_wait(
+                                current_session_id,
+                                prompt_type,
+                                wait_started,
+                                f"<waiting_user:{type(exc).__name__}>",
+                                payload,
+                                started_at=wait_started_at,
+                            )
+                            break
+                        self._record_human_wait(
+                            current_session_id,
+                            prompt_type,
+                            wait_started,
+                            user_response,
+                            payload,
+                            started_at=wait_started_at,
+                        )
 
                     # 通用中断
                     else:
-                        user_response = await asyncio.to_thread(
-                            input, f"{Fore.YELLOW}Response (q=quit) > {Style.RESET_ALL}"
+                        wait_started = time.perf_counter()
+                        wait_started_at = timestamp_now()
+                        generic_payload = payload if isinstance(payload, dict) else {"content": payload}
+                        try:
+                            user_response = await self._aprompt_user(
+                                current_session_id,
+                                "interrupt",
+                                f"{Fore.YELLOW}Response (q=quit) > {Style.RESET_ALL}",
+                                payload=generic_payload,
+                                started_at=wait_started_at,
+                            )
+                        except HumanInputUnavailable as exc:
+                            self._record_human_wait(
+                                current_session_id,
+                                "interrupt",
+                                wait_started,
+                                f"<waiting_user:{type(exc).__name__}>",
+                                generic_payload,
+                                started_at=wait_started_at,
+                            )
+                            break
+                        self._record_human_wait(
+                            current_session_id,
+                            "interrupt",
+                            wait_started,
+                            user_response,
+                            generic_payload,
+                            started_at=wait_started_at,
                         )
 
                     if user_response.strip().lower() in ["q", "quit", "exit"]:
+                        self.profiler.finish_task(current_session_id, "cancelled")
                         break
                     next_input = Command(resume=user_response)
 
             except KeyboardInterrupt:
-                print(f"\n{Fore.YELLOW}⚡ Interrupted{Style.RESET_ALL}")
+                restore_terminal_state()
+                print(f"\n{Fore.YELLOW}⚡ Interrupted. Exiting interactive mode.{Style.RESET_ALL}")
                 if self.state_manager:
                     self.state_manager.update_task_status(current_session_id, "interrupted")
+                self.profiler.finish_task(current_session_id, "interrupted")
+                break
             except Exception:
                 import traceback
                 traceback.print_exc()
@@ -2408,11 +3844,17 @@ Commands:
 
 def restore_terminal():
     try:
-        if os.name == "posix":
-            os.system("stty echo")
+        restore_terminal_state()
     except Exception:
         pass
     print("\n👋 Terminal restored.")
+
+
+def _handle_suspend(signum, frame):
+    restore_terminal_state()
+    signal.signal(signal.SIGTSTP, signal.SIG_DFL)
+    os.kill(os.getpid(), signal.SIGTSTP)
+    signal.signal(signal.SIGTSTP, _handle_suspend)
 
 
 async def main():
@@ -2444,6 +3886,11 @@ async def main():
 
 if __name__ == "__main__":
     atexit.register(restore_terminal)
+    if hasattr(signal, "SIGTSTP"):
+        try:
+            signal.signal(signal.SIGTSTP, _handle_suspend)
+        except Exception:
+            pass
     try:
         asyncio.run(main())
     except KeyboardInterrupt:

@@ -275,7 +275,7 @@ gs = fig.add_gridspec(4, 3, height_ratios=[1.1, 0.9, 0.9, 0.9])
 ax10, ax11, ax12 = [fig.add_subplot(gs[3, i]) for i in range(3)]
 
 # Example: violin plot of body methylation per context
-import seaborn as sns   # pip install seaborn if needed
+import seaborn as sns   # if missing, delegate: <install_tool env="bio_methylation_plot">seaborn</install_tool>
 for ctx, ax in zip(contexts, [ax10, ax11, ax12]):
     body_vals = {s: region_means[ctx][s]["body"] for s in sample_keys}
     ax.violinplot(list(body_vals.values()), positions=range(len(sample_keys)))

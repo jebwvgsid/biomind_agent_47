@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -51,6 +52,14 @@ def _msg_tokens(msg) -> int:
     if isinstance(msg, dict):
         return count_tokens(str(msg.get("content", "")))
     return count_tokens(str(msg))
+
+
+def _safe_print(text: str):
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        encoding = sys.stdout.encoding or "utf-8"
+        print(str(text).encode(encoding, errors="replace").decode(encoding, errors="replace"))
 
 
 # ─────────────────────────────────────────────────────────────
@@ -120,6 +129,8 @@ class MemoryManager:
         max_tokens: int = 200_000,
         compress_threshold: float = 0.85,     # 85% 时触发压缩
         keep_recent_tokens: int = 40_000,     # 压缩后保留最近 40K tokens
+        summary_max_words: Optional[int] = None,
+        audit_compressions: bool = True,
     ):
         self.llm = llm
         self.archive_dir = Path(archive_dir)
@@ -127,10 +138,13 @@ class MemoryManager:
         self.max_tokens = max_tokens
         self.compress_threshold = compress_threshold
         self.keep_recent_tokens = keep_recent_tokens
+        self.summary_max_words = self._resolve_summary_max_words(summary_max_words)
+        self.audit_compressions = audit_compressions
 
         self._compression_count: int = 0
         self._chunks: List[MemoryChunk] = []
         self._index_file = self.archive_dir / "memory_index.json"
+        self._audit_file = self.archive_dir / "compression_audit.jsonl"
         self._load_index()
 
     # ── 公开接口 ────────────────────────────────────────────
@@ -148,8 +162,8 @@ class MemoryManager:
         if total < threshold:
             return messages, False
 
-        print(f"\n{Fore.YELLOW}🗜️  [Memory] Token usage {total:,}/{self.max_tokens:,} "
-              f"(≥{self.compress_threshold*100:.0f}%). Compressing...{Style.RESET_ALL}")
+        _safe_print(f"\n{Fore.YELLOW}🗜️  [Memory] Token usage {total:,}/{self.max_tokens:,} "
+                    f"(≥{self.compress_threshold*100:.0f}%). Compressing...{Style.RESET_ALL}")
 
         compressed_msgs, archived_msgs = self._split_messages(messages)
 
@@ -158,7 +172,7 @@ class MemoryManager:
             return messages, False
 
         # 1. 生成摘要
-        summary = await self._summarize(archived_msgs, task_id)
+        summary, prompt = await self._summarize_with_prompt(archived_msgs, task_id)
 
         # 2. 持久化原始消息
         archive_path = self._write_archive(archived_msgs, task_id)
@@ -177,9 +191,8 @@ class MemoryManager:
             archive_file=str(archive_path),
         )
         self._chunks.append(chunk)
-        self._save_index()
         self._compression_count += 1
-
+        self._save_index()
         # 5. 将摘要注入保留消息的最前方
         from langchain_core.messages import SystemMessage
         summary_msg = SystemMessage(
@@ -192,8 +205,18 @@ class MemoryManager:
         new_messages = [summary_msg] + compressed_msgs
 
         new_total = sum(_msg_tokens(m) for m in new_messages)
-        print(f"{Fore.GREEN}✓ Compressed: {total:,} → {new_total:,} tokens "
-              f"({archive_path.name}){Style.RESET_ALL}")
+        if self.audit_compressions:
+            self._write_compression_audit(
+                chunk=chunk,
+                prompt=prompt,
+                summary=summary,
+                total_tokens_before=total,
+                total_tokens_after=new_total,
+                archived_message_count=len(archived_msgs),
+                retained_message_count=len(compressed_msgs),
+            )
+        _safe_print(f"{Fore.GREEN}✓ Compressed: {total:,} → {new_total:,} tokens "
+                    f"({archive_path.name}){Style.RESET_ALL}")
 
         return new_messages, True
 
@@ -249,6 +272,25 @@ class MemoryManager:
                         pass
         return records
 
+    def read_compression_audit(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Read compression audit records, newest last by default."""
+        if not self._audit_file.exists():
+            return []
+        records: List[Dict[str, Any]] = []
+        for line in self._audit_file.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                data = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(data, dict):
+                records.append(data)
+        if limit is not None and limit >= 0:
+            return records[-limit:]
+        return records
+
     def status(self, messages: List[Any] = None) -> MemoryStatus:
         used = sum(_msg_tokens(m) for m in messages) if messages else 0
         return MemoryStatus(
@@ -260,62 +302,180 @@ class MemoryManager:
 
     def print_status(self, messages: List[Any] = None):
         s = self.status(messages)
-        print(f"\n📊 Memory: {s}")
+        _safe_print(f"\n📊 Memory: {s}")
 
     # ── 内部方法 ────────────────────────────────────────────
+
+    @staticmethod
+    def _resolve_summary_max_words(value: Optional[int]) -> int:
+        if value is None:
+            raw = os.getenv("BIOMIND_SUMMARY_MAX_WORDS", "").strip()
+            if raw:
+                try:
+                    value = int(raw)
+                except ValueError:
+                    logger.warning("Invalid BIOMIND_SUMMARY_MAX_WORDS=%r; using 900.", raw)
+                    value = None
+        try:
+            resolved = int(value) if value is not None else 900
+        except (TypeError, ValueError):
+            resolved = 900
+        return max(200, resolved)
+
+    @staticmethod
+    def _is_memory_compression_message(message: Any) -> bool:
+        content = str(getattr(message, "content", message))
+        return content.lstrip().startswith("[Memory Compression #")
+
+    @staticmethod
+    def _is_protected_plan_message(message: Any) -> bool:
+        content = str(getattr(message, "content", message))
+        return content.lstrip().startswith("[Protected Plan]")
+
+    @staticmethod
+    def _is_system_message(message: Any) -> bool:
+        try:
+            from langchain_core.messages import SystemMessage
+            if isinstance(message, SystemMessage):
+                return True
+        except Exception:
+            pass
+
+        message_type = str(getattr(message, "type", "") or "").lower()
+        message_role = str(getattr(message, "role", "") or "").lower()
+        if message_type == "system" or message_role == "system":
+            return True
+        return type(message).__name__ == "SystemMessage"
+
+    @staticmethod
+    def _clip_middle(text: str, limit: int) -> str:
+        text = str(text)
+        if len(text) <= limit:
+            return text
+        head = max(1, limit // 2)
+        tail = max(1, limit - head)
+        skipped = len(text) - limit
+        return f"{text[:head]}\n... [truncated {skipped} chars] ...\n{text[-tail:]}"
+
+    def _message_summary_excerpt(self, message: Any) -> str:
+        role = type(message).__name__.replace("Message", "")
+        content = str(message.content) if hasattr(message, "content") else str(message)
+        lower = content.lower()
+
+        if "<observation>" in lower or "stdout:" in lower or "stderr:" in lower:
+            limit = 2_500
+        elif "<execute>" in lower:
+            limit = 2_500
+        elif role == "Human":
+            limit = 1_500
+        elif role == "AI":
+            limit = 900
+        else:
+            limit = 1_200
+        return self._clip_middle(content, limit)
 
     def _split_messages(self, messages: List[Any]) -> Tuple[List[Any], List[Any]]:
         """
         从消息列表末尾保留 keep_recent_tokens 的内容，
         其余全部归档。
-        保证：第一条 SystemMessage（系统 Prompt）永远保留。
+        保留：第一条稳定 SystemMessage、已有压缩摘要、最近对话。
+        其他旧 SystemMessage 也会进入归档，避免长任务里系统反馈无限积累。
         """
-        from langchain_core.messages import SystemMessage
+        retained_indices: set[int] = set()
+        stable_system_seen = False
+        for idx, message in enumerate(messages):
+            if not self._is_system_message(message):
+                continue
+            if self._is_memory_compression_message(message):
+                retained_indices.add(idx)
+                continue
+            if self._is_protected_plan_message(message):
+                retained_indices.add(idx)
+                continue
+            if not stable_system_seen:
+                retained_indices.add(idx)
+                stable_system_seen = True
 
-        # 找到最前面的 SystemMessage（主 Prompt）
-        system_msgs = [m for m in messages if isinstance(m, SystemMessage)]
-        non_system = [m for m in messages if not isinstance(m, SystemMessage)]
-
-        # 从后向前收集保留列表
-        keep: List[Any] = []
         keep_tokens = 0
-        for m in reversed(non_system):
-            t = _msg_tokens(m)
+        for idx in range(len(messages) - 1, -1, -1):
+            if idx in retained_indices:
+                continue
+            message = messages[idx]
+            if self._is_system_message(message):
+                continue
+            t = _msg_tokens(message)
             if keep_tokens + t > self.keep_recent_tokens:
                 break
-            keep.insert(0, m)
+            retained_indices.add(idx)
             keep_tokens += t
 
-        to_archive = [m for m in non_system if m not in keep]
-
-        # 保留消息 = 系统消息 + 最近内容
-        compressed = system_msgs + keep
+        compressed = [message for idx, message in enumerate(messages) if idx in retained_indices]
+        to_archive = [message for idx, message in enumerate(messages) if idx not in retained_indices]
         return compressed, to_archive
+
+    async def _summarize_with_prompt(self, messages: List[Any], task_id: str) -> Tuple[str, str]:
+        prompt = self._build_summary_prompt(messages, task_id)
+        from langchain_core.messages import HumanMessage
+        try:
+            response = await self.llm.ainvoke([HumanMessage(content=prompt)])
+            return response.content.strip(), prompt
+        except Exception as e:
+            logger.error(f"Summarization failed: {e}")
+            fallback = "\n".join(
+                str(getattr(m, "content", m))[:200] for m in messages[-5:]
+            )
+            return f"[Summarization failed. Fallback excerpt]\n{fallback}", prompt
 
     async def _summarize(self, messages: List[Any], task_id: str) -> str:
         """调用 LLM 对一段对话生成结构化摘要"""
-        from langchain_core.messages import HumanMessage
+        summary, _prompt = await self._summarize_with_prompt(messages, task_id)
+        return summary
 
+    def _build_summary_prompt(self, messages: List[Any], task_id: str) -> str:
         # 序列化消息为可读文本
         text_parts = []
         for m in messages:
             role = type(m).__name__.replace("Message", "")
-            content = str(m.content) if hasattr(m, "content") else str(m)
-            text_parts.append(f"[{role}]: {content[:800]}")   # 截断超长消息
+            text_parts.append(f"[{role}]: {self._message_summary_excerpt(m)}")
 
         conversation_text = "\n\n".join(text_parts)
 
-        prompt = f"""You are a memory archivist for a bioinformatics AI agent.
-Summarize the following conversation segment into a CONCISE but INFORMATION-RICH record.
+        prompt = f"""You are BioMind's memory archivist for scientific and bioinformatics analysis tasks.
 
-REQUIRED SECTIONS:
-1. **Task Goal** – What was the user trying to accomplish?
-2. **Steps Completed** – Which steps ran successfully? Include key file paths and commands.
-3. **Current Status** – What is the last known state? Any pending steps?
-4. **Key Artifacts** – Files generated, tool versions confirmed, env names.
-5. **Errors Encountered** – Any errors and their resolutions (if resolved).
+Summarize the archived conversation segment so a future agent can safely resume the work without rereading the raw log.
 
-Keep the summary under 600 words. Be precise and factual.
+Rules:
+- Be factual. Do not infer missing files, parameters, sample groups, biological context, or results.
+- Preserve exact paths, dataset names, sample IDs, commands, parameters, environments, outputs, metrics, and errors when observed.
+- Only include domain-specific details that appeared in the conversation.
+- Do not force irrelevant fields such as genome build, annotation version, contrast design, or sample groups if they were not part of the task.
+- If a core section has no useful information, write "not observed".
+- Distinguish completed, failed, planned, and pending work.
+- Record enough detail to avoid rerunning expensive successful steps.
+- Do not include hidden reasoning or generic advice.
+
+Required sections:
+1. Task Goal
+2. Data and Inputs
+3. Analysis Context
+4. Methods, Tools, and Environment
+5. Commands and Parameters
+6. Outputs and Artifacts
+7. Metrics, Results, and Observations
+8. Errors, Fixes, and Caveats
+9. Current Status
+10. Next Action
+
+Domain-specific guidance:
+- If the task involves sequencing/genomics, preserve reference genome, annotation, genome build, regions, variants, aligners, callers, and relevant thresholds.
+- If the task involves scRNA-seq, preserve object paths, sample metadata, QC thresholds, normalization method, clustering resolution, annotation method, marker/DE settings.
+- If the task involves methylation/epigenomics, preserve bigWig/BED/region files, methylation contexts, binning/window settings, genome coordinates, and plotting outputs.
+- If the task involves chromatin/TAD analysis, preserve matrix files, resolutions, boundary/domain files, comparison pairs, tools, and output tables.
+- If the task involves proteomics/metabolomics, preserve raw/input tables, identifiers, normalization, statistical contrasts, databases, and key output tables.
+- If the task is tool installation/environment setup, preserve package names, env names, install/verify commands, versions, registry status, and failure fixes.
+- If the task is general coding/data processing, preserve source files, scripts, APIs, schemas, transformations, tests, and produced files.
+
+Keep the summary under {self.summary_max_words} words.
 
 ---CONVERSATION SEGMENT---
 Task ID: {task_id}
@@ -323,17 +483,36 @@ Task ID: {task_id}
 ---END---
 
 OUTPUT THE SUMMARY NOW:"""
+        return prompt
 
-        try:
-            response = await self.llm.ainvoke([HumanMessage(content=prompt)])
-            return response.content.strip()
-        except Exception as e:
-            logger.error(f"Summarization failed: {e}")
-            # 降级：拼接最后几条消息的内容
-            fallback = "\n".join(
-                str(getattr(m, "content", m))[:200] for m in messages[-5:]
-            )
-            return f"[Summarization failed. Fallback excerpt]\n{fallback}"
+    def _write_compression_audit(
+        self,
+        *,
+        chunk: MemoryChunk,
+        prompt: str,
+        summary: str,
+        total_tokens_before: int,
+        total_tokens_after: int,
+        archived_message_count: int,
+        retained_message_count: int,
+    ) -> None:
+        record = {
+            "chunk_id": chunk.chunk_id,
+            "task_id": chunk.task_id,
+            "created_at": chunk.created_at,
+            "archive_file": chunk.archive_file,
+            "token_count_original": chunk.token_count_original,
+            "total_tokens_before": total_tokens_before,
+            "total_tokens_after": total_tokens_after,
+            "archived_message_count": archived_message_count,
+            "retained_message_count": retained_message_count,
+            "summary_max_words": self.summary_max_words,
+            "keywords": list(chunk.keywords),
+            "prompt": prompt,
+            "summary": summary,
+        }
+        with self._audit_file.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
 
     def _extract_keywords(self, text: str) -> List[str]:
         """简单关键词提取（无需 NLP 库）"""

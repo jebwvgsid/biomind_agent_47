@@ -1,0 +1,33 @@
+workflow_id: hic_tad_analysis
+name: Hi-C TAD Analysis
+description: Hi-C/Micro-C/Pore-C TAD workflow covering matrix preflight, TAD calling, boundary-change summaries, and optional differential TAD testing.
+task_types: [chromatin_contact_tad]
+triggers: [TAD, hicFindTADs, HiCExplorer, boundary change, differential TAD, Hi-C, Micro-C, 拓扑结构域, TAD边界]
+stages:
+  - stage: matrix_preflight
+    title: Confirm matrix paths, resolution, and balance status
+    batch_id: "1"
+    status_hint: no_skill_needed
+    inputs: [cool_matrix, mcool_matrix, sample_sheet, resolution]
+    outputs: [validated_matrix_inputs]
+  - stage: tad_calling
+    title: Call TADs with HiCExplorer
+    batch_id: "1"
+    default_skill: genomics/chromatin/tad-calling
+    inputs: [validated_matrix_inputs, resolution]
+    outputs: [tad_domains, tad_boundaries, tad_summary]
+  - stage: boundary_change
+    title: Summarize changed/shared/gained/lost boundaries
+    batch_id: "2"
+    default_skill: genomics/chromatin/tad-boundary-change
+    inputs: [tad_boundaries]
+    outputs: [boundary_change_tables, boundary_change_plots]
+    optional: true
+  - stage: differential_tad
+    title: Differential TAD testing between target and control
+    batch_id: "2"
+    default_skill: genomics/chromatin/differential-tad
+    inputs: [target_matrix, control_matrix, target_tad_domains]
+    outputs: [differential_tad_tables]
+    optional: true
+    may_block_if_missing: [target_control_pairing]

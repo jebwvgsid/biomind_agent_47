@@ -7,8 +7,10 @@ from langchain_core.messages import HumanMessage
 from execution.confirmation import RiskAnalyzer, RiskLevel
 from execution.confirmation import RiskAnalyzer, RiskLevel
 from execution.monitoring import LogCleaner
+from execution.profiling import get_current_node, get_current_profiler, get_current_task_id
 from config.config import KB_MAP
 from colorama import Fore, Style
+from agent_core.llm_safety import clip_text, llm_failure_summary
 
 logger = logging.getLogger("BioMind.Middleware")
 
@@ -43,6 +45,24 @@ class HITLMiddleware:
         # 如果配置了自动放行，且风险等级为 SAFE，直接通过，不打扰用户
         if self.auto_approve_safe and risk_analysis['risk_level'] == RiskLevel.SAFE:
             logger.info(f"✅ Auto-approved safe code: {code[:30]}...")
+            profiler = get_current_profiler()
+            task_id = get_current_task_id()
+            if profiler and task_id:
+                profiler.record_confirmation(
+                    task_id=task_id,
+                    prompt_type="code_review",
+                    response="auto-approved",
+                    duration_seconds=0.0,
+                    node=get_current_node(),
+                    payload={
+                        "content": code,
+                        "risk": {
+                            "risk_level": risk_analysis["risk_level"].value,
+                            "risk_score": risk_analysis["risk_score"],
+                        },
+                    },
+                    automatic=True,
+                )
             return "approve", code
 
         # --- C. 构造中断请求 (仅针对非 Safe 操作) ---
@@ -57,11 +77,12 @@ class HITLMiddleware:
 
         payload = {
             "type": "code_review",
-            "msg": f"⚠️ Code Execution Request ({language})",
+            "msg": f"⚠️ Code Execution Request ({language}) | y/Enter=run, n=reject, q=quit, e:/edit:/code:=replacement; text=feedback, not code",
             "content": code,   # 原始代码
             "language": language,
             "risk": risk_info, # 传入风险详情
-            "options": ["(y)es", "(n)o", "(e)dit"]
+            "options": ["(y)es", "(n)o", "(e)dit"],
+            "instructions": "Plain text is feedback, not executable code. Replacement code must start with e:, edit:, or code:."
         }
 
         # --- D. 触发中断 ---
@@ -100,13 +121,20 @@ class HITLMiddleware:
         elif resp_str.lower() in ['q', 'quit']:
             return "quit", ""
 
-        # 6. 编辑/其他
-        else:
-            # (原有代码保持不变)
+        # 6. Explicit edit only. Plain text is feedback, not executable code.
+        elif re.match(r'^(edit:|code:|e:)\s*', resp_str, flags=re.IGNORECASE):
             edited_code = re.sub(r'^(edit:|code:|e:)\s*', '', resp_str, flags=re.IGNORECASE).strip()
             if edited_code:
                 return "edit", edited_code
-            return "approve", original_code
+            return "reject", "Edit prefix was provided without replacement code."
+
+        # 7. Other text is usually a parameter answer or guidance typed into the
+        # review prompt by mistake. Do not run it as shell code.
+        else:
+            return "reject", (
+                "User provided feedback at code review instead of approval: "
+                f"{resp_str}. Regenerate the next command using this feedback if relevant."
+            )
 
 
 def error_recovery_middleware(llm, retriever):
@@ -126,6 +154,8 @@ def error_recovery_middleware(llm, retriever):
             
             # 2. 检查是否包含“❌ Failed”标记 (这是我们在 execute 节点里定义的失败标记)
             if "❌ Failed" in last_msg:
+                if "guard blocked execution" in last_msg.lower():
+                    return result
                 print(f"\n{Fore.RED}🚑 [Middleware] Detected Execution Failure. Starting Auto-Diagnosis...{Style.RESET_ALL}")
                 
                 # --- A. 提取错误指纹 ---
@@ -148,6 +178,31 @@ def error_recovery_middleware(llm, retriever):
                         f"<install_tool env=\"{env_name}\">skill_python_deps</install_tool>. "
                         f"Do not emit a direct pip/conda install command in <execute>."
                     )
+                runtime_status = {}
+                if isinstance(result, dict):
+                    runtime_status = result.get("runtime_status") or {}
+                if not runtime_status and isinstance(state, dict):
+                    runtime_status = state.get("runtime_status") or {}
+                if "hicFindTADs not found on PATH" in error_text and isinstance(runtime_status, dict):
+                    passed_records = [
+                        record for record in runtime_status.values()
+                        if isinstance(record, dict)
+                        and record.get("ok")
+                        and (
+                            record.get("env") == "hicexplore"
+                            or "hicFindTADs" in str(record.get("healthcheck", ""))
+                        )
+                    ]
+                    if passed_records:
+                        record = passed_records[-1]
+                        runner = record.get("env_runner") or f"conda run -n {record.get('env', 'hicexplore')} python"
+                        env_hint = (
+                            "\n\nRuntime diagnosis: the selected skill runtime healthcheck already passed, "
+                            "so this is not an installation failure. The command likely ran outside the "
+                            f"`{record.get('env', 'hicexplore')}` environment. Regenerate the same skill command "
+                            f"with the runner prefix `{runner}`. Do not output `<install_tool>` unless a new "
+                            "healthcheck fails."
+                        )
 
                 # --- B. RAG 检索 (查病历) ---
                 rag_advice = ""
@@ -168,13 +223,13 @@ def error_recovery_middleware(llm, retriever):
 Analyze the following execution error:
 <error>
 STDOUT:
-{stdout_content}
+{clip_text(stdout_content, 1200)}
 
 STDERR:
-{stderr_content}
+{clip_text(stderr_content, 1200)}
 </error>
 
-{rag_advice}
+{clip_text(rag_advice, 1200)}
 
 Task:
 1. Explain why it failed.
@@ -182,12 +237,21 @@ Task:
 {env_hint}
 """
                 # 调用 LLM 生成诊断
-                diagnosis_msg = await llm.ainvoke([HumanMessage(content=diagnosis_prompt)])
+                try:
+                    diagnosis_msg = await llm.ainvoke([HumanMessage(content=diagnosis_prompt)])
+                    diagnosis_text = diagnosis_msg.content
+                except Exception as exc:
+                    diagnosis_text = (
+                        "Automatic diagnosis LLM call failed. "
+                        f"{llm_failure_summary(exc, 'error_recovery_middleware')}\n"
+                        "Use the observed STDOUT/STDERR above and retry with a different command; "
+                        "do not repeat the same failing command."
+                    )
                 
                 # --- D. 注入修正后的上下文 ---
                 # 我们修改 result 中的 messages，追加诊断信息
                 # 这样主 Agent 在下一次 generate 时，就会看到错误 + 专家的修复建议
-                augmented_observation = last_msg + f"\n\n<system_diagnosis>\n{diagnosis_msg.content}\n</system_diagnosis>"
+                augmented_observation = last_msg + f"\n\n<system_diagnosis>\n{diagnosis_text}\n</system_diagnosis>"
                 
                 # 更新返回结果
                 result["messages"] = [HumanMessage(content=augmented_observation)]

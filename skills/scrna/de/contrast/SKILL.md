@@ -2,6 +2,14 @@
 name: scRNA DE Contrast
 description: 在样本分组、条件分组或指定细胞类型子集上执行差异表达并导出结果表与火山图。Use when Codex needs a manifest-driven differential expression step after scRNA annotation or clustering.
 tags: [single-cell, scRNA, Seurat, differential-expression, contrast, 单细胞, 差异表达, 对比]
+task_types: [single_cell_rnaseq]
+stage_tags: [de_analysis]
+inputs: [annotated_seurat_object, clustered_seurat_object, contrast_definition]
+outputs: [de_table, volcano_plot]
+when_to_use:
+  - Workflow stage is de_analysis.
+  - User provides sample groups, conditions, or cell-type subset contrast.
+when_not_to_use: [Bulk RNA-seq, no contrast definition]
 legacy_ids: [scrna-de-contrast]
 runtime:
   default_env: bio_scrna_core
@@ -9,6 +17,7 @@ runtime:
   language: r
   packages: [Seurat, yaml, ggplot2, dplyr]
   capabilities: [scrna-de, scrna-contrast]
+  install_tool: '<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>'
 ---
 
 # scRNA DE Contrast
@@ -38,6 +47,17 @@ object.
 ```bash
 conda run -n bio_scrna_core Rscript skills/scrna/de/contrast/scripts/de_contrast_seurat.R --manifest /abs/path/manifest.yaml
 ```
+
+## Environment
+
+Reuse `bio_scrna_core`. If the environment is missing or package verification
+fails, delegate installation with:
+
+```text
+<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>
+```
+
+Do not inline package-manager installation commands from this skill.
 
 ## Outputs
 

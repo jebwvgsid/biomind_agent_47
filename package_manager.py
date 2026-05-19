@@ -39,6 +39,16 @@ except Exception as e:
 logger = logging.getLogger("PackageManager")
 
 class PackageManager:
+    INSTALLED_STATUSES = {"installed", "verified", "success"}
+    STATUS_RANK = {
+        "": 0,
+        "registered": 0,
+        "broken": 0,
+        "installed": 1,
+        "verified": 2,
+        "success": 3,
+    }
+
     def __init__(self, work_dir: str = "./"):
         # 1. work_dir 用于存放临时文件或项目特定数据
         self.work_dir = Path(work_dir).absolute()
@@ -183,6 +193,14 @@ class PackageManager:
                 merged.append(item)
         return merged
 
+    def _status_rank(self, status: str) -> int:
+        return self.STATUS_RANK.get(str(status or "").lower(), 0)
+
+    def _best_status(self, existing: str, incoming: str) -> str:
+        existing = str(existing or "").lower()
+        incoming = str(incoming or "").lower()
+        return incoming if self._status_rank(incoming) > self._status_rank(existing) else (existing or incoming)
+
     def _format_python_imports(self, packages: List[str]) -> str:
         imports = []
         for pkg in packages:
@@ -191,6 +209,39 @@ class PackageManager:
                 continue
             imports.append(token.replace("-", "_"))
         return ", ".join(dict.fromkeys(imports))
+
+    def infer_conda_env_from_path(self, path: Optional[str]) -> str:
+        """Infer conda env name from paths like /conda/envs/<env>/bin/tool."""
+        if not path:
+            return ""
+        text = str(path).replace("\\", "/")
+        match = re.search(r"(?:^|/)envs/([^/]+)(?:/|$)", text)
+        return match.group(1) if match else ""
+
+    def _default_tool_env(self, tool_name: str) -> str:
+        return f"bio_{str(tool_name).lower().replace('-', '_')}"
+
+    def _is_default_tool_env(self, env_name: str, tool_name: str) -> bool:
+        return str(env_name or "") == self._default_tool_env(tool_name)
+
+    def _normalize_tool_registration_env(self, tool_name: str, env_name: str, source_path: Optional[str]) -> str:
+        inferred_env = self.infer_conda_env_from_path(source_path)
+        requested_env = str(env_name or "").strip()
+        if inferred_env and requested_env and requested_env != inferred_env:
+            if self._is_default_tool_env(requested_env, tool_name):
+                logger.warning(
+                    "Registering %s: replacing default env %s with env inferred from path: %s",
+                    tool_name,
+                    requested_env,
+                    inferred_env,
+                )
+                return inferred_env
+            raise ValueError(
+                f"Refusing to register tool '{tool_name}' with env '{requested_env}' because "
+                f"source_path belongs to conda env '{inferred_env}': {source_path}. "
+                f"Use env='{inferred_env}' or remove the mismatched path."
+            )
+        return requested_env or inferred_env or self._default_tool_env(tool_name)
 
     def build_environment_healthcheck(
         self,
@@ -259,6 +310,7 @@ class PackageManager:
         healthcheck: str = "",
         status: str = "registered",
         tool_name: str = "",
+        last_verified_at: str = "",
     ):
         """Register a reusable environment even when it does not expose a command shim."""
         envs = self.registry.setdefault("environments", {})
@@ -281,15 +333,62 @@ class PackageManager:
             "packages": merged_packages,
             "capabilities": merged_caps,
             "healthcheck": selected_healthcheck,
-            "status": status or existing.get("status", "registered"),
+            "status": "broken" if str(status or "").lower() == "broken" else self._best_status(existing.get("status", "registered"), status or "registered"),
             "notes": notes or existing.get("notes", ""),
             "skill_ids": merged_skills,
             "bound_tools": merged_tools,
             "registered_at": existing.get("registered_at", datetime.now().isoformat()),
-            "last_verified_at": existing.get("last_verified_at", ""),
+            "last_verified_at": last_verified_at or existing.get("last_verified_at", ""),
         }
         self._save_registry()
         return True
+
+    def merge_registry_data(self, data: Optional[Dict[str, Any]]) -> Dict[str, int]:
+        """Merge external software registry JSON without downgrading verified records."""
+        stats = {"tools": 0, "environments": 0}
+        if not isinstance(data, dict):
+            return stats
+
+        for env_name, info in (data.get("environments") or {}).items():
+            if not env_name or not isinstance(info, dict):
+                continue
+            self.register_environment(
+                env_name=str(info.get("env") or env_name),
+                purpose=str(info.get("purpose") or ""),
+                packages=info.get("packages"),
+                skill_id=None,
+                notes=str(info.get("notes") or ""),
+                language=str(info.get("language") or ""),
+                capabilities=info.get("capabilities"),
+                healthcheck=str(info.get("healthcheck") or ""),
+                status=str(info.get("status") or "registered"),
+                tool_name="",
+                last_verified_at=str(info.get("last_verified_at") or ""),
+            )
+            record = self.registry.setdefault("environments", {}).setdefault(str(info.get("env") or env_name), {})
+            record["skill_ids"] = self._merge_unique(record.get("skill_ids"), info.get("skill_ids") or info.get("skill_id"))
+            record["bound_tools"] = self._merge_unique(record.get("bound_tools"), info.get("bound_tools"))
+            self._save_registry()
+            stats["environments"] += 1
+
+        for tool_name, info in (data.get("tools") or {}).items():
+            if not tool_name or not isinstance(info, dict):
+                continue
+            tools = self.registry.setdefault("tools", {})
+            existing = dict(tools.get(tool_name, {}))
+            merged = dict(existing)
+            merged.update(info)
+            merged["name"] = str(merged.get("name") or tool_name)
+            merged["env"] = str(merged.get("env") or merged.get("env_name") or existing.get("env") or "")
+            merged["env_name"] = str(merged.get("env_name") or merged.get("env") or "")
+            merged["status"] = self._best_status(existing.get("status", "registered"), info.get("status", "registered"))
+            tools[tool_name] = merged
+            if merged.get("env"):
+                self.bind_tool_to_environment(str(tool_name), str(merged["env"]))
+            else:
+                self._save_registry()
+            stats["tools"] += 1
+        return stats
 
     def find_matching_environment(self, requirements: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         requirements = requirements or {}
@@ -384,7 +483,7 @@ class PackageManager:
         """自动安装 (Conda)"""
         if not self.conda_exe: return False, "Conda/Mamba not found."
         tool_name = tool_name.lower()
-        env_name = f"bio_{tool_name}"
+        env_name = self._default_tool_env(tool_name)
         logger.info(f"📦 Installing {tool_name} to {env_name}...")
         
         cmd = specific_cmd if specific_cmd else f"{self.conda_exe} create -n {env_name} -c bioconda -c conda-forge {tool_name} -y"
@@ -428,6 +527,7 @@ class PackageManager:
         # 自动清洗：如果 source_path 指向文件，自动转为目录
         if source_path and os.path.isfile(source_path):
             source_path = os.path.dirname(source_path)
+        env_name = self._normalize_tool_registration_env(tool_name, env_name, source_path)
 
         try:
             final_setup = ""
@@ -435,9 +535,17 @@ class PackageManager:
             # 1. 处理路径 (同时添加 root 和 bin)
             if source_path:
                 abs_path = os.path.abspath(source_path)
-                # 这里的修改解决了 3d-dna 等脚本在根目录的问题
-                final_setup += f'export PATH="{abs_path}:{abs_path}/bin:$PATH"\n'
-                final_setup += f'export PYTHONPATH="{abs_path}:$PYTHONPATH"\n'
+                inferred_env = self.infer_conda_env_from_path(abs_path)
+                if inferred_env and inferred_env == env_name:
+                    logger.info(
+                        "Registering %s from conda env %s; skipping redundant PATH/PYTHONPATH injection.",
+                        tool_name,
+                        env_name,
+                    )
+                else:
+                    # 这里的修改解决了 3d-dna 等脚本在根目录的问题
+                    final_setup += f'export PATH="{abs_path}:{abs_path}/bin:$PATH"\n'
+                    final_setup += f'export PYTHONPATH="{abs_path}:$PYTHONPATH"\n'
 
             # 2. [新增] 注入自定义 Setup (来自 Agent/知识库)
             if setup_script:
@@ -534,6 +642,13 @@ unset __conda_setup
 
 # 3. Activate Environment
 conda activate {env_name}
+activate_rc=$?
+if [ $activate_rc -ne 0 ]; then
+    echo "BioMind shim error: failed to activate conda env '{env_name}' for tool '{tool_name}'." >&2
+    echo "This shim is stale or the environment was not registered correctly." >&2
+    echo "Verify the real tool path and re-register it to an existing environment." >&2
+    exit $activate_rc
+fi
 
 # 4. Inject Extra Configs (注入 Agent 自动配置的路径)
 {extra_setup}

@@ -4,8 +4,12 @@ import os
 import io
 import ast
 import re
+import time
 from io import StringIO
 from typing import Tuple, Dict, Any, Optional
+
+from execution.profiling import get_current_node, get_current_profiler, get_current_task_id, timestamp_now
+from execution.shell_safety import shell_safety_error
 
 # 全局变量：用于保持 Python REPL 的上下文记忆 (变量、导入库等)
 _persistent_namespace: Dict[str, Any] = {
@@ -82,8 +86,10 @@ def detect_script_language(code: str) -> str:
     return "Bash"
 
 
-async def run_command(command: str, timeout=None) -> Tuple[str, str, int]:
+async def run_command(command: str, timeout=None, profile: bool = True) -> Tuple[str, str, int]:
     """通用 Shell 命令执行器"""
+    start_time = time.time()
+    started_at = timestamp_now()
     try:
         # 移除 timeout 的外层包裹（如果默认传 None 的话），并切断 stdin
         process = await asyncio.create_subprocess_shell(
@@ -100,17 +106,43 @@ async def run_command(command: str, timeout=None) -> Tuple[str, str, int]:
             except asyncio.TimeoutError:
                 process.kill()
                 await process.communicate()
-                return "", f"TIMEOUT after {timeout} seconds", 124
+                result = "", f"TIMEOUT after {timeout} seconds", 124
+                return result
         else:
             stdout, stderr = await process.communicate()
         
-        return stdout.decode(), stderr.decode(), process.returncode
+        result = stdout.decode(), stderr.decode(), process.returncode
+        return result
     except Exception as e:
-        return "", str(e), 1
+        result = "", str(e), 1
+        return result
+    finally:
+        if profile and "result" in locals():
+            profiler = get_current_profiler()
+            task_id = get_current_task_id()
+            if profiler and task_id:
+                stdout, stderr, returncode = result
+                profiler.record_command(
+                    task_id=task_id,
+                    language="Bash",
+                    code=command,
+                    stdout=stdout,
+                    stderr=stderr,
+                    returncode=returncode,
+                    duration_seconds=time.time() - start_time,
+                    node=get_current_node(),
+                    started_at=started_at,
+                )
 
 async def run_bash_script(code: str, timeout: int = None) -> Tuple[str, str, int]:
     """执行 Bash 脚本 (自动处理权限和临时文件)"""
+    start_time = time.time()
+    started_at = timestamp_now()
     try:
+        safety_error = shell_safety_error(code, "Bash")
+        if safety_error:
+            return "", safety_error, 126
+
         filename = "temp_script.sh"
         with open(filename, "w", encoding="utf-8") as f:
             # 👈 核心修改：强制添加 bash 解释器声明
@@ -122,16 +154,42 @@ async def run_bash_script(code: str, timeout: int = None) -> Tuple[str, str, int
         os.chmod(filename, 0o755)
         
         # 执行（直接传 None 确保没有超时限制）
-        return await run_command(f"./{filename}", timeout=None)
+        stdout, stderr, returncode = await run_command(f"./{filename}", timeout=None, profile=False)
+        return stdout, stderr, returncode
     except Exception as e:
-        return "", str(e), 1
+        stdout, stderr, returncode = "", str(e), 1
+        return stdout, stderr, returncode
+    finally:
+        if "returncode" in locals():
+            profiler = get_current_profiler()
+            task_id = get_current_task_id()
+            if profiler and task_id:
+                profiler.record_command(
+                    task_id=task_id,
+                    language="Bash",
+                    code=code,
+                    stdout=stdout,
+                    stderr=stderr,
+                    returncode=returncode,
+                    duration_seconds=time.time() - start_time,
+                    node=get_current_node(),
+                    started_at=started_at,
+                )
 
 async def run_python_repl(code: str, timeout: int = None) -> Tuple[str, str, int]:
     """
     在持久化命名空间中执行 Python 代码
     注意：这是模拟 REPL，不是独立的 Python 进程
     """
+    start_time = time.time()
+    started_at = timestamp_now()
+    old_stdout = sys.stdout
+    captured_output = None
     try:
+        safety_error = shell_safety_error(code, "Python")
+        if safety_error:
+            return "", safety_error, 126
+
         # 预加载常用库
         if _persistent_namespace['pd'] is None:
             try:
@@ -143,31 +201,69 @@ async def run_python_repl(code: str, timeout: int = None) -> Tuple[str, str, int
                 pass
         
         # 捕获 stdout
-        old_stdout = sys.stdout
         sys.stdout = captured_output = StringIO()
         
         # 在全局命名空间执行
         exec(code, _persistent_namespace)
         
-        # 恢复 stdout
-        sys.stdout = old_stdout
         output = captured_output.getvalue()
         
-        return output, "", 0
+        stdout, stderr, returncode = output, "", 0
+        return stdout, stderr, returncode
+    except SystemExit as e:
+        stdout, stderr, returncode = "", f"Generated Python code attempted to exit the agent process: {e}", 1
+        return stdout, stderr, returncode
     except Exception as e:
-        # 恢复 stdout (防止崩溃后没恢复)
-        if 'old_stdout' in locals():
-            sys.stdout = old_stdout
-        return "", str(e), 1
+        stdout, stderr, returncode = "", str(e), 1
+        return stdout, stderr, returncode
+    finally:
+        sys.stdout = old_stdout
+        if captured_output is not None:
+            captured_output.close()
+        if "returncode" in locals():
+            profiler = get_current_profiler()
+            task_id = get_current_task_id()
+            if profiler and task_id:
+                profiler.record_command(
+                    task_id=task_id,
+                    language="Python",
+                    code=code,
+                    stdout=stdout,
+                    stderr=stderr,
+                    returncode=returncode,
+                    duration_seconds=time.time() - start_time,
+                    node=get_current_node(),
+                    started_at=started_at,
+                )
 
 async def run_r_code(code: str, timeout: int = None) -> Tuple[str, str, int]:
     """执行 R 脚本"""
+    start_time = time.time()
+    started_at = timestamp_now()
     try:
         with open("temp_script.R", "w", encoding="utf-8") as f:
             f.write(code)
-        return await run_command("Rscript temp_script.R", timeout)
+        stdout, stderr, returncode = await run_command("Rscript temp_script.R", timeout, profile=False)
+        return stdout, stderr, returncode
     except Exception as e:
-        return "", str(e), 1
+        stdout, stderr, returncode = "", str(e), 1
+        return stdout, stderr, returncode
+    finally:
+        if "returncode" in locals():
+            profiler = get_current_profiler()
+            task_id = get_current_task_id()
+            if profiler and task_id:
+                profiler.record_command(
+                    task_id=task_id,
+                    language="R",
+                    code=code,
+                    stdout=stdout,
+                    stderr=stderr,
+                    returncode=returncode,
+                    duration_seconds=time.time() - start_time,
+                    node=get_current_node(),
+                    started_at=started_at,
+                )
 
 
 def reset_python_namespace():

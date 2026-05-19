@@ -28,10 +28,31 @@ RAGFLOW_DATASET_IDS = _split_env_list("RAGFLOW_DATASET_IDS") or [
 RERANK_MODEL_ID = os.getenv("RERANK_MODEL_ID", "gte-rerank@Tongyi-Qianwen")
 
 DEFAULT_PROJECT_ID = os.getenv("BIOMIND_PROJECT_ID", "default")
+BIOMIND_WIKI_DIR = os.getenv("BIOMIND_WIKI_DIR", "").strip()
 
-LLM_API_KEY = os.getenv("QWEN_API_KEY", None)
+LLM_API_KEY = (
+    os.getenv("QWEN_API_KEY")
+    or os.getenv("DASHSCOPE_API_KEY")
+    or os.getenv("OPENAI_API_KEY")
+    or ""
+)
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
 LLM_DEFAULT_MODEL = os.getenv("LLM_DEFAULT_MODEL", "qwen3-max-2026-01-23")
+
+WIKI_EMBEDDING_ENABLED = os.getenv("WIKI_EMBEDDING_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+WIKI_EMBEDDING_BASE_URL = os.getenv("WIKI_EMBEDDING_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+WIKI_EMBEDDING_API_KEY = (
+    os.getenv("WIKI_EMBEDDING_API_KEY")
+    or os.getenv("DASHSCOPE_API_KEY")
+    or os.getenv("QWEN_API_KEY")
+    or os.getenv("OPENAI_API_KEY")
+    or ""
+)
+WIKI_EMBEDDING_MODEL = os.getenv("WIKI_EMBEDDING_MODEL", "text-embedding-v4")
+try:
+    WIKI_EMBEDDING_DIMENSIONS = int(os.getenv("WIKI_EMBEDDING_DIMENSIONS", "1024"))
+except ValueError:
+    WIKI_EMBEDDING_DIMENSIONS = 1024
 
 # skill 目录：优先使用当前项目自带 skills，避免加载到旧的硬编码目录。
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
