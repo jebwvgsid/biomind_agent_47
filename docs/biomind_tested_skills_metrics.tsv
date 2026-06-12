@@ -1,0 +1,10 @@
+date	session_id	test_content	total_agent_seconds	consultant	execute	generate	plan_review	planner	supervisor	triage	script_seconds	error_count	human_confirm_count
+2026.6.4	session_1780561820	crop-gs-rrblup-gblup	194.414	32.238	14.883	30.222		58.529	16.964	3.713		2	
+2026.6.4	session_1780561820	crop-gs-bglr-bayesian	387.411	33.154	18.583	41.911		60.796	20.864	3.821		3	
+2026.6.8	session_1780883441	sommer multi-core GxE skill baseline		33.438	26.269	41.830		62.274	29.852	3.830	5.607	0	
+2026.6.8	session_1780902600	WGS/VCF marker score test											
+2026.6.9	session_1780968650	TAD calling		195.837	56.919	25.549		26.485	10.492	1.474	65.984	0	8
+2026.6.9	session_1780986129leaf_bud_differential	TAD differential analysis		20.290	104.371	31.961		31.133	18.064	1.581	56.406	3	5
+2026.6.9	session_1780987107	TAD boundary change		24.236	30.655	68.885		24.316	11.662		3.005	2	5
+2026.6.10	session_1781072246	Compartment calling without CALDER		67.070	168.255	158.555		35.259	57.547		251.103	5	23
+2026.6.10	session_1781088503	Compartment switch calling		42.013	8.215	19.809		23.549	13.120	1.753	3.805	1	5

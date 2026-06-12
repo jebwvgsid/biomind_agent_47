@@ -1,0 +1,14 @@
+dataset_id: public-cooler-hg19-gm12878-mboi-chr22
+source_package: Ubuntu python3-cooler-examples 0.8.11-2
+source_member: tests/data/hg19.GM12878-MboI.matrix.2000kb.cool
+source_sha256: 94543454deda584cb27368c9e622529b5b428c66619771383efbdee57a2bdfd7
+subset_rule: single chromosome chr22 retained from hg19 GM12878 MboI 2Mb cooler test
+  matrix
+expected:
+  chromosomes:
+  - chr22
+  bin_size: 2000000
+  nbins: 26
+  nnz: 106
+  sum_counts: 1066
+  max_pixel_count: 81

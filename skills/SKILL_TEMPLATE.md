@@ -49,6 +49,44 @@ metadata:
 - `allowed-tools`: only if the runtime honors tool restrictions.
 - `metadata`: only for provenance or priority hints that are useful later.
 
+## Optional Runtime Contract
+
+Add `runtime` only when BioMind must verify or install an environment before
+using the skill. Prefer declarative, reproducible runtime metadata over prose
+instructions buried in the body.
+
+```yaml
+runtime:
+  default_env: example-env
+  env_runner: conda run -n example-env python
+  language: python
+  packages: [numpy, pandas]
+  capabilities: [example-analysis]
+  healthcheck: conda run -n example-env python scripts/run_example.py --help
+  install_policy: prefer-declared
+  install_command: mamba create -n example-env -c conda-forge numpy pandas -y
+  install_fallbacks:
+    - conda create -n example-env -c conda-forge numpy pandas -y
+```
+
+Runtime policy:
+
+- `prefer-declared`: the installer tries declared commands first. If the real
+  error proves that an extra package is missing, it may make a generic repair in
+  the same target environment, but must pass the skill healthcheck before
+  registration. This is the default for ordinary skills.
+- `declared-only`: the installer may execute only declared commands or an
+  `env_file` command generated from the metadata. Use this for fragile or
+  version-sensitive runtimes such as R/Bioconductor, CUDA, system-backed tools,
+  or workflows where ad-hoc fallback can silently corrupt the environment.
+- `env_file`: path relative to the skill directory for a conda/mamba environment
+  file. Use it when the environment should be reproducible.
+
+Do not mark a skill `declared-only` unless all known install paths and approved
+fallbacks are listed. If you omit install commands entirely, normal missing
+package repair remains allowed, but the environment still must pass the
+healthcheck before BioMind treats it as installed.
+
 ## Body Structure
 
 After the YAML, write enough Markdown instructions that the selected skill is usable without opening any other file:

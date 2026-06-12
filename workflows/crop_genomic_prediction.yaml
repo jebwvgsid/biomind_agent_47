@@ -1,0 +1,34 @@
+workflow_id: crop_genomic_prediction
+name: Crop Genomic Prediction
+description: Professional crop genomic selection workflow that routes real genotype and phenotype data to rrBLUP/GBLUP, BGLR Bayesian, or sommer mixed-model execution.
+task_types: [crop_genomic_prediction]
+triggers: [genomic selection, genomic prediction, GEBV, rrBLUP, GBLUP, BGLR, sommer, 作物基因组选择, 表型预测]
+stages:
+  - stage: gs_triage
+    title: Select GS method and validation design
+    batch_id: "1"
+    default_skill: crop-breeding/crop-genomic-prediction
+    inputs: [data_inventory, genotype_data, phenotype_table, breeding_goal]
+    outputs: [selected_gs_skill, validation_plan, data_requirements, leakage_warnings]
+  - stage: rrblup_gblup_prediction
+    title: Run rrBLUP or GBLUP with CRAN rrBLUP
+    batch_id: "2"
+    default_skill: crop-breeding/crop-gs-rrblup-gblup
+    inputs: [genotype_matrix, phenotype_table, trait, validation_plan]
+    outputs: [gebv_predictions, model_performance, ranked_materials]
+    optional: true
+  - stage: bglr_bayesian_prediction
+    title: Run Bayesian GS with CRAN BGLR
+    batch_id: "2"
+    default_skill: crop-breeding/crop-gs-bglr-bayesian
+    inputs: [genotype_matrix, phenotype_table, trait, bayesian_model, mcmc_settings]
+    outputs: [prediction_table, posterior_summary, model_performance]
+    optional: true
+  - stage: sommer_multikernel_gxe
+    title: Run complex mixed-model GS with CRAN sommer
+    batch_id: "2"
+    default_skill: crop-breeding/crop-gs-sommer-multikernel-gxe
+    inputs: [model_config, genotype_matrix, phenotype_table]
+    outputs: [variance_components, prediction_table, model_performance]
+    optional: true
+    may_block_if_missing: [model_config]

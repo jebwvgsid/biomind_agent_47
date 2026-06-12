@@ -1,6 +1,7 @@
 import re
 import logging
-from typing import Literal
+import shlex
+from typing import Any, Dict, Literal
 from pathlib import Path
 from datetime import datetime
 
@@ -13,6 +14,7 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 # Local Imports
 from agent_core.state import InstallerState
 from agent_core.middleware import HITLMiddleware
+from agent_core.llm_safety import is_llm_input_rejected, llm_failure_summary
 from package_manager import PackageManager
 from execution.executor import detect_script_language, normalize_script_code, run_bash_script, run_python_repl
 from prompts.manager import PromptManager
@@ -32,6 +34,9 @@ from config import (
 logger = logging.getLogger("BioMind.Installer")
 
 class InstallerAgent:
+    MAX_INSTALLER_GENERATE_TURNS = 10
+    MAX_REPEATED_OBSERVATIONS = 3
+
     def __init__(self, llm, work_dir: str = "./data", package_manager=None):
         self.llm = llm
         if package_manager:
@@ -91,6 +96,218 @@ class InstallerAgent:
             "ls ",
         )
         return all(line.startswith(allowed_prefixes) or line == "pwd" for line in lines)
+
+    def _installer_generate_turns(self, state: InstallerState) -> int:
+        return sum(1 for msg in state.get("messages", []) if isinstance(msg, AIMessage))
+
+    def _installer_observations(self, state: InstallerState) -> list[str]:
+        observations = []
+        for msg in state.get("messages", []):
+            content = str(getattr(msg, "content", "") or "").strip()
+            if isinstance(msg, HumanMessage) and "<observation>" in content:
+                observations.append(content)
+        return observations
+
+    def _repeated_installer_observation_count(self, state: InstallerState) -> int:
+        observations = self._installer_observations(state)
+        if not observations:
+            return 0
+        last = re.sub(r"\s+", " ", observations[-1]).strip()
+        count = 0
+        for obs in reversed(observations):
+            normalized = re.sub(r"\s+", " ", obs).strip()
+            if normalized != last:
+                break
+            count += 1
+        return count
+
+    def _installer_failure_reason(self, state: InstallerState) -> str:
+        turns = self._installer_generate_turns(state)
+        repeated = self._repeated_installer_observation_count(state)
+        if turns >= self.MAX_INSTALLER_GENERATE_TURNS:
+            return f"installer exceeded {self.MAX_INSTALLER_GENERATE_TURNS} generate turns without successful registration."
+        if repeated >= self.MAX_REPEATED_OBSERVATIONS:
+            return f"installer repeated the same observation {repeated} times without progress."
+        observations = self._installer_observations(state)
+        if observations:
+            return observations[-1][:500]
+        return "installer stopped before successful verification and registration."
+
+    def _normalize_install_command_for_contract(self, command: str) -> str:
+        text = str(command or "").replace("\\\n", " ").strip()
+        text = re.sub(r"\s+", " ", text)
+        return text.rstrip(";")
+
+    def _strict_runtime_contract(self, state: InstallerState) -> Dict[str, Any]:
+        text = "\n".join(str(getattr(msg, "content", "") or "") for msg in state.get("messages", []))
+        matches = re.findall(
+            r"\[STRICT SKILL RUNTIME CONTRACT\](.*?)\[/STRICT SKILL RUNTIME CONTRACT\]",
+            text,
+            re.DOTALL | re.IGNORECASE,
+        )
+        if not matches:
+            return {"active": False, "allowed": []}
+        block = matches[-1]
+        allowed = [
+            self._normalize_install_command_for_contract(command)
+            for command in re.findall(r"allowed_install_command:\s*(.+)", block)
+        ]
+        allowed = [command for command in allowed if command]
+        metadata = self._selected_skill_install_metadata(text)
+        metadata.update({"active": bool(allowed), "allowed": list(dict.fromkeys(allowed))})
+        return metadata
+
+    def _last_contract_value(self, text: str, key: str) -> str:
+        matches = re.findall(
+            rf"^\s*-\s*{re.escape(key)}:\s*(.*?)\s*$",
+            str(text or ""),
+            re.MULTILINE,
+        )
+        return matches[-1].strip() if matches else ""
+
+    def _split_contract_list(self, value: str) -> list[str]:
+        return [part.strip() for part in re.split(r"[,\n;]+", str(value or "")) if part.strip() and part.strip().lower() != "none"]
+
+    def _selected_skill_install_metadata(self, text: str) -> Dict[str, Any]:
+        packages = self._split_contract_list(
+            self._last_contract_value(text, "packages")
+            or self._last_contract_value(text, "requested packages")
+        )
+        capabilities = self._split_contract_list(
+            self._last_contract_value(text, "capabilities")
+            or self._last_contract_value(text, "requested capabilities")
+        )
+        return {
+            "selected_skills": self._split_contract_list(self._last_contract_value(text, "selected_skills")),
+            "target_env": self._last_contract_value(text, "target_env"),
+            "language": self._last_contract_value(text, "language"),
+            "packages": packages,
+            "capabilities": capabilities,
+            "healthcheck": self._last_contract_value(text, "healthcheck"),
+            "install_policy": self._last_contract_value(text, "install_policy"),
+        }
+
+    def _command_lines(self, code: str) -> list[str]:
+        return [
+            line.strip()
+            for line in str(code or "").splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        ]
+
+    def _declared_install_like_command(self, code: str, contract: Dict[str, Any]) -> str:
+        if not contract.get("active"):
+            return ""
+        allowed = set(contract.get("allowed") or [])
+        normalized_code = self._normalize_install_command_for_contract(code)
+        if normalized_code in allowed and self._is_install_like_command(normalized_code):
+            return normalized_code
+        for line in self._command_lines(code):
+            normalized = self._normalize_install_command_for_contract(line)
+            if normalized in allowed and self._is_install_like_command(line):
+                return normalized
+        return ""
+
+    def _verify_and_register_contract_runtime(
+        self,
+        contract: Dict[str, Any],
+        tool_name: str,
+        attempted_command: str,
+    ) -> str:
+        if not contract.get("active"):
+            return ""
+        env = str(contract.get("target_env") or "").strip()
+        healthcheck = str(contract.get("healthcheck") or "").strip()
+        if not env or not healthcheck:
+            return ""
+        selected_skills = list(contract.get("selected_skills") or [])
+        skill_id = selected_skills[0] if selected_skills else None
+        language = str(contract.get("language") or "").strip()
+        packages = contract.get("packages") or []
+        capabilities = contract.get("capabilities") or []
+
+        try:
+            self.pm.register_environment(
+                env_name=env,
+                purpose=f"Runtime for {', '.join(selected_skills) if selected_skills else tool_name}",
+                packages=packages,
+                skill_id=skill_id,
+                notes="Registered from strict skill runtime contract before healthcheck.",
+                language=language,
+                capabilities=capabilities,
+                healthcheck=healthcheck,
+                status="registered",
+                tool_name=tool_name,
+            )
+            ok, detail = self.pm.verify_environment(
+                env_name=env,
+                language=language,
+                healthcheck=healthcheck,
+            )
+        except Exception as exc:
+            return (
+                "<observation>❌ Strict runtime healthcheck could not run after declared install command.\n"
+                f"Command: {attempted_command}\n"
+                f"Healthcheck: {healthcheck}\n"
+                f"Error: {exc}</observation>"
+            )
+
+        if ok:
+            return (
+                "<observation>✅ Declared runtime healthcheck passed.\n"
+                f"Healthcheck: {healthcheck}\n"
+                f"Detail: {str(detail or 'OK')[:500]}\n"
+                f"Environment '{env}' registered successfully via PackageManager.</observation>"
+            )
+        return (
+            "<observation>❌ Strict runtime healthcheck failed after declared install command.\n"
+            f"Command: {attempted_command}\n"
+            f"Healthcheck: {healthcheck}\n"
+            f"Detail: {str(detail or 'Healthcheck failed.')[:700]}\n"
+            "If another allowed_install_command remains, use it once; otherwise stop and report this failure.</observation>"
+        )
+
+    def _is_install_like_command(self, line: str) -> bool:
+        return bool(re.search(
+            r"\b(?:conda|mamba)\s+(?:install|create|env\s+(?:create|update))\b"
+            r"|\b(?:python(?:3)?\s+-m\s+)?pip\s+install\b"
+            r"|install\.packages\s*\("
+            r"|install_github\s*\("
+            r"|BiocManager::install\s*\(",
+            str(line or ""),
+            re.IGNORECASE,
+        ))
+
+    def _runtime_contract_violation(self, code: str, language: str, state: InstallerState) -> str:
+        if language != "Bash":
+            return ""
+        contract = self._strict_runtime_contract(state)
+        if not contract.get("active"):
+            return ""
+        allowed = set(contract.get("allowed", []))
+        lines = [
+            line.strip()
+            for line in str(code or "").splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        ]
+        for line in lines:
+            if contract.get("active") and re.match(r"^cd(?:\s|$)", line, re.IGNORECASE):
+                return (
+                    "The selected skill declares a strict runtime installation contract. "
+                    "Refusing a manual `cd` in installer code. The installer runs Bash commands "
+                    "inside the configured source install directory automatically; use the declared "
+                    "command exactly without changing directories."
+                )
+            if not self._is_install_like_command(line):
+                continue
+            normalized = self._normalize_install_command_for_contract(line)
+            if normalized in allowed:
+                continue
+            return (
+                "The selected skill declares a strict runtime installation contract. "
+                f"Refusing undeclared install command `{normalized}`. "
+                "Use one of the `allowed_install_command` entries exactly; if they fail, report the failure instead of inventing a fallback."
+            )
+        return ""
 
     def _build_graph(self):
         workflow = StateGraph(InstallerState)
@@ -185,7 +402,29 @@ class InstallerAgent:
             else:
                 full_context = messages + msgs_to_return
 
-            response = await self.llm.ainvoke(full_context)
+            try:
+                response = await self.llm.ainvoke(full_context)
+            except Exception as exc:  # noqa: BLE001 - convert provider failures into graph state.
+                summary = llm_failure_summary(exc, f"installer_generate:{tool_name}")
+                if is_llm_input_rejected(exc):
+                    guidance = (
+                        "The model provider rejected the installer prompt payload. "
+                        "The installer is stopping instead of resubmitting the same accumulated logs."
+                    )
+                else:
+                    guidance = "The installer LLM call failed before it could generate the next action."
+                return {
+                    "messages": [
+                        HumanMessage(
+                            content=(
+                                "<failure>"
+                                f"{summary}\n{guidance}\n"
+                                "No installation command was executed after this failure."
+                                "</failure>"
+                            )
+                        )
+                    ]
+                }
             msgs_to_return.append(response)
             
             return {"messages": msgs_to_return}
@@ -198,6 +437,8 @@ class InstallerAgent:
             content = last_msg.content
             tool_name = state["tool_name"]
             observations = []
+            contract = self._strict_runtime_contract(state)
+            registration_found = False
             
             # 1. 执行 Shell/Python 代码
             exec_matches = re.findall(r"<execute.*?>(.*?)</execute>", content, re.DOTALL)
@@ -216,9 +457,16 @@ class InstallerAgent:
                 if self._is_low_friction_installer_command(stripped_code, language):
                     final_code = stripped_code
                 else:
+                    contract_violation = self._runtime_contract_violation(stripped_code, language, state)
+                    if contract_violation:
+                        observations.append(f"<observation>❌ Runtime contract violation: {contract_violation}</observation>")
+                        continue
                     action, final_code = self.middleware.review_code(code, language)
                     if action == "reject":
-                        observations.append("<observation>❌ User rejected execution.</observation>")
+                        observations.append(
+                            "<observation>❌ User rejected execution. "
+                            f"Feedback: {str(final_code or 'No reason provided.')[:500]}</observation>"
+                        )
                         continue
                     elif action == "quit":
                         return {"messages": [HumanMessage(content="Installation terminated.")]}
@@ -228,19 +476,44 @@ class InstallerAgent:
                     else:
                         final_code = normalize_script_code(final_code)
 
+                contract_violation = self._runtime_contract_violation(final_code, language, state)
+                if contract_violation:
+                    observations.append(f"<observation>❌ Runtime contract violation: {contract_violation}</observation>")
+                    continue
+
                 if language == "Python":
                     stdout, stderr, rc = await run_python_repl(final_code)
                 else:
                     shim_path = self.pm.get_shim_dir_str()
-                    full_code = f'export PATH="{shim_path}:$PATH"\n{final_code}'
+                    source_root = str(self.pm.source_root)
+                    full_code = (
+                        f'export PATH="{shim_path}:$PATH"\n'
+                        f"cd {shlex.quote(source_root)}\n"
+                        f"{final_code}"
+                    )
                     stdout, stderr, rc = await run_bash_script(full_code)
 
                 status = "✅" if rc == 0 else "❌"
                 if rc == 0: execution_success = True
-                observations.append(f"<observation>[{language}] {status}\n{stdout[:500]}\n{stderr[:500]}</observation>")
+                observations.append(
+                    f"<observation>[{language}] {status}\n"
+                    f"Command:\n{final_code[:500]}\n"
+                    f"STDOUT:\n{stdout[:500]}\n"
+                    f"STDERR:\n{stderr[:500]}</observation>"
+                )
+                declared_command = self._declared_install_like_command(final_code, contract)
+                if declared_command:
+                    runtime_check = self._verify_and_register_contract_runtime(
+                        contract,
+                        tool_name,
+                        declared_command,
+                    )
+                    if runtime_check:
+                        observations.append(runtime_check)
+                        if "registered successfully" in runtime_check:
+                            registration_found = True
 
             # 2. [核心修复] 注册标签解析与强制校验
-            registration_found = False
             attr_pattern = re.compile(r'(\w+)=(["\'])(.*?)\2')
 
             for tag_attrs in re.findall(r"<register_environment\b(.*?)/?>", content, re.DOTALL):
@@ -319,6 +592,8 @@ Action Required:
             content = last_msg.content
             
             if isinstance(last_msg, AIMessage):
+                if self._installer_generate_turns(state) > self.MAX_INSTALLER_GENERATE_TURNS:
+                    return "end_failure"
                 return "execute"
 
             if "<success>" in content: return "end_success"
@@ -327,7 +602,11 @@ Action Required:
             # Observation 中明确注册了环境或工具，才算成功
             if "Shim created" in content or "registered successfully" in content:
                 return "end_success"
-                
+            if self._installer_generate_turns(state) >= self.MAX_INSTALLER_GENERATE_TURNS:
+                return "end_failure"
+            if self._repeated_installer_observation_count(state) >= self.MAX_REPEATED_OBSERVATIONS:
+                return "end_failure"
+                 
             return "generate"
 
         # ------------------------------------
@@ -336,7 +615,7 @@ Action Required:
         def end_success(state: InstallerState):
             return {"final_result": "✅ Installation & Registration Complete."}
         def end_failure(state: InstallerState):
-            return {"final_result": "❌ Installation Failed."}
+            return {"final_result": f"❌ Installation Failed: {self._installer_failure_reason(state)}"}
 
         # ------------------------------------
         # 5. Graph Wiring

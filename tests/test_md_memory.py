@@ -1,208 +1,94 @@
-import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from memory.core_store import CoreMemoryStore
-from memory.md_memory import MarkdownMemoryManager
+from memory.session_archive import SessionArchive
+from memory.task_summary import TaskSummaryRenderer
+from memory.wiki_memory import WikiMemoryManager
 
 
-class _Response:
-    def __init__(self, content: str):
-        self.content = content
-
-
-class _FakeLLM:
-    def __init__(self, patch):
-        self.patch = patch
-        self.calls = []
-
-    async def ainvoke(self, messages):
-        self.calls.append(messages)
-        return _Response(json.dumps(self.patch))
-
-
-class MarkdownMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
-    async def test_append_event_is_hot_path_and_dream_curates_memory(self):
-        patch = {
-            "long_term": {
-                "User Preferences": ["Prefer Markdown-only memory."],
-                "Project Facts": [],
-                "Important Paths": ["Workspace root: D:\\work\\BioMind"],
-                "Reusable Fixes": [],
-                "Important Decisions": [],
-                "Deprecated / Superseded": [],
-            },
-            "task": {
-                "Goal": "Build Markdown memory.",
-                "Current Status": "Planner completed.",
-                "Key Files and Directories": ["memory/MEMORY.md"],
-                "Commands and Results": ["Generated task plan."],
-                "Errors and Fixes": [],
-                "Artifacts": ["memory/tasks/session_1.md"],
-                "Open Questions": [],
-            },
-            "task_status": "running",
-            "log_summary": "Observed planner event.",
-        }
-        with tempfile.TemporaryDirectory() as tmpdir:
-            manager = MarkdownMemoryManager(_FakeLLM(patch), Path(tmpdir) / "memory")
-            await manager.observe_event(
-                "session_1",
-                "planner",
-                messages=[],
-                payload={"plan_file": "task_outputs/session_1/plan.md"},
-            )
-            self.assertEqual(manager.llm.calls, [])
-
-            root = Path(tmpdir) / "memory"
-            self.assertTrue((root / "MEMORY.md").exists())
-            self.assertTrue((root / "TASKS.md").exists())
-            self.assertTrue((root / "tasks" / "session_1.md").exists())
-            self.assertTrue((root / "logs" / "session_1.md").exists())
-            self.assertTrue((root / "history" / "PENDING.md").exists())
-
-            long_term = (root / "MEMORY.md").read_text(encoding="utf-8")
-            task_memory = (root / "tasks" / "session_1.md").read_text(encoding="utf-8")
-            log_text = (root / "logs" / "session_1.md").read_text(encoding="utf-8")
-            task_index = (root / "TASKS.md").read_text(encoding="utf-8")
-
-            self.assertNotIn("Prefer Markdown-only memory.", long_term)
-            self.assertIn("plan_file", log_text)
-            self.assertIn("session_1", task_index)
-
-            result = await manager.curate_pending(task_id="session_1")
-            self.assertIn("Dream completed.", result)
-            self.assertEqual(len(manager.llm.calls), 1)
-
-            long_term = (root / "MEMORY.md").read_text(encoding="utf-8")
-            task_memory = (root / "tasks" / "session_1.md").read_text(encoding="utf-8")
-            dream_log = (root / "dreams" / "DREAM_LOG.md").read_text(encoding="utf-8")
-            pending = (root / "history" / "PENDING.md").read_text(encoding="utf-8")
-
-            self.assertIn("Prefer Markdown-only memory.", long_term)
-            self.assertNotIn("Workspace root: D:\\work\\BioMind", long_term)
-            self.assertIn("Build Markdown memory.", task_memory)
-            self.assertIn("memory/MEMORY.md", task_memory)
-            self.assertIn("Wiki Candidates", task_memory)
-            self.assertIn("Important Paths: Workspace root: D:\\work\\BioMind", task_memory)
-            self.assertIn("Observed planner event.", dream_log)
-            self.assertNotIn("plan_file", pending)
-
-    async def test_full_log_is_not_default_prompt_context(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            manager = MarkdownMemoryManager(_FakeLLM({}), Path(tmpdir) / "memory")
-            manager.initialize_task("session_2", "Do work")
-            manager.log_path("session_2").write_text(
-                "# Full Process Log: session_2\n\nSECRET_LOG_ONLY\n",
-                encoding="utf-8",
-            )
-
-            context = manager.build_prompt_context("session_2")
-            combined = "\n".join(context.values())
-
-            self.assertIn("Do work", combined)
-            self.assertNotIn("SECRET_LOG_ONLY", combined)
-
-    async def test_existing_long_term_project_sections_are_routed_to_wiki_candidates(self):
+class TaskSummaryRendererTests(unittest.IsolatedAsyncioTestCase):
+    async def test_task_summary_renders_from_archive_without_pending_or_dream(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir) / "memory"
-            root.mkdir(parents=True)
-            (root / "MEMORY.md").write_text(
-                "# BioMind Long-term Memory\n\n"
-                "## User Preferences\n- Prefer concise answers.\n\n"
-                "## Project Facts\n- Alpha dataset lives at /data/alpha.\n\n"
-                "## Important Paths\n- Workspace root: D:\\work\\BioMind\n\n"
-                "## Reusable Fixes\n- Use --force for beta.\n",
-                encoding="utf-8",
+            archive = SessionArchive(root / "session_archive.sqlite3")
+            wiki = WikiMemoryManager(None, root)
+            renderer = TaskSummaryRenderer(root, archive, wiki)
+
+            archive.append_event(
+                task_id="session_1",
+                session_id="session_1",
+                project_id="project_alpha",
+                stage="planner",
+                event_type="plan_created",
+                content="Plan: run QC and create task_outputs/session_1/plan.md",
+                summary="Planner created QC plan.",
+                metadata={"goal": "Run QC", "plan_file": "task_outputs/session_1/plan.md"},
+                paths=["task_outputs/session_1/plan.md"],
+            )
+            archive.append_event(
+                task_id="session_1",
+                session_id="session_1",
+                project_id="project_alpha",
+                stage="execute",
+                event_type="execution_finished",
+                content="Generated tables/qc_summary.tsv",
+                summary="QC summary table generated.",
+                metadata={"script_file": "task_outputs/session_1/run.sh", "returncode": 0},
+                returncode=0,
             )
 
-            manager = MarkdownMemoryManager(_FakeLLM({}), root)
+            path = renderer.write_task_summary("session_1")
+            text = path.read_text(encoding="utf-8")
 
-            long_term = manager.read_long_term()
-            candidates = (root / "history" / "WIKI_CANDIDATES.md").read_text(encoding="utf-8")
-            self.assertIn("Prefer concise answers.", long_term)
-            self.assertIn("Use --force for beta.", long_term)
-            self.assertNotIn("Alpha dataset lives", long_term)
-            self.assertNotIn("Workspace root", long_term)
-            self.assertIn("Alpha dataset lives at /data/alpha.", candidates)
-            self.assertIn("Workspace root: D:\\work\\BioMind", candidates)
+            self.assertIn("Derived from SessionArchive events", text)
+            self.assertIn("Run QC", text)
+            self.assertIn("QC summary table generated.", text)
+            self.assertIn("task_outputs/session_1/plan.md", text)
+            self.assertFalse((root / "history" / "PENDING.md").exists())
+            self.assertFalse((root / "dreams" / "DREAM_LOG.md").exists())
 
-    async def test_lexical_long_term_retrieval_returns_matching_chunks(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            manager = MarkdownMemoryManager(_FakeLLM({}), Path(tmpdir) / "memory")
-            manager.apply_patch(
-                "session_3",
-                {
-                    "long_term": {
-                        "Project Facts": ["Alpha dataset lives at /data/alpha."],
-                        "Reusable Fixes": ["Beta tool needs --force."],
-                    },
-                    "task": {},
-                },
-            )
-
-            result = manager.lexical_retrieve_long_term("beta tool", top_k=1)
-            task_memory = manager.read_task_memory("session_3")
-
-            self.assertIn("Beta tool needs", result)
-            self.assertNotIn("Alpha dataset lives", manager.read_long_term())
-            self.assertIn("Project Facts: Alpha dataset lives at /data/alpha.", task_memory)
-
-    async def test_dream_restore_reverts_latest_memory_snapshot(self):
-        patch = {
-            "long_term": {"Reusable Fixes": ["Dream-only fix."]},
-            "task": {"Current Status": "Dreamed."},
-            "task_status": "running",
-            "dream_summary": "Added dream-only fix.",
-        }
-        with tempfile.TemporaryDirectory() as tmpdir:
-            manager = MarkdownMemoryManager(_FakeLLM(patch), Path(tmpdir) / "memory")
-            manager.append_event("session_4", "execute", payload={"stdout": "ok"})
-
-            await manager.curate_pending(task_id="session_4")
-            self.assertIn("Dream-only fix.", manager.read_long_term())
-
-            restore_result = manager.restore_latest_snapshot()
-            self.assertIn("Restored Markdown memory snapshot", restore_result)
-            self.assertNotIn("Dream-only fix.", manager.read_long_term())
-
-    async def test_dream_writes_facts_to_core_memory_for_future_sessions(self):
-        project_id = "project_alpha"
-        patch = {
-            "user_profile": {"Workflow": ["Prefer complete runnable scripts."]},
-            "agent_memory": {"Reusable Fixes": ["Use conda run instead of conda activate."]},
-            "projects": {
-                project_id: {
-                    "project_root": "/data/project_alpha",
-                    "paths": {"gff": "/data/project_alpha.gff3"},
-                    "defaults": {"dmr_skill": "dmr-expression-filter"},
-                }
-            },
-            "long_term": {
-                "Project Facts": ["Project Alpha uses dmr-expression-filter for DMR expression filtering."]
-            },
-            "task": {"Current Status": "Dreamed facts into core memory."},
-            "task_status": "completed",
-            "dream_summary": "Added durable Project Alpha facts.",
-        }
+    async def test_task_summary_can_be_rebuilt_after_delete(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir) / "memory"
-            core_store = CoreMemoryStore(root, default_project_id=project_id)
-            manager = MarkdownMemoryManager(_FakeLLM(patch), root, core_store=core_store, core_project_id=project_id)
-            manager.append_event("session_5", "finalize", payload={"status": "completed"})
+            archive = SessionArchive(root / "session_archive.sqlite3")
+            renderer = TaskSummaryRenderer(root, archive)
+            archive.append_event(
+                task_id="session_2",
+                session_id="session_2",
+                stage="finalize",
+                event_type="task_finalized",
+                content="Task completed.",
+                summary="Task completed.",
+                metadata={"status": "completed"},
+            )
 
-            await manager.curate_pending(task_id="session_5")
+            first = renderer.write_task_summary("session_2")
+            first.unlink()
+            rebuilt = renderer.read_task_summary("session_2")
 
-            frozen_before = core_store.read_core(project_id, snapshot_id="session_before")
-            self.assertIn("Prefer complete runnable scripts.", frozen_before)
-            self.assertIn("Use conda run instead of conda activate.", frozen_before)
-            self.assertIn("/data/project_alpha", frozen_before)
-            self.assertNotIn("/data/project_alpha.gff3", frozen_before)
-            self.assertNotIn("dmr-expression-filter", frozen_before)
-            self.assertIn("paths.gff", (root / "CORE_REVIEW.md").read_text(encoding="utf-8"))
-            self.assertNotIn("dmr-expression-filter", manager.read_long_term())
-            self.assertIn("Project Facts: Project Alpha uses dmr-expression-filter", manager.read_task_memory("session_5"))
+            self.assertIn("Task completed.", rebuilt)
+            self.assertIn("Status: completed", rebuilt)
+
+    async def test_prompt_context_uses_archive_search_as_related_memory(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir) / "memory"
+            archive = SessionArchive(root / "session_archive.sqlite3")
+            renderer = TaskSummaryRenderer(root, archive)
+            archive.append_event(
+                task_id="session_3",
+                session_id="session_3",
+                stage="execute",
+                event_type="execution_finished",
+                content="Generated beta markers table.",
+                summary="Beta markers table generated.",
+            )
+
+            context = await renderer.build_prompt_context_async("session_3", "beta markers")
+
+            self.assertEqual(context["long_term_memory"], "")
+            self.assertIn("Beta markers table generated.", context["task_memory"])
+            self.assertIn("Retrieved Related Session Events", context["related_memory"])
 
 
 if __name__ == "__main__":

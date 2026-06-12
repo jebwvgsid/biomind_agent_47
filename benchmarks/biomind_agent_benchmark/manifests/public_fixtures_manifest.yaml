@@ -1,0 +1,196 @@
+fixture_set_id: biomind-public-demo-fixtures
+version: 0.3.1
+root: fixtures_public
+notes:
+  - Public fixtures are downloaded or extracted from public package data, then subsetted for benchmark execution.
+  - File entries use availability=available when present in the current workspace and availability=planned when expected on the server or after later fixture copy.
+  - Raw downloads are cached under .biomind/public_raw and are not required in git.
+
+datasets:
+  - id: public-pbmc3k-10x-subset
+    source_url: https://cf.10xgenomics.com/samples/cell-exp/1.1.0/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
+    availability: available
+    files:
+      - path: fixtures_public/pbmc3k_10x_subset/matrix.mtx
+        availability: available
+      - path: fixtures_public/pbmc3k_10x_subset/features.tsv
+        availability: available
+      - path: fixtures_public/pbmc3k_10x_subset/barcodes.tsv
+        availability: available
+      - path: fixtures_public/pbmc3k_10x_subset/cell_qc_metrics.tsv
+        availability: available
+      - path: fixtures_public/pbmc3k_10x_subset/answer_key.yaml
+        availability: available
+
+  - id: public-ucsc-hg38-chrM
+    source_url: https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/chrM.fa.gz
+    availability: available
+    files:
+      - path: fixtures_public/hg38_chrM/hg38_chrM.fa
+        availability: available
+      - path: fixtures_public/hg38_chrM/answer_key.yaml
+        availability: available
+
+  - id: public-cooler-hg19-gm12878-mboi-chr22
+    source_url: apt://python3-cooler-examples
+    availability: available
+    files:
+      - path: fixtures_public/cool_hg19_gm12878_chr22/hg19_GM12878_MboI_chr22_2Mb.cool
+        availability: available
+      - path: fixtures_public/cool_hg19_gm12878_chr22/bins.tsv
+        availability: available
+      - path: fixtures_public/cool_hg19_gm12878_chr22/pixels.tsv
+        availability: available
+      - path: fixtures_public/cool_hg19_gm12878_chr22/answer_key.yaml
+        availability: available
+
+  - id: public-cooler-pair-5kb-tad-difftad
+    source_url: planned://paired-5kb-cooler-tad-differential-tad-fixture
+    availability: planned
+    files:
+      - path: fixtures_public/cool_pair_5kb_tad/target_5kb.cool
+        availability: planned
+      - path: fixtures_public/cool_pair_5kb_tad/control_5kb.cool
+        availability: planned
+      - path: fixtures_public/cool_pair_5kb_tad/sample_sheet.tsv
+        availability: planned
+      - path: fixtures_public/cool_pair_5kb_tad/answer_key.yaml
+        availability: planned
+
+  - id: public-clim4omics-g2f-maize-gxe-subset
+    source_url: https://zenodo.org/records/8002909
+    availability: planned
+    files:
+      - path: fixtures_public/g2f_maize_gxe/phenotype_multi_environment.tsv
+        availability: planned
+      - path: fixtures_public/g2f_maize_gxe/genotype_matrix.tsv
+        availability: planned
+      - path: fixtures_public/g2f_maize_gxe/environment_timeseries.tsv
+        availability: planned
+      - path: fixtures_public/g2f_maize_gxe/growth_stage_window.tsv
+        availability: planned
+      - path: fixtures_public/g2f_maize_gxe/answer_key.yaml
+        availability: planned
+
+  - id: public-maize-pangenome-sv-epav-subset
+    source_url: https://zenodo.org/records/16576184
+    availability: planned
+    files:
+      - path: fixtures_public/maize_pangenome_sv/sv.vcf
+        availability: planned
+      - path: fixtures_public/maize_pangenome_sv/pangenome_gene_presence_absence.tsv
+        availability: planned
+      - path: fixtures_public/maize_pangenome_sv/pangenome_gene_presence_absence.features_by_sample.tsv
+        availability: planned
+      - path: fixtures_public/maize_pangenome_sv/pav_answer_key.yaml
+        availability: planned
+
+  - id: public-metabolomics-workbench-st001947-subset
+    source_url: https://www.metabolomicsworkbench.org/data/DRCCMetadata.php?Mode=Study&StudyID=ST001947
+    availability: planned
+    files:
+      - path: fixtures_public/crop_multiomics/metabolite_matrix.tsv
+        availability: planned
+      - path: fixtures_public/crop_multiomics/metabolite_sample_metadata.tsv
+        availability: planned
+      - path: fixtures_public/crop_multiomics/metabolite_answer_key.yaml
+        availability: planned
+
+  - id: public-giab-hg002-grch38-truth-subset
+    source_url: https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/NISTv4.2.1/GRCh38/
+    availability: planned
+    files:
+      - path: fixtures_public/giab_hg002_wgs/known_truth.vcf
+        availability: planned
+      - path: fixtures_public/giab_hg002_wgs/high_confidence_regions.bed
+        availability: planned
+
+  - id: public-ont-basemod-ecoli-5mc-modkit-subset
+    source_url: https://registry.opendata.aws/ont_basemod_data/
+    availability: planned
+    files:
+      - path: fixtures_public/ont_methylation_modkit/Ecoli_WT_5kHz_sup_v5.2r1_5mC.bam
+        availability: planned
+      - path: fixtures_public/ont_methylation_modkit/ecoli.fa
+        availability: planned
+      - path: fixtures_public/ont_methylation_modkit/Ecoli_WT_bisulfite_20x.tsv
+        availability: planned
+      - path: fixtures_public/ont_methylation_modkit/answer_key.yaml
+        availability: planned
+
+task_fixtures:
+  BM-SCRNA-PBMC-QC-001:
+    - path: fixtures_public/pbmc3k_10x_subset/matrix.mtx
+      availability: available
+    - path: fixtures_public/pbmc3k_10x_subset/features.tsv
+      availability: available
+    - path: fixtures_public/pbmc3k_10x_subset/barcodes.tsv
+      availability: available
+    - path: fixtures_public/pbmc3k_10x_subset/cell_qc_metrics.tsv
+      availability: available
+    - path: fixtures_public/pbmc3k_10x_subset/answer_key.yaml
+      availability: available
+  BM-SCRNA-PBMC-CLUSTER-MARKER-002:
+    - path: fixtures_public/pbmc3k_10x_subset/matrix.mtx
+      availability: available
+    - path: fixtures_public/pbmc3k_10x_subset/features.tsv
+      availability: available
+    - path: fixtures_public/pbmc3k_10x_subset/barcodes.tsv
+      availability: available
+    - path: fixtures_public/pbmc3k_10x_subset/answer_key.yaml
+      availability: available
+  BM-3DDNA-COOL-TAD-003:
+    - path: fixtures_public/cool_hg19_gm12878_chr22/hg19_GM12878_MboI_chr22_2Mb.cool
+      availability: available
+    - path: fixtures_public/cool_hg19_gm12878_chr22/answer_key.yaml
+      availability: available
+  BM-3DDNA-COOL-RESAMPLE-DIFFTAD-025:
+    - path: fixtures_public/cool_pair_5kb_tad/target_5kb.cool
+      availability: planned
+    - path: fixtures_public/cool_pair_5kb_tad/control_5kb.cool
+      availability: planned
+    - path: fixtures_public/cool_pair_5kb_tad/sample_sheet.tsv
+      availability: planned
+    - path: fixtures_public/cool_pair_5kb_tad/answer_key.yaml
+      availability: planned
+  BM-CROP-METABOLOMICS-015:
+    - path: fixtures_public/crop_multiomics/metabolite_matrix.tsv
+      availability: planned
+    - path: fixtures_public/crop_multiomics/metabolite_sample_metadata.tsv
+      availability: planned
+    - path: fixtures_public/crop_multiomics/metabolite_answer_key.yaml
+      availability: planned
+  BM-CROP-GXE-017:
+    - path: fixtures_public/g2f_maize_gxe/phenotype_multi_environment.tsv
+      availability: planned
+    - path: fixtures_public/g2f_maize_gxe/genotype_matrix.tsv
+      availability: planned
+    - path: fixtures_public/g2f_maize_gxe/environment_timeseries.tsv
+      availability: planned
+    - path: fixtures_public/g2f_maize_gxe/growth_stage_window.tsv
+      availability: planned
+    - path: fixtures_public/g2f_maize_gxe/answer_key.yaml
+      availability: planned
+  BM-CROP-PANGENOME-SV-018:
+    - path: fixtures_public/maize_pangenome_sv/sv.vcf
+      availability: planned
+    - path: fixtures_public/maize_pangenome_sv/pangenome_gene_presence_absence.tsv
+      availability: planned
+    - path: fixtures_public/maize_pangenome_sv/pangenome_gene_presence_absence.features_by_sample.tsv
+      availability: planned
+    - path: fixtures_public/maize_pangenome_sv/pav_answer_key.yaml
+      availability: planned
+  BM-WGS-GIAB-021:
+    - path: fixtures_public/giab_hg002_wgs/known_truth.vcf
+      availability: planned
+    - path: fixtures_public/giab_hg002_wgs/high_confidence_regions.bed
+      availability: planned
+  BM-ONT-METHYL-MODKIT-024:
+    - path: fixtures_public/ont_methylation_modkit/Ecoli_WT_5kHz_sup_v5.2r1_5mC.bam
+      availability: planned
+    - path: fixtures_public/ont_methylation_modkit/ecoli.fa
+      availability: planned
+    - path: fixtures_public/ont_methylation_modkit/Ecoli_WT_bisulfite_20x.tsv
+      availability: planned
+    - path: fixtures_public/ont_methylation_modkit/answer_key.yaml
+      availability: planned

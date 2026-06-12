@@ -2,6 +2,7 @@ import os
 import json
 import re
 import shutil
+import shlex
 import subprocess
 import logging
 import sys
@@ -30,16 +31,27 @@ try:
     BIO_SOFTWARE_ROOT = getattr(config_module, 'BIO_SOFTWARE_ROOT', None)
     # [新增] 读取源码安装专用目录
     BIO_SOURCE_INSTALL_DIR = getattr(config_module, 'BIO_SOURCE_INSTALL_DIR', None)
+    ANACONDA_ROOT = getattr(config_module, 'ANACONDA_ROOT', None)
 
 except Exception as e:
     # 兜底默认值
     BIO_SOFTWARE_ROOT = None
     BIO_SOURCE_INSTALL_DIR = None
+    ANACONDA_ROOT = None
 
 logger = logging.getLogger("PackageManager")
 
 class PackageManager:
     INSTALLED_STATUSES = {"installed", "verified", "success"}
+    PYTHON_IMPORT_ALIASES = {
+        "pytorch": "torch",
+        "scikit-learn": "sklearn",
+        "scikit_learn": "sklearn",
+        "pyyaml": "yaml",
+        "opencv-python": "cv2",
+        "opencv_python": "cv2",
+        "pillow": "PIL",
+    }
     STATUS_RANK = {
         "": 0,
         "registered": 0,
@@ -48,6 +60,7 @@ class PackageManager:
         "verified": 2,
         "success": 3,
     }
+    SHIM_PATH_PARTS = {"agent_shim", "bin_shims", "shims"}
 
     def __init__(self, work_dir: str = "./"):
         # 1. work_dir 用于存放临时文件或项目特定数据
@@ -89,6 +102,7 @@ class PackageManager:
         
         # 5. 加载配置
         self.load_from_yaml(self.root_dir / "tools_setup.yaml")
+        self.repair_registered_shims()
         
 
     # ==========================================
@@ -97,9 +111,50 @@ class PackageManager:
     
     def _detect_manager(self):
         """探测 Conda/Mamba"""
+        for executable in ("mamba", "conda"):
+            configured = self._configured_manager_path(executable)
+            if configured:
+                return configured
         if shutil.which("mamba"): return "mamba"
         elif shutil.which("conda"): return "conda"
         return None
+
+    def _configured_manager_path(self, executable: str) -> Optional[str]:
+        if not ANACONDA_ROOT:
+            return None
+        root = Path(str(ANACONDA_ROOT)).expanduser()
+        candidates = [
+            root / "bin" / executable,
+            root / "Scripts" / f"{executable}.exe",
+            root / f"{executable}.exe",
+            root / executable,
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                return str(candidate)
+        return None
+
+    @staticmethod
+    def _quote_shell_path(path: str) -> str:
+        text = str(path or "")
+        if not text:
+            return text
+        if os.name == "nt":
+            return f'"{text}"' if re.search(r"\s", text) else text
+        return shlex.quote(text)
+
+    def _command_with_configured_manager(self, command: str) -> str:
+        text = str(command or "").strip()
+        if not text or not self.conda_exe:
+            return text
+        if re.match(r"^(conda|mamba)(?:\s|$)", text):
+            return re.sub(
+                r"^(conda|mamba)(?=\s|$)",
+                lambda _match: self._quote_shell_path(self.conda_exe),
+                text,
+                count=1,
+            )
+        return text
 
     def _get_conda_root(self):
         """
@@ -115,6 +170,8 @@ class PackageManager:
                 return data.get("root_prefix")
         except: 
             pass
+        if ANACONDA_ROOT:
+            return str(Path(str(ANACONDA_ROOT)).expanduser())
             
         # 2. 兜底：尝试从当前环境推断 (如果当前是在 base 环境下)
         prefix = os.environ.get("CONDA_PREFIX")
@@ -207,7 +264,8 @@ class PackageManager:
             token = re.split(r"[<>=!~]", str(pkg))[0].strip()
             if not token:
                 continue
-            imports.append(token.replace("-", "_"))
+            normalized = token.replace("-", "_")
+            imports.append(self.PYTHON_IMPORT_ALIASES.get(token.lower(), self.PYTHON_IMPORT_ALIASES.get(normalized.lower(), normalized)))
         return ", ".join(dict.fromkeys(imports))
 
     def infer_conda_env_from_path(self, path: Optional[str]) -> str:
@@ -224,7 +282,59 @@ class PackageManager:
     def _is_default_tool_env(self, env_name: str, tool_name: str) -> bool:
         return str(env_name or "") == self._default_tool_env(tool_name)
 
+    def _is_shim_like_path(self, path: Optional[str]) -> bool:
+        if not path:
+            return False
+        parts = [part for part in str(path).replace("\\", "/").lower().split("/") if part]
+        return any(part in self.SHIM_PATH_PARTS for part in parts)
+
+    def _is_posix_absolute_path(self, path: Optional[str]) -> bool:
+        text = str(path or "")
+        return text.startswith("/") and not re.match(r"^/[A-Za-z]/", text)
+
+    def _absolute_path_for_runtime(self, path: str) -> str:
+        if self._is_posix_absolute_path(path):
+            return str(path).rstrip("/") or "/"
+        return os.path.abspath(path)
+
+    def _join_runtime_path(self, base: str, *parts: str) -> str:
+        if self._is_posix_absolute_path(base):
+            return "/".join([str(base).rstrip("/"), *[str(part).strip("/") for part in parts if str(part)]])
+        return os.path.join(base, *parts)
+
+    def _candidate_tool_paths(
+        self,
+        env_name: str,
+        tool_name: str,
+        source_path: Optional[str] = None,
+        source_executable: Optional[str] = None,
+    ) -> List[str]:
+        candidates: List[str] = []
+        if source_executable:
+            candidates.append(self._absolute_path_for_runtime(source_executable))
+        if source_path:
+            abs_path = self._absolute_path_for_runtime(source_path)
+            candidates.append(self._join_runtime_path(abs_path, tool_name))
+            if str(abs_path).replace("\\", "/").rstrip("/").split("/")[-1] != "bin":
+                candidates.append(self._join_runtime_path(abs_path, "bin", tool_name))
+        if self.conda_root:
+            candidates.append(os.path.join(str(self.conda_root), "envs", env_name, "bin", tool_name))
+        prefix = os.environ.get("CONDA_PREFIX", "")
+        if prefix and Path(prefix).name == env_name:
+            candidates.append(os.path.join(prefix, "bin", tool_name))
+
+        unique: List[str] = []
+        for candidate in candidates:
+            if candidate and candidate not in unique and not self._is_shim_like_path(candidate):
+                unique.append(candidate)
+        return unique
+
     def _normalize_tool_registration_env(self, tool_name: str, env_name: str, source_path: Optional[str]) -> str:
+        if self._is_shim_like_path(source_path):
+            raise ValueError(
+                f"Refusing to register tool '{tool_name}' from shim path: {source_path}. "
+                "Register the real executable path, for example /path/to/conda/envs/ENV/bin/tool."
+            )
         inferred_env = self.infer_conda_env_from_path(source_path)
         requested_env = str(env_name or "").strip()
         if inferred_env and requested_env and requested_env != inferred_env:
@@ -282,17 +392,21 @@ class PackageManager:
         tools = []
         if "tools" in self.registry:
             for name, info in self.registry["tools"].items():
-                env_info = f"(Env: {info.get('env', 'unknown')})"
+                env_info = f"(Env: {info.get('env', 'unknown')}; status: {info.get('status', 'registered')})"
                 tools.append(f"- {name} {env_info}")
         if "environments" in self.registry:
             for name, info in self.registry["environments"].items():
                 purpose = info.get("purpose", "environment")
+                status = info.get("status", "registered")
                 packages = ", ".join(info.get("packages", []) or [])
                 caps = ", ".join(info.get("capabilities", []) or [])
+                bound_tools = ", ".join(info.get("bound_tools", []) or [])
                 suffix = f"; packages: {packages}" if packages else ""
                 if caps:
                     suffix += f"; capabilities: {caps}"
-                tools.append(f"- env:{name} ({purpose}{suffix})")
+                if bound_tools:
+                    suffix += f"; tools: {bound_tools}"
+                tools.append(f"- env:{name} ({purpose}; status: {status}{suffix})")
         return "\n".join(tools) if tools else "None"
 
     def get_environment(self, env_name: str) -> Dict[str, Any]:
@@ -311,6 +425,7 @@ class PackageManager:
         status: str = "registered",
         tool_name: str = "",
         last_verified_at: str = "",
+        healthchecks_by_skill=None,
     ):
         """Register a reusable environment even when it does not expose a command shim."""
         envs = self.registry.setdefault("environments", {})
@@ -320,12 +435,22 @@ class PackageManager:
         merged_skills = self._merge_unique(existing.get("skill_ids"), [skill_id] if skill_id else [])
         merged_tools = self._merge_unique(existing.get("bound_tools"), [tool_name] if tool_name else [])
         selected_language = str(language or existing.get("language", "")).lower()
+        merged_healthchecks_by_skill = dict(existing.get("healthchecks_by_skill") or {})
+        if isinstance(healthchecks_by_skill, dict):
+            for key, value in healthchecks_by_skill.items():
+                if str(key or "").strip() and str(value or "").strip():
+                    merged_healthchecks_by_skill[str(key).strip()] = str(value).strip()
+        skill_healthcheck = ""
+        if skill_id:
+            skill_healthcheck = str(healthcheck or merged_healthchecks_by_skill.get(skill_id, "") or "").strip()
         selected_healthcheck = self.build_environment_healthcheck(
             env_name=env_name,
             language=selected_language,
             packages=merged_packages,
-            healthcheck=healthcheck or existing.get("healthcheck", ""),
+            healthcheck=skill_healthcheck or healthcheck or existing.get("healthcheck", ""),
         )
+        if skill_id and selected_healthcheck:
+            merged_healthchecks_by_skill[skill_id] = selected_healthcheck
         envs[env_name] = {
             "env": env_name,
             "purpose": purpose or existing.get("purpose") or "Reusable environment",
@@ -333,6 +458,7 @@ class PackageManager:
             "packages": merged_packages,
             "capabilities": merged_caps,
             "healthcheck": selected_healthcheck,
+            "healthchecks_by_skill": merged_healthchecks_by_skill,
             "status": "broken" if str(status or "").lower() == "broken" else self._best_status(existing.get("status", "registered"), status or "registered"),
             "notes": notes or existing.get("notes", ""),
             "skill_ids": merged_skills,
@@ -361,6 +487,7 @@ class PackageManager:
                 language=str(info.get("language") or ""),
                 capabilities=info.get("capabilities"),
                 healthcheck=str(info.get("healthcheck") or ""),
+                healthchecks_by_skill=info.get("healthchecks_by_skill"),
                 status=str(info.get("status") or "registered"),
                 tool_name="",
                 last_verified_at=str(info.get("last_verified_at") or ""),
@@ -442,12 +569,13 @@ class PackageManager:
             healthcheck=healthcheck or info.get("healthcheck", ""),
         )
         info["healthcheck"] = command
+        run_command = self._command_with_configured_manager(command)
         try:
-            proc = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=180)
+            proc = subprocess.run(run_command, shell=True, capture_output=True, text=True, timeout=180)
             ok = proc.returncode == 0
             info["status"] = "verified" if ok else "broken"
             info["last_verified_at"] = datetime.now().isoformat()
-            info["last_healthcheck"] = command
+            info["last_healthcheck"] = run_command
             combined = "\n".join(part for part in [proc.stdout.strip(), proc.stderr.strip()] if part).strip()
             if combined:
                 info["notes"] = combined[:1000]
@@ -478,6 +606,109 @@ class PackageManager:
         envs[env_name] = env_record
         self._save_registry()
         return True
+
+    def _extract_extra_setup_from_shim(self, text: str) -> str:
+        marker = "# 4. Inject Extra Configs"
+        execute_marker = "\n# 5. Execute"
+        start = text.find(marker)
+        end = text.find(execute_marker)
+        if start < 0 or end < 0 or end <= start:
+            return ""
+        setup = text[start:end].split("\n", 1)
+        return setup[1].strip("\n") if len(setup) == 2 else ""
+
+    def _infer_shim_env_from_text(self, tool_name: str, text: str) -> str:
+        """Infer the real conda env used by a shim's executable candidates."""
+        env_counts: Dict[str, int] = {}
+        for match in re.finditer(
+            rf"(?:^|[\s\"'])/(?P<path>[^\"'\s]*?/envs/(?P<env>[^/]+)/bin/{re.escape(tool_name)})(?:$|[\s\"'])",
+            str(text or ""),
+        ):
+            env = match.group("env")
+            env_counts[env] = env_counts.get(env, 0) + 2
+        for match in re.finditer(r"/envs/(?P<env>[^/]+)/bin(?=$|[/:\"'\s])", str(text or "")):
+            env = match.group("env")
+            env_counts[env] = env_counts.get(env, 0) + 1
+        if not env_counts:
+            return ""
+        return sorted(env_counts.items(), key=lambda item: (-item[1], item[0]))[0][0]
+
+    def _registered_shim_repair_env(self, tool_name: str, record: Dict[str, Any], shim_path: Path) -> str:
+        env_name = str(record.get("env") or record.get("env_name") or "").strip()
+        if not env_name or not self._is_default_tool_env(env_name, tool_name):
+            return env_name
+
+        inferred = self.infer_conda_env_from_path(record.get("source_path"))
+        if not inferred and shim_path.exists():
+            try:
+                inferred = self._infer_shim_env_from_text(tool_name, shim_path.read_text(encoding="utf-8"))
+            except Exception:
+                inferred = ""
+        if inferred and inferred != env_name:
+            logger.warning(
+                "Repairing stale shim for %s: replacing default env %s with env inferred from executable path: %s",
+                tool_name,
+                env_name,
+                inferred,
+            )
+            record["env"] = inferred
+            record["env_name"] = inferred
+            return inferred
+        return env_name
+
+    def _shim_needs_repair(self, tool_name: str, shim_path: Path, env_name: str = "", record: Optional[Dict[str, Any]] = None) -> bool:
+        if not shim_path.exists():
+            return True
+        try:
+            text = shim_path.read_text(encoding="utf-8")
+        except Exception:
+            return True
+        if env_name and self._is_default_tool_env(env_name, tool_name):
+            inferred = self.infer_conda_env_from_path((record or {}).get("source_path"))
+            inferred = inferred or self._infer_shim_env_from_text(tool_name, text)
+            if inferred and inferred != env_name:
+                return True
+        if "Resolve the real executable explicitly" in text and 'exec "$real_tool" "$@"' in text:
+            return False
+        return f'exec {tool_name} "$@"' in text or f"exec {tool_name} " in text
+
+    def repair_registered_shims(self) -> int:
+        """Rewrite stale recursive shims from the software registry."""
+        repaired = 0
+        for tool_name, record in list((self.registry.get("tools") or {}).items()):
+            env_name = str(record.get("env") or record.get("env_name") or "").strip()
+            if not tool_name or not env_name:
+                continue
+            shim_path = Path(record.get("shim_path") or (self.shim_dir / tool_name))
+            original_env_name = env_name
+            env_name = self._registered_shim_repair_env(str(tool_name), record, shim_path)
+            env_changed = env_name != original_env_name
+            if not env_changed and not self._shim_needs_repair(str(tool_name), shim_path, env_name=env_name, record=record):
+                continue
+            extra_setup = ""
+            if shim_path.exists():
+                try:
+                    extra_setup = self._extract_extra_setup_from_shim(shim_path.read_text(encoding="utf-8"))
+                except Exception:
+                    extra_setup = ""
+            source_path = record.get("source_path")
+            if self._is_shim_like_path(source_path):
+                source_path = None
+            if self.infer_conda_env_from_path(source_path) == env_name:
+                extra_setup = ""
+            new_shim = self._create_shim(
+                env_name,
+                str(tool_name),
+                extra_setup=extra_setup,
+                source_path=source_path,
+            )
+            record["shim_path"] = str(new_shim)
+            record["shim_version"] = "realpath-v2"
+            repaired += 1
+        if repaired:
+            self._save_registry()
+            logger.info("Repaired %s stale BioMind shim(s).", repaired)
+        return repaired
 
     def install_package(self, tool_name: str, specific_cmd: str = None) -> tuple:
         """自动安装 (Conda)"""
@@ -519,13 +750,27 @@ class PackageManager:
         :param source_path: 源码所在目录 (会自动添加到 PATH)
         :param setup_script: [新增] 特异性环境配置脚本 (如 export PERL5LIB=...)
         """
-        tool_name = tool_name.strip()
+        original_tool_name = str(tool_name or "").strip()
+        if self._is_shim_like_path(original_tool_name):
+            raise ValueError(
+                f"Refusing to register shim path as tool command: {original_tool_name}. "
+                "Use the command name plus the real executable directory instead."
+            )
+        tool_name = original_tool_name
         
         # 自动清洗：如果传入路径，只取文件名
         if "/" in tool_name: tool_name = os.path.basename(tool_name)
+        if "\\" in tool_name: tool_name = os.path.basename(tool_name)
         
         # 自动清洗：如果 source_path 指向文件，自动转为目录
+        source_executable = None
+        if self._is_shim_like_path(source_path):
+            raise ValueError(
+                f"Refusing to register tool '{tool_name}' from shim path: {source_path}. "
+                "Use the real executable path instead of agent_shim/bin_shims."
+            )
         if source_path and os.path.isfile(source_path):
+            source_executable = os.path.abspath(source_path)
             source_path = os.path.dirname(source_path)
         env_name = self._normalize_tool_registration_env(tool_name, env_name, source_path)
 
@@ -554,7 +799,13 @@ class PackageManager:
                 final_setup += "# -----------------------------\n"
 
             # 3. 创建 Shim
-            shim_path = self._create_shim(env_name, tool_name, extra_setup=final_setup)
+            shim_path = self._create_shim(
+                env_name,
+                tool_name,
+                extra_setup=final_setup,
+                source_path=source_path,
+                source_executable=source_executable,
+            )
             
             # 4. 更新注册表
             self.registry.setdefault("tools", {})[tool_name] = {
@@ -608,7 +859,14 @@ class PackageManager:
     # =========================================================
     # [核心修改] 生成 Shim (注入 extra_setup)
     # =========================================================
-    def _create_shim(self, env_name, tool_name, extra_setup=""):
+    def _create_shim(
+        self,
+        env_name,
+        tool_name,
+        extra_setup="",
+        source_path: Optional[str] = None,
+        source_executable: Optional[str] = None,
+    ):
         """生成 Shim 启动脚本"""
         shim_path = self.shim_dir / tool_name
         
@@ -617,6 +875,14 @@ class PackageManager:
         # 如果获取到的是子环境路径，尝试截取根目录
         if "/envs/" in real_conda_root:
             real_conda_root = real_conda_root.split("/envs/")[0]
+
+        tool_name_literal = shlex.quote(str(tool_name))
+        candidate_lines = [
+            f'    "$CONDA_PREFIX/bin/{tool_name}"',
+        ]
+        for candidate in self._candidate_tool_paths(env_name, tool_name, source_path, source_executable):
+            candidate_lines.append(f"    {shlex.quote(candidate)}")
+        candidate_block = "\n".join(candidate_lines)
 
         script = f"""#!/bin/bash
 # BioMind Shim for {tool_name}
@@ -654,7 +920,43 @@ fi
 {extra_setup}
 
 # 5. Execute
-exec {tool_name} "$@"
+# Resolve the real executable explicitly. Do not run bare `{tool_name}` here:
+# if this shim directory is first in PATH, a bare exec can recursively call
+# this shim and make the agent look stuck.
+shim_self="$(readlink -f "$0" 2>/dev/null || printf '%s\\n' "$0")"
+real_tool=""
+real_tool_candidates=(
+{candidate_block}
+)
+for candidate in "${{real_tool_candidates[@]}}"; do
+    [ -n "$candidate" ] || continue
+    [ -x "$candidate" ] || continue
+    candidate_real="$(readlink -f "$candidate" 2>/dev/null || printf '%s\\n' "$candidate")"
+    [ "$candidate_real" = "$shim_self" ] && continue
+    real_tool="$candidate"
+    break
+done
+
+if [ -z "$real_tool" ]; then
+    shim_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+    search_path=":$PATH:"
+    search_path="${{search_path//:$shim_dir:/:}}"
+    search_path="${{search_path#:}}"
+    search_path="${{search_path%:}}"
+    real_tool="$(PATH="$search_path" command -v {tool_name_literal} 2>/dev/null || true)"
+    if [ -n "$real_tool" ]; then
+        real_tool_real="$(readlink -f "$real_tool" 2>/dev/null || printf '%s\\n' "$real_tool")"
+        [ "$real_tool_real" = "$shim_self" ] && real_tool=""
+    fi
+fi
+
+if [ -z "$real_tool" ]; then
+    echo "BioMind shim error: could not resolve real executable for tool '{tool_name}' in env '{env_name}'." >&2
+    echo "The shim refused to call itself recursively. Re-register the tool with its real executable path." >&2
+    exit 127
+fi
+
+exec "$real_tool" "$@"
 """
         shim_path.write_text(script, encoding='utf-8')
         shim_path.chmod(0o755)

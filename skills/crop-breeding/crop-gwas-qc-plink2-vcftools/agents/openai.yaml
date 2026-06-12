@@ -1,0 +1,4 @@
+interface:
+  display_name: "Crop GWAS QC"
+  short_description: "Run PLINK2/VCF QC before crop GWAS."
+  default_prompt: "Use $crop-gwas-qc-plink2-vcftools to QC my crop genotype data before GWAS."

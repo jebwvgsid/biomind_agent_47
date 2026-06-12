@@ -1,0 +1,3 @@
+sample	matrix	resolution_bp	note
+target	toy_target.mcool	40000	placeholder matrix path for preflight-only task
+control	toy_control.mcool	40000	placeholder matrix path for preflight-only task

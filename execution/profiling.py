@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import contextvars
+import csv
 import json
 import time
 import uuid
@@ -185,8 +186,234 @@ def _shorten(text: Any, limit: int = 500) -> str:
     return value[:limit] + f"... [truncated {len(value) - limit} chars]"
 
 
+def _ensure_list(value: Any) -> List[Any]:
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple, set)):
+        return list(value)
+    return [value]
+
+
+def _dedupe_text(items: Any) -> List[str]:
+    result: List[str] = []
+    seen: set[str] = set()
+    for item in _ensure_list(items):
+        text = str(item or "").strip()
+        if not text or text.lower() in {"none", "n/a", "null"}:
+            continue
+        if text in seen:
+            continue
+        seen.add(text)
+        result.append(text)
+    return result
+
+
+def _merge_text(existing: Any, incoming: Any) -> List[str]:
+    return _dedupe_text([*_ensure_list(existing), *_ensure_list(incoming)])
+
+
+def _normalize_path_text(value: Any) -> str:
+    text = str(value or "").strip()
+    if len(text) >= 3 and text[1] == ":":
+        while "\\\\" in text:
+            text = text.replace("\\\\", "\\")
+    return text
+
+
+def _dedupe_paths(items: Any) -> List[str]:
+    return _dedupe_text([_normalize_path_text(item) for item in _ensure_list(items)])
+
+
+def _join_tsv(items: Any) -> str:
+    return "; ".join(text.replace("\t", " ").replace("\n", " ") for text in _dedupe_text(items))
+
+
+def _coerce_int(value: Any, default: int = 0) -> int:
+    try:
+        if value is None or value == "":
+            return default
+        return int(value)
+    except Exception:
+        return default
+
+
+def _format_bytes(size: Any) -> str:
+    size_int = _coerce_int(size)
+    if size_int <= 0:
+        return "0 B"
+    units = ["B", "KB", "MB", "GB", "TB"]
+    value = float(size_int)
+    unit = units[0]
+    for unit in units:
+        if value < 1024 or unit == units[-1]:
+            break
+        value /= 1024
+    if unit == "B":
+        return f"{int(value)} B"
+    return f"{value:.2f} {unit}"
+
+
+def _resolve_repo_root(repo_root: str | Path | None = None) -> Path:
+    if repo_root:
+        return Path(repo_root).resolve()
+    return Path(__file__).resolve().parents[1]
+
+
+def _file_size_bytes(raw_path: str, root: Path) -> int:
+    value = str(raw_path or "").strip()
+    if not value:
+        return 0
+    path = Path(value)
+    if not path.is_absolute():
+        path = root / path
+    try:
+        if path.exists() and path.is_file():
+            return path.stat().st_size
+    except OSError:
+        return 0
+    return 0
+
+
+def generic_metadata_for_prompt(
+    task_id: str,
+    prompt: Any,
+    repo_root: str | Path | None = None,
+) -> Dict[str, Any]:
+    """Return audit metadata for any non-benchmark task prompt."""
+    task_key = str(task_id or "").strip() or "default"
+    prompt_text = str(prompt or "").strip()
+    root = _resolve_repo_root(repo_root)
+    if not prompt_text:
+        return {
+            "test_task_id": task_key,
+            "test_content": task_key,
+            "test_prompt": "",
+            "test_data": [],
+            "data_size_bytes": 0,
+        }
+
+    semantics: Dict[str, Any] = {}
+    data_paths: List[str] = []
+    try:
+        from memory.task_semantics import extract_path_like_values
+
+        data_paths = _dedupe_paths(extract_path_like_values(prompt_text))
+    except Exception:
+        data_paths = []
+    try:
+        from memory.task_semantics import infer_task_semantics
+
+        semantics = infer_task_semantics(
+            task_id=task_key,
+            stage="start",
+            messages=[prompt_text],
+            payload={"user_query": prompt_text},
+        )
+        data_paths = _dedupe_paths([*_ensure_list(semantics.get("output_artifacts")), *data_paths])
+    except Exception:
+        semantics = {}
+
+    compact_prompt = " ".join(prompt_text.split())
+    task_type = str(semantics.get("task_type") or "general")
+    analysis_type = str(semantics.get("analysis_type") or "general_analysis")
+    inferred_title = str(semantics.get("task_title") or "").strip()
+    if inferred_title and not (task_type == "general" and analysis_type == "general_analysis"):
+        test_content = inferred_title
+    else:
+        test_content = compact_prompt[:160] or task_key
+
+    return {
+        "test_task_id": task_key,
+        "test_content": test_content,
+        "test_prompt": prompt_text,
+        "test_data": data_paths,
+        "data_size_bytes": sum(_file_size_bytes(path, root) for path in data_paths),
+        "semantics": semantics,
+    }
+
+
+def benchmark_metadata_for_task(task_id: str, repo_root: str | Path | None = None) -> Dict[str, Any]:
+    """Return benchmark prompt/data metadata for a BM-* task id, if available."""
+    task_key = str(task_id or "").strip()
+    if not task_key.startswith("BM-"):
+        return {}
+
+    root = _resolve_repo_root(repo_root)
+    tasks_path = root / "benchmarks" / "biomind_agent_benchmark" / "questions" / "tasks.yaml"
+    if not tasks_path.exists():
+        return {}
+    try:
+        import yaml
+
+        data = yaml.safe_load(tasks_path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}
+
+    tasks = data.get("tasks") or []
+    if not isinstance(tasks, list):
+        return {}
+    task = next((item for item in tasks if isinstance(item, dict) and str(item.get("id")) == task_key), None)
+    if not task:
+        return {}
+
+    data_paths: List[str] = []
+    data_size = 0
+    for entry in task.get("data_files") or []:
+        if isinstance(entry, dict):
+            rel_path = str(entry.get("path") or "").strip()
+            availability = str(entry.get("availability") or "available").strip()
+        else:
+            rel_path = str(entry or "").strip()
+            availability = "available"
+        if not rel_path:
+            continue
+        data_paths.append(rel_path)
+        if availability != "available":
+            continue
+        path = Path(rel_path)
+        if not path.is_absolute():
+            path = root / path
+        data_size += _file_size_bytes(str(path), root)
+
+    return {
+        "test_task_id": task_key,
+        "test_content": str(task.get("title") or task.get("category") or task_key),
+        "test_prompt": str(task.get("prompt") or ""),
+        "test_data": data_paths,
+        "data_size_bytes": data_size,
+        "benchmark": {
+            "benchmark_id": data.get("benchmark_id", ""),
+            "version": data.get("version", ""),
+            "category": task.get("category", ""),
+            "question_type": task.get("question_type", ""),
+            "execution_mode": task.get("execution_mode", ""),
+            "expected_skills": _dedupe_text(task.get("expected_skills")),
+            "optional_skills": _dedupe_text(task.get("optional_skills")),
+            "forbidden_skills": _dedupe_text(task.get("forbidden_skills")),
+        },
+    }
+
+
 class RunProfiler:
     """Collects per-task wall time, LLM usage, human wait, and command timings."""
+
+    RUN_RECORD_FIELDS = [
+        "测试时间",
+        "测试任务id",
+        "测试内容",
+        "测试提示词",
+        "测试数据",
+        "数据大小",
+        "选择skills",
+        "使用skills",
+        "分析总用时",
+        "计算用时",
+        "纠错次数",
+        "人工确认时间",
+        "输出结果",
+        "状态",
+        "run_metrics_json",
+    ]
 
     def __init__(self, output_root: str | Path):
         self.output_root = Path(output_root)
@@ -209,6 +436,22 @@ class RunProfiler:
             "last_updated_at": _now_iso(),
             "ended_at": None,
             "events": [],
+            "metadata": {},
+            "skills": {
+                "selected": [],
+                "selected_raw": [],
+                "active": [],
+                "future": [],
+                "candidate": [],
+                "selection_source": "",
+                "workflow_id": "",
+                "active_batch_id": "",
+                "used": [],
+                "used_by_type": {},
+            },
+            "correction_count": 0,
+            "max_retry_count": 0,
+            "final_result": {},
         }
 
     def finish_task(self, task_id: str, status: str = "completed") -> None:
@@ -358,6 +601,186 @@ class RunProfiler:
             },
         )
 
+    def record_task_metadata(
+        self,
+        task_id: str,
+        *,
+        test_content: str = "",
+        test_prompt: str = "",
+        test_data: Any = None,
+        data_size_bytes: Any = None,
+        test_time: Optional[str] = None,
+        benchmark: Optional[Dict[str, Any]] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        task = self._ensure_task(task_id)
+        metadata = task.setdefault("metadata", {})
+        metadata.setdefault("test_task_id", task_id)
+        metadata.setdefault("test_time", test_time or task.get("started_at") or _now_iso())
+        if test_content:
+            metadata["test_content"] = str(test_content)
+        if test_prompt:
+            metadata["test_prompt"] = str(test_prompt)
+        if test_data is not None:
+            data_items = _dedupe_text(test_data)
+            if data_items or not metadata.get("test_data"):
+                metadata["test_data"] = data_items
+        if data_size_bytes is not None:
+            data_size = _coerce_int(data_size_bytes)
+            if data_size > 0 or not metadata.get("data_size_bytes"):
+                metadata["data_size_bytes"] = data_size
+        if benchmark:
+            existing = metadata.get("benchmark") if isinstance(metadata.get("benchmark"), dict) else {}
+            metadata["benchmark"] = {**existing, **benchmark}
+        if extra:
+            metadata.update(extra)
+        task["last_updated_at"] = _now_iso()
+
+    def record_skill_selection(
+        self,
+        task_id: str,
+        *,
+        selected_skills: Any = None,
+        selected_skills_raw: Any = None,
+        active_skills: Any = None,
+        future_skills: Any = None,
+        candidate_skills: Any = None,
+        source: str = "",
+        workflow_id: str = "",
+        active_batch_id: str = "",
+        node: Optional[str] = None,
+    ) -> None:
+        task = self._ensure_task(task_id)
+        skills = task.setdefault("skills", {})
+        active = _dedupe_text(active_skills)
+        future = _dedupe_text(future_skills)
+        selected = _dedupe_text([*active, *future]) or _dedupe_text(selected_skills)
+        if selected_skills is not None or active or future:
+            skills["selected"] = selected
+        if selected_skills_raw is not None:
+            skills["selected_raw"] = _dedupe_text(selected_skills_raw)
+        if active_skills is not None:
+            skills["active"] = active
+        if future_skills is not None:
+            skills["future"] = future
+        if candidate_skills is not None:
+            skills["candidate"] = _dedupe_text(candidate_skills)
+        if source:
+            skills["selection_source"] = str(source)
+        if workflow_id:
+            skills["workflow_id"] = str(workflow_id)
+        if active_batch_id:
+            skills["active_batch_id"] = str(active_batch_id)
+        task["last_updated_at"] = _now_iso()
+        if selected or active or future or candidate_skills:
+            self._append_event(
+                task_id,
+                {
+                    "id": self._new_event_id("skill_select"),
+                    "type": "skill_selection",
+                    "node": node or get_current_node(),
+                    "started_at": _now_iso(),
+                    "selected": list(selected),
+                    "active": list(active),
+                    "future": list(future),
+                    "candidate": _dedupe_text(candidate_skills),
+                    "source": source,
+                    "workflow_id": workflow_id,
+                    "active_batch_id": active_batch_id,
+                },
+            )
+
+    def record_skill_usage(
+        self,
+        task_id: str,
+        skills: Any,
+        *,
+        usage_type: str = "used",
+        node: Optional[str] = None,
+        detail: str = "",
+    ) -> None:
+        used = _dedupe_text(skills)
+        if not used:
+            return
+        task = self._ensure_task(task_id)
+        skills_state = task.setdefault("skills", {})
+        skills_state["used"] = _merge_text(skills_state.get("used"), used)
+        used_by_type = skills_state.setdefault("used_by_type", {})
+        used_by_type[usage_type] = _merge_text(used_by_type.get(usage_type), used)
+        self._append_event(
+            task_id,
+            {
+                "id": self._new_event_id("skill_use"),
+                "type": "skill_usage",
+                "node": node or get_current_node(),
+                "started_at": _now_iso(),
+                "usage_type": usage_type,
+                "skills": used,
+                "detail": _shorten(detail, 500),
+            },
+        )
+
+    def record_supervisor_verdict(
+        self,
+        task_id: str,
+        verdict: Any,
+        *,
+        retry_count: Any = None,
+        node: Optional[str] = None,
+    ) -> None:
+        verdict_text = str(verdict or "").strip().upper()
+        if not verdict_text:
+            return
+        task = self._ensure_task(task_id)
+        retry_int = _coerce_int(retry_count)
+        task["max_retry_count"] = max(_coerce_int(task.get("max_retry_count")), retry_int)
+        if verdict_text == "RETRY":
+            task["correction_count"] = _coerce_int(task.get("correction_count")) + 1
+        self._append_event(
+            task_id,
+            {
+                "id": self._new_event_id("supervisor"),
+                "type": "supervisor_verdict",
+                "node": node or get_current_node(),
+                "started_at": _now_iso(),
+                "verdict": verdict_text,
+                "retry_count": retry_int,
+            },
+        )
+
+    def record_final_result(
+        self,
+        task_id: str,
+        *,
+        status: str = "",
+        output_result: str = "",
+        output_artifacts: Any = None,
+        node: Optional[str] = None,
+    ) -> None:
+        task = self._ensure_task(task_id)
+        final_result = task.setdefault("final_result", {})
+        if status:
+            final_result["status"] = str(status)
+            task["status"] = str(status)
+        if output_result:
+            final_result["output_result"] = _shorten(output_result, 3000)
+        if output_artifacts is not None:
+            final_result["output_artifacts"] = _dedupe_text(output_artifacts)
+        final_result["updated_at"] = _now_iso()
+        task["last_updated_at"] = final_result["updated_at"]
+        self._append_event(
+            task_id,
+            {
+                "id": self._new_event_id("final"),
+                "type": "final_result",
+                "node": node or get_current_node(),
+                "started_at": final_result["updated_at"],
+                "status": final_result.get("status", ""),
+                "output_result": _shorten(final_result.get("output_result", ""), 800),
+                "output_artifacts": final_result.get("output_artifacts", []),
+            },
+        )
+
     def flush(self, task_id: str) -> Optional[Path]:
         if task_id not in self._tasks:
             return None
@@ -368,6 +791,7 @@ class RunProfiler:
         md_path = out_dir / "run_metrics.md"
         json_path.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False), encoding="utf-8")
         md_path.write_text(self.render_markdown(snapshot), encoding="utf-8")
+        self._write_run_record(snapshot, json_path)
         return json_path
 
     def snapshot(self, task_id: str) -> Dict[str, Any]:
@@ -391,6 +815,13 @@ class RunProfiler:
         human_total = sum(float(e.get("duration_seconds") or 0) for e in human_events)
         llm_total = sum(float(e.get("duration_seconds") or 0) for e in llm_events)
         install_repair = self._install_repair_seconds(events)
+        review_prompt_types = {"code_review", "legacy_code_review", "plan_review", "plan_review_feedback"}
+        review_feedback_or_rejections = [
+            e for e in human_events
+            if e.get("prompt_type") in review_prompt_types
+            and not e.get("approved")
+            and not str(e.get("response") or "").startswith("<waiting_user:")
+        ]
 
         node_totals: Dict[str, float] = {}
         for event in node_events:
@@ -419,9 +850,15 @@ class RunProfiler:
             "failed_commands": sum(1 for e in command_events if not e.get("success")),
             "manual_confirmations": len(human_events),
             "auto_confirmations": sum(1 for e in events if e.get("type") == "confirmation" and e.get("automatic")),
+            "correction_count": _coerce_int(task.get("correction_count")),
+            "max_retry_count": _coerce_int(task.get("max_retry_count")),
+            "manual_feedback_or_rejection_count": len(review_feedback_or_rejections),
             "node_seconds": node_totals,
             "tokens": token_totals,
         }
+        final_result = dict(task.get("final_result") or {})
+        if not final_result.get("output_result"):
+            final_result["output_result"] = self._fallback_output_result(events)
 
         return {
             "task_id": task_id,
@@ -429,12 +866,18 @@ class RunProfiler:
             "started_at": task.get("started_at"),
             "last_updated_at": _now_iso(),
             "ended_at": task.get("ended_at"),
+            "metadata": dict(task.get("metadata") or {}),
+            "skills": dict(task.get("skills") or {}),
+            "final_result": final_result,
             "summary": summary,
             "events": events,
         }
 
     def render_markdown(self, snapshot: Dict[str, Any]) -> str:
         summary = snapshot["summary"]
+        metadata = snapshot.get("metadata") or {}
+        skills = snapshot.get("skills") or {}
+        final_result = snapshot.get("final_result") or {}
         token_note = "yes" if summary["tokens"].get("contains_estimates") else "no"
         lines = [
             f"# Run Metrics: {snapshot['task_id']}",
@@ -455,13 +898,36 @@ class RunProfiler:
             f"| LLM calls | {summary['llm_call_seconds']:.3f} | {self._format_seconds(summary['llm_call_seconds'])} |",
             f"| Analysis/planning/overhead | {summary['analysis_planning_overhead_seconds']:.3f} | {self._format_seconds(summary['analysis_planning_overhead_seconds'])} |",
             f"| Install or repair estimate | {summary['install_or_repair_seconds_estimate']:.3f} | {self._format_seconds(summary['install_or_repair_seconds_estimate'])} |",
+            f"| Corrections | {summary['correction_count']:.3f} | {summary['correction_count']} retry verdict(s) |",
             "",
             "## Counts",
             "",
             f"- LLM calls: {summary['llm_calls']}",
             f"- Commands: {summary['commands']} ({summary['successful_commands']} success, {summary['failed_commands']} failed)",
             f"- Confirmations: {summary['manual_confirmations']} manual, {summary['auto_confirmations']} automatic",
+            f"- Review feedback/rejections: {summary['manual_feedback_or_rejection_count']}",
             f"- Tokens: prompt={summary['tokens']['prompt_tokens']}, completion={summary['tokens']['completion_tokens']}, total={summary['tokens']['total_tokens']} (contains estimates: {token_note})",
+            "",
+            "## Task Metadata",
+            "",
+            f"- Test content: {metadata.get('test_content') or 'none recorded'}",
+            f"- Test prompt: {_shorten(metadata.get('test_prompt', ''), 300) or 'none recorded'}",
+            f"- Test data: {_join_tsv(metadata.get('test_data')) or 'none recorded'}",
+            f"- Data size: {metadata.get('data_size_bytes', 0)} bytes ({_format_bytes(metadata.get('data_size_bytes'))})",
+            "",
+            "## Skills",
+            "",
+            f"- Selected: {_join_tsv(skills.get('selected')) or 'none recorded'}",
+            f"- Active: {_join_tsv(skills.get('active')) or 'none recorded'}",
+            f"- Future: {_join_tsv(skills.get('future')) or 'none recorded'}",
+            f"- Used: {_join_tsv(skills.get('used')) or 'none recorded'}",
+            f"- Selection source: {skills.get('selection_source') or 'none recorded'}",
+            "",
+            "## Final Result",
+            "",
+            f"- Status: {final_result.get('status') or snapshot.get('status')}",
+            f"- Output: {_shorten(final_result.get('output_result', ''), 600) or 'none recorded'}",
+            f"- Output artifacts: {_join_tsv(final_result.get('output_artifacts')) or 'none recorded'}",
             "",
             "## Node Seconds",
             "",
@@ -491,8 +957,77 @@ class RunProfiler:
             elif event_type == "node":
                 err = f", error={event.get('error')}" if event.get("error") else ""
                 lines.append(f"- node [{node}] {duration:.3f}s{err}")
+            elif event_type == "skill_usage":
+                lines.append(f"- skill_usage [{node}] {event.get('usage_type')}: {_join_tsv(event.get('skills'))}")
+            elif event_type == "skill_selection":
+                lines.append(f"- skill_selection [{node}] selected={_join_tsv(event.get('selected'))}")
+            elif event_type == "supervisor_verdict":
+                lines.append(f"- supervisor [{node}] {event.get('verdict')} retry_count={event.get('retry_count')}")
+            elif event_type == "final_result":
+                lines.append(f"- final [{node}] {event.get('status')}: {_shorten(event.get('output_result', ''), 120)}")
         lines.append("")
         return "\n".join(lines)
+
+    def _write_run_record(self, snapshot: Dict[str, Any], json_path: Path) -> None:
+        record_path = self.output_root / "run_records.tsv"
+        record_path.parent.mkdir(parents=True, exist_ok=True)
+        rows: List[Dict[str, str]] = []
+        if record_path.exists():
+            try:
+                with record_path.open("r", encoding="utf-8", newline="") as handle:
+                    reader = csv.DictReader(handle, delimiter="\t")
+                    rows = [
+                        {field: str(row.get(field, "") or "") for field in self.RUN_RECORD_FIELDS}
+                        for row in reader
+                        if row
+                    ]
+            except Exception:
+                rows = []
+        new_row = self._run_record_row(snapshot, json_path)
+        replaced = False
+        for index, row in enumerate(rows):
+            if row.get("测试任务id") == new_row["测试任务id"]:
+                rows[index] = new_row
+                replaced = True
+                break
+        if not replaced:
+            rows.append(new_row)
+        with record_path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=self.RUN_RECORD_FIELDS, delimiter="\t", lineterminator="\n")
+            writer.writeheader()
+            writer.writerows(rows)
+
+    def _run_record_row(self, snapshot: Dict[str, Any], json_path: Path) -> Dict[str, str]:
+        metadata = snapshot.get("metadata") or {}
+        summary = snapshot.get("summary") or {}
+        skills = snapshot.get("skills") or {}
+        final_result = snapshot.get("final_result") or {}
+        selected = skills.get("selected") or _merge_text(skills.get("active"), skills.get("future"))
+        return {
+            "测试时间": str(metadata.get("test_time") or snapshot.get("started_at") or ""),
+            "测试任务id": str(metadata.get("test_task_id") or snapshot.get("task_id") or ""),
+            "测试内容": str(metadata.get("test_content") or ""),
+            "测试提示词": str(metadata.get("test_prompt") or "").replace("\t", " ").replace("\n", " "),
+            "测试数据": _join_tsv(metadata.get("test_data")),
+            "数据大小": str(_coerce_int(metadata.get("data_size_bytes"))),
+            "选择skills": _join_tsv(selected),
+            "使用skills": _join_tsv(skills.get("used")),
+            "分析总用时": f"{float(summary.get('total_wall_seconds') or 0):.3f}",
+            "计算用时": f"{float(summary.get('command_execution_seconds') or 0):.3f}",
+            "纠错次数": str(_coerce_int(summary.get("correction_count"))),
+            "人工确认时间": f"{float(summary.get('human_confirmation_wait_seconds') or 0):.3f}",
+            "输出结果": str(final_result.get("output_result") or "").replace("\t", " ").replace("\n", " "),
+            "状态": str(final_result.get("status") or snapshot.get("status") or ""),
+            "run_metrics_json": str(json_path),
+        }
+
+    def _fallback_output_result(self, events: List[Dict[str, Any]]) -> str:
+        for event in reversed(events):
+            if event.get("type") == "final_result" and event.get("output_result"):
+                return str(event.get("output_result"))
+            if event.get("type") == "command" and event.get("success") and event.get("stdout_preview"):
+                return _shorten(event.get("stdout_preview", ""), 800)
+        return ""
 
     def _append_event(self, task_id: str, event: Dict[str, Any]) -> None:
         task = self._ensure_task(task_id)

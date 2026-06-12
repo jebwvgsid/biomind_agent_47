@@ -11,6 +11,7 @@ class WorkflowManager:
     def __init__(self, workflows_root: str):
         self.workflows_root = Path(workflows_root)
         self.workflows: Dict[str, Dict[str, Any]] = {}
+        self.workflow_aliases: Dict[str, str] = {}
         self._discover_workflows()
 
     def _discover_workflows(self) -> None:
@@ -30,6 +31,11 @@ class WorkflowManager:
             data["_workflow_path"] = str(path.resolve())
             data["stages"] = self._normalize_stages(data.get("stages") or [])
             self.workflows[workflow_id] = data
+            self.workflow_aliases[workflow_id] = workflow_id
+            for alias in self._ensure_list(data.get("aliases")):
+                normalized_alias = self._normalize_workflow_id(alias)
+                if normalized_alias:
+                    self.workflow_aliases.setdefault(normalized_alias, workflow_id)
 
     @staticmethod
     def _normalize_workflow_id(value: Any) -> str:
@@ -72,10 +78,15 @@ class WorkflowManager:
         return normalized
 
     def has_workflow(self, workflow_id: str) -> bool:
-        return self._normalize_workflow_id(workflow_id) in self.workflows
+        return bool(self.resolve_workflow_id(workflow_id))
+
+    def resolve_workflow_id(self, workflow_id: str) -> str:
+        normalized = self._normalize_workflow_id(workflow_id)
+        return self.workflow_aliases.get(normalized, "")
 
     def get_workflow(self, workflow_id: str) -> Dict[str, Any]:
-        return dict(self.workflows.get(self._normalize_workflow_id(workflow_id)) or {})
+        resolved = self.resolve_workflow_id(workflow_id)
+        return dict(self.workflows.get(resolved) or {})
 
     def get_workflow_catalog_prompt(self) -> str:
         if not self.workflows:
@@ -89,8 +100,10 @@ class WorkflowManager:
             task_types = ", ".join(self._ensure_list(workflow.get("task_types"))) or "none"
             triggers = ", ".join(self._ensure_list(workflow.get("triggers"))) or "none"
             stages = ", ".join(stage.get("stage", "") for stage in workflow.get("stages", []) if stage.get("stage")) or "none"
+            aliases = ", ".join(self._ensure_list(workflow.get("aliases"))) or "none"
             lines.extend([
                 f"- workflow_id: {workflow_id}",
+                f"  aliases: {aliases}",
                 f"  name: {workflow.get('name', workflow_id)}",
                 f"  task_types: {task_types}",
                 f"  triggers: {triggers}",
@@ -168,8 +181,13 @@ def validate_workflow_handoff(
     stages = normalized.get("workflow_stages") or []
     is_workflow = bool(workflow_id or stages)
 
-    if workflow_id and workflow_manager and not workflow_manager.has_workflow(workflow_id):
-        errors.append(f"Unknown workflow_id: {workflow_id}")
+    if workflow_id and workflow_manager:
+        resolved_workflow_id = workflow_manager.resolve_workflow_id(workflow_id)
+        if not resolved_workflow_id:
+            errors.append(f"Unknown workflow_id: {workflow_id}")
+        else:
+            workflow_id = resolved_workflow_id
+            normalized["workflow_id"] = resolved_workflow_id
     if is_workflow and not stages:
         errors.append("Workflow task must include WORKFLOW_STAGES.")
 

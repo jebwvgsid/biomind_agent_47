@@ -24,12 +24,18 @@ class AgentState(TypedDict, total=False):
     active_batch_id: Optional[str]
     active_skills: List[str]
     future_skills: List[str]
+    required_skills_all: List[str]
     candidate_skills: List[str]
     retry_count: int
+    task_mode: Optional[str]
+    retrieval_mode: Optional[str]
+    use_scientific_review: bool
+    validation_level: Optional[str]
     intent: Optional[str]
     artifacts: List[str]
     requirements_summary: str  # 存储咨询阶段确认的参数（如基因组大小、物种等）
     rag_history: List[str]     # 存储咨询阶段查到的所有知识片段
+    memory_packet_context: str  # Consultant 阶段筛选整理后的跨阶段记忆包
     wiki_memory_context: str    # Consultant 阶段一次性检索到的 Wiki 上下文
     supervisor_verdict: Optional[str]
 

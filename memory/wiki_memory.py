@@ -31,6 +31,11 @@ from .utils import (
     query_terms,
     safe_id,
 )
+from .task_semantics import (
+    infer_task_semantics as shared_infer_task_semantics,
+    merge_task_semantics as shared_merge_task_semantics,
+    normalize_task_semantics as shared_normalize_task_semantics,
+)
 
 try:
     from langchain_core.messages import HumanMessage
@@ -150,6 +155,25 @@ PAGE_TYPE_BOUNDARY_RULES = (
     "- Create entity or concept pages only when the item is cross-page knowledge that does not fit a more specific existing type.\n"
     "- Link entity/concept pages to tool, method, and dataset pages with related[] instead of duplicating their content.\n"
 )
+SKILL_SELECTION_MEMORY_RULES = (
+    "## Skill Selection Memory Rules\n"
+    "- When archive evidence includes selected_skills, active_skills, future_skills, candidate_skills, "
+    "selected_skills_raw, workflow_handoff, workflow_stages, or skill_selection_source, treat it as reusable "
+    "skill-choice evidence for similar future tasks.\n"
+    "- Store reusable skill-choice knowledge in exactly one canonical section named `## Skill Selection` on the "
+    "most specific method or decision page for that task/workflow. Do not create separate `Used Skills`, "
+    "`Selected Skills`, `Skills Used`, `Rejected Skills`, or similar duplicate sections.\n"
+    "- Frontmatter `skills[]` is only a search/graph index of active or selected skill IDs; do not explain "
+    "skill roles, rejected skills, or transition reasons in frontmatter.\n"
+    "- In `## Skill Selection`, use one table with columns `skill_id | role | phase | reason | evidence`. "
+    "Allowed roles are active, future, candidate, rejected, added_later, or avoided.\n"
+    "- Record later additions by updating the existing `## Skill Selection` row to role=added_later or by adding "
+    "one `## Skill Transitions` table only when a skill changed phase. Do not repeat the same skill in another "
+    "used-skills list.\n"
+    "- Source pages under sources/ preserve raw evidence only; reusable skill-selection patterns belong in "
+    "method or decision pages.\n"
+    "- Merge by canonical skill_id and evidence ref: update existing rows/fields instead of appending duplicates.\n"
+)
 CLAIM_EVIDENCE_PREFIXES = ("raw:", "session_archive:", "task:", "artifact:")
 VALID_CLAIM_CONFIDENCE = {"medium", "high"}
 DEFAULT_EMBEDDING_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
@@ -227,7 +251,7 @@ class WikiSearchHit:
 
 
 class WikiMemoryManager:
-    """Project-scoped LLM Wiki memory with immutable raw evidence."""
+    """Project-scoped LLM Wiki memory curated from SessionArchive evidence."""
 
     def __init__(
         self,
@@ -243,9 +267,6 @@ class WikiMemoryManager:
         self.root = Path(memory_dir)
         self.raw_dir = self.root / "raw"
         self.conversations_dir = self.raw_dir / "conversations"
-        self.large_outputs_dir = self.raw_dir / "large_outputs"
-        self.pending_file = self.raw_dir / "pending_wiki.jsonl"
-        self.processed_file = self.raw_dir / "processed_wiki_events.json"
         self.wiki_dir = Path(wiki_dir) if wiki_dir else self.root / "wiki"
         self.review_dir = self.wiki_dir / "review"
         self.review_pending = self.review_dir / "PENDING.md"
@@ -268,8 +289,6 @@ class WikiMemoryManager:
 
     def ensure_layout(self) -> None:
         self.root.mkdir(parents=True, exist_ok=True)
-        self.conversations_dir.mkdir(parents=True, exist_ok=True)
-        self.large_outputs_dir.mkdir(parents=True, exist_ok=True)
         self.wiki_dir.mkdir(parents=True, exist_ok=True)
         self.review_dir.mkdir(parents=True, exist_ok=True)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -283,10 +302,6 @@ class WikiMemoryManager:
             self.purpose_file.write_text(self._initial_purpose(), encoding="utf-8")
         if not self.schema_file.exists():
             self.schema_file.write_text(self._initial_schema(), encoding="utf-8")
-        if not self.pending_file.exists():
-            self.pending_file.write_text("", encoding="utf-8")
-        if not self.processed_file.exists():
-            self.processed_file.write_text("[]\n", encoding="utf-8")
         if not self.index_file.exists():
             self.index_file.write_text("# Wiki Index\n\nNo wiki pages indexed yet.\n", encoding="utf-8")
         if not self.log_file.exists():
@@ -309,12 +324,12 @@ class WikiMemoryManager:
             "- Preserve durable bioinformatics project knowledge with traceable evidence.\n"
             "- Help the agent recover context across sessions without re-reading full logs.\n"
             "- Track datasets, input files, methods, parameters, decisions, issues, artifacts, and conclusions.\n"
-            "- Support reproducible analysis by linking claims to raw events, task memory, session archives, or artifacts.\n"
+            "- Support reproducible analysis by linking claims to SessionArchive events or artifacts.\n"
             "- Keep Core memory small: Core stores user preferences, stable operating habits, and Wiki indexes only.\n\n"
             "## What Belongs In This Wiki\n"
             "- Dataset facts: sample names, sequencing files, metadata, genome versions, annotations.\n"
             "- Method facts: tools, workflows, parameters, commands that shaped the analysis.\n"
-            "- Decisions: why a method, parameter, reference, or filtering rule was chosen.\n"
+            "- Decisions: why a method, parameter, reference, filtering rule, or Skill selection was chosen.\n"
             "- Issues and fixes: errors, failed attempts, validated repairs, caveats.\n"
             "- Artifacts: output files, reports, assemblies, plots, tables, and evaluation results.\n"
             "- Conclusions: evidence-backed biological or technical findings.\n\n"
@@ -323,6 +338,7 @@ class WikiMemoryManager:
             "- Unverified guesses or facts without evidence.\n"
             "- Full noisy execution logs; keep those in raw/session archives.\n"
             "- Procedural SOPs that should become reusable Skills.\n"
+            "- Duplicate Skill lists; reusable Skill choices belong in one canonical Skill Selection section.\n"
             "- Temporary thoughts that only matter within the current turn.\n\n"
             "## Current Questions\n"
             "- Which project facts are needed for future continuation?\n"
@@ -331,7 +347,8 @@ class WikiMemoryManager:
             "## Evolving Hypotheses\n"
             "- None recorded yet.\n\n"
             "## Evidence Policy\n"
-            "Every durable factual claim should cite evidence using raw:, task:, session_archive:, or artifact: references. "
+            "Every durable factual claim should cite evidence using session_archive:, task:, or artifact: references. "
+            "Historical raw: references may exist in older pages, but new ingest should cite session_archive:<id>. "
             "If evidence is missing, conflicting, low-confidence, or stale, route the item to review instead of storing it as a claim.\n"
         )
 
@@ -348,20 +365,22 @@ class WikiMemoryManager:
             "updated_at, sources, aliases, tags, confidence, and optional claims[].\n"
             "- Task-linked pages may include task semantic frontmatter: task_id, task_title, task_type, "
             "workflow_id, analysis_type, skills[], samples[], resolutions[], output_artifacts[], and output_dirs[]. "
-            "These fields are used for graph/community linkage and should be preserved when present in raw evidence.\n"
+            "These fields are used for graph/community linkage and should be preserved when present in archive evidence.\n"
             "- Entity pages should use type=entity and may include entity_type and related[]. "
             "Concept pages should use type=concept and may include concept_type, definition, and related[].\n"
             "- Each claim must include id, text, status, confidence, evidence[], supersedes[], "
             "review_required, and updated_at.\n"
-            "- Claim evidence must reference raw:, session_archive:, task:, or artifact: sources.\n"
+            "- Claim evidence must reference session_archive:, task:, or artifact: sources. Preserve historical raw: references when editing old pages, but do not create new raw: evidence.\n"
             "- Existing pages are updated by appending sections, merging bullets, or updating frontmatter; do not overwrite pages.\n"
             "- Low-confidence, contradictory, stale, or evidence-free claims must be flagged for review instead of applied.\n"
             "- Page paths must stay inside wiki/ and must not contain path traversal.\n\n"
             "## Source Rules\n"
-            "- Cite raw event IDs, session archive IDs, task IDs, artifact paths, or raw file hashes in sources[].\n"
+            "- Cite SessionArchive IDs, task IDs, or artifact paths in sources[].\n"
             "- Use add_research_queries for machine-readable follow-up search queries that need later deep research.\n"
             "\n"
             f"{PAGE_TYPE_BOUNDARY_RULES}"
+            "\n"
+            f"{SKILL_SELECTION_MEMORY_RULES}"
         )
 
     @staticmethod
@@ -427,128 +446,15 @@ class WikiMemoryManager:
         payload: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Infer compact task-level metadata for wiki indexing and graph edges."""
-        payload = payload if isinstance(payload, dict) else {}
-        messages = messages or []
-        text = self._semantic_context_text(task_id, stage, payload, messages)
-
-        workflow_id = self._first_text(
-            payload.get("workflow_id"),
-            self._nested_get(payload, ("workflow_handoff", "workflow_id")),
-            self._nested_get(payload, ("task_semantics", "workflow_id")),
-            self._nested_get(payload, ("task_semantics", "workflow")),
-        )
-        skills = self._semantic_list(
-            payload.get("selected_skills"),
-            payload.get("active_skills"),
-            payload.get("selected_skills_raw"),
-            payload.get("skill_ids"),
-            self._nested_get(payload, ("workflow_handoff", "active_skills")),
-            self._nested_get(payload, ("workflow_handoff", "future_skills")),
-            self._nested_get(payload, ("task_semantics", "skills")),
-        )
-        samples = self._semantic_list(
-            payload.get("samples"),
-            payload.get("sample"),
-            payload.get("sample_id"),
-            payload.get("sample_name"),
-            self._nested_get(payload, ("task_semantics", "samples")),
-            self._extract_samples(text),
-        )
-        resolutions = self._semantic_list(
-            payload.get("resolution"),
-            payload.get("resolutions"),
-            payload.get("bin_size"),
-            payload.get("binsize"),
-            self._nested_get(payload, ("task_semantics", "resolutions")),
-            self._extract_resolutions(text),
-        )
-        artifacts = self._semantic_list(
-            payload.get("artifacts"),
-            payload.get("artifact"),
-            payload.get("output_artifacts"),
-            payload.get("output_paths"),
-            payload.get("output_path"),
-            payload.get("output_file"),
-            payload.get("out_dir"),
-            payload.get("plan_file"),
-            payload.get("script_file"),
-            self._nested_get(payload, ("task_semantics", "output_artifacts")),
-            self._extract_path_like_values(text),
-        )
-        output_dirs = self._semantic_list(
-            payload.get("output_dirs"),
-            payload.get("output_dir"),
-            payload.get("out_dir"),
-            self._nested_get(payload, ("task_semantics", "output_dirs")),
-            self._artifact_dirs(artifacts),
-        )
-
-        task_type = self._first_text(
-            payload.get("task_type"),
-            self._nested_get(payload, ("task_semantics", "task_type")),
-            self._infer_task_type(text, skills, workflow_id),
-        )
-        analysis_type = self._first_text(
-            payload.get("analysis_type"),
-            self._nested_get(payload, ("task_semantics", "analysis_type")),
-            self._infer_analysis_type(text, skills, workflow_id),
-        )
-        task_date = self._first_text(
-            payload.get("task_date"),
-            self._nested_get(payload, ("task_semantics", "task_date")),
-            _now()[:10].replace("-", ""),
-        )
-        task_title = self._first_text(
-            payload.get("task_title"),
-            self._nested_get(payload, ("task_semantics", "task_title")),
-            self._build_task_title(samples, analysis_type, task_date),
-        )
-
-        return self._normalize_task_semantics({
-            "task_id": task_id,
-            "task_title": task_title,
-            "task_type": task_type,
-            "workflow": workflow_id,
-            "workflow_id": workflow_id,
-            "analysis_type": analysis_type,
-            "task_date": task_date,
-            "skills": skills,
-            "samples": samples,
-            "resolutions": resolutions,
-            "output_artifacts": artifacts,
-            "output_dirs": output_dirs,
-        })
+        return shared_infer_task_semantics(task_id, stage=stage, messages=messages, payload=payload)
 
     @classmethod
     def _normalize_task_semantics(cls, value: Any) -> Dict[str, Any]:
-        if not isinstance(value, dict):
-            return {}
-        normalized: Dict[str, Any] = {}
-        for key in TASK_SEMANTIC_SCALAR_KEYS:
-            text = redact_secrets(value.get(key) or "").strip()
-            if text and text.lower() not in {"none", "n/a", "null"}:
-                normalized[key] = text[:180]
-        for key in TASK_SEMANTIC_LIST_KEYS:
-            items = _ensure_list(value.get(key))
-            if items:
-                normalized[key] = items[:20]
-        workflow = normalized.get("workflow") or normalized.get("workflow_id")
-        if workflow:
-            normalized["workflow"] = str(workflow)
-            normalized["workflow_id"] = str(workflow)
-        return normalized
+        return shared_normalize_task_semantics(value)
 
     @classmethod
     def _merge_task_semantics(cls, *items: Any) -> Dict[str, Any]:
-        merged: Dict[str, Any] = {}
-        for item in items:
-            normalized = cls._normalize_task_semantics(item)
-            for key, value in normalized.items():
-                if key in TASK_SEMANTIC_LIST_KEYS:
-                    merged[key] = cls._merge_lists(merged.get(key), value)
-                elif value:
-                    merged[key] = value
-        return cls._normalize_task_semantics(merged)
+        return shared_merge_task_semantics(*items)
 
     @staticmethod
     def _nested_get(value: Any, path: Sequence[str]) -> Any:
@@ -708,97 +614,39 @@ class WikiMemoryManager:
         date = re.sub(r"\D+", "", task_date or "")[:8] or _now()[:10].replace("-", "")
         return f"{sample_part}_{analysis}_{date}"
 
-    def append_raw_event(
+    async def ingest_from_archive(
         self,
-        task_id: str,
-        session_id: Optional[str],
-        stage: str,
-        event_type: str,
-        messages: Optional[List[Any]] = None,
-        payload: Optional[Dict[str, Any]] = None,
+        session_archive: Any,
         project_id: Optional[str] = None,
-        source_refs: Optional[Sequence[str]] = None,
+        limit: int = 20,
+        task_id: Optional[str] = None,
     ) -> str:
-        messages = messages or []
-        payload = dict(payload or {})
-        session_id = session_id or task_id
         project_id = self._resolve_project_id(project_id)
-        task_semantics = self._merge_task_semantics(
-            self.infer_task_semantics(task_id, stage=stage, messages=messages, payload=payload),
-            payload.get("task_semantics"),
+        pending = session_archive.pending_for_wiki(
+            project_id=project_id,
+            limit=max(1, limit),
+            task_id=task_id,
         )
-        if task_semantics:
-            payload["task_semantics"] = task_semantics
-        event_seed = {
-            "task_id": task_id,
-            "session_id": session_id,
-            "project_id": project_id,
-            "task_semantics": task_semantics,
-            "stage": stage,
-            "event_type": event_type,
-            "messages": [
-                {"role": _role_of(message), "content": _content_of(message)}
-                for message in messages[-8:]
-            ],
-            "payload": sanitize_value(payload),
-            "source_refs": list(source_refs or []),
-        }
-        event_hash = hashlib.sha256(_json(event_seed).encode("utf-8")).hexdigest()
-        event_id = f"{_safe_id(task_id)}-{event_hash[:16]}"
-        raw_path = self.conversations_dir / f"{_safe_id(session_id)}.jsonl"
-
-        if self._raw_event_exists(raw_path, event_id):
-            return event_id
-
-        record = {
-            "event_id": event_id,
-            "event_hash": event_hash,
-            "timestamp": _now(),
-            **event_seed,
-        }
-        record = self._externalize_large_values(record, event_id)
-
-        with raw_path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
-
-        self._append_pending_event({
-            "event_id": event_id,
-            "event_hash": event_hash,
-            "timestamp": record["timestamp"],
-            "task_id": _safe_id(task_id),
-            "session_id": _safe_id(session_id),
-            "project_id": _safe_id(project_id),
-            "stage": redact_secrets(stage),
-            "event_type": redact_secrets(event_type),
-            "raw_file": str(raw_path),
-            "task_semantics": task_semantics,
-            "source_refs": list(source_refs or []),
-        })
-        return event_id
-
-    async def ingest_pending(self, project_id: Optional[str] = None, limit: int = 20) -> str:
-        project_id = self._resolve_project_id(project_id)
-        pending = [
-            item for item in self._read_pending_events()
-            if str(item.get("project_id") or project_id) == _safe_id(project_id)
-        ]
-        processed = self._read_processed_events()
-        pending = [item for item in pending if str(item.get("event_id")) not in processed]
         if not pending:
             return "No pending wiki events to ingest."
         if self.llm is None:
             return "Wiki ingest unavailable: no LLM configured."
 
         batch = pending[: max(1, limit)]
-        raw_records = self._load_raw_records(batch)
-        event_text = self._format_raw_records_for_prompt(raw_records)
+        archive_records = [event.as_wiki_record() for event in batch]
+        event_text = session_archive.format_events_for_wiki_prompt(batch, total_limit=INGEST_EVENT_TEXT_CHAR_LIMIT)
         query = "\n".join(
-            str(record.get("payload", ""))[:500] for record in raw_records
+            " ".join([
+                str(record.get("summary", ""))[:500],
+                str(record.get("content", ""))[:500],
+                str(record.get("metadata", ""))[:500],
+            ])
+            for record in archive_records
         )
         related_pages = self.format_hits(self.search(query, project_id=project_id, top_k=4))
 
         analysis_prompt = f"""You are BioMind's wiki analyst.
-Analyze pending raw evidence before wiki patch generation. Return strict JSON only.
+Analyze pending SessionArchive evidence before wiki patch generation. Return strict JSON only.
 Do not output chain-of-thought or markdown fences.
 
 Purpose:
@@ -816,7 +664,10 @@ Relevant pages:
 Page type boundary rules:
 {PAGE_TYPE_BOUNDARY_RULES}
 
-Pending raw evidence:
+Skill selection memory rules:
+{SKILL_SELECTION_MEMORY_RULES}
+
+Pending SessionArchive evidence:
 {event_text}
 
 Return JSON with exactly these top-level keys:
@@ -847,6 +698,8 @@ Priority rules:
 - If an item is an analysis technique, workflow, procedure, or parameter strategy, plan a method page update instead of a concept page.
 - If an item is a named dataset or sample collection, plan a dataset page update instead of an entity page.
 - Only include entities/concepts that should be referenced by multiple pages and do not fit tool, method, or dataset.
+- If archive evidence contains skill selection fields, plan a method or decision page update with one canonical
+  `## Skill Selection` section. Do not plan duplicate sections for used/selected/rejected skills.
 """
         try:
             analysis_response = await self.llm.ainvoke([HumanMessage(content=analysis_prompt)])
@@ -860,7 +713,7 @@ Priority rules:
                 "Invalid Wiki Analysis",
                 "Wiki analysis JSON was invalid; patch generation was skipped.\n" + "\n".join(f"- {issue}" for issue in analysis_errors),
                 {
-                    "event_ids": [str(item.get("event_id")) for item in batch],
+                    "event_ids": [f"session_archive:{event.id}" for event in batch],
                     "analysis_preview": _clip(analysis, 4000),
                 },
                 project_id,
@@ -877,25 +730,29 @@ All paths must stay inside wiki/.
 Prefer append_section or merge_section_items for existing pages.
 Page type boundary rules:
 {PAGE_TYPE_BOUNDARY_RULES}
+Skill selection memory rules:
+{SKILL_SELECTION_MEMORY_RULES}
 Before creating entity/concept pages, check whether the information should update an existing or new tool, method, or dataset page instead.
 Use type=entity pages under entities/ for important genes, samples, tissues, species, paths, parameters, or traits that are cross-page objects.
 Use type=concept pages under concepts/ for important mechanisms, metrics, thresholds, workflows, file formats, strategies, or biological processes that are cross-page ideas.
 Avoid duplicate entity/concept pages for named tools, analysis methods, or datasets; link to those pages with related[] instead of copying their content.
+When writing reusable skill-choice memory, update only `## Skill Selection` and optional `## Skill Transitions`.
+Do not write separate `Used Skills`, `Selected Skills`, `Rejected Skills`, or narrative duplicates.
 Route conflicts, stale facts, and low confidence updates to flag_review.
-Every applied page update must include sources with raw event IDs.
-Use upsert_claims for durable factual claims. Every claim must include evidence[] using raw:, session_archive:, task:, or artifact: refs.
-Use type=source pages to summarize raw evidence when useful.
+Every applied page update must include sources with session_archive event refs.
+Use upsert_claims for durable factual claims. Every claim must include evidence[] using session_archive:, task:, or artifact: refs.
+Use type=source pages to summarize archive evidence when useful.
 Use add_research_queries for every useful follow-up search from analysis_json.research_queries.
-Do not update purpose.md directly. If the raw evidence suggests changes to goals, current questions, scope, or evolving hypotheses,
+Do not update purpose.md directly. If the archive evidence suggests changes to goals, current questions, scope, or evolving hypotheses,
 emit a flag_review operation titled "Purpose Update Suggestion" with the suggested purpose changes in the body.
-Preserve task_semantics from raw events in page frontmatter when a page represents or summarizes that task context. Use fields such as
+Preserve task_semantics from archive events in page frontmatter when a page represents or summarizes that task context. Use fields such as
 task_title, task_type, workflow_id, analysis_type, skills, samples, resolutions, output_artifacts, and output_dirs.
 
 Analysis JSON:
 {_clip(json.dumps(analysis_json, ensure_ascii=False, indent=2, default=str), INGEST_ANALYSIS_JSON_CHAR_LIMIT)}
 
-Raw event IDs:
-{", ".join(str(item.get("event_id")) for item in batch)}
+SessionArchive event refs:
+{", ".join(f"session_archive:{event.id}" for event in batch)}
 """
         try:
             patch_response = await self.llm.ainvoke([HumanMessage(content=patch_prompt)])
@@ -906,15 +763,17 @@ Raw event IDs:
             return "Wiki ingest failed: curator returned invalid JSON."
 
         applied = self.apply_patch(patch, project_id=project_id)
-        source_summaries = self._ensure_source_summary_pages(raw_records, project_id)
+        source_summaries = self._ensure_source_summary_pages(archive_records, project_id)
         if source_summaries:
             self._rebuild_index_page()
             self._sync_search_index()
             self.compile_digest(project_id)
-        processed.update(str(item.get("event_id")) for item in batch)
-        self._write_processed_events(processed)
-        self._rewrite_pending_events(processed)
         summary = str(patch.get("ingest_summary") or patch.get("summary") or "Wiki ingest completed.")
+        session_archive.mark_wiki_ingested(
+            [event.id for event in batch],
+            project_id=project_id,
+            summary=summary,
+        )
         return (
             f"Wiki ingest completed.\n"
             f"Summary: {summary}\n"
@@ -926,11 +785,11 @@ Raw event IDs:
         self,
         stage: str,
         exc: Exception,
-        batch: Sequence[Dict[str, Any]],
+        batch: Sequence[Any],
         project_id: str,
     ) -> str:
         message = redact_secrets(str(exc))
-        event_ids = [str(item.get("event_id")) for item in batch]
+        event_ids = [self._ingest_event_ref(item) for item in batch]
         self._flag_review(
             "Wiki Ingest LLM Error",
             f"Wiki ingest failed during {stage} LLM call.\n\n{message}",
@@ -940,61 +799,14 @@ Raw event IDs:
         logger.warning("Wiki ingest %s LLM call failed: %s", stage, message)
         return f"Wiki ingest failed during {stage} LLM call: {message}"
 
-    def _format_raw_records_for_prompt(
-        self,
-        raw_records: Sequence[Dict[str, Any]],
-        total_limit: int = INGEST_EVENT_TEXT_CHAR_LIMIT,
-    ) -> str:
-        if not raw_records:
-            return "No raw records could be loaded for the pending wiki events."
-
-        per_record_limit = max(1_200, total_limit // max(1, len(raw_records)))
-        chunks: List[str] = []
-        used = 0
-        for record in raw_records:
-            remaining = total_limit - used
-            if remaining < 600:
-                break
-            chunk = self._raw_record_prompt_preview(record, min(per_record_limit, remaining))
-            chunks.append(chunk)
-            used += len(chunk) + 2
-
-        omitted = len(raw_records) - len(chunks)
-        if omitted > 0:
-            chunks.append(f"### Omitted records\n{omitted} raw record(s) omitted because the ingest prompt budget was reached.")
-        return _clip("\n\n".join(chunks), total_limit)
-
-    def _raw_record_prompt_preview(self, record: Dict[str, Any], limit: int) -> str:
-        metadata_keys = (
-            "event_id",
-            "timestamp",
-            "task_id",
-            "session_id",
-            "project_id",
-            "stage",
-            "event_type",
-            "source_refs",
-        )
-        metadata = {
-            key: sanitize_value(record.get(key))
-            for key in metadata_keys
-            if record.get(key) not in (None, "", [])
-        }
-        messages = record.get("messages")
-        recent_messages = messages[-4:] if isinstance(messages, list) else []
-        preview = {
-            "metadata": metadata,
-            "payload_json_preview": self._json_prompt_preview(record.get("payload"), max(500, limit // 2)),
-            "recent_messages_json_preview": self._json_prompt_preview(recent_messages, max(500, limit // 3)),
-            "note": "Payload and messages are clipped previews; cite the raw event ID for source evidence.",
-        }
-        text = json.dumps(preview, ensure_ascii=False, indent=2, default=str)
-        return _clip(f"### {metadata.get('event_id', 'raw-event')}\n{text}", limit)
-
     @staticmethod
-    def _json_prompt_preview(value: Any, limit: int) -> str:
-        text = json.dumps(sanitize_value(value), ensure_ascii=False, indent=2, default=str)
-        return _clip(text, limit)
+    def _ingest_event_ref(item: Any) -> str:
+        event_id = getattr(item, "id", None)
+        if event_id is not None:
+            return f"session_archive:{event_id}"
+        if isinstance(item, dict):
+            return str(item.get("event_ref") or item.get("event_id") or "")
+        return str(item)
 
     @staticmethod
     def _validate_analysis_json(data: Optional[Dict[str, Any]]) -> List[str]:
@@ -1357,8 +1169,7 @@ Raw event IDs:
         page_count = len(pages)
         claim_count = len(self._flatten_claims(pages, project_id))
         review_count = self._review_count(project_id)
-        raw_count = sum(1 for _ in self.conversations_dir.glob("*.jsonl"))
-        pending_count = len(self._read_pending_events())
+        legacy_raw_count = sum(1 for _ in self.conversations_dir.glob("*.jsonl")) if self.conversations_dir.exists() else 0
         research_count = self._research_query_count(project_id)
         digest_path = self.digest_path(project_id)
         return "\n".join([
@@ -1367,8 +1178,8 @@ Raw event IDs:
             f"Wiki pages: {page_count}",
             f"Wiki claims: {claim_count}",
             f"Research queries: {research_count}",
-            f"Raw conversation files: {raw_count}",
-            f"Pending wiki events: {pending_count}",
+            f"Legacy raw conversation files: {legacy_raw_count}",
+            "Pending wiki events: stored in SessionArchive",
             f"FTS enabled: {self.fts_enabled} ({self.fts_tokenizer})",
             f"Embedding enabled: {self._embedding_enabled()} ({self._embedding_model()}, dim={self._embedding_dimensions()})",
             f"Review queue: {self.review_pending}",
@@ -1486,121 +1297,27 @@ Raw event IDs:
         finally:
             conn.close()
 
-    def _raw_event_exists(self, raw_path: Path, event_id: str) -> bool:
-        if not raw_path.exists():
-            return False
-        return f'"event_id": "{event_id}"' in raw_path.read_text(encoding="utf-8", errors="replace")
-
-    def _externalize_large_values(self, value: Any, event_id: str, key_path: str = "record") -> Any:
-        if isinstance(value, str):
-            value = redact_secrets(value)
-            if len(value) <= self.max_inline_chars:
-                return value
-            digest = hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
-            safe_key = _slug(key_path.replace(".", "_"), default="large")
-            path = self.large_outputs_dir / f"{event_id}_{safe_key}_{digest}.txt"
-            if not path.exists():
-                path.write_text(value, encoding="utf-8")
-            return {
-                "type": "large_text_ref",
-                "path": str(path),
-                "chars": len(value),
-                "sha256": hashlib.sha256(value.encode("utf-8")).hexdigest(),
-                "preview": value[:600],
-            }
-        if isinstance(value, list):
-            return [
-                self._externalize_large_values(item, event_id, f"{key_path}.{idx}")
-                for idx, item in enumerate(value)
-            ]
-        if isinstance(value, dict):
-            return {
-                str(redact_secrets(key)): self._externalize_large_values(item, event_id, f"{key_path}.{key}")
-                for key, item in value.items()
-            }
-        return value
-
-    def _append_pending_event(self, event: Dict[str, Any]) -> None:
-        existing_ids = {str(item.get("event_id")) for item in self._read_pending_events()}
-        if str(event.get("event_id")) in existing_ids:
-            return
-        with self.pending_file.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(event, ensure_ascii=False, default=str) + "\n")
-
-    def _read_pending_events(self) -> List[Dict[str, Any]]:
-        if not self.pending_file.exists():
-            return []
-        events: List[Dict[str, Any]] = []
-        for line in self.pending_file.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                data = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(data, dict):
-                events.append(data)
-        return events
-
-    def _read_processed_events(self) -> set[str]:
-        if not self.processed_file.exists():
-            return set()
-        try:
-            data = json.loads(self.processed_file.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            return set()
-        if not isinstance(data, list):
-            return set()
-        return {str(item) for item in data}
-
-    def _write_processed_events(self, processed: Iterable[str]) -> None:
-        ordered = sorted({str(item) for item in processed if str(item).strip()})
-        self.processed_file.write_text(json.dumps(ordered, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-    def _rewrite_pending_events(self, processed: set[str]) -> None:
-        remaining = [
-            item for item in self._read_pending_events()
-            if str(item.get("event_id")) not in processed
-        ]
-        self.pending_file.write_text(
-            "".join(json.dumps(item, ensure_ascii=False, default=str) + "\n" for item in remaining),
-            encoding="utf-8",
-        )
-
-    def _load_raw_records(self, pending: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        records: List[Dict[str, Any]] = []
-        wanted = {str(item.get("event_id")) for item in pending}
-        for item in pending:
-            raw_file = Path(str(item.get("raw_file") or ""))
-            if not raw_file.exists():
-                continue
-            for line in raw_file.read_text(encoding="utf-8", errors="replace").splitlines():
-                try:
-                    record = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if str(record.get("event_id")) in wanted:
-                    records.append(record)
-        return records
-
     def _ensure_source_summary_pages(self, raw_records: Sequence[Dict[str, Any]], project_id: str) -> int:
         project_id = self._resolve_project_id(project_id)
         pages = self._all_pages(project_id=project_id)
         created = 0
         for record in raw_records:
             event_id = str(record.get("event_id") or "").strip()
-            if not event_id:
+            event_ref = str(record.get("event_ref") or "").strip()
+            if not event_ref and event_id:
+                event_ref = f"session_archive:{event_id}" if event_id.isdigit() else f"raw:{event_id}"
+            if not event_id or not event_ref:
                 continue
-            event_ref = f"raw:{event_id}"
             if self._source_summary_exists(event_id, event_ref, pages):
                 continue
 
-            title = f"Source Summary: {event_id}"
-            path = self._safe_wiki_path(f"sources/{_slug(event_id, default='event')}.md")
+            title = f"Source Summary: {event_ref}"
+            path_key = event_ref if event_ref.startswith("session_archive:") else event_id
+            path = self._safe_wiki_path(f"sources/{_slug(path_key, default='event')}.md")
             task_semantics = self._merge_task_semantics(
                 record.get("task_semantics"),
                 self._nested_get(record, ("payload", "task_semantics")),
+                self._nested_get(record, ("metadata", "task_semantics")),
             )
             if path.exists():
                 text = path.read_text(encoding="utf-8")
@@ -1646,7 +1363,8 @@ Raw event IDs:
 
     @staticmethod
     def _source_summary_exists(event_id: str, event_ref: str, pages: Sequence[Dict[str, Any]]) -> bool:
-        expected_path = f"sources/{_slug(event_id, default='event')}.md"
+        path_key = event_ref if str(event_ref).startswith("session_archive:") else event_id
+        expected_path = f"sources/{_slug(path_key or event_id, default='event')}.md"
         for page in pages:
             if str(page.get("type") or "").lower() != "source":
                 continue
@@ -1660,7 +1378,7 @@ Raw event IDs:
         return False
 
     def _source_summary_body(self, record: Dict[str, Any], title: str) -> str:
-        payload = record.get("payload")
+        payload = record.get("payload") or record.get("metadata")
         payload_text = json.dumps(sanitize_value(payload), ensure_ascii=False, indent=2, default=str)
         messages = record.get("messages")
         if isinstance(messages, list):
@@ -1668,17 +1386,28 @@ Raw event IDs:
         else:
             message_text = "[]"
         source_refs = _ensure_list(record.get("source_refs"))
+        content_preview = str(record.get("content") or "")
         lines = [
             f"# {title}",
             "",
             "## Event",
             f"- event_id: {redact_secrets(record.get('event_id') or '')}",
+            f"- event_ref: {redact_secrets(record.get('event_ref') or '')}",
             f"- event_type: {redact_secrets(record.get('event_type') or '')}",
             f"- stage: {redact_secrets(record.get('stage') or '')}",
             f"- task_id: {redact_secrets(record.get('task_id') or '')}",
             f"- session_id: {redact_secrets(record.get('session_id') or '')}",
+            f"- project_id: {redact_secrets(record.get('project_id') or '')}",
             f"- timestamp: {redact_secrets(record.get('timestamp') or '')}",
             f"- source_refs: {', '.join(source_refs) if source_refs else 'none'}",
+            "",
+            "## Summary",
+            redact_secrets(record.get("summary") or "- None recorded."),
+            "",
+            "## Content Preview",
+            "```text",
+            _clip(content_preview, 1200),
+            "```",
             "",
             "## Payload Preview",
             "```json",
@@ -2130,7 +1859,7 @@ Raw event IDs:
         if not evidence:
             return {}, "Wiki claim missing evidence."
         if not all(self._valid_evidence_ref(item) for item in evidence):
-            return {}, "Wiki claim evidence must reference raw:, session_archive:, task:, or artifact:."
+            return {}, "Wiki claim evidence must reference session_archive:, task:, artifact:, or a historical raw: source."
 
         claim_id = str(raw_claim.get("id") or "").strip()
         if not claim_id:

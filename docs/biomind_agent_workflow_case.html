@@ -1,0 +1,1323 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BioMind 智能体工作流案例</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --panel-2: #f0f5f7;
+      --text: #17212b;
+      --muted: #62707f;
+      --line: #d9e2ea;
+      --line-strong: #b7c7d4;
+      --blue: #2364aa;
+      --teal: #0b7a75;
+      --green: #2d7d46;
+      --orange: #b95f04;
+      --red: #b42318;
+      --purple: #6941c6;
+      --shadow: 0 12px 30px rgba(23, 33, 43, 0.08);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
+      line-height: 1.55;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 278px minmax(0, 1fr);
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 22px 18px;
+      border-right: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    main {
+      min-width: 0;
+      padding: 26px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 800;
+      background: linear-gradient(135deg, #2364aa, #0b7a75);
+      letter-spacing: 0;
+    }
+
+    .brand h1 {
+      font-size: 17px;
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .nav-title {
+      margin: 20px 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .nav a {
+      display: block;
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .nav a:hover {
+      background: var(--panel-2);
+      text-decoration: none;
+    }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      background: var(--blue);
+    }
+
+    .dot.teal { background: var(--teal); }
+    .dot.green { background: var(--green); }
+    .dot.orange { background: var(--orange); }
+    .dot.purple { background: var(--purple); }
+    .dot.red { background: var(--red); }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .title h2 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    .title p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      max-width: 820px;
+    }
+
+    .meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      min-width: 300px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    section {
+      margin: 18px 0;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-header {
+      padding: 16px 18px 0;
+    }
+
+    .panel-header h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .panel-header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .case-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 14px;
+    }
+
+    .case-input {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #f9fbfc;
+      padding: 14px;
+    }
+
+    .case-input code,
+    code {
+      font-family: Consolas, "Cascadia Mono", "SFMono-Regular", monospace;
+      font-size: 12.5px;
+      color: #20334a;
+      background: #eef4f8;
+      border: 1px solid #dde8ef;
+      border-radius: 4px;
+      padding: 1px 4px;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, "Cascadia Mono", "SFMono-Regular", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .facts {
+      display: grid;
+      gap: 8px;
+    }
+
+    .fact {
+      border-left: 4px solid var(--blue);
+      padding: 9px 10px;
+      background: #f7fafc;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .fact b { display: block; font-size: 13px; margin-bottom: 2px; }
+    .fact span { color: var(--muted); font-size: 13px; }
+    .fact.teal { border-left-color: var(--teal); }
+    .fact.green { border-left-color: var(--green); }
+    .fact.orange { border-left-color: var(--orange); }
+
+    .flow {
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .flow-grid {
+      min-width: 1050px;
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 10px;
+      align-items: stretch;
+      position: relative;
+    }
+
+    .node {
+      min-height: 136px;
+      border: 1px solid var(--line-strong);
+      border-top: 5px solid var(--blue);
+      border-radius: 7px;
+      background: #fff;
+      padding: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      position: relative;
+    }
+
+    .node::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -10px;
+      width: 10px;
+      height: 1px;
+      background: var(--line-strong);
+    }
+
+    .node:last-child::after { display: none; }
+    .node.teal { border-top-color: var(--teal); }
+    .node.green { border-top-color: var(--green); }
+    .node.orange { border-top-color: var(--orange); }
+    .node.purple { border-top-color: var(--purple); }
+    .node.red { border-top-color: var(--red); }
+
+    .node h4 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .node small {
+      color: var(--muted);
+      font-size: 12px;
+      display: block;
+    }
+
+    .node ul {
+      margin: 0;
+      padding-left: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .branch-row {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .branch {
+      border: 1px dashed var(--line-strong);
+      background: #fbfcfd;
+      border-radius: 7px;
+      padding: 12px;
+    }
+
+    .branch h4 { margin: 0 0 6px; font-size: 14px; }
+    .branch p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .stage-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    details.stage {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    details.stage[open] {
+      border-color: var(--line-strong);
+      box-shadow: 0 6px 14px rgba(23, 33, 43, 0.06);
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 13px 14px;
+      display: grid;
+      grid-template-columns: minmax(160px, 230px) minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    .stage-name {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stage-sub {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stage-tag {
+      color: #fff;
+      background: var(--blue);
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .stage-content {
+      border-top: 1px solid var(--line);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      background: #fbfcfd;
+    }
+
+    .bucket {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 12px;
+    }
+
+    .bucket h5 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: #334155;
+    }
+
+    .bucket ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .handoff {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #334155;
+      background: #f7fafc;
+      font-weight: 700;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+      counter-reset: item;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .timeline-item::before {
+      counter-increment: item;
+      content: counter(item);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #e8f1f8;
+      color: var(--blue);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .timeline-card {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 11px 12px;
+    }
+
+    .timeline-card b { display: block; margin-bottom: 3px; }
+    .timeline-card span { color: var(--muted); font-size: 13px; }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .check {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 12px;
+    }
+
+    .check h4 {
+      margin: 0 0 7px;
+      font-size: 14px;
+      color: #334155;
+    }
+
+    .check p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .severity {
+      display: inline-block;
+      min-width: 42px;
+      text-align: center;
+      border-radius: 4px;
+      padding: 2px 5px;
+      color: #fff;
+      font-size: 12px;
+      margin-right: 6px;
+    }
+
+    .s-low { background: var(--green); }
+    .s-mid { background: var(--orange); }
+    .s-high { background: var(--red); }
+
+    .code-map {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .module-card {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 12px;
+    }
+
+    .module-card h4 {
+      margin: 0 0 5px;
+      font-size: 14px;
+    }
+
+    .module-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 0 0 12px;
+    }
+
+    button {
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: #fff;
+      padding: 7px 10px;
+      cursor: pointer;
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+    }
+
+    button:hover { background: var(--panel-2); }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      aside {
+        position: relative;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      main { padding: 18px; }
+      .topbar, .case-grid, .handoff, .check-grid, .code-map {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .topbar { display: grid; }
+      .meta { justify-content: flex-start; min-width: 0; }
+      .stage-content { grid-template-columns: 1fr; }
+      summary { grid-template-columns: 1fr; }
+      .branch-row { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      aside { display: none; }
+      .app { display: block; }
+      main { padding: 0; }
+      .panel { box-shadow: none; break-inside: avoid; }
+      button { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <div class="brand-mark">BM</div>
+        <div>
+          <h1>BioMind 工作流案例</h1>
+          <p>基于当前代码的阶段级数据流</p>
+        </div>
+      </div>
+      <div class="nav">
+        <div class="nav-title">导航</div>
+        <a href="#case">案例输入</a>
+        <a href="#flow">主链路图</a>
+        <a href="#stages">阶段明细</a>
+        <a href="#handoff">跨阶段状态</a>
+        <a href="#memory">记忆闭环</a>
+        <a href="#modules">代码模块</a>
+        <a href="#optimize">优化检查点</a>
+      </div>
+      <div class="nav-title">颜色说明</div>
+      <div class="legend">
+        <span><i class="dot"></i>路由与规划</span>
+        <span><i class="dot teal"></i>知识/记忆检索</span>
+        <span><i class="dot green"></i>执行与产物</span>
+        <span><i class="dot orange"></i>人工确认/安装</span>
+        <span><i class="dot purple"></i>科学审查</span>
+        <span><i class="dot red"></i>失败/阻断</span>
+      </div>
+    </aside>
+
+    <main>
+      <div class="page">
+        <div class="topbar">
+          <div class="title">
+            <h2>BioMind 智能体如何处理一个 scRNA 标准分析任务</h2>
+            <p>这份 HTML 按当前代码梳理，不是理想化流程图。它展示每个阶段搜索了哪些知识、收集了什么上下文、写入哪些状态字段，以及传给下一个阶段的内容。</p>
+          </div>
+          <div class="meta">
+            <span class="pill">入口：<code>BioAnalystAgent.go()</code></span>
+            <span class="pill">图引擎：<code>LangGraph StateGraph</code></span>
+            <span class="pill">案例：<code>scrna_standard_analysis</code></span>
+          </div>
+        </div>
+
+        <section id="case" class="panel">
+          <div class="panel-header">
+            <h3>案例输入</h3>
+            <p>选择单细胞标准分析作为示例，因为仓库里已经有完整 workflow 模板和多阶段 skill。</p>
+          </div>
+          <div class="panel-body">
+            <div class="case-grid">
+              <div class="case-input">
+                <pre>用户请求示例：
+“请对 manifests/gse96583_ingest_qc.yaml 对应的单细胞数据做标准分析。
+先完成 ingest 和 QC，再继续预处理、聚类、marker 查找和细胞类型注释。
+如果环境缺失，请先安装或复用合适环境。”</pre>
+              </div>
+              <div class="facts">
+                <div class="fact">
+                  <b>Workflow 模板</b>
+                  <span><code>workflows/scrna_standard_analysis.yaml</code> 定义 7 个阶段，batch 1 只激活 ingest + QC。</span>
+                </div>
+                <div class="fact teal">
+                  <b>Skill 来源</b>
+                  <span><code>skills/scrna/*/SKILL.md</code> 提供执行脚本、输入输出、runtime 和 healthcheck。</span>
+                </div>
+                <div class="fact green">
+                  <b>执行产物</b>
+                  <span>计划、脚本、stdout/stderr、验证结果写入 <code>task_outputs/&lt;task_id&gt;/</code> 和 SessionArchive。</span>
+                </div>
+                <div class="fact orange">
+                  <b>人工节点</b>
+                  <span>计划审批、代码执行确认、环境选择和缺失参数都会中断等待用户。</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="flow" class="panel">
+          <div class="panel-header">
+            <h3>主链路图</h3>
+            <p>Managed 任务的核心循环是 Generate -> Execute -> Supervisor -> Generate；轻量任务会绕过 Consultant/Planner/Supervisor。</p>
+          </div>
+          <div class="panel-body">
+            <div class="flow">
+              <div class="flow-grid" aria-label="BioMind workflow">
+                <div class="node">
+                  <h4>0. go()</h4>
+                  <small>初始化任务状态</small>
+                  <ul>
+                    <li>创建 task_id</li>
+                    <li>加载 CoreMemory</li>
+                    <li>写入 stable prompt</li>
+                  </ul>
+                </div>
+                <div class="node">
+                  <h4>1. Triage</h4>
+                  <small>快速四分类</small>
+                  <ul>
+                    <li>chat</li>
+                    <li>readonly</li>
+                    <li>simple_execute</li>
+                    <li>managed</li>
+                  </ul>
+                </div>
+                <div class="node teal">
+                  <h4>2. Consultant</h4>
+                  <small>知识经纪人</small>
+                  <ul>
+                    <li>搜 workflow/skill</li>
+                    <li>搜 Wiki/Archive/RAG</li>
+                    <li>验证输入路径</li>
+                  </ul>
+                </div>
+                <div class="node">
+                  <h4>3. Planner</h4>
+                  <small>详细计划</small>
+                  <ul>
+                    <li>加载 active skill docs</li>
+                    <li>生成 checklist</li>
+                    <li>保存 plan.md</li>
+                  </ul>
+                </div>
+                <div class="node orange">
+                  <h4>4. Plan Review</h4>
+                  <small>人工审批</small>
+                  <ul>
+                    <li>批准进入执行</li>
+                    <li>反馈返回 Planner</li>
+                    <li>取消则结束</li>
+                  </ul>
+                </div>
+                <div class="node teal">
+                  <h4>5. Generate</h4>
+                  <small>单步动作生成</small>
+                  <ul>
+                    <li>&lt;execute&gt;</li>
+                    <li>&lt;search&gt;</li>
+                    <li>&lt;install_tool&gt;</li>
+                    <li>&lt;solution&gt;</li>
+                  </ul>
+                </div>
+                <div class="node green">
+                  <h4>6. Execute</h4>
+                  <small>代码审查与运行</small>
+                  <ul>
+                    <li>runtime guard</li>
+                    <li>保存脚本</li>
+                    <li>收集 stdout/stderr</li>
+                  </ul>
+                </div>
+                <div class="node purple">
+                  <h4>7. Supervisor</h4>
+                  <small>科学性审查</small>
+                  <ul>
+                    <li>规则检查</li>
+                    <li>必要时 LLM review</li>
+                    <li>PASS/WARN/RETRY</li>
+                  </ul>
+                </div>
+                <div class="node green">
+                  <h4>8. Finalize</h4>
+                  <small>记忆归档</small>
+                  <ul>
+                    <li>TaskSummary</li>
+                    <li>SessionArchive</li>
+                    <li>Wiki ingest</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="branch-row">
+              <div class="branch">
+                <h4>安装分支</h4>
+                <p>Generate 或 Execute 发现 runtime/包缺失时进入 <code>install_subagent</code>，确认环境后运行 InstallerAgent，完成后回到 Generate。</p>
+              </div>
+              <div class="branch">
+                <h4>问用户分支</h4>
+                <p>Consultant 或 Generate 输出 <code>ASK</code>/<code>&lt;ask_user&gt;</code> 时进入 <code>ask_user</code>，用户答案作为 <code>&lt;human_answer&gt;</code> 回到原阶段。</p>
+              </div>
+              <div class="branch">
+                <h4>批次切换分支</h4>
+                <p>工作流后续批次通过 <code>&lt;activate_batch batch_id="N" /&gt;</code> 激活，未来技能才会进入 active skills。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="stages" class="panel">
+          <div class="panel-header">
+            <h3>阶段明细：搜寻、收集、传递</h3>
+            <p>默认展开的是 managed scRNA 案例路径。按钮可快速展开或折叠全部阶段。</p>
+          </div>
+          <div class="panel-body">
+            <div class="toolbar">
+              <button type="button" data-action="open">展开全部</button>
+              <button type="button" data-action="close">折叠全部</button>
+            </div>
+            <div class="stage-list">
+              <details class="stage" open>
+                <summary>
+                  <div class="stage-name"><span class="dot"></span>Triage</div>
+                  <div class="stage-sub">判断任务是否进入完整智能体流程</div>
+                  <span class="stage-tag">route</span>
+                </summary>
+                <div class="stage-content">
+                  <div class="bucket">
+                    <h5>搜寻/读取</h5>
+                    <ul>
+                      <li>读取用户最新请求文本。</li>
+                      <li>调用 <code>classify_task_mode()</code>，让 LLM 返回 JSON 路由。</li>
+                      <li>不查本地文件，不查 RAG，不查技能正文。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>收集</h5>
+                    <ul>
+                      <li><code>task_mode=managed</code></li>
+                      <li><code>retrieval_mode=kb</code></li>
+                      <li><code>validation_level=scientific</code></li>
+                      <li><code>use_scientific_review=true</code></li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>传递给</h5>
+                    <ul>
+                      <li>managed -> Consultant</li>
+                      <li>readonly/simple_execute -> Generate</li>
+                      <li>chat -> Direct Chat</li>
+                    </ul>
+                  </div>
+                </div>
+              </details>
+
+              <details class="stage" open>
+                <summary>
+                  <div class="stage-name"><span class="dot teal"></span>Consultant</div>
+                  <div class="stage-sub">广域检索、需求审计、workflow/skill 选择</div>
+                  <span class="stage-tag">memory broker</span>
+                </summary>
+                <div class="stage-content">
+                  <div class="bucket">
+                    <h5>搜寻/读取</h5>
+                    <ul>
+                      <li><code>WorkflowManager</code> 读取 <code>workflows/*.yaml</code>。</li>
+                      <li><code>SkillManager</code> 读取技能树、浅层 catalog、必要时 SKILL.md/reference/script。</li>
+                      <li><code>WikiMemoryManager</code> 读取 wiki digest 与相关页面。</li>
+                      <li><code>SessionArchive</code> 检索同项目历史事件和未入 Wiki 的近期事件。</li>
+                      <li><code>TaskSummaryRenderer</code> 查询当前任务/相关任务摘要。</li>
+                      <li>需要外部知识时通过 <code>SEARCH KB_NAME query</code> 调 RAGFlow。</li>
+                      <li>用户给路径时用安全只读 <code>EXECUTE</code> 验证存在性和格式。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>收集</h5>
+                    <ul>
+                      <li>已验证输入路径、目标环境、缺失输入。</li>
+                      <li>Workflow handoff：<code>WORKFLOW_DECISION</code>、<code>WORKFLOW_STAGES</code>。</li>
+                      <li>当前批次 <code>ACTIVE_SKILLS</code>，后续批次 <code>FUTURE_SKILLS</code>。</li>
+                      <li>把广域记忆压缩成 <code>consultant_memory_packet</code>。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>传递给</h5>
+                    <ul>
+                      <li><code>requirements_summary</code> -> Planner/Installer。</li>
+                      <li><code>workflow_handoff</code>、<code>active_batch_id</code> -> Planner/Generate。</li>
+                      <li><code>active_skills</code>、<code>future_skills</code> -> Planner/Generate/Execute。</li>
+                      <li><code>memory_packet_context</code> -> Planner/Generate。</li>
+                      <li><code>rag_history</code> -> Planner/Generate。</li>
+                    </ul>
+                  </div>
+                </div>
+              </details>
+
+              <details class="stage" open>
+                <summary>
+                  <div class="stage-name"><span class="dot"></span>Planner</div>
+                  <div class="stage-sub">把咨询结果转成可执行 checklist</div>
+                  <span class="stage-tag">plan</span>
+                </summary>
+                <div class="stage-content">
+                  <div class="bucket">
+                    <h5>搜寻/读取</h5>
+                    <ul>
+                      <li>读取 Consultant 的 <code>requirements_summary</code> 和记忆包。</li>
+                      <li>读取已选择技能完整文档、reference index、runtime execution cards。</li>
+                      <li>读取 installed tools 和 workflow handoff。</li>
+                      <li>如果没有 Consultant 记忆包，再补查 Wiki 和 pending archive buffer。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>收集</h5>
+                    <ul>
+                      <li>详细计划四段：需求分析、执行步骤、执行 checklist、验证 checklist。</li>
+                      <li><code>plan.md</code> 和 <code>plan_state.json</code>。</li>
+                      <li>计划中的 active/future skill block，并再次验证 workflow handoff。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>传递给</h5>
+                    <ul>
+                      <li><code>current_plan</code> -> Plan Review/Generate/Supervisor。</li>
+                      <li><code>plan_progress</code> -> Generate/Execute/Supervisor。</li>
+                      <li>经验证的 <code>selected_skills</code>/<code>active_skills</code> -> Generate。</li>
+                    </ul>
+                  </div>
+                </div>
+              </details>
+
+              <details class="stage">
+                <summary>
+                  <div class="stage-name"><span class="dot orange"></span>Plan Review</div>
+                  <div class="stage-sub">人工批准或退回计划</div>
+                  <span class="stage-tag">HITL</span>
+                </summary>
+                <div class="stage-content">
+                  <div class="bucket">
+                    <h5>搜寻/读取</h5>
+                    <ul>
+                      <li>读取 <code>current_plan</code> 和当前消息的 memory status。</li>
+                      <li>不做外部检索。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>收集</h5>
+                    <ul>
+                      <li>用户批准、取消或反馈。</li>
+                      <li>批准时初始化/持久化 checklist 当前步骤。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>传递给</h5>
+                    <ul>
+                      <li>批准 -> Generate。</li>
+                      <li>反馈 -> Planner，并清空当前技能/workflow 状态。</li>
+                      <li>取消 -> Finalize。</li>
+                    </ul>
+                  </div>
+                </div>
+              </details>
+
+              <details class="stage" open>
+                <summary>
+                  <div class="stage-name"><span class="dot teal"></span>Generate</div>
+                  <div class="stage-sub">只生成一个当前步骤动作</div>
+                  <span class="stage-tag">step-local</span>
+                </summary>
+                <div class="stage-content">
+                  <div class="bucket">
+                    <h5>搜寻/读取</h5>
+                    <ul>
+                      <li>加载 stable system prompt：CoreMemory、AGENTS.md、工具上下文。</li>
+                      <li>加载当前 active skills 的完整文档和 reference index。</li>
+                      <li>消费 Consultant 的 <code>memory_packet_context</code>。</li>
+                      <li>错误/WARN/RETRY 时按需查 SessionArchive 作为 recovery memory。</li>
+                      <li>缺输入路径时按需查 ArtifactIndex 和 pending archive buffer。</li>
+                      <li>用户追问证据时按需查 Wiki digest/context。</li>
+                      <li>主动输出 <code>&lt;search&gt;</code> 时查 RAGFlow SOP/ERRORS。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>收集</h5>
+                    <ul>
+                      <li>下一步动作：<code>&lt;execute&gt;</code>、<code>&lt;install_tool&gt;</code>、<code>&lt;ask_user&gt;</code>、<code>&lt;activate_batch&gt;</code> 或 <code>&lt;solution&gt;</code>。</li>
+                      <li>当前 plan_progress 证据。</li>
+                      <li>生成内容写入 SessionArchive。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>传递给</h5>
+                    <ul>
+                      <li><code>&lt;execute&gt;</code> -> Execute。</li>
+                      <li><code>&lt;install_tool&gt;</code> -> Install Sub-Agent。</li>
+                      <li><code>&lt;search&gt;</code> 的结果回到 Generate。</li>
+                      <li><code>&lt;solution&gt;</code> -> Finalize。</li>
+                    </ul>
+                  </div>
+                </div>
+              </details>
+
+              <details class="stage" open>
+                <summary>
+                  <div class="stage-name"><span class="dot green"></span>Execute</div>
+                  <div class="stage-sub">运行脚本并生成 observation</div>
+                  <span class="stage-tag">runtime</span>
+                </summary>
+                <div class="stage-content">
+                  <div class="bucket">
+                    <h5>搜寻/读取</h5>
+                    <ul>
+                      <li>读取 Generate 的 <code>&lt;execute&gt;</code> 代码。</li>
+                      <li>检查 future skill guard，阻止提前使用未来批次技能。</li>
+                      <li>检查 selected skill 的 <code>env_runner</code> 使用是否正确。</li>
+                      <li>检查 runtime 是否 ready；不 ready 则改走安装分支。</li>
+                      <li>执行前通过 HITL middleware 做代码审查。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>收集</h5>
+                    <ul>
+                      <li>保存 <code>step_N.sh</code> 或 <code>step_N.py</code>。</li>
+                      <li>收集 stdout、stderr、returncode、duration。</li>
+                      <li>调用 ResultValidator 得到 validation block。</li>
+                      <li>记录成功技能执行和自动发现的 artifact。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>传递给</h5>
+                    <ul>
+                      <li><code>&lt;observation&gt;</code> -> Supervisor。</li>
+                      <li>失败 observation -> Generate 重新生成。</li>
+                      <li>readonly/simple_execute 任务直接 Finalize，不进 Supervisor。</li>
+                    </ul>
+                  </div>
+                </div>
+              </details>
+
+              <details class="stage" open>
+                <summary>
+                  <div class="stage-name"><span class="dot purple"></span>Supervisor</div>
+                  <div class="stage-sub">执行后科学审查与纠错</div>
+                  <span class="stage-tag">QA</span>
+                </summary>
+                <div class="stage-content">
+                  <div class="bucket">
+                    <h5>搜寻/读取</h5>
+                    <ul>
+                      <li>读取最近的 <code>&lt;execute&gt;</code> 和 <code>&lt;observation&gt;</code>。</li>
+                      <li>RuleEngine 检查退出码、空输出、静默失败、非进展命令、OOM、生信工具正向信号。</li>
+                      <li>有错误/警告或 scientific validation 时调用 LLMReviewer。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>收集</h5>
+                    <ul>
+                      <li><code>supervisor_verdict=PASS/WARN/RETRY/ESCALATE</code>。</li>
+                      <li><code>&lt;supervisor_feedback&gt;</code>。</li>
+                      <li>CoT/执行审查日志。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>传递给</h5>
+                    <ul>
+                      <li>PASS/WARN -> Generate 执行下一 checklist 步。</li>
+                      <li>RETRY -> Generate，要求不要重复失败命令。</li>
+                      <li>ESCALATE -> Finalize failed。</li>
+                    </ul>
+                  </div>
+                </div>
+              </details>
+
+              <details class="stage">
+                <summary>
+                  <div class="stage-name"><span class="dot orange"></span>Install Sub-Agent</div>
+                  <div class="stage-sub">环境复用、安装与注册</div>
+                  <span class="stage-tag">runtime setup</span>
+                </summary>
+                <div class="stage-content">
+                  <div class="bucket">
+                    <h5>搜寻/读取</h5>
+                    <ul>
+                      <li>读取 <code>&lt;install_tool&gt;</code>、requirements summary、当前计划。</li>
+                      <li>读取 selected skill runtime metadata、healthcheck、install_tool。</li>
+                      <li>查 runtime registry 和 PackageManager，优先复用已验证环境。</li>
+                      <li>必要时启动 InstallerAgent 子图。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>收集</h5>
+                    <ul>
+                      <li>目标 conda/env 名称。</li>
+                      <li>安装结果和 runtime_status。</li>
+                      <li>成功环境写回 skill runtime registry。</li>
+                    </ul>
+                  </div>
+                  <div class="bucket">
+                    <h5>传递给</h5>
+                    <ul>
+                      <li>安装 observation -> Generate。</li>
+                      <li>更新后的 runtime_status -> Execute guard。</li>
+                      <li>失败原因 -> Generate 重新决策。</li>
+                    </ul>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <section id="handoff" class="panel">
+          <div class="panel-header">
+            <h3>本案例中的跨阶段状态</h3>
+            <p>这些字段是你检查流程优化时最值得追踪的“交接单”。</p>
+          </div>
+          <div class="panel-body">
+            <div class="handoff">
+              <div class="case-input">
+                <pre>[WORKFLOW_DECISION]
+workflow_id: scrna_standard_analysis
+workflow_source: workflow_registry
+active_batch_id: "1"
+
+[WORKFLOW_STAGES]
+- data_ingest -> selected_skill -> scrna/ingest/data-download -> active
+- qc_filter   -> selected_skill -> scrna/qc/filter           -> active
+- preprocess  -> selected_skill -> scrna/preprocess/basic    -> future
+- cluster     -> selected_skill -> scrna/cluster/basic       -> future
+- marker_find -> selected_skill -> scrna/markers/find        -> future
+- annotation  -> selected_skill -> scrna/annotate/basic      -> future/block if ref missing
+- de_analysis -> optional      -> scrna/de/contrast          -> future</pre>
+              </div>
+              <div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>状态字段</th>
+                      <th>来源阶段</th>
+                      <th>用途</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>requirements_summary</code></td>
+                      <td>Consultant</td>
+                      <td>给 Planner/Installer 使用的确认输入、参数、环境、缺口摘要。</td>
+                    </tr>
+                    <tr>
+                      <td><code>memory_packet_context</code></td>
+                      <td>Consultant</td>
+                      <td>广域记忆检索后的压缩交接包，Planner/Generate 默认只消费它。</td>
+                    </tr>
+                    <tr>
+                      <td><code>active_skills</code></td>
+                      <td>Consultant/Planner</td>
+                      <td>当前批次加载到 Generate 的技能，最多 3 个。</td>
+                    </tr>
+                    <tr>
+                      <td><code>future_skills</code></td>
+                      <td>Consultant/Planner</td>
+                      <td>后续批次技能；Execute 会阻止提前调用。</td>
+                    </tr>
+                    <tr>
+                      <td><code>current_plan</code></td>
+                      <td>Planner</td>
+                      <td>Generate 单步执行、Supervisor 判断上下文、Plan Review 展示。</td>
+                    </tr>
+                    <tr>
+                      <td><code>plan_progress</code></td>
+                      <td>PlanTracker</td>
+                      <td>标记当前 checklist 步骤 running/done/blocked，并记录证据。</td>
+                    </tr>
+                    <tr>
+                      <td><code>supervisor_verdict</code></td>
+                      <td>Supervisor</td>
+                      <td>PASS/WARN 进入下一步，RETRY 触发 Generate 修复，ESCALATE 结束。</td>
+                    </tr>
+                    <tr>
+                      <td><code>runtime_status</code></td>
+                      <td>Install/Execute</td>
+                      <td>记录环境是否可用，供后续 runtime guard 和提示词使用。</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="memory" class="panel">
+          <div class="panel-header">
+            <h3>记忆闭环</h3>
+            <p>当前设计把“长期稳定事实、任务过程日志、可复用 Wiki 知识”分开，避免 Generate 每轮都吞大量历史。</p>
+          </div>
+          <div class="panel-body">
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-card">
+                  <b>启动时加载 CoreMemory</b>
+                  <span><code>CoreMemoryStore.load_snapshot()</code> 生成 stable system prompt。它适合放用户偏好、项目稳定规则、Wiki 索引引用，不适合放具体过程日志。</span>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-card">
+                  <b>每个阶段写 SessionArchive</b>
+                  <span><code>_observe_session_memory()</code> 在 consultant、planner、generate、execute、supervisor、install_subagent、finalize 等阶段记录事件、摘要、路径、returncode、task_semantics。</span>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-card">
+                  <b>Consultant 做广域自动检索</b>
+                  <span><code>_consultant_memory_retrieval_context()</code> 汇总 Wiki、TaskSummary、相关 Archive、项目 Archive，然后要求 Consultant 只把相关内容放进 handoff。</span>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-card">
+                  <b>Generate 只做触发式按需检索</b>
+                  <span>正常 PASS 流程不重新广域召回；只有错误恢复、缺路径、用户追问证据、显式 <code>&lt;search&gt;</code> 时才查 Archive/Artifact/Wiki/RAG。</span>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-card">
+                  <b>结束后生成 TaskSummary，可进入 Wiki</b>
+                  <span><code>_finalize_task_memory()</code> 写任务摘要；根据 <code>BIOMIND_WIKI_INGEST_MODE</code> 自动、询问或手动把 pending events 汇编成 Wiki 页面。</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="modules" class="panel">
+          <div class="panel-header">
+            <h3>代码模块地图</h3>
+            <p>下面是本说明页直接依据的主要模块，方便你回到源码检查。</p>
+          </div>
+          <div class="panel-body">
+            <div class="code-map">
+              <div class="module-card">
+                <h4><code>bio_agents.py</code></h4>
+                <p>主智能体、LangGraph 节点、状态流、计划审批、Generate/Execute/Install/Supervisor 分支。</p>
+              </div>
+              <div class="module-card">
+                <h4><code>agent_core/router.py</code></h4>
+                <p>将用户请求分类为 chat、readonly、simple_execute、managed，并确定 retrieval mode。</p>
+              </div>
+              <div class="module-card">
+                <h4><code>agent_core/skill_manager.py</code></h4>
+                <p>扫描 SKILL.md frontmatter，匹配/加载技能，读取脚本和 reference，维护 runtime registry。</p>
+              </div>
+              <div class="module-card">
+                <h4><code>agent_core/workflow_manager.py</code></h4>
+                <p>读取 workflow YAML、解析/验证 workflow handoff、按 batch 找默认技能。</p>
+              </div>
+              <div class="module-card">
+                <h4><code>prompts/templates.py</code> / <code>prompts/manager.py</code></h4>
+                <p>定义 Consultant、Planner、Generate 的角色边界和可用 action 标签。</p>
+              </div>
+              <div class="module-card">
+                <h4><code>memory/*</code></h4>
+                <p>CoreMemory、SessionArchive、TaskSummary、WikiMemory、ArtifactIndex、task semantics。</p>
+              </div>
+              <div class="module-card">
+                <h4><code>execution/*</code></h4>
+                <p>脚本执行、安全确认、结果验证、错误恢复 middleware、运行监控。</p>
+              </div>
+              <div class="module-card">
+                <h4><code>supervisor.py</code></h4>
+                <p>规则引擎、LLM 科学审查、PASS/WARN/RETRY/ESCALATE 判决和 CoT 日志。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="optimize" class="panel">
+          <div class="panel-header">
+            <h3>优化检查点</h3>
+            <p>这些不是必须修改的 bug，而是你检查智能体是否还能优化时可以优先看的地方。</p>
+          </div>
+          <div class="panel-body">
+            <div class="check-grid">
+              <div class="check">
+                <h4><span class="severity s-mid">中</span>Plan Review 反馈会清空技能/workflow</h4>
+                <p>当前用户拒绝计划后会把 <code>selected_skills</code>、<code>active_skills</code>、<code>workflow_handoff</code> 清空再回 Planner。若反馈只是“小改参数”，可能导致重复选择技能。</p>
+              </div>
+              <div class="check">
+                <h4><span class="severity s-low">低</span>Generate 的任务摘要默认不重查</h4>
+                <p><code>_generate_on_demand_memory_contexts()</code> 返回空 task summary context，主要依赖 Consultant 记忆包和触发式 Archive/Wiki 检索。这个设计省 token，但要确认不会漏掉长任务中途的关键摘要。</p>
+              </div>
+              <div class="check">
+                <h4><span class="severity s-mid">中</span>Consultant 是唯一广域自动检索点</h4>
+                <p>这是清晰的架构边界。优化时建议检查 Consultant 的 FINISH 是否真的把关键记忆转成了 plan constraints，而不是只把原文塞进 summary。</p>
+              </div>
+              <div class="check">
+                <h4><span class="severity s-low">低</span>Active skills 上限保护批次执行</h4>
+                <p>当前最多 3 个 active skills，适合 scRNA batch 1 的 ingest+QC。完整分析靠 <code>activate_batch</code> 推进，避免一次加载全部 skill 文档。</p>
+              </div>
+              <div class="check">
+                <h4><span class="severity s-mid">中</span>Execute 的脚本编号取消息长度</h4>
+                <p><code>step_N.sh</code> 的 N 来自消息数量，重试/搜索/问答多时编号可能不连续。对审计不致命，但可读性一般。</p>
+              </div>
+              <div class="check">
+                <h4><span class="severity s-high">高</span>Supervisor 依赖 observation 文本判断失败</h4>
+                <p>当前会从 observation 的符号和文本提取 returncode/流信息。若未来 observation 格式变化，建议改成结构化 runtime_status 或 metadata 传递。</p>
+              </div>
+              <div class="check">
+                <h4><span class="severity s-mid">中</span>RAGFlow dataset 选择较粗</h4>
+                <p>Generate 主动 search 目前按 query 是否含 error 在 SOP/ERRORS 间切换；Consultant SEARCH 由模型指定 KB_NAME。后续可以加入更明确的数据集路由。</p>
+              </div>
+              <div class="check">
+                <h4><span class="severity s-low">低</span>Wiki ingest 模式影响后续检索质量</h4>
+                <p>如果 <code>BIOMIND_WIKI_INGEST_MODE</code> 不是 auto，任务结束后的知识不会自动进入 Wiki，后续任务只能查 pending Archive 或手动 <code>/wiki ingest</code>。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const buttons = document.querySelectorAll("[data-action]");
+    const stages = Array.from(document.querySelectorAll("details.stage"));
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const open = button.dataset.action === "open";
+        stages.forEach((stage) => { stage.open = open; });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -402,6 +402,22 @@ def check_cooler_balance(matrix_uri: str, weight_name: str) -> Tuple[bool, str]:
     return True, f"weight column '{weight_name}' finite bins: {valid}/{total}"
 
 
+def is_balance_correctable_failure(message: str) -> bool:
+    text = str(message or "").lower()
+    return (
+        "weight column" in text
+        and (
+            "not found" in text
+            or "no finite values" in text
+        )
+    )
+
+
+def run_cooler_balance(matrix_uri: str, log_path: Path) -> int:
+    cmd = ["cooler", "balance", matrix_uri]
+    return run_command(cmd, log_path)
+
+
 def ensure_expected_outputs(out_prefix: Path) -> Tuple[bool, str]:
     paths = expected_output_paths(out_prefix)
     missing = [str(path) for key, path in paths.items() if key in {"boundaries_bed", "domains_bed", "score_bedgraph"} and not path.is_file()]
@@ -517,10 +533,32 @@ def process_sample(row: Dict[str, object], args: argparse.Namespace) -> Tuple[Di
         run_status["balanced"] = "yes" if ok else "no"
         if ok:
             print(f"[INFO] balance check passed for sample={sample}: {message}")
+        elif args.auto_balance and is_balance_correctable_failure(message):
+            print(f"[WARN] balance check failed for sample={sample}: {message}")
+            balance_log = Path(f"{out_prefix}.cooler_balance.log")
+            balance_code = run_cooler_balance(matrix_uri, balance_log)
+            if balance_code != 0:
+                tail = read_log_tail(balance_log)
+                run_status.update(
+                    {
+                        "status": "failed",
+                        "return_code": balance_code,
+                        "message": tail or f"cooler balance exited with {balance_code}",
+                    }
+                )
+                return run_status, [], [], summarize_domains(sample, resolution_bp, [], 0)
+            ok, message = check_cooler_balance(matrix_uri, args.weight_name)
+            run_status["balanced"] = "auto_balanced" if ok else "no"
+            if ok:
+                print(f"[INFO] auto-balance succeeded for sample={sample}: {message}")
+            else:
+                run_status.update({"status": "failed", "message": f"auto-balance finished but balance check still failed: {message}"})
+                print(f"[ERROR] balance check failed after auto-balance for sample={sample}: {message}")
+                return run_status, [], [], summarize_domains(sample, resolution_bp, [], 0)
         else:
             run_status.update({"status": "failed", "message": message})
             print(f"[ERROR] balance check failed for sample={sample}: {message}")
-            print("[ERROR] run `cooler balance <matrix.cool>` or provide a balanced/corrected cooler; use --skip-balance-check only if you have verified correction externally.")
+            print("[ERROR] automatic balancing is disabled or this failure is not balance-correctable; use --auto-balance or provide a balanced/corrected cooler.")
             return run_status, [], [], summarize_domains(sample, resolution_bp, [], 0)
     elif should_run:
         run_status["balanced"] = "skipped"
@@ -552,6 +590,37 @@ def process_sample(row: Dict[str, object], args: argparse.Namespace) -> Tuple[Di
     stats = summarize_domains(sample, resolution_bp, domains, len(boundaries))
     run_status.update({"status": "success", "message": "ok"})
     return run_status, domains, boundaries, stats
+
+
+def preflight_samples(samples: Sequence[Dict[str, object]], args: argparse.Namespace, out_dir: Path) -> List[Dict[str, object]]:
+    rows: List[Dict[str, object]] = []
+    for row in samples:
+        sample = str(row["sample"])
+        resolution_bp = int(row["effective_resolution_bp"])
+        matrix_uri = build_matrix_uri(str(row["matrix"]), resolution_bp)
+        result = {
+            "sample": sample,
+            "resolution_bp": resolution_bp,
+            "matrix": matrix_uri,
+            "balanced": "",
+            "status": "pending",
+            "message": "",
+        }
+        if args.skip_balance_check:
+            result.update({"balanced": "skipped", "status": "skipped", "message": "balance check skipped"})
+            print(f"[WARN] preflight balance check skipped for sample={sample}")
+        else:
+            ok, message = check_cooler_balance(matrix_uri, args.weight_name)
+            result.update({"balanced": "yes" if ok else "no", "status": "success" if ok else "failed", "message": message})
+            level = "INFO" if ok else "ERROR"
+            print(f"[{level}] preflight balance check {'passed' if ok else 'failed'} for sample={sample}: {message}")
+        rows.append(result)
+    write_tsv(
+        out_dir / "tad_preflight.tsv",
+        rows,
+        ["sample", "resolution_bp", "matrix", "balanced", "status", "message"],
+    )
+    return rows
 
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -623,6 +692,17 @@ Sample sheet TSV columns:
         help="Skip cooler balance preflight. Use only if correction was verified outside this script.",
     )
     parser.add_argument(
+        "--auto-balance",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Automatically run cooler balance on samples whose weight column is missing or has no finite values before TAD calling.",
+    )
+    parser.add_argument(
+        "--preflight-only",
+        action="store_true",
+        help="Only validate inputs, resolution, and balance weight columns, then write tad_preflight.tsv without running hicFindTADs.",
+    )
+    parser.add_argument(
         "--extra-arg",
         action="append",
         default=None,  # Allows advanced HiCExplorer flags without editing the wrapper.
@@ -664,6 +744,11 @@ Sample sheet TSV columns:
         action="store_true",
         help="Stop after the first failed sample.",
     )
+    parser.add_argument(
+        "--allow-partial-success",
+        action="store_true",
+        help="Exit 0 when at least one sample succeeds even if other samples fail. By default any failed sample exits non-zero.",
+    )
     return parser.parse_args(argv)
 
 
@@ -690,15 +775,26 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         print("[ERROR] run one confirmed resolution at a time, or split your sample sheet by resolution.")
         sys.exit(1)
 
-    if not args.stats_only and not args.dry_run:
-        ensure_hicfindtads_available()
-
     if args.force and args.skip_existing:
         print("[WARN] both --force and --skip-existing were set; --force takes precedence")
         args.skip_existing = False
 
     out_dir = Path(args.out_root) / str(resolutions[0])
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.preflight_only:
+        preflight_rows = preflight_samples(samples, args, out_dir)
+        failed_rows = [row for row in preflight_rows if row.get("status") == "failed"]
+        print(
+            f"[INFO] preflight summary: samples={len(samples)}, failed={len(failed_rows)}, "
+            f"resolution_bp={resolutions[0]}"
+        )
+        if failed_rows:
+            sys.exit(1)
+        return
+
+    if not args.stats_only and not args.dry_run:
+        ensure_hicfindtads_available()
 
     run_rows: List[Dict[str, object]] = []
     all_domains: List[Dict[str, object]] = []
@@ -750,8 +846,13 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         f"[INFO] summary: samples={len(samples)}, success={success}, skipped={skipped}, "
         f"resolution_bp={resolutions[0]}, domains={len(all_domains)}, boundaries={len(all_boundaries)}"
     )
+    failed_rows = [row for row in run_rows if row.get("status") not in {"success", "dry_run"}]
     if success == 0 and not args.dry_run:
         print("[ERROR] all samples failed")
+        sys.exit(1)
+    if failed_rows and not args.dry_run and not args.allow_partial_success:
+        failed_samples = ", ".join(str(row.get("sample", "")) for row in failed_rows)
+        print(f"[ERROR] failed sample(s): {failed_samples}")
         sys.exit(1)
 
 

@@ -1,0 +1,701 @@
+answer_set_id: biomind-agent-benchmark-expected-answers
+version: 0.3.1
+source_alignment:
+  reference_paper: Empowering AI data scientists using a multi-agent LLM framework with self-evolving capabilities for autonomous, tool-aware biomedical data analyses
+  reference_benchmark: BioMed-AQA
+  open_benchmark_url: https://huggingface.co/datasets/BOBQWERA/biomed-aqa-dataset
+  mcq_benchmark_url: https://huggingface.co/datasets/BOBQWERA/biomed-mcq-dataset
+  input_and_milestone_files_url: https://doi.org/10.5281/zenodo.17430550
+  code_url: https://github.com/BOBQWERA/BioMedAgent
+  open_benchmark_rows: 327
+  mcq_benchmark_rows: 172
+  adapted_fields:
+    task_classification: category
+    question: prompt
+    reference_steps: required_reference_steps
+    reference_milestones: reference_milestones
+    files: data_files
+    milestone_reference_files: expected_artifacts
+    question_type: question_type
+    result_choice: result_question.correct_answer
+  adaptation_note: >
+    BioMind keeps the BioMed-AQA open-task shape but adds explicit fixture paths,
+    skill-selection scoring, metric extraction, and final result-choice scoring.
+
+active_data_policy:
+  accepted_sources:
+    - public downloaded and checksummed demo/database subsets
+    - msprime professional simulation
+    - planned ONT methylation fixture once copied into fixtures_public/ont_methylation_modkit
+  inactive_sources:
+    - hand-written toy NumPy/Pandas synthetic fixtures
+    - deletable results/ outputs
+
+open_task_answers:
+  BM-SCRNA-PBMC-QC-001:
+    question: PBMC3k ingest and QC with fixture-path validation and result choice.
+    task_classification: single_cell_rnaseq
+    task_abbr: PBMC3k scRNA ingest and QC result choice
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: easy
+    answer_type: data_analysis_result_choice
+    expected_skills:
+      - scrna/env/bootstrap
+      - scrna/ingest/data-download
+      - scrna/qc/filter
+    optional_skills:
+      - scrna/workflows/ingest-qc
+    forbidden_skills:
+      - crop-breeding/crop-rnaseq-de
+      - sequence/search/remote-blast
+    required_reference_steps:
+      - Validate PBMC3k fixture paths.
+      - Use scRNA ingest/QC skills.
+      - Read matrix and QC summaries.
+      - Produce QC evidence.
+      - Choose the evidence-supported result.
+    reference_milestones:
+      - Validates all explicit PBMC3k file paths.
+      - Selects scRNA ingest and QC skills, with optional workflow wrapper.
+      - Produces or inspects QC evidence from matrix and cell metrics.
+      - Checks key dimensions and total-count metrics against the answer key.
+      - Chooses the correct result option from the evidence.
+    expected_artifacts:
+      - raw_seurat_object.rds or matrix validation summary
+      - qc_report.tsv or qc_metrics_summary.json
+      - selected_result_answer.txt
+    expected_metrics:
+      matrix_shape_genes_by_cells: must match answer_key.yaml
+      total_counts: must match answer_key.yaml
+      qc_metrics_rows: must match the number of barcodes
+    numeric_tolerances:
+      matrix_shape: exact
+      total_counts: exact
+    result_question:
+      correct_answer: A
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - claims QC completion without validating matrix/features/barcodes
+        - uses bulk RNA-seq or BLAST skills as the primary workflow
+        - chooses an option unsupported by the fixture evidence
+
+  BM-SCRNA-PBMC-CLUSTER-MARKER-002:
+    question: PBMC3k preprocessing, clustering, marker detection, and result choice.
+    task_classification: single_cell_rnaseq
+    task_abbr: PBMC3k clustering and marker-result interpretation
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: medium
+    answer_type: data_analysis_result_choice
+    expected_skills:
+      - scrna/preprocess/basic
+      - scrna/cluster/basic
+      - scrna/markers/find
+    optional_skills:
+      - scrna/qc/filter
+    forbidden_skills:
+      - scrna/de/contrast
+      - crop-breeding/crop-rnaseq-de
+    required_reference_steps:
+      - Validate PBMC3k paths.
+      - Run preprocessing before clustering.
+      - Run marker discovery after clustering.
+      - Summarize marker evidence.
+      - Choose correct stage-order result.
+    reference_milestones:
+      - Validates the PBMC3k file paths.
+      - Selects preprocess, cluster, and marker skills.
+      - Maintains correct stage order.
+      - Uses marker-table evidence for interpretation.
+      - Chooses the correct result option.
+    expected_artifacts:
+      - preprocessed_seurat_object.rds
+      - clustered_seurat_object.rds
+      - marker_table.tsv
+      - selected_result_answer.txt
+    expected_metrics:
+      marker_table_nonempty: true
+      cluster_labels_present: true
+    numeric_tolerances:
+      marker_table_rows: ">0 when execution environment is available"
+    result_question:
+      correct_answer: A
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - runs condition DE without condition metadata
+        - runs marker discovery before clustering
+        - uses bulk RNA-seq skills for PBMC3k clustering
+
+  BM-3DDNA-COOL-TAD-003:
+    question: Cooler matrix TAD analysis with metadata validation and result choice.
+    task_classification: chromatin_contact_tad
+    task_abbr: Cooler Hi-C TAD analysis result choice
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: medium
+    answer_type: data_analysis_result_choice
+    expected_skills:
+      - 3d-dna/3d-dna-analysis
+      - 3d-dna/tad-calling
+    optional_skills: []
+    forbidden_skills:
+      - 3d-dna/loop-classification
+      - genomics/wgs-variant-calling
+    required_reference_steps:
+      - Validate .cool and answer-key paths.
+      - Select 3D DNA TAD skills.
+      - Check matrix metadata.
+      - Produce or block TAD artifacts.
+      - Choose correct result.
+    reference_milestones:
+      - Validates cooler and answer-key paths.
+      - Selects 3D DNA router and TAD-calling skills.
+      - Checks resolution and matrix metadata.
+      - Produces or honestly blocks TAD domain/boundary artifacts.
+      - Chooses the correct result option.
+    expected_artifacts:
+      - tad_domains.tsv
+      - tad_boundaries.tsv
+      - tad_domain_stats.tsv
+      - selected_result_answer.txt
+    expected_metrics:
+      cooler_bin_size: must match answer_key.yaml
+      cooler_nnz: must match answer_key.yaml
+    numeric_tolerances:
+      cooler_metadata: exact
+      tad_count: ">=0; empty TAD calls must be reported honestly"
+    result_question:
+      correct_answer: A
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - guesses resolution without checking cooler metadata
+        - uses loop classification before loop calls
+        - claims TAD results when matrix loading fails
+
+  BM-3DDNA-COOL-RESAMPLE-DIFFTAD-025:
+    question: 5kb cooler to 40kb TAD calling and bidirectional differential-TAD result choice.
+    task_classification: chromatin_contact_tad
+    task_abbr: 5kb-to-40kb TAD and differential-TAD result choice
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: hard
+    answer_type: data_analysis_result_choice
+    expected_skills:
+      - 3d-dna/3d-dna-analysis
+      - 3d-dna/tad-calling
+      - 3d-dna/differential-tad
+    optional_skills:
+      - 3d-dna/tad-boundary-change
+    forbidden_skills:
+      - 3d-dna/loop-classification
+      - genomics/wgs-variant-calling
+    required_reference_steps:
+      - Validate target/control 5 kb .cool paths, sample sheet, and answer key before analysis.
+      - Confirm both matrices have the same chromosome scope, 5 kb input binsize, and usable balancing metadata.
+      - Coarsen or convert both matrices to exactly 40 kb and verify the converted binsize/count metadata.
+      - Call TADs independently for target and control using the converted 40 kb matrices.
+      - Run differential TAD testing in the target-vs-control direction using target domains.
+      - Run the reverse control-vs-target comparison using control domains, or explicitly report if bidirectional execution blocks.
+      - Read the differential TAD summary, count rejected differential TADs, and choose the matching result option.
+    reference_milestones:
+      - Validates paired 5 kb cooler inputs, sample sheet, and answer key.
+      - Performs or plans evidence-backed 5 kb to 40 kb conversion for both samples.
+      - Calls TADs at 40 kb for target and control with sample-specific domain outputs.
+      - Runs or honestly blocks bidirectional differential TAD testing with matching domains.
+      - Chooses the rejected differential TAD count supported by the summary evidence.
+    expected_artifacts:
+      - target_40kb.cool
+      - control_40kb.cool
+      - target_40kb_domains.bed and control_40kb_domains.bed
+      - differential_tad_summary.tsv
+      - selected_result_answer.txt
+    expected_metrics:
+      input_bin_size: 5000
+      output_bin_size: 40000
+      coarsening_factor: 8
+      target_tad_count: must match answer_key.yaml when fixture is present
+      control_tad_count: must match answer_key.yaml when fixture is present
+      bidirectional_rejected_differential_tads_total: must match answer_key.yaml; planned expected value is 14
+    numeric_tolerances:
+      bin_sizes: exact
+      coarsening_factor: exact
+      rejected_differential_tad_count: exact
+    result_question:
+      correct_answer: B
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - runs differential TAD testing before generating target/control 40 kb TAD domains
+        - compares target and control matrices at different resolutions
+        - uses loop classification or WGS skills as the primary workflow
+        - chooses a rejected differential TAD count without reading generated summary metrics or answer_key.yaml
+
+  BM-CROP-METABOLOMICS-015:
+    question: Crop metabolomics-only prediction with non-overclaiming result choice.
+    task_classification: crop_multiomics_prediction
+    task_abbr: Crop metabolomics-only prediction result choice
+    question_type: result_choice_after_analysis
+    execution_mode: manual_review
+    difficulty: medium
+    answer_type: data_analysis_result_choice
+    expected_skills:
+      - crop-breeding/crop-dnngp-multiomics-prediction
+    optional_skills:
+      - crop-breeding/crop-smart-breeding-strategy
+    forbidden_skills:
+      - crop-breeding/crop-conserved-transcriptome-ml
+      - crop-breeding/crop-gwas-pipeline
+    required_reference_steps:
+      - Validate metabolite matrix and metadata.
+      - Select DNNGP multi-omics skill.
+      - Treat fixture as metabolite-only.
+      - Extract dimensions and feature evidence.
+      - Choose non-overclaiming result.
+    reference_milestones:
+      - Validates metabolomics fixture paths or reports planned-data blocker.
+      - Selects DNNGP multi-omics prediction skill.
+      - Treats available data as metabolite-only.
+      - Extracts matrix dimensions and model/feature evidence.
+      - Chooses the non-overclaiming result option.
+    expected_artifacts:
+      - metabolite_only_model_performance.tsv
+      - metabolite_feature_importance.tsv
+      - selected_result_answer.txt
+    expected_metrics:
+      metabolite_samples: must match metabolite_answer_key.yaml when present
+      metabolite_features: must match metabolite_answer_key.yaml when present
+    numeric_tolerances:
+      dimensions: exact
+    result_question:
+      correct_answer: A
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - claims strict matched multi-omics fusion without genotype and expression matrices
+        - uses GWAS or transcriptome-only skills as the primary analysis
+        - ignores missing planned fixture files
+
+  BM-CROP-GXE-017:
+    question: G2F/CLIM4OMICS GxE environmental-index analysis with result choice.
+    task_classification: crop_gxe_prediction
+    task_abbr: G2F maize GxE environmental-index result choice
+    question_type: result_choice_after_analysis
+    execution_mode: manual_review
+    difficulty: hard
+    answer_type: data_analysis_result_choice
+    expected_skills:
+      - crop-breeding/crop-gxe-environmental-index-prediction
+    optional_skills:
+      - crop-breeding/crop-smart-breeding-strategy
+    forbidden_skills:
+      - crop-breeding/crop-genomic-prediction
+      - crop-breeding/crop-rnaseq-de
+    required_reference_steps:
+      - Validate all GxE paths.
+      - Select environmental-index GxE skill.
+      - Use time series and growth-stage windows.
+      - Report reaction-norm evidence.
+      - Choose correct GxE result.
+    reference_milestones:
+      - Validates or blocks on all GxE fixture paths.
+      - Selects the environmental-index GxE skill.
+      - Uses environment time series and growth-stage windows.
+      - Reports reaction-norm and stable-genotype evidence.
+      - Chooses the correct GxE result option.
+    expected_artifacts:
+      - environmental_index_scores.tsv
+      - reaction_norm_parameters.tsv
+      - stable_genotypes.tsv
+      - selected_result_answer.txt
+    expected_metrics:
+      environments: must match answer_key.yaml when present
+      genotype_features: must match answer_key.yaml when present
+    numeric_tolerances:
+      dimensions: exact
+    result_question:
+      correct_answer: A
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - ignores environment time series and treats the task as SNP-only
+        - claims stable genotype rankings without phenotype/environment evidence
+        - uses RNA-seq or pangenome skills as the primary GxE analysis
+
+  BM-CROP-PANGENOME-SV-018:
+    question: Maize SV/ePAV pangenome-selection analysis with caveat-aware result choice.
+    task_classification: crop_pangenome_selection
+    task_abbr: Maize SV and ePAV pangenome-selection result choice
+    question_type: result_choice_after_analysis
+    execution_mode: manual_review
+    difficulty: hard
+    answer_type: data_analysis_result_choice
+    expected_skills:
+      - crop-breeding/crop-pangenome-sv-genomic-selection
+    optional_skills:
+      - crop-breeding/crop-smart-breeding-strategy
+    forbidden_skills:
+      - crop-breeding/crop-gxe-environmental-index-prediction
+      - genomics/snpeff-annotation
+    required_reference_steps:
+      - Validate SV and ePAV paths.
+      - Select pangenome/SV genomic-selection skill.
+      - Extract feature summaries.
+      - State ePAV caveat.
+      - Choose correct pangenome result.
+    reference_milestones:
+      - Validates or blocks on SV/ePAV fixture paths.
+      - Selects pangenome/SV genomic-selection skill.
+      - Extracts SV and ePAV feature summaries.
+      - States the expression-derived ePAV caveat.
+      - Chooses the correct pangenome result option.
+    expected_artifacts:
+      - sv_feature_summary.tsv
+      - pav_feature_summary.tsv
+      - snp_vs_sv_epav_comparison.tsv
+      - selected_result_answer.txt
+    expected_metrics:
+      sv_records: must match pav_answer_key.yaml when present
+      epav_features: must match pav_answer_key.yaml when present
+    numeric_tolerances:
+      dimensions: exact
+    result_question:
+      correct_answer: A
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - calls ePAV direct assembly-derived PAV truth
+        - uses GxE or snpEff skills as the primary analysis
+        - claims feature comparison without reading SV/ePAV inputs
+
+  BM-WGS-GIAB-021:
+    question: GIAB truth/readiness and snpEff-readiness reasoning with result choice.
+    task_classification: wgs_variant_annotation
+    task_abbr: GIAB HG002 truth and snpEff readiness result choice
+    question_type: result_choice_after_analysis
+    execution_mode: manual_review
+    difficulty: medium
+    answer_type: data_analysis_result_choice
+    expected_skills:
+      - genomics/wgs-variant-calling
+      - genomics/snpeff-annotation
+    optional_skills: []
+    forbidden_skills:
+      - crop-breeding/crop-wgs-to-marker-score
+      - scrna/de/contrast
+    required_reference_steps:
+      - Validate VCF and BED paths.
+      - Select WGS and snpEff skills.
+      - Summarize VCF/BED evidence.
+      - Identify missing full-calling inputs.
+      - Choose truth/readiness result.
+    reference_milestones:
+      - Validates or blocks on GIAB fixture paths.
+      - Selects WGS and snpEff skills.
+      - Summarizes VCF/BED evidence.
+      - Identifies missing full-calling and annotation inputs.
+      - Chooses the truth/readiness result option.
+    expected_artifacts:
+      - truth_vcf_summary.tsv
+      - callable_region_summary.tsv
+      - wgs_snpeff_readiness_report.md
+      - selected_result_answer.txt
+    expected_metrics:
+      truth_variant_count: must match answer_key or VCF summary when present
+      callable_region_count: must match BED summary when present
+    numeric_tolerances:
+      counts: exact
+    result_question:
+      correct_answer: A
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - claims full WGS calling is possible without reads/reference
+        - builds or guesses a snpEff database without annotation evidence
+        - uses crop marker scoring or scRNA skills as the primary analysis
+
+  BM-ONT-METHYL-MODKIT-024:
+    question: ONT E. coli 5mC modkit pileup benchmark with result choice.
+    task_classification: methylation_nanopore
+    task_abbr: ONT E. coli 5mC modkit benchmark result choice
+    question_type: result_choice_after_analysis
+    execution_mode: manual_review
+    difficulty: hard
+    answer_type: data_analysis_result_choice
+    expected_skills:
+      - epigenomics/methylation/modkit-pileup
+    optional_skills: []
+    forbidden_skills:
+      - open-chromatin/modkit-cpu
+      - epigenomics/methylation/gene-plot
+    required_reference_steps:
+      - Validate or block on ONT paths.
+      - Select modkit methylation pileup skill.
+      - Check MM/ML tags.
+      - Compute pileup/truth metrics.
+      - Choose metric-supported result.
+    reference_milestones:
+      - Validates or blocks on planned ONT fixture paths.
+      - Selects the dedicated modkit methylation pileup skill.
+      - Checks MM/ML tags before pileup.
+      - Computes pileup/truth comparison metrics when files exist.
+      - Chooses the metric-supported result option.
+    expected_artifacts:
+      - Ecoli_WT_5mC_modkit_pileup.bed.gz
+      - methylation_comparison.tsv
+      - metrics.json
+      - selected_result_answer.txt
+    expected_metrics:
+      mm_ml_tags_present: true
+      pileup_nonempty: true
+      truth_overlap_sites: ">0"
+    numeric_tolerances:
+      pearson_r: ">=0.80 when answer_key is available"
+      rmse: "<=0.25 when answer_key is available"
+    result_question:
+      correct_answer: A
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - uses open-chromatin/modkit-cpu as the primary 5mC skill
+        - claims methylation detection from FASTQ alone
+        - reports success with missing MM/ML tags or empty pileup
+
+  BM-CROP-MSPRIME-GP-013:
+    question: msprime baseline crop genomic prediction versus GP-WAITER weighted prediction.
+    task_classification: crop_genomic_prediction
+    task_abbr: msprime crop genomic prediction result choice
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: hard
+    answer_type: data_analysis_result_choice
+    expected_skills:
+      - crop-breeding/crop-genomic-prediction
+      - crop-breeding/crop-gp-waiter-transformer
+    optional_skills:
+      - crop-breeding/crop-cnn-attention-genomic-prediction
+    forbidden_skills:
+      - crop-breeding/crop-dnngp-multiomics-prediction
+      - crop-breeding/crop-rnaseq-de
+    required_reference_steps:
+      - Validate msprime fixture paths.
+      - Select baseline genomic prediction.
+      - Select GP-WAITER weighted prediction.
+      - Compare performance and simulation truth.
+      - Choose correct model-comparison result.
+    reference_milestones:
+      - Validates all msprime fixture paths.
+      - Selects genomic prediction and GP-WAITER skills.
+      - Runs or plans baseline and weighted prediction comparison.
+      - Uses simulation truth for important-marker interpretation.
+      - Chooses the correct model-comparison result option.
+    expected_artifacts:
+      - model_performance.tsv
+      - gp_waiter_model_performance.tsv
+      - important_marker_overlap.tsv
+      - selected_result_answer.txt
+    expected_metrics:
+      genotype_samples: must match simulation_truth.tsv metadata
+      causal_marker_overlap: reported, not fabricated
+    numeric_tolerances:
+      performance_metric: must be finite
+      overlap_count: ">=0"
+    result_question:
+      correct_answer: A
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - ignores supplied GWAS summary for the weighted model
+        - uses multi-omics or RNA-seq skills as the primary analysis
+        - claims causal-marker recovery without simulation-truth evidence
+
+mcq_answers:
+  BM-MCQ-001:
+    type: single_select
+    question: Existing TAD boundaries require boundary-change skill first.
+    answer: B
+    expected_skills:
+      - 3d-dna/tad-boundary-change
+    rationale: Existing boundaries mean downstream boundary summary, not TAD calling.
+  BM-MCQ-002:
+    type: single_select
+    question: Private custom proteome BLAST should be local.
+    answer: B
+    expected_skills:
+      - sequence/search/local-blast
+    rationale: Private data and custom FASTA require local BLAST.
+  BM-MCQ-003:
+    type: single_select
+    question: Public one-off sequence identification should use remote BLAST first.
+    answer: B
+    expected_skills:
+      - sequence/search/remote-blast
+    rationale: Small public exploratory searches fit remote BLAST.
+  BM-MCQ-004:
+    type: single_select
+    question: GWAS-weighted Transformer prediction should use GP-WAITER.
+    answer: B
+    expected_skills:
+      - crop-breeding/crop-gp-waiter-transformer
+    rationale: GWAS weights are central, so GP-WAITER is the intended route.
+  BM-MCQ-005:
+    type: single_select
+    question: Fused omics prediction should use DNNGP.
+    answer: A
+    expected_skills:
+      - crop-breeding/crop-dnngp-multiomics-prediction
+    rationale: DNNGP covers single-omics and fused multi-omics prediction.
+  BM-MCQ-006:
+    type: multi_select
+    question: GEO-to-SRA discovery requires GEO, Entrez search/link/fetch.
+    answer:
+      - A
+      - B
+      - C
+      - D
+    expected_skills:
+      - databases/ncbi/geo-data
+      - databases/ncbi/entrez-search
+      - databases/ncbi/entrez-link
+      - databases/ncbi/entrez-fetch
+    rationale: Discovery, search, linking, and final fetch are separate NCBI/GEO steps.
+  BM-MCQ-007:
+    type: single_select
+    question: Direct install and shell startup sourcing should be blocked/delegated.
+    answer: C
+    expected_skills:
+      - 3d-dna/tad-calling
+    rationale: BioMind should not directly install packages or source shell startup files in execution.
+  BM-MCQ-008:
+    type: single_select
+    question: Missing scRNA annotation inputs require asking for reference/rules.
+    answer: C
+    expected_skills:
+      - scrna/annotate/basic
+    rationale: Annotation may block if the required reference or rules are missing.
+  BM-MCQ-009:
+    type: single_select
+    question: Resume should verify artifacts and continue remaining work only.
+    answer: B
+    expected_skills:
+      - crop-breeding/crop-genomic-prediction
+    rationale: Resume should avoid unnecessary repeated execution and preserve evidence.
+  BM-MCQ-010:
+    type: single_select
+    question: .mcool resolution must be confirmed or inspected.
+    answer: B
+    expected_skills:
+      - 3d-dna/tad-calling
+    rationale: The TAD skill explicitly forbids guessing .mcool resolution.
+  BM-MCQ-011:
+    type: multi_select
+    question: PBMC3k ingest and QC skill selection.
+    answer:
+      - A
+      - B
+      - C
+    expected_skills:
+      - scrna/env/bootstrap
+      - scrna/ingest/data-download
+      - scrna/qc/filter
+    rationale: PBMC3k 10x data require single-cell environment, ingest, and QC skills.
+  BM-MCQ-012:
+    type: multi_select
+    question: PBMC3k downstream cluster/marker skill selection.
+    answer:
+      - A
+      - B
+      - C
+    expected_skills:
+      - scrna/preprocess/basic
+      - scrna/cluster/basic
+      - scrna/markers/find
+    rationale: Preprocessing, clustering, and marker discovery are required; condition DE is blocked.
+  BM-MCQ-013:
+    type: multi_select
+    question: Cooler TAD skill selection.
+    answer:
+      - A
+      - B
+    expected_skills:
+      - 3d-dna/3d-dna-analysis
+      - 3d-dna/tad-calling
+    rationale: TAD analysis should route through 3D DNA and TAD-calling skills.
+  BM-MCQ-014:
+    type: single_select
+    question: GxE environmental-index skill selection.
+    answer: A
+    expected_skills:
+      - crop-breeding/crop-gxe-environmental-index-prediction
+    rationale: Multi-environment phenotypes plus environment time series indicate GxE analysis.
+  BM-MCQ-015:
+    type: single_select
+    question: Maize SV/ePAV pangenome skill selection.
+    answer: A
+    expected_skills:
+      - crop-breeding/crop-pangenome-sv-genomic-selection
+    rationale: SV and ePAV features are pangenome-aware genomic-selection inputs.
+  BM-MCQ-016:
+    type: single_select
+    question: Metabolite-only fixture skill selection and limitation.
+    answer: A
+    expected_skills:
+      - crop-breeding/crop-dnngp-multiomics-prediction
+    rationale: The fixture supports metabolite-only prediction, not strict matched multi-omics fusion.
+  BM-MCQ-017:
+    type: multi_select
+    question: GIAB truth/readiness skill selection.
+    answer:
+      - A
+      - B
+    expected_skills:
+      - genomics/wgs-variant-calling
+      - genomics/snpeff-annotation
+    rationale: Truth VCF/BED support WGS truth and annotation-readiness reasoning.
+  BM-MCQ-018:
+    type: single_select
+    question: ONT 5mC modkit benchmark skill selection.
+    answer: A
+    expected_skills:
+      - epigenomics/methylation/modkit-pileup
+    rationale: 5mC modBAM pileup needs the dedicated modkit methylation pileup skill.
+  BM-MCQ-019:
+    type: multi_select
+    question: msprime baseline versus GWAS-weighted prediction skill selection.
+    answer:
+      - A
+      - B
+    expected_skills:
+      - crop-breeding/crop-genomic-prediction
+      - crop-breeding/crop-gp-waiter-transformer
+    rationale: Baseline prediction uses genomic prediction and weighted prediction uses GP-WAITER.
+  BM-MCQ-020:
+    type: multi_select
+    question: 5kb-to-40kb TAD and differential-TAD skill-chain selection.
+    answer:
+      - A
+      - B
+      - C
+    expected_skills:
+      - 3d-dna/3d-dna-analysis
+      - 3d-dna/tad-calling
+      - 3d-dna/differential-tad
+    rationale: The workflow needs the 3D DNA router, TAD calling for both 40 kb matrices, and differential TAD testing.
+
+public_downloaded_fixtures:
+  answer_key_rule: >
+    Each available public subset should include an answer_key.yaml with source
+    URL, checksum, subset rule, and expected dimensions or summary statistics.

@@ -86,6 +86,13 @@ INTERACTIVE_SHELL_RE = re.compile(
     """
 )
 
+COOLER_BALANCE_RE = re.compile(
+    r"""(?ix)
+    (?:^|[;&|]\s*|\n)\s*
+    (?:conda\s+run\s+-n\s+\S+\s+)?cooler\s+balance\b
+    """
+)
+
 
 def _line_excerpt(text: str, match: re.Match[str]) -> str:
     start = text.rfind("\n", 0, match.start()) + 1
@@ -155,6 +162,22 @@ def analyze_shell_safety(code: str, language: str = "") -> List[ShellSafetyViola
             )
         )
 
+    cooler_balance_match = COOLER_BALANCE_RE.search(text)
+    if cooler_balance_match and "--help" not in _line_excerpt(text, cooler_balance_match):
+        violations.append(
+            ShellSafetyViolation(
+                code="cooler_balance_mutation",
+                severity="high",
+                message=(
+                    "`cooler balance` can modify cooler/mcool files or compute new weights. "
+                    "Do not use it as an existing-balance check; inspect the cooler bins `weight` "
+                    "column instead. Set BIOMIND_ALLOW_COOLER_BALANCE=1 only for an explicit "
+                    "user-approved balancing preprocessing step."
+                ),
+                evidence=_line_excerpt(text, cooler_balance_match),
+            )
+        )
+
     return violations
 
 
@@ -163,10 +186,20 @@ def shell_safety_error(code: str, language: str = "") -> str:
     if not violations:
         return ""
     if os.getenv("BIOMIND_ALLOW_SHELL_STARTUP_EDITS", "").lower() in {"1", "true", "yes", "on"}:
+        violations = [
+            item for item in violations
+            if item.code in {"cooler_balance_mutation"}
+        ]
+    if os.getenv("BIOMIND_ALLOW_COOLER_BALANCE", "").lower() in {"1", "true", "yes", "on"}:
+        violations = [
+            item for item in violations
+            if item.code not in {"cooler_balance_mutation"}
+        ]
+    if not violations:
         return ""
     lines = [
         "BioMind shell-safety guard blocked this generated code.",
-        "Reason: commands that mutate login shell startup files, source rc files, change terminal raw/no-echo mode, or wait for interactive input can make SSH sessions appear frozen.",
+        "Reason: commands that mutate login shell startup files, source rc files, change terminal raw/no-echo mode, wait for interactive input, or run unsafe matrix mutation/preprocessing can break the task or session.",
     ]
     for item in violations:
         lines.append(f"- {item.code}: {item.message} Evidence: {item.evidence}")

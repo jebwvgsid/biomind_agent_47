@@ -46,7 +46,8 @@ except ModuleNotFoundError:
 from execution.confirmation import RiskAnalyzer, RiskLevel
 from execution.executor import run_bash_script, run_python_repl
 from execution.shell_safety import analyze_shell_safety, shell_safety_error
-from agent_core.middleware import HITLMiddleware, error_recovery_middleware
+import agent_core.middleware as middleware_module
+from agent_core.middleware import HITLMiddleware, classify_execution_failure, error_recovery_middleware
 
 
 class ShellSafetyTests(unittest.IsolatedAsyncioTestCase):
@@ -77,6 +78,25 @@ class ShellSafetyTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(any(item.code == "unsafe_terminal_mode" for item in stty_violations))
         self.assertTrue(any(item.code == "interactive_python_input" for item in input_violations))
+
+    def test_blocks_cooler_balance_as_generated_preprocessing(self):
+        code = "cooler balance sample.mcool::10000"
+
+        violations = analyze_shell_safety(code, "Bash")
+
+        self.assertTrue(any(item.code == "cooler_balance_mutation" for item in violations))
+        self.assertIn("cooler balance", shell_safety_error(code, "Bash"))
+
+    def test_blocks_cooler_balance_stdout_as_balance_check(self):
+        code = "cooler balance --stdout sample.mcool::/resolutions/10000 > /dev/null"
+
+        violations = analyze_shell_safety(code, "Bash")
+
+        self.assertTrue(any(item.code == "cooler_balance_mutation" for item in violations))
+        self.assertIn("weight", shell_safety_error(code, "Bash"))
+
+    def test_allows_cooler_balance_help(self):
+        self.assertEqual(analyze_shell_safety("cooler balance --help", "Bash"), [])
 
     def test_risk_analyzer_marks_shell_startup_mutation_critical(self):
         result = RiskAnalyzer.analyze("echo x >> ~/.bashrc", "Bash")
@@ -158,6 +178,7 @@ class ShellSafetyTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("not an installation failure", captured["prompt"])
         self.assertIn("conda run -n hicexplore python", captured["prompt"])
         self.assertIn("Do not output `<install_tool>`", captured["prompt"])
+        self.assertIn("tail -n 80", captured["prompt"])
 
     async def test_recovery_llm_failure_is_deterministic_fallback(self):
         class FailingLLM:
@@ -182,6 +203,58 @@ class ShellSafetyTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn("Automatic diagnosis LLM call failed", result["messages"][-1].content)
         self.assertIn("data_inspection_failed", result["messages"][-1].content)
+
+    def test_recovery_classifies_rscript_missing_as_missing_executable(self):
+        failure_class, action = classify_execution_failure("/tmp/script: line 3: Rscript: command not found")
+
+        self.assertEqual(failure_class, "missing_executable")
+        self.assertIn("r-base", action)
+
+    async def test_recovery_queries_rag_only_after_first_retry(self):
+        captured = {"prompts": []}
+
+        class FakeLLM:
+            async def ainvoke(self, messages):
+                captured["prompts"].append(messages[0].content)
+                return type("Msg", (), {"content": "diagnosis"})()
+
+        class FakeRetriever:
+            def __init__(self):
+                self.calls = 0
+
+            def retrieve(self, query, target_datasets=None):
+                self.calls += 1
+                return "known fix"
+
+        async def failing_execute(state):
+            return {
+                "messages": [
+                    HumanMessage(
+                        content=(
+                            "<observation>\n[Bash] ❌ Failed\n"
+                            "STDOUT:\nout\nSTDERR:\nValueError: bad input\n</observation>"
+                        )
+                    )
+                ],
+                "runtime_status": {},
+            }
+
+        old_errors_kb = middleware_module.KB_MAP.get("ERRORS")
+        middleware_module.KB_MAP["ERRORS"] = "errors-kb"
+        try:
+            retriever = FakeRetriever()
+            wrapped = error_recovery_middleware(FakeLLM(), retriever=retriever)(failing_execute)
+
+            await wrapped({"retry_count": 0})
+            self.assertEqual(retriever.calls, 0)
+            self.assertIn("Recovery tier: 0", captured["prompts"][-1])
+
+            await wrapped({"retry_count": 1})
+            self.assertEqual(retriever.calls, 1)
+            self.assertIn("Recovery tier: 1", captured["prompts"][-1])
+            self.assertIn("RAG Knowledge Base Advice", captured["prompts"][-1])
+        finally:
+            middleware_module.KB_MAP["ERRORS"] = old_errors_kb or ""
 
 
 if __name__ == "__main__":

@@ -1,0 +1,9 @@
+metric	value
+simulator	msprime
+msprime_version	1.4.2
+sequence_length	80000
+num_individuals	24
+num_sites	7071
+num_markers_exported	64
+num_causal_markers	8
+seed	20260526

@@ -1,0 +1,7 @@
+params {
+  input = "samplesheet.csv"
+  fasta = "genome.fa"
+  gtf = "genome.gff3"
+  outdir = "results/rnaseq_pipeline"
+  aligner = "star_salmon"
+}

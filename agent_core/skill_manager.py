@@ -10,6 +10,15 @@ class SkillManager:
     """遵循 Agent Skills 标准的技能加载器"""
     MAX_SELECTED_SKILLS = 3
     INSTALLED_STATUSES = {"installed", "verified", "success"}
+    PYTHON_IMPORT_ALIASES = {
+        "pytorch": "torch",
+        "scikit-learn": "sklearn",
+        "scikit_learn": "sklearn",
+        "pyyaml": "yaml",
+        "opencv-python": "cv2",
+        "opencv_python": "cv2",
+        "pillow": "PIL",
+    }
     STATUS_RANK = {
         "": 0,
         "registered": 0,
@@ -230,6 +239,10 @@ class SkillManager:
             record.setdefault("status", "installed")
             record.setdefault("env_runner", "")
             record.setdefault("healthcheck", "")
+            record.setdefault("install_policy", "")
+            record["install_commands"] = self._runtime_command_list(record.get("install_commands"))
+            record["install_fallbacks"] = self._runtime_command_list(record.get("install_fallbacks"))
+            record.setdefault("env_file", "")
             registry["skills"][skill_id] = record
         return registry
 
@@ -286,6 +299,40 @@ class SkillManager:
             return "python"
         return ""
 
+    def _runtime_command_list(self, value) -> List[str]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return [str(item).strip() for item in value if str(item).strip()]
+        if isinstance(value, tuple) or isinstance(value, set):
+            return [str(item).strip() for item in value if str(item).strip()]
+        text = str(value).strip()
+        return [text] if text else []
+
+    def _runtime_asset_path(self, runtime: Dict[str, Any], meta: Dict[str, Any], key: str) -> str:
+        raw = str(runtime.get(key, "") or "").strip()
+        if not raw:
+            return ""
+        expanded = raw.replace("{env}", str(runtime.get("default_env", "") or "").strip())
+        path = Path(expanded)
+        if not path.is_absolute():
+            skill_dir = Path(meta.get("_skill_dir", ""))
+            if skill_dir:
+                path = skill_dir / path
+        return str(path.resolve()).replace("\\", "/")
+
+    def _runtime_install_commands(self, runtime: Dict[str, Any], record: Dict[str, Any]) -> List[str]:
+        commands: List[str] = []
+        commands.extend(self._runtime_command_list(runtime.get("install_command")))
+        commands.extend(self._runtime_command_list(runtime.get("install_commands")))
+        commands.extend(self._runtime_command_list(record.get("install_command")))
+        commands.extend(self._runtime_command_list(record.get("install_commands")))
+        unique: List[str] = []
+        for command in commands:
+            if command not in unique:
+                unique.append(command)
+        return unique
+
     def _is_environment_bootstrap_skill(self, skill_id: str, runtime: Dict[str, Any], meta: Dict[str, Any]) -> bool:
         haystack = " ".join([
             skill_id,
@@ -311,7 +358,10 @@ class SkillManager:
         meta = meta or {}
         healthcheck = str(runtime.get("healthcheck", "") or "")
         if healthcheck:
-            return healthcheck.replace("{env}", env)
+            return self._normalize_runtime_healthcheck_paths(
+                healthcheck.replace("{env}", env),
+                meta,
+            )
         packages = self._runtime_packages(runtime)
         language = self._runtime_language(runtime)
         if language == "r":
@@ -328,26 +378,78 @@ class SkillManager:
             for pkg in packages:
                 token = re.split(r"[<>=!~]", str(pkg))[0].strip()
                 if token:
-                    imports.append(token.replace("-", "_"))
+                    normalized = token.replace("-", "_")
+                    imports.append(self.PYTHON_IMPORT_ALIASES.get(token.lower(), self.PYTHON_IMPORT_ALIASES.get(normalized.lower(), normalized)))
             imports = list(dict.fromkeys(imports))
             if imports:
                 imports_str = ", ".join(imports)
                 return f'conda run -n {env} python -c "import {imports_str}; print(\'OK\')"'
         return f'conda run -n {env} python -c "print(\'OK\')"'
 
+    def _normalize_runtime_healthcheck_paths(self, command: str, meta: Dict[str, Any]) -> str:
+        """Make skill-script healthchecks independent of the task working directory."""
+        if not command or not meta:
+            return command
+
+        skill_dir_raw = meta.get("_skill_dir") or ""
+        if not skill_dir_raw:
+            return command
+
+        skill_dir = Path(skill_dir_raw).resolve()
+        skills_root = self.skills_root.resolve()
+        normalized = (
+            command
+            .replace("{skill_dir}", str(skill_dir).replace("\\", "/"))
+            .replace("{skills_root}", str(skills_root).replace("\\", "/"))
+        )
+
+        try:
+            skill_rel = skill_dir.relative_to(skills_root).as_posix()
+        except ValueError:
+            skill_rel = ""
+
+        scripts = meta.get("_scripts", []) or []
+        for script in scripts:
+            rel_script = str(script).replace("\\", "/").lstrip("./")
+            if not rel_script:
+                continue
+            abs_script = str((skill_dir / rel_script).resolve()).replace("\\", "/")
+            candidates = [rel_script]
+            if skill_rel:
+                candidates.extend([
+                    f"skills/{skill_rel}/{rel_script}",
+                    f"./skills/{skill_rel}/{rel_script}",
+                ])
+            for candidate in sorted(set(candidates), key=len, reverse=True):
+                pattern = rf"(?<![\w./:\\-]){re.escape(candidate)}(?![\w./:\\-])"
+                normalized = re.sub(pattern, abs_script, normalized)
+        return normalized
+
     def get_runtime_requirements(self, skill_id: str) -> Dict[str, Any]:
         meta = self.get_skill_meta(skill_id)
         runtime = meta.get("runtime") or {}
         canonical_id = meta.get("_skill_id", skill_id)
         record = self.get_runtime_record(canonical_id)
-        env = self.get_runtime_env(canonical_id) or runtime.get("default_env", "")
-        packages = self._merge_unique(self._runtime_packages(runtime), record.get("packages"))
+        default_env = str(runtime.get("default_env", "") or "").strip()
+        env = default_env or self.get_runtime_env(canonical_id)
+        runtime_packages = self._runtime_packages(runtime)
+        packages = runtime_packages or self._ensure_list(record.get("packages"))
         language = self._runtime_language(runtime)
         if not language:
             language = str(record.get("language", "") or "").lower()
-        capabilities = self._merge_unique(self._runtime_capabilities(runtime, meta), record.get("capabilities"))
-        env_runner = record.get("env_runner") or runtime.get("env_runner", "")
-        healthcheck = record.get("healthcheck") or self.build_runtime_healthcheck(env or runtime.get("default_env", ""), runtime, meta)
+        runtime_capabilities = self._runtime_capabilities(runtime, meta)
+        capabilities = runtime_capabilities or self._ensure_list(record.get("capabilities"))
+        env_runner = str(runtime.get("env_runner", "") or record.get("env_runner") or "")
+        runtime_healthcheck = self.build_runtime_healthcheck(env or runtime.get("default_env", ""), runtime, meta)
+        healthcheck = runtime_healthcheck or record.get("healthcheck", "")
+        install_commands = self._runtime_install_commands(runtime, record)
+        install_command = install_commands[0] if install_commands else ""
+        install_policy = str(
+            runtime.get("install_policy")
+            or record.get("install_policy")
+            or ("prefer-declared" if install_commands or runtime.get("env_file") else "")
+        ).strip()
+        install_fallbacks = self._runtime_command_list(runtime.get("install_fallbacks")) or self._runtime_command_list(record.get("install_fallbacks"))
         return {
             "skill_id": canonical_id,
             "default_env": runtime.get("default_env", ""),
@@ -357,8 +459,13 @@ class SkillManager:
             "packages": packages,
             "capabilities": capabilities,
             "install_tool": record.get("install_tool") or runtime.get("install_tool", ""),
-            "install_command": record.get("install_command") or runtime.get("install_command", ""),
+            "install_command": install_command,
+            "install_commands": install_commands,
+            "install_fallbacks": install_fallbacks,
+            "install_policy": install_policy,
+            "env_file": self._runtime_asset_path(runtime, meta, "env_file"),
             "healthcheck": healthcheck,
+            "mode_healthchecks": runtime.get("mode_healthchecks", {}) or record.get("mode_healthchecks", {}) or {},
         }
 
     def get_discovery_prompt(self) -> str:
@@ -400,7 +507,10 @@ class SkillManager:
                     f"\n  language: {self._runtime_language(runtime) or 'unspecified'}"
                     f"\n  packages: {packages}"
                     f"\n  capabilities: {capabilities}"
+                    f"\n  install_policy: {runtime.get('install_policy', 'unspecified')}"
                 )
+                if runtime.get("env_file"):
+                    runtime_text += f"\n  env_file: {runtime.get('env_file')}"
             if record:
                 runtime_text += (
                     f"\n  remembered_env: {record.get('env', 'unknown')}"
@@ -556,12 +666,35 @@ class SkillManager:
             issues.append(f"Too many selected skills: {len(raw)} > {max_results}")
         return issues
 
+    def validate_selected_skills_for_analysis(self, analysis_type: str, skill_ids: List[str]) -> List[str]:
+        """Check selected skills against inferred analysis type using declared stage tags."""
+        expected = str(analysis_type or "").strip().lower().replace("-", "_")
+        if not expected or expected == "general_analysis":
+            return []
+        issues: List[str] = []
+        for sid in self.normalize_selected_skills(skill_ids or [], max_results=self.MAX_SELECTED_SKILLS):
+            meta = self.get_skill_meta(sid)
+            stage_tags = [
+                str(tag).strip().lower().replace("-", "_")
+                for tag in self.metadata_list(meta, "stage_tags")
+                if str(tag).strip()
+            ]
+            if stage_tags and expected not in stage_tags:
+                issues.append(
+                    f"Selected skill '{sid}' declares stage_tags {stage_tags}, "
+                    f"which do not match inferred analysis_type '{expected}'."
+                )
+        return issues
+
     def get_runtime_env(self, skill_id: str) -> str:
+        runtime = (self.get_skill_meta(skill_id).get("runtime") or {})
+        default_env = str(runtime.get("default_env", "") or "").strip()
+        if default_env:
+            return default_env
         record = self.get_runtime_record(skill_id)
         if record.get("env") and record.get("status") in {"installed", "verified", "success"}:
             return record["env"]
-        runtime = (self.get_skill_meta(skill_id).get("runtime") or {})
-        return runtime.get("default_env", "")
+        return ""
 
     def get_execution_cards(self, skill_ids: List[str]) -> str:
         """Concise, high-priority execution facts for Planner/Generator."""
@@ -578,13 +711,26 @@ class SkillManager:
             cards.append(f"### Skill Execution Card: {sid}")
             cards.append(f"- absolute_dir: {skill_dir}")
             if record:
-                cards.append(f"- remembered_env: {record.get('env', 'unknown')}")
+                remembered_env = str(record.get("env", "") or "")
+                effective_env = str(requirements.get("env", "") or requirements.get("default_env", "") or "")
+                if remembered_env and remembered_env == effective_env:
+                    cards.append(f"- remembered_env: {remembered_env}")
+                elif remembered_env:
+                    cards.append("- remembered_env_status: ignored because skill runtime metadata defines a different environment")
                 cards.append(f"- environment_status: {record.get('status', 'unknown')}")
                 cards.append(f"- last_verified_at: {record.get('last_verified_at', 'unknown')}")
-                if record.get("env_runner"):
+                remembered_runner = str(record.get("env_runner", "") or "")
+                effective_runner = str(requirements.get("env_runner", "") or "")
+                if remembered_runner and remembered_runner == effective_runner:
                     cards.append(f"- remembered_env_runner: {record.get('env_runner')}")
-                if record.get("healthcheck"):
+                elif remembered_runner:
+                    cards.append("- remembered_env_runner_status: ignored because skill runtime metadata defines a different runner")
+                remembered_healthcheck = str(record.get("healthcheck", "") or "")
+                effective_healthcheck = str(requirements.get("healthcheck", "") or "")
+                if remembered_healthcheck and remembered_healthcheck == effective_healthcheck:
                     cards.append(f"- remembered_healthcheck: {record.get('healthcheck')}")
+                elif remembered_healthcheck:
+                    cards.append("- remembered_healthcheck_status: ignored because skill runtime metadata defines a different healthcheck")
                 if record.get("last_success_command"):
                     cards.append(f"- last_success_command: {record.get('last_success_command')}")
                 cards.append("- install_policy: verify registered env first; install only if healthcheck fails")
@@ -608,6 +754,18 @@ class SkillManager:
                 cards.append(f"- healthcheck: {requirements.get('healthcheck')}")
             if requirements.get("install_tool"):
                 cards.append(f"- install_tool: {requirements.get('install_tool')}")
+            if requirements.get("install_policy"):
+                cards.append(f"- install_policy: {requirements.get('install_policy')}")
+            if requirements.get("env_file"):
+                cards.append(f"- env_file: {requirements.get('env_file')}")
+            if requirements.get("install_commands"):
+                cards.append("- install_commands:")
+                for command in requirements.get("install_commands", []):
+                    cards.append(f"  - {command}")
+            if requirements.get("install_fallbacks"):
+                cards.append("- install_fallbacks:")
+                for command in requirements.get("install_fallbacks", []):
+                    cards.append(f"  - {command}")
             if self._is_environment_bootstrap_skill(sid, runtime, meta):
                 cards.append("- install_strategy: verify first; if verification fails, delegate installation via <install_tool>; then re-verify")
                 cards.append("- planner_restriction: do not inline conda/pip/R package installation commands in the plan for this skill")
@@ -667,9 +825,9 @@ class SkillManager:
 
     def _runtime_record_from_info(self, skill_id: str, info: Dict[str, Any], env_override: str = "") -> Dict[str, Any]:
         requirements = self.get_runtime_requirements(skill_id)
-        env = str(env_override or info.get("env") or info.get("default_env") or requirements.get("env") or "").strip()
-        language = str(info.get("language") or requirements.get("language") or "").lower()
-        env_runner = str(info.get("env_runner") or requirements.get("env_runner") or "").strip()
+        env = str(requirements.get("default_env") or requirements.get("env") or env_override or info.get("env") or info.get("default_env") or "").strip()
+        language = str(requirements.get("language") or info.get("language") or "").lower()
+        env_runner = str(requirements.get("env_runner") or info.get("env_runner") or "").strip()
         if env and not env_runner and language:
             env_runner = f"conda run -n {env} {'Rscript' if language == 'r' else 'python'}"
         return {
@@ -679,9 +837,13 @@ class SkillManager:
             "language": language,
             "packages": self._merge_unique(requirements.get("packages"), info.get("packages")),
             "capabilities": self._merge_unique(requirements.get("capabilities"), info.get("capabilities")),
-            "healthcheck": str(info.get("healthcheck") or requirements.get("healthcheck") or "").strip(),
+            "healthcheck": str(requirements.get("healthcheck") or info.get("healthcheck") or "").strip(),
             "install_tool": str(info.get("install_tool") or requirements.get("install_tool") or "").strip(),
-            "install_command": str(info.get("install_command") or requirements.get("install_command") or "").strip(),
+            "install_command": str(requirements.get("install_command") or info.get("install_command") or "").strip(),
+            "install_commands": self._merge_unique(requirements.get("install_commands"), info.get("install_commands")),
+            "install_fallbacks": self._merge_unique(requirements.get("install_fallbacks"), info.get("install_fallbacks")),
+            "install_policy": str(requirements.get("install_policy") or info.get("install_policy") or "").strip(),
+            "env_file": str(requirements.get("env_file") or info.get("env_file") or "").strip(),
             "status": str(info.get("status") or "registered").lower(),
             "notes": str(info.get("notes") or "").strip(),
             "last_verified_at": str(info.get("last_verified_at") or "").strip(),
@@ -697,18 +859,23 @@ class SkillManager:
         if incoming.get("status") not in self.INSTALLED_STATUSES:
             return False
 
+        requirements = self.get_runtime_requirements(canonical_id)
         record = self.runtime_registry.setdefault("skills", {}).setdefault(canonical_id, {})
         selected_status = self._best_status(record.get("status", "registered"), incoming.get("status", "registered"))
         record.update({
             "skill_id": canonical_id,
-            "env": incoming["env"] or record.get("env", ""),
-            "env_runner": incoming["env_runner"] or record.get("env_runner", ""),
-            "language": incoming["language"] or record.get("language", ""),
+            "env": requirements.get("env") or incoming["env"] or record.get("env", ""),
+            "env_runner": requirements.get("env_runner") or incoming["env_runner"] or record.get("env_runner", ""),
+            "language": requirements.get("language") or incoming["language"] or record.get("language", ""),
             "packages": self._merge_unique(record.get("packages"), incoming.get("packages")),
             "capabilities": self._merge_unique(record.get("capabilities"), incoming.get("capabilities")),
-            "healthcheck": incoming["healthcheck"] or record.get("healthcheck", ""),
+            "healthcheck": requirements.get("healthcheck") or incoming["healthcheck"] or record.get("healthcheck", ""),
             "install_tool": incoming["install_tool"] or record.get("install_tool", ""),
-            "install_command": incoming["install_command"] or record.get("install_command", ""),
+            "install_command": requirements.get("install_command") or incoming["install_command"] or record.get("install_command", ""),
+            "install_commands": self._merge_unique(record.get("install_commands"), incoming.get("install_commands")),
+            "install_fallbacks": self._merge_unique(record.get("install_fallbacks"), incoming.get("install_fallbacks")),
+            "install_policy": requirements.get("install_policy") or incoming.get("install_policy") or record.get("install_policy", ""),
+            "env_file": requirements.get("env_file") or incoming.get("env_file") or record.get("env_file", ""),
             "status": selected_status,
             "notes": incoming["notes"] or record.get("notes", ""),
             "last_verified_at": incoming["last_verified_at"] or record.get("last_verified_at", ""),
@@ -718,19 +885,20 @@ class SkillManager:
     def _sync_record_to_package_manager(self, package_manager, skill_id: str, record: Dict[str, Any]):
         if not package_manager or not isinstance(record, dict):
             return
-        env = str(record.get("env") or "").strip()
+        requirements = self.get_runtime_requirements(skill_id)
+        env = str(requirements.get("env") or record.get("env") or "").strip()
         status = str(record.get("status") or "").lower()
         if not env or status not in self.INSTALLED_STATUSES:
             return
         package_manager.register_environment(
             env_name=env,
             purpose=f"Runtime for skill {skill_id}",
-            packages=record.get("packages"),
+            packages=requirements.get("packages") or record.get("packages"),
             skill_id=skill_id,
             notes=record.get("notes", ""),
-            language=record.get("language", ""),
-            capabilities=record.get("capabilities"),
-            healthcheck=record.get("healthcheck", ""),
+            language=requirements.get("language") or record.get("language", ""),
+            capabilities=requirements.get("capabilities") or record.get("capabilities"),
+            healthcheck=requirements.get("healthcheck") or record.get("healthcheck", ""),
             status=status,
             last_verified_at=record.get("last_verified_at", ""),
         )
@@ -920,22 +1088,32 @@ class SkillManager:
         scored: List[tuple] = []
         for skill in self.discovered_skills:
             skill_id = skill.get("_skill_id", "")
-            terms = self._skill_match_terms(skill)
+            if self._is_calder2_skill(skill) and self._plain_compartment_request_without_calder(text_l):
+                continue
+            if (
+                skill_id == "3d-dna/compartment-calling"
+                and self._explicit_calder2_request(text_l)
+                and not self._explicit_plain_pc1_request(text_l)
+            ):
+                continue
             seen_hits = set()
             score = 0
             if self._matches_known_alias(skill, text_l):
                 score += 8
-            for term in terms:
+            for term, allow_token_match in self._skill_match_term_entries(skill):
                 term_l = str(term).lower().strip()
                 if not term_l:
                     continue
                 if len(term_l) >= 3 and term_l in text_l and term_l not in seen_hits:
                     score += 4 if "/" in term_l else 2
                     seen_hits.add(term_l)
-                for token in re.split(r"[\s,;:/|()\[\]{}<>，。；、_-]+", term_l):
-                    if len(token) >= 2 and token in text_l and token not in seen_hits:
-                        score += 1
-                        seen_hits.add(token)
+                if allow_token_match:
+                    for token in re.split(r"[\s,;:/|()\[\]{}<>，。；、_-]+", term_l):
+                        if len(token) >= 2 and token in text_l and token not in seen_hits:
+                            score += 1
+                            seen_hits.add(token)
+            if skill_id == "3d-dna/compartment-calling" and self._plain_compartment_request_without_calder(text_l):
+                score += 20
             if score > 0:
                 scored.append((score, skill_id))
         scored.sort(key=lambda item: (-item[0], item[1]))
@@ -1031,15 +1209,17 @@ class SkillManager:
         return scored[:max_results]
 
     def _skill_match_terms(self, skill: Dict[str, Any]) -> List[str]:
+        return [term for term, _ in self._skill_match_term_entries(skill)]
+
+    def _skill_match_term_entries(self, skill: Dict[str, Any]) -> List[tuple]:
         runtime = skill.get("runtime") or {}
-        return [
+        structured_terms = [
             skill.get("_skill_id", ""),
             skill.get("_skill_leaf", ""),
             skill.get("_skill_category", ""),
             " ".join(map(str, skill.get("_skill_path_tokens", []) or [])),
             " ".join(self._ensure_list(skill.get("_legacy_skill_ids"))),
             skill.get("name", ""),
-            skill.get("description", ""),
             " ".join(map(str, skill.get("tags", []) or [])),
             " ".join(self.metadata_list(skill, "task_types")),
             " ".join(self.metadata_list(skill, "stage_tags")),
@@ -1048,6 +1228,11 @@ class SkillManager:
             " ".join(self.metadata_list(skill, "when_to_use")),
             " ".join(self._ensure_list(runtime.get("capabilities"))),
         ]
+        phrase_only_terms = [
+            skill.get("description", ""),
+            " ".join(self.metadata_list(skill, "when_not_to_use")),
+        ]
+        return [(term, True) for term in structured_terms] + [(term, False) for term in phrase_only_terms]
 
     def _matches_known_alias(self, skill: Dict[str, Any], text_l: str) -> bool:
         """Domain aliases catch common Chinese abbreviations not present in YAML tags."""
@@ -1058,6 +1243,20 @@ class SkillManager:
             "tad_calling": ["tad", "hicfindtads", "拓扑结构域"],
             "tad-calling": ["tad", "hicfindtads", "拓扑结构域"],
             "differential-tad": ["差异tad", "差异 tads", "differential tad", "hicdifferentialtad"],
+            "scrna/de/contrast": [
+                "差异表达",
+                "differential expression",
+                "de analysis",
+                "ctrl vs stim",
+                "condition contrast",
+            ],
+            "scrna-de-contrast": [
+                "差异表达",
+                "differential expression",
+                "de analysis",
+                "ctrl vs stim",
+                "condition contrast",
+            ],
             "tad-boundary-change": [
                 "tad边界改变",
                 "tad边界变化",
@@ -1071,6 +1270,68 @@ class SkillManager:
         }
         keys = self._skill_identifier_candidates(skill)
         return any(alias.lower() in text_l for key in keys for alias in aliases.get(key, []))
+
+    def _is_calder2_skill(self, skill: Dict[str, Any]) -> bool:
+        keys = {str(key).lower() for key in self._skill_identifier_candidates(skill)}
+        return "3d-dna/calder2-subcompartment" in keys or any("calder" in key for key in keys)
+
+    @staticmethod
+    def _plain_compartment_request_without_calder(text_l: str) -> bool:
+        if not text_l:
+            return False
+        if SkillManager._explicit_calder2_request(text_l):
+            return False
+        plain_terms = [
+            "区室鉴定",
+            "鉴定区室",
+            "ab区室",
+            "a/b区室",
+            "a/b compartment",
+            "a/b compartments",
+            "ab compartment",
+            "ab compartments",
+            "compartment calling",
+            "call compartments",
+            "identify compartments",
+            "pc1",
+            "eigenvector",
+        ]
+        return any(term in text_l for term in plain_terms)
+
+    @staticmethod
+    def _explicit_calder2_request(text_l: str) -> bool:
+        explicit_calder_terms = [
+            "calder",
+            "calder2",
+            "sub-compartment",
+            "subcompartment",
+            "sub compartment",
+            "sub区室",
+            "亚区室",
+            "层级区室",
+            "hierarchical compartment",
+            "hierarchical compartments",
+            "a.1",
+            "a.2",
+            "b.1",
+            "b.2",
+            "compartment4",
+            "compartment8",
+        ]
+        return any(term in text_l for term in explicit_calder_terms)
+
+    @staticmethod
+    def _explicit_plain_pc1_request(text_l: str) -> bool:
+        plain_terms = [
+            "普通",
+            "默认",
+            "pc1",
+            "eigenvector",
+            "a/b",
+            "ab区室",
+            "ordinary",
+        ]
+        return any(term in text_l for term in plain_terms)
 
     def load_skill(self, skill_id: str) -> str:
         """3. 加载 (Load)：根据选中的 skill_id，读取完整的正文内容供大模型使用"""

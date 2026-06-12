@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import csv
 import importlib.util
+import math
 import shutil
 import statistics
 import subprocess
@@ -56,7 +57,28 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--resolution-bp", type=int, help="Matrix resolution in bp.")
     parser.add_argument("--out-root", default="Loops/Mustache", help="Output root.")
-    parser.add_argument("--processes", type=int, default=6, help="Mustache processes.")
+    parser.add_argument(
+        "--weight-name",
+        default="weight",
+        help="Cooler bin weight column required before loop calling.",
+    )
+    parser.add_argument(
+        "--skip-balance-check",
+        action="store_true",
+        help="Skip cooler weight-column preflight. Use only when correction was verified externally.",
+    )
+    parser.add_argument(
+        "--auto-balance",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Automatically run cooler balance on samples whose weight column is missing or has no finite values before loop calling.",
+    )
+    parser.add_argument(
+        "--processes",
+        type=int,
+        default=6,
+        help="Reserved for tools that support process control; not passed to ay-lab MUSTACHE by default.",
+    )
     parser.add_argument("--pt", type=float, default=0.05, help="Mustache -pt value.")
     parser.add_argument(
         "--pt2",
@@ -65,7 +87,16 @@ def parse_args() -> argparse.Namespace:
         help="Mustache diff -pt2 value. Defaults to --pt.",
     )
     parser.add_argument("--st", type=float, default=0.88, help="Mustache -st value.")
-    parser.add_argument("--mustache-bin", default="mustache", help="Mustache command.")
+    parser.add_argument(
+        "--mustache-bin",
+        default="",
+        help="Optional Mustache executable. Defaults to the current Python with '-m mustache'.",
+    )
+    parser.add_argument(
+        "--mustache-module",
+        default="mustache",
+        help="Python module used when --mustache-bin is not set.",
+    )
     parser.add_argument(
         "--diff-script",
         help="Path to diff_mustache.py. Auto-detected from PATH or Python package.",
@@ -91,6 +122,11 @@ def parse_args() -> argparse.Namespace:
         "--stats-only",
         action="store_true",
         help="Only summarize existing outputs under the resolution directory.",
+    )
+    parser.add_argument(
+        "--preflight-only",
+        action="store_true",
+        help="Only verify effective cooler URIs and balance weight columns, then write loop_preflight.tsv.",
     )
     parser.add_argument(
         "--dry-run",
@@ -142,6 +178,113 @@ def effective_resolution(row: dict[str, str], global_resolution: int | None) -> 
     return int(value)
 
 
+def effective_matrix_uri(matrix: str, resolution: int) -> str:
+    if "::" in matrix:
+        return matrix
+    if matrix.endswith(".mcool"):
+        return f"{matrix}::/resolutions/{resolution}"
+    return matrix
+
+
+def try_import_cooler():
+    try:
+        import cooler  # type: ignore
+    except Exception as exc:  # noqa: BLE001
+        raise SystemExit(f"[ERROR] missing dependency for balance preflight: {exc}") from exc
+    return cooler
+
+
+def check_cooler_balance(matrix_uri: str, weight_name: str) -> tuple[bool, str]:
+    cooler = try_import_cooler()
+    try:
+        clr = cooler.Cooler(matrix_uri)
+        bin_columns = list(clr.bins().columns)
+    except Exception as exc:  # noqa: BLE001
+        return False, f"could not open cooler URI {matrix_uri!r}: {exc}"
+    if weight_name not in bin_columns:
+        return False, f"weight column {weight_name!r} not found. Available bin columns: {bin_columns}"
+    try:
+        weights = clr.bins()[weight_name][:]
+    except Exception as exc:  # noqa: BLE001
+        return False, f"could not read weight column {weight_name!r}: {exc}"
+
+    total = 0
+    valid = 0
+    for value in weights:
+        total += 1
+        try:
+            if value is not None and math.isfinite(float(value)):
+                valid += 1
+        except (TypeError, ValueError):
+            continue
+    if total == 0:
+        return False, f"cooler has zero bins at {matrix_uri}"
+    if valid == 0:
+        return False, f"weight column {weight_name!r} exists but has no finite values"
+    return True, f"weight column {weight_name!r} finite bins: {valid}/{total}"
+
+
+def is_balance_correctable_failure(message: str) -> bool:
+    text = str(message or "").lower()
+    return (
+        "weight column" in text
+        and (
+            "not found" in text
+            or "no finite values" in text
+        )
+    )
+
+
+def run_cooler_balance(matrix_uri: str, log_path: Path) -> tuple[str, int, str]:
+    return run_command(["cooler", "balance", matrix_uri], False, log_path)
+
+
+def preflight_samples(
+    args: argparse.Namespace,
+    samples: dict[str, dict[str, str]],
+) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for label, row in samples.items():
+        resolution = effective_resolution(row, args.resolution_bp)
+        if args.resolution_bp and resolution != args.resolution_bp:
+            rows.append(
+                {
+                    "sample": label,
+                    "resolution_bp": str(resolution),
+                    "matrix": row["matrix"],
+                    "matrix_uri": "",
+                    "balanced": "no",
+                    "message": "mixed resolutions in one run are not supported",
+                }
+            )
+            continue
+        matrix_uri = effective_matrix_uri(row["matrix"], resolution)
+        if args.skip_balance_check:
+            rows.append(
+                {
+                    "sample": label,
+                    "resolution_bp": str(resolution),
+                    "matrix": row["matrix"],
+                    "matrix_uri": matrix_uri,
+                    "balanced": "skipped",
+                    "message": "balance check skipped",
+                }
+            )
+            continue
+        ok, message = check_cooler_balance(matrix_uri, args.weight_name)
+        rows.append(
+            {
+                "sample": label,
+                "resolution_bp": str(resolution),
+                "matrix": row["matrix"],
+                "matrix_uri": matrix_uri,
+                "balanced": "yes" if ok else "no",
+                "message": message,
+            }
+        )
+    return rows
+
+
 def find_diff_script(explicit: str | None) -> Path | None:
     if explicit:
         p = Path(explicit)
@@ -176,7 +319,7 @@ def call_loops(
 ) -> list[dict[str, str]]:
     if args.stats_only:
         return []
-    if not shutil.which(args.mustache_bin):
+    if args.mustache_bin and not shutil.which(args.mustache_bin):
         raise SystemExit(f"[ERROR] {args.mustache_bin!r} not found on PATH")
 
     rows: list[dict[str, str]] = []
@@ -184,6 +327,38 @@ def call_loops(
         resolution = effective_resolution(row, args.resolution_bp)
         if args.resolution_bp and resolution != args.resolution_bp:
             raise SystemExit("[ERROR] mixed resolutions in one run are not supported")
+        matrix_uri = effective_matrix_uri(row["matrix"], resolution)
+        balance_status = "skipped"
+        balance_message = "balance check skipped"
+        if not args.skip_balance_check:
+            ok, balance_message = check_cooler_balance(matrix_uri, args.weight_name)
+            balance_status = "yes" if ok else "no"
+            if ok:
+                print(f"[INFO] balance check passed for sample={label}: {balance_message}")
+            elif args.auto_balance and is_balance_correctable_failure(balance_message):
+                print(f"[WARN] balance check failed for sample={label}: {balance_message}")
+                _cmd, balance_code, balance_run_status = run_cooler_balance(
+                    matrix_uri,
+                    out_dir / f"{label}.cooler_balance.log",
+                )
+                if balance_code != 0:
+                    raise SystemExit(
+                        f"[ERROR] cooler balance failed for sample={label} "
+                        f"(exit {balance_code}, status={balance_run_status})"
+                    )
+                ok, balance_message = check_cooler_balance(matrix_uri, args.weight_name)
+                balance_status = "auto_balanced" if ok else "no"
+                if ok:
+                    print(f"[INFO] auto-balance succeeded for sample={label}: {balance_message}")
+                else:
+                    raise SystemExit(
+                        f"[ERROR] balance check failed after auto-balance for sample={label}: {balance_message}"
+                    )
+            else:
+                raise SystemExit(
+                    f"[ERROR] balance check failed for sample={label}: {balance_message}. "
+                    "Automatic balancing is disabled or this failure is not balance-correctable."
+                )
         outfile = out_dir / f"{label}.tsv"
         if outfile.exists() and args.skip_existing:
             rows.append(
@@ -192,28 +367,32 @@ def call_loops(
                     "sample1": label,
                     "sample2": "",
                     "resolution_bp": str(resolution),
+                    "matrix_uri": matrix_uri,
+                    "balanced": balance_status,
                     "output": str(outfile),
                     "status": "skipped_existing",
                     "return_code": "0",
+                    "message": balance_message,
                     "command": "",
                 }
             )
             continue
-        cmd = [
-            args.mustache_bin,
-            "--file",
-            row["matrix"],
-            "--resolution",
-            str(resolution),
-            "--outfile",
-            str(outfile),
-            "--processes",
-            str(args.processes),
-            "-pt",
-            str(args.pt),
-            "-st",
-            str(args.st),
-        ] + args.extra_arg
+        cmd = [args.mustache_bin] if args.mustache_bin else [sys.executable, "-m", args.mustache_module]
+        cmd.extend(
+            [
+                "-f",
+                matrix_uri,
+                "-r",
+                str(resolution),
+                "-o",
+                str(outfile),
+                "-pt",
+                str(args.pt),
+                "-st",
+                str(args.st),
+            ]
+        )
+        cmd.extend(args.extra_arg)
         command, return_code, status = run_command(cmd, args.dry_run, out_dir / f"{label}.mustache.log")
         rows.append(
             {
@@ -221,9 +400,12 @@ def call_loops(
                 "sample1": label,
                 "sample2": "",
                 "resolution_bp": str(resolution),
+                "matrix_uri": matrix_uri,
+                "balanced": balance_status,
                 "output": str(outfile),
                 "status": status,
                 "return_code": str(return_code),
+                "message": balance_message,
                 "command": command,
             }
         )
@@ -253,6 +435,8 @@ def call_differential(
         resolution2 = effective_resolution(row2, args.resolution_bp)
         if resolution1 != resolution2:
             raise SystemExit(f"[ERROR] pair has mixed resolutions: {sample1}, {sample2}")
+        matrix_uri1 = effective_matrix_uri(row1["matrix"], resolution1)
+        matrix_uri2 = effective_matrix_uri(row2["matrix"], resolution2)
         out_prefix = out_dir / prefix
         expected = out_dir / f"{prefix}.diffloop1"
         if expected.exists() and args.skip_existing:
@@ -264,9 +448,9 @@ def call_differential(
                 sys.executable,
                 str(script),
                 "-f1",
-                row1["matrix"],
+                matrix_uri1,
                 "-f2",
-                row2["matrix"],
+                matrix_uri2,
                 "--resolution",
                 str(resolution1),
                 "--outfile",
@@ -395,6 +579,20 @@ def main() -> None:
     resolution_label = str(args.resolution_bp or "existing")
     out_dir = Path(args.out_root) / resolution_label
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.preflight_only:
+        rows = preflight_samples(args, samples)
+        write_tsv(out_dir / "loop_preflight.tsv", rows)
+        for row in rows:
+            print(
+                "[PREFLIGHT] "
+                f"{row['sample']}: balanced={row['balanced']} "
+                f"uri={row['matrix_uri']} message={row['message']}"
+            )
+        if any(row["balanced"] == "no" for row in rows):
+            raise SystemExit("[ERROR] loop preflight failed for one or more samples")
+        print(f"[OK] wrote preflight under {out_dir}")
+        return
 
     run_rows = []
     run_rows.extend(call_loops(args, samples, out_dir))

@@ -77,6 +77,14 @@ class RuleEngine:
         (r"\bnan\b|\binf\b",                           "NaN/Inf detected in output – possible division error"),
     ]
 
+    HARD_FAILURE_PATTERNS = [
+        (r"biomind shim error",                         "BioMind shim is stale or bound to the wrong runtime"),
+        (r"rscript:\s*command not found",                "Rscript is missing from the selected runtime"),
+        (r"calder2?\s+not\s+available",                 "CALDER R package is not available"),
+        (r"there is no package called ['\"]?calder",     "CALDER R package is not installed"),
+        (r"gene_density(?:\.bed)?[^\n]*(?:sum|总和)[^\n]*(?:0|为 0)", "gene_density has zero signal"),
+    ]
+
     # 生信科学性规则（正向模式 → 预期存在）
     BIO_POSITIVE_CHECKS = {
         "samtools_sort":    r"bam|cram",
@@ -95,6 +103,14 @@ class RuleEngine:
         r"^\s*(?:which|where|type)\s+\S+\s*$",
     ]
 
+    EXPECTED_SILENT_COMMAND_PATTERNS = [
+        r"^\s*(?:cd|pushd|popd)\b",
+        r"^\s*(?:mkdir|chmod|touch|sync)\b",
+        r"^\s*(?:rm|rmdir)\s+",
+        r"^\s*(?:cp|mv)\s+",
+        r"^\s*(?:echo|printf|cat|awk|sed|perl)\b.*(?:>>?|tee\s+-a?\b)",
+    ]
+
     @classmethod
     def is_non_progress_command(cls, code: str) -> bool:
         lines = [
@@ -110,6 +126,32 @@ class RuleEngine:
         return all(
             any(re.search(pattern, line, re.IGNORECASE) for pattern in cls.NON_PROGRESS_PATTERNS)
             for line in lines
+        )
+
+    @classmethod
+    def is_expected_silent_command(cls, code: str) -> bool:
+        lines = [
+            line.strip()
+            for line in str(code or "").splitlines()
+            if line.strip()
+            and not line.strip().startswith("#")
+            and not line.strip().startswith("set ")
+            and not line.strip().startswith("export ")
+        ]
+        if not lines:
+            return False
+        command_like = []
+        for line in lines:
+            if re.match(r"^[A-Za-z_][A-Za-z0-9_-]*:", line):
+                continue
+            if not re.search(r"\b(?:cd|pushd|popd|mkdir|chmod|touch|sync|rm|rmdir|cp|mv|echo|printf|cat|awk|sed|perl)\b|>>?|tee\s+-a?\b", line):
+                continue
+            command_like.append(line)
+        if not command_like:
+            return False
+        return all(
+            any(re.search(pattern, line, re.IGNORECASE) for pattern in cls.EXPECTED_SILENT_COMMAND_PATTERNS)
+            for line in command_like
         )
 
     @classmethod
@@ -149,6 +191,17 @@ class RuleEngine:
                 message="Exit code 0 ✓",
             ))
 
+        # ── Rule 2b: 硬失败输出检测，即使退出码为 0 ────────────
+        for pattern, hint in cls.HARD_FAILURE_PATTERNS:
+            if re.search(pattern, combined, re.IGNORECASE):
+                results.append(CheckResult(
+                    rule="HardFailureOutputDetector",
+                    passed=False,
+                    severity="error",
+                    message=f"Hard failure signal detected: {hint}",
+                    suggestion=hint,
+                ))
+
         # ── Rule 3: 静默失败检测 ──────────────────────────────
         for pattern, hint in cls.SILENT_FAILURE_PATTERNS:
             if re.search(pattern, combined, re.IGNORECASE):
@@ -161,7 +214,7 @@ class RuleEngine:
                 ))
 
         # ── Rule 4: 空输出检测 ────────────────────────────────
-        if returncode == 0 and not stdout.strip() and not stderr.strip():
+        if returncode == 0 and not stdout.strip() and not stderr.strip() and not cls.is_expected_silent_command(code):
             results.append(CheckResult(
                 rule="EmptyOutputCheck",
                 passed=False,
@@ -220,8 +273,11 @@ class LLMReviewer:
     def __init__(self, llm):
         self.llm = llm
 
-    async def review(self, code: str, stdout: str, stderr: str, task_context: str) -> str:
+    async def review(self, code: str, stdout: str, stderr: str, task_context: str, returncode: int = 0) -> str:
         prompt = f"""You are a senior bioinformatics scientist reviewing an agent's execution step.
+
+[RETURN CODE]
+{returncode}
 
 [EXECUTED CODE]
 {code[:1500]}
@@ -242,10 +298,21 @@ Evaluate:
 4. Should this step be ACCEPTED, WARNED, or RETRIED?
 
 Review rules:
+- If RETURN CODE is non-zero, the verdict must be RETRY or ESCALATE. Never output PASS.
+- If post-run validation failed in the observation, the verdict must be RETRY or ESCALATE.
+- Do not infer missing inputs unless the exact error line proves the missing input.
+- If the traceback/log is truncated, ask to inspect the relevant log tail or run a minimal availability check instead of guessing.
 - Do not guess a tool's CLI from memory when the executed code already shows its arguments.
 - If a Python script exits non-zero with empty STDERR, inspect STDOUT first; many scripts print errors there.
+- If a failure points to a `.err`, `.log`, `.out`, or traceback file, inspect only the tail first (`tail -n 80` or targeted `grep ... | tail -n 40`); never request or paste an entire long log.
 - For `plot_methylation.py`, `--sample` intentionally takes five values:
   LABEL, CG_BW, CHG_BW, CHH_BW, COMP_BED. A dummy compartment BED path is allowed by the skill docs.
+- For CALDER2 official-r mode, a subprocess `No such file or directory` at `Popen`
+  usually means the executable in the command, commonly `Rscript`, is missing; verify
+  executable availability before speculating about FASTA or matrix paths.
+- For gene-density feature tracks, do not accept a file based only on existence:
+  require binned intervals at the selected resolution, matching chromosome names,
+  column 4 sum > 0, and non-zero bins > 0.
 
 Be concise. Format:
 **Verdict**: [PASS | WARN | RETRY]
@@ -362,7 +429,7 @@ class SupervisorNode:
 
     @staticmethod
     def _extract_stream(content: str, label: str) -> str:
-        pattern = rf"{re.escape(label)}:[ \t]*\r?\n?(.*?)(?=\r?\nSTDOUT:|\r?\nSTDERR:|\r?\n<runtime_status>|</observation>|\r?\n</observation>|$)"
+        pattern = rf"{re.escape(label)}:[ \t]*\r?\n?(.*?)(?=\r?\nSTDOUT:|\r?\nSTDERR:|(?:\r?\n)?<validation_result|(?:\r?\n)?<runtime_status>|</observation>|\r?\n</observation>|$)"
         match = re.search(pattern, content, re.DOTALL)
         return match.group(1).strip() if match else ""
 
@@ -385,6 +452,77 @@ class SupervisorNode:
             "tool check",
         )
         return any(term in context for term in allowed_terms)
+
+    @staticmethod
+    def _validation_checks_from_observation(observation: str) -> List[CheckResult]:
+        match = re.search(
+            r"<validation_result\b(?P<attrs>[^>]*)>(?P<body>.*?)</validation_result>",
+            str(observation or ""),
+            re.DOTALL | re.IGNORECASE,
+        )
+        if not match:
+            return []
+        attrs = match.group("attrs") or ""
+        body = match.group("body").strip()
+        status_match = re.search(r"status=['\"](?P<status>[^'\"]+)['\"]", attrs, re.IGNORECASE)
+        status = status_match.group("status").lower() if status_match else ""
+        normalized = body.lower()
+        summary = re.sub(r"\s+", " ", body).strip()[:500]
+
+        if status == "failed" or "status: failed" in normalized or "critical failures" in normalized:
+            return [
+                CheckResult(
+                    rule="ExecutionValidator",
+                    passed=False,
+                    severity="error",
+                    message=f"Post-run validation failed: {summary}",
+                    suggestion="Fix validation failures before treating this step as complete.",
+                )
+            ]
+        if status == "warning" or "with warnings" in normalized or "warnings:" in normalized:
+            return [
+                CheckResult(
+                    rule="ExecutionValidator",
+                    passed=False,
+                    severity="warning",
+                    message=f"Post-run validation warning: {summary}",
+                    suggestion="Review validation warnings and continue only if they are expected.",
+                )
+            ]
+        return []
+
+    @staticmethod
+    def _validation_level_from_observation(observation: str) -> str:
+        match = re.search(
+            r"<validation_result\b(?P<attrs>[^>]*)>",
+            str(observation or ""),
+            re.DOTALL | re.IGNORECASE,
+        )
+        if not match:
+            return ""
+        level_match = re.search(r"level=['\"](?P<level>[^'\"]+)['\"]", match.group("attrs") or "", re.IGNORECASE)
+        return level_match.group("level").lower() if level_match else ""
+
+    @staticmethod
+    def _validation_status_from_observation(observation: str) -> str:
+        match = re.search(
+            r"<validation_result\b(?P<attrs>[^>]*)>",
+            str(observation or ""),
+            re.DOTALL | re.IGNORECASE,
+        )
+        if not match:
+            return ""
+        status_match = re.search(r"status=['\"](?P<status>[^'\"]+)['\"]", match.group("attrs") or "", re.IGNORECASE)
+        return status_match.group("status").lower() if status_match else ""
+
+    @staticmethod
+    def _extract_review_verdict(llm_text: str) -> str:
+        match = re.search(
+            r"(?:\*\*)?\s*Verdict\s*(?:\*\*)?\s*:\s*(PASS|WARN|RETRY|ESCALATE)\b",
+            str(llm_text or ""),
+            re.IGNORECASE,
+        )
+        return match.group(1).upper() if match else ""
 
     async def run(self, state: Dict[str, Any]) -> Dict[str, Any]:
         messages = state.get("messages", [])
@@ -426,17 +564,40 @@ class SupervisorNode:
         # ── 规则引擎检查 ─────────────────────────────────────
         print(f"\n{Fore.CYAN}🔬 [Supervisor] Analyzing execution result...{Style.RESET_ALL}")
         rule_results = RuleEngine.run(last_code, stdout, stderr, returncode)
+        rule_results.extend(self._validation_checks_from_observation(last_obs))
 
         errors   = [r for r in rule_results if not r.passed and r.severity == "error"]
         warnings = [r for r in rule_results if not r.passed and r.severity == "warning"]
         warning_rules = {r.rule for r in warnings}
+        validation_level = self._validation_level_from_observation(last_obs)
+        validation_status = self._validation_status_from_observation(last_obs)
+        if validation_status == "passed" and warning_rules <= {"EmptyOutputCheck"}:
+            rule_results = [r for r in rule_results if r.rule != "EmptyOutputCheck"]
+            warnings = []
+            warning_rules = set()
+        validated_silent_success = (
+            returncode == 0
+            and validation_status == "passed"
+            and not stdout.strip()
+            and not stderr.strip()
+        )
+        needs_scientific_review = validation_level == "scientific" and not validated_silent_success
+        only_empty_output_warning = bool(warnings) and warning_rules <= {"EmptyOutputCheck"}
 
-        # ── LLM 深度审查（仅在有问题时调用，节省 token）────
+        # ── LLM 深度审查：问题步骤 + scientific 级别成功步骤 ────
         llm_review_text = ""
-        if (errors or warnings) and self.use_llm_review:
-            task_context = f"Plan:\n{current_plan[:400]}\n\nLast observation:\n{last_obs[:400]}"
+        if (errors or (warnings and not only_empty_output_warning) or needs_scientific_review) and self.use_llm_review:
+            task_context = (
+                f"Validation level: {validation_level or 'basic'}\n"
+                f"Plan:\n{current_plan[:400]}\n\nLast observation:\n{last_obs[:600]}"
+            )
             llm_review_text = await self._llm_reviewer.review(
-                last_code, stdout, stderr, task_context
+                last_code, stdout, stderr, task_context, returncode
+            )
+            llm_review_text = self._enforce_review_hard_constraints(
+                llm_review_text,
+                hard_failed=bool(errors),
+                returncode=returncode,
             )
 
         # ── 判决逻辑 ─────────────────────────────────────────
@@ -459,10 +620,17 @@ class SupervisorNode:
 
         # 从 LLM 审查中覆盖判决（如果 LLM 说 RETRY/ESCALATE）
         if llm_review_text:
-            only_empty_output_warning = bool(warnings) and warning_rules <= {"EmptyOutputCheck"}
-            if "RETRY" in llm_review_text.upper() and verdict == Verdict.WARN and not only_empty_output_warning:
+            review_verdict = self._extract_review_verdict(llm_review_text)
+            if review_verdict == "WARN" and verdict == Verdict.PASS:
+                verdict = Verdict.WARN
+            if (
+                review_verdict == "RETRY"
+                and verdict in {Verdict.PASS, Verdict.WARN}
+                and (bool(errors) or needs_scientific_review)
+                and not only_empty_output_warning
+            ):
                 verdict = Verdict.RETRY
-            if "ESCALATE" in llm_review_text.upper():
+            if review_verdict == "ESCALATE":
                 verdict = Verdict.ESCALATE
 
         # ── 打印审查报告 ──────────────────────────────────────
@@ -508,6 +676,25 @@ class SupervisorNode:
             "retry_count": new_retry,
             "supervisor_verdict": verdict.value,
         }
+
+    @staticmethod
+    def _enforce_review_hard_constraints(llm_text: str, hard_failed: bool, returncode: int) -> str:
+        """Prevent confusing LLM review text from declaring PASS on hard failures."""
+        if not llm_text or not hard_failed:
+            return llm_text
+        if re.search(r"\*\*Verdict\*\*\s*:\s*PASS\b", llm_text, re.IGNORECASE):
+            llm_text = re.sub(
+                r"\*\*Verdict\*\*\s*:\s*PASS\b",
+                "**Verdict**: RETRY",
+                llm_text,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+            llm_text += (
+                f"\n\nSystem override: hard execution/validation failure detected "
+                f"(return code {returncode}); PASS is not allowed."
+            )
+        return llm_text
 
     @staticmethod
     def route(state: Dict[str, Any]) -> str:

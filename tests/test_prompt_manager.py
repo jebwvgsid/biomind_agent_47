@@ -55,6 +55,8 @@ class PromptManagerTests(unittest.TestCase):
         self.assertIn("RAG_HIT", ephemeral)
         self.assertIn("ACTIVE_SKILL_DOC", ephemeral)
         self.assertIn("TASK_MEMORY_HIT", ephemeral)
+        self.assertIn("step-local runtime context", ephemeral)
+        self.assertIn("broad memory is not reloaded on every Generate turn", ephemeral)
         self.assertIn("WIKI_HIT", ephemeral)
         self.assertIn("<wiki_digest>", ephemeral)
         self.assertIn("WIKI_DIGEST_HIT", ephemeral)
@@ -81,7 +83,7 @@ class PromptManagerTests(unittest.TestCase):
             wiki_memory_context="WIKI_MEMORY_CONTEXT",
         )
 
-        self.assertIn("[WIKI MEMORY CONTEXT]", prompt)
+        self.assertIn("[CONSULTANT MEMORY RETRIEVAL CONTEXT]", prompt)
         self.assertIn("WIKI_MEMORY_CONTEXT", prompt)
 
     def test_consultant_prompt_contains_workflow_first_protocol(self):
@@ -98,6 +100,20 @@ class PromptManagerTests(unittest.TestCase):
         self.assertIn("WORKFLOW_STAGES", prompt)
         self.assertIn("ACTIVE_SKILLS", prompt)
 
+    def test_consultant_prompt_restricts_execute_to_read_only_preflight(self):
+        prompt = PromptManager.get_consultant_prompt(
+            intent="General Inquiry",
+            kb_list_desc="SOP, TOOLS, ERRORS",
+            skills_summary="SKILL_TREE",
+            rag_history=[],
+        )
+
+        self.assertIn("safe, read-only", prompt)
+        self.assertIn("must never create, modify, index, normalize, balance", prompt)
+        self.assertIn("cooler balance", prompt)
+        self.assertIn("--preflight-only", prompt)
+        self.assertIn("blocked/input-invalid handoff", prompt)
+
     def test_detailed_planner_prompt_is_centralized(self):
         prompt = PromptManager.get_detailed_planner_prompt(
             user_msg="Run QC",
@@ -111,8 +127,10 @@ class PromptManagerTests(unittest.TestCase):
         self.assertIn("You are the Planner for BioAnalyst V4.", prompt)
         self.assertIn("Run QC", prompt)
         self.assertIn("Consultant Summary", prompt)
+        self.assertIn("[PLANNING MEMORY CONTEXT]", prompt)
         self.assertIn("Use scripts/qc_filter_seurat.R", prompt)
         self.assertIn("Do NOT generate bash scripts", prompt)
+        self.assertIn("- Cautions:", prompt)
         self.assertIn("## Execution Checklist", prompt)
         self.assertIn("- [ ] Step N:", prompt)
         self.assertIn("Action: [SEARCH/EXECUTE/INSTALL/ACTIVATE_BATCH/FINISH]", prompt)
@@ -131,6 +149,18 @@ class PromptManagerTests(unittest.TestCase):
         self.assertIn("ACTIVE_SKILLS max = 3", prompt)
         self.assertIn("Every ACTIVE_SKILL must be linked to an active workflow stage", prompt)
         self.assertIn("Candidate skills must never be loaded into generate", prompt)
+
+    def test_installer_handover_prompt_prefers_conda_for_r_packages(self):
+        prompt = PromptManager.get_installer_handover_prompt(
+            tool_name="crop_breeding_crop_gs_rrblup_gblup_r",
+            target_env="crop_gp_pro",
+            env_instruction="Target environment: crop_gp_pro",
+        )
+
+        self.assertIn("r-<package>", prompt)
+        self.assertIn("rrBLUP` -> `r-rrblup", prompt)
+        self.assertIn("install.packages", prompt)
+        self.assertIn("cat('OK\\n')", prompt)
 
 
 if __name__ == "__main__":

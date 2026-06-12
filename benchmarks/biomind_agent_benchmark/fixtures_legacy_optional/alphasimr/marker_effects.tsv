@@ -1,0 +1,13 @@
+marker_id	effect_allele	effect	trait_direction	truth_source
+3_139	ALT	-2.561097	low	association_with_AlphaSimR_true_genetic_value
+2_18	ALT	-2.554195	low	association_with_AlphaSimR_true_genetic_value
+1_98	ALT	-2.438708	low	association_with_AlphaSimR_true_genetic_value
+2_130	ALT	2.418276	high	association_with_AlphaSimR_true_genetic_value
+3_99	ALT	-2.163391	low	association_with_AlphaSimR_true_genetic_value
+1_157	ALT	-2.1044	low	association_with_AlphaSimR_true_genetic_value
+2_84	ALT	-2.024284	low	association_with_AlphaSimR_true_genetic_value
+1_68	ALT	-2.004538	low	association_with_AlphaSimR_true_genetic_value
+1_50	ALT	-1.960528	low	association_with_AlphaSimR_true_genetic_value
+3_115	ALT	1.956492	high	association_with_AlphaSimR_true_genetic_value
+2_46	ALT	-1.859418	low	association_with_AlphaSimR_true_genetic_value
+1_159	ALT	-1.846326	low	association_with_AlphaSimR_true_genetic_value

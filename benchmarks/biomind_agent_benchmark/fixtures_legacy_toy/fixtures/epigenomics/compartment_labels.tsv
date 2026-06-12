@@ -1,0 +1,4 @@
+gene_id	compartment	expected_pattern
+GENE_0001	A	low_CG_high_TPM
+GENE_0002	B	high_CG_low_TPM
+GENE_0003	A	moderate_methylation

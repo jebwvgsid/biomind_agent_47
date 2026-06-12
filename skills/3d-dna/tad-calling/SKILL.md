@@ -30,7 +30,7 @@ runtime:
 
 ## Overview
 
-This skill runs HiCExplorer `hicFindTADs` on one or many `.cool/.mcool` contact matrices, after confirming the resolution and checking that the cooler is balanced.
+This skill runs HiCExplorer `hicFindTADs` on one or many `.cool/.mcool` contact matrices, after confirming the resolution and ensuring that the cooler has usable balance weights.
 It writes native HiCExplorer outputs plus combined multi-sample tables for domains, boundaries, and domain length statistics.
 
 | Output group | Files |
@@ -98,8 +98,22 @@ Before running `hicFindTADs`, do these checks:
 2. If the user provides plain `.mcool` paths and no explicit resolution, ask the user which resolution to use. Do not guess from common values like 40000.
 3. If paths are full URIs such as `sample.mcool::/resolutions/40000`, treat that as explicit resolution confirmation.
 4. Prefer one confirmed resolution per multi-sample comparison. Do not combine different resolutions in one summary unless the user explicitly asks for separate runs.
-5. Let the script check cooler balance by default. It verifies the `weight` bin column before running `hicFindTADs`.
+5. Let the script ensure cooler balance by default. It verifies the `weight` bin column before running `hicFindTADs`; if the column is missing or has no finite values, it automatically runs `cooler balance` on the effective cooler URI and then re-checks. For a read-only preflight step, run the wrapper with `--preflight-only`.
 6. Use `--skip-balance-check` only when the user says the matrix is already corrected by another method and the `weight` column check is inappropriate.
+
+Do not write ad hoc balance checks with `clr.bins()["weight"].dropna()` or
+`clr.bins()["weight"].notna()`: `clr.bins()["weight"]` is a Cooler selector,
+not a pandas Series, until it is sliced. Do not use `cooler attrs | grep weight`
+to decide whether balancing weights exist; `weight` is a bins-table column, not
+a top-level cooler attribute. Prefer the wrapper script's built-in balance check.
+If a manual check is required, use `weights = clr.bins()["weight"][:]` before
+calling pandas-like methods.
+
+Read-only wrapper preflight command:
+
+```bash
+conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py --sample leaf /path/to/leaf.mcool --sample bud /path/to/bud.mcool --resolution-bp 40000 --out-root TADs/HiCExplorer --preflight-only
+```
 
 Resolution discovery command when the user has not specified a resolution:
 
@@ -111,7 +125,7 @@ Do not use bare commands such as `cooler info sample.mcool` unless `which cooler
 
 ### Tier 1 — 直接调用脚本
 
-**触发条件**：标准多样本或单样本 hicFindTADs TAD 分析；用户已经确认样本路径、输出目录、分辨率，并允许默认 balance check。
+**触发条件**：标准多样本或单样本 hicFindTADs TAD 分析；用户已经确认样本路径、输出目录、分辨率，并允许默认 balance handling。
 
 For many samples, use a sample sheet:
 
@@ -147,6 +161,7 @@ conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
 | "只统计已有结果，不重新跑" | `--stats-only` |
 | "结果已存在就跳过运行" | `--skip-existing` |
 | "重新覆盖已有结果" | `--force` |
+| "不要自动 balance，缺 weight 就报错" | `--no-auto-balance` |
 | "多重检验用 fdr" | `--correct-for-multiple-testing fdr` |
 | "限制染色体 Chr03" | `--chromosome Chr03` |
 | "这个矩阵没有 weight 但我确认已校正" | `--skip-balance-check` |
@@ -322,7 +337,7 @@ for line in domains.read_text().splitlines():
 | `[ERROR] hicFindTADs not found on PATH` | 如果 healthcheck 曾成功，说明命令没有进入 `hicexplore`；否则才是 HiCExplorer 缺失或环境损坏 | 先重生成 `conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py ...`；只有 healthcheck 失败才用 `<install_tool env="hicexplore">hicexplorer</install_tool>` |
 | `[ERROR] missing dependency: No module named 'cooler'` | balance/resolution preflight 需要 cooler Python 包 | `<install_tool env="hicexplore">cooler</install_tool>` |
 | `[ERROR] --resolution-bp is required for .mcool` | `.mcool` 有多个分辨率，脚本不会替用户猜 | `conda run -n hicexplore python -c "import cooler; print(cooler.fileops.list_coolers('sample.mcool'))"` |
-| `[ERROR] balance check failed ... weight column 'weight' not found` | cooler 未 balance 或权重列名不同 | `cooler balance sample.cool` |
+| `[ERROR] automatic balancing is disabled ...` | cooler 未 balance 且命令禁用了自动 balance，或失败类型不能通过 balance 修复 | 去掉 `--no-auto-balance`，或先提供已 balance 的矩阵 |
 | `[ERROR] file does not exist: ...` | 输入路径写错，或 URI 前面的基础文件不存在 | `test -f hic_matrix/Corrected/sample.mcool && echo OK` |
 | `[ERROR] sample sheet missing required column(s)` | sample sheet 没有 `sample` 和 `matrix` 列 | `head -n 1 samples.tsv` |
 | `[ERROR] mixed resolutions in one run are not supported` | 多样本比较混入不同 resolution | 按 resolution 拆分 sample sheet 后分别运行 |

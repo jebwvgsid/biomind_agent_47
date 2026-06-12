@@ -25,6 +25,8 @@ from .monitoring import (
 from .profiling import (
     ProfilingCallbackHandler,
     RunProfiler,
+    benchmark_metadata_for_task,
+    generic_metadata_for_prompt,
     get_current_node,
     get_current_profiler,
     get_current_task_id,
@@ -56,6 +58,8 @@ __all__ = [
     'ErrorPattern',
     'ProfilingCallbackHandler',
     'RunProfiler',
+    'benchmark_metadata_for_task',
+    'generic_metadata_for_prompt',
     'get_current_node',
     'get_current_profiler',
     'get_current_task_id',

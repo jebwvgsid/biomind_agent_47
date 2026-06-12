@@ -1,0 +1,10 @@
+dataset_id: public-ucsc-hg38-chrM
+source_url: https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/chrM.fa.gz
+source_sha256: 4f7735feca8d21054553df68ce6bdca8f188dbcc5f4fba9a5778393be6446581
+subset_rule: full hg38 chrM chromosome FASTA from UCSC chromosome download
+expected:
+  fasta_header: chrM
+  sequence_length: 16569
+  gc_count: 7350
+  gc_fraction: 0.443599
+  md5_sequence_uppercase: c68f52674c9fb33aef52dcf399755519

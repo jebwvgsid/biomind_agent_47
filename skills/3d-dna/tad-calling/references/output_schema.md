@@ -83,7 +83,7 @@ Use this reference before changing output columns or connecting the TAD outputs 
 | `resolution_bp` | Confirmed resolution |
 | `matrix` | Effective matrix URI sent to hicFindTADs |
 | `out_prefix` | Native output prefix |
-| `balanced` | `yes`, `no`, `skipped`, or blank |
+| `balanced` | `yes`, `auto_balanced`, `no`, `skipped`, or blank |
 | `status` | `success`, `failed`, or `dry_run` |
 | `return_code` | hicFindTADs return code |
 | `message` | Error/status message |

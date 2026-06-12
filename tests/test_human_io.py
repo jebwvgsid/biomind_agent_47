@@ -12,9 +12,13 @@ from agent_core.human_io import (
     clear_waiting_state,
     decode_terminal_bytes,
     load_waiting_state,
+    read_pending_paste_lines,
     repair_terminal_text,
     resolve_input_timeout,
+    resolve_paste_grace_seconds,
+    resolve_paste_max_lines,
     safe_input,
+    safe_multiline_input,
     save_waiting_state,
     waiting_state_path,
 )
@@ -23,12 +27,13 @@ from agent_core.human_io import (
 class FakeReadline:
     def __init__(self, history=None):
         self.history = list(history or [])
+        self.bindings = []
 
     def set_completer(self, completer):
         self.completer = completer
 
     def parse_and_bind(self, binding):
-        pass
+        self.bindings.append(binding)
 
     def get_current_history_length(self):
         return len(self.history)
@@ -41,6 +46,19 @@ class FakeReadline:
 
     def add_history(self, item):
         self.history.append(item)
+
+
+class FakeStdin:
+    def __init__(self, lines):
+        self.lines = list(lines)
+
+    def isatty(self):
+        return True
+
+    def readline(self):
+        if not self.lines:
+            return ""
+        return self.lines.pop(0)
 
 
 class HumanIOTests(unittest.TestCase):
@@ -73,6 +91,27 @@ class HumanIOTests(unittest.TestCase):
 
         with patch.dict(os.environ, {"BIOMIND_INPUT_TIMEOUT_SECONDS": "bad"}):
             self.assertEqual(resolve_input_timeout(default=7), 7)
+
+    def test_resolve_paste_options_use_environment(self):
+        with patch.dict(
+            os.environ,
+            {
+                "BIOMIND_PASTE_GRACE_SECONDS": "0.25",
+                "BIOMIND_PASTE_MAX_LINES": "42",
+            },
+        ):
+            self.assertEqual(resolve_paste_grace_seconds(default=0.08), 0.25)
+            self.assertEqual(resolve_paste_max_lines(default=2000), 42)
+
+        with patch.dict(
+            os.environ,
+            {
+                "BIOMIND_PASTE_GRACE_SECONDS": "bad",
+                "BIOMIND_PASTE_MAX_LINES": "bad",
+            },
+        ):
+            self.assertEqual(resolve_paste_grace_seconds(default=0.12), 0.12)
+            self.assertEqual(resolve_paste_max_lines(default=9), 9)
 
     def test_safe_input_maps_eoferror(self):
         with patch("builtins.input", side_effect=EOFError):
@@ -125,6 +164,42 @@ class HumanIOTests(unittest.TestCase):
 
         self.assertEqual(result, "new command")
         self.assertEqual(fake_readline.history, ["older command", "new command"])
+        self.assertIn("set enable-bracketed-paste on", fake_readline.bindings)
+
+    def test_read_pending_paste_lines_drains_posix_tty(self):
+        fake_stdin = FakeStdin(["  /path/genotype.tsv\n", "- phenotype: phenotype.tsv\n"])
+
+        with patch.object(human_io_module.sys, "stdin", fake_stdin):
+            with patch.object(human_io_module.os, "name", "posix"):
+                with patch(
+                    "select.select",
+                    side_effect=[
+                        ([fake_stdin], [], []),
+                        ([fake_stdin], [], []),
+                        ([], [], []),
+                    ],
+                ):
+                    lines = read_pending_paste_lines(grace_seconds=0.01, max_lines=10)
+
+        self.assertEqual(lines, ["  /path/genotype.tsv", "- phenotype: phenotype.tsv"])
+
+    def test_read_pending_paste_lines_skips_non_posix(self):
+        fake_stdin = FakeStdin(["second line\n"])
+
+        with patch.object(human_io_module.sys, "stdin", fake_stdin):
+            with patch.object(human_io_module.os, "name", "nt"):
+                self.assertEqual(read_pending_paste_lines(grace_seconds=0.01), [])
+
+    def test_safe_multiline_input_reads_until_end_marker(self):
+        with patch.object(
+            human_io_module,
+            "_readline_input_with_timeout",
+            side_effect=["- genotype:", "  /path/genotype.tsv", "/end"],
+        ) as mocked_input:
+            result = safe_multiline_input("Paste> ", timeout_seconds=5)
+
+        self.assertEqual(result, "- genotype:\n  /path/genotype.tsv")
+        self.assertEqual(mocked_input.call_count, 3)
 
     def test_decode_terminal_bytes_accepts_utf8(self):
         self.assertEqual(decode_terminal_bytes("帮我 鉴定TAD\n".encode("utf-8")), "帮我 鉴定TAD")

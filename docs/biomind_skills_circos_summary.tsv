@@ -1,0 +1,55 @@
+skill_id	category	name	step_count	script_count	reference_count	has_runtime	workflow_count	input_count	output_count	tag_count	body_words
+3d-dna/3d-dna-analysis	3d-dna	3d-dna-analysis	6	0	0	0	0	0	0	0	667
+3d-dna/calder2-subcompartment	3d-dna	calder2-subcompartment-analysis	1	2	0	1	0	4	2	16	502
+3d-dna/compartment-calling	3d-dna	compartment-analysis	1	4	0	1	0	4	3	12	1040
+3d-dna/differential-compartment	3d-dna	differential-compartment-analysis	1	1	0	1	0	1	2	10	383
+3d-dna/differential-tad	3d-dna	differential-tad-analysis	9	1	0	1	0	3	1	11	664
+3d-dna/loop-calling	3d-dna	loop-calling	8	2	0	1	0	3	3	14	1274
+3d-dna/loop-classification	3d-dna	loop-classification	6	1	0	0	0	0	0	0	678
+3d-dna/tad-boundary-change	3d-dna	tad-boundary-change-analysis	1	1	1	1	0	1	2	10	1041
+3d-dna/tad-calling	3d-dna	tad-analysis	6	2	3	1	0	5	3	16	2032
+crop-breeding/crop-cnn-attention-genomic-prediction	crop-breeding	crop-cnn-attention-genomic-prediction	7	0	2	1	0	3	4	8	370
+crop-breeding/crop-conserved-transcriptome-ml	crop-breeding	crop-conserved-transcriptome-ml	7	0	2	1	0	4	4	9	416
+crop-breeding/crop-diff-visualizer	crop-breeding	crop-diff-visualizer	5	4	0	0	0	0	0	0	220
+crop-breeding/crop-dnngp-multiomics-prediction	crop-breeding	crop-dnngp-multiomics-prediction	7	0	2	1	0	5	4	7	474
+crop-breeding/crop-genomic-prediction	crop-breeding	crop-genomic-prediction-guide	5	0	0	0	1	4	4	5	391
+crop-breeding/crop-gp-waiter-transformer	crop-breeding	crop-gp-waiter-transformer	7	0	2	1	0	4	5	8	592
+crop-breeding/crop-gs-bglr-bayesian	crop-breeding	crop-gs-bglr-bayesian	1	1	0	1	1	6	4	5	172
+crop-breeding/crop-gs-rrblup-gblup	crop-breeding	crop-gs-rrblup-gblup	1	1	0	1	1	5	5	5	241
+crop-breeding/crop-gs-sommer-multikernel-gxe	crop-breeding	crop-gs-sommer-multikernel-gxe	1	1	0	1	1	3	4	6	187
+crop-breeding/crop-gwas-gapit3-model-compare	crop-breeding	crop-gwas-gapit3-model-compare	1	1	0	1	1	5	5	7	206
+crop-breeding/crop-gwas-gemma-lmm	crop-breeding	crop-gwas-gemma-lmm	1	2	0	1	1	5	5	5	211
+crop-breeding/crop-gwas-pav-sv-pangenome	crop-breeding	crop-gwas-pav-sv-pangenome	1	1	0	1	1	5	5	7	234
+crop-breeding/crop-gwas-pipeline	crop-breeding	crop-gwas-pipeline	5	9	0	0	1	6	4	5	451
+crop-breeding/crop-gwas-qc-plink2-vcftools	crop-breeding	crop-gwas-qc-plink2-vcftools	1	2	0	1	1	5	5	8	223
+crop-breeding/crop-gwas-rmvp-large-scale	crop-breeding	crop-gwas-rmvp-large-scale	1	1	0	1	1	5	5	7	203
+crop-breeding/crop-gxe-environmental-index-prediction	crop-breeding	crop-gxe-environmental-index-prediction	7	0	2	1	0	4	4	8	448
+crop-breeding/crop-pangenome-sv-genomic-selection	crop-breeding	crop-pangenome-sv-genomic-selection	7	0	2	1	0	5	5	8	474
+crop-breeding/crop-popgen-dnasp	crop-breeding	crop-popgen-dnasp	5	5	0	0	0	0	0	0	327
+crop-breeding/crop-rnaseq-de	crop-breeding	crop-rnaseq-de	5	4	0	0	0	0	0	0	372
+crop-breeding/crop-rnaseq-pipeline	crop-breeding	crop-rnaseq-pipeline	5	3	0	0	0	0	0	0	381
+crop-breeding/crop-smart-breeding-strategy	crop-breeding	crop-smart-breeding-strategy	6	0	1	0	0	3	4	8	418
+crop-breeding/crop-wgs-to-marker-score	crop-breeding	crop-wgs-to-marker-score	3	4	0	0	0	0	0	0	241
+databases/ensembl/ensembl-database	databases	ensembl-database	6	0	0	0	0	0	0	0	768
+databases/ncbi/entrez-fetch	databases	ncbi-entrez-fetch	7	0	2	0	0	0	0	0	649
+databases/ncbi/entrez-link	databases	ncbi-entrez-link	6	0	0	0	0	0	0	0	987
+databases/ncbi/entrez-search	databases	ncbi-entrez-search	6	0	2	0	0	0	0	0	500
+databases/ncbi/geo-data	databases	ncbi-geo-data	4	0	2	0	0	0	0	0	603
+epigenomics/methylation/gene-plot	epigenomics	甲基化基因绘图	1	1	2	1	0	0	0	6	1347
+epigenomics/methylation/modkit-pileup	epigenomics	modkit-methylation-pileup	5	0	0	0	0	4	3	10	177
+genomics/assembly	genomics	Hifiasm Assembly	6	0	0	0	0	0	0	0	505
+genomics/snpeff-annotation	genomics	snpeff-annotation	10	1	1	0	0	0	0	0	899
+genomics/wgs-variant-calling	genomics	wgs-variant-calling	6	2	1	0	0	0	0	0	1125
+open-chromatin/modkit-cpu	open-chromatin	modkit-open-chromatin-cpu	10	1	0	1	0	0	0	10	652
+scrna/annotate/basic	scrna	scRNA Annotate Basic	1	1	0	1	1	4	1	9	152
+scrna/cluster/basic	scrna	scRNA Cluster Basic	1	1	0	1	1	1	2	9	163
+scrna/de/contrast	scrna	scRNA DE Contrast	1	1	0	1	1	3	2	8	162
+scrna/env/bootstrap	scrna	scRNA Environment Bootstrap	3	1	0	1	0	1	1	6	205
+scrna/ingest/data-download	scrna	scRNA Data Download And Ingest	1	2	1	1	1	5	2	7	193
+scrna/markers/find	scrna	scRNA Markers Find	1	1	0	1	1	1	2	8	145
+scrna/preprocess/basic	scrna	scRNA Preprocess Basic	1	1	0	1	1	1	1	9	159
+scrna/qc/filter	scrna	scRNA QC Filter	1	1	0	1	1	2	2	7	179
+scrna/workflows/ingest-qc	scrna	scRNA Ingest QC Workflow	3	1	0	1	1	5	3	8	195
+sequence/search/local-blast	sequence	local-blast	7	0	0	0	0	0	0	0	662
+sequence/search/remote-blast	sequence	remote-blast	7	0	0	0	0	0	0	0	558
+sequence/search/sequence-similarity	sequence	sequence-similarity	7	0	0	0	0	0	0	0	806

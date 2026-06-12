@@ -1,0 +1,3 @@
+sample,fastq_1,fastq_2,tissue,genotype,condition,replicate,strandedness
+S001,/path/S001_R1.fastq.gz,/path/S001_R2.fastq.gz,stem,GT21,high_sugar,1,auto
+S002,/path/S002_R1.fastq.gz,/path/S002_R2.fastq.gz,stem,GT21,low_sugar,1,auto

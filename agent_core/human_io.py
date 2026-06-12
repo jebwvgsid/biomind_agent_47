@@ -14,6 +14,7 @@ import glob
 import signal
 import sys
 import threading
+import time
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -57,6 +58,30 @@ def resolve_input_timeout(default: int = 900) -> int:
         return max(0, int(float(raw)))
     except ValueError:
         return max(0, int(default))
+
+
+def resolve_paste_grace_seconds(default: float = 0.08) -> float:
+    """Resolve the short stdin-drain window used after a terminal paste."""
+
+    raw = os.getenv("BIOMIND_PASTE_GRACE_SECONDS", "").strip()
+    if not raw:
+        return max(0.0, float(default))
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return max(0.0, float(default))
+
+
+def resolve_paste_max_lines(default: int = 2000) -> int:
+    """Resolve the maximum number of continuation lines to absorb from paste."""
+
+    raw = os.getenv("BIOMIND_PASTE_MAX_LINES", "").strip()
+    if not raw:
+        return max(1, int(default))
+    try:
+        return max(1, int(float(raw)))
+    except ValueError:
+        return max(1, int(default))
 
 
 def _input_encodings() -> list[str]:
@@ -160,6 +185,7 @@ def _configure_readline() -> None:
     try:
         readline.set_completer(complete_path)
         readline.parse_and_bind("set editing-mode emacs")
+        readline.parse_and_bind("set enable-bracketed-paste on")
         readline.parse_and_bind("tab: complete")
     except Exception:
         pass
@@ -296,6 +322,55 @@ def _read_terminal_line_text() -> str:
     return line.rstrip("\n")
 
 
+def _can_read_pending_terminal_lines() -> bool:
+    return (
+        os.name == "posix"
+        and sys.stdin.isatty()
+        and threading.current_thread() is threading.main_thread()
+    )
+
+
+def read_pending_paste_lines(
+    *,
+    grace_seconds: Optional[float] = None,
+    max_lines: Optional[int] = None,
+) -> list[str]:
+    """Drain complete lines that are already pending after a multiline paste.
+
+    ``input()`` returns at the first newline, so a pasted task can otherwise be
+    split into several prompts. This function only runs on POSIX TTYs and uses
+    ``select`` with a tiny timeout so normal interactive typing remains single
+    line.
+    """
+
+    timeout = resolve_paste_grace_seconds() if grace_seconds is None else max(0.0, float(grace_seconds))
+    limit = resolve_paste_max_lines() if max_lines is None else max(1, int(max_lines))
+    if timeout <= 0 or not _can_read_pending_terminal_lines():
+        return []
+
+    try:
+        import select
+    except Exception:
+        return []
+
+    lines: list[str] = []
+    deadline = time.monotonic() + timeout
+    while len(lines) < limit:
+        wait_seconds = max(0.0, deadline - time.monotonic())
+        try:
+            ready, _, _ = select.select([sys.stdin], [], [], wait_seconds)
+        except Exception:
+            break
+        if not ready:
+            break
+        try:
+            lines.append(_read_terminal_line_text())
+        except HumanInputUnavailable:
+            break
+        deadline = time.monotonic() + min(timeout, 0.02)
+    return lines
+
+
 def safe_input(prompt: str, timeout_seconds: Optional[int] = None, *, history: bool = True) -> str:
     """Read one line from stdin with POSIX timeout support.
 
@@ -308,6 +383,32 @@ def safe_input(prompt: str, timeout_seconds: Optional[int] = None, *, history: b
 
     timeout = resolve_input_timeout() if timeout_seconds is None else int(timeout_seconds)
     return _readline_input_with_timeout(prompt, timeout, history=history)
+
+
+def safe_multiline_input(
+    prompt: str,
+    timeout_seconds: Optional[int] = None,
+    *,
+    terminator: str = "/end",
+    history: bool = False,
+) -> str:
+    """Read a multiline block until a line exactly matching ``terminator``."""
+
+    timeout = resolve_input_timeout() if timeout_seconds is None else int(timeout_seconds)
+    end_marker = str(terminator or "/end").strip()
+    lines: list[str] = []
+    first_prompt = prompt
+    while True:
+        line = _readline_input_with_timeout(
+            first_prompt if not lines else "... ",
+            timeout,
+            history=history and not lines,
+        )
+        if line.strip() == end_marker:
+            break
+        lines.append(line)
+        first_prompt = ""
+    return "\n".join(lines)
 
 
 def task_output_dir(data_path: str | Path, task_id: str) -> Path:

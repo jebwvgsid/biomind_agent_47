@@ -1,0 +1,7 @@
+sample_id	condition	replicate
+ctrl_1	ctrl	1
+ctrl_2	ctrl	2
+ctrl_3	ctrl	3
+stress_1	stress	1
+stress_2	stress	2
+stress_3	stress	3

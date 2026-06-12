@@ -1,0 +1,4 @@
+interface:
+  display_name: "Crop GWAS GEMMA LMM"
+  short_description: "Run GEMMA kinship-aware crop GWAS."
+  default_prompt: "Use $crop-gwas-gemma-lmm to run GEMMA LMM on my crop trait."

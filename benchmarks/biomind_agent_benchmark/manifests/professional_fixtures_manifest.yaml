@@ -1,0 +1,32 @@
+fixture_set_id: biomind-professional-msprime-fixtures
+version: 0.3.0
+seed: 20260526
+simulators:
+  msprime: 1.4.2
+root: fixtures_professional
+notes:
+  - Active professional simulated data are restricted to msprime outputs.
+  - Generated with scripts/generate/generate_msprime_fixtures.py.
+  - Phenotype and GWAS-like p-values are BioMind-controlled truth labels derived from simulated genotypes.
+
+task_fixtures:
+  BM-CROP-MSPRIME-GP-013:
+    - path: fixtures_professional/msprime/genotype_matrix.tsv
+      availability: available
+    - path: fixtures_professional/msprime/phenotype.tsv
+      availability: available
+    - path: fixtures_professional/msprime/gwas_summary.tsv
+      availability: available
+    - path: fixtures_professional/msprime/marker_annotation.tsv
+      availability: available
+    - path: fixtures_professional/msprime/simulation_truth.tsv
+      availability: available
+  BM-CROP-MSPRIME-TRUTH:
+    - path: fixtures_professional/msprime/msprime_variants.vcf
+      availability: available
+    - path: fixtures_professional/msprime/haplotypes.fasta
+      availability: available
+    - path: fixtures_professional/msprime/sample_groups.tsv
+      availability: available
+    - path: fixtures_professional/msprime/marker_effects.tsv
+      availability: available

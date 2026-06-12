@@ -1,0 +1,54 @@
+workflow_id: crop_gwas_analysis
+aliases: [crop-gwas-pipeline, crop_gwas_pipeline, crop-breeding/crop-gwas-pipeline]
+name: Crop GWAS Analysis
+description: Crop and plant GWAS workflow covering triage, genotype QC, SNP GWAS models, optional PAV/SV pangenome GWAS, and final standardized synthesis.
+task_types: [crop_gwas]
+triggers: [GWAS, crop GWAS, plant GWAS, FarmCPU, BLINK, GEMMA, GAPIT3, rMVP, PAV-GWAS, SV-GWAS, 作物GWAS, 植物GWAS]
+stages:
+  - stage: gwas_triage
+    title: Confirm data inventory, ploidy, trait, covariates, marker type, and method route
+    batch_id: "1"
+    default_skill: crop-breeding/crop-gwas-pipeline
+    inputs: [data_inventory, genotype_data, phenotype_table, trait, covariates, marker_type]
+    outputs: [selected_gwas_skill, method_plan, data_requirements]
+  - stage: genotype_qc
+    title: Run VCF/PLINK genotype QC, sample overlap, PCA, and optional LD pruning
+    batch_id: "1"
+    default_skill: crop-breeding/crop-gwas-qc-plink2-vcftools
+    inputs: [vcf, pfile, bfile, phenotype_table, qc_parameters]
+    outputs: [qc_genotype_prefix, sample_overlap, pca, ld_prune, qc_report]
+  - stage: gemma_lmm_gwas
+    title: Run GEMMA kinship-aware LMM
+    batch_id: "2"
+    default_skill: crop-breeding/crop-gwas-gemma-lmm
+    inputs: [qc_genotype_prefix, phenotype_table, trait, covariates]
+    outputs: [summary_stats, lead_snps, lambda_gc, gwas_report]
+    optional: true
+  - stage: gapit3_model_compare
+    title: Run GAPIT3 MLM, MLMM, FarmCPU, and BLINK comparison
+    batch_id: "2"
+    default_skill: crop-breeding/crop-gwas-gapit3-model-compare
+    inputs: [genotype_table, phenotype_table, trait, covariates, model_list]
+    outputs: [summary_stats, lead_snps, lambda_gc, model_comparison, gwas_report]
+    optional: true
+  - stage: rmvp_large_scale_gwas
+    title: Run rMVP GLM, MLM, and FarmCPU for large marker sets
+    batch_id: "2"
+    default_skill: crop-breeding/crop-gwas-rmvp-large-scale
+    inputs: [vcf, genotype_table, phenotype_table, trait, threads]
+    outputs: [summary_stats, lead_snps, lambda_gc, rmvp_outputs, gwas_report]
+    optional: true
+  - stage: pav_sv_pangenome_gwas
+    title: Run PAV/SV/pangenome marker-matrix GWAS
+    batch_id: "3"
+    default_skill: crop-breeding/crop-gwas-pav-sv-pangenome
+    inputs: [marker_matrix, phenotype_table, trait, covariates, model]
+    outputs: [summary_stats, lead_snps, lambda_gc, pangenome_gwas_report]
+    optional: true
+    may_block_if_missing: [marker_matrix]
+  - stage: final_synthesis
+    title: Synthesize standardized GWAS outputs and interpretation boundaries
+    batch_id: "4"
+    status_hint: no_skill_needed
+    inputs: [summary_stats, lead_snps, lambda_gc, candidate_genes]
+    outputs: [method_comparison, final_report]

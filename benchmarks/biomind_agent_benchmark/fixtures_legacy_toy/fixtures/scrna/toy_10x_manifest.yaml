@@ -1,0 +1,13 @@
+project_name: biomind_toy_scrna
+species: human
+input_mode: 10x_mtx
+sample_id: toy_pbmc
+input_path: D:/研究生/项目/BioMind/Biomind_v1/benchmarks/biomind_agent_benchmark/fixtures/scrna/toy_10x
+output_dir: D:/研究生/项目/BioMind/Biomind_v1/benchmarks/biomind_agent_benchmark/fixtures/scrna/outputs/toy_pbmc
+
+qc:
+  min_features: 20
+  max_features: 280
+  min_counts: 30
+  max_counts: 5000
+  max_percent_mt: 25

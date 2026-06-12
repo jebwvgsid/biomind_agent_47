@@ -1,0 +1,3 @@
+interface:
+  display_name: "snpEff Annotation"
+  short_description: "Build or use snpEff databases and annotate VCF variants with ANN effects."

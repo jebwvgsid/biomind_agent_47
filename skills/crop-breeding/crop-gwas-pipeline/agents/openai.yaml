@@ -1,0 +1,4 @@
+interface:
+  display_name: "Crop GWAS Router"
+  short_description: "Route crop GWAS tasks to executable subskills."
+  default_prompt: "Use $crop-gwas-pipeline to plan and route my crop GWAS workflow."

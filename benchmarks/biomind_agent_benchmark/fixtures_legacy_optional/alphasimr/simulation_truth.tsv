@@ -1,0 +1,10 @@
+metric	value
+simulator	AlphaSimR
+AlphaSimR_version	2.1.0
+seed	20260527
+n_individuals	60
+n_chromosomes	3
+n_markers	120
+n_qtl_per_chromosome	12
+target_h2	0.45
+trait_model	additive

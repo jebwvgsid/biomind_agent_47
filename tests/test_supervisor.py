@@ -82,6 +82,40 @@ class SupervisorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["supervisor_verdict"], Verdict.WARN.value)
         self.assertEqual(result["retry_count"], 0)
 
+    async def test_validated_silent_success_does_not_call_scientific_llm_retry(self):
+        obs = (
+            "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\n\nSTDERR:\n"
+            "<validation_result level=\"scientific\" status=\"passed\">\n"
+            "✅ Execution Validated: No critical errors found.\n"
+            "</validation_result>\n</observation>"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(_FakeLLM("**Verdict**: RETRY\n**Reason**: hallucinated\n**Action**: retry"), output_dir=tmpdir)
+            result = await supervisor.run(_state("echo ok > report.md\nchmod +x reproduce.sh", obs, retry_count=0))
+
+        self.assertEqual(result["supervisor_verdict"], Verdict.PASS.value)
+        self.assertEqual(result["retry_count"], 0)
+
+    async def test_expected_silent_file_write_is_pass_without_validation(self):
+        obs = "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\n\nSTDERR:\n</observation>"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(_FakeLLM("**Verdict**: RETRY"), output_dir=tmpdir)
+            result = await supervisor.run(_state("printf 'x\\n' > out.txt\nchmod +x run.sh", obs, retry_count=0))
+
+        self.assertEqual(result["supervisor_verdict"], Verdict.PASS.value)
+
+    async def test_llm_retry_cannot_upgrade_warning_without_hard_or_scientific_signal(self):
+        obs = "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\nWARNING: no reads mapped\nSTDERR:\n</observation>"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(
+                _FakeLLM("**Verdict**: RETRY\n**Reason**: retry anyway\n**Action**: retry"),
+                output_dir=tmpdir,
+                use_llm_review=True,
+            )
+            result = await supervisor.run(_state("python run_analysis.py", obs, retry_count=0))
+
+        self.assertEqual(result["supervisor_verdict"], Verdict.WARN.value)
+
     async def test_non_progress_help_command_retries_unless_preflight_step(self):
         obs = "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\nusage\nSTDERR:\n</observation>"
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -98,10 +132,69 @@ class SupervisorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(warn_result["supervisor_verdict"], Verdict.WARN.value)
 
     def test_stdout_stderr_stream_extraction_does_not_bleed(self):
-        obs = "<observation>\n[Bash] ❌ Failed\nSTDOUT:\nout line\nSTDERR:\nerr line\n</observation>"
+        obs = (
+            "<observation>\n[Bash] ❌ Failed\nSTDOUT:\nout line\nSTDERR:\nerr line\n"
+            "<validation_result level=\"basic\" status=\"failed\">\nvalidation\n</validation_result>\n"
+            "</observation>"
+        )
 
         self.assertEqual(SupervisorNode._extract_stream(obs, "STDOUT"), "out line")
         self.assertEqual(SupervisorNode._extract_stream(obs, "STDERR"), "err line")
+
+    async def test_validation_failure_converts_success_to_retry(self):
+        obs = (
+            "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\nfinished\n"
+            "<validation_result level=\"basic\" status=\"failed\">\n"
+            "❌ Status: FAILED\n\n🚨 Critical Failures:\n  • [Generic Error Check] command not found\n"
+            "</validation_result>\n</observation>"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(_FakeLLM("**Verdict**: PASS"), output_dir=tmpdir, use_llm_review=False)
+            result = await supervisor.run(_state("python run_analysis.py", obs, retry_count=0))
+
+        self.assertEqual(result["supervisor_verdict"], Verdict.RETRY.value)
+
+    async def test_calder_not_available_stdout_is_hard_failure_even_with_exit_zero(self):
+        obs = (
+            "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\n"
+            "=== Testing CALDER R package ===\nCALDER not available\n"
+            "STDERR:\n</observation>"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(_FakeLLM("**Verdict**: PASS"), output_dir=tmpdir, use_llm_review=False)
+            result = await supervisor.run(_state("conda run -n hicexplore Rscript -e \"library(CALDER)\" || echo 'CALDER not available'", obs, retry_count=0))
+
+        self.assertEqual(result["supervisor_verdict"], Verdict.RETRY.value)
+
+    async def test_llm_pass_is_overridden_on_hard_failure(self):
+        obs = "<observation>\n[Bash] ❌ Failed\nSTDOUT:\n\nSTDERR:\nboom\n</observation>"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(
+                _FakeLLM("**Verdict**: PASS\n**Reason**: looks fine\n**Action**: continue"),
+                output_dir=tmpdir,
+                use_llm_review=True,
+            )
+            result = await supervisor.run(_state("false", obs, retry_count=0))
+
+        self.assertEqual(result["supervisor_verdict"], Verdict.RETRY.value)
+        self.assertIn("System override", result["messages"][0].content)
+
+    async def test_scientific_success_can_be_retried_by_llm_review(self):
+        obs = (
+            "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\nfinished\n"
+            "<validation_result level=\"scientific\" status=\"passed\">\n"
+            "✅ Execution Validated: No critical errors found.\n"
+            "</validation_result>\n</observation>"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(
+                _FakeLLM("**Verdict**: RETRY\n**Reason**: parameter mismatch\n**Action**: rerun with matching genome build"),
+                output_dir=tmpdir,
+                use_llm_review=True,
+            )
+            result = await supervisor.run(_state("python run_analysis.py --genome hg19", obs, retry_count=0))
+
+        self.assertEqual(result["supervisor_verdict"], Verdict.RETRY.value)
 
 
 if __name__ == "__main__":

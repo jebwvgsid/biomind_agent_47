@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BioMind LLM Wiki 记忆系统方法论</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #fbfaf7;
+      --ink: #17212b;
+      --muted: #66707d;
+      --line: #d9ded6;
+      --soft: #f3f5f1;
+      --purple: #7048e8;
+      --purple-soft: #eee7ff;
+      --green: #1f9d55;
+      --green-soft: #e7f8ed;
+      --orange: #d97706;
+      --orange-soft: #fff1d6;
+      --blue: #2563eb;
+      --blue-soft: #e8f0ff;
+      --teal: #0f766e;
+      --teal-soft: #e3f5f2;
+      --red: #dc2626;
+      --red-soft: #fff0f0;
+      --pink: #c026d3;
+      --pink-soft: #fae8ff;
+      --shadow: 0 16px 42px rgba(23, 33, 43, 0.08);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(1500px, calc(100vw - 36px));
+      margin: 0 auto;
+      padding: 22px 0 34px;
+    }
+
+    header {
+      text-align: center;
+      padding: 8px 0 18px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(30px, 4.8vw, 54px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: clamp(14px, 1.5vw, 18px);
+      font-weight: 700;
+    }
+
+    .canvas {
+      display: grid;
+      grid-template-columns: 1.05fr 1.02fr 0.98fr;
+      gap: 26px;
+      align-items: start;
+    }
+
+    .panel {
+      position: relative;
+      min-width: 0;
+      padding: 22px 24px 24px;
+      border: 1px solid rgba(217, 222, 214, 0.9);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.84);
+      box-shadow: var(--shadow);
+    }
+
+    .panel.soft-purple { background: #fbf9ff; }
+    .panel.soft-green { background: #f8fdf9; }
+    .panel.soft-amber { background: #fffdf7; }
+    .panel.soft-blue { background: #f8fbff; }
+
+    .panel h2 {
+      margin-bottom: 14px;
+      text-align: center;
+      color: var(--blue);
+      font-size: clamp(19px, 2.1vw, 25px);
+      letter-spacing: 0;
+    }
+
+    .panel h2.green { color: #177245; }
+    .panel h2.orange { color: #9a4c0b; }
+    .panel h2.purple { color: var(--purple); }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .layer,
+    .operation,
+    .small-card,
+    .flow-node,
+    .scenario,
+    .insight {
+      border: 3px solid currentColor;
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .layer,
+    .operation {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      min-height: 78px;
+      padding: 14px 16px;
+      color: var(--purple);
+      background: var(--purple-soft);
+      --accent: var(--purple);
+    }
+
+    .layer.green,
+    .operation.green {
+      color: var(--green);
+      background: var(--green-soft);
+      --accent: var(--green);
+    }
+
+    .layer.orange,
+    .operation.orange {
+      color: var(--orange);
+      background: var(--orange-soft);
+      --accent: var(--orange);
+    }
+
+    .layer.blue,
+    .operation.blue {
+      color: var(--blue);
+      background: var(--blue-soft);
+      --accent: var(--blue);
+    }
+
+    .layer.teal,
+    .operation.teal {
+      color: var(--teal);
+      background: var(--teal-soft);
+      --accent: var(--teal);
+    }
+
+    .layer.red,
+    .operation.red {
+      color: var(--red);
+      background: var(--red-soft);
+      --accent: var(--red);
+    }
+
+    .number,
+    .dot {
+      display: grid;
+      place-items: center;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--accent, currentColor);
+      font-weight: 900;
+      font-size: 20px;
+      flex: 0 0 auto;
+    }
+
+    .dot {
+      width: 42px;
+      height: 42px;
+      font-size: 0;
+    }
+
+    .number span,
+    .dot span {
+      color: #fff;
+    }
+
+    .card-title {
+      color: color-mix(in srgb, currentColor 82%, #111);
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .card-title code {
+      font-size: 0.86em;
+    }
+
+    .card-text {
+      margin-top: 5px;
+      color: #344054;
+      font-size: 14px;
+    }
+
+    .arrow-down {
+      display: grid;
+      place-items: center;
+      height: 14px;
+      color: #2fb344;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .small-card {
+      min-height: 104px;
+      padding: 16px;
+      color: var(--teal);
+      background: var(--teal-soft);
+    }
+
+    .small-card.orange {
+      color: var(--orange);
+      background: #fff4cc;
+    }
+
+    .small-card.purple {
+      color: var(--purple);
+      background: var(--purple-soft);
+    }
+
+    .small-card.blue {
+      color: var(--blue);
+      background: #dff0ff;
+    }
+
+    .small-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .small-card p {
+      color: #344054;
+      font-size: 14px;
+    }
+
+    .role-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 14px;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .link-word {
+      color: #394150;
+      font-weight: 900;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .wide {
+      grid-column: span 2;
+    }
+
+    .flow-panel {
+      grid-column: span 2;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: 150px 34px 1fr 34px 1fr 34px 1.18fr;
+      gap: 18px;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .flow-node {
+      display: grid;
+      align-content: center;
+      min-height: 72px;
+      padding: 14px 16px;
+      color: var(--purple);
+      background: var(--purple-soft);
+      text-align: center;
+    }
+
+    .flow-node.source {
+      color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .flow-node.discuss {
+      color: var(--blue);
+      background: #dff0ff;
+    }
+
+    .flow-node.update {
+      color: var(--green);
+      background: var(--green-soft);
+      text-align: left;
+    }
+
+    .flow-title {
+      display: block;
+      color: color-mix(in srgb, currentColor 84%, #111);
+      font-size: 17px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .flow-text {
+      display: block;
+      margin-top: 5px;
+      color: #394150;
+      font-size: 13px;
+    }
+
+    .flow-arrow {
+      position: relative;
+      height: 2px;
+      background: #303642;
+    }
+
+    .flow-arrow::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -2px;
+      width: 10px;
+      height: 10px;
+      border-top: 2px solid #303642;
+      border-right: 2px solid #303642;
+      transform: translateY(-50%) rotate(45deg);
+      background: transparent;
+    }
+
+    .fanout {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .fan-card {
+      min-height: 58px;
+      padding: 11px 12px;
+      border: 2px solid var(--green);
+      border-radius: var(--radius);
+      background: var(--green-soft);
+      color: #146c43;
+      text-align: center;
+      font-weight: 900;
+    }
+
+    .fan-card.orange {
+      border-color: var(--orange);
+      background: var(--orange-soft);
+      color: #9a4c0b;
+    }
+
+    .fan-note {
+      margin-top: 12px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .scenario {
+      min-height: 74px;
+      padding: 13px 14px;
+      color: var(--purple);
+      background: var(--purple-soft);
+    }
+
+    .scenario.green {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .scenario.blue {
+      color: var(--blue);
+      background: #dff0ff;
+    }
+
+    .scenario.orange {
+      color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .scenario.red {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .scenario.pink {
+      color: var(--pink);
+      background: var(--pink-soft);
+    }
+
+    .scenario strong {
+      display: block;
+      margin-bottom: 5px;
+      color: color-mix(in srgb, currentColor 84%, #111);
+      font-size: 16px;
+    }
+
+    .scenario span {
+      color: #344054;
+      font-size: 13px;
+    }
+
+    .insight {
+      width: min(1220px, 100%);
+      margin: 26px auto 0;
+      padding: 18px 24px;
+      color: var(--orange);
+      background: #fff6c7;
+      text-align: left;
+    }
+
+    .insight h2 {
+      margin-bottom: 8px;
+      color: #1f2937;
+      text-align: left;
+      font-size: 21px;
+    }
+
+    .insight p {
+      color: #1f2937;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    code {
+      padding: 1px 5px;
+      border: 1px solid rgba(23, 33, 43, 0.12);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.68);
+      color: #20334a;
+      font-family: Consolas, "Cascadia Mono", "SFMono-Regular", monospace;
+      font-size: 0.9em;
+    }
+
+    .caption {
+      margin-top: 10px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+    }
+
+    @media (max-width: 1180px) {
+      .canvas {
+        grid-template-columns: 1fr;
+      }
+
+      .wide,
+      .flow-panel {
+        grid-column: auto;
+      }
+
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-arrow {
+        width: 2px;
+        height: 28px;
+        margin: 0 auto;
+      }
+
+      .flow-arrow::after {
+        top: auto;
+        right: auto;
+        bottom: -2px;
+        left: 50%;
+        transform: translateX(-50%) rotate(135deg);
+      }
+    }
+
+    @media (max-width: 720px) {
+      main {
+        width: min(100vw - 24px, 1500px);
+      }
+
+      .panel {
+        padding: 18px 14px;
+      }
+
+      .layer,
+      .operation {
+        grid-template-columns: 1fr;
+      }
+
+      .dot,
+      .number {
+        width: 42px;
+        height: 42px;
+      }
+
+      .mini-grid,
+      .role-row,
+      .fanout,
+      .scenario-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .link-word {
+        min-height: 20px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      main {
+        width: 100%;
+        padding: 0;
+      }
+
+      .panel,
+      .insight {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>BioMind LLM Wiki 记忆系统方法论</h1>
+      <p class="subtitle">证据优先的项目知识库构建模式 · Markdown Wiki + SessionArchive + LLM 协作</p>
+    </header>
+
+    <div class="canvas" aria-label="BioMind LLM Wiki 记忆系统方法论总览">
+      <section class="panel soft-purple" aria-labelledby="layer-title">
+        <h2 id="layer-title" class="purple">三层架构</h2>
+        <div class="stack">
+          <article class="layer">
+            <div class="number"><span>1</span></div>
+            <div>
+              <div class="card-title">Evidence 层 · <code>SessionArchive</code></div>
+              <p class="card-text">原始消息、计划、执行结果、错误、产物路径。只追加、可检索、可追溯，是 Wiki ingest 的唯一事件源。</p>
+            </div>
+          </article>
+          <div class="arrow-down">↓</div>
+          <article class="layer green">
+            <div class="number"><span>2</span></div>
+            <div>
+              <div class="card-title">Wiki 层 · LLM 生成 Markdown</div>
+              <p class="card-text">按 project、method、dataset、tool、decision、issue、artifact 等类型沉淀页面；长期事实以 claim 保存。</p>
+            </div>
+          </article>
+          <div class="arrow-down">↓</div>
+          <article class="layer orange">
+            <div class="number"><span>3</span></div>
+            <div>
+              <div class="card-title">Control 层 · 边界与一致性</div>
+              <p class="card-text"><code>schema.md</code>、<code>purpose.md</code>、review queue、lint、digest 与索引共同约束 LLM 不乱写长期记忆。</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel soft-blue" aria-labelledby="operation-title">
+        <h2 id="operation-title">三大操作</h2>
+        <div class="stack">
+          <article class="operation">
+            <div class="dot"><span></span></div>
+            <div>
+              <div class="card-title">Ingest · 插入</div>
+              <p class="card-text">从 pending events 中抽取实体、概念、claims、冲突与研究问题；一个任务可产生多页 Wiki。</p>
+            </div>
+          </article>
+          <article class="operation green">
+            <div class="dot"><span></span></div>
+            <div>
+              <div class="card-title">Query · 查询</div>
+              <p class="card-text">对 Wiki 页面进行词法检索、可选向量检索、RRF 融合与页面图扩展，再注入步骤局部上下文。</p>
+            </div>
+          </article>
+          <article class="operation orange">
+            <div class="dot"><span></span></div>
+            <div>
+              <div class="card-title">Lint · 维护</div>
+              <p class="card-text">检查证据缺失、低置信度、冲突、过期结论、Core/Wiki 边界违规，并写入审查队列。</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <div class="stack">
+        <section class="panel soft-green" aria-labelledby="index-title">
+          <h2 id="index-title" class="green">索引与日志</h2>
+          <div class="mini-grid">
+            <article class="small-card">
+              <strong><code>index.md</code></strong>
+              <p>内容导航、页面目录、项目入口。LLM 可先索引再打开具体页面。</p>
+            </article>
+            <article class="small-card orange">
+              <strong><code>log.md</code></strong>
+              <p>时间导向的整理历史，记录 ingest、patch、review 与 digest 更新。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel soft-amber" aria-labelledby="role-title">
+          <h2 id="role-title" class="orange">角色分工</h2>
+          <div class="role-row">
+            <article class="small-card purple">
+              <strong>你 · 人类研究者</strong>
+              <p>提出目标、确认冲突、决定哪些结论可进入长期知识库。</p>
+            </article>
+            <div class="link-word">协作</div>
+            <article class="small-card blue">
+              <strong>LLM · BioMind</strong>
+              <p>归纳证据、维护一致性、检索相似经验、生成可审查 patch。</p>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel flow-panel soft-blue" aria-labelledby="flow-title">
+        <h2 id="flow-title">Ingest 插入流程</h2>
+        <div class="flow">
+          <article class="flow-node source">
+            <span class="flow-title">新事件</span>
+            <span class="flow-text">message / execute / artifact / supervisor</span>
+          </article>
+          <div class="flow-arrow" aria-hidden="true"></div>
+          <article class="flow-node">
+            <span class="flow-title">LLM 读取分析</span>
+            <span class="flow-text">source summary、entities、concepts、claims</span>
+          </article>
+          <div class="flow-arrow" aria-hidden="true"></div>
+          <article class="flow-node discuss">
+            <span class="flow-title">与你讨论要点</span>
+            <span class="flow-text">冲突、缺证据、是否需要继续查证</span>
+          </article>
+          <div class="flow-arrow" aria-hidden="true"></div>
+          <article class="flow-node update">
+            <span class="flow-title">更新 Wiki</span>
+            <span class="flow-text">生成 patch，写摘要页、实体页、方法页，并更新索引。</span>
+          </article>
+        </div>
+        <div class="fanout" aria-label="Wiki 更新结果">
+          <div class="fan-card">摘要页</div>
+          <div class="fan-card">实体页 × N</div>
+          <div class="fan-card">方法 / 概念页</div>
+          <div class="fan-card orange">更新 index</div>
+        </div>
+        <p class="fan-note">一个 SessionArchive 事件批次可能触发 10 到 15 个 Wiki 页面或 claim 更新。</p>
+      </section>
+
+      <section class="panel soft-green" aria-labelledby="scenario-title">
+        <h2 id="scenario-title" class="green">BioMind 应用场景</h2>
+        <div class="scenario-grid">
+          <article class="scenario">
+            <strong>个人成长</strong>
+            <span>研究日记、工具偏好、常见错误修复。</span>
+          </article>
+          <article class="scenario green">
+            <strong>深度研究</strong>
+            <span>论文、报告、演化论点、证据链。</span>
+          </article>
+          <article class="scenario blue">
+            <strong>读书伴侣</strong>
+            <span>人物、主题、情节页与观点复盘。</span>
+          </article>
+          <article class="scenario orange">
+            <strong>团队知识库</strong>
+            <span>会议、文档、Slack 结论与决策记录。</span>
+          </article>
+          <article class="scenario red">
+            <strong>竞品分析</strong>
+            <span>产品差异、版本变更、对比证据。</span>
+          </article>
+          <article class="scenario pink">
+            <strong>旅行规划</strong>
+            <span>路线、预算、景点、约束条件。</span>
+          </article>
+          <article class="scenario orange">
+            <strong>课程笔记</strong>
+            <span>概念、公式、实验流程、错题回顾。</span>
+          </article>
+          <article class="scenario green">
+            <strong>生信项目</strong>
+            <span>样本、参数、工作流、产物与结论。</span>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <section class="insight" aria-labelledby="insight-title">
+      <h2 id="insight-title">核心洞察</h2>
+      <p>
+        维护知识库的瓶颈不是“让 LLM 记更多”，而是记账、对账与追溯。BioMind 的 Wiki 记忆把原始事件留在 SessionArchive，把可复用事实写成带 evidence 的 claim，把不确定内容推入 review queue。LLM 不负责替人类相信结论，只负责把证据整理到可以审查、检索、复用的位置。
+      </p>
+    </section>
+
+    <p class="caption">BioMind 记忆原则：当前用户输入与文件系统状态优先，其次是最新 observation，再其次是 Wiki 证据，最后才是 Core 快照。</p>
+  </main>
+</body>
+</html>

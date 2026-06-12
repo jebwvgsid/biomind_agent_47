@@ -22,10 +22,17 @@ class WorkflowManagerTests(unittest.TestCase):
         self.assertTrue(self.workflow_manager.has_workflow("scrna_standard_analysis"))
         self.assertTrue(self.workflow_manager.has_workflow("scrna_ingest_qc"))
         self.assertTrue(self.workflow_manager.has_workflow("hic_tad_analysis"))
+        self.assertTrue(self.workflow_manager.has_workflow("crop_genomic_prediction"))
+        self.assertTrue(self.workflow_manager.has_workflow("crop_gwas_analysis"))
+        self.assertTrue(self.workflow_manager.has_workflow("crop-gwas-pipeline"))
+        self.assertTrue(self.workflow_manager.has_workflow("crop-breeding/crop-gwas-pipeline"))
 
         catalog = self.workflow_manager.get_workflow_catalog_prompt()
         self.assertIn("workflow_id: scrna_standard_analysis", catalog)
         self.assertIn("stages: data_ingest, qc_filter", catalog)
+        self.assertIn("workflow_id: crop_genomic_prediction", catalog)
+        self.assertIn("workflow_id: crop_gwas_analysis", catalog)
+        self.assertIn("aliases: crop-gwas-pipeline, crop_gwas_pipeline, crop-breeding/crop-gwas-pipeline", catalog)
 
     def test_load_workflow_template_by_id(self):
         template = self.workflow_manager.load_workflow_prompt("scrna_standard_analysis")
@@ -34,6 +41,143 @@ class WorkflowManagerTests(unittest.TestCase):
         self.assertEqual(parsed["workflow_id"], "scrna_standard_analysis")
         self.assertEqual(parsed["stages"][0]["stage"], "data_ingest")
         self.assertEqual(parsed["stages"][0]["default_skill"], "scrna/ingest/data-download")
+
+    def test_load_workflow_template_by_alias(self):
+        template = self.workflow_manager.load_workflow_prompt("crop-breeding/crop-gwas-pipeline")
+        parsed = yaml.safe_load(template)
+
+        self.assertEqual(parsed["workflow_id"], "crop_gwas_analysis")
+        self.assertEqual(parsed["aliases"][0], "crop-gwas-pipeline")
+
+    def test_crop_genomic_prediction_workflow_matches_stage_tags(self):
+        workflow = self.workflow_manager.get_workflow("crop_genomic_prediction")
+        stages = workflow["stages"]
+
+        self.assertEqual(
+            [stage["stage"] for stage in stages],
+            [
+                "gs_triage",
+                "rrblup_gblup_prediction",
+                "bglr_bayesian_prediction",
+                "sommer_multikernel_gxe",
+            ],
+        )
+
+        handoff_stages = [
+            {
+                "stage": stage["stage"],
+                "status": "selected_skill",
+                "skill": stage["default_skill"],
+            }
+            for stage in stages
+        ]
+        result = validate_workflow_handoff(
+            {
+                "workflow_id": "crop_genomic_prediction",
+                "workflow_stages": handoff_stages,
+                "active_skills": [],
+            },
+            self.skill_manager,
+            self.workflow_manager,
+        )
+
+        self.assertEqual(result["errors"], [])
+
+    def test_crop_gwas_analysis_workflow_matches_stage_tags(self):
+        workflow = self.workflow_manager.get_workflow("crop_gwas_analysis")
+        stages = workflow["stages"]
+
+        self.assertEqual(
+            [stage["stage"] for stage in stages],
+            [
+                "gwas_triage",
+                "genotype_qc",
+                "gemma_lmm_gwas",
+                "gapit3_model_compare",
+                "rmvp_large_scale_gwas",
+                "pav_sv_pangenome_gwas",
+                "final_synthesis",
+            ],
+        )
+
+        handoff_stages = []
+        for stage in stages:
+            if stage.get("default_skill"):
+                handoff_stages.append(
+                    {
+                        "stage": stage["stage"],
+                        "status": "selected_skill",
+                        "skill": stage["default_skill"],
+                    }
+                )
+            else:
+                handoff_stages.append(
+                    {
+                        "stage": stage["stage"],
+                        "status": "no_skill_needed",
+                        "reason": "standardized GWAS outputs are already produced by operation skills",
+                        "direct_method": "read standardized summary_stats, lead_snps, lambda_gc, and candidate gene tables",
+                    }
+                )
+        result = validate_workflow_handoff(
+            {
+                "workflow_id": "crop_gwas_analysis",
+                "workflow_stages": handoff_stages,
+                "active_skills": [],
+            },
+            self.skill_manager,
+            self.workflow_manager,
+        )
+
+        self.assertEqual(result["errors"], [])
+
+    def test_crop_gwas_workflow_alias_handoff_is_canonicalized(self):
+        result = validate_workflow_handoff(
+            {
+                "workflow_id": "crop-breeding/crop-gwas-pipeline",
+                "active_batch_id": "1",
+                "workflow_stages": [
+                    {
+                        "stage": "gwas_triage",
+                        "status": "selected_skill",
+                        "skill": "crop-breeding/crop-gwas-pipeline",
+                        "batch_id": "1",
+                        "active_now": True,
+                    }
+                ],
+                "active_skills": ["crop-breeding/crop-gwas-pipeline"],
+            },
+            self.skill_manager,
+            self.workflow_manager,
+        )
+
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["handoff"]["workflow_id"], "crop_gwas_analysis")
+
+    def test_crop_gwas_batch2_active_skill_limit_accepts_three_methods(self):
+        active = [
+            "crop-breeding/crop-gwas-gemma-lmm",
+            "crop-breeding/crop-gwas-gapit3-model-compare",
+            "crop-breeding/crop-gwas-rmvp-large-scale",
+        ]
+        result = validate_workflow_handoff(
+            {
+                "workflow_id": "crop_gwas_analysis",
+                "active_batch_id": "2",
+                "workflow_stages": [
+                    {"stage": "gemma_lmm_gwas", "status": "selected_skill", "skill": active[0], "batch_id": "2", "active_now": True},
+                    {"stage": "gapit3_model_compare", "status": "selected_skill", "skill": active[1], "batch_id": "2", "active_now": True},
+                    {"stage": "rmvp_large_scale_gwas", "status": "selected_skill", "skill": active[2], "batch_id": "2", "active_now": True},
+                    {"stage": "pav_sv_pangenome_gwas", "status": "selected_skill", "skill": "crop-breeding/crop-gwas-pav-sv-pangenome", "batch_id": "3", "active_now": False},
+                ],
+                "active_skills": active,
+            },
+            self.skill_manager,
+            self.workflow_manager,
+            max_active_skills=3,
+        )
+
+        self.assertEqual(result["errors"], [])
 
     def test_parse_and_validate_valid_handoff(self):
         handoff = parse_workflow_handoff(

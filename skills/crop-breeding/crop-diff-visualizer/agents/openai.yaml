@@ -1,0 +1,3 @@
+interface:
+  display_name: "Crop Diff Visualizer"
+  short_description: "Create crop DEG figures, highlighted candidates, and reports."

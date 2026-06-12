@@ -6,6 +6,7 @@ import unittest
 from unittest import mock
 from pathlib import Path
 
+from memory.session_archive import SessionArchive
 from memory.wiki_memory import WikiMemoryManager, WikiSearchHit
 
 
@@ -45,18 +46,57 @@ def _minimal_analysis(**overrides):
     return data
 
 
+def _new_archive(manager: WikiMemoryManager) -> SessionArchive:
+    return SessionArchive(manager.root / "session_archive.sqlite3", max_inline_chars=manager.max_inline_chars)
+
+
+def _append_archive_event(
+    archive: SessionArchive,
+    manager: WikiMemoryManager,
+    task_id: str,
+    stage: str,
+    event_type: str,
+    payload=None,
+    messages=None,
+    project_id=None,
+    source_refs=None,
+) -> int:
+    payload = dict(payload or {})
+    messages = messages or []
+    semantics = manager.infer_task_semantics(task_id, stage=stage, messages=messages, payload=payload)
+    if semantics:
+        payload["task_semantics"] = semantics
+    content = "\n\n".join([
+        *(str(getattr(message, "content", message)) for message in messages[-4:]),
+        "payload: " + json.dumps(payload, ensure_ascii=False, default=str),
+    ])
+    return archive.append_event(
+        task_id=task_id,
+        session_id=task_id,
+        project_id=project_id or manager.default_project_id,
+        stage=stage,
+        event_type=event_type,
+        content=content,
+        summary=str(payload.get("summary") or content[:800]),
+        metadata=payload,
+        task_semantics=semantics,
+        source_refs=source_refs or [f"task:{task_id}"],
+    )
+
+
 class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
-    async def test_layout_raw_redaction_and_large_output_refs(self):
+    async def test_layout_and_archive_large_output_refs(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir) / ".biomind" / "memory"
             manager = WikiMemoryManager(None, root, max_inline_chars=80)
+            archive = _new_archive(manager)
 
-            event_id = manager.append_raw_event(
+            event_id = _append_archive_event(
+                archive,
+                manager,
                 task_id="session_1",
-                session_id="session_1",
                 stage="execute",
                 event_type="execution_finished",
-                messages=[],
                 payload={
                     "api_key": "sk-1234567890abcdef",
                     "stdout": "A" * 200,
@@ -66,21 +106,18 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue((root / "purpose.md").exists())
             self.assertTrue((root / "schema.md").exists())
             self.assertTrue((root / "wiki" / "index.md").exists())
-            raw_file = root / "raw" / "conversations" / "session_1.jsonl"
-            raw_text = raw_file.read_text(encoding="utf-8")
-            self.assertIn(event_id, raw_text)
-            self.assertIn("sk-[REDACTED]", raw_text)
-            self.assertNotIn("sk-1234567890abcdef", raw_text)
-            self.assertIn("large_text_ref", raw_text)
+            self.assertFalse((root / "raw" / "pending_wiki.jsonl").exists())
 
-            record = json.loads(raw_text.strip())
-            self.assertEqual(record["project_id"], "default")
-            ref_path = Path(record["payload"]["stdout"]["path"])
+            event = archive.recent_events(task_id="session_1", limit=1)[0]
+            self.assertEqual(event.id, event_id)
+            self.assertEqual(event.project_id, "default")
+            self.assertIn("sk-[REDACTED]", json.dumps(event.metadata, ensure_ascii=False))
+            self.assertNotIn("sk-1234567890abcdef", json.dumps(event.metadata, ensure_ascii=False))
+            self.assertIn("large_text_ref", json.dumps(event.metadata, ensure_ascii=False))
+            ref_path = Path(event.metadata["stdout"]["path"])
             self.assertTrue(ref_path.exists())
             self.assertEqual(ref_path.read_text(encoding="utf-8"), "A" * 200)
-
-            pending = json.loads(manager.pending_file.read_text(encoding="utf-8").strip())
-            self.assertEqual(pending["project_id"], "default")
+            self.assertEqual(len(archive.pending_for_wiki("default")), 1)
 
             purpose = (root / "purpose.md").read_text(encoding="utf-8")
             self.assertIn("bioinformatics analysis agent", purpose)
@@ -435,28 +472,34 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
             review = manager.read_review_queue()
             self.assertIn("Unsafe wiki page path", review)
 
-    async def test_raw_append_is_idempotent_by_event_hash(self):
+    async def test_archive_append_is_idempotent_by_event_hash(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = WikiMemoryManager(None, Path(tmpdir) / "memory")
-            kwargs = {
-                "task_id": "session_2",
-                "session_id": "session_2",
-                "project_id": "project_alpha",
-                "stage": "planner",
-                "event_type": "planner_event",
-                "payload": {"plan": "Run one step."},
-            }
+            archive = _new_archive(manager)
 
-            first = manager.append_raw_event(**kwargs)
-            second = manager.append_raw_event(**kwargs)
+            first = _append_archive_event(
+                archive,
+                manager,
+                task_id="session_2",
+                project_id="project_alpha",
+                stage="planner",
+                event_type="planner_event",
+                payload={"plan": "Run one step."},
+            )
+            second = _append_archive_event(
+                archive,
+                manager,
+                task_id="session_2",
+                project_id="project_alpha",
+                stage="planner",
+                event_type="planner_event",
+                payload={"plan": "Run one step."},
+            )
 
             self.assertEqual(first, second)
-            pending_lines = manager.pending_file.read_text(encoding="utf-8").splitlines()
-            raw_lines = (manager.conversations_dir / "session_2.jsonl").read_text(encoding="utf-8").splitlines()
-            self.assertEqual(len(pending_lines), 1)
-            self.assertEqual(len(raw_lines), 1)
+            self.assertEqual(len(archive.pending_for_wiki("project_alpha")), 1)
 
-    async def test_ingest_pending_applies_llm_patch_and_marks_processed(self):
+    async def test_ingest_from_archive_applies_llm_patch_and_marks_processed(self):
         patch = {
             "operations": [
                 {
@@ -465,7 +508,7 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                     "title": "Use Wiki Memory",
                     "type": "decision",
                     "content": "BioMind should use a source-traceable wiki layer.",
-                    "sources": ["raw:event-placeholder"],
+                    "sources": ["session_archive:placeholder"],
                 }
             ],
             "ingest_summary": "Added wiki memory decision.",
@@ -476,24 +519,26 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 Path(tmpdir) / "memory",
                 default_project_id="project_alpha",
             )
-            event_id = manager.append_raw_event(
+            archive = _new_archive(manager)
+            event_id = _append_archive_event(
+                archive,
+                manager,
                 task_id="session_3",
-                session_id="session_3",
                 stage="finalize",
                 event_type="task_finalized",
                 payload={"summary": "Use wiki memory."},
+                project_id="project_alpha",
             )
-            patch["operations"][0]["sources"] = [f"raw:{event_id}"]
+            patch["operations"][0]["sources"] = [f"session_archive:{event_id}"]
 
-            result = await manager.ingest_pending()
+            result = await manager.ingest_from_archive(archive)
 
             self.assertIn("Wiki ingest completed.", result)
-            self.assertIn(event_id, manager.processed_file.read_text(encoding="utf-8"))
-            self.assertEqual(manager.pending_file.read_text(encoding="utf-8").strip(), "")
+            self.assertEqual(archive.pending_for_wiki("project_alpha"), [])
             page = manager.read_page("decisions/use-wiki.md")
             self.assertIn("source-traceable wiki layer", page)
 
-    async def test_ingest_clips_large_raw_events_before_llm_call(self):
+    async def test_ingest_clips_large_archive_events_before_llm_call(self):
         patch = {"operations": [{"op": "append_log", "message": "ok"}]}
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = WikiMemoryManager(
@@ -501,20 +546,23 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 Path(tmpdir) / "memory",
                 default_project_id="project_alpha",
             )
-            manager.append_raw_event(
+            archive = _new_archive(manager)
+            _append_archive_event(
+                archive,
+                manager,
                 task_id="session_large",
-                session_id="session_large",
                 stage="execute",
                 event_type="execution_finished",
                 payload={"summary": "large numeric output", "values": list(range(100_000))},
+                project_id="project_alpha",
             )
 
-            result = await manager.ingest_pending()
+            result = await manager.ingest_from_archive(archive)
 
             analysis_prompt = manager.llm.calls[0][0].content
             self.assertIn("Wiki ingest completed.", result)
             self.assertLess(len(analysis_prompt), 120_000)
-            self.assertIn("payload_json_preview", analysis_prompt)
+            self.assertIn("metadata_json_preview", analysis_prompt)
 
     async def test_ingest_llm_error_returns_message_and_keeps_events_pending(self):
         class FailingLLM:
@@ -527,19 +575,21 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 Path(tmpdir) / "memory",
                 default_project_id="project_alpha",
             )
-            event_id = manager.append_raw_event(
+            archive = _new_archive(manager)
+            event_id = _append_archive_event(
+                archive,
+                manager,
                 task_id="session_llm_error",
-                session_id="session_llm_error",
                 stage="finalize",
                 event_type="task_finalized",
                 payload={"summary": "Needs later ingest."},
+                project_id="project_alpha",
             )
 
-            result = await manager.ingest_pending()
+            result = await manager.ingest_from_archive(archive)
 
             self.assertIn("Wiki ingest failed during analysis LLM call", result)
-            self.assertIn(event_id, manager.pending_file.read_text(encoding="utf-8"))
-            self.assertEqual(json.loads(manager.processed_file.read_text(encoding="utf-8")), [])
+            self.assertEqual([event.id for event in archive.pending_for_wiki("project_alpha")], [event_id])
             self.assertIn("Wiki Ingest LLM Error", manager.read_review_queue())
 
     async def test_ingest_prompt_reads_purpose_and_requires_purpose_review(self):
@@ -550,15 +600,18 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 Path(tmpdir) / "memory",
                 default_project_id="project_alpha",
             )
-            manager.append_raw_event(
+            archive = _new_archive(manager)
+            _append_archive_event(
+                archive,
+                manager,
                 task_id="session_purpose",
-                session_id="session_purpose",
                 stage="planner",
                 event_type="planner_event",
                 payload={"summary": "A new project question emerged."},
+                project_id="project_alpha",
             )
 
-            await manager.ingest_pending()
+            await manager.ingest_from_archive(archive)
 
             analysis_prompt = manager.llm.calls[0][0].content
             patch_prompt = manager.llm.calls[1][0].content
@@ -583,6 +636,9 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("concept = an abstract biological or analytical idea", schema)
             self.assertIn("Prefer the concrete page type first", schema)
             self.assertIn("related[] instead of duplicating their content", schema)
+            self.assertIn("## Skill Selection Memory Rules", schema)
+            self.assertIn("Frontmatter `skills[]` is only a search/graph index", schema)
+            self.assertIn("one canonical section named `## Skill Selection`", schema)
 
     async def test_ingest_analysis_prompt_prioritizes_concrete_page_types(self):
         patch = {"operations": [{"op": "append_log", "message": "ok"}]}
@@ -592,15 +648,18 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 Path(tmpdir) / "memory",
                 default_project_id="project_alpha",
             )
-            manager.append_raw_event(
+            archive = _new_archive(manager)
+            _append_archive_event(
+                archive,
+                manager,
                 task_id="session_type_boundaries",
-                session_id="session_type_boundaries",
                 stage="planner",
                 event_type="planner_event",
                 payload={"summary": "Seurat SCTransform and an Alpha dataset were discussed."},
+                project_id="project_alpha",
             )
 
-            await manager.ingest_pending()
+            await manager.ingest_from_archive(archive)
 
             analysis_prompt = manager.llm.calls[0][0].content
             self.assertIn("Page type boundary rules:", analysis_prompt)
@@ -619,21 +678,62 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 Path(tmpdir) / "memory",
                 default_project_id="project_alpha",
             )
-            manager.append_raw_event(
+            archive = _new_archive(manager)
+            _append_archive_event(
+                archive,
+                manager,
                 task_id="session_duplicate_boundaries",
-                session_id="session_duplicate_boundaries",
                 stage="planner",
                 event_type="planner_event",
                 payload={"summary": "STAR alignment workflow and STAR tool were discussed."},
+                project_id="project_alpha",
             )
 
-            await manager.ingest_pending()
+            await manager.ingest_from_archive(archive)
 
             patch_prompt = manager.llm.calls[1][0].content
             self.assertIn("Before creating entity/concept pages", patch_prompt)
             self.assertIn("update an existing or new tool, method, or dataset page", patch_prompt)
             self.assertIn("Avoid duplicate entity/concept pages", patch_prompt)
             self.assertIn("link to those pages with related[]", patch_prompt)
+
+    async def test_ingest_prompts_use_canonical_skill_selection_rules(self):
+        patch = {"operations": [{"op": "append_log", "message": "ok"}]}
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = WikiMemoryManager(
+                _FakeLLM([json.dumps(_minimal_analysis()), json.dumps(patch)]),
+                Path(tmpdir) / "memory",
+                default_project_id="project_alpha",
+            )
+            archive = _new_archive(manager)
+            _append_archive_event(
+                archive,
+                manager,
+                task_id="session_skill_selection",
+                stage="planner",
+                event_type="planner_event",
+                payload={
+                    "summary": "QC first, preprocessing later.",
+                    "selected_skills": ["scrna/qc/filter"],
+                    "active_skills": ["scrna/qc/filter"],
+                    "future_skills": ["scrna/preprocess/basic"],
+                    "candidate_skills": ["scrna/de/contrast"],
+                    "skill_selection_source": "consultant_finish",
+                },
+                project_id="project_alpha",
+            )
+
+            await manager.ingest_from_archive(archive)
+
+            analysis_prompt = manager.llm.calls[0][0].content
+            patch_prompt = manager.llm.calls[1][0].content
+            for prompt in (analysis_prompt, patch_prompt):
+                self.assertIn("Skill selection memory rules:", prompt)
+                self.assertIn("one canonical section named `## Skill Selection`", prompt)
+                self.assertIn("Do not create separate `Used Skills`", prompt)
+                self.assertIn("Frontmatter `skills[]` is only a search/graph index", prompt)
+            self.assertIn("plan a method or decision page update", analysis_prompt)
+            self.assertIn("Do not write separate `Used Skills`", patch_prompt)
 
     async def test_ingest_creates_fallback_source_summary_when_missing(self):
         patch = {"operations": [{"op": "append_log", "message": "no source page"}]}
@@ -643,22 +743,25 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 Path(tmpdir) / "memory",
                 default_project_id="project_alpha",
             )
-            event_id = manager.append_raw_event(
+            archive = _new_archive(manager)
+            event_id = _append_archive_event(
+                archive,
+                manager,
                 task_id="session_source",
-                session_id="session_source",
                 stage="execute",
                 event_type="execution_finished",
                 payload={"stdout": "assembled contigs"},
                 source_refs=["task:session_source"],
+                project_id="project_alpha",
             )
 
-            result = await manager.ingest_pending()
+            result = await manager.ingest_from_archive(archive)
 
-            page = manager.read_page(f"sources/{event_id}.md")
+            page = manager.read_page(f"sources/session_archive-{event_id}.md")
             frontmatter, body = manager._split_frontmatter(page)
             self.assertIn("Source summaries created: 1", result)
             self.assertEqual(frontmatter["type"], "source")
-            self.assertIn(f"raw:{event_id}", frontmatter["sources"])
+            self.assertIn(f"session_archive:{event_id}", frontmatter["sources"])
             self.assertNotIn("claims", frontmatter)
             self.assertIn("assembled contigs", body)
 
@@ -669,12 +772,15 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 Path(tmpdir) / "memory",
                 default_project_id="project_alpha",
             )
-            event_id = manager.append_raw_event(
+            archive = _new_archive(manager)
+            event_id = _append_archive_event(
+                archive,
+                manager,
                 task_id="session_existing_source",
-                session_id="session_existing_source",
                 stage="finalize",
                 event_type="task_finalized",
                 payload={"summary": "Existing source summary."},
+                project_id="project_alpha",
             )
             patch = {
                 "operations": [
@@ -684,13 +790,13 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                         "title": "Manual Source",
                         "type": "source",
                         "content": "Manual source summary.",
-                        "sources": [f"raw:{event_id}"],
+                        "sources": [f"session_archive:{event_id}"],
                     }
                 ]
             }
             manager.llm.responses = [json.dumps(_minimal_analysis()), json.dumps(patch)]
 
-            result = await manager.ingest_pending()
+            result = await manager.ingest_from_archive(archive)
 
             source_pages = [
                 page for page in manager._all_pages(project_id="project_alpha")
@@ -699,7 +805,7 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("Source summaries created: 0", result)
             self.assertEqual(len(source_pages), 1)
             self.assertEqual(source_pages[0]["path"], "sources/manual-source.md")
-            self.assertIn("Wiki page not found", manager.read_page(f"sources/{event_id}.md"))
+            self.assertIn("Wiki page not found", manager.read_page(f"sources/session_archive-{event_id}.md"))
 
     async def test_purpose_update_suggestion_goes_to_review_queue(self):
         patch = {
@@ -718,15 +824,18 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 Path(tmpdir) / "memory",
                 default_project_id="project_alpha",
             )
-            manager.append_raw_event(
+            archive = _new_archive(manager)
+            _append_archive_event(
+                archive,
+                manager,
                 task_id="session_review",
-                session_id="session_review",
                 stage="consultant",
                 event_type="consultant_event",
                 payload={"summary": "Need genome assembly QC question."},
+                project_id="project_alpha",
             )
 
-            await manager.ingest_pending()
+            await manager.ingest_from_archive(archive)
 
             review = manager.read_review_queue()
             self.assertIn("Purpose Update Suggestion", review)
@@ -1104,18 +1213,20 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 _FakeLLM([json.dumps(analysis), json.dumps(patch)]),
                 Path(tmpdir) / "memory",
             )
-            event_id = manager.append_raw_event(
+            archive = _new_archive(manager)
+            event_id = _append_archive_event(
+                archive,
+                manager,
                 task_id="session_json",
-                session_id="session_json",
                 stage="execute",
                 event_type="observation",
                 payload={"summary": "TP53 appears in immune evasion context."},
                 project_id="project_alpha",
             )
-            analysis["entities"][0]["evidence"] = [f"raw:{event_id}"]
-            analysis["research_queries"][0]["sources"] = [f"raw:{event_id}"]
+            analysis["entities"][0]["evidence"] = [f"session_archive:{event_id}"]
+            analysis["research_queries"][0]["sources"] = [f"session_archive:{event_id}"]
 
-            result = await manager.ingest_pending(project_id="project_alpha")
+            result = await manager.ingest_from_archive(archive, project_id="project_alpha")
 
             second_prompt = str(manager.llm.calls[1][0].content)
             self.assertIn("Wiki ingest completed.", result)
@@ -1132,21 +1243,23 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 _FakeLLM(["not json", json.dumps({"operations": [{"op": "append_log", "message": "should not run"}]})]),
                 Path(tmpdir) / "memory",
             )
-            manager.append_raw_event(
+            archive = _new_archive(manager)
+            event_id = _append_archive_event(
+                archive,
+                manager,
                 task_id="session_bad",
-                session_id="session_bad",
                 stage="execute",
                 event_type="observation",
                 payload={"summary": "Bad analysis should stop ingest."},
                 project_id="project_alpha",
             )
 
-            result = await manager.ingest_pending(project_id="project_alpha")
+            result = await manager.ingest_from_archive(archive, project_id="project_alpha")
 
             self.assertIn("analyst returned invalid JSON", result)
             self.assertEqual(len(manager.llm.calls), 1)
             self.assertIn("Invalid Wiki Analysis", manager.read_review_queue())
-            self.assertEqual(json.loads(manager.processed_file.read_text(encoding="utf-8")), [])
+            self.assertEqual([event.id for event in archive.pending_for_wiki("project_alpha")], [event_id])
 
     async def test_add_research_queries_writes_deduped_queue_and_reviews_invalid_items(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1451,13 +1564,15 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(manager._type_affinity("source", "decision"), 0.5)
             self.assertEqual(manager._type_affinity("dataset", "issue"), 0.0)
 
-    async def test_raw_events_include_inferred_task_semantics(self):
+    async def test_archive_events_include_inferred_task_semantics(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = WikiMemoryManager(None, Path(tmpdir) / "memory")
+            archive = _new_archive(manager)
 
-            event_id = manager.append_raw_event(
+            event_id = _append_archive_event(
+                archive,
+                manager,
                 task_id="session_1",
-                session_id="session_1",
                 stage="planner",
                 event_type="planner_event",
                 messages=["Call TADs for leaf.cool at 40kb with hicFindTADs."],
@@ -1470,16 +1585,16 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 project_id="project_alpha",
             )
 
-            raw_record = json.loads((manager.conversations_dir / "session_1.jsonl").read_text(encoding="utf-8"))
-            semantics = raw_record["task_semantics"]
+            archive_event = archive.recent_events(task_id="session_1", limit=1)[0]
+            semantics = archive_event.task_semantics
 
-            self.assertEqual(raw_record["event_id"], event_id)
+            self.assertEqual(archive_event.id, event_id)
             self.assertEqual(semantics["task_type"], "chromatin_contact_tad")
             self.assertEqual(semantics["workflow_id"], "hic_tad_analysis")
             self.assertIn("3d-dna/tad-calling", semantics["skills"])
             self.assertIn("40000", semantics["resolutions"])
             self.assertIn("leaf", semantics["samples"])
-            self.assertEqual(raw_record["payload"]["task_semantics"]["analysis_type"], "tad_calling")
+            self.assertEqual(archive_event.metadata["task_semantics"]["analysis_type"], "tad_calling")
 
     async def test_source_summary_pages_preserve_task_semantic_frontmatter(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1928,15 +2043,18 @@ class WikiMemoryManagerTests(unittest.IsolatedAsyncioTestCase):
                 default_project_id="project_beta",
             )
 
-            manager.append_raw_event(
+            archive = _new_archive(manager)
+            event_id = _append_archive_event(
+                archive,
+                manager,
                 task_id="session_beta",
-                session_id="session_beta",
                 stage="execute",
                 event_type="execution_finished",
                 payload={"summary": "Beta project note."},
             )
-            raw_text = (manager.conversations_dir / "session_beta.jsonl").read_text(encoding="utf-8")
-            self.assertEqual(json.loads(raw_text)["project_id"], "project_beta")
+            archive_event = archive.recent_events(task_id="session_beta", limit=1)[0]
+            self.assertEqual(event_id, archive_event.id)
+            self.assertEqual(archive_event.project_id, "project_beta")
 
             manager.apply_patch(
                 {

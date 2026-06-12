@@ -1,0 +1,4 @@
+chrom	start	end	change_type	target_id	control_id
+Chr01	100000	120000	shifted	target_boundary_1	control_boundary_1
+Chr01	250000	260000	shifted	target_boundary_2	control_boundary_2
+Chr02	180000	180000	shared	target_boundary_4	control_boundary_4

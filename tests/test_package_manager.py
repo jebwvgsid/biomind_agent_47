@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,6 +11,7 @@ class PackageManagerRegistrationTests(unittest.TestCase):
     def make_manager(self, root: str) -> PackageManager:
         package_manager.BIO_SOFTWARE_ROOT = None
         package_manager.BIO_SOURCE_INSTALL_DIR = None
+        package_manager.ANACONDA_ROOT = None
         return PackageManager(work_dir=root)
 
     def test_register_existing_tool_replaces_default_env_with_env_from_conda_path(self):
@@ -28,6 +30,125 @@ class PackageManagerRegistrationTests(unittest.TestCase):
             self.assertIn("# Env: hicexplore", text)
             self.assertIn("conda activate hicexplore", text)
             self.assertNotIn("export PATH=\"/data0/stu_liusiqi/anaconda3/envs/hicexplore/bin", text)
+            self.assertIn('"$CONDA_PREFIX/bin/cooler"', text)
+            self.assertIn("could not resolve real executable", text)
+            self.assertNotIn('exec cooler "$@"', text)
+            self.assertIn('exec "$real_tool" "$@"', text)
+
+    def test_register_existing_tool_rejects_shim_source_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            pm = self.make_manager(tmp)
+            shim_dir = Path(tmp) / "agent_shim" / "bin_shims"
+            shim_dir.mkdir(parents=True)
+            shim_path = shim_dir / "bcftools"
+            shim_path.write_text("#!/bin/bash\nexec bcftools \"$@\"\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "Refusing to register tool 'bcftools' from shim path"):
+                pm.register_existing_tool(
+                    tool_name="bcftools",
+                    env_name="samtools",
+                    source_path=str(shim_path),
+                )
+
+    def test_register_existing_tool_rejects_shim_command_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            pm = self.make_manager(tmp)
+            with self.assertRaisesRegex(ValueError, "Refusing to register shim path as tool command"):
+                pm.register_existing_tool(
+                    tool_name="/data0/stu_liusiqi/software/agent_shim/bin_shims/bcftools",
+                    env_name="samtools",
+                    source_path="/data0/stu_liusiqi/anaconda3/envs/samtools/bin",
+                )
+
+    def test_manager_repairs_recursive_registered_shim_on_startup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shim_dir = root / "bin_shims"
+            shim_dir.mkdir()
+            shim = shim_dir / "bcftools"
+            shim.write_text(
+                "#!/bin/bash\n"
+                "# BioMind Shim for bcftools\n"
+                "# Env: samtools\n"
+                "# 4. Inject Extra Configs (注入 Agent 自动配置的路径)\n"
+                "\n"
+                "# 5. Execute\n"
+                "exec bcftools \"$@\"\n",
+                encoding="utf-8",
+            )
+            (root / "software_registry.json").write_text(
+                json.dumps(
+                    {
+                        "tools": {
+                            "bcftools": {
+                                "env": "samtools",
+                                "env_name": "samtools",
+                                "shim_path": str(shim),
+                                "source_path": "/data0/stu_liusiqi/anaconda3/envs/samtools/bin",
+                            }
+                        },
+                        "environments": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            pm = self.make_manager(tmp)
+
+            text = shim.read_text(encoding="utf-8")
+            self.assertIn("Resolve the real executable explicitly", text)
+            self.assertNotIn('exec bcftools "$@"', text)
+            self.assertIn('exec "$real_tool" "$@"', text)
+            self.assertEqual(pm.registry["tools"]["bcftools"]["shim_version"], "realpath-v2")
+
+    def test_manager_repairs_default_env_shim_mismatch_from_real_executable_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shim_dir = root / "bin_shims"
+            shim_dir.mkdir()
+            shim = shim_dir / "cooler"
+            shim.write_text(
+                "#!/bin/bash\n"
+                "# BioMind Shim for cooler\n"
+                "# Env: bio_cooler\n"
+                "conda activate bio_cooler\n"
+                "# 4. Inject Extra Configs (注入 Agent 自动配置的路径)\n"
+                'export PATH="/data0/stu_liusiqi/anaconda3/envs/hicexplore/bin:$PATH"\n'
+                "# 5. Execute\n"
+                "# Resolve the real executable explicitly. Do not run bare `cooler` here:\n"
+                'real_tool_candidates=(\n'
+                '    "$CONDA_PREFIX/bin/cooler"\n'
+                "    /data0/stu_liusiqi/anaconda3/envs/hicexplore/bin/cooler\n"
+                "    /data0/stu_liusiqi/anaconda3/envs/bio_cooler/bin/cooler\n"
+                ")\n"
+                'exec "$real_tool" "$@"\n',
+                encoding="utf-8",
+            )
+            (root / "software_registry.json").write_text(
+                json.dumps(
+                    {
+                        "tools": {
+                            "cooler": {
+                                "env": "bio_cooler",
+                                "env_name": "bio_cooler",
+                                "shim_path": str(shim),
+                                "source_path": "/data0/stu_liusiqi/anaconda3/envs/hicexplore/bin",
+                            }
+                        },
+                        "environments": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            pm = self.make_manager(tmp)
+
+            text = shim.read_text(encoding="utf-8")
+            self.assertEqual(pm.registry["tools"]["cooler"]["env"], "hicexplore")
+            self.assertIn("# Env: hicexplore", text)
+            self.assertIn("conda activate hicexplore", text)
+            self.assertNotIn("conda activate bio_cooler", text)
+            self.assertNotIn('export PATH="/data0/stu_liusiqi/anaconda3/envs/hicexplore/bin', text)
 
     def test_register_existing_tool_rejects_explicit_env_mismatch(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -76,6 +197,70 @@ class PackageManagerRegistrationTests(unittest.TestCase):
             record = pm.registry["environments"]["hicexplore"]
             self.assertEqual(record["status"], "verified")
             self.assertIn("genomics/chromatin/tad-calling", record["skill_ids"])
+
+    def test_shared_environment_tracks_healthchecks_per_skill(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            pm = self.make_manager(tmp)
+            sommer_check = "conda run -n crop_gp_pro Rscript -e \"library(sommer); library(yaml); cat('OK\\n')\""
+            rrblup_check = "conda run -n crop_gp_pro Rscript -e \"library(rrBLUP); cat('OK\\n')\""
+
+            pm.register_environment(
+                env_name="crop_gp_pro",
+                packages=["sommer", "yaml"],
+                skill_id="crop-breeding/crop-gs-sommer-multikernel-gxe",
+                language="r",
+                healthcheck=sommer_check,
+                status="verified",
+            )
+            pm.register_environment(
+                env_name="crop_gp_pro",
+                packages=["rrBLUP"],
+                skill_id="crop-breeding/crop-gs-rrblup-gblup",
+                language="r",
+                healthcheck=rrblup_check,
+                status="verified",
+            )
+
+            record = pm.registry["environments"]["crop_gp_pro"]
+            self.assertEqual(record["packages"], ["sommer", "yaml", "rrBLUP"])
+            self.assertEqual(
+                record["healthchecks_by_skill"]["crop-breeding/crop-gs-sommer-multikernel-gxe"],
+                sommer_check,
+            )
+            self.assertEqual(
+                record["healthchecks_by_skill"]["crop-breeding/crop-gs-rrblup-gblup"],
+                rrblup_check,
+            )
+
+    def test_python_healthcheck_uses_import_module_aliases(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            pm = self.make_manager(tmp)
+
+            command = pm.build_environment_healthcheck(
+                env_name="gp_waiter",
+                language="python",
+                packages=["pytorch", "scikit-learn", "numpy"],
+            )
+
+            self.assertIn("import torch, sklearn, numpy", command)
+            self.assertNotIn("import pytorch", command)
+
+    def test_configured_anaconda_root_is_used_for_healthchecks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            conda_bin = root / "anaconda3" / "bin"
+            conda_bin.mkdir(parents=True)
+            conda_exe = conda_bin / "conda"
+            conda_exe.write_text("#!/bin/sh\n", encoding="utf-8")
+            package_manager.BIO_SOFTWARE_ROOT = None
+            package_manager.BIO_SOURCE_INSTALL_DIR = None
+            package_manager.ANACONDA_ROOT = str(root / "anaconda3")
+
+            pm = PackageManager(work_dir=str(root / "work"))
+            command = pm._command_with_configured_manager("conda run -n mustache python -m mustache --help")
+
+            self.assertTrue(pm.conda_exe.replace("\\", "/").endswith("anaconda3/bin/conda"))
+            self.assertIn("anaconda3/bin/conda run -n mustache", command.replace("\\", "/"))
 
 
 if __name__ == "__main__":

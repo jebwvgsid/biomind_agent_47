@@ -23,6 +23,7 @@ PRIME_DIRECTIVES = """<prime_directives>
    - If a skill provides a runtime `env_runner`, prefix that skill's script with the runner exactly; never run the script with bare `python`/`Rscript`.
    - If a skill execution card says a registered environment is installed/verified/success, verify it first and do not install unless the healthcheck fails.
    - **CHECK FIRST**: Look at `<installed_tools>`. If the tool is listed, **RUN IT DIRECTLY**.
+   - **NO DIRECT SHIM PATHS**: The shim directory is already in PATH. Never call an absolute path under `bin_shims` or `agent_shim`; call the registered command name or use the skill `env_runner`.
    - **NO DIRECT INSTALL IN EXECUTE**: Never output `pip install`, `conda install`, `conda create`, or `mamba install` inside `<execute>`. Use `<install_tool env="...">...</install_tool>` instead.
    ...
 
@@ -41,6 +42,7 @@ PRIME_DIRECTIVES = """<prime_directives>
 4. **Data Integrity**: 
    - Never invent file paths. Use `ls` to verify files exist before processing.
    - Do not assume tools are installed; check `<installed_tools>` list first.
+   - When an error points to a `.err`, `.log`, `.out`, or traceback file, inspect only the tail first, e.g. `tail -n 80 file.log`. For huge logs, use targeted grep plus tail, e.g. `grep -iE 'error|exception|fatal|traceback|killed' file.log | tail -n 40`. Never `cat` an entire long log.
 
 5. **ATOMIC EXECUTION (ANTI-SNOWBALL PROTOCOL)**:
    - **ONE STEP AT A TIME**: You are STRICTLY FORBIDDEN from generating code for more than ONE logical step of the plan at a time.
@@ -80,9 +82,13 @@ TOOL_CONTEXT_TEMPLATE = """<environment_context>
 MEMORY_CONTEXT_TEMPLATE = """<memory_context>
 <memory_policy>
 - Current user input, verified filesystem state, and latest observations override stale memory.
-- Markdown long-term memory is compatibility context only; do not use it as the source of truth for project facts.
+- Memory injection is staged, not full-recall-per-step.
+- Consultant performs broad automatic retrieval once and curates a compact memory packet for downstream stages.
+- Planner must convert useful historical lessons into plan constraints, step cautions, inputs, and success criteria.
+- Generate is step-local by default: use the current plan/progress, active skills, required paths, latest observation, environment, and supervisor feedback.
+- Wiki, TaskSummary, SessionArchive, and artifact index context appear here only after an on-demand trigger such as error recovery, missing input paths, resume, phase change, or explicit evidence/source questions.
+- TaskSummary is a report/cache for task navigation and resume only; do not treat it as a factual source of truth.
 - wiki_purpose is direction-setting context, not factual evidence.
-- Project facts, dataset paths, methods, parameters, decisions, and conclusions should come from Wiki claims with evidence.
 - Full process logs are not injected by default. Search memory explicitly if older details are needed.
 </memory_policy>
 
@@ -97,6 +103,10 @@ MEMORY_CONTEXT_TEMPLATE = """<memory_context>
 <related_memory>
 {related_memory}
 </related_memory>
+
+<consultant_memory_packet>
+{memory_packet_context}
+</consultant_memory_packet>
 
 <wiki_context>
 {wiki_context}
@@ -131,10 +141,11 @@ AGENTS_CONTEXT_TEMPLATE = """<agents_md_context>
 
 EPHEMERAL_CONTEXT_TEMPLATE = """<ephemeral_context>
 <ephemeral_policy>
-- This context may change each turn and is appended after the stable system prompt.
-- Use it for retrieved evidence, active skills, task state, supervisor feedback, and recovery hints.
+- This is the step-local runtime context appended after the stable system prompt.
+- It is intentionally narrow during normal PASS progression; broad memory is not reloaded on every Generate turn.
+- Use it for active skills, current task state, latest observation, supervisor feedback, and only the retrieved evidence needed by this step.
 - Do not promote procedural workflows from memory into durable facts; use skills for procedures.
-- Priority order: current user input > verified filesystem state > latest observations > Wiki evidence > Core snapshot.
+- Priority order: current user input/messages/state > verified filesystem state > latest observations > pending SessionArchive buffer > Wiki evidence > Core snapshot.
 </ephemeral_policy>
 
 <latest_environment_context>
@@ -225,11 +236,15 @@ INTERACTION_PROTOCOL = """<interaction_protocol>
 # 5. 错误恢复模板
 RECOVERY_TEMPLATE = """<recovery_mode>
 WARNING: PREVIOUS STEP FAILED. 
-1. Analyze the error log in `<observation>` carefully.
-2. Check common issues: Missing tool? Wrong path? Permission? Memory?
-3. If the tool is missing, use `<install_tool>`.
-4. If a Python package is missing, still use `<install_tool env="...">package_or_skill_deps</install_tool>`; do not output `pip install`.
-5. Do not repeat the exact same command. Try a fix.
+1. Treat non-zero exit code or failed validation as failed. Never call it PASS.
+2. Diagnose the exact failing command, line, and error class before retrying.
+3. Do not infer missing inputs unless the exact error proves that input is missing.
+4. If logs or tracebacks are truncated, inspect the relevant tail first; do not guess.
+5. If the tool is missing, use `<install_tool>`.
+6. If a Python/R package is missing, still use `<install_tool env="...">package_or_skill_deps</install_tool>`; do not output `pip install`, `conda install`, or R package installation directly.
+7. Do not repeat the exact same command without changing the diagnosed cause.
+8. Do not proceed to downstream workflow steps until the failed step passes concrete validation gates.
+9. If the failure references a `.err`, `.log`, `.out`, or traceback file, inspect only the last 40-100 lines first. Use `tail -n 80` or targeted `grep ... | tail -n 40`; do not read or paste the entire long log.
 </recovery_mode>
 """
 
@@ -362,19 +377,30 @@ Instructions:
 1. **CRITICAL**: Read the 'Context (User Situation)' first.
    - If user says "Already installed" or "Files exist", **DO NOT DOWNLOAD**.
    - Instead, verify the path and Register it (Method C).
-2. Prefer reusing or extending an existing environment instead of creating a duplicate whenever the context suggests a reusable env.
-2. If this is a Python package dependency for a skill:
+2. If the context contains `[STRICT SKILL RUNTIME CONTRACT]`, it overrides all generic installer heuristics:
+   - Execute only listed `allowed_install_command` values, exactly apart from harmless whitespace.
+   - Do not infer package names, switch environments, downgrade runtimes, or use pip/CRAN/GitHub fallback unless that exact command is listed.
+   - Do not add manual `cd` lines. The installer executes Bash commands from the configured Source Install Path automatically.
+   - If the allowed command(s) fail, report the failing command and stderr instead of inventing a fallback.
+3. Prefer reusing or extending an existing environment instead of creating a duplicate whenever the context suggests a reusable env.
+4. If this is a Python package dependency for a skill:
    - Install into the requested env **'{target_env}'**, not into base.
    - The requested env **'{target_env}'** overrides any `default_env` shown in skill docs for this installation.
    - Prefer conda/mamba with conda-forge and bioconda.
    - If selected skill context contains `python_packages`, install all listed packages into **'{target_env}'**.
    - If selected skill context contains an `install_command` for another env name, adapt it by replacing that env name with **'{target_env}'**.
+   - If selected skill context contains `[SELECTED SKILL INSTALL COMMAND]`, prefer its `install_command` over generic package-name inference.
    - Verify with `conda run -n {target_env} python` imports.
-3. If this is an R package dependency for a skill, verify with `conda run -n {target_env} Rscript -e "library(...)"`.
-4. After verification, you MUST register the environment with `<register_environment env="{target_env}" language="Python_or_R" packages="pkg1,pkg2" capabilities="cap1,cap2" />`.
-5. If this is also a command-line tool, output `<register_tool ... />` after the environment registration.
-6. Execute the necessary steps (Install OR Register). Do not claim success before verification and registration both complete.
-7. Never edit shell startup/login files (`~/.bashrc`, `~/.profile`, `~/.bash_profile`, `~/.zshrc`, `/etc/profile*`) and never run `source ~/.bashrc`, unsafe `stty`, `tmux attach`, or interactive prompts. These can freeze SSH sessions.
+5. If this is an R package dependency for a skill:
+   - Install into **'{target_env}'**, not base.
+   - Prefer conda/mamba from conda-forge using the `r-<package>` name, e.g. `rrBLUP` -> `r-rrblup`.
+   - If selected skill context contains `[SELECTED SKILL INSTALL COMMAND]`, prefer its `install_command` over generic `r-<package>` inference.
+   - Use CRAN `install.packages(...)`, GitHub, or Bioconductor install commands only when there is no strict skill runtime contract, or when the exact command is listed in that contract.
+   - Verify with `conda run -n {target_env} Rscript -e "library(...); cat('OK\\n')"`.
+6. After verification, you MUST register the environment with `<register_environment env="{target_env}" language="Python_or_R" packages="pkg1,pkg2" capabilities="cap1,cap2" />`.
+7. If this is also a command-line tool, output `<register_tool ... />` after the environment registration.
+8. Execute the necessary steps (Install OR Register). Do not claim success before verification and registration both complete.
+9. Never edit shell startup/login files (`~/.bashrc`, `~/.profile`, `~/.bash_profile`, `~/.zshrc`, `/etc/profile*`) and never run `source ~/.bashrc`, unsafe `stty`, `tmux attach`, or interactive prompts. These can freeze SSH sessions.
 """
 
 # ======================================================
@@ -438,6 +464,9 @@ Check the `<user_context>` passed in the conversation.
  **Method A: PURE CONDA**
    1. Use only if no source build is required.
    2. `conda install ...`
+      - For R package dependencies, prefer conda-forge package names with the `r-` prefix, for example `rrBLUP` -> `r-rrblup`.
+      - If the user work order includes `[SELECTED SKILL INSTALL COMMAND]`, prefer its `install_command` over generic package-name inference.
+      - After installing an R package, verify with `conda run -n TARGET_ENV Rscript -e "library(PACKAGE); cat('OK\\n')"`.
    3. Output `<register_environment ... />`. If this is a command-line tool, also output `<register_tool ... />`.
 
 **PHASE 3: VERIFICATION & REGISTRATION**
@@ -475,7 +504,7 @@ Installed System Tools: {installed_tools_str}
 - Current Work Dir: {work_dir}
 - Skill Selection Limit: {max_skills}
 
-[WIKI MEMORY CONTEXT]
+[CONSULTANT MEMORY RETRIEVAL CONTEXT]
 {wiki_memory_context}
 
 [COGNITIVE MEMORY]
@@ -485,11 +514,17 @@ Search & Action History:
 <role_definition>
 Your goal is to decide which local skill(s) are needed, determine what inputs are still missing, and verify key requirements before handoff.
 You should behave like a consultant who can inspect deeper skill materials when shallow metadata is not enough.
+You are also the memory broker: use the retrieval context above to curate only task-relevant memory into your FINISH handoff.
 </role_definition>
 
 <capabilities>
 1. **EXECUTE**: Run **safe, read-only** commands to verify data or environment. 
    - Use this to check if files exist, peek at CSV headers, or check tool versions.
+   - Consultant EXECUTE must never create, modify, index, normalize, balance, convert, install, download, or preprocess data/tools.
+   - Forbidden in Consultant EXECUTE unless the user explicitly asked for that mutation in the current turn: `cooler balance`, `samtools index`, `bwa index`, `conda install`, `conda create`, `pip install`, `git clone`, `mkdir`, `rm`, `mv`, `cp`, output redirection to data files, and any command whose purpose is to repair inputs.
+   - If a selected skill provides a read-only preflight command, use that exact preflight command instead of inventing tool-specific checks.
+   - For cooler/mcool balance status, inspect the effective cooler URI's `bins()["weight"]` column or a skill wrapper `--preflight-only`; do not run `cooler balance` or `cooler balance --stdout`.
+   - If read-only verification shows an input violates the user's constraints, ASK or FINISH with a blocked/input-invalid handoff. Do not attempt preprocessing or installation to work around invalid inputs.
    - Format:
      EXECUTE
      ```bash
@@ -553,7 +588,10 @@ Order:
 You must determine the core requirements (e.g., input files, reference genomes, target conda environment).
 - **CRITICAL PRE-CHECK**: If the user provides a file path, you **MUST** use the `EXECUTE` command (e.g., `ls`, `head`) to physically verify that the file exists and is readable BEFORE you output FINISH.
 - Do NOT assume a file exists just because the user provided the path. Test it!
-- Check if the target software environment is explicitly defined.
+- Read `Installed System Tools` carefully: registered tools, environments, environment status, packages, capabilities, and bound tools are evidence for availability.
+- Check whether each selected skill's declared runtime environment is registered and appropriate. A tool registered in another conda environment is not automatically available inside the selected skill runtime.
+- If a required tool is registered as a BioMind shim, refer to the command name; do not hard-code a path under `bin_shims`.
+- Check if the target software environment is explicitly defined and report runtime uncertainty in FINISH instead of leaving it for Execute to discover.
 
 **Step 4: Gap Analysis**
 - Compare **Doc Requirements** vs **User Input** + **Verification Results**.
@@ -565,6 +603,7 @@ Before you output FINISH, you MUST ensure:
 - Input file path(s) exist (Verified via EXECUTE).
 - Input file format is correct.
 - Target environment is clarified.
+- Registered runtime/tool availability has been checked from the environment registry; if uncertain or missing, say so explicitly in REQUIREMENTS_SUMMARY.
 - Selected local skill ID(s) are chosen if a local skill applies.
 
 If any of the above is missing or not verified, you MUST ASK or EXECUTE instead of FINISH.
@@ -625,6 +664,7 @@ canonical_skill_id: why it may be useful later
 - Verified inputs and exact absolute paths
 - Target env or runtime constraints
 - Key parameters, references, and selected skill rationale
+- Relevant memory facts selected from CONSULTANT MEMORY RETRIEVAL CONTEXT, with source refs when available
 [/REQUIREMENTS_SUMMARY]
 </handover_format>
 

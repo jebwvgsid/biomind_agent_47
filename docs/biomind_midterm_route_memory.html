@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BioMind 中期答辩：技术路线图与记忆系统流程图</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5a6472;
+      --line: #d9ded8;
+      --blue: #2563eb;
+      --blue-soft: #e9f1ff;
+      --teal: #0f766e;
+      --teal-soft: #e5f5f2;
+      --amber: #b7791f;
+      --amber-soft: #fff5dd;
+      --rose: #be123c;
+      --rose-soft: #fff0f3;
+      --violet: #6d28d9;
+      --violet-soft: #f3edff;
+      --green: #2f855a;
+      --green-soft: #e8f5ed;
+      --shadow: 0 18px 48px rgba(24, 33, 42, 0.10);
+      --radius: 8px;
+      --max: 1180px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.72), rgba(246,247,243,0.95)),
+        radial-gradient(circle at 18% 0%, rgba(37,99,235,0.10), transparent 30%),
+        radial-gradient(circle at 90% 12%, rgba(15,118,110,0.11), transparent 26%),
+        var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
+      line-height: 1.62;
+    }
+
+    main {
+      width: min(var(--max), calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    header {
+      min-height: 62vh;
+      display: grid;
+      align-content: center;
+      gap: 28px;
+      padding: 42px 0 32px;
+    }
+
+    .kicker {
+      width: fit-content;
+      padding: 5px 11px;
+      border: 1px solid rgba(15, 118, 110, 0.28);
+      border-radius: 999px;
+      background: rgba(229, 245, 242, 0.84);
+      color: var(--teal);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    h1 {
+      max-width: 980px;
+      margin: 0;
+      font-size: clamp(34px, 6vw, 70px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: clamp(24px, 3vw, 38px);
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 19px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .lead {
+      max-width: 920px;
+      color: #344154;
+      font-size: clamp(17px, 2vw, 23px);
+      line-height: 1.55;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      max-width: 980px;
+    }
+
+    .metric {
+      min-height: 108px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.88);
+      box-shadow: 0 10px 30px rgba(24, 33, 42, 0.06);
+    }
+
+    .metric strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--ink);
+      font-size: 26px;
+      line-height: 1.1;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    section {
+      margin: 34px 0;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.92);
+      box-shadow: var(--shadow);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .section-note {
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 4px 10px;
+      border: 1px solid rgba(37, 99, 235, 0.22);
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .route-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+      position: relative;
+    }
+
+    .route-card {
+      min-height: 245px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--blue);
+      border-radius: var(--radius);
+      background: var(--panel);
+      position: relative;
+    }
+
+    .route-card:nth-child(2) { border-top-color: var(--teal); }
+    .route-card:nth-child(3) { border-top-color: var(--violet); }
+    .route-card:nth-child(4) { border-top-color: var(--amber); }
+    .route-card:nth-child(5) { border-top-color: var(--rose); }
+    .route-card:nth-child(6) { border-top-color: var(--green); }
+
+    .step-no {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      margin-bottom: 9px;
+      border-radius: 50%;
+      background: #18212a;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .route-card p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .route-card ul,
+    .talking-points ul,
+    .risk-grid ul {
+      margin: 12px 0 0;
+      padding-left: 18px;
+      color: #324054;
+      font-size: 13px;
+    }
+
+    .route-card li,
+    .talking-points li,
+    .risk-grid li {
+      margin: 5px 0;
+    }
+
+    .roadmap-bar {
+      display: grid;
+      grid-template-columns: 1.1fr 1.4fr 1.4fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .phase {
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcfb;
+    }
+
+    .phase strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .phase span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .svg-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcfb;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      min-width: 980px;
+      height: auto;
+    }
+
+    .node-title {
+      font-size: 16px;
+      font-weight: 800;
+      fill: #17202a;
+    }
+
+    .node-sub {
+      font-size: 12px;
+      fill: #4d5968;
+    }
+
+    .lane-title {
+      font-size: 13px;
+      font-weight: 800;
+      fill: #324054;
+    }
+
+    .tiny {
+      font-size: 11px;
+      fill: #5a6472;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .swatch {
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+      border: 1px solid rgba(0,0,0,0.12);
+    }
+
+    .talking-points {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .point {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcfb;
+    }
+
+    .point strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--ink);
+      font-size: 15px;
+    }
+
+    .point p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .risk-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .risk-card {
+      min-height: 158px;
+      padding: 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: #fbfcfb;
+    }
+
+    .risk-card:nth-child(1) { background: var(--blue-soft); }
+    .risk-card:nth-child(2) { background: var(--amber-soft); }
+    .risk-card:nth-child(3) { background: var(--green-soft); }
+    .risk-card:nth-child(4) { background: var(--rose-soft); }
+
+    .footer {
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: #eef1f4;
+      color: #17202a;
+      font-family: Consolas, "SFMono-Regular", monospace;
+      font-size: 0.92em;
+    }
+
+    @media (max-width: 920px) {
+      main {
+        width: min(100vw - 24px, var(--max));
+        padding-top: 18px;
+      }
+
+      header {
+        min-height: auto;
+        padding: 24px 0;
+      }
+
+      .hero-grid,
+      .route-grid,
+      .roadmap-bar,
+      .talking-points,
+      .risk-grid {
+        grid-template-columns: 1fr;
+      }
+
+      section {
+        padding: 20px;
+      }
+
+      .section-head {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      main {
+        width: 100%;
+        padding: 0;
+      }
+
+      header {
+        min-height: auto;
+        padding: 28px 0;
+      }
+
+      section {
+        box-shadow: none;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .svg-wrap {
+        overflow: visible;
+      }
+
+      svg {
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="kicker">BioMind Midterm Defense Material</div>
+      <div>
+        <h1>技术路线图与记忆系统工作流程图</h1>
+        <p class="lead">
+          BioMind 面向生物信息学长流程分析，目标不是替代 Seurat、HiCExplorer 等领域算法，
+          而是构建一个可执行、可审计、可恢复的智能体基础设施。
+        </p>
+      </div>
+      <div class="hero-grid" aria-label="BioMind 中期实现概览">
+        <div class="metric">
+          <strong>LangGraph</strong>
+          <span>Consultant / Planner / Generate / Execute / Supervisor / Installer 状态机</span>
+        </div>
+        <div class="metric">
+          <strong>26 Skills</strong>
+          <span>单细胞、三维基因组、表观组、序列检索与数据库访问技能</span>
+        </div>
+        <div class="metric">
+          <strong>3 Workflows</strong>
+          <span>scRNA 标准分析、scRNA ingest-QC、Hi-C TAD 分析模板</span>
+        </div>
+        <div class="metric">
+          <strong>5 Memories</strong>
+          <span>Core、Task Summary、Session Archive、Wiki、RAG 分层协同</span>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>一、BioMind 技术路线图</h2>
+          <p class="section-note">
+            路线从“用户自然语言目标”出发，经由任务路由、领域知识约束、状态机编排、安全执行和结果监督，
+            最终沉淀为可检索、可追溯的项目记忆。
+          </p>
+        </div>
+        <span class="tag">答辩主图 1</span>
+      </div>
+
+      <div class="route-grid">
+        <article class="route-card">
+          <span class="step-no">1</span>
+          <h3>问题定义与需求澄清</h3>
+          <p>识别任务类型、输入数据、分析目标和缺失信息，避免模型直接猜测参数。</p>
+          <ul>
+            <li><code>Consultant</code> 需求总结</li>
+            <li>任务语义：样本、路径、分辨率、比较组</li>
+            <li>必要时进入 <code>AskUser</code></li>
+          </ul>
+        </article>
+
+        <article class="route-card">
+          <span class="step-no">2</span>
+          <h3>领域知识结构化封装</h3>
+          <p>将生物信息学流程固化为可发现、可加载、可验证的 Skill 和 Workflow。</p>
+          <ul>
+            <li><code>SkillManager</code> 扫描与匹配技能</li>
+            <li><code>WorkflowManager</code> 阶段化模板</li>
+            <li>RAGFlow 检索 SOP、工具与错误库</li>
+          </ul>
+        </article>
+
+        <article class="route-card">
+          <span class="step-no">3</span>
+          <h3>状态机智能体编排</h3>
+          <p>用 LangGraph 将计划、审批、生成、执行、监督和安装组织成可中断闭环。</p>
+          <ul>
+            <li><code>Planner</code> 生成可审核计划</li>
+            <li><code>Generate</code> 输出受控动作标签</li>
+            <li>每轮只推进一个逻辑步骤</li>
+          </ul>
+        </article>
+
+        <article class="route-card">
+          <span class="step-no">4</span>
+          <h3>安全执行与环境复用</h3>
+          <p>执行前进行风险分析，安装行为委派子智能体，避免环境污染和危险命令。</p>
+          <ul>
+            <li><code>RiskAnalyzer</code> 与人工确认</li>
+            <li><code>Executor</code> 运行 Bash / Python / R</li>
+            <li><code>PackageManager</code> 注册环境和 shim</li>
+          </ul>
+        </article>
+
+        <article class="route-card">
+          <span class="step-no">5</span>
+          <h3>执行后监督与纠错</h3>
+          <p>把“命令退出码为 0”和“科学分析有效”区分开，捕捉空输出、静默失败和参数风险。</p>
+          <ul>
+            <li><code>RuleEngine</code> 快速规则检查</li>
+            <li><code>LLMReviewer</code> 科学性审查</li>
+            <li>判决：PASS / WARN / RETRY / ESCALATE</li>
+          </ul>
+        </article>
+
+        <article class="route-card">
+          <span class="step-no">6</span>
+          <h3>分层记忆与可恢复评估</h3>
+          <p>将执行事件、任务摘要、项目事实和外部知识分层管理，支撑跨会话恢复。</p>
+          <ul>
+            <li><code>SessionArchive</code> 是事件源</li>
+            <li><code>Wiki claims</code> 绑定证据</li>
+            <li>恢复能力、证据完整性和检索质量评估</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="roadmap-bar" aria-label="中期前后推进阶段">
+        <div class="phase">
+          <strong>阶段 A：领域调研与需求建模</strong>
+          <span>抽象长流程任务痛点：上下文遗忘、工具幻觉、环境依赖、错误恢复和证据链缺失。</span>
+        </div>
+        <div class="phase">
+          <strong>阶段 B：核心系统实现</strong>
+          <span>完成主状态机、Skill/Workflow、执行器、Supervisor、Installer 和持久化状态。</span>
+        </div>
+        <div class="phase">
+          <strong>阶段 C：记忆系统强化</strong>
+          <span>构建 Core / Task / Archive / Wiki / RAG 五层记忆，并实现证据化 Wiki ingest。</span>
+        </div>
+        <div class="phase">
+          <strong>阶段 D：中期后验证</strong>
+          <span>围绕 scRNA、TAD 和工具安装失败场景，评估恢复率、重复执行率和证据完整率。</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>二、系统执行闭环图</h2>
+          <p class="section-note">
+            BioMind 的主链不是“一次性生成脚本”，而是以计划为控制对象，通过用户审批、安全执行和 Supervisor 反馈形成闭环。
+          </p>
+        </div>
+        <span class="tag">答辩主图 2</span>
+      </div>
+
+      <div class="svg-wrap">
+        <svg viewBox="0 0 1180 520" role="img" aria-label="BioMind 主智能体执行闭环">
+          <defs>
+            <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"></path>
+            </marker>
+            <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#b7791f"></path>
+            </marker>
+            <marker id="arrow-rose" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#be123c"></path>
+            </marker>
+            <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#18212a" flood-opacity="0.13"></feDropShadow>
+            </filter>
+          </defs>
+
+          <rect x="20" y="24" width="1140" height="472" rx="14" fill="#ffffff" stroke="#d9ded8"></rect>
+          <text x="48" y="58" class="lane-title">用户交互与状态机主链</text>
+          <text x="48" y="448" class="lane-title">知识、执行与记忆支撑层</text>
+
+          <rect x="60" y="92" width="130" height="82" rx="8" fill="#e9f1ff" stroke="#93b7ff" filter="url(#soft-shadow)"></rect>
+          <text x="125" y="125" text-anchor="middle" class="node-title">用户目标</text>
+          <text x="125" y="148" text-anchor="middle" class="node-sub">自然语言任务</text>
+
+          <rect x="235" y="92" width="145" height="82" rx="8" fill="#e5f5f2" stroke="#75c7bd" filter="url(#soft-shadow)"></rect>
+          <text x="307" y="122" text-anchor="middle" class="node-title">Consultant</text>
+          <text x="307" y="145" text-anchor="middle" class="node-sub">澄清需求 / 选择技能</text>
+
+          <rect x="425" y="92" width="145" height="82" rx="8" fill="#f3edff" stroke="#bca6f5" filter="url(#soft-shadow)"></rect>
+          <text x="498" y="122" text-anchor="middle" class="node-title">Planner</text>
+          <text x="498" y="145" text-anchor="middle" class="node-sub">计划文件与进度</text>
+
+          <rect x="615" y="92" width="145" height="82" rx="8" fill="#fff5dd" stroke="#ecc66d" filter="url(#soft-shadow)"></rect>
+          <text x="688" y="122" text-anchor="middle" class="node-title">PlanReview</text>
+          <text x="688" y="145" text-anchor="middle" class="node-sub">用户审核计划</text>
+
+          <rect x="805" y="92" width="145" height="82" rx="8" fill="#e9f1ff" stroke="#93b7ff" filter="url(#soft-shadow)"></rect>
+          <text x="878" y="122" text-anchor="middle" class="node-title">Generate</text>
+          <text x="878" y="145" text-anchor="middle" class="node-sub">受控动作标签</text>
+
+          <rect x="805" y="244" width="145" height="82" rx="8" fill="#fff0f3" stroke="#f4a6b8" filter="url(#soft-shadow)"></rect>
+          <text x="878" y="274" text-anchor="middle" class="node-title">Execute</text>
+          <text x="878" y="297" text-anchor="middle" class="node-sub">风险分析 / 脚本运行</text>
+
+          <rect x="615" y="244" width="145" height="82" rx="8" fill="#e8f5ed" stroke="#94cfae" filter="url(#soft-shadow)"></rect>
+          <text x="688" y="274" text-anchor="middle" class="node-title">Supervisor</text>
+          <text x="688" y="297" text-anchor="middle" class="node-sub">PASS / WARN / RETRY</text>
+
+          <rect x="995" y="244" width="115" height="82" rx="8" fill="#f7f8f7" stroke="#d9ded8"></rect>
+          <text x="1052" y="274" text-anchor="middle" class="node-title">Installer</text>
+          <text x="1052" y="297" text-anchor="middle" class="node-sub">环境安装注册</text>
+
+          <path d="M190 133 H227" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow-blue)"></path>
+          <path d="M380 133 H417" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow-blue)"></path>
+          <path d="M570 133 H607" stroke="#b7791f" stroke-width="3" fill="none" marker-end="url(#arrow-amber)"></path>
+          <path d="M760 133 H797" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow-blue)"></path>
+          <path d="M878 174 V236" stroke="#be123c" stroke-width="3" fill="none" marker-end="url(#arrow-rose)"></path>
+          <path d="M805 285 H768" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow-blue)"></path>
+          <path d="M688 244 C688 205 742 197 805 177" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow-blue)"></path>
+          <path d="M950 285 H987" stroke="#b7791f" stroke-width="3" fill="none" marker-end="url(#arrow-amber)"></path>
+          <path d="M995 256 C960 222 925 202 898 177" stroke="#b7791f" stroke-width="3" fill="none" marker-end="url(#arrow-amber)"></path>
+
+          <text x="674" y="205" class="tiny">审查反馈回注入 Generate</text>
+          <text x="960" y="220" class="tiny">缺工具时委派</text>
+
+          <rect x="58" y="390" width="168" height="58" rx="8" fill="#f7f8f7" stroke="#d9ded8"></rect>
+          <text x="142" y="415" text-anchor="middle" class="node-title">Skill / Workflow</text>
+          <text x="142" y="436" text-anchor="middle" class="node-sub">领域约束与阶段模板</text>
+
+          <rect x="266" y="390" width="168" height="58" rx="8" fill="#f7f8f7" stroke="#d9ded8"></rect>
+          <text x="350" y="415" text-anchor="middle" class="node-title">RAGFlow</text>
+          <text x="350" y="436" text-anchor="middle" class="node-sub">SOP / 工具 / 错误库</text>
+
+          <rect x="474" y="390" width="168" height="58" rx="8" fill="#f7f8f7" stroke="#d9ded8"></rect>
+          <text x="558" y="415" text-anchor="middle" class="node-title">Persistent State</text>
+          <text x="558" y="436" text-anchor="middle" class="node-sub">plan_state / execution records</text>
+
+          <rect x="682" y="390" width="168" height="58" rx="8" fill="#f7f8f7" stroke="#d9ded8"></rect>
+          <text x="766" y="415" text-anchor="middle" class="node-title">Memory Layer</text>
+          <text x="766" y="436" text-anchor="middle" class="node-sub">Archive / Summary / Wiki</text>
+
+          <path d="M142 390 C178 296 236 210 280 174" stroke="#0f766e" stroke-width="2.4" fill="none" stroke-dasharray="7 6" marker-end="url(#arrow-blue)"></path>
+          <path d="M350 390 C432 300 640 214 805 157" stroke="#0f766e" stroke-width="2.4" fill="none" stroke-dasharray="7 6" marker-end="url(#arrow-blue)"></path>
+          <path d="M558 390 C558 340 548 244 513 176" stroke="#6d28d9" stroke-width="2.4" fill="none" stroke-dasharray="7 6" marker-end="url(#arrow-blue)"></path>
+          <path d="M766 390 C790 350 820 340 848 326" stroke="#0f766e" stroke-width="2.4" fill="none" stroke-dasharray="7 6" marker-end="url(#arrow-blue)"></path>
+        </svg>
+      </div>
+
+      <div class="legend" aria-label="图例">
+        <span><i class="swatch" style="background:#e9f1ff"></i>智能体决策节点</span>
+        <span><i class="swatch" style="background:#fff5dd"></i>人工审核或环境委派</span>
+        <span><i class="swatch" style="background:#fff0f3"></i>安全执行节点</span>
+        <span><i class="swatch" style="background:#e8f5ed"></i>监督审查节点</span>
+        <span><i class="swatch" style="background:#f7f8f7"></i>支撑层模块</span>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>三、记忆系统工作流程图</h2>
+          <p class="section-note">
+            记忆系统遵循“观测先归档，事实后整理”：执行热路径只追加可追溯事件，长期项目事实通过 Wiki ingest 转换为带证据的 claims。
+          </p>
+        </div>
+        <span class="tag">答辩主图 3</span>
+      </div>
+
+      <div class="svg-wrap">
+        <svg viewBox="0 0 1180 680" role="img" aria-label="BioMind 记忆系统工作流程">
+          <defs>
+            <marker id="mem-arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"></path>
+            </marker>
+            <marker id="mem-arrow-teal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#0f766e"></path>
+            </marker>
+            <marker id="mem-arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#b7791f"></path>
+            </marker>
+            <marker id="mem-arrow-rose" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#be123c"></path>
+            </marker>
+          </defs>
+
+          <rect x="20" y="20" width="1140" height="640" rx="14" fill="#ffffff" stroke="#d9ded8"></rect>
+          <rect x="48" y="72" width="1084" height="126" rx="10" fill="#fbfcfb" stroke="#d9ded8"></rect>
+          <text x="64" y="104" class="lane-title">A. 稳定提示词：会话开始时冻结，保证长期任务中的行为规则不漂移</text>
+
+          <rect x="80" y="124" width="178" height="48" rx="8" fill="#e8f5ed" stroke="#94cfae"></rect>
+          <text x="169" y="144" text-anchor="middle" class="node-title">Core Memory</text>
+          <text x="169" y="164" text-anchor="middle" class="node-sub">偏好 / 规则 / Wiki 索引</text>
+
+          <rect x="322" y="124" width="178" height="48" rx="8" fill="#f7f8f7" stroke="#d9ded8"></rect>
+          <text x="411" y="144" text-anchor="middle" class="node-title">MemorySnapshot</text>
+          <text x="411" y="164" text-anchor="middle" class="node-sub">snapshot_id = session_id</text>
+
+          <rect x="564" y="124" width="208" height="48" rx="8" fill="#e9f1ff" stroke="#93b7ff"></rect>
+          <text x="668" y="144" text-anchor="middle" class="node-title">Stable System Prompt</text>
+          <text x="668" y="164" text-anchor="middle" class="node-sub">执行协议 + 冻结 Core</text>
+
+          <path d="M258 148 H314" stroke="#0f766e" stroke-width="3" fill="none" marker-end="url(#mem-arrow-teal)"></path>
+          <path d="M500 148 H556" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#mem-arrow-blue)"></path>
+          <text x="820" y="146" class="tiny">Core 运行中更新不会隐式改变当前会话提示词；新会话或显式 reload 后生效。</text>
+
+          <rect x="48" y="232" width="1084" height="178" rx="10" fill="#fbfcfb" stroke="#d9ded8"></rect>
+          <text x="64" y="264" class="lane-title">B. 执行热路径：每个节点只做确定性事件追加，保留可追溯观察</text>
+
+          <rect x="80" y="292" width="145" height="58" rx="8" fill="#e5f5f2" stroke="#75c7bd"></rect>
+          <text x="153" y="315" text-anchor="middle" class="node-title">Consultant</text>
+          <text x="153" y="336" text-anchor="middle" class="node-sub">需求 / 技能选择</text>
+
+          <rect x="275" y="292" width="145" height="58" rx="8" fill="#f3edff" stroke="#bca6f5"></rect>
+          <text x="348" y="315" text-anchor="middle" class="node-title">Planner</text>
+          <text x="348" y="336" text-anchor="middle" class="node-sub">计划 / 状态</text>
+
+          <rect x="470" y="292" width="145" height="58" rx="8" fill="#e9f1ff" stroke="#93b7ff"></rect>
+          <text x="543" y="315" text-anchor="middle" class="node-title">Generate</text>
+          <text x="543" y="336" text-anchor="middle" class="node-sub">动作决策</text>
+
+          <rect x="665" y="292" width="145" height="58" rx="8" fill="#fff0f3" stroke="#f4a6b8"></rect>
+          <text x="738" y="315" text-anchor="middle" class="node-title">Execute</text>
+          <text x="738" y="336" text-anchor="middle" class="node-sub">stdout / stderr / artifact</text>
+
+          <rect x="860" y="292" width="145" height="58" rx="8" fill="#e8f5ed" stroke="#94cfae"></rect>
+          <text x="933" y="315" text-anchor="middle" class="node-title">Supervisor</text>
+          <text x="933" y="336" text-anchor="middle" class="node-sub">审查结论</text>
+
+          <rect x="462" y="382" width="250" height="58" rx="8" fill="#fff5dd" stroke="#ecc66d"></rect>
+          <text x="587" y="405" text-anchor="middle" class="node-title">SessionArchive</text>
+          <text x="587" y="426" text-anchor="middle" class="node-sub">SQLite / FTS / large_refs / content_hash</text>
+
+          <path d="M225 321 H267" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#mem-arrow-blue)"></path>
+          <path d="M420 321 H462" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#mem-arrow-blue)"></path>
+          <path d="M615 321 H657" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#mem-arrow-blue)"></path>
+          <path d="M810 321 H852" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#mem-arrow-blue)"></path>
+          <path d="M153 350 C190 384 310 404 454 407" stroke="#b7791f" stroke-width="2.4" fill="none" stroke-dasharray="7 6" marker-end="url(#mem-arrow-amber)"></path>
+          <path d="M348 350 C390 374 424 393 454 404" stroke="#b7791f" stroke-width="2.4" fill="none" stroke-dasharray="7 6" marker-end="url(#mem-arrow-amber)"></path>
+          <path d="M543 350 V374" stroke="#b7791f" stroke-width="2.4" fill="none" stroke-dasharray="7 6" marker-end="url(#mem-arrow-amber)"></path>
+          <path d="M738 350 C710 373 692 388 682 382" stroke="#b7791f" stroke-width="2.4" fill="none" stroke-dasharray="7 6" marker-end="url(#mem-arrow-amber)"></path>
+          <path d="M933 350 C876 387 802 405 720 410" stroke="#b7791f" stroke-width="2.4" fill="none" stroke-dasharray="7 6" marker-end="url(#mem-arrow-amber)"></path>
+
+          <rect x="48" y="456" width="1084" height="164" rx="10" fill="#fbfcfb" stroke="#d9ded8"></rect>
+          <text x="64" y="488" class="lane-title">C. 派生整理与按需注入：长期事实必须带证据，Generate 默认步骤局部上下文</text>
+
+          <rect x="80" y="520" width="180" height="58" rx="8" fill="#f7f8f7" stroke="#d9ded8"></rect>
+          <text x="170" y="543" text-anchor="middle" class="node-title">Task Summary</text>
+          <text x="170" y="564" text-anchor="middle" class="node-sub">从 Archive / Wiki 渲染</text>
+
+          <rect x="315" y="520" width="190" height="58" rx="8" fill="#e8f5ed" stroke="#94cfae"></rect>
+          <text x="410" y="543" text-anchor="middle" class="node-title">Wiki Ingest</text>
+          <text x="410" y="564" text-anchor="middle" class="node-sub">pending events -> patches</text>
+
+          <rect x="560" y="520" width="205" height="58" rx="8" fill="#e5f5f2" stroke="#75c7bd"></rect>
+          <text x="662" y="543" text-anchor="middle" class="node-title">Wiki Pages / Claims</text>
+          <text x="662" y="564" text-anchor="middle" class="node-sub">evidence: session_archive / task / artifact</text>
+
+          <rect x="820" y="520" width="235" height="58" rx="8" fill="#e9f1ff" stroke="#93b7ff"></rect>
+          <text x="938" y="543" text-anchor="middle" class="node-title">Step-local Context</text>
+          <text x="938" y="564" text-anchor="middle" class="node-sub">当前步骤最小上下文 / 按需检索</text>
+
+          <path d="M505 437 C416 471 274 497 200 515" stroke="#0f766e" stroke-width="3" fill="none" marker-end="url(#mem-arrow-teal)"></path>
+          <path d="M587 440 C538 475 476 499 434 516" stroke="#0f766e" stroke-width="3" fill="none" marker-end="url(#mem-arrow-teal)"></path>
+          <path d="M505 549 H552" stroke="#0f766e" stroke-width="3" fill="none" marker-end="url(#mem-arrow-teal)"></path>
+          <path d="M765 549 H812" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#mem-arrow-blue)"></path>
+          <path d="M260 549 H812" stroke="#2563eb" stroke-width="2.4" fill="none" stroke-dasharray="8 7" marker-end="url(#mem-arrow-blue)"></path>
+          <path d="M938 520 C892 465 806 420 704 409" stroke="#2563eb" stroke-width="2.4" fill="none" stroke-dasharray="8 7" marker-end="url(#mem-arrow-blue)"></path>
+
+          <rect x="842" y="404" width="244" height="54" rx="8" fill="#fff0f3" stroke="#f4a6b8"></rect>
+          <text x="964" y="426" text-anchor="middle" class="node-title">优先级规则</text>
+          <text x="964" y="447" text-anchor="middle" class="node-sub">用户输入 / 文件系统 / 最新 observation > Wiki > Core</text>
+          <path d="M964 458 V512" stroke="#be123c" stroke-width="2.4" fill="none" marker-end="url(#mem-arrow-rose)"></path>
+
+          <text x="96" y="640" class="tiny">核心原则：Consultant 宽检索，Planner 固化经验，Generate 默认窄上下文；Task Summary 是 report/cache，Wiki claim 才是长期事实。</text>
+        </svg>
+      </div>
+
+      <div class="legend" aria-label="记忆图图例">
+        <span><i class="swatch" style="background:#e8f5ed"></i>长期或项目级记忆</span>
+        <span><i class="swatch" style="background:#fff5dd"></i>事件归档热路径</span>
+        <span><i class="swatch" style="background:#e9f1ff"></i>提示词注入</span>
+        <span><i class="swatch" style="background:#fff0f3"></i>冲突处理与安全优先级</span>
+        <span><i class="swatch" style="background:#f7f8f7"></i>派生报告或支撑模块</span>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>四、答辩讲解要点</h2>
+          <p class="section-note">
+            下面的表述可以配合上面三张图展开，重点突出系统创新点和中期完成度。
+          </p>
+        </div>
+        <span class="tag">口头说明</span>
+      </div>
+
+      <div class="talking-points">
+        <div class="point">
+          <strong>1. 为什么需要 BioMind</strong>
+          <p>生物信息学任务不是单轮问答，而是长流程科研计算。系统要知道任务做到哪一步、产物在哪里、错误如何恢复，并能说明结论来自哪条证据。</p>
+        </div>
+        <div class="point">
+          <strong>2. 为什么用状态机</strong>
+          <p>LangGraph 将智能体行为拆成节点，避免模型一次生成多步命令。每一步都经过计划、执行、观察和监督，失败后可回到 Generate 修复。</p>
+        </div>
+        <div class="point">
+          <strong>3. 为什么要 Skill / Workflow</strong>
+          <p>Skill 把领域流程、环境、脚本路径和输入输出约束固化下来；Workflow 把 scRNA、TAD 这类长任务拆成阶段，降低工具幻觉和越阶段执行风险。</p>
+        </div>
+        <div class="point">
+          <strong>4. 记忆系统的创新点</strong>
+          <p>BioMind 没有把所有历史都塞进向量库，而是把稳定规则、任务摘要、会话事件、项目 Wiki 和外部 RAG 分层，长期事实必须绑定证据。</p>
+        </div>
+        <div class="point">
+          <strong>5. 安全与可审计</strong>
+          <p>执行前有命令风险分析和人工确认；执行后有 Supervisor 审查；执行过程、stdout/stderr、产物路径和审查结论进入持久化记录。</p>
+        </div>
+        <div class="point">
+          <strong>6. 中期后的验证方向</strong>
+          <p>围绕真实 scRNA 和 TAD 任务，评价中断恢复成功率、关键参数召回率、重复执行比例、Wiki evidence 缺失率和错误修复复用效果。</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>五、风险控制与评价指标</h2>
+          <p class="section-note">
+            答辩时可以用这一页说明系统不仅能“跑”，还考虑了科研计算中的风险、复现和质量评价。
+          </p>
+        </div>
+        <span class="tag">补充页</span>
+      </div>
+
+      <div class="risk-grid">
+        <div class="risk-card">
+          <h3>恢复能力</h3>
+          <ul>
+            <li>中断后继续执行成功率</li>
+            <li>已完成步骤重复执行比例</li>
+            <li>关键路径与参数召回率</li>
+          </ul>
+        </div>
+        <div class="risk-card">
+          <h3>执行质量</h3>
+          <ul>
+            <li>Supervisor RETRY 修复成功率</li>
+            <li>空输出、静默失败捕捉率</li>
+            <li>计划步骤完成率</li>
+          </ul>
+        </div>
+        <div class="risk-card">
+          <h3>记忆质量</h3>
+          <ul>
+            <li>Wiki claim evidence 完整率</li>
+            <li>Core / Wiki 边界违规数</li>
+            <li>相关记忆检索命中率</li>
+          </ul>
+        </div>
+        <div class="risk-card">
+          <h3>安全合规</h3>
+          <ul>
+            <li>危险命令拦截与确认记录</li>
+            <li>密钥脱敏覆盖率</li>
+            <li>路径逃逸和交互阻塞防护</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="footer">
+        参考项目模块：<code>bio_agents.py</code>、<code>supervisor.py</code>、<code>agent_core/</code>、<code>execution/</code>、<code>memory/</code>、<code>workflows/</code>、<code>skills/</code>
+      </p>
+    </section>
+  </main>
+</body>
+</html>

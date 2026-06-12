@@ -111,6 +111,7 @@ class PromptManager:
         long_term_memory: str = "",
         task_memory: str = "",
         related_memory: str = "",
+        memory_packet_context: str = "",
         wiki_context: str = "",
         wiki_digest: str = "",
         archive_context: str = "",
@@ -123,9 +124,10 @@ class PromptManager:
             final_rag_context = f"<retrieved_docs>\n{rag_context}\n</retrieved_docs>"
 
         memory_context = MEMORY_CONTEXT_TEMPLATE.format(
-            long_term_memory=long_term_memory or "No long-term Markdown memory relevant to this step.",
-            task_memory=task_memory or "No task Markdown memory for this step.",
-            related_memory=related_memory or "No related Markdown memory retrieved for this step.",
+            long_term_memory=long_term_memory or "No extra long-term compatibility memory relevant to this step.",
+            task_memory=task_memory or "No TaskSummary report injected for this step.",
+            related_memory=related_memory or "No related SessionArchive report/cache context retrieved for this step.",
+            memory_packet_context=memory_packet_context or "No consultant-curated memory packet for this step.",
             wiki_context=wiki_context or "No wiki memory retrieved for this step.",
         )
 
@@ -273,6 +275,7 @@ class PromptManager:
         active_batch_id: str = "",
         active_skills_text: str = "None",
         future_skills_text: str = "None",
+        required_skills_all_text: str = "None",
         candidate_skills_text: str = "None",
     ) -> str:
         """Build the concrete planner prompt used by the main graph planner node."""
@@ -281,8 +284,8 @@ class PromptManager:
 User Goal: {user_msg}
 {f"Consultant Summary: {consultant_summary}" if consultant_summary else ""}
 
-[WIKI MEMORY CONTEXT]
-{planner_wiki_context if planner_wiki_context else "No compiled or retrieved wiki memory for this plan."}
+[PLANNING MEMORY CONTEXT]
+{planner_wiki_context if planner_wiki_context else "No consultant memory packet or retrieved planning memory for this plan."}
 
 [ENVIRONMENT]
 Installed Tools:
@@ -304,6 +307,7 @@ Installed Tools:
 active_batch_id: {active_batch_id or "none"}
 active_skills: {active_skills_text}
 future_skills: {future_skills_text}
+required_skills_all: {required_skills_all_text}
 candidate_skills: {candidate_skills_text}
 
 [ACTIVE SKILL DOCS]
@@ -318,6 +322,10 @@ TASK: Generate a DETAILED PLAN with 4 sections:
 You are only planning. Do NOT generate bash scripts, Python scripts, or runnable code blocks.
 Do NOT invent commands for skills. If a matching skill is present in ACTIVE SKILL DOCS,
 plan to use its documented script path and documented arguments exactly.
+If Consultant Summary contains [RUNTIME_PREFLIGHT] with any `failed` row, the
+first executable step for that skill must be INSTALL or an explicit runtime
+repair/registration step. Do not plan data execution before the selected skill
+runtime is verified.
 
 ## Section 1: Requirement Analysis
 - Input files, reference genomes, parameters needed
@@ -332,6 +340,7 @@ For EACH step, provide:
     - Input: [expected input files/data]
     - Output: [expected output files/format]
     - Success criteria: [how to verify this step worked]
+    - Cautions: [historical lessons, path reuse rules, failure guards, or "none"]
     - Risk: [LOW/MEDIUM/HIGH - and why]
 
 ## Execution Checklist
@@ -360,6 +369,7 @@ RULES:
 - ACTIVE SKILLS are already finalized for the current batch. Do not add extra candidate skills beyond that set.
 - If MANDATORY SKILL EXECUTION CARDS are present, they override your prior knowledge and all plan wording.
 - If ACTIVE SKILL DOCS are present, you MUST read them and use their real script path(s). Never describe the skill as an abstract module or pre-built global command.
+- Convert relevant planning memory into step-local constraints and cautions. Do not rely on Generate to retrieve broad Wiki/TaskSummary context again.
 - Never write "Command template" for a selected skill. Use "Execution guidance".
 - Never use placeholder wrapper commands or undocumented script names.
 - **PATH STRICTNESS**: You MUST use the EXACT absolute paths provided in the Consultant Summary.

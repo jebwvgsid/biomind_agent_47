@@ -1,7 +1,7 @@
 import re
 import functools
 import logging
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, List
 from langgraph.types import interrupt
 from langchain_core.messages import HumanMessage
 from execution.confirmation import RiskAnalyzer, RiskLevel
@@ -13,6 +13,14 @@ from colorama import Fore, Style
 from agent_core.llm_safety import clip_text, llm_failure_summary
 
 logger = logging.getLogger("BioMind.Middleware")
+
+LOG_TAIL_POLICY = (
+    "When an error points to a .err, .log, .out, or trace file, inspect only a "
+    "small tail first, for example `tail -n 80 path/to/file.log`. For very large "
+    "logs, combine targeted grep with a tail, for example "
+    "`grep -iE 'error|exception|fatal|traceback|killed' path/to/file.log | tail -n 40`. "
+    "Never `cat` or paste an entire long log into the prompt."
+)
 
 class HITLMiddleware:
     def __init__(self, auto_approve_safe: bool = True):
@@ -137,11 +145,83 @@ class HITLMiddleware:
             )
 
 
-def error_recovery_middleware(llm, retriever):
+def _recovery_tier(retry_count: int) -> int:
+    if retry_count <= 0:
+        return 0
+    if retry_count == 1:
+        return 1
+    return 2
+
+
+def classify_execution_failure(text: str) -> Tuple[str, str]:
+    lower = str(text or "").lower()
+    if "biomind shim error" in lower or "stale" in lower and "shim" in lower:
+        return "stale_shim", "Re-register the tool to the real executable/env; do not keep retrying the stale shim."
+    if re.search(r"rscript:\s*command not found|which:\s*no rscript|command not found", lower, re.IGNORECASE):
+        return "missing_executable", "Verify the executable with `which`/`--version`; install r-base before any R package install command."
+    if re.search(r"there is no package called|calder2?\s+not available|modulenotfounderror|importerror", lower, re.IGNORECASE):
+        return "missing_package", "Install/register the missing package only after its language runtime is available, then rerun the package load check."
+    if re.search(r"gene_density(?:\.bed)?[^\n]*(?:sum|总和)[^\n]*(?:0|为 0)|no non-zero bins|chromosome names do not match", lower, re.IGNORECASE):
+        return "semantic_validation_failed", "Regenerate the scientific input artifact and pass semantic validation before retrying downstream tools."
+    if re.search(r"no such file or directory|file not found|not found:", lower, re.IGNORECASE):
+        return "missing_input_file", "Verify the exact path named in the error before changing unrelated inputs."
+    return "unknown_truncated_log", "Inspect the smallest relevant log tail or run a minimal deterministic availability check."
+
+
+def _selected_skill_ids(state: Dict[str, Any]) -> List[str]:
+    if not isinstance(state, dict):
+        return []
+    selected = state.get("active_skills") or state.get("selected_skills") or []
+    return [str(item) for item in selected if str(item).strip()]
+
+
+def _skill_error_context(skill_manager, state: Dict[str, Any], max_chars: int = 3000) -> str:
+    if not skill_manager:
+        return ""
+    selected = _selected_skill_ids(state)
+    if not selected:
+        return ""
+
+    chunks: List[str] = []
+    try:
+        cards = skill_manager.get_execution_cards(selected)
+        if cards:
+            chunks.append("### Active skill execution cards\n" + clip_text(cards, 1400))
+    except Exception as exc:  # noqa: BLE001 - recovery context should be best-effort.
+        chunks.append(f"### Active skill context unavailable\n{exc}")
+
+    ref_keywords = ("error", "troubleshoot", "trouble", "faq", "preflight", "output_schema", "usage")
+    loaded_refs = 0
+    for sid in selected[:3]:
+        try:
+            refs = skill_manager.get_skill_reference_index(sid)
+        except Exception:
+            refs = []
+        prioritized = [
+            ref for ref in refs
+            if any(keyword in str(ref).lower() for keyword in ref_keywords)
+        ]
+        for ref_path in prioritized[:2]:
+            if loaded_refs >= 3:
+                break
+            try:
+                body = skill_manager.load_reference(sid, ref_path)
+            except Exception as exc:  # noqa: BLE001
+                body = f"Unable to load reference: {exc}"
+            chunks.append(f"### Skill reference: {sid} / {ref_path}\n{clip_text(body, 900)}")
+            loaded_refs += 1
+
+    if not chunks:
+        return ""
+    return "\n\n<active_skill_error_context>\n" + clip_text("\n\n".join(chunks), max_chars) + "\n</active_skill_error_context>"
+
+
+def error_recovery_middleware(llm, retriever, skill_manager=None):
     """
     错误恢复中间件装饰器工厂
     :param llm: 用于生成修复方案的 LLM 实例
     :param retriever: 用于检索 RAG 的检索器实例
+    :param skill_manager: 可选，用于在二次失败后加载 active skill 的错误/运行上下文
     """
     def decorator(func):
         @functools.wraps(func)
@@ -156,6 +236,13 @@ def error_recovery_middleware(llm, retriever):
             if "❌ Failed" in last_msg:
                 if "guard blocked execution" in last_msg.lower():
                     return result
+                retry_count = 0
+                if isinstance(state, dict):
+                    try:
+                        retry_count = int(state.get("retry_count", 0) or 0)
+                    except (TypeError, ValueError):
+                        retry_count = 0
+                tier = _recovery_tier(retry_count)
                 print(f"\n{Fore.RED}🚑 [Middleware] Detected Execution Failure. Starting Auto-Diagnosis...{Style.RESET_ALL}")
                 
                 # --- A. 提取错误指纹 ---
@@ -167,6 +254,7 @@ def error_recovery_middleware(llm, retriever):
                 stderr_content = last_msg.split("STDERR:")[-1].split("</observation>")[0]
                 error_text = (stderr_content.strip() or stdout_content.strip())
                 error_fingerprint = LogCleaner.extract_error_fingerprint(error_text)
+                failure_class, failure_action = classify_execution_failure(error_text)
                 print(f"{Fore.RED}🔍 Error Fingerprint: {error_fingerprint[:100]}...{Style.RESET_ALL}")
                 env_hint = ""
                 env_missing = re.search(r"EnvironmentLocationNotFound:.*?/envs/([A-Za-z0-9_.-]+)", error_text)
@@ -204,9 +292,12 @@ def error_recovery_middleware(llm, retriever):
                             "healthcheck fails."
                         )
 
-                # --- B. RAG 检索 (查病历) ---
+                # --- B. 分层检索：第一次只本地修复，后续才扩展上下文 ---
                 rag_advice = ""
-                if retriever and KB_MAP.get("ERRORS"):
+                skill_advice = ""
+                if tier >= 1:
+                    skill_advice = _skill_error_context(skill_manager, state if isinstance(state, dict) else {})
+                if tier >= 1 and retriever and KB_MAP.get("ERRORS"):
                     try:
                         print(f"{Fore.YELLOW}📚 Querying RAG for solution...{Style.RESET_ALL}")
                         docs = retriever.retrieve(query=error_fingerprint, target_datasets=[KB_MAP["ERRORS"]])
@@ -215,12 +306,71 @@ def error_recovery_middleware(llm, retriever):
                             print(f"{Fore.GREEN}✓ Found relevant solution in KB.{Style.RESET_ALL}")
                     except Exception as e:
                         print(f"RAG Error: {e}")
+                elif tier == 0:
+                    print(f"{Fore.YELLOW}↪ Recovery tier 0: local stdout/stderr diagnosis only; skipping RAG for this first retry.{Style.RESET_ALL}")
+
+                external_hint = ""
+                if tier >= 2:
+                    external_hint = (
+                        "\n\nExternal search policy: local fix and RAG/skill context have already been tried. "
+                        "If the next fix still depends on undocumented behavior and an approved web search "
+                        "capability is available, search the exact error fingerprint plus tool/version, prefer "
+                        "official docs and GitHub issues, and summarize only the actionable finding. If no "
+                        "external search capability is available, stop escalating guesses and ask the user."
+                    )
+                repeated_class_hint = ""
+                if tier >= 1 and failure_class != "unknown_truncated_log":
+                    repeated_class_hint = (
+                        f"\n\nRepeated failure class: `{failure_class}`. Stop broad guessing. "
+                        f"Use this single next action: {failure_action}"
+                    )
 
                 # --- C. LLM 诊断 (开处方) ---
                 # 我们不直接修改代码，而是生成一个“专家会诊意见”，注入到对话历史中
                 # 让下一个 Generate 节点基于这个意见去重写代码
                 diagnosis_prompt = f"""
+You are a recovery engineer diagnosing exactly one failed execution. Your goal is
+to identify the proven root cause before proposing any retry. Do not continue the
+workflow blindly.
+
+Hard rules:
+1. If the observed exit code or validation status is failed, the step failed. Never call it PASS.
+2. Do not infer missing inputs unless the error evidence proves that exact missing input.
+3. First identify the failing command, failing line, and primary error class.
+4. If the traceback or tool log is truncated, the next action must inspect the relevant tail of the log or run a minimal availability check; do not guess.
+5. Do not proceed to downstream workflow steps until the failed step passes validation gates.
+6. Do not repeat the same command without changing the diagnosed cause.
+7. Prefer deterministic checks over clever shell constructs.
+8. For conda/subprocess errors, first check executable availability with `which`, `--version`, and package import/load tests.
+9. For scientific file generation, success requires semantic validation, not only file existence.
+
+Classify the failure as exactly one primary class:
+- command_syntax_error
+- missing_executable
+- missing_package
+- missing_input_file
+- wrong_path_or_uri
+- format_or_schema_error
+- chromosome_name_mismatch
+- coordinate_system_mismatch
+- scientific_validation_failed
+- downstream_tool_runtime_error
+- unknown_truncated_log
+
+Domain-specific rules for CALDER2 compartment-calling:
+- A gene-density BED is valid only when it is binned at the selected resolution,
+  chromosome names match cooler chromnames, column 4 sum > 0, and non-zero bins > 0.
+- Do not call gene intervals or gene lengths "gene density".
+- Never use artificial chromosome lengths when FASTA/cooler lengths are available.
+- Do not use process substitution `<(...)` under `conda run`; use real temp files.
+- Before official CALDER2 mode, verify `Rscript`, `Rscript --version`, and
+  `Rscript -e "library(CALDER); packageVersion('CALDER')"`.
+
 Analyze the following execution error:
+Recovery tier: {tier} (retry_count={retry_count})
+Primary failure class detected by rules: {failure_class}
+Rule-based next action: {failure_action}
+
 <error>
 STDOUT:
 {clip_text(stdout_content, 1200)}
@@ -231,10 +381,36 @@ STDERR:
 
 {clip_text(rag_advice, 1200)}
 
-Task:
-1. Explain why it failed.
-2. Provide the CORRECTED code block immediately.
+{clip_text(skill_advice, 1800)}
+
+Output format:
+Root cause:
+- one sentence, evidence-backed.
+
+Evidence:
+- quote the exact error line or failed invariant.
+
+Do not do:
+- list commands or assumptions that must not be repeated.
+
+Next diagnostic command:
+- provide only if the root cause is not proven or the log is truncated.
+
+Corrected command/code:
+- provide only after the root cause is proven.
+
+Validation gates:
+- list concrete checks that must pass before continuing.
+
+Escalation:
+- if the same class failed twice, stop broad guessing and request the missing log,
+  environment path, or tool availability result.
+
+Log policy:
+{LOG_TAIL_POLICY}
 {env_hint}
+{external_hint}
+{repeated_class_hint}
 """
                 # 调用 LLM 生成诊断
                 try:

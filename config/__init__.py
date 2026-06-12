@@ -17,7 +17,9 @@ from .config import (
     RAGFLOW_DATASET_IDS,
     RERANK_MODEL_ID,
     DEFAULT_PROJECT_ID,
+    BIOMIND_MEMORY_DIR,
     BIOMIND_WIKI_DIR,
+    BIOMIND_WIKI_INGEST_MODE,
     
     # LLM 配置
     LLM_API_KEY,
@@ -60,7 +62,9 @@ __all__ = [
     'RAGFLOW_DATASET_IDS',
     'RERANK_MODEL_ID',
     'DEFAULT_PROJECT_ID',
+    'BIOMIND_MEMORY_DIR',
     'BIOMIND_WIKI_DIR',
+    'BIOMIND_WIKI_INGEST_MODE',
     
     # LLM
     'LLM_API_KEY',

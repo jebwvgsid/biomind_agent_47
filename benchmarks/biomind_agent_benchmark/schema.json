@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BioMind Agent Benchmark Task",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "category",
+    "question_type",
+    "execution_mode",
+    "difficulty",
+    "prompt",
+    "expected_skills",
+    "reference_steps",
+    "milestones",
+    "scoring"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^BM-[A-Z0-9-]+$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "question_type": {
+      "type": "string",
+      "enum": ["clear_step", "open_step", "fault_injection", "resume", "safety", "evidence", "result_choice_after_analysis"]
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": ["routing_only", "smoke", "full", "manual_review", "fault_injection"]
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["easy", "medium", "hard"]
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "repo_files": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "data_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "role", "availability"],
+        "properties": {
+          "path": {"type": "string"},
+          "role": {"type": "string"},
+          "availability": {"type": "string", "enum": ["available", "planned"]}
+        }
+      }
+    },
+    "input_requirements": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "expected_workflow": {
+      "type": "string"
+    },
+    "expected_skills": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1
+    },
+    "optional_skills": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "forbidden_skills": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "reference_steps": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1
+    },
+    "expected_artifacts": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "expected_metrics": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "numeric_tolerances": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "result_question": {
+      "type": "object",
+      "required": ["prompt", "options", "correct_answer"],
+      "properties": {
+        "prompt": {"type": "string"},
+        "options": {
+          "type": "object",
+          "minProperties": 2,
+          "additionalProperties": {"type": "string"}
+        },
+        "correct_answer": {"type": "string"}
+      }
+    },
+    "milestones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "points"],
+        "properties": {
+          "id": {"type": "string"},
+          "description": {"type": "string"},
+          "points": {"type": "number"}
+        }
+      },
+      "minItems": 1
+    },
+    "scoring": {
+      "type": "object",
+      "required": ["total_points", "pass_threshold", "hard_failures"],
+      "properties": {
+        "total_points": {"type": "number"},
+        "pass_threshold": {"type": "number"},
+        "hard_failures": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,874 @@
+benchmark_id: biomind-agent-benchmark
+version: 0.3.1
+created: 2026-06-02
+description: >
+  Data-backed BioMind benchmark tasks following the BioMed-AQA shape. Each task
+  requires explicit fixture-path validation, correct skill selection, real
+  analysis or evidence-based blocking, metric extraction, and a final result
+  choice.
+
+default_scoring:
+  total_points: 5
+  pass_threshold: 4
+  hard_failures:
+    - "fabricates missing input files or claims outputs were produced without evidence"
+    - "selects a forbidden skill for the primary analysis"
+    - "ignores failed, empty, or incompatible outputs and reports success"
+    - "chooses a result answer without reading generated metrics or answer keys"
+
+tasks:
+  - id: BM-SCRNA-PBMC-QC-001
+    title: "PBMC3k scRNA ingest and QC result choice"
+    category: single_cell_rnaseq
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: easy
+    prompt: >
+      Use the PBMC3k 10x fixture at
+      benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/matrix.mtx,
+      benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/features.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/barcodes.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/cell_qc_metrics.tsv,
+      and benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/answer_key.yaml.
+      Validate the files, build or inspect the Seurat-ready count matrix, perform
+      QC filtering, summarize cell/gene/count/percent.mt evidence, and choose the
+      result option that best matches the fixture.
+    data_files:
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/matrix.mtx
+        role: 10x sparse count matrix
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/features.tsv
+        role: gene feature table
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/barcodes.tsv
+        role: cell barcode table
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/cell_qc_metrics.tsv
+        role: precomputed QC metrics for result checking
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/answer_key.yaml
+        role: fixture dimensions and expected summary statistics
+        availability: available
+    expected_skills:
+      - scrna/env/bootstrap
+      - scrna/ingest/data-download
+      - scrna/qc/filter
+    optional_skills:
+      - scrna/workflows/ingest-qc
+    forbidden_skills:
+      - crop-breeding/crop-rnaseq-de
+      - sequence/search/remote-blast
+    reference_steps:
+      - "Validate every PBMC3k fixture path before analysis."
+      - "Use scRNA ingest/QC skills and avoid bulk RNA-seq skills."
+      - "Read matrix dimensions and QC metric summaries from the fixture."
+      - "Produce a QC report or metrics summary with retained-cell evidence."
+      - "Choose the result option supported by the observed matrix/QC evidence."
+    expected_artifacts:
+      - "raw_seurat_object.rds or matrix validation summary"
+      - "qc_report.tsv or qc_metrics_summary.json"
+      - "selected_result_answer.txt"
+    expected_metrics:
+      matrix_shape_genes_by_cells: "must match answer_key.yaml"
+      total_counts: "must match answer_key.yaml"
+      qc_metrics_rows: "must match the number of barcodes"
+    numeric_tolerances:
+      matrix_shape: exact
+      total_counts: exact
+    result_question:
+      prompt: "Which conclusion is correct after inspecting the PBMC3k fixture and QC metrics?"
+      options:
+        A: "The fixture is a valid 10x scRNA count matrix; QC should use cell/gene/count/percent.mt summaries before downstream clustering."
+        B: "The files are bulk RNA-seq TPM tables and should be analyzed with crop-rnaseq-de."
+        C: "The count matrix is missing barcodes, so cell-level QC cannot be assessed."
+        D: "Remote BLAST is the primary skill because the input is a nucleotide sequence."
+        E: "QC can be reported as successful without checking matrix dimensions or metrics."
+      correct_answer: A
+    milestones:
+      - id: M1
+        description: "Validates all explicit PBMC3k file paths."
+        points: 1
+      - id: M2
+        description: "Selects scRNA ingest and QC skills, with optional workflow wrapper."
+        points: 1
+      - id: M3
+        description: "Produces or inspects QC evidence from matrix and cell metrics."
+        points: 1
+      - id: M4
+        description: "Checks key dimensions and total-count metrics against the answer key."
+        points: 1
+      - id: M5
+        description: "Chooses the correct result option from the evidence."
+        points: 1
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - "claims QC completion without validating matrix/features/barcodes"
+        - "uses bulk RNA-seq or BLAST skills as the primary workflow"
+        - "chooses an option unsupported by the fixture evidence"
+
+  - id: BM-SCRNA-PBMC-CLUSTER-MARKER-002
+    title: "PBMC3k clustering and marker-result interpretation"
+    category: single_cell_rnaseq
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: medium
+    prompt: >
+      Continue from the PBMC3k fixture paths
+      benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/matrix.mtx,
+      benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/features.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/barcodes.tsv,
+      and benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/answer_key.yaml.
+      Run or plan standard scRNA preprocessing, PCA/UMAP clustering, and
+      FindAllMarkers-style marker discovery. Interpret marker outputs and choose
+      the option that best reflects a valid scRNA cluster/marker analysis.
+    data_files:
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/matrix.mtx
+        role: 10x sparse count matrix
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/features.tsv
+        role: gene feature table
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/barcodes.tsv
+        role: cell barcode table
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/answer_key.yaml
+        role: expected fixture dimensions
+        availability: available
+    expected_skills:
+      - scrna/preprocess/basic
+      - scrna/cluster/basic
+      - scrna/markers/find
+    optional_skills:
+      - scrna/qc/filter
+    forbidden_skills:
+      - scrna/de/contrast
+      - crop-breeding/crop-rnaseq-de
+    reference_steps:
+      - "Validate PBMC3k paths and confirm a filtered or filterable scRNA count matrix."
+      - "Run preprocessing before clustering."
+      - "Run marker discovery only after cluster labels exist."
+      - "Summarize marker table evidence such as top genes per cluster."
+      - "Choose the result option that preserves correct scRNA stage order."
+    expected_artifacts:
+      - "preprocessed_seurat_object.rds"
+      - "clustered_seurat_object.rds"
+      - "marker_table.tsv"
+      - "selected_result_answer.txt"
+    expected_metrics:
+      marker_table_nonempty: true
+      cluster_labels_present: true
+    numeric_tolerances:
+      marker_table_rows: ">0 when execution environment is available"
+    result_question:
+      prompt: "Which conclusion is correct for a valid PBMC3k clustering and marker workflow?"
+      options:
+        A: "Preprocessing and clustering must precede marker detection; a nonempty marker table is the evidence for cluster-marker interpretation."
+        B: "Differential expression between conditions should be run first even though no condition metadata is supplied."
+        C: "Marker discovery is valid before creating cluster labels."
+        D: "Bulk RNA-seq DESeq2 is the canonical PBMC3k clustering method."
+        E: "The task is complete if UMAP is plotted but marker output is empty."
+      correct_answer: A
+    milestones:
+      - id: M1
+        description: "Validates the PBMC3k file paths."
+        points: 1
+      - id: M2
+        description: "Selects preprocess, cluster, and marker skills."
+        points: 1
+      - id: M3
+        description: "Maintains correct stage order."
+        points: 1
+      - id: M4
+        description: "Uses marker-table evidence for interpretation."
+        points: 1
+      - id: M5
+        description: "Chooses the correct result option."
+        points: 1
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - "runs condition DE without condition metadata"
+        - "runs marker discovery before clustering"
+        - "uses bulk RNA-seq skills for PBMC3k clustering"
+
+  - id: BM-3DDNA-COOL-TAD-003
+    title: "Cooler Hi-C TAD analysis result choice"
+    category: chromatin_contact_tad
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: medium
+    prompt: >
+      Use the Hi-C cooler fixture
+      benchmarks/biomind_agent_benchmark/fixtures_public/cool_hg19_gm12878_chr22/hg19_GM12878_MboI_chr22_2Mb.cool
+      plus benchmarks/biomind_agent_benchmark/fixtures_public/cool_hg19_gm12878_chr22/answer_key.yaml.
+      Validate the cooler resolution and chromosome metadata, run or plan TAD
+      calling with HiCExplorer-compatible checks, summarize TAD domains and
+      boundaries, and choose the result option supported by the matrix evidence.
+    data_files:
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/cool_hg19_gm12878_chr22/hg19_GM12878_MboI_chr22_2Mb.cool
+        role: balanced Hi-C cooler matrix
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/cool_hg19_gm12878_chr22/answer_key.yaml
+        role: cooler expected dimensions and counts
+        availability: available
+    expected_skills:
+      - 3d-dna/3d-dna-analysis
+      - 3d-dna/tad-calling
+    optional_skills: []
+    forbidden_skills:
+      - 3d-dna/loop-classification
+      - genomics/wgs-variant-calling
+    reference_steps:
+      - "Validate the .cool path and load answer-key matrix metadata."
+      - "Route through the 3D DNA entry skill and TAD-calling skill."
+      - "Check matrix resolution, balance/readability, and chromosome scope."
+      - "Run or plan TAD calling and summarize domain/boundary statistics."
+      - "Choose the result option that matches a TAD analysis rather than loop classification or WGS."
+    expected_artifacts:
+      - "tad_domains.tsv"
+      - "tad_boundaries.tsv"
+      - "tad_domain_stats.tsv"
+      - "selected_result_answer.txt"
+    expected_metrics:
+      cooler_bin_size: "must match answer_key.yaml"
+      cooler_nnz: "must match answer_key.yaml"
+    numeric_tolerances:
+      cooler_metadata: exact
+      tad_count: ">=0; empty TAD calls must be reported honestly"
+    result_question:
+      prompt: "Which conclusion is correct for this cooler fixture?"
+      options:
+        A: "The .cool matrix should be validated for resolution/count metadata before TAD calling; TAD outputs are domains, boundaries, and summary statistics."
+        B: "The correct first step is loop-anchor classification because no loop calls exist yet."
+        C: "The matrix should be treated as a VCF and sent to GATK."
+        D: "Resolution can be guessed without inspecting the cooler metadata."
+        E: "A TAD result is valid even if matrix loading fails."
+      correct_answer: A
+    milestones:
+      - id: M1
+        description: "Validates cooler and answer-key paths."
+        points: 1
+      - id: M2
+        description: "Selects 3D DNA router and TAD-calling skills."
+        points: 1
+      - id: M3
+        description: "Checks resolution and matrix metadata."
+        points: 1
+      - id: M4
+        description: "Produces or honestly blocks TAD domain/boundary artifacts."
+        points: 1
+      - id: M5
+        description: "Chooses the correct result option."
+        points: 1
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - "guesses resolution without checking cooler metadata"
+        - "uses loop classification before loop calls"
+        - "claims TAD results when matrix loading fails"
+
+  - id: BM-3DDNA-COOL-RESAMPLE-DIFFTAD-025
+    title: "5kb cooler to 40kb TAD and differential-TAD result choice"
+    category: chromatin_contact_tad
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: hard
+    prompt: >
+      Use the paired Hi-C cooler fixture paths
+      benchmarks/biomind_agent_benchmark/fixtures_public/cool_pair_5kb_tad/target_5kb.cool,
+      benchmarks/biomind_agent_benchmark/fixtures_public/cool_pair_5kb_tad/control_5kb.cool,
+      benchmarks/biomind_agent_benchmark/fixtures_public/cool_pair_5kb_tad/sample_sheet.tsv,
+      and benchmarks/biomind_agent_benchmark/fixtures_public/cool_pair_5kb_tad/answer_key.yaml.
+      Validate that both input matrices are 5 kb balanced coolers, coarsen or
+      convert both matrices to a shared 40 kb resolution, verify the converted
+      matrices, call TADs separately for target and control at 40 kb, run
+      bidirectional target-control differential TAD testing with the matching
+      sample-specific domain BED files, summarize accepted and rejected
+      differential TAD counts, and choose the result option that matches the
+      final rejected differential TAD total.
+    data_files:
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/cool_pair_5kb_tad/target_5kb.cool
+        role: target 5 kb balanced Hi-C cooler matrix
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/cool_pair_5kb_tad/control_5kb.cool
+        role: control 5 kb balanced Hi-C cooler matrix
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/cool_pair_5kb_tad/sample_sheet.tsv
+        role: target/control sample sheet with expected 5 kb input and 40 kb analysis resolution
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/cool_pair_5kb_tad/answer_key.yaml
+        role: expected conversion, TAD, and differential-TAD summary metrics
+        availability: planned
+    expected_skills:
+      - 3d-dna/3d-dna-analysis
+      - 3d-dna/tad-calling
+      - 3d-dna/differential-tad
+    optional_skills:
+      - 3d-dna/tad-boundary-change
+    forbidden_skills:
+      - 3d-dna/loop-classification
+      - genomics/wgs-variant-calling
+    reference_steps:
+      - "Validate target/control 5 kb .cool paths, sample sheet, and answer key before analysis."
+      - "Confirm both matrices have the same chromosome scope, 5 kb input binsize, and usable balancing metadata."
+      - "Coarsen or convert both matrices to exactly 40 kb and verify the converted binsize/count metadata."
+      - "Call TADs independently for target and control using the converted 40 kb matrices."
+      - "Run differential TAD testing in the target-vs-control direction using target domains."
+      - "Run the reverse control-vs-target comparison using control domains, or explicitly report if bidirectional execution blocks."
+      - "Read the differential TAD summary, count rejected differential TADs, and choose the matching result option."
+    expected_artifacts:
+      - "target_40kb.cool"
+      - "control_40kb.cool"
+      - "target_40kb_domains.bed and control_40kb_domains.bed"
+      - "differential_tad_summary.tsv"
+      - "selected_result_answer.txt"
+    expected_metrics:
+      input_bin_size: 5000
+      output_bin_size: 40000
+      coarsening_factor: 8
+      target_tad_count: "must match answer_key.yaml when fixture is present"
+      control_tad_count: "must match answer_key.yaml when fixture is present"
+      bidirectional_rejected_differential_tads_total: "must match answer_key.yaml; planned expected value is 14"
+    numeric_tolerances:
+      bin_sizes: exact
+      coarsening_factor: exact
+      rejected_differential_tad_count: exact
+    result_question:
+      prompt: "After 5 kb to 40 kb conversion, 40 kb TAD calling, and bidirectional differential TAD testing, how many rejected differential TADs are reported in total?"
+      options:
+        A: "0 rejected differential TADs"
+        B: "14 rejected differential TADs"
+        C: "28 rejected differential TADs"
+        D: "Only the target TAD count should be reported; differential TAD testing is not part of the workflow"
+        E: "The count is valid without converting both matrices to the same 40 kb resolution"
+      correct_answer: B
+    milestones:
+      - id: M1
+        description: "Validates paired 5 kb cooler inputs, sample sheet, and answer key."
+        points: 1
+      - id: M2
+        description: "Performs or plans evidence-backed 5 kb to 40 kb conversion for both samples."
+        points: 1
+      - id: M3
+        description: "Calls TADs at 40 kb for target and control with sample-specific domain outputs."
+        points: 1
+      - id: M4
+        description: "Runs or honestly blocks bidirectional differential TAD testing with matching domains."
+        points: 1
+      - id: M5
+        description: "Chooses the rejected differential TAD count supported by the summary evidence."
+        points: 1
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - "runs differential TAD testing before generating target/control 40 kb TAD domains"
+        - "compares target and control matrices at different resolutions"
+        - "uses loop classification or WGS skills as the primary workflow"
+        - "chooses a rejected differential TAD count without reading generated summary metrics or answer_key.yaml"
+
+  - id: BM-CROP-METABOLOMICS-015
+    title: "Crop metabolomics-only prediction result choice"
+    category: crop_multiomics_prediction
+    question_type: result_choice_after_analysis
+    execution_mode: manual_review
+    difficulty: medium
+    prompt: >
+      Use the crop metabolomics fixture paths
+      benchmarks/biomind_agent_benchmark/fixtures_public/crop_multiomics/metabolite_matrix.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_public/crop_multiomics/metabolite_sample_metadata.tsv,
+      and benchmarks/biomind_agent_benchmark/fixtures_public/crop_multiomics/metabolite_answer_key.yaml.
+      Validate sample and metabolite dimensions, run or plan metabolite-only
+      prediction and feature interpretation, and choose the option that states
+      what this fixture can and cannot prove.
+    data_files:
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/crop_multiomics/metabolite_matrix.tsv
+        role: metabolite feature matrix
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/crop_multiomics/metabolite_sample_metadata.tsv
+        role: metabolomics sample metadata
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/crop_multiomics/metabolite_answer_key.yaml
+        role: metabolomics fixture expected dimensions
+        availability: planned
+    expected_skills:
+      - crop-breeding/crop-dnngp-multiomics-prediction
+    optional_skills:
+      - crop-breeding/crop-smart-breeding-strategy
+    forbidden_skills:
+      - crop-breeding/crop-conserved-transcriptome-ml
+      - crop-breeding/crop-gwas-pipeline
+    reference_steps:
+      - "Validate metabolite matrix and sample metadata paths."
+      - "Use the DNNGP multi-omics skill for metabolite-feature prediction planning."
+      - "Treat this as metabolite-only unless matched genotype/expression files are also present."
+      - "Summarize feature matrix dimensions and candidate important metabolites."
+      - "Choose the result option that avoids overclaiming strict matched multi-omics."
+    expected_artifacts:
+      - "metabolite_only_model_performance.tsv"
+      - "metabolite_feature_importance.tsv"
+      - "selected_result_answer.txt"
+    expected_metrics:
+      metabolite_samples: "must match metabolite_answer_key.yaml when present"
+      metabolite_features: "must match metabolite_answer_key.yaml when present"
+    numeric_tolerances:
+      dimensions: exact
+    result_question:
+      prompt: "Which conclusion is correct for this crop_multiomics fixture?"
+      options:
+        A: "It supports metabolite-only prediction and metadata handling, but it cannot prove strictly matched genotype-expression-metabolite fusion by itself."
+        B: "It proves full genotype-expression-metabolite fusion because all omics tables are present."
+        C: "It should be analyzed with GWAS because the files are VCF/PLINK genotypes."
+        D: "It should use conserved transcriptome ML because an expression matrix is present."
+        E: "No sample metadata check is needed for metabolomics prediction."
+      correct_answer: A
+    milestones:
+      - id: M1
+        description: "Validates metabolomics fixture paths or reports planned-data blocker."
+        points: 1
+      - id: M2
+        description: "Selects DNNGP multi-omics prediction skill."
+        points: 1
+      - id: M3
+        description: "Treats available data as metabolite-only."
+        points: 1
+      - id: M4
+        description: "Extracts matrix dimensions and model/feature evidence."
+        points: 1
+      - id: M5
+        description: "Chooses the non-overclaiming result option."
+        points: 1
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - "claims strict matched multi-omics fusion without genotype and expression matrices"
+        - "uses GWAS or transcriptome-only skills as the primary analysis"
+        - "ignores missing planned fixture files"
+
+  - id: BM-CROP-GXE-017
+    title: "G2F maize GxE environmental-index result choice"
+    category: crop_gxe_prediction
+    question_type: result_choice_after_analysis
+    execution_mode: manual_review
+    difficulty: hard
+    prompt: >
+      Use the maize GxE fixture paths
+      benchmarks/biomind_agent_benchmark/fixtures_public/g2f_maize_gxe/phenotype_multi_environment.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_public/g2f_maize_gxe/genotype_matrix.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_public/g2f_maize_gxe/environment_timeseries.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_public/g2f_maize_gxe/growth_stage_window.tsv,
+      and benchmarks/biomind_agent_benchmark/fixtures_public/g2f_maize_gxe/answer_key.yaml.
+      Select environmental indices from the weather/envirotype time series,
+      fit or plan a reaction-norm GxE analysis, identify stable genotypes or
+      environment-specific predictions, and choose the supported result option.
+    data_files:
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/g2f_maize_gxe/phenotype_multi_environment.tsv
+        role: multi-environment phenotype table
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/g2f_maize_gxe/genotype_matrix.tsv
+        role: genotype marker matrix
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/g2f_maize_gxe/environment_timeseries.tsv
+        role: environment time-series table
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/g2f_maize_gxe/growth_stage_window.tsv
+        role: growth-stage window definition
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/g2f_maize_gxe/answer_key.yaml
+        role: expected dimensions and GxE fixture metadata
+        availability: planned
+    expected_skills:
+      - crop-breeding/crop-gxe-environmental-index-prediction
+    optional_skills:
+      - crop-breeding/crop-smart-breeding-strategy
+    forbidden_skills:
+      - crop-breeding/crop-genomic-prediction
+      - crop-breeding/crop-rnaseq-de
+    reference_steps:
+      - "Validate phenotype, genotype, environment time-series, growth-stage, and answer-key paths."
+      - "Use the GxE environmental-index skill rather than SNP-only genomic prediction."
+      - "Derive or select environment indices over growth-stage windows."
+      - "Fit or plan reaction-norm intercept/slope and stable genotype ranking."
+      - "Choose the result option that reflects multi-environment GxE analysis."
+    expected_artifacts:
+      - "environmental_index_scores.tsv"
+      - "reaction_norm_parameters.tsv"
+      - "stable_genotypes.tsv"
+      - "selected_result_answer.txt"
+    expected_metrics:
+      environments: "must match answer_key.yaml when present"
+      genotype_features: "must match answer_key.yaml when present"
+    numeric_tolerances:
+      dimensions: exact
+    result_question:
+      prompt: "Which conclusion is correct for the G2F/CLIM4OMICS fixture?"
+      options:
+        A: "It supports multi-environment GxE analysis using phenotype, genotype, environment time series, and growth-stage windows."
+        B: "It should be reduced to SNP-only genomic prediction because environment data are irrelevant."
+        C: "It is a bulk RNA-seq contrast dataset and should use DESeq2."
+        D: "Stable genotype ranking can be claimed without reading phenotype or environment tables."
+        E: "The correct primary skill is pangenome/SV genomic selection."
+      correct_answer: A
+    milestones:
+      - id: M1
+        description: "Validates or blocks on all GxE fixture paths."
+        points: 1
+      - id: M2
+        description: "Selects the environmental-index GxE skill."
+        points: 1
+      - id: M3
+        description: "Uses environment time series and growth-stage windows."
+        points: 1
+      - id: M4
+        description: "Reports reaction-norm and stable-genotype evidence."
+        points: 1
+      - id: M5
+        description: "Chooses the correct GxE result option."
+        points: 1
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - "ignores environment time series and treats the task as SNP-only"
+        - "claims stable genotype rankings without phenotype/environment evidence"
+        - "uses RNA-seq or pangenome skills as the primary GxE analysis"
+
+  - id: BM-CROP-PANGENOME-SV-018
+    title: "Maize SV and ePAV pangenome-selection result choice"
+    category: crop_pangenome_selection
+    question_type: result_choice_after_analysis
+    execution_mode: manual_review
+    difficulty: hard
+    prompt: >
+      Use the maize pangenome fixture paths
+      benchmarks/biomind_agent_benchmark/fixtures_public/maize_pangenome_sv/sv.vcf,
+      benchmarks/biomind_agent_benchmark/fixtures_public/maize_pangenome_sv/pangenome_gene_presence_absence.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_public/maize_pangenome_sv/pangenome_gene_presence_absence.features_by_sample.tsv,
+      and benchmarks/biomind_agent_benchmark/fixtures_public/maize_pangenome_sv/pav_answer_key.yaml.
+      Parse SV and gene presence/absence-like features, compare feature classes
+      for pangenome-aware genomic selection, and choose the option that correctly
+      labels the ePAV fixture caveat.
+    data_files:
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/maize_pangenome_sv/sv.vcf
+        role: structural-variant VCF subset
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/maize_pangenome_sv/pangenome_gene_presence_absence.tsv
+        role: sample-by-feature ePAV matrix
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/maize_pangenome_sv/pangenome_gene_presence_absence.features_by_sample.tsv
+        role: feature-by-sample ePAV matrix
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/maize_pangenome_sv/pav_answer_key.yaml
+        role: PAV/ePAV fixture metadata and caveats
+        availability: planned
+    expected_skills:
+      - crop-breeding/crop-pangenome-sv-genomic-selection
+    optional_skills:
+      - crop-breeding/crop-smart-breeding-strategy
+    forbidden_skills:
+      - crop-breeding/crop-gxe-environmental-index-prediction
+      - genomics/snpeff-annotation
+    reference_steps:
+      - "Validate SV VCF and ePAV matrix paths."
+      - "Use the pangenome/SV genomic-selection skill."
+      - "Count SV records and ePAV feature/sample dimensions from answer key or files."
+      - "Compare or plan feature-class contribution without overclaiming genomic PAV truth."
+      - "Choose the result option that states the ePAV caveat."
+    expected_artifacts:
+      - "sv_feature_summary.tsv"
+      - "pav_feature_summary.tsv"
+      - "snp_vs_sv_epav_comparison.tsv"
+      - "selected_result_answer.txt"
+    expected_metrics:
+      sv_records: "must match pav_answer_key.yaml when present"
+      epav_features: "must match pav_answer_key.yaml when present"
+    numeric_tolerances:
+      dimensions: exact
+    result_question:
+      prompt: "Which conclusion is correct for the maize pangenome fixture?"
+      options:
+        A: "The SV VCF is a real subset, while the gene presence/absence table is expression-derived ePAV and must not be called assembly-derived PAV truth."
+        B: "The ePAV matrix is direct assembly-derived genomic gene presence/absence truth."
+        C: "The primary analysis should be GxE environmental-index modeling because no SV/PAV data are present."
+        D: "snpEff annotation is the main skill because the task is variant consequence prediction."
+        E: "Feature-class comparison is valid without checking SV or ePAV dimensions."
+      correct_answer: A
+    milestones:
+      - id: M1
+        description: "Validates or blocks on SV/ePAV fixture paths."
+        points: 1
+      - id: M2
+        description: "Selects pangenome/SV genomic-selection skill."
+        points: 1
+      - id: M3
+        description: "Extracts SV and ePAV feature summaries."
+        points: 1
+      - id: M4
+        description: "States the expression-derived ePAV caveat."
+        points: 1
+      - id: M5
+        description: "Chooses the correct pangenome result option."
+        points: 1
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - "calls ePAV direct assembly-derived PAV truth"
+        - "uses GxE or snpEff skills as the primary analysis"
+        - "claims feature comparison without reading SV/ePAV inputs"
+
+  - id: BM-WGS-GIAB-021
+    title: "GIAB HG002 truth and snpEff readiness result choice"
+    category: wgs_variant_annotation
+    question_type: result_choice_after_analysis
+    execution_mode: manual_review
+    difficulty: medium
+    prompt: >
+      Use the GIAB HG002 fixture paths
+      benchmarks/biomind_agent_benchmark/fixtures_public/giab_hg002_wgs/known_truth.vcf
+      and benchmarks/biomind_agent_benchmark/fixtures_public/giab_hg002_wgs/high_confidence_regions.bed.
+      Inspect the truth VCF and high-confidence BED, explain what WGS calling or
+      snpEff annotation can be evaluated from these files, identify missing
+      FASTQ/reference/annotation inputs, and choose the correct result option.
+    data_files:
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/giab_hg002_wgs/known_truth.vcf
+        role: GIAB HG002 truth VCF subset
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/giab_hg002_wgs/high_confidence_regions.bed
+        role: GIAB high-confidence callable regions
+        availability: planned
+    expected_skills:
+      - genomics/wgs-variant-calling
+      - genomics/snpeff-annotation
+    optional_skills: []
+    forbidden_skills:
+      - crop-breeding/crop-wgs-to-marker-score
+      - scrna/de/contrast
+    reference_steps:
+      - "Validate truth VCF and BED paths."
+      - "Select WGS variant-calling and snpEff annotation readiness skills."
+      - "Count or summarize truth variants and callable regions."
+      - "Identify missing reads, reference FASTA, GFF3, or snpEff database inputs."
+      - "Choose the result option that treats this as truth/readiness, not full calling."
+    expected_artifacts:
+      - "truth_vcf_summary.tsv"
+      - "callable_region_summary.tsv"
+      - "wgs_snpeff_readiness_report.md"
+      - "selected_result_answer.txt"
+    expected_metrics:
+      truth_variant_count: "must match answer_key or VCF summary when present"
+      callable_region_count: "must match BED summary when present"
+    numeric_tolerances:
+      counts: exact
+    result_question:
+      prompt: "Which conclusion is correct for the GIAB HG002 fixture?"
+      options:
+        A: "It is a truth/readiness fixture for VCF/BED validation; full WGS calling still needs reads, reference FASTA, and annotation or snpEff database inputs."
+        B: "It is a complete WGS benchmark because paired FASTQ and reference FASTA are already present."
+        C: "It should be scored with crop marker effects because it is a breeding VCF."
+        D: "snpEff annotation can be finalized without selecting a genome database or GFF3/GTF annotation."
+        E: "The high-confidence BED is unnecessary for truth-set evaluation."
+      correct_answer: A
+    milestones:
+      - id: M1
+        description: "Validates or blocks on GIAB fixture paths."
+        points: 1
+      - id: M2
+        description: "Selects WGS and snpEff skills."
+        points: 1
+      - id: M3
+        description: "Summarizes VCF/BED evidence."
+        points: 1
+      - id: M4
+        description: "Identifies missing full-calling and annotation inputs."
+        points: 1
+      - id: M5
+        description: "Chooses the truth/readiness result option."
+        points: 1
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - "claims full WGS calling is possible without reads/reference"
+        - "builds or guesses a snpEff database without annotation evidence"
+        - "uses crop marker scoring or scRNA skills as the primary analysis"
+
+  - id: BM-ONT-METHYL-MODKIT-024
+    title: "ONT E. coli 5mC modkit benchmark result choice"
+    category: methylation_nanopore
+    question_type: result_choice_after_analysis
+    execution_mode: manual_review
+    difficulty: hard
+    prompt: >
+      Use the planned ONT methylation fixture paths
+      benchmarks/biomind_agent_benchmark/fixtures_public/ont_methylation_modkit/Ecoli_WT_5kHz_sup_v5.2r1_5mC.bam,
+      benchmarks/biomind_agent_benchmark/fixtures_public/ont_methylation_modkit/ecoli.fa,
+      benchmarks/biomind_agent_benchmark/fixtures_public/ont_methylation_modkit/Ecoli_WT_bisulfite_20x.tsv,
+      and benchmarks/biomind_agent_benchmark/fixtures_public/ont_methylation_modkit/answer_key.yaml.
+      Check modBAM MM/ML tags, run modkit pileup for 5mC when files exist,
+      compare callable sites to bisulfite truth, compute overlap/correlation/RMSE,
+      and choose the result option supported by the metrics.
+    data_files:
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/ont_methylation_modkit/Ecoli_WT_5kHz_sup_v5.2r1_5mC.bam
+        role: ONT aligned modBAM with 5mC calls
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/ont_methylation_modkit/ecoli.fa
+        role: E. coli reference FASTA
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/ont_methylation_modkit/Ecoli_WT_bisulfite_20x.tsv
+        role: bisulfite truth table
+        availability: planned
+      - path: benchmarks/biomind_agent_benchmark/fixtures_public/ont_methylation_modkit/answer_key.yaml
+        role: expected modkit/truth-comparison metrics
+        availability: planned
+    expected_skills:
+      - epigenomics/methylation/modkit-pileup
+    optional_skills: []
+    forbidden_skills:
+      - open-chromatin/modkit-cpu
+      - epigenomics/methylation/gene-plot
+    reference_steps:
+      - "Validate modBAM, reference, truth table, and answer-key paths or report planned-data blocker."
+      - "Use the modkit methylation pileup skill, not the 6mA open-chromatin skill."
+      - "Run modkit tag checks before pileup."
+      - "Run 5mC pileup and compare to bisulfite truth when files are present."
+      - "Choose the result option based on tag, pileup, overlap, correlation, and RMSE evidence."
+    expected_artifacts:
+      - "Ecoli_WT_5mC_modkit_pileup.bed.gz"
+      - "methylation_comparison.tsv"
+      - "metrics.json"
+      - "selected_result_answer.txt"
+    expected_metrics:
+      mm_ml_tags_present: true
+      pileup_nonempty: true
+      truth_overlap_sites: ">0"
+    numeric_tolerances:
+      pearson_r: ">=0.80 when answer_key is available"
+      rmse: "<=0.25 when answer_key is available"
+    result_question:
+      prompt: "Which conclusion is correct for the ONT E. coli 5mC modkit benchmark?"
+      options:
+        A: "A valid run must detect MM/ML tags, produce a nonempty 5mC modkit pileup, overlap bisulfite truth sites, and report correlation/RMSE."
+        B: "The open-chromatin 6mA CPU skill is the primary skill for this 5mC methylation benchmark."
+        C: "Plain FASTQ alone is sufficient to compute modkit methylation pileup."
+        D: "The benchmark is complete if modkit starts, even when the pileup is empty."
+        E: "Bisulfite truth should be ignored because methylation ratios cannot be compared."
+      correct_answer: A
+    milestones:
+      - id: M1
+        description: "Validates or blocks on planned ONT fixture paths."
+        points: 1
+      - id: M2
+        description: "Selects the dedicated modkit methylation pileup skill."
+        points: 1
+      - id: M3
+        description: "Checks MM/ML tags before pileup."
+        points: 1
+      - id: M4
+        description: "Computes pileup/truth comparison metrics when files exist."
+        points: 1
+      - id: M5
+        description: "Chooses the metric-supported result option."
+        points: 1
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - "uses open-chromatin/modkit-cpu as the primary 5mC skill"
+        - "claims methylation detection from FASTQ alone"
+        - "reports success with missing MM/ML tags or empty pileup"
+
+  - id: BM-CROP-MSPRIME-GP-013
+    title: "msprime crop genomic prediction result choice"
+    category: crop_genomic_prediction
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: hard
+    prompt: >
+      Use the msprime professional fixture paths
+      benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/genotype_matrix.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/phenotype.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/gwas_summary.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/marker_annotation.tsv,
+      and benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/simulation_truth.tsv.
+      Train or run smoke checks for crop genomic prediction and GP-WAITER-style
+      GWAS-weighted prediction, compare model performance, use simulation truth
+      to interpret causal-marker recovery, and choose the correct result option.
+    data_files:
+      - path: benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/genotype_matrix.tsv
+        role: simulated genotype marker matrix
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/phenotype.tsv
+        role: simulated phenotype table
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/gwas_summary.tsv
+        role: GWAS-like marker weights
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/marker_annotation.tsv
+        role: marker annotation table
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/simulation_truth.tsv
+        role: simulation truth labels
+        availability: available
+    expected_skills:
+      - crop-breeding/crop-genomic-prediction
+      - crop-breeding/crop-gp-waiter-transformer
+    optional_skills:
+      - crop-breeding/crop-cnn-attention-genomic-prediction
+    forbidden_skills:
+      - crop-breeding/crop-dnngp-multiomics-prediction
+      - crop-breeding/crop-rnaseq-de
+    reference_steps:
+      - "Validate genotype, phenotype, GWAS summary, annotation, and truth paths."
+      - "Use crop genomic prediction for baseline modeling."
+      - "Use GP-WAITER because GWAS-derived marker weights are available."
+      - "Compare CV performance and important-marker overlap with simulation truth."
+      - "Choose the result option based on model-performance and truth evidence."
+    expected_artifacts:
+      - "model_performance.tsv"
+      - "gp_waiter_model_performance.tsv"
+      - "important_marker_overlap.tsv"
+      - "selected_result_answer.txt"
+    expected_metrics:
+      genotype_samples: "must match simulation_truth.tsv metadata"
+      causal_marker_overlap: "reported, not fabricated"
+    numeric_tolerances:
+      performance_metric: "must be finite"
+      overlap_count: ">=0"
+    result_question:
+      prompt: "Which conclusion is correct for the msprime crop prediction fixture?"
+      options:
+        A: "The task should compare baseline genomic prediction with GWAS-weighted GP-WAITER and interpret important markers against simulation truth."
+        B: "The task is multi-omics DNNGP because metabolite and expression matrices are present."
+        C: "The correct primary analysis is bulk RNA-seq differential expression."
+        D: "Marker recovery can be claimed without reading simulation_truth.tsv."
+        E: "GWAS weights should be ignored even though gwas_summary.tsv is supplied."
+      correct_answer: A
+    milestones:
+      - id: M1
+        description: "Validates all msprime fixture paths."
+        points: 1
+      - id: M2
+        description: "Selects genomic prediction and GP-WAITER skills."
+        points: 1
+      - id: M3
+        description: "Runs or plans baseline and weighted prediction comparison."
+        points: 1
+      - id: M4
+        description: "Uses simulation truth for important-marker interpretation."
+        points: 1
+      - id: M5
+        description: "Chooses the correct model-comparison result option."
+        points: 1
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - "ignores supplied GWAS summary for the weighted model"
+        - "uses multi-omics or RNA-seq skills as the primary analysis"
+        - "claims causal-marker recovery without simulation-truth evidence"

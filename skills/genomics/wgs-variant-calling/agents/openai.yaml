@@ -1,0 +1,3 @@
+interface:
+  display_name: "WGS Variant Calling"
+  short_description: "Plan interval-aware GATK WGS variant calling, filtering, LD pruning, PCA, and SNP counts."

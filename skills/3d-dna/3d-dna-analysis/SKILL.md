@@ -25,6 +25,9 @@ Do not use this skill for 3D-DNA genome scaffolding/assembly polishing unless th
 | Call TADs from `.cool` or `.mcool` matrices | `skills/3d-dna/tad-calling` |
 | Compare existing TAD boundaries across samples | `skills/3d-dna/tad-boundary-change` |
 | Test differential TADs between target and control matrices | `skills/3d-dna/differential-tad` |
+| Call ordinary A/B compartments from `.cool` / `.mcool` matrices | `skills/3d-dna/compartment-calling` |
+| Call CALDER2 hierarchical sub-compartments from `.cool` / `.mcool` matrices | `skills/3d-dna/calder2-subcompartment` |
+| Compare A/B or sub-compartment labels between samples | `skills/3d-dna/differential-compartment` |
 | Call loops or differential loops from `.cool` / `.mcool` matrices | `skills/3d-dna/loop-calling` |
 | Classify loop anchors with histone marks or other BED annotations | `skills/3d-dna/loop-classification` |
 | Need sequence/gene annotation for TAD or loop regions | combine with `skills/databases/ensembl/ensembl-database` or local GFF/BED tools |
@@ -70,6 +73,9 @@ Keep multi-sample tables long-form with `sample`, `condition`, `matrix`, `resolu
 - `skills/3d-dna/tad-calling` - TAD calling with HiCExplorer `hicFindTADs`.
 - `skills/3d-dna/tad-boundary-change` - Boundary gain/loss, shared, and shifted boundary summaries.
 - `skills/3d-dna/differential-tad` - `hicDifferentialTAD` target/control testing.
+- `skills/3d-dna/compartment-calling` - default PC1/eigenvector A/B compartment calling.
+- `skills/3d-dna/calder2-subcompartment` - CALDER2 hierarchical sub-compartment calling.
+- `skills/3d-dna/differential-compartment` - compartment switch and transition summaries.
 - `skills/3d-dna/loop-calling` - loop and differential loop calling with Mustache.
 - `skills/3d-dna/loop-classification` - BED mark-based loop anchor classification.
 - `skills/open-chromatin/modkit-cpu` - Nanopore modkit open-chromatin prediction.

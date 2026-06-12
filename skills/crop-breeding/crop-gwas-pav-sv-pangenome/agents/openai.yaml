@@ -1,0 +1,4 @@
+interface:
+  display_name: "Crop PAV/SV GWAS"
+  short_description: "Run pangenome PAV/SV marker GWAS."
+  default_prompt: "Use $crop-gwas-pav-sv-pangenome to run GWAS on my PAV or SV marker matrix."

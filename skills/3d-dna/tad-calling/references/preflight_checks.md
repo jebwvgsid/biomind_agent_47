@@ -44,7 +44,7 @@ Ask the user which one to use. Do not choose automatically.
 
 ## Check Balance
 
-The wrapper checks balance by opening the effective cooler URI and requiring a finite `weight` column in `clr.bins()`.
+The wrapper checks balance by opening the effective cooler URI and requiring a finite `weight` column in `clr.bins()`. During normal TAD calling, the wrapper automatically runs `cooler balance` on the effective URI if the `weight` column is missing or has no finite values, then re-checks before calling `hicFindTADs`. During `--preflight-only`, the wrapper only reports balance status and does not modify the matrix.
 
 Manual check:
 
@@ -57,10 +57,39 @@ weights = clr.bins()["weight"][:]
 print(weights.notna().sum(), len(weights))
 ```
 
-If the `weight` column is missing, balance the cooler:
+Do not use `clr.bins()["weight"].dropna()` or `clr.bins()["weight"].notna()`
+directly. `clr.bins()["weight"]` is a Cooler selector until it is sliced with
+`[:]`, so pandas-like methods are only valid after `weights =
+clr.bins()["weight"][:]`. Do not use `cooler attrs | grep weight` to check
+balance weights because `weight` is a bins-table column, not a top-level cooler
+attribute.
+
+Compact shell check for multiple matrices:
 
 ```bash
-cooler balance sample.cool
+conda run -n hicexplore python - <<'PY'
+import cooler
+
+paths = [
+    "sample_a.mcool::/resolutions/40000",
+    "sample_b.mcool::/resolutions/40000",
+]
+for path in paths:
+    clr = cooler.Cooler(path)
+    columns = list(clr.bins().columns)
+    print(path, "columns=", columns)
+    if "weight" not in columns:
+        print(path, "weight=MISSING")
+        continue
+    weights = clr.bins()["weight"][:]
+    print(path, "weight=", weights.notna().sum(), "/", len(weights))
+PY
+```
+
+If the `weight` column is missing during normal TAD calling, use the wrapper's default auto-balance behavior:
+
+```bash
+conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py --sample SAMPLE sample.mcool --resolution-bp 40000 --out-root TADs/HiCExplorer
 ```
 
 For `.mcool`, balance must be applied to the relevant resolution or generated upstream during matrix creation.
