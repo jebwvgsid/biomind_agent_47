@@ -1,0 +1,50 @@
+workflow_id: aporec_methylation_analysis
+aliases: [aporec-methylation-workflow, aporec_methylation, porec_methylation, nanopore_porec_methylation, 三代甲基化分析]
+name: AporeC Long-Read Methylation Analysis
+description: AporeC/Pore-C and ordinary ONT long-read methylation workflow that separates direct modBAM/modkit analysis from second-generation bisulfite or enzymatic methylation data, with optional Pore-C contact matrices for AporeC libraries.
+task_types: [aporec_methylation, methylation_long_read_workflow]
+triggers: [AporeC, aporec, Pore-C, porec.smk, nanopore methylation, modBAM, MM/ML, modkit, 三代甲基化, 甲基化到基因组, 二代甲基化区分]
+stages:
+  - stage: aporec_input_triage
+    title: Classify AporeC, ONT, PacBio, or second-generation methylation input
+    batch_id: "1"
+    default_skill: epigenomics/methylation/aporec-methylation-workflow
+    inputs: [assay_type, platform, raw_reads_or_bam, reference_fasta, sample_table, modbase]
+    outputs: [analysis_route, selected_stages, input_contract, blocked_reason]
+  - stage: dorado_basecalling
+    title: Create or align modified-base modBAM when needed
+    batch_id: "1"
+    default_skill: epigenomics/methylation/dorado-modbase-prep
+    inputs: [pod5_or_fast5_or_unaligned_modbam, reference_fasta, dorado_model, sample_name]
+    outputs: [aligned_sorted_indexed_modbam, dorado_summary_tsv, modbam_check_tags]
+    optional: true
+    may_block_if_missing: [raw_signal_or_existing_modbam, dorado_model]
+  - stage: modkit_pileup
+    title: Generate long-read methylation bedMethyl, QC, bigWig, and context tracks
+    batch_id: "2"
+    default_skill: epigenomics/methylation/modkit-pileup
+    inputs: [aligned_sorted_indexed_modbam, reference_fasta, modbase, optional_regions_bed]
+    outputs: [bedmethyl_bgzip, bedmethyl_tabix, modkit_summary_tsv, methylation_bigwig, cg_chg_chh_tracks]
+  - stage: aporec_contact_matrix
+    title: Generate AporeC/Pore-C pairs, concatemer QC, and cool matrices
+    batch_id: "2"
+    default_skill: epigenomics/methylation/aporec-porec-contact
+    inputs: [aporec_or_porec_bam, reference_fasta, binsizes, sample_table]
+    outputs: [pairs_gz, porec_gz, concatemer_summary, high_order_hist, merged_pairs_gz, cool_matrices]
+    optional: true
+    may_block_if_missing: [aporec_or_porec_assay]
+  - stage: methylation_profile_plot
+    title: Plot gene-centered methylation profiles from bigWig tracks
+    batch_id: "3"
+    default_skill: epigenomics/methylation/gene-plot
+    inputs: [methylation_bigwig, gene_bed_or_gff, optional_expression_tpm, optional_compartment_bed]
+    outputs: [profile_plots, profile_summary_tsv]
+    optional: true
+  - stage: differential_methylation
+    title: Compare long-read bedMethyl files with modkit DMR
+    batch_id: "3"
+    default_skill: epigenomics/methylation/modkit-dmr
+    inputs: [condition_a_bedmethyl, condition_b_bedmethyl, reference_fasta, optional_regions_bed]
+    outputs: [dmr_pair_bed, dmr_segments_bed, dmr_log]
+    optional: true
+    may_block_if_missing: [condition_design]

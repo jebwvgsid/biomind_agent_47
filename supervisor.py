@@ -23,7 +23,13 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from colorama import Fore, Style
+try:
+    from colorama import Fore, Style
+except ModuleNotFoundError:  # pragma: no cover - cosmetic fallback for minimal test envs
+    class _NoColor:
+        BLACK = RED = GREEN = YELLOW = BLUE = MAGENTA = CYAN = WHITE = RESET_ALL = ""
+
+    Fore = Style = _NoColor()
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from execution.executor import detect_script_language
 
@@ -111,6 +117,11 @@ class RuleEngine:
         r"^\s*(?:echo|printf|cat|awk|sed|perl)\b.*(?:>>?|tee\s+-a?\b)",
     ]
 
+    ARTIFACT_INSPECTION_RE = re.compile(
+        r"\.(?:bed|bedgraph|gff|gtf|tsv|csv|json|jsonl|md|png|pdf|html|h5ad|h5|rds|rda|cool|mcool|bm)\b",
+        re.IGNORECASE,
+    )
+
     @classmethod
     def is_non_progress_command(cls, code: str) -> bool:
         lines = [
@@ -127,6 +138,19 @@ class RuleEngine:
             any(re.search(pattern, line, re.IGNORECASE) for pattern in cls.NON_PROGRESS_PATTERNS)
             for line in lines
         )
+
+    @classmethod
+    def is_artifact_verification_command(cls, code: str, stdout: str = "", stderr: str = "") -> bool:
+        """Return True when an inspection-only command shows concrete output artifacts.
+
+        A plain parent-directory listing such as `ls TADs/HiCExplorer` should not
+        count; it only becomes useful completion evidence when either the command
+        or its output names real files with analysis-artifact extensions.
+        """
+        if not cls.is_non_progress_command(code):
+            return False
+        evidence = "\n".join([str(code or ""), str(stdout or ""), str(stderr or "")])
+        return bool(cls.ARTIFACT_INSPECTION_RE.search(evidence))
 
     @classmethod
     def is_expected_silent_command(cls, code: str) -> bool:
@@ -283,23 +307,29 @@ class LLMReviewer:
 {code[:1500]}
 
 [STDOUT]
-{stdout[:1000]}
+{stdout[:3000]}
 
 [STDERR]
-{stderr[:500]}
+{stderr[:1200]}
 
 [TASK CONTEXT]
-{task_context[:500]}
+{task_context[:1500]}
 
 Evaluate:
 1. Is the scientific approach correct for this bioinformatics task?
 2. Are the parameters reasonable (threads, memory, genome version)?
 3. Are there any red flags in the output (e.g., low mapping rate, 0 variants)?
-4. Should this step be ACCEPTED, WARNED, or RETRIED?
+4. If this step generated or summarized artifacts such as reports, tables, status files,
+   manifests, or metrics, are the conclusions consistent with the visible evidence?
+5. Should this step be ACCEPTED, WARNED, or RETRIED?
 
 Review rules:
 - If RETURN CODE is non-zero, the verdict must be RETRY or ESCALATE. Never output PASS.
 - If post-run validation failed in the observation, the verdict must be RETRY or ESCALATE.
+- For artifact/report steps, compare conclusions against any visible tables, status rows,
+  metrics, logs, and file paths. If the required evidence is not visible, ask for a targeted
+  inspection of the relevant artifact instead of accepting the conclusion.
+- Do not use command success alone as evidence that a scientific or reporting conclusion is true.
 - Do not infer missing inputs unless the exact error line proves the missing input.
 - If the traceback/log is truncated, ask to inspect the relevant log tail or run a minimal availability check instead of guessing.
 - Do not guess a tool's CLI from memory when the executed code already shows its arguments.
@@ -434,6 +464,22 @@ class SupervisorNode:
         return match.group(1).strip() if match else ""
 
     @staticmethod
+    def _returncode_from_observation(content: str) -> int:
+        """Infer executor status from the observation header only.
+
+        Do not scan full stdout/stderr for symbols such as "❌"; reports may use
+        those symbols as data values (for example "Not balanced") even when the
+        shell command itself exited successfully.
+        """
+        match = re.search(r"^\[[^\]\n]+\]\s*(?P<header>[^\n]*)", str(content or ""), re.MULTILINE)
+        if not match:
+            return 0
+        header = match.group("header").strip().lower()
+        if "failed" in header or "runtime missing" in header:
+            return 1
+        return 0
+
+    @staticmethod
     def _non_progress_is_allowed(plan_progress: str, current_plan: str) -> bool:
         match = re.search(r"^Next step:\s*(.+)$", str(plan_progress or ""), re.MULTILINE | re.IGNORECASE)
         context = (match.group(1) if match else current_plan).lower()
@@ -546,8 +592,7 @@ class SupervisorNode:
             if "<observation>" in content and not last_obs:
                 last_obs = content
                 # 解析退出状态
-                if "❌ Failed" in content or "❌" in content:
-                    returncode = 1
+                returncode = self._returncode_from_observation(content)
                 # 提取 stdout / stderr
                 stdout = self._extract_stream(content, "STDOUT")
                 stderr = self._extract_stream(content, "STDERR")
@@ -581,15 +626,21 @@ class SupervisorNode:
             and not stdout.strip()
             and not stderr.strip()
         )
-        needs_scientific_review = validation_level == "scientific" and not validated_silent_success
+        validated_artifact_inspection = (
+            returncode == 0
+            and validation_status == "passed"
+            and "NonProgressCommandCheck" in warning_rules
+            and RuleEngine.is_artifact_verification_command(last_code, stdout, stderr)
+        )
+        needs_model_review = validation_level in {"artifact", "scientific"} and not validated_silent_success
         only_empty_output_warning = bool(warnings) and warning_rules <= {"EmptyOutputCheck"}
 
-        # ── LLM 深度审查：问题步骤 + scientific 级别成功步骤 ────
+        # ── LLM 深度审查：问题步骤 + artifact/scientific 级别步骤 ────
         llm_review_text = ""
-        if (errors or (warnings and not only_empty_output_warning) or needs_scientific_review) and self.use_llm_review:
+        if (errors or (warnings and not only_empty_output_warning) or needs_model_review) and self.use_llm_review:
             task_context = (
                 f"Validation level: {validation_level or 'basic'}\n"
-                f"Plan:\n{current_plan[:400]}\n\nLast observation:\n{last_obs[:600]}"
+                f"Plan:\n{current_plan[:800]}\n\nLast observation:\n{last_obs[:1200]}"
             )
             llm_review_text = await self._llm_reviewer.review(
                 last_code, stdout, stderr, task_context, returncode
@@ -615,6 +666,7 @@ class SupervisorNode:
             verdict == Verdict.WARN
             and "NonProgressCommandCheck" in warning_rules
             and not self._non_progress_is_allowed(plan_progress, current_plan)
+            and not validated_artifact_inspection
         ):
             verdict = Verdict.ESCALATE if retry_count >= self.max_retries else Verdict.RETRY
 
@@ -626,7 +678,7 @@ class SupervisorNode:
             if (
                 review_verdict == "RETRY"
                 and verdict in {Verdict.PASS, Verdict.WARN}
-                and (bool(errors) or needs_scientific_review)
+                and (bool(errors) or needs_model_review)
                 and not only_empty_output_warning
             ):
                 verdict = Verdict.RETRY

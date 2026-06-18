@@ -204,7 +204,7 @@ def validate_workflow_handoff(
         errors.append(f"Too many active skills: {len(active_skills)} > {max_active_skills}")
 
     stage_names = set()
-    skill_to_stage: Dict[str, str] = {}
+    skill_to_stage: Dict[str, List[str]] = {}
     active_stage_skills: List[str] = []
     normalized_stages: List[Dict[str, Any]] = []
     active_batch_id = str(normalized.get("active_batch_id") or "").strip()
@@ -243,8 +243,13 @@ def validate_workflow_handoff(
                 elif not stage_tags:
                     warnings.append(f"Skill {skill} has no stage_tags; accepted via legacy fallback for stage {stage_name}.")
                 if skill in skill_to_stage:
-                    errors.append(f"Skill {skill} selected for multiple stages: {skill_to_stage[skill]} and {stage_name}")
-                skill_to_stage[skill] = stage_name
+                    previous_stages = skill_to_stage[skill]
+                    covered_stages = [*previous_stages, stage_name]
+                    if not stage_tags or not all(item in stage_tags for item in covered_stages):
+                        errors.append(
+                            f"Skill {skill} selected for multiple stages: {', '.join(previous_stages)} and {stage_name}"
+                        )
+                skill_to_stage.setdefault(skill, []).append(stage_name)
                 if stage.get("active_now") is True or (active_batch_id and stage["batch_id"] == active_batch_id):
                     active_stage_skills.append(skill)
         elif status == "no_skill_needed":

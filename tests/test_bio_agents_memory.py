@@ -309,6 +309,25 @@ class BioAgentMemoryTests(unittest.TestCase):
 
         self.assertEqual(-1, next_generate_idx)
 
+    def test_install_subagent_resume_interrupt_does_not_increment_attempt_count(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        pending_idx = source.index("installer_has_pending_interrupt = bool(")
+        attempt_idx = source.index("self._install_attempt_counts[attempt_key]", pending_idx)
+        guard_idx = source.index("if not installer_has_pending_interrupt:", pending_idx)
+        loop_idx = source.index("repeated installation loop detected", attempt_idx)
+
+        self.assertLess(guard_idx, attempt_idx)
+        self.assertLess(attempt_idx, loop_idx)
+        self.assertIn(
+            "if self._install_attempt_counts.get(attempt_key, 0) > 2:",
+            source[attempt_idx:loop_idx],
+        )
+        self.assertIn(
+            "if not installer_has_pending_interrupt:\n                    self._install_scope_attempt_counts[scope_key]",
+            source[pending_idx:loop_idx],
+        )
+
     def test_install_subagent_prints_final_observation(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 

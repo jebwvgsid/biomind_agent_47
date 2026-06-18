@@ -8,11 +8,12 @@ description: >
   TAD batch analysis, sample sheet workflows, resolution confirmation, or balance
   checks for .cool/.mcool matrices.
 version: "1.2.0"
+legacy_ids: [genomics/chromatin/tad-calling, tad-calling, tad-analysis]
 tags: [TAD, TAD分析, TAD-calling, hicFindTADs, HiCExplorer, Hi-C, Micro-C, Pore-C, mcool, cool, cooler-balance, sample-sheet, multi-sample, resolution, boundaries, domains]
 task_types: [chromatin_contact_tad]
-stage_tags: [tad_calling]
+stage_tags: [matrix_preflight, tad_calling]
 inputs: [validated_matrix_inputs, cool_matrix, mcool_matrix, sample_sheet, resolution]
-outputs: [tad_domains, tad_boundaries, tad_summary]
+outputs: [tad_domains, tad_boundaries, tad_summary, matrix_balance_report]
 when_to_use:
   - Workflow stage is tad_calling.
   - User needs hicFindTADs TAD calling from .cool or .mcool matrices.
@@ -38,6 +39,7 @@ It writes native HiCExplorer outputs plus combined multi-sample tables for domai
 | HiCExplorer native outputs | `{sample}_boundaries.bed`, `{sample}_boundaries.gff`, `{sample}_domains.bed`, `{sample}_score.bedgraph`, `{sample}_tad_score.bm` |
 | Combined summary outputs | `tad_domain_stats.tsv`, `tad_domains_long.tsv`, `tad_boundaries_long.tsv`, `tad_run_summary.tsv` |
 | Optional figure | `tad_domain_lengths.png` |
+| Read-only matrix balance preflight | `mcool_balance_preflight.tsv`, `stage_status.tsv`, `report.md`, `reproduce.sh` |
 
 ## When to Use This Skill
 
@@ -46,6 +48,7 @@ It writes native HiCExplorer outputs plus combined multi-sample tables for domai
 - User provides one or many `.cool`, `.mcool`, or `.mcool::/resolutions/N` contact matrices.
 - User wants to run TAD calling across many samples using a sample sheet instead of hard-coded leaf/bud names.
 - User asks to verify or ensure the input cooler has been balanced/corrected before TAD calling.
+- User only asks to check whether `.mcool` files are balanced and which resolutions can be used directly.
 - User has not provided a resolution and needs the Agent to ask for/confirm the intended resolution before running `.mcool` data.
 
 ## Quick Start
@@ -108,6 +111,26 @@ to decide whether balancing weights exist; `weight` is a bins-table column, not
 a top-level cooler attribute. Prefer the wrapper script's built-in balance check.
 If a manual check is required, use `weights = clr.bins()["weight"][:]` before
 calling pandas-like methods.
+
+For a read-only task that asks only whether `.mcool` files are already balanced
+and which resolutions are directly usable, use the dedicated balance preflight
+script. Do not use `cooler.fileops.list_coolers()` alone as a balance check; it
+only lists available resolution groups.
+
+```bash
+conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/check_mcool_balance.py \
+  --sample leaf /path/to/leaf.mcool \
+  --sample bud /path/to/bud.mcool \
+  --out-dir /path/to/results/BM-3DDNA-BALANCE-MEDIUM-002
+```
+
+The script is read-only. It reports `weight` column presence, total bin count,
+finite weight count, finite positive weight count, finite ratio, and usable
+status for every sample-resolution pair. A resolution is usable when the bins
+table contains the weight column, at least one finite weight exists, and at
+least one finite weight is >0. Small numbers of NaN weights are reported but do
+not automatically mean the matrix is unbalanced. Always base `report.md` on
+`mcool_balance_preflight.tsv`; the report summary must not contradict the table.
 
 Read-only wrapper preflight command:
 

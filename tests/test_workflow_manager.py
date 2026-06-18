@@ -49,6 +49,53 @@ class WorkflowManagerTests(unittest.TestCase):
         self.assertEqual(parsed["workflow_id"], "crop_gwas_analysis")
         self.assertEqual(parsed["aliases"][0], "crop-gwas-pipeline")
 
+    def test_hic_tad_workflow_uses_canonical_3d_dna_skills(self):
+        workflow = self.workflow_manager.get_workflow("hic_tad_analysis")
+        stages = workflow["stages"]
+        skills = [stage.get("default_skill", "") for stage in stages]
+
+        self.assertIn("3d-dna/tad-calling", skills)
+        self.assertIn("3d-dna/tad-boundary-change", skills)
+        self.assertIn("3d-dna/differential-tad", skills)
+        self.assertNotIn("genomics/chromatin/tad-calling", skills)
+
+    def test_hic_tad_batch1_allows_tad_calling_skill_for_preflight_and_calling(self):
+        result = validate_workflow_handoff(
+            {
+                "workflow_id": "hic_tad_analysis",
+                "active_batch_id": "1",
+                "workflow_stages": [
+                    {
+                        "stage": "matrix_preflight",
+                        "status": "selected_skill",
+                        "skill": "3d-dna/tad-calling",
+                        "batch_id": "1",
+                        "active_now": True,
+                    },
+                    {
+                        "stage": "tad_calling",
+                        "status": "selected_skill",
+                        "skill": "3d-dna/tad-calling",
+                        "batch_id": "1",
+                        "active_now": True,
+                    },
+                    {
+                        "stage": "boundary_change",
+                        "status": "selected_skill",
+                        "skill": "3d-dna/tad-boundary-change",
+                        "batch_id": "2",
+                        "active_now": False,
+                    },
+                ],
+                "active_skills": ["3d-dna/tad-calling"],
+                "future_skills": ["3d-dna/tad-boundary-change"],
+            },
+            self.skill_manager,
+            self.workflow_manager,
+        )
+
+        self.assertEqual(result["errors"], [])
+
     def test_crop_genomic_prediction_workflow_matches_stage_tags(self):
         workflow = self.workflow_manager.get_workflow("crop_genomic_prediction")
         stages = workflow["stages"]

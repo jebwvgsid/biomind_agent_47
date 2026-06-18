@@ -230,7 +230,7 @@ class ResultValidator:
             check_function=check_calder2_r_preflight,
             suggestion="先运行 `conda run -n <env> which Rscript`, `Rscript --version`, `Rscript -e \"library(CALDER); packageVersion('CALDER')\"`。"
         ))
-    
+
     def register_rule(self, rule: ValidationRule):
         self.rules.append(rule)
     

@@ -301,6 +301,18 @@ def mark_plan_step_done(state: PlanState, evidence: str = "") -> bool:
     return True
 
 
+def reopen_last_done_step(state: PlanState, evidence: str = "") -> bool:
+    steps = [step for step in state.get("steps", []) or [] if isinstance(step, dict)]
+    for step in reversed(steps):
+        if step.get("status") != STATUS_DONE:
+            continue
+        step["status"] = STATUS_RUNNING
+        _append_evidence(step, "reopened", evidence)
+        state["updated_at"] = _now()
+        return True
+    return False
+
+
 def mark_plan_step_blocked(state: PlanState, evidence: str = "") -> bool:
     step = _first_step_by_status(state, (STATUS_RUNNING,))
     if not step:

@@ -22,6 +22,7 @@ Do not use this skill for 3D-DNA genome scaffolding/assembly polishing unless th
 
 | User need | Use |
 |---|---|
+| Check `.cool` / `.mcool` resolutions and existing balance weights only | `skills/3d-dna/tad-calling` read-only `check_mcool_balance.py` preflight |
 | Call TADs from `.cool` or `.mcool` matrices | `skills/3d-dna/tad-calling` |
 | Compare existing TAD boundaries across samples | `skills/3d-dna/tad-boundary-change` |
 | Test differential TADs between target and control matrices | `skills/3d-dna/differential-tad` |
@@ -62,6 +63,7 @@ Keep multi-sample tables long-form with `sample`, `condition`, `matrix`, `resolu
 ## Interpretation Rules
 
 - TAD, compartment, and loop results are resolution- and normalization-dependent; always report matrix resolution and balancing status.
+- `cooler.fileops.list_coolers()` only proves which resolution groups exist in an `.mcool`; it does not prove balance. Balance status must come from the bins-table weight column on each effective URI.
 - Do not compare matrices at different resolutions unless the method explicitly supports it.
 - Loop classification requires loop calls and BED annotations on the same genome assembly and chromosome naming convention.
 - Differential TAD testing requires clear target/control direction; do not infer direction from file order.

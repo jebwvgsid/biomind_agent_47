@@ -12,7 +12,7 @@ metadata:
     - Workflow stage is boundary_change.
     - User needs shared, shifted, gained, or lost TAD boundary summaries.
   when_not_to_use: [TAD calling from raw matrices, differential TAD testing]
-  legacy_ids: [tad-boundary-change, tad-boundary-statistics, "TAD\u8fb9\u754c\u6539\u53d8\u7edf\u8ba1", "TAD\u8fb9\u754c\u53d8\u5316"]
+  legacy_ids: [genomics/chromatin/tad-boundary-change, tad-boundary-change, tad-boundary-statistics, "TAD\u8fb9\u754c\u6539\u53d8\u7edf\u8ba1", "TAD\u8fb9\u754c\u53d8\u5316"]
   runtime:
     default_env: hicexplore
     env_runner: conda run -n hicexplore python

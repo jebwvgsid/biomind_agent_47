@@ -1,0 +1,4 @@
+interface:
+  display_name: "AporeC Methylation Workflow"
+  short_description: "Route AporeC and ONT methylation projects."
+  default_prompt: "Use $aporec-methylation-workflow to triage AporeC/Pore-C versus ordinary ONT or short-read methylation data and choose the right downstream skills."

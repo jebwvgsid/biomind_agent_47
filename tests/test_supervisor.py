@@ -131,6 +131,37 @@ class SupervisorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(retry_result["supervisor_verdict"], Verdict.RETRY.value)
         self.assertEqual(warn_result["supervisor_verdict"], Verdict.WARN.value)
 
+    async def test_non_progress_artifact_listing_is_not_upgraded_to_retry_when_validated(self):
+        obs = (
+            "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\n"
+            "leaf_domains.bed\nleaf_boundaries.bed\ntad_domains_long.tsv\n"
+            "STDERR:\n"
+            "<validation_result level=\"scientific\" status=\"passed\">\n"
+            "✅ Execution Validated: No critical errors found.\n"
+            "</validation_result>\n</observation>"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(_FakeLLM("**Verdict**: PASS"), output_dir=tmpdir, use_llm_review=False)
+            result = await supervisor.run(_state("ls -l TADs/HiCExplorer/40000", obs, retry_count=0))
+
+        self.assertEqual(result["supervisor_verdict"], Verdict.WARN.value)
+        self.assertEqual(result["retry_count"], 0)
+
+    async def test_non_progress_parent_listing_without_artifacts_still_retries(self):
+        obs = (
+            "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\n"
+            "40000\n"
+            "STDERR:\n"
+            "<validation_result level=\"scientific\" status=\"passed\">\n"
+            "✅ Execution Validated: No critical errors found.\n"
+            "</validation_result>\n</observation>"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(_FakeLLM("**Verdict**: PASS"), output_dir=tmpdir, use_llm_review=False)
+            result = await supervisor.run(_state("ls -l TADs/HiCExplorer", obs, retry_count=0))
+
+        self.assertEqual(result["supervisor_verdict"], Verdict.RETRY.value)
+
     def test_stdout_stderr_stream_extraction_does_not_bleed(self):
         obs = (
             "<observation>\n[Bash] ❌ Failed\nSTDOUT:\nout line\nSTDERR:\nerr line\n"
@@ -153,6 +184,19 @@ class SupervisorTests(unittest.IsolatedAsyncioTestCase):
             result = await supervisor.run(_state("python run_analysis.py", obs, retry_count=0))
 
         self.assertEqual(result["supervisor_verdict"], Verdict.RETRY.value)
+
+    async def test_success_stdout_status_icons_do_not_change_exit_code(self):
+        obs = (
+            "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\n"
+            "| stage | status |\n"
+            "| optional_followup | ❌ skipped |\n"
+            "STDERR:\n</observation>"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(_FakeLLM("**Verdict**: PASS"), output_dir=tmpdir, use_llm_review=False)
+            result = await supervisor.run(_state("python make_status_table.py", obs, retry_count=0))
+
+        self.assertEqual(result["supervisor_verdict"], Verdict.PASS.value)
 
     async def test_calder_not_available_stdout_is_hard_failure_even_with_exit_zero(self):
         obs = (
@@ -193,6 +237,24 @@ class SupervisorTests(unittest.IsolatedAsyncioTestCase):
                 use_llm_review=True,
             )
             result = await supervisor.run(_state("python run_analysis.py --genome hg19", obs, retry_count=0))
+
+        self.assertEqual(result["supervisor_verdict"], Verdict.RETRY.value)
+
+    async def test_artifact_success_can_be_retried_by_llm_review(self):
+        obs = (
+            "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\n"
+            "saved report.md and stage_status.tsv\n"
+            "<validation_result level=\"artifact\" status=\"passed\">\n"
+            "✅ Execution Validated: No critical errors found.\n"
+            "</validation_result>\n</observation>"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(
+                _FakeLLM("**Verdict**: RETRY\n**Reason**: report conclusion is not supported by the visible status table\n**Action**: inspect report.md and stage_status.tsv"),
+                output_dir=tmpdir,
+                use_llm_review=True,
+            )
+            result = await supervisor.run(_state("python make_report.py", obs, retry_count=0))
 
         self.assertEqual(result["supervisor_verdict"], Verdict.RETRY.value)
 

@@ -313,6 +313,20 @@ class SkillManagerSelectionTests(unittest.TestCase):
         matched = self.manager.match_skills("请做TAD边界改变统计，比较shared和lost boundaries", max_results=3)
         self.assertEqual(matched[0], "3d-dna/tad-boundary-change")
 
+    def test_legacy_tad_skill_ids_resolve_to_3d_dna_namespace(self):
+        self.assertEqual(
+            self.manager.normalize_selected_skills(["genomics/chromatin/tad-calling"]),
+            ["3d-dna/tad-calling"],
+        )
+        self.assertEqual(
+            self.manager.normalize_selected_skills(["genomics/chromatin/tad-boundary-change"]),
+            ["3d-dna/tad-boundary-change"],
+        )
+        self.assertEqual(
+            self.manager.normalize_selected_skills(["genomics/chromatin/differential-tad"]),
+            ["3d-dna/differential-tad"],
+        )
+
     def test_plain_compartment_request_prefers_pc1_skill_not_calder2(self):
         matched = self.manager.match_skills("请对这些 mcool 文件做区室鉴定，输出普通 A/B 区室", max_results=5)
 

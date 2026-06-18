@@ -90,10 +90,12 @@ from agent_core.plan_tracker import (
     mark_plan_step_done,
     record_current_step_evidence,
     render_plan_progress,
+    reopen_last_done_step,
     reset_plan_state,
     save_plan_state,
     update_plan_markdown_status,
 )
+from agent_core.completion_gate import CompletionGate
 from execution.executor import detect_script_language, normalize_script_code, run_bash_script, run_python_repl
 from execution.profiling import (
     ProfilingCallbackHandler,
@@ -1666,6 +1668,93 @@ class BioAnalystAgent:
             record_current_step_evidence(state, event, detail)
             return self._persist_plan_tracker(task_id, state)
         return render_plan_progress(state)
+
+    def _plan_has_blocking_evidence(self, task_id: str) -> bool:
+        state = load_plan_state(self.data_path, task_id)
+        for step in state.get("steps", []) or []:
+            if not isinstance(step, dict):
+                continue
+            if str(step.get("status") or "").strip().lower() == "blocked":
+                return True
+            for item in step.get("evidence", []) or []:
+                if not isinstance(item, dict):
+                    continue
+                event = str(item.get("event") or "").strip().lower()
+                detail = str(item.get("detail") or "")
+                detail_lower = detail.lower()
+                if event in {
+                    "execute_failed",
+                    "runtime_missing_after_execute",
+                    "runtime_not_ready",
+                    "skill_env_runner_guard",
+                    "future_skill_guard",
+                    "pre_execution_boundary_gate_failed",
+                    "activate_batch_failed",
+                }:
+                    return True
+                if event in {"blocked", "install_failed"}:
+                    return True
+                if event == "supervisor_verdict" and "ESCALATE" in detail:
+                    return True
+                if (
+                    "blocked:" in detail_lower
+                    or "runtime missing" in detail_lower
+                    or "command failed" in detail_lower
+                    or "failed healthcheck" in detail_lower
+                ):
+                    return True
+        return False
+
+    def _prepare_final_solution_progress(
+        self,
+        task_id: str,
+        solution_text: str,
+        current_plan: str,
+    ) -> Tuple[bool, str, str, str]:
+        plan_state = load_plan_state(self.data_path, task_id)
+        if not plan_state.get("steps"):
+            return True, render_plan_progress(plan_state), "completed", ""
+
+        terminal_status = self._terminal_status_from_text(solution_text)
+        if terminal_status == "blocked":
+            if self._plan_has_blocking_evidence(task_id):
+                progress = self._mark_plan_current_blocked(
+                    task_id,
+                    f"final solution blocked: {solution_text[:500]}",
+                )
+                return True, progress, "blocked", ""
+            progress = self._record_plan_current_evidence(
+                task_id,
+                "final_solution_blocked_without_evidence",
+                solution_text[:1000],
+            )
+            return (
+                False,
+                progress,
+                "blocked",
+                "The final solution claims the task is blocked, but no concrete blocking evidence "
+                "was recorded in the plan. Continue execution or record the real dependency/command failure.",
+            )
+
+        mark_plan_step_done(plan_state, evidence=f"final solution generated: {solution_text[:500]}")
+        progress = self._persist_plan_tracker(task_id, plan_state)
+        final_state = load_plan_state(self.data_path, task_id)
+        final_gate = CompletionGate.validate_final(
+            self.data_path,
+            task_id,
+            final_state,
+            current_plan,
+        )
+        if final_gate.passed:
+            return True, progress, "completed", ""
+
+        reopened_state = load_plan_state(self.data_path, task_id)
+        reopen_last_done_step(
+            reopened_state,
+            f"final_solution_gate_failed: {final_gate.message}",
+        )
+        progress = self._persist_plan_tracker(task_id, reopened_state)
+        return False, progress, "completed", final_gate.feedback
 
     def _plan_tracker_is_complete(self, task_id: str) -> bool:
         state = load_plan_state(self.data_path, task_id)
@@ -4145,16 +4234,31 @@ The supervisor has flagged an issue. Please:
                 },
             )
             if answer_match:
-                plan_progress = self._mark_plan_current_done(
+                solution_text = answer_match.group(1).strip()
+                can_finish, plan_progress, final_status, gate_feedback = self._prepare_final_solution_progress(
                     task_id,
-                    f"final solution generated: {answer_match.group(1).strip()[:500]}",
+                    solution_text,
+                    str(current_plan or ""),
                 )
+                if not can_finish:
+                    gate_message = (
+                        "Final solution validation failed.\n\n"
+                        f"{gate_feedback}\n\n"
+                        "Do not finish yet. Continue the current plan step, run concrete verification, "
+                        "and only produce <solution> after the promised artifacts exist or a real blocker is recorded."
+                    )
+                    return {
+                        "messages": [response, SystemMessage(content=gate_message)],
+                        "plan_progress": plan_progress,
+                        "next_step": "generate",
+                    }
                 await self._finalize_task_memory(
                     task_id,
-                    "completed",
+                    final_status,
                     messages + [response],
-                    {"solution": answer_match.group(1).strip()[:3000]},
+                    {"solution": solution_text[:3000], "plan_progress": plan_progress},
                 )
+                return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
 
             if activate_match and not answer_match:
                 update = self._activate_workflow_batch(state, activate_match.group(1).strip())
@@ -4234,6 +4338,24 @@ The supervisor has flagged an issue. Please:
             original_code = match.group(1).strip()
             language = detect_script_language(original_code)
             code = normalize_script_code(original_code)
+            task_boundary_context = "\n".join(
+                str(getattr(message, "content", message))
+                for message in state.get("messages", [])[:8]
+            )
+            boundary_gate = CompletionGate.validate_code_boundary(code, task_boundary_context)
+            if not boundary_gate.passed:
+                plan_progress = self._record_plan_current_evidence(
+                    task_id,
+                    "pre_execution_boundary_gate_failed",
+                    boundary_gate.message,
+                )
+                obs = f"<observation>❌ Pre-execution boundary gate blocked execution.\n{boundary_gate.feedback}\n</observation>"
+                return {
+                    "messages": [HumanMessage(content=obs)],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "next_step": "generate",
+                }
             selected_skills_state = state.get("active_skills", []) or state.get("selected_skills", [])
             future_skills_state = state.get("future_skills", []) or []
             runtime_skills_state = self._infer_runtime_skills_from_code(code, selected_skills_state)
@@ -4325,6 +4447,21 @@ The supervisor has flagged an issue. Please:
                     language = detect_script_language(code_to_run)
             else:
                 code_to_run = normalize_script_code(final_code)  # approve 的情况  
+
+            boundary_gate = CompletionGate.validate_code_boundary(code_to_run, task_boundary_context)
+            if not boundary_gate.passed:
+                plan_progress = self._record_plan_current_evidence(
+                    task_id,
+                    "pre_execution_boundary_gate_failed",
+                    boundary_gate.message,
+                )
+                obs = f"<observation>❌ Pre-execution boundary gate blocked execution.\n{boundary_gate.feedback}\n</observation>"
+                return {
+                    "messages": [HumanMessage(content=obs)],
+                    "plan_progress": plan_progress,
+                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "next_step": "generate",
+                }
 
             runtime_skills_state = self._infer_runtime_skills_from_code(code_to_run, selected_skills_state)
             install_redirect = self._redirect_install_command(code_to_run, runtime_skills_state)
@@ -4555,10 +4692,58 @@ The supervisor has flagged an issue. Please:
             if isinstance(update, dict):
                 verdict = str(update.get("supervisor_verdict") or "")
                 if verdict in {"PASS", "WARN"}:
-                    plan_progress = self._mark_plan_current_done(task_id, f"supervisor_verdict: {verdict}")
-                    update["plan_progress"] = plan_progress
-                    if self._plan_tracker_is_complete(task_id):
-                        update["next_step"] = "finish"
+                    step_gate_state = load_plan_state(self.data_path, task_id)
+                    step_gate = CompletionGate.validate_current_step(
+                        self.data_path,
+                        task_id,
+                        step_gate_state,
+                    )
+                    if not step_gate.passed:
+                        plan_progress = self._record_plan_current_evidence(
+                            task_id,
+                            "step_completion_gate_failed",
+                            step_gate.message,
+                        )
+                        gate_message = (
+                            "Step completion validation failed.\n\n"
+                            f"{step_gate.feedback}\n\n"
+                            "Do not advance to the next plan step yet. Continue or repair the current step, "
+                            "then run a concrete verification command."
+                        )
+                        update.setdefault("messages", []).append(SystemMessage(content=gate_message))
+                        update["supervisor_verdict"] = "RETRY"
+                        update["next_step"] = "generate"
+                        update["plan_progress"] = plan_progress
+                    else:
+                        plan_progress = self._mark_plan_current_done(task_id, f"supervisor_verdict: {verdict}")
+                        update["plan_progress"] = plan_progress
+                        if self._plan_tracker_is_complete(task_id):
+                            final_gate_state = load_plan_state(self.data_path, task_id)
+                            final_gate = CompletionGate.validate_final(
+                                self.data_path,
+                                task_id,
+                                final_gate_state,
+                                state.get("current_plan", ""),
+                            )
+                            if final_gate.passed:
+                                update["next_step"] = "finish"
+                            else:
+                                reopened_state = load_plan_state(self.data_path, task_id)
+                                reopen_last_done_step(
+                                    reopened_state,
+                                    f"final_completion_gate_failed: {final_gate.message}",
+                                )
+                                plan_progress = self._persist_plan_tracker(task_id, reopened_state)
+                                gate_message = (
+                                    "Final completion validation failed.\n\n"
+                                    f"{final_gate.feedback}\n\n"
+                                    "The plan was marked complete, but the task is not ready to finish. "
+                                    "Repair the reopened final/output step and verify the artifacts."
+                                )
+                                update.setdefault("messages", []).append(SystemMessage(content=gate_message))
+                                update["supervisor_verdict"] = "RETRY"
+                                update["next_step"] = "generate"
+                                update["plan_progress"] = plan_progress
                 elif verdict == "RETRY":
                     plan_progress = self._record_plan_current_evidence(task_id, "supervisor_verdict", verdict)
                     update["plan_progress"] = plan_progress
@@ -4766,13 +4951,20 @@ The supervisor has flagged an issue. Please:
                 target_env = user_choice.strip() if isinstance(user_choice, str) and user_choice.strip() else default_env
             self._install_env_choices[choice_key] = target_env
             attempt_key = f"{choice_key}::{target_env}"
-            self._install_attempt_counts[attempt_key] = self._install_attempt_counts.get(attempt_key, 0) + 1
+            sub_config = {"configurable": {"thread_id": f"{task_id}_installer_{tool_name}"}}
+            installer_snapshot = self.installer_app.get_state(sub_config)
+            installer_has_pending_interrupt = bool(
+                installer_snapshot.tasks and installer_snapshot.tasks[0].interrupts
+            )
+            if not installer_has_pending_interrupt:
+                self._install_attempt_counts[attempt_key] = self._install_attempt_counts.get(attempt_key, 0) + 1
             scope_key = ""
             if explicit_runtime_repair:
                 skill_scope = ",".join(selected_skills or selected_for_install or [tool_name])
                 scope_key = f"{task_id}::runtime_repair::{explicit_runtime_repair}::{target_env}::{skill_scope}"
-                self._install_scope_attempt_counts[scope_key] = self._install_scope_attempt_counts.get(scope_key, 0) + 1
-                if self._install_scope_attempt_counts[scope_key] > 2:
+                if not installer_has_pending_interrupt:
+                    self._install_scope_attempt_counts[scope_key] = self._install_scope_attempt_counts.get(scope_key, 0) + 1
+                if self._install_scope_attempt_counts.get(scope_key, 0) > 2:
                     final_res = (
                         f"blocked: repeated runtime repair loop detected for `{explicit_runtime_repair}` in "
                         f"`{target_env}` after {self._install_scope_attempt_counts[scope_key]} attempts. "
@@ -4800,7 +4992,7 @@ The supervisor has flagged an issue. Please:
                         "runtime_status": self._runtime_status_for_task(task_id),
                         "next_step": "finish",
                     }
-            if self._install_attempt_counts[attempt_key] > 2:
+            if self._install_attempt_counts.get(attempt_key, 0) > 2:
                 final_res = (
                     f"blocked: repeated installation loop detected for `{tool_name}` in environment "
                     f"`{target_env}` after {self._install_attempt_counts[attempt_key]} attempts. "
@@ -4855,10 +5047,9 @@ The supervisor has flagged an issue. Please:
                 env_instruction=f"Target environment: {target_env}",
             )
 
-            sub_config   = {"configurable": {"thread_id": f"{task_id}_installer_{tool_name}"}}
             final_res    = "Installation Failed"
-            snapshot     = self.installer_app.get_state(sub_config)
-            current_payload = None if (snapshot.tasks and snapshot.tasks[0].interrupts) \
+            snapshot     = installer_snapshot
+            current_payload = None if installer_has_pending_interrupt \
                               else {"tool_name": tool_name,
                                     "messages": [HumanMessage(content=initial_msg)]}
 

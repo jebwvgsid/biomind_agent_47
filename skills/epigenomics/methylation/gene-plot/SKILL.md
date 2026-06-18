@@ -9,6 +9,10 @@ description: >
 version: "2.0"
 tags: [methylation, bigwig, epigenomics, visualization, porec, RNA-seq]
 legacy_ids: [甲基化基因绘图, methylation_profile_plot]
+task_types: [aporec_methylation, methylation_visualization]
+stage_tags: [methylation_profile_plot]
+inputs: [methylation_bigwig, gene_bed_or_gff, tpm_table, compartment_bed, gene_list]
+outputs: [profile_plots, profile_summary_tsv]
 runtime:
   default_env: bio_methylation_plot
   env_runner: conda run -n bio_methylation_plot python

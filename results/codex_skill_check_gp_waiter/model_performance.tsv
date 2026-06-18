@@ -1,0 +1,2 @@
+model	pearson_r	spearman_rho	RMSE	MAE	R2	n_samples	n_features	mode
+elasticnet	-0.32023046539784494	-0.3104173987887899	1.5857389220023794	1.2513362261173366	-0.6029287636610343	24	64	gwas_weighted_sklearn

@@ -17,7 +17,7 @@ when_to_use:
   - Workflow stage is differential_tad.
   - User needs target-vs-control hicDifferentialTAD testing after TAD calling.
 when_not_to_use: [boundary change summary only, no target control pairing]
-legacy_ids: [differential-tad, diff-tad, hicdifferentialtad, 差异TADs鉴定, 差异TAD]
+legacy_ids: [genomics/chromatin/differential-tad, differential-tad, diff-tad, hicdifferentialtad, 差异TADs鉴定, 差异TAD]
 runtime:
   default_env: hicexplore
   env_runner: conda run -n hicexplore python

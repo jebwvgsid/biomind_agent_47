@@ -1,0 +1,4 @@
+interface:
+  display_name: "AporeC Pore-C Contact"
+  short_description: "Build Pore-C pairs and cool matrices."
+  default_prompt: "Use $aporec-porec-contact to create Pore-C pairs, concatemer QC, and cool matrices from AporeC or ONT Pore-C BAM files."
