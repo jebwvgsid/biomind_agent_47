@@ -1,0 +1,4 @@
+interface:
+  display_name: "Enrichment Analysis"
+  short_description: "Run species-aware gene set enrichment QC."
+  default_prompt: "Use $enrichment-analysis to validate gene IDs, choose ORA or GSEA, and run functional enrichment."
