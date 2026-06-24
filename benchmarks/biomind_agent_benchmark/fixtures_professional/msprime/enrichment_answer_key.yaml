@@ -1,0 +1,21 @@
+fixture_id: msprime_gwas_enrichment
+source_fixture: msprime
+selection_rule: "candidate genes are unique marker_annotation gene_id values whose best GWAS pvalue is < 1e-4"
+species: "Simulated msprime crop"
+gene_id_type: "MSP_GENE synthetic gene ID"
+foreground_gene_count: 8
+background_gene_count: 32
+functional_annotation_rows: 85
+term2name_rows: 6
+expected_method: ORA
+expected_background: "all genes represented by exported msprime markers"
+expected_mapping_rate: 1.0
+expected_tested_terms: 6
+expected_significant_terms_fdr_0_05: 1
+expected_top_term_id: "BM:TRAIT_ASSOCIATED_MODULE"
+expected_top_term_name: "Trait-associated module"
+expected_top_term_overlap_count: 8
+expected_top_term_size: 8
+expected_top_term_padj: 5.70434385784775e-07
+forbidden_background: "whole genome unless explicitly justified"
+correct_result_option: A

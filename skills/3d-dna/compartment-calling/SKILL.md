@@ -32,7 +32,7 @@ metadata:
     language: python
     packages: [cooler, cooltools, pandas, numpy, scipy, h5py, bedtools]
     install_tool: compartment_pc1_runtime
-    install_policy: prefer-declared
+    install_policy: declared-only
     install_command: conda create -n compartment -c conda-forge -c bioconda python=3.10 cooler cooltools pandas numpy scipy h5py bedtools -y
     capabilities: [ab-compartment, pc1-eigenvector, cooler-preflight, feature-track-orientation]
     healthcheck: conda run -n compartment python skills/3d-dna/compartment-calling/scripts/call_ab_compartments_pc1.py --help
@@ -165,6 +165,12 @@ Verify the PC1 runtime before execution:
 conda run -n compartment python -c "import cooler, cooltools, pandas, numpy, h5py; print('PC1_OK')"
 conda run -n compartment python skills/3d-dna/compartment-calling/scripts/call_ab_compartments_pc1.py --help
 ```
+
+`bedtools` is a CLI dependency, not a required Python module for this skill.
+Do not use `import pybedtools` as a healthcheck unless the user explicitly asks
+for a pybedtools-based implementation. If the CLI needs to be checked directly,
+use `conda run -n compartment bedtools --version` or the wrapper healthcheck
+above.
 
 If the `compartment` environment is missing, repair it with the declared runtime
 command:

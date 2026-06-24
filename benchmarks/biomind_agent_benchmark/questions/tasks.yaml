@@ -872,3 +872,105 @@ tasks:
         - "ignores supplied GWAS summary for the weighted model"
         - "uses multi-omics or RNA-seq skills as the primary analysis"
         - "claims causal-marker recovery without simulation-truth evidence"
+
+  - id: BM-ENRICH-MSPRIME-GWAS-026
+    title: "msprime GWAS candidate gene enrichment result choice"
+    category: functional_enrichment
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: medium
+    prompt: >
+      Use the msprime professional enrichment fixture paths
+      benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/gwas_candidate_genes.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/background_genes.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/functional_annotation.tsv,
+      benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/term2name.tsv,
+      and benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/enrichment_answer_key.yaml.
+      Validate the foreground candidate genes, background gene universe, species
+      and ID metadata, build a custom TERM2GENE from the functional annotation,
+      run ORA functional enrichment with FDR correction, compare the top term
+      and mapping metrics to the answer key, and choose the correct result
+      option.
+    data_files:
+      - path: benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/gwas_candidate_genes.tsv
+        role: GWAS-derived foreground candidate gene list
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/background_genes.tsv
+        role: marker-derived background gene universe
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/functional_annotation.tsv
+        role: custom functional annotation for TERM2GENE construction
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/term2name.tsv
+        role: custom term names for enrichment reporting
+        availability: available
+      - path: benchmarks/biomind_agent_benchmark/fixtures_professional/msprime/enrichment_answer_key.yaml
+        role: expected enrichment metrics and result choice
+        availability: available
+    expected_skills:
+      - enrichment-analysis
+    optional_skills:
+      - crop-breeding/crop-gwas-pipeline
+    forbidden_skills:
+      - scrna/markers/find
+      - crop-breeding/crop-genomic-prediction
+      - crop-breeding/crop-rnaseq-de
+    reference_steps:
+      - "Validate candidate, background, functional annotation, term-name, and answer-key paths."
+      - "Select the general enrichment-analysis skill rather than a single-cell marker or prediction workflow."
+      - "Use ORA because the fixture supplies a significant candidate gene list, not a full ranked gene list."
+      - "Use background_genes.tsv as the background universe and build custom TERM2GENE from functional_annotation.tsv."
+      - "Check mapping rate, significant FDR terms, top term, and overlap metrics against enrichment_answer_key.yaml before choosing the result option."
+    expected_artifacts:
+      - "input_qc.tsv"
+      - "term2gene.tsv"
+      - "enrichment_results.tsv"
+      - "enrichment_results.filtered.tsv"
+      - "report.md"
+      - "selected_result_answer.txt"
+    expected_metrics:
+      foreground_gene_count: 8
+      background_gene_count: 32
+      mapping_rate: 1.0
+      expected_top_term_id: "BM:TRAIT_ASSOCIATED_MODULE"
+      expected_top_term_overlap_count: 8
+      expected_significant_terms_fdr_0_05: 1
+    numeric_tolerances:
+      foreground_and_background_counts: exact
+      mapping_rate: exact
+      top_term_overlap_count: exact
+      significant_term_count: exact
+      top_term_padj: "approximately 5.70434385784775e-07"
+    result_question:
+      prompt: "Which conclusion is correct after running ORA on the msprime GWAS candidate genes?"
+      options:
+        A: "ORA with the supplied marker-derived background maps all 8 candidate genes and identifies BM:TRAIT_ASSOCIATED_MODULE as the only FDR-significant top term with 8/8 overlap."
+        B: "The correct background is the whole genome by default, even though a marker-derived background file is supplied."
+        C: "GSEA is required because the fixture provides only significant candidate genes and no full ranked list."
+        D: "The primary workflow is scRNA marker discovery because the input file contains genes."
+        E: "The task is complete if a plot is produced without input_qc.tsv or enrichment_results.tsv."
+      correct_answer: A
+    milestones:
+      - id: M1
+        description: "Validates all explicit enrichment fixture paths."
+        points: 1
+      - id: M2
+        description: "Selects enrichment-analysis as the primary skill and avoids unrelated workflows."
+        points: 1
+      - id: M3
+        description: "Chooses ORA and uses the supplied marker-derived background universe."
+        points: 1
+      - id: M4
+        description: "Builds or uses custom TERM2GENE and reports mapping/QC evidence."
+        points: 1
+      - id: M5
+        description: "Chooses the correct result option from FDR top-term and overlap evidence."
+        points: 1
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - "uses whole genome background by default despite supplied background_genes.tsv"
+        - "runs GSEA on a significant-only list without a full ranked universe"
+        - "uses scRNA marker, genomic prediction, or RNA-seq DE as the primary workflow"
+        - "claims enrichment success without input QC and result table evidence"

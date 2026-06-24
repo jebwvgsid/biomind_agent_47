@@ -131,6 +131,26 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertIn("plan_progress=plan_progress", source)
         self.assertIn("reset_plan_state(self.data_path, task_id)", source)
 
+    def test_completed_resume_plans_are_sanitized_to_finish_only(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertIn("def _planner_declares_completed_task", source)
+        self.assertIn("def _finish_only_plan_from_completed_plan", source)
+        self.assertIn("Action: FINISH", source)
+        self.assertIn("plan_content = self._sanitize_completed_planner_plan(response.content)", source)
+        self.assertNotIn('"already complete",', source)
+
+    def test_generate_rewrites_completed_resume_plan_before_execution(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertIn("def _replace_plan_tracker_with_plan", source)
+        self.assertIn("def _resume_plan_material", source)
+        self.assertIn("sanitized_current_plan = self._sanitize_completed_planner_plan", source)
+        self.assertIn("resume_plan_material = self._resume_plan_material", source)
+        self.assertIn("generate replaced completed-task plan with FINISH-only plan", source)
+        self.assertIn("if self._current_plan_step_requests_finish(task_id):", source)
+        self.assertIn("self._finish_solution_from_plan", source)
+
     def test_memory_status_reads_checkpoint_messages(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
@@ -162,8 +182,17 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertIn('planner_wiki_context = state.get("memory_packet_context")', source)
         self.assertIn('memory_packet_context = state.get("memory_packet_context", "") or ""', source)
         self.assertIn("memory_packet_context=memory_packet_context", source)
-        self.assertIn('elif not memory_packet_context.strip() and state.get("wiki_memory_context")', source)
+        self.assertIn('elif self.wiki_enabled and not memory_packet_context.strip() and state.get("wiki_memory_context")', source)
         self.assertIn('"wiki_digest": ""', source)
+
+    def test_consultant_uses_formal_upstream_artifact_audit_before_prompt(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertIn("resolve_formal_upstream_artifacts", source)
+        self.assertIn("format_formal_upstream_context", source)
+        self.assertIn("input_resolution_context=input_resolution_context", source)
+        self.assertNotIn("formal_upstream_artifact_audit", source)
+        self.assertNotIn("formal_upstream_question", source)
 
     def test_planner_uses_packet_and_generate_uses_on_demand_retrieval(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")

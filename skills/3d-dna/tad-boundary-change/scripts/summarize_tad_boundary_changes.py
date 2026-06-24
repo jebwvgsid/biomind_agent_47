@@ -9,6 +9,7 @@ import csv
 import itertools
 import math
 import re
+import shlex
 import statistics
 import sys
 from dataclasses import dataclass
@@ -837,6 +838,92 @@ def write_tsv(path: Path, rows: Sequence[Dict[str, object]], fieldnames: Sequenc
     print(f"[INFO] saved: {path}")
 
 
+def write_report(
+    path: Path,
+    sample_stats: Sequence[Dict[str, object]],
+    summary_rows: Sequence[Dict[str, object]],
+    output_files: Sequence[Path],
+    args: argparse.Namespace,
+) -> None:
+    lines = [
+        "# TAD Boundary Change Report",
+        "",
+        "## Inputs",
+        "",
+        "| Sample | Resolution bp | Unique boundaries | Duplicate positions removed | Source files |",
+        "| --- | ---: | ---: | ---: | --- |",
+    ]
+    for row in sample_stats:
+        lines.append(
+            "| {sample} | {resolution_bp} | {n_boundaries_unique_positions} | "
+            "{n_duplicate_positions_removed} | `{source_files}` |".format(**row)
+        )
+
+    lines.extend([
+        "",
+        "## Comparisons",
+        "",
+        "| Comparison | Tolerance bp | Matched | Shifted within tolerance | Sample A specific | Sample B specific | Median abs shift bp |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ])
+    for row in summary_rows:
+        lines.append(
+            "| {comparison} | {boundary_tol_bp} | {n_matched} | {n_shifted_within_tol} | "
+            "{n_a_specific} | {n_b_specific} | {median_abs_shift_bp} |".format(**row)
+        )
+
+    tolerance_note = (
+        f"explicit {args.boundary_tol_bp} bp"
+        if args.boundary_tol_bp is not None
+        else f"{args.boundary_tol_bins} bin(s) times comparison resolution"
+    )
+    lines.extend([
+        "",
+        "## Parameters",
+        "",
+        f"- Position mode: `{args.position_mode}`",
+        f"- Tolerance policy: `{tolerance_note}`",
+        f"- Mixed resolution allowed: `{bool(args.allow_mixed_resolution)}`",
+        "",
+        "## Outputs",
+        "",
+    ])
+    for output_file in output_files:
+        lines.append(f"- `{output_file}`")
+    lines.append("")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"[INFO] saved: {path}")
+
+
+def write_stage_status(path: Path, status: str, message: str, output_files: Sequence[Path]) -> None:
+    rows = [
+        {"stage": "input_collection", "status": status, "message": message if status != "completed" else "parsed boundary inputs"},
+        {"stage": "boundary_comparison", "status": status, "message": message if status != "completed" else "computed pairwise boundary changes"},
+        {
+            "stage": "reporting",
+            "status": status,
+            "message": message if status != "completed" else f"wrote {len(output_files)} output file(s)",
+        },
+    ]
+    write_tsv(path, rows, ["stage", "status", "message"])
+
+
+def write_reproduce(path: Path) -> None:
+    script_path = Path(__file__).resolve()
+    command = " ".join(shlex.quote(part) for part in ["python", str(script_path), *sys.argv[1:]])
+    text = (
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n\n"
+        "# Run inside the same Python or conda environment used for the original boundary-change analysis.\n"
+        f"{command}\n"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    path.chmod(0o755)
+    print(f"[INFO] saved: {path}")
+
+
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Compare TAD boundary files and summarize shared, shifted, and sample-specific boundaries.",
@@ -915,8 +1002,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             all_long.extend(long_rows)
 
         out_dir = args.out_dir
+        sample_stats_path = out_dir / "tad_boundary_sample_stats.tsv"
+        summary_path = out_dir / "tad_boundary_change_summary.tsv"
+        matches_path = out_dir / "tad_boundary_matches.tsv"
+        long_path = out_dir / "tad_boundary_changes_long.tsv"
+        run_summary_path = out_dir / "tad_boundary_change_run_summary.tsv"
+        report_path = out_dir / "report.md"
+        reproduce_path = out_dir / "reproduce.sh"
+        stage_status_path = out_dir / "stage_status.tsv"
+
         write_tsv(
-            out_dir / "tad_boundary_sample_stats.tsv",
+            sample_stats_path,
             sample_stats,
             [
                 "sample",
@@ -929,7 +1025,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             ],
         )
         write_tsv(
-            out_dir / "tad_boundary_change_summary.tsv",
+            summary_path,
             all_summary,
             [
                 "comparison",
@@ -953,7 +1049,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             ],
         )
         write_tsv(
-            out_dir / "tad_boundary_matches.tsv",
+            matches_path,
             all_matches,
             [
                 "comparison",
@@ -979,7 +1075,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             ],
         )
         write_tsv(
-            out_dir / "tad_boundary_changes_long.tsv",
+            long_path,
             all_long,
             [
                 "comparison",
@@ -1003,7 +1099,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             ],
         )
         write_tsv(
-            out_dir / "tad_boundary_change_run_summary.tsv",
+            run_summary_path,
             [
                 {
                     "n_samples": len(samples),
@@ -1029,12 +1125,34 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 "command",
             ],
         )
+        output_files = [
+            sample_stats_path,
+            summary_path,
+            matches_path,
+            long_path,
+            run_summary_path,
+            report_path,
+            reproduce_path,
+            stage_status_path,
+        ]
+        write_report(report_path, sample_stats, all_summary, output_files, args)
+        write_reproduce(reproduce_path)
+        write_stage_status(
+            stage_status_path,
+            "completed",
+            f"samples={len(samples)}, comparisons={len(pairs)}",
+            output_files,
+        )
         print(
             f"[INFO] summary: samples={len(samples)}, comparisons={len(pairs)}, "
             f"matched_pairs={len(all_matches)}, classified_boundaries={len(all_long)}"
         )
         return 0
     except Exception as exc:
+        try:
+            write_stage_status(args.out_dir / "stage_status.tsv", "failed", str(exc), [])
+        except Exception:
+            pass
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 

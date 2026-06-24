@@ -26,6 +26,7 @@ active_data_policy:
   accepted_sources:
     - public downloaded and checksummed demo/database subsets
     - msprime professional simulation
+    - deterministic msprime-derived functional annotation for enrichment mechanics
     - planned ONT methylation fixture once copied into fixtures_public/ont_methylation_modkit
   inactive_sources:
     - hand-written toy NumPy/Pandas synthetic fixtures
@@ -521,6 +522,65 @@ open_task_answers:
         - ignores supplied GWAS summary for the weighted model
         - uses multi-omics or RNA-seq skills as the primary analysis
         - claims causal-marker recovery without simulation-truth evidence
+
+  BM-ENRICH-MSPRIME-GWAS-026:
+    question: msprime GWAS candidate gene ORA enrichment with background validation and result choice.
+    task_classification: functional_enrichment
+    task_abbr: msprime GWAS candidate gene enrichment result choice
+    question_type: result_choice_after_analysis
+    execution_mode: full
+    difficulty: medium
+    answer_type: data_analysis_result_choice
+    expected_skills:
+      - enrichment-analysis
+    optional_skills:
+      - crop-breeding/crop-gwas-pipeline
+    forbidden_skills:
+      - scrna/markers/find
+      - crop-breeding/crop-genomic-prediction
+      - crop-breeding/crop-rnaseq-de
+    required_reference_steps:
+      - Validate enrichment fixture paths.
+      - Select enrichment-analysis as the primary skill.
+      - Use ORA for a significant candidate gene list.
+      - Use marker-derived background and custom TERM2GENE.
+      - Compare mapping, FDR top term, and overlap metrics with the answer key.
+    reference_milestones:
+      - Validates all explicit enrichment fixture paths.
+      - Selects enrichment-analysis as the primary skill and avoids unrelated workflows.
+      - Chooses ORA and uses the supplied marker-derived background universe.
+      - Builds or uses custom TERM2GENE and reports mapping/QC evidence.
+      - Chooses the correct result option from FDR top-term and overlap evidence.
+    expected_artifacts:
+      - input_qc.tsv
+      - term2gene.tsv
+      - enrichment_results.tsv
+      - enrichment_results.filtered.tsv
+      - report.md
+      - selected_result_answer.txt
+    expected_metrics:
+      foreground_gene_count: 8
+      background_gene_count: 32
+      mapping_rate: 1.0
+      expected_top_term_id: BM:TRAIT_ASSOCIATED_MODULE
+      expected_top_term_overlap_count: 8
+      expected_significant_terms_fdr_0_05: 1
+    numeric_tolerances:
+      foreground_and_background_counts: exact
+      mapping_rate: exact
+      top_term_overlap_count: exact
+      significant_term_count: exact
+      top_term_padj: approximately 5.70434385784775e-07
+    result_question:
+      correct_answer: A
+    scoring:
+      total_points: 5
+      pass_threshold: 4
+      hard_failures:
+        - uses whole genome background by default despite supplied background_genes.tsv
+        - runs GSEA on a significant-only list without a full ranked universe
+        - uses scRNA marker, genomic prediction, or RNA-seq DE as the primary workflow
+        - claims enrichment success without input QC and result table evidence
 
 mcq_answers:
   BM-MCQ-001:

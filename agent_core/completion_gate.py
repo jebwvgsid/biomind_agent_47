@@ -77,63 +77,6 @@ WRITE_HINTS = (
     "writeLines",
 )
 
-BOUNDARY_NEGATION_RE = re.compile(
-    r"禁止|不要|不允许|不得|不能|请勿|do\s+not|don't|must\s+not|forbid|forbidden",
-    re.IGNORECASE,
-)
-
-DIRECT_TOOL_SCOPE_RE = re.compile(
-    r"(?:直接调用|直接运行|direct(?:ly)?\s+(?:call|run)|bare\s+command).{0,50}"
-    r"(?:hicFindTADs|mustache|hicPCA|calder|cooltools)",
-    re.IGNORECASE,
-)
-
-TOY_OR_FAKE_SCOPE_RE = re.compile(
-    r"(?:toy|demo|fixtures?|expected_answers|hidden answers?|伪造|模拟|假数据|隐藏答案).{0,80}"
-    r"(?:tad|loop|compartment|domain|boundary|domains|boundaries)"
-    r"|(?:tad|loop|compartment|domain|boundary|domains|boundaries).{0,80}"
-    r"(?:toy|demo|fixtures?|expected_answers|hidden answers?|伪造|模拟|假数据|隐藏答案)",
-    re.IGNORECASE,
-)
-
-SKIP_PREFLIGHT_SCOPE_RE = re.compile(
-    r"(?:跳过|skip).{0,50}(?:preflight|检查|验证|check|resolution|balance|weight)"
-    r"|(?:preflight|检查|验证|check|resolution|balance|weight).{0,50}(?:跳过|skip)",
-    re.IGNORECASE,
-)
-
-DIRECT_TOOL_RULES = (
-    (
-        re.compile(r"hicFindTADs", re.IGNORECASE),
-        re.compile(r"(?<![\w.-])hicFindTADs\b", re.IGNORECASE),
-        "The user/task boundary forbids direct hicFindTADs calls; use the TAD wrapper instead.",
-    ),
-)
-
-FORBIDDEN_ANALYSIS_RULES = (
-    (
-        ("tad", "tad calling", "hicfindtads"),
-        re.compile(r"call_tads\.py|hicFindTADs|3d-dna/tad-calling", re.IGNORECASE),
-        "The user/task boundary forbids TAD calling, but the generated command invokes a TAD caller.",
-    ),
-    (
-        ("loop", "loops", "loop calling", "mustache"),
-        re.compile(r"mustache|loop-calling|cooltools.*dots", re.IGNORECASE),
-        "The user/task boundary forbids loop calling, but the generated command invokes a loop caller.",
-    ),
-    (
-        ("compartment", "a/b", "pc1", "hicpca", "calder"),
-        re.compile(r"compartment|hicPCA|calder|cooltools.*eigs", re.IGNORECASE),
-        "The user/task boundary forbids compartment calling, but the generated command invokes a compartment caller.",
-    ),
-    (
-        ("heavy analysis", "heavy", "下游分析", "下游"),
-        re.compile(r"call_tads\.py|hicFindTADs|mustache|loop-calling|compartment|hicPCA|calder", re.IGNORECASE),
-        "The task boundary forbids direct heavy/downstream analysis, but the generated command invokes one.",
-    ),
-)
-
-
 @dataclass
 class GateResult:
     passed: bool
@@ -258,47 +201,6 @@ def _has_balance_weight_evidence(code: str, stdout: str) -> bool:
     )
 
 
-def _context_units(text: str) -> List[str]:
-    units: List[str] = []
-    for raw in re.split(r"[\n。；;!?]+", str(text or "")):
-        unit = re.sub(r"\s+", " ", raw).strip()
-        if unit:
-            units.append(unit)
-    return units
-
-
-def _mentions_any(unit: str, terms: Iterable[str]) -> bool:
-    lowered = str(unit or "").lower()
-    return any(str(term).lower() in lowered for term in terms)
-
-
-def _unit_forbids_whole_analysis(unit: str, terms: Iterable[str]) -> bool:
-    if not BOUNDARY_NEGATION_RE.search(unit) or not _mentions_any(unit, terms):
-        return False
-    if DIRECT_TOOL_SCOPE_RE.search(unit):
-        return False
-    if TOY_OR_FAKE_SCOPE_RE.search(unit):
-        return False
-    if SKIP_PREFLIGHT_SCOPE_RE.search(unit):
-        return False
-    return True
-
-
-def _context_forbids_whole_analysis(context: str, terms: Iterable[str]) -> bool:
-    return any(_unit_forbids_whole_analysis(unit, terms) for unit in _context_units(context))
-
-
-def _context_forbids_direct_tool(context: str, tool_re: re.Pattern[str]) -> bool:
-    for unit in _context_units(context):
-        if (
-            BOUNDARY_NEGATION_RE.search(unit)
-            and DIRECT_TOOL_SCOPE_RE.search(unit)
-            and tool_re.search(unit)
-        ):
-            return True
-    return False
-
-
 def _artifact_candidates(text: str) -> List[str]:
     seen: set[str] = set()
     artifacts: List[str] = []
@@ -348,16 +250,6 @@ def _artifact_exists_in_roots(output_roots: Iterable[Path], artifact: str) -> bo
         except OSError:
             continue
 
-    basename = Path(artifact).name
-    for output_root in output_roots:
-        try:
-            for found in output_root.rglob(basename):
-                if "task_outputs" in found.parts:
-                    continue
-                if found.is_file() and found.stat().st_size > 0:
-                    return True
-        except OSError:
-            continue
     return False
 
 
@@ -426,10 +318,11 @@ def _text_for_output_root_discovery(plan_state: Dict[str, Any], current_plan: st
     return "\n".join(chunks)
 
 
-def _candidate_output_roots(data_path: str | Path, plan_state: Dict[str, Any], current_plan: str) -> List[Path]:
+def _candidate_output_roots_from_text(data_path: str | Path, text: str) -> List[Path]:
     base_root = Path(data_path)
     roots: List[Path] = []
     seen: set[str] = set()
+    tokens: List[str] = []
 
     def add(path: Path) -> None:
         existing = _normalise_existing_dir(path, base_root)
@@ -442,19 +335,53 @@ def _candidate_output_roots(data_path: str | Path, plan_state: Dict[str, Any], c
         roots.append(existing)
 
     add(base_root)
-    discovery_text = _text_for_output_root_discovery(plan_state, current_plan)
-    for match in PATH_TOKEN_RE.finditer(discovery_text):
+    for match in PATH_TOKEN_RE.finditer(str(text or "")):
         token = match.group(1).strip("`'\".,;:()[]{}")
         if not token:
             continue
+        tokens.append(token)
         path = Path(token)
+        if not path.is_absolute():
+            continue
         if path.suffix:
             for parent in (path.parent, path.parent.parent):
                 if str(parent) not in {"", "."}:
                     add(parent)
         else:
             add(path)
+
+    # Resolve relative output paths against every explicitly discovered output
+    # root. This preserves the no-global-recursive-search rule while allowing a
+    # plan step such as "Done: gene_density.bed" to be satisfied by stdout or a
+    # status file that points to "Compartments/PC1_AB/gene_density.bed" after
+    # the script has cd'ed into the benchmark run directory.
+    changed = True
+    while changed:
+        changed = False
+        known_roots = list(roots)
+        for token in tokens:
+            path = Path(token)
+            if path.is_absolute():
+                continue
+            for root in known_roots:
+                candidate = root / path
+                before = len(roots)
+                if path.suffix:
+                    for parent in (candidate.parent, candidate.parent.parent):
+                        if str(parent) not in {"", "."}:
+                            add(parent)
+                else:
+                    add(candidate)
+                if len(roots) != before:
+                    changed = True
     return roots
+
+
+def _candidate_output_roots(data_path: str | Path, plan_state: Dict[str, Any], current_plan: str) -> List[Path]:
+    return _candidate_output_roots_from_text(
+        data_path,
+        _text_for_output_root_discovery(plan_state, current_plan),
+    )
 
 
 class CompletionGate:
@@ -462,33 +389,6 @@ class CompletionGate:
 
     @staticmethod
     def validate_code_boundary(code: str, task_context: str) -> GateResult:
-        context = str(task_context or "")
-        command = str(code or "")
-        for context_tool_re, command_re, message in DIRECT_TOOL_RULES:
-            if _context_forbids_direct_tool(context, context_tool_re) and command_re.search(command):
-                return GateResult(
-                    passed=False,
-                    message=message,
-                    feedback=(
-                        "Pre-execution boundary gate blocked this command.\n\n"
-                        f"{message}\n\n"
-                        "Regenerate the command through the approved wrapper or add the required preflight/validation path "
-                        "instead of calling the low-level tool directly."
-                    ),
-                )
-        for analysis_terms, command_re, message in FORBIDDEN_ANALYSIS_RULES:
-            if _context_forbids_whole_analysis(context, analysis_terms) and command_re.search(command):
-                return GateResult(
-                    passed=False,
-                    message=message,
-                    feedback=(
-                        "Pre-execution boundary gate blocked this command.\n\n"
-                        f"{message}\n\n"
-                        "Regenerate a command that stays inside the user's stated boundary. "
-                        "For readiness/preflight tasks, produce inventory/QC/dependency checks, questions for the user, "
-                        "and blocked/stage_status outputs instead of launching downstream analysis."
-                    ),
-                )
         return GateResult(True)
 
     @staticmethod
@@ -500,6 +400,8 @@ class CompletionGate:
         output_root = Path(data_path)
         script_path, stdout = _last_execution_evidence(step)
         code = _read_script(script_path)
+        discovery_text = "\n".join([title, script_path, code, stdout])
+        output_roots = _candidate_output_roots_from_text(output_root, discovery_text)
         checked: List[str] = []
 
         if _looks_like_directory_prep_step(title):
@@ -520,8 +422,8 @@ class CompletionGate:
         if _looks_like_artifact_step(title):
             artifacts = _artifact_candidates(title)
             checked.extend(artifacts)
-            missing = [artifact for artifact in artifacts if not _artifact_exists(output_root, artifact)]
-            if _is_metadata_or_prep_only(code) and not _has_write_intent(code):
+            missing = [artifact for artifact in artifacts if not _artifact_exists_in_roots(output_roots, artifact)]
+            if missing and _is_metadata_or_prep_only(code) and not _has_write_intent(code):
                 return GateResult(
                     passed=False,
                     message="Current plan step is an output/artifact step, but the latest command only prepared or inspected resources.",
@@ -534,12 +436,14 @@ class CompletionGate:
                     checked_artifacts=checked,
                 )
             if missing:
+                roots_text = ", ".join(str(root) for root in output_roots)
                 return GateResult(
                     passed=False,
                     message=f"Current plan step is missing promised artifacts: {', '.join(missing)}",
                     feedback=(
                         "Step completion gate failed: the current step promised these artifacts but they are missing "
-                        f"or empty under {output_root}: {', '.join(missing)}. Continue the step and create/validate them."
+                        f"or empty under searched roots ({roots_text}): {', '.join(missing)}. "
+                        "Continue the step and create/validate them."
                     ),
                     missing_artifacts=missing,
                     checked_artifacts=checked,

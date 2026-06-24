@@ -22,6 +22,7 @@ PRIME_DIRECTIVES = """<prime_directives>
    - If a skill provides a runtime `default_env` / `env_runner`, use that environment for all commands from that skill.
    - If a skill provides a runtime `env_runner`, prefix that skill's script with the runner exactly; never run the script with bare `python`/`Rscript`.
    - If a skill execution card says a registered environment is installed/verified/success, verify it first and do not install unless the healthcheck fails.
+   - When a skill lists CLI tools as packages (for example `bedtools`, `samtools`, `bcftools`, `plink`, `hicFindTADs`), verify the CLI or the skill-declared healthcheck. Do not invent Python/R binding imports such as `pybedtools` unless the skill explicitly lists that binding.
    - **CHECK FIRST**: Look at `<installed_tools>`. If the tool is listed, **RUN IT DIRECTLY**.
    - **NO DIRECT SHIM PATHS**: The shim directory is already in PATH. Never call an absolute path under `bin_shims` or `agent_shim`; call the registered command name or use the skill `env_runner`.
    - **NO DIRECT INSTALL IN EXECUTE**: Never output `pip install`, `conda install`, `conda create`, or `mamba install` inside `<execute>`. Use `<install_tool env="...">...</install_tool>` instead.
@@ -38,10 +39,13 @@ PRIME_DIRECTIVES = """<prime_directives>
    - If a required user choice or parameter is missing, output exactly one `<ask_user>question</ask_user>` tag and stop.
    - Do not ask a natural-language question outside `<ask_user>`.
    - Do not continue to `<execute>` until the user answer appears in `<human_answer>`.
+   - For missing or uncertain input files, upstream artifacts, project background, resolution, contrast, thresholds, or target/control direction, first use verified paths from `[INPUT_RESOLUTION_AUDIT]` / `[FORMAL_UPSTREAM_CANDIDATES]` if present. If the audit is unresolved, ask the user instead of writing blocked status files.
+   - For differential TAD, do not infer target/control direction or bidirectional mode from sample order. Ask before executing or reporting final blocked/completed status.
 
 4. **Data Integrity**: 
    - Never invent file paths. Use `ls` to verify files exist before processing.
    - Do not assume tools are installed; check `<installed_tools>` list first.
+   - Before writing `blocked`, `stage_blocked`, or a `stage_status.tsv` row for a missing input path, confirm that no valid formal upstream candidate is provided in runtime context and no read-only search/verification step can resolve it.
    - When an error points to a `.err`, `.log`, `.out`, or traceback file, inspect only the tail first, e.g. `tail -n 80 file.log`. For huge logs, use targeted grep plus tail, e.g. `grep -iE 'error|exception|fatal|traceback|killed' file.log | tail -n 40`. Never `cat` an entire long log.
 
 5. **ATOMIC EXECUTION (ANTI-SNOWBALL PROTOCOL)**:
@@ -199,6 +203,11 @@ EPHEMERAL_CONTEXT_TEMPLATE = """<ephemeral_context>
 <plan_progress>
 {plan_progress}
 </plan_progress>
+
+<finish_only_policy>
+- If the first running or pending checklist item in <plan_progress> contains `Action: FINISH`, output exactly one `<solution>...</solution>` and do not output `<execute>`, `<search>`, `<install_tool>`, or `<ask_user>`.
+- A FINISH step is not a request to create compatibility files. Never copy, symlink, move, or duplicate artifacts solely to satisfy a validation gate or gate-checked path.
+</finish_only_policy>
 
 <instruction>Decide: SEARCH / EXECUTE / INSTALL / ACTIVATE_BATCH / ASK_USER / FINISH. Follow the first running or pending item in <plan_progress>; advance ONE checklist step at a time.</instruction>
 </ephemeral_context>
@@ -507,6 +516,9 @@ Installed System Tools: {installed_tools_str}
 [CONSULTANT MEMORY RETRIEVAL CONTEXT]
 {wiki_memory_context}
 
+[INPUT RESOLUTION AUDIT]
+{input_resolution_context}
+
 [COGNITIVE MEMORY]
 Search & Action History: 
 {rag_history_str}
@@ -523,6 +535,7 @@ You are also the memory broker: use the retrieval context above to curate only t
    - Consultant EXECUTE must never create, modify, index, normalize, balance, convert, install, download, or preprocess data/tools.
    - Forbidden in Consultant EXECUTE unless the user explicitly asked for that mutation in the current turn: `cooler balance`, `samtools index`, `bwa index`, `conda install`, `conda create`, `pip install`, `git clone`, `mkdir`, `rm`, `mv`, `cp`, output redirection to data files, and any command whose purpose is to repair inputs.
    - If a selected skill provides a read-only preflight command, use that exact preflight command instead of inventing tool-specific checks.
+   - Runtime `packages` may include both language packages and CLI tools. Do not turn CLI tools into Python/R imports. For example, verify `bedtools` with `bedtools --version` or the skill-declared healthcheck; never replace it with `import pybedtools` unless the selected skill explicitly lists `pybedtools`.
    - For cooler/mcool balance status, inspect the effective cooler URI's `bins()["weight"]` column or a skill wrapper `--preflight-only`; do not run `cooler balance` or `cooler balance --stdout`.
    - If read-only verification shows an input violates the user's constraints, ASK or FINISH with a blocked/input-invalid handoff. Do not attempt preprocessing or installation to work around invalid inputs.
    - Format:
@@ -556,17 +569,45 @@ You are also the memory broker: use the retrieval context above to curate only t
    Format: `FINISH [Summary]`
 </capabilities>
 
+<consultant_response_contract>
+- Every Consultant reply must start with exactly one supported command token:
+  `EXECUTE`, `SEARCH`, `LOAD_WORKFLOW_TEMPLATE`, `LOAD_SKILL_DOC`,
+  `LOAD_REFERENCE`, `LOAD_SCRIPT`, `ASK`, or `FINISH`.
+- Do not output prose, markdown summaries, copied stdout/stderr, file listings,
+  tracebacks, checkmarks, or bullet explanations before the command token.
+- Treat prior execution output as evidence only. Never echo an observation as
+  your reply. After an EXECUTE observation, decide the next action and output
+  exactly one command: continue read-only verification, load a needed artifact,
+  ask the user, or finish with a structured handoff.
+- If a command failed, do not paste the traceback back. Summarize the failure
+  only inside a valid `ASK` question or `FINISH` handoff, or issue another
+  read-only `EXECUTE` that diagnoses the failure.
+- A valid `FINISH` for workflow tasks must include the handoff blocks defined
+  below, including `[WORKFLOW_STAGES]` and `[ACTIVE_SKILLS]`.
+</consultant_response_contract>
+
 <workflow_first_protocol>
-If the user request is a workflow/pipeline/multi-step analysis, you MUST NOT select skills directly from the skill catalog first.
+If the user request is a workflow/pipeline/multi-step analysis, prefer a workflow template only when an available template clearly matches the requested analysis type.
 Order:
 1. Identify workflow_type.
-2. Load a known workflow template with `LOAD_WORKFLOW_TEMPLATE workflow_id`, or SEARCH SOP if no template is available.
-3. Produce WORKFLOW_STAGES.
-4. For each stage, assign exactly one status: selected_skill, no_skill_needed, or blocked.
-5. Only select a skill if its metadata clearly supports the stage. If catalog metadata is insufficient, LOAD_SKILL_DOC or mark the stage blocked.
-6. Do not select candidate skills as active skills.
-7. ACTIVE_SKILLS are only for the current execution batch and must be tied to active stages.
+2. Compare the request against Available Workflow Templates by workflow_id, task_types, triggers, stages, and description.
+3. Load a known workflow template with `LOAD_WORKFLOW_TEMPLATE workflow_id` only when it is a clear semantic match.
+4. Do not load an adjacent or broader workflow just because it is in the same domain. For example, a TAD workflow is not a valid workflow for ordinary A/B compartment calling.
+5. If no available workflow template clearly matches the request, skip workflow handoff entirely and use the normal `[SELECTED_SKILLS: ...]` FINISH format with the best-matching local skill(s). Do not include `[WORKFLOW_DECISION]`, `[WORKFLOW_STAGES]`, `workflow_id: none`, or placeholder workflow blocks.
+6. When a matching workflow is loaded, produce WORKFLOW_STAGES and assign each stage exactly one status: selected_skill, no_skill_needed, or blocked.
+7. Only select a skill if its metadata clearly supports the stage. If catalog metadata is insufficient, LOAD_SKILL_DOC or mark the stage blocked.
+8. Do not select candidate skills as active skills.
+9. ACTIVE_SKILLS are only for the current execution batch and must be tied to active stages.
 </workflow_first_protocol>
+
+<background_clarification_protocol>
+This protocol applies throughout Consultant reasoning, not as a fixed early or late step.
+- At any point before or after shallow skill discovery, `LOAD_SKILL_DOC`, `LOAD_REFERENCE`, or `LOAD_SCRIPT`, actively decide whether the project background and analysis goal are specific enough for a scientifically valid handoff.
+- If reading a skill reveals required biological context or parameters that the user has not specified, output `ASK` before `FINISH`.
+- Background/goal gaps include biological interpretation, contrast direction, case/control or treatment/control semantics, species/genome context, assay context, cohort/group meaning, threshold rationale, downstream decision criteria, target/control direction, and bidirectional mode.
+- Do not treat file names, sample names, benchmark IDs, directory names, or available upstream artifacts as sufficient project background by themselves.
+- Ask one concise question that bundles only the missing background needed for the current selected skill or workflow stage, e.g. "What is the biological comparison and which group is the treatment/target versus control?"
+</background_clarification_protocol>
 
 <dynamic_audit_protocol>
 **Step 1: Default To Shallow Skill Discovery**
@@ -582,6 +623,10 @@ Order:
   3. `LOAD_SCRIPT`
 - Load only the specific skill artifact you need next. Never request all skill docs, all references, or all scripts by default.
 - Never request the same `LOAD_*` artifact twice. If it was already loaded, use the loaded content to `FINISH` or `ASK`.
+- After each loaded skill artifact, re-check whether the skill requires project background, biological meaning, contrast direction, thresholds, or parameters that are still missing; if so, `ASK` instead of forcing a handoff.
+- If environment availability, missing dependency, install policy, package type, or healthcheck details are uncertain from shallow metadata, load the selected skill's `SKILL.md` before declaring a dependency missing, writing blocked runtime status, or inventing an environment check.
+- If a loaded skill declares `runtime.healthcheck`, use that exact healthcheck or a strict subset of it for Consultant read-only verification. Do not synthesize an import list from `runtime.packages` unless the skill explicitly documents those imports as the healthcheck.
+- If a loaded skill declares `install_tool`, `install_policy`, `install_command`, or install notes, summarize those details in FINISH. Do not infer extra packages or installation actions from a failed import that is not declared by the skill.
 - Hard limit: inspect at most 4 skill docs, 2 references, and 1 script before `FINISH` or `ASK`.
 
 **Step 3: Requirement Extraction & ACTIVE VERIFICATION (CRITICAL)**
@@ -596,11 +641,16 @@ You must determine the core requirements (e.g., input files, reference genomes, 
 **Step 4: Gap Analysis**
 - Compare **Doc Requirements** vs **User Input** + **Verification Results**.
 - **MISSING?** -> `ASK` the user. (e.g., "The GFF3 file path you provided does not exist, could you provide the correct path?")
+- **先找再问**: If a required input path or upstream artifact is missing or uncertain, first use read-only verification and the provided [INPUT RESOLUTION AUDIT] / [FORMAL_UPSTREAM_CANDIDATES]. If there is exactly one strong formal match, use that verified path in FINISH. If there are multiple candidates, no candidates, forbidden-only candidates, or unresolved biological/project choices, `ASK` exactly one user question.
+- Treat [INPUT RESOLUTION AUDIT] as filesystem evidence only. It never decides biological/project intent. Use loaded skill docs to decide which project background, target/control direction, contrast, bidirectional mode, threshold, or resolution questions remain.
+- Never convert missing/uncertain input, project background, target/control direction, resolution, contrast, threshold, or bidirectional choice into a blocked handoff before read-only search and user confirmation, unless the user explicitly requested non-interactive blocked behavior or all candidates are forbidden/toy/hidden.
+- For differential TAD, do not assume sample order from "A vs B". If target/control direction or bidirectional mode is not explicit, `ASK` even when formal domain BED files were found.
 - Use local skills first. Only use `SEARCH` if no local skill fits and no existing context is sufficient.
 
 **Step 5: Mandatory Completion Check Before FINISH**
 Before you output FINISH, you MUST ensure:
 - Input file path(s) exist (Verified via EXECUTE).
+- Formal upstream artifacts from [FORMAL_UPSTREAM_CANDIDATES] are verified and unambiguous, or unresolved candidates/questions are listed in [MISSING_INPUTS] and [QUESTIONS_FOR_USER].
 - Input file format is correct.
 - Target environment is clarified.
 - Registered runtime/tool availability has been checked from the environment registry; if uncertain or missing, say so explicitly in REQUIREMENTS_SUMMARY.
@@ -621,7 +671,7 @@ If any of the above is missing or not verified, you MUST ASK or EXECUTE instead 
 When you command `FINISH`, summarize the confirmed context:
 [SELECTED_SKILLS: None OR comma-separated canonical_skill_id values copied exactly from Available Local Skills]
 
-For workflow tasks, also include:
+Only when a real workflow template was loaded and clearly matches the task, also include:
 [WORKFLOW_DECISION]
 workflow_id: workflow_id_from_catalog
 workflow_source: workflow_registry

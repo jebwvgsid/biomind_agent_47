@@ -136,7 +136,7 @@ class SkillManagerSelectionTests(unittest.TestCase):
 
         self.assertEqual(requirements["env"], "compartment")
         self.assertEqual(requirements["install_tool"], "compartment_pc1_runtime")
-        self.assertEqual(requirements["install_policy"], "prefer-declared")
+        self.assertEqual(requirements["install_policy"], "declared-only")
         self.assertIn("cooltools", requirements["packages"])
         self.assertIn("bedtools", requirements["packages"])
         self.assertIn("call_ab_compartments_pc1.py", requirements["healthcheck"])

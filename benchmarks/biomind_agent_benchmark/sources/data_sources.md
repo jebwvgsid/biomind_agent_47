@@ -59,6 +59,10 @@ simulation or downloaded public/database subsets with source metadata.
 - Generate coalescent ancestry and mutation simulation with `msprime`.
 - Export VCF, haplotypes, genotype dosage matrix, phenotype table, GWAS-like
   truth labels, marker annotation, and simulation truth metadata.
+- Derive functional-enrichment fixtures from the same msprime marker/gene table:
+  GWAS candidate genes, marker-derived background genes, custom functional
+  annotation, term names, and enrichment answer key. These test enrichment
+  mechanics without requiring a live database download.
 - Use `scripts/generate/generate_msprime_fixtures.py`.
 
 ### Phase 2: public-data downloader

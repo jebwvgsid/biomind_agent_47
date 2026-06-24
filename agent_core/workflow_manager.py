@@ -93,7 +93,7 @@ class WorkflowManager:
             return "<workflow_catalog>\nNo workflow templates available.\n</workflow_catalog>"
         lines = [
             "<workflow_catalog>",
-            "Workflow templates define required stages. For multi-step workflow tasks, select a workflow before selecting skills.",
+            "Workflow templates define required stages. Use a workflow only when it clearly matches the requested analysis; otherwise skip workflow handoff and select local skill(s) directly.",
         ]
         for workflow_id in sorted(self.workflows):
             workflow = self.workflows[workflow_id]

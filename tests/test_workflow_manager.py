@@ -33,6 +33,8 @@ class WorkflowManagerTests(unittest.TestCase):
         self.assertIn("workflow_id: crop_genomic_prediction", catalog)
         self.assertIn("workflow_id: crop_gwas_analysis", catalog)
         self.assertIn("aliases: crop-gwas-pipeline, crop_gwas_pipeline, crop-breeding/crop-gwas-pipeline", catalog)
+        self.assertIn("Use a workflow only when it clearly matches the requested analysis", catalog)
+        self.assertIn("otherwise skip workflow handoff and select local skill(s) directly", catalog)
 
     def test_load_workflow_template_by_id(self):
         template = self.workflow_manager.load_workflow_prompt("scrna_standard_analysis")

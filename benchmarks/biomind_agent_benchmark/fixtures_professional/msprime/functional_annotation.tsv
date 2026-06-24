@@ -1,0 +1,86 @@
+gene_id	term_id	term_name	evidence
+MSP_GENE_0001	BM:TRAIT_ASSOCIATED_MODULE	Trait-associated module	msprime-derived benchmark annotation
+MSP_GENE_0005	BM:TRAIT_ASSOCIATED_MODULE	Trait-associated module	msprime-derived benchmark annotation
+MSP_GENE_0010	BM:TRAIT_ASSOCIATED_MODULE	Trait-associated module	msprime-derived benchmark annotation
+MSP_GENE_0014	BM:TRAIT_ASSOCIATED_MODULE	Trait-associated module	msprime-derived benchmark annotation
+MSP_GENE_0019	BM:TRAIT_ASSOCIATED_MODULE	Trait-associated module	msprime-derived benchmark annotation
+MSP_GENE_0023	BM:TRAIT_ASSOCIATED_MODULE	Trait-associated module	msprime-derived benchmark annotation
+MSP_GENE_0028	BM:TRAIT_ASSOCIATED_MODULE	Trait-associated module	msprime-derived benchmark annotation
+MSP_GENE_0032	BM:TRAIT_ASSOCIATED_MODULE	Trait-associated module	msprime-derived benchmark annotation
+MSP_GENE_0001	BM:GROWTH_SIGNALING	Growth signaling benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0002	BM:GROWTH_SIGNALING	Growth signaling benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0003	BM:GROWTH_SIGNALING	Growth signaling benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0005	BM:GROWTH_SIGNALING	Growth signaling benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0010	BM:GROWTH_SIGNALING	Growth signaling benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0014	BM:GROWTH_SIGNALING	Growth signaling benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0002	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0003	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0004	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0005	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0006	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0007	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0008	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0009	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0010	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0011	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0012	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0013	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0014	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0015	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0016	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0017	BM:BASELINE_METABOLISM	Baseline metabolism benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0018	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0019	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0020	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0021	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0022	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0023	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0024	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0025	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0026	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0027	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0028	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0029	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0030	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0031	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0032	BM:STRUCTURAL_COMPONENT	Structural component benchmark process	msprime-derived benchmark annotation
+MSP_GENE_0003	BM:LOW_SIGNAL_MODULE	Low-signal benchmark module	msprime-derived benchmark annotation
+MSP_GENE_0004	BM:LOW_SIGNAL_MODULE	Low-signal benchmark module	msprime-derived benchmark annotation
+MSP_GENE_0006	BM:LOW_SIGNAL_MODULE	Low-signal benchmark module	msprime-derived benchmark annotation
+MSP_GENE_0007	BM:LOW_SIGNAL_MODULE	Low-signal benchmark module	msprime-derived benchmark annotation
+MSP_GENE_0008	BM:LOW_SIGNAL_MODULE	Low-signal benchmark module	msprime-derived benchmark annotation
+MSP_GENE_0009	BM:LOW_SIGNAL_MODULE	Low-signal benchmark module	msprime-derived benchmark annotation
+MSP_GENE_0011	BM:LOW_SIGNAL_MODULE	Low-signal benchmark module	msprime-derived benchmark annotation
+MSP_GENE_0012	BM:LOW_SIGNAL_MODULE	Low-signal benchmark module	msprime-derived benchmark annotation
+MSP_GENE_0001	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0002	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0003	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0004	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0005	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0006	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0007	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0008	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0009	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0010	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0011	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0012	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0013	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0014	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0015	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0016	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0017	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0018	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0019	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0020	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0021	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0022	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0023	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0024	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0025	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0026	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0027	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0028	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0029	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0030	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0031	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation
+MSP_GENE_0032	BM:WHOLE_BACKGROUND	Whole benchmark background	msprime-derived benchmark annotation

@@ -1,10 +1,16 @@
 import os
 from openai import OpenAI
-from config.config import LLM_BASE_URL, LLM_DEFAULT_MODEL
+from config.config import LLM_API_KEY, LLM_BASE_URL, LLM_DEFAULT_MODEL
 
-# 1. 这里尝试直接从代码里硬编码 KEY，先跑通再说！
-# 替换成你真实的 Key，例如 "sk-..."
-MY_API_KEY = "sk-871f422c6" 
+MY_API_KEY = (
+    LLM_API_KEY
+    or os.getenv("DEEPSEEK_API_KEY")
+    or os.getenv("QWEN_API_KEY")
+    or os.getenv("DASHSCOPE_API_KEY")
+    or os.getenv("OPENAI_API_KEY")
+)
+if not MY_API_KEY:
+    raise RuntimeError("Missing LLM API key. Set DEEPSEEK_API_KEY, QWEN_API_KEY, DASHSCOPE_API_KEY, or OPENAI_API_KEY.")
 
 print(f"🔄 Connecting to: {LLM_BASE_URL}")
 print(f"🤖 Using Model: {LLM_DEFAULT_MODEL}")

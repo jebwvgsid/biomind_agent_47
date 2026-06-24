@@ -38,8 +38,8 @@ try:
     def count_tokens(text: str) -> int:
         return len(_enc.encode(text, disallowed_special=()))
 
-except ImportError:
-    logger.warning("tiktoken not found – using char/4 estimation for token count.")
+except Exception as exc:
+    logger.warning("tiktoken unavailable (%s) - using char/4 estimation for token count.", exc)
 
     def count_tokens(text: str) -> int:          # type: ignore[misc]
         return max(1, len(text) // 4)

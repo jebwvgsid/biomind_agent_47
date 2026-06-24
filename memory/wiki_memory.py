@@ -48,6 +48,54 @@ except ImportError:
 logger = logging.getLogger("BioMind.WikiMemory")
 
 
+class NullWikiMemoryManager:
+    """No-op wiki manager used when BioMind wiki memory is disabled."""
+
+    enabled = False
+
+    def __init__(self, *args: Any, **kwargs: Any):
+        self.root = Path("")
+        self.wiki_dir = Path("")
+        self.overview_file = Path("/dev/null")
+        self.default_project_id = str(kwargs.get("default_project_id") or DEFAULT_PROJECT_ID)
+
+    def build_prompt_context(self, *args: Any, **kwargs: Any) -> str:
+        return ""
+
+    async def ingest_from_archive(self, *args: Any, **kwargs: Any) -> str:
+        return self.status_text()
+
+    def compile_digest(self, *args: Any, **kwargs: Any) -> str:
+        return self.status_text()
+
+    def digest_path(self, project_id: Optional[str] = None) -> Path:
+        return Path("/dev/null")
+
+    def read_claims_index(self, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        return []
+
+    def lint(self, project_id: Optional[str] = None) -> str:
+        return self.status_text()
+
+    def status_text(self, project_id: Optional[str] = None) -> str:
+        return "Wiki memory is disabled (set BIOMIND_WIKI_ENABLED=true to enable it)."
+
+    def format_hits(self, hits: Sequence[Dict[str, Any]], title: str = "Wiki Search") -> str:
+        return self.status_text()
+
+    def search(self, query: str, project_id: Optional[str] = None, top_k: int = 6) -> List[Dict[str, Any]]:
+        return []
+
+    def sync_project_index_fields(self, project_id: Optional[str] = None) -> str:
+        return self.status_text()
+
+    def read_page(self, identifier: str) -> str:
+        return self.status_text()
+
+    def read_review_queue(self) -> str:
+        return self.status_text()
+
+
 ALLOWED_PAGE_TYPES = {
     "concept",
     "project",

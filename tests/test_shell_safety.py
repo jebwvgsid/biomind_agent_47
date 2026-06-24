@@ -104,6 +104,51 @@ class ShellSafetyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["risk_level"], RiskLevel.CRITICAL)
         self.assertTrue(any("mutates_shell_startup" in item for item in result["risky_operations"]))
 
+    def test_risk_analyzer_auto_approves_read_only_conda_python_probe(self):
+        code = '''conda run -n compartment python -c "
+import cooler
+c = cooler.Cooler('/data/leaf.mcool::/resolutions/40000')
+print('leaf chroms:', c.chromnames[:])
+print('leaf bins count:', c.bins()[:].shape[0])
+"'''
+
+        result = RiskAnalyzer.analyze(code, "Bash")
+
+        self.assertEqual(result["risk_level"], RiskLevel.SAFE)
+        self.assertIn("Whitelisted Command", result["safe_operations"])
+
+    def test_risk_analyzer_auto_approves_read_only_conda_rscript_probe(self):
+        code = 'conda run -n calder2 Rscript -e "library(CALDER); cat(\\\'OK\\\\n\\\')"'
+
+        result = RiskAnalyzer.analyze(code, "Bash")
+
+        self.assertEqual(result["risk_level"], RiskLevel.SAFE)
+
+    def test_risk_analyzer_keeps_conda_python_write_probe_interactive(self):
+        code = 'conda run -n compartment python -c "import pandas as pd; pd.DataFrame().to_csv(\\\'out.tsv\\\')"'
+
+        result = RiskAnalyzer.analyze(code, "Bash")
+
+        self.assertEqual(result["risk_level"], RiskLevel.MEDIUM)
+        self.assertTrue(result["risky_operations"])
+        self.assertEqual(result["safe_operations"], [])
+
+    def test_risk_analyzer_allows_stderr_to_stdout_read_only_probe(self):
+        code = "ls -lh result.tsv 2>&1 && wc -l result.tsv 2>&1 && head -3 result.tsv 2>&1"
+
+        result = RiskAnalyzer.analyze(code, "Bash")
+
+        self.assertEqual(result["risk_level"], RiskLevel.SAFE)
+        self.assertIn("Whitelisted Command", result["safe_operations"])
+
+    def test_risk_analyzer_keeps_file_redirection_interactive(self):
+        code = "ls -lh result.tsv > listing.txt"
+
+        result = RiskAnalyzer.analyze(code, "Bash")
+
+        self.assertEqual(result["risk_level"], RiskLevel.MEDIUM)
+        self.assertTrue(any("redirection" in item for item in result["risky_operations"]))
+
     def test_hitl_plain_text_review_response_is_feedback_not_code(self):
         action, payload = HITLMiddleware()._parse_code_response("40k", original_code="echo ok")
 

@@ -16,13 +16,13 @@ TASK_SECTIONS = [
     "Commands and Results",
     "Errors and Fixes",
     "Artifacts",
-    "Wiki Claims",
+    "Curated Claims",
     "Open Questions",
 ]
 
 
 class TaskSummaryRenderer:
-    """Render human-readable task reports from SessionArchive and Wiki claims."""
+    """Render human-readable task reports from SessionArchive and optional curated claims."""
 
     def __init__(
         self,
@@ -51,7 +51,7 @@ class TaskSummaryRenderer:
     def _initial_task_index() -> str:
         return (
             "# BioMind Task Summary Index\n\n"
-            "Derived from SessionArchive and Wiki claims. Deleting task summary files does not delete memory.\n\n"
+            "Derived from SessionArchive events and optional curated claims. Deleting task summary files does not delete memory.\n\n"
             "| Task ID | Status | Updated | Goal | Summary |\n"
             "| --- | --- | --- | --- | --- |\n"
         )
@@ -94,7 +94,7 @@ class TaskSummaryRenderer:
         lines = [
             f"# Task Summary: {task_id}",
             "",
-            "Derived from SessionArchive events and Wiki claims. This file is a report/cache, not the memory source of truth.",
+            "Derived from SessionArchive events and optional curated claims. This file is a report/cache, not the memory source of truth.",
             "",
             f"- Updated: {updated}",
             f"- Status: {status}",
@@ -118,7 +118,7 @@ class TaskSummaryRenderer:
             "## Artifacts",
             self._artifact_bullets(events),
             "",
-            "## Wiki Claims",
+            "## Curated Claims",
             self._claim_bullets(claims),
             "",
             "## Open Questions",
@@ -262,7 +262,7 @@ class TaskSummaryRenderer:
 
     def _claim_bullets(self, claims: Sequence[Dict[str, Any]]) -> str:
         if not claims:
-            return "- No Wiki claims currently cite this task's SessionArchive events."
+            return "- No curated claims currently cite this task's SessionArchive events."
         lines = []
         for claim in claims[:20]:
             evidence = ", ".join(str(item) for item in claim.get("evidence", [])[:3])

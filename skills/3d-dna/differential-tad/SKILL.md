@@ -43,6 +43,19 @@ Before executing data, confirm these items with the user when they are not expli
 2. Should the analysis be one-way only, or bidirectional?
 3. If bidirectional, where is the control sample's TAD domain BED?
 
+If a prompt says to use already generated formal TAD calling results from the
+same project, search formal project output locations such as
+`benchmarks/biomind_agent_benchmark/runs/3d_dna/*/TADs/HiCExplorer/{resolution}/*_domains.bed`
+before declaring the domains missing. Reuse a non-empty formal candidate only
+when sample, resolution, and project context are unambiguous. If multiple formal
+candidates match, ask the user to choose. Never use toy, fixtures, test,
+expected-answer, or hidden answer-key domains as analysis input.
+
+Formal domain discovery does not answer the biological direction question. Even
+when both target and control domain BED files are found, ask the user if
+target/control direction, analysis goal/background, or bidirectional mode is not
+explicit in the prompt.
+
 For bidirectional comparison, run both:
 
 - `target_vs_control`: target matrix + control matrix + target domains

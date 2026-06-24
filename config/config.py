@@ -1,4 +1,20 @@
 import os
+from pathlib import Path
+
+from dotenv import dotenv_values
+
+
+def _load_local_env_defaults() -> None:
+    env_path = Path(__file__).resolve().parents[1] / ".env"
+    if not env_path.exists():
+        return
+    for key, value in dotenv_values(env_path).items():
+        if not key or value is None or os.getenv(key):
+            continue
+        os.environ[key] = value
+
+
+_load_local_env_defaults()
 
 
 def _split_env_list(name: str) -> list[str]:
@@ -29,21 +45,28 @@ RERANK_MODEL_ID = os.getenv("RERANK_MODEL_ID", "gte-rerank@Tongyi-Qianwen")
 
 DEFAULT_PROJECT_ID = os.getenv("BIOMIND_PROJECT_ID", "default")
 BIOMIND_MEMORY_DIR = os.getenv("BIOMIND_MEMORY_DIR", "").strip()
+BIOMIND_WIKI_ENABLED = os.getenv("BIOMIND_WIKI_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
 BIOMIND_WIKI_DIR = os.getenv("BIOMIND_WIKI_DIR", "").strip()
-BIOMIND_WIKI_INGEST_MODE = os.getenv("BIOMIND_WIKI_INGEST_MODE", "ask").strip().lower()
-if BIOMIND_WIKI_INGEST_MODE not in {"manual", "ask", "auto"}:
+BIOMIND_WIKI_INGEST_MODE = os.getenv(
+    "BIOMIND_WIKI_INGEST_MODE",
+    "ask" if BIOMIND_WIKI_ENABLED else "disabled",
+).strip().lower()
+if not BIOMIND_WIKI_ENABLED:
+    BIOMIND_WIKI_INGEST_MODE = "disabled"
+elif BIOMIND_WIKI_INGEST_MODE not in {"manual", "ask", "auto"}:
     BIOMIND_WIKI_INGEST_MODE = "ask"
 
 LLM_API_KEY = (
-    os.getenv("QWEN_API_KEY")
+    os.getenv("DEEPSEEK_API_KEY")
+    or os.getenv("QWEN_API_KEY")
     or os.getenv("DASHSCOPE_API_KEY")
     or os.getenv("OPENAI_API_KEY")
     or ""
 )
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
-LLM_DEFAULT_MODEL = os.getenv("LLM_DEFAULT_MODEL", "qwen3-max-2026-01-23")
+LLM_DEFAULT_MODEL = os.getenv("LLM_DEFAULT_MODEL", "")
 
-WIKI_EMBEDDING_ENABLED = os.getenv("WIKI_EMBEDDING_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+WIKI_EMBEDDING_ENABLED = BIOMIND_WIKI_ENABLED and os.getenv("WIKI_EMBEDDING_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
 WIKI_EMBEDDING_BASE_URL = os.getenv("WIKI_EMBEDDING_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
 WIKI_EMBEDDING_API_KEY = (
     os.getenv("WIKI_EMBEDDING_API_KEY")

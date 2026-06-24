@@ -131,7 +131,7 @@ class _FakeSkillManager:
                     "conda create -n compartment -c conda-forge -c bioconda python=3.10 cooler cooltools pandas numpy scipy h5py bedtools -y",
                 ],
                 "install_fallbacks": [],
-                "install_policy": "prefer-declared",
+                "install_policy": "declared-only",
                 "env_file": "",
                 "healthcheck": "conda run -n compartment python skills/3d-dna/compartment-calling/scripts/call_ab_compartments_pc1.py --help",
                 "mode_healthchecks": {},
@@ -333,7 +333,23 @@ class RuntimePreflightTests(unittest.TestCase):
         )
 
         self.assertEqual(tool_name, "compartment_pc1_runtime")
-        self.assertIn("not CALDER2", note)
+        self.assertIn("selected skill runtime declares `compartment_pc1_runtime`", note)
+
+    def test_undeclared_package_install_tool_is_sanitized_to_selected_runtime(self):
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.skill_manager = _FakeSkillManager()
+
+        defaults = agent._skill_runtime_defaults(["3d-dna/compartment-calling"])
+        tool_name, note = agent._sanitize_install_tool_for_selected_runtime(
+            "pybedtools",
+            ["3d-dna/compartment-calling"],
+            defaults,
+            "compartment",
+        )
+
+        self.assertEqual(tool_name, "compartment_pc1_runtime")
+        self.assertIn("selected skill runtime declares `compartment_pc1_runtime`", note)
+        self.assertIn("undeclared package names", note)
 
     def test_compartment_skill_blocks_rscript_from_other_env(self):
         agent = BioAnalystAgent.__new__(BioAnalystAgent)
@@ -378,6 +394,17 @@ class RuntimePreflightTests(unittest.TestCase):
         self.assertIn("allowed_install_command: conda create -n calder2", context)
         self.assertNotIn("mamba create", context)
         self.assertNotIn("biomind-calder2", context)
+
+    def test_compartment_install_context_uses_strict_contract(self):
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.skill_manager = _FakeSkillManager()
+
+        defaults = agent._skill_runtime_defaults(["3d-dna/compartment-calling"])
+        context = BioAnalystAgent._selected_skill_install_command_context(defaults, "compartment")
+
+        self.assertIn("[STRICT SKILL RUNTIME CONTRACT]", context)
+        self.assertIn("allowed_install_command: conda create -n compartment", context)
+        self.assertNotIn("pybedtools", context)
 
     def test_prefer_declared_install_context_does_not_emit_strict_contract(self):
         defaults = {

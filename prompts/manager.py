@@ -233,6 +233,7 @@ class PromptManager:
         work_dir: str = ".",
         max_skills: int = 1,
         wiki_memory_context: str = "",
+        input_resolution_context: str = "",
         workflow_catalog: str = "",
     ) -> str:
         rag_history_str = "\n".join(rag_history) if rag_history else "No previous context."
@@ -245,6 +246,7 @@ class PromptManager:
             work_dir=work_dir,
             max_skills=max_skills,
             wiki_memory_context=wiki_memory_context or "No compiled or retrieved wiki memory for this consultation.",
+            input_resolution_context=input_resolution_context or "No formal upstream artifact audit was triggered for this consultation.",
             workflow_catalog=workflow_catalog or "No workflow templates available.",
         )
 
@@ -346,7 +348,7 @@ For EACH step, provide:
 ## Execution Checklist
 After the detailed plan, include a machine-trackable checklist.
 Each executable step MUST be one checkbox line in this exact style:
-- [ ] Step N: [short action title] | Goal: [goal] | Action: [SEARCH/EXECUTE/INSTALL/ACTIVATE_BATCH/FINISH] | Done: [completion criterion]
+- [ ] Step N: [short action title] | Goal: [goal] | Action: [SEARCH/EXECUTE/INSTALL/ACTIVATE_BATCH/ASK_USER/FINISH] | Done: [completion criterion]
 Keep checkbox lines short. Do not put long explanations or multi-line details inside checkbox items.
 The checklist order MUST match Section 2 and should be executable one step at a time.
 
@@ -368,6 +370,8 @@ RULES:
 - You may only select skill IDs listed in AVAILABLE SKILLS. Do not translate, rename, or invent skill IDs.
 - ACTIVE SKILLS are already finalized for the current batch. Do not add extra candidate skills beyond that set.
 - If MANDATORY SKILL EXECUTION CARDS are present, they override your prior knowledge and all plan wording.
+- If Consultant Summary, resume context, or verified execution history says the task is already complete and all required artifacts are present, make the entire checklist a single `Action: FINISH` item. Do not add SEARCH, EXECUTE, INSTALL, or compatibility-repair steps after a completed task.
+- Never plan to copy, symlink, move, or duplicate artifacts solely to satisfy a validation gate, completion gate, or gate-checked path. Use the verified real artifact path; if a gate disagrees, the gate/validation context must be repaired, not the scientific outputs.
 - If ACTIVE SKILL DOCS are present, you MUST read them and use their real script path(s). Never describe the skill as an abstract module or pre-built global command.
 - Convert relevant planning memory into step-local constraints and cautions. Do not rely on Generate to retrieve broad Wiki/TaskSummary context again.
 - Never write "Command template" for a selected skill. Use "Execution guidance".
@@ -375,6 +379,9 @@ RULES:
 - **PATH STRICTNESS**: You MUST use the EXACT absolute paths provided in the Consultant Summary.
 - **NO GUESSING**: Do NOT guess file names or naming patterns (e.g., do not assume '.CG.bw' if the summary says '_CG.Chr10.bw').
 - If a required path is missing from the summary, your plan MUST include a step to find it first.
+- If Consultant Summary contains `[INPUT_RESOLUTION_AUDIT]` with `needs_user:true`, or `[QUESTIONS_FOR_USER]` contains anything other than `none`, the first executable checklist item MUST be `Action: ASK_USER`. Do not plan data execution, blocked report generation, or `stage_status.tsv` missing-input rows before that answer.
+- If `[FORMAL_UPSTREAM_CANDIDATES]` lists verified candidates, plan to verify and reuse those exact formal paths; if candidates are multiple or ambiguous, plan to ask the user to choose.
+- For differential TAD, target/control direction and bidirectional mode are required biological choices. If they are not explicit in Consultant Summary, plan `ASK_USER` before execution.
 - Skill name is not a runnable shell command unless the skill body explicitly defines such a command.
 - Do not include a "Script Skeleton" section.
 """

@@ -1,0 +1,7 @@
+term_id	term_name
+BM:TRAIT_ASSOCIATED_MODULE	Trait-associated module
+BM:GROWTH_SIGNALING	Growth signaling benchmark process
+BM:BASELINE_METABOLISM	Baseline metabolism benchmark process
+BM:STRUCTURAL_COMPONENT	Structural component benchmark process
+BM:LOW_SIGNAL_MODULE	Low-signal benchmark module
+BM:WHOLE_BACKGROUND	Whole benchmark background

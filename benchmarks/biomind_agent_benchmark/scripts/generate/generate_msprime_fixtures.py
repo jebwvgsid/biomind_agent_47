@@ -36,6 +36,148 @@ def write_fasta(path: Path, records: list[tuple[str, str]], line_width: int = 80
                 handle.write(seq[i : i + line_width] + "\n")
 
 
+def write_text(path: Path, text: str) -> None:
+    ensure_dir(path.parent)
+    path.write_text(text, encoding="utf-8")
+
+
+def hypergeom_upper_tail(overlap: int, term_size: int, background_size: int, foreground_size: int) -> float:
+    denom = math.comb(background_size, foreground_size)
+    total = 0
+    for i in range(overlap, foreground_size + 1):
+        if i <= term_size and 0 <= foreground_size - i <= background_size - term_size:
+            total += math.comb(term_size, i) * math.comb(background_size - term_size, foreground_size - i)
+    return total / denom
+
+
+def write_msprime_enrichment_fixtures(out: Path, marker_rows: list[dict[str, object]], gwas_rows: list[dict[str, object]]) -> None:
+    gwas_by_marker = {str(row["marker_id"]): row for row in gwas_rows}
+    rows_by_gene: dict[str, list[dict[str, object]]] = {}
+    for marker_row in marker_rows:
+        merged = dict(marker_row)
+        merged.update(gwas_by_marker[str(marker_row["marker_id"])])
+        rows_by_gene.setdefault(str(marker_row["gene_id"]), []).append(merged)
+
+    best_rows = {
+        gene_id: min(rows, key=lambda row: float(row["pvalue"]))
+        for gene_id, rows in rows_by_gene.items()
+    }
+    candidate_genes = [
+        gene_id
+        for gene_id, row in sorted(best_rows.items())
+        if float(row["pvalue"]) < 1e-4
+    ]
+    background_genes = sorted(rows_by_gene)
+
+    candidate_rows = [
+        {
+            "gene_id": gene_id,
+            "best_marker_id": best_rows[gene_id]["marker_id"],
+            "min_pvalue": best_rows[gene_id]["pvalue"],
+            "best_beta": best_rows[gene_id]["beta"],
+            "selection_rule": "pvalue < 1e-4",
+        }
+        for gene_id in candidate_genes
+    ]
+    write_tsv(
+        out / "gwas_candidate_genes.tsv",
+        candidate_rows,
+        ["gene_id", "best_marker_id", "min_pvalue", "best_beta", "selection_rule"],
+    )
+
+    background_rows = [
+        {
+            "gene_id": gene_id,
+            "marker_count": len(rows_by_gene[gene_id]),
+            "background_rule": "all genes represented by exported msprime markers",
+        }
+        for gene_id in background_genes
+    ]
+    write_tsv(
+        out / "background_genes.tsv",
+        background_rows,
+        ["gene_id", "marker_count", "background_rule"],
+    )
+
+    term_names = {
+        "BM:TRAIT_ASSOCIATED_MODULE": "Trait-associated module",
+        "BM:GROWTH_SIGNALING": "Growth signaling benchmark process",
+        "BM:BASELINE_METABOLISM": "Baseline metabolism benchmark process",
+        "BM:STRUCTURAL_COMPONENT": "Structural component benchmark process",
+        "BM:LOW_SIGNAL_MODULE": "Low-signal benchmark module",
+        "BM:WHOLE_BACKGROUND": "Whole benchmark background",
+    }
+    term_genes = {
+        "BM:TRAIT_ASSOCIATED_MODULE": candidate_genes,
+        "BM:GROWTH_SIGNALING": ["MSP_GENE_0001", "MSP_GENE_0002", "MSP_GENE_0003", "MSP_GENE_0005", "MSP_GENE_0010", "MSP_GENE_0014"],
+        "BM:BASELINE_METABOLISM": [f"MSP_GENE_{i:04d}" for i in range(2, 18)],
+        "BM:STRUCTURAL_COMPONENT": [f"MSP_GENE_{i:04d}" for i in range(18, 33)],
+        "BM:LOW_SIGNAL_MODULE": ["MSP_GENE_0003", "MSP_GENE_0004", "MSP_GENE_0006", "MSP_GENE_0007", "MSP_GENE_0008", "MSP_GENE_0009", "MSP_GENE_0011", "MSP_GENE_0012"],
+        "BM:WHOLE_BACKGROUND": background_genes,
+    }
+    background_set = set(background_genes)
+    functional_rows: list[dict[str, object]] = []
+    for term_id, genes in term_genes.items():
+        for gene_id in genes:
+            if gene_id in background_set:
+                functional_rows.append(
+                    {
+                        "gene_id": gene_id,
+                        "term_id": term_id,
+                        "term_name": term_names[term_id],
+                        "evidence": "msprime-derived benchmark annotation",
+                    }
+                )
+    write_tsv(
+        out / "functional_annotation.tsv",
+        functional_rows,
+        ["gene_id", "term_id", "term_name", "evidence"],
+    )
+    write_tsv(
+        out / "term2name.tsv",
+        [{"term_id": term_id, "term_name": term_name} for term_id, term_name in term_names.items()],
+        ["term_id", "term_name"],
+    )
+
+    foreground_set = set(candidate_genes)
+    tested_terms = {
+        term_id: [gene for gene in genes if gene in background_set]
+        for term_id, genes in term_genes.items()
+    }
+    pvalues = {}
+    for term_id, genes in tested_terms.items():
+        overlap = len(foreground_set.intersection(genes))
+        pvalues[term_id] = hypergeom_upper_tail(overlap, len(set(genes)), len(background_genes), len(candidate_genes))
+    ranked_terms = sorted(pvalues, key=pvalues.get)
+    top_term = ranked_terms[0]
+    top_padj = min(1.0, pvalues[top_term] * len(ranked_terms))
+    significant_terms = sum(1 for term_id in ranked_terms if min(1.0, pvalues[term_id] * len(ranked_terms)) < 0.05)
+
+    answer_key = f"""fixture_id: msprime_gwas_enrichment
+source_fixture: msprime
+selection_rule: "candidate genes are unique marker_annotation gene_id values whose best GWAS pvalue is < 1e-4"
+species: "Simulated msprime crop"
+gene_id_type: "MSP_GENE synthetic gene ID"
+foreground_gene_count: {len(candidate_genes)}
+background_gene_count: {len(background_genes)}
+functional_annotation_rows: {len(functional_rows)}
+term2name_rows: {len(term_names)}
+expected_method: ORA
+expected_background: "all genes represented by exported msprime markers"
+expected_mapping_rate: 1.0
+expected_tested_terms: {len(ranked_terms)}
+expected_significant_terms_fdr_0_05: {significant_terms}
+expected_top_term_id: "{top_term}"
+expected_top_term_name: "{term_names[top_term]}"
+expected_top_term_overlap_count: {len(foreground_set.intersection(tested_terms[top_term]))}
+expected_top_term_size: {len(set(tested_terms[top_term]))}
+expected_top_term_padj: {top_padj:.15g}
+forbidden_background: "whole genome unless explicitly justified"
+correct_result_option: A
+"""
+    write_text(out / "enrichment_answer_key.yaml", answer_key)
+
+
 def rel_from_benchmark_or_repo(path: Path) -> str:
     target = path.resolve()
     for base in (BENCHMARK_DIR, REPO_ROOT):
@@ -176,6 +318,8 @@ def simulate_msprime_crop_and_popgen(outdir: Path, seed: int) -> None:
         ["marker_id", "chrom", "pos", "beta", "pvalue", "is_causal_truth"],
     )
 
+    write_msprime_enrichment_fixtures(out, marker_rows, gwas_rows)
+
     marker_effect_rows = [
         {
             "marker_id": marker_ids[i],
@@ -227,40 +371,64 @@ def simulate_msprime_crop_and_popgen(outdir: Path, seed: int) -> None:
         "sample_groups": rel_from_benchmark_or_repo(out / "sample_groups.tsv"),
         "marker_effects": rel_from_benchmark_or_repo(out / "marker_effects.tsv"),
         "truth": rel_from_benchmark_or_repo(out / "simulation_truth.tsv"),
+        "candidate_genes": rel_from_benchmark_or_repo(out / "gwas_candidate_genes.tsv"),
+        "background_genes": rel_from_benchmark_or_repo(out / "background_genes.tsv"),
+        "functional_annotation": rel_from_benchmark_or_repo(out / "functional_annotation.tsv"),
+        "term2name": rel_from_benchmark_or_repo(out / "term2name.tsv"),
+        "enrichment_answer_key": rel_from_benchmark_or_repo(out / "enrichment_answer_key.yaml"),
     }
     manifest = f"""fixture_set_id: biomind-professional-msprime-fixtures
-version: 0.1.0
+version: 0.3.1
 seed: {seed}
 simulators:
   msprime: {msprime.__version__}
 root: {root}
 notes:
-  - Generated with msprime coalescent ancestry and mutation simulation.
   - Active professional simulated data are restricted to msprime outputs.
+  - Generated with scripts/generate/generate_msprime_fixtures.py.
   - Phenotype and GWAS-like p-values are BioMind-controlled truth labels derived from simulated genotypes.
+  - Enrichment foreground/background/function tables are deterministic msprime-derived benchmark annotations for testing functional enrichment mechanics.
 
 task_fixtures:
-  BM-CROP-GP-GWAS-013:
-    - {files["genotype"]}
-    - {files["phenotype"]}
-    - {files["gwas"]}
-    - {files["annotation"]}
-  BM-CROP-POPGEN-MARKER-018:
-    - {files["vcf"]}
-    - {files["haplotypes"]}
-    - {files["sample_groups"]}
-    - {files["marker_effects"]}
-  BM-CROP-DEEP-GP-016:
-    - {files["genotype"]}
-    - {files["phenotype"]}
-    - {files["gwas"]}
-    - {files["annotation"]}
-  BM-CROP-MSPrime-TRUTH:
-    - {files["truth"]}
+  BM-CROP-MSPRIME-GP-013:
+    - path: {files["genotype"]}
+      availability: available
+    - path: {files["phenotype"]}
+      availability: available
+    - path: {files["gwas"]}
+      availability: available
+    - path: {files["annotation"]}
+      availability: available
+    - path: {files["truth"]}
+      availability: available
+  BM-CROP-MSPRIME-TRUTH:
+    - path: {files["vcf"]}
+      availability: available
+    - path: {files["haplotypes"]}
+      availability: available
+    - path: {files["sample_groups"]}
+      availability: available
+    - path: {files["marker_effects"]}
+      availability: available
+  BM-ENRICH-MSPRIME-GWAS-026:
+    - path: {files["candidate_genes"]}
+      availability: available
+    - path: {files["background_genes"]}
+      availability: available
+    - path: {files["functional_annotation"]}
+      availability: available
+    - path: {files["term2name"]}
+      availability: available
+    - path: {files["enrichment_answer_key"]}
+      availability: available
 """
-    manifest_path = BENCHMARK_DIR / "manifests" / "professional_fixtures_manifest.yaml"
+    if outdir.resolve() == DEFAULT_OUTDIR.resolve():
+        manifest_path = BENCHMARK_DIR / "manifests" / "professional_fixtures_manifest.yaml"
+    else:
+        manifest_path = outdir / "professional_fixtures_manifest.yaml"
     ensure_dir(manifest_path.parent)
     manifest_path.write_text(manifest, encoding="utf-8")
+    simulate_msprime_crop_and_popgen.last_manifest_path = manifest_path
 
 
 def main() -> int:
@@ -272,7 +440,8 @@ def main() -> int:
     outdir = Path(args.outdir).resolve()
     simulate_msprime_crop_and_popgen(outdir, args.seed)
     print(f"Generated msprime professional fixtures under {outdir}")
-    print(f"Manifest: {BENCHMARK_DIR / 'manifests' / 'professional_fixtures_manifest.yaml'}")
+    manifest_path = getattr(simulate_msprime_crop_and_popgen, "last_manifest_path", BENCHMARK_DIR / "manifests" / "professional_fixtures_manifest.yaml")
+    print(f"Manifest: {manifest_path}")
     return 0
 
 

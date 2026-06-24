@@ -63,8 +63,14 @@ This creates:
 - `marker_effects.tsv`
 - `sample_groups.tsv`
 - `simulation_truth.tsv`
+- `gwas_candidate_genes.tsv`
+- `background_genes.tsv`
+- `functional_annotation.tsv`
+- `term2name.tsv`
+- `enrichment_answer_key.yaml`
 
 The genotype/VCF/haplotype data come from `msprime`. The phenotype and GWAS-like p-values are BioMind-controlled truth labels derived from the simulated genotypes.
+The enrichment files are deterministic msprime-derived benchmark annotations for testing ORA, background choice, mapping QC, and TERM2GENE handling without a live database download.
 
 ## Run Crop msprime Smoke
 

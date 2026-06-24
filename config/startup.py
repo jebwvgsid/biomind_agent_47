@@ -58,6 +58,7 @@ class EnvironmentManager:
             'RAGFLOW_API_KEY': os.getenv('RAGFLOW_API_KEY', ''),
             'RAGFLOW_DATASET_IDS': os.getenv('RAGFLOW_DATASET_IDS', ''),
             'RERANK_MODEL_ID': os.getenv('RERANK_MODEL_ID', ''),
+            'DEEPSEEK_API_KEY': os.getenv('DEEPSEEK_API_KEY', ''),
             'DASHSCOPE_API_KEY': os.getenv('DASHSCOPE_API_KEY', ''),
             'QWEN_API_KEY': os.getenv('QWEN_API_KEY', ''), # 确保获取 Qwen Key
             'OPENAI_API_KEY': os.getenv('OPENAI_API_KEY', ''),
@@ -133,6 +134,7 @@ class StartupCheck:
         
         llm_api_key = (
             getattr(sys_config, 'LLM_API_KEY', '')
+            or env_vars['DEEPSEEK_API_KEY']
             or env_vars['DASHSCOPE_API_KEY']
             or env_vars['QWEN_API_KEY']
             or env_vars['OPENAI_API_KEY']
@@ -141,8 +143,15 @@ class StartupCheck:
             logger.info("✓ LLM API Key: Present")
             checks.append(True)
         else:
-            logger.error("❌ LLM API Key: Missing (Need QWEN_API_KEY, DASHSCOPE_API_KEY, or OPENAI_API_KEY)")
+            logger.error("❌ LLM API Key: Missing (Need DEEPSEEK_API_KEY, QWEN_API_KEY, DASHSCOPE_API_KEY, or OPENAI_API_KEY)")
             checks.append(False)
+        logger.info("✓ LLM endpoint: %s | model: %s", getattr(sys_config, 'LLM_BASE_URL', ''), getattr(sys_config, 'LLM_DEFAULT_MODEL', ''))
+        proxy_vars = [
+            name for name in ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY", "https_proxy", "http_proxy", "all_proxy")
+            if os.getenv(name)
+        ]
+        if proxy_vars:
+            logger.info("ℹ Network proxy env detected: %s", ", ".join(proxy_vars))
         
         # 检查目录
         for name, path in [

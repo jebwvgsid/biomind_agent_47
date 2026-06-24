@@ -134,6 +134,9 @@ The script writes:
 - `tad_boundary_changes_long.tsv`: long per-boundary classification table for plotting or annotation.
 - `tad_boundary_sample_stats.tsv`: one row per sample with input and unique-position boundary counts.
 - `tad_boundary_change_run_summary.tsv`: input files, resolution source, tolerance policy, and command metadata.
+- `report.md`: concise Markdown report with input, parameter, comparison, and output summaries.
+- `reproduce.sh`: executable command script for rerunning the same boundary-change analysis.
+- `stage_status.tsv`: status rows for input collection, boundary comparison, and reporting.
 
 Read `references/output_schema.md` before changing output columns.
 

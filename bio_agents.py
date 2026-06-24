@@ -51,7 +51,7 @@ from config.settings import PathManager
 from config.config import (
     RAGFLOW_ADDRESS, RAGFLOW_API_KEY, KB_MAP, RERANK_MODEL_ID,
     LLM_API_KEY, LLM_DEFAULT_MODEL, LLM_BASE_URL, BIO_SOFTWARE_ROOT, BIO_SOURCE_INSTALL_DIR,
-    DEFAULT_PROJECT_ID, BIOMIND_MEMORY_DIR, BIOMIND_WIKI_DIR, BIOMIND_WIKI_INGEST_MODE, WIKI_EMBEDDING_ENABLED, WIKI_EMBEDDING_BASE_URL,
+    DEFAULT_PROJECT_ID, BIOMIND_MEMORY_DIR, BIOMIND_WIKI_ENABLED, BIOMIND_WIKI_DIR, BIOMIND_WIKI_INGEST_MODE, WIKI_EMBEDDING_ENABLED, WIKI_EMBEDDING_BASE_URL,
     WIKI_EMBEDDING_API_KEY, WIKI_EMBEDDING_MODEL, WIKI_EMBEDDING_DIMENSIONS,
 )
 
@@ -80,6 +80,10 @@ from agent_core.skill_manager import SkillManager
 from agent_core.workflow_manager import WorkflowManager, parse_workflow_handoff, validate_workflow_handoff
 from agent_core.middleware import HITLMiddleware
 from agent_core.llm_safety import deterministic_failure_solution, llm_failure_summary
+from agent_core.formal_artifact_resolver import (
+    format_formal_upstream_context,
+    resolve_formal_upstream_artifacts,
+)
 from agent_core.plan_tracker import (
     build_plan_state,
     default_plan_file,
@@ -88,6 +92,7 @@ from agent_core.plan_tracker import (
     mark_first_pending_running,
     mark_plan_step_blocked,
     mark_plan_step_done,
+    next_action_title,
     record_current_step_evidence,
     render_plan_progress,
     reopen_last_done_step,
@@ -112,13 +117,33 @@ from memory.core_store import CoreMemoryStore
 from memory.session_archive import SessionArchive
 from memory.task_semantics import infer_task_semantics, merge_task_semantics
 from memory.task_summary import TaskSummaryRenderer
-from memory.wiki_memory import WikiMemoryManager
+from memory.wiki_memory import NullWikiMemoryManager, WikiMemoryManager
 from memory.artifact_index import ArtifactIndex
 from prompts.manager import PromptManager
 
 # ── 新增模块 ──────────────────────────────────────────────────
 from memory_manager import MemoryManager
 from supervisor import SupervisorNode, log_plan_to_cot
+
+
+def _llm_extra_body(model: str, base_url: str) -> dict[str, Any]:
+    model_lower = (model or "").lower()
+    base_url_lower = (base_url or "").lower()
+
+    if "deepseek" in base_url_lower or model_lower.startswith("deepseek-"):
+        thinking_enabled = os.getenv("DEEPSEEK_THINKING", "false").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+            "enabled",
+        }
+        return {"thinking": {"type": "enabled" if thinking_enabled else "disabled"}}
+
+    if "dashscope.aliyuncs.com" in base_url_lower or "qwen" in model_lower:
+        return {"enable_thinking": False}
+
+    return {}
 
 logger = logging.getLogger("BioMind.Agent")
 
@@ -395,16 +420,19 @@ class BioAnalystAgent:
             self.pm = None
 
         # ── LLM ──────────────────────────────────────────────
-        self.llm = init_chat_model(
-            model=llm_model,
-            model_provider=model_provider,
-            base_url=LLM_BASE_URL,
-            streaming=True,
-            api_key=LLM_API_KEY,
-            callbacks=[VibeThinkingHandler(), ProfilingCallbackHandler(self.profiler)],
-            temperature=0.7,
-            extra_body={"enable_thinking": False},
-        )
+        llm_kwargs: dict[str, Any] = {
+            "model": llm_model,
+            "model_provider": model_provider,
+            "base_url": LLM_BASE_URL,
+            "streaming": True,
+            "api_key": LLM_API_KEY,
+            "callbacks": [VibeThinkingHandler(), ProfilingCallbackHandler(self.profiler)],
+            "temperature": 0.7,
+        }
+        extra_body = _llm_extra_body(llm_model, LLM_BASE_URL)
+        if extra_body:
+            llm_kwargs["extra_body"] = extra_body
+        self.llm = init_chat_model(**llm_kwargs)
 
         # ── 验证 & 确认 ───────────────────────────────────────
         self.validator = ResultValidator()
@@ -454,8 +482,9 @@ class BioAnalystAgent:
                 migrated_current_memory,
                 self.runtime_memory_dir,
             )
+        self.wiki_enabled = bool(BIOMIND_WIKI_ENABLED)
         self.configured_wiki_dir: Optional[Path] = None
-        if BIOMIND_WIKI_DIR:
+        if self.wiki_enabled and BIOMIND_WIKI_DIR:
             configured = Path(BIOMIND_WIKI_DIR).expanduser()
             if not configured.is_absolute():
                 configured = self.runtime_memory_dir / configured
@@ -487,26 +516,29 @@ class BioAnalystAgent:
         )
         self._stable_prompt_cache: Dict[str, Dict[str, str]] = {}
         self._stable_prompt_dir = self.runtime_memory_dir / "session_prompts"
-        self.wiki_memory_manager = WikiMemoryManager(
-            llm=self.llm,
-            memory_dir=self.runtime_memory_dir,
-            default_project_id=self.default_project_id,
-            wiki_dir=self.configured_wiki_dir,
-            embedding_config={
-                "enabled": WIKI_EMBEDDING_ENABLED,
-                "base_url": WIKI_EMBEDDING_BASE_URL,
-                "api_key": WIKI_EMBEDDING_API_KEY,
-                "model": WIKI_EMBEDDING_MODEL,
-                "dimensions": WIKI_EMBEDDING_DIMENSIONS,
-            },
-        )
+        if self.wiki_enabled:
+            self.wiki_memory_manager = WikiMemoryManager(
+                llm=self.llm,
+                memory_dir=self.runtime_memory_dir,
+                default_project_id=self.default_project_id,
+                wiki_dir=self.configured_wiki_dir,
+                embedding_config={
+                    "enabled": WIKI_EMBEDDING_ENABLED,
+                    "base_url": WIKI_EMBEDDING_BASE_URL,
+                    "api_key": WIKI_EMBEDDING_API_KEY,
+                    "model": WIKI_EMBEDDING_MODEL,
+                    "dimensions": WIKI_EMBEDDING_DIMENSIONS,
+                },
+            )
+        else:
+            self.wiki_memory_manager = NullWikiMemoryManager(default_project_id=self.default_project_id)
         self.task_summary_renderer = TaskSummaryRenderer(
             memory_dir=self.runtime_memory_dir,
             session_archive=self.session_archive,
             wiki_memory_manager=self.wiki_memory_manager,
         )
         self._wiki_digest_cache: Dict[str, Tuple[float, str]] = {}
-        self.wiki_ingest_mode = BIOMIND_WIKI_INGEST_MODE
+        self.wiki_ingest_mode = BIOMIND_WIKI_INGEST_MODE if self.wiki_enabled else "disabled"
         self._wiki_ingest_offer_done: set[str] = set()
         self._wiki_auto_ingest_done: set[str] = set()
 
@@ -710,7 +742,7 @@ class BioAnalystAgent:
             logger.warning(f"Task memory finalize failed for {task_id}: {e}")
 
     async def _maybe_auto_wiki_ingest_after_finalize(self, task_id: str, status: str) -> None:
-        if self.wiki_ingest_mode != "auto" or status != "completed":
+        if not self.wiki_enabled or self.wiki_ingest_mode != "auto" or status != "completed":
             return
         project_id = self.default_project_id
         key = f"{project_id}:{task_id}"
@@ -735,7 +767,7 @@ class BioAnalystAgent:
             logger.warning(f"Auto wiki ingest failed for {task_id}: {e}")
 
     async def _maybe_offer_wiki_ingest(self, task_id: str, project_id: Optional[str] = None) -> None:
-        if self.wiki_ingest_mode != "ask":
+        if not self.wiki_enabled or self.wiki_ingest_mode != "ask":
             return
         project_id = project_id or self.default_project_id
         key = f"{project_id}:{task_id}"
@@ -954,7 +986,7 @@ class BioAnalystAgent:
         project_id: Optional[str] = None,
         limit: int = 4,
     ) -> str:
-        if not query.strip():
+        if not self.wiki_enabled or not query.strip():
             return ""
         project_id = project_id or self.default_project_id
         try:
@@ -1207,12 +1239,12 @@ class BioAnalystAgent:
                 + "\n\n".join(archive_parts)
             )
 
-        if evidence_query:
+        if self.wiki_enabled and evidence_query:
             wiki_context = self._wiki_prompt_context(task_id, project_id, trigger_text)
             if wiki_context.strip():
                 contexts["wiki_context"] = wiki_context
             contexts["wiki_digest"] = self._wiki_digest_prompt_context(project_id, max_chars=2000)
-        elif not memory_packet_context.strip() and state.get("wiki_memory_context"):
+        elif self.wiki_enabled and not memory_packet_context.strip() and state.get("wiki_memory_context"):
             contexts["wiki_context"] = str(state.get("wiki_memory_context") or "")
 
         return contexts
@@ -1243,8 +1275,14 @@ class BioAnalystAgent:
             parts.append(str(user_prompt).strip())
         return "\n\n".join(parts)
 
+    def _wiki_disabled_message(self) -> str:
+        return (
+            "Wiki memory is disabled (BIOMIND_WIKI_ENABLED=false). "
+            "BioMind will use SessionArchive, TaskSummary, Core memory, and verified filesystem evidence instead."
+        )
+
     def _wiki_prompt_context(self, task_id: str, project_id: str, query: str) -> str:
-        if not query.strip():
+        if not self.wiki_enabled or not query.strip():
             return ""
         try:
             return self.wiki_memory_manager.build_prompt_context(
@@ -1264,6 +1302,8 @@ class BioAnalystAgent:
         digest_chars: int = 2_000,
         context_chars: int = 4_000,
     ) -> str:
+        if not self.wiki_enabled:
+            return ""
         parts = []
         digest = self._wiki_digest_prompt_context(project_id, max_chars=digest_chars)
         if digest:
@@ -1382,6 +1422,8 @@ class BioAnalystAgent:
         return refs
 
     def _wiki_digest_prompt_context(self, project_id: str, max_chars: int = 4_000) -> str:
+        if not self.wiki_enabled:
+            return ""
         try:
             digest_path = self.wiki_memory_manager.digest_path(project_id)
             if not digest_path.exists():
@@ -1755,6 +1797,118 @@ class BioAnalystAgent:
         )
         progress = self._persist_plan_tracker(task_id, reopened_state)
         return False, progress, "completed", final_gate.feedback
+
+    def _planner_declares_completed_task(self, plan_content: str) -> bool:
+        text = str(plan_content or "").lower()
+        completion_markers = (
+            "already fully complete",
+            "task is already complete",
+            "task is complete",
+            "task status\n**complete**",
+            "task status\ncomplete",
+            "**complete** - no blocked",
+            "all stages have been successfully executed",
+            "all output artifacts are verified",
+            "all output artifacts are verified and present",
+            "all artifacts delivered and validated",
+        )
+        return any(marker in text for marker in completion_markers)
+
+    def _planner_proposes_gate_workaround(self, plan_content: str) -> bool:
+        text = str(plan_content or "").lower()
+        gate_markers = (
+            "validation gate",
+            "completion gate",
+            "gate-checked path",
+            "gate checked path",
+            "satisfy the completion check",
+        )
+        workaround_markers = (
+            "symlink",
+            "symbolic link",
+            "copy of",
+            "cp ",
+            "ln -s",
+            "accessible at the gate",
+            "fix the path accessibility",
+        )
+        return any(marker in text for marker in gate_markers) and any(marker in text for marker in workaround_markers)
+
+    def _finish_only_plan_from_completed_plan(self, plan_content: str) -> str:
+        return (
+            "## Section 1: Requirement Analysis\n"
+            "The Planner determined that the existing task is already complete: required outputs have been generated, "
+            "validated, and documented. No additional filesystem mutation is needed.\n\n"
+            "## Section 2: Step-by-Step Execution Plan\n"
+            "Step 1: Finalize already completed task\n"
+            "  - Tool: BioMind final response\n"
+            "  - Execution guidance: Do not execute shell commands or create compatibility copies/symlinks. "
+            "Summarize the verified artifacts and any limitations from the existing evidence.\n"
+            "  - Input: Existing verified artifacts and reports\n"
+            "  - Output: Final completion summary\n"
+            "  - Success criteria: The user receives a concise final summary; no extra files are modified.\n"
+            "  - Cautions: Never work around validation gates by copying or symlinking artifacts into unrelated directories.\n"
+            "  - Risk: LOW - final reporting only.\n\n"
+            "## Execution Checklist\n"
+            "- [ ] Step 1: Finalize already completed task | Goal: Report verified completion without modifying outputs | Action: FINISH | Done: final answer summarizes verified artifacts and limitations\n\n"
+            "## Section 4: Validation Checklist\n"
+            "- Use the existing verified outputs and status files. Do not require bigWig files unless the selected skill documents them.\n"
+            "- Do not create compatibility copies or symlinks to satisfy an old validation path.\n\n"
+            "## Completion Evidence Summary\n"
+            "The original Planner response stated that the task was already fully complete and that output artifacts had been verified. "
+            "That completion claim is preserved here without copying old artifact-path lists into new validation requirements.\n"
+        )
+
+    def _sanitize_completed_planner_plan(self, plan_content: str) -> str:
+        if self._planner_declares_completed_task(plan_content):
+            return self._finish_only_plan_from_completed_plan(plan_content)
+        return plan_content
+
+    def _replace_plan_tracker_with_plan(self, task_id: str, plan_content: str, reason: str = "") -> str:
+        plan_file = default_plan_file(self.data_path, task_id)
+        plan_file.parent.mkdir(parents=True, exist_ok=True)
+        plan_state = build_plan_state(task_id, plan_content, plan_file=plan_file)
+        if reason and plan_state.get("steps"):
+            record_current_step_evidence(plan_state, "plan_replaced", reason)
+        save_plan_state(self.data_path, task_id, plan_state)
+        plan_file.write_text(
+            "# Task Plan\n"
+            f"Generated: {datetime.now().isoformat()}\n"
+            "Plan Source: sanitized completed-task resume\n\n"
+            f"{plan_content}",
+            encoding="utf-8",
+        )
+        update_plan_markdown_status(plan_file, plan_state)
+        return render_plan_progress(plan_state)
+
+    def _resume_plan_material(self, task_id: str, current_plan: str) -> str:
+        parts = [str(current_plan or "")]
+        state = load_plan_state(self.data_path, task_id)
+        title = next_action_title(state)
+        if title:
+            parts.append(title)
+        plan_file = str(state.get("plan_file") or "").strip()
+        if plan_file:
+            try:
+                path = Path(plan_file)
+                if path.exists() and path.is_file():
+                    parts.append(path.read_text(encoding="utf-8")[:12000])
+            except OSError:
+                pass
+        return "\n\n".join(part for part in parts if part and part.strip())
+
+    def _current_plan_step_requests_finish(self, task_id: str) -> bool:
+        state = load_plan_state(self.data_path, task_id)
+        title = next_action_title(state).lower()
+        return "action: finish" in title or "| finish" in title
+
+    def _finish_solution_from_plan(self, current_plan: str) -> str:
+        return (
+            "Task is complete based on the existing verified outputs and status evidence. "
+            "No additional shell commands or compatibility file copies are needed. "
+            "The analysis outputs, report, reproducibility script, and stage status should be treated as the deliverables; "
+            "any prior validation-gate path mismatch should be handled by the generalized gate logic rather than by duplicating artifacts."
+        )
 
     def _plan_tracker_is_complete(self, task_id: str) -> bool:
         state = load_plan_state(self.data_path, task_id)
@@ -2715,7 +2869,20 @@ class BioAnalystAgent:
         runtime_defaults: Dict[str, Any],
         requested_env: str = "",
     ) -> Tuple[str, str]:
-        if str(tool_name or "").strip() != "calder_r_runtime":
+        requested_tool = str(tool_name or "").strip()
+        selected = self._selected_skill_ids(selected_skills)
+        declared_tool = str(runtime_defaults.get("install_tool") or runtime_defaults.get("tool_name") or "").strip()
+        if selected and declared_tool and requested_tool and requested_tool != declared_tool:
+            if requested_tool == "calder_r_runtime" and self._calder_runtime_allowed(selected_skills, requested_env):
+                return tool_name, ""
+            note = (
+                "[INSTALL TOOL CORRECTION]\n"
+                f"- Generated install tag requested `{requested_tool}`, but the selected skill runtime declares `{declared_tool}`.\n"
+                "- Do not install undeclared package names inferred from a failed import unless the selected skill runtime contract lists them.\n"
+                f"- Replaced install tool with `{declared_tool}`.\n"
+            )
+            return declared_tool, note
+        if requested_tool != "calder_r_runtime":
             return tool_name, ""
         if self._calder_runtime_allowed(selected_skills, requested_env):
             return tool_name, ""
@@ -3232,6 +3399,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
             ]
             task_id = state.get("task_id", "default")
             project_id = state.get("project_id") or self.default_project_id
+            work_dir = self.pm.work_dir if self.pm else os.getcwd()
 
             # 内存压缩检查
             messages, compressed = await self.memory_manager.maybe_compress(messages, task_id)
@@ -3248,6 +3416,19 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 query=consultant_context,
                 wiki_context=consultant_wiki_context,
             )
+            input_resolution_result = resolve_formal_upstream_artifacts(
+                consultant_context,
+                work_dir=work_dir,
+                task_id=task_id,
+                project_root=project_root,
+            )
+            input_resolution_context = format_formal_upstream_context(input_resolution_result)
+            if input_resolution_context.strip():
+                output.print_once(
+                    f"formal_upstream_audit:{task_id}",
+                    "🔎 Consultant checked formal upstream artifacts before asking or blocking.",
+                    Fore.CYAN,
+                )
 
             if self.skill_manager and (len(load_actions) >= 6 or len(validation_errors) >= 3):
                 fallback_raw = []
@@ -3317,6 +3498,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 work_dir=self.pm.work_dir if self.pm else ".",
                 max_skills=consultant_max_skills,
                 wiki_memory_context=consultant_memory_retrieval_context,
+                input_resolution_context=input_resolution_context,
                 workflow_catalog=workflow_catalog,
             )
 
@@ -3817,8 +3999,11 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         {"reason": llm_failure_summary(exc, "planner", task_id), "plan_progress": plan_progress},
                     )
                     return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
-                plan_content = response.content
-                violations = self._skill_plan_violations(plan_content, selected_skills)
+                plan_content = self._sanitize_completed_planner_plan(response.content)
+                if plan_content != response.content:
+                    violations = []
+                else:
+                    violations = self._skill_plan_violations(plan_content, selected_skills)
                 if not violations:
                     break
 
@@ -4083,11 +4268,49 @@ If the user is actually asking you to run analysis or inspect local files, say t
             if compressed:
                 print(f"{Fore.YELLOW}🗜️ Memory compressed mid-task.{Style.RESET_ALL}")
 
+            resume_plan_material = self._resume_plan_material(task_id, str(current_plan or ""))
+            sanitized_current_plan = self._sanitize_completed_planner_plan(resume_plan_material)
+            if sanitized_current_plan != resume_plan_material:
+                current_plan = sanitized_current_plan
+                self._replace_plan_tracker_with_plan(
+                    task_id,
+                    current_plan,
+                    reason="generate replaced completed-task plan with FINISH-only plan",
+                )
+
             plan_progress = self._start_or_load_plan_progress(
                 task_id,
                 current_plan,
                 evidence="entered generate after compression check",
             )
+            if self._current_plan_step_requests_finish(task_id):
+                solution_text = self._finish_solution_from_plan(str(current_plan or ""))
+                response = AIMessage(content=f"<solution>{solution_text}</solution>")
+                output.print_ai(response.content)
+                can_finish, plan_progress, final_status, gate_feedback = self._prepare_final_solution_progress(
+                    task_id,
+                    solution_text,
+                    str(current_plan or ""),
+                )
+                if not can_finish:
+                    gate_message = (
+                        "Final solution validation failed.\n\n"
+                        f"{gate_feedback}\n\n"
+                        "Do not execute compatibility copies or symlinks to appease validation. "
+                        "Repair the validation context or report the real blocker."
+                    )
+                    return {
+                        "messages": [response, SystemMessage(content=gate_message)],
+                        "plan_progress": plan_progress,
+                        "next_step": "generate",
+                    }
+                await self._finalize_task_memory(
+                    task_id,
+                    final_status,
+                    messages + [response],
+                    {"solution": solution_text[:3000], "plan_progress": plan_progress},
+                )
+                return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
             if supervisor_verdict and supervisor_verdict in ["RETRY", "WARN"]:
                 plan_progress = self._record_plan_current_evidence(
                     task_id,
@@ -5300,6 +5523,10 @@ The supervisor has flagged an issue. Please:
             return "blocked"
         if (
             "❌" in plain
+            or "task stopped before the next generated action" in lowered
+            or "llm request_failed" in lowered
+            or "llm input_rejected" in lowered
+            or "the llm call failed" in lowered
             or lowered.startswith(("failed", "error:"))
             or "\nfailed" in lowered
             or "\nerror:" in lowered
@@ -5411,17 +5638,17 @@ Commands:
   /resume <id>        Resume task
   /memory             Show memory status
   /memory search <q>  Search SessionArchive events
-  /memory lint        Check Core/Wiki memory boundary and conflicts
+  /memory lint        Check Core memory and optional curated-claim conflicts
   /memory promote     Promote safe wiki index refs into Core project memory
-  /wiki               Show wiki memory status
-  /wiki search <q>    Search LLM wiki memory
-  /wiki ingest        Curate pending SessionArchive events into wiki pages
-  /wiki ingest task   Curate pending events from the current task only
-  /wiki compile       Rebuild wiki digest and claims cache
-  /wiki lint          Check wiki links and source metadata
-  /wiki page <id>     Show a wiki page by path or title
-  /wiki review        Show pending wiki review items
-  /task summarize [id] Render a task summary report from archive/wiki evidence
+  /wiki               Show wiki disabled/enabled status
+  /wiki search <q>    Search wiki memory when BIOMIND_WIKI_ENABLED=true
+  /wiki ingest        Curate events only when BIOMIND_WIKI_ENABLED=true
+  /wiki ingest task   Curate current task only when BIOMIND_WIKI_ENABLED=true
+  /wiki compile       Rebuild wiki digest only when BIOMIND_WIKI_ENABLED=true
+  /wiki lint          Check wiki links only when BIOMIND_WIKI_ENABLED=true
+  /wiki page <id>     Show a wiki page only when BIOMIND_WIKI_ENABLED=true
+  /wiki review        Show pending wiki review items only when enabled
+  /task summarize [id] Render a task summary report from archive evidence
   /paste              Enter multiline task input; finish with /end
   /cot <id>           Open CoT log for task
   /stop               Cancel current task
@@ -5491,10 +5718,19 @@ Commands:
                     continue
 
                 if user_input == "/memory lint":
-                    wiki_lint = self.wiki_memory_manager.lint(project_id=self.default_project_id)
+                    wiki_lint = (
+                        self.wiki_memory_manager.lint(project_id=self.default_project_id)
+                        if self.wiki_enabled
+                        else self._wiki_disabled_message()
+                    )
+                    wiki_claims = (
+                        self.wiki_memory_manager.read_claims_index(self.default_project_id)
+                        if self.wiki_enabled
+                        else []
+                    )
                     core_lint = self.core_memory_store.lint_project_memory(
                         self.default_project_id,
-                        wiki_claims=self.wiki_memory_manager.read_claims_index(self.default_project_id),
+                        wiki_claims=wiki_claims,
                     )
                     output.page_text(
                         "Memory Lint",
@@ -5504,9 +5740,17 @@ Commands:
                     continue
 
                 if user_input == "/memory promote":
+                    if not self.wiki_enabled:
+                        output.page_text("Memory Promote", self._wiki_disabled_message(), Fore.CYAN)
+                        continue
                     result = self.wiki_memory_manager.sync_project_index_fields(project_id=self.default_project_id)
                     output.page_text("Memory Promote", result, Fore.CYAN)
                     continue
+
+                if user_input == "/wiki" or user_input.startswith("/wiki "):
+                    if not self.wiki_enabled:
+                        output.page_text("Wiki Disabled", self._wiki_disabled_message(), Fore.CYAN)
+                        continue
 
                 if user_input.startswith("/wiki search "):
                     query = user_input.split(" ", 2)[2].strip()
@@ -5916,7 +6160,7 @@ async def main():
 
     agent = BioAnalystAgent(
         data_path=data_path,
-        llm_model="qwen3-max",
+        llm_model=LLM_DEFAULT_MODEL,
         model_provider="openai",
         max_memory_tokens=200_000,
         use_llm_supervisor=True,

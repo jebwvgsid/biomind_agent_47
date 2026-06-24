@@ -3,6 +3,7 @@
 """
 
 import re
+import shlex
 import sys
 import time
 from typing import Dict, Any, List, Optional
@@ -76,7 +77,7 @@ class RiskAnalyzer:
         RiskLevel.MEDIUM: [
             r'\bmkdir\b', r'\btouch\b', r'\bcp\b', r'\bmv\b',
             r'\bgit clone\b', r'\bwget\b', r'\bcurl\b',
-            r'\bsed\b.*-i', r'>', r'\.to_csv', r'open\(.*w',
+            r'\bsed\b.*-i', r'\.to_csv', r'open\(.*w',
         ]
     }
 
@@ -97,6 +98,79 @@ class RiskAnalyzer:
         # 生信查看 (只读)
         r"^samtools view\b", r"^bcftools view\b", r"^seqkit stat\b", r"^bioawk"
     ]
+
+    READ_ONLY_CONDA_RUNNERS = {"python", "python3", "Rscript", "which"}
+    INLINE_CODE_FLAGS = {"python": "-c", "python3": "-c", "Rscript": "-e"}
+    INLINE_MUTATION_PATTERNS = [
+        r"\b(?:pip|conda)\s+(?:install|uninstall|create|remove)\b",
+        r"\b(?:os\.remove|os\.unlink|os\.rmdir|os\.rename|os\.replace)\s*\(",
+        r"\b(?:shutil\.rmtree|shutil\.move|shutil\.copy|shutil\.copyfile)\s*\(",
+        r"\b(?:subprocess\.|os\.system\s*\()",
+        r"\b(?:mkdir|makedirs|chmod|chown)\s*\(",
+        r"\bopen\s*\([^)]*['\"][wax+]",
+        r"\bwrite_text\s*\(",
+        r"\bwrite_bytes\s*\(",
+        r"\.to_(?:csv|tsv|excel|parquet|hdf|pickle|json|feather)\s*\(",
+        r"\.(?:write|writelines|dump|dumps|savefig)\s*\(",
+        r"\b(?:cooler\.)?balance\s*\(",
+    ]
+    WRITE_REDIRECTION_RE = re.compile(r"(?<!\S)(?:\d*)>>?(?:\s*([^\s;|]+))?")
+
+    @staticmethod
+    def _has_write_redirection(code: str) -> bool:
+        text = str(code or "")
+        if re.search(r"(?<!\S)&>>?", text):
+            return True
+        for match in RiskAnalyzer.WRITE_REDIRECTION_RE.finditer(text):
+            target = (match.group(1) or "").strip()
+            # File descriptor duplication such as `2>&1`, `1>&2`, or `>&-`
+            # does not write a file and should not turn read-only probes into
+            # manual confirmations.
+            if re.fullmatch(r"&(?:\d+|-)", target):
+                continue
+            return True
+        return False
+
+    @staticmethod
+    def _is_read_only_conda_probe(code: str) -> bool:
+        """Recognize declared-runtime inspection commands without approving writes.
+
+        The interactive reviewer used to stop every `conda run -n ENV python -c`
+        preflight because `conda` was not on the simple whitelist. Keep this
+        narrow: only one conda-run command, only python/Rscript inline probes or
+        `which`, and no obvious mutation/install APIs inside inline code.
+        """
+        try:
+            parts = shlex.split(code.strip())
+        except ValueError:
+            return False
+
+        if len(parts) < 5 or parts[:3] != ["conda", "run", "-n"]:
+            return False
+
+        runner_index = 4
+        # Support harmless conda-run switches after the env name if they appear.
+        while runner_index < len(parts) and parts[runner_index].startswith("-"):
+            runner_index += 1
+        if runner_index >= len(parts):
+            return False
+
+        runner = parts[runner_index]
+        if runner not in RiskAnalyzer.READ_ONLY_CONDA_RUNNERS:
+            return False
+
+        if runner == "which":
+            return len(parts) == runner_index + 2 and re.match(r"^[\w.+-]+$", parts[-1]) is not None
+
+        flag = RiskAnalyzer.INLINE_CODE_FLAGS[runner]
+        if len(parts) != runner_index + 3 or parts[runner_index + 1] != flag:
+            return False
+
+        inline_code = parts[runner_index + 2]
+        for pattern in RiskAnalyzer.INLINE_MUTATION_PATTERNS:
+            if re.search(pattern, inline_code, re.IGNORECASE):
+                return False
+        return True
 
     # [修复] analyze 方法现在正确地位于类内部
     @staticmethod
@@ -129,6 +203,16 @@ class RiskAnalyzer:
             risk_score = max(risk_score, 100 if label == RiskLevel.CRITICAL else 80)
             found_explicit_risk = True
 
+        if RiskAnalyzer._has_write_redirection(code):
+            risky_operations.append("medium: file redirection (>)")
+            detected_level = max(
+                detected_level,
+                RiskLevel.MEDIUM,
+                key=lambda item: list(RiskLevel).index(item),
+            )
+            risk_score = max(risk_score, 60)
+            found_explicit_risk = True
+
         for level, patterns in RiskAnalyzer.RISK_PATTERNS.items():
             for pattern in patterns:
                 matches = re.findall(pattern, code, re.IGNORECASE)
@@ -156,12 +240,14 @@ class RiskAnalyzer:
             if re.search(p, clean_code):
                 is_whitelisted = True
                 break
+        if not is_whitelisted and RiskAnalyzer._is_read_only_conda_probe(clean_code):
+            is_whitelisted = True
         
         # 逻辑判定：
         # 只有 (匹配白名单) AND (没有显式风险如 >) AND (没有黑名单匹配) -> SAFE
         if is_whitelisted and not found_explicit_risk:
-            # 二次检查：确保没有重定向符 > (防止 ls > file)
-            if ">" not in clean_code and ">>" not in clean_code:
+            # 二次检查：确保没有写入重定向 (防止 ls > file)
+            if not RiskAnalyzer._has_write_redirection(clean_code):
                 detected_level = RiskLevel.SAFE
                 risk_score = 0
                 safe_operations.append("Whitelisted Command")

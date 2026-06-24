@@ -70,6 +70,9 @@ class PromptManagerTests(unittest.TestCase):
         self.assertIn("Follow the first running or pending item", ephemeral)
         self.assertIn("<activate_batch batch_id=\"N\" />", ephemeral)
         self.assertIn("Only follow skills inside <active_skills>", ephemeral)
+        self.assertIn("<finish_only_policy>", ephemeral)
+        self.assertIn("contains `Action: FINISH`, output exactly one `<solution>...</solution>`", ephemeral)
+        self.assertIn("Never copy, symlink, move, or duplicate artifacts solely to satisfy", ephemeral)
 
     def test_consultant_prompt_contains_wiki_memory_context(self):
         prompt = PromptManager.get_consultant_prompt(
@@ -86,6 +89,35 @@ class PromptManagerTests(unittest.TestCase):
         self.assertIn("[CONSULTANT MEMORY RETRIEVAL CONTEXT]", prompt)
         self.assertIn("WIKI_MEMORY_CONTEXT", prompt)
 
+    def test_consultant_prompt_contains_formal_upstream_audit_policy(self):
+        prompt = PromptManager.get_consultant_prompt(
+            intent="General Inquiry",
+            kb_list_desc="SOP, TOOLS, ERRORS",
+            skills_summary="SKILL_TREE",
+            rag_history=[],
+            input_resolution_context="[INPUT_RESOLUTION_AUDIT]\nneeds_user:true\n[/INPUT_RESOLUTION_AUDIT]",
+        )
+
+        self.assertIn("[INPUT RESOLUTION AUDIT]", prompt)
+        self.assertIn("[INPUT_RESOLUTION_AUDIT]", prompt)
+        self.assertIn("先找再问", prompt)
+        self.assertIn("[FORMAL_UPSTREAM_CANDIDATES]", prompt)
+        self.assertIn("For differential TAD, do not assume sample order", prompt)
+
+    def test_consultant_prompt_requires_project_background_clarification(self):
+        prompt = PromptManager.get_consultant_prompt(
+            intent="Run biological comparison",
+            kb_list_desc="SOP, TOOLS, ERRORS",
+            skills_summary="SKILL_TREE",
+            rag_history=[],
+        )
+
+        self.assertIn("<background_clarification_protocol>", prompt)
+        self.assertIn("applies throughout Consultant reasoning, not as a fixed early or late step", prompt)
+        self.assertIn("before or after shallow skill discovery", prompt)
+        self.assertIn("If reading a skill reveals required biological context or parameters", prompt)
+        self.assertIn("Do not treat file names, sample names, benchmark IDs, directory names", prompt)
+
     def test_consultant_prompt_contains_workflow_first_protocol(self):
         prompt = PromptManager.get_consultant_prompt(
             intent="General Inquiry",
@@ -99,6 +131,26 @@ class PromptManagerTests(unittest.TestCase):
         self.assertIn("LOAD_WORKFLOW_TEMPLATE workflow_id", prompt)
         self.assertIn("WORKFLOW_STAGES", prompt)
         self.assertIn("ACTIVE_SKILLS", prompt)
+        self.assertIn("only when it is a clear semantic match", prompt)
+        self.assertIn("Do not load an adjacent or broader workflow", prompt)
+        self.assertIn("a TAD workflow is not a valid workflow for ordinary A/B compartment calling", prompt)
+        self.assertIn("skip workflow handoff entirely and use the normal `[SELECTED_SKILLS: ...]`", prompt)
+        self.assertIn("Do not include `[WORKFLOW_DECISION]`, `[WORKFLOW_STAGES]`, `workflow_id: none`", prompt)
+        self.assertIn("Only when a real workflow template was loaded and clearly matches the task", prompt)
+
+    def test_consultant_prompt_requires_strict_command_response_contract(self):
+        prompt = PromptManager.get_consultant_prompt(
+            intent="General Inquiry",
+            kb_list_desc="SOP, TOOLS, ERRORS",
+            skills_summary="SKILL_TREE",
+            rag_history=[],
+        )
+
+        self.assertIn("<consultant_response_contract>", prompt)
+        self.assertIn("Every Consultant reply must start with exactly one supported command token", prompt)
+        self.assertIn("Never echo an observation as", prompt)
+        self.assertIn("Do not output prose, markdown summaries, copied stdout/stderr", prompt)
+        self.assertIn("If a command failed, do not paste the traceback back", prompt)
 
     def test_consultant_prompt_restricts_execute_to_read_only_preflight(self):
         prompt = PromptManager.get_consultant_prompt(
@@ -113,6 +165,23 @@ class PromptManagerTests(unittest.TestCase):
         self.assertIn("cooler balance", prompt)
         self.assertIn("--preflight-only", prompt)
         self.assertIn("blocked/input-invalid handoff", prompt)
+        self.assertIn("Do not turn CLI tools into Python/R imports", prompt)
+        self.assertIn("bedtools --version", prompt)
+        self.assertIn("never replace it with `import pybedtools`", prompt)
+
+    def test_consultant_prompt_loads_skill_doc_before_uncertain_runtime_checks(self):
+        prompt = PromptManager.get_consultant_prompt(
+            intent="Run tool with strict runtime",
+            kb_list_desc="SOP, TOOLS, ERRORS",
+            skills_summary="SKILL_TREE",
+            rag_history=[],
+        )
+
+        self.assertIn("If environment availability, missing dependency, install policy, package type, or healthcheck details are uncertain", prompt)
+        self.assertIn("load the selected skill's `SKILL.md` before declaring a dependency missing", prompt)
+        self.assertIn("use that exact healthcheck or a strict subset of it", prompt)
+        self.assertIn("Do not synthesize an import list from `runtime.packages`", prompt)
+        self.assertIn("Do not infer extra packages or installation actions from a failed import", prompt)
 
     def test_detailed_planner_prompt_is_centralized(self):
         prompt = PromptManager.get_detailed_planner_prompt(
@@ -133,7 +202,19 @@ class PromptManagerTests(unittest.TestCase):
         self.assertIn("- Cautions:", prompt)
         self.assertIn("## Execution Checklist", prompt)
         self.assertIn("- [ ] Step N:", prompt)
-        self.assertIn("Action: [SEARCH/EXECUTE/INSTALL/ACTIVATE_BATCH/FINISH]", prompt)
+        self.assertIn("Action: [SEARCH/EXECUTE/INSTALL/ACTIVATE_BATCH/ASK_USER/FINISH]", prompt)
+        self.assertIn("single `Action: FINISH` item", prompt)
+        self.assertIn("Never plan to copy, symlink, move, or duplicate artifacts solely to satisfy", prompt)
+
+    def test_detailed_planner_prompt_requires_ask_user_for_unresolved_audit(self):
+        prompt = PromptManager.get_detailed_planner_prompt(
+            user_msg="Run differential TAD",
+            consultant_summary="[INPUT_RESOLUTION_AUDIT]\nneeds_user:true\n[/INPUT_RESOLUTION_AUDIT]\n[QUESTIONS_FOR_USER]\n- confirm target/control\n[/QUESTIONS_FOR_USER]",
+        )
+
+        self.assertIn("needs_user:true", prompt)
+        self.assertIn("first executable checklist item MUST be `Action: ASK_USER`", prompt)
+        self.assertIn("target/control direction and bidirectional mode are required", prompt)
 
     def test_detailed_planner_prompt_contains_active_batch_policy(self):
         prompt = PromptManager.get_detailed_planner_prompt(
