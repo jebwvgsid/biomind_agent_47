@@ -32,6 +32,22 @@ class PlanTrackerTests(unittest.TestCase):
         self.assertEqual(steps[0]["status"], "pending")
         self.assertIn("Inspect inputs", steps[0]["title"])
 
+    def test_parse_ignores_validation_checklist_items(self):
+        plan = """
+## Execution Checklist
+- [ ] Step 1: Run standard wrapper | Goal: produce report | Action: EXECUTE | Done: report exists
+
+## Section 4: Validation Checklist
+- [ ] Confirm all expected output files exist.
+- [ ] Check QC thresholds.
+"""
+
+        steps = parse_plan_steps(plan)
+
+        self.assertEqual(len(steps), 1)
+        self.assertIn("Run standard wrapper", steps[0]["title"])
+        self.assertNotIn("Confirm all expected output files", steps[0]["title"])
+
     def test_parse_legacy_numbered_steps(self):
         plan = """
 ## Section 2: Step-by-Step Execution Plan

@@ -73,6 +73,10 @@ class PromptManagerTests(unittest.TestCase):
         self.assertIn("<finish_only_policy>", ephemeral)
         self.assertIn("contains `Action: FINISH`, output exactly one `<solution>...</solution>`", ephemeral)
         self.assertIn("Never copy, symlink, move, or duplicate artifacts solely to satisfy", ephemeral)
+        self.assertIn("<completion_gate_policy>", ephemeral)
+        self.assertIn("missing promised artifacts", ephemeral)
+        self.assertIn("do not run another `sed`, `grep`, `head`, `cat`, or source-code inspection command", ephemeral)
+        self.assertIn("blocked outputs (`stage_status.tsv`, `report.md`, `reproduce.sh`)", ephemeral)
 
     def test_consultant_prompt_contains_wiki_memory_context(self):
         prompt = PromptManager.get_consultant_prompt(

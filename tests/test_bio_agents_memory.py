@@ -120,6 +120,141 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertIn("plan_active_skills = self.skill_manager.extract_active_skills_from_plan(plan_content)", source)
         self.assertIn('skill_selection_source = "planner_active_skills"', source)
 
+    def test_workflow_batches_continue_before_wiki_finish(self):
+        root = Path(__file__).resolve().parents[1]
+        source = (root / "bio_agents.py").read_text(encoding="utf-8")
+        prompt = (root / "prompts" / "manager.py").read_text(encoding="utf-8")
+
+        self.assertIn("def _next_workflow_batch_id", source)
+        self.assertIn("def _activate_next_workflow_batch_after_plan_completion", source)
+        self.assertIn("next_batch_update = self._activate_next_workflow_batch_after_plan_completion", source)
+        self.assertIn('activation["next_step"] = "planner"', source)
+        self.assertIn("legacy_future_skills_bookkeeping", prompt)
+        self.assertIn("Later skills should be represented by later `Action: ACTIVATE_BATCH` checklist steps", prompt)
+        self.assertNotIn("def _workflow_stage_requested", source)
+        self.assertNotIn("stage_requested = self._workflow_stage_requested(stage, query_text)", source)
+
+    def test_consultant_readonly_loop_gets_forced_finish_before_user_repair(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertIn("<consultant_force_finish_from_observations>", source)
+        self.assertIn("Stop running more read-only commands", source)
+        self.assertIn("Use the verified observations already collected to FINISH a handoff, or ASK the user", source)
+        self.assertIn('"next_step": "consultant"', source)
+        self.assertNotIn("consultant_readonly_loop_decision", source)
+        self.assertNotIn("_main_controller_recovered_consultant_update", source)
+
+    def test_consultant_internal_failures_ask_user_without_main_controller(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertIn("<consultant_loop_guard_blocked>", source)
+        self.assertIn("Candidate skill hints", source)
+        self.assertIn("will not auto-select skills or hand off to Planner", source)
+        self.assertIn('"next_step": "ask_user"', source)
+        self.assertNotIn("from agent_core.main_controller import MainController", source)
+        self.assertNotIn("self.main_controller = MainController()", source)
+        self.assertNotIn("consultant_internal_failure_decision", source)
+
+    def test_legacy_graph_routing_is_used_by_default(self):
+        root = Path(__file__).resolve().parents[1]
+        source = (root / "bio_agents.py").read_text(encoding="utf-8")
+        manager = (root / "prompts" / "manager.py").read_text(encoding="utf-8")
+        templates = (root / "prompts" / "templates.py").read_text(encoding="utf-8")
+        state = (root / "agent_core" / "state.py").read_text(encoding="utf-8")
+
+        self.assertNotIn("MAIN_AGENT_PROMPT", templates)
+        self.assertNotIn("def get_main_agent_prompt", manager)
+        self.assertNotIn("def main_agent(state: AgentState):", source)
+        self.assertNotIn("PromptManager.get_main_agent_prompt", source)
+        self.assertIn("node_recommended_next_step", source)
+        self.assertIn('"workflow_state"', source)
+        self.assertIn("workflow_state: dict", state)
+        self.assertNotIn('workflow.add_node("main_agent"', source)
+        self.assertNotIn('return "main_agent"', source)
+        self.assertNotIn('workflow.add_edge("planner",     "main_agent")', source)
+        self.assertIn('workflow.add_edge("planner",     "plan_review")', source)
+        self.assertIn('return "consultant"', source)
+
+    def test_structured_actions_require_nonempty_execute_body(self):
+        root = Path(__file__).resolve().parents[1]
+        source = (root / "bio_agents.py").read_text(encoding="utf-8")
+        templates = (root / "prompts" / "templates.py").read_text(encoding="utf-8")
+
+        self.assertIn("def _recent_nonempty_execute_body", source)
+        self.assertIn("def _extract_structured_action", source)
+        self.assertIn('self._pending_action_is(pending_action, "execute")', source)
+        self.assertIn('pending_action.get("code")', source)
+        self.assertIn("has_execute_body = bool", source)
+        self.assertIn('"execute_empty_body"', source)
+        self.assertIn("exactly one non-empty `<execute>...</execute>` block", templates)
+        self.assertIn("Put the actual runnable command/script inside the tag or in `action_json.code`", templates)
+
+    def test_prompts_distinguish_install_tool_from_runner(self):
+        templates = (Path(__file__).resolve().parents[1] / "prompts" / "templates.py").read_text(encoding="utf-8")
+
+        self.assertIn("INSTALL_TOOL IS NOT A RUNNER", templates)
+        self.assertIn("not an environment name, not an interpreter", templates)
+        self.assertIn("Planner must not describe `install_tool` as the command used to run analysis scripts", templates)
+        self.assertIn("Never write commands like `install_tool_name <<EOF`", templates)
+
+    def test_execute_reads_recent_execute_body_after_interleaving_message(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertIn('pending_action = state.get("pending_action") or {}', source)
+        self.assertIn("original_code = self._recent_nonempty_execute_body(state.get(\"messages\", []), window=6)", source)
+        self.assertNotIn("last_message = state[\"messages\"][-1].content", source)
+
+    def test_ask_user_answer_advances_ask_user_plan_step(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertIn('self._plan_step_action_is(running_step, "ask_user")', source)
+        self.assertIn("user_answered:", source)
+        self.assertIn('"pending_human_question": {}', source)
+        self.assertIn('"plan_progress": plan_progress', source)
+
+    def test_context_search_does_not_complete_execute_step(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertIn('self._plan_step_action_is(self._running_plan_step(load_plan_state(self.data_path, task_id)), "search")', source)
+        self.assertIn('"search_completed"', source)
+
+    def test_planner_separates_activate_batch_from_execution(self):
+        prompt = (Path(__file__).resolve().parents[1] / "prompts" / "manager.py").read_text(encoding="utf-8")
+
+        self.assertIn("ACTIVATE_BATCH` is only a skill/batch switch", prompt)
+        self.assertIn("After every ACTIVATE_BATCH item, add a separate `Action: EXECUTE` item", prompt)
+
+    def test_generate_stable_prompt_is_execution_node_scoped(self):
+        templates = (Path(__file__).resolve().parents[1] / "prompts" / "templates.py").read_text(encoding="utf-8")
+
+        self.assertIn("Generate is step-local by default", templates)
+        self.assertIn("Follow the first running or pending item", templates)
+        self.assertIn("You are the **Generate node**", templates)
+        self.assertIn("produce exactly one step-local action", templates)
+
+    def test_planner_validates_user_requirement_coverage(self):
+        root = Path(__file__).resolve().parents[1]
+        source = (root / "bio_agents.py").read_text(encoding="utf-8")
+        prompt = (root / "prompts" / "manager.py").read_text(encoding="utf-8")
+
+        self.assertIn("Plan coverage missing workflow handoff stage", source)
+        self.assertIn("Plan coverage missing user-expected output", source)
+        self.assertIn("user_msg=str(user_msg)", source)
+        self.assertIn("workflow as a minimum coverage scaffold, not a ceiling", prompt)
+        self.assertIn("custom stages beyond the workflow", prompt)
+
+    def test_consultant_decomposes_and_planner_activates_workflow_skills(self):
+        root = Path(__file__).resolve().parents[1]
+        source = (root / "bio_agents.py").read_text(encoding="utf-8")
+        consultant_prompt = (root / "prompts" / "templates.py").read_text(encoding="utf-8")
+        planner_prompt = (root / "prompts" / "manager.py").read_text(encoding="utf-8")
+
+        self.assertIn("Consultant owns coarse stage decomposition", consultant_prompt)
+        self.assertIn("ACTIVE_SKILLS is optional in Consultant output", consultant_prompt)
+        self.assertIn("Planner owns execution scheduling", planner_prompt)
+        self.assertIn("If Consultant left ACTIVE_SKILLS as None/empty", planner_prompt)
+        self.assertIn("Auto-repaired planner workflow activation", source)
+
     def test_plan_tracker_is_persisted_and_reinjected_after_compression(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
@@ -255,7 +390,8 @@ class BioAgentMemoryTests(unittest.TestCase):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
         self.assertNotIn('"next_step": next_step, "retry_count": 0', source)
-        self.assertIn('"next_step": next_step}', source)
+        self.assertIn('"next_step": next_step,', source)
+        self.assertIn('"pending_action": structured_action if structured_action else {}', source)
 
     def test_execute_success_waits_for_supervisor_before_completing_plan_step(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
@@ -263,6 +399,15 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertIn('"execute_success"', source)
         self.assertNotIn('self._mark_plan_current_done(task_id, f"execute success:', source)
         self.assertIn('verdict in {"PASS", "WARN"}', source)
+
+    def test_actionable_supervisor_warn_routes_back_to_generate(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertIn("def _supervisor_warn_requires_followup", source)
+        self.assertIn('"warn_followup_required"', source)
+        self.assertIn('if verdict == "WARN" and self._supervisor_warn_requires_followup(update_messages):', source)
+        self.assertIn('update["supervisor_verdict"] = "RETRY"', source)
+        self.assertIn('update["next_step"] = "generate"', source)
 
     def test_execute_includes_post_run_validation(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
@@ -301,15 +446,15 @@ class BioAgentMemoryTests(unittest.TestCase):
         code_review = source.index("action, final_code = self.middleware.review_code(code, language)")
         self.assertLess(runtime_check, code_review)
 
-    def test_execute_router_can_route_to_install_subagent(self):
+    def test_execute_router_returns_to_stable_legacy_chain(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
-        self.assertIn('if state.get("next_step") == "install_subagent":', source)
-        self.assertIn('return "install_subagent"', source)
+        self.assertIn('"install_subagent"', source)
+        self.assertIn('if step == "install_subagent": return "install_subagent"', source)
         self.assertIn('workflow.add_conditional_edges("execute", execute_router', source)
         self.assertIn('["generate", "install_subagent", "supervisor", END]', source)
 
-    def test_execute_guard_can_route_back_to_generate(self):
+    def test_execute_guard_routes_back_to_generate_without_main_agent(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
         router_idx = source.index("def execute_router(state):")
@@ -319,12 +464,13 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertLess(generate_guard_idx, supervisor_idx)
         self.assertIn('return "generate"', source[generate_guard_idx:supervisor_idx])
 
-    def test_install_subagent_failure_routes_to_end(self):
+    def test_install_subagent_failure_returns_to_legacy_generate_chain(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
         self.assertIn("def install_subagent_router(state):", source)
         self.assertIn('workflow.add_conditional_edges("install_subagent", install_subagent_router', source)
         self.assertNotIn('workflow.add_edge("install_subagent", "generate")', source)
+        self.assertIn('return "generate"', source[source.index("def install_subagent_router(state):"):])
         self.assertIn('"next_step": "generate" if install_success else "finish"', source)
         self.assertIn('"next_step": "finish"', source)
 
@@ -404,7 +550,7 @@ class BioAgentMemoryTests(unittest.TestCase):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
         self.assertIn("consultant_loop_guard_blocked", source)
-        self.assertIn("auto-select skills or hand off to Planner", source)
+        self.assertIn("will not auto-select skills or hand off to Planner", source)
         self.assertIn('"resume_step": "consultant"', source)
         self.assertIn('"next_step": "ask_user"', source)
         self.assertNotIn('"skill_selection_source": "consultant_loop_guard"', source)

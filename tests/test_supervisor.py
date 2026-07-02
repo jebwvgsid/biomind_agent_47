@@ -29,7 +29,7 @@ except (ImportError, ModuleNotFoundError):
     sys.modules.setdefault("langchain_core", langchain_core)
     sys.modules["langchain_core.messages"] = messages_module
 
-from supervisor import SupervisorNode, Verdict
+from supervisor import CheckResult, SupervisorNode, Verdict
 
 
 class _Response:
@@ -115,6 +115,32 @@ class SupervisorTests(unittest.IsolatedAsyncioTestCase):
             result = await supervisor.run(_state("python run_analysis.py", obs, retry_count=0))
 
         self.assertEqual(result["supervisor_verdict"], Verdict.WARN.value)
+
+    def test_warn_feedback_keeps_llm_action_for_generate(self):
+        review = (
+            "**Verdict**: WARN\n"
+            "**Reason**: only created a shell script without running actual analysis.\n"
+            "**Action**: Execute the generated reproduce.sh script."
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            supervisor = SupervisorNode(_FakeLLM(review), output_dir=tmpdir, use_llm_review=True)
+            feedback = supervisor._build_feedback_message(
+                [
+                    CheckResult(
+                        rule="IncompleteStep",
+                        passed=False,
+                        severity="warning",
+                        message="Only created a shell script.",
+                        suggestion="Execute it.",
+                    )
+                ],
+                Verdict.WARN,
+                review,
+                retry_count=0,
+            )
+
+        self.assertIn("EXPERT DIAGNOSIS", feedback)
+        self.assertIn("Execute the generated reproduce.sh script", feedback)
 
     async def test_non_progress_help_command_retries_unless_preflight_step(self):
         obs = "<observation>\n[Bash] ✅ Success (0.1s)\nSTDOUT:\nusage\nSTDERR:\n</observation>"
