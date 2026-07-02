@@ -23,7 +23,7 @@ runtime:
   packages: [Seurat, Matrix, yaml, ggplot2, patchwork]
   capabilities: [scrna-workflow, scrna-ingest, scrna-qc]
   install_tool: '<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>'
-  healthcheck: bash skills/scrna/workflows/ingest-qc/scripts/run_scrna_ingest_qc.sh --help
+  healthcheck: conda run -n bio_scrna_core Rscript skills/scrna/env/bootstrap/scripts/check_scrna_env.R
 ---
 
 # scRNA Ingest QC Workflow

@@ -3,6 +3,8 @@ name: scRNA Ingest QC
 description: First scRNA-seq workflow batch that verifies the Seurat runtime, ingests raw input, and runs QC filtering from a manifest.
 task_types: [single_cell_rnaseq]
 triggers: [scRNA ingest QC, data preparation, Seurat object construction, 单细胞质控, 导入质控]
+exclude_when:
+  any: [.mcool, .cool, hicFindTADs, HiCExplorer, Hi-C, Micro-C, contact matrix, 拓扑结构域, TAD边界]
 stages:
   - stage: ingest_qc
     title: Ingest raw scRNA input and run QC filtering

@@ -3,6 +3,10 @@ name: Hi-C TAD Analysis
 description: Hi-C/Micro-C/Pore-C TAD workflow covering matrix preflight, TAD calling, boundary-change summaries, and optional differential TAD testing.
 task_types: [chromatin_contact_tad]
 triggers: [TAD, hicFindTADs, HiCExplorer, boundary change, differential TAD, Hi-C, Micro-C, 拓扑结构域, TAD边界]
+exclude_when:
+  any: [scRNA, single-cell, single cell, Seurat, 单细胞]
+  all_groups:
+    - [matrix.mtx, features.tsv, barcodes.tsv]
 stages:
   - stage: matrix_preflight
     title: Confirm matrix paths, resolution, and balance status

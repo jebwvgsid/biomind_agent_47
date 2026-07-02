@@ -1,8 +1,10 @@
 workflow_id: scrna_standard_analysis
 name: scRNA Standard Analysis
-description: Standard multi-stage single-cell RNA-seq analysis from raw input through QC, preprocessing, clustering, marker discovery, annotation, and optional contrast-level DE.
+description: Standard multi-stage single-cell RNA-seq analysis from raw input through QC, preprocessing, clustering, marker discovery, annotation, optional contrast-level DE, enrichment, trajectory, and final reporting.
 task_types: [single_cell_rnaseq]
 triggers: [single-cell, scRNA, Seurat, standard analysis, complete analysis, 单细胞, 完整分析]
+exclude_when:
+  any: [.mcool, .cool, hicFindTADs, HiCExplorer, Hi-C, Micro-C, contact matrix, 拓扑结构域, TAD边界]
 stages:
   - stage: data_ingest
     title: Build initial Seurat object
@@ -40,7 +42,7 @@ stages:
     default_skill: scrna/annotate/basic
     inputs: [clustered_seurat_object, marker_table, annotation_reference]
     outputs: [annotated_seurat_object]
-    may_block_if_missing: [annotation_reference, marker_rules]
+    may_ask_if_missing: [annotation_reference, marker_rules, tissue_background]
   - stage: de_analysis
     title: Differential expression contrast
     batch_id: "3"
@@ -48,4 +50,26 @@ stages:
     inputs: [annotated_seurat_object, contrast_definition]
     outputs: [de_table, volcano_plot]
     optional: true
-    may_block_if_missing: [contrast_definition]
+    may_ask_if_missing: [contrast_definition, target_control_direction]
+  - stage: scrna_enrichment
+    title: Enrichment from markers or DE genes
+    batch_id: "4"
+    default_skill: scrna/enrichment/marker-de
+    inputs: [marker_table, de_table, background_gene_universe, species, annotation_table]
+    outputs: [enrichment_results, enrichment_report]
+    optional: true
+    may_ask_if_missing: [species, gene_id_type, background_gene_universe, annotation_source]
+  - stage: trajectory_pseudotime
+    title: Optional trajectory and pseudotime inference
+    batch_id: "4"
+    default_skill: scrna/trajectory/pseudotime
+    inputs: [annotated_seurat_object, root_cells, lineage_definition]
+    outputs: [pseudotime_table, trajectory_plots]
+    optional: true
+    may_ask_if_missing: [root_cells, lineage_definition, trajectory_method]
+  - stage: scrna_report
+    title: Final scRNA report and reproduction files
+    batch_id: "5"
+    default_skill: scrna/report/summary
+    inputs: [analysis_outputs, stage_status, reproduce_script]
+    outputs: [report, stage_status, reproduce_script]
