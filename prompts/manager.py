@@ -53,7 +53,6 @@ class PromptManager:
         """生成最终失败报告"""
         return TASK_FAILURE_REPORT_TEMPLATE.format(analysis=analysis_text)
 
-
     @staticmethod
     def _build_tool_context(package_manager, work_dir: str) -> str:
         if package_manager:
@@ -308,7 +307,7 @@ Installed Tools:
 [ACTIVE BATCH]
 active_batch_id: {active_batch_id or "none"}
 active_skills: {active_skills_text}
-future_skills: {future_skills_text}
+legacy_future_skills_bookkeeping: {future_skills_text}
 required_skills_all: {required_skills_all_text}
 candidate_skills: {candidate_skills_text}
 
@@ -328,6 +327,10 @@ If Consultant Summary contains [RUNTIME_PREFLIGHT] with any `failed` row, the
 first executable step for that skill must be INSTALL or an explicit runtime
 repair/registration step. Do not plan data execution before the selected skill
 runtime is verified.
+If the user request, benchmark instruction, Consultant Summary, or resume
+context explicitly says missing environments/dependencies should be `blocked`,
+`do not install`, or equivalent, do NOT plan INSTALL. Plan a blocked FINISH
+after documenting the failed runtime check.
 
 ## Section 1: Requirement Analysis
 - Input files, reference genomes, parameters needed
@@ -359,20 +362,27 @@ The checklist order MUST match Section 2 and should be executable one step at a 
 
 RULES:
 - If a tool is in Installed Tools, use it directly. DO NOT add install steps.
-- For workflow tasks, plan the full workflow but activate only the current execution batch.
-- ACTIVE_SKILLS max = 3.
+- User/benchmark install policy overrides skill defaults: if missing runtime must be blocked or installation is forbidden, do not add INSTALL even when a skill declares `install_tool`.
+- For workflow tasks, use the workflow as a minimum coverage scaffold, not a ceiling. Plan every user-requested stage/output, including custom stages beyond the workflow.
+- Consultant decomposes coarse workflow stages; Planner owns execution scheduling. The plan must decide which skill(s) are active for each executable step or batch.
+- Activate only the current execution step/batch at first; use `Action: ACTIVATE_BATCH` checklist steps when the plan reaches later workflow batches.
+- `Action: ACTIVATE_BATCH` is only a skill/batch switch. Do not combine it with running analysis in the same checklist item. After every ACTIVATE_BATCH item, add a separate `Action: EXECUTE` item for the actual cluster/marker/annotation/report/etc. work and its output artifacts.
+- ACTIVE_SKILLS max = 3 per executable checklist step. If a stage/batch needs more than 3 skills, split it into multiple checklist steps/batches with at most 3 active skills each.
 - Every ACTIVE_SKILL must be linked to an active workflow stage.
-- Future-stage skills must be placed under FUTURE_SKILLS, not ACTIVE_SKILLS.
+- Do not activate future-stage skills early. Later work must appear as later checklist steps with `Action: ACTIVATE_BATCH`, `ASK_USER`, `EXECUTE`, `stage_blocked`, or `FINISH` as appropriate.
+- REQUIRED_SKILLS_ALL and CANDIDATE_SKILLS are not active by themselves. Convert only the current executable step/batch to ACTIVE_SKILLS.
 - Candidate skills must never be loaded into generate.
 - If a stage has no selected skill, it must be marked no_skill_needed or blocked in the workflow handoff.
 - If using legacy non-workflow skills, append: [SELECTED_SKILLS: skill_id_1, skill_id_2]
-- If using workflow skills, append [ACTIVE_SKILLS] and [FUTURE_SKILLS] blocks.
+- If using workflow skills, append an [ACTIVE_SKILLS] block for the current executable step/batch. Later skills should be represented by later `Action: ACTIVATE_BATCH` checklist steps, not by preloading them.
+- If Consultant left ACTIVE_SKILLS as None/empty for a workflow, you MUST append an [ACTIVE_SKILLS] block for the first executable step/batch you plan to run now.
 - You may only select skill IDs listed in AVAILABLE SKILLS. Do not translate, rename, or invent skill IDs.
-- ACTIVE SKILLS are already finalized for the current batch. Do not add extra candidate skills beyond that set.
+- ACTIVE SKILLS are finalized only for the current batch. Future or custom stages requested by the user must still appear in the plan as future workflow batches, ASK_USER decisions, stage_blocked rows, or explicit custom-stage steps.
 - If MANDATORY SKILL EXECUTION CARDS are present, they override your prior knowledge and all plan wording.
 - If Consultant Summary, resume context, or verified execution history says the task is already complete and all required artifacts are present, make the entire checklist a single `Action: FINISH` item. Do not add SEARCH, EXECUTE, INSTALL, or compatibility-repair steps after a completed task.
 - Never plan to copy, symlink, move, or duplicate artifacts solely to satisfy a validation gate, completion gate, or gate-checked path. Use the verified real artifact path; if a gate disagrees, the gate/validation context must be repaired, not the scientific outputs.
-- If ACTIVE SKILL DOCS are present, you MUST read them and use their real script path(s). Never describe the skill as an abstract module or pre-built global command.
+- If ACTIVE SKILL DOCS are present, you MUST read them and plan the selected stage with their real script path(s), manifest format, and documented outputs. Do not replace a selected skill with a custom R/Python/bash script unless the skill doc explicitly says no script exists for that stage.
+- Custom scripts are allowed only for user-requested custom stages that are not covered by the current ACTIVE_SKILLS or later planned workflow stages, or for final report/status assembly when no selected report skill is active.
 - Convert relevant planning memory into step-local constraints and cautions. Do not rely on Generate to retrieve broad Wiki/TaskSummary context again.
 - Never write "Command template" for a selected skill. Use "Execution guidance".
 - Never use placeholder wrapper commands or undocumented script names.

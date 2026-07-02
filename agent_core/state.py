@@ -18,7 +18,10 @@ class AgentState(TypedDict, total=False):
     skill_selection_source: Optional[str]
     workflow_id: Optional[str]
     workflow_stages: List[dict]
+    workflow_state: dict
     workflow_handoff: dict
+    pending_action: dict
+    node_recommended_next_step: Optional[str]
     pending_human_question: dict
     runtime_status: dict
     active_batch_id: Optional[str]

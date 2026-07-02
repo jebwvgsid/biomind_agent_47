@@ -39,7 +39,10 @@ class WorkflowManager:
 
     @staticmethod
     def _normalize_workflow_id(value: Any) -> str:
-        return str(value or "").replace("\\", "/").strip().strip("/")
+        normalized = str(value or "").replace("\\", "/").strip().strip("/")
+        if normalized.lower() in {"none", "null", "nil", "n/a", "na", "-"}:
+            return ""
+        return normalized
 
     @staticmethod
     def _ensure_list(value: Any) -> List[str]:
@@ -150,7 +153,7 @@ def parse_workflow_handoff(text: str) -> Dict[str, Any]:
     workflow_id = ""
     active_batch_id = ""
     if isinstance(decision, dict):
-        workflow_id = str(decision.get("workflow_id") or "").strip()
+        workflow_id = WorkflowManager._normalize_workflow_id(decision.get("workflow_id"))
         active_batch_id = str(decision.get("active_batch_id") or decision.get("current_batch") or "").strip()
     for stage in stages:
         if isinstance(stage, dict) and stage.get("active_now") is True and not active_batch_id:
@@ -166,6 +169,11 @@ def parse_workflow_handoff(text: str) -> Dict[str, Any]:
         "required_skills_all": required_all,
         "candidate_skills": candidate_skills,
     }
+
+
+def parse_workflow_state(text: str) -> Dict[str, Any]:
+    """Parse workflow state using the legacy handoff wire format."""
+    return parse_workflow_handoff(text)
 
 
 def validate_workflow_handoff(
@@ -282,6 +290,262 @@ def validate_workflow_handoff(
     return {"errors": errors, "warnings": warnings, "handoff": normalized}
 
 
+def validate_workflow_state(
+    workflow_state: Dict[str, Any],
+    skill_manager,
+    workflow_manager: Optional[WorkflowManager] = None,
+    max_active_skills: int = 3,
+) -> Dict[str, Any]:
+    """Validate workflow state while preserving legacy validation behavior."""
+    result = validate_workflow_handoff(
+        workflow_state,
+        skill_manager,
+        workflow_manager,
+        max_active_skills=max_active_skills,
+    )
+    if "handoff" in result:
+        result["workflow_state"] = result["handoff"]
+    return result
+
+
+def repair_workflow_handoff(
+    handoff: Dict[str, Any],
+    skill_manager,
+    workflow_manager: Optional[WorkflowManager] = None,
+    max_active_skills: int = 3,
+) -> Dict[str, Any]:
+    """Repair deterministic workflow handoff omissions using workflow/stage metadata.
+
+    This intentionally stays generic: a repair is allowed only when a selected
+    active skill maps to exactly one workflow stage via either template
+    default_skill or skill stage_tags. Ambiguous cases remain validation errors.
+    """
+    validation = validate_workflow_handoff(
+        handoff,
+        skill_manager,
+        workflow_manager,
+        max_active_skills=max_active_skills,
+    )
+    if not validation.get("errors"):
+        return {"repaired": False, "notes": [], **validation}
+
+    normalized = dict(validation.get("handoff") or handoff or {})
+    workflow_id = str(normalized.get("workflow_id") or "").strip()
+    active_skills = _normalize_skills(skill_manager, normalized.get("active_skills") or [])
+    stages = [dict(stage or {}) for stage in normalized.get("workflow_stages") or [] if isinstance(stage, dict)]
+    notes: List[str] = []
+
+    template_stages: List[Dict[str, Any]] = []
+    if workflow_id and workflow_manager:
+        template = workflow_manager.get_workflow(workflow_id)
+        template_stages = [dict(stage or {}) for stage in template.get("stages", []) if isinstance(stage, dict)]
+
+    by_stage: Dict[str, Dict[str, Any]] = {}
+    for stage in template_stages + stages:
+        stage_name = str(stage.get("stage") or stage.get("stage_id") or "").strip()
+        if not stage_name:
+            continue
+        current = by_stage.setdefault(stage_name, {})
+        for key, value in stage.items():
+            if key in {"stage", "stage_id"}:
+                continue
+            current_value = current.get(key)
+            value_is_empty = value is None or value == "" or value == []
+            current_has_value = current_value is not None and current_value != "" and current_value != []
+            if value_is_empty and current_has_value:
+                continue
+            current[key] = value
+        current["stage"] = stage_name
+
+    if not active_skills:
+        active_stage_skills = []
+        for stage in stages:
+            if stage.get("status") != "selected_skill":
+                continue
+            if stage.get("active_now") is not True and not (
+                normalized.get("active_batch_id")
+                and str(stage.get("batch_id") or "").strip() == str(normalized.get("active_batch_id") or "").strip()
+            ):
+                continue
+            canonical = _normalize_skills(skill_manager, [str(stage.get("skill") or "")])
+            if canonical:
+                active_stage_skills.append(canonical[0])
+        if active_stage_skills:
+            active_skills = list(dict.fromkeys(active_stage_skills))
+            normalized["active_skills"] = active_skills
+            notes.append("Derived ACTIVE_SKILLS from selected active stages.")
+
+    active_batch_id = str(normalized.get("active_batch_id") or "").strip()
+    matched_batches: List[str] = []
+    repaired_stage_names: List[str] = []
+
+    for skill in active_skills:
+        meta = skill_manager.get_skill_meta(skill) if skill_manager else {}
+        stage_tags = skill_manager.metadata_list(meta, "stage_tags") if hasattr(skill_manager, "metadata_list") else []
+        matches: List[Dict[str, Any]] = []
+        for stage in by_stage.values():
+            stage_name = str(stage.get("stage") or stage.get("stage_id") or "").strip()
+            default_skill = str(stage.get("default_skill") or "").strip()
+            default_canonical = _normalize_skills(skill_manager, [default_skill]) if default_skill else []
+            if stage_name in stage_tags or (default_canonical and default_canonical[0] == skill):
+                matches.append(stage)
+
+        if active_batch_id:
+            batch_matches = [
+                stage for stage in matches
+                if str(stage.get("batch_id") or "").strip() == active_batch_id
+            ]
+            if len(batch_matches) == 1:
+                matches = batch_matches
+        if len(matches) != 1:
+            continue
+
+        stage = dict(matches[0])
+        stage_name = str(stage.get("stage") or stage.get("stage_id") or "").strip()
+        if not stage_name:
+            continue
+        stage["stage"] = stage_name
+        stage["status"] = "selected_skill"
+        stage["skill"] = skill
+        stage["active_now"] = True
+        stage["batch_id"] = str(stage.get("batch_id") or active_batch_id or "1").strip()
+        by_stage[stage_name] = stage
+        matched_batches.append(stage["batch_id"])
+        if stage_name not in repaired_stage_names:
+            repaired_stage_names.append(stage_name)
+        notes.append(f"Tied active skill {skill} to workflow stage {stage_name}.")
+
+    for stage_name, stage in list(by_stage.items()):
+        if str(stage.get("status") or "").strip() != "selected_skill":
+            continue
+        skill = _normalize_skills(skill_manager, [str(stage.get("skill") or "")])
+        skill_id = skill[0] if skill else ""
+        meta = skill_manager.get_skill_meta(skill_id) if skill_id and skill_manager else {}
+        stage_tags = skill_manager.metadata_list(meta, "stage_tags") if hasattr(skill_manager, "metadata_list") else []
+        default_skill = str(stage.get("default_skill") or "").strip()
+        default_canonical = _normalize_skills(skill_manager, [default_skill]) if default_skill else []
+        supports_stage = bool(
+            skill_id
+            and (
+                stage_name in stage_tags
+                or (default_canonical and default_canonical[0] == skill_id)
+            )
+        )
+        if supports_stage:
+            continue
+        status_hint = str(stage.get("status_hint") or "").strip()
+        if status_hint != "no_skill_needed":
+            continue
+        repaired = dict(stage)
+        repaired["status"] = "no_skill_needed"
+        repaired.pop("skill", None)
+        repaired.pop("skill_role", None)
+        if not str(repaired.get("reason") or "").strip():
+            repaired["reason"] = "Workflow template marks this stage as a direct verification step; no separate skill is required."
+        if not str(repaired.get("direct_method") or "").strip():
+            repaired["direct_method"] = (
+                "Verify the selected workflow skill's expected output files and record readiness in the final report/status table."
+            )
+        by_stage[stage_name] = repaired
+        notes.append(f"Converted workflow stage {stage_name} to no_skill_needed from template status_hint.")
+
+    if not active_batch_id and matched_batches and len(set(matched_batches)) == 1:
+        active_batch_id = matched_batches[0]
+        normalized["active_batch_id"] = active_batch_id
+        decision = dict(normalized.get("workflow_decision") or {})
+        if decision:
+            decision["active_batch_id"] = active_batch_id
+            normalized["workflow_decision"] = decision
+        notes.append(f"Inferred active_batch_id={active_batch_id} from repaired active stage.")
+
+    selected_stage_skills_by_batch: Dict[str, List[str]] = {}
+    for stage in by_stage.values():
+        if str(stage.get("status") or "").strip() != "selected_skill":
+            continue
+        skill = _normalize_skills(skill_manager, [str(stage.get("skill") or "")])
+        if not skill:
+            continue
+        batch_id = str(stage.get("batch_id") or "").strip()
+        selected_stage_skills_by_batch.setdefault(batch_id, [])
+        if skill[0] not in selected_stage_skills_by_batch[batch_id]:
+            selected_stage_skills_by_batch[batch_id].append(skill[0])
+
+    if selected_stage_skills_by_batch:
+        if not active_batch_id:
+            active_batch_id = sorted(selected_stage_skills_by_batch, key=_batch_sort_key)[0]
+            normalized["active_batch_id"] = active_batch_id
+            decision = dict(normalized.get("workflow_decision") or {})
+            decision["workflow_id"] = workflow_id or decision.get("workflow_id", "")
+            decision["active_batch_id"] = active_batch_id
+            normalized["workflow_decision"] = decision
+            notes.append(f"Inferred active_batch_id={active_batch_id} from selected workflow stages.")
+
+        batch_active_skills = selected_stage_skills_by_batch.get(active_batch_id, [])
+        if batch_active_skills and (
+            len(active_skills) > max_active_skills
+            or set(active_skills) != set(batch_active_skills)
+        ):
+            future = list(normalized.get("future_skills") or [])
+            for skills in selected_stage_skills_by_batch.values():
+                for skill in skills:
+                    if skill not in batch_active_skills and skill not in future:
+                        future.append(skill)
+            normalized["active_skills"] = batch_active_skills[:max_active_skills]
+            normalized["future_skills"] = future
+            required_all = list(normalized.get("required_skills_all") or [])
+            for skill in [*batch_active_skills, *future]:
+                if skill not in required_all:
+                    required_all.append(skill)
+            normalized["required_skills_all"] = required_all
+            active_skills = list(normalized["active_skills"])
+            notes.append(
+                f"Pruned ACTIVE_SKILLS to active_batch_id={active_batch_id}; moved later batch skills to FUTURE_SKILLS."
+            )
+
+        for stage in by_stage.values():
+            stage_batch = str(stage.get("batch_id") or "").strip()
+            if stage_batch:
+                stage["active_now"] = stage_batch == active_batch_id
+
+    original_order = [
+        str(stage.get("stage") or stage.get("stage_id") or "").strip()
+        for stage in stages
+        if str(stage.get("stage") or stage.get("stage_id") or "").strip()
+    ]
+    ordered_names = list(dict.fromkeys(original_order + repaired_stage_names))
+    normalized["workflow_stages"] = [by_stage[name] for name in ordered_names if name in by_stage]
+
+    repaired_validation = validate_workflow_handoff(
+        normalized,
+        skill_manager,
+        workflow_manager,
+        max_active_skills=max_active_skills,
+    )
+    return {
+        "repaired": bool(notes and not repaired_validation.get("errors")),
+        "notes": notes,
+        **repaired_validation,
+    }
+
+
+def repair_workflow_state(
+    workflow_state: Dict[str, Any],
+    skill_manager,
+    workflow_manager: Optional[WorkflowManager] = None,
+    max_active_skills: int = 3,
+) -> Dict[str, Any]:
+    """Repair workflow state using the legacy handoff repair rules."""
+    result = repair_workflow_handoff(
+        workflow_state,
+        skill_manager,
+        workflow_manager,
+        max_active_skills=max_active_skills,
+    )
+    if "handoff" in result:
+        result["workflow_state"] = result["handoff"]
+    return result
+
+
 def _block(text: str, name: str) -> str:
     match = re.search(rf"\[{name}\]\s*(.*?)\s*\[/{name}\]", text, re.DOTALL | re.IGNORECASE)
     return match.group(1).strip() if match else ""
@@ -333,3 +597,10 @@ def _normalize_skills(skill_manager, skills: List[str], keep_unknown: bool = Fal
         if value and value not in normalized:
             normalized.append(value)
     return normalized
+
+
+def _batch_sort_key(batch_id: str) -> tuple[int, str]:
+    text = str(batch_id or "").strip()
+    if text.isdigit():
+        return (int(text), text)
+    return (10**9, text)

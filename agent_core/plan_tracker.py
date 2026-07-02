@@ -96,6 +96,50 @@ def _dedupe_steps(steps: List[PlanStep]) -> List[PlanStep]:
     return deduped
 
 
+def _lines_in_named_section(plan_text: str, section_name: str) -> List[str]:
+    """Return lines under a markdown heading whose title contains section_name."""
+    wanted = str(section_name or "").strip().lower()
+    lines: List[str] = []
+    in_section = False
+    section_level = 0
+    for line in str(plan_text or "").splitlines():
+        heading = re.match(r"^\s*(#{2,6})\s+(?P<title>.+?)\s*$", line)
+        if heading:
+            level = len(heading.group(1))
+            title = heading.group("title").strip().lower()
+            if wanted and wanted in title:
+                in_section = True
+                section_level = level
+                continue
+            if in_section and level <= section_level:
+                in_section = False
+        if in_section:
+            lines.append(line)
+    return lines
+
+
+def _lines_excluding_named_section(plan_text: str, section_name: str) -> List[str]:
+    """Return markdown lines except those under a matching heading."""
+    unwanted = str(section_name or "").strip().lower()
+    lines: List[str] = []
+    in_section = False
+    section_level = 0
+    for line in str(plan_text or "").splitlines():
+        heading = re.match(r"^\s*(#{2,6})\s+(?P<title>.+?)\s*$", line)
+        if heading:
+            level = len(heading.group(1))
+            title = heading.group("title").strip().lower()
+            if unwanted and unwanted in title:
+                in_section = True
+                section_level = level
+                continue
+            if in_section and level <= section_level:
+                in_section = False
+        if not in_section:
+            lines.append(line)
+    return lines
+
+
 def parse_plan_steps(plan_text: str) -> List[PlanStep]:
     """Extract executable checklist steps from a planner response.
 
@@ -104,22 +148,30 @@ def parse_plan_steps(plan_text: str) -> List[PlanStep]:
     """
 
     created = _now()
-    checkbox_steps: List[PlanStep] = []
-    for line in str(plan_text or "").splitlines():
-        match = _CHECKBOX_RE.match(line)
-        if not match:
-            continue
-        title = _clean_step_title(match.group("title"))
-        index = len(checkbox_steps) + 1
-        checkbox_steps.append(
-            {
-                "step_id": _step_id_for(title, index),
-                "title": title,
-                "status": _status_from_mark(match.group("mark")),
-                "evidence": [],
-                "updated_at": created,
-            }
-        )
+    def _parse_checkbox_lines(lines: List[str]) -> List[PlanStep]:
+        parsed: List[PlanStep] = []
+        for line in lines:
+            match = _CHECKBOX_RE.match(line)
+            if not match:
+                continue
+            title = _clean_step_title(match.group("title"))
+            index = len(parsed) + 1
+            parsed.append(
+                {
+                    "step_id": _step_id_for(title, index),
+                    "title": title,
+                    "status": _status_from_mark(match.group("mark")),
+                    "evidence": [],
+                    "updated_at": created,
+                }
+            )
+        return parsed
+
+    checkbox_steps = _parse_checkbox_lines(_lines_in_named_section(plan_text, "execution checklist"))
+    if checkbox_steps:
+        return _dedupe_steps(checkbox_steps)
+
+    checkbox_steps = _parse_checkbox_lines(_lines_excluding_named_section(plan_text, "validation checklist"))
     if checkbox_steps:
         return _dedupe_steps(checkbox_steps)
 

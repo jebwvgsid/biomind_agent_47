@@ -807,6 +807,8 @@ class SupervisorNode:
             parts.append("⚠️ Supervisor: Execution passed with warnings. Proceed but note issues:")
             for w in warnings:
                 parts.append(f"  - {w.message} | Fix: {w.suggestion}")
+            if llm_text:
+                parts.append(f"\nEXPERT DIAGNOSIS:\n{llm_text}")
         elif verdict == Verdict.RETRY:
             parts.append(
                 f"❌ Supervisor: Execution failed. RETRY required "

@@ -17,6 +17,7 @@ import logging
 import os
 import re
 import shutil
+import shlex
 import signal
 import subprocess
 import sys
@@ -77,7 +78,15 @@ from agent_core.installer import InstallerAgent
 from agent_core.retriever import RAGFlowRetriever
 from agent_core.router import classify_task_mode
 from agent_core.skill_manager import SkillManager
-from agent_core.workflow_manager import WorkflowManager, parse_workflow_handoff, validate_workflow_handoff
+from agent_core.workflow_manager import (
+    WorkflowManager,
+    parse_workflow_handoff,
+    parse_workflow_state,
+    repair_workflow_handoff,
+    repair_workflow_state,
+    validate_workflow_handoff,
+    validate_workflow_state,
+)
 from agent_core.middleware import HITLMiddleware
 from agent_core.llm_safety import deterministic_failure_solution, llm_failure_summary
 from agent_core.formal_artifact_resolver import (
@@ -437,7 +446,11 @@ class BioAnalystAgent:
         # ── 验证 & 确认 ───────────────────────────────────────
         self.validator = ResultValidator()
         self.confirmation_manager = ConfirmationManager(
-            ConfirmationConfig(auto_approve_safe=True, show_code_preview=True)
+            ConfirmationConfig(
+                auto_approve_safe=True,
+                show_code_preview=True,
+                timeout_seconds=self.input_timeout_seconds,
+            )
         )
         self.middleware = HITLMiddleware(auto_approve_safe=True)
 
@@ -1103,6 +1116,43 @@ class BioAnalystAgent:
         )
 
     @staticmethod
+    def _supervisor_warn_requires_followup(messages: List[BaseMessage]) -> bool:
+        """Detect WARN reviews that are actually unfinished-step instructions."""
+        text = "\n".join(str(getattr(msg, "content", msg) or "") for msg in messages)
+        lower = text.lower()
+        if "verdict" not in lower or "warn" not in lower:
+            return False
+        followup_action = re.search(
+            r"\baction\s*:\s*(?:execute|run|rerun|re-run|inspect|verify|check|proceed|continue|repair)\b",
+            lower,
+        )
+        unfinished_signal = any(
+            phrase in lower
+            for phrase in (
+                "only created",
+                "without running",
+                "no actual",
+                "not performed",
+                "not generated",
+                "incomplete",
+                "truncated",
+                "before accepting",
+                "before treating",
+                "proceed to the next planned analysis step",
+                "execute the generated",
+                "run the preprocess",
+                "inspect the output",
+                "validate its scientific outputs",
+                "未真正执行",
+                "没有真正执行",
+                "尚未执行",
+                "继续执行",
+                "执行生成的",
+            )
+        )
+        return bool(followup_action and unfinished_signal)
+
+    @staticmethod
     def _looks_like_missing_input_context(text: str) -> bool:
         lower = str(text or "").lower()
         missing_terms = (
@@ -1564,7 +1614,7 @@ class BioAnalystAgent:
         return "\n".join(lines)
 
     def _activate_workflow_batch(self, state: AgentState, batch_id: str) -> Dict[str, Any]:
-        handoff = dict(state.get("workflow_handoff") or {})
+        handoff = self._workflow_state_from_mapping(state)
         stages = [dict(stage) for stage in handoff.get("workflow_stages", state.get("workflow_stages", [])) or []]
         if not stages:
             return {
@@ -1617,6 +1667,7 @@ class BioAnalystAgent:
         )
         return {
             "messages": [HumanMessage(content=obs)],
+            "workflow_state": handoff,
             "workflow_handoff": handoff,
             "workflow_stages": handoff.get("workflow_stages", []),
             "active_batch_id": handoff.get("active_batch_id", target_batch),
@@ -1626,6 +1677,66 @@ class BioAnalystAgent:
             "selected_skills": handoff.get("active_skills", []),
             "next_step": "generate",
         }
+
+    @staticmethod
+    def _workflow_batch_sort_key(batch_id: str) -> Tuple[int, str]:
+        text = str(batch_id or "").strip()
+        if text.isdigit():
+            return (int(text), text)
+        return (10**9, text)
+
+    def _next_workflow_batch_id(self, state: AgentState) -> str:
+        handoff = self._workflow_state_from_mapping(state)
+        stages = [dict(stage) for stage in handoff.get("workflow_stages", (state or {}).get("workflow_stages", [])) or []]
+        active_batch_id = str((state or {}).get("active_batch_id") or handoff.get("active_batch_id") or "").strip()
+        future_skills = set(self._selected_skill_ids((state or {}).get("future_skills", []) or handoff.get("future_skills", []) or []))
+        if not stages or not active_batch_id:
+            return ""
+
+        candidates: List[str] = []
+        for stage in stages:
+            if stage.get("status") != "selected_skill":
+                continue
+            batch_id = str(stage.get("batch_id") or "").strip()
+            if not batch_id or batch_id == active_batch_id:
+                continue
+            skill = str(stage.get("skill") or "").strip()
+            canonical = self._selected_skill_ids([skill])
+            skill_id = canonical[0] if canonical else skill
+            if future_skills and skill_id not in future_skills:
+                continue
+            if self._workflow_batch_sort_key(batch_id) <= self._workflow_batch_sort_key(active_batch_id):
+                continue
+            if batch_id not in candidates:
+                candidates.append(batch_id)
+        if not candidates:
+            return ""
+        return sorted(candidates, key=self._workflow_batch_sort_key)[0]
+
+    def _activate_next_workflow_batch_after_plan_completion(
+        self,
+        state: AgentState,
+        task_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        next_batch_id = self._next_workflow_batch_id(state)
+        if not next_batch_id:
+            return None
+        activation = self._activate_workflow_batch(state, next_batch_id)
+        if not activation.get("active_skills"):
+            return None
+        reset_plan_state(self.data_path, task_id)
+        activation["next_step"] = "planner"
+        activation["current_plan"] = ""
+        activation["plan_progress"] = ""
+        activation.setdefault("messages", []).append(
+            SystemMessage(
+                content=(
+                    f"Previous workflow batch completed. Activated batch {next_batch_id}; "
+                    "create a new plan for the newly active skills. Do not finish the overall task yet."
+                )
+            )
+        )
+        return activation
 
     def _stable_prompt_paths(self, session_id: str, project_id: str) -> Tuple[Path, Path]:
         stem = self._safe_prompt_stem(f"{session_id}__{project_id}")
@@ -1704,12 +1815,79 @@ class BioAnalystAgent:
             return self._persist_plan_tracker(task_id, state)
         return render_plan_progress(state)
 
+    def _plan_has_pending_after_block(self, task_id: str) -> bool:
+        state = load_plan_state(self.data_path, task_id)
+        for step in state.get("steps", []) or []:
+            if not isinstance(step, dict):
+                continue
+            if str(step.get("status") or "").strip().lower() == "pending":
+                return True
+        return False
+
+    def _next_step_after_runtime_block(self, task_id: str) -> str:
+        return "generate" if self._plan_has_pending_after_block(task_id) else "finish"
+
     def _record_plan_current_evidence(self, task_id: str, event: str, detail: str = "") -> str:
         state = load_plan_state(self.data_path, task_id)
         if state.get("steps"):
             record_current_step_evidence(state, event, detail)
             return self._persist_plan_tracker(task_id, state)
         return render_plan_progress(state)
+
+    @staticmethod
+    def _running_plan_step(state: Dict[str, Any]) -> Dict[str, Any]:
+        for step in state.get("steps", []) or []:
+            if isinstance(step, dict) and str(step.get("status") or "").strip().lower() == "running":
+                return step
+        return {}
+
+    @staticmethod
+    def _plan_step_is_activation_only(step: Dict[str, Any]) -> bool:
+        title = str(step.get("title") or "")
+        lower = title.lower()
+        if "activate_batch" not in lower and "action: activate" not in lower:
+            return False
+        if re.search(r"\b(run|execute|generate|create|write|cluster|marker|annotat|de analysis|report)\b", lower):
+            return False
+        if any(term in title for term in ("运行", "执行", "生成", "聚类", "注释", "报告", "差异")):
+            return False
+        return not re.search(r"\.(?:rds|tsv|csv|txt|md|png|pdf|sh|html?)\b", lower)
+
+    @staticmethod
+    def _plan_step_action_is(step: Dict[str, Any], action: str) -> bool:
+        title = str(step.get("title") or "").lower()
+        wanted = str(action or "").strip().lower()
+        return bool(wanted and re.search(rf"\baction:\s*{re.escape(wanted)}\b", title))
+
+    def _record_activate_batch_progress(self, task_id: str, batch_id: str, update_text: str) -> str:
+        state = load_plan_state(self.data_path, task_id)
+        if not state.get("steps"):
+            return render_plan_progress(state)
+        if "✅" in str(update_text or ""):
+            step = self._running_plan_step(state)
+            if self._plan_step_is_activation_only(step):
+                mark_plan_step_done(state, evidence=f"activate batch success: {batch_id}")
+            else:
+                record_current_step_evidence(state, "activate_batch_success", update_text[:1000])
+        else:
+            record_current_step_evidence(state, "activate_batch_failed", update_text[:1000])
+        return self._persist_plan_tracker(task_id, state)
+
+    @staticmethod
+    def _current_step_can_emit_final_solution(plan_state: Dict[str, Any]) -> bool:
+        running = BioAnalystAgent._running_plan_step(plan_state)
+        if not running:
+            return True
+        unfinished = [
+            step for step in plan_state.get("steps", []) or []
+            if isinstance(step, dict)
+            and str(step.get("status") or "").strip().lower()
+            not in {"done", "blocked", "skipped", "cancelled"}
+        ]
+        title = str(running.get("title") or "").lower()
+        if len(unfinished) == 1:
+            return True
+        return any(term in title for term in ("final", "report", "summary", "solution", "收尾", "报告", "总结"))
 
     def _plan_has_blocking_evidence(self, task_id: str) -> bool:
         state = load_plan_state(self.data_path, task_id)
@@ -1778,7 +1956,14 @@ class BioAnalystAgent:
                 "was recorded in the plan. Continue execution or record the real dependency/command failure.",
             )
 
-        mark_plan_step_done(plan_state, evidence=f"final solution generated: {solution_text[:500]}")
+        if self._current_step_can_emit_final_solution(plan_state):
+            mark_plan_step_done(plan_state, evidence=f"final solution generated: {solution_text[:500]}")
+        else:
+            record_current_step_evidence(
+                plan_state,
+                "premature_final_solution",
+                solution_text[:1000],
+            )
         progress = self._persist_plan_tracker(task_id, plan_state)
         final_state = load_plan_state(self.data_path, task_id)
         final_gate = CompletionGate.validate_final(
@@ -1786,6 +1971,8 @@ class BioAnalystAgent:
             task_id,
             final_state,
             current_plan,
+            require_execution_evidence=True,
+            require_supervisor_evidence=False,
         )
         if final_gate.passed:
             return True, progress, "completed", ""
@@ -2007,8 +2194,22 @@ class BioAnalystAgent:
         except Exception as e:
             logger.warning("Runtime registry startup sync failed: %s", e)
 
-    def _runtime_status_for_task(self, task_id: str) -> Dict[str, Dict[str, Any]]:
-        return dict(self.runtime_status.get(task_id or "default", {}))
+    def _runtime_status_for_task(
+        self,
+        task_id: str,
+        selected_skills: Optional[List[str]] = None,
+    ) -> Dict[str, Dict[str, Any]]:
+        records = dict(self.runtime_status.get(task_id or "default", {}))
+        if selected_skills is None:
+            return records
+        selected = set(self._selected_skill_ids(selected_skills))
+        if not selected:
+            return {}
+        return {
+            key: record
+            for key, record in records.items()
+            if str(record.get("skill_id") or "") in selected
+        }
 
     def _runtime_cache_key(self, skill_id: str, env: str, mode: str = "") -> str:
         suffix = f"::{mode}" if mode else ""
@@ -2025,6 +2226,8 @@ class BioAnalystAgent:
         env_runner: str,
         mode: str = "",
     ):
+        if not hasattr(self, "runtime_status") or self.runtime_status is None:
+            self.runtime_status = {}
         bucket = self.runtime_status.setdefault(task_id or "default", {})
         bucket[self._runtime_cache_key(skill_id, env, mode)] = {
             "skill_id": skill_id,
@@ -2108,6 +2311,40 @@ class BioAnalystAgent:
                 ), env
         return True, f"Mode runtime preflight passed for {skill_id} ({mode}).", env
 
+    def _verify_conda_env_presence(self, env: str) -> Tuple[bool, str]:
+        env_name = str(env or "").strip()
+        if not env_name or env_name in {"base", "default"}:
+            return True, ""
+        if not self.pm or not hasattr(self.pm, "conda_exe"):
+            return True, ""
+        command = f"conda run -n {shlex.quote(env_name)} true"
+        if hasattr(self.pm, "_command_with_configured_manager"):
+            command = self.pm._command_with_configured_manager(command)
+        try:
+            proc = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=45)
+        except Exception as exc:
+            return False, f"Conda environment presence check failed for `{env_name}`: {exc}"
+        if proc.returncode == 0:
+            return True, f"Conda environment `{env_name}` exists."
+        detail = "\n".join(part.strip() for part in [proc.stdout, proc.stderr] if part and part.strip()).strip()
+        return False, detail or f"Conda environment `{env_name}` is not available."
+
+    def _resolved_runtime_healthcheck(self, healthcheck: str) -> str:
+        command = str(healthcheck or "").strip()
+        if not command:
+            return ""
+        if not self.skill_manager:
+            return command
+        if not re.search(r"(^|\s)(?:bash\s+|Rscript\s+|python\s+)?skills/", command):
+            return command
+        repo_root = Path(getattr(self.skill_manager, "skills_root", "") or "").parent
+        if not repo_root or not repo_root.exists():
+            return command
+        resolved = command
+        if hasattr(self.pm, "_command_with_configured_manager") and re.match(r"^(conda|mamba)(?:\s|$)", resolved):
+            resolved = self.pm._command_with_configured_manager(resolved)
+        return f"cd {shlex.quote(str(repo_root))} && {resolved}"
+
     def _verify_skill_runtime(self, skill_id: str, task_id: str = "default", use_cache: bool = True, code: str = "") -> Tuple[bool, str, str]:
         if not self.skill_manager or not self.pm:
             return True, "", ""
@@ -2125,11 +2362,34 @@ class BioAnalystAgent:
                 notes="Auto-registered from skill runtime metadata before healthcheck.",
                 language=requirements.get("language", ""),
                 capabilities=requirements.get("capabilities", []),
-                healthcheck=requirements.get("healthcheck", ""),
+                healthcheck=self._resolved_runtime_healthcheck(requirements.get("healthcheck", "")),
                 status="registered",
             )
         cache_key = self._runtime_cache_key(skill_id, env)
         cached = self.runtime_status.get(task_id or "default", {}).get(cache_key)
+        env_ok, env_detail = self._verify_conda_env_presence(env)
+        if not env_ok:
+            self.skill_manager.record_environment(
+                skill_id,
+                env=env,
+                packages=requirements.get("packages", []),
+                install_command=requirements.get("install_command", ""),
+                status="broken",
+                notes=env_detail,
+                language=requirements.get("language", ""),
+                capabilities=requirements.get("capabilities", []),
+                healthcheck=self._resolved_runtime_healthcheck(requirements.get("healthcheck", "")),
+            )
+            self._cache_runtime_status(
+                task_id,
+                skill_id,
+                env,
+                False,
+                env_detail,
+                f"conda run -n {env} true",
+                requirements.get("env_runner", ""),
+            )
+            return False, env_detail, env
         if use_cache and cached and cached.get("ok") and not mode_healthchecks:
             return True, str(cached.get("detail") or "Cached runtime healthcheck passed."), env
         if use_cache and cached and cached.get("ok"):
@@ -2138,7 +2398,7 @@ class BioAnalystAgent:
             ok, detail = self.pm.verify_environment(
                 env_name=env,
                 language=requirements.get("language", ""),
-                healthcheck=requirements.get("healthcheck", ""),
+                healthcheck=self._resolved_runtime_healthcheck(requirements.get("healthcheck", "")),
             )
             status = "verified" if ok else "broken"
             self.skill_manager.record_environment(
@@ -2150,7 +2410,7 @@ class BioAnalystAgent:
                 notes=detail or ("Environment healthcheck passed." if ok else "Environment healthcheck failed."),
                 language=requirements.get("language", ""),
                 capabilities=requirements.get("capabilities", []),
-                healthcheck=requirements.get("healthcheck", ""),
+                healthcheck=self._resolved_runtime_healthcheck(requirements.get("healthcheck", "")),
             )
             self._cache_runtime_status(
                 task_id,
@@ -2158,7 +2418,7 @@ class BioAnalystAgent:
                 env,
                 ok,
                 detail or ("OK" if ok else "Healthcheck failed."),
-                requirements.get("healthcheck", ""),
+                self._resolved_runtime_healthcheck(requirements.get("healthcheck", "")),
                 requirements.get("env_runner", ""),
             )
         if not ok:
@@ -2243,8 +2503,12 @@ class BioAnalystAgent:
             + "\n[/RUNTIME_PREFLIGHT]"
         )
 
-    def _format_runtime_status_for_observation(self, task_id: str) -> str:
-        records = self.runtime_status.get(task_id or "default", {})
+    def _format_runtime_status_for_observation(
+        self,
+        task_id: str,
+        selected_skills: Optional[List[str]] = None,
+    ) -> str:
+        records = self._runtime_status_for_task(task_id, selected_skills)
         if not records:
             return ""
         lines = ["<runtime_status>"]
@@ -2277,6 +2541,16 @@ class BioAnalystAgent:
             if not runner or runner == "bash":
                 continue
             env = str(requirements.get("env") or requirements.get("default_env") or "").strip()
+            install_tool_name = self._install_tool_name(requirements.get("install_tool") or "")
+            if install_tool_name and re.search(rf"(?m)^\s*{re.escape(install_tool_name)}\b", code_text):
+                install_tag = self._install_tool_tag(install_tool_name, env)
+                return (
+                    f"Selected skill `{sid}` declares install_tool `{install_tool_name}`, but the generated "
+                    f"<execute> command invokes it like a script/interpreter. `{install_tool_name}` is only for "
+                    f"installation delegation via `{install_tag}`, not for running analysis code. "
+                    f"If the runtime is already available, regenerate the command with env_runner `{runner}`. "
+                    f"If the runtime healthcheck fails, emit `{install_tag}` outside <execute>."
+                )
             meta = self.skill_manager.get_skill_meta(sid)
             skill_dir = Path(meta.get("_skill_dir", self.skill_manager.skills_root / sid)).resolve()
             runner_present = runner in code_text or (env and f"conda run -n {env}" in code_text)
@@ -2453,12 +2727,66 @@ class BioAnalystAgent:
             }
         return {}
 
-    def _skill_plan_violations(self, plan: str, selected_skills: List[str]) -> List[str]:
-        if not selected_skills:
-            return []
-        if not self.skill_manager:
-            return []
-        return self.skill_manager.validate_plan(plan, selected_skills)
+    def _skill_plan_violations(
+        self,
+        plan: str,
+        selected_skills: List[str],
+        user_msg: str = "",
+        workflow_handoff: Optional[Dict[str, Any]] = None,
+    ) -> List[str]:
+        violations = self.skill_manager.validate_plan(plan, selected_skills) if self.skill_manager and selected_skills else []
+        plan_l = str(plan or "").lower()
+        request_text = str(user_msg or "")
+
+        if workflow_handoff:
+            template_by_stage: Dict[str, Dict[str, Any]] = {}
+            workflow_id = str(workflow_handoff.get("workflow_id") or "").strip()
+            if self.workflow_manager and workflow_id:
+                template = self.workflow_manager.get_workflow(workflow_id)
+                template_by_stage = {
+                    str(stage.get("stage") or "").strip(): dict(stage)
+                    for stage in template.get("stages", []) or []
+                    if str(stage.get("stage") or "").strip()
+                }
+            for stage in workflow_handoff.get("workflow_stages", []) or []:
+                if not isinstance(stage, dict):
+                    continue
+                stage_name = str(stage.get("stage") or "").strip()
+                if not stage_name:
+                    continue
+                template_stage = template_by_stage.get(stage_name, {})
+                output_terms = (
+                    [str(item) for item in self.workflow_manager._ensure_list(template_stage.get("outputs"))]
+                    if self.workflow_manager else []
+                )
+                terms = [
+                    stage_name,
+                    stage_name.replace("_", " "),
+                    str(stage.get("skill") or template_stage.get("default_skill") or ""),
+                    *output_terms,
+                ]
+                if not any(term and term.lower() in plan_l for term in terms):
+                    violations.append(
+                        f"Plan coverage missing workflow handoff stage `{stage_name}`. "
+                        "Include it as an executable step, ASK_USER decision, stage_blocked item, or later ACTIVATE_BATCH stage."
+                    )
+
+        expected_match = re.search(
+            r"(?:预期产物|expected outputs?|final outputs?)\s*[:：]\s*(.*?)(?=\n\s*(?:通用要求|允许|禁止|依赖规则|停止条件|输入文件|输出目录|$))",
+            request_text,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if expected_match:
+            for artifact in re.findall(
+                r"([A-Za-z0-9_.+\-/]+\.(?:tsv|csv|txt|md|html?|json|ya?ml|rds|png|pdf|svg|sh|R|r|py))\b",
+                expected_match.group(1),
+                flags=re.IGNORECASE,
+            ):
+                artifact_name = Path(artifact).name.lower()
+                if artifact_name and artifact_name not in plan_l:
+                    violations.append(f"Plan coverage missing user-expected output `{artifact_name}`.")
+
+        return violations
 
     def _repair_consultant_skill_summary(
         self,
@@ -2523,8 +2851,8 @@ class BioAnalystAgent:
                 else:
                     tool_name = defaults.get("install_tool") or defaults.get("tool_name") or "r_package_runtime"
                 return (
-                    f'<install_tool env="{env}">{tool_name}</install_tool>'
-                    "<!-- R package installation must be performed by install_subagent and rechecked after install. -->"
+                    self._install_tool_tag(tool_name, env)
+                    + "<!-- R package installation must be performed by install_subagent and rechecked after install. -->"
                 )
             return None
         payload = install_re.group(1) or install_re.group(2) or ""
@@ -2560,7 +2888,7 @@ class BioAnalystAgent:
             env = requested_env or f"bio_{package.lower().replace('-', '_')}"
 
         tool_name = defaults.get("tool_name") if defaults.get("selected") else package
-        return f'<install_tool env="{env}">{tool_name}</install_tool>'
+        return self._install_tool_tag(tool_name, env)
 
     def _infer_runtime_skills_from_code(
         self,
@@ -2608,6 +2936,219 @@ class BioAnalystAgent:
             r"commandnotfounderror",
         )
         return any(re.search(pattern, lower, re.IGNORECASE) for pattern in patterns)
+
+    @staticmethod
+    def _install_tool_parts(value: str, fallback_env: str = "") -> Tuple[str, str]:
+        text = str(value or "").strip()
+        if not text:
+            return "", str(fallback_env or "").strip()
+        match = re.fullmatch(
+            r"<install_tool(?:\s+env=[\"'](?P<env>.*?)[\"'])?>(?P<name>.*?)</install_tool>",
+            text,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if match:
+            return match.group("name").strip(), (match.group("env") or fallback_env or "").strip()
+        return text, str(fallback_env or "").strip()
+
+    @classmethod
+    def _install_tool_name(cls, value: str) -> str:
+        name, _env = cls._install_tool_parts(value)
+        return name
+
+    @classmethod
+    def _install_tool_tag(cls, value: str, env: str) -> str:
+        name, declared_env = cls._install_tool_parts(value, env)
+        return f'<install_tool env="{declared_env or env}">{name or "skill_runtime"}</install_tool>'
+
+    @staticmethod
+    def _runtime_install_disallowed_by_context(text: str) -> bool:
+        haystack = str(text or "")
+        patterns = (
+            r"(?:环境|运行环境|依赖|runtime|env|environment|dependency).{0,40}(?:缺失|missing|not found|不存在|unavailable).{0,40}(?:blocked|block|阻塞|终止|停止)",
+            r"(?:缺失|missing|not found|不存在|unavailable).{0,40}(?:环境|运行环境|依赖|runtime|env|environment|dependency).{0,40}(?:blocked|block|阻塞|终止|停止)",
+            r"(?:不要|不得|禁止|不允许).{0,30}(?:安装|install)",
+            r"(?:do not|don't|never).{0,30}(?:install|installation)",
+            r"\bno\s+(?:runtime\s+)?install(?:ation)?\b(?!\s+required)",
+        )
+        return any(re.search(pattern, haystack, re.IGNORECASE) for pattern in patterns)
+
+    @staticmethod
+    def _runtime_policy_context_from_state(state: Dict[str, Any]) -> str:
+        messages = list((state or {}).get("messages", []) or [])
+        sampled = messages[:6] + messages[-6:]
+        parts = [
+            str((state or {}).get("requirements_summary") or ""),
+            str((state or {}).get("current_plan") or ""),
+        ]
+        parts.extend(str(getattr(message, "content", message)) for message in sampled)
+        return "\n".join(part for part in parts if part)
+
+    def _runtime_block_message(self, redirect: str, selected_skills: Optional[List[str]], evidence: str = "") -> str:
+        env = ""
+        tool_name = ""
+        match = re.search(r"<install_tool(?:\s+env=[\"'](.*?)[\"'])?>(.*?)</install_tool>", str(redirect or ""), re.DOTALL)
+        if match:
+            env = (match.group(1) or "").strip()
+            tool_name = self._install_tool_name(match.group(2))
+        skills = ", ".join(self._selected_skill_ids(selected_skills)) or "selected skill runtime"
+        detail = str(evidence or redirect or "").strip().replace("\n", " ")[:600]
+        return (
+            "blocked: required runtime dependency is missing, and the current task explicitly "
+            "requires missing environments/dependencies to be treated as blocked instead of "
+            f"delegating installation. skills={skills}; env={env or 'unknown'}; "
+            f"install_tool={tool_name or 'skill_runtime'}; evidence={detail}"
+        )
+
+    def _consultant_runtime_block_handoff(
+        self,
+        consultant_context: str,
+        code: str,
+        stdout: str,
+        stderr: str,
+        task_id: str,
+        max_skills: int = 1,
+    ) -> Dict[str, Any]:
+        selected: List[str] = []
+        raw_selected: List[str] = []
+        if self.skill_manager:
+            raw_selected = self.skill_manager.match_skills(consultant_context, max_results=max_skills)
+            selected = self.skill_manager.normalize_selected_skills(raw_selected, max_results=max_skills)
+        if not selected:
+            selected = []
+        runtime_skills = self._infer_runtime_skills_from_code(code, selected)
+        evidence = (stderr or stdout or "Consultant runtime verification failed.").strip()
+        env_match = re.search(r"\bconda\s+run\s+-n\s+([A-Za-z0-9_.-]+)", str(code or ""), re.IGNORECASE)
+        env_hint = env_match.group(1) if env_match else ""
+        for sid in runtime_skills:
+            requirements = self._skill_runtime_requirements(sid)
+            env = str(requirements.get("env") or requirements.get("default_env") or env_hint or "").strip()
+            if not env:
+                continue
+            self._cache_runtime_status(
+                task_id,
+                sid,
+                env,
+                False,
+                evidence[:1000],
+                requirements.get("healthcheck", ""),
+                requirements.get("env_runner", ""),
+                mode="consultant",
+            )
+        skill_marker = ", ".join(runtime_skills) if runtime_skills else "None"
+        summary = (
+            f"[SELECTED_SKILLS: {skill_marker}]\n\n"
+            "[MISSING_INPUTS]\n"
+            "- none\n"
+            "[/MISSING_INPUTS]\n"
+            "[QUESTIONS_FOR_USER]\n"
+            "- none\n"
+            "[/QUESTIONS_FOR_USER]\n"
+            "[REQUIREMENTS_SUMMARY]\n"
+            "- Intent / mode: Runtime availability verification for the requested analysis.\n"
+            "- Runtime policy: The current user/benchmark instruction requires missing runtime environments/dependencies to be treated as blocked instead of installing them.\n"
+            f"- Failed Consultant check: `{str(code or '').strip()[:300]}`\n"
+            f"- Evidence: {evidence[:800]}\n"
+            f"- Selected skill rationale: {skill_marker} matched the requested analysis context; no installation should be delegated under this task policy.\n"
+            "[/REQUIREMENTS_SUMMARY]"
+        )
+        return {
+            "messages": [AIMessage(content="FINISH\n" + summary)],
+            "selected_skills": runtime_skills,
+            "selected_skills_raw": list(raw_selected),
+            "skill_selection_source": "consultant_runtime_block",
+            "requirements_summary": summary,
+            "runtime_status": self._runtime_status_for_task(task_id),
+            "next_step": "planner",
+        }
+
+    @staticmethod
+    def _workflow_cue_present(text: str, cue: str) -> bool:
+        haystack = str(text or "")
+        needle = str(cue or "").strip()
+        if not needle:
+            return False
+        if needle.startswith("re:"):
+            pattern = needle[3:].strip()
+            return bool(pattern and re.search(pattern, haystack, re.IGNORECASE))
+        return needle.lower() in haystack.lower()
+
+    def _workflow_exclusion_reason(self, workflow: Dict[str, Any], query_text: str) -> str:
+        """Apply workflow-declared exclusion cues without embedding domain rules in core."""
+        if not self.workflow_manager:
+            return ""
+        rules = workflow.get("exclude_when") or {}
+        if not isinstance(rules, dict):
+            return ""
+
+        for cue in self.workflow_manager._ensure_list(rules.get("any")):
+            if self._workflow_cue_present(query_text, str(cue)):
+                return f"workflow exclude_when.any matched: {cue}"
+
+        all_cues = [str(cue) for cue in self.workflow_manager._ensure_list(rules.get("all")) if str(cue).strip()]
+        if all_cues and all(self._workflow_cue_present(query_text, cue) for cue in all_cues):
+            return "workflow exclude_when.all matched: " + ", ".join(all_cues)
+
+        groups = rules.get("all_groups") or []
+        if isinstance(groups, (str, bytes)):
+            groups = [[str(groups)]]
+        for group in groups:
+            cues = [str(cue) for cue in self.workflow_manager._ensure_list(group) if str(cue).strip()]
+            if cues and all(self._workflow_cue_present(query_text, cue) for cue in cues):
+                return "workflow exclude_when.all_groups matched: " + ", ".join(cues)
+        return ""
+
+    def _workflow_candidate_allowed(self, workflow: Dict[str, Any], query_text: str) -> bool:
+        return not self._workflow_exclusion_reason(workflow, query_text)
+
+    def _explicit_skill_ids_from_text(self, text: str, max_results: Optional[int] = None) -> List[str]:
+        if not self.skill_manager:
+            return []
+        candidates = re.findall(r"\b(?:[A-Za-z0-9_.-]+/){1,4}[A-Za-z0-9_.-]+\b", str(text or ""))
+        normalized: List[str] = []
+        for candidate in candidates:
+            for skill_id in self.skill_manager.normalize_selected_skills([candidate], max_results=1):
+                if skill_id not in normalized:
+                    normalized.append(skill_id)
+        limit = max_results or SkillManager.MAX_SELECTED_SKILLS
+        return normalized[:limit]
+
+    def _state_update_for_user_skill_correction(
+        self,
+        user_answer: str,
+        state: AgentState,
+        task_id: str,
+    ) -> Dict[str, Any]:
+        explicit_skills = self._explicit_skill_ids_from_text(user_answer)
+        if not explicit_skills:
+            return {}
+        current_skills = self._selected_skill_ids(state.get("active_skills", []) or state.get("selected_skills", []))
+        if explicit_skills == current_skills:
+            return {}
+        update = {
+            "selected_skills": explicit_skills,
+            "selected_skills_raw": list(explicit_skills),
+            "active_skills": explicit_skills,
+            "future_skills": [],
+            "required_skills_all": list(explicit_skills),
+            "candidate_skills": list(explicit_skills),
+            "workflow_handoff": {},
+            "workflow_stages": [],
+            "workflow_id": "",
+            "active_batch_id": "",
+            "skill_selection_source": "explicit_user_skill_correction",
+        }
+        selected = update.get("active_skills") or update.get("selected_skills") or explicit_skills
+        update["runtime_status"] = self._runtime_status_for_task(task_id, selected)
+        update["current_plan"] = ""
+        update["requirements_summary"] = (
+            "[USER_SKILL_CORRECTION]\n"
+            f"- User explicitly requested active skill(s): {', '.join(selected)}.\n"
+            "- Discard any previous incompatible workflow/active-skill state and re-plan from these skills.\n"
+            "[/USER_SKILL_CORRECTION]"
+        )
+        update["next_step"] = "planner"
+        return update
 
     @staticmethod
     def _runtime_install_target_from_error(text: str, fallback_name: str) -> Tuple[str, str]:
@@ -2777,19 +3318,29 @@ class BioAnalystAgent:
             if not env:
                 continue
             defaults = self._skill_runtime_defaults([sid])
-            redirect_name = requirements.get("install_tool") or defaults.get("tool_name", "skill_runtime")
+            redirect_name = self._install_tool_name(requirements.get("install_tool")) or defaults.get("tool_name", "skill_runtime")
             install_command = requirements.get("install_command", "")
             reason = stderr.strip() or stdout.strip() or f"Runtime dependency check failed for {sid}."
             redirect_name, ordered_hint = self._runtime_install_target_from_error(reason, redirect_name)
             if redirect_name == "calder_r_runtime" and not self._calder_runtime_allowed([sid], env):
-                redirect_name = requirements.get("install_tool") or defaults.get("tool_name", "skill_runtime")
+                redirect_name = self._install_tool_name(requirements.get("install_tool")) or defaults.get("tool_name", "skill_runtime")
                 ordered_hint = "Ignoring CALDER repair for non-CALDER2 skill; ordinary A/B compartments use PC1/eigenvector runtime."
+            self._cache_runtime_status(
+                task_id,
+                sid,
+                env,
+                False,
+                reason[:1000],
+                requirements.get("healthcheck", ""),
+                requirements.get("env_runner", ""),
+                mode="execution",
+            )
             comment_parts = [reason[:500]]
             if ordered_hint:
                 comment_parts.append(ordered_hint)
             if install_command:
                 comment_parts.append(f"suggested install: {install_command}")
-            return f'<install_tool env="{env}">{redirect_name}</install_tool><!-- {"; ".join(comment_parts)} -->', runtime_skills
+            return f'{self._install_tool_tag(redirect_name, env)}<!-- {"; ".join(comment_parts)} -->', runtime_skills
         return "", runtime_skills
 
     def _selected_skill_ids(self, state_selected: Optional[List[str]] = None) -> List[str]:
@@ -2835,7 +3386,7 @@ class BioAnalystAgent:
             "install_command": requirements.get("install_command", ""),
             "install_commands": requirements.get("install_commands", []),
             "install_fallbacks": requirements.get("install_fallbacks", []),
-            "install_tool": requirements.get("install_tool", ""),
+            "install_tool": self._install_tool_name(requirements.get("install_tool", "")),
             "install_policy": requirements.get("install_policy", ""),
             "env_file": requirements.get("env_file", ""),
             "tool_name": tool_name,
@@ -2858,7 +3409,7 @@ class BioAnalystAgent:
         if self.skill_manager:
             for sid in selected:
                 requirements = self._skill_runtime_requirements(sid)
-                if requirements.get("install_tool") == "calder_r_runtime":
+                if self._install_tool_name(requirements.get("install_tool") or "") == "calder_r_runtime":
                     return True
         return str(env or "").strip() == "calder2" and not selected
 
@@ -2869,12 +3420,12 @@ class BioAnalystAgent:
         runtime_defaults: Dict[str, Any],
         requested_env: str = "",
     ) -> Tuple[str, str]:
-        requested_tool = str(tool_name or "").strip()
+        requested_tool = self._install_tool_name(tool_name)
         selected = self._selected_skill_ids(selected_skills)
-        declared_tool = str(runtime_defaults.get("install_tool") or runtime_defaults.get("tool_name") or "").strip()
+        declared_tool = self._install_tool_name(runtime_defaults.get("install_tool") or runtime_defaults.get("tool_name") or "")
         if selected and declared_tool and requested_tool and requested_tool != declared_tool:
             if requested_tool == "calder_r_runtime" and self._calder_runtime_allowed(selected_skills, requested_env):
-                return tool_name, ""
+                return requested_tool, ""
             note = (
                 "[INSTALL TOOL CORRECTION]\n"
                 f"- Generated install tag requested `{requested_tool}`, but the selected skill runtime declares `{declared_tool}`.\n"
@@ -2883,10 +3434,10 @@ class BioAnalystAgent:
             )
             return declared_tool, note
         if requested_tool != "calder_r_runtime":
-            return tool_name, ""
+            return requested_tool or tool_name, ""
         if self._calder_runtime_allowed(selected_skills, requested_env):
-            return tool_name, ""
-        replacement = runtime_defaults.get("install_tool") or runtime_defaults.get("tool_name") or "skill_runtime"
+            return requested_tool, ""
+        replacement = self._install_tool_name(runtime_defaults.get("install_tool") or runtime_defaults.get("tool_name") or "skill_runtime")
         note = (
             "[INSTALL TOOL CORRECTION]\n"
             "- Generated install tag requested `calder_r_runtime`, but the selected skill is not CALDER2.\n"
@@ -2900,10 +3451,10 @@ class BioAnalystAgent:
         if not self.skill_manager:
             return ""
         normalized = self._selected_skill_ids(selected_skills)
-        requested_tool = str(tool_name or "").strip()
+        requested_tool = self._install_tool_name(tool_name)
         for sid in normalized:
             requirements = self._skill_runtime_requirements(sid)
-            if requested_tool and requested_tool == str(requirements.get("install_tool") or "").strip():
+            if requested_tool and requested_tool == self._install_tool_name(requirements.get("install_tool") or ""):
                 return sid
             defaults = self._skill_runtime_defaults([sid])
             if requested_tool and requested_tool == str(defaults.get("tool_name") or "").strip():
@@ -2967,15 +3518,15 @@ class BioAnalystAgent:
                 continue
             ok, detail, env = self._verify_skill_runtime(sid, task_id=task_id, code=code)
             if not ok:
-                redirect_name = requirements.get("install_tool") or self._skill_runtime_defaults([sid]).get("tool_name", "skill_runtime")
+                redirect_name = self._install_tool_name(requirements.get("install_tool")) or self._skill_runtime_defaults([sid]).get("tool_name", "skill_runtime")
                 reason = detail or f"Healthcheck failed for environment {env}"
                 redirect_name, ordered_hint = self._runtime_install_target_from_error(reason, redirect_name)
                 if redirect_name == "calder_r_runtime" and not self._calder_runtime_allowed([sid], env):
-                    redirect_name = requirements.get("install_tool") or self._skill_runtime_defaults([sid]).get("tool_name", "skill_runtime")
+                    redirect_name = self._install_tool_name(requirements.get("install_tool")) or self._skill_runtime_defaults([sid]).get("tool_name", "skill_runtime")
                     ordered_hint = "Ignoring CALDER repair for non-CALDER2 skill; ordinary A/B compartments use PC1/eigenvector runtime."
                 if ordered_hint:
                     reason = f"{reason} {ordered_hint}"
-                return False, f'<install_tool env="{env}">{redirect_name}</install_tool><!-- {reason} -->'
+                return False, f'{self._install_tool_tag(redirect_name, env)}<!-- {reason} -->'
         return True, ""
 
     def _record_successful_skill_execution(self, selected_skills: Optional[List[str]], code: str, stdout: str):
@@ -3065,7 +3616,7 @@ class BioAnalystAgent:
         future = merged.get("future_skills", []) or []
         candidate = merged.get("candidate_skills", []) or []
         raw = merged.get("selected_skills_raw", []) or []
-        handoff = merged.get("workflow_handoff", {}) or {}
+        handoff = self._workflow_state_from_mapping(merged)
         workflow_id = merged.get("workflow_id") or handoff.get("workflow_id", "")
         active_batch_id = merged.get("active_batch_id") or handoff.get("active_batch_id", "")
         source = merged.get("skill_selection_source", "")
@@ -3102,11 +3653,197 @@ class BioAnalystAgent:
                     node=node_name,
                 )
 
+    @staticmethod
+    def _workflow_state_from_mapping(mapping: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        if not isinstance(mapping, dict):
+            return {}
+        workflow_state = mapping.get("workflow_state")
+        if isinstance(workflow_state, dict) and workflow_state:
+            return dict(workflow_state)
+        workflow_handoff = mapping.get("workflow_handoff")
+        if isinstance(workflow_handoff, dict) and workflow_handoff:
+            return dict(workflow_handoff)
+        return {}
+
+    def _normalize_state_update_aliases(
+        self,
+        node_name: str,
+        state: AgentState,
+        update: Any,
+    ) -> Any:
+        if not isinstance(update, dict):
+            return update
+        normalized = dict(update)
+        if str(normalized.get("next_step") or "").strip():
+            normalized["node_recommended_next_step"] = str(normalized.get("next_step") or "").strip()
+        workflow_state = self._workflow_state_from_mapping(normalized) or self._workflow_state_from_mapping(state)
+        if workflow_state:
+            normalized.setdefault("workflow_state", workflow_state)
+            normalized.setdefault("workflow_handoff", workflow_state)
+        if node_name in {"execute", "install_subagent"}:
+            normalized.setdefault("pending_action", {})
+        return normalized
+
+    @staticmethod
+    def _extract_json_object(text: str) -> Dict[str, Any]:
+        raw = str(text or "").strip()
+        if not raw:
+            return {}
+        candidates = [raw]
+        fenced = re.search(r"```(?:json)?\s*(.*?)```", raw, re.DOTALL | re.IGNORECASE)
+        if fenced:
+            candidates.insert(0, fenced.group(1).strip())
+        brace = re.search(r"\{.*\}", raw, re.DOTALL)
+        if brace:
+            candidates.append(brace.group(0))
+        for candidate in candidates:
+            try:
+                parsed = json.loads(candidate)
+            except Exception:
+                continue
+            if isinstance(parsed, dict):
+                return parsed
+        return {}
+
+    @staticmethod
+    def _recent_nonempty_execute_body(messages: Any, window: int = 3) -> str:
+        for message in reversed(list(messages or [])[-window:]):
+            if not isinstance(message, AIMessage):
+                continue
+            content = str(getattr(message, "content", "") or "")
+            match = re.search(r"<execute>(.*?)</execute>", content, re.DOTALL)
+            if match and match.group(1).strip():
+                return match.group(1).strip()
+        return ""
+
+    @staticmethod
+    def _normalize_action_type(action_type: str) -> str:
+        value = str(action_type or "").strip().lower().replace("-", "_")
+        aliases = {
+            "ask": "ask_user",
+            "question": "ask_user",
+            "install": "install_tool",
+            "finish": "solution",
+            "final": "solution",
+            "answer": "solution",
+            "activate": "activate_batch",
+        }
+        return aliases.get(value, value)
+
+    @classmethod
+    def _structured_action_from_object(cls, obj: Dict[str, Any], source: str = "action_json") -> Dict[str, Any]:
+        if not isinstance(obj, dict):
+            return {}
+        action_type = cls._normalize_action_type(
+            obj.get("action_type") or obj.get("type") or obj.get("action") or ""
+        )
+        if not action_type:
+            return {}
+        action: Dict[str, Any] = {"type": action_type, "source": source}
+        if action_type == "execute":
+            code = str(obj.get("code") or obj.get("body") or obj.get("command") or "").strip()
+            if not code:
+                return {}
+            action.update({"code": code, "language": str(obj.get("language") or "").strip()})
+            return action
+        if action_type == "ask_user":
+            question = str(obj.get("question") or obj.get("body") or obj.get("prompt") or "").strip()
+            if not question:
+                return {}
+            action["question"] = question
+            return action
+        if action_type == "search":
+            query = str(obj.get("query") or obj.get("question") or obj.get("body") or "").strip()
+            if not query:
+                return {}
+            action["query"] = query
+            return action
+        if action_type == "install_tool":
+            tool = str(obj.get("tool") or obj.get("tool_name") or obj.get("body") or "").strip()
+            if not tool:
+                return {}
+            action.update({"tool": tool, "env": str(obj.get("env") or "").strip()})
+            return action
+        if action_type == "activate_batch":
+            batch_id = str(obj.get("batch_id") or obj.get("batch") or "").strip()
+            if not batch_id:
+                return {}
+            action["batch_id"] = batch_id
+            return action
+        if action_type == "solution":
+            text = str(obj.get("text") or obj.get("answer") or obj.get("body") or "").strip()
+            if not text:
+                return {}
+            action["text"] = text
+            return action
+        return {}
+
+    @classmethod
+    def _extract_structured_action(cls, text: str) -> Dict[str, Any]:
+        raw = str(text or "").strip()
+        if not raw:
+            return {}
+
+        json_candidates: List[str] = []
+        for match in re.finditer(r"<action_json>(.*?)</action_json>", raw, re.DOTALL | re.IGNORECASE):
+            json_candidates.append(match.group(1).strip())
+        fenced = re.search(r"```(?:json)?\s*(.*?)```", raw, re.DOTALL | re.IGNORECASE)
+        if fenced:
+            json_candidates.append(fenced.group(1).strip())
+        if raw.startswith("{"):
+            json_candidates.append(raw)
+        for candidate in json_candidates:
+            action = cls._structured_action_from_object(cls._extract_json_object(candidate))
+            if action:
+                return action
+
+        execute_match = re.search(r"<execute>(.*?)</execute>", raw, re.DOTALL | re.IGNORECASE)
+        if execute_match and execute_match.group(1).strip():
+            code = execute_match.group(1).strip()
+            return {"type": "execute", "code": code, "language": detect_script_language(code), "source": "xml"}
+        ask_match = re.search(r"<ask_user>(.*?)</ask_user>", raw, re.DOTALL | re.IGNORECASE)
+        if ask_match and ask_match.group(1).strip():
+            return {"type": "ask_user", "question": ask_match.group(1).strip(), "source": "xml"}
+        search_match = re.search(r"<search>(.*?)</search>", raw, re.DOTALL | re.IGNORECASE)
+        if search_match and search_match.group(1).strip():
+            return {"type": "search", "query": search_match.group(1).strip(), "source": "xml"}
+        install_match = re.search(
+            r"<install_tool(?:\s+env=[\"'](.*?)[\"'])?>(.*?)</install_tool>",
+            raw,
+            re.DOTALL | re.IGNORECASE,
+        )
+        if install_match and install_match.group(2).strip():
+            return {
+                "type": "install_tool",
+                "env": str(install_match.group(1) or "").strip(),
+                "tool": install_match.group(2).strip(),
+                "source": "xml",
+            }
+        activate_match = re.search(
+            r"<activate_batch\s+batch_id=[\"']?([^\"'\s>/]+)[\"']?\s*/?>",
+            raw,
+            re.DOTALL | re.IGNORECASE,
+        )
+        if activate_match and activate_match.group(1).strip():
+            return {"type": "activate_batch", "batch_id": activate_match.group(1).strip(), "source": "xml"}
+        solution_match = re.search(r"<solution>(.*?)</solution>", raw, re.DOTALL | re.IGNORECASE)
+        if solution_match and solution_match.group(1).strip():
+            return {"type": "solution", "text": solution_match.group(1).strip(), "source": "xml"}
+        return {}
+
+    @staticmethod
+    def _pending_action_is(action: Any, action_type: str) -> bool:
+        return (
+            isinstance(action, dict)
+            and str(action.get("type") or "").strip().lower() == action_type
+        )
+
     def _profile_node(self, node_name: str, func):
         async def wrapped(state: AgentState):
             task_id = state.get("task_id") or state.get("session_id") or "default"
             with self.profiler.node(task_id, node_name):
                 result = await func(state)
+            result = self._normalize_state_update_aliases(node_name, state, result)
             self._record_profiler_state_update(task_id, node_name, state, result)
             return result
         return wrapped
@@ -3392,10 +4129,46 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 for m in recent_consultant_messages
                 if isinstance(m, AIMessage) and str(m.content).strip().startswith("LOAD_")
             ]
+            execute_actions = [
+                str(m.content).strip()
+                for m in recent_consultant_messages
+                if isinstance(m, AIMessage) and str(m.content).strip().startswith("EXECUTE")
+            ]
+            consultant_observations = [
+                str(m.content)
+                for m in recent_consultant_messages
+                if isinstance(m, SystemMessage) and "<observation>" in str(m.content)
+            ]
             validation_errors = [
                 str(m.content)
                 for m in recent_consultant_messages
                 if isinstance(m, SystemMessage) and "<consultant_validation_error>" in str(m.content)
+            ]
+            load_errors = [
+                str(m.content)
+                for m in recent_consultant_messages
+                if isinstance(m, SystemMessage) and "<load_error" in str(m.content)
+            ]
+            failed_consultant_execs = [
+                str(m.content)
+                for m in recent_consultant_messages
+                if isinstance(m, SystemMessage)
+                and "<observation>" in str(m.content)
+                and "❌" in str(m.content)
+            ]
+            force_finish_indices = [
+                idx
+                for idx, msg in enumerate(recent_consultant_messages)
+                if isinstance(msg, SystemMessage)
+                and "<consultant_force_finish_from_observations>" in str(msg.content)
+            ]
+            last_force_finish_index = force_finish_indices[-1] if force_finish_indices else -1
+            execute_after_force_finish = [
+                str(msg.content).strip()
+                for idx, msg in enumerate(recent_consultant_messages)
+                if idx > last_force_finish_index
+                and isinstance(msg, AIMessage)
+                and str(msg.content).strip().startswith("EXECUTE")
             ]
             task_id = state.get("task_id", "default")
             project_id = state.get("project_id") or self.default_project_id
@@ -3430,7 +4203,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     Fore.CYAN,
                 )
 
-            if self.skill_manager and (len(load_actions) >= 6 or len(validation_errors) >= 3):
+            if self.skill_manager and (len(load_actions) >= 6 or len(validation_errors) >= 3 or len(load_errors) >= 3):
                 fallback_raw = []
                 for action in load_actions:
                     parts = action.split(maxsplit=2)
@@ -3439,30 +4212,71 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 if not fallback_raw:
                     fallback_raw = self.skill_manager.match_skills(consultant_context, max_results=consultant_max_skills)
                 selected = self.skill_manager.normalize_selected_skills(fallback_raw, max_results=consultant_max_skills)
-                recent_error_preview = "\n".join(
-                    f"- {re.sub(r'<[^>]+>', '', err).strip()[:500]}"
-                    for err in validation_errors[-3:]
-                    if str(err).strip()
-                )
-                candidate_text = ", ".join(selected) if selected else "none"
-                question = (
-                    "Consultant handoff validation failed repeatedly in the current turn, so BioMind will not "
-                    "auto-select skills or hand off to Planner.\n"
-                    f"Candidate skill hints from metadata matching: {candidate_text}\n"
-                    f"Recent validation errors:\n{recent_error_preview or '- none'}\n\n"
-                    "Please provide the canonical skill id(s) to use, provide a corrected workflow handoff, "
-                    "or reply with `blocked: <reason>`."
-                )
-                obs = (
+                hints = ", ".join(selected) if selected else "None"
+                message = (
                     "<consultant_loop_guard_blocked>\n"
-                    "Repeated Consultant internal actions reached the loop guard. "
-                    "Automatic skill fallback and Planner handoff are disabled.\n"
-                    f"candidate_skill_hints: {candidate_text}\n"
+                    "Consultant handoff validation or skill loading failed repeatedly. "
+                    "BioMind will not auto-select skills or hand off to Planner from this guard.\n"
+                    f"Candidate skill hints from metadata matching: {hints}\n"
+                    "Please provide canonical skill id(s), provide a corrected workflow_state, "
+                    "or reply with `blocked: <reason>`.\n"
                     "</consultant_loop_guard_blocked>"
                 )
                 output.print_once(
                     "consultant_loop_guard_blocked",
                     "⚠️ Consultant repeated internal actions; asking for explicit repair instead of auto-routing.",
+                    Fore.YELLOW,
+                )
+                return {
+                    "messages": [SystemMessage(content=message)],
+                    "pending_human_question": {
+                        "type": "consultant_question",
+                        "stage": "consultant",
+                        "question": (
+                            "Consultant failed to produce a valid handoff after repeated internal actions. "
+                            f"Candidate skill hints: {hints}. Please provide canonical skill id(s), a corrected workflow_state, "
+                            "or `blocked: <reason>`."
+                        ),
+                        "resume_step": "consultant",
+                    },
+                    "next_step": "ask_user",
+                }
+
+            if len(execute_actions) >= 4 and (last_force_finish_index < 0 or execute_after_force_finish):
+                message = (
+                    "<consultant_force_finish_from_observations>\n"
+                    "Consultant has repeated read-only EXECUTE checks. Stop running more read-only commands. "
+                    "Use the verified observations already collected to FINISH a handoff, or ASK the user for the missing input/decision.\n"
+                    "</consultant_force_finish_from_observations>"
+                )
+                output.print_once(
+                    "consultant_execute_count_loop_guard_blocked",
+                    "⚠️ Repeated Consultant EXECUTE actions reached the loop guard; requesting FINISH/ASK repair.",
+                    Fore.YELLOW,
+                )
+                return {"messages": [SystemMessage(content=message)], "next_step": "consultant"}
+
+            if len(failed_consultant_execs) >= 3:
+                recent_error_preview = "\n".join(
+                    f"- {re.sub(r'<[^>]+>', '', err).strip()[:500]}"
+                    for err in failed_consultant_execs[-3:]
+                    if str(err).strip()
+                )
+                question = (
+                    "Consultant read-only verification failed repeatedly in the current turn, so BioMind stopped "
+                    "the Consultant EXECUTE loop.\n"
+                    f"Recent failed observations:\n{recent_error_preview or '- none'}\n\n"
+                    "Please provide corrected inputs/runtime instructions, or reply with `blocked: <reason>`."
+                )
+                obs = (
+                    "<consultant_loop_guard_blocked>\n"
+                    "Repeated Consultant EXECUTE failures reached the loop guard. "
+                    "Automatic read-only checks are paused.\n"
+                    "</consultant_loop_guard_blocked>"
+                )
+                output.print_once(
+                    "consultant_execute_loop_guard_blocked",
+                    "⚠️ Consultant read-only checks failed repeatedly; asking for explicit repair instead of looping.",
                     Fore.YELLOW,
                 )
                 return {
@@ -3553,6 +4367,19 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         "</observation>"
                     )
                     output.print_observation(obs)
+                    if (
+                        ret != 0
+                        and self._looks_like_missing_runtime_dependency("\n".join([clean_code, stdout, stderr]))
+                        and self._runtime_install_disallowed_by_context(consultant_context)
+                    ):
+                        return self._consultant_runtime_block_handoff(
+                            consultant_context,
+                            clean_code,
+                            stdout,
+                            stderr,
+                            task_id,
+                            max_skills=consultant_max_skills,
+                        )
                 else:
                     obs = f"User denied. Feedback: {user_response}" if len(user_response) > 1 else "User denied execution."
                 return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
@@ -3736,11 +4563,40 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             max_active_skills=SkillManager.MAX_SELECTED_SKILLS,
                         )
                         if validation["errors"]:
+                            repaired = repair_workflow_handoff(
+                                workflow_handoff,
+                                self.skill_manager,
+                                self.workflow_manager,
+                                max_active_skills=SkillManager.MAX_SELECTED_SKILLS,
+                            )
+                            if repaired.get("repaired"):
+                                validation = {
+                                    "errors": repaired.get("errors", []),
+                                    "warnings": list(repaired.get("warnings", []))
+                                    + [
+                                        f"Auto-repaired workflow handoff: {note}"
+                                        for note in repaired.get("notes", [])
+                                    ],
+                                    "handoff": repaired.get("handoff", workflow_handoff),
+                                }
+                                output.print_once(
+                                    f"workflow_autorepair:{len(validation_errors)}",
+                                    "🔧 Auto-repaired Consultant workflow handoff using workflow stage metadata.",
+                                    Fore.YELLOW,
+                                )
+                            else:
+                                validation["errors"].extend(
+                                    f"Auto-repair could not resolve: {note}"
+                                    for note in repaired.get("notes", [])
+                                    if note
+                                )
+                        if validation["errors"]:
                             obs = (
                                 "<consultant_validation_error>\n"
                                 "Workflow handoff is invalid:\n"
                                 + "\n".join(f"- {issue}" for issue in validation["errors"])
-                                + "\nUse LOAD_WORKFLOW_TEMPLATE, repair WORKFLOW_STAGES, and keep ACTIVE_SKILLS tied to active stages.\n"
+                                + "\nUse LOAD_WORKFLOW_TEMPLATE and repair WORKFLOW_STAGES. Consultant may leave ACTIVE_SKILLS empty for Planner, "
+                                "or include only the current batch tied to active stages.\n"
                                 "</consultant_validation_error>"
                             )
                             output.print_once(
@@ -3849,6 +4705,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "candidate_skills": candidate_skills,
                     "workflow_id": workflow_handoff.get("workflow_id", ""),
                     "workflow_stages": workflow_handoff.get("workflow_stages", []),
+                    "workflow_state": workflow_handoff if has_workflow_handoff else {},
                     "workflow_handoff": workflow_handoff if has_workflow_handoff else {},
                     "active_batch_id": active_batch_id,
                     "runtime_status": self._runtime_status_for_task(task_id),
@@ -3862,7 +4719,8 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "<consultant_validation_error>\n"
                 "Consultant response did not use any supported command. Reply with exactly one command: "
                 "EXECUTE, SEARCH, LOAD_WORKFLOW_TEMPLATE, LOAD_SKILL_DOC, LOAD_REFERENCE, LOAD_SCRIPT, ASK, or FINISH.\n"
-                "If verification is complete, use FINISH with [SELECTED_SKILLS: ...] or a valid workflow handoff.\n"
+                "If verification is complete, use FINISH with [SELECTED_SKILLS: ...] or a valid workflow handoff. "
+                "For workflow handoff, ACTIVE_SKILLS may be empty when Planner should choose the current batch.\n"
                 f"Unrecognized response preview:\n{content[:1200]}\n"
                 "</consultant_validation_error>"
             )
@@ -3894,11 +4752,35 @@ If the user is actually asking you to run analysis or inspect local files, say t
             })
             stage = str(pending.get("stage") or "consultant")
             resume_step = str(pending.get("resume_step") or ("generate" if stage == "generate" else "consultant"))
-            return {
+            user_correction = self._state_update_for_user_skill_correction(str(user_answer or ""), state, task_id)
+            plan_state = load_plan_state(self.data_path, task_id)
+            running_step = self._running_plan_step(plan_state)
+            if self._plan_step_action_is(running_step, "ask_user"):
+                plan_progress = self._mark_plan_current_done(
+                    task_id,
+                    f"user_answered: {str(user_answer or '')[:500]}",
+                )
+            else:
+                plan_progress = self._record_plan_current_evidence(
+                    task_id,
+                    "user_answered",
+                    str(user_answer or "")[:500],
+                )
+            base_update = {
                 "messages": [HumanMessage(content=f"<human_answer stage=\"{stage}\">\nQuestion: {question}\nAnswer: {user_answer}\n</human_answer>")],
                 "pending_human_question": {},
+                "plan_progress": plan_progress,
                 "next_step": resume_step,
             }
+            if user_correction:
+                base_update.update(user_correction)
+                base_update["messages"].append(SystemMessage(
+                    content=(
+                        "User explicitly corrected the active skill/workflow. "
+                        "Re-plan using the corrected active skill state; do not reuse the prior incompatible workflow."
+                    )
+                ))
+            return base_update
 
         # ════════════════════════════════════════════
         # Node 1: Planner（详细规划 + 脚本预生成）
@@ -3917,7 +4799,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
             selected_skills = active_skills_state or state.get("selected_skills", []) or []
             selected_skills_raw = state.get("selected_skills_raw", []) or list(selected_skills)
             skill_selection_source = state.get("skill_selection_source", "consultant_finish")
-            workflow_handoff = state.get("workflow_handoff", {}) or {}
+            workflow_handoff = self._workflow_state_from_mapping(state)
             active_batch_id = state.get("active_batch_id", "") or workflow_handoff.get("active_batch_id", "")
             future_skills = state.get("future_skills", []) or workflow_handoff.get("future_skills", []) or []
             required_skills_all = state.get("required_skills_all", []) or workflow_handoff.get("required_skills_all", []) or []
@@ -3982,9 +4864,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 if violations:
                     prompt_to_send += (
                         "\n\n[PLAN VALIDATION FAILED]\n"
-                        "Your previous plan violated the selected skill contract:\n"
+                        "Your previous plan failed skill or user-requirement coverage validation:\n"
                         + "\n".join(f"- {v}" for v in violations)
-                        + "\nRegenerate the plan. Do not add placeholders or invented commands.\n"
+                        + "\nRegenerate the plan so every user-requested stage/output is covered. Do not add placeholders or invented commands.\n"
                     )
                 try:
                     response = await self.llm.ainvoke([HumanMessage(content=prompt_to_send)])
@@ -4003,7 +4885,12 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 if plan_content != response.content:
                     violations = []
                 else:
-                    violations = self._skill_plan_violations(plan_content, selected_skills)
+                    violations = self._skill_plan_violations(
+                        plan_content,
+                        selected_skills,
+                        user_msg=str(user_msg),
+                        workflow_handoff=workflow_handoff,
+                    )
                 if not violations:
                     break
 
@@ -4035,6 +4922,23 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             self.workflow_manager,
                             max_active_skills=SkillManager.MAX_SELECTED_SKILLS,
                         )
+                        if validation["errors"]:
+                            repaired = repair_workflow_handoff(
+                                candidate_handoff,
+                                self.skill_manager,
+                                self.workflow_manager,
+                                max_active_skills=SkillManager.MAX_SELECTED_SKILLS,
+                            )
+                            if repaired.get("repaired"):
+                                validation = {
+                                    "errors": repaired.get("errors", []),
+                                    "warnings": list(repaired.get("warnings", []))
+                                    + [
+                                        f"Auto-repaired planner workflow activation: {note}"
+                                        for note in repaired.get("notes", [])
+                                    ],
+                                    "handoff": repaired.get("handoff", candidate_handoff),
+                                }
                         if validation["errors"]:
                             plan_content += (
                                 "\n\n## Workflow Skill Validation Warnings\n"
@@ -4107,6 +5011,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "future_skills": future_skills,
                 "required_skills_all": required_skills_all,
                 "candidate_skills": candidate_skills,
+                "workflow_state": workflow_handoff,
                 "workflow_handoff": workflow_handoff,
                 "workflow_stages": workflow_handoff.get("workflow_stages", []) if workflow_handoff else [],
                 "workflow_id": workflow_handoff.get("workflow_id", "") if workflow_handoff else "",
@@ -4244,6 +5149,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "active_skills": [],
                     "future_skills": [],
                     "candidate_skills": [],
+                    "workflow_state": {},
                     "workflow_handoff": {},
                     "workflow_stages": [],
                     "workflow_id": "",
@@ -4435,14 +5341,20 @@ The supervisor has flagged an issue. Please:
             ask_user_match = re.search(r"<ask_user>(.*?)</ask_user>", content, re.DOTALL)
             answer_match  = re.search(r"<solution>(.*?)</solution>", content, re.DOTALL)
             activate_match = re.search(r"<activate_batch\s+batch_id=[\"']?([^\"'\s>/]+)[\"']?\s*/?>", content, re.DOTALL)
+            structured_action = self._extract_structured_action(content)
+            action_type = str(structured_action.get("type") or "").strip()
+            has_execute_body = bool(
+                (execute_match and execute_match.group(1).strip())
+                or (action_type == "execute" and str(structured_action.get("code") or "").strip())
+            )
 
             generated_action = (
-                "finish" if answer_match else
-                "ask_user" if ask_user_match else
-                "activate_batch" if activate_match else
-                "install" if install_match else
-                "execute" if execute_match else
-                "search" if search_match else
+                "finish" if answer_match or action_type == "solution" else
+                "ask_user" if ask_user_match or action_type == "ask_user" else
+                "activate_batch" if activate_match or action_type == "activate_batch" else
+                "install" if install_match or action_type == "install_tool" else
+                "execute" if has_execute_body else
+                "search" if search_match or action_type == "search" else
                 "continue"
             )
             await self._observe_session_memory(
@@ -4456,8 +5368,12 @@ The supervisor has flagged an issue. Please:
                     "plan_progress": plan_progress,
                 },
             )
-            if answer_match:
-                solution_text = answer_match.group(1).strip()
+            if answer_match or action_type == "solution":
+                solution_text = (
+                    answer_match.group(1).strip()
+                    if answer_match
+                    else str(structured_action.get("text") or "").strip()
+                )
                 can_finish, plan_progress, final_status, gate_feedback = self._prepare_final_solution_progress(
                     task_id,
                     solution_text,
@@ -4474,6 +5390,7 @@ The supervisor has flagged an issue. Please:
                         "messages": [response, SystemMessage(content=gate_message)],
                         "plan_progress": plan_progress,
                         "next_step": "generate",
+                        "pending_action": {},
                     }
                 await self._finalize_task_memory(
                     task_id,
@@ -4481,25 +5398,54 @@ The supervisor has flagged an issue. Please:
                     messages + [response],
                     {"solution": solution_text[:3000], "plan_progress": plan_progress},
                 )
-                return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
+                return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish", "pending_action": {}}
 
-            if activate_match and not answer_match:
-                update = self._activate_workflow_batch(state, activate_match.group(1).strip())
+            if execute_match and not has_execute_body:
+                plan_progress = self._record_plan_current_evidence(
+                    task_id,
+                    "execute_empty_body",
+                    "Generate emitted an empty <execute> block.",
+                )
+                repair = (
+                    "Generate emitted an empty <execute> block. The next response must either provide a non-empty "
+                    "<execute>...</execute> command for the current checklist step, ask the user for a missing decision, "
+                    "or write truthful blocked/partial-success artifacts. Do not explain only."
+                )
+                return {
+                    "messages": [response, SystemMessage(content=repair)],
+                    "plan_progress": plan_progress,
+                    "next_step": "generate",
+                    "pending_action": {},
+                }
+
+            if (activate_match or action_type == "activate_batch") and not answer_match:
+                batch_id = (
+                    activate_match.group(1).strip()
+                    if activate_match
+                    else str(structured_action.get("batch_id") or "").strip()
+                )
+                update = self._activate_workflow_batch(state, batch_id)
                 update_messages = update.get("messages", []) if isinstance(update, dict) else []
                 update_text = "\n".join(str(getattr(msg, "content", msg)) for msg in update_messages)
-                if "✅" in update_text:
-                    plan_progress = self._mark_plan_current_done(task_id, f"activate batch success: {activate_match.group(1).strip()}")
-                else:
-                    plan_progress = self._record_plan_current_evidence(task_id, "activate_batch_failed", update_text[:1000])
+                plan_progress = self._record_activate_batch_progress(
+                    task_id,
+                    batch_id,
+                    update_text,
+                )
                 return {
                     **update,
                     "messages": [response] + update.get("messages", []),
                     "plan_progress": plan_progress,
                     "next_step": "generate",
+                    "pending_action": {},
                 }
 
-            if ask_user_match and not answer_match:
-                question = ask_user_match.group(1).strip()
+            if (ask_user_match or action_type == "ask_user") and not answer_match:
+                question = (
+                    ask_user_match.group(1).strip()
+                    if ask_user_match
+                    else str(structured_action.get("question") or "").strip()
+                )
                 plan_progress = self._record_plan_current_evidence(task_id, "generate_asked_user", question[:1000])
                 return {
                     "messages": [response],
@@ -4512,11 +5458,12 @@ The supervisor has flagged an issue. Please:
                     },
                     "plan_progress": plan_progress,
                     "next_step": "ask_user",
+                    "pending_action": structured_action if structured_action else {},
                 }
 
             # Active RAG
-            if search_match:
-                query = search_match.group(1).strip()
+            if search_match or action_type == "search":
+                query = search_match.group(1).strip() if search_match else str(structured_action.get("query") or "").strip()
                 output.print_once(f"rag:{query[:30]}", f"🔍 Searching KB: {query}", Fore.CYAN)
                 rag_result = "No info found."
                 if self.retriever:
@@ -4528,43 +5475,58 @@ The supervisor has flagged an issue. Please:
                         rag_result = f"Search error: {e}"
                 if str(rag_result).startswith("Search error:"):
                     plan_progress = self._record_plan_current_evidence(task_id, "search_failed", rag_result[:1000])
-                else:
+                elif self._plan_step_action_is(self._running_plan_step(load_plan_state(self.data_path, task_id)), "search"):
                     plan_progress = self._mark_plan_current_done(task_id, f"search completed: {query[:500]}")
+                else:
+                    plan_progress = self._record_plan_current_evidence(task_id, "search_completed", query[:500])
                 tool_msg = HumanMessage(content=f"<rag_result>\n{query}\n{rag_result}\n</rag_result>")
-                return {"messages": [response, tool_msg], "plan_progress": plan_progress, "next_step": "generate"}
+                return {"messages": [response, tool_msg], "plan_progress": plan_progress, "next_step": "generate", "pending_action": {}}
 
             next_step = "generate"
-            if answer_match:    next_step = "finish"
-            elif ask_user_match: next_step = "ask_user"
-            elif install_match: next_step = "install_subagent"
-            elif execute_match:
-                code_to_execute = execute_match.group(1).strip()
-                next_step = "execute" if code_to_execute else "generate"
+            if answer_match or action_type == "solution":
+                next_step = "finish"
+            elif ask_user_match or action_type == "ask_user":
+                next_step = "ask_user"
+            elif install_match or action_type == "install_tool":
+                next_step = "install_subagent"
+            elif has_execute_body:
+                next_step = "execute"
 
-            return {"messages": [response], "plan_progress": plan_progress, "next_step": next_step}
+            return {
+                "messages": [response],
+                "plan_progress": plan_progress,
+                "next_step": next_step,
+                "pending_action": structured_action if structured_action else {},
+            }
 
         # ════════════════════════════════════════════
         # Node 3: Execute
         # ════════════════════════════════════════════
         async def execute_logic(state: AgentState) -> AgentState:
             output.print_node_header("execute")
-            last_message = state["messages"][-1].content
             task_id      = state.get("task_id", "default")
 
-            match = re.search(r"<execute>(.*?)</execute>", last_message, re.DOTALL)
-            if not match:
-                plan_progress = self._record_plan_current_evidence(task_id, "execute_missing_code", "No <execute> body found.")
+            pending_action = state.get("pending_action") or {}
+            original_code = ""
+            if self._pending_action_is(pending_action, "execute"):
+                original_code = str(pending_action.get("code") or "").strip()
+            if not original_code:
+                original_code = self._recent_nonempty_execute_body(state.get("messages", []), window=6)
+            if not original_code:
+                plan_progress = self._record_plan_current_evidence(task_id, "execute_missing_code", "No pending execute action or <execute> body found.")
                 return {"messages": [HumanMessage(content="<observation>❌ No code found.</observation>")],
                         "plan_progress": plan_progress,
+                        "pending_action": {},
                         "next_step": "generate"}
 
-            original_code = match.group(1).strip()
             language = detect_script_language(original_code)
             code = normalize_script_code(original_code)
             task_boundary_context = "\n".join(
                 str(getattr(message, "content", message))
                 for message in state.get("messages", [])[:8]
             )
+            runtime_policy_context = self._runtime_policy_context_from_state(state)
+            install_disallowed = self._runtime_install_disallowed_by_context(runtime_policy_context)
             boundary_gate = CompletionGate.validate_code_boundary(code, task_boundary_context)
             if not boundary_gate.passed:
                 plan_progress = self._record_plan_current_evidence(
@@ -4584,13 +5546,24 @@ The supervisor has flagged an issue. Please:
             runtime_skills_state = self._infer_runtime_skills_from_code(code, selected_skills_state)
             install_redirect = self._redirect_install_command(code, runtime_skills_state)
             if install_redirect:
+                if install_disallowed:
+                    final_res = self._runtime_block_message(install_redirect, runtime_skills_state, code[:1000])
+                    plan_progress = self._mark_plan_current_blocked(task_id, final_res)
+                    return {
+                        "messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
+                        "plan_progress": plan_progress,
+                        "selected_skills": runtime_skills_state,
+                        "active_skills": runtime_skills_state,
+                        "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
+                        "next_step": self._next_step_after_runtime_block(task_id),
+                    }
                 plan_progress = self._record_plan_current_evidence(task_id, "redirect_to_install", install_redirect[:1000])
                 return {
                     "messages": [AIMessage(content=install_redirect)],
                     "plan_progress": plan_progress,
                     "selected_skills": runtime_skills_state,
                     "active_skills": runtime_skills_state,
-                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                     "next_step": "install_subagent",
                 }
 
@@ -4601,7 +5574,7 @@ The supervisor has flagged an issue. Please:
                 return {
                     "messages": [HumanMessage(content=obs)],
                     "plan_progress": plan_progress,
-                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                     "next_step": "generate",
                 }
 
@@ -4612,19 +5585,30 @@ The supervisor has flagged an issue. Please:
                 return {
                     "messages": [HumanMessage(content=obs)],
                     "plan_progress": plan_progress,
-                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                     "next_step": "generate",
                 }
 
             runtime_ready, runtime_redirect = self._ensure_skill_runtime_ready(runtime_skills_state, task_id=task_id, code=code)
             if not runtime_ready and runtime_redirect:
+                if install_disallowed:
+                    final_res = self._runtime_block_message(runtime_redirect, runtime_skills_state, runtime_redirect)
+                    plan_progress = self._mark_plan_current_blocked(task_id, final_res)
+                    return {
+                        "messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
+                        "plan_progress": plan_progress,
+                        "selected_skills": runtime_skills_state,
+                        "active_skills": runtime_skills_state,
+                        "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
+                        "next_step": self._next_step_after_runtime_block(task_id),
+                    }
                 plan_progress = self._record_plan_current_evidence(task_id, "runtime_not_ready", runtime_redirect[:1000])
                 return {
                     "messages": [AIMessage(content=runtime_redirect)],
                     "plan_progress": plan_progress,
                     "selected_skills": runtime_skills_state,
                     "active_skills": runtime_skills_state,
-                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                     "next_step": "install_subagent",
                 }
 
@@ -4644,7 +5628,7 @@ The supervisor has flagged an issue. Please:
                 )
                 return {"messages": [HumanMessage(content=obs)],
                         "plan_progress": plan_progress,
-                        "runtime_status": self._runtime_status_for_task(task_id),
+                        "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                         "next_step": "generate"}
             if action == "quit":
                 await self._finalize_task_memory(
@@ -4682,20 +5666,31 @@ The supervisor has flagged an issue. Please:
                 return {
                     "messages": [HumanMessage(content=obs)],
                     "plan_progress": plan_progress,
-                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                     "next_step": "generate",
                 }
 
             runtime_skills_state = self._infer_runtime_skills_from_code(code_to_run, selected_skills_state)
             install_redirect = self._redirect_install_command(code_to_run, runtime_skills_state)
             if install_redirect:
+                if install_disallowed:
+                    final_res = self._runtime_block_message(install_redirect, runtime_skills_state, code_to_run[:1000])
+                    plan_progress = self._mark_plan_current_blocked(task_id, final_res)
+                    return {
+                        "messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
+                        "plan_progress": plan_progress,
+                        "selected_skills": runtime_skills_state,
+                        "active_skills": runtime_skills_state,
+                        "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
+                        "next_step": self._next_step_after_runtime_block(task_id),
+                    }
                 plan_progress = self._record_plan_current_evidence(task_id, "redirect_to_install", install_redirect[:1000])
                 return {
                     "messages": [AIMessage(content=install_redirect)],
                     "plan_progress": plan_progress,
                     "selected_skills": runtime_skills_state,
                     "active_skills": runtime_skills_state,
-                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                     "next_step": "install_subagent",
                 }
 
@@ -4706,7 +5701,7 @@ The supervisor has flagged an issue. Please:
                 return {
                     "messages": [HumanMessage(content=obs)],
                     "plan_progress": plan_progress,
-                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                     "next_step": "generate",
                 }
 
@@ -4717,19 +5712,30 @@ The supervisor has flagged an issue. Please:
                 return {
                     "messages": [HumanMessage(content=obs)],
                     "plan_progress": plan_progress,
-                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                     "next_step": "generate",
                 }
 
             runtime_ready, runtime_redirect = self._ensure_skill_runtime_ready(runtime_skills_state, task_id=task_id, code=code_to_run)
             if not runtime_ready and runtime_redirect:
+                if install_disallowed:
+                    final_res = self._runtime_block_message(runtime_redirect, runtime_skills_state, runtime_redirect)
+                    plan_progress = self._mark_plan_current_blocked(task_id, final_res)
+                    return {
+                        "messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
+                        "plan_progress": plan_progress,
+                        "selected_skills": runtime_skills_state,
+                        "active_skills": runtime_skills_state,
+                        "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
+                        "next_step": self._next_step_after_runtime_block(task_id),
+                    }
                 plan_progress = self._record_plan_current_evidence(task_id, "runtime_not_ready", runtime_redirect[:1000])
                 return {
                     "messages": [AIMessage(content=runtime_redirect)],
                     "plan_progress": plan_progress,
                     "selected_skills": runtime_skills_state,
                     "active_skills": runtime_skills_state,
-                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                     "next_step": "install_subagent",
                 }
 
@@ -4783,6 +5789,7 @@ The supervisor has flagged an issue. Please:
                 task_id,
             )
             runtime_missing = bool(runtime_install_redirect)
+            runtime_install_blocked = bool(runtime_missing and install_disallowed)
 
             # 持久化
             if self.state_manager:
@@ -4796,7 +5803,7 @@ The supervisor has flagged an issue. Please:
                         stdout,
                     )
 
-            runtime_status_block = self._format_runtime_status_for_observation(task_id)
+            runtime_status_block = self._format_runtime_status_for_observation(task_id, runtime_skills_state)
             stdout_obs = self._clip_observation_text(stdout, 2000)
             stderr_obs = self._clip_observation_text(stderr, 1000)
             if runtime_missing:
@@ -4824,7 +5831,14 @@ The supervisor has flagged an issue. Please:
                        f"{runtime_status_block}\n</observation>")
 
             output.print_observation(obs)
-            if runtime_missing:
+            if runtime_install_blocked:
+                final_res = self._runtime_block_message(
+                    runtime_install_redirect,
+                    runtime_skills_after_execute,
+                    stderr or stdout or runtime_install_redirect,
+                )
+                plan_progress = self._mark_plan_current_blocked(task_id, final_res)
+            elif runtime_missing:
                 plan_progress = self._record_plan_current_evidence(
                     task_id,
                     "runtime_missing_after_execute",
@@ -4858,13 +5872,22 @@ The supervisor has flagged an issue. Please:
                     "plan_progress": plan_progress,
                 },
             )
+            if runtime_install_blocked:
+                return {
+                    "messages": [HumanMessage(content=obs), AIMessage(content=f"<observation>{final_res}</observation>")],
+                    "plan_progress": plan_progress,
+                    "selected_skills": runtime_skills_after_execute,
+                    "active_skills": runtime_skills_after_execute,
+                    "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_after_execute),
+                    "next_step": self._next_step_after_runtime_block(task_id),
+                }
             if runtime_missing:
                 return {
                     "messages": [HumanMessage(content=obs), AIMessage(content=runtime_install_redirect)],
                     "plan_progress": plan_progress,
                     "selected_skills": runtime_skills_after_execute,
                     "active_skills": runtime_skills_after_execute,
-                    "runtime_status": self._runtime_status_for_task(task_id),
+                    "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_after_execute),
                     "next_step": "install_subagent",
                 }
             task_mode = str(state.get("task_mode") or "").strip().lower()
@@ -4884,7 +5907,7 @@ The supervisor has flagged an issue. Please:
             return {
                 "messages": [HumanMessage(content=obs)],
                 "plan_progress": plan_progress,
-                "runtime_status": self._runtime_status_for_task(task_id),
+                "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                 "next_step": "finish" if task_mode in {"readonly", "simple_execute"} else "supervisor",
             }
 
@@ -4899,8 +5922,8 @@ The supervisor has flagged an issue. Please:
         # ════════════════════════════════════════════
         async def supervisor(state: AgentState):
             output.print_node_header("supervisor")
-            update = await self.supervisor_node.run(state)
             task_id = state.get("task_id", "default")
+            update = await self.supervisor_node.run(state)
             update_messages = update.get("messages", []) if isinstance(update, dict) else []
             await self._observe_session_memory(
                 task_id,
@@ -4914,7 +5937,28 @@ The supervisor has flagged an issue. Please:
             )
             if isinstance(update, dict):
                 verdict = str(update.get("supervisor_verdict") or "")
-                if verdict in {"PASS", "WARN"}:
+                if verdict == "WARN" and self._supervisor_warn_requires_followup(update_messages):
+                    followup_text = "\n".join(
+                        str(getattr(msg, "content", msg) or "") for msg in update_messages
+                    )[:1200]
+                    plan_progress = self._record_plan_current_evidence(
+                        task_id,
+                        "warn_followup_required",
+                        followup_text,
+                    )
+                    update.setdefault("messages", []).append(
+                        SystemMessage(
+                            content=(
+                                "Supervisor WARN contains a required follow-up action, so this step is not complete yet. "
+                                "Continue with Generate and perform the concrete action from the supervisor feedback before "
+                                "advancing or finishing."
+                            )
+                        )
+                    )
+                    update["supervisor_verdict"] = "RETRY"
+                    update["next_step"] = "generate"
+                    update["plan_progress"] = plan_progress
+                elif verdict in {"PASS", "WARN"}:
                     step_gate_state = load_plan_state(self.data_path, task_id)
                     step_gate = CompletionGate.validate_current_step(
                         self.data_path,
@@ -4947,9 +5991,20 @@ The supervisor has flagged an issue. Please:
                                 task_id,
                                 final_gate_state,
                                 state.get("current_plan", ""),
+                                require_execution_evidence=True,
+                                require_supervisor_evidence=False,
                             )
                             if final_gate.passed:
-                                update["next_step"] = "finish"
+                                next_batch_update = self._activate_next_workflow_batch_after_plan_completion(
+                                    state,
+                                    task_id,
+                                )
+                                if next_batch_update:
+                                    update.update(next_batch_update)
+                                    update["supervisor_verdict"] = "PASS"
+                                    update["plan_progress"] = ""
+                                else:
+                                    update["next_step"] = "finish"
                             else:
                                 reopened_state = load_plan_state(self.data_path, task_id)
                                 reopen_last_done_step(
@@ -4999,6 +6054,7 @@ The supervisor has flagged an issue. Please:
             output.print_node_header("install_subagent")
             last_msg = state["messages"][-1].content
             task_id  = state.get("task_id", "default")
+            pending_action = state.get("pending_action") or {}
             context_summary = state.get("requirements_summary", "No context.")
             current_plan_for_install = state.get("current_plan", "")
             selected_for_install = state.get("active_skills", []) or state.get("selected_skills", [])
@@ -5012,8 +6068,15 @@ The supervisor has flagged an issue. Please:
                     context_summary += f"\n\nSelected skill runtime context:\n{cards}\n{skill_ctx[:4000]}"
 
             match = re.search(r"<install_tool(?:\s+env=[\"'](.*?)[\"'])?>(.*?)</install_tool>", last_msg, re.DOTALL)
-            specified_env = match.group(1) if match else None
-            tool_name     = match.group(2).strip() if match else runtime_defaults.get("tool_name", "skill_runtime")
+            if self._pending_action_is(pending_action, "install_tool"):
+                specified_env = str(pending_action.get("env") or "").strip() or None
+                raw_tool_name = str(pending_action.get("tool") or "").strip() or runtime_defaults.get("tool_name", "skill_runtime")
+            else:
+                specified_env = match.group(1) if match else None
+                raw_tool_name = match.group(2).strip() if match else runtime_defaults.get("tool_name", "skill_runtime")
+            tool_name, inner_env = self._install_tool_parts(raw_tool_name, specified_env or runtime_defaults.get("env", ""))
+            if inner_env and not specified_env:
+                specified_env = inner_env
             if not tool_name or tool_name == "unknown":
                 tool_name = runtime_defaults.get("tool_name", "skill_runtime")
             owner_skill = self._runtime_owner_skill_for_install(tool_name, selected_for_install)
