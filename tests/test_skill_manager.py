@@ -100,6 +100,22 @@ class SkillManagerSelectionTests(unittest.TestCase):
         self.assertNotIn("import pytorch", requirements["healthcheck"])
         self.assertIn("mamba create -n gp_waiter", requirements["install_command"])
 
+    def test_local_blast_runtime_metadata_declares_install_and_healthcheck(self):
+        requirements = self.manager.get_runtime_requirements("sequence/search/local-blast")
+
+        self.assertEqual(requirements["env"], "bio_sequence_search_local_blast_runtime")
+        self.assertEqual(requirements["env_runner"], "conda run -n bio_sequence_search_local_blast_runtime")
+        self.assertIn("blast", requirements["packages"])
+        self.assertIn("makeblastdb -version", requirements["healthcheck"])
+        self.assertIn("blastp -version", requirements["healthcheck"])
+        self.assertNotIn("bash -lc", requirements["healthcheck"])
+        self.assertEqual(requirements["install_tool"], "sequence_search_local_blast_runtime")
+        self.assertEqual(requirements["install_policy"], "declared-only")
+        self.assertEqual(
+            requirements["install_command"],
+            "conda create -y -n bio_sequence_search_local_blast_runtime -c conda-forge -c bioconda blast",
+        )
+
     def test_crop_gwas_v1_skills_are_discoverable_and_stage_tagged(self):
         skills = {
             "crop-breeding/crop-gwas-pipeline": "gwas_triage",

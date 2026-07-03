@@ -136,6 +136,26 @@ class _FakeSkillManager:
                 "healthcheck": "conda run -n bio_scrna_core Rscript -e \"cat('OK\\n')\"",
                 "mode_healthchecks": {},
             }
+        if skill_id == "sequence/search/local-blast":
+            return {
+                "skill_id": skill_id,
+                "env": "bio_sequence_search_local_blast_runtime",
+                "default_env": "bio_sequence_search_local_blast_runtime",
+                "env_runner": "conda run -n bio_sequence_search_local_blast_runtime",
+                "language": "cli",
+                "packages": ["blast"],
+                "capabilities": ["local-blast", "makeblastdb", "blastp", "blastn", "blastdbcmd"],
+                "install_tool": "sequence_search_local_blast_runtime",
+                "install_command": "conda create -y -n bio_sequence_search_local_blast_runtime -c conda-forge -c bioconda blast",
+                "install_commands": [
+                    "conda create -y -n bio_sequence_search_local_blast_runtime -c conda-forge -c bioconda blast",
+                ],
+                "install_fallbacks": [],
+                "install_policy": "declared-only",
+                "env_file": "",
+                "healthcheck": "conda run -n bio_sequence_search_local_blast_runtime makeblastdb -version && conda run -n bio_sequence_search_local_blast_runtime blastp -version && conda run -n bio_sequence_search_local_blast_runtime blastn -version && conda run -n bio_sequence_search_local_blast_runtime blastdbcmd -version",
+                "mode_healthchecks": {},
+            }
         if skill_id == "3d-dna/compartment-calling":
             return {
                 "skill_id": skill_id,
@@ -581,6 +601,32 @@ class RuntimePreflightTests(unittest.TestCase):
         self.assertNotIn("<install_tool env=\"bio_scrna_core\"><install_tool", redirect)
         cache = agent.runtime_status["task_runtime_xml"]["scrna/workflows/ingest-qc::bio_scrna_core::execution"]
         self.assertFalse(cache["ok"])
+
+    def test_local_blast_missing_makeblastdb_redirect_has_structured_install_hint(self):
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.skill_manager = _FakeSkillManager()
+        agent.runtime_status = {}
+
+        redirect, runtime_skills = agent._runtime_install_redirect_from_execution(
+            "makeblastdb -in target_proteins.fasta -dbtype prot",
+            "",
+            "./temp_script.sh: line 6: makeblastdb: command not found",
+            ["sequence/search/local-blast"],
+            "task_local_blast_runtime",
+        )
+
+        self.assertEqual(runtime_skills, ["sequence/search/local-blast"])
+        self.assertIn('<install_tool env="bio_sequence_search_local_blast_runtime">sequence_search_local_blast_runtime</install_tool>', redirect)
+        self.assertIn("failure_class=missing_executable", redirect)
+        self.assertIn("missing_tools=[makeblastdb]", redirect)
+        self.assertIn("suggested_package=blast", redirect)
+        self.assertIn("conda create -y -n bio_sequence_search_local_blast_runtime", redirect)
+        self.assertIn("makeblastdb -version", redirect)
+        cache = agent.runtime_status["task_local_blast_runtime"][
+            "sequence/search/local-blast::bio_sequence_search_local_blast_runtime::execution"
+        ]
+        self.assertFalse(cache["ok"])
+        self.assertIn("makeblastdb: command not found", cache["detail"])
 
     def test_runtime_install_policy_context_blocks_install_when_requested(self):
         self.assertTrue(

@@ -357,6 +357,22 @@ Classify the failure as exactly one primary class:
 - downstream_tool_runtime_error
 - unknown_truncated_log
 
+After the prose diagnosis, include a compact machine-readable repair hint block
+when the failure is dependency/runtime related:
+```json
+{
+  "failure_class": "missing_executable|missing_package",
+  "missing_tools": ["tool_or_package_name"],
+  "affected_skill": "selected skill id if known",
+  "recommended_action": "install_runtime|verify_existing_runtime|block_runtime",
+  "suggested_package": "package name if known",
+  "healthcheck": ["exact minimal healthcheck commands to run after repair"]
+}
+```
+If the active skill context includes a declared healthcheck or install command,
+use that exact command or a strict subset of it; do not invent a Python/R binding
+or alternative package name.
+
 Domain-specific rules for CALDER2 compartment-calling:
 - A gene-density BED is valid only when it is binned at the selected resolution,
   chromosome names match cooler chromnames, column 4 sum > 0, and non-zero bins > 0.

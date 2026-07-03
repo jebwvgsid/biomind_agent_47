@@ -8,6 +8,7 @@ from agent_core.plan_tracker import (
     load_plan_state,
     mark_first_pending_running,
     mark_plan_step_done,
+    record_current_step_evidence,
     save_plan_state,
 )
 
@@ -98,6 +99,35 @@ class CompletionGateTests(unittest.TestCase):
         self.assertIn("latest command did not mention", result.feedback)
         self.assertIn("report.md", result.feedback)
         self.assertIn("reproduce.sh", result.feedback)
+
+    def test_step_gate_accepts_one_of_conditional_artifacts(self):
+        plan = """
+- [ ] Step 1: Run RBH or write follow-up plan | Goal: Generate rbh_results.tsv or similarity_followup_plan.md | Action: EXECUTE | Done: conditional artifact exists
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "similarity_followup_plan.md").write_text("# skipped RBH\n", encoding="utf-8")
+
+            state = ensure_plan_state(root, "task_seq", plan_text=plan)
+            mark_first_pending_running(state, "started")
+            script = root / "task_outputs" / "task_seq" / "step_1.sh"
+            script.parent.mkdir(parents=True, exist_ok=True)
+            script.write_text(
+                f"cd {root} && cat > similarity_followup_plan.md <<'EOF'\n# skipped RBH\nEOF\n",
+                encoding="utf-8",
+            )
+            state["steps"][0]["evidence"].append(
+                {
+                    "event": "execute_success",
+                    "detail": f"{script}\nSTDOUT:\n",
+                }
+            )
+            save_plan_state(root, "task_seq", state)
+
+            result = CompletionGate.validate_current_step(root, "task_seq", load_plan_state(root, "task_seq"))
+
+        self.assertTrue(result.passed, result.feedback)
+        self.assertEqual(result.missing_artifacts, [])
 
     def test_step_gate_uses_declared_nested_output_path_from_current_evidence(self):
         plan = """
@@ -340,6 +370,32 @@ class FinalSolutionGateTests(unittest.TestCase):
         self.assertFalse(result.passed)
         self.assertIn("leaf_domains.bed", result.feedback)
 
+    def test_final_gate_accepts_one_of_conditional_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "similarity_followup_plan.md").write_text("# no RBH needed\n", encoding="utf-8")
+            (root / "report.md").write_text("# report\n", encoding="utf-8")
+            plan = f"""
+- [x] Step 1: Conditional sequence follow-up | Done: rbh_results.tsv or similarity_followup_plan.md exists
+- [x] Step 2: Generate report.md | Done: report.md exists
+
+Output directory: `{root}`
+
+## Final outputs
+- rbh_results.tsv or similarity_followup_plan.md
+- report.md
+"""
+            state = ensure_plan_state(root, "task_seq_final", plan_text=plan)
+            while any(step["status"] == "pending" for step in state["steps"]):
+                mark_first_pending_running(state, "started")
+                mark_plan_step_done(state, "done")
+            save_plan_state(root, "task_seq_final", state)
+
+            result = CompletionGate.validate_final(root, "task_seq_final", load_plan_state(root, "task_seq_final"), plan)
+
+        self.assertTrue(result.passed, result.feedback)
+        self.assertEqual(result.missing_artifacts, [])
+
     def test_final_gate_searches_declared_output_directory_outside_task_root(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             task_root = Path(tmpdir) / "results" / "04.BM-3DDNA-TAD-STRICT-004"
@@ -567,6 +623,45 @@ Output directory: runs/remaining/BM-REMAIN-SCRNA-002/medium
         self.assertFalse(result.passed)
         self.assertIn("report.md", result.feedback)
         self.assertIn("reproduce.sh", result.feedback)
+
+    def test_step_gate_does_not_scan_sibling_status_files_from_broad_root(self):
+        plan = """
+- [ ] Step 1: Write final status and report outputs | Goal: Generate final report, reproduce.sh, and stage_status.tsv | Action: EXECUTE | Done: final files exist
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            current = root / "runs" / "remaining" / "BM-REMAIN-SCRNA-002" / "vague"
+            sibling = root / "runs" / "remaining" / "BM-REMAIN-SCRNA-002" / "medium"
+            current.mkdir(parents=True)
+            sibling.mkdir(parents=True)
+            for name in ("report.md", "reproduce.sh", "stage_status.tsv"):
+                (current / name).write_text("completed\n", encoding="utf-8")
+            (current / "stage_status.tsv").write_text(
+                "stage\tstatus\treason\n"
+                "scrna_report\tcompleted\treport.md, reproduce.sh, stage_status.tsv generated\n",
+                encoding="utf-8",
+            )
+            (sibling / "stage_status.tsv").write_text(
+                "stage\tstatus\treason\n"
+                "scrna_report\tcompleted\treport.md and reproduce.sh generated\n",
+                encoding="utf-8",
+            )
+            script = root / "task_outputs" / "task_scrna" / "step_1.sh"
+            script.parent.mkdir(parents=True)
+            script.write_text(f"ls -lh {current / 'report.md'} {current / 'reproduce.sh'} {current / 'stage_status.tsv'}\n", encoding="utf-8")
+            state = ensure_plan_state(root, "task_scrna", plan_text=plan)
+            mark_first_pending_running(state, "started")
+            record_current_step_evidence(
+                state,
+                "execute_success",
+                f"{script}\nSTDOUT:\n-rw report.md\n-rw reproduce.sh\n-rw stage_status.tsv\n",
+            )
+            save_plan_state(root, "task_scrna", state)
+
+            result = CompletionGate.validate_current_step(root, "task_scrna", load_plan_state(root, "task_scrna"))
+
+        self.assertTrue(result.passed, result.feedback)
+        self.assertFalse(any("medium" in item for item in result.checked_artifacts))
 
     def test_solution_branch_uses_final_gate_before_finishing(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")

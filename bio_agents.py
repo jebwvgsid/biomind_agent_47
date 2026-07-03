@@ -107,6 +107,7 @@ from agent_core.plan_tracker import (
     reopen_last_done_step,
     reset_plan_state,
     save_plan_state,
+    sync_plan_state_from_stage_status,
     update_plan_markdown_status,
 )
 from agent_core.completion_gate import CompletionGate
@@ -1794,6 +1795,60 @@ class BioAnalystAgent:
         update_plan_markdown_status(plan_file, state)
         return render_plan_progress(state)
 
+    def _stage_status_candidates_from_text(self, *texts: str) -> List[Path]:
+        candidates: List[Path] = []
+        seen: set[str] = set()
+        bases = [Path(self.data_path), project_root, Path.cwd()]
+
+        def add(path_text: str) -> None:
+            cleaned = str(path_text or "").strip().strip("`'\".,;:()[]{}")
+            if not cleaned:
+                return
+            raw = Path(cleaned)
+            paths = [raw] if raw.is_absolute() else [base / raw for base in bases]
+            for path in paths:
+                try:
+                    resolved = path.resolve()
+                except OSError:
+                    resolved = path
+                key = str(resolved)
+                if key in seen:
+                    continue
+                seen.add(key)
+                candidates.append(resolved)
+
+        for text in texts:
+            source = str(text or "")
+            for match in re.finditer(r"((?:/|[A-Za-z0-9_.+\-]+/)[^\s`'\"<>|]*stage_status\.tsv)", source):
+                add(match.group(1))
+            for line in source.splitlines():
+                if not re.search(r"\b(output\s+dir(?:ectory)?|输出目录)\b", line, re.IGNORECASE):
+                    continue
+                for match in re.finditer(r"((?:/|[A-Za-z0-9_.+\-]+/)[^\s`'\"<>|]+)", line):
+                    token = match.group(1).strip("`'\".,;:()[]{}")
+                    if token:
+                        add(str(Path(token) / "stage_status.tsv"))
+        return candidates
+
+    def _sync_plan_tracker_from_stage_status(
+        self,
+        task_id: str,
+        state: Dict[str, Any],
+        *texts: str,
+    ) -> bool:
+        evidence_text = json.dumps(state, ensure_ascii=False)[:20000]
+        changed = 0
+        for path in self._stage_status_candidates_from_text(*texts, evidence_text):
+            changed += sync_plan_state_from_stage_status(
+                state,
+                path,
+                evidence=f"terminal stage_status.tsv observed at {path}",
+            )
+        if changed:
+            self._persist_plan_tracker(task_id, state)
+            return True
+        return False
+
     def _start_or_load_plan_progress(self, task_id: str, current_plan: Optional[str], evidence: str = "") -> str:
         state = self._ensure_plan_tracker(task_id, current_plan)
         if state.get("steps"):
@@ -1934,6 +1989,13 @@ class BioAnalystAgent:
         plan_state = load_plan_state(self.data_path, task_id)
         if not plan_state.get("steps"):
             return True, render_plan_progress(plan_state), "completed", ""
+        self._sync_plan_tracker_from_stage_status(
+            task_id,
+            plan_state,
+            current_plan,
+            solution_text,
+        )
+        plan_state = load_plan_state(self.data_path, task_id)
 
         terminal_status = self._terminal_status_from_text(solution_text)
         if terminal_status == "blocked":
@@ -2934,8 +2996,30 @@ class BioAnalystAgent:
             r"environmentlocationnotfound",
             r"could not find conda environment",
             r"commandnotfounderror",
+            r"\b(?:makeblastdb|blastp|blastn|blastdbcmd|hmmsearch|hmmbuild|diamond)\s*:\s*command not found\b",
+            r"\b(?:no|which:\s*no)\s+(?:makeblastdb|blastp|blastn|blastdbcmd|hmmsearch|hmmbuild|diamond)\b",
         )
         return any(re.search(pattern, lower, re.IGNORECASE) for pattern in patterns)
+
+    @staticmethod
+    def _missing_executables_from_error(text: str) -> List[str]:
+        tools: List[str] = []
+        seen: set[str] = set()
+
+        def add(tool: str) -> None:
+            cleaned = str(tool or "").strip()
+            if not cleaned or "/" in cleaned or cleaned in seen:
+                return
+            seen.add(cleaned)
+            tools.append(cleaned)
+
+        for match in re.finditer(r"\b([A-Za-z0-9_.+-]+)\s*:\s*command not found\b", str(text or ""), re.IGNORECASE):
+            add(match.group(1))
+        for match in re.finditer(r"\b(?:which:\s*)?no\s+([A-Za-z0-9_.+-]+)\s+(?:in|found)\b", str(text or ""), re.IGNORECASE):
+            add(match.group(1))
+        for match in re.finditer(r"/bin/([A-Za-z0-9_.+-]+):\s+No such file or directory\b", str(text or ""), re.IGNORECASE):
+            add(match.group(1))
+        return tools
 
     @staticmethod
     def _install_tool_parts(value: str, fallback_env: str = "") -> Tuple[str, str]:
@@ -3157,6 +3241,8 @@ class BioAnalystAgent:
             return "r_base_runtime", "Rscript is missing; install/register r-base before attempting CALDER."
         if re.search(r"there is no package called .{0,4}calder|calder2?\s+not available", lower, re.IGNORECASE):
             return "calder_r_runtime", "CALDER R package is missing; install it only after Rscript passes."
+        if re.search(r"\b(?:makeblastdb|blastp|blastn|blastdbcmd)\b", lower, re.IGNORECASE):
+            return fallback_name, "missing_tools=[makeblastdb, blastp, blastn, blastdbcmd]; suggested_package=blast"
         return fallback_name, ""
 
     @staticmethod
@@ -3322,6 +3408,7 @@ class BioAnalystAgent:
             install_command = requirements.get("install_command", "")
             reason = stderr.strip() or stdout.strip() or f"Runtime dependency check failed for {sid}."
             redirect_name, ordered_hint = self._runtime_install_target_from_error(reason, redirect_name)
+            missing_tools = self._missing_executables_from_error(reason)
             if redirect_name == "calder_r_runtime" and not self._calder_runtime_allowed([sid], env):
                 redirect_name = self._install_tool_name(requirements.get("install_tool")) or defaults.get("tool_name", "skill_runtime")
                 ordered_hint = "Ignoring CALDER repair for non-CALDER2 skill; ordinary A/B compartments use PC1/eigenvector runtime."
@@ -3336,10 +3423,14 @@ class BioAnalystAgent:
                 mode="execution",
             )
             comment_parts = [reason[:500]]
+            if missing_tools:
+                comment_parts.append(f"failure_class=missing_executable; missing_tools=[{', '.join(missing_tools)}]")
             if ordered_hint:
                 comment_parts.append(ordered_hint)
             if install_command:
                 comment_parts.append(f"suggested install: {install_command}")
+            if requirements.get("healthcheck"):
+                comment_parts.append(f"healthcheck: {requirements.get('healthcheck')}")
             return f'{self._install_tool_tag(redirect_name, env)}<!-- {"; ".join(comment_parts)} -->', runtime_skills
         return "", runtime_skills
 

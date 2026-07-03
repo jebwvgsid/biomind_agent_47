@@ -342,6 +342,104 @@ def _artifact_candidates(text: str) -> List[str]:
     return artifacts
 
 
+def _artifact_alternative_groups(text: str) -> List[List[str]]:
+    """Return artifact groups where the plan promises one of several outputs.
+
+    Planner often expresses conditional stages as "A or B" (or Chinese "A 或 B").
+    Those alternatives must be validated as an OR condition; otherwise the gate
+    keeps asking Generate to create intentionally skipped artifacts.
+    """
+    groups: List[List[str]] = []
+    seen_groups: set[Tuple[str, ...]] = set()
+    searchable = _drop_negative_artifact_sections(str(text or ""))
+
+    def add_group(group: List[str]) -> None:
+        cleaned: List[str] = []
+        seen: set[str] = set()
+        for artifact in group:
+            key = artifact.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            cleaned.append(artifact)
+        if len(cleaned) < 2:
+            return
+        key = tuple(sorted(item.lower() for item in cleaned))
+        if key in seen_groups:
+            return
+        seen_groups.add(key)
+        groups.append(cleaned)
+
+    for line in searchable.splitlines():
+        allowed = {artifact.lower() for artifact in _artifact_candidates(line)}
+        if len(allowed) < 2:
+            continue
+        matches: List[Tuple[str, int, int]] = []
+        for match in ARTIFACT_RE.finditer(line):
+            artifact = match.group(1).strip("`'\".,;:()[]{}")
+            if artifact.lower() in allowed:
+                matches.append((artifact, match.start(), match.end()))
+        if len(matches) < 2:
+            continue
+        current = [matches[0][0]]
+        for index in range(1, len(matches)):
+            previous = matches[index - 1]
+            artifact, start, end = matches[index]
+            separator = line[previous[2]:start].lower()
+            is_alternative = bool(
+                re.search(r"\b(?:or|either|and/or)\b", separator)
+                or re.search(r"或|或者|二选一|任选其一", separator)
+                or re.search(r"(^|\s)/(?:\s|$)", separator)
+            )
+            if is_alternative:
+                current.append(artifact)
+            else:
+                add_group(current)
+                current = [artifact]
+        add_group(current)
+    return groups
+
+
+def _missing_artifacts_considering_alternatives(
+    artifacts: Iterable[str],
+    alternative_groups: Iterable[Iterable[str]],
+    output_roots: Iterable[Path],
+) -> Tuple[List[str], List[str]]:
+    artifact_list = list(artifacts)
+    artifact_keys = {artifact.lower() for artifact in artifact_list}
+    handled: set[str] = set()
+    missing: List[str] = []
+    mention_required: List[str] = []
+    roots = list(output_roots)
+
+    def add_once(target: List[str], artifact: str) -> None:
+        if artifact not in target:
+            target.append(artifact)
+
+    for raw_group in alternative_groups:
+        group = [artifact for artifact in raw_group if artifact.lower() in artifact_keys]
+        if len(group) < 2:
+            continue
+        for artifact in group:
+            handled.add(artifact.lower())
+        existing = [artifact for artifact in group if _artifact_exists_in_roots(roots, artifact)]
+        if existing:
+            for artifact in existing:
+                add_once(mention_required, artifact)
+            continue
+        for artifact in group:
+            add_once(missing, artifact)
+            add_once(mention_required, artifact)
+
+    for artifact in artifact_list:
+        if artifact.lower() in handled:
+            continue
+        add_once(mention_required, artifact)
+        if not _artifact_exists_in_roots(roots, artifact):
+            add_once(missing, artifact)
+    return missing, mention_required
+
+
 def _known_absent_artifacts(current_plan: str) -> set[str]:
     absent: set[str] = set()
     for match in KNOWN_ABSENT_RE.finditer(str(current_plan or "")):
@@ -423,9 +521,9 @@ def _trusted_final_output_roots(data_path: str | Path, current_plan: str) -> Lis
         seen.add(key)
         roots.append(root)
 
-    add(base_root)
     for token in _declared_output_dirs(current_plan):
         add(Path(token))
+    add(base_root)
     return roots or [base_root]
 
 
@@ -483,7 +581,7 @@ def _declared_completed_artifacts(output_roots: Iterable[Path]) -> List[str]:
 
     for output_root in output_roots:
         try:
-            iterator = output_root.rglob("*")
+            iterator = output_root.iterdir()
         except OSError:
             continue
         for path in iterator:
@@ -893,7 +991,11 @@ class CompletionGate:
                 if artifact not in artifacts:
                     artifacts.append(artifact)
             checked.extend(artifacts)
-            missing = [artifact for artifact in artifacts if not _artifact_exists_in_roots(output_roots, artifact)]
+            missing, mention_artifacts = _missing_artifacts_considering_alternatives(
+                artifacts,
+                _artifact_alternative_groups(title),
+                output_roots,
+            )
             if missing and _is_metadata_or_prep_only(code) and not _has_write_intent(code):
                 return GateResult(
                     passed=False,
@@ -919,7 +1021,7 @@ class CompletionGate:
                     missing_artifacts=missing,
                     checked_artifacts=checked,
                 )
-            if artifacts and not _latest_command_mentions_artifacts(code, stdout, artifacts):
+            if mention_artifacts and not _latest_command_mentions_artifacts(code, stdout, mention_artifacts):
                 return GateResult(
                     passed=False,
                     message="Current plan step artifacts already exist, but the latest command did not create or verify the promised artifacts.",
@@ -927,7 +1029,7 @@ class CompletionGate:
                         "Step completion gate failed: the current step promised output/report/result artifacts, "
                         "but those artifacts appear to be pre-existing or from another step because the latest command "
                         "did not mention them. Continue this same step by creating or directly verifying the promised "
-                        f"artifacts: {', '.join(artifacts)}."
+                        f"artifacts: {', '.join(mention_artifacts)}."
                     ),
                     checked_artifacts=checked,
                 )
@@ -978,7 +1080,12 @@ class CompletionGate:
                 continue
             if artifact not in expected:
                 expected.append(artifact)
-        missing = [artifact for artifact in expected if not _artifact_exists_in_roots(output_roots, artifact)]
+        alternative_context = "\n".join([current_plan] + [_step_title(step) for step in _steps(plan_state)])
+        missing, _ = _missing_artifacts_considering_alternatives(
+            expected,
+            _artifact_alternative_groups(alternative_context),
+            output_roots,
+        )
         if expected and missing:
             if _plan_declares_blocked(plan_state, current_plan) and _blocked_status_artifacts_present(output_roots):
                 return GateResult(True, checked_artifacts=expected)

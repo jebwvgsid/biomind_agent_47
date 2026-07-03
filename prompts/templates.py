@@ -221,6 +221,7 @@ Legacy XML action tags below are still accepted for compatibility, but do not mi
 <completion_gate_policy>
 - If CompletionGate or Supervisor says `premature finish`, `Final audit failed`, `no successful Execute evidence`, or `no Supervisor PASS/WARN evidence`, continue the same checklist step with a real `<execute>` command or a truthful blocked/partial-success output. Do not output another `<solution>`.
 - If the latest supervisor or system message says `Step completion validation failed`, `step_completion_gate_failed`, or `missing promised artifacts`, the next action for the same checklist item must directly create/run/validate the promised artifacts or write a truthful blocked status artifact.
+- If the current step has conditional alternatives such as `A or B`, `A / B`, or `A 或 B`, satisfy the branch that matches verified evidence. Do not create the other branch merely to appease validation once a truthful `stage_status.tsv`, blocked/skipped status, or branch artifact documents why it is not applicable.
 - In that situation, do not run another `sed`, `grep`, `head`, `cat`, or source-code inspection command unless the missing artifact error names a specific traceback/log file that must be tailed.
 - A runtime missing error for a task whose policy forbids installation must be converted into blocked outputs (`stage_status.tsv`, `report.md`, `reproduce.sh`) when the approved plan has pending reporting/status steps.
 </completion_gate_policy>
@@ -309,6 +310,9 @@ User Goal: "{user_msg}"
    - Directly create a step to run the analysis (e.g., "Run hifiasm...").
    - Only create an "Install [tool]" step if the tool is NOT in the list.
 2. **LOGICAL STEPS**: Break down the task into logical steps.
+   - For conditional outputs, do not list every possible branch as simultaneously required. Write branch-specific success criteria, for example: "if threshold fails, generate `rbh_results.tsv`; otherwise write `similarity_followup_plan.md` and mark the stage skipped/blocked as appropriate."
+   - If a later stage is optional, network-dependent, or input-dependent, include an explicit decision/status step before its output step so Generate can stop that branch truthfully instead of fabricating missing artifacts.
+   - Do not hard-code expected counts such as sequence number, cell number, chromosome number, sample number, or rows unless they were explicitly supplied or verified. Prefer success criteria like "matches the verified input count" until a preflight step observes the number.
 3. **NO CONDA ACTIVATION**: Do not write steps to activate environments. The system handles it.
 4. **USE SKILLS (CRITICAL)**: Check the **AVAILABLE AGENT SKILLS**. If the Consultant passed a 'Selected Skill' in the summary, or if you find a perfect match, you MUST use it.
    - **SKILL INVOCATION**: Use only skill IDs and absolute paths shown in the available/active skill docs. Do not invoke the skill name as a global command unless the skill docs explicitly say it is in PATH.
@@ -489,6 +493,7 @@ Check the `<user_context>` passed in the conversation.
    2. `conda install ...`
       - For R package dependencies, prefer conda-forge package names with the `r-` prefix, for example `rrBLUP` -> `r-rrblup`.
       - If the user work order includes `[SELECTED SKILL INSTALL COMMAND]`, prefer its `install_command` over generic package-name inference.
+      - If the user work order includes `[STRICT SKILL RUNTIME CONTRACT]`, execute one listed `allowed_install_command` exactly before trying any generic install or declaring failure. Then run the listed `healthcheck` exactly. Do not rename the environment, infer another package, or stop before a real command result.
       - After installing an R package, verify with `conda run -n TARGET_ENV Rscript -e "library(PACKAGE); cat('OK\\n')"`.
    3. Output `<register_environment ... />`. If this is a command-line tool, also output `<register_tool ... />`.
 

@@ -2,6 +2,16 @@
 name: local-blast
 description: Run BLAST+ locally against custom, private, or downloaded nucleotide/protein databases. Use for local genomes, project-specific annotations, GT21/custom FASTA files, private sequences, reproducible batch searches, and database construction with makeblastdb; do not use for quick public single-query searches when remote BLAST is easier.
 legacy_ids: [bio-local-blast, local-blast, blast-plus]
+runtime:
+  default_env: bio_sequence_search_local_blast_runtime
+  env_runner: conda run -n bio_sequence_search_local_blast_runtime
+  language: cli
+  packages: [blast]
+  capabilities: [local-blast, blast-plus, makeblastdb, blastp, blastn, blastdbcmd]
+  install_tool: sequence_search_local_blast_runtime
+  install_policy: declared-only
+  install_command: conda create -y -n bio_sequence_search_local_blast_runtime -c conda-forge -c bioconda blast
+  healthcheck: conda run -n bio_sequence_search_local_blast_runtime makeblastdb -version && conda run -n bio_sequence_search_local_blast_runtime blastp -version && conda run -n bio_sequence_search_local_blast_runtime blastn -version && conda run -n bio_sequence_search_local_blast_runtime blastdbcmd -version
 ---
 
 # Local BLAST Search

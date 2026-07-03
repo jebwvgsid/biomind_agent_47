@@ -19,6 +19,7 @@ STATUS_PENDING = "pending"
 STATUS_RUNNING = "running"
 STATUS_DONE = "done"
 STATUS_BLOCKED = "blocked"
+STATUS_SKIPPED = "skipped"
 
 _CHECKBOX_RE = re.compile(r"^\s*[-*]\s+\[(?P<mark>[ xX>!])\]\s*(?P<title>.+?)\s*$")
 _STEP_LINE_RE = re.compile(
@@ -63,6 +64,7 @@ def _mark_from_status(status: str) -> str:
         STATUS_DONE: "x",
         STATUS_RUNNING: ">",
         STATUS_BLOCKED: "!",
+        STATUS_SKIPPED: "-",
     }.get(str(status), " ")
 
 
@@ -382,6 +384,74 @@ def record_current_step_evidence(state: PlanState, event: str, detail: str = "")
     _append_evidence(step, event, detail)
     state["updated_at"] = _now()
     return True
+
+
+def _stage_status_rows(text: str) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    header: List[str] = []
+    for raw_line in str(text or "").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = [part.strip() for part in line.split("\t")]
+        if not header:
+            header = [part.lower() for part in parts]
+            continue
+        row = {header[index]: value for index, value in enumerate(parts) if index < len(header)}
+        if row:
+            rows.append(row)
+    return rows
+
+
+def stage_status_is_terminal(text: str) -> bool:
+    rows = _stage_status_rows(text)
+    if not rows:
+        return False
+    saw_terminal = False
+    for row in rows:
+        status = str(row.get("status") or "").strip().lower()
+        reason = str(row.get("reason") or row.get("notes") or "").strip().lower()
+        combined = f"{status} {reason}"
+        if any(term in combined for term in ("pending", "running", "in_progress", "awaiting", "todo")):
+            return False
+        if any(term in status for term in ("completed", "complete", "blocked", "skipped", "success", "failed")):
+            saw_terminal = True
+    return saw_terminal
+
+
+def sync_plan_state_from_stage_status(
+    state: PlanState,
+    stage_status_path: str | Path,
+    evidence: str = "",
+) -> int:
+    """Mark desynchronised checklist steps terminal from a terminal stage_status.tsv.
+
+    `stage_status.tsv` is the run-level status contract. When it has no pending
+    rows, the chat-level checklist should not keep an old early step running and
+    force Generate/Supervisor into a final-summary loop.
+    """
+    path = Path(stage_status_path)
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return 0
+    if not stage_status_is_terminal(text):
+        return 0
+
+    changed = 0
+    detail = evidence or f"synced from terminal stage_status.tsv: {path}"
+    terminal_statuses = {STATUS_DONE, STATUS_BLOCKED, STATUS_SKIPPED, "cancelled"}
+    for step in state.get("steps", []) or []:
+        if not isinstance(step, dict):
+            continue
+        if str(step.get("status") or "").strip().lower() in terminal_statuses:
+            continue
+        step["status"] = STATUS_DONE
+        _append_evidence(step, "stage_status_sync", detail)
+        changed += 1
+    if changed:
+        state["updated_at"] = _now()
+    return changed
 
 
 def next_action_title(state: PlanState) -> str:

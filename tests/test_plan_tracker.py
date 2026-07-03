@@ -14,6 +14,7 @@ from agent_core.plan_tracker import (
     render_plan_progress,
     reset_plan_state,
     save_plan_state,
+    sync_plan_state_from_stage_status,
     update_plan_markdown_status,
 )
 
@@ -106,6 +107,32 @@ Step 2: Validate outputs
             self.assertEqual(data["steps"][0]["status"], "running")
             self.assertEqual(data["steps"][0]["evidence"][-1]["event"], "supervisor_verdict")
             self.assertFalse((Path(tmpdir) / "task_outputs" / "task_a" / "plan_state.json").exists())
+
+    def test_terminal_stage_status_syncs_desynchronised_plan(self):
+        plan = """
+- [ ] Step 1: Inspect grouping | Action: EXECUTE | Done: grouping decision recorded
+- [ ] Step 2: Run preprocess | Action: EXECUTE | Done: seurat_norm.rds generated
+- [ ] Step 3: Generate report | Action: EXECUTE | Done: report.md generated
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            status = Path(tmpdir) / "run" / "stage_status.tsv"
+            status.parent.mkdir(parents=True)
+            status.write_text(
+                "stage\tstatus\treason\n"
+                "preprocess\tcompleted\tok\n"
+                "cluster\tcompleted\tok\n"
+                "de_analysis\tstage_blocked_de\tno contrast\n"
+                "scrna_report\tcompleted\treport.md generated\n",
+                encoding="utf-8",
+            )
+            state = build_plan_state("task_a", plan)
+            mark_first_pending_running(state, "started")
+
+            changed = sync_plan_state_from_stage_status(state, status)
+
+        self.assertEqual(changed, 3)
+        self.assertTrue(all(step["status"] == "done" for step in state["steps"]))
+        self.assertEqual(state["steps"][0]["evidence"][-1]["event"], "stage_status_sync")
 
 
 if __name__ == "__main__":
