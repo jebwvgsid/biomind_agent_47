@@ -226,6 +226,14 @@ class DecisionLineageTests(unittest.TestCase):
                 "plan_step_id": "step-1",
             }
             save_plan_state(tmpdir, "task-a", plan)
+            ContextLineageStore(tmpdir, "task-a").record_event(
+                "renderer_invocation",
+                {
+                    "step_id": "step-1",
+                    "renderer_id": "renderer/example",
+                    "manifest_path": str(manifest_path),
+                },
+            )
             bundle = build_decision_lineage_bundle(tmpdir, "task-a", "step-1")
             self.assertEqual(bundle["segments"]["generate_renderer"]["calls"], [])
             self.assertEqual(bundle["renderer_lineage"]["manifests"][0]["renderer_id"], "renderer/example")

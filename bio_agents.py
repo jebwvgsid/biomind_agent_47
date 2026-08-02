@@ -5411,6 +5411,28 @@ class BioAnalystAgent:
         logger.error(summary)
         return AIMessage(content=deterministic_failure_solution(exc, stage, task_id))
 
+    def _trace_skill_versions(self, skill_ids: List[str]) -> Dict[str, str]:
+        versions: Dict[str, str] = {}
+        skill_manager = getattr(self, "skill_manager", None)
+        if not skill_manager:
+            return versions
+        for skill_id in [str(item) for item in skill_ids or [] if str(item).strip()]:
+            try:
+                meta = dict(skill_manager.get_skill_meta(skill_id) or {})
+            except Exception:
+                continue
+            declared = str(meta.get("version") or meta.get("skill_version") or "").strip()
+            if declared:
+                versions[skill_id] = declared
+                continue
+            source = Path(str(meta.get("_skill_file") or meta.get("skill_file") or ""))
+            if source.is_file():
+                try:
+                    versions[skill_id] = f"sha256:{hashlib.sha256(source.read_bytes()).hexdigest()}"
+                except OSError:
+                    pass
+        return versions
+
     async def _ainvoke_llm(
         self,
         messages: List[BaseMessage],
@@ -5468,6 +5490,10 @@ class BioAnalystAgent:
             metadata.setdefault("stage_id", (current_step.get("renderer_execution") or {}).get("current_stage_id"))
             metadata.setdefault("action_id", (current_step.get("renderer_execution") or {}).get("current_action_id"))
             metadata.setdefault("selected_skill_ids", current_step.get("skill_ids") or [])
+            metadata.setdefault(
+                "skill_versions",
+                self._trace_skill_versions(list(metadata.get("selected_skill_ids") or [])),
+            )
             if not metadata.get("call_id"):
                 ordinal = len(trace_store.list_snapshots()) + 1
                 identity = json.dumps({
@@ -7870,6 +7896,9 @@ class BioAnalystAgent:
                                     or []
                                 ),
                                 "selected_skill_ids": list(normalized.get("selected_skills") or []),
+                                "skill_versions": self._trace_skill_versions(
+                                    list(normalized.get("selected_skills") or [])
+                                ),
                                 "consult_handoff": self._workflow_state_from_mapping(normalized),
                                 "runtime_audit": list(normalized.get("runtime_audit") or []),
                             },
@@ -9587,7 +9616,13 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
                         "candidate_skill_ids": candidate_skill_ids,
                         "selected_skill_ids": list(state.get("selected_skills") or []),
-                        "retrieval_refs": list(state.get("rag_history") or []),
+                        "retrieval_refs": [
+                            {
+                                "sha256": hashlib.sha256(str(item).encode("utf-8")).hexdigest(),
+                                "chars": len(str(item)),
+                            }
+                            for item in list(state.get("rag_history") or [])
+                        ],
                         "component_token_counts": {
                             key: max(0, int(value) // 4)
                             for key, value in prompt_components.items()

@@ -291,7 +291,7 @@ class ContextLineageStore:
             if key in current and _digest(current[key]) != _digest(value):
                 raise SnapshotConflictError(f"Call annotation conflict for {call_id}: {key}")
             current[key] = value
-            if key in {"selected_skill_ids", "candidate_skill_ids"}:
+            if key in {"selected_skill_ids", "candidate_skill_ids", "skill_versions"}:
                 manifest[key] = value
         manifest["annotations"] = current
         manifest["redaction_manifest"] = [*manifest.get("redaction_manifest", []), *redactions]
@@ -584,14 +584,66 @@ def build_decision_lineage_bundle(
         })
 
     safe_plan, plan_redactions = redact_payload(plan)
+    task_spec = {}
+    if plan:
+        task_spec = dict((plan.get("task_state") or {}).get("task_spec") or plan.get("task_spec") or {})
+    inherited_refs = list(plan.get("inherited_refs") or []) if plan else []
+    if task_spec:
+        from agent_core.task_spec import resolve_effective_user_facts
+
+        effective = resolve_effective_user_facts(task_spec)
+        for fact in effective.get("inherited_facts", []) or []:
+            ref = {
+                "source_task_id": str(fact.get("source_task_id") or ""),
+                "fact_id": str(fact.get("fact_id") or ""),
+                "source_message_id": str(fact.get("source_message_id") or ""),
+                "locator": str(fact.get("locator") or ""),
+            }
+            if ref["source_task_id"] and ref not in inherited_refs:
+                inherited_refs.append(ref)
+    exact_trace_available = bool(calls or controller_events)
+    inherited_lineage: List[Dict[str, Any]] = []
+    source_task_ids = sorted({
+        str(item.get("source_task_id") or "")
+        for item in inherited_refs
+        if isinstance(item, Mapping)
+        and str(item.get("source_task_id") or "") not in {"", str(task_id)}
+    })
+    for source_task_id in source_task_ids:
+        source_store = ContextLineageStore(data_path, source_task_id, create=False)
+        source_calls = [
+            _snapshot_bundle(row)
+            for row in source_store.list_snapshots()
+            if str(row.get("call_kind") or "") in {"task_router", "consultant"}
+        ]
+        source_plan = load_plan_state(data_path, source_task_id)
+        source_provenance = dict((provenance_debug_dump(source_plan).get("provenance") or {})) if source_plan else {}
+        source_artifacts = []
+        for artifact_id, version_id in (source_provenance.get("artifact_heads") or {}).items():
+            artifact = dict((source_provenance.get("artifacts") or {}).get(version_id) or {})
+            if artifact:
+                source_artifacts.append({"artifact_id": artifact_id, **artifact})
+        requested_refs = [
+            item for item in inherited_refs
+            if isinstance(item, Mapping) and str(item.get("source_task_id") or "") == source_task_id
+        ]
+        inherited_lineage.append({
+            "source_task_id": source_task_id,
+            "requested_refs": requested_refs,
+            "user_and_consult_calls": source_calls,
+            "task_completion_handoff": dict((source_plan.get("task_state") or {}).get("completion_handoff") or {}),
+            "artifact_heads": source_artifacts,
+            "trace_status": "available" if source_calls else "legacy_unavailable",
+        })
     return {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "task_id": str(task_id),
         "step_id": str(step_id or ""),
         "attempt_id": str(attempt_id or ""),
-        "trace_status": "available" if calls or renderer_manifests or execution_rows else "legacy_unavailable",
-        "reconstructed": False if calls else bool(renderer_manifests or execution_rows),
-        "not_exact": False if calls else True,
+        "trace_status": "available" if exact_trace_available else "legacy_unavailable",
+        "reconstructed": not exact_trace_available,
+        "not_exact": not exact_trace_available,
+        "exact_snapshot_count": len(calls),
         "task_state": safe_plan,
         "segments": segments,
         "segment_plan": segment_plan,
@@ -603,6 +655,8 @@ def build_decision_lineage_bundle(
             "scripts": scripts,
             "execution_records": execution_rows,
             "validations": list((provenance.get("validations") or {}).values()),
+            "actions": list(actions.values()),
+            "attempts": list(attempts.values()),
         },
         "controller_lineage": controller_events,
         "provenance_summary": provenance_dump.get("summary") or {},
@@ -610,9 +664,54 @@ def build_decision_lineage_bundle(
         "scope": {
             "current_task_only": True,
             "current_plan_id": str(plan.get("plan_id") or "") if plan else "",
-            "explicit_inherited_refs": list(plan.get("inherited_refs") or []) if plan else [],
+            "explicit_inherited_refs": inherited_refs,
         },
+        "inherited_lineage": inherited_lineage,
     }
+
+
+def dump_effective_user_facts(
+    data_path: str | Path,
+    task_id: str,
+    *,
+    as_json: bool = False,
+) -> Dict[str, Any] | str:
+    """Read the durable TaskSpec through the sole effective-facts resolver."""
+    from agent_core.plan_tracker import load_plan_state
+    from agent_core.task_spec import resolve_effective_user_facts
+
+    plan = load_plan_state(data_path, task_id)
+    task_spec = dict((plan.get("task_state") or {}).get("task_spec") or plan.get("task_spec") or {})
+    facts = resolve_effective_user_facts(task_spec)
+    snapshots = ContextLineageStore(data_path, task_id, create=False).list_snapshots()
+    payload, redactions = redact_payload({
+        **facts,
+        "llm_call_ids": [str(row.get("call_id") or "") for row in snapshots],
+        "snapshot_refs": [str(row.get("snapshot_ref") or "") for row in snapshots],
+        "trace_status": "available" if snapshots else "legacy_unavailable",
+    })
+    payload["redaction_manifest"] = redactions
+    if as_json:
+        return json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2, default=str)
+    return payload
+
+
+def dump_context_lineage(
+    data_path: str | Path,
+    task_id: str,
+    step_id: str = "",
+    attempt_id: str = "",
+    *,
+    as_json: bool = False,
+) -> Dict[str, Any] | str:
+    """Return a redacted, read-only lineage dump for operators and tests."""
+    payload, redactions = redact_payload(
+        build_decision_lineage_bundle(data_path, task_id, step_id, attempt_id)
+    )
+    payload["dump_redaction_manifest"] = redactions
+    if as_json:
+        return json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2, default=str)
+    return payload
 
 
 __all__ = [
@@ -621,6 +720,8 @@ __all__ = [
     "SnapshotConflictError",
     "ainvoke_with_snapshot",
     "build_decision_lineage_bundle",
+    "dump_context_lineage",
+    "dump_effective_user_facts",
     "message_payload",
     "redact_payload",
     "response_payload",
