@@ -364,13 +364,13 @@ def extract_user_fact_candidates(text: str) -> List[Dict[str, Any]]:
         })
 
     constraint_match = re.search(
-        r"\b(?:must|must not|never|only|at least|at most|prefer)\b|必须|禁止|不得|不要|只允许|仅允许|优先|至少|最多",
+        r"\b(?:must|must not|do not|don't|never|only|at least|at most|prefer)\b|必须|禁止|不得|不要|只允许|仅允许|优先|至少|最多",
         raw,
         re.IGNORECASE,
     )
     if constraint_match:
         marker = constraint_match.group(0).lower()
-        mode = "prohibit" if marker in {"must not", "never", "禁止", "不得", "不要"} else "require"
+        mode = "prohibit" if marker in {"must not", "do not", "don't", "never", "禁止", "不得", "不要"} else "require"
         if marker in {"prefer", "优先"}:
             mode = "prefer"
         candidates.append({
@@ -1633,6 +1633,107 @@ def resolve_effective_user_facts(spec: Mapping[str, Any] | None) -> Dict[str, An
         ]
         for kind, field in FACT_FIELDS.items()
     }
+    known_artifact_locators = {
+        _text(item.get("locator"))
+        for item in typed["artifact"]
+        if _text(item.get("locator"))
+    }
+    known_artifact_roles = {
+        _field_key(item.get("role"))
+        for item in typed["artifact"]
+        if _field_key(item.get("role"))
+    }
+
+    def legacy_artifact(
+        *,
+        role: str,
+        locator: str,
+        direction: str,
+        source: str,
+        required: bool,
+        verified: bool = False,
+    ) -> Dict[str, Any]:
+        identity = (task_id, "legacy_binding", role, direction, locator)
+        return {
+            "fact_kind": "artifact",
+            "fact_id": _stable_fact_id(*identity),
+            "role": role,
+            "direction": direction,
+            "locator": locator,
+            "artifact_type": "directory" if role == "output_dir" else "file",
+            "format": "directory" if role == "output_dir" else _artifact_format(locator),
+            "cardinality": "one" if role == "output_dir" else "unknown",
+            "required": required,
+            "verified": verified,
+            "scope": "task",
+            "source": _fact_source(source),
+            "source_type": _fact_source(source),
+            "source_task_id": task_id,
+            "source_message_id": "",
+            "revision_id": task_spec_revision(normalized),
+            "status": "active",
+            "supersedes": [],
+            "merge_reason": "legacy_binding_projection",
+            "confidence": 1.0 if _binding_source(source) == "user_explicit" else 0.8,
+        }
+
+    for item in normalized.get("inputs", []) or []:
+        if not isinstance(item, Mapping):
+            continue
+        locator = _text(item.get("resolved_path") or item.get("path"))
+        if not locator or locator in known_artifact_locators:
+            continue
+        typed["artifact"].append(legacy_artifact(
+            role=canonical_input_role(_text(item.get("role")), locator),
+            locator=locator,
+            direction="input",
+            source=_text(item.get("source") or "legacy_task_input"),
+            required=bool(item.get("required", True)),
+            verified=bool(item.get("verified")),
+        ))
+        known_artifact_locators.add(locator)
+    for item in normalized.get("expected_outputs", []) or []:
+        if not isinstance(item, Mapping):
+            continue
+        role = _field_key(item.get("role")) or "output"
+        locator = _text(item.get("path") or item.get("filename"))
+        if not locator or locator in known_artifact_locators or role in known_artifact_roles:
+            continue
+        typed["artifact"].append(legacy_artifact(
+            role=role,
+            locator=locator,
+            direction="output",
+            source=_text(item.get("source") or "legacy_task_spec"),
+            required=bool(item.get("required", True)),
+        ))
+        known_artifact_locators.add(locator)
+        known_artifact_roles.add(role)
+    known_constraint_text = {
+        _text(item.get("text")) for item in typed["constraint"] if _text(item.get("text"))
+    }
+    for field, constraint_type in (("must_do", "require"), ("must_not_do", "prohibit")):
+        for raw in normalized.get(field, []) or []:
+            text = _text(raw.get("text") if isinstance(raw, Mapping) else raw)
+            if not text or text in known_constraint_text:
+                continue
+            typed["constraint"].append({
+                "fact_kind": "constraint",
+                "fact_id": _stable_fact_id(task_id, "legacy_constraint", constraint_type, text),
+                "constraint_type": constraint_type,
+                "text": text,
+                "scope": "task",
+                "cardinality": "many",
+                "source": "user_explicit",
+                "source_type": "user_explicit",
+                "source_task_id": task_id,
+                "source_message_id": "",
+                "revision_id": task_spec_revision(normalized),
+                "status": "active",
+                "supersedes": [],
+                "merge_reason": "legacy_constraint_projection",
+                "confidence": 1.0,
+            })
+            known_constraint_text.add(text)
     inactive: List[Dict[str, Any]] = []
     unresolved: List[Dict[str, Any]] = []
     active_by_kind: Dict[str, List[Dict[str, Any]]] = {
@@ -1867,6 +1968,107 @@ def project_effective_user_facts(
     return result
 
 
+def format_effective_user_facts_context(
+    spec: Mapping[str, Any] | None,
+    *,
+    audience: str,
+    step: Mapping[str, Any] | None = None,
+    max_chars: int = 12000,
+) -> str:
+    """Render the shared projection with explicit fact/source boundaries."""
+    projection = project_effective_user_facts(
+        resolve_effective_user_facts(spec),
+        audience=audience,
+        step=step,
+        max_chars=max_chars,
+    )
+    refs = list(projection.get("source_refs") or [])
+    fact_payload = {
+        key: deepcopy(value)
+        for key, value in projection.items()
+        if key not in {"projection_text", "projection_chars", "projection_budget", "source_refs"}
+    }
+    return (
+        "[EFFECTIVE USER FACTS]\n"
+        + json.dumps(fact_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+        + "\n[USER SOURCE REFERENCES]\n"
+        + json.dumps(refs, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+    )
+
+
+def effective_task_contract(spec: Mapping[str, Any] | None) -> Dict[str, Any]:
+    """Project active facts into the legacy contract consumed by QA gates."""
+    normalized = ensure_task_spec(spec)
+    resolved = resolve_effective_user_facts(normalized)
+    inputs: List[Dict[str, Any]] = []
+    outputs: List[Dict[str, Any]] = []
+    for artifact in resolved["active_artifacts"]:
+        locator = _text(artifact.get("locator"))
+        if not locator:
+            continue
+        if _text(artifact.get("direction")).lower() == "output":
+            outputs.append(normalize_output_binding({
+                "role": artifact.get("role"),
+                "path": locator if artifact.get("role") == "output_dir" else "",
+                "filename": "" if artifact.get("role") == "output_dir" else locator,
+                "required": bool(artifact.get("required", True)),
+                "source": artifact.get("source"),
+                "fact_id": artifact.get("fact_id"),
+            }))
+        else:
+            inputs.append(normalize_input_binding({
+                "role": artifact.get("role"),
+                "path": locator,
+                "required": bool(artifact.get("required", True)),
+                "source": artifact.get("source"),
+                "verified": bool(artifact.get("verified")),
+                "fact_id": artifact.get("fact_id"),
+            }))
+
+    active_input_paths = {_text(item.get("path")) for item in inputs}
+    inactive_artifact_paths = {
+        _text(item.get("locator"))
+        for item in resolved["inactive_facts"]
+        if _field_key(item.get("fact_kind")) == "artifact" and _text(item.get("locator"))
+    }
+    requirements: List[Dict[str, Any]] = []
+    for item in normalized.get("requirements", []) or []:
+        if not isinstance(item, Mapping):
+            continue
+        requirement = normalize_requirement(item)
+        locator = _text(requirement.get("path") or requirement.get("value"))
+        if locator in inactive_artifact_paths and locator not in active_input_paths:
+            continue
+        requirements.append(requirement)
+    known_requirement_paths = {
+        _text(item.get("path") or item.get("value")) for item in requirements
+    }
+    for item in inputs:
+        path = _text(item.get("path"))
+        if path in known_requirement_paths:
+            continue
+        requirements.append(normalize_requirement({
+            "requirement_id": item.get("role") or Path(path).name,
+            "role": item.get("role"),
+            "path": path,
+            "value": path,
+            "level": "required" if item.get("required", True) else "recommended",
+            "status": "verified" if item.get("verified") else "unresolved",
+            "source": item.get("source"),
+            "fact_id": item.get("fact_id"),
+        }))
+    return {
+        "effective_facts_revision": resolved["effective_facts_revision"],
+        "inputs": sorted(inputs, key=lambda item: (_text(item.get("role")), _text(item.get("path")))),
+        "outputs": sorted(outputs, key=lambda item: (_text(item.get("role")), _text(item.get("path") or item.get("filename")))),
+        "requirements": sorted(requirements, key=lambda item: (_text(item.get("role")), _text(item.get("path") or item.get("value")))),
+        "parameters": deepcopy(resolved["active_parameters"]),
+        "constraints": deepcopy(resolved["active_constraints"]),
+        "decisions": deepcopy(resolved["active_decisions"]),
+        "source_refs": deepcopy(resolved["source_refs"]),
+    }
+
+
 def classify_user_feedback_change(kind: str, feedback: str) -> TaskChangeType:
     """Classify user feedback without treating every acknowledgement as a new task."""
     normalized_kind = _text(kind).lower()
@@ -1896,26 +2098,11 @@ def classify_user_feedback_change(kind: str, feedback: str) -> TaskChangeType:
 
 def task_spec_constraints(spec: Mapping[str, Any] | None) -> List[str]:
     """Return explicit effective constraints for legacy conflict detectors."""
-    normalized = ensure_task_spec(spec)
-    values: List[str] = []
-    for field in ("must_do", "must_not_do"):
-        for item in normalized.get(field, []) or []:
-            if isinstance(item, Mapping) and item.get("active") is False:
-                continue
-            text = _text(item.get("text") if isinstance(item, Mapping) else item)
-            if text and text not in values:
-                values.append(text)
-    for item in normalized.get("user_directives", []) or []:
-        if not isinstance(item, Mapping) or _text(item.get("kind")) == "initial_request":
-            continue
-        if item.get("active") is False:
-            continue
-        if _text(item.get("change_type")) not in {"", "requirement_change"}:
-            continue
-        text = _text(item.get("text"))
-        if text and text not in values:
-            values.append(text)
-    return values
+    return list(dict.fromkeys(
+        _text(item.get("text"))
+        for item in resolve_effective_user_facts(spec).get("active_constraints", [])
+        if _text(item.get("text"))
+    ))
 
 
 def render_task_spec(spec: Mapping[str, Any] | None, *, max_chars: int = 12000) -> str:

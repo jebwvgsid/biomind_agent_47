@@ -24,23 +24,116 @@ class AgentState(TypedDict, total=False):
     node_recommended_next_step: Optional[str]
     pending_human_question: dict
     runtime_status: dict
+    runtime_audit: List[dict]
     active_batch_id: Optional[str]
+    current_stage_id: Optional[str]
     active_skills: List[str]
+    skill_activation_error: Optional[str]
     future_skills: List[str]
     required_skills_all: List[str]
     candidate_skills: List[str]
     retry_count: int
+    llm_retry_counts: dict
     task_mode: Optional[str]
     retrieval_mode: Optional[str]
     use_scientific_review: bool
     validation_level: Optional[str]
     intent: Optional[str]
     artifacts: List[str]
+    expected_artifacts: List[str]
+    final_artifacts: List[str]
+    user_constraints: List[str]
     requirements_summary: str  # 存储咨询阶段确认的参数（如基因组大小、物种等）
+    task_spec: dict  # User-owned effective task facts and later confirmed decisions.
+    task_revision: int
+    effective_user_facts_revision: str
+    normalized_fact_mappings: dict
+    user_source_refs: List[dict]
+    input_audit: dict
+    step_states: dict
+    current_step_id: Optional[str]
+    latest_execution: dict
+    diagnosis_state: dict
+    supervisor_state: dict
+    pending_question: dict
+    budgets: dict
+    task_status: Optional[str]
+    last_transition: dict
+    transition_guard: Optional[str]
+    state_version: int
+    state_updated_at: Optional[str]
     rag_history: List[str]     # 存储咨询阶段查到的所有知识片段
     memory_packet_context: str  # Consultant 阶段筛选整理后的跨阶段记忆包
     wiki_memory_context: str    # Consultant 阶段一次性检索到的 Wiki 上下文
     supervisor_verdict: Optional[str]
+    retry_reason: str
+    failed_step_id: str
+    failure_fingerprint: str
+    failure_owner: str
+    required_next_action: str
+    recovery_scope: str
+    evidence_status: str
+    last_supervisor_feedback: dict
+    context_budget_report: dict
+    recovery_phase: Optional[str]
+    recovery_status: Optional[str]
+    recovery_context: dict
+    recovery_context_digest: Optional[str]
+    current_step_context: dict
+    diagnostic_context: dict
+    recovery_trigger: dict
+    recovery_history: List[dict]
+    recovery_decision: dict
+    recovery_application: dict
+    pre_action_evidence: dict
+    dependency_evidence: dict
+    validation_evidence: dict
+    progress_snapshot: dict
+    progress_evidence: dict
+    recovery_hypotheses: List[dict]
+    recovery_attempts: List[dict]
+    execution_evidence: dict
+    generate_result: str
+    generate_exit_reason: str
+    generate_lifecycle: dict
+    step_completion_candidate: dict
+    action_format_repair: dict
+    root_cause_analysis: dict
+    command_chain: dict
+    pending_recovery_action: dict
+    recovery_progress: dict
+    diagnostic_summary: dict
+    structured_diagnosis: dict
+    forbidden_recovery_actions: List[str]
+    knowledge_claims: List[dict]
+    knowledge_conflicts: List[dict]
+    knowledge_conflict_summary: dict
+    knowledge_progress_events: List[dict]
+    conflict_resolution: dict
+    plan_revision: dict
+    plan_version: Optional[str]
+    plan_stale_steps: List[str]
+    plan_revalidation_steps: List[str]
+    verification_checks: List[dict]
+    final_audit_requested: bool
+    completion_candidate: dict
+    completion_gate_result: dict
+    requirements: List[dict]
+    missing_required_inputs: List[str]
+    skipped_optional_checks: List[str]
+    proposed_requirements: List[dict]
+    supervisor_review_decision: dict
+    action_status: Optional[str]
+    step_status: Optional[str]
+    contract_status: Optional[str]
+    resume_mode: Optional[str]
+    resolved_resume_node: Optional[str]
+    resume_audit: dict
+    failure_type: Optional[str]
+    failure_stage: Optional[str]
+    failure_id: Optional[str]
+    provenance_summary: dict
+    provenance_state_path: Optional[str]
 
 # 安装子智能体状态
 class InstallerState(TypedDict):
