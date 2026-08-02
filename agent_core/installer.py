@@ -15,6 +15,7 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from agent_core.state import InstallerState
 from agent_core.middleware import HITLMiddleware
 from agent_core.llm_safety import is_llm_input_rejected, llm_failure_summary
+from agent_core.context_lineage import ainvoke_with_snapshot
 from package_manager import PackageManager
 from execution.executor import detect_script_language, normalize_script_code, run_bash_script, run_python_repl
 from prompts.manager import PromptManager
@@ -28,7 +29,9 @@ from config import (
     RERANK_MODEL_ID, 
     BIO_SOFTWARE_ROOT,
     BIO_SOURCE_INSTALL_DIR,
-    ANACONDA_ROOT
+    ANACONDA_ROOT,
+    LLM_STEP_CONTEXT_CHARS,
+    LLM_STEP_CONTEXT_MESSAGES,
 )
 
 logger = logging.getLogger("BioMind.Installer")
@@ -39,6 +42,7 @@ class InstallerAgent:
 
     def __init__(self, llm, work_dir: str = "./data", package_manager=None):
         self.llm = llm
+        self.work_dir = str(work_dir)
         if package_manager:
             self.pm = package_manager
         else:
@@ -99,6 +103,86 @@ class InstallerAgent:
 
     def _installer_generate_turns(self, state: InstallerState) -> int:
         return sum(1 for msg in state.get("messages", []) if isinstance(msg, AIMessage))
+
+    @staticmethod
+    def _clip_message_content(message, max_chars: int):
+        content = str(getattr(message, "content", "") or "")
+        if len(content) <= max_chars:
+            return message
+        head = max_chars // 2
+        tail = max_chars - head
+        clipped = content[:head] + "\n...[step context clipped]...\n" + content[-tail:]
+        try:
+            return message.model_copy(update={"content": clipped})
+        except Exception:
+            return message
+
+    @classmethod
+    def _step_local_messages(
+        cls,
+        messages,
+        *,
+        max_messages: int = LLM_STEP_CONTEXT_MESSAGES,
+        max_chars: int = LLM_STEP_CONTEXT_CHARS,
+    ):
+        """Keep the installer work order and latest evidence, not old logs."""
+        if not messages:
+            return []
+
+        selected = []
+
+        def add(message):
+            if message not in selected:
+                selected.append(message)
+
+        for message in messages:
+            if isinstance(message, SystemMessage):
+                add(message)
+                break
+        for message in messages:
+            if isinstance(message, HumanMessage):
+                add(message)
+                break
+        for message in reversed(messages):
+            content = str(getattr(message, "content", "") or "")
+            if isinstance(message, HumanMessage) and (
+                "<observation>" in content
+                or "<failure>" in content
+                or "Feedback:" in content
+            ):
+                add(message)
+                break
+        for message in reversed(messages):
+            if isinstance(message, AIMessage):
+                add(message)
+                break
+        for message in reversed(messages):
+            if isinstance(message, SystemMessage):
+                add(message)
+                break
+        if not selected:
+            add(messages[-1])
+
+        # System instructions must precede the retained work-order/evidence messages.
+        selected = [
+            *[message for message in selected if isinstance(message, SystemMessage)],
+            *[message for message in selected if not isinstance(message, SystemMessage)],
+        ][:max_messages]
+        if not selected:
+            return []
+
+        per_message_limit = max(800, max_chars // len(selected))
+        clipped = [cls._clip_message_content(message, per_message_limit) for message in selected]
+        total = sum(len(str(getattr(message, "content", "") or "")) for message in clipped)
+        if total > max_chars:
+            clipped[-1] = cls._clip_message_content(
+                clipped[-1],
+                max(400, max_chars - sum(
+                    len(str(getattr(message, "content", "") or ""))
+                    for message in clipped[:-1]
+                )),
+            )
+        return clipped
 
     def _installer_observations(self, state: InstallerState) -> list[str]:
         observations = []
@@ -258,12 +342,26 @@ class InstallerAgent:
                 f"Detail: {str(detail or 'OK')[:500]}\n"
                 f"Environment '{env}' registered successfully via PackageManager.</observation>"
             )
+        normalized_attempt = self._normalize_install_command_for_contract(attempted_command)
+        remaining = [
+            command for command in contract.get("allowed", [])
+            if self._normalize_install_command_for_contract(command) != normalized_attempt
+        ]
+        if not remaining:
+            return (
+                "<failure>❌ Strict runtime healthcheck failed after its only declared install command.\n"
+                f"Command: {attempted_command}\n"
+                f"Healthcheck: {healthcheck}\n"
+                f"Detail: {str(detail or 'Healthcheck failed.')[:700]}\n"
+                "No declared fallback install command remains. Stop instead of inferring another package, "
+                "environment, channel, or version.</failure>"
+            )
         return (
             "<observation>❌ Strict runtime healthcheck failed after declared install command.\n"
             f"Command: {attempted_command}\n"
             f"Healthcheck: {healthcheck}\n"
             f"Detail: {str(detail or 'Healthcheck failed.')[:700]}\n"
-            "If another allowed_install_command remains, use it once; otherwise stop and report this failure.</observation>"
+            "A different declared install command remains; use it at most once and then re-run the healthcheck.</observation>"
         )
 
     def _is_install_like_command(self, line: str) -> bool:
@@ -324,8 +422,7 @@ class InstallerAgent:
             last_msg = messages[-1] if messages else None
             is_error_recovery = False
 
-            if not messages or (len(messages) > 0 and not isinstance(messages[0], SystemMessage)):
-                is_init = True
+            is_init = not any(isinstance(message, AIMessage) for message in messages)
             
             if last_msg and isinstance(last_msg, HumanMessage) and "<observation>" in str(last_msg.content):
                 if "❌" in str(last_msg.content) or "Failed" in str(last_msg.content):
@@ -400,10 +497,28 @@ class InstallerAgent:
             if is_init:
                 full_context = msgs_to_return + messages
             else:
-                full_context = messages + msgs_to_return
+                step_context = self._step_local_messages(messages)
+                full_context = (
+                    [message for message in step_context if isinstance(message, SystemMessage)]
+                    + [message for message in msgs_to_return if isinstance(message, SystemMessage)]
+                    + [message for message in step_context if not isinstance(message, SystemMessage)]
+                    + [message for message in msgs_to_return if not isinstance(message, SystemMessage)]
+                )
 
             try:
-                response = await self.llm.ainvoke(full_context)
+                response, _ = await ainvoke_with_snapshot(
+                    self.llm,
+                    full_context,
+                    data_path=self.work_dir,
+                    task_id=str(state.get("task_id") or tool_name or "installer"),
+                    metadata={
+                        "node_name": "install_subagent",
+                        "call_kind": "installer",
+                        "selected_skill_ids": list(state.get("selected_skills") or []),
+                        "installer_tool_name": tool_name,
+                        "installer_turn": self._installer_generate_turns(state) + 1,
+                    },
+                )
             except Exception as exc:  # noqa: BLE001 - convert provider failures into graph state.
                 summary = llm_failure_summary(exc, f"installer_generate:{tool_name}")
                 if is_llm_input_rejected(exc):

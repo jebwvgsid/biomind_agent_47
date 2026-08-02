@@ -134,10 +134,14 @@ class AgentState(TypedDict, total=False):
     failure_id: Optional[str]
     provenance_summary: dict
     provenance_state_path: Optional[str]
+    llm_call_refs: List[dict]
+    context_lineage_ref: Optional[str]
 
 # 安装子智能体状态
 class InstallerState(TypedDict):
     tool_name: str
+    task_id: str
+    selected_skills: List[str]
     messages: Annotated[List[BaseMessage], add_messages]
     next_step: Optional[str]
     final_result: Optional[str]

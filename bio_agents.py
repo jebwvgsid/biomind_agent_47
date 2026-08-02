@@ -128,6 +128,7 @@ from agent_core.diagnostics import (
     build_recovery_context,
     enrich_execution_evidence,
 )
+from agent_core.context_lineage import ContextLineageStore
 from agent_core.knowledge_conflicts import (
     ClaimRegistry,
     ConflictResolver,
@@ -743,6 +744,7 @@ class BioAnalystAgent:
         )
         self._stable_prompt_cache: Dict[str, Dict[str, str]] = {}
         self._stable_prompt_dir = self.runtime_memory_dir / "session_prompts"
+        self._latest_llm_call_refs: Dict[str, List[Dict[str, Any]]] = {}
         if self.wiki_enabled:
             self.wiki_memory_manager = WikiMemoryManager(
                 llm=self.llm,
@@ -2449,6 +2451,13 @@ class BioAnalystAgent:
                         stage="recovery_judge",
                         task_id=task_id,
                         task_mode=str(state.get("task_mode") or "managed"),
+                        trace_metadata={
+                            "call_kind": "recovery_judge",
+                            "attempt_id": str(evidence.get("attempt_id") or ""),
+                            "action_id": str(evidence.get("action_id") or ""),
+                            "step_id": str(evidence.get("step_id") or ""),
+                            "recovery_context_ref": str(store.root / "recovery_context.json"),
+                        },
                     )
                     raw_response = str(getattr(response, "content", response) or "")
                     decision = parse_recovery_judge_decision(raw_response)
@@ -5409,6 +5418,7 @@ class BioAnalystAgent:
         stage: str,
         task_id: str = "",
         task_mode: str = "",
+        trace_metadata: Optional[Dict[str, Any]] = None,
     ) -> BaseMessage:
         """Invoke the shared model with a hard wall-clock bound.
 
@@ -5438,6 +5448,40 @@ class BioAnalystAgent:
             prompt_chars,
             timeout,
         )
+        trace_store = ContextLineageStore(self.data_path, task_id) if task_id else None
+        snapshot: Dict[str, Any] = {}
+        if trace_store:
+            metadata = dict(trace_metadata or {})
+            call_kind = str(metadata.get("call_kind") or {
+                "planner": "planner_initial",
+                "planner_repair": "planner_repair",
+            }.get(stage, stage))
+            plan_state = load_plan_state(self.data_path, task_id)
+            _, current_step = current_plan_step_with_index(plan_state)
+            current_step = current_step or {}
+            metadata.setdefault("node_name", stage)
+            metadata.setdefault("call_kind", call_kind)
+            metadata.setdefault("task_revision", plan_state.get("generated_from_task_revision"))
+            metadata.setdefault("task_spec_revision", metadata.get("task_revision"))
+            metadata.setdefault("plan_revision", plan_state.get("plan_revision"))
+            metadata.setdefault("step_id", current_step.get("step_id"))
+            metadata.setdefault("stage_id", (current_step.get("renderer_execution") or {}).get("current_stage_id"))
+            metadata.setdefault("action_id", (current_step.get("renderer_execution") or {}).get("current_action_id"))
+            metadata.setdefault("selected_skill_ids", current_step.get("skill_ids") or [])
+            if not metadata.get("call_id"):
+                ordinal = len(trace_store.list_snapshots()) + 1
+                identity = json.dumps({
+                    "task": task_id,
+                    "kind": call_kind,
+                    "ordinal": ordinal,
+                    "step": metadata.get("step_id"),
+                    "attempt": metadata.get("attempt_id"),
+                }, ensure_ascii=False, sort_keys=True)
+                metadata["call_id"] = (
+                    f"{call_kind}-{ordinal:04d}-"
+                    f"{hashlib.sha256(identity.encode('utf-8')).hexdigest()[:12]}"
+                )
+            snapshot = trace_store.start_call(messages, metadata)
         invoke_task = asyncio.create_task(self.llm.ainvoke(messages))
         try:
             done, _ = await asyncio.wait({invoke_task}, timeout=timeout)
@@ -5447,11 +5491,33 @@ class BioAnalystAgent:
                     f"{stage} LLM request timed out after {timeout:.0f}s"
                 )
             try:
-                return invoke_task.result()
+                response = invoke_task.result()
+                if trace_store and snapshot:
+                    snapshot = trace_store.finish_call(snapshot["call_id"], response)
+                    refs = getattr(self, "_latest_llm_call_refs", None)
+                    if refs is None:
+                        self._latest_llm_call_refs = {}
+                        refs = self._latest_llm_call_refs
+                    refs.setdefault(task_id, []).append({
+                        key: snapshot.get(key)
+                        for key in (
+                            "call_id", "snapshot_ref", "request_hash", "response_hash",
+                            "task_revision", "plan_revision", "step_id", "attempt_id", "call_kind",
+                        )
+                    })
+                    refs[task_id] = refs[task_id][-50:]
+                return response
             except asyncio.CancelledError as exc:
                 raise TimeoutError(
                     f"{stage} LLM request was cancelled by the provider/client"
                 ) from exc
+        except BaseException as exc:
+            if trace_store and snapshot:
+                try:
+                    trace_store.fail_call(snapshot["call_id"], exc)
+                except Exception as trace_exc:  # noqa: BLE001 - preserve original provider failure.
+                    logger.warning("Failed to persist LLM failure snapshot %s: %s", snapshot.get("call_id"), trace_exc)
+            raise
         finally:
             if not invoke_task.done():
                 invoke_task.cancel()
@@ -7658,6 +7724,24 @@ class BioAnalystAgent:
                 node=node_name,
                 next_step=str(update.get("next_step") or ""),
             )
+            transition_payload = {
+                "from_node": node_name,
+                "to_node": str(update.get("next_step") or ""),
+                "task_status": projected_task_status,
+                "step_id": str(current_step.get("step_id") or ""),
+                "plan_id": str(durable_plan.get("plan_id") or ""),
+                "plan_revision": durable_plan.get("plan_revision"),
+                "trigger": str(update.get("node_recommended_next_step") or update.get("next_step") or ""),
+                "guard": str(update.get("transition_guard") or "allowed"),
+            }
+            ContextLineageStore(self.data_path, task_id).record_event(
+                "controller_route",
+                transition_payload,
+                event_id=(
+                    f"route-{node_name}-{durable_task_state.get('state_version', 0)}-"
+                    f"{hashlib.sha256(json.dumps(transition_payload, sort_keys=True, default=str).encode('utf-8')).hexdigest()[:12]}"
+                ),
+            )
         except Exception as exc:
             logger.warning("Could not persist compact task state after %s: %s", node_name, exc)
 
@@ -7758,6 +7842,40 @@ class BioAnalystAgent:
             normalized.setdefault("workflow_handoff", workflow_state)
         if node_name in {"execute", "install_subagent"}:
             normalized.setdefault("pending_action", {})
+        task_id = str(normalized.get("task_id") or state.get("task_id") or "")
+        trace_refs = [
+            *list(state.get("llm_call_refs") or []),
+            *list(getattr(self, "_latest_llm_call_refs", {}).get(task_id, []) or []),
+        ]
+        trace_refs = list({str(item.get("call_id") or index): item for index, item in enumerate(trace_refs) if isinstance(item, dict)}.values())
+        if trace_refs:
+            normalized["llm_call_refs"] = trace_refs[-50:]
+            normalized.setdefault(
+                "context_lineage_ref",
+                str(Path(self.data_path) / "task_outputs" / task_id / "context_trace"),
+            )
+            if node_name == "consultant":
+                latest = next(
+                    (item for item in reversed(trace_refs) if item.get("call_kind") == "consultant"),
+                    {},
+                )
+                if latest.get("call_id"):
+                    try:
+                        ContextLineageStore(self.data_path, task_id).annotate_call(
+                            str(latest["call_id"]),
+                            {
+                                "candidate_skill_ids": list(
+                                    normalized.get("candidate_skills")
+                                    or state.get("candidate_skills")
+                                    or []
+                                ),
+                                "selected_skill_ids": list(normalized.get("selected_skills") or []),
+                                "consult_handoff": self._workflow_state_from_mapping(normalized),
+                                "runtime_audit": list(normalized.get("runtime_audit") or []),
+                            },
+                        )
+                    except Exception as exc:  # noqa: BLE001 - tracing cannot change task routing.
+                        logger.warning("Could not annotate Consultant lineage snapshot: %s", exc)
         return normalized
 
     @staticmethod
@@ -8902,7 +9020,17 @@ class BioAnalystAgent:
                     "next_step": resume_node,
                 }
 
-            decision = await classify_task_mode(self.llm, user_text)
+            decision = await classify_task_mode(self.llm,
+                user_text,
+                data_path=self.data_path,
+                task_id=task_id,
+                trace_metadata={
+                    "task_revision": self._task_revision_for_state(dict(state)),
+                    "task_spec_revision": self._task_revision_for_state(dict(state)),
+                    "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
+                    "user_source_refs": list(state.get("user_source_refs") or []),
+                },
+            )
             mode = str(decision.get("task_mode") or "managed").strip().lower()
             retrieval_mode = str(decision.get("retrieval_mode") or "kb").strip().lower()
             if mode not in {"chat", "readonly", "simple_execute", "managed"}:
@@ -8928,6 +9056,11 @@ class BioAnalystAgent:
                 "validation_level": validation_by_mode.get(mode, "scientific"),
                 "next_step": next_by_mode.get(mode, "consultant"),
             }
+            if decision.get("llm_call_ref"):
+                update["llm_call_refs"] = [dict(decision["llm_call_ref"])]
+                update["context_lineage_ref"] = str(
+                    Path(self.data_path) / "task_outputs" / task_id / "context_trace"
+                )
             if mode in {"readonly", "simple_execute"}:
                 update["current_plan"] = (
                     f"Lightweight {mode} task. Satisfy the user request with one minimal command, "
@@ -9448,6 +9581,21 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     stage="consultant",
                     task_id=task_id,
                     task_mode=str(state.get("task_mode") or "managed"),
+                    trace_metadata={
+                        "call_kind": "consultant",
+                        "task_spec_revision": task_spec_revision(task_spec),
+                        "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
+                        "candidate_skill_ids": candidate_skill_ids,
+                        "selected_skill_ids": list(state.get("selected_skills") or []),
+                        "retrieval_refs": list(state.get("rag_history") or []),
+                        "component_token_counts": {
+                            key: max(0, int(value) // 4)
+                            for key, value in prompt_components.items()
+                            if isinstance(value, int)
+                        },
+                        "formal_input_audit": input_resolution_context,
+                        "user_source_refs": list(state.get("user_source_refs") or []),
+                    },
                 )
             except Exception as exc:
                 failure_summary = llm_failure_summary(exc, "consultant", task_id)
@@ -10358,6 +10506,15 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         stage="planner",
                         task_id=task_id,
                         task_mode=str(state.get("task_mode") or "managed"),
+                        trace_metadata={
+                            "call_kind": "planner_initial",
+                            "task_spec_revision": task_spec_revision(task_spec),
+                            "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
+                            "selected_skill_ids": selected_skills,
+                            "runtime_audit_ref": str(
+                                Path(self.data_path) / "task_outputs" / task_id / "runtime_audit.json"
+                            ),
+                        },
                     )
                 except Exception as exc:
                     if is_transient_llm_failure(exc) and not is_llm_input_rejected(exc):
@@ -10462,6 +10619,18 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             stage="planner_repair",
                             task_id=task_id,
                             task_mode=str(state.get("task_mode") or "managed"),
+                            trace_metadata={
+                                "call_kind": "planner_repair",
+                                "parent_call_id": str(
+                                    (getattr(self, "_latest_llm_call_refs", {}).get(task_id, [{}])[-1]).get("call_id")
+                                    if getattr(self, "_latest_llm_call_refs", {}).get(task_id)
+                                    else ""
+                                ),
+                                "task_spec_revision": task_spec_revision(task_spec),
+                                "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
+                                "selected_skill_ids": selected_skills,
+                                "repair_scope": repair_request,
+                            },
                         )
                         recovery_store.save_llm_result(
                             repair_context_id,
@@ -11325,6 +11494,22 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         stage="generate",
                         task_id=task_id,
                         task_mode=task_mode,
+                        trace_metadata={
+                            "call_kind": "generate",
+                            "task_spec_revision": self._task_revision_for_state(dict(state)),
+                            "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
+                            "step_id": str(current_step_id or ""),
+                            "selected_skill_ids": active_skills,
+                            "component_token_counts": dict(
+                                (context_budget_report or {}).get("component_token_counts") or {}
+                            ),
+                            "truncation_manifest": list(
+                                (context_budget_report or {}).get("truncation_manifest") or []
+                            ),
+                            "action_contract_ref": str(
+                                Path(self.data_path) / "task_outputs" / task_id / "plan_state.json"
+                            ),
+                        },
                     )
                     if recovery_context_obj:
                         recovery_store.save_llm_result(
@@ -14619,8 +14804,12 @@ If the user is actually asking you to run analysis or inspect local files, say t
             final_res    = "Installation Failed"
             snapshot     = installer_snapshot
             current_payload = None if installer_has_pending_interrupt \
-                              else {"tool_name": tool_name,
-                                    "messages": [HumanMessage(content=initial_msg)]}
+                else {
+                    "tool_name": tool_name,
+                    "task_id": task_id,
+                    "selected_skills": selected_skills or selected_for_install,
+                    "messages": [HumanMessage(content=initial_msg)],
+                }
 
             while True:
                 if current_payload:

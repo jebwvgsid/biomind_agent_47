@@ -10,6 +10,8 @@ except ModuleNotFoundError:  # pragma: no cover - lightweight test fallback
         def __init__(self, content: str):
             self.content = content
 
+from agent_core.context_lineage import ainvoke_with_snapshot
+
 logger = logging.getLogger("BioMind.Router")
 
 TASK_MODES = {"chat", "readonly", "simple_execute", "managed"}
@@ -138,17 +140,46 @@ async def classify_task_mode(
     user_query: str,
     *,
     confidence_threshold: float = 0.65,
+    data_path: str | None = None,
+    task_id: str = "",
+    trace_metadata: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     try:
-        response = await llm.ainvoke([HumanMessage(content=build_task_mode_router_prompt(user_query))])
+        messages = [HumanMessage(content=build_task_mode_router_prompt(user_query))]
+        response, snapshot = await ainvoke_with_snapshot(
+            llm,
+            messages,
+            data_path=data_path,
+            task_id=task_id,
+            metadata={
+                "node_name": "triage",
+                "call_kind": "task_router",
+                **dict(trace_metadata or {}),
+            },
+        )
         data = _extract_json_object(str(response.content))
-        return normalize_task_mode_decision(data, confidence_threshold=confidence_threshold)
+        decision = normalize_task_mode_decision(data, confidence_threshold=confidence_threshold)
+        if snapshot:
+            decision["llm_call_ref"] = {
+                key: snapshot.get(key)
+                for key in (
+                    "call_id", "snapshot_ref", "request_hash", "response_hash",
+                    "task_revision", "plan_revision", "step_id", "attempt_id", "call_kind",
+                )
+            }
+        return decision
     except Exception as exc:
         logger.warning("Task-mode router failed: %s", exc)
         return _default_decision(f"router failed: {type(exc).__name__}")
 
 
-async def determine_intent(llm: Any, user_query: str) -> str:
+async def determine_intent(
+    llm: Any,
+    user_query: str,
+    *,
+    data_path: str | None = None,
+    task_id: str = "",
+) -> str:
     """Backward-compatible legacy intent entrypoint.
 
     The main graph now uses classify_task_mode(). This function keeps the old
@@ -175,7 +206,13 @@ USER QUERY: "{user_query}"
 OUTPUT ONLY one word: SOP, TOOLS, INFO, ERRORS, or CHAT.
 """
     try:
-        response = await llm.ainvoke([HumanMessage(content=router_prompt)])
+        response, _ = await ainvoke_with_snapshot(
+            llm,
+            [HumanMessage(content=router_prompt)],
+            data_path=data_path,
+            task_id=task_id,
+            metadata={"node_name": "triage", "call_kind": "task_router", "legacy_router": True},
+        )
         intent = str(response.content or "").strip().upper()
         for valid in ["SOP", "TOOLS", "INFO", "ERRORS", "CHAT", "ALL"]:
             if valid in intent:

@@ -40,6 +40,7 @@ from agent_core.recovery import (
     ValidationStatus,
     failure_log_projection,
 )
+from agent_core.context_lineage import ainvoke_with_snapshot
 from agent_core.task_spec import effective_task_contract, evaluate_requirements
 
 logger = logging.getLogger("BioMind.Supervisor")
@@ -475,8 +476,9 @@ class RuleEngine:
 # ─────────────────────────────────────────────────────────────
 
 class LLMReviewer:
-    def __init__(self, llm):
+    def __init__(self, llm, *, data_path: str = ""):
         self.llm = llm
+        self.data_path = str(data_path or "")
 
     @staticmethod
     def _parse_decision(text: str) -> Dict[str, Any]:
@@ -516,7 +518,17 @@ class LLMReviewer:
             }
         return {}
 
-    async def review(self, code: str, stdout: str, stderr: str, task_context: str, returncode: int = 0) -> str:
+    async def review(
+        self,
+        code: str,
+        stdout: str,
+        stderr: str,
+        task_context: str,
+        returncode: int = 0,
+        *,
+        task_id: str = "",
+        trace_metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
         prompt = f"""You are a senior bioinformatics scientist reviewing an agent's execution step.
 
 [RETURN CODE]
@@ -582,7 +594,17 @@ Return exactly one JSON object and no prose:
 }}
 """
         try:
-            r = await self.llm.ainvoke([HumanMessage(content=prompt)])
+            r, first_snapshot = await ainvoke_with_snapshot(
+                self.llm,
+                [HumanMessage(content=prompt)],
+                data_path=self.data_path,
+                task_id=task_id,
+                metadata={
+                    "node_name": "supervisor",
+                    "call_kind": "supervisor_reviewer",
+                    **dict(trace_metadata or {}),
+                },
+            )
             decision = self._parse_decision(r.content)
             if not decision:
                 repair = (
@@ -590,7 +612,19 @@ Return exactly one JSON object and no prose:
                     "Return exactly one JSON object with assessment, concerns, suggestions, and confidence. "
                     "Do not include Markdown or prose.\n\nInvalid response:\n" + str(r.content)[:2000]
                 )
-                repaired = await self.llm.ainvoke([HumanMessage(content=prompt), HumanMessage(content=repair)])
+                repaired, _ = await ainvoke_with_snapshot(
+                    self.llm,
+                    [HumanMessage(content=prompt), HumanMessage(content=repair)],
+                    data_path=self.data_path,
+                    task_id=task_id,
+                    metadata={
+                        "node_name": "supervisor",
+                        "call_kind": "supervisor_reviewer",
+                        "parent_call_id": str(first_snapshot.get("call_id") or ""),
+                        "repair": True,
+                        **dict(trace_metadata or {}),
+                    },
+                )
                 decision = self._parse_decision(repaired.content)
             if not decision:
                 decision = {
@@ -734,7 +768,9 @@ class SupervisorNode:
         self.output_dir = output_dir
         self.max_retries = max_retries
         self.use_llm_review = use_llm_review
-        self._llm_reviewer = LLMReviewer(llm)
+        output_path = Path(output_dir).expanduser()
+        trace_data_path = output_path.parent if output_path.name == "task_outputs" else output_path
+        self._llm_reviewer = LLMReviewer(llm, data_path=str(trace_data_path))
         self._cot_loggers: Dict[str, ChainOfThoughtLogger] = {}
 
     def _get_cot(self, task_id: str) -> ChainOfThoughtLogger:
@@ -1365,6 +1401,13 @@ class SupervisorNode:
                     str(context["stderr"])[-4000:],
                     task_context,
                     returncode,
+                    task_id=task_id,
+                    trace_metadata={
+                        "step_id": step_id,
+                        "action_id": str(execution.get("action_id") or ""),
+                        "attempt_id": str(execution.get("attempt_id") or ""),
+                        "action_contract_ref": str(execution.get("manifest_path") or ""),
+                    },
                 )
                 try:
                     advisory = json.loads(review_text)
@@ -1639,7 +1682,18 @@ class SupervisorNode:
                 str(projected.get("tail") or ""),
             ])
             llm_review_text = await self._llm_reviewer.review(
-                last_code, review_stdout, stderr[-4000:], task_context, returncode
+                last_code,
+                review_stdout,
+                stderr[-4000:],
+                task_context,
+                returncode,
+                task_id=task_id,
+                trace_metadata={
+                    "step_id": str((evidence or {}).get("step_id") or ""),
+                    "action_id": str((evidence or {}).get("action_id") or ""),
+                    "attempt_id": str((evidence or {}).get("attempt_id") or ""),
+                    "action_contract_ref": str((evidence or {}).get("manifest_path") or ""),
+                },
             )
             llm_review_text = self._enforce_review_hard_constraints(
                 llm_review_text,
