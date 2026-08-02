@@ -815,7 +815,10 @@ def _merge_fact_list(current: Iterable[Any], additions: Iterable[Any]) -> List[A
                     continue
                 existing_priority = SOURCE_PRIORITY.get(_text(existing.get("source")), 0)
                 existing_revision = int(existing.get("revision_id") or 0)
-                if incoming_priority < existing_priority or incoming_revision < existing_revision:
+                if incoming_priority < existing_priority or (
+                    incoming_priority == existing_priority
+                    and incoming_revision < existing_revision
+                ):
                     incoming["status"] = "unresolved"
                     incoming["merge_reason"] = "lower_priority_or_older_conflict"
                     continue
@@ -1556,6 +1559,312 @@ def apply_user_feedback(
         reason=f"{kind}:{change_type}",
         increment_revision=increments_revision,
     )
+
+
+def _effective_fact_sort_key(value: Mapping[str, Any]) -> tuple[Any, ...]:
+    """Return a deterministic order for resolved facts and audit output."""
+    return (
+        _field_key(value.get("fact_kind")),
+        _fact_group_key(value),
+        _text(value.get("locator")),
+        _text(value.get("value")),
+        _text(value.get("text")),
+        _text(value.get("fact_id")),
+    )
+
+
+def _effective_fact_rank(value: Mapping[str, Any], task_id: str) -> tuple[Any, ...]:
+    source = _text(value.get("source"))
+    source_task_id = _text(value.get("source_task_id"))
+    return (
+        SOURCE_PRIORITY.get(source, 0),
+        int(bool(task_id and source_task_id == task_id)),
+        int(value.get("revision_id") or 0),
+        float(value.get("confidence") or 0.0),
+        _text(value.get("fact_id")),
+    )
+
+
+def _canonical_fact_payload(value: Mapping[str, Any]) -> Dict[str, Any]:
+    """Strip volatile bookkeeping that cannot change the effective meaning."""
+    return {
+        key: deepcopy(item)
+        for key, item in sorted(dict(value).items())
+        if key not in {"created_at", "recorded_at", "verified_at"}
+    }
+
+
+def _effective_fact_value_key(value: Mapping[str, Any]) -> str:
+    semantic_fields = (
+        "fact_kind", "role", "direction", "locator", "artifact_type", "format",
+        "entity_type", "namespace", "key", "value", "value_type", "unit",
+        "constraint_type", "text", "decision_type", "subject", "predicate",
+        "object", "scope", "required",
+    )
+    payload = {
+        field: deepcopy(value.get(field))
+        for field in semantic_fields
+        if value.get(field) not in (None, "", [], {})
+    }
+    return json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    )
+
+
+def resolve_effective_user_facts(spec: Mapping[str, Any] | None) -> Dict[str, Any]:
+    """Resolve the active, user-owned facts without projecting them to a node.
+
+    Resolution is deterministic and side-effect free. Single-valued groups use
+    source priority before revision; multi-valued groups preserve every unique
+    active value. Superseded, withdrawn and unresolved candidates remain
+    queryable as audit evidence but never leak into the active views.
+    """
+    normalized = ensure_task_spec(spec)
+    task_id = _text(normalized.get("task_id"))
+    typed: Dict[str, List[Dict[str, Any]]] = {
+        kind: [
+            deepcopy(dict(item))
+            for item in normalized.get(field, []) or []
+            if isinstance(item, Mapping)
+        ]
+        for kind, field in FACT_FIELDS.items()
+    }
+    inactive: List[Dict[str, Any]] = []
+    unresolved: List[Dict[str, Any]] = []
+    active_by_kind: Dict[str, List[Dict[str, Any]]] = {
+        kind: [] for kind in FACT_FIELDS
+    }
+
+    for kind, values in typed.items():
+        grouped: Dict[str, List[Dict[str, Any]]] = {}
+        for value in values:
+            status = _text(value.get("status") or "active").lower()
+            if kind == "unresolved" or status in {"unresolved", "provisional"}:
+                unresolved.append(value)
+                continue
+            if status != "active" or value.get("active") is False:
+                inactive.append(value)
+                continue
+            grouped.setdefault(_fact_group_key(value), []).append(value)
+
+        for group_values in grouped.values():
+            group_values.sort(
+                key=lambda item: _effective_fact_rank(item, task_id),
+                reverse=True,
+            )
+            cardinality_one = any(
+                _text(item.get("cardinality")).lower() == "one"
+                for item in group_values
+            )
+            if cardinality_one:
+                active_by_kind[kind].append(group_values[0])
+                for shadowed in group_values[1:]:
+                    shadowed = deepcopy(shadowed)
+                    shadowed["effective_status"] = "shadowed"
+                    shadowed["shadowed_by"] = _text(group_values[0].get("fact_id"))
+                    inactive.append(shadowed)
+                continue
+            seen: set[str] = set()
+            for item in group_values:
+                identity = _effective_fact_value_key(item)
+                if identity in seen:
+                    duplicate = deepcopy(item)
+                    duplicate["effective_status"] = "duplicate"
+                    inactive.append(duplicate)
+                    continue
+                seen.add(identity)
+                active_by_kind[kind].append(item)
+
+    for values in active_by_kind.values():
+        values.sort(key=_effective_fact_sort_key)
+    unresolved.sort(key=_effective_fact_sort_key)
+    inactive.sort(key=_effective_fact_sort_key)
+
+    all_active = [
+        item
+        for kind in ("artifact", "entity", "parameter", "constraint", "decision", "relation")
+        for item in active_by_kind[kind]
+    ]
+    inherited = sorted(
+        [
+            deepcopy(item)
+            for item in all_active
+            if _text(item.get("source")) == "inherited_explicit"
+            or bool(task_id and _text(item.get("source_task_id")) not in {"", task_id})
+        ],
+        key=_effective_fact_sort_key,
+    )
+    source_refs = sorted(
+        {
+            (
+                _text(item.get("fact_id")),
+                _text(item.get("source")),
+                _text(item.get("source_task_id")),
+                _text(item.get("source_message_id")),
+                int(item.get("revision_id") or 0),
+            )
+            for item in all_active + unresolved
+        }
+    )
+    source_ref_payload = [
+        {
+            "fact_id": fact_id,
+            "source": source,
+            "source_task_id": source_task_id,
+            "source_message_id": source_message_id,
+            "revision_id": revision_id,
+        }
+        for fact_id, source, source_task_id, source_message_id, revision_id in source_refs
+    ]
+    fingerprint_payload = {
+        "task_id": task_id,
+        "task_revision": task_spec_revision(normalized),
+        "active": [_canonical_fact_payload(item) for item in all_active],
+        "unresolved": [_canonical_fact_payload(item) for item in unresolved],
+    }
+    effective_revision = hashlib.sha256(
+        json.dumps(
+            fingerprint_payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")
+    ).hexdigest()
+    return {
+        "schema_version": 1,
+        "task_id": task_id,
+        "task_revision": task_spec_revision(normalized),
+        "task_goal": _text(normalized.get("goal")),
+        "effective_facts_revision": effective_revision,
+        "active_artifacts": active_by_kind["artifact"],
+        "active_entities": active_by_kind["entity"],
+        "active_parameters": active_by_kind["parameter"],
+        "active_constraints": active_by_kind["constraint"],
+        "active_decisions": active_by_kind["decision"],
+        "active_relations": active_by_kind["relation"],
+        "unresolved_facts": unresolved,
+        "inherited_facts": inherited,
+        "source_refs": source_ref_payload,
+        "inactive_facts": inactive,
+    }
+
+
+def _step_projection_tokens(step: Mapping[str, Any] | None) -> set[str]:
+    if not isinstance(step, Mapping):
+        return set()
+    tokens: set[str] = set()
+
+    def visit(value: Any) -> None:
+        if isinstance(value, Mapping):
+            for key, item in value.items():
+                tokens.add(_text(key).lower())
+                visit(item)
+        elif isinstance(value, (list, tuple, set)):
+            for item in value:
+                visit(item)
+        elif value not in (None, ""):
+            tokens.add(_text(value).lower())
+
+    visit(step)
+    return tokens
+
+
+def _artifact_relevant_to_step(
+    artifact: Mapping[str, Any],
+    step_tokens: set[str],
+) -> bool:
+    if _text(artifact.get("direction")).lower() == "output":
+        return True
+    if not step_tokens:
+        return True
+    candidates = {
+        _text(artifact.get("locator")).lower(),
+        _text(artifact.get("role")).lower(),
+        _text(artifact.get("fact_id")).lower(),
+    }
+    candidates.discard("")
+    return any(
+        candidate == token or candidate in token or token in candidate
+        for candidate in candidates
+        for token in step_tokens
+        if len(token) > 2
+    )
+
+
+def project_effective_user_facts(
+    resolved_facts: Mapping[str, Any],
+    *,
+    audience: str,
+    step: Mapping[str, Any] | None = None,
+    max_chars: int = 12000,
+) -> Dict[str, Any]:
+    """Build one bounded, valid-JSON node projection from resolved facts.
+
+    The projector drops complete low-priority sections rather than clipping
+    values. Active outputs and constraints are mandatory and may exceed the
+    requested budget when preserving them is the only faithful option.
+    """
+    resolved = deepcopy(dict(resolved_facts or {}))
+    step_tokens = _step_projection_tokens(step)
+    artifacts = [
+        deepcopy(dict(item))
+        for item in resolved.get("active_artifacts", []) or []
+        if isinstance(item, Mapping) and _artifact_relevant_to_step(item, step_tokens)
+    ]
+    artifacts.sort(key=_effective_fact_sort_key)
+    max_chars = max(256, int(max_chars or 12000))
+    base: Dict[str, Any] = {
+        "schema_version": 1,
+        "audience": _field_key(audience) or "node",
+        "task_id": _text(resolved.get("task_id")),
+        "task_revision": int(resolved.get("task_revision") or 0),
+        "effective_facts_revision": _text(resolved.get("effective_facts_revision")),
+        "active_artifacts": artifacts,
+        "active_constraints": deepcopy(list(resolved.get("active_constraints") or [])),
+    }
+    optional_sections = (
+        ("task_goal", _text(resolved.get("task_goal"))),
+        ("active_entities", deepcopy(list(resolved.get("active_entities") or []))),
+        ("active_decisions", deepcopy(list(resolved.get("active_decisions") or []))),
+        ("active_relations", deepcopy(list(resolved.get("active_relations") or []))),
+        ("active_parameters", deepcopy(list(resolved.get("active_parameters") or []))),
+        ("unresolved_facts", deepcopy(list(resolved.get("unresolved_facts") or []))),
+        ("inherited_facts", deepcopy(list(resolved.get("inherited_facts") or []))),
+        ("source_refs", deepcopy(list(resolved.get("source_refs") or []))),
+    )
+    payload = deepcopy(base)
+    omitted: List[str] = []
+    for name, value in optional_sections:
+        if value in (None, "", [], {}):
+            payload[name] = value
+            continue
+        candidate = {**payload, name: value, "projection_truncated": False, "omitted_sections": []}
+        rendered = json.dumps(candidate, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+        if len(rendered) <= max_chars:
+            payload[name] = value
+        else:
+            payload[name] = [] if isinstance(value, list) else ""
+            omitted.append(name)
+
+    payload["projection_truncated"] = bool(omitted)
+    payload["omitted_sections"] = omitted
+    rendered = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    )
+    result = deepcopy(payload)
+    result["projection_text"] = rendered
+    result["projection_chars"] = len(rendered)
+    result["projection_budget"] = max_chars
+    return result
 
 
 def classify_user_feedback_change(kind: str, feedback: str) -> TaskChangeType:
