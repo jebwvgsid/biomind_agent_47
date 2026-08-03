@@ -1,4 +1,8 @@
 from pathlib import Path
+import unittest
+
+from agent_core.installer import InstallerAgent
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 
 def installer_source() -> str:
@@ -59,3 +63,36 @@ def test_installer_contract_healthcheck_registers_declared_runtime():
     assert "Declared runtime healthcheck passed" in source
     assert "Environment '{env}' registered successfully via PackageManager" in source
     assert "Strict runtime healthcheck failed after declared install command" in source
+    assert "No declared fallback install command remains" in source
+
+
+def test_installer_uses_step_local_context_after_initial_prompt():
+    source = installer_source()
+
+    assert "is_init = not any(isinstance(message, AIMessage) for message in messages)" in source
+    assert "def _step_local_messages(" in source
+    assert "step_context = self._step_local_messages(messages)" in source
+    assert "LLM_STEP_CONTEXT_CHARS" in source
+    assert "step context clipped" in source
+
+
+class InstallerStepContextTests(unittest.TestCase):
+    def test_step_context_keeps_work_order_and_latest_evidence(self):
+        messages = [
+            HumanMessage(content="original install work order"),
+            SystemMessage(content="stable installer instructions"),
+            AIMessage(content="old install command"),
+            HumanMessage(content="<observation>old failure</observation>"),
+            AIMessage(content="current install command"),
+            HumanMessage(content="<observation>current result</observation>"),
+        ]
+
+        visible = InstallerAgent._step_local_messages(messages, max_messages=6, max_chars=4000)
+        text = "\n".join(str(message.content) for message in visible)
+
+        self.assertIn("original install work order", text)
+        self.assertIn("current install command", text)
+        self.assertIn("current result", text)
+        self.assertNotIn("old install command", text)
+        self.assertLessEqual(len(visible), 6)
+        self.assertLessEqual(sum(len(str(message.content)) for message in visible), 4000)

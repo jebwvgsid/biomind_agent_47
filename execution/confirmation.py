@@ -90,6 +90,8 @@ class RiskAnalyzer:
         # 文本查看
         r"^cat\b", r"^head\b", r"^tail\b", r"^more\b", r"^less\b", 
         r"^grep\b", r"^wc\b", r"^sort\b", r"^uniq\b",
+        r"^zcat\b", r"^gzip\s+-cd\b", r"^gunzip\s+-c\b", r"^bzcat\b", r"^xzcat\b",
+        r"^file\b", r"^stat\b",
         r"^echo\b", 
         # 软件检查
         r"^which\b", r"^type\b", 
@@ -119,13 +121,18 @@ class RiskAnalyzer:
     @staticmethod
     def _has_write_redirection(code: str) -> bool:
         text = str(code or "")
-        if re.search(r"(?<!\S)&>>?", text):
+        for match in re.finditer(r"(?<!\S)&>>?(?:\s*([^\s;|&]+))?", text):
+            target = (match.group(1) or "").strip().strip("'\"")
+            if target == "/dev/null":
+                continue
             return True
         for match in RiskAnalyzer.WRITE_REDIRECTION_RE.finditer(text):
-            target = (match.group(1) or "").strip()
+            target = (match.group(1) or "").strip().strip("'\"")
             # File descriptor duplication such as `2>&1`, `1>&2`, or `>&-`
             # does not write a file and should not turn read-only probes into
             # manual confirmations.
+            if target == "/dev/null":
+                continue
             if re.fullmatch(r"&(?:\d+|-)", target):
                 continue
             return True
@@ -348,43 +355,53 @@ class ConfirmationUI:
     @staticmethod
     def prompt_confirmation(risk_level: RiskLevel, timeout: int = 0) -> str: # 👈 注意这里改为返回 str
         prompt_color = Fore.CYAN
+        enter_executes = risk_level == RiskLevel.SAFE
         if risk_level != RiskLevel.SAFE:
              print(f"\n{Fore.YELLOW}⚠️  This operation requires confirmation.{Style.RESET_ALL}")
              prompt_color = Fore.YELLOW
 
         # 🌟 升级交互提示
         print(f"\n{Fore.WHITE}Options:")
-        print(f"  {Fore.GREEN}[y/Enter]{Fore.WHITE} - Execute")
+        if enter_executes:
+            print(f"  {Fore.GREEN}[y/Enter]{Fore.WHITE} - Execute")
+        else:
+            print(f"  {Fore.GREEN}[y]{Fore.WHITE}       - Execute")
         print(f"  {Fore.RED}[n]{Fore.WHITE}       - Reject (Skip)")
         print(f"  {Fore.MAGENTA}[q]{Fore.WHITE}       - Quit task")
         print(f"  {Fore.CYAN}[任意文字]{Fore.WHITE} - 拒绝执行，并将文字作为反馈发送给 AI (例如: '用 ll 看看')")
 
-        try:
+        while True:
             # 提示符改成 Action >
-            response = safe_input(
-                f"\n{prompt_color}Action > {Style.RESET_ALL}",
-                timeout_seconds=timeout,
-                history=False,
-            ).strip()
-            
-            if response.lower() in ['y', 'yes', '']:
-                return 'y'
-            
-            if response.lower() in ['q', 'quit', 'exit', 'stop']:
-                print(f"{Fore.RED}🛑 User requested force quit.{Style.RESET_ALL}")
-                raise KeyboardInterrupt  
+            try:
+                response = safe_input(
+                    f"\n{prompt_color}Action > {Style.RESET_ALL}",
+                    timeout_seconds=timeout,
+                    history=False,
+                ).strip()
                 
-            if response.lower() in ['n', 'no']:
+                if response.lower() in ['y', 'yes']:
+                    return 'y'
+                if response == '':
+                    if enter_executes:
+                        return 'y'
+                    print(f"{Fore.YELLOW}Please type 'y' to execute this non-SAFE command, 'n' to reject, or 'q' to quit.{Style.RESET_ALL}")
+                    continue
+                
+                if response.lower() in ['q', 'quit', 'exit', 'stop']:
+                    print(f"{Fore.RED}🛑 User requested force quit.{Style.RESET_ALL}")
+                    raise KeyboardInterrupt
+
+                if response.lower() in ['n', 'no']:
+                    return 'n'
+
+                # 🌟 核心魔法：如果用户输入了其他文字，直接把文字原样返回！
+                return response
+            except KeyboardInterrupt:
+                restore_terminal_state()
+                raise
+            except HumanInputUnavailable:
+                restore_terminal_state()
                 return 'n'
-                
-            # 🌟 核心魔法：如果用户输入了其他文字，直接把文字原样返回！
-            return response
-        except KeyboardInterrupt:
-            restore_terminal_state()
-            raise
-        except HumanInputUnavailable:
-            restore_terminal_state()
-            return 'n'
 
 #================================
 #4. 确认管理器 (主入口)

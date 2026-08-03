@@ -1,19 +1,283 @@
+import json
+import os
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
-from agent_core.completion_gate import CompletionGate, _candidate_output_roots_from_text
+from agent_core.completion_gate import CompletionGate, _candidate_output_roots_from_text, _contract_exists
 from agent_core.plan_tracker import (
+    apply_artifact_reconciliation,
+    build_plan_state,
     ensure_plan_state,
     load_plan_state,
     mark_first_pending_running,
     mark_plan_step_done,
     record_current_step_evidence,
+    register_renderer_manifest,
     save_plan_state,
 )
 
 
 class CompletionGateTests(unittest.TestCase):
+    def test_registered_renderer_actions_must_finish_before_step_or_final_gate(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            manifest_path = root / "manifest.json"
+            manifest = {
+                "schema_version": 3,
+                "outdir": str(root),
+                "renderer": {"id": "test.renderer"},
+                "provenance": {
+                    "task_id": "task-a",
+                    "step_id": "step-1",
+                    "producer_action_id": "render-a",
+                },
+                "actions": [
+                    {"id": "preflight", "script": "00.preflight.sh", "required": True},
+                    {"id": "run", "script": "01.run.sh", "depends_on": ["preflight"], "required": True},
+                ],
+                "artifacts": [],
+                "requirements": [],
+            }
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            state = build_plan_state(
+                "task-a",
+                "- [>] Step 1: Run renderer workflow | Action: EXECUTE | Skills: [test/renderer] "
+                "| Done: all manifest actions complete",
+            )
+            register_renderer_manifest(
+                state,
+                "step-1",
+                manifest,
+                manifest_path=manifest_path,
+                task_id="task-a",
+                producer_action_id="render-a",
+            )
+
+            step_result = CompletionGate.validate_current_step(root, "task-a", state)
+            final_result = CompletionGate.validate_final(root, "task-a", state)
+
+        self.assertEqual(step_result.classification, "renderer_actions_incomplete")
+        self.assertEqual(final_result.classification, "renderer_actions_incomplete")
+        self.assertEqual(
+            step_result.reconciliation["remaining_action_ids"],
+            ["preflight", "run"],
+        )
+
+    def test_nonempty_directory_contract_is_valid(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            output = root / "results"
+            output.mkdir()
+            (output / "part.tsv").write_text("value\n", encoding="utf-8")
+
+            self.assertTrue(_contract_exists({
+                "path": "results",
+                "base_dir": str(root),
+                "validator": "nonempty_directory",
+                "required": True,
+            }, [root]))
+
+    def test_gate_result_has_serializable_classification(self):
+        from agent_core.completion_gate import GateResult
+
+        result = GateResult(
+            passed=False,
+            message="required artifact is missing",
+            feedback="create report.md",
+            missing_artifacts=["report.md"],
+            checked_artifacts=["stage_status.tsv"],
+            classification="artifact_missing",
+        )
+
+        value = result.to_dict()
+        self.assertEqual(value["classification"], "artifact_missing")
+        self.assertEqual(value["missing_artifacts"], ["report.md"])
+        self.assertFalse(value["passed"])
+
+    def test_step_gate_rejects_old_nonempty_artifact_without_current_producer(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            report = root / "report.md"
+            report.write_text("# result from an older task\n", encoding="utf-8")
+            old_time = time.time() - 3600
+            os.utime(report, (old_time, old_time))
+            state = ensure_plan_state(
+                root,
+                "task_stale",
+                plan_text="- [ ] Step 1: Generate report.md | Action: EXECUTE | Done: report.md exists\n",
+            )
+            mark_first_pending_running(state, "started")
+            execution = root / "task_outputs" / "task_stale" / "step_1.sh"
+            execution.parent.mkdir(parents=True, exist_ok=True)
+            execution.write_text(f"test -s {report}\n", encoding="utf-8")
+            state["steps"][0]["evidence"].append({
+                "event": "execute_success",
+                "detail": f"{execution}\nSTDOUT:\nverified {report}\n",
+            })
+            save_plan_state(root, "task_stale", state)
+
+            result = CompletionGate.validate_current_step(
+                root, "task_stale", load_plan_state(root, "task_stale")
+            )
+
+        self.assertFalse(result.passed)
+        self.assertEqual(result.classification, "stale_preexisting_artifact")
+        self.assertIn("report.md", result.missing_artifacts)
+
+    def _renderer_contract_state(self, root: Path, *, create_script: bool = True):
+        rendered = root / "rendered"
+        rendered.mkdir(parents=True)
+        physical = rendered / "02.build_database.sh"
+        if create_script:
+            physical.write_text("#!/bin/bash\ntrue\n", encoding="utf-8")
+            physical.chmod(0o700)
+        manifest_data = {
+            "manifest_type": "renderer_artifact_contract",
+            "outdir": str(rendered),
+            "artifacts": [{
+                "artifact_id": "snpeff_database_build_script",
+                "path": physical.name,
+                "artifact_type": "script",
+                "required": True,
+                "producer_step_id": "step-1",
+                "producer": "renderer.py",
+                "validator": "nonempty_executable_script",
+            }],
+        }
+        manifest = rendered / "manifest.json"
+        manifest.write_text(__import__("json").dumps(manifest_data), encoding="utf-8")
+        state = ensure_plan_state(
+            root,
+            "task_contract",
+            plan_text="- [ ] Step 1: Render database build script | Action: EXECUTE | Done: build_db.sh exists\n",
+        )
+        mark_first_pending_running(state, "started")
+        execution = root / "task_outputs" / "task_contract" / "step_1.sh"
+        execution.parent.mkdir(parents=True, exist_ok=True)
+        execution.write_text(f"python renderer.py --outdir {rendered}\n", encoding="utf-8")
+        state["steps"][0]["evidence"].append({
+            "event": "execute_success",
+            "detail": f'{execution}\nSTDOUT:\n{{"outdir": "{rendered}", "scripts": ["02.build_database.sh"]}}\n',
+        })
+        save_plan_state(root, "task_contract", state)
+        return state, manifest_data, manifest
+
+    def test_manifest_contract_drift_reconciles_then_passes_without_generate_retry(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            state, manifest_data, manifest = self._renderer_contract_state(root)
+            first = CompletionGate.validate_current_step(root, "task_contract", state)
+
+            self.assertEqual(first.classification, "contract_reconciliation_required")
+            events = apply_artifact_reconciliation(
+                state,
+                "step-1",
+                manifest_data,
+                manifest_path=manifest,
+            )
+            save_plan_state(root, "task_contract", state)
+            second = CompletionGate.validate_current_step(root, "task_contract", load_plan_state(root, "task_contract"))
+
+            state["steps"][0]["status"] = "done"
+            final = CompletionGate.validate_final(
+                root,
+                "task_contract",
+                state,
+                "Outputs: build_db.sh\n",
+            )
+
+        self.assertEqual(len(events), 1)
+        self.assertTrue(second.passed, second.feedback)
+        self.assertTrue(final.passed, final.feedback)
+        self.assertNotIn("build_db.sh", final.checked_artifacts)
+        self.assertIn("02.build_database.sh", final.checked_artifacts)
+        budgets = state["task_state"]["budgets"]
+        self.assertEqual(budgets["contract_reconciliation_count"], 1)
+        self.assertEqual(budgets["generate_attempts_by_step"], {})
+        self.assertEqual(budgets["execution_retry_count"], 0)
+
+    def test_manifest_canonical_artifact_missing_is_real_failure(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            _, manifest_data, manifest = self._renderer_contract_state(root, create_script=False)
+            state = load_plan_state(root, "task_contract")
+            apply_artifact_reconciliation(state, "step-1", manifest_data, manifest_path=manifest)
+            save_plan_state(root, "task_contract", state)
+
+            result = CompletionGate.validate_current_step(root, "task_contract", load_plan_state(root, "task_contract"))
+
+        self.assertFalse(result.passed)
+        self.assertEqual(result.classification, "artifact_missing")
+        self.assertIn("02.build_database.sh", result.missing_artifacts)
+
+    def test_similar_artifact_without_manifest_requires_probe(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            candidate = root / "02.build_database.sh"
+            candidate.write_text("#!/bin/bash\ntrue\n", encoding="utf-8")
+            candidate.chmod(0o700)
+            state = ensure_plan_state(
+                root,
+                "task_contract",
+                plan_text="- [ ] Step 1: Render database build script | Action: EXECUTE | Done: build_db.sh exists\n",
+            )
+            mark_first_pending_running(state, "started")
+            execution = root / "task_outputs" / "task_contract" / "step_1.sh"
+            execution.parent.mkdir(parents=True, exist_ok=True)
+            execution.write_text("python renderer.py\n", encoding="utf-8")
+            record_current_step_evidence(state, "execute_success", f"{execution}\nSTDOUT:\nrender complete\n")
+            save_plan_state(root, "task_contract", state)
+
+            result = CompletionGate.validate_current_step(root, "task_contract", load_plan_state(root, "task_contract"))
+
+        self.assertFalse(result.passed)
+        self.assertEqual(result.classification, "diagnostic_probe_required")
+        self.assertIn(str(candidate), str(result.reconciliation))
+
+    def test_degraded_manifest_requires_complete_scientific_disclosure(self):
+        plan = (
+            "- [x] Step 1: Finalize outputs | Action: EXECUTE | Done: report.md, stage_status.tsv, and reproduce.sh exist\n"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "manifest.json").write_text(__import__("json").dumps({
+                "manifest_type": "renderer_artifact_contract",
+                "outdir": str(root),
+                "validation": {
+                    "validation_mode": "unchecked_missing_cds_protein",
+                    "skipped_checks": ["CDS", "protein"],
+                    "required_disclosures": ["report.md", "stage_status.tsv", "reproduce.sh"],
+                    "reproduction_markers": ["--allow-unchecked-build"],
+                },
+            }), encoding="utf-8")
+            for name in ("report.md", "stage_status.tsv", "reproduce.sh"):
+                (root / name).write_text("completed\n", encoding="utf-8")
+            state = ensure_plan_state(root, "task_degraded", plan_text=plan)
+            mark_first_pending_running(state, "started")
+            mark_plan_step_done(state, "done")
+            save_plan_state(root, "task_degraded", state)
+
+            failed = CompletionGate.validate_final(root, "task_degraded", load_plan_state(root, "task_degraded"), plan)
+            (root / "report.md").write_text(
+                "Degraded validation: CDS and protein consistency checks were skipped.\n",
+                encoding="utf-8",
+            )
+            (root / "stage_status.tsv").write_text(
+                "stage\tstatus\tnotes\nbuild\tdegraded\tCDS and protein checks skipped\n",
+                encoding="utf-8",
+            )
+            (root / "reproduce.sh").write_text(
+                "#!/bin/bash\npython renderer.py --allow-unchecked-build\n",
+                encoding="utf-8",
+            )
+            passed = CompletionGate.validate_final(root, "task_degraded", load_plan_state(root, "task_degraded"), plan)
+
+        self.assertFalse(failed.passed)
+        self.assertEqual(failed.classification, "incomplete_degraded_validation_disclosure")
+        self.assertTrue(passed.passed, passed.feedback)
+
     def test_code_boundary_gate_does_not_semantically_block_wrapper(self):
         context = "请使用 BioMind 的 3d-dna/tad-calling skill 对 leaf 和 bud 两个 mcool 文件做 TAD calling。"
         code = (
@@ -40,6 +304,51 @@ class CompletionGateTests(unittest.TestCase):
         result = CompletionGate.validate_code_boundary(code, context)
 
         self.assertTrue(result.passed, result.message)
+
+    def test_code_boundary_gate_rejects_benchmark_root_under_code_repo(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "benchmarks").mkdir()
+            (project_root / "Biomind_v1").mkdir()
+            bad_path = project_root / "Biomind_v1" / "benchmarks" / "data" / "ont1.fq.gz"
+            context = f"benchmark 根目录：{project_root / 'benchmarks'}"
+            code = f"minimap2 -ax map-ont ref.fa {bad_path} | samtools sort -o ont1.sort.bam"
+
+            result = CompletionGate.validate_code_boundary(code, context)
+
+        self.assertFalse(result.passed)
+        self.assertIn("Biomind_v1/benchmarks", result.feedback)
+        self.assertIn(str(project_root / "benchmarks"), result.feedback)
+
+    def test_code_boundary_gate_accepts_declared_sibling_benchmark_root(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "benchmarks").mkdir()
+            good_path = project_root / "benchmarks" / "data" / "ont1.fq.gz"
+            context = f"benchmark 根目录：{project_root / 'benchmarks'}"
+            code = f"minimap2 -ax map-ont ref.fa {good_path} | samtools sort -o ont1.sort.bam"
+
+            result = CompletionGate.validate_code_boundary(code, context)
+
+        self.assertTrue(result.passed, result.feedback)
+
+    def test_code_boundary_gate_rejects_unbounded_broad_find_scan(self):
+        result = CompletionGate.validate_code_boundary(
+            "find /public/home/example -name 'snpEff.jar' -type f 2>/dev/null",
+            "Verify the declared runtime before annotation.",
+        )
+
+        self.assertFalse(result.passed)
+        self.assertIn("unbounded broad file-system scan", result.message)
+        self.assertIn("-maxdepth", result.feedback)
+
+    def test_code_boundary_gate_allows_bounded_environment_find_scan(self):
+        result = CompletionGate.validate_code_boundary(
+            "find \"$CONDA_PREFIX/share\" -maxdepth 4 -name snpEff.jar -type f -print -quit",
+            "Verify the declared runtime before annotation.",
+        )
+
+        self.assertTrue(result.passed, result.feedback)
 
     def test_step_gate_rejects_report_step_satisfied_only_by_sibling_run(self):
         plan = """
@@ -99,6 +408,34 @@ class CompletionGateTests(unittest.TestCase):
         self.assertIn("latest command did not mention", result.feedback)
         self.assertIn("report.md", result.feedback)
         self.assertIn("reproduce.sh", result.feedback)
+
+    def test_step_gate_requires_nonempty_binary_database_artifact(self):
+        plan = """
+- [ ] Step 1: Build custom database | Goal: Build the database | Action: EXECUTE | Done: data/custom_genome/snpEffectPredictor.bin exists and is non-empty
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            state = ensure_plan_state(root, "task_database", plan_text=plan)
+            mark_first_pending_running(state, "started")
+            script = root / "task_outputs" / "task_database" / "step_1.sh"
+            script.parent.mkdir(parents=True, exist_ok=True)
+            script.write_text("echo database build attempted\n", encoding="utf-8")
+            state["steps"][0]["evidence"].append(
+                {
+                    "event": "execute_success",
+                    "detail": f"{script}\nSTDOUT:\ndatabase build attempted\n",
+                }
+            )
+            save_plan_state(root, "task_database", state)
+
+            result = CompletionGate.validate_current_step(
+                root,
+                "task_database",
+                load_plan_state(root, "task_database"),
+            )
+
+        self.assertFalse(result.passed)
+        self.assertIn("data/custom_genome/snpEffectPredictor.bin", result.missing_artifacts)
 
     def test_step_gate_accepts_one_of_conditional_artifacts(self):
         plan = """
@@ -350,6 +687,35 @@ class FinalSolutionGateTests(unittest.TestCase):
 
         self.assertTrue(result.passed, result.feedback)
 
+    def test_final_gate_accepts_recovery_policy_complete_step_evidence(self):
+        plan = """
+- [ ] Step 1: Run downstream analysis | Action: EXECUTE | Done: report.md exists
+
+## Final outputs
+- report.md
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = ensure_plan_state(tmpdir, "task_policy_verified", plan_text=plan)
+            mark_first_pending_running(state, "started")
+            state["steps"][0]["evidence"].extend([
+                {"event": "execute_success", "detail": "analysis command returned 0"},
+                {"event": "recovery_decision", "detail": "COMPLETE_STEP: validation_satisfied"},
+            ])
+            mark_plan_step_done(state, "RecoveryPolicy accepted ValidationEvidence")
+            save_plan_state(tmpdir, "task_policy_verified", state)
+            Path(tmpdir, "report.md").write_text("# supported\n", encoding="utf-8")
+
+            result = CompletionGate.validate_final(
+                tmpdir,
+                "task_policy_verified",
+                load_plan_state(tmpdir, "task_policy_verified"),
+                plan,
+                require_execution_evidence=True,
+                require_supervisor_evidence=True,
+            )
+
+        self.assertTrue(result.passed, result.feedback)
+
     def test_final_gate_rejects_done_plan_when_expected_artifacts_are_missing(self):
         plan = """
 - [ ] Step 1: Run TAD calling | Done: 40000/leaf_domains.bed and report.md exist
@@ -434,6 +800,70 @@ Output directory: `{output_root}`
             result = CompletionGate.validate_final(task_root, "task_tad", load_plan_state(task_root, "task_tad"), plan)
 
         self.assertTrue(result.passed, result.feedback)
+
+    def test_final_gate_discovers_output_root_from_plan_evidence_absolute_paths(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_root = Path(tmpdir) / "benchmarks" / "biomind_agent_benchmark" / "runs" / "remaining"
+            output_root = data_root / "BM-REMAIN-WGS-005" / "strict"
+            for rel in [
+                "ref/genome.fasta",
+                "variants/cohort.combined.g.vcf.gz",
+                "variants/cohort.raw.vcf.gz",
+                "variants/cohort.filtered.snp.vcf.gz",
+                "variants/cohort.filtered.indel.vcf.gz",
+                "stats/variant_summary.tsv",
+                "stats/raw.bcftools.stats.txt",
+                "stats/pass.snp.bcftools.stats.txt",
+                "stage_status.tsv",
+                "report.md",
+                "reproduce.sh",
+            ]:
+                target = output_root / rel
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text("ok\n", encoding="utf-8")
+
+            plan = f"""
+- [ ] Step 1: Combine GVCFs | Done: variants/cohort.combined.g.vcf.gz exists
+- [ ] Step 2: GenotypeGVCFs | Done: variants/cohort.raw.vcf.gz exists
+- [ ] Step 3: Filter SNPs | Done: variants/cohort.filtered.snp.vcf.gz exists
+- [ ] Step 4: Filter InDels | Done: variants/cohort.filtered.indel.vcf.gz exists
+- [ ] Step 5: Generate stats | Done: stats/variant_summary.tsv exists
+- [ ] Step 6: Write report | Done: stage_status.tsv, report.md, reproduce.sh exist
+
+Reference genome: `{output_root / "ref" / "genome.fasta"}`
+
+## Final outputs
+- variants/cohort.combined.g.vcf.gz
+- variants/cohort.raw.vcf.gz
+- variants/cohort.filtered.snp.vcf.gz
+- variants/cohort.filtered.indel.vcf.gz
+- stats/variant_summary.tsv
+- stats/*.bcftools.stats.txt
+- stage_status.tsv
+- report.md
+- reproduce.sh
+"""
+            state = ensure_plan_state(data_root, "task_wgs", plan_text=plan)
+            while any(step["status"] == "pending" for step in state["steps"]):
+                mark_first_pending_running(state, "started")
+                record_current_step_evidence(
+                    state,
+                    "execute_success",
+                    f"{data_root / 'task_outputs' / 'task_wgs' / 'step.sh'}\nSTDOUT:\ncompleted\n",
+                )
+                mark_plan_step_done(state, "supervisor_verdict: PASS")
+            save_plan_state(data_root, "task_wgs", state)
+
+            result = CompletionGate.validate_final(
+                data_root,
+                "task_wgs",
+                load_plan_state(data_root, "task_wgs"),
+                plan,
+                require_execution_evidence=True,
+            )
+
+        self.assertTrue(result.passed, result.feedback)
+        self.assertEqual(result.missing_artifacts, [])
 
     def test_final_gate_ignores_sibling_run_artifacts(self):
         plan = """

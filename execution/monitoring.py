@@ -100,6 +100,11 @@ class ErrorPattern:
     auto_fix: bool = False
 
 class ErrorRecoverySystem:
+    """Deprecated standalone helper.
+
+    No active graph node constructs this LLM recovery path. It remains for
+    compatibility only and must not consume or override RecoveryContext.
+    """
     """错误恢复系统 (Regex + LLM)"""
     ERROR_PATTERNS = [
         ErrorPattern(r"No such file or directory: '(.+?)'", "FileNotFound", "文件 {0} 不存在。将自动创建目录。", True),

@@ -14,7 +14,7 @@ runtime:
   language: bash
   packages: [gatk4, samtools, bcftools, picard]
   capabilities: [haplotypecaller, gvcf, genomicsdb, hard-filtering]
-  healthcheck: bash -lc "gatk --version >/dev/null && bcftools --version >/dev/null && samtools --version >/dev/null"
+  healthcheck: bash -lc "gatk --version >/dev/null && bcftools --version >/dev/null && samtools --version >/dev/null && command -v picard >/dev/null"
 ---
 
 # WGS GATK SNP/InDel Calling
@@ -95,6 +95,32 @@ gatk GenotypeGVCFs \
   -V "gendb://${OUTDIR}/03.variant_calling/genomicsdb.${interval}" \
   -O "${OUTDIR}/03.variant_calling/${interval}.raw.vcf.gz"
 ```
+
+For small cohorts, `CombineGVCFs` is acceptable, but do not pass a
+`sample<TAB>gvcf_path` sample map as `--variant`. `CombineGVCFs --variant`
+expects each value to be an actual GVCF/VCF path. Use repeated `--variant`
+arguments or a list containing only GVCF paths, then run `GenotypeGVCFs`:
+
+```bash
+gatk CombineGVCFs \
+  -R "${REFERENCE_FASTA}" \
+  --variant "${OUTDIR}/03.variant_calling/gvcf/S1/S1.g.vcf.gz" \
+  --variant "${OUTDIR}/03.variant_calling/gvcf/S2/S2.g.vcf.gz" \
+  -O "${OUTDIR}/03.variant_calling/cohort.combined.g.vcf.gz"
+
+gatk GenotypeGVCFs \
+  -R "${REFERENCE_FASTA}" \
+  -V "${OUTDIR}/03.variant_calling/cohort.combined.g.vcf.gz" \
+  -O "${OUTDIR}/03.variant_calling/cohort.raw.vcf.gz"
+```
+
+Rule of thumb:
+
+- `sample<TAB>gvcf_path` map -> `GenomicsDBImport --sample-name-map`.
+- individual GVCF paths -> `CombineGVCFs --variant ... --variant ...`.
+- If GATK reports a path like `S1%09/path/to/S1.g.vcf.gz`, the command passed
+  a sample map where a GVCF path was expected; switch to one of the two valid
+  patterns above instead of retrying the same shape.
 
 Hard-filter defaults for diploid short-read WGS:
 

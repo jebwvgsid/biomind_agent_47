@@ -152,6 +152,15 @@ from agent_core.formal_artifact_resolver import (
     resolve_formal_upstream_artifacts,
 )
 from agent_core.plan_tracker import (
+    ATTEMPT_APPROVED,
+    ATTEMPT_COMPLETED,
+    ATTEMPT_EVIDENCE_COMMITTED,
+    ATTEMPT_PROCESS_EXITED,
+    ATTEMPT_RUNNING,
+    ATTEMPT_SCRIPT_READY,
+    ATTEMPT_STARTING,
+    ATTEMPT_UNKNOWN_AFTER_CRASH,
+    ATTEMPT_VALIDATED,
     PLAN_OPERATION_LOCAL_REPLAN,
     PLAN_OPERATION_REPAIR,
     TASK_STATUS_BLOCKED,
@@ -181,6 +190,7 @@ from agent_core.plan_tracker import (
     changed_plan_step_ids,
     collapse_renderer_composite_steps,
     current_plan_step_with_index,
+    classify_attempt_resume,
     default_plan_file,
     ensure_plan_state,
     load_plan_state,
@@ -237,6 +247,7 @@ from execution.executor import (
     detect_script_language,
     normalize_script_code,
     run_bash_script,
+    run_script_path,
     run_python_repl,
     terminate_active_processes,
     get_last_execution_metadata,
@@ -1667,6 +1678,7 @@ class BioAnalystAgent:
         active_or_pending = bool(statuses & {
             "pending", "ready", "running", "diagnosing", "repairing", "retry_pending"
         })
+        attempt_resume = classify_attempt_resume(plan_state)
 
         if durable_task_status in {TASK_STATUS_BLOCKED, TASK_STATUS_FAILED, TASK_STATUS_CANCELLED}:
             node = "finish"
@@ -1677,6 +1689,11 @@ class BioAnalystAgent:
         elif durable_task_status == TASK_STATUS_COMPLETED:
             node = "finish"
             reason = "task_already_terminal"
+        elif attempt_resume.get("route") in {
+            "monitor_running_attempt", "reconcile_attempt", "supervisor", "transition_guard",
+        }:
+            node = "execute"
+            reason = str(attempt_resume.get("reason") or "resume_durable_attempt")
         elif pending_action and not self._validate_pending_action_contract(
             pending_action,
             {**values, "task_spec": task_spec, "task_revision": task_revision},
@@ -1741,8 +1758,140 @@ class BioAnalystAgent:
             "resolved_resume_node": node,
             "resume_reason": reason,
             "plan_validation": validation,
+            "attempt_resume": attempt_resume,
         }
         return node, audit
+
+    async def _resume_durable_attempt_update(
+        self,
+        task_id: str,
+        state: AgentState,
+    ) -> Optional[Dict[str, Any]]:
+        """Reconcile one persisted active attempt without allocating a replacement."""
+        plan_state = load_plan_state(self.data_path, task_id)
+        resume = classify_attempt_resume(plan_state)
+        if resume.get("create_new_attempt") or not resume.get("attempt"):
+            return None
+
+        while resume.get("route") == "monitor_running_attempt":
+            await asyncio.sleep(1.0)
+            plan_state = load_plan_state(self.data_path, task_id)
+            resume = classify_attempt_resume(plan_state)
+
+        attempt = dict(resume.get("attempt") or {})
+        attempt_id = str(attempt.get("attempt_id") or "")
+        action_id = str(attempt.get("action_id") or "")
+        provenance = dict(plan_state.get("provenance_state") or {})
+        action = dict((provenance.get("actions") or {}).get(action_id) or {})
+        if resume.get("route") == "transition_guard":
+            evidence_ref = str(
+                attempt.get("validation_evidence_ref")
+                or attempt.get("execution_record_id")
+                or f"attempt:{attempt_id}"
+            )
+            return {
+                "messages": [SystemMessage(content=(
+                    "Recovered a validated attempt whose plan transition was not committed. "
+                    f"attempt_id={attempt_id}."
+                ))],
+                "pending_action": {},
+                "step_completion_candidate": {
+                    "type": "step_completion_candidate",
+                    "step_id": str(attempt.get("step_id") or action.get("step_id") or ""),
+                    "reason": "Persisted ValidationEvidence satisfies the interrupted step transition.",
+                    "evidence_ids": [evidence_ref],
+                    "attempt_id": attempt_id,
+                },
+                "next_step": "generate",
+            }
+        exit_status_path = Path(str(attempt.get("exit_status_path") or ""))
+        exit_record: Dict[str, Any] = {}
+        if exit_status_path.is_file():
+            try:
+                exit_record = json.loads(exit_status_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                exit_record = {}
+        returncode = exit_record.get("returncode", attempt.get("returncode"))
+        try:
+            returncode = int(returncode) if returncode is not None else None
+        except (TypeError, ValueError):
+            returncode = None
+
+        def read_tail(path_value: Any, limit: int = 16_000) -> str:
+            path = Path(str(path_value or ""))
+            try:
+                payload = path.read_bytes()
+            except OSError:
+                return ""
+            return payload[-limit:].decode("utf-8", errors="replace")
+
+        stdout = read_tail(attempt.get("stdout_path"))
+        stderr = read_tail(attempt.get("stderr_path"))
+        attempt_status = str(attempt.get("status") or "").upper()
+        if returncode is None and attempt_status != ATTEMPT_UNKNOWN_AFTER_CRASH:
+            record_provenance_event(plan_state, "attempt_state_changed", {
+                "attempt_id": attempt_id,
+                "status": ATTEMPT_UNKNOWN_AFTER_CRASH,
+                "finished_at": datetime.now().isoformat(timespec="seconds"),
+            })
+        elif returncode is not None and attempt_status in {ATTEMPT_STARTING, ATTEMPT_RUNNING, ATTEMPT_UNKNOWN_AFTER_CRASH}:
+            record_provenance_event(plan_state, "attempt_state_changed", {
+                "attempt_id": attempt_id,
+                "status": ATTEMPT_PROCESS_EXITED,
+                "returncode": returncode,
+                "finished_at": str(exit_record.get("finished_at") or datetime.now().isoformat(timespec="seconds")),
+            })
+        evidence = {
+            "execution_id": f"exec-{attempt_id}",
+            "attempt_id": attempt_id,
+            "action_id": action_id,
+            "plan_id": str(plan_state.get("plan_id") or ""),
+            "plan_version": str(attempt.get("plan_version") or plan_state.get("plan_version") or ""),
+            "step_id": str(attempt.get("step_id") or action.get("step_id") or ""),
+            "stage_id": str(attempt.get("stage_id") or action.get("stage_id") or ""),
+            "command_role": str(attempt.get("command_role") or action.get("command_role") or "primary"),
+            "action_source": str(action.get("source") or "resume"),
+            "execution_status": "succeeded" if returncode == 0 else "failed" if returncode is not None else "unknown",
+            "returncode": returncode,
+            "stdout_summary": self._clip_observation_text(stdout, 2000),
+            "stderr_summary": self._clip_observation_text(stderr, 2000),
+            "stdout_log": str(attempt.get("stdout_path") or ""),
+            "stderr_log": str(attempt.get("stderr_path") or ""),
+            "exit_status_path": str(exit_status_path) if str(exit_status_path) != "." else "",
+            "generated_script": dict(attempt.get("generated_script") or action.get("generated_script") or {}),
+            "approved_script": dict(attempt.get("approved_script") or {}),
+            "executed_script": dict(attempt.get("executed_script") or {}),
+            "script_file": str(attempt.get("executed_script_path") or ""),
+            "finished_at": str(exit_record.get("finished_at") or attempt.get("finished_at") or ""),
+            "resumed_after_crash": True,
+        }
+        if returncode is not None and attempt_status != ATTEMPT_EVIDENCE_COMMITTED:
+            record = ExecutionRecord.from_mapping(evidence)
+            RecoveryStateStore(self.data_path, task_id).save_execution_record(record)
+            record_provenance_event(plan_state, "execution_finished", {
+                "attempt_id": attempt_id,
+                "execution_record": {**evidence, **record.summary()},
+            })
+            task_state = dict(plan_state.get("task_state") or {})
+            task_state["pending_action"] = {}
+            plan_state["task_state"] = task_state
+        save_plan_state(self.data_path, task_id, plan_state)
+        return {
+            "messages": [SystemMessage(content=(
+                "Recovered a persisted execution attempt without rerunning it. "
+                f"attempt_id={attempt_id} returncode={returncode!r}."
+            ))],
+            "execution_evidence": evidence,
+            "pending_action": {},
+            "pending_recovery_action": ({
+                "type": "revalidate",
+                "reason": "The process ended without a trustworthy external exit record.",
+                "failure_owner": RecoveryFailureOwner.VERIFICATION.value,
+                "requires_user_input": False,
+            } if returncode is None else {}),
+            "required_next_action": "REVALIDATE" if returncode is None else "",
+            "next_step": "supervisor",
+        }
 
     def _build_resume_runner_state(
         self,
@@ -1818,7 +1967,7 @@ class BioAnalystAgent:
             "runtime_status": values.get("runtime_status") or self._runtime_status_for_task(task_id),
             "runtime_audit": values.get("runtime_audit") or task_state.get("runtime_audit") or [],
             "input_audit": values.get("input_audit") or task_state.get("input_audit") or {},
-            "pending_action": values.get("pending_action") or {},
+            "pending_action": values.get("pending_action") or task_state.get("pending_action") or {},
             "pending_human_question": values.get("pending_human_question") or task_state.get("pending_question") or {},
             "pending_recovery_action": (
                 {}
@@ -2346,7 +2495,7 @@ class BioAnalystAgent:
                 or (self._running_plan_step(plan_state) or {}).get("step_id")
                 or ""
             ),
-            "plan_version": str(plan_state.get("plan_version") or "plan_v2"),
+            "plan_version": str(plan_state.get("plan_version") or "plan_v1"),
             "task_revision": self._task_revision_for_state(dict(state)),
             "execution_id": str(evidence.get("execution_id") or evidence.get("action_id") or ""),
             "failed_checks": [
@@ -2524,9 +2673,6 @@ class BioAnalystAgent:
             dict((plan_state.get("task_state") or {}).get("budgets") or {}),
         )
         decision = contextualize_recovery_decision(decision, source_node="supervisor")
-        application = apply_recovery_decision(plan_state, decision)
-        save_plan_state(self.data_path, task_id, plan_state)
-
         store.save_diagnostic_context(context)
         store.save_recovery_decision(decision)
         store.append_trace("RECOVERY_JUDGE", {
@@ -2572,9 +2718,7 @@ class BioAnalystAgent:
             "retry_reason": decision.reason or decision.root_cause,
             "recovery_phase": "diagnose",
             "recovery_status": decision.recommended_action,
-            "recovery_application": application,
-            "current_step_id": str(application.get("current_step_id") or ""),
-            "current_stage_id": str(application.get("current_stage_id") or ""),
+            "recovery_application": {},
         })
         if decision.next_route == "ask_user":
             question = "BioMind needs your decision before recovery can continue: " + (decision.reason or decision.root_cause)
@@ -2705,12 +2849,8 @@ class BioAnalystAgent:
                 budgets=budgets,
             )
         decision = contextualize_recovery_decision(decision, source_node=source_node)
-        application = apply_recovery_decision(plan_state, decision)
-        save_plan_state(self.data_path, task_id, plan_state)
         update["recovery_decision"] = decision.to_dict()
-        update["recovery_application"] = application
-        update["current_step_id"] = str(application.get("current_step_id") or "")
-        update["current_stage_id"] = str(application.get("current_stage_id") or "")
+        update["recovery_application"] = {}
         update["next_step"] = decision.next_route
         update["recovery_status"] = decision.kind
         update["retry_count"] = int(
@@ -2729,7 +2869,7 @@ class BioAnalystAgent:
         evidence = state.get("execution_evidence") or {}
         expected = {
             "step_id": str(current_step.get("step_id") or ""),
-            "plan_version": str(plan_state.get("plan_version") or "plan_v2"),
+            "plan_version": str(plan_state.get("plan_version") or "plan_v1"),
             "task_revision": str(self._task_revision_for_state(dict(state))),
             "execution_id": str(evidence.get("execution_id") or evidence.get("action_id") or ""),
         }
@@ -2971,6 +3111,62 @@ class BioAnalystAgent:
         ])
         return "\n".join(lines)
 
+    def _persist_script_version(
+        self,
+        task_id: str,
+        plan_state: Dict[str, Any],
+        step_id: str,
+        action_id: str,
+        version: str,
+        content: str,
+        *,
+        extension: str,
+        parent_script_ref: Optional[Dict[str, Any]] = None,
+        mutation_reason: str = "",
+        producer: str = "controller",
+        root: Optional[Path] = None,
+    ) -> Dict[str, Any]:
+        """Atomically persist one immutable script version and return its lineage ref."""
+        script_root = root or (
+            Path(self.data_path)
+            / "task_outputs"
+            / str(task_id or "default")
+            / "scripts"
+            / str(plan_state.get("plan_id") or "plan")
+            / str(plan_state.get("plan_version") or "plan_v1")
+            / str(step_id or "step")
+            / str(action_id or "action")
+        )
+        script_root.mkdir(parents=True, exist_ok=True)
+        path = script_root / f"{version}{extension}"
+        payload = str(content or "").encode("utf-8")
+        digest = hashlib.sha256(payload).hexdigest()
+        if path.exists():
+            existing_digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            if existing_digest != digest:
+                raise ValueError(f"Immutable script version already exists with different content: {path}")
+        else:
+            fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
+            try:
+                with os.fdopen(fd, "wb") as handle:
+                    handle.write(payload)
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                os.chmod(tmp_name, 0o700)
+                os.replace(tmp_name, path)
+            finally:
+                if os.path.exists(tmp_name):
+                    os.unlink(tmp_name)
+        return {
+            "version": version,
+            "path": str(path.resolve()),
+            "sha256": digest,
+            "producer": str(producer or "controller"),
+            "parent_script_ref": dict(parent_script_ref or {}),
+            "mutation_reason": str(mutation_reason or ""),
+            "created_at": datetime.now().isoformat(timespec="seconds"),
+        }
+
     def _bind_pending_action(self, action: Dict[str, Any], state: AgentState, task_id: str) -> Dict[str, Any]:
         """Bind one generated action to the exact task revision and plan step."""
         if not isinstance(action, dict) or not action:
@@ -2980,7 +3176,7 @@ class BioAnalystAgent:
         plan_state = load_plan_state(self.data_path, task_id)
         step = self._running_plan_step(plan_state) or {}
         task_revision = self._task_revision_for_state(dict(state))
-        plan_version = str(plan_state.get("plan_version") or "plan_v2")
+        plan_version = str(plan_state.get("plan_version") or "plan_v1")
         step_id = str(step.get("step_id") or "")
         purpose = self._pending_action_purpose(bound, step)
         skill_manager = getattr(self, "skill_manager", None)
@@ -3051,6 +3247,22 @@ class BioAnalystAgent:
                 "expected_evidence": list(bound.get("success_checks") or step.get("success_criteria") or []),
             }
         )
+        if str(bound.get("type") or "").lower() == "execute" and str(bound.get("code") or "").strip():
+            language = detect_script_language(str(bound.get("code") or ""))
+            generated_ref = self._persist_script_version(
+                task_id,
+                plan_state,
+                step_id,
+                str(bound["action_id"]),
+                "generated",
+                str(bound.get("code") or ""),
+                extension=".py" if language == "Python" else ".sh",
+                mutation_reason="model_generation",
+                producer="generate",
+            )
+            bound["generated_script"] = generated_ref
+            bound["generated_script_path"] = generated_ref["path"]
+            bound["generated_script_hash"] = generated_ref["sha256"]
         action_record = record_provenance_event(plan_state, "action_bound", {
             "task_id": task_id,
             "action": bound,
@@ -3060,6 +3272,12 @@ class BioAnalystAgent:
             bound["manifest_id"] = str(action_record["manifest_id"])
         if action_record.get("stage_id"):
             bound["stage_id"] = str(action_record["stage_id"])
+        task_state = dict(plan_state.get("task_state") or {})
+        task_state["pending_action"] = {
+            key: value for key, value in bound.items()
+            if key not in {"code", "messages", "raw_response"}
+        }
+        plan_state["task_state"] = task_state
         save_plan_state(self.data_path, task_id, plan_state)
         return bound
 
@@ -3563,7 +3781,17 @@ class BioAnalystAgent:
         if expected_type == "execute":
             code = str(action.get("code") or "").strip()
             if not code:
-                return "Pending execute action has no command body."
+                generated_ref = dict(action.get("generated_script") or {})
+                generated_path = str(generated_ref.get("path") or action.get("generated_script_path") or "")
+                generated_hash = str(generated_ref.get("sha256") or action.get("generated_script_hash") or "")
+                try:
+                    payload = Path(generated_path).read_bytes() if generated_path else b""
+                except OSError:
+                    payload = b""
+                if payload and (not generated_hash or hashlib.sha256(payload).hexdigest() == generated_hash):
+                    code = payload.decode("utf-8", errors="replace").strip()
+            if not code:
+                return "Pending execute action has no verified generated script source."
             executable_lines = [
                 line.strip() for line in code.splitlines()
                 if line.strip() and not line.lstrip().startswith("#")
@@ -3659,7 +3887,7 @@ class BioAnalystAgent:
         expected = {
             "step_id": str(step.get("step_id") or ""),
             "task_revision": str(self._task_revision_for_state(dict(state))),
-            "plan_version": str(plan_state.get("plan_version") or "plan_v2"),
+            "plan_version": str(plan_state.get("plan_version") or "plan_v1"),
         }
         missing = [key for key in expected if str(action.get(key) or "") == ""]
         if missing:
@@ -3803,7 +4031,7 @@ class BioAnalystAgent:
         protocol = self._renderer_action_protocol(state, task_id)
         lines = [
             f"task_revision: {self._task_revision_for_state(dict(state))}",
-            f"plan_version: {str(plan_state.get('plan_version') or 'plan_v2')}",
+            f"plan_version: {str(plan_state.get('plan_version') or 'plan_v1')}",
             "Generate exactly one structured action for the canonical current step; do not execute later steps.",
             "The plan is approved. Do not ask whether to continue; HITL handles execution approval.",
             "Allowed actions and manifest status are authoritative in CurrentStepContext.",
@@ -4453,19 +4681,7 @@ class BioAnalystAgent:
     def _mark_plan_current_done(self, task_id: str, evidence: str, *, source_node: str = "controller") -> str:
         state = load_plan_state(self.data_path, task_id)
         if state.get("steps"):
-            _, step = current_plan_step_with_index(state)
-            decision = RecoveryPolicy().decide(
-                completion_evidence={
-                    "completion_satisfied": True,
-                    "task_complete": False,
-                    "evidence": [str(evidence or "controller_verified")],
-                },
-                action_id=str((state.get("task_state") or {}).get("current_action_id") or ""),
-                step_id=str((step or {}).get("step_id") or ""),
-                attempt_id=f"complete:{str((step or {}).get('step_id') or 'step')}",
-                budgets=dict((state.get("task_state") or {}).get("budgets") or {}),
-            )
-            apply_recovery_decision(state, contextualize_recovery_decision(decision, source_node=source_node))
+            advance_plan_after_verified_step(state, str(evidence or "controller_verified"))
             return self._persist_plan_tracker(task_id, state)
         return render_plan_progress(state)
 
@@ -4501,27 +4717,28 @@ class BioAnalystAgent:
             "controller_verified_step_completion_candidate: "
             + ", ".join(str(item) for item in candidate.get("evidence_ids", []) or [])
         )
-        decision = RecoveryPolicy().decide(
-            completion_evidence={
-                "completion_satisfied": bool(attached),
-                "task_complete": False,
-                "evidence": [completion_reason],
-            },
-            action_id=str(record.get("action_id") or record.get("execution_id") or ""),
-            step_id=step_id,
-            attempt_id=str(record.get("attempt_id") or record.get("execution_id") or ""),
-            budgets=dict((plan_state.get("task_state") or {}).get("budgets") or {}),
-        )
-        if not attached or decision.kind != RecoveryDecisionKind.COMPLETE_STEP.value:
+        _, current_step = current_plan_step_with_index(plan_state)
+        if not attached or str((current_step or {}).get("step_id") or "") != step_id:
             gate.passed = False
             gate.message = "Controller could not apply the verified step transition."
             gate.feedback = "The current step changed while its completion candidate was being validated. Regenerate for the new step."
             gate.classification = "step_candidate_transition_stale"
             return False, gate, render_plan_progress(plan_state)
-        apply_recovery_decision(
-            plan_state,
-            contextualize_recovery_decision(decision, source_node=source_node),
-        )
+        attempt_id = str(record.get("attempt_id") or record.get("execution_id") or "")
+        attempt = dict(((plan_state.get("provenance_state") or {}).get("attempts") or {}).get(attempt_id) or {})
+        if str(attempt.get("status") or "").upper() == ATTEMPT_EVIDENCE_COMMITTED:
+            record_provenance_event(plan_state, "attempt_state_changed", {
+                "attempt_id": attempt_id,
+                "status": ATTEMPT_VALIDATED,
+                "validation_evidence_ref": str((gate.reconciliation or {}).get("validation_id") or "completion_gate"),
+            })
+            attempt["status"] = ATTEMPT_VALIDATED
+        if str(attempt.get("status") or "").upper() == ATTEMPT_VALIDATED:
+            record_provenance_event(plan_state, "attempt_state_changed", {
+                "attempt_id": attempt_id,
+                "status": ATTEMPT_COMPLETED,
+            })
+        advance_plan_after_verified_step(plan_state, completion_reason)
         return True, gate, self._persist_plan_tracker(task_id, plan_state)
 
     def _advance_satisfied_validation_steps(
@@ -4603,7 +4820,7 @@ class BioAnalystAgent:
         step_id: str,
         response_text: str,
         schema_error: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[int, int, str]:
+    ) -> Tuple[int, int, str, RecoveryDecision]:
         response_hash = hashlib.sha256(
             str(response_text or "").strip().encode("utf-8", errors="replace")
         ).hexdigest()[:20]
@@ -4612,10 +4829,10 @@ class BioAnalystAgent:
         budgets = dict(task_state.get("budgets") or {})
         step_key = str(step_id or "lightweight")
         current_count = int((budgets.get("action_format_repair_by_step") or {}).get(step_key) or 0)
-        prior_duplicate_count = int(
-            ((budgets.get("invalid_action_hashes_by_step") or {}).get(step_key) or {}).get(response_hash)
-            or 0
-        )
+        protocol_dir = Path(self.data_path) / "task_outputs" / str(task_id or "default") / "action_protocol"
+        prior_duplicate_count = len(list(
+            protocol_dir.glob(f"{step_key}.invalid.*.*.{response_hash}.txt")
+        )) if protocol_dir.is_dir() else 0
         scoped_budgets = {**budgets, "action_format_repair_count": current_count}
         policy = RecoveryPolicy(max_format_repairs=1)
         decision = policy.decide(
@@ -4639,26 +4856,8 @@ class BioAnalystAgent:
             attempt_id=f"format-{current_count + 1}:{response_hash}",
             source_node="generate",
         )
-        apply_recovery_decision(plan_state, decision)
-        save_plan_state(self.data_path, task_id, plan_state)
-        persisted_budgets = dict((plan_state.get("task_state") or {}).get("budgets") or {})
-        count = int((persisted_budgets.get("action_format_repair_by_step") or {}).get(step_key) or 0)
-        duplicate_count = int(
-            ((persisted_budgets.get("invalid_action_hashes_by_step") or {}).get(step_key) or {}).get(response_hash)
-            or 0
-        )
-        if duplicate_count <= prior_duplicate_count:
-            hashes_by_step = dict(persisted_budgets.get("invalid_action_hashes_by_step") or {})
-            hashes = dict(hashes_by_step.get(step_key) or {})
-            duplicate_count = prior_duplicate_count + 1
-            hashes[response_hash] = duplicate_count
-            hashes_by_step[step_key] = hashes
-            persisted_budgets["invalid_action_hashes_by_step"] = hashes_by_step
-            task_state = dict(plan_state.get("task_state") or {})
-            task_state["budgets"] = persisted_budgets
-            plan_state["task_state"] = task_state
-            save_plan_state(self.data_path, task_id, plan_state)
-        protocol_dir = Path(self.data_path) / "task_outputs" / str(task_id or "default") / "action_protocol"
+        count = current_count + (1 if decision.consume_budget else 0)
+        duplicate_count = prior_duplicate_count + 1
         protocol_dir.mkdir(parents=True, exist_ok=True)
         raw_path = protocol_dir / (
             f"{str(step_id or 'lightweight')}.invalid.{count}.{duplicate_count}.{response_hash}.txt"
@@ -4696,7 +4895,7 @@ class BioAnalystAgent:
             "requires_user_input": False,
             "schema_error": schema_error,
         }, ensure_ascii=False, indent=2), encoding="utf-8")
-        return count, duplicate_count, response_hash
+        return count, duplicate_count, response_hash, decision
 
     def _commit_preaction_policy_decision(
         self,
@@ -4721,8 +4920,6 @@ class BioAnalystAgent:
             budgets=budgets,
         )
         decision = contextualize_recovery_decision(decision, source_node=source_node)
-        apply_recovery_decision(plan_state, decision)
-        save_plan_state(self.data_path, task_id, plan_state)
         return decision
 
     def _knowledge_conflict_root(self, task_id: str) -> Path:
@@ -8290,21 +8487,7 @@ class BioAnalystAgent:
     def _finalize_blocked_state(self, task_id: str, reason: str) -> str:
         """Persist a truthful framework-level blocked result without another LLM call."""
         plan_state = load_plan_state(self.data_path, task_id)
-        _, step = current_plan_step_with_index(plan_state)
-        decision = RecoveryPolicy().decide(
-            pre_action_evidence={
-                "valid": False,
-                "missing_bindings": ["terminal_recovery_path"],
-                "blocked_evidence": [str(reason)],
-                "repairable": False,
-            },
-            action_id=str((plan_state.get("task_state") or {}).get("current_action_id") or ""),
-            step_id=str((step or {}).get("step_id") or ""),
-            attempt_id=f"blocked:{hashlib.sha256(str(reason).encode('utf-8')).hexdigest()[:16]}",
-            budgets=dict((plan_state.get("task_state") or {}).get("budgets") or {}),
-        )
-        decision = contextualize_recovery_decision(decision, source_node="controller")
-        apply_recovery_decision(plan_state, decision)
+        block_plan_and_downstream(plan_state, str(reason or "Controller blocked the task."))
         progress = self._persist_plan_tracker(task_id, plan_state)
         root = Path(self.data_path) / "task_outputs" / str(task_id or "default")
         root.mkdir(parents=True, exist_ok=True)
@@ -8366,6 +8549,62 @@ class BioAnalystAgent:
         guarded = dict(update or {})
         merged = {**dict(state or {}), **guarded}
         plan_state = load_plan_state(self.data_path, task_id)
+
+        def commit_guard_decision(decision_like: Any) -> Tuple[RecoveryDecision, Dict[str, Any]]:
+            nonlocal plan_state
+            decision_value = (
+                decision_like.to_dict()
+                if hasattr(decision_like, "to_dict")
+                else dict(decision_like or {})
+            )
+            identity_changed = False
+            for key, value in (
+                ("task_id", str(plan_state.get("task_id") or task_id)),
+                ("plan_id", str(plan_state.get("plan_id") or "")),
+                ("plan_version", str(plan_state.get("plan_version") or "")),
+            ):
+                if not str(decision_value.get(key) or "") and value:
+                    decision_value[key] = value
+                    identity_changed = True
+            if identity_changed:
+                decision_value.pop("decision_id", None)
+                decision_value.pop("idempotency_key", None)
+            policy_value = RecoveryDecision.from_mapping(decision_value)
+            application_value = apply_recovery_decision(plan_state, policy_value)
+            save_plan_state(self.data_path, task_id, plan_state)
+            return policy_value, application_value
+
+        proposed_decision = guarded.get("recovery_decision")
+        if isinstance(proposed_decision, dict) and proposed_decision:
+            try:
+                policy_decision, application = commit_guard_decision(proposed_decision)
+                guarded["recovery_decision"] = policy_decision.to_dict()
+                guarded["recovery_application"] = application
+                if application.get("current_step_id"):
+                    guarded["current_step_id"] = str(application["current_step_id"])
+                if application.get("current_stage_id"):
+                    guarded["current_stage_id"] = str(application["current_stage_id"])
+                merged = {**dict(state or {}), **guarded}
+            except (TypeError, ValueError) as exc:
+                # apply_recovery_decision records the rejected decision in the
+                # PlanTracker state; persist that audit even though no state
+                # transition or retry budget was applied.
+                save_plan_state(self.data_path, task_id, plan_state)
+                guarded.update({
+                    "next_step": "supervisor",
+                    "pending_action": {},
+                    "pending_human_question": {},
+                    "pending_recovery_action": {
+                        "type": "internal_protocol_error",
+                        "reason": f"Recovery decision commit rejected: {exc}",
+                        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                        "requires_user_input": False,
+                    },
+                    "required_next_action": "INTERNAL_PROTOCOL_ERROR",
+                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    "transition_guard": "recovery_decision_commit_rejected",
+                })
+                return guarded
         durable_recovery = dict((plan_state.get("task_state") or {}).get("recovery_state") or {})
         durable_decision = durable_recovery.get("last_recovery_decision")
         if (
@@ -8467,7 +8706,7 @@ class BioAnalystAgent:
             return guarded
 
         step_candidate = guarded.get("step_completion_candidate")
-        if node_name == "generate" and isinstance(step_candidate, dict) and step_candidate:
+        if node_name in {"generate", "execute"} and isinstance(step_candidate, dict) and step_candidate:
             renderer_protocol = self._renderer_action_protocol(merged, task_id)
             if (
                 renderer_protocol.get("renderer_composite")
@@ -8492,6 +8731,7 @@ class BioAnalystAgent:
                     "renderer_invocation_required_before_step_completion",
                     attempt_id=f"step-candidate:{candidate_hash}",
                 )
+                policy_decision, _ = commit_guard_decision(policy_decision)
                 guarded.update({
                     "next_step": policy_decision.next_route,
                     "recovery_decision": policy_decision.to_dict(),
@@ -8569,6 +8809,7 @@ class BioAnalystAgent:
                     attempt_id=f"step-candidate-rejected:{rejection_signature}:{candidate_sequence}",
                     source_node=node_name,
                 )
+                policy_decision, _ = commit_guard_decision(policy_decision)
                 guarded.update({
                     "next_step": policy_decision.next_route,
                     "recovery_decision": policy_decision.to_dict(),
@@ -8622,7 +8863,9 @@ class BioAnalystAgent:
                     contract_error={"reason": contract_error},
                 )
                 current_budgets = dict((plan_state.get("task_state") or {}).get("budgets") or {})
-                attempt_sequence = int(current_budgets.get("generate_action_count") or 0) + 1
+                attempt_sequence = int(
+                    (current_budgets.get("action_format_repair_by_step") or {}).get(step_id) or 0
+                ) + 1
                 policy_decision = self._commit_preaction_policy_decision(
                     task_id,
                     step_id,
@@ -8632,6 +8875,7 @@ class BioAnalystAgent:
                         f"{attempt_sequence}"
                     ),
                 )
+                policy_decision, _ = commit_guard_decision(policy_decision)
                 pending_type = (
                     "ACTION_FORMAT_REPAIR"
                     if policy_decision.kind == RecoveryDecisionKind.FORMAT_REPAIR.value
@@ -8677,6 +8921,7 @@ class BioAnalystAgent:
                 "generate_result_missing_transition",
                 attempt_id=f"missing-transition:{hashlib.sha256(json.dumps(guarded, default=str, sort_keys=True).encode('utf-8')).hexdigest()[:16]}",
             )
+            policy_decision, _ = commit_guard_decision(policy_decision)
             guarded.update({
                 "next_step": policy_decision.next_route,
                 "recovery_decision": policy_decision.to_dict(),
@@ -11825,7 +12070,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
 
             if (activate_match or action_type == "activate_batch") and not answer_match:
                 plan_state = load_plan_state(self.data_path, task_id)
-                if str(plan_state.get("plan_version") or "") == "plan_v2":
+                if int(plan_state.get("plan_schema_version") or plan_state.get("schema_version") or 0) >= 2:
                     plan_progress = self._record_plan_current_evidence(
                         task_id,
                         "generate_attempted_activation",
@@ -11836,7 +12081,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             response,
                             SystemMessage(
                                 content=(
-                                    "ACTIVATE_BATCH is not a valid action for plan_v2. The controller already derived "
+                                    "ACTIVATE_BATCH is not valid for a structured step-scheduled plan. The controller already derived "
                                     "the current stage and ACTIVE_SKILLS from the running step. Execute that step, ask "
                                     "for required input, install its declared runtime, or finish as specified."
                                 )
@@ -11920,7 +12165,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 next_step = "execute"
 
             if generated_action == "continue":
-                format_count, duplicate_count, invalid_hash = self._record_action_format_failure(
+                format_count, duplicate_count, invalid_hash, format_decision = self._record_action_format_failure(
                     task_id,
                     str((current_plan_step_with_index(load_plan_state(self.data_path, task_id))[1] or {}).get("step_id") or "lightweight"),
                     str(content or ""),
@@ -11996,6 +12241,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         "generate_result": "BLOCKED",
                         "generate_exit_reason": "internal_protocol_error",
                         "task_status": TASK_STATUS_BLOCKED,
+                        "recovery_decision": format_decision.to_dict(),
                         "next_step": "finish",
                     }
                 repair_feedback = self._action_format_repair_feedback(
@@ -12029,6 +12275,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         "feedback": repair_feedback,
                     },
                     "required_next_action": "ACTION_FORMAT_REPAIR",
+                    "recovery_decision": format_decision.to_dict(),
                     "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
                     "generate_result": "NEEDS_RECOVERY",
                     "generate_exit_reason": "unrecognized_action",
@@ -12197,6 +12444,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
         async def execute_logic(state: AgentState) -> AgentState:
             output.print_node_header("execute")
             task_id      = state.get("task_id", "default")
+            resumed_attempt = await self._resume_durable_attempt_update(task_id, state)
+            if resumed_attempt is not None:
+                return resumed_attempt
 
             stale_reason = self._stale_plan_task_revision_reason(state, task_id)
             if stale_reason:
@@ -12307,7 +12557,41 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         "pending_action": {},
                         "next_step": "generate",
                     }
-                original_code = str(pending_action.get("code") or "").strip()
+                generated_ref = dict(pending_action.get("generated_script") or {})
+                generated_path = str(
+                    generated_ref.get("path") or pending_action.get("generated_script_path") or ""
+                )
+                generated_hash = str(
+                    generated_ref.get("sha256") or pending_action.get("generated_script_hash") or ""
+                )
+                if generated_path:
+                    try:
+                        generated_bytes = Path(generated_path).read_bytes()
+                    except OSError as exc:
+                        detail = f"Generated script source is unavailable: {generated_path}: {exc}"
+                        return {
+                            "messages": [SystemMessage(content=detail)],
+                            "pending_action": {},
+                            "required_next_action": "INTERNAL_PROTOCOL_ERROR",
+                            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                            "next_step": "supervisor",
+                        }
+                    actual_hash = hashlib.sha256(generated_bytes).hexdigest()
+                    if generated_hash and actual_hash != generated_hash:
+                        detail = (
+                            "Generated script hash drifted before approval: "
+                            f"expected {generated_hash}, observed {actual_hash}."
+                        )
+                        return {
+                            "messages": [SystemMessage(content=detail)],
+                            "pending_action": {},
+                            "required_next_action": "INTERNAL_PROTOCOL_ERROR",
+                            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                            "next_step": "supervisor",
+                        }
+                    original_code = generated_bytes.decode("utf-8", errors="replace").strip()
+                else:
+                    original_code = str(pending_action.get("code") or "").strip()
             if not original_code and str(state.get("task_mode") or "managed").lower() in {"readonly", "simple_execute"}:
                 original_code = self._recent_nonempty_execute_body(state.get("messages", []), window=6)
             if not original_code:
@@ -12362,8 +12646,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         attempt_id=str(pending_action.get("attempt_id") or "dependency-gate"),
                     )
                     decision = contextualize_recovery_decision(decision, source_node="controller")
-                    application = apply_recovery_decision(action_plan_state, decision)
-                    save_plan_state(self.data_path, task_id, action_plan_state)
                     pending_type = {
                         RecoveryDecisionKind.PLAN_PATCH_REQUEST.value: "PLAN_PATCH",
                         RecoveryDecisionKind.ROLLBACK_UPSTREAM_STEP.value: "ROLLBACK_UPSTREAM_STEP",
@@ -12372,20 +12654,18 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     return {
                         "messages": [SystemMessage(content=(
                             "DependencyGate rejected the formal action before execution. "
-                            f"RecoveryPolicy committed {decision.kind}: {decision.reason}"
+                            f"RecoveryPolicy proposed {decision.kind}: {decision.reason}"
                         ))],
                         "dependency_evidence": dependency_evidence.to_dict(),
                         "recovery_decision": decision.to_dict(),
-                        "recovery_application": application,
+                        "recovery_application": {},
                         "recovery_status": decision.kind,
                         "pending_recovery_action": {
                             "type": pending_type,
                             "reason": decision.reason,
-                            "step_id": application.get("current_step_id") or dependency_evidence.step_id,
+                            "step_id": dependency_evidence.step_id,
                         },
                         "required_next_action": pending_type,
-                        "current_step_id": str(application.get("current_step_id") or ""),
-                        "current_stage_id": str(application.get("current_stage_id") or ""),
                         "plan_progress": render_plan_progress(action_plan_state),
                         "pending_action": {},
                         "next_step": decision.next_route,
@@ -12743,22 +13023,121 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "next_step": "install_subagent",
                 }
 
-            # 保存脚本
+            # Allocate the attempt before materializing the approved/executed
+            # versions. Every durable path is therefore namespaced by one attempt.
             step_index = len(state["messages"])
-            script_dir = os.path.join(self.data_path, "task_outputs", task_id)
-            os.makedirs(script_dir, exist_ok=True)
-            ext = ".py" if language == "Python" else ".sh"
-            script_file = os.path.join(script_dir, f"step_{step_index}{ext}")
-            with open(script_file, "w", encoding="utf-8") as f:
-                if language == "Bash" and not code_to_run.startswith("#!"):
-                    f.write(BASH_SCRIPT_PROLOGUE)
-                f.write(code_to_run)
+            shim_path  = self.pm.get_shim_dir_str()
+            started_at = datetime.now().isoformat(timespec="seconds")
+            attempt_plan_state = load_plan_state(self.data_path, task_id)
+            record_provenance_event(attempt_plan_state, "action_bound", {
+                "task_id": task_id,
+                "action": dict(pending_action),
+                "raw_action": dict(pending_action),
+            })
+            generated_ref = dict(pending_action.get("generated_script") or {})
+            attempt_record = record_provenance_event(attempt_plan_state, "attempt_created", {
+                "action_id": str(pending_action.get("action_id") or ""),
+                "step_id": str(pending_action.get("step_id") or ""),
+                "stage_id": str(pending_action.get("stage_id") or ""),
+                "generated_script": generated_ref,
+            })
+            attempt_id = str(attempt_record.get("attempt_id") or "")
+            attempt_dir = (
+                Path(self.data_path) / "task_outputs" / task_id / "attempts" / attempt_id
+            )
+            attempt_dir.mkdir(parents=True, exist_ok=True)
+            stdout_path = attempt_dir / "stdout.log"
+            stderr_path = attempt_dir / "stderr.log"
+            exit_status_path = attempt_dir / "exit_status.json"
+            trace_file = str(attempt_dir / "command_trace.log") if language == "Bash" and ENABLE_COMMAND_TRACE else ""
+            trace_prefix = ""
+            if trace_file:
+                trace_prefix = f"exec 9>{shlex.quote(trace_file)}\n"
+                if ENABLE_PIPESTATUS_CAPTURE:
+                    trace_prefix += (
+                        "set -o pipefail\n"
+                        "set -E\n"
+                        "trap 'ps=(\"${PIPESTATUS[@]}\"); rc=\"${ps[-1]}\"; "
+                        "printf \"+BIO_ERR|${BASH_SOURCE}:${LINENO}|${rc}| ${BASH_COMMAND}\\n\" >&9; "
+                        "printf \"PIPESTATUS=(%s)\\n\" \"${ps[*]}\" >&9' ERR\n"
+                    )
+            approved_content = code_to_run
+            if language == "Bash":
+                approved_body = code_to_run.split("\n", 1)[1] if code_to_run.startswith("#!") and "\n" in code_to_run else code_to_run
+                approved_content = BASH_SCRIPT_PROLOGUE + trace_prefix + approved_body
+            approved_ref = self._persist_script_version(
+                task_id,
+                attempt_plan_state,
+                str(pending_action.get("step_id") or "step"),
+                str(pending_action.get("action_id") or "action"),
+                "approved",
+                approved_content,
+                extension=".py" if language == "Python" else ".sh",
+                parent_script_ref=generated_ref,
+                mutation_reason="user_approval_or_edit",
+                producer="hitl_approval",
+                root=attempt_dir,
+            )
+            record_provenance_event(attempt_plan_state, "attempt_state_changed", {
+                "attempt_id": attempt_id,
+                "status": ATTEMPT_SCRIPT_READY,
+                "generated_script": generated_ref,
+                "approved_script": approved_ref,
+                "stdout_path": str(stdout_path),
+                "stderr_path": str(stderr_path),
+                "exit_status_path": str(exit_status_path),
+            })
+            record_provenance_event(attempt_plan_state, "attempt_state_changed", {
+                "attempt_id": attempt_id,
+                "status": ATTEMPT_APPROVED,
+            })
+            approved_runner = "bash" if language == "Bash" else sys.executable
+            status_tmp = f"{exit_status_path}.tmp.$$"
+            wrapper = (
+                "#!/bin/bash\n"
+                "set +e\n"
+                f"export PATH=\"$PATH:{shim_path}\"\n"
+                f": > {shlex.quote(str(stdout_path))}\n"
+                f": > {shlex.quote(str(stderr_path))}\n"
+                f"{shlex.quote(approved_runner)} {shlex.quote(approved_ref['path'])} "
+                f"> {shlex.quote(str(stdout_path))} 2> {shlex.quote(str(stderr_path))}\n"
+                "rc=$?\n"
+                "finished_at=$(date -Iseconds 2>/dev/null || date)\n"
+                f"printf '{{\"attempt_id\":\"{attempt_id}\",\"returncode\":%s,\"finished_at\":\"%s\"}}\\n' "
+                f"\"$rc\" \"$finished_at\" > {shlex.quote(status_tmp)}\n"
+                f"mv {shlex.quote(status_tmp)} {shlex.quote(str(exit_status_path))}\n"
+                f"cat {shlex.quote(str(stdout_path))}\n"
+                f"cat {shlex.quote(str(stderr_path))} >&2\n"
+                "exit \"$rc\"\n"
+            )
+            executed_ref = self._persist_script_version(
+                task_id,
+                attempt_plan_state,
+                str(pending_action.get("step_id") or "step"),
+                str(pending_action.get("action_id") or "action"),
+                "executed",
+                wrapper,
+                extension=".sh",
+                parent_script_ref=approved_ref,
+                mutation_reason="durable_execution_wrapper",
+                producer="executor_wrapper",
+                root=attempt_dir,
+            )
+            script_file = executed_ref["path"]
+            record_provenance_event(attempt_plan_state, "attempt_state_changed", {
+                "attempt_id": attempt_id,
+                "status": ATTEMPT_STARTING,
+                "executed_script": executed_ref,
+                "executed_script_path": script_file,
+                "started_at": started_at,
+            })
+            save_plan_state(self.data_path, task_id, attempt_plan_state)
             output.print_once(f"script:{script_file}", f"💾 Script: {script_file}", Fore.GREEN)
 
-            # 执行
-            shim_path  = self.pm.get_shim_dir_str()
-            execution_argv = ["bash", script_file] if language == "Bash" else ["python", script_file]
-            execution_command = f"{execution_argv[0]} {shlex.quote(script_file)}"
+            execution_argv = ["bash", script_file]
+            execution_command = f"bash {shlex.quote(script_file)}"
+            recovery_dir = str(attempt_dir / "recovery")
+            os.makedirs(recovery_dir, exist_ok=True)
             log_metadata_before: Dict[str, Dict[str, int]] = {}
             if ENABLE_ROOT_CAUSE_ANALYZER:
                 try:
@@ -12769,47 +13148,33 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     )
                 except Exception as exc:
                     logger.debug("Could not capture pre-run log metadata: %s", exc)
-            recovery_dir = os.path.join(script_dir, "recovery")
-            trace_file = ""
-            trace_prefix = ""
-            if language == "Bash" and ENABLE_COMMAND_TRACE:
-                os.makedirs(recovery_dir, exist_ok=True)
-                trace_file = os.path.join(recovery_dir, "command_trace.log")
-                trace_prefix = (
-                    f"exec 9>{shlex.quote(trace_file)}\n"
-                )
-                if ENABLE_PIPESTATUS_CAPTURE:
-                    trace_prefix += (
-                        "set -o pipefail\n"
-                        "set -E\n"
-                        "trap 'ps=(\"${PIPESTATUS[@]}\"); rc=\"${ps[-1]}\"; "
-                        "printf \"+BIO_ERR|${BASH_SOURCE}:${LINENO}|${rc}| ${BASH_COMMAND}\\n\" >&9; "
-                        "printf \"PIPESTATUS=(%s)\\n\" \"${ps[*]}\" >&9' ERR\n"
-                    )
-            started_at = datetime.now().isoformat(timespec="seconds")
-            attempt_plan_state = load_plan_state(self.data_path, task_id)
-            record_provenance_event(attempt_plan_state, "action_bound", {
-                "task_id": task_id,
-                "action": dict(pending_action),
-                "raw_action": dict(pending_action),
-            })
-            attempt_record = record_provenance_event(attempt_plan_state, "attempt_started", {
-                "action_id": str(pending_action.get("action_id") or ""),
-                "step_id": str(pending_action.get("step_id") or ""),
-                "stage_id": str(pending_action.get("stage_id") or ""),
-                "executed_script_path": script_file,
-                "started_at": started_at,
-            })
-            save_plan_state(self.data_path, task_id, attempt_plan_state)
+
+            async def persist_attempt_lifecycle(event: str, payload: Dict[str, Any]) -> None:
+                lifecycle_state = load_plan_state(self.data_path, task_id)
+                lifecycle_payload = {
+                    "attempt_id": attempt_id,
+                    "status": ATTEMPT_PROCESS_EXITED if event == "PROCESS_EXITED" else ATTEMPT_RUNNING,
+                    "pid": payload.get("pid"),
+                    "pgid": payload.get("pgid"),
+                    "heartbeat_at": payload.get("heartbeat_at"),
+                    "started_at": payload.get("started_at") or started_at,
+                    "finished_at": payload.get("finished_at") or "",
+                    "returncode": payload.get("returncode"),
+                    "stdout_path": str(stdout_path),
+                    "stderr_path": str(stderr_path),
+                    "exit_status_path": str(exit_status_path),
+                }
+                record_provenance_event(lifecycle_state, "attempt_state_changed", lifecycle_payload)
+                save_plan_state(self.data_path, task_id, lifecycle_state)
+
             start_time = time.time()
             try:
-                if language == "Bash":
-                    code_with_path = f'export PATH="$PATH:{shim_path}"\n{trace_prefix}{code_to_run}'
-                    stdout, stderr, returncode = await run_bash_script(code_with_path)
-                else:
-                    code_with_path = (f"import os\nos.environ['PATH']="
-                                      f"os.environ.get('PATH','')+os.pathsep+r'{shim_path}'\n{code_to_run}")
-                    stdout, stderr, returncode = await run_python_repl(code_with_path)
+                stdout, stderr, returncode = await run_script_path(
+                    script_file,
+                    expected_sha256=executed_ref["sha256"],
+                    interpreter="bash",
+                    lifecycle_callback=persist_attempt_lifecycle,
+                )
             except Exception as e:
                 stdout, stderr, returncode = "", str(e), 1
 
@@ -13084,9 +13449,13 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "command": execution_command,
                 "code": code_to_run,
                 "generated_code": code_to_run,
+                "code_path": approved_ref["path"],
                 "argv": execution_argv,
                 "script_file": script_file,
-                "generated_script_path": script_file,
+                "generated_script_path": str(generated_ref.get("path") or ""),
+                "generated_script": generated_ref,
+                "approved_script": approved_ref,
+                "executed_script": executed_ref,
                 "cwd": os.getcwd(),
                 "started_at": started_at,
                 "finished_at": finished_at,
@@ -13101,10 +13470,10 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "trace_text": trace_text,
                 "pipeline_statuses": pipeline_statuses,
                 "log_metadata_before": log_metadata_before,
-                "executor_metadata": get_last_execution_metadata() if language == "Bash" else {},
+                "executor_metadata": get_last_execution_metadata(),
                 "root_cause_analysis": root_cause_analysis,
                 "command_chain": command_chain,
-                "plan_version": str(execution_plan_state.get("plan_version") or "plan_v2"),
+                "plan_version": str(execution_plan_state.get("plan_version") or "plan_v1"),
                 "task_revision": self._task_revision_for_state(dict(state)),
                 "step_id": str(execution_step.get("step_id") or ""),
                 "attempt": len(state.get("recovery_attempts", []) or []) + 1,
@@ -13117,6 +13486,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     and (not effective_success or validation_failed or runtime_missing)
                 ),
                 "failure_fingerprint": execution_failure_fingerprint,
+                "stdout_log": str(stdout_path),
+                "stderr_log": str(stderr_path),
+                "exit_status_path": str(exit_status_path),
                 "stdout_summary": self._clip_observation_text(stdout, 2000),
                 "stderr_summary": self._clip_observation_text(stderr, 2000),
                 "expected_runtime_contract": {
@@ -13156,9 +13528,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 name: str(shutil.which(name) or "") for name in sorted(runtime_tool_names)
             }
             if executor_metadata.get("stdout_log"):
-                execution_evidence["stdout_log"] = str(executor_metadata["stdout_log"])
+                execution_evidence["executor_stdout_log"] = str(executor_metadata["stdout_log"])
             if executor_metadata.get("stderr_log"):
-                execution_evidence["stderr_log"] = str(executor_metadata["stderr_log"])
+                execution_evidence["executor_stderr_log"] = str(executor_metadata["stderr_log"])
             try:
                 prior_records = RecoveryStateStore(self.data_path, task_id).load_execution_records()
                 execution_evidence["recent_attempts"] = [
@@ -13186,6 +13558,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 })
                 record.produced_artifact_ids = list(provenance_result.get("produced_artifact_ids") or [])
                 RecoveryStateStore(self.data_path, task_id).save_execution_record(record)
+                provenance_task_state = dict(provenance_plan.get("task_state") or {})
+                provenance_task_state["pending_action"] = {}
+                provenance_plan["task_state"] = provenance_task_state
                 save_plan_state(self.data_path, task_id, provenance_plan)
                 logger.info(
                     "Execution provenance: task=%s plan=%s step=%s stage=%s action=%s attempt=%s role=%s artifacts=%s source=%s",
@@ -13435,12 +13810,8 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     attempt_id=str(execution.get("attempt_id") or execution.get("execution_id") or validation.validation_id),
                 )
                 decision = contextualize_recovery_decision(decision, source_node="supervisor")
-                application = apply_recovery_decision(current, decision)
-                save_plan_state(self.data_path, task_id, current)
                 update["recovery_decision"] = decision.to_dict()
-                update["recovery_application"] = application
-                update["current_step_id"] = str(application.get("current_step_id") or "")
-                update["current_stage_id"] = str(application.get("current_stage_id") or "")
+                update["recovery_application"] = {}
                 update["recovery_status"] = decision.kind
                 update["plan_progress"] = render_plan_progress(current)
                 update["pending_action"] = {}
@@ -14338,12 +14709,8 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 attempt_id=f"final-audit:{task_id}:{validation.validation_id}",
             )
             decision = contextualize_recovery_decision(decision, source_node="supervisor")
-            application = apply_recovery_decision(plan_state, decision)
-            save_plan_state(self.data_path, task_id, plan_state)
             update["recovery_decision"] = decision.to_dict()
-            update["recovery_application"] = application
-            update["current_step_id"] = str(application.get("current_step_id") or "")
-            update["current_stage_id"] = str(application.get("current_stage_id") or "")
+            update["recovery_application"] = {}
             update["recovery_status"] = decision.kind
             update["plan_progress"] = render_plan_progress(plan_state)
             update["final_audit_requested"] = False
@@ -14460,12 +14827,8 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         completion_decision,
                         source_node="supervisor",
                     )
-                    application = apply_recovery_decision(completed_state, completion_decision)
-                    save_plan_state(self.data_path, task_id, completed_state)
                     update["recovery_decision"] = completion_decision.to_dict()
-                    update["recovery_application"] = application
-                    update["current_step_id"] = str(application.get("current_step_id") or "")
-                    update["current_stage_id"] = str(application.get("current_stage_id") or "")
+                    update["recovery_application"] = {}
                     update["next_step"] = completion_decision.next_route
                     update["final_audit_requested"] = False
                     update["completion_candidate"] = {}

@@ -15,6 +15,21 @@ CONTENT_FILTER_MARKERS = (
     "input data may contain",
 )
 
+TRANSIENT_FAILURE_MARKERS = (
+    "apiconnectionerror",
+    "connection error",
+    "connection reset",
+    "connection aborted",
+    "timed out",
+    "timeout",
+    "temporarily unavailable",
+    "rate limit",
+    "status code 429",
+    "status code 502",
+    "status code 503",
+    "status code 504",
+)
+
 
 def clip_text(value: Any, limit: int = 1200) -> str:
     text = str(value or "")
@@ -28,6 +43,12 @@ def clip_text(value: Any, limit: int = 1200) -> str:
 def is_llm_input_rejected(exc: BaseException) -> bool:
     text = f"{type(exc).__name__}: {exc}".lower()
     return any(marker in text for marker in CONTENT_FILTER_MARKERS)
+
+
+def is_transient_llm_failure(exc: BaseException) -> bool:
+    """Classify provider/network failures that are safe to retry once."""
+    text = f"{type(exc).__name__}: {exc}".lower()
+    return any(marker in text for marker in TRANSIENT_FAILURE_MARKERS)
 
 
 def llm_failure_summary(exc: BaseException, stage: str, task_id: str = "") -> str:

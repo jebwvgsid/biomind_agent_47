@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 import glob
+import shlex
 from enum import Enum
 from dataclasses import dataclass
 from typing import List, Dict, Any, Callable, Tuple
@@ -22,10 +23,112 @@ class ValidationRule:
 
 class ResultValidator:
     """自动化结果验证器"""
+    READONLY_PREVIEW_TOOLS = {
+        "ls", "ll", "la", "dir", "pwd", "tree",
+        "cat", "head", "tail", "more", "less",
+        "grep", "egrep", "fgrep", "rg", "wc", "sort", "uniq", "cut",
+        "awk", "sed", "file", "stat", "du", "find",
+        "zcat", "gzip", "gunzip", "bzcat", "xzcat",
+        "echo", "printf",
+    }
+    READONLY_PREFIX_TOOLS = {"cd", "export", "set"}
+    MUTATING_OR_ANALYSIS_TOOLS = {
+        "minimap2", "bwa", "bwa-mem2", "samtools", "bcftools", "gatk",
+        "sniffles", "sniffles2", "manta", "configmanta.py", "cnvnator",
+        "lumpyexpress", "svtyper", "syri", "nucmer", "makeblastdb",
+        "blastn", "blastp", "conda", "mamba", "pip", "python", "python3",
+        "rscript", "rm", "mv", "cp", "mkdir", "touch", "chmod",
+    }
+    HARD_FAILURE_SIGNAL_RE = re.compile(
+        r"\bA USER ERROR has occurred\b|"
+        r"\bERROR\s+conda\.cli\.main_run:execute\b|"
+        r"\bTraceback \(most recent call last\):|"
+        r"\b[Ff]atal error\b|"
+        r"\bException in thread\b|"
+        r"\bsegmentation fault\b|"
+        r"\bcommand not found\b|"
+        r"\bEnvironmentNameNotFound\b|"
+        r"\bunbound variable\b|"
+        r"\bpermission denied\b",
+        re.IGNORECASE,
+    )
     
     def __init__(self):
         self.rules: List[ValidationRule] = []
         self._register_default_rules()
+
+    @staticmethod
+    def _has_real_output_redirection(code: str) -> bool:
+        text = str(code or "")
+        if re.search(r">>", text):
+            return True
+        for match in re.finditer(r"(?<!\S)(?:\d*)>(?:\s*([^\s;|]+))?", text):
+            target = (match.group(1) or "").strip().strip("'\"")
+            if target == "/dev/null":
+                continue
+            if re.fullmatch(r"&(?:\d+|-)", target):
+                continue
+            return True
+        if re.search(r"(?<!\S)&>(?!\s*/dev/null\b)", text):
+            return True
+        return False
+
+    @classmethod
+    def _readonly_preview_tokens(cls, code: str) -> List[str]:
+        normalized = re.sub(r"\d?>\s*/dev/null\b", " ", str(code or ""))
+        normalized = re.sub(r"\d?>&\d\b", " ", normalized)
+        tokens: List[str] = []
+        for segment in re.split(r"\s*(?:&&|\|\||\||;|\n)\s*", normalized):
+            segment = segment.strip()
+            if not segment or segment.startswith("#"):
+                continue
+            try:
+                parts = shlex.split(segment)
+            except ValueError:
+                return []
+            if not parts:
+                continue
+            while parts and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=.*$", parts[0]):
+                parts.pop(0)
+            if not parts:
+                continue
+            cmd = os.path.basename(parts[0]).lower()
+            if cmd in cls.READONLY_PREFIX_TOOLS:
+                continue
+            tokens.append(cmd)
+        return tokens
+
+    @classmethod
+    def _is_benign_readonly_preview_nonzero(
+        cls,
+        stdout: str,
+        stderr: str,
+        code: str,
+        returncode: int,
+    ) -> bool:
+        """Treat bounded read-only previews as successful evidence despite SIGPIPE.
+
+        Commands such as `zcat big.fastq.gz | head -8` often exit non-zero under
+        `set -o pipefail` because the preview consumer closes the pipe early.
+        This is not an analysis failure when the command is inspection-only and
+        already produced usable stdout. Real analysis commands and any hard error
+        signals remain failures.
+        """
+        if returncode == 0 or not str(stdout or "").strip():
+            return False
+        if cls.HARD_FAILURE_SIGNAL_RE.search("\n".join([stdout or "", stderr or ""])):
+            return False
+        if cls._has_real_output_redirection(code):
+            return False
+        tokens = cls._readonly_preview_tokens(code)
+        if not tokens:
+            return False
+        if any(token in cls.MUTATING_OR_ANALYSIS_TOOLS for token in tokens):
+            return False
+        if not all(token in cls.READONLY_PREVIEW_TOOLS for token in tokens):
+            return False
+        bounded_tools = {"head", "tail", "wc", "file", "stat", "grep", "egrep", "fgrep", "rg"}
+        return bool(set(tokens) & bounded_tools or "|" in str(code or ""))
     
     def _register_default_rules(self):
         # 1. 通用生信报错检测 (Segmentation fault 等)
@@ -35,6 +138,7 @@ class ResultValidator:
                 "segmentation fault", "core dumped", 
                 "command not found", "no such file or directory",
                 "syntax error", "permission denied",
+                "environmentnamenotfound", "unbound variable",
                 "biomind shim error",
                 "there is no package called",
                 "rscript: command not found",
@@ -60,16 +164,40 @@ class ResultValidator:
         def check_swallowed_availability_failure(stdout: str, stderr: str, code: str) -> Tuple[bool, str]:
             lowered_code = str(code or "").lower()
             combined = (stdout + "\n" + stderr).lower()
-            swallows_failure = "||" in lowered_code and "echo" in lowered_code
-            hides_stderr = "2>/dev/null" in lowered_code or "2> /dev/null" in lowered_code
-            if not (swallows_failure or hides_stderr):
+            lines = [line.strip() for line in lowered_code.splitlines() if line.strip()]
+
+            def is_availability_probe(line: str) -> bool:
+                probe_patterns = [
+                    r"\b(?:which|command\s+-v|type\s+-p|hash)\s+[a-z0-9_.+-]+",
+                    r"\b(?:conda|mamba)\s+env\s+list\b",
+                    r"\b(?:conda|mamba)\s+list\b",
+                    r"\b[a-z0-9_.+-]+\s+(?:--version|-version|version|--help|-h)\b",
+                    r"\brscript\b.*\b(?:library|require)\s*\(",
+                    r"\b(?:python|python3)\b.*\b(?:import|importlib)\b",
+                    r"\bperl\b.*\s-m[a-z0-9_:]+",
+                ]
+                return any(re.search(pattern, line, re.IGNORECASE) for pattern in probe_patterns)
+
+            risky_probe_lines = [
+                line for line in lines
+                if is_availability_probe(line)
+                and (
+                    ("||" in line and "echo" in line)
+                    or "2>/dev/null" in line
+                    or "2> /dev/null" in line
+                )
+            ]
+            if not risky_probe_lines:
                 return True, ""
+
             failure_patterns = [
                 r"\bnot available\b",
                 r"\bnot found\b",
-                r"\bfailed\b",
                 r"\bcommand not found\b",
                 r"\bthere is no package called\b",
+                r"\bno module named\b",
+                r"\bimporterror\b",
+                r"\bmodulenotfounderror\b",
             ]
             for pattern in failure_patterns:
                 if re.search(pattern, combined, re.IGNORECASE):
@@ -82,6 +210,31 @@ class ResultValidator:
             level=ValidationLevel.CRITICAL,
             check_function=check_swallowed_availability_failure,
             suggestion="依赖检查不要用 `|| echo not available` 吞失败；让 `which`、`--version`、`library()` 原样返回非零退出码。"
+        ))
+
+        # 1c. Hard tool errors hidden behind a successful diagnostic pipeline.
+        def check_masked_tool_failure(stdout: str, stderr: str, code: str) -> Tuple[bool, str]:
+            combined = stdout + "\n" + stderr
+            hard_patterns = [
+                (r"\bA USER ERROR has occurred\b", "工具明确报告 A USER ERROR"),
+                (r"\bERROR\s+conda\.cli\.main_run:execute\b", "conda run 包裹的命令失败"),
+                (r"\bTraceback \(most recent call last\):", "Python traceback"),
+                (r"\b[Ff]atal error\b", "fatal error"),
+                (r"\bException in thread\b", "JVM exception"),
+                (r"\bEnvironmentNameNotFound\b", "Conda environment does not exist"),
+                (r"\bunbound variable\b", "Shell environment hook failed under nounset"),
+            ]
+            for pattern, message in hard_patterns:
+                if re.search(pattern, combined, re.IGNORECASE):
+                    return False, message
+            return True, ""
+
+        self.register_rule(ValidationRule(
+            name="Masked Tool Failure Check",
+            description="检测被 grep/head/tail 等诊断管道吞掉退出码的真实工具失败",
+            level=ValidationLevel.CRITICAL,
+            check_function=check_masked_tool_failure,
+            suggestion="不要把包含硬失败的诊断输出当作成功；保留完整 stderr/log，修正原始命令后再执行。"
         ))
 
         # 2. 内存溢出 (OOM) 检测
@@ -235,15 +388,26 @@ class ResultValidator:
         self.rules.append(rule)
     
     def validate(self, stdout: str, stderr: str, code: str, returncode: int) -> Dict[str, Any]:
+        benign_nonzero_preview = self._is_benign_readonly_preview_nonzero(
+            stdout,
+            stderr,
+            code,
+            returncode,
+        )
         result = {
-            'passed': returncode == 0,
+            'passed': returncode == 0 or benign_nonzero_preview,
             'critical_failures': [],
             'warnings': [],
             'info': [],
-            'suggestions': []
+            'suggestions': [],
+            'benign_nonzero_readonly_preview': benign_nonzero_preview,
         }
         
-        if returncode != 0:
+        if returncode != 0 and benign_nonzero_preview:
+            result['warnings'].append(
+                "Read-only preview command exited non-zero after producing stdout; treating as bounded preview/pipe early-close, not analysis failure."
+            )
+        elif returncode != 0:
             result['critical_failures'].append(f"Process exited with error code: {returncode}")
         
         for rule in self.rules:

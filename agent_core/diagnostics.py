@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from agent_core.context_lineage import redact_text
 from agent_core.root_cause import extract_failed_trace_event
 from agent_core.task_spec import project_effective_user_facts, resolve_effective_user_facts
 
@@ -40,9 +41,7 @@ _SECRET_RE = re.compile(
 
 
 def _redact(value: Any) -> str:
-    text = _text(value)
-    text = _SECRET_RE.sub(lambda match: f"{match.group('prefix')}[REDACTED]", text)
-    return re.sub(r"\bBearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", text, flags=re.IGNORECASE)
+    return redact_text(_text(value))
 
 
 _SECRET_KEY_RE = re.compile(

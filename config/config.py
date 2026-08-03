@@ -56,6 +56,26 @@ if not BIOMIND_WIKI_ENABLED:
 elif BIOMIND_WIKI_INGEST_MODE not in {"manual", "ask", "auto"}:
     BIOMIND_WIKI_INGEST_MODE = "ask"
 
+
+def _env_bool(name: str, default: bool = True) -> bool:
+    return os.getenv(name, "1" if default else "0").strip().lower() in {"1", "true", "yes", "on"}
+
+
+# Recovery is enabled by default. These switches are intentionally process
+# local: task-specific runtime paths and credentials stay out of .env.
+ENABLE_STRUCTURED_RECOVERY = _env_bool("ENABLE_STRUCTURED_RECOVERY", True)
+ENABLE_RECOVERY_PATCHING = _env_bool("ENABLE_RECOVERY_PATCHING", True)
+ENABLE_PROGRESS_DETECTOR = _env_bool("ENABLE_PROGRESS_DETECTOR", True)
+ENABLE_ARTIFACT_GATE = _env_bool("ENABLE_ARTIFACT_GATE", True)
+ENABLE_ROOT_CAUSE_ANALYZER = _env_bool("ENABLE_ROOT_CAUSE_ANALYZER", True)
+ENABLE_COMMAND_TRACE = _env_bool("ENABLE_COMMAND_TRACE", True)
+ENABLE_PIPESTATUS_CAPTURE = _env_bool("ENABLE_PIPESTATUS_CAPTURE", True)
+ENABLE_KNOWLEDGE_CONFLICT_DETECTOR = _env_bool("ENABLE_KNOWLEDGE_CONFLICT_DETECTOR", True)
+ENABLE_PLAN_ASSUMPTION_VALIDATION = _env_bool("ENABLE_PLAN_ASSUMPTION_VALIDATION", True)
+ENABLE_PLAN_VERSIONING = _env_bool("ENABLE_PLAN_VERSIONING", True)
+ENABLE_PLAN_IMPACT_ANALYSIS = _env_bool("ENABLE_PLAN_IMPACT_ANALYSIS", True)
+ENABLE_PLAN_OSCILLATION_GUARD = _env_bool("ENABLE_PLAN_OSCILLATION_GUARD", True)
+
 LLM_API_KEY = (
     os.getenv("DEEPSEEK_API_KEY")
     or os.getenv("QWEN_API_KEY")
@@ -65,6 +85,51 @@ LLM_API_KEY = (
 )
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
 LLM_DEFAULT_MODEL = os.getenv("LLM_DEFAULT_MODEL", "")
+
+
+def _env_float(name: str, default: float, *, minimum: float = 0.0) -> float:
+    try:
+        value = float(os.getenv(name, str(default)))
+    except (TypeError, ValueError):
+        value = default
+    return max(minimum, value)
+
+
+def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
+    try:
+        value = int(os.getenv(name, str(default)))
+    except (TypeError, ValueError):
+        value = default
+    return max(minimum, value)
+
+
+ROOT_CAUSE_TIMEOUT_SECONDS = _env_float(
+    "BIOMIND_ROOT_CAUSE_TIMEOUT_SECONDS",
+    3.0,
+    minimum=0.1,
+)
+
+
+# Bound provider calls at the client layer. These are process settings rather
+# than task-specific values, so an API failure cannot wait indefinitely or
+# retry the same request forever.
+LLM_TIMEOUT_SECONDS = _env_float("BIOMIND_LLM_TIMEOUT_SECONDS", 90.0, minimum=10.0)
+LLM_READONLY_TIMEOUT_SECONDS = _env_float(
+    "BIOMIND_LLM_READONLY_TIMEOUT_SECONDS",
+    45.0,
+    minimum=10.0,
+)
+LLM_MAX_RETRIES = _env_int("BIOMIND_LLM_MAX_RETRIES", 1, minimum=0)
+LLM_MAX_HISTORY_MESSAGES = _env_int("BIOMIND_LLM_MAX_HISTORY_MESSAGES", 12, minimum=2)
+LLM_MAX_HISTORY_CHARS = _env_int("BIOMIND_LLM_MAX_HISTORY_CHARS", 24000, minimum=4000)
+# Downstream managed nodes use a smaller step-local view than the full audit
+# history.  Keep these configurable for providers with different context
+# limits without changing the persisted task state.
+LLM_STEP_CONTEXT_MESSAGES = _env_int("BIOMIND_LLM_STEP_CONTEXT_MESSAGES", 6, minimum=3)
+LLM_STEP_CONTEXT_CHARS = _env_int("BIOMIND_LLM_STEP_CONTEXT_CHARS", 12000, minimum=4000)
+LLM_STEP_PLAN_CHARS = _env_int("BIOMIND_LLM_STEP_PLAN_CHARS", 6000, minimum=2000)
+LLM_STEP_SKILL_DOC_CHARS = _env_int("BIOMIND_LLM_STEP_SKILL_DOC_CHARS", 18000, minimum=4000)
+LLM_STEP_EPHEMERAL_CHARS = _env_int("BIOMIND_LLM_STEP_EPHEMERAL_CHARS", 26000, minimum=8000)
 
 WIKI_EMBEDDING_ENABLED = BIOMIND_WIKI_ENABLED and os.getenv("WIKI_EMBEDDING_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
 WIKI_EMBEDDING_BASE_URL = os.getenv("WIKI_EMBEDDING_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")

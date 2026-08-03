@@ -1865,11 +1865,6 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
             )
             decision = contextualize_recovery_decision(decision, source_node="execute")
 
-            application = None
-            if data_path:
-                application = apply_recovery_decision(plan_state, decision)
-                save_plan_state(data_path, task_id, plan_state)
-
             if store:
                 store.save_diagnostic_context(diagnostic_context)
                 store.save_recovery_decision(decision)
@@ -1946,9 +1941,7 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                 "retry_reason": decision.reason or decision.root_cause,
                 "recovery_phase": "diagnose",
                 "recovery_status": action,
-                "recovery_application": application or {},
-                "current_step_id": str((application or {}).get("current_step_id") or ""),
-                "current_stage_id": str((application or {}).get("current_stage_id") or ""),
+                "recovery_application": {},
                 # Compatibility mirror only. Graph routers consume
                 # recovery_decision.kind/next_route as the authority.
                 "next_step": decision.next_route,
@@ -2020,19 +2013,11 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                     "step_id": str(evidence.get("step_id") or "") if isinstance(evidence, dict) else "",
                     "attempt_id": str(evidence.get("attempt_id") or evidence.get("execution_id") or "") if isinstance(evidence, dict) else "",
                 })
-                application = {}
-                if data_path:
-                    fallback_task_id = str((state or {}).get("task_id") or result.get("task_id") or "default")
-                    fallback_plan = load_plan_state(data_path, fallback_task_id)
-                    application = apply_recovery_decision(fallback_plan, decision)
-                    save_plan_state(data_path, fallback_task_id, fallback_plan)
                 result.update({
                     "recovery_phase": "diagnose",
                     "recovery_status": "RECOVERY_INTERNAL_ERROR",
                     "recovery_decision": decision.to_dict(),
-                    "recovery_application": application,
-                    "current_step_id": str(application.get("current_step_id") or ""),
-                    "current_stage_id": str(application.get("current_stage_id") or ""),
+                    "recovery_application": {},
                     "pending_recovery_action": {
                         "type": "recovery_internal_error",
                         "reason": detail,

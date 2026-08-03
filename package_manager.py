@@ -147,6 +147,19 @@ class PackageManager:
         text = str(command or "").strip()
         if not text or not self.conda_exe:
             return text
+        # `mamba run` takes the package-manager lock. A healthcheck is a
+        # non-mutating execution request and must remain usable while another
+        # environment is being solved or installed with mamba.
+        if re.match(r"^(conda|mamba)\s+run\b", text):
+            configured = Path(self.conda_exe)
+            conda_sibling = configured.with_name("conda")
+            runner = str(conda_sibling) if conda_sibling.is_file() else (shutil.which("conda") or self.conda_exe)
+            return re.sub(
+                r"^(conda|mamba)(?=\s|$)",
+                lambda _match: self._quote_shell_path(runner),
+                text,
+                count=1,
+            )
         if re.match(r"^(conda|mamba)(?:\s|$)", text):
             return re.sub(
                 r"^(conda|mamba)(?=\s|$)",
@@ -160,8 +173,16 @@ class PackageManager:
         """
         获取真实的 Conda 安装根目录 (用于在 shim 中 source conda.sh)
         """
+        # Prefer deterministic local path inference. `conda info` may wait on
+        # package-manager/plugin locks for tens of seconds on shared clusters.
+        if self.conda_exe:
+            manager_path = Path(str(self.conda_exe)).expanduser()
+            if manager_path.parent.name in {"bin", "Scripts"}:
+                inferred_root = manager_path.parent.parent
+                if (inferred_root / "conda-meta").is_dir():
+                    return str(inferred_root)
         try:
-            # 1. 尝试通过 conda info 获取 root_prefix
+            # Fall back to conda itself for wrappers and non-standard layouts.
             cmd = [self.conda_exe, "info", "--json"] if self.conda_exe else ["conda", "info", "--json"]
             res = subprocess.run(cmd, capture_output=True, text=True)
             if res.returncode == 0:
@@ -170,6 +191,12 @@ class PackageManager:
                 return data.get("root_prefix")
         except: 
             pass
+        if self.conda_exe:
+            manager_path = Path(str(self.conda_exe)).expanduser()
+            if manager_path.parent.name in {"bin", "Scripts"}:
+                inferred_root = manager_path.parent.parent
+                if inferred_root.is_dir():
+                    return str(inferred_root)
         if ANACONDA_ROOT:
             return str(Path(str(ANACONDA_ROOT)).expanduser())
             
@@ -388,14 +415,93 @@ class PackageManager:
     def get_shim_dir_str(self):
         return str(self.shim_dir)
 
+    def _environment_runtime_available(self, env_name: str, info: Optional[Dict[str, Any]] = None) -> bool:
+        """Return whether a registered environment is eligible for reuse."""
+
+        env_name = str(env_name or "").strip()
+        record = dict(info or (self.registry.get("environments") or {}).get(env_name, {}) or {})
+        if str(record.get("status") or "").lower() == "broken":
+            return False
+        if not env_name:
+            return False
+        current_prefix = Path(os.environ.get("CONDA_PREFIX", ""))
+        if current_prefix.name == env_name and current_prefix.is_dir():
+            return True
+        if self.conda_root:
+            prefix = Path(self.conda_root) / "envs" / env_name
+            return prefix.is_dir()
+        explicit_prefix = Path(str(record.get("prefix") or record.get("path") or ""))
+        if str(explicit_prefix) not in {"", "."}:
+            return explicit_prefix.is_dir()
+        return str(record.get("status") or "").lower() in self.INSTALLED_STATUSES
+
+    def environment_runtime_available(self, env_name: str) -> bool:
+        """Public read-only environment presence check used by runtime preflight."""
+        return self._environment_runtime_available(env_name, self.get_environment(env_name))
+
+    def _direct_environment_healthcheck(self, env_name: str, command: str) -> tuple:
+        """Run a read-only healthcheck from an existing prefix without `conda run` startup."""
+        if not self.conda_root:
+            return str(command or ""), None
+        prefix = Path(self.conda_root) / "envs" / str(env_name or "")
+        bin_dir = prefix / ("Scripts" if os.name == "nt" else "bin")
+        if not prefix.is_dir() or not bin_dir.is_dir():
+            return str(command or ""), None
+        env_pattern = re.compile(
+            rf"(?<!\S)(?:(?:\S*/)?(?:conda|mamba|micromamba))\s+run\s+-n\s+{re.escape(str(env_name))}\s+"
+        )
+        direct_command = env_pattern.sub("", str(command or ""))
+        if direct_command == str(command or ""):
+            return direct_command, None
+        process_env = os.environ.copy()
+        process_env["CONDA_PREFIX"] = str(prefix)
+        process_env["CONDA_DEFAULT_ENV"] = str(env_name)
+        process_env["PATH"] = str(bin_dir) + os.pathsep + process_env.get("PATH", "")
+        return direct_command, process_env
+
+    def recent_environment_healthcheck(
+        self,
+        env_name: str,
+        healthcheck: str,
+        max_age_seconds: float = 3600.0,
+    ) -> Optional[str]:
+        """Return persisted evidence only when the same healthcheck passed recently."""
+        record = self.get_environment(env_name)
+        if str(record.get("status") or "").lower() not in self.INSTALLED_STATUSES:
+            return None
+        recorded = str(record.get("last_healthcheck") or "").strip()
+        recorded, _recorded_env = self._direct_environment_healthcheck(env_name, recorded)
+        expected, _process_env = self._direct_environment_healthcheck(env_name, healthcheck)
+        normalize = lambda value: re.sub(r"\s+", " ", str(value or "")).strip()
+        if not recorded or normalize(recorded) != normalize(expected):
+            return None
+        verified_at = str(record.get("last_verified_at") or "").strip()
+        if not verified_at:
+            return None
+        try:
+            age = (datetime.now() - datetime.fromisoformat(verified_at)).total_seconds()
+        except (TypeError, ValueError):
+            return None
+        if age < 0 or age > max(0.0, float(max_age_seconds)):
+            return None
+        return str(record.get("notes") or "Cached runtime healthcheck passed.")
+
     def list_installed_tools(self):
         tools = []
         if "tools" in self.registry:
             for name, info in self.registry["tools"].items():
+                env_name = str(info.get("env") or info.get("env_name") or "")
+                env_record = (self.registry.get("environments") or {}).get(env_name, {})
+                source_path = str(info.get("source_path") or "")
+                source_available = bool(source_path and Path(source_path).exists())
+                if env_name and not source_available and not self._environment_runtime_available(env_name, env_record):
+                    continue
                 env_info = f"(Env: {info.get('env', 'unknown')}; status: {info.get('status', 'registered')})"
                 tools.append(f"- {name} {env_info}")
         if "environments" in self.registry:
             for name, info in self.registry["environments"].items():
+                if not self._environment_runtime_available(name, info):
+                    continue
                 purpose = info.get("purpose", "environment")
                 status = info.get("status", "registered")
                 packages = ", ".join(info.get("packages", []) or [])
@@ -526,6 +632,8 @@ class PackageManager:
         best_match = None
         best_score = -1
         for env_name, info in (self.registry.get("environments") or {}).items():
+            if not self._environment_runtime_available(env_name, info):
+                continue
             env_language = str(info.get("language", "") or "").lower()
             if req_language and env_language and req_language != env_language:
                 continue
@@ -569,9 +677,18 @@ class PackageManager:
             healthcheck=healthcheck or info.get("healthcheck", ""),
         )
         info["healthcheck"] = command
-        run_command = self._command_with_configured_manager(command)
+        run_command, process_env = self._direct_environment_healthcheck(env_name, command)
+        if process_env is None:
+            run_command = self._command_with_configured_manager(command)
         try:
-            proc = subprocess.run(run_command, shell=True, capture_output=True, text=True, timeout=180)
+            proc = subprocess.run(
+                run_command,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=180,
+                env=process_env,
+            )
             ok = proc.returncode == 0
             info["status"] = "verified" if ok else "broken"
             info["last_verified_at"] = datetime.now().isoformat()

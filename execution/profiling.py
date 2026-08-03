@@ -534,6 +534,30 @@ class RunProfiler:
             },
         )
 
+    def record_context_budget(
+        self,
+        task_id: str,
+        report: Dict[str, Any],
+        *,
+        node: Optional[str] = None,
+    ) -> None:
+        """Persist block-level prompt packing decisions for later diagnosis."""
+        if not isinstance(report, dict):
+            return
+        self._append_event(
+            task_id,
+            {
+                "id": self._new_event_id("context"),
+                "type": "context_budget",
+                "node": node or get_current_node(),
+                "started_at": _now_iso(),
+                "budget_chars": _coerce_int(report.get("budget_chars")),
+                "rendered_chars": _coerce_int(report.get("rendered_chars")),
+                "overflow": bool(report.get("overflow")),
+                "blocks": list(report.get("blocks") or []),
+            },
+        )
+
     def record_command(
         self,
         task_id: str,

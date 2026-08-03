@@ -5,9 +5,12 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
+import os
 import re
 import shlex
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -127,6 +130,118 @@ def shell_cmd(container: str | None, singularity_args: list[str], tool: str, arg
 
 def write_script(path: Path, lines: list[str]) -> None:
     path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    path.chmod(path.stat().st_mode | 0o700)
+
+
+def _fingerprint(value: object) -> str:
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _path_fingerprint(path: str | None) -> dict:
+    candidate = Path(path).resolve() if path else None
+    if not candidate:
+        return {"path": "", "size": 0, "mtime_ns": 0}
+    try:
+        stat = candidate.stat()
+        return {"path": str(candidate), "size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
+    except OSError:
+        return {"path": str(candidate), "size": 0, "mtime_ns": 0}
+
+
+def requirement_manifest(args: argparse.Namespace) -> list[dict]:
+    annotation_requested = bool(args.annotation_gff or args.annotation_fasta or args.annovar_buildver)
+    return [
+        {"requirement_id": "sample_bam_list", "role": "sample_manifest", "path": args.sample_bam_list, "level": "required", "present": True},
+        {"requirement_id": "interval_plan", "role": "intervals", "path": args.intervals_tsv, "level": "required", "present": True},
+        {"requirement_id": "reference_fasta", "role": "reference", "path": args.ref, "level": "required", "present": True},
+        {
+            "requirement_id": "annotation_gff",
+            "role": "annotation",
+            "path": args.annotation_gff or "",
+            "level": "conditional",
+            "condition": annotation_requested,
+            "present": bool(args.annotation_gff),
+        },
+        {
+            "requirement_id": "annotation_fasta",
+            "role": "annotation_reference",
+            "path": args.annotation_fasta or "",
+            "level": "conditional",
+            "condition": annotation_requested,
+            "present": bool(args.annotation_fasta),
+        },
+        {
+            "requirement_id": "annovar_buildver",
+            "role": "database_key",
+            "value": args.annovar_buildver or "",
+            "level": "conditional",
+            "condition": annotation_requested,
+            "present": bool(args.annovar_buildver),
+        },
+    ]
+
+
+def artifact_manifest(args: argparse.Namespace, scripts: dict[str, list[str]]) -> list[dict]:
+    annotation_requested = bool(args.annotation_gff or args.annotation_fasta or args.annovar_buildver)
+    artifacts = [
+        {
+            "artifact_id": f"gatk_{sanitize_token(Path(name).stem).lower()}_script",
+            "path": name,
+            "artifact_type": "script",
+            "required": True,
+            "producer": "render_gatk_wgs_scripts.py",
+            "validator": "nonempty_executable_script",
+            "state": "generated",
+        }
+        for name in scripts
+    ]
+    promised = [
+        ("gatk_gvcf_root", args.gvcf_root, "directory", "step1.HaplotypeCaller.sh", "nonempty_directory", True),
+        ("gatk_genomicsdb_root", args.db_root, "directory", "step2.GenomicsDBImport.sh", "nonempty_directory", True),
+        ("gatk_raw_vcf_root", args.raw_vcf_root, "directory", "step3.GenotypeGVCFs.sh", "nonempty_directory", True),
+        ("gatk_merged_vcf", "merged/gatk.raw.vcf.gz", "vcf", "step4.MergeVcfs.sh", "nonempty_file", True),
+        ("gatk_filtered_vcf", "filtered/gatk.filtered.snp.vcf.gz", "vcf", "step5.FilterSNPs.sh", "nonempty_file", True),
+        ("gatk_plink_pca", "plink/PCA_plink.out.eigenvec", "table", "step6.Plink_LD_PCA.sh", "nonempty_file", True),
+        ("gatk_snp_counts", "counts/snp_count_per_sample.tsv", "table", "step7.SNP_counts.sh", "nonempty_file", True),
+        ("gatk_annovar_output", f"{args.annovar_dbdir}/all.anno.variant_function", "table", "step8.ANNOVAR_annotation.sh", "nonempty_file", annotation_requested),
+    ]
+    for artifact_id, path, kind, producer, validator, required in promised:
+        artifacts.append({
+            "artifact_id": artifact_id,
+            "path": path,
+            "artifact_type": kind,
+            "required": required,
+            "producer": producer,
+            "validator": validator,
+            "state": "promised",
+        })
+    return artifacts
+
+
+def action_manifest(args: argparse.Namespace, scripts: dict[str, list[str]], artifacts: list[dict]) -> list[dict]:
+    produced: dict[str, list[str]] = {}
+    for artifact in artifacts:
+        produced.setdefault(str(artifact.get("producer") or ""), []).append(str(artifact.get("artifact_id") or ""))
+    annotation_requested = bool(args.annotation_gff or args.annotation_fasta or args.annovar_buildver)
+    actions = []
+    previous = ""
+    for index, name in enumerate(scripts, start=1):
+        action_id = re.sub(r"[^a-z0-9]+", "_", Path(name).stem.lower()).strip("_") or f"action_{index}"
+        annotation = name == "step8.ANNOVAR_annotation.sh"
+        actions.append({
+            "id": action_id,
+            "script": name,
+            "kind": "verification" if name == "00.preflight.sh" else "primary",
+            "depends_on": [previous] if previous else [],
+            "expected_artifact_ids": produced.get(name, []),
+            "success_checks": ["script_exit_zero", *(["expected_artifacts_nonempty"] if produced.get(name) else [])],
+            "required": not annotation or annotation_requested,
+            "enabled": not annotation or annotation_requested,
+            "condition": "annotation_requested" if annotation else "",
+        })
+        previous = action_id
+    return actions
 
 
 def write_normalized_samples(outdir: Path, samples: list[dict[str, str]]) -> None:
@@ -546,6 +661,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--annovar-buildver", help="Project/database buildver prefix for ANNOVAR files")
     parser.add_argument("--annovar-dbtype", default="refGene", help="ANNOVAR database type; use refGene for gff3ToGenePred-derived databases")
     parser.add_argument("--annovar-dbdir", default="annotation", help="ANNOVAR database/output directory")
+    parser.add_argument("--producer-step-id", default="", help="Optional composite plan step recorded in manifest provenance")
     return parser.parse_args()
 
 
@@ -575,11 +691,52 @@ def main() -> int:
     for name, lines in scripts.items():
         write_script(outdir / name, lines)
 
+    artifacts = artifact_manifest(args, scripts)
+    requirements = requirement_manifest(args)
+    actions = action_manifest(args, scripts, artifacts)
+    generated_at = datetime.now(timezone.utc).isoformat()
     manifest = {
+        "schema_version": 3,
+        "manifest_type": "renderer_artifact_contract",
+        "producer": Path(__file__).name,
+        "producer_step_id": str(args.producer_step_id or ""),
+        "producer_action_id": str(os.environ.get("BIOMIND_ACTION_ID") or ""),
+        "task_id": str(os.environ.get("BIOMIND_TASK_ID") or ""),
+        "generated_at": generated_at,
+        "renderer": {"id": "genomics.gatk_wgs", "version": 3},
+        "provenance": {
+            "task_id": str(os.environ.get("BIOMIND_TASK_ID") or ""),
+            "step_id": str(args.producer_step_id or ""),
+            "producer_action_id": str(os.environ.get("BIOMIND_ACTION_ID") or ""),
+            "input_fingerprint": _fingerprint([
+                _path_fingerprint(args.sample_bam_list),
+                _path_fingerprint(args.intervals_tsv),
+                _path_fingerprint(args.ref),
+                *[_path_fingerprint(path) for path in (args.annotation_gff, args.annotation_fasta) if path],
+            ]),
+            "runtime_fingerprint": _fingerprint({"container": _path_fingerprint(args.container) if args.container else {}, "runner": "bash"}),
+            "options_fingerprint": _fingerprint({
+                "tmp_dir": args.tmp_dir,
+                "gvcf_root": args.gvcf_root,
+                "db_root": args.db_root,
+                "raw_vcf_root": args.raw_vcf_root,
+                "annovar_buildver": args.annovar_buildver,
+            }),
+        },
         "samples": len(samples),
         "intervals": len(intervals),
         "scripts": list(scripts),
         "outdir": str(outdir),
+        "actions": actions,
+        "requirements": requirements,
+        "artifacts": artifacts,
+        "validation": {"validation_mode": "contract_levels", "skipped_checks": []},
+        "tool_metadata": {
+            "workflow": "gatk_wgs",
+            "sample_count": len(samples),
+            "interval_count": len(intervals),
+            "annotation_requested": bool(args.annotation_gff or args.annotation_fasta or args.annovar_buildver),
+        },
     }
     (outdir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print(json.dumps(manifest, indent=2))

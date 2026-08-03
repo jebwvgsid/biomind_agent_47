@@ -1,6 +1,9 @@
 import json
 import os
 import re
+import shlex
+import shutil
+import subprocess
 import yaml
 from pathlib import Path
 from datetime import datetime
@@ -8,7 +11,8 @@ from typing import Any, Dict, List, Optional
 
 class SkillManager:
     """遵循 Agent Skills 标准的技能加载器"""
-    MAX_SELECTED_SKILLS = 3
+    MAX_ACTIVE_SKILLS = 3
+    MAX_SELECTED_SKILLS = 12
     INSTALLED_STATUSES = {"installed", "verified", "success"}
     PYTHON_IMPORT_ALIASES = {
         "pytorch": "torch",
@@ -63,8 +67,9 @@ class SkillManager:
                     if isinstance(meta.get("metadata"), dict):
                         for key in (
                             "version", "tags", "legacy_ids", "runtime",
+                            "renderer",
                             "task_types", "stage_tags", "inputs", "outputs",
-                            "when_to_use", "when_not_to_use",
+                            "when_to_use", "when_not_to_use", "skill_type",
                         ):
                             if key not in meta and key in meta["metadata"]:
                                 meta[key] = meta["metadata"][key]
@@ -217,15 +222,113 @@ class SkillManager:
         )
 
     def get_runtime_record(self, skill_id: str) -> Dict:
+        """Return declared runtime metadata plus any persisted registration evidence.
+
+        A skill document is the source of the runtime contract; the registry only
+        records whether that contract has been installed or verified.  Returning
+        an explicit missing record keeps callers from treating absent metadata as
+        an exception or silently guessing an environment.
+        """
         meta = self.get_skill_meta(skill_id)
         candidates = [skill_id]
         if meta:
             candidates = self._skill_identifier_candidates(meta)
+        persisted: Dict[str, Any] = {}
         for candidate in candidates:
             record = self.runtime_registry.get("skills", {}).get(candidate, {})
             if record:
-                return record
-        return {}
+                persisted = dict(record)
+                break
+
+        runtime = dict((meta or {}).get("runtime") or {})
+        canonical_id = str((meta or {}).get("_skill_id") or skill_id)
+        if not runtime and not persisted:
+            return {
+                "skill_id": canonical_id,
+                "status": "unknown",
+                "metadata_present": False,
+                "metadata_status": "missing",
+            }
+
+        declared_env = str(runtime.get("default_env") or "").strip()
+        declared = {
+            "default_env": declared_env,
+            "env_runner": str(runtime.get("env_runner") or ""),
+            "language": self._runtime_language(runtime),
+            "tools": self._ensure_list(runtime.get("tools")),
+            "packages": self._runtime_packages(runtime),
+            "capabilities": self._runtime_capabilities(runtime, meta or {}),
+            "install_tool": str(runtime.get("install_tool") or ""),
+            "install_commands": self._runtime_command_list(runtime.get("install_command"))
+            + self._runtime_command_list(runtime.get("install_commands")),
+            "install_fallbacks": self._runtime_command_list(runtime.get("install_fallbacks")),
+            "install_policy": str(runtime.get("install_policy") or ""),
+            "healthcheck": self.build_runtime_healthcheck(declared_env, runtime, meta or {}),
+            "env_file": self._runtime_asset_path(runtime, meta or {}, "env_file"),
+        }
+        merged = dict(persisted)
+        merged.setdefault("skill_id", canonical_id)
+        merged.setdefault("status", "declared" if runtime else "unknown")
+        merged["metadata_present"] = bool(runtime)
+        merged["metadata_status"] = "present" if runtime else "missing"
+        merged["declared_runtime"] = declared if runtime else {}
+        for key, value in declared.items():
+            if value not in ("", [], {}, None):
+                merged.setdefault(key, value)
+        return merged
+
+    def get_renderer_record(self, skill_id: str) -> Dict[str, Any]:
+        """Return the declared deterministic renderer, if this skill owns one."""
+        canonical_id = self._resolve_skill_id(skill_id) or self._normalize_skill_key(skill_id)
+        meta = self.get_skill_meta(canonical_id) or {}
+        renderer = meta.get("renderer")
+        if not isinstance(renderer, dict) and isinstance(meta.get("metadata"), dict):
+            renderer = meta["metadata"].get("renderer")
+        if not isinstance(renderer, dict) or not renderer:
+            return {
+                "skill_id": canonical_id or str(skill_id or ""),
+                "metadata_present": False,
+                "status": "missing",
+            }
+        entrypoint = str(renderer.get("entrypoint") or renderer.get("script") or "").strip()
+        resolved = ""
+        if entrypoint:
+            try:
+                resolved = str(self._resolve_listed_skill_file(meta, entrypoint, "_scripts"))
+            except (FileNotFoundError, ValueError):
+                resolved = ""
+        status = "declared" if resolved else "invalid"
+        renderer_id = str(renderer.get("renderer_id") or renderer.get("id") or canonical_id)
+        aliases = [
+            renderer_id,
+            canonical_id,
+            entrypoint,
+            Path(entrypoint).name if entrypoint else "",
+            Path(entrypoint).stem if entrypoint else "",
+            resolved,
+            Path(resolved).name if resolved else "",
+            Path(resolved).stem if resolved else "",
+            *self._ensure_list(renderer.get("aliases")),
+        ]
+        return {
+            **renderer,
+            "skill_id": canonical_id,
+            "renderer_id": renderer_id,
+            "renderer_aliases": list(dict.fromkeys(str(item).strip() for item in aliases if str(item).strip())),
+            "invocation": dict(renderer.get("invocation") or {}),
+            "entrypoint": entrypoint,
+            "resolved_entrypoint": resolved,
+            "runner": str(renderer.get("runner") or "controller_python"),
+            "manifest_filename": str(renderer.get("manifest_filename") or "manifest.json"),
+            "manifest_type": str(renderer.get("manifest_type") or "renderer_artifact_contract"),
+            "schema_version": int(renderer.get("schema_version") or 3),
+            "composite_step": bool(renderer.get("composite_step", True)),
+            "metadata_present": True,
+            "status": status,
+        }
+
+    def has_renderer(self, skill_id: str) -> bool:
+        return self.get_renderer_record(skill_id).get("status") == "declared"
 
     def _normalize_runtime_registry(self, data: Dict[str, Any]) -> Dict[str, Any]:
         registry = {"skills": {}}
@@ -284,6 +387,10 @@ class SkillManager:
 
     def _runtime_packages(self, runtime: Dict[str, Any]) -> List[str]:
         return self._ensure_list(runtime.get("packages")) or self._ensure_list(runtime.get("python_packages"))
+
+    def _runtime_tools(self, runtime: Dict[str, Any], record: Dict[str, Any]) -> List[str]:
+        tools = self._ensure_list(runtime.get("tools")) or self._ensure_list(record.get("tools"))
+        return list(dict.fromkeys(str(tool).strip() for tool in tools if str(tool).strip()))
 
     def _runtime_capabilities(self, runtime: Dict[str, Any], meta: Dict[str, Any]) -> List[str]:
         caps = self._ensure_list(runtime.get("capabilities"))
@@ -351,6 +458,38 @@ class SkillManager:
         ]
         return any(marker in haystack for marker in markers)
 
+    @staticmethod
+    def _healthcheck_already_enters_conda_env(command: str) -> bool:
+        return bool(re.search(r"\b(?:conda|mamba)\s+run\s+-n\s+\S+", str(command or "")))
+
+    @staticmethod
+    def _healthcheck_needs_shell(command: str) -> bool:
+        text = str(command or "")
+        return bool(re.search(r"(\&\&|\|\||\||;|>|<|\$\(|`)", text))
+
+    def _wrap_runtime_healthcheck(self, env: str, command: str) -> str:
+        """Run declared healthchecks inside the skill's default conda env.
+
+        Many bash-oriented skills naturally declare checks such as
+        `bash -lc "tool --version"` or `samtools --version && ...`. Those are
+        only valid after the runtime env is active. Keep explicit `conda run`
+        healthchecks unchanged, but wrap bare checks generically.
+        """
+        command = str(command or "").strip()
+        env = str(env or "").strip()
+        if not command or not env or self._healthcheck_already_enters_conda_env(command):
+            return command
+        bash_login = re.match(r"^bash\s+-lc\s+(.+)$", command, re.DOTALL)
+        if bash_login:
+            # `conda run ... bash -lc` can reset PATH on some HPC login shells and
+            # hide the conda env binaries. Keep the shell semantics, drop `-l`.
+            return f"conda run -n {shlex.quote(env)} bash -c {bash_login.group(1).strip()}"
+        if re.match(r"^(?:bash|sh|python|python\d+(?:\.\d+)?|Rscript|R)\b", command):
+            return f"conda run -n {shlex.quote(env)} {command}"
+        if self._healthcheck_needs_shell(command):
+            return f"conda run -n {shlex.quote(env)} bash -lc {shlex.quote(command)}"
+        return f"conda run -n {shlex.quote(env)} {command}"
+
     def build_runtime_healthcheck(self, env: str, runtime: Dict[str, Any], meta: Dict[str, Any] = None) -> str:
         if not env:
             return ""
@@ -358,10 +497,11 @@ class SkillManager:
         meta = meta or {}
         healthcheck = str(runtime.get("healthcheck", "") or "")
         if healthcheck:
-            return self._normalize_runtime_healthcheck_paths(
+            normalized = self._normalize_runtime_healthcheck_paths(
                 healthcheck.replace("{env}", env),
                 meta,
             )
+            return self._wrap_runtime_healthcheck(env, normalized)
         packages = self._runtime_packages(runtime)
         language = self._runtime_language(runtime)
         if language == "r":
@@ -456,6 +596,7 @@ class SkillManager:
             "env": env,
             "env_runner": env_runner,
             "language": language,
+            "tools": self._runtime_tools(runtime, record),
             "packages": packages,
             "capabilities": capabilities,
             "install_tool": record.get("install_tool") or runtime.get("install_tool", ""),
@@ -466,7 +607,114 @@ class SkillManager:
             "env_file": self._runtime_asset_path(runtime, meta, "env_file"),
             "healthcheck": healthcheck,
             "mode_healthchecks": runtime.get("mode_healthchecks", {}) or record.get("mode_healthchecks", {}) or {},
+            "metadata_present": bool(runtime or record.get("metadata_present")),
+            "metadata_status": "present" if runtime or record.get("metadata_present") else "missing",
         }
+
+    def controlled_rg_hints(
+        self,
+        text: str,
+        search_roots: Optional[List[str]] = None,
+        max_results: int = 24,
+        timeout_seconds: float = 3.0,
+    ) -> Dict[str, Any]:
+        """Return bounded discovery hints; never treat text matches as runtime readiness."""
+
+        result: Dict[str, Any] = {
+            "status": "no_hints",
+            "candidate_skills": [],
+            "candidate_envs": [],
+            "candidate_tools": [],
+            "candidate_paths": [],
+            "evidence_files": [],
+        }
+        rg = shutil.which("rg")
+        if not rg:
+            result["status"] = "rg_unavailable"
+            return result
+
+        raw_terms = re.findall(r"[A-Za-z][A-Za-z0-9_.+-]{2,}|[\u4e00-\u9fff]{2,8}", str(text or ""))
+        ignored = {
+            "analysis", "benchmark", "biomind", "data", "file", "files", "input", "output",
+            "skill", "skills", "task", "test", "using", "with", "分析", "文件", "输入", "输出",
+        }
+        terms: List[str] = []
+        for term in raw_terms:
+            normalized = term.strip()
+            if normalized.lower() in ignored or normalized in terms:
+                continue
+            terms.append(normalized[:80])
+            if len(terms) >= 8:
+                break
+        if not terms:
+            result["status"] = "no_search_terms"
+            return result
+
+        roots: List[str] = []
+        for raw_root in [str(self.skills_root), *(search_roots or [])]:
+            path = Path(str(raw_root or "")).expanduser()
+            if path.exists():
+                resolved = str(path.resolve())
+                if resolved not in roots:
+                    roots.append(resolved)
+        if not roots:
+            result["status"] = "no_search_roots"
+            return result
+
+        command = [
+            rg, "-n", "-i", "-F", "--max-filesize", "1M", "--max-count", "2",
+            "--glob", "SKILL.md", "--glob", "*.json", "--glob", "*.yaml", "--glob", "*.yml",
+            "--glob", "*.md", "--glob", "*.sh", "--glob", "*.py", "--glob", "*.txt",
+            "--glob", "!**/expected_answers/**", "--glob", "!**/answer_key/**",
+            "--glob", "!**/hidden/**", "--glob", "!**/solutions/**", "--glob", "!**/tests/**",
+        ]
+        for term in terms:
+            command.extend(["-e", term])
+        command.extend(["--", *roots])
+        try:
+            completed = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=max(0.1, float(timeout_seconds)),
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            result["status"] = "rg_failed"
+            result["reason"] = type(exc).__name__
+            return result
+
+        lines = [line for line in completed.stdout.splitlines() if line.strip()][:max_results]
+        for line in lines:
+            path_text, _sep, evidence = line.partition(":")
+            path = Path(path_text)
+            if not path.is_file():
+                continue
+            path_str = str(path.resolve())
+            if path_str not in result["evidence_files"]:
+                result["evidence_files"].append(path_str)
+            if path_str not in result["candidate_paths"]:
+                result["candidate_paths"].append(path_str)
+            try:
+                skill_id = path.parent.relative_to(self.skills_root.resolve()).as_posix()
+            except ValueError:
+                skill_id = ""
+            if path.name == "SKILL.md" and self.get_skill_meta(skill_id):
+                if skill_id not in result["candidate_skills"]:
+                    result["candidate_skills"].append(skill_id)
+            haystack = f"{path_str} {evidence}"
+            for env in re.findall(r"\b(?:bio|env)_[A-Za-z0-9_.-]+\b", haystack):
+                if env not in result["candidate_envs"]:
+                    result["candidate_envs"].append(env)
+            for tool in re.findall(r"\b(?:command\s+-v|which)\s+([A-Za-z][A-Za-z0-9_.+-]*)", evidence):
+                if tool not in result["candidate_tools"]:
+                    result["candidate_tools"].append(tool)
+
+        result["status"] = "hints_found" if lines else "no_hints"
+        result["candidate_skills"] = result["candidate_skills"][: self.MAX_SELECTED_SKILLS]
+        for key in ("candidate_envs", "candidate_tools", "candidate_paths", "evidence_files"):
+            result[key] = result[key][:max_results]
+        return result
 
     def get_discovery_prompt(self) -> str:
         """生成供 Planner [选择] 使用的元数据列表 (低 Token 开销)"""
@@ -535,13 +783,26 @@ class SkillManager:
         lines.append("</available_skills>")
         return "\n".join(lines)
 
-    def get_skill_tree_prompt(self) -> str:
+    def get_skill_tree_prompt(self, max_chars: Optional[int] = None) -> str:
         """Compact tree view for LLM-first skill selection."""
         if not self.discovered_skills:
             return "<skill_tree>\nNo external skills available.\n</skill_tree>"
         lines = ["<skill_tree>", "skills/"]
         lines.extend(self._render_tree_lines(self._skill_tree_structure()))
         lines.append("</skill_tree>")
+        if max_chars and len("\n".join(lines)) > max_chars:
+            limit = max(240, int(max_chars))
+            closing = [
+                "... additional canonical IDs are available through skill retrieval ...",
+                "</skill_tree>",
+            ]
+            kept = [lines[0], lines[1]]
+            for line in lines[2:-1]:
+                candidate = "\n".join(kept + [line] + closing)
+                if len(candidate) > limit:
+                    break
+                kept.append(line)
+            lines = kept + closing
         return "\n".join(lines)
 
     def get_skill_catalog_prompt(self, skill_ids: Optional[List[str]] = None) -> str:
@@ -562,6 +823,36 @@ class SkillManager:
             lines.extend(self._catalog_entry_lines(skill))
         lines.append("</skill_catalog>")
         return "\n".join(lines)
+
+    def candidate_skill_ids_for_prompt(
+        self,
+        text: str,
+        max_results: int = None,
+    ) -> List[str]:
+        """Return a bounded retrieval set without deciding final skill use.
+
+        Explicit canonical/legacy IDs are sufficient evidence for this
+        retrieval context, so do not pad them with unrelated metadata matches.
+        Without explicit IDs, return bounded shallow metadata matches. The
+        Consultant still decides which skills to select and may load any other
+        ID visible in the compact skill tree.
+        """
+        limit = max_results or self.MAX_SELECTED_SKILLS
+        path_like_ids = re.findall(
+            r"(?<![\w./-])([A-Za-z0-9][A-Za-z0-9_.-]*(?:/[A-Za-z0-9][A-Za-z0-9_.-]*)+)(?![\w./-])",
+            str(text or ""),
+        )
+        explicit = self.normalize_selected_skills(path_like_ids, max_results=limit)
+        if explicit:
+            return explicit
+        matched = self.match_skills(text, max_results=limit)
+        ordered: List[str] = []
+        for skill_id in explicit + matched:
+            if skill_id not in ordered:
+                ordered.append(skill_id)
+            if len(ordered) >= limit:
+                break
+        return ordered
 
     def get_skill_reference_index(self, skill_id: str) -> List[str]:
         """Return only reference filenames; caller can load individual files later."""
@@ -638,6 +929,133 @@ class SkillManager:
         resolved = self._resolve_skill_id(skill_id)
         return dict(self._skill_lookup.get(resolved) or {})
 
+    def is_workflow_router_skill(self, skill_id: str) -> bool:
+        """Return True for skills that only route/decompose work, not execute runtimes."""
+        meta = self.get_skill_meta(skill_id)
+        if not meta:
+            return False
+        skill_type = str(meta.get("skill_type") or "").strip().lower()
+        tags = {item.lower() for item in self.metadata_list(meta, "tags")}
+        stage_tags = {item.lower() for item in self.metadata_list(meta, "stage_tags")}
+        outputs = {item.lower() for item in self.metadata_list(meta, "outputs")}
+        runtime = meta.get("runtime") or {}
+        if skill_type in {"workflow_router", "workflow-router", "router"}:
+            return True
+        if "workflow-router" in tags or "workflow_router" in tags:
+            return True
+        routing_tags = {"workflow_routing", "input_triage"}
+        routing_outputs = {"selected_skills", "stage_plan", "output_contract", "blocked_reason"}
+        if stage_tags and stage_tags <= routing_tags and outputs & routing_outputs and not runtime:
+            return True
+        return False
+
+    def is_executable_runtime_skill(self, skill_id: str) -> bool:
+        """Return True when a skill has a concrete runtime and is not a router."""
+        if self.is_workflow_router_skill(skill_id):
+            return False
+        requirements = self.get_runtime_requirements(skill_id)
+        return bool(
+            requirements.get("env")
+            or requirements.get("default_env")
+            or requirements.get("healthcheck")
+            or requirements.get("packages")
+            or requirements.get("capabilities")
+        )
+
+    @staticmethod
+    def _command_terms_from_text(text: str) -> List[str]:
+        ignored = {
+            "bash", "sh", "python", "python3", "r", "rscript", "conda", "mamba",
+            "run", "env", "which", "echo", "cat", "grep", "head", "tail", "sed",
+            "awk", "sort", "uniq", "cut", "tr", "test", "ls", "find", "mkdir",
+            "chmod", "cd", "true", "false", "printf",
+        }
+        terms: List[str] = []
+        for token in re.findall(r"(?<![-\w./])([A-Za-z][A-Za-z0-9_.+-]*)(?=\s|$)", str(text or "")):
+            lower = token.lower()
+            if lower in ignored or lower.startswith("-"):
+                continue
+            if lower not in terms:
+                terms.append(lower)
+        return terms
+
+    def runtime_tool_terms(self, skill_id: str) -> List[str]:
+        """Extract executable/tool terms declared by a skill runtime."""
+        meta = self.get_skill_meta(skill_id)
+        if not meta or self.is_workflow_router_skill(skill_id):
+            return []
+        requirements = self.get_runtime_requirements(skill_id)
+        terms: List[str] = []
+        for source in (
+            requirements.get("healthcheck", ""),
+            requirements.get("install_tool", ""),
+            " ".join(map(str, requirements.get("packages") or [])),
+            " ".join(map(str, requirements.get("capabilities") or [])),
+        ):
+            for term in self._command_terms_from_text(str(source or "")):
+                if term not in terms:
+                    terms.append(term)
+        return terms
+
+    def find_runtime_skills_for_tool(
+        self,
+        tool: str,
+        selected_skill_ids: Optional[List[str]] = None,
+        max_results: int = 5,
+    ) -> List[str]:
+        """Find executable runtime skills that declare or healthcheck a tool."""
+        requested = str(tool or "").strip().split("/")[-1].lower()
+        if not requested or requested.startswith("-"):
+            return []
+        selected = set(self.normalize_selected_skills(selected_skill_ids or [], max_results=self.MAX_SELECTED_SKILLS))
+        selected_executable = {
+            sid for sid in selected
+            if self.is_executable_runtime_skill(sid)
+        }
+        scored: List[tuple[int, str]] = []
+        for meta in self.discovered_skills:
+            sid = meta.get("_skill_id", "")
+            if not sid or not self.is_executable_runtime_skill(sid):
+                continue
+            # If the current plan already selected concrete executable skills,
+            # runtime inference must stay inside that pool. Otherwise a generic
+            # token such as "ONT"/"nanopore" or a hallucinated command can pull
+            # an unrelated executable skill into the active task and trigger an
+            # installer for the wrong environment. Workflow-router-only context
+            # is still allowed to resolve to concrete runtime skills.
+            if selected_executable and sid not in selected_executable:
+                continue
+            requirements = self.get_runtime_requirements(sid)
+            healthcheck_terms = set(self._command_terms_from_text(requirements.get("healthcheck", "")))
+            package_terms = {str(item).lower() for item in requirements.get("packages", []) or []}
+            capability_terms = {str(item).lower() for item in requirements.get("capabilities", []) or []}
+            install_tool = str(requirements.get("install_tool") or "").lower()
+            score = 0
+            if requested in healthcheck_terms:
+                score += 80
+            if requested in package_terms:
+                score += 25
+            if requested in capability_terms:
+                score += 20
+            if requested and requested == install_tool:
+                score += 30
+            if score <= 0:
+                continue
+            if sid in selected:
+                score += 15
+            tags = {str(item).lower() for item in self.metadata_list(meta, "tags")}
+            description = str(meta.get("description") or "").lower()
+            if "primary-caller" in tags:
+                score += 5
+            if "optional-caller" in tags:
+                score -= 3
+            if "legacy" in tags or "legacy" in description or "fallback" in description:
+                score -= 5
+            if score:
+                scored.append((score, sid))
+        scored.sort(key=lambda item: (-item[0], item[1]))
+        return [sid for _score, sid in scored[:max_results]]
+
     def normalize_selected_skills(self, skill_ids: List[str], max_results: int = None) -> List[str]:
         """Resolve aliases, drop unknown IDs, dedupe, and keep a bounded list."""
         if max_results is None:
@@ -708,8 +1126,38 @@ class SkillManager:
             record = self.get_runtime_record(sid)
             scripts = meta.get("_scripts", []) or []
             requirements = self.get_runtime_requirements(sid)
+            renderer = self.get_renderer_record(sid)
             cards.append(f"### Skill Execution Card: {sid}")
             cards.append(f"- absolute_dir: {skill_dir}")
+            if renderer.get("status") == "declared":
+                cards.extend([
+                    f"- renderer_id: {renderer.get('renderer_id')}",
+                    f"- renderer_entrypoint: {renderer.get('resolved_entrypoint')}",
+                    f"- renderer_runner: {renderer.get('runner')}",
+                    f"- renderer_manifest: {renderer.get('manifest_filename')} ({renderer.get('manifest_type')} v{renderer.get('schema_version')})",
+                    "- renderer_plan_policy: one composite Plan step; manifest actions own internal execution order",
+                ])
+                invocation = dict(renderer.get("invocation") or {})
+                argument_specs = invocation.get("arguments") or {}
+                if isinstance(argument_specs, dict) and argument_specs:
+                    required = [
+                        str(name)
+                        for name, spec in argument_specs.items()
+                        if isinstance(spec, dict) and bool(spec.get("required"))
+                    ]
+                    aliases = {
+                        str(name): [str(item) for item in spec.get("aliases") or []]
+                        for name, spec in argument_specs.items()
+                        if isinstance(spec, dict) and spec.get("aliases")
+                    }
+                    cards.append("- renderer_argument_names: " + ", ".join(str(name) for name in argument_specs))
+                    if required:
+                        cards.append("- renderer_required_arguments: " + ", ".join(required))
+                    if aliases:
+                        cards.append("- renderer_argument_aliases: " + json.dumps(aliases, ensure_ascii=False, sort_keys=True))
+                routed = invocation.get("routed_arguments") or {}
+                if isinstance(routed, dict) and routed:
+                    cards.append("- renderer_routed_arguments: " + json.dumps(routed, ensure_ascii=False, sort_keys=True))
             if record:
                 remembered_env = str(record.get("env", "") or "")
                 effective_env = str(requirements.get("env", "") or requirements.get("default_env", "") or "")
@@ -732,7 +1180,10 @@ class SkillManager:
                 elif remembered_healthcheck:
                     cards.append("- remembered_healthcheck_status: ignored because skill runtime metadata defines a different healthcheck")
                 if record.get("last_success_command"):
-                    cards.append(f"- last_success_command: {record.get('last_success_command')}")
+                    cards.append(
+                        "- historical_success_command: omitted from execution context; "
+                        "re-resolve current paths from the runtime audit and active skill docs"
+                    )
                 cards.append("- install_policy: verify registered env first; install only if healthcheck fails")
             if requirements.get("default_env"):
                 cards.append(f"- default_env: {requirements.get('default_env')}")
@@ -770,7 +1221,24 @@ class SkillManager:
                 cards.append("- install_strategy: verify first; if verification fails, delegate installation via <install_tool>; then re-verify")
                 cards.append("- planner_restriction: do not inline conda/pip/R package installation commands in the plan for this skill")
             for script in scripts:
-                cards.append(f"- script: {skill_dir / script}")
+                script_path = skill_dir / script
+                cards.append(f"- script: {script_path}")
+                if script_path.suffix.lower() == ".py":
+                    try:
+                        script_source = script_path.read_text(encoding="utf-8", errors="replace")
+                    except OSError:
+                        script_source = ""
+                    declared_flags = sorted(set(
+                        re.findall(r"['\"](--[A-Za-z0-9][A-Za-z0-9-]*)['\"]", script_source)
+                    ))
+                    if declared_flags:
+                        cards.append(f"  - declared_cli_flags: {', '.join(declared_flags[:60])}")
+                    first_line = script_source.splitlines()[0] if script_source else ""
+                    if str(requirements.get("env_runner") or "").strip() == "bash" and "python" in first_line:
+                        cards.append(
+                            "  - script_runner: controller_python "
+                            "(controller-side helper; do not inject a Conda Python)"
+                        )
             cards.extend([
                 "- plan_rules:",
                 "  - The planner must use only scripts and command schemas documented in this skill.",
@@ -798,29 +1266,23 @@ class SkillManager:
             if phrase in lower_plan:
                 violations.append(f"Plan contains forbidden phrase for selected skill: '{phrase}'")
 
+        known_script_names = {
+            Path(path).name
+            for sid in selected_skill_ids
+            for path in (self.get_skill_meta(sid).get("_scripts", []) or [])
+        }
         for sid in selected_skill_ids:
             meta = self.get_skill_meta(sid)
             if not meta:
                 violations.append(f"Selected skill id is not available: {sid}")
                 continue
-            scripts = [Path(p).name for p in meta.get("_scripts", []) or []]
-            runtime = self.get_runtime_requirements(sid)
             identifiers = self._skill_identifier_candidates(meta)
             if not any(identifier and identifier in plan for identifier in identifiers):
                 violations.append(f"Plan selected skill '{sid}' but does not mention its skill id.")
-            if scripts and not any(script in plan for script in scripts):
-                violations.append(
-                    f"Plan selected skill '{sid}' but does not mention any documented script: {', '.join(scripts)}"
-                )
-            if runtime.get("default_env") and runtime.get("default_env") not in plan:
-                violations.append(
-                    f"Plan selected skill '{sid}' but does not mention default_env '{runtime.get('default_env')}'."
-                )
-            known_script_names = set(scripts)
-            invented = re.findall(r"\b[\w.-]+(?:skill|plot|pipeline|workflow)[\w.-]*\.py\b", plan, re.IGNORECASE)
-            for name in invented:
-                if name not in known_script_names:
-                    violations.append(f"Plan appears to invent an undocumented script name: {name}")
+        invented = re.findall(r"\b[\w.-]+(?:skill|plot|pipeline|workflow)[\w.-]*\.py\b", plan, re.IGNORECASE)
+        for name in invented:
+            if name not in known_script_names:
+                violations.append(f"Plan appears to invent an undocumented script name: {name}")
         return violations
 
     def _runtime_record_from_info(self, skill_id: str, info: Dict[str, Any], env_override: str = "") -> Dict[str, Any]:
@@ -1239,16 +1701,22 @@ class SkillManager:
         aliases = {
             "甲基化基因绘图": ["甲基化", "甲基化图", "甲基化绘图", "bw文件", "bigwig", "tpm"],
             "methylation_profile_plot": ["甲基化", "methylation profile", "bigwig", "cg/chg/chh"],
-            "assembly": ["组装", "hifiasm", "hifi"],
+            "assembly": ["hifiasm", "hifi", "基因组组装", "de novo assembly"],
             "reseq-variant-workflow": ["重测序变异检测", "reseq variant", "resequencing variant"],
             "wgs-short-read-mapping": ["wgs fastq", "双端wgs", "bwa比对", "短读长比对"],
             "wgs-gatk-snp-indel": ["gatk snp", "gatk indel", "gatk snp和indel", "gvcf", "haplotypecaller"],
             "wgs-bcftools-snp-indel": ["bcftools", "mpileup", "bcftools snp"],
-            "wgs-lumpy-sv": ["lumpy", "短读长sv", "split read", "discordant"],
+            "wgs-manta-sv": ["manta", "短读长sv", "短读长结构变异", "paired-end sv", "short-read sv"],
+            "wgs-lumpy-sv": ["lumpy", "lumpy sv", "split read", "discordant"],
             "wgs-cnvnator-cnv": ["cnvnator", "拷贝数变异", "cnv分析", "read-depth cnv"],
             "rnaseq-variant-calling": ["rna-seq variant", "rnaseq variant", "表达区域snp", "rna-seq数据想检测"],
-            "long-read-sv-sniffles-survivor": ["sniffles", "survivor", "长读长sv", "ont长读长", "pacbio sv"],
-            "assembly-variant-syri": ["syri", "syri比较", "组装比较syri", "染色体级组装", "assembly variant"],
+            "long-read-sv-sniffles2": ["sniffles2", "sniffles", "长读长sv", "ont长读长", "pacbio sv", "nanopore sv"],
+            "long-read-sv-cutesv": ["cutesv", "cute sv", "cuteSV"],
+            "pacbio-sv-pbsv": ["pbsv", "pbmm2", "pacbio官方", "pacbio official"],
+            "long-read-sv-sniffles-survivor": ["survivor", "survivor merge", "legacy sniffles"],
+            "assembly-variant-syri": ["syri", "syri比较", "组装比较syri", "组装比较", "组装结构变异", "染色体级组装", "assembly variant"],
+            "assembly-variant-assemblytics": ["assemblytics"],
+            "assembly-variant-svim-asm": ["svim-asm", "svim asm"],
             "popgen-gwas-workflow": ["群体遗传gwas", "gwas流程", "emmax还是tassel", "population gwas"],
             "gwas-vcf-prep-qc": ["gwas输入准备", "样本顺序检查", "表型排序", "vcf和表型"],
             "gwas-emmax-association": ["emmax", "emmax gwas", "emmax关联分析"],
@@ -1512,12 +1980,16 @@ class SkillManager:
         return[]
 
     def extract_active_skills_from_plan(self, plan_text: str) -> List[str]:
-        return self.extract_skills_from_block(plan_text, "ACTIVE_SKILLS")
+        return self.extract_skills_from_block(
+            plan_text,
+            "ACTIVE_SKILLS",
+            max_results=self.MAX_ACTIVE_SKILLS,
+        )
 
     def extract_future_skills_from_plan(self, plan_text: str) -> List[str]:
         return self.extract_skills_from_block(plan_text, "FUTURE_SKILLS")
 
-    def extract_skills_from_block(self, plan_text: str, block_name: str) -> List[str]:
+    def extract_skills_from_block(self, plan_text: str, block_name: str, max_results: int = None) -> List[str]:
         match = re.search(rf"\[{re.escape(block_name)}\]\s*(.*?)\s*\[/{re.escape(block_name)}\]", plan_text or "", re.DOTALL | re.IGNORECASE)
         if not match:
             return []
@@ -1527,4 +1999,7 @@ class SkillManager:
             cleaned = self._clean_selected_skill_item(item)
             if cleaned and cleaned.lower() not in {"none", "n/a", "na", "null"}:
                 selected.append(cleaned)
-        return self.normalize_selected_skills(selected, max_results=self.MAX_SELECTED_SKILLS)
+        return self.normalize_selected_skills(
+            selected,
+            max_results=max_results or self.MAX_SELECTED_SKILLS,
+        )

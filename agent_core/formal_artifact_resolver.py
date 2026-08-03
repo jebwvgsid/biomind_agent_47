@@ -1,29 +1,49 @@
-"""Resolve formal upstream analysis artifacts before asking or blocking."""
+"""Resolve formal upstream analysis artifacts before asking or blocking.
+
+The resolver is intentionally read-only and evidence-oriented. It should not
+encode benchmark cases as control flow. Domain-specific artifacts are declared
+as file relationship patterns, while biological intent remains Consultant and
+skill responsibility.
+"""
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from agent_core.task_spec import extract_path_tokens
 
-FORBIDDEN_PATH_TOKENS = (
+
+ALWAYS_FORBIDDEN_PATH_TOKENS = (
+    ".answers",
+    "answer_key",
+    "expected_answers",
+    "gold",
+    "hidden",
+    "solution",
+)
+
+CONDITIONALLY_FORBIDDEN_PATH_TOKENS = (
     "fixtures_legacy_toy",
-    "fixtures",
     "toy",
     "tests",
-    "expected_answers",
-    "answer_key",
-    "hidden",
-    "truth",
     "demo",
+)
+
+ALLOWED_FORMAL_FIXTURE_TOKENS = (
+    "fixtures_public",
+    "fixtures_simulated_truth",
 )
 
 
 @dataclass(frozen=True)
 class ArtifactSpec:
     kind: str
+    role: str
     label: str
     filename_suffixes: Tuple[str, ...]
     search_globs: Tuple[str, ...]
@@ -36,7 +56,8 @@ class ArtifactSpec:
 ARTIFACT_SPECS: Tuple[ArtifactSpec, ...] = (
     ArtifactSpec(
         kind="tad_boundaries",
-        label="TAD boundary BED",
+        role="region_boundary_bed",
+        label="Region boundary BED",
         filename_suffixes=("_boundaries.bed",),
         search_globs=("*_boundaries.bed",),
         query_tokens=(
@@ -54,7 +75,8 @@ ARTIFACT_SPECS: Tuple[ArtifactSpec, ...] = (
     ),
     ArtifactSpec(
         kind="tad_domains",
-        label="TAD domain BED",
+        role="region_domain_bed",
+        label="Region domain BED",
         filename_suffixes=("_domains.bed",),
         search_globs=("*_domains.bed",),
         query_tokens=(
@@ -97,11 +119,13 @@ def resolve_formal_upstream_artifacts(
     extracted_benchmark_id = _extract_benchmark_id(query_text)
     current_task_id = task_id or extracted_benchmark_id or ""
     spec = _select_artifact_spec(query_text, current_task_id)
-    relevant = spec is not None
+    generic_discovery = _discover_local_inputs(query_text, work_path, project_path, max_candidates=max_candidates)
+    relevant = spec is not None or bool(generic_discovery.get("relevant"))
     result: Dict[str, Any] = {
         "relevant": relevant,
         "artifact_kind": spec.kind if spec else "",
         "artifact_label": spec.label if spec else "",
+        "artifact_role": spec.role if spec else "",
         "status": "not_applicable",
         "task_id": current_task_id,
         "benchmark_id": extracted_benchmark_id or task_id or "",
@@ -116,17 +140,37 @@ def resolve_formal_upstream_artifacts(
         "selected_by_sample": {},
         "ambiguous_samples": [],
         "ambiguous_resolutions": [],
+        "resolved_inputs": generic_discovery.get("resolved_inputs", []),
+        "candidate_groups": generic_discovery.get("candidate_groups", {}),
+        "missing_roles": generic_discovery.get("missing_roles", []),
+        "ambiguous_roles": generic_discovery.get("ambiguous_roles", []),
+        "discovery_log": generic_discovery.get("discovery_log", []),
         "unresolved": False,
         "unresolved_reasons": [],
         "consultant_action_hint": "",
     }
-    if not relevant or spec is None:
+    if not relevant:
         return result
 
     samples = _extract_samples(query_text)
     resolutions = _extract_resolution_labels(query_text)
     result["samples"] = samples
     result["resolutions"] = resolutions
+
+    if spec is None:
+        if result["ambiguous_roles"]:
+            result["status"] = "ambiguous_inputs"
+            result["unresolved"] = True
+            result["unresolved_reasons"] = ["multiple plausible input candidates"]
+            result["consultant_action_hint"] = "ask_user_to_choose_input_candidate"
+        elif result["missing_roles"]:
+            result["status"] = "missing_candidates"
+            result["unresolved"] = True
+            result["unresolved_reasons"] = ["local input discovery found unresolved roles"]
+            result["consultant_action_hint"] = "ask_user_for_formal_paths_or_upstream_permission"
+        else:
+            result["status"] = "resolved"
+        return result
 
     explicit_valid, explicit_invalid = _verify_explicit_artifact_paths(query_text, spec, work_path, project_path)
     result["verified_explicit_paths"] = [str(path) for path in explicit_valid]
@@ -204,6 +248,7 @@ def format_formal_upstream_context(result: Dict[str, Any]) -> str:
         "policy:先找再问; verify formal project artifacts before ASK or BLOCK",
         f"artifact_kind:{result.get('artifact_kind') or 'unknown'}",
         f"artifact_label:{result.get('artifact_label') or 'unknown'}",
+        f"artifact_role:{result.get('artifact_role') or 'unknown'}",
         f"status:{result.get('status') or 'unknown'}",
         f"task_id:{result.get('task_id') or 'unknown'}",
         f"benchmark_id:{result.get('benchmark_id') or 'unknown'}",
@@ -225,6 +270,21 @@ def format_formal_upstream_context(result: Dict[str, Any]) -> str:
         lines.append("ambiguous_samples:" + ", ".join(result.get("ambiguous_samples") or []))
     if result.get("ambiguous_resolutions"):
         lines.append("ambiguous_resolutions:" + ", ".join(result.get("ambiguous_resolutions") or []))
+    if result.get("resolved_inputs"):
+        lines.append("resolved_inputs:")
+        for item in (result.get("resolved_inputs") or [])[:16]:
+            lines.append(
+                f"- role={item.get('role') or 'unknown'}; source={item.get('source') or 'unknown'}; "
+                f"path={item.get('path') or item.get('paths') or 'unknown'}"
+                + (f"; detail={item.get('detail')}" if item.get("detail") else "")
+            )
+    if result.get("ambiguous_roles"):
+        lines.append("ambiguous_roles:" + ", ".join(result.get("ambiguous_roles") or []))
+    if result.get("missing_roles"):
+        lines.append("missing_roles:" + ", ".join(result.get("missing_roles") or []))
+    if result.get("discovery_log"):
+        lines.append("discovery_log:")
+        lines.extend(f"- {entry}" for entry in (result.get("discovery_log") or [])[:12])
     lines.append("[/INPUT_RESOLUTION_AUDIT]")
 
     lines.append("[FORMAL_UPSTREAM_CANDIDATES]")
@@ -247,6 +307,7 @@ def format_formal_upstream_context(result: Dict[str, Any]) -> str:
                 f"resolution={item.get('resolution') or 'unknown'}; "
                 f"task_id={item.get('task_id') or 'unknown'}; "
                 f"kind={item.get('artifact_kind') or 'unknown'}; "
+                f"role={item.get('artifact_role') or 'unknown'}; "
                 f"path={item.get('path')}"
             )
     else:
@@ -261,16 +322,510 @@ def format_formal_upstream_context(result: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _discover_local_inputs(
+    text: str,
+    work_dir: Path,
+    project_root: Optional[Path],
+    max_candidates: int = 24,
+) -> Dict[str, Any]:
+    """Discover generic local input relationships without domain decisions."""
+
+    result: Dict[str, Any] = {
+        "relevant": False,
+        "resolved_inputs": [],
+        "candidate_groups": {},
+        "missing_roles": [],
+        "ambiguous_roles": [],
+        "discovery_log": [],
+    }
+    explicit_tokens = _raw_path_tokens(text)
+    if not explicit_tokens:
+        return result
+
+    explicit_dirs: List[Path] = []
+    explicit_files: List[Path] = []
+    invalid_paths: List[str] = []
+    excluded: List[str] = []
+    for raw in explicit_tokens:
+        candidates = _expand_path_token(raw, work_dir, project_root)
+        resolved_raw = False
+        candidate_failures: List[str] = []
+        for path in candidates:
+            if _forbidden_path_reason(path, explicit=True):
+                excluded.append(str(path))
+                continue
+            if _is_dir_safe(path):
+                explicit_dirs.append(path.resolve())
+                result["resolved_inputs"].append(_input_record("input_directory", path, "explicit"))
+                resolved_raw = True
+                continue
+            if _is_file_safe(path):
+                explicit_files.append(path.resolve())
+                result["resolved_inputs"].append(_input_record(_role_for_path(path), path, "explicit"))
+                explicit_dirs.append(path.parent.resolve())
+                resolved_raw = True
+            else:
+                candidate_failures.append(str(path))
+        if not resolved_raw and _looks_like_relevant_input_path(raw):
+            invalid_paths.extend(candidate_failures or [raw])
+
+    explicit_dirs = _dedupe_paths(explicit_dirs)
+    explicit_files = _dedupe_paths(explicit_files)
+    result["relevant"] = bool(explicit_files or explicit_dirs or invalid_paths or excluded)
+    if invalid_paths:
+        result["missing_roles"].append("explicit_input_path")
+        result["discovery_log"].append("explicit input path(s) did not resolve: " + "; ".join(invalid_paths[:6]))
+    if excluded:
+        result["discovery_log"].append("excluded forbidden explicit path(s): " + "; ".join(excluded[:6]))
+
+    _discover_paired_fastqs(result, explicit_files, explicit_dirs, max_candidates=max_candidates)
+    _discover_sidecars(result, explicit_files)
+    if _should_discover_reference_annotation(text, explicit_files):
+        _discover_reference_annotation_pairs(result, explicit_files, explicit_dirs, work_dir, project_root, max_candidates)
+    result["missing_roles"] = _dedupe_strings(result.get("missing_roles") or [])
+    result["ambiguous_roles"] = _dedupe_strings(result.get("ambiguous_roles") or [])
+    return result
+
+
+def _input_record(role: str, path: Path, source: str, detail: str = "", **extra: Any) -> Dict[str, Any]:
+    resolved = path.resolve()
+    exists = resolved.exists()
+    is_file = exists and resolved.is_file()
+    is_directory = exists and resolved.is_dir()
+    try:
+        non_empty = bool(
+            (is_file and resolved.stat().st_size > 0)
+            or (is_directory and next(resolved.iterdir(), None) is not None)
+        )
+    except OSError:
+        non_empty = False
+    readable = exists and os.access(resolved, os.R_OK)
+    verified = bool(exists and readable and (non_empty if is_file else is_directory))
+    evidence = [
+        label for label, present in (
+            ("exists", exists),
+            ("is_file", is_file),
+            ("is_directory", is_directory),
+            ("non_empty", non_empty),
+            ("readable", readable),
+        ) if present
+    ]
+    record: Dict[str, Any] = {
+        "role": role,
+        "path": str(resolved),
+        "resolved_path": str(resolved),
+        "source": source,
+        "exists": exists,
+        "is_file": is_file,
+        "is_directory": is_directory,
+        "non_empty": non_empty,
+        "readable": readable,
+        "verified": verified,
+        "verified_at": datetime.now().isoformat(timespec="seconds"),
+        "verification_evidence": evidence,
+    }
+    if detail:
+        record["detail"] = detail
+    record.update(extra)
+    return record
+
+
+def _role_for_path(path: Path) -> str:
+    suffix = _compound_suffix(path)
+    if suffix in {".fq", ".fastq", ".fq.gz", ".fastq.gz"}:
+        return "fastq"
+    if suffix in {".fa", ".fasta", ".fna"}:
+        return "reference_fasta"
+    if suffix == ".gtf":
+        return "annotation_file"
+    if suffix in {".gff", ".gff3"}:
+        return "annotation_file"
+    if suffix == ".bam":
+        return "alignment_bam"
+    if suffix in {".vcf", ".vcf.gz", ".bcf"}:
+        return "variant_file"
+    if suffix == ".bed":
+        return "bed_file"
+    return "input_file"
+
+
+def _compound_suffix(path: Path) -> str:
+    name = path.name.lower()
+    for suffix in (
+        ".fastq.gz",
+        ".fq.gz",
+        ".vcf.gz",
+        ".fasta",
+        ".fastq",
+        ".gff3",
+        ".fna",
+        ".gtf",
+        ".gff",
+        ".bam",
+        ".vcf",
+        ".bcf",
+        ".bed",
+        ".fa",
+        ".fq",
+    ):
+        if name.endswith(suffix):
+            return suffix
+    return path.suffix.lower()
+
+
+def _looks_like_relevant_input_path(raw: str) -> bool:
+    lower = str(raw or "").lower()
+    return any(
+        token in lower
+        for token in (
+            ".fq",
+            ".fastq",
+            ".fa",
+            ".fasta",
+            ".fna",
+            ".gtf",
+            ".gff",
+            ".gff3",
+            ".bam",
+            ".vcf",
+            ".bcf",
+            ".bed",
+            ".cool",
+            ".mcool",
+            ".rds",
+            ".h5ad",
+        )
+    )
+
+
+def _discover_paired_fastqs(
+    result: Dict[str, Any],
+    explicit_files: Sequence[Path],
+    explicit_dirs: Sequence[Path],
+    max_candidates: int,
+) -> None:
+    explicit_fastqs = [path for path in explicit_files if _role_for_path(path) == "fastq"]
+    paired_groups: List[Dict[str, Any]] = []
+    for path in explicit_fastqs:
+        mate = _fastq_mate_path(path)
+        if mate and _is_valid_formal_file(mate) and not _forbidden_path_reason(mate, explicit=True):
+            group = _paired_fastq_group(path, mate, source="sibling_discovery")
+            paired_groups.append(group)
+            result["resolved_inputs"].append(
+                {
+                    "role": "paired_fastq",
+                    "paths": [group["r1"], group["r2"]],
+                    "sample": group["sample"],
+                    "source": "sibling_discovery",
+                }
+            )
+            result["discovery_log"].append(f"paired FASTQ mate found for {path.name}: {mate.name}")
+        elif mate:
+            result["missing_roles"].append("fastq_mate")
+            result["discovery_log"].append(f"paired FASTQ mate not found for {path.name}: expected {mate.name}")
+
+    if not explicit_fastqs:
+        for directory in explicit_dirs[:8]:
+            paired_groups.extend(_scan_fastq_pairs(directory, max_candidates=max_candidates))
+
+    paired_groups = _dedupe_group_records(paired_groups, key_fields=("r1", "r2"))
+    if paired_groups:
+        result["candidate_groups"]["paired_fastq"] = paired_groups[:max_candidates]
+        if not explicit_fastqs and len(paired_groups) == 1:
+            group = paired_groups[0]
+            result["resolved_inputs"].append(
+                {
+                    "role": "paired_fastq",
+                    "paths": [group["r1"], group["r2"]],
+                    "sample": group["sample"],
+                    "source": "directory_discovery",
+                }
+            )
+        elif not explicit_fastqs and len(paired_groups) > 1:
+            result["ambiguous_roles"].append("paired_fastq")
+            result["discovery_log"].append(
+                f"multiple paired FASTQ groups found: {', '.join(group['sample'] for group in paired_groups[:6])}"
+            )
+
+
+def _fastq_mate_path(path: Path) -> Optional[Path]:
+    name = path.name
+    patterns = (
+        (r"^(?P<prefix>.+?)(?P<sep>[_\-.])R1(?P<tail>.*\.(?:f(?:ast)?q)(?:\.gz)?)$", "R2"),
+        (r"^(?P<prefix>.+?)(?P<sep>[_\-.])1(?P<tail>\.(?:f(?:ast)?q)(?:\.gz)?)$", "2"),
+        (r"^(?P<prefix>.+?)R1(?P<tail>\.(?:f(?:ast)?q)(?:\.gz)?)$", "R2"),
+    )
+    for pattern, mate_token in patterns:
+        match = re.match(pattern, name, re.IGNORECASE)
+        if not match:
+            continue
+        if "sep" in match.groupdict():
+            mate_name = f"{match.group('prefix')}{match.group('sep')}{mate_token}{match.group('tail')}"
+        else:
+            mate_name = f"{match.group('prefix')}{mate_token}{match.group('tail')}"
+        if mate_name != name:
+            return path.with_name(mate_name)
+    return None
+
+
+def _paired_fastq_group(r1: Path, r2: Path, source: str) -> Dict[str, Any]:
+    sample = _fastq_sample_name(r1)
+    return {
+        "role": "paired_fastq",
+        "sample": sample,
+        "r1": str(r1.resolve()),
+        "r2": str(r2.resolve()),
+        "source": source,
+    }
+
+
+def _fastq_sample_name(path: Path) -> str:
+    name = path.name
+    for pattern in (
+        r"(?P<sample>.+?)(?:[_\-.])R[12].*\.(?:f(?:ast)?q)(?:\.gz)?$",
+        r"(?P<sample>.+?)(?:[_\-.])[12]\.(?:f(?:ast)?q)(?:\.gz)?$",
+        r"(?P<sample>.+?)R[12]\.(?:f(?:ast)?q)(?:\.gz)?$",
+    ):
+        match = re.match(pattern, name, re.IGNORECASE)
+        if match:
+            return match.group("sample").strip("._-")
+    return path.stem
+
+
+def _scan_fastq_pairs(directory: Path, max_candidates: int) -> List[Dict[str, Any]]:
+    if not _is_dir_safe(directory):
+        return []
+    groups: List[Dict[str, Any]] = []
+    for path in sorted(directory.iterdir()):
+        if not _is_file_safe(path) or _role_for_path(path) != "fastq":
+            continue
+        mate = _fastq_mate_path(path)
+        if not mate or not _is_valid_formal_file(mate) or _forbidden_path_reason(mate, explicit=True):
+            continue
+        if path.name > mate.name:
+            continue
+        groups.append(_paired_fastq_group(path, mate, source="directory_discovery"))
+        if len(groups) >= max_candidates:
+            break
+    return groups
+
+
+def _discover_sidecars(result: Dict[str, Any], explicit_files: Sequence[Path]) -> None:
+    for path in explicit_files:
+        sidecars = _sidecar_paths(path)
+        found = [
+            sidecar for sidecar in sidecars if _is_valid_formal_file(sidecar) and not _forbidden_path_reason(sidecar, explicit=True)
+        ]
+        for sidecar in found:
+            result["resolved_inputs"].append(_input_record(_role_for_path(sidecar), sidecar, "sidecar_discovery", detail=f"sidecar for {path.name}"))
+        if sidecars:
+            result["candidate_groups"].setdefault("sidecar_files", []).extend(
+                _input_record(_role_for_path(sidecar), sidecar, "sidecar_discovery", detail=f"sidecar for {path.name}")
+                for sidecar in found
+            )
+
+
+def _sidecar_paths(path: Path) -> List[Path]:
+    suffix = _compound_suffix(path)
+    if suffix in {".fa", ".fasta", ".fna"}:
+        return [Path(str(path) + ".fai"), path.with_suffix(".dict")]
+    if suffix == ".bam":
+        return [Path(str(path) + ".bai"), path.with_suffix(".bai")]
+    if suffix in {".vcf", ".vcf.gz"}:
+        return [Path(str(path) + ".tbi"), Path(str(path) + ".csi")]
+    return []
+
+
+def _discover_reference_annotation_pairs(
+    result: Dict[str, Any],
+    explicit_files: Sequence[Path],
+    explicit_dirs: Sequence[Path],
+    work_dir: Path,
+    project_root: Optional[Path],
+    max_candidates: int,
+) -> None:
+    roots = _local_input_search_roots(explicit_dirs, work_dir, project_root)
+    references = _dedupe_paths([path for path in explicit_files if _role_for_path(path) == "reference_fasta"])
+    annotations = _dedupe_paths([path for path in explicit_files if _role_for_path(path) == "annotation_file"])
+    if not references:
+        references = _find_files_by_suffixes(roots, (".fa", ".fasta", ".fna"), max_candidates=max_candidates)
+    if not annotations:
+        annotations = _find_files_by_suffixes(roots, (".gtf", ".gff", ".gff3"), max_candidates=max_candidates)
+
+    reference_records = [_input_record("reference_fasta", path, "local_discovery") for path in references[:max_candidates]]
+    annotation_records: List[Dict[str, Any]] = []
+    for annotation in annotations[:max_candidates]:
+        record = _input_record(_role_for_path(annotation), annotation, "local_discovery")
+        if references:
+            compatibility = _annotation_compatibility(references[0], annotation)
+            record["compatibility"] = compatibility["status"]
+            if compatibility.get("detail"):
+                record["detail"] = compatibility["detail"]
+        annotation_records.append(record)
+
+    if reference_records:
+        result["candidate_groups"]["reference_fasta"] = reference_records
+        if len(reference_records) == 1:
+            result["resolved_inputs"].append(reference_records[0])
+        else:
+            result["ambiguous_roles"].append("reference_fasta")
+    if annotation_records:
+        result["candidate_groups"]["annotation_file"] = annotation_records
+        compatible = [item for item in annotation_records if item.get("compatibility") in ("compatible", "unchecked")]
+        if len(compatible) == 1:
+            result["resolved_inputs"].append(compatible[0])
+            result["discovery_log"].append(f"annotation candidate selected: {Path(compatible[0]['path']).name}")
+        elif len(compatible) > 1:
+            result["ambiguous_roles"].append("annotation_file")
+        elif annotation_records:
+            result["ambiguous_roles"].append("annotation_file")
+            result["discovery_log"].append("annotation candidates found but none passed lightweight compatibility")
+
+
+def _should_discover_reference_annotation(text: str, explicit_files: Sequence[Path]) -> bool:
+    if any(_role_for_path(path) in {"reference_fasta", "annotation_file"} for path in explicit_files):
+        return True
+    lower = str(text or "").lower()
+    return any(
+        token in lower
+        for token in (
+            "annotation",
+            "annotate",
+            "gtf",
+            "gff",
+            "gff3",
+            "reference",
+            "genome fasta",
+            "参考",
+            "注释",
+        )
+    )
+
+
+def _local_input_search_roots(
+    explicit_dirs: Sequence[Path],
+    work_dir: Path,
+    project_root: Optional[Path],
+) -> List[Path]:
+    roots: List[Path] = []
+    seeds = list(explicit_dirs) or [work_dir]
+    if project_root:
+        seeds.append(project_root)
+    target_names = {"data", "ref", "refs", "reference", "annotation", "annotations", "genome", "metadata", "samples"}
+    for seed in seeds:
+        if _is_dir_safe(seed) and seed not in roots:
+            roots.append(seed)
+        for parent in list(seed.parents)[:4]:
+            if parent not in roots:
+                roots.append(parent)
+            try:
+                children = list(parent.iterdir())[:200]
+            except OSError:
+                children = []
+            for child in children:
+                if not _is_dir_safe(child):
+                    continue
+                child_name = child.name.lower()
+                if child_name in target_names or any(token in child_name for token in target_names):
+                    if child not in roots:
+                        roots.append(child)
+                data_child = child / "data"
+                if _is_dir_safe(data_child) and data_child not in roots:
+                    roots.append(data_child)
+    return roots[:80]
+
+
+def _find_files_by_suffixes(roots: Sequence[Path], suffixes: Sequence[str], max_candidates: int) -> List[Path]:
+    found: List[Path] = []
+    for root in roots:
+        if not _is_dir_safe(root):
+            continue
+        try:
+            entries = list(root.iterdir())
+        except OSError:
+            continue
+        for path in sorted(entries):
+            if len(found) >= max_candidates:
+                return _dedupe_paths(found)
+            if not _is_file_safe(path):
+                continue
+            if _forbidden_path_reason(path, explicit=False):
+                continue
+            if path.name.lower().endswith(tuple(suffixes)) and _is_valid_formal_file(path):
+                found.append(path.resolve())
+    return _dedupe_paths(found)
+
+
+def _annotation_compatibility(reference: Path, annotation: Path) -> Dict[str, str]:
+    ref_names = _fasta_contigs(reference)
+    ann_names = _annotation_contigs(annotation)
+    if not ref_names or not ann_names:
+        return {"status": "unchecked", "detail": "contig preview unavailable"}
+    overlap = ref_names & ann_names
+    if overlap:
+        return {"status": "compatible", "detail": f"shared_contigs={len(overlap)}"}
+    return {
+        "status": "compatibility_warning",
+        "detail": f"reference_contigs={','.join(sorted(ref_names)[:4])}; annotation_contigs={','.join(sorted(ann_names)[:4])}",
+    }
+
+
+def _fasta_contigs(path: Path, limit: int = 32) -> set[str]:
+    names: set[str] = set()
+    try:
+        with path.open("r", encoding="utf-8", errors="ignore") as handle:
+            for line in handle:
+                if line.startswith(">"):
+                    names.add(line[1:].strip().split()[0])
+                    if len(names) >= limit:
+                        break
+    except OSError:
+        return set()
+    return names
+
+
+def _annotation_contigs(path: Path, limit: int = 128) -> set[str]:
+    names: set[str] = set()
+    try:
+        with path.open("r", encoding="utf-8", errors="ignore") as handle:
+            for line in handle:
+                if not line.strip() or line.startswith("#"):
+                    continue
+                names.add(line.split("\t", 1)[0].strip())
+                if len(names) >= limit:
+                    break
+    except OSError:
+        return set()
+    return names
+
+
+def _dedupe_strings(values: Iterable[str]) -> List[str]:
+    seen: set[str] = set()
+    unique: List[str] = []
+    for value in values:
+        if value and value not in seen:
+            seen.add(value)
+            unique.append(value)
+    return unique
+
+
+def _dedupe_group_records(records: Iterable[Dict[str, Any]], key_fields: Sequence[str]) -> List[Dict[str, Any]]:
+    seen: set[Tuple[str, ...]] = set()
+    unique: List[Dict[str, Any]] = []
+    for record in records:
+        key = tuple(str(record.get(field) or "") for field in key_fields)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(record)
+    return unique
+
+
 def _select_artifact_spec(text: str, task_id: str = "") -> Optional[ArtifactSpec]:
     task_upper = str(task_id or "").upper()
     for spec in ARTIFACT_SPECS:
         if any(token in task_upper for token in spec.task_id_tokens):
             return spec
-
-    if task_upper.startswith("BM-3DDNA-") and any(
-        token in task_upper for token in ("-BALANCE-", "-COMP-", "-LOOP-", "-TAD-")
-    ):
-        return None
 
     lower = str(text or "").lower()
     for spec in ARTIFACT_SPECS:
@@ -293,7 +848,7 @@ def _query_matches_spec(lower_text: str, spec: ArtifactSpec) -> bool:
 
 
 def _extract_benchmark_id(text: str) -> str:
-    match = re.search(r"\b(BM-3DDNA-[A-Z]+-[A-Z]+-\d+)\b", str(text or ""))
+    match = re.search(r"\b(BM-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d+)\b", str(text or ""), re.IGNORECASE)
     return match.group(1) if match else ""
 
 
@@ -414,7 +969,7 @@ def _verify_explicit_artifact_paths(
         if not expanded:
             continue
         for path in expanded:
-            if _is_valid_formal_file(path) and not _forbidden_path_reason(path):
+            if _is_valid_formal_file(path) and not _forbidden_path_reason(path, explicit=True):
                 valid.append(path.resolve())
             elif "*" not in raw:
                 invalid.append(path.resolve())
@@ -427,13 +982,16 @@ def _token_matches_spec(raw: str, spec: ArtifactSpec) -> bool:
 
 
 def _path_tokens(text: str) -> List[str]:
-    tokens: List[str] = []
-    for match in re.finditer(r"(?P<path>(?:/|\.{0,2}/|[A-Za-z0-9_.-]+/)[^\s`'\"，,;；)）\]】]+)", str(text or "")):
-        token = match.group("path").strip()
-        token = token.rstrip(".:")
-        if "/" in token and (".bed" in token or "*" in token):
+    tokens = []
+    for token in _raw_path_tokens(text):
+        lower = token.lower()
+        if ".bed" in lower or "*" in token:
             tokens.append(token)
     return tokens
+
+
+def _raw_path_tokens(text: str) -> List[str]:
+    return extract_path_tokens(text)
 
 
 def _expand_path_token(raw: str, work_dir: Path, project_root: Optional[Path]) -> List[Path]:
@@ -466,11 +1024,13 @@ def _candidate_search_roots(work_dir: Path, project_root: Optional[Path]) -> Lis
     roots: List[Path] = []
     for base in bases:
         for rel in (
+            Path("benchmarks/biomind_agent_benchmark/runs"),
             Path("benchmarks/biomind_agent_benchmark/runs/3d_dna"),
+            Path("../benchmarks/biomind_agent_benchmark/runs"),
             Path("../benchmarks/biomind_agent_benchmark/runs/3d_dna"),
         ):
             candidate = (base / rel).resolve()
-            if candidate.is_dir() and candidate not in roots:
+            if _is_dir_safe(candidate) and candidate not in roots:
                 roots.append(candidate)
     return roots
 
@@ -521,12 +1081,18 @@ def _candidate_record(
         "score": score,
         "artifact_kind": spec.kind,
         "artifact_label": spec.label,
+        "artifact_role": spec.role,
     }, ""
 
 
-def _forbidden_path_reason(path: Path) -> str:
+def _forbidden_path_reason(path: Path, explicit: bool = False) -> str:
     lower = str(path.resolve()).lower()
-    for token in FORBIDDEN_PATH_TOKENS:
+    for token in ALWAYS_FORBIDDEN_PATH_TOKENS:
+        if token in lower:
+            return f"forbidden path token: {token}"
+    if explicit and any(token in lower for token in ALLOWED_FORMAL_FIXTURE_TOKENS):
+        return ""
+    for token in CONDITIONALLY_FORBIDDEN_PATH_TOKENS:
         if token in lower:
             return f"forbidden path token: {token}"
     return ""
@@ -554,13 +1120,27 @@ def _resolution_from_path(path: Path) -> str:
 
 
 def _benchmark_id_from_path(path: Path) -> str:
-    match = re.search(r"\b(BM-3DDNA-[^/\\]+)\b", str(path))
+    match = re.search(r"\b(BM-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d+)\b", str(path), re.IGNORECASE)
     return match.group(1) if match else ""
 
 
 def _is_valid_formal_file(path: Path) -> bool:
     try:
-        return path.is_file() and path.stat().st_size > 0
+        return _is_file_safe(path) and path.stat().st_size > 0
+    except OSError:
+        return False
+
+
+def _is_dir_safe(path: Path) -> bool:
+    try:
+        return path.is_dir()
+    except OSError:
+        return False
+
+
+def _is_file_safe(path: Path) -> bool:
+    try:
+        return path.is_file()
     except OSError:
         return False
 

@@ -91,28 +91,105 @@ class WorkflowManager:
         resolved = self.resolve_workflow_id(workflow_id)
         return dict(self.workflows.get(resolved) or {})
 
-    def get_workflow_catalog_prompt(self) -> str:
+    def candidate_workflow_ids_for_prompt(self, text: str, max_results: int = 3) -> List[str]:
+        """Return metadata matches for a compact Consultant context.
+
+        This is retrieval only. It does not decide that a workflow applies; the
+        Consultant must still load and semantically validate the candidate.
+        """
+        query = str(text or "").lower()
+        if not query or not self.workflows:
+            return []
+
+        scored: List[tuple[int, str]] = []
+        for workflow_id, workflow in self.workflows.items():
+            fields = [
+                workflow_id,
+                workflow.get("name", ""),
+                workflow.get("description", ""),
+                *self._ensure_list(workflow.get("aliases")),
+                *self._ensure_list(workflow.get("task_types")),
+                *self._ensure_list(workflow.get("triggers")),
+                *[
+                    value
+                    for stage in workflow.get("stages", []) or []
+                    if isinstance(stage, dict)
+                    for value in (
+                        stage.get("stage", ""),
+                        *self._ensure_list(stage.get("task_types")),
+                        *self._ensure_list(stage.get("inputs")),
+                        *self._ensure_list(stage.get("outputs")),
+                    )
+                ],
+            ]
+            score = 0
+            seen: set[str] = set()
+            for field in fields:
+                for token in re.split(r"[^a-z0-9]+", str(field or "").lower()):
+                    if len(token) < 3 or token in seen:
+                        continue
+                    if token in query:
+                        score += 2 if token in workflow_id.lower() else 1
+                        seen.add(token)
+            if score:
+                scored.append((score, workflow_id))
+
+        scored.sort(key=lambda item: (-item[0], item[1]))
+        return [workflow_id for _, workflow_id in scored[: max(1, int(max_results or 1))]]
+
+    def get_workflow_catalog_prompt(
+        self,
+        workflow_ids: Optional[List[str]] = None,
+        max_entries: Optional[int] = None,
+        description_chars: int = 240,
+    ) -> str:
         if not self.workflows:
             return "<workflow_catalog>\nNo workflow templates available.\n</workflow_catalog>"
+        compact = bool(workflow_ids) or max_entries is not None or description_chars != 240
+        chosen_ids = [
+            self.resolve_workflow_id(workflow_id)
+            for workflow_id in (workflow_ids or [])
+            if self.resolve_workflow_id(workflow_id)
+        ]
+        if chosen_ids:
+            selected = [self.workflows[workflow_id] for workflow_id in dict.fromkeys(chosen_ids)]
+        else:
+            selected = [self.workflows[workflow_id] for workflow_id in sorted(self.workflows)]
+        if max_entries is not None:
+            selected = selected[: max(0, int(max_entries))]
         lines = [
             "<workflow_catalog>",
-            "Workflow templates define required stages. Use a workflow only when it clearly matches the requested analysis; otherwise skip workflow handoff and select local skill(s) directly.",
+            "Use a workflow only when it clearly matches the requested analysis; compare task type, inputs, outputs, and stages before selecting it.",
+            "Otherwise, select local skill(s) directly and skip workflow handoff.",
         ]
-        for workflow_id in sorted(self.workflows):
-            workflow = self.workflows[workflow_id]
+        for workflow in selected:
+            workflow_id = workflow.get("workflow_id", "")
             task_types = ", ".join(self._ensure_list(workflow.get("task_types"))) or "none"
             triggers = ", ".join(self._ensure_list(workflow.get("triggers"))) or "none"
             stages = ", ".join(stage.get("stage", "") for stage in workflow.get("stages", []) if stage.get("stage")) or "none"
-            aliases = ", ".join(self._ensure_list(workflow.get("aliases"))) or "none"
-            lines.extend([
-                f"- workflow_id: {workflow_id}",
-                f"  aliases: {aliases}",
-                f"  name: {workflow.get('name', workflow_id)}",
-                f"  task_types: {task_types}",
-                f"  triggers: {triggers}",
-                f"  stages: {stages}",
-                f"  description: {workflow.get('description', 'No description')}",
-            ])
+            if compact:
+                description = str(workflow.get("description", "No description") or "No description").strip()
+                description = description[: max(80, int(description_chars or 240))]
+                lines.extend([
+                    f"- workflow_id: {workflow_id}",
+                    f"  task_types: {task_types}",
+                    f"  triggers: {triggers}",
+                    f"  stages: {stages}",
+                    f"  description: {description}",
+                ])
+            else:
+                aliases = ", ".join(self._ensure_list(workflow.get("aliases"))) or "none"
+                lines.extend([
+                    f"- workflow_id: {workflow_id}",
+                    f"  aliases: {aliases}",
+                    f"  name: {workflow.get('name', workflow_id)}",
+                    f"  task_types: {task_types}",
+                    f"  triggers: {triggers}",
+                    f"  stages: {stages}",
+                    f"  description: {workflow.get('description', 'No description')}",
+                ])
+        if not selected:
+            lines.append("- no metadata match; do not invent a workflow_id")
         lines.append("</workflow_catalog>")
         return "\n".join(lines)
 
@@ -174,6 +251,31 @@ def parse_workflow_handoff(text: str) -> Dict[str, Any]:
 def parse_workflow_state(text: str) -> Dict[str, Any]:
     """Parse workflow state using the legacy handoff wire format."""
     return parse_workflow_handoff(text)
+
+
+def strip_workflow_activation(workflow_state: Dict[str, Any]) -> Dict[str, Any]:
+    """Return coarse workflow metadata without node-owned execution state.
+
+    Legacy sessions may still contain activation fields. They remain parseable,
+    but new Consultant-to-Planner handoffs must not carry scheduling decisions.
+    """
+    normalized = dict(workflow_state or {})
+    normalized["active_batch_id"] = ""
+    normalized["active_skills"] = []
+    normalized["future_skills"] = []
+    decision = dict(normalized.get("workflow_decision") or {})
+    decision.pop("active_batch_id", None)
+    decision.pop("current_batch", None)
+    normalized["workflow_decision"] = decision
+    stages: List[Dict[str, Any]] = []
+    for raw_stage in normalized.get("workflow_stages") or []:
+        if not isinstance(raw_stage, dict):
+            continue
+        stage = dict(raw_stage)
+        stage.pop("active_now", None)
+        stages.append(stage)
+    normalized["workflow_stages"] = stages
+    return normalized
 
 
 def validate_workflow_handoff(

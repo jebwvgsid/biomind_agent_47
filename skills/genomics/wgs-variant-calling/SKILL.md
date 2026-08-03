@@ -1,6 +1,15 @@
 ---
 name: wgs-variant-calling
 description: Generate and validate WGS resequencing variant calling workflows from FASTQ/BAM through GATK gVCF, GenomicsDBImport, joint genotyping, VCF merge/filtering, PLINK LD pruning/PCA, SNP counting, and optional ANNOVAR-style SNP annotation. Use for large or many-sample genomes where intervals must be planned from FASTA .fai; keep chromosomes/contigs at or below 500 Mb unsplit and split only larger sequences unless the user overrides the threshold.
+metadata:
+  renderer:
+    renderer_id: genomics.gatk_wgs
+    entrypoint: scripts/render_gatk_wgs_scripts.py
+    runner: controller_python
+    manifest_filename: manifest.json
+    manifest_type: renderer_artifact_contract
+    schema_version: 3
+    composite_step: true
 ---
 
 # WGS Variant Calling

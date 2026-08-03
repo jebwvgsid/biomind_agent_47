@@ -24,6 +24,20 @@ _ASSIGNMENT_SECRET = re.compile(
 _AUTH_SECRET = re.compile(r"(?i)(Authorization\s*:\s*(?:Bearer|Basic)\s+)([^\s]+)")
 _BEARER_SECRET = re.compile(r"(?i)(\bBearer\s+)([A-Za-z0-9._~+/=-]{8,})")
 _OPENAI_STYLE_SECRET = re.compile(r"\bsk-[A-Za-z0-9_-]{8,}\b")
+_COOKIE_SECRET = re.compile(r"(?im)^((?:Set-)?Cookie\s*:\s*)([^\r\n]+)")
+_URL_CREDENTIAL = re.compile(r"(?i)(https?://)([^\s/@:]+):([^\s/@]+)@")
+_URL_QUERY_SECRET = re.compile(
+    r"(?i)([?&](?:access_token|refresh_token|api_key|apikey|token|password|secret)=)([^&#\s]+)"
+)
+_SSH_PRIVATE_KEY = re.compile(
+    r"-----BEGIN (?:OPENSSH|RSA|DSA|EC|ENCRYPTED) PRIVATE KEY-----.*?"
+    r"-----END (?:OPENSSH|RSA|DSA|EC|ENCRYPTED) PRIVATE KEY-----",
+    re.DOTALL,
+)
+_CLOUD_CREDENTIAL = re.compile(
+    r"(?i)\b((?:AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|GOOGLE_APPLICATION_CREDENTIALS|"
+    r"AZURE_CLIENT_SECRET|GITHUB_TOKEN|GITLAB_TOKEN)\s*[=:]\s*)([^\s,;]+)"
+)
 
 
 class SnapshotConflictError(RuntimeError):
@@ -108,9 +122,32 @@ def _redact(value: Any, path: str = "$", manifest: Optional[List[Dict[str, str]]
         rules.append("authorization_header")
         return f"{match.group(1)}[REDACTED]"
 
+    def replace_cookie(match: re.Match[str]) -> str:
+        rules.append("cookie_header")
+        return f"{match.group(1)}[REDACTED]"
+
+    def replace_url_credential(match: re.Match[str]) -> str:
+        rules.append("url_credential")
+        return f"{match.group(1)}[REDACTED]@"
+
+    def replace_query_secret(match: re.Match[str]) -> str:
+        rules.append("url_query_secret")
+        return f"{match.group(1)}[REDACTED]"
+
+    def replace_cloud_secret(match: re.Match[str]) -> str:
+        rules.append("cloud_credential")
+        return f"{match.group(1)}[REDACTED]"
+
     text = _ASSIGNMENT_SECRET.sub(replace_assignment, text)
     text = _AUTH_SECRET.sub(replace_auth, text)
     text = _BEARER_SECRET.sub(replace_auth, text)
+    text = _COOKIE_SECRET.sub(replace_cookie, text)
+    text = _URL_CREDENTIAL.sub(replace_url_credential, text)
+    text = _URL_QUERY_SECRET.sub(replace_query_secret, text)
+    text = _CLOUD_CREDENTIAL.sub(replace_cloud_secret, text)
+    if _SSH_PRIVATE_KEY.search(text):
+        rules.append("ssh_private_key")
+        text = _SSH_PRIVATE_KEY.sub("[REDACTED SSH PRIVATE KEY]", text)
     if _OPENAI_STYLE_SECRET.search(text):
         rules.append("api_key_pattern")
         text = _OPENAI_STYLE_SECRET.sub("[REDACTED]", text)
@@ -122,6 +159,12 @@ def _redact(value: Any, path: str = "$", manifest: Optional[List[Dict[str, str]]
 def redact_payload(value: Any) -> Tuple[Any, List[Dict[str, str]]]:
     manifest: List[Dict[str, str]] = []
     return _redact(value, manifest=manifest), manifest
+
+
+def redact_text(value: Any) -> str:
+    """Return the shared disk-safe text projection without touching source files."""
+    redacted, _ = redact_payload(str(value or ""))
+    return str(redacted)
 
 
 def _message_role(message: Any) -> str:
