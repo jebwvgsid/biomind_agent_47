@@ -16,13 +16,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from agent_core.task_spec import normalize_requirement
+from agent_core.task_spec import normalize_requirement, project_task_spec_to_renderer
 
 PlanState = Dict[str, Any]
 PlanStep = Dict[str, Any]
 
-PLAN_SCHEMA_VERSION = 4
-PLAN_MIGRATION_VERSION = 4
+PLAN_SCHEMA_VERSION = 5
+PLAN_MIGRATION_VERSION = 5
 PROVENANCE_SCHEMA_VERSION = 1
 RENDERER_MANIFEST_SCHEMA_VERSION = 3
 MANIFEST_ACTION_KINDS = {
@@ -230,6 +230,34 @@ def _mark_from_status(status: str) -> str:
 def _clean_step_title(title: str) -> str:
     title = re.sub(r"\s+", " ", str(title or "")).strip()
     return title.rstrip()
+
+
+def _display_step_title(title: str) -> str:
+    value = re.split(
+        r"\s+\|\s+(?=(?:Goal|Action|Purpose|Skills|Stage|Batch|Done|Success(?: Criteria)?)\s*:)",
+        _clean_step_title(title),
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0]
+    return re.sub(r"^Step\s+\d+\s*:\s*", "", value, flags=re.IGNORECASE)
+
+
+def step_requires_execution_evidence(step: Dict[str, Any]) -> bool:
+    """Return whether a validation step needs local execution evidence, not KB text."""
+    value = " ".join(
+        [
+            str(step.get("title") or ""),
+            str(step.get("purpose") or ""),
+            *(str(item) for item in step.get("success_criteria", []) or []),
+        ]
+    ).lower()
+    explicit_checks = ("test -", "exists", "non-empty", "nonempty", "readable", "writable")
+    local_objects = ("file", "path", "directory", "input", "文件", "路径", "目录", "输入")
+    local_checks = ("存在", "非空", "可读", "可写", "完整")
+    return any(token in value for token in explicit_checks) or (
+        any(token in value for token in local_objects)
+        and any(token in value for token in local_checks)
+    )
 
 
 def _step_id_for(title: str, index: int) -> str:
@@ -743,6 +771,9 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                 provenance["stages"][record["stage_id"]]["current_attempt_id"] = attempt_id
                 provenance["stages"][record["stage_id"]]["status"] = "running"
             result = deepcopy(record)
+        if event == "attempt_started":
+            state["execution_cursor_step_id"] = str(result.get("step_id") or "")
+            state["execution_status"] = "in_progress"
 
     elif event == "attempt_state_changed":
         attempt_id = str(value.get("attempt_id") or "")
@@ -782,6 +813,17 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                 attempt[key] = deepcopy(value[key])
         attempt["status"] = status
         attempt["updated_at"] = now
+        if status in {ATTEMPT_STARTING, ATTEMPT_RUNNING}:
+            state["execution_cursor_step_id"] = str(attempt.get("step_id") or "")
+        elif status in {
+            ATTEMPT_PROCESS_EXITED,
+            ATTEMPT_EVIDENCE_COMMITTED,
+            ATTEMPT_VALIDATED,
+            ATTEMPT_COMPLETED,
+            ATTEMPT_FAILED,
+            ATTEMPT_UNKNOWN_AFTER_CRASH,
+        } and str(state.get("execution_cursor_step_id") or "") == str(attempt.get("step_id") or ""):
+            state["execution_cursor_step_id"] = ""
         result = deepcopy(attempt)
 
     elif event == "execution_finished":
@@ -802,6 +844,9 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             "status": ATTEMPT_EVIDENCE_COMMITTED,
             "command_role": role,
         })
+        if str(state.get("execution_cursor_step_id") or "") == str(attempt.get("step_id") or ""):
+            state["execution_cursor_step_id"] = ""
+        state["execution_status"] = "in_progress" if attempt.get("returncode") == 0 else "failed"
         if str(attempt.get("stage_id") or "") in provenance.get("stages", {}):
             stage = provenance["stages"][str(attempt.get("stage_id"))]
             stage["current_attempt_id"] = attempt_id
@@ -1463,6 +1508,12 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
     task_state["recovery_state"] = recovery_state
     task_state["last_recovery_decision"] = value
     state["task_state"] = task_state
+    if normalized == TASK_STATUS_COMPLETED:
+        state["execution_status"] = "completed"
+    elif normalized in {TASK_STATUS_FAILED, TASK_STATUS_BLOCKED, TASK_STATUS_CANCELLED}:
+        state["execution_status"] = normalized
+    elif normalized in {TASK_STATUS_RUNNING, TASK_STATUS_DIAGNOSING, TASK_STATUS_REPAIRING}:
+        state.setdefault("execution_status", "not_started")
     state["updated_at"] = _now()
     original_state.clear()
     original_state.update(state)
@@ -2122,9 +2173,10 @@ def normalize_plan_step(step: PlanStep, index: int = 1) -> PlanStep:
     """Normalize one step in place while retaining unknown legacy fields."""
     if not isinstance(step, dict):
         step = {}
-    title = _clean_step_title(step.get("title") or step.get("name") or f"Step {index}")
-    parsed = _structured_step_fields(title)
-    step["step_id"] = str(step.get("step_id") or step.get("id") or _step_id_for(title, index))
+    raw_title = str(step.get("title") or step.get("name") or f"Step {index}")
+    parsed = _structured_step_fields(raw_title)
+    title = _clean_step_title(raw_title)
+    step["step_id"] = str(step.get("step_id") or step.get("id") or _step_id_for(raw_title, index))
     step["title"] = title
     step["action"] = str(step.get("action") or parsed.get("action") or "").strip().lower()
     step["tool"] = str(step.get("tool") or parsed.get("tool") or "").strip()
@@ -3006,6 +3058,7 @@ def apply_plan_patch(
     candidate_state = deepcopy(state)
     candidate_state["steps"] = current_steps
     candidate_state = carry_forward_plan_lifecycle(state, candidate_state)
+    revision_delta = stable_plan_revision_delta(state, candidate_state)
     candidate_hash = semantic_plan_hash(candidate_state)
     if candidate_hash == base_hash:
         # A semantic no-op is not a plan revision and must not consume the plan
@@ -3023,6 +3076,7 @@ def apply_plan_patch(
             "plan_hash": base_hash,
             "semantic_change": False,
             "no_op": True,
+            "revision_delta": revision_delta,
         }
     candidate_state["parent_plan_version"] = str(state.get("plan_version") or "")
     candidate_state["plan_version"] = f"plan_v{int(candidate_state.get('plan_revision') or base_revision)}"
@@ -3037,7 +3091,11 @@ def apply_plan_patch(
             "changed_step_ids": changed_ids,
             "changed_fields": changed_fields,
             "field_changes": field_changes,
+            "revision_delta": revision_delta,
             "review_required": review_required,
+            "base_revision_status": "superseded",
+            "revision_status": "current",
+            "approval_status": "awaiting_review",
             "reason": str(patch.get("reason") or "local validation repair"),
             "updated_at": _now(),
         }
@@ -3061,6 +3119,7 @@ def apply_plan_patch(
         "plan_hash": candidate_hash,
         "semantic_change": base_hash != candidate_hash,
         "no_op": False,
+        "revision_delta": revision_delta,
     }
 
 
@@ -3077,17 +3136,76 @@ def render_structured_plan(state: PlanState) -> str:
         batch = str(step.get("batch_id") or "none")
         done = "; ".join(step.get("success_criteria") or [])
         lines.append(
-            f"- [{mark}] {step.get('title')} | Action: {str(step.get('action') or '').upper()} "
+            f"- [{mark}] [{step.get('step_id')}] {_display_step_title(str(step.get('title') or ''))} "
+            f"| Action: {str(step.get('action') or '').upper()} "
             f"| Purpose: {str(step.get('purpose') or 'analysis').upper()} "
             f"| Skills: [{skills}] | Stage: [{stages}] | Batch: {batch} | Done: {done}"
         )
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _render_output_ownership(state: PlanState) -> List[str]:
+    task_spec = dict(state.get("task_spec") or {})
+    outputs = list(task_spec.get("output_contracts") or task_spec.get("expected_outputs") or [])
+    steps = [
+        normalize_plan_step(dict(raw), index)
+        for index, raw in enumerate(state.get("steps", []) or [], 1)
+        if isinstance(raw, dict)
+    ]
+    lines: List[str] = []
+    for binding in outputs:
+        if not isinstance(binding, dict) or str(binding.get("role") or "") == "output_dir":
+            continue
+        path = str(binding.get("path") or binding.get("filename") or binding.get("value") or "")
+        if not path:
+            continue
+        name = Path(path).name
+        owner = next(
+            (
+                step
+                for step in steps
+                if any(Path(str(item)).name == name for item in step.get("outputs", []) or [])
+                or any(
+                    Path(str(item.get("path") or "")).name == name
+                    for item in step.get("artifacts", []) or []
+                    if isinstance(item, dict)
+                )
+            ),
+            {},
+        )
+        if owner:
+            invocation = dict(owner.get("renderer_invocation_contract") or {})
+            renderer_execution = dict(owner.get("renderer_execution") or {})
+            renderer_bound = bool(invocation or renderer_execution.get("manifest_path"))
+            producer_type = "renderer" if renderer_bound else "plan_step"
+            producer_id = str(
+                invocation.get("invocation_id")
+                or renderer_execution.get("manifest_id")
+                or owner.get("step_id")
+                or ""
+            )
+            producer_action = str(owner.get("action") or "").upper()
+            for artifact in owner.get("artifacts", []) or []:
+                if isinstance(artifact, dict) and Path(str(artifact.get("path") or "")).name == name:
+                    producer_action = str(artifact.get("producer") or producer_action)
+                    break
+        else:
+            producer_type = "unassigned"
+            producer_id = "none"
+            producer_action = "none"
+        lines.append(
+            f"- `{path}` | producer_type: `{producer_type}` | "
+            f"producer_id: `{producer_id}` | action: `{producer_action}`"
+        )
+    return lines
+
+
 def render_plan_review_content(state: PlanState, plan_text: str = "") -> str:
-    """Render the effective Plan first and a bounded deterministic diff second."""
+    """Render the deterministic approval projection, never Planner prose."""
     identity = plan_identity(state)
     _, next_executable = current_plan_step_with_index(state)
+    projection = build_approval_projection(state)
+    scope = build_approval_scope(state, projection)
     review_diff = list(state.get("pending_review_diff") or [])
     changed_ids = list(dict.fromkeys(
         str(step_id)
@@ -3101,14 +3219,28 @@ def render_plan_review_content(state: PlanState, plan_text: str = "") -> str:
         f"- Plan Version: `{identity['plan_version']}`",
         f"- Parent Version: `{state.get('parent_plan_version') or 'none'}`",
         f"- Semantic Hash: `{identity['plan_semantic_hash']}`",
-        f"- Execution Cursor: `{state.get('current_step_id') or 'none'}`",
+        f"- Approval Scope: `{scope['approval_scope_hash']}`",
+        f"- Execution Cursor: `{state.get('execution_cursor_step_id') or 'none'}`",
         f"- Next Executable Step: `{(next_executable or {}).get('step_id') or 'none'}`",
         f"- Changed Stable Step IDs: `{', '.join(changed_ids) or 'none'}`",
         "",
         "## Effective Plan",
-        "",
-        str(plan_text or render_structured_plan(state)).strip(),
     ]
+    for step in projection["steps"]:
+        lines.extend([
+            "",
+            f"### [{step['step_id']}] {step['title']}",
+            f"- Action: `{step['action']}`",
+            f"- Purpose: `{step['purpose']}`",
+            f"- Skills: `{', '.join(step['skill_ids']) or 'none'}`",
+            f"- Inputs: `{', '.join(step['inputs']) or 'none'}`",
+            f"- Outputs: `{', '.join(step['outputs']) or 'none'}`",
+            f"- Depends on: `{', '.join(step['depends_on']) or 'none'}`",
+            f"- Success criteria: `{'; '.join(step['success_criteria']) or 'none'}`",
+        ])
+    ownership = _render_output_ownership(state)
+    if ownership:
+        lines.extend(["", "## Output Ownership", *ownership])
     summary = []
     for item in review_diff[:8]:
         if not isinstance(item, dict):
@@ -3143,15 +3275,22 @@ def _plan_defaults(task_id: str, data_path: str | Path | None = None) -> PlanSta
         "plan_version": "plan_v1",
         "plan_revision": 1,
         "plan_status": PLAN_STATUS_PENDING_REVIEW,
+        "revision_status": "current",
+        "approval_status": "awaiting_review",
+        "execution_status": "not_started",
+        "current_effective_plan_version": "plan_v1",
         "semantic_plan_hash": "",
         "approved_plan_hash": "",
         "approved_plan_revision": 0,
         "approved_task_revision": 0,
         "approval_timestamp": "",
         "approval_record": {},
+        "approval_projection": {},
+        "approval_scope": {},
         "generated_from_task_revision": 0,
         "parent_plan_version": "",
         "current_step_id": "",
+        "execution_cursor_step_id": "",
         "current_stage_id": "",
         "revision_history": [],
         "stale_step_ids": [],
@@ -3262,6 +3401,18 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
     if not had_plan_status:
         data["plan_status"] = PLAN_STATUS_APPROVED if _legacy_plan_was_executing(data) else PLAN_STATUS_PENDING_REVIEW
         newly_applied.append("initialize_plan_lifecycle")
+    data.setdefault("revision_status", "current")
+    data.setdefault(
+        "approval_status",
+        "approved" if data.get("plan_status") == PLAN_STATUS_APPROVED else "awaiting_review",
+    )
+    data.setdefault(
+        "execution_status",
+        "in_progress" if _legacy_plan_was_executing(data) else "not_started",
+    )
+    data.setdefault("current_effective_plan_version", str(data.get("plan_version") or "plan_v1"))
+    data.setdefault("approval_projection", {})
+    data.setdefault("approval_scope", {})
     if data.get("plan_status") == PLAN_STATUS_APPROVED and semantic_hash:
         data.setdefault("approved_plan_hash", semantic_hash)
         if not data.get("approved_plan_hash"):
@@ -3290,6 +3441,8 @@ def carry_forward_plan_lifecycle(previous: PlanState, candidate: PlanState) -> P
     previous_revision = max(1, _int(previous.get("plan_revision"), 1))
     if previous_hash and previous_hash == candidate_hash:
         candidate["plan_revision"] = previous_revision
+        candidate["plan_version"] = str(previous.get("plan_version") or f"plan_v{previous_revision}")
+        candidate["current_effective_plan_version"] = candidate["plan_version"]
         previous_steps = {
             str(step.get("step_id") or ""): step
             for step in previous.get("steps", []) or []
@@ -3309,17 +3462,58 @@ def carry_forward_plan_lifecycle(previous: PlanState, candidate: PlanState) -> P
             "approved_task_revision",
             "approval_timestamp",
             "approval_record",
+            "approval_projection",
+            "approval_scope",
+            "approval_status",
         ):
             candidate[field] = previous.get(field, candidate.get(field))
     elif previous_hash:
         candidate["plan_revision"] = previous_revision + 1
+        candidate["parent_plan_version"] = str(previous.get("plan_version") or f"plan_v{previous_revision}")
+        candidate["plan_version"] = f"plan_v{candidate['plan_revision']}"
+        candidate["current_effective_plan_version"] = candidate["plan_version"]
         candidate["plan_status"] = PLAN_STATUS_PENDING_REVIEW
         candidate["approved_plan_hash"] = ""
         candidate["approved_plan_revision"] = 0
         candidate["approved_task_revision"] = 0
         candidate["approval_timestamp"] = ""
+        candidate["approval_record"] = {}
+        candidate["approval_projection"] = {}
+        candidate["approval_scope"] = {}
+        candidate["approval_status"] = "awaiting_review"
+        candidate["revision_status"] = "current"
+        candidate["current_effective_plan_version"] = str(candidate.get("plan_version") or "")
     candidate["semantic_plan_hash"] = candidate_hash
     return candidate
+
+
+def stable_plan_revision_delta(previous: PlanState, candidate: PlanState) -> Dict[str, List[str]]:
+    """Classify revision changes by stable step ID without positional inference."""
+    old_steps = {
+        str(step.get("step_id") or ""): _semantic_step(step)
+        for step in previous.get("steps", []) or [] if isinstance(step, dict) and step.get("step_id")
+    }
+    new_steps = {
+        str(step.get("step_id") or ""): _semantic_step(step)
+        for step in candidate.get("steps", []) or [] if isinstance(step, dict) and step.get("step_id")
+    }
+    collapsed = {
+        str(step_id)
+        for audit in candidate.get("normalization_audit", []) or [] if isinstance(audit, dict)
+        for step_id in audit.get("removed_step_ids", []) or []
+        if str(audit.get("status") or "") == "collapsed"
+    }
+    removed = set(old_steps) - set(new_steps)
+    return {
+        "added_step_ids": sorted(set(new_steps) - set(old_steps)),
+        "changed_step_ids": sorted(
+            step_id for step_id in set(old_steps) & set(new_steps)
+            if old_steps[step_id] != new_steps[step_id]
+        ),
+        "collapsed_step_ids": sorted(removed & collapsed),
+        "removed_step_ids": sorted(removed - collapsed),
+        "tombstoned_step_ids": sorted(removed - collapsed),
+    }
 
 
 def plan_identity(state: PlanState) -> Dict[str, str]:
@@ -3331,12 +3525,137 @@ def plan_identity(state: PlanState) -> Dict[str, str]:
     }
 
 
+def _approval_task_spec_view(state: PlanState) -> Dict[str, Any]:
+    spec = dict(state.get("task_spec") or {})
+    binding_fields = (
+        "role", "path", "resolved_path", "filename", "path_or_name", "required",
+        "value", "level", "condition", "source_type", "source_ref", "provenance",
+    )
+
+    def compact(values: Any) -> List[Dict[str, Any]]:
+        return [
+            {key: deepcopy(item.get(key)) for key in binding_fields if item.get(key) not in (None, "", [], {})}
+            for item in values or [] if isinstance(item, dict)
+        ]
+
+    return {
+        "goal": str(spec.get("goal") or ""),
+        "revision": _int(spec.get("revision"), 0),
+        "inputs": compact(spec.get("inputs")),
+        "requirements": compact(spec.get("requirements")),
+        "output_contracts": compact(spec.get("output_contracts") or spec.get("expected_outputs")),
+    }
+
+
+def _approval_output_ownership(state: PlanState) -> List[Dict[str, Any]]:
+    owners: Dict[str, List[Dict[str, str]]] = {}
+    for index, raw in enumerate(state.get("steps", []) or [], 1):
+        if not isinstance(raw, dict):
+            continue
+        step = normalize_plan_step(dict(raw), index)
+        renderer_execution = dict(step.get("renderer_execution") or {})
+        invocation = dict(step.get("renderer_invocation_contract") or {})
+        renderer_bound = bool(invocation or renderer_execution.get("manifest_path"))
+        producer_type = "renderer" if renderer_bound else "plan_step"
+        producer_id = str(
+            invocation.get("invocation_id")
+            or renderer_execution.get("manifest_id")
+            or step.get("step_id")
+        )
+        for value in step.get("outputs", []) or []:
+            identity = _output_identity(value)
+            if identity:
+                owners.setdefault(identity, []).append({
+                    "producer_type": producer_type,
+                    "producer_id": producer_id,
+                    "step_id": str(step.get("step_id") or ""),
+                    "action": str(step.get("action") or "").upper(),
+                })
+    result: List[Dict[str, Any]] = []
+    task_spec = _approval_task_spec_view(state)
+    for output in task_spec["output_contracts"]:
+        identity = _output_identity(output)
+        if not identity or str(output.get("role") or "") == "output_dir":
+            continue
+        result.append({
+            "output_id": str(output.get("output_id") or identity),
+            "path_or_name": str(output.get("path_or_name") or output.get("path") or output.get("filename") or ""),
+            "required": bool(output.get("required", True)),
+            "producers": owners.get(identity, []),
+        })
+    return result
+
+
+def build_approval_projection(state: PlanState) -> Dict[str, Any]:
+    """Build the exact controller-owned view a human approves."""
+    steps: List[Dict[str, Any]] = []
+    for index, raw in enumerate(state.get("steps", []) or [], 1):
+        if not isinstance(raw, dict):
+            continue
+        step = normalize_plan_step(dict(raw), index)
+        steps.append({
+            "step_id": str(step.get("step_id") or ""),
+            "title": _display_step_title(str(step.get("title") or "")),
+            "action": str(step.get("action") or "").upper(),
+            "purpose": str(step.get("purpose") or ""),
+            "skill_ids": list(step.get("skill_ids") or []),
+            "inputs": list(step.get("inputs") or []),
+            "outputs": list(step.get("outputs") or []),
+            "depends_on": list(step.get("depends_on") or step.get("dependencies") or []),
+            "success_criteria": list(step.get("success_criteria") or []),
+            "step_type": str(step.get("step_type") or "atomic"),
+            "renderer_id": str(step.get("renderer_id") or ""),
+        })
+    return {
+        "schema_version": 1,
+        "task_id": str(state.get("task_id") or ""),
+        "plan_id": str(state.get("plan_id") or ""),
+        "plan_version": str(state.get("plan_version") or "plan_v1"),
+        "steps": steps,
+        "output_ownership": _approval_output_ownership(state),
+    }
+
+
+def build_approval_scope(
+    state: PlanState,
+    approval_projection: Optional[Dict[str, Any]] = None,
+) -> Dict[str, str]:
+    """Hash every semantic input that can change the approved execution."""
+    projection = deepcopy(approval_projection or build_approval_projection(state))
+    task_spec_view = _approval_task_spec_view(state)
+    renderer_contracts = [
+        {
+            "step_id": str(step.get("step_id") or ""),
+            "renderer_id": str(step.get("renderer_id") or ""),
+            "inputs": list(step.get("inputs") or []),
+            "outputs": list(step.get("outputs") or []),
+        }
+        for step in state.get("steps", []) or [] if isinstance(step, dict)
+        if step.get("renderer_id") or step.get("renderer_invocation_contract")
+    ]
+    scope = {
+        "task_hash": _stable_payload_hash({"task_id": state.get("task_id"), "goal": task_spec_view.get("goal")}),
+        "plan_id": str(state.get("plan_id") or ""),
+        "plan_version": str(state.get("plan_version") or "plan_v1"),
+        "plan_hash": semantic_plan_hash(state),
+        "task_spec_hash": _stable_payload_hash(task_spec_view),
+        "input_bindings_hash": _stable_payload_hash(task_spec_view.get("inputs") or []),
+        "renderer_invocation_hash": _stable_payload_hash(renderer_contracts),
+        "selected_skills_hash": _stable_payload_hash(sorted(str(item) for item in state.get("selected_skill_ids", []) or [])),
+        "projection_hash": _stable_payload_hash(projection),
+        "projection_version": str(projection.get("schema_version") or 1),
+    }
+    scope["approval_scope_hash"] = _stable_payload_hash(scope)
+    return scope
+
+
 def approve_plan_state(
     state: PlanState,
     task_revision: int,
     *,
     approval_source: str = "human_plan_review",
     review_event_id: str = "",
+    approval_projection: Optional[Dict[str, Any]] = None,
 ) -> PlanState:
     state, _ = migrate_plan_state(state, str(state.get("task_id") or "default"))
     current_hash = semantic_plan_hash(state)
@@ -3347,6 +3666,13 @@ def approve_plan_state(
     state["approved_task_revision"] = max(0, _int(task_revision, 0))
     state["approval_timestamp"] = _now()
     identity = plan_identity(state)
+    projection = deepcopy(approval_projection or build_approval_projection(state))
+    scope = build_approval_scope(state, projection)
+    state["approval_projection"] = projection
+    state["approval_scope"] = scope
+    state["approval_status"] = "approved"
+    state["revision_status"] = "current"
+    state["current_effective_plan_version"] = identity["plan_version"]
     approval_seed = "|".join([
         str(state.get("task_id") or ""), identity["plan_id"],
         identity["plan_version"], identity["plan_semantic_hash"],
@@ -3361,6 +3687,9 @@ def approve_plan_state(
         "approved_at": state["approval_timestamp"],
         "approval_source": str(approval_source or "human_plan_review"),
         "review_event_id": str(review_event_id or ""),
+        "approval_scope_hash": scope["approval_scope_hash"],
+        "approval_scope": deepcopy(scope),
+        "projection_hash": scope["projection_hash"],
     }
     state["pending_review_diff"] = []
     return state
@@ -3380,11 +3709,36 @@ def plan_approval_is_current(state: PlanState, task_revision: int) -> bool:
     if not record:
         return True
     identity = plan_identity(state)
+    recorded_scope = str(record.get("approval_scope_hash") or "")
+    if recorded_scope and recorded_scope != build_approval_scope(state).get("approval_scope_hash"):
+        return False
     return (
         str(record.get("approved_plan_id") or "") == identity["plan_id"]
         and str(record.get("approved_plan_version") or "") == identity["plan_version"]
         and str(record.get("approved_plan_semantic_hash") or "") == identity["plan_semantic_hash"]
     )
+
+
+def validate_action_approval_lineage(
+    state: PlanState,
+    action: Dict[str, Any],
+    task_revision: int,
+) -> str:
+    """Reject actions not generated from the currently approved semantic scope."""
+    if not plan_approval_is_current(state, task_revision):
+        return "The plan approval scope is stale or missing."
+    scope = build_approval_scope(state)
+    expected = {
+        "generated_from_plan_hash": scope["plan_hash"],
+        "generated_from_approval_scope_hash": scope["approval_scope_hash"],
+    }
+    missing = [key for key in expected if not str(action.get(key) or "")]
+    if missing:
+        return "Pending action is missing approval lineage: " + ", ".join(missing)
+    mismatches = [key for key, value in expected.items() if str(action.get(key)) != str(value)]
+    if mismatches:
+        return "Pending action approval scope is stale: " + ", ".join(mismatches)
+    return ""
 
 
 def plan_contract_violations(state: PlanState) -> List[Dict[str, str]]:
@@ -3394,6 +3748,14 @@ def plan_contract_violations(state: PlanState) -> List[Dict[str, str]]:
         return [{"step_id": "", "field": "steps", "reason": "Plan has no executable steps."}]
     violations: List[Dict[str, str]] = []
     for index, raw_step in enumerate(steps):
+        raw_action = str(raw_step.get("action") or "").strip().lower()
+        if raw_action == "search" and step_requires_execution_evidence(raw_step):
+            violations.append({
+                "violation_code": "INVALID_ACTION_FOR_STEP_PURPOSE",
+                "step_id": str(raw_step.get("step_id") or ""),
+                "field": "action",
+                "reason": "SEARCH is knowledge-base retrieval only; local file validation requires a read-only EXECUTE action.",
+            })
         step = normalize_plan_step(dict(raw_step), index + 1)
         step_id = str(step.get("step_id") or "")
         if not str(step.get("action") or "").strip():
@@ -3488,9 +3850,6 @@ def collapse_renderer_composite_steps(
                         seen.add(key)
                         merged.append(deepcopy(item))
             anchor[field] = merged
-        for output_name in owned_outputs:
-            if _output_identity(output_name) not in {_output_identity(item) for item in anchor.get("outputs", []) or []}:
-                anchor.setdefault("outputs", []).append(output_name)
         dependencies: List[str] = []
         for _, step in matches:
             for dependency in step.get("dependencies", []) or []:
@@ -3523,21 +3882,6 @@ def collapse_renderer_composite_steps(
         anchor["artifacts"] = step_artifact_contracts(anchor)
 
         removed_ids = merged_ids - {str(anchor.get("step_id") or "")}
-        if owned_identities:
-            for step in steps:
-                step_id = str(step.get("step_id") or "")
-                if step_id == str(anchor.get("step_id") or "") or step_id in removed_ids:
-                    continue
-                outputs = list(step.get("outputs") or [])
-                retained = [item for item in outputs if _output_identity(item) not in owned_identities]
-                if len(retained) == len(outputs):
-                    continue
-                if retained:
-                    step["outputs"] = retained
-                    step["output_contracts"] = list(retained)
-                    step["artifacts"] = step_artifact_contracts(step)
-                else:
-                    removed_ids.add(step_id)
         steps = [
             step for index, step in enumerate(steps)
             if index == anchor_index or str(step.get("step_id") or "") not in removed_ids
@@ -3579,6 +3923,9 @@ def validate_output_contracts(
             continue
         step = normalize_plan_step(dict(raw_step), index)
         step_id = str(step.get("step_id") or "")
+        renderer_step = str(step.get("step_type") or "") == "renderer_composite"
+        if renderer_step and not step.get("renderer_invocation_contract"):
+            continue
         for output in step.get("outputs", []) or []:
             identity = _output_identity(output)
             if identity and step_id not in producers.setdefault(identity, []):
@@ -3622,16 +3969,65 @@ def validate_output_contracts(
     return violations
 
 
+def bind_renderer_invocation_contracts(
+    state: PlanState,
+    renderer_records: List[Dict[str, Any]],
+    task_spec: Optional[Dict[str, Any]],
+) -> PlanState:
+    """Instantiate deterministic renderer contracts from approved task bindings."""
+    candidate = deepcopy(state)
+    records = {
+        str(item.get("skill_id") or ""): dict(item)
+        for item in renderer_records or [] if isinstance(item, dict) and item.get("skill_id")
+    }
+    if not task_spec:
+        return candidate
+    for index, raw in enumerate(candidate.get("steps", []) or [], 1):
+        if not isinstance(raw, dict):
+            continue
+        step = normalize_plan_step(raw, index)
+        if str(step.get("step_type") or "") != "renderer_composite":
+            continue
+        skill_id = str(step.get("selected_skill_id") or "")
+        if not skill_id:
+            skill_id = next((str(item) for item in step.get("skill_ids", []) or [] if str(item) in records), "")
+        renderer = records.get(skill_id, {})
+        if not renderer:
+            continue
+        projection = project_task_spec_to_renderer(
+            task_spec,
+            renderer.get("invocation") or {},
+            task_id=str(candidate.get("task_id") or ""),
+        )
+        if not projection.get("complete") or projection.get("conflicts"):
+            continue
+        payload = {
+            "renderer_id": str(renderer.get("renderer_id") or step.get("renderer_id") or ""),
+            "producer_step_id": str(step.get("step_id") or ""),
+            "arguments": projection.get("arguments") or {},
+            "outdir": str(projection.get("outdir") or ""),
+            "outputs": list(step.get("outputs") or []),
+        }
+        payload["invocation_id"] = "renderer-invocation-" + _stable_payload_hash(payload)[:20]
+        payload["projection_hash"] = _stable_payload_hash(projection)
+        payload["source"] = "task_spec_renderer_projection"
+        step["renderer_invocation_contract"] = payload
+        candidate["steps"][index - 1] = step
+    return candidate
+
+
 def normalize_plan_contracts(
     state: PlanState,
     *,
     renderer_records: Optional[List[Dict[str, Any]]] = None,
     output_contracts: Optional[List[Dict[str, Any]]] = None,
+    task_spec: Optional[Dict[str, Any]] = None,
 ) -> Tuple[PlanState, List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Run the shared pre-review normalization and output validation pipeline."""
     records = [dict(item) for item in (renderer_records or []) if isinstance(item, dict)]
     renderer_skill_ids = [str(item.get("skill_id") or "") for item in records if str(item.get("skill_id") or "")]
     normalized, audit = collapse_renderer_composite_steps(state, renderer_skill_ids, records)
+    normalized = bind_renderer_invocation_contracts(normalized, records, task_spec)
     violations: List[Dict[str, Any]] = []
     violations.extend(plan_contract_violations(normalized))
     violations.extend(validate_output_contracts(normalized, list(output_contracts or [])))

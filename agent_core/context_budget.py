@@ -8,6 +8,7 @@ valid or raise ``RequiredContextOverflow``.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass, field
@@ -23,6 +24,46 @@ class RequiredContextOverflow(RuntimeError):
     def __init__(self, message: str, *, report: Optional[Dict] = None):
         super().__init__(message)
         self.report = dict(report or {})
+
+
+def build_prompt_budget_telemetry(
+    messages: Sequence[object],
+    *,
+    component_chars: Optional[Dict[str, int]] = None,
+    context_limit_tokens: int = 200_000,
+    warning_ratio: float = 0.75,
+) -> Dict:
+    """Return provider-neutral prompt size telemetry without storing content."""
+    texts = [str(getattr(item, "content", item) or "") for item in messages]
+    total_chars = sum(len(value) for value in texts)
+    estimated_tokens = max(1, (total_chars + 3) // 4) if total_chars else 0
+    seen: set[str] = set()
+    duplicate_chars = 0
+    for value in texts:
+        normalized = re.sub(r"\s+", " ", value).strip()
+        if not normalized:
+            continue
+        digest = hashlib.sha256(normalized.encode("utf-8", errors="replace")).hexdigest()
+        if digest in seen:
+            duplicate_chars += len(value)
+        else:
+            seen.add(digest)
+    limit = max(1, int(context_limit_tokens or 1))
+    ratio = estimated_tokens / limit
+    return {
+        "message_count": len(texts),
+        "input_chars": total_chars,
+        "estimated_input_tokens": estimated_tokens,
+        "context_limit_tokens": limit,
+        "remaining_headroom_tokens": max(0, limit - estimated_tokens),
+        "usage_ratio": round(ratio, 6),
+        "warning": ratio >= max(0.0, min(float(warning_ratio), 1.0)),
+        "duplicate_chars": duplicate_chars,
+        "component_chars": {
+            str(key): max(0, int(value or 0))
+            for key, value in dict(component_chars or {}).items()
+        },
+    }
 
 
 @dataclass

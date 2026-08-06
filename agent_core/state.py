@@ -112,6 +112,11 @@ class AgentState(TypedDict, total=False):
     conflict_resolution: dict
     plan_revision: dict
     plan_version: Optional[str]
+    revision_status: Optional[str]
+    approval_status: Optional[str]
+    execution_status: Optional[str]
+    approval_scope: dict
+    approval_projection: dict
     plan_stale_steps: List[str]
     plan_revalidation_steps: List[str]
     verification_checks: List[dict]

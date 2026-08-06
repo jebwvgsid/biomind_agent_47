@@ -11,6 +11,7 @@ bio_agents.py  ―  BioAnalyst Agent V4
 from __future__ import annotations
 
 import asyncio
+from copy import deepcopy
 import atexit
 import hashlib
 import json
@@ -146,7 +147,11 @@ from agent_core.llm_safety import (
     is_transient_llm_failure,
     llm_failure_summary,
 )
-from agent_core.context_budget import RequiredContextOverflow, compress_tagged_text
+from agent_core.context_budget import (
+    RequiredContextOverflow,
+    build_prompt_budget_telemetry,
+    compress_tagged_text,
+)
 from agent_core.formal_artifact_resolver import (
     format_formal_upstream_context,
     resolve_formal_upstream_artifacts,
@@ -183,6 +188,8 @@ from agent_core.plan_tracker import (
     approve_plan_state,
     bind_plan_to_task_revision,
     block_plan_and_downstream,
+    build_approval_projection,
+    build_approval_scope,
     build_plan_repair_request,
     build_plan_state,
     increment_plan_budget,
@@ -219,8 +226,10 @@ from agent_core.plan_tracker import (
     reset_plan_state,
     save_plan_state,
     set_task_status,
+    step_requires_execution_evidence,
     step_artifact_contracts,
     validate_renderer_action_artifacts,
+    validate_action_approval_lineage,
     parse_plan_patch,
     sync_plan_state_from_stage_status,
     task_status,
@@ -641,6 +650,7 @@ class BioAnalystAgent:
             self.llm_timeout_seconds,
         )
         self.llm_max_retries = LLM_MAX_RETRIES
+        self.llm_context_limit_tokens = max(1, int(max_memory_tokens))
 
         # ── PackageManager ────────────────────────────────────
         try:
@@ -3301,6 +3311,28 @@ class BioAnalystAgent:
                 "expected_evidence": list(bound.get("success_checks") or step.get("success_criteria") or []),
             }
         )
+        approval_scope = build_approval_scope(plan_state)
+        bound["generated_from_plan_hash"] = approval_scope["plan_hash"]
+        bound["generated_from_approval_scope_hash"] = approval_scope["approval_scope_hash"]
+        bound["action_hash"] = hashlib.sha256(
+            json.dumps(
+                {
+                    key: value for key, value in bound.items()
+                    if key not in {"raw_response", "messages", "action_hash"}
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+                default=str,
+            ).encode("utf-8")
+        ).hexdigest()
+        invocation_contract = dict(bound.get("renderer_invocation_contract") or {})
+        if invocation_contract and step_id:
+            invocation_contract.setdefault("invocation_id", str(bound["action_id"]))
+            bound["renderer_invocation_contract"] = invocation_contract
+            for plan_step in plan_state.get("steps", []) or []:
+                if isinstance(plan_step, dict) and str(plan_step.get("step_id") or "") == step_id:
+                    plan_step["renderer_invocation_contract"] = deepcopy(invocation_contract)
+                    break
         if str(bound.get("type") or "").lower() == "execute" and str(bound.get("code") or "").strip():
             language = detect_script_language(str(bound.get("code") or ""))
             generated_ref = self._persist_script_version(
@@ -3598,6 +3630,15 @@ class BioAnalystAgent:
             "manifest_path": manifest_path,
             "expected_outputs": [manifest_path],
             "success_checks": ["renderer_exit_zero", "manifest_v3_valid", "manifest_provenance_matches"],
+            "renderer_invocation_contract": {
+                "schema_version": 1,
+                "renderer_id": str(renderer.get("renderer_id") or ""),
+                "arguments_hash": hashlib.sha256(
+                    json.dumps(argv, ensure_ascii=False, sort_keys=True).encode("utf-8")
+                ).hexdigest(),
+                "manifest_path": manifest_path,
+                "producer_step_id": step_id,
+            },
         }
 
     def _projected_renderer_action_update(
@@ -3951,7 +3992,16 @@ class BioAnalystAgent:
             for key, value in expected.items()
             if str(action.get(key)) != value
         ]
-        return "Pending action is stale: " + "; ".join(mismatches) if mismatches else ""
+        if mismatches:
+            return "Pending action is stale: " + "; ".join(mismatches)
+        approval_record = dict(plan_state.get("approval_record") or {})
+        if approval_record.get("approval_scope_hash"):
+            return validate_action_approval_lineage(
+                plan_state,
+                action,
+                self._task_revision_for_state(dict(state)),
+            )
+        return ""
 
     def _validate_generate_context(self, state: AgentState, task_id: str) -> Dict[str, Any]:
         """Use the canonical Plan validator for every managed Generate entry."""
@@ -5727,6 +5777,12 @@ class BioAnalystAgent:
             len(str(getattr(message, "content", message) or ""))
             for message in messages
         )
+        trace_metadata = dict(trace_metadata or {})
+        prompt_telemetry = build_prompt_budget_telemetry(
+            messages,
+            component_chars=trace_metadata.get("component_chars") or {},
+            context_limit_tokens=self.llm_context_limit_tokens,
+        )
         started = time.monotonic()
         logger.info(
             "LLM request started: stage=%s task=%s messages=%s chars=%s timeout=%ss",
@@ -5736,10 +5792,26 @@ class BioAnalystAgent:
             prompt_chars,
             timeout,
         )
+        logger.info(
+            "LLM prompt budget: stage=%s task=%s %s",
+            stage,
+            task_id or "-",
+            json.dumps(prompt_telemetry, ensure_ascii=False, sort_keys=True),
+        )
+        if prompt_telemetry["warning"]:
+            logger.warning(
+                "LLM prompt budget warning: stage=%s task=%s estimated_tokens=%s headroom=%s duplicates=%s",
+                stage,
+                task_id or "-",
+                prompt_telemetry["estimated_input_tokens"],
+                prompt_telemetry["remaining_headroom_tokens"],
+                prompt_telemetry["duplicate_chars"],
+            )
         trace_store = ContextLineageStore(self.data_path, task_id) if task_id else None
         snapshot: Dict[str, Any] = {}
         if trace_store:
             metadata = dict(trace_metadata or {})
+            metadata["prompt_budget_telemetry"] = prompt_telemetry
             call_kind = str(metadata.get("call_kind") or {
                 "planner": "planner_initial",
                 "planner_repair": "planner_repair",
@@ -9927,6 +9999,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             for key, value in prompt_components.items()
                             if isinstance(value, int)
                         },
+                        "component_chars": prompt_components,
                         "formal_input_audit": input_resolution_context,
                         "user_source_refs": list(state.get("user_source_refs") or []),
                     },
@@ -10861,6 +10934,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     candidate_for_repair,
                     renderer_records=renderer_records,
                     output_contracts=canonical_output_contracts,
+                    task_spec=task_spec,
                 )
                 plan_content = render_structured_plan(candidate_for_repair)
                 violations = [*local_violations, *canonical_violations]
@@ -10885,6 +10959,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             "runtime_audit_ref": str(
                                 Path(self.data_path) / "task_outputs" / task_id / "runtime_audit.json"
                             ),
+                            "component_chars": planner_prompt_components,
                         },
                     )
                 except Exception as exc:
@@ -10909,6 +10984,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     candidate_for_repair,
                     renderer_records=renderer_records,
                     output_contracts=canonical_output_contracts,
+                    task_spec=task_spec,
                 )
                 if renderer_normalization:
                     plan_content = render_structured_plan(candidate_for_repair)
@@ -10920,6 +10996,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 ))
                 violations.extend(self._plan_step_skill_violations(candidate_for_repair, selected_skills))
 
+            initial_contract_violations = deepcopy(violations)
             # A failed validation repairs the candidate plan in place.  It does
             # not replay the full Planner prompt or ask the model to regenerate
             # unrelated steps.  The local store validates base version/hash and
@@ -11023,6 +11100,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         candidate_for_repair,
                         renderer_records=renderer_records,
                         output_contracts=canonical_output_contracts,
+                        task_spec=task_spec,
                     )
                     patch_audit["renderer_normalization"] = renderer_normalization
                 except Exception as exc:
@@ -11122,6 +11200,23 @@ If the user is actually asking you to run analysis or inspect local files, say t
             candidate_plan_state["user_constraints"] = list(state.get("user_constraints", []) or [])
             candidate_plan_state["selected_skill_ids"] = list(selected_skills)
             candidate_plan_state["task_spec"] = task_spec
+            candidate_plan_state["planner_quality_telemetry"] = {
+                "schema_version": 1,
+                "first_pass_schema_valid": bool(candidate_for_repair.get("steps")),
+                "first_pass_contract_valid": not bool(initial_contract_violations),
+                "repair_required": bool(initial_contract_violations),
+                "repair_reason_codes": sorted({
+                    str(item.get("violation_code") or item.get("field") or "contract_violation")
+                    if isinstance(item, dict) else str(item)[:120]
+                    for item in initial_contract_violations
+                }),
+                "repair_semantic_change": any(
+                    bool(item.get("semantic_change")) for item in plan_patch_audits
+                ),
+                "final_contract_valid": not bool(violations),
+                "planner_llm_calls": 0 if use_local_plan else 1,
+                "planner_repair_llm_calls": 1 if plan_patch_audits else 0,
+            }
             candidate_plan_state = carry_forward_plan_lifecycle(previous_plan_state, candidate_plan_state)
             if (
                 plan_patch_audits
@@ -12233,6 +12328,30 @@ If the user is actually asking you to run analysis or inspect local files, say t
             # Active RAG
             if search_match or action_type == "search":
                 query = search_match.group(1).strip() if search_match else str(structured_action.get("query") or "").strip()
+                search_plan_state = load_plan_state(self.data_path, task_id)
+                search_step = self._running_plan_step(search_plan_state)
+                if step_requires_execution_evidence(search_step):
+                    reason = (
+                        "SEARCH retrieves knowledge-base text and cannot satisfy local filesystem validation. "
+                        "Return an EXECUTE action containing a bounded read-only check for the current step."
+                    )
+                    plan_progress = self._record_plan_current_evidence(
+                        task_id,
+                        "knowledge_search_rejected_for_local_validation",
+                        reason,
+                    )
+                    return {
+                        "messages": [response, SystemMessage(content=f"<action_protocol_error>\n{reason}\n</action_protocol_error>")],
+                        "plan_progress": plan_progress,
+                        "next_step": "generate",
+                        "pending_action": {},
+                        "pending_recovery_action": {
+                            "type": "ACTION_FORMAT_REPAIR",
+                            "reason": reason,
+                            "required_next_action": "EXECUTE",
+                        },
+                        "required_next_action": "ACTION_FORMAT_REPAIR",
+                    }
                 output.print_once(f"rag:{query[:30]}", f"🔍 Searching KB: {query}", Fore.CYAN)
                 rag_result = "No info found."
                 if self.retriever:
@@ -15728,6 +15847,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
         input_data: Any,
         task_id: Optional[str] = None,
         resume: bool = False,
+        structured_source: Optional[Dict[str, Any]] = None,
     ):
         if not task_id:
             task_id = self._auto_task_id_for_prompt(input_data) or f"task_{int(time.time())}"
@@ -15760,7 +15880,10 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 runner_input = {
                     "messages": [HumanMessage(
                         content=prompt,
-                        additional_kwargs={"message_origin": "user"},
+                        additional_kwargs={
+                            "message_origin": "user",
+                            "structured_source": dict(structured_source or {}),
+                        },
                     )],
                     "task_id": task_id,
                     "session_id": task_id,
@@ -15771,6 +15894,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "task_spec": create_task_spec(
                         str(prompt),
                         task_id=task_id,
+                        structured_source=structured_source,
                         base_dir=project_root,
                         project_root=project_root,
                     ),

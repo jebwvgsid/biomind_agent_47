@@ -6,6 +6,7 @@ from agent_core.plan_tracker import (
     build_plan_state,
     plan_identity,
     render_plan_review_content,
+    step_requires_execution_evidence,
     save_plan_state,
     validate_plan_for_generate,
 )
@@ -39,10 +40,76 @@ class PlanReviewIdentityTests(unittest.TestCase):
         rendered = render_plan_review_content(state)
 
         self.assertLess(rendered.index("## Effective Plan"), rendered.index("## Changes Since Parent Revision"))
-        self.assertIn("Step 1: Validate input", rendered)
-        self.assertIn("Step 4: Produce table", rendered)
+        self.assertIn("[step-1] Validate input", rendered)
+        self.assertIn("[step-4] Produce table", rendered)
         self.assertIn("Changed Stable Step IDs: `step-4`", rendered)
         self.assertNotIn("must_not_be_rendered", rendered)
+
+    def test_review_renders_canonical_fields_once_and_separates_cursors(self):
+        state = self._plan()
+        state["current_step_id"] = "step-1"
+
+        rendered = render_plan_review_content(state)
+
+        step_lines = rendered.splitlines()
+        step_start = next(index for index, line in enumerate(step_lines) if "[step-1]" in line)
+        step_block = "\n".join(step_lines[step_start:step_start + 8])
+        self.assertEqual(step_block.count("Action:"), 1)
+        self.assertEqual(step_block.count("Skills:"), 1)
+        self.assertIn("Execution Cursor: `none`", rendered)
+        self.assertIn("Next Executable Step: `step-1`", rendered)
+
+    def test_review_shows_required_output_producer_ownership(self):
+        state = self._plan()
+        state["steps"][1].update({
+            "step_type": "renderer_composite",
+            "renderer_id": "snpeff_annotation",
+            "renderer_invocation_contract": {"invocation_id": "invoke-snpeff"},
+            "outputs": ["ann_gene_summary.tsv"],
+            "artifacts": [{
+                "artifact_id": "gene-summary",
+                "path": "ann_gene_summary.tsv",
+                "producer": "04.summarize_ann.sh",
+            }],
+        })
+        state["task_spec"] = {
+            "output_contracts": [{
+                "filename": "ann_gene_summary.tsv",
+                "required": True,
+                "source_type": "benchmark_contract",
+            }],
+        }
+
+        rendered = render_plan_review_content(state)
+
+        self.assertIn("## Output Ownership", rendered)
+        self.assertIn("producer_type: `renderer`", rendered)
+        self.assertIn("producer_id: `invoke-snpeff`", rendered)
+        self.assertIn("action: `04.summarize_ann.sh`", rendered)
+
+    def test_filesystem_validation_requires_execution_evidence(self):
+        self.assertTrue(step_requires_execution_evidence({
+            "title": "Validate local inputs",
+            "purpose": "validation",
+            "success_criteria": ["VCF, FASTA, and GTF files exist and are non-empty"],
+        }))
+        self.assertFalse(step_requires_execution_evidence({
+            "title": "Find annotation guidance",
+            "purpose": "probe",
+            "success_criteria": ["Relevant SOP retrieved"],
+        }))
+
+    def test_search_file_validation_is_rejected_by_plan_contract(self):
+        state = build_plan_state(
+            "task-search-normalization",
+            "- [ ] Step 1: Validate files | Action: SEARCH | Purpose: validation | "
+            "Skills: [] | Done: input files exist and are non-empty\n",
+        )
+
+        self.assertEqual(state["steps"][0]["action"], "search")
+        from agent_core.plan_tracker import plan_contract_violations
+        violations = plan_contract_violations(state)
+        self.assertTrue(any(item.get("violation_code") == "INVALID_ACTION_FOR_STEP_PURPOSE" for item in violations))
 
     def test_approval_record_is_bound_to_exact_plan_identity(self):
         state = self._plan()

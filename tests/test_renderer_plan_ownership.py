@@ -7,7 +7,7 @@ from agent_core.plan_tracker import (
     validate_output_contracts,
 )
 from agent_core.skill_manager import SkillManager
-from agent_core.task_spec import effective_output_contracts, ensure_task_spec
+from agent_core.task_spec import create_task_spec, effective_output_contracts, ensure_task_spec
 
 
 SKILLS_ROOT = Path(__file__).resolve().parents[1] / "skills"
@@ -57,16 +57,23 @@ class RendererPlanOwnershipTests(unittest.TestCase):
             state,
             renderer_records=[self.renderer],
             output_contracts=contracts,
+            task_spec=create_task_spec(
+                "Use /tmp/input.vcf with a custom genome /tmp/reference.fasta and /tmp/annotation.gtf using -gtf22. "
+                "Output directory: /tmp/renderer-output",
+                task_id="task-renderer",
+                project_root="/tmp",
+            ),
         )
 
         self.assertFalse(violations)
-        self.assertEqual([step["step_id"] for step in normalized["steps"]], ["step-1", "step-3"])
+        self.assertEqual([step["step_id"] for step in normalized["steps"]], ["step-1", "step-2", "step-3"])
         anchor = normalized["steps"][0]
         self.assertTrue(anchor["renderer_composite"])
         self.assertEqual(anchor["renderer_id"], "genomics.snpeff_annotation")
         self.assertEqual(anchor["selected_skill_id"], "genomics/snpeff-annotation")
-        self.assertIn("report.md", anchor["outputs"])
-        self.assertEqual(audit[0]["removed_step_ids"], ["step-2"])
+        self.assertNotIn("report.md", anchor["outputs"])
+        self.assertTrue(anchor["renderer_invocation_contract"]["invocation_id"])
+        self.assertEqual(audit[0]["removed_step_ids"], [])
 
     def test_duplicate_output_producer_is_blocking(self):
         state = build_plan_state(
@@ -83,6 +90,19 @@ class RendererPlanOwnershipTests(unittest.TestCase):
         self.assertEqual(len(violations), 1)
         self.assertEqual(violations[0]["violation_code"], "DUPLICATE_OUTPUT_PRODUCER")
         self.assertEqual(violations[0]["affected_step_ids"], ["step-1", "step-2"])
+
+    def test_renderer_capability_without_invocation_is_not_a_producer(self):
+        state = build_plan_state(
+            "task-capability-only",
+            "- [ ] Step 1: Renderer capability | Action: EXECUTE | Skills: [genomics/snpeff-annotation] "
+            "| Outputs: [annotated.vcf] | Done: annotated.vcf exists\n",
+        )
+        state["steps"][0].update({"step_type": "renderer_composite", "renderer_id": "snpeff"})
+        violations = validate_output_contracts(
+            state,
+            effective_output_contracts({"output_contracts": [{"filename": "annotated.vcf", "required": True}]}),
+        )
+        self.assertEqual(violations[0]["violation_code"], "REQUIRED_OUTPUT_UNCOVERED")
 
     def test_optional_output_does_not_trigger_coverage_repair(self):
         state = build_plan_state(

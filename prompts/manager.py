@@ -605,6 +605,7 @@ Keep checkbox lines short. Do not put long explanations or multi-line details in
 The checklist order MUST match Section 2 and should be executable one step at a time.
 `Skills:` is mandatory on every checklist item. Use `Skills: []` only for an intentional no-skill control, user-question, or finalization step; never omit the field.
 `Purpose:` describes what a successful command proves and is distinct from `Action:` routing. Use `validation` for a step whose completion criterion is verification itself; use `probe` only when its evidence cannot complete the current business step.
+`Action: SEARCH` is knowledge-base retrieval only. It can never prove that a local file, directory, executable, or artifact exists, is non-empty, readable, writable, or compatible. Plan such read-only filesystem checks as `Action: EXECUTE` with `Purpose: validation` so they produce real execution evidence.
 
 ## Section 4: Validation Checklist
 - What final outputs to verify?
