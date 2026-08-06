@@ -257,7 +257,8 @@ def extract_user_fact_candidates(text: str) -> List[Dict[str, Any]]:
     retain_only = bool(re.search(r"\b(?:keep|retain)\s+only\b|只保留|仅保留", lower))
 
     output_dir = _request_output_directory(raw)
-    path_tokens = extract_path_tokens(raw)
+    path_mentions = classify_path_mentions(raw)
+    path_tokens = [item["requested_path"] for item in path_mentions if item["classification"] in {"input", "reference"}]
     for index, locator in enumerate(path_tokens):
         if output_dir and locator.rstrip("/.") == output_dir.rstrip("/."):
             continue
@@ -283,6 +284,24 @@ def extract_user_fact_candidates(text: str) -> List[Dict[str, Any]]:
             "scope": "task",
             "status": status,
             "retain_only": retain_only,
+        })
+    for mention in path_mentions:
+        if mention["classification"] != "forbidden":
+            continue
+        locator = mention["requested_path"]
+        candidates.append({
+            "fact_kind": "artifact",
+            "role": generic_artifact_role(locator, raw),
+            "direction": "input",
+            "locator": locator,
+            "artifact_type": "file",
+            "format": _artifact_format(locator),
+            "cardinality": "unknown",
+            "classification": "forbidden",
+            "required": False,
+            "scope": "task",
+            "status": "withdrawn",
+            "source_ref": mention.get("source_ref", ""),
         })
     if output_dir:
         candidates.append({
@@ -461,18 +480,59 @@ def normalize_fact_candidates_with_skill(
     return normalized
 
 
-def extract_path_tokens(text: str) -> List[str]:
-    """Extract path-like request tokens without checking the filesystem."""
-    tokens: List[str] = []
-    for line in str(text or "").splitlines():
+def classify_path_mentions(text: str) -> List[Dict[str, Any]]:
+    """Classify slash tokens before they can become active input contracts."""
+    mentions: List[Dict[str, Any]] = []
+    negative = re.compile(r"(?:禁止|不要|不得|不能使用|不允许|do\s+not\s+use|must\s+not\s+use|never\s+use)", re.IGNORECASE)
+    example = re.compile(r"(?:例如|示例|example|e\.g\.)", re.IGNORECASE)
+    control_prefixes = ("ask_user/", "blocked_", "stage_blocked/", "finish/", "execute/")
+    skill_pattern = re.compile(r"^[a-z][a-z0-9_-]+/[a-z][a-z0-9_.-]+$")
+    for line_no, line in enumerate(str(text or "").splitlines(), start=1):
         for match in re.finditer(
             r"(?P<path>(?:/|\.{0,2}/|[A-Za-z0-9_.-]+/)[^\s`'\"，,、;；。)）\]】]+)",
             line,
         ):
             token = match.group("path").strip().rstrip(".:。；;，,")
-            if "/" in token and token not in tokens:
-                tokens.append(token)
-    return tokens
+            prefix = line[:match.start()]
+            clause_prefix = re.split(r"[。.!！？?；;，,]", prefix)[-1]
+            lower = token.lower()
+            classification = "input"
+            if re.search(r"(?:输出目录|output\s*(?:directory|dir))\s*[:：=]?\s*$", clause_prefix, re.IGNORECASE):
+                classification = "output"
+            elif lower.startswith(control_prefixes) or lower in {"benchmark/hidden/fixture", "benchmark/hidden/fixtures"}:
+                classification = "control_token"
+            elif skill_pattern.fullmatch(lower) and not re.search(r"\.[a-z0-9]{1,8}$", lower):
+                classification = "skill_id"
+            elif negative.search(clause_prefix):
+                classification = "forbidden"
+            elif example.search(clause_prefix):
+                classification = "example"
+            mentions.append({
+                "path_mention_id": "path-" + hashlib.sha256(f"{line_no}|{match.start()}|{token}".encode("utf-8")).hexdigest()[:16],
+                "classification": classification,
+                "required": classification in {"input", "reference"},
+                "resolution_status": "unresolved",
+                "requested_path": token,
+                "resolved_path": "",
+                "source_ref": f"request:line:{line_no}",
+            })
+    deduped: List[Dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for mention in mentions:
+        key = (mention["classification"], mention["requested_path"])
+        if key not in seen:
+            seen.add(key)
+            deduped.append(mention)
+    return deduped
+
+
+def extract_path_tokens(text: str) -> List[str]:
+    """Return only positive input/reference path mentions."""
+    return [
+        item["requested_path"]
+        for item in classify_path_mentions(text)
+        if item["classification"] in {"input", "reference"}
+    ]
 
 
 def canonical_input_role(role: str = "", path: str = "") -> str:
@@ -651,6 +711,49 @@ def effective_output_contracts(
     return normalized
 
 
+def _dedupe_input_aliases(inputs: List[Dict[str, Any]]) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Collapse only uniquely resolvable same-role aliases."""
+    grouped: Dict[tuple[str, str], List[Dict[str, Any]]] = {}
+    for item in inputs:
+        key = (_field_key(item.get("role")), Path(_text(item.get("path"))).name.lower())
+        grouped.setdefault(key, []).append(item)
+    resolved: List[Dict[str, Any]] = []
+    audit: List[Dict[str, Any]] = []
+    for (role, basename), values in grouped.items():
+        by_path: Dict[str, Dict[str, Any]] = {}
+        for item in values:
+            by_path.setdefault(_text(item.get("path")), item)
+        unique = list(by_path.values())
+        if len(unique) <= 1:
+            resolved.extend(unique)
+            continue
+        existing = [item for item in unique if Path(_text(item.get("path"))).is_file()]
+        if len(existing) == 1:
+            chosen = deepcopy(existing[0])
+            chosen["aliases"] = [
+                _text(item.get("path")) for item in unique
+                if _text(item.get("path")) != _text(chosen.get("path"))
+            ]
+            chosen["resolution_status"] = "resolved"
+            resolved.append(chosen)
+            audit.append({
+                "status": "INPUT_ALIAS_RESOLVED",
+                "role": role,
+                "basename": basename,
+                "resolved_path": chosen.get("path"),
+                "aliases": chosen["aliases"],
+            })
+        else:
+            resolved.extend(unique)
+            audit.append({
+                "status": "AMBIGUOUS_INPUT_ALIAS",
+                "role": role,
+                "basename": basename,
+                "candidate_paths": [_text(item.get("path")) for item in unique],
+            })
+    return resolved, audit
+
+
 def _request_output_directory(text: str) -> str:
     inline = re.search(
         r"(?:输出目录|output\s*(?:directory|dir))\s*(?:改为|改成|[:：=])\s*([^\s`'\"，,;；。)）\]】]+)",
@@ -687,8 +790,13 @@ def _request_output_filenames(text: str) -> List[str]:
         elif in_output_section and re.match(r"^[^\s-][^:：]{0,30}[:：]\s*$", stripped):
             in_output_section = False
         scan = stripped if in_output_section else ""
-        if not scan and re.search(r"(?:输出|output|produce|生成)", stripped, re.IGNORECASE):
-            scan = re.split(r"(?:输出|output|produce|生成)", stripped, maxsplit=1, flags=re.IGNORECASE)[-1]
+        if not scan and re.search(r"(?:输出|output|produce|生成|交付|产物|deliverables?|result\s+files?)", stripped, re.IGNORECASE):
+            scan = re.split(
+                r"(?:输出|output|produce|生成|交付|产物|deliverables?|result\s+files?)",
+                stripped,
+                maxsplit=1,
+                flags=re.IGNORECASE,
+            )[-1]
         for match in file_re.finditer(scan):
             name = match.group(1)
             if name not in values:
@@ -1027,6 +1135,7 @@ def ensure_task_spec(
         for item in normalized.get("inputs", [])
         if isinstance(item, (Mapping, str))
     ]
+    normalized["inputs"], normalized["input_alias_audit"] = _dedupe_input_aliases(normalized["inputs"])
     normalized["expected_outputs"] = [
         normalize_output_binding(
             item,
@@ -2048,12 +2157,64 @@ def format_effective_user_facts_context(
         for key, value in projection.items()
         if key not in {"projection_text", "projection_chars", "projection_budget", "source_refs"}
     }
-    return (
-        "[EFFECTIVE USER FACTS]\n"
-        + json.dumps(fact_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
-        + "\n[USER SOURCE REFERENCES]\n"
-        + json.dumps(refs, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
-    )
+    def render(payload: Mapping[str, Any], source_refs: List[Any]) -> str:
+        return (
+            "[EFFECTIVE USER FACTS]\n"
+            + json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+            + "\n[USER SOURCE REFERENCES]\n"
+            + json.dumps(source_refs, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+        )
+
+    rendered = render(fact_payload, refs)
+    if len(rendered) <= max_chars:
+        return rendered
+
+    compact_refs = [
+        {
+            key: ref.get(key)
+            for key in ("fact_id", "source_type", "source_message_id", "source_task_id", "source_ref")
+            if ref.get(key) not in (None, "", [])
+        }
+        if isinstance(ref, Mapping) else str(ref)[:160]
+        for ref in refs
+    ]
+    fact_payload["projection_truncated"] = True
+    fact_payload.setdefault("omitted_sections", []).append("source_reference_excerpts")
+    rendered = render(fact_payload, compact_refs)
+    while len(rendered) > max_chars and compact_refs:
+        compact_refs.pop()
+        rendered = render(fact_payload, compact_refs)
+    if len(rendered) <= max_chars:
+        return rendered
+
+    for field in ("decisions", "parameters", "entities", "relations", "unresolved_facts", "inactive_facts"):
+        if field in fact_payload and fact_payload[field]:
+            fact_payload[field] = []
+            fact_payload.setdefault("omitted_sections", []).append(field)
+            rendered = render(fact_payload, compact_refs)
+            if len(rendered) <= max_chars:
+                return rendered
+
+    # Required contracts and their source identifiers are retained; optional
+    # narrative fields have already been removed by this point.
+    for field in ("active_artifacts", "requirements", "output_contracts", "inputs", "constraints"):
+        values = fact_payload.get(field)
+        while isinstance(values, list) and len(rendered) > max_chars and len(values) > 1:
+            values.pop()
+            fact_payload.setdefault("omitted_sections", []).append(f"{field}:tail")
+            rendered = render(fact_payload, compact_refs)
+    if len(rendered) <= max_chars:
+        return rendered
+    fallback = {
+        "projection_truncated": True,
+        "effective_facts_revision": fact_payload.get("effective_facts_revision", ""),
+        "required_contract_counts": {
+            field: len(fact_payload.get(field) or [])
+            for field in ("active_artifacts", "requirements", "output_contracts", "inputs", "constraints")
+        },
+        "error": "PLANNER_CONTEXT_BUDGET_UNSATISFIED",
+    }
+    return render(fallback, [])[:max_chars]
 
 
 def effective_task_contract(spec: Mapping[str, Any] | None) -> Dict[str, Any]:
@@ -2061,20 +2222,22 @@ def effective_task_contract(spec: Mapping[str, Any] | None) -> Dict[str, Any]:
     normalized = ensure_task_spec(spec)
     resolved = resolve_effective_user_facts(normalized)
     inputs: List[Dict[str, Any]] = []
-    outputs: List[Dict[str, Any]] = []
+    outputs: List[Dict[str, Any]] = effective_output_contracts(normalized)
+    has_canonical_outputs = bool(outputs)
     for artifact in resolved["active_artifacts"]:
         locator = _text(artifact.get("locator"))
         if not locator:
             continue
         if _text(artifact.get("direction")).lower() == "output":
-            outputs.append(normalize_output_binding({
-                "role": artifact.get("role"),
-                "path": locator if artifact.get("role") == "output_dir" else "",
-                "filename": "" if artifact.get("role") == "output_dir" else locator,
-                "required": bool(artifact.get("required", True)),
-                "source": artifact.get("source"),
-                "fact_id": artifact.get("fact_id"),
-            }))
+            if not has_canonical_outputs:
+                outputs.append(normalize_output_binding({
+                    "role": artifact.get("role"),
+                    "path": locator if artifact.get("role") == "output_dir" else "",
+                    "filename": "" if artifact.get("role") == "output_dir" else locator,
+                    "required": bool(artifact.get("required", True)),
+                    "source": artifact.get("source"),
+                    "fact_id": artifact.get("fact_id"),
+                }))
         else:
             inputs.append(normalize_input_binding({
                 "role": artifact.get("role"),

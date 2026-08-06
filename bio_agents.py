@@ -956,13 +956,7 @@ class BioAnalystAgent:
             or ""
         )
         try:
-            inferred = infer_task_semantics(
-                task_id=task_id,
-                stage="finalize",
-                messages=messages or [],
-                payload=payload,
-            )
-            output_artifacts = self._archive_paths_from_payload(payload, inferred)
+            output_artifacts = self._structured_final_artifacts(task_id, payload)
         except Exception:
             output_artifacts = []
         self.profiler.record_final_result(
@@ -1120,6 +1114,63 @@ class BioAnalystAgent:
             seen.add(path)
             ordered.append(path)
         return ordered
+
+    def _structured_final_artifacts(self, task_id: str, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Project final artifacts only from TaskSpec and Plan ownership."""
+        plan = load_plan_state(self.data_path, task_id)
+        task_spec = ensure_task_spec(
+            payload.get("task_spec") or plan.get("task_spec") or {},
+            task_id=task_id,
+        )
+        contracts = effective_output_contracts(task_spec)
+        output_dir = next(
+            (
+                str(item.get("path") or item.get("path_or_name") or "")
+                for item in contracts
+                if str(item.get("role") or "") == "output_dir"
+            ),
+            "",
+        )
+        steps = [item for item in plan.get("steps", []) or [] if isinstance(item, dict)]
+        records: List[Dict[str, Any]] = []
+        for contract in contracts:
+            if str(contract.get("role") or "") == "output_dir":
+                continue
+            requested = str(contract.get("path_or_name") or contract.get("path") or contract.get("filename") or "")
+            if not requested:
+                continue
+            path = Path(requested).expanduser()
+            if not path.is_absolute() and output_dir:
+                path = Path(output_dir).expanduser() / path
+            identity = path.name.lower()
+            producers = [
+                step for step in steps
+                if identity in {
+                    Path(str(value)).name.lower()
+                    for value in step.get("outputs", []) or []
+                    if str(value)
+                }
+            ]
+            producer = producers[0] if len(producers) == 1 else {}
+            artifacts = [
+                item for item in producer.get("artifacts", []) or []
+                if isinstance(item, dict)
+                and Path(str(item.get("path") or "")).name.lower() == identity
+            ]
+            artifact = artifacts[0] if artifacts else {}
+            producer_id = str(producer.get("step_id") or "")
+            records.append({
+                "artifact_ref": str(artifact.get("artifact_id") or contract.get("output_id") or identity),
+                "output_id": str(contract.get("output_id") or identity),
+                "path": str(path),
+                "producer_id": producer_id,
+                "producer_type": "renderer" if producer.get("renderer_composite") else ("plan_step" if producer_id else "unresolved"),
+                "required": bool(contract.get("required", True)),
+                "exists": path.is_file() and path.stat().st_size > 0,
+                "validation_ref": str(artifact.get("validator") or contract.get("validation") or ""),
+                "source_contract_ref": str(contract.get("source_ref") or contract.get("output_id") or ""),
+            })
+        return records
 
     def _load_agents_md(self, work_dir: str) -> str:
         try:
@@ -10665,38 +10716,51 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 planner_wiki_context = "\n\n".join(part for part in planner_memory_parts if part)
             planner_wiki_context = self._clip_prompt_text(planner_wiki_context, 1000)
 
-            detailed_plan_prompt = PromptManager.get_detailed_planner_prompt(
-                user_msg=str(user_msg),
-                task_spec_context=task_spec_context,
-                consultant_summary=summary,
-                planner_wiki_context=planner_wiki_context,
-                runtime_audit_context=runtime_audit_context,
-                rag_knowledge=rag_knowledge,
-                skills_summary=skills_summary,
-                selected_skills_text=selected_skills_text,
-                active_skill_docs=active_skill_docs,
-                skill_reference_index=skill_reference_index,
-                skill_execution_context=skill_execution_context,
-                workflow_handoff=workflow_handoff_text,
-                active_batch_id=str(active_batch_id or ""),
-                active_skills_text=active_skills_text,
-                future_skills_text=", ".join(future_skills) if future_skills else "None",
-                required_skills_all_text=", ".join(required_skills_all) if required_skills_all else "None",
-                candidate_skills_text=", ".join(candidate_skills) if candidate_skills else "None",
-                user_preferences_context=self._clip_prompt_text(self._load_user_preferences(), 500),
-            )
+            planner_prompt_args = {
+                "user_msg": str(user_msg),
+                "task_spec_context": task_spec_context,
+                "consultant_summary": summary,
+                "planner_wiki_context": planner_wiki_context,
+                "runtime_audit_context": runtime_audit_context,
+                "rag_knowledge": rag_knowledge,
+                "skills_summary": skills_summary,
+                "selected_skills_text": selected_skills_text,
+                "active_skill_docs": active_skill_docs,
+                "skill_reference_index": skill_reference_index,
+                "skill_execution_context": skill_execution_context,
+                "workflow_handoff": workflow_handoff_text,
+                "active_batch_id": str(active_batch_id or ""),
+                "active_skills_text": active_skills_text,
+                "future_skills_text": ", ".join(future_skills) if future_skills else "None",
+                "required_skills_all_text": ", ".join(required_skills_all) if required_skills_all else "None",
+                "candidate_skills_text": ", ".join(candidate_skills) if candidate_skills else "None",
+                "user_preferences_context": self._clip_prompt_text(self._load_user_preferences(), 500),
+            }
+            detailed_plan_prompt = PromptManager.get_detailed_planner_prompt(**planner_prompt_args)
+            if len(detailed_plan_prompt) > LLM_STEP_EPHEMERAL_CHARS:
+                planner_prompt_args.update({
+                    "consultant_summary": self._clip_prompt_text(summary, 1000),
+                    "planner_wiki_context": "",
+                    "rag_knowledge": "",
+                    "skills_summary": self._clip_prompt_text(skills_summary, 1500),
+                    "skill_reference_index": self._clip_prompt_text(skill_reference_index, 1200),
+                    "skill_execution_context": self._clip_prompt_text(skill_execution_context, 2800),
+                    "workflow_handoff": self._clip_prompt_text(workflow_handoff_text, 800),
+                    "user_preferences_context": self._clip_prompt_text(planner_prompt_args["user_preferences_context"], 240),
+                })
+                detailed_plan_prompt = PromptManager.get_detailed_planner_prompt(**planner_prompt_args)
             planner_prompt_components = {
                 "total_chars": len(detailed_plan_prompt),
-                "task_spec": len(task_spec_context),
-                "consultant_summary": len(summary),
-                "runtime_audit": len(runtime_audit_context),
-                "memory_context": len(planner_wiki_context),
-                "rag_knowledge": len(rag_knowledge),
-                "selected_skill_catalog": len(skills_summary),
-                "active_skill_docs": len(active_skill_docs),
-                "skill_reference_index": len(skill_reference_index),
-                "skill_execution_context": len(skill_execution_context),
-                "workflow_state": len(workflow_handoff_text),
+                "task_spec": len(planner_prompt_args["task_spec_context"]),
+                "consultant_summary": len(planner_prompt_args["consultant_summary"]),
+                "runtime_audit": len(planner_prompt_args["runtime_audit_context"]),
+                "memory_context": len(planner_prompt_args["planner_wiki_context"]),
+                "rag_knowledge": len(planner_prompt_args["rag_knowledge"]),
+                "selected_skill_catalog": len(planner_prompt_args["skills_summary"]),
+                "active_skill_docs": len(planner_prompt_args["active_skill_docs"]),
+                "skill_reference_index": len(planner_prompt_args["skill_reference_index"]),
+                "skill_execution_context": len(planner_prompt_args["skill_execution_context"]),
+                "workflow_state": len(planner_prompt_args["workflow_handoff"]),
             }
             logger.info(
                 "Planner prompt components: task=%s %s",
@@ -10704,12 +10768,22 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 json.dumps(planner_prompt_components, ensure_ascii=False, sort_keys=True),
             )
             if len(detailed_plan_prompt) > LLM_STEP_EPHEMERAL_CHARS:
-                logger.warning(
-                    "Planner prompt exceeds step-local budget: task=%s chars=%s budget=%s",
+                logger.error(
+                    "Planner prompt remains over step-local budget after deterministic compression: task=%s chars=%s budget=%s",
                     task_id,
                     len(detailed_plan_prompt),
                     LLM_STEP_EPHEMERAL_CHARS,
                 )
+                reason = (
+                    "PLANNER_CONTEXT_BUDGET_UNSATISFIED: deterministic projection remains "
+                    f"{len(detailed_plan_prompt)} chars for a {LLM_STEP_EPHEMERAL_CHARS}-char budget."
+                )
+                plan_progress = self._mark_plan_current_blocked(task_id, reason)
+                return {
+                    "messages": [SystemMessage(content=reason)],
+                    "plan_progress": plan_progress,
+                    "next_step": "finish",
+                }
 
             # Persist the Planner input contract before the remote call so a
             # timeout/restart cannot erase Consultant-selected skills or task facts.

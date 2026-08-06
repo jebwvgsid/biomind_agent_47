@@ -789,7 +789,20 @@ class RunProfiler:
         if output_result:
             final_result["output_result"] = _shorten(output_result, 3000)
         if output_artifacts is not None:
-            final_result["output_artifacts"] = _dedupe_text(output_artifacts)
+            if isinstance(output_artifacts, (list, tuple)) and all(
+                isinstance(item, dict) for item in output_artifacts
+            ):
+                deduped: List[Dict[str, Any]] = []
+                seen: set[str] = set()
+                for item in output_artifacts:
+                    key = str(item.get("artifact_ref") or item.get("output_id") or item.get("path") or "")
+                    if not key or key in seen:
+                        continue
+                    seen.add(key)
+                    deduped.append(dict(item))
+                final_result["output_artifacts"] = deduped
+            else:
+                final_result["output_artifacts"] = _dedupe_text(output_artifacts)
         final_result["updated_at"] = _now_iso()
         task["last_updated_at"] = final_result["updated_at"]
         self._append_event(
