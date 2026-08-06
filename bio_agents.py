@@ -203,11 +203,13 @@ from agent_core.plan_tracker import (
     normalize_renderer_manifest,
     plan_contract_violations,
     plan_approval_is_current,
+    plan_identity,
     plan_state_path,
     provenance_debug_dump,
     record_current_step_evidence,
     record_provenance_event,
     render_structured_plan,
+    render_plan_review_content,
     render_plan_progress,
     renderer_manifest_complete,
     register_renderer_manifest,
@@ -3949,7 +3951,15 @@ class BioAnalystAgent:
             "plan_state_path": str(plan_state_path(self.data_path, task_id)),
             "migration_applied": list(plan_state.get("migrations_applied") or []),
         }
-        logger.warning("Generate redirected to Planner: %s", json.dumps(audit, ensure_ascii=False, sort_keys=True))
+        approval_reason = audit["redirect_reason"] in {
+            "plan_not_approved", "stale_task_revision", "plan_approval_stale",
+        }
+        target_node = "plan_review" if approval_reason else "planner"
+        logger.warning(
+            "Generate redirected to %s: %s",
+            target_node,
+            json.dumps(audit, ensure_ascii=False, sort_keys=True),
+        )
         detail = json.dumps(audit, ensure_ascii=False, sort_keys=True)
         plan_progress = self._record_plan_current_evidence(task_id, "generate_plan_redirect", detail)
         user_message = message or (
@@ -3957,17 +3967,24 @@ class BioAnalystAgent:
             f"Missing fields: {', '.join(audit['missing_fields']) or 'none'}. "
             "Planner must repair the canonical current-step contract."
         )
-        return {
+        update = {
             "messages": [SystemMessage(content=user_message)],
             "plan_progress": plan_progress,
             "pending_action": {},
             "resume_audit": audit,
-            "required_next_action": "PLAN_PATCH",
-            "failure_owner": RecoveryFailureOwner.PLAN.value,
-            "recovery_scope": "CURRENT_STEP",
-            "recovery_phase": "plan_repair",
-            "next_step": "planner",
+            "required_next_action": "PLAN_APPROVAL_REQUIRED" if approval_reason else "PLAN_PATCH",
+            "failure_owner": "" if approval_reason else RecoveryFailureOwner.PLAN.value,
+            "recovery_scope": "" if approval_reason else "CURRENT_STEP",
+            "recovery_phase": "" if approval_reason else "plan_repair",
+            "next_step": target_node,
         }
+        if approval_reason:
+            update["plan_approval_status"] = (
+                "PLAN_APPROVAL_REQUIRED"
+                if audit["redirect_reason"] == "plan_not_approved"
+                else "PLAN_APPROVAL_STALE"
+            )
+        return update
 
     def _pause_retryable_llm_failure(
         self,
@@ -11221,12 +11238,8 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "next_step": "generate",
                 }
 
-            review_diff = persisted_plan.get("pending_review_diff") or []
-            review_content = (
-                "## Plan Change Review\n\n"
-                + json.dumps(review_diff, ensure_ascii=False, indent=2, default=str)
-                if review_diff else plan
-            )
+            identity = plan_identity(persisted_plan)
+            review_content = render_plan_review_content(persisted_plan, plan)
 
             # 显示内存状态
             mem_status = self.memory_manager.status(messages)
@@ -11279,7 +11292,15 @@ If the user is actually asking you to run analysis or inspect local files, say t
             if il in ["y", "yes", "approve", ""]:
                 print(f"{Fore.GREEN}✓ Plan approved. Executing...{Style.RESET_ALL}")
                 plan_state = self._ensure_plan_tracker(task_id, plan)
-                approve_plan_state(plan_state, task_revision)
+                review_event_id = "review-" + hashlib.sha256(
+                    f"{task_id}|{identity['plan_version']}|{identity['plan_semantic_hash']}".encode("utf-8")
+                ).hexdigest()[:20]
+                approve_plan_state(
+                    plan_state,
+                    task_revision,
+                    approval_source="human_plan_review",
+                    review_event_id=review_event_id,
+                )
                 plan_progress = self._persist_plan_tracker(task_id, plan_state) if plan_state.get("steps") else render_plan_progress(plan_state)
                 approval_event = SystemMessage(
                     content=(
@@ -12378,6 +12399,21 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "context_mode": str((state.get("context_budget_report") or {}).get("projection_mode") or "current_step"),
                 "remaining_budget": generate_remaining,
             }
+            consumed_identity = plan_identity(plan_state)
+            approval_record = dict(plan_state.get("approval_record") or {})
+            entry.update({
+                "generate_call_id": "generate-" + hashlib.sha256(
+                    (
+                        f"{task_id}|{consumed_identity['plan_version']}|"
+                        f"{consumed_identity['plan_semantic_hash']}|{current_step_id}"
+                    ).encode("utf-8")
+                ).hexdigest()[:20],
+                "consumed_plan_id": consumed_identity["plan_id"],
+                "consumed_plan_version": consumed_identity["plan_version"],
+                "consumed_plan_semantic_hash": consumed_identity["plan_semantic_hash"],
+                "approval_id": str(approval_record.get("approval_id") or "legacy-approval"),
+                "approval_validation": "passed",
+            })
             logger.info("Generate lifecycle: task=%s %s", task_id, json.dumps(entry, ensure_ascii=False, sort_keys=True))
 
             try:

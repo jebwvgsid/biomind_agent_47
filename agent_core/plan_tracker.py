@@ -2509,6 +2509,23 @@ def _semantic_step(step: PlanStep) -> Dict[str, Any]:
     )
     payload = {field: normalized.get(field) for field in PLAN_STEP_FIELDS if field != "status"}
     payload["title"] = semantic_title
+    payload["selected_skill_id"] = str(normalized.get("selected_skill_id") or "")
+    payload["artifacts"] = sorted(
+        [
+            {
+                "artifact_id": str(item.get("artifact_id") or ""),
+                "path": str(item.get("path") or ""),
+                "required": bool(item.get("required", True)),
+                "producer_step_id": str(item.get("producer_step_id") or ""),
+                "producer": str(item.get("producer") or ""),
+                "source": str(item.get("source") or ""),
+                "validator": str(item.get("validator") or ""),
+            }
+            for item in normalized.get("artifacts", []) or []
+            if isinstance(item, dict)
+        ],
+        key=lambda item: (item["artifact_id"], item["path"], item["producer_step_id"]),
+    )
     return payload
 
 
@@ -3076,6 +3093,50 @@ def render_structured_plan(state: PlanState) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def render_plan_review_content(state: PlanState, plan_text: str = "") -> str:
+    """Render the effective Plan first and a bounded deterministic diff second."""
+    identity = plan_identity(state)
+    _, next_executable = current_plan_step_with_index(state)
+    review_diff = list(state.get("pending_review_diff") or [])
+    changed_ids = list(dict.fromkeys(
+        str(step_id)
+        for item in review_diff if isinstance(item, dict)
+        for step_id in item.get("changed_step_ids", []) or []
+        if str(step_id)
+    ))
+    lines = [
+        "## Plan Identity",
+        f"- Plan ID: `{identity['plan_id']}`",
+        f"- Plan Version: `{identity['plan_version']}`",
+        f"- Parent Version: `{state.get('parent_plan_version') or 'none'}`",
+        f"- Semantic Hash: `{identity['plan_semantic_hash']}`",
+        f"- Execution Cursor: `{state.get('current_step_id') or 'none'}`",
+        f"- Next Executable Step: `{(next_executable or {}).get('step_id') or 'none'}`",
+        f"- Changed Stable Step IDs: `{', '.join(changed_ids) or 'none'}`",
+        "",
+        "## Effective Plan",
+        "",
+        str(plan_text or render_structured_plan(state)).strip(),
+    ]
+    summary = []
+    for item in review_diff[:8]:
+        if not isinstance(item, dict):
+            continue
+        reasons = [
+            str(reason.get("reason") or reason)
+            for reason in item.get("reason", []) or []
+            if str(reason)
+        ]
+        summary.append(
+            f"- {item.get('operation') or 'PLAN_CHANGE'}: "
+            f"steps={','.join(str(value) for value in item.get('changed_step_ids', []) or []) or 'none'}; "
+            f"reason={'; '.join(reasons) or 'not recorded'}"
+        )
+    if summary:
+        lines.extend(["", "## Changes Since Parent Revision", *summary])
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def _plan_defaults(task_id: str, data_path: str | Path | None = None) -> PlanState:
     plan_file = str(default_plan_file(data_path, task_id)) if data_path is not None else ""
     return {
@@ -3096,6 +3157,7 @@ def _plan_defaults(task_id: str, data_path: str | Path | None = None) -> PlanSta
         "approved_plan_revision": 0,
         "approved_task_revision": 0,
         "approval_timestamp": "",
+        "approval_record": {},
         "generated_from_task_revision": 0,
         "parent_plan_version": "",
         "current_step_id": "",
@@ -3255,6 +3317,7 @@ def carry_forward_plan_lifecycle(previous: PlanState, candidate: PlanState) -> P
             "approved_plan_revision",
             "approved_task_revision",
             "approval_timestamp",
+            "approval_record",
         ):
             candidate[field] = previous.get(field, candidate.get(field))
     elif previous_hash:
@@ -3268,7 +3331,22 @@ def carry_forward_plan_lifecycle(previous: PlanState, candidate: PlanState) -> P
     return candidate
 
 
-def approve_plan_state(state: PlanState, task_revision: int) -> PlanState:
+def plan_identity(state: PlanState) -> Dict[str, str]:
+    """Return the immutable identity shared by review, approval, and Generate."""
+    return {
+        "plan_id": str(state.get("plan_id") or ""),
+        "plan_version": str(state.get("plan_version") or "plan_v1"),
+        "plan_semantic_hash": semantic_plan_hash(state),
+    }
+
+
+def approve_plan_state(
+    state: PlanState,
+    task_revision: int,
+    *,
+    approval_source: str = "human_plan_review",
+    review_event_id: str = "",
+) -> PlanState:
     state, _ = migrate_plan_state(state, str(state.get("task_id") or "default"))
     current_hash = semantic_plan_hash(state)
     state["semantic_plan_hash"] = current_hash
@@ -3277,6 +3355,22 @@ def approve_plan_state(state: PlanState, task_revision: int) -> PlanState:
     state["approved_plan_revision"] = _int(state.get("plan_revision"), 1)
     state["approved_task_revision"] = max(0, _int(task_revision, 0))
     state["approval_timestamp"] = _now()
+    identity = plan_identity(state)
+    approval_seed = "|".join([
+        str(state.get("task_id") or ""), identity["plan_id"],
+        identity["plan_version"], identity["plan_semantic_hash"],
+        state["approval_timestamp"], str(review_event_id or ""),
+    ])
+    state["approval_record"] = {
+        "approval_id": "approval-" + hashlib.sha256(approval_seed.encode("utf-8")).hexdigest()[:20],
+        "task_id": str(state.get("task_id") or ""),
+        "approved_plan_id": identity["plan_id"],
+        "approved_plan_version": identity["plan_version"],
+        "approved_plan_semantic_hash": identity["plan_semantic_hash"],
+        "approved_at": state["approval_timestamp"],
+        "approval_source": str(approval_source or "human_plan_review"),
+        "review_event_id": str(review_event_id or ""),
+    }
     state["pending_review_diff"] = []
     return state
 
@@ -3284,10 +3378,21 @@ def approve_plan_state(state: PlanState, task_revision: int) -> PlanState:
 def plan_approval_is_current(state: PlanState, task_revision: int) -> bool:
     if str(state.get("plan_status") or "") != PLAN_STATUS_APPROVED:
         return False
-    return (
+    legacy_current = (
         str(state.get("approved_plan_hash") or "") == semantic_plan_hash(state)
         and _int(state.get("approved_plan_revision"), 0) == _int(state.get("plan_revision"), 1)
         and _int(state.get("approved_task_revision"), 0) == _int(task_revision, 0)
+    )
+    if not legacy_current:
+        return False
+    record = state.get("approval_record") or {}
+    if not record:
+        return True
+    identity = plan_identity(state)
+    return (
+        str(record.get("approved_plan_id") or "") == identity["plan_id"]
+        and str(record.get("approved_plan_version") or "") == identity["plan_version"]
+        and str(record.get("approved_plan_semantic_hash") or "") == identity["plan_semantic_hash"]
     )
 
 
@@ -3443,7 +3548,12 @@ def validate_plan_for_generate(state: PlanState, task_revision: int) -> Dict[str
         return {**base, "reason_code": "plan_missing", "missing_fields": ["steps"]}
     if not plan_approval_is_current(state, task_revision):
         generated_revision = _int(state.get("generated_from_task_revision"), 0)
-        reason = "stale_task_revision" if generated_revision and generated_revision != _int(task_revision, 0) else "plan_not_approved"
+        if generated_revision and generated_revision != _int(task_revision, 0):
+            reason = "stale_task_revision"
+        elif state.get("approval_record") or state.get("approved_plan_hash"):
+            reason = "plan_approval_stale"
+        else:
+            reason = "plan_not_approved"
         return {**base, "reason_code": reason}
 
     current_index, current = current_plan_step_with_index(state)
