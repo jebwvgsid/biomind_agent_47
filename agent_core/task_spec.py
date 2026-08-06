@@ -584,16 +584,71 @@ def normalize_output_binding(
         resolution_base = _text(raw.get("resolution_base"))
     if not role:
         role = _field_key(filename) or "output"
+    source_value = _binding_source(_text(raw.get("source_type") or raw.get("source") or source))
+    path_or_name = path_value or filename
+    output_id = _text(raw.get("output_id"))
+    if not output_id:
+        identity = f"{role}|{path_or_name}".lower()
+        output_id = "output-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
     return {
         **raw,
+        "output_id": output_id,
         "role": role,
         "path": path_value,
         "filename": filename,
+        "path_or_name": path_or_name,
         "required": bool(raw.get("required", True)),
         "validation": _text(raw.get("validation") or ("directory" if role == "output_dir" else "nonempty_file")),
-        "source": _binding_source(_text(raw.get("source") or source)),
+        "source": source_value,
+        "source_type": source_value,
+        "source_ref": _text(raw.get("source_ref")),
+        "user_visible": bool(raw.get("user_visible", role != "output_dir")),
+        "producer_hint": _text(raw.get("producer_hint")),
         "resolution_base": resolution_base,
     }
+
+
+def effective_output_contracts(
+    spec: Mapping[str, Any] | None,
+    *,
+    base_dir: str | Path | None = None,
+    project_root: str | Path | None = None,
+) -> List[Dict[str, Any]]:
+    """Return the single canonical output contract view.
+
+    ``expected_outputs`` is accepted only as a legacy migration source when
+    the authoritative ``output_contracts`` collection is absent.
+    """
+    raw = dict(spec or {})
+    values = raw.get("output_contracts")
+    migration_source = "output_contracts"
+    if not isinstance(values, list) or not values:
+        values = raw.get("expected_outputs")
+        migration_source = "legacy_expected_outputs"
+    values = values if isinstance(values, list) else []
+    normalized: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for value in values:
+        if not isinstance(value, (Mapping, str)):
+            continue
+        item = normalize_output_binding(
+            value,
+            source=(
+                _text(value.get("source_type") or value.get("source"))
+                if isinstance(value, Mapping)
+                else migration_source
+            ) or migration_source,
+            base_dir=base_dir,
+            project_root=project_root,
+        )
+        key = _field_key(item.get("role")) + "|" + _text(item.get("path_or_name")).lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        if migration_source != "output_contracts":
+            item.setdefault("migration_source", migration_source)
+        normalized.append(item)
+    return normalized
 
 
 def _request_output_directory(text: str) -> str:
@@ -982,6 +1037,11 @@ def ensure_task_spec(
         for item in normalized.get("expected_outputs", [])
         if isinstance(item, (Mapping, str))
     ]
+    normalized["output_contracts"] = effective_output_contracts(
+        normalized,
+        base_dir=base_dir,
+        project_root=project_root,
+    )
     # Older v4 prototypes may have only the aggregate `facts` list. Distribute
     # it into the typed views before migration and keep `facts` derived below.
     if normalized.get("facts"):

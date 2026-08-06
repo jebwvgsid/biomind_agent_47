@@ -3026,16 +3026,7 @@ def apply_plan_patch(
         }
     candidate_state["parent_plan_version"] = str(state.get("plan_version") or "")
     candidate_state["plan_version"] = f"plan_v{int(candidate_state.get('plan_revision') or base_revision)}"
-    review_required = any(
-        set(fields) - {"success_criteria"}
-        for fields in changed_fields.values()
-    )
-    if (
-        not review_required
-        and str(state.get("plan_status") or "") == PLAN_STATUS_APPROVED
-        and state.get("approved_task_revision") is not None
-    ):
-        approve_plan_state(candidate_state, _int(state.get("approved_task_revision"), 0))
+    review_required = bool(changed_ids)
     candidate_state.setdefault("revision_history", []).append(
         {
             "operation": PLAN_OPERATION_REPAIR,
@@ -3420,9 +3411,29 @@ def plan_contract_violations(state: PlanState) -> List[Dict[str, str]]:
     return violations
 
 
+def _output_identity(value: Any) -> str:
+    if isinstance(value, dict):
+        value = value.get("path_or_name") or value.get("path") or value.get("filename") or value.get("output_id")
+    text = str(value or "").strip().strip("`'\"")
+    if not text:
+        return ""
+    return Path(text).name.lower() or text.lower()
+
+
+def _renderer_owned_outputs(record: Dict[str, Any]) -> List[str]:
+    values = record.get("owned_outputs") or []
+    return [
+        str(item.get("path_or_name") or item.get("path") or item.get("filename") or item.get("output_id") or "")
+        if isinstance(item, dict) else str(item)
+        for item in values
+        if str(item)
+    ]
+
+
 def collapse_renderer_composite_steps(
     state: PlanState,
     renderer_skill_ids: List[str],
+    renderer_records: Optional[List[Dict[str, Any]]] = None,
 ) -> Tuple[PlanState, List[Dict[str, Any]]]:
     """Normalize a newly generated plan so each renderer owns one Execute step.
 
@@ -3440,16 +3451,24 @@ def collapse_renderer_composite_steps(
         if isinstance(step, dict)
     ]
     audits: List[Dict[str, Any]] = []
+    records_by_skill = {
+        str(record.get("skill_id") or ""): dict(record)
+        for record in (renderer_records or [])
+        if isinstance(record, dict) and str(record.get("skill_id") or "")
+    }
     for skill_id in sorted(renderer_ids):
+        renderer = records_by_skill.get(skill_id, {})
+        owned_outputs = _renderer_owned_outputs(renderer)
+        owned_identities = {_output_identity(item) for item in owned_outputs if _output_identity(item)}
         matches = [
             (index, step)
             for index, step in enumerate(steps)
             if skill_id in {str(item) for item in step.get("skill_ids", []) or []}
             and str(step.get("action") or "").strip().upper() == "EXECUTE"
         ]
-        if len(matches) <= 1:
+        if not matches:
             continue
-        if any(step.get("renderer_execution") for _, step in matches):
+        if len(matches) > 1 and any(step.get("renderer_execution") for _, step in matches):
             audits.append({
                 "renderer_skill_id": skill_id,
                 "status": "preserved_existing_execution",
@@ -3469,6 +3488,9 @@ def collapse_renderer_composite_steps(
                         seen.add(key)
                         merged.append(deepcopy(item))
             anchor[field] = merged
+        for output_name in owned_outputs:
+            if _output_identity(output_name) not in {_output_identity(item) for item in anchor.get("outputs", []) or []}:
+                anchor.setdefault("outputs", []).append(output_name)
         dependencies: List[str] = []
         for _, step in matches:
             for dependency in step.get("dependencies", []) or []:
@@ -3482,12 +3504,40 @@ def collapse_renderer_composite_steps(
         anchor["purpose"] = "analysis"
         anchor["tool"] = "renderer"
         anchor["renderer_composite"] = True
+        anchor["step_type"] = "renderer_composite"
+        anchor["selected_skill_id"] = skill_id
+        anchor["renderer_id"] = str(renderer.get("renderer_id") or anchor.get("renderer_id") or skill_id)
+        anchor["renderer_manifest_ref"] = str(
+            (anchor.get("renderer_execution") or {}).get("manifest_path")
+            or anchor.get("renderer_manifest_ref")
+            or ""
+        )
+        anchor["renderer_manifest_hash"] = str(
+            (anchor.get("renderer_execution") or {}).get("manifest_fingerprint")
+            or anchor.get("renderer_manifest_hash")
+            or ""
+        )
         anchor["skills_declared"] = bool(anchor.get("skill_ids"))
         anchor["input_contracts"] = list(anchor.get("inputs") or [])
         anchor["output_contracts"] = list(anchor.get("outputs") or [])
         anchor["artifacts"] = step_artifact_contracts(anchor)
 
         removed_ids = merged_ids - {str(anchor.get("step_id") or "")}
+        if owned_identities:
+            for step in steps:
+                step_id = str(step.get("step_id") or "")
+                if step_id == str(anchor.get("step_id") or "") or step_id in removed_ids:
+                    continue
+                outputs = list(step.get("outputs") or [])
+                retained = [item for item in outputs if _output_identity(item) not in owned_identities]
+                if len(retained) == len(outputs):
+                    continue
+                if retained:
+                    step["outputs"] = retained
+                    step["output_contracts"] = list(retained)
+                    step["artifacts"] = step_artifact_contracts(step)
+                else:
+                    removed_ids.add(step_id)
         steps = [
             step for index, step in enumerate(steps)
             if index == anchor_index or str(step.get("step_id") or "") not in removed_ids
@@ -3503,9 +3553,11 @@ def collapse_renderer_composite_steps(
             step["depends_on"] = list(rewritten)
         audits.append({
             "renderer_skill_id": skill_id,
+            "renderer_id": anchor.get("renderer_id"),
             "status": "collapsed",
             "anchor_step_id": anchor_id,
             "removed_step_ids": sorted(removed_ids),
+            "owned_outputs": owned_outputs,
         })
 
     candidate["steps"] = steps
@@ -3514,6 +3566,76 @@ def collapse_renderer_composite_steps(
         candidate["semantic_plan_hash"] = semantic_plan_hash(candidate)
         candidate["updated_at"] = _now()
     return candidate, audits
+
+
+def validate_output_contracts(
+    state: PlanState,
+    output_contracts: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Validate required coverage and single active producer ownership."""
+    producers: Dict[str, List[str]] = {}
+    for index, raw_step in enumerate(state.get("steps", []) or [], start=1):
+        if not isinstance(raw_step, dict):
+            continue
+        step = normalize_plan_step(dict(raw_step), index)
+        step_id = str(step.get("step_id") or "")
+        for output in step.get("outputs", []) or []:
+            identity = _output_identity(output)
+            if identity and step_id not in producers.setdefault(identity, []):
+                producers[identity].append(step_id)
+
+    violations: List[Dict[str, Any]] = []
+    for contract in output_contracts or []:
+        if not isinstance(contract, dict) or not bool(contract.get("required", True)):
+            continue
+        if str(contract.get("role") or "") == "output_dir":
+            continue
+        identity = _output_identity(contract)
+        if not identity:
+            continue
+        owner_ids = producers.get(identity, [])
+        common = {
+            "output_id": str(contract.get("output_id") or identity),
+            "path_or_name": str(contract.get("path_or_name") or contract.get("path") or contract.get("filename") or ""),
+            "source_type": str(contract.get("source_type") or contract.get("source") or "unknown"),
+            "source_ref": str(contract.get("source_ref") or ""),
+            "affected_output_ids": [str(contract.get("output_id") or identity)],
+            "affected_step_ids": list(owner_ids),
+            "allowed_changed_step_ids": list(owner_ids),
+        }
+        if not owner_ids:
+            violations.append({
+                **common,
+                "violation_code": "REQUIRED_OUTPUT_UNCOVERED",
+                "step_id": "",
+                "field": "outputs",
+                "reason": f"Required output `{common['path_or_name'] or identity}` has no logical producer.",
+            })
+        elif len(owner_ids) > 1:
+            violations.append({
+                **common,
+                "violation_code": "DUPLICATE_OUTPUT_PRODUCER",
+                "step_id": owner_ids[0],
+                "field": "outputs",
+                "reason": f"Output `{common['path_or_name'] or identity}` has multiple active producers: {', '.join(owner_ids)}.",
+            })
+    return violations
+
+
+def normalize_plan_contracts(
+    state: PlanState,
+    *,
+    renderer_records: Optional[List[Dict[str, Any]]] = None,
+    output_contracts: Optional[List[Dict[str, Any]]] = None,
+) -> Tuple[PlanState, List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Run the shared pre-review normalization and output validation pipeline."""
+    records = [dict(item) for item in (renderer_records or []) if isinstance(item, dict)]
+    renderer_skill_ids = [str(item.get("skill_id") or "") for item in records if str(item.get("skill_id") or "")]
+    normalized, audit = collapse_renderer_composite_steps(state, renderer_skill_ids, records)
+    violations: List[Dict[str, Any]] = []
+    violations.extend(plan_contract_violations(normalized))
+    violations.extend(validate_output_contracts(normalized, list(output_contracts or [])))
+    return normalized, audit, violations
 
 
 def validate_plan_for_generate(state: PlanState, task_revision: int) -> Dict[str, Any]:

@@ -10,6 +10,13 @@ metadata:
     manifest_type: renderer_artifact_contract
     schema_version: 3
     composite_step: true
+    owned_outputs:
+      - annotated.vcf
+      - snpEff_summary.html
+      - ann_effect_summary.tsv
+      - report.md
+      - reproduce.sh
+      - stage_status.tsv
     invocation:
       arguments:
         vcf: {flag: --vcf, required: true, aliases: [variant_file]}

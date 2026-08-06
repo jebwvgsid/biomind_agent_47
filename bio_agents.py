@@ -188,7 +188,6 @@ from agent_core.plan_tracker import (
     increment_plan_budget,
     carry_forward_plan_lifecycle,
     changed_plan_step_ids,
-    collapse_renderer_composite_steps,
     current_plan_step_with_index,
     classify_attempt_resume,
     default_plan_file,
@@ -200,6 +199,7 @@ from agent_core.plan_tracker import (
     mark_renderer_action_completed,
     next_action_title,
     next_renderer_manifest_action,
+    normalize_plan_contracts,
     normalize_renderer_manifest,
     plan_contract_violations,
     plan_approval_is_current,
@@ -233,6 +233,7 @@ from agent_core.task_spec import (
     classify_user_feedback_change,
     create_task_spec,
     evaluate_requirements,
+    effective_output_contracts,
     effective_task_contract,
     ensure_task_spec,
     format_effective_user_facts_context,
@@ -6844,21 +6845,6 @@ class BioAnalystAgent:
                         "Include it as an executable step with `Stage:` and `Skills:` fields, an ASK_USER decision, or a stage_blocked item."
                     )
 
-        expected_match = re.search(
-            r"(?:预期产物|expected outputs?|final outputs?)\s*[:：]\s*(.*?)(?=\n\s*(?:通用要求|允许|禁止|依赖规则|停止条件|输入文件|输出目录|$))",
-            request_text,
-            re.IGNORECASE | re.DOTALL,
-        )
-        if expected_match:
-            for artifact in re.findall(
-                r"([A-Za-z0-9_.+\-/]+\.(?:tsv|csv|txt|md|html?|json|ya?ml|rds|png|pdf|svg|sh|R|r|py))\b",
-                expected_match.group(1),
-                flags=re.IGNORECASE,
-            ):
-                artifact_name = Path(artifact).name.lower()
-                if artifact_name and artifact_name not in plan_l:
-                    violations.append(f"Plan coverage missing user-expected output `{artifact_name}`.")
-
         return violations
 
     def _repair_consultant_skill_summary(
@@ -10643,6 +10629,15 @@ If the user is actually asking you to run analysis or inspect local files, say t
             skill_reference_index = self._clip_prompt_text(skill_reference_index, 3000)
             skill_execution_context = self._clip_prompt_text(skill_execution_context, 5000)
             selected_skills_text = ", ".join(selected_skills) if selected_skills else "None"
+            renderer_records = [
+                self.skill_manager.get_renderer_record(skill_id)
+                for skill_id in selected_skills
+                if self.skill_manager and self.skill_manager.has_renderer(skill_id)
+            ]
+            canonical_output_contracts = effective_output_contracts(
+                task_spec,
+                project_root=project_root,
+            )
             active_skills_text = ", ".join(active_skills_state) if active_skills_state else "None - Planner must choose the first executable step's ACTIVE_SKILLS"
             workflow_handoff_text = self._clip_prompt_text(
                 self._format_workflow_handoff_for_prompt(workflow_handoff),
@@ -10788,8 +10783,13 @@ If the user is actually asking you to run analysis or inspect local files, say t
 
             if use_local_plan:
                 candidate_for_repair = durable_preplan
+                candidate_for_repair, renderer_normalization, canonical_violations = normalize_plan_contracts(
+                    candidate_for_repair,
+                    renderer_records=renderer_records,
+                    output_contracts=canonical_output_contracts,
+                )
                 plan_content = render_structured_plan(candidate_for_repair)
-                violations = local_violations
+                violations = [*local_violations, *canonical_violations]
                 logger.info(
                     "Planner using %s for task=%s affected=%s instead of CREATE_PLAN",
                     repair_operation,
@@ -10831,17 +10831,13 @@ If the user is actually asking you to run analysis or inspect local files, say t
 
                 plan_content = self._sanitize_completed_planner_plan(response.content)
                 candidate_for_repair = build_plan_state(task_id, plan_content)
-                renderer_skill_ids = [
-                    skill_id for skill_id in selected_skills
-                    if self.skill_manager and self.skill_manager.has_renderer(skill_id)
-                ]
-                candidate_for_repair, renderer_normalization = collapse_renderer_composite_steps(
+                candidate_for_repair, renderer_normalization, violations = normalize_plan_contracts(
                     candidate_for_repair,
-                    renderer_skill_ids,
+                    renderer_records=renderer_records,
+                    output_contracts=canonical_output_contracts,
                 )
                 if renderer_normalization:
                     plan_content = render_structured_plan(candidate_for_repair)
-                violations = plan_contract_violations(candidate_for_repair)
                 violations.extend(self._skill_plan_violations(
                     plan_content,
                     selected_skills,
@@ -10949,11 +10945,17 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         # evidence and return ownership to same-step Generate.
                         violations = []
                         break
+                    candidate_for_repair, renderer_normalization, canonical_violations = normalize_plan_contracts(
+                        candidate_for_repair,
+                        renderer_records=renderer_records,
+                        output_contracts=canonical_output_contracts,
+                    )
+                    patch_audit["renderer_normalization"] = renderer_normalization
                 except Exception as exc:
                     violations = [*violations, f"plan_patch_rejected: {type(exc).__name__}: {exc}"]
                     break
                 plan_content = render_structured_plan(candidate_for_repair)
-                violations = plan_contract_violations(candidate_for_repair)
+                violations = list(canonical_violations)
                 violations.extend(self._skill_plan_violations(
                     plan_content,
                     selected_skills,
