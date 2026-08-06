@@ -40,6 +40,8 @@ SOURCE_PRIORITY = {
     "current_task_user_explicit": 90,
     "current_task_user_confirmed": 80,
     "inherited_explicit": 70,
+    "benchmark_contract": 60,
+    "benchmark_question": 50,
     "user_explicit": 40,
     "user_initial": 40,
     "user_feedback": 40,
@@ -496,6 +498,8 @@ def classify_path_mentions(text: str) -> List[Dict[str, Any]]:
             prefix = line[:match.start()]
             clause_prefix = re.split(r"[。.!！？?；;，,]", prefix)[-1]
             lower = token.lower()
+            if not _looks_like_path_mention(token):
+                continue
             classification = "input"
             if re.search(r"(?:输出目录|output\s*(?:directory|dir))\s*[:：=]?\s*$", clause_prefix, re.IGNORECASE):
                 classification = "output"
@@ -524,6 +528,33 @@ def classify_path_mentions(text: str) -> List[Dict[str, Any]]:
             seen.add(key)
             deduped.append(mention)
     return deduped
+
+
+def _looks_like_path_mention(token: str) -> bool:
+    """Reject prose containing a slash while retaining ordinary filesystem paths."""
+    value = _text(token).strip()
+    lower = value.lower()
+    if not value:
+        return False
+    if lower in {"benchmark/hidden/fixture", "benchmark/hidden/fixtures"}:
+        return True
+    if re.fullmatch(r"[a-z][a-z0-9_-]+/[a-z][a-z0-9_.-]+", lower):
+        return True
+    if value.startswith(("/", "./", "../", "~/")):
+        # Chinese prose such as `/目标` and `/验证本地` is not an absolute path.
+        if value.startswith("/") and value.count("/") == 1 and re.fullmatch(r"/[\u3400-\u9fff]+", value):
+            return False
+        return True
+    if re.search(r"\.[A-Za-z0-9][A-Za-z0-9.]{0,9}(?:$|[?#])", value):
+        return True
+    if value.count("/") >= 2:
+        return True
+    first = lower.split("/", 1)[0]
+    return first in {
+        "data", "input", "inputs", "output", "outputs", "result", "results",
+        "ref", "reference", "references", "annotation", "annotations", "genome",
+        "metadata", "benchmarks", "objects", "tables", "plots", "scripts", "task_outputs",
+    }
 
 
 def extract_path_tokens(text: str) -> List[str]:
@@ -569,6 +600,23 @@ def _binding_source(source: str) -> str:
     return normalized or "consultant_inferred"
 
 
+def _binding_provenance(raw: Mapping[str, Any], fallback_source: str) -> List[Dict[str, str]]:
+    """Normalize all known sources for one binding without losing legacy fields."""
+    values = raw.get("provenance") if isinstance(raw.get("provenance"), list) else []
+    result: List[Dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for value in [*values, raw]:
+        if not isinstance(value, Mapping):
+            continue
+        source_type = _binding_source(_text(value.get("source_type") or value.get("source") or fallback_source))
+        source_ref = _text(value.get("source_ref"))
+        key = (source_type, source_ref)
+        if source_type and key not in seen:
+            seen.add(key)
+            result.append({"source_type": source_type, "source_ref": source_ref})
+    return result
+
+
 def _resolved_binding_path(
     raw_path: str,
     *,
@@ -608,6 +656,7 @@ def normalize_input_binding(
     binding_source = _binding_source(_text(raw.get("source") or source))
     verified = bool(raw.get("verified") or _text(raw.get("status")).lower() == "verified")
     evidence = raw.get("verification_evidence") or raw.get("evidence") or []
+    provenance = _binding_provenance(raw, binding_source)
     return {
         **raw,
         "role": canonical_input_role(_text(raw.get("role")), path),
@@ -616,6 +665,9 @@ def normalize_input_binding(
         "resolution_base": _text(raw.get("resolution_base") or resolution_base),
         "required": bool(raw.get("required", True)),
         "source": binding_source,
+        "source_type": binding_source,
+        "source_ref": _text(raw.get("source_ref")),
+        "provenance": provenance,
         "verified": verified,
         "status": "verified" if verified else _text(raw.get("status") or "declared").lower(),
         "verification_evidence": list(evidence) if isinstance(evidence, list) else [_text(evidence)],
@@ -650,6 +702,7 @@ def normalize_output_binding(
     if not output_id:
         identity = f"{role}|{path_or_name}".lower()
         output_id = "output-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+    provenance = _binding_provenance(raw, source_value)
     return {
         **raw,
         "output_id": output_id,
@@ -662,6 +715,7 @@ def normalize_output_binding(
         "source": source_value,
         "source_type": source_value,
         "source_ref": _text(raw.get("source_ref")),
+        "provenance": provenance,
         "user_visible": bool(raw.get("user_visible", role != "output_dir")),
         "producer_hint": _text(raw.get("producer_hint")),
         "resolution_base": resolution_base,
@@ -687,7 +741,7 @@ def effective_output_contracts(
         migration_source = "legacy_expected_outputs"
     values = values if isinstance(values, list) else []
     normalized: List[Dict[str, Any]] = []
-    seen: set[str] = set()
+    indexes: Dict[str, int] = {}
     for value in values:
         if not isinstance(value, (Mapping, str)):
             continue
@@ -702,9 +756,15 @@ def effective_output_contracts(
             project_root=project_root,
         )
         key = _field_key(item.get("role")) + "|" + _text(item.get("path_or_name")).lower()
-        if key in seen:
+        if key in indexes:
+            existing = normalized[indexes[key]]
+            existing["required"] = bool(existing.get("required", True) or item.get("required", True))
+            existing["provenance"] = _binding_provenance(
+                {"provenance": [*(existing.get("provenance") or []), *(item.get("provenance") or [])]},
+                _text(existing.get("source_type") or existing.get("source")),
+            )
             continue
-        seen.add(key)
+        indexes[key] = len(normalized)
         if migration_source != "output_contracts":
             item.setdefault("migration_source", migration_source)
         normalized.append(item)
@@ -807,6 +867,8 @@ def _request_output_filenames(text: str) -> List[str]:
 def extract_request_contracts(
     request: str,
     *,
+    source_type: str = "user_explicit",
+    source_ref: str = "",
     base_dir: str | Path | None = None,
     project_root: str | Path | None = None,
 ) -> Dict[str, Any]:
@@ -822,7 +884,7 @@ def extract_request_contracts(
         if not supported_input_suffix.search(token):
             continue
         binding = normalize_input_binding(
-            {"path": token, "source": "user_explicit", "required": True},
+            {"path": token, "source": source_type, "source_ref": source_ref, "required": True},
             base_dir=base_dir,
             project_root=project_root,
         )
@@ -832,7 +894,7 @@ def extract_request_contracts(
         requirements.append(normalize_requirement(
             {**item, "requirement_id": item["role"], "level": "required", "value": item["path"]},
             default_level="required",
-            source="user_explicit",
+            source=source_type,
         ))
     lower = str(request or "").lower()
     format_match = re.search(r"(?<![\w.])-?(gtf22|gff3|genbank)\b", lower)
@@ -843,7 +905,8 @@ def extract_request_contracts(
             "value": format_match.group(1),
             "level": "required",
             "status": "satisfied",
-            "source": "user_explicit",
+            "source": source_type,
+            "source_ref": source_ref,
         }))
     if re.search(r"\bcustom[ _-]+genome\b|自定义(?:基因组|参考)", lower):
         requirements.append(normalize_requirement({
@@ -852,7 +915,8 @@ def extract_request_contracts(
             "value": "custom_genome",
             "level": "required",
             "status": "satisfied",
-            "source": "user_explicit",
+            "source": source_type,
+            "source_ref": source_ref,
         }))
     if re.search(r"(?:do not|don't|never|禁止|不得|不要).{0,24}(?:guess|猜).{0,24}(?:species|物种).{0,16}(?:database|数据库)", lower):
         requirements.append(normalize_requirement({
@@ -861,14 +925,19 @@ def extract_request_contracts(
             "value": True,
             "level": "required",
             "status": "satisfied",
-            "source": "user_explicit",
+            "source": source_type,
+            "source_ref": source_ref,
         }))
 
     expected_outputs = [
-        normalize_output_binding({"role": "output_dir", "path": output_dir_raw, "source": "user_explicit"}, base_dir=base_dir, project_root=project_root)
+        normalize_output_binding(
+            {"role": "output_dir", "path": output_dir_raw, "source": source_type, "source_ref": source_ref},
+            base_dir=base_dir,
+            project_root=project_root,
+        )
     ] if output_dir_raw else []
     expected_outputs.extend(
-        normalize_output_binding({"filename": filename, "source": "user_explicit"})
+        normalize_output_binding({"filename": filename, "source": source_type, "source_ref": source_ref})
         for filename in _request_output_filenames(request)
     )
     return {
@@ -1021,12 +1090,15 @@ def create_task_spec(
     *,
     source: str = "user_initial",
     task_id: str = "",
+    structured_source: Mapping[str, Any] | None = None,
     base_dir: str | Path | None = None,
     project_root: str | Path | None = None,
 ) -> TaskSpec:
     request_text = _text(request)
     created_at = _now()
     source_message_id = _message_id(request_text, task_id)
+    structured = dict(structured_source or {})
+    contract_text = _text(structured.get("question")) or request_text
     directive = {
         "text": request_text,
         "kind": "initial_request",
@@ -1040,11 +1112,100 @@ def create_task_spec(
         "active": True,
         "recorded_at": created_at,
     }
+    question_source = _text(structured.get("question_source_type") or "benchmark_question") if structured else "user_explicit"
+    question_ref = _text(structured.get("question_source_ref"))
     contracts = extract_request_contracts(
-        request_text,
+        contract_text,
+        source_type=question_source,
+        source_ref=question_ref,
         base_dir=base_dir,
         project_root=project_root,
     )
+    if structured:
+        contract_source = _text(structured.get("contract_source_type") or "benchmark_contract")
+        contract_ref = _text(structured.get("contract_source_ref"))
+        structured_inputs = [
+            normalize_input_binding(
+                {
+                    **(dict(item) if isinstance(item, Mapping) else {"path": _text(item)}),
+                    "source": contract_source,
+                    "source_ref": (
+                        _text(item.get("source_ref")) if isinstance(item, Mapping) else ""
+                    ) or f"{contract_ref}#input_files[{index}]",
+                },
+                source=contract_source,
+                base_dir=base_dir,
+                project_root=project_root,
+            )
+            for index, item in enumerate(structured.get("input_files") or [])
+        ]
+        structured_outputs = [
+            normalize_output_binding(
+                {
+                    **(dict(item) if isinstance(item, Mapping) else {"filename": _text(item)}),
+                    "source": contract_source,
+                    "source_type": contract_source,
+                    "source_ref": (
+                        _text(item.get("source_ref")) if isinstance(item, Mapping) else ""
+                    ) or f"{contract_ref}#expected_outputs[{index}]",
+                    "required": True,
+                },
+                source=contract_source,
+                base_dir=base_dir,
+                project_root=project_root,
+            )
+            for index, item in enumerate(structured.get("expected_outputs") or [])
+        ]
+        output_dir = _text(structured.get("output_dir"))
+        if output_dir:
+            structured_outputs.insert(0, normalize_output_binding(
+                {
+                    "role": "output_dir",
+                    "path": output_dir,
+                    "source": contract_source,
+                    "source_type": contract_source,
+                    "source_ref": f"{contract_ref}#output_dir",
+                    "required": True,
+                    "user_visible": False,
+                },
+                source=contract_source,
+                base_dir=base_dir,
+                project_root=project_root,
+            ))
+        contracts["inputs"] = _merge_list(contracts.get("inputs", []), structured_inputs)
+        contracts["requirements"] = _merge_list(
+            contracts.get("requirements", []),
+            [
+                normalize_requirement(
+                    {**item, "requirement_id": item["role"], "level": "required", "value": item["path"]},
+                    default_level="required",
+                    source=contract_source,
+                )
+                for item in structured_inputs
+            ],
+        )
+        contracts["output_contracts"] = _merge_list(contracts.get("output_contracts", []), structured_outputs)
+        contracts["expected_outputs"] = deepcopy(contracts["output_contracts"])
+    contracts["inputs"], input_alias_audit = _dedupe_input_aliases(contracts.get("inputs", []))
+    input_roles = {_field_key(item.get("role")) for item in contracts["inputs"]}
+    retained_requirements = [
+        item
+        for item in contracts.get("requirements", [])
+        if not (
+            isinstance(item, Mapping)
+            and _field_key(item.get("role")) in input_roles
+            and _text(item.get("path"))
+        )
+    ]
+    input_requirements = [
+        normalize_requirement(
+            {**item, "requirement_id": item["role"], "level": "required", "value": item["path"]},
+            default_level="required",
+            source=_text(item.get("source") or "user_explicit"),
+        )
+        for item in contracts["inputs"]
+    ]
+    contracts["requirements"] = _merge_list(retained_requirements, input_requirements)
     candidates = extract_user_fact_candidates(request_text)
     facts = _fact_patch(
         candidates,
@@ -1057,9 +1218,19 @@ def create_task_spec(
         "schema_version": TASK_SPEC_SCHEMA_VERSION,
         "task_id": _text(task_id),
         "revision": 1,
-        "goal": request_text,
+        "goal": contract_text,
+        "request_envelope": {
+            "schema_version": 1,
+            "request_text": contract_text,
+            "raw_submission_text": request_text,
+            "source_type": _text(structured.get("source_type") or source),
+            "source_ref": _text(structured.get("source_ref")),
+            "benchmark_id": _text(structured.get("benchmark_id")),
+            "controls": deepcopy(dict(structured.get("controls") or {})),
+        },
         "user_directives": [directive] if request_text else [],
         "inputs": contracts["inputs"],
+        "input_alias_audit": input_alias_audit,
         "parameters": _parameters_from_candidates(candidates),
         "output_contracts": contracts["output_contracts"],
         "expected_outputs": contracts["expected_outputs"],
@@ -1103,6 +1274,15 @@ def ensure_task_spec(
     normalized["schema_version"] = max(TASK_SPEC_SCHEMA_VERSION, old_schema)
     normalized["revision"] = max(1, task_spec_revision(normalized))
     normalized.setdefault("goal", _text(fallback_request))
+    normalized.setdefault("request_envelope", {
+        "schema_version": 1,
+        "request_text": _text(normalized.get("goal") or fallback_request),
+        "raw_submission_text": _text(fallback_request or normalized.get("goal")),
+        "source_type": "legacy_task_spec",
+        "source_ref": "",
+        "benchmark_id": "",
+        "controls": {},
+    })
     normalized.setdefault("task_id", _text(task_id))
     for field in _LIST_FIELDS:
         value = normalized.get(field)
@@ -1268,6 +1448,7 @@ def normalize_requirement(
     requirement_id = _text(raw.get("requirement_id") or role)
     if not requirement_id:
         requirement_id = _text(Path(path).name if path else requirement_value)
+    source_value = _binding_source(_text(raw.get("source_type") or raw.get("source") or source))
     return {
         **raw,
         "requirement_id": requirement_id or "requirement",
@@ -1277,7 +1458,10 @@ def normalize_requirement(
         "level": level,
         "condition": raw.get("condition"),
         "status": _text(raw.get("status") or "unresolved").lower(),
-        "source": _text(raw.get("source") or source),
+        "source": source_value,
+        "source_type": source_value,
+        "source_ref": _text(raw.get("source_ref")),
+        "provenance": _binding_provenance(raw, source_value),
         "evidence": list(raw.get("evidence") or []) if isinstance(raw.get("evidence"), list) else [],
     }
 
@@ -1368,6 +1552,10 @@ def _merge_list(current: Iterable[Any], additions: Iterable[Any]) -> List[Any]:
         if key in indexes and isinstance(merged[indexes[key]], dict) and isinstance(item, Mapping):
             existing = merged[indexes[key]]
             incoming = deepcopy(dict(item))
+            combined_provenance = _binding_provenance(
+                {"provenance": [*(existing.get("provenance") or []), *(incoming.get("provenance") or [])]},
+                _text(existing.get("source_type") or existing.get("source") or incoming.get("source")),
+            )
             existing_priority = SOURCE_PRIORITY.get(_binding_source(_text(existing.get("source"))), 0)
             incoming_priority = SOURCE_PRIORITY.get(_binding_source(_text(incoming.get("source"))), 0)
             if existing_priority > incoming_priority:
@@ -1377,6 +1565,8 @@ def _merge_list(current: Iterable[Any], additions: Iterable[Any]) -> List[Any]:
                         existing[field] = value
             else:
                 existing.update(incoming)
+            if combined_provenance:
+                existing["provenance"] = combined_provenance
             continue
         if key not in indexes:
             indexes[key] = len(merged)
@@ -1437,6 +1627,11 @@ def merge_task_spec(
     parameters = updates.get("parameters")
     if isinstance(parameters, Mapping):
         merged["parameters"].update(deepcopy(dict(parameters)))
+
+    if isinstance(updates.get("output_contracts"), list) or isinstance(updates.get("expected_outputs"), list):
+        merged["output_contracts"] = effective_output_contracts(merged)
+        # Compatibility view only; output_contracts remains authoritative.
+        merged["expected_outputs"] = deepcopy(merged["output_contracts"])
 
     merged["facts"] = [
         deepcopy(item)

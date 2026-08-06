@@ -57,6 +57,52 @@ class TaskSpecContractHardeningTests(unittest.TestCase):
         self.assertEqual(len(forbidden), 1)
         self.assertTrue(all(not item["required"] and item["status"] == "withdrawn" for item in forbidden))
 
+    def test_chinese_slash_prose_is_not_classified_as_a_path(self):
+        mentions = classify_path_mentions(
+            "建议/目标 skills；构建/验证本地 database；不要读取 benchmark/hidden/fixture。"
+        )
+
+        paths = {item["requested_path"] for item in mentions}
+        self.assertNotIn("/目标", paths)
+        self.assertNotIn("/验证本地", paths)
+        controls = {
+            item["requested_path"]: item["classification"]
+            for item in mentions
+        }
+        self.assertEqual(controls["benchmark/hidden/fixture"], "control_token")
+
+    def test_structured_benchmark_outputs_keep_contract_provenance(self):
+        spec = create_task_spec(
+            "请输出 annotated.vcf 和 ann_gene_summary.tsv。",
+            task_id="BM-REMAIN-ANNOT-007__strict",
+            structured_source={
+                "question": "请输出 annotated.vcf。",
+                "question_source_type": "benchmark_question",
+                "question_source_ref": "cases.yaml#strict",
+                "contract_source_type": "benchmark_contract",
+                "contract_source_ref": "cases.yaml#BM-REMAIN-ANNOT-007",
+                "input_files": ["benchmarks/data/input.vcf"],
+                "expected_outputs": ["annotated.vcf", "ann_gene_summary.tsv"],
+                "output_dir": "benchmarks/output/strict",
+            },
+        )
+
+        outputs = {item["filename"]: item for item in spec["output_contracts"] if item.get("filename")}
+        gene = outputs["ann_gene_summary.tsv"]
+        self.assertTrue(gene["required"])
+        self.assertEqual(gene["source_type"], "benchmark_contract")
+        self.assertEqual(
+            gene["source_ref"],
+            "cases.yaml#BM-REMAIN-ANNOT-007#expected_outputs[1]",
+        )
+        self.assertEqual(spec["inputs"][0]["source"], "benchmark_contract")
+
+    def test_manual_expected_output_remains_user_explicit(self):
+        spec = create_task_spec("预期产物：\n- ann_gene_summary.tsv")
+        output = next(item for item in spec["output_contracts"] if item.get("filename") == "ann_gene_summary.tsv")
+
+        self.assertEqual(output["source_type"], "user_explicit")
+
     def test_unique_existing_same_role_path_resolves_alias(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

@@ -371,6 +371,20 @@ def _discover_local_inputs(
 
     explicit_dirs = _dedupe_paths(explicit_dirs)
     explicit_files = _dedupe_paths(explicit_files)
+    if invalid_paths and explicit_files:
+        existing_by_name: Dict[str, List[Path]] = {}
+        for path in explicit_files:
+            existing_by_name.setdefault(path.name.lower(), []).append(path)
+        retained_invalid: List[str] = []
+        for value in invalid_paths:
+            matches = existing_by_name.get(Path(value).name.lower(), [])
+            if len(matches) == 1:
+                result["discovery_log"].append(
+                    f"explicit alias resolved: {value} -> {matches[0]}"
+                )
+                continue
+            retained_invalid.append(value)
+        invalid_paths = retained_invalid
     result["relevant"] = bool(explicit_files or explicit_dirs or invalid_paths or excluded)
     if invalid_paths:
         result["missing_roles"].append("explicit_input_path")
