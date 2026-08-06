@@ -14,6 +14,7 @@ metadata:
       - annotated.vcf
       - snpEff_summary.html
       - ann_effect_summary.tsv
+      - ann_gene_summary.tsv
       - report.md
       - reproduce.sh
       - stage_status.tsv
