@@ -54,6 +54,11 @@ def build_prompt_budget_telemetry(
         "message_count": len(texts),
         "input_chars": total_chars,
         "estimated_input_tokens": estimated_tokens,
+        "prompt_sha256": hashlib.sha256(
+            json.dumps(texts, ensure_ascii=False, separators=(",", ":")).encode(
+                "utf-8", errors="replace"
+            )
+        ).hexdigest(),
         "context_limit_tokens": limit,
         "remaining_headroom_tokens": max(0, limit - estimated_tokens),
         "usage_ratio": round(ratio, 6),
@@ -64,6 +69,73 @@ def build_prompt_budget_telemetry(
             for key, value in dict(component_chars or {}).items()
         },
     }
+
+
+def assess_prompt_budget(
+    messages: Sequence[object],
+    *,
+    component_chars: Optional[Dict[str, int]] = None,
+    context_limit_tokens: int = 200_000,
+    nominal_char_budget: int = 50_000,
+    compressible_chars: int = 0,
+    noncompressible_chars: int = 0,
+    soft_warning_ratio: float = 0.60,
+    compression_ratio: float = 0.75,
+    hard_safety_ratio: float = 0.90,
+    reserved_headroom_tokens: int = 8_192,
+) -> Dict:
+    """Classify prompt pressure without treating characters as model tokens.
+
+    ``nominal_char_budget`` is an engineering/cost signal.  It can request
+    compression of optional history, memory, or retrieval blocks, but it is
+    never by itself a reason to truncate canonical control contracts or block
+    a provider call.  Hard blocking is based only on estimated token usage and
+    reserved model headroom.
+    """
+    telemetry = build_prompt_budget_telemetry(
+        messages,
+        component_chars=component_chars,
+        context_limit_tokens=context_limit_tokens,
+        warning_ratio=soft_warning_ratio,
+    )
+    soft = max(0.0, min(float(soft_warning_ratio), 1.0))
+    compression = max(soft, min(float(compression_ratio), 1.0))
+    hard = max(compression, min(float(hard_safety_ratio), 1.0))
+    nominal = max(1, int(nominal_char_budget or 1))
+    compressible = max(0, int(compressible_chars or 0))
+    noncompressible = max(0, int(noncompressible_chars or 0))
+    reserved = max(0, int(reserved_headroom_tokens or 0))
+    over_nominal = telemetry["input_chars"] > nominal
+    hard_block = bool(
+        telemetry["usage_ratio"] >= hard
+        or telemetry["remaining_headroom_tokens"] < reserved
+    )
+    should_compress = bool(
+        not hard_block
+        and compressible > 0
+        and (over_nominal or telemetry["usage_ratio"] >= compression)
+    )
+    telemetry.update({
+        "nominal_char_budget": nominal,
+        "soft_warning_ratio": soft,
+        "compression_ratio": compression,
+        "hard_safety_ratio": hard,
+        "reserved_headroom_tokens": reserved,
+        "compressible_chars": compressible,
+        "noncompressible_chars": noncompressible,
+        "over_nominal_char_budget": over_nominal,
+        "noncompressible_prompt_over_budget": noncompressible > nominal,
+        "compression_recommended": should_compress,
+        "hard_block": hard_block,
+        "decision": (
+            "block_context_safety"
+            if hard_block
+            else "compress_optional_context"
+            if should_compress
+            else "no_compression"
+        ),
+    })
+    return telemetry
 
 
 @dataclass

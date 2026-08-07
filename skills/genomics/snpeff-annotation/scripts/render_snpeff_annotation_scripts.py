@@ -620,6 +620,30 @@ def artifact_manifest(args: argparse.Namespace, scripts: dict[str, list[str]], o
     return artifacts
 
 
+def output_manifest(artifacts: list[dict], producer_step_id: str = "") -> list[dict]:
+    """Declare only canonical final outputs for the controller output gate."""
+    final_ids = {
+        "snpeff_annotated_vcf",
+        "snpeff_summary_html",
+        "snpeff_ann_effect_summary",
+        "snpeff_ann_gene_summary",
+        "snpeff_report",
+        "snpeff_reproduce",
+        "snpeff_stage_status",
+    }
+    return [
+        {
+            "output_id": str(item.get("artifact_id") or ""),
+            "path": str(item.get("path") or ""),
+            "required": bool(item.get("required", True)),
+            "producer_step_id": str(producer_step_id or ""),
+            "renderer_id": "genomics.snpeff_annotation",
+        }
+        for item in artifacts
+        if str(item.get("artifact_id") or "") in final_ids
+    ]
+
+
 def validate_render_inputs(args: argparse.Namespace) -> None:
     """Reject explicit input/runtime paths before emitting unusable scripts."""
     paths = [("input VCF", args.vcf)]
@@ -758,6 +782,7 @@ def main() -> int:
             "java_home": str(os.environ.get("SNPEFF_JAVA_HOME") or os.environ.get("JAVA_HOME") or ""),
         },
         "actions": actions,
+        "outputs": output_manifest(artifacts, str(args.producer_step_id or "")),
         "requirements": requirements,
         "artifacts": artifacts,
         "validation": validation_metadata(args),

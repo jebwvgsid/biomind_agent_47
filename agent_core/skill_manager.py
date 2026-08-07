@@ -310,12 +310,28 @@ class SkillManager:
             Path(resolved).stem if resolved else "",
             *self._ensure_list(renderer.get("aliases")),
         ]
+        raw_output_bindings = renderer.get("output_bindings") or {}
+        if isinstance(raw_output_bindings, list):
+            output_bindings = {
+                str(item.get("logical_output") or item.get("output_id") or item.get("role") or "").strip(): dict(item)
+                for item in raw_output_bindings
+                if isinstance(item, dict)
+                and str(item.get("logical_output") or item.get("output_id") or item.get("role") or "").strip()
+            }
+        else:
+            output_bindings = {
+                str(key): dict(value) if isinstance(value, dict) else {"mode": str(value)}
+                for key, value in dict(raw_output_bindings or {}).items()
+                if str(key).strip()
+            }
         return {
             **renderer,
             "skill_id": canonical_id,
             "renderer_id": renderer_id,
             "renderer_aliases": list(dict.fromkeys(str(item).strip() for item in aliases if str(item).strip())),
             "invocation": dict(renderer.get("invocation") or {}),
+            "owned_outputs": self._ensure_list(renderer.get("owned_outputs")),
+            "output_bindings": output_bindings,
             "entrypoint": entrypoint,
             "resolved_entrypoint": resolved,
             "runner": str(renderer.get("runner") or "controller_python"),
@@ -1244,6 +1260,29 @@ class SkillManager:
                     f"- renderer_manifest: {renderer.get('manifest_filename')} ({renderer.get('manifest_type')} v{renderer.get('schema_version')})",
                     "- renderer_plan_policy: one composite Plan step; manifest actions own internal execution order",
                 ])
+                owned_outputs = [
+                    str(item.get("path_or_name") or item.get("path") or item.get("filename") or item.get("output_id") or "")
+                    if isinstance(item, dict) else str(item)
+                    for item in renderer.get("owned_outputs", []) or []
+                    if str(item).strip()
+                ]
+                if owned_outputs:
+                    cards.append("- renderer_owned_output_capabilities: " + ", ".join(owned_outputs))
+                output_bindings = dict(renderer.get("output_bindings") or {})
+                if output_bindings:
+                    compact_bindings = {
+                        str(logical): {
+                            key: value
+                            for key, value in dict(binding or {}).items()
+                            if key in {"mode", "argument", "path", "filename", "logical_output"}
+                            and value not in (None, "", [], {})
+                        }
+                        for logical, binding in output_bindings.items()
+                    }
+                    cards.append(
+                        "- renderer_output_binding_contract: "
+                        + json.dumps(compact_bindings, ensure_ascii=False, sort_keys=True)
+                    )
                 invocation = dict(renderer.get("invocation") or {})
                 argument_specs = invocation.get("arguments") or {}
                 if isinstance(argument_specs, dict) and argument_specs:

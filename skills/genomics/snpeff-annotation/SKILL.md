@@ -18,6 +18,14 @@ metadata:
       - report.md
       - reproduce.sh
       - stage_status.tsv
+    output_bindings:
+      annotated_vcf: {mode: argument, argument: output_vcf, filename: annotated.vcf}
+      snpeff_summary_html: {mode: fixed, filename: snpEff_summary.html}
+      ann_effect_summary_tsv: {mode: fixed, filename: ann_effect_summary.tsv}
+      ann_gene_summary_tsv: {mode: fixed, filename: ann_gene_summary.tsv}
+      report_md: {mode: fixed, filename: report.md}
+      reproduce_sh: {mode: fixed, filename: reproduce.sh}
+      stage_status_tsv: {mode: fixed, filename: stage_status.tsv}
     invocation:
       arguments:
         vcf: {flag: --vcf, required: true, aliases: [variant_file]}

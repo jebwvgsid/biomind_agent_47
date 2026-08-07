@@ -2412,6 +2412,140 @@ def format_effective_user_facts_context(
     return render(fallback, [])[:max_chars]
 
 
+def format_planner_task_contract_context(spec: Mapping[str, Any] | None) -> str:
+    """Render the lossless, compact control contract required by Planner.
+
+    Unlike the general effective-facts projection, this view has no character
+    slicer.  It intentionally omits verbose evidence while retaining every
+    active input, requirement, constraint, unresolved decision, and canonical
+    output (including system/workflow additions).
+    """
+    normalized = ensure_task_spec(spec)
+    outputs = effective_output_contracts(normalized)
+    effective_facts = resolve_effective_user_facts(normalized)
+
+    def compact(values: Any, fields: tuple[str, ...]) -> List[Dict[str, Any]]:
+        return [
+            {
+                key: deepcopy(item.get(key))
+                for key in fields
+                if item.get(key) not in (None, "", [], {})
+            }
+            for item in values or []
+            if isinstance(item, Mapping)
+        ]
+
+    output_fields = (
+        "output_id", "role", "path", "resolved_path", "filename", "path_or_name", "required",
+        "validation", "source_type", "source_ref", "producer_hint",
+        "user_visible", "resolution_base", "provenance",
+    )
+    compact_outputs = compact(outputs, output_fields)
+    categorized: Dict[str, List[Dict[str, Any]]] = {
+        "user_requested": [],
+        "system_required": [],
+        "skill_or_workflow_required": [],
+        "optional": [],
+    }
+    for output in compact_outputs:
+        if not bool(output.get("required", True)):
+            category = "optional"
+        else:
+            source = _field_key(output.get("source_type"))
+            if source.startswith("system"):
+                category = "system_required"
+            elif source.startswith("skill") or source.startswith("workflow"):
+                category = "skill_or_workflow_required"
+            else:
+                category = "user_requested"
+        categorized[category].append(output)
+
+    contract = {
+        "schema_version": TASK_SPEC_SCHEMA_VERSION,
+        "task_id": _text(normalized.get("task_id")),
+        "revision": task_spec_revision(normalized),
+        "goal": _text(normalized.get("goal")),
+        "inputs": compact(
+            normalized.get("inputs"),
+            (
+                "role", "path", "resolved_path", "format", "cardinality",
+                "required", "verified", "status", "source_type", "source_ref",
+                "resolution_base", "provenance",
+            ),
+        ),
+        "requirements": compact(
+            normalized.get("requirements"),
+            (
+                "requirement_id", "role", "value", "path", "text", "description",
+                "level", "status", "condition", "source_type", "source_ref", "provenance",
+            ),
+        ),
+        "parameters": deepcopy(dict(normalized.get("parameters") or {})),
+        "constraints": [
+            *list(normalized.get("must_do") or []),
+            *list(normalized.get("must_not_do") or []),
+            *list(normalized.get("constraints") or []),
+        ],
+        "unresolved_questions": list(normalized.get("unresolved_questions") or []),
+        "stop_conditions": list(normalized.get("stop_conditions") or []),
+        "acceptance_criteria": list(normalized.get("acceptance_criteria") or []),
+        "output_contracts": compact_outputs,
+        "effective_user_facts": {
+            "effective_facts_revision": str(effective_facts.get("effective_facts_revision") or ""),
+            "active_artifacts": [
+                _canonical_fact_payload(item)
+                for item in effective_facts.get("active_artifacts", []) or []
+                if isinstance(item, Mapping)
+            ],
+            "active_entities": [
+                _canonical_fact_payload(item)
+                for item in effective_facts.get("active_entities", []) or []
+                if isinstance(item, Mapping)
+            ],
+            "active_parameters": [
+                _canonical_fact_payload(item)
+                for item in effective_facts.get("active_parameters", []) or []
+                if isinstance(item, Mapping)
+            ],
+            "active_constraints": [
+                _canonical_fact_payload(item)
+                for item in effective_facts.get("active_constraints", []) or []
+                if isinstance(item, Mapping)
+            ],
+            "active_decisions": [
+                _canonical_fact_payload(item)
+                for item in effective_facts.get("active_decisions", []) or []
+                if isinstance(item, Mapping)
+            ],
+            "active_relations": [
+                _canonical_fact_payload(item)
+                for item in effective_facts.get("active_relations", []) or []
+                if isinstance(item, Mapping)
+            ],
+            "unresolved_facts": [
+                _canonical_fact_payload(item)
+                for item in effective_facts.get("unresolved_facts", []) or []
+                if isinstance(item, Mapping)
+            ],
+        },
+    }
+    output_view = {
+        "authority": "TaskSpec.output_contracts",
+        "required_count": sum(
+            1
+            for output in compact_outputs
+            if bool(output.get("required", True)) and output.get("role") != "output_dir"
+        ),
+        **categorized,
+    }
+    return (
+        "[CANONICAL TASK CONTRACT]\n"
+        + json.dumps(contract, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+        + "\n[CANONICAL REQUIRED OUTPUTS]\n"
+        + json.dumps(output_view, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+    )
+
+
 def effective_task_contract(spec: Mapping[str, Any] | None) -> Dict[str, Any]:
     """Project active facts into the legacy contract consumed by QA gates."""
     normalized = ensure_task_spec(spec)

@@ -1,0 +1,80 @@
+{
+  "fixture_source": "session_1786114733/plan_state.json",
+  "selected_skill_ids": [
+    "genomics/snpeff-annotation"
+  ],
+  "task_spec": {
+    "schema_version": 4,
+    "task_id": "session_1786114733",
+    "revision": 1,
+    "goal": "请用 genomics/snpeff-annotation 给 all.filtered.snp.vcf 做 custom genome 注释。必须使用 data/genome.fasta 和 genome.gtf，以 -gtf22 构建/验证本地 snpEff database，不要猜物种数据库；输出 annotated.vcf、snpEff_summary.html、ann_effect_summary.tsv、report.md、reproduce.sh。最终还必须生成 ann_gene_summary.tsv 和 stage_status.tsv。",
+    "inputs": [
+      {
+        "role": "variant_vcf",
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/all.filtered.snp.vcf",
+        "required": true,
+        "verified": true,
+        "status": "verified",
+        "source": "user_explicit"
+      },
+      {
+        "role": "reference_fasta",
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.fasta",
+        "required": true,
+        "verified": true,
+        "status": "verified",
+        "source": "user_explicit"
+      },
+      {
+        "role": "annotation_gtf",
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.gtf",
+        "required": true,
+        "verified": true,
+        "status": "verified",
+        "source": "user_explicit"
+      }
+    ],
+    "requirements": [
+      {
+        "requirement_id": "annotation_format",
+        "role": "annotation_format",
+        "value": "gtf22",
+        "level": "required",
+        "status": "satisfied",
+        "source": "user_explicit"
+      },
+      {
+        "requirement_id": "database_source",
+        "role": "database_source",
+        "value": "custom_genome",
+        "level": "required",
+        "status": "satisfied",
+        "source": "user_explicit"
+      },
+      {
+        "requirement_id": "forbid_species_database_guess",
+        "role": "forbid_species_database_guess",
+        "value": true,
+        "level": "required",
+        "status": "satisfied",
+        "source": "user_explicit"
+      }
+    ],
+    "output_contracts": [
+      {
+        "role": "output_dir",
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-ANNOT-007/strict",
+        "required": true,
+        "source_type": "benchmark_contract",
+        "user_visible": false
+      },
+      {"role": "annotated_vcf", "filename": "annotated.vcf", "required": true, "source_type": "benchmark_contract"},
+      {"role": "snpeff_summary_html", "filename": "snpEff_summary.html", "required": true, "source_type": "benchmark_contract"},
+      {"role": "ann_effect_summary_tsv", "filename": "ann_effect_summary.tsv", "required": true, "source_type": "benchmark_contract"},
+      {"role": "ann_gene_summary_tsv", "filename": "ann_gene_summary.tsv", "required": true, "source_type": "benchmark_contract"},
+      {"role": "report_md", "filename": "report.md", "required": true, "source_type": "system_required"},
+      {"role": "reproduce_sh", "filename": "reproduce.sh", "required": true, "source_type": "system_required"},
+      {"role": "stage_status_tsv", "filename": "stage_status.tsv", "required": true, "source_type": "system_required"}
+    ]
+  }
+}

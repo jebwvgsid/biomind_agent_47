@@ -36,7 +36,7 @@ class RendererPlanOwnershipTests(unittest.TestCase):
         self.assertEqual(contracts[0]["source_type"], "benchmark_contract")
         self.assertEqual(contracts[0]["source_ref"], "task.outputs[0]")
 
-    def test_renderer_owned_steps_collapse_without_losing_independent_output(self):
+    def test_renderer_binding_detects_conflicting_independent_producers(self):
         state = build_plan_state(
             "task-renderer",
             "- [ ] Step 1: Run annotation | Action: EXECUTE | Skills: [genomics/snpeff-annotation] "
@@ -65,13 +65,17 @@ class RendererPlanOwnershipTests(unittest.TestCase):
             ),
         )
 
-        self.assertFalse(violations)
+        self.assertTrue(violations)
+        self.assertTrue(all(
+            item["violation_code"] == "OUTPUT_PRODUCER_AMBIGUOUS"
+            for item in violations
+        ))
         self.assertEqual([step["step_id"] for step in normalized["steps"]], ["step-1", "step-2", "step-3"])
         anchor = normalized["steps"][0]
         self.assertTrue(anchor["renderer_composite"])
         self.assertEqual(anchor["renderer_id"], "genomics.snpeff_annotation")
         self.assertEqual(anchor["selected_skill_id"], "genomics/snpeff-annotation")
-        self.assertNotIn("report.md", anchor["outputs"])
+        self.assertIn("report.md", anchor["outputs"])
         self.assertTrue(anchor["renderer_invocation_contract"]["invocation_id"])
         self.assertEqual(audit[0]["removed_step_ids"], [])
 
@@ -82,13 +86,16 @@ class RendererPlanOwnershipTests(unittest.TestCase):
             "- [ ] Step 2: Second | Action: EXECUTE | Skills: [] | Outputs: [/tmp/out/report.md] | Done: report exists\n",
         )
         contracts = effective_output_contracts({
-            "output_contracts": [{"filename": "report.md", "required": True, "source_type": "system_required"}],
+            "output_contracts": [
+                {"role": "output_dir", "path": "/tmp/out", "required": True},
+                {"filename": "report.md", "required": True, "source_type": "system_required"},
+            ],
         })
 
         violations = validate_output_contracts(state, contracts)
 
         self.assertEqual(len(violations), 1)
-        self.assertEqual(violations[0]["violation_code"], "DUPLICATE_OUTPUT_PRODUCER")
+        self.assertEqual(violations[0]["violation_code"], "OUTPUT_PRODUCER_AMBIGUOUS")
         self.assertEqual(violations[0]["affected_step_ids"], ["step-1", "step-2"])
 
     def test_renderer_capability_without_invocation_is_not_a_producer(self):

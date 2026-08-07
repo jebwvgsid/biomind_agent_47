@@ -59,6 +59,9 @@ from config.config import (
     LLM_MAX_HISTORY_MESSAGES, LLM_MAX_HISTORY_CHARS,
     LLM_STEP_CONTEXT_MESSAGES, LLM_STEP_CONTEXT_CHARS, LLM_STEP_PLAN_CHARS,
     LLM_STEP_SKILL_DOC_CHARS, LLM_STEP_EPHEMERAL_CHARS,
+    PLANNER_NOMINAL_CHAR_BUDGET, PLANNER_SOFT_TOKEN_RATIO,
+    PLANNER_COMPRESSION_TOKEN_RATIO, PLANNER_HARD_TOKEN_RATIO,
+    PLANNER_RESERVED_HEADROOM_TOKENS,
     DEFAULT_PROJECT_ID, BIOMIND_MEMORY_DIR, BIOMIND_WIKI_ENABLED, BIOMIND_WIKI_DIR, BIOMIND_WIKI_INGEST_MODE, WIKI_EMBEDDING_ENABLED, WIKI_EMBEDDING_BASE_URL,
     WIKI_EMBEDDING_API_KEY, WIKI_EMBEDDING_MODEL, WIKI_EMBEDDING_DIMENSIONS,
     ENABLE_ROOT_CAUSE_ANALYZER, ENABLE_COMMAND_TRACE, ENABLE_PIPESTATUS_CAPTURE,
@@ -149,6 +152,7 @@ from agent_core.llm_safety import (
 )
 from agent_core.context_budget import (
     RequiredContextOverflow,
+    assess_prompt_budget,
     build_prompt_budget_telemetry,
     compress_tagged_text,
 )
@@ -246,6 +250,7 @@ from agent_core.task_spec import (
     effective_task_contract,
     ensure_task_spec,
     format_effective_user_facts_context,
+    format_planner_task_contract_context,
     merge_task_spec_input_audit,
     project_effective_user_facts,
     project_task_spec_to_renderer,
@@ -3008,18 +3013,35 @@ class BioAnalystAgent:
             self._task_spec_for_state(dict(state), list(state.get("messages", []) or [])),
             input_audit,
         )
-        argument_projection = project_task_spec_to_renderer(
-            task_spec,
-            renderer.get("invocation") or {},
-            task_id=task_id,
-        ) if renderer else {
+        approved_invocation = dict(step.get("renderer_invocation_contract") or {})
+        if renderer and approved_invocation.get("arguments") is not None and approved_invocation.get("outdir"):
+            argument_projection = {
+                "arguments": deepcopy(dict(approved_invocation.get("arguments") or {})),
+                "outdir": str(approved_invocation.get("outdir") or ""),
+                "outputs": list(approved_invocation.get("outputs") or []),
+                "bound_outputs": deepcopy(list(approved_invocation.get("bound_outputs") or [])),
+                "missing_bindings": [],
+                "conflicts": [],
+                "unverified_bindings": [],
+                "complete": True,
+                "source": "approved_renderer_invocation_contract",
+                "invocation_id": str(approved_invocation.get("invocation_id") or ""),
+            }
+        elif renderer:
+            argument_projection = project_task_spec_to_renderer(
+                task_spec,
+                renderer.get("invocation") or {},
+                task_id=task_id,
+            )
+        else:
+            argument_projection = {
             "arguments": {},
             "outdir": "",
             "missing_bindings": [],
             "conflicts": [],
             "unverified_bindings": [],
             "complete": False,
-        }
+            }
         if renderer_composite and manifest_status != "registered":
             allowed_actions = ["RENDERER_INVOCATION", "BLOCKED_WITH_DETERMINISTIC_MISSING_EVIDENCE"]
         elif renderer_composite:
@@ -3328,11 +3350,16 @@ class BioAnalystAgent:
         ).hexdigest()
         invocation_contract = dict(bound.get("renderer_invocation_contract") or {})
         if invocation_contract and step_id:
-            invocation_contract.setdefault("invocation_id", str(bound["action_id"]))
-            bound["renderer_invocation_contract"] = invocation_contract
+            approved_invocation = dict(step.get("renderer_invocation_contract") or {})
+            if approved_invocation:
+                invocation_contract = approved_invocation
+            else:
+                invocation_contract.setdefault("invocation_id", str(bound["action_id"]))
+            bound["renderer_invocation_contract"] = deepcopy(invocation_contract)
             for plan_step in plan_state.get("steps", []) or []:
                 if isinstance(plan_step, dict) and str(plan_step.get("step_id") or "") == step_id:
-                    plan_step["renderer_invocation_contract"] = deepcopy(invocation_contract)
+                    if not plan_step.get("renderer_invocation_contract"):
+                        plan_step["renderer_invocation_contract"] = deepcopy(invocation_contract)
                     break
         if str(bound.get("type") or "").lower() == "execute" and str(bound.get("code") or "").strip():
             language = detect_script_language(str(bound.get("code") or ""))
@@ -3576,6 +3603,28 @@ class BioAnalystAgent:
                 },
             }
         renderer = candidates[0]
+        approved_invocation = dict(step.get("renderer_invocation_contract") or {})
+        if approved_invocation:
+            requested_contract = {
+                "renderer_id": str(renderer.get("renderer_id") or ""),
+                "arguments": dict(action.get("arguments") or {}) if isinstance(action.get("arguments"), dict) else action.get("arguments"),
+                "outdir": str(action.get("outdir") or ""),
+            }
+            approved_contract = {
+                "renderer_id": str(approved_invocation.get("renderer_id") or ""),
+                "arguments": dict(approved_invocation.get("arguments") or {}),
+                "outdir": str(approved_invocation.get("outdir") or ""),
+            }
+            if requested_contract != approved_contract:
+                return {
+                    "type": "renderer_contract_error",
+                    "source": "controller",
+                    "contract_error": {
+                        "error_type": "RENDERER_INVOCATION_APPROVAL_MISMATCH",
+                        "reason": "renderer arguments or output directory differ from the approved binding",
+                        "approved_invocation_id": str(approved_invocation.get("invocation_id") or ""),
+                    },
+                }
         argv, outdir, contract_error = self._normalize_renderer_invocation_arguments(action, renderer, state)
         if contract_error:
             return {
@@ -3620,6 +3669,29 @@ class BioAnalystAgent:
             }
         command_argv = [sys.executable, entrypoint, *argv]
         manifest_path = str((Path(outdir).expanduser() / str(renderer.get("manifest_filename") or "manifest.json")).resolve())
+        if approved_invocation and str(approved_invocation.get("manifest_path") or "") not in {"", manifest_path}:
+            return {
+                "type": "renderer_contract_error",
+                "source": "controller",
+                "contract_error": {
+                    "error_type": "RENDERER_INVOCATION_APPROVAL_MISMATCH",
+                    "reason": "renderer manifest path differs from the approved binding",
+                    "approved_invocation_id": str(approved_invocation.get("invocation_id") or ""),
+                },
+            }
+        invocation_contract = deepcopy(approved_invocation) if approved_invocation else {
+            "schema_version": 2,
+            "renderer_id": str(renderer.get("renderer_id") or ""),
+            "producer_step_id": step_id,
+            "arguments": deepcopy(dict(action.get("arguments") or {})) if isinstance(action.get("arguments"), dict) else {},
+            "outdir": outdir,
+            "outputs": list(action.get("outputs") or []),
+            "bound_outputs": deepcopy(list(action.get("bound_outputs") or [])),
+        }
+        invocation_contract["manifest_path"] = manifest_path
+        invocation_contract.setdefault("arguments_hash", hashlib.sha256(
+            json.dumps(argv, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        ).hexdigest())
         return {
             "type": "execute",
             "language": "bash",
@@ -3631,15 +3703,7 @@ class BioAnalystAgent:
             "manifest_path": manifest_path,
             "expected_outputs": [manifest_path],
             "success_checks": ["renderer_exit_zero", "manifest_v3_valid", "manifest_provenance_matches"],
-            "renderer_invocation_contract": {
-                "schema_version": 1,
-                "renderer_id": str(renderer.get("renderer_id") or ""),
-                "arguments_hash": hashlib.sha256(
-                    json.dumps(argv, ensure_ascii=False, sort_keys=True).encode("utf-8")
-                ).hexdigest(),
-                "manifest_path": manifest_path,
-                "producer_step_id": step_id,
-            },
+            "renderer_invocation_contract": invocation_contract,
         }
 
     def _projected_renderer_action_update(
@@ -9997,24 +10061,29 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 for message in consultant_visible_messages
             )
             prompt_chars = len(consultant_prompt) + history_chars
-            prompt_components = {
-                "total_chars": prompt_chars,
-                "system_prompt": len(consultant_prompt),
-                "history": history_chars,
+            consultant_prompt_accounting = {
+                "assembled_prompt_chars": prompt_chars,
+                "component_chars": {
+                    "assembled_system_prompt": len(consultant_prompt),
+                    "history": history_chars,
+                },
+                "inclusive_subcomponent_chars": {
                 "skill_tree": len(skill_tree),
                 "candidate_skill_catalog": len(skill_catalog),
-                "candidate_skill_count": len(candidate_skill_ids),
                 "workflow_catalog": len(workflow_catalog),
                 "runtime_evidence": len(runtime_evidence_context),
                 "memory_context": len(consultant_memory_retrieval_context),
                 "input_resolution": len(input_resolution_context),
                 "rag_history": len(rag_history_text),
                 "user_preferences": len(user_preferences_context),
+                },
+                "candidate_skill_count": len(candidate_skill_ids),
+                "component_accounting": "component_chars are non-overlapping; inclusive_subcomponent_chars are children of assembled_system_prompt",
             }
             logger.info(
                 "Consultant prompt components: task=%s %s",
                 task_id,
-                json.dumps(prompt_components, ensure_ascii=False, sort_keys=True),
+                json.dumps(consultant_prompt_accounting, ensure_ascii=False, sort_keys=True),
             )
             if prompt_chars > CONSULTANT_PROMPT_WARNING_CHARS:
                 logger.warning(
@@ -10045,10 +10114,11 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         ],
                         "component_token_counts": {
                             key: max(0, int(value) // 4)
-                            for key, value in prompt_components.items()
+                            for key, value in consultant_prompt_accounting["component_chars"].items()
                             if isinstance(value, int)
                         },
-                        "component_chars": prompt_components,
+                        "component_chars": consultant_prompt_accounting["component_chars"],
+                        "prompt_component_accounting": consultant_prompt_accounting,
                         "formal_input_audit": input_resolution_context,
                         "user_source_refs": list(state.get("user_source_refs") or []),
                     },
@@ -10690,11 +10760,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
             task_spec = self._task_spec_for_state(dict(state), messages)
             task_revision = task_spec_revision(task_spec)
             task_id = state.get("task_id", "default")
-            task_spec_context = format_effective_user_facts_context(
-                task_spec,
-                audience="planner",
-                max_chars=6000,
-            )
+            task_spec_context = format_planner_task_contract_context(task_spec)
             task_requirement_text = "\n".join(
                 [
                     str(task_spec.get("goal") or ""),
@@ -10705,16 +10771,10 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     ],
                 ]
             ).strip()
-            user_msg = self._clip_prompt_text(
-                str(task_spec.get("goal") or ""),
-                800,
-            )
-            summary = self._clip_prompt_text(state.get("requirements_summary", ""), 2500)
+            user_msg = str(task_spec.get("goal") or "")
+            summary = str(state.get("requirements_summary", "") or "")
             rag_history = state.get("rag_history", [])
-            rag_knowledge = self._clip_prompt_text(
-                str(rag_history[-1]) if rag_history else "",
-                1000,
-            )
+            rag_knowledge = str(rag_history[-1]) if rag_history else ""
 
             runtime_audits = list(state.get("runtime_audit", []) or [])
             runtime_audit_context = self._format_runtime_audit(runtime_audits) if runtime_audits else ""
@@ -10725,7 +10785,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     re.DOTALL,
                 )
                 runtime_audit_context = legacy_runtime_audit.group(0) if legacy_runtime_audit else ""
-            runtime_audit_context = self._clip_prompt_text(runtime_audit_context, 3000)
             selected_skills = state.get("selected_skills", []) or []
             # Planner schedules the Consultant-selected pool. No skill is
             # active until an approved plan step starts.
@@ -10787,10 +10846,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
             else:
                 skill_tree = "<skill_tree>\nNo external skills available.\n</skill_tree>"
                 skill_catalog = "<skill_catalog>\nNo external skills available.\n</skill_catalog>"
-            skills_summary = self._clip_prompt_text(
-                f"{skill_tree}\n{skill_catalog}" if self.skill_manager else "None",
-                3000,
-            )
+            skills_summary = f"{skill_tree}\n{skill_catalog}" if self.skill_manager else "None"
             skill_reference_index = self.skill_manager.get_skill_reference_index_prompt(planner_context_skills) if self.skill_manager else ""
             skill_execution_context = self._skill_execution_context(planner_context_skills)
             # Consultant selects the skill pool, while Generate loads the full
@@ -10798,8 +10854,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
             # compact catalog and execution cards; repeating full SKILL.md
             # content here bloats the request without adding scheduling facts.
             active_skill_docs = ""
-            skill_reference_index = self._clip_prompt_text(skill_reference_index, 3000)
-            skill_execution_context = self._clip_prompt_text(skill_execution_context, 5000)
             selected_skills_text = ", ".join(selected_skills) if selected_skills else "None"
             renderer_records = [
                 self.skill_manager.get_renderer_record(skill_id)
@@ -10811,10 +10865,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 project_root=project_root,
             )
             active_skills_text = ", ".join(active_skills_state) if active_skills_state else "None - Planner must choose the first executable step's ACTIVE_SKILLS"
-            workflow_handoff_text = self._clip_prompt_text(
-                self._format_workflow_handoff_for_prompt(workflow_handoff),
-                1500,
-            )
+            workflow_handoff_text = self._format_workflow_handoff_for_prompt(workflow_handoff)
             project_id = state.get("project_id") or self.default_project_id
             planner_wiki_query = "\n".join(
                 part for part in [str(user_msg)[:1200], str(summary)[:1200]]
@@ -10835,7 +10886,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     ),
                 ]
                 planner_wiki_context = "\n\n".join(part for part in planner_memory_parts if part)
-            planner_wiki_context = self._clip_prompt_text(planner_wiki_context, 1000)
 
             planner_prompt_args = {
                 "user_msg": str(user_msg),
@@ -10855,49 +10905,107 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "future_skills_text": ", ".join(future_skills) if future_skills else "None",
                 "required_skills_all_text": ", ".join(required_skills_all) if required_skills_all else "None",
                 "candidate_skills_text": ", ".join(candidate_skills) if candidate_skills else "None",
-                "user_preferences_context": self._clip_prompt_text(self._load_user_preferences(), 500),
+                "user_preferences_context": self._load_user_preferences(),
             }
             detailed_plan_prompt = PromptManager.get_detailed_planner_prompt(**planner_prompt_args)
-            if len(detailed_plan_prompt) > LLM_STEP_EPHEMERAL_CHARS:
+
+            compressible_component_keys = {
+                "planner_wiki_context",
+                "rag_knowledge",
+            }
+
+            def planner_prompt_accounting(prompt: str) -> Dict[str, Any]:
+                component_map = {
+                    "task_spec": len(str(planner_prompt_args["task_spec_context"] or "")),
+                    "consultant_summary": len(str(planner_prompt_args["consultant_summary"] or "")),
+                    "runtime_audit": len(str(planner_prompt_args["runtime_audit_context"] or "")),
+                    "memory_context": len(str(planner_prompt_args["planner_wiki_context"] or "")),
+                    "rag_knowledge": len(str(planner_prompt_args["rag_knowledge"] or "")),
+                    "selected_skill_catalog": len(str(planner_prompt_args["skills_summary"] or "")),
+                    "active_skill_docs": len(str(planner_prompt_args["active_skill_docs"] or "")),
+                    "skill_reference_index": len(str(planner_prompt_args["skill_reference_index"] or "")),
+                    "skill_execution_context": len(str(planner_prompt_args["skill_execution_context"] or "")),
+                    "workflow_state": len(str(planner_prompt_args["workflow_handoff"] or "")),
+                    "user_goal": len(str(planner_prompt_args["user_msg"] or "")),
+                    "user_preferences": len(str(planner_prompt_args["user_preferences_context"] or "")),
+                    "selected_skill_ids": len(str(planner_prompt_args["selected_skills_text"] or "")),
+                }
+                component_map["base_template_and_protocol"] = max(
+                    0,
+                    len(prompt) - sum(component_map.values()),
+                )
+                return {
+                    "assembled_prompt_chars": len(prompt),
+                    "component_chars": component_map,
+                    "component_accounting": "non_overlapping",
+                }
+
+            planner_accounting = planner_prompt_accounting(detailed_plan_prompt)
+            compressible_chars = sum(
+                len(str(planner_prompt_args[key] or ""))
+                for key in compressible_component_keys
+            )
+            planner_budget = assess_prompt_budget(
+                [detailed_plan_prompt],
+                component_chars=planner_accounting["component_chars"],
+                context_limit_tokens=self.llm_context_limit_tokens,
+                nominal_char_budget=PLANNER_NOMINAL_CHAR_BUDGET,
+                compressible_chars=compressible_chars,
+                noncompressible_chars=max(0, len(detailed_plan_prompt) - compressible_chars),
+                soft_warning_ratio=PLANNER_SOFT_TOKEN_RATIO,
+                compression_ratio=PLANNER_COMPRESSION_TOKEN_RATIO,
+                hard_safety_ratio=PLANNER_HARD_TOKEN_RATIO,
+                reserved_headroom_tokens=PLANNER_RESERVED_HEADROOM_TOKENS,
+            )
+            if planner_budget["decision"] in {"compress_optional_context", "block_context_safety"} and compressible_chars:
                 planner_prompt_args.update({
-                    "consultant_summary": self._clip_prompt_text(summary, 1000),
-                    "planner_wiki_context": "",
-                    "rag_knowledge": "",
-                    "skills_summary": self._clip_prompt_text(skills_summary, 1500),
-                    "skill_reference_index": self._clip_prompt_text(skill_reference_index, 1200),
-                    "skill_execution_context": self._clip_prompt_text(skill_execution_context, 2800),
-                    "workflow_handoff": self._clip_prompt_text(workflow_handoff_text, 800),
-                    "user_preferences_context": self._clip_prompt_text(planner_prompt_args["user_preferences_context"], 240),
+                    "planner_wiki_context": self._clip_prompt_text(planner_wiki_context, 2000),
+                    "rag_knowledge": self._clip_prompt_text(rag_knowledge, 2000),
                 })
                 detailed_plan_prompt = PromptManager.get_detailed_planner_prompt(**planner_prompt_args)
-            planner_prompt_components = {
-                "total_chars": len(detailed_plan_prompt),
-                "task_spec": len(planner_prompt_args["task_spec_context"]),
-                "consultant_summary": len(planner_prompt_args["consultant_summary"]),
-                "runtime_audit": len(planner_prompt_args["runtime_audit_context"]),
-                "memory_context": len(planner_prompt_args["planner_wiki_context"]),
-                "rag_knowledge": len(planner_prompt_args["rag_knowledge"]),
-                "selected_skill_catalog": len(planner_prompt_args["skills_summary"]),
-                "active_skill_docs": len(planner_prompt_args["active_skill_docs"]),
-                "skill_reference_index": len(planner_prompt_args["skill_reference_index"]),
-                "skill_execution_context": len(planner_prompt_args["skill_execution_context"]),
-                "workflow_state": len(planner_prompt_args["workflow_handoff"]),
-            }
+                planner_accounting = planner_prompt_accounting(detailed_plan_prompt)
+                compressible_chars = sum(
+                    len(str(planner_prompt_args[key] or ""))
+                    for key in compressible_component_keys
+                )
+                planner_budget = assess_prompt_budget(
+                    [detailed_plan_prompt],
+                    component_chars=planner_accounting["component_chars"],
+                    context_limit_tokens=self.llm_context_limit_tokens,
+                    nominal_char_budget=PLANNER_NOMINAL_CHAR_BUDGET,
+                    compressible_chars=compressible_chars,
+                    noncompressible_chars=max(0, len(detailed_plan_prompt) - compressible_chars),
+                    soft_warning_ratio=PLANNER_SOFT_TOKEN_RATIO,
+                    compression_ratio=PLANNER_COMPRESSION_TOKEN_RATIO,
+                    hard_safety_ratio=PLANNER_HARD_TOKEN_RATIO,
+                    reserved_headroom_tokens=PLANNER_RESERVED_HEADROOM_TOKENS,
+                )
+                planner_budget["optional_compression_applied"] = True
+            else:
+                planner_budget["optional_compression_applied"] = False
+            planner_prompt_components = planner_accounting["component_chars"]
             logger.info(
                 "Planner prompt components: task=%s %s",
                 task_id,
-                json.dumps(planner_prompt_components, ensure_ascii=False, sort_keys=True),
+                json.dumps(planner_accounting, ensure_ascii=False, sort_keys=True),
             )
-            if len(detailed_plan_prompt) > LLM_STEP_EPHEMERAL_CHARS:
+            logger.info(
+                "Planner prompt budget decision: task=%s %s",
+                task_id,
+                json.dumps(planner_budget, ensure_ascii=False, sort_keys=True),
+            )
+            if planner_budget["hard_block"]:
                 logger.error(
-                    "Planner prompt remains over step-local budget after deterministic compression: task=%s chars=%s budget=%s",
+                    "Planner prompt exceeds token safety boundary after optional compression: task=%s chars=%s estimated_tokens=%s headroom=%s",
                     task_id,
                     len(detailed_plan_prompt),
-                    LLM_STEP_EPHEMERAL_CHARS,
+                    planner_budget["estimated_input_tokens"],
+                    planner_budget["remaining_headroom_tokens"],
                 )
                 reason = (
-                    "PLANNER_CONTEXT_BUDGET_UNSATISFIED: deterministic projection remains "
-                    f"{len(detailed_plan_prompt)} chars for a {LLM_STEP_EPHEMERAL_CHARS}-char budget."
+                    "PLANNER_CONTEXT_BUDGET_UNSATISFIED: estimated input is "
+                    f"{planner_budget['estimated_input_tokens']} / {planner_budget['context_limit_tokens']} tokens "
+                    f"with {planner_budget['remaining_headroom_tokens']} reserved-headroom tokens remaining."
                 )
                 plan_progress = self._mark_plan_current_blocked(task_id, reason)
                 return {
@@ -11008,6 +11116,8 @@ If the user is actually asking you to run analysis or inspect local files, say t
                                 Path(self.data_path) / "task_outputs" / task_id / "runtime_audit.json"
                             ),
                             "component_chars": planner_prompt_components,
+                            "prompt_component_accounting": planner_accounting,
+                            "planner_budget_decision": planner_budget,
                         },
                     )
                 except Exception as exc:
@@ -11045,6 +11155,33 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 violations.extend(self._plan_step_skill_violations(candidate_for_repair, selected_skills))
 
             initial_contract_violations = deepcopy(violations)
+            repair_reason_codes = sorted({
+                str(item.get("violation_code") or item.get("field") or "semantic_plan_violation")
+                if isinstance(item, dict) else "semantic_plan_violation"
+                for item in violations
+            })
+            repair_trigger_categories = sorted({
+                {
+                    "REQUIRED_OUTPUT_UNCOVERED": "output_contract_uncovered",
+                    "RENDERER_OUTPUT_BINDING_UNRESOLVED": "output_binding_unresolved",
+                    "OUTPUT_PRODUCER_AMBIGUOUS": "output_contract_uncovered",
+                    "INVALID_ACTION_FOR_STEP_PURPOSE": "semantic_plan_violation",
+                    "steps": "parser_failure",
+                }.get(code, "dependency_violation" if "DEPEND" in code.upper() else "semantic_plan_violation")
+                for code in repair_reason_codes
+            })
+            deterministic_blocking_codes = {"RENDERER_OUTPUT_BINDING_UNRESOLVED"}
+            deterministic_binding_blocked = bool(
+                deterministic_blocking_codes.intersection(repair_reason_codes)
+            )
+            if violations:
+                logger.info(
+                    "Planner repair decision: task=%s reason_codes=%s trigger_categories=%s llm_repair_allowed=%s",
+                    task_id,
+                    repair_reason_codes,
+                    repair_trigger_categories,
+                    not deterministic_binding_blocked,
+                )
             # A failed validation repairs the candidate plan in place.  It does
             # not replay the full Planner prompt or ask the model to regenerate
             # unrelated steps.  The local store validates base version/hash and
@@ -11052,7 +11189,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
             # One PLAN-owned recovery context may generate at most one local
             # patch. A rejected patch is preserved for explicit escalation;
             # replaying the same Planner prompt cannot create new evidence.
-            for _repair_attempt in range(1):
+            for _repair_attempt in range(0 if deterministic_binding_blocked else 1):
                 if not violations:
                     break
                 repair_request = build_plan_repair_request(
@@ -11237,11 +11374,10 @@ If the user is actually asking you to run analysis or inspect local files, say t
             os.makedirs(plan_dir, exist_ok=True)
             plan_file = os.path.join(plan_dir, "plan.md")
             previous_plan_state = load_plan_state(self.data_path, task_id)
-            candidate_plan_state = (
-                dict(candidate_for_repair)
-                if plan_patch_audits
-                else build_plan_state(task_id, plan_content, plan_file=plan_file)
-            )
+            # The normalized object contains controller-owned renderer args and
+            # bound outputs that are intentionally absent from rendered
+            # Markdown.  Never reparse the display text and discard them.
+            candidate_plan_state = deepcopy(candidate_for_repair)
             candidate_plan_state["plan_file"] = plan_file
             bind_plan_to_task_revision(candidate_plan_state, task_revision)
             self._plan_step_skill_violations(candidate_plan_state, selected_skills)
@@ -11258,6 +11394,8 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     if isinstance(item, dict) else str(item)[:120]
                     for item in initial_contract_violations
                 }),
+                "repair_trigger_categories": repair_trigger_categories,
+                "deterministic_binding_blocked": deterministic_binding_blocked,
                 "repair_semantic_change": any(
                     bool(item.get("semantic_change")) for item in plan_patch_audits
                 ),
@@ -11344,6 +11482,23 @@ If the user is actually asking you to run analysis or inspect local files, say t
             plan_state["user_constraints"] = list(state.get("user_constraints", []) or [])
             bind_plan_to_task_revision(plan_state, task_revision)
             save_plan_state(self.data_path, task_id, plan_state)
+            deterministic_block_reason = ""
+            if deterministic_binding_blocked:
+                deterministic_block_reason = (
+                    "Deterministic renderer output binding is unresolved: "
+                    + json.dumps(
+                        [
+                            item for item in violations
+                            if isinstance(item, dict)
+                            and item.get("violation_code") == "RENDERER_OUTPUT_BINDING_UNRESOLVED"
+                        ],
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        default=str,
+                    )
+                )
+                self._mark_plan_current_blocked(task_id, deterministic_block_reason)
+                plan_state = load_plan_state(self.data_path, task_id)
             with open(plan_file, "w", encoding="utf-8") as f:
                 f.write(
                     "# Task Plan\n"
@@ -11419,7 +11574,11 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "workflow_id": workflow_handoff.get("workflow_id", "") if workflow_handoff else "",
                 "active_batch_id": active_batch_id,
                 "skill_selection_source": skill_selection_source,
-                "messages": [AIMessage(content=f"📋 Plan ready (saved to {plan_file})")],
+                "messages": [AIMessage(content=(
+                    f"⛔ {deterministic_block_reason}"
+                    if deterministic_block_reason
+                    else f"📋 Plan ready (saved to {plan_file})"
+                ))],
                 "pending_action": {},
                 "pending_recovery_action": {},
                 "recovery_decision": {},
@@ -11430,7 +11589,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "recovery_status": "",
                 "supervisor_verdict": "",
                 "completion_gate_result": {},
-                "next_step": "plan_review",
+                "next_step": "finish" if deterministic_block_reason else "plan_review",
             }
 
         # ════════════════════════════════════════════

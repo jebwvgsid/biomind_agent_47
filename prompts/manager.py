@@ -544,7 +544,7 @@ User Goal: {user_msg}
 {runtime_audit_context or "No selected-skill runtime audit is available. Planner must schedule targeted runtime diagnosis; it must not infer availability from a global tool inventory."}
 
 [KNOWLEDGE BASE CONTEXT]
-{rag_knowledge[:2000] if rag_knowledge else "None"}
+{rag_knowledge if rag_knowledge else "None"}
 
 [WORKFLOW STATE]
 {workflow_handoff if workflow_handoff else "No workflow handoff. Treat SELECTED SKILLS as the allowed skill pool, not as active skills."}
@@ -572,6 +572,10 @@ machine-auditable facts, not filler prose. Mark uncertain items as unverified
 assumptions. Runtime or artifact evidence can invalidate an assumption and
 trigger a scoped revision, but cannot silently weaken a user hard constraint
 or change the scientific target.
+The `[CANONICAL REQUIRED OUTPUTS]` block is the complete Planner-facing output
+contract. Include every required output, including system/workflow additions,
+without inventing a producer. Prefer the count-free phrase "all required
+outputs" / "所有 required outputs"; never hard-code a numeric output count.
 
 ## Section 1: Requirement Analysis
 - Input files, reference genomes, parameters needed
@@ -599,9 +603,24 @@ For EACH step, provide:
 
 ## Execution Checklist
 After the detailed plan, include a machine-trackable checklist.
-Each executable step MUST be one checkbox line in this exact style:
-- [ ] Step N: [short action title] | Goal: [goal] | Action: [SEARCH/EXECUTE/INSTALL/ASK_USER/FINISH] | Purpose: [analysis/validation/probe/record_failure/install/user_input] | Skills: [canonical_skill_id,...] | Stage: [workflow_stage_id or none] | Batch: [batch_id or none] | Done: [completion criterion]
-Keep checkbox lines short. Do not put long explanations or multi-line details inside checkbox items.
+Each executable step MUST use this canonical structure (the checkbox is the
+primary scheduler record and the indented fields are its typed contract):
+- [ ] [step-N] [short action title]
+  - Action: [SEARCH/EXECUTE/INSTALL/ASK_USER/FINISH]
+  - Purpose: [analysis/validation/probe/record_failure/install/user_input]
+  - Skills: [canonical_skill_id,...]
+  - Inputs:
+    - [logical or exact input]
+  - Outputs:
+    - [logical or exact output]
+  - Depends on: [step IDs or none]
+  - Success criteria: [count-free completion criterion]
+  - Stage: [workflow_stage_id or none]
+  - Batch: [batch_id or none]
+`Inputs:` and `Outputs:` are mandatory, even when their value is an explicit
+empty list. Keep values concise and place explanations in Section 2.
+Legacy `- [ ] Step N:` records remain parser-compatible, but emit the canonical
+stable-ID form above for every new plan.
 The checklist order MUST match Section 2 and should be executable one step at a time.
 `Skills:` is mandatory on every checklist item. Use `Skills: []` only for an intentional no-skill control, user-question, or finalization step; never omit the field.
 `Purpose:` describes what a successful command proves and is distinct from `Action:` routing. Use `validation` for a step whose completion criterion is verification itself; use `probe` only when its evidence cannot complete the current business step.

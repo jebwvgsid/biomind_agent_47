@@ -130,6 +130,17 @@ LLM_STEP_CONTEXT_CHARS = _env_int("BIOMIND_LLM_STEP_CONTEXT_CHARS", 12000, minim
 LLM_STEP_PLAN_CHARS = _env_int("BIOMIND_LLM_STEP_PLAN_CHARS", 6000, minimum=2000)
 LLM_STEP_SKILL_DOC_CHARS = _env_int("BIOMIND_LLM_STEP_SKILL_DOC_CHARS", 18000, minimum=4000)
 LLM_STEP_EPHEMERAL_CHARS = _env_int("BIOMIND_LLM_STEP_EPHEMERAL_CHARS", 26000, minimum=8000)
+# Planner prompt sizing uses a nominal engineering budget plus real token
+# headroom thresholds.  The character budget is not a model context proxy.
+PLANNER_NOMINAL_CHAR_BUDGET = _env_int("BIOMIND_PLANNER_NOMINAL_CHAR_BUDGET", 50000, minimum=8000)
+PLANNER_SOFT_TOKEN_RATIO = _env_float("BIOMIND_PLANNER_SOFT_TOKEN_RATIO", 0.60, minimum=0.0)
+PLANNER_COMPRESSION_TOKEN_RATIO = _env_float("BIOMIND_PLANNER_COMPRESSION_TOKEN_RATIO", 0.75, minimum=0.0)
+PLANNER_HARD_TOKEN_RATIO = _env_float("BIOMIND_PLANNER_HARD_TOKEN_RATIO", 0.90, minimum=0.0)
+PLANNER_RESERVED_HEADROOM_TOKENS = _env_int(
+    "BIOMIND_PLANNER_RESERVED_HEADROOM_TOKENS",
+    8192,
+    minimum=0,
+)
 
 WIKI_EMBEDDING_ENABLED = BIOMIND_WIKI_ENABLED and os.getenv("WIKI_EMBEDDING_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
 WIKI_EMBEDDING_BASE_URL = os.getenv("WIKI_EMBEDDING_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")

@@ -66,6 +66,14 @@ class PlanReviewIdentityTests(unittest.TestCase):
             "renderer_id": "snpeff_annotation",
             "renderer_invocation_contract": {"invocation_id": "invoke-snpeff"},
             "outputs": ["ann_gene_summary.tsv"],
+            "bound_outputs": [{
+                "required_output": "ann_gene_summary.tsv",
+                "canonical_path": "ann_gene_summary.tsv",
+                "materialized_path": "ann_gene_summary.tsv",
+                "binding_mode": "fixed",
+                "renderer_id": "snpeff_annotation",
+                "producer_step_id": "step-4",
+            }],
             "artifacts": [{
                 "artifact_id": "gene-summary",
                 "path": "ann_gene_summary.tsv",

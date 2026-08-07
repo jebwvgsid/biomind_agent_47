@@ -46,7 +46,7 @@ class PlanContractCanaryTests(unittest.TestCase):
             task_spec=self.task_spec,
         )
         self.assertTrue(any(item.get("violation_code") == "INVALID_ACTION_FOR_STEP_PURPOSE" for item in first_violations))
-        self.assertTrue(any(item.get("violation_code") == "REQUIRED_OUTPUT_UNCOVERED" for item in first_violations))
+        self.assertFalse(any(item.get("violation_code") == "REQUIRED_OUTPUT_UNCOVERED" for item in first_violations))
 
         repaired = build_plan_state(
             self.TASK_ID,

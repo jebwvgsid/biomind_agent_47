@@ -8,21 +8,23 @@ from __future__ import annotations
 
 import json
 import hashlib
+import logging
 import os
 import re
 import tempfile
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from agent_core.task_spec import normalize_requirement, project_task_spec_to_renderer
 
 PlanState = Dict[str, Any]
 PlanStep = Dict[str, Any]
+logger = logging.getLogger("BioMind.PlanTracker")
 
-PLAN_SCHEMA_VERSION = 5
-PLAN_MIGRATION_VERSION = 5
+PLAN_SCHEMA_VERSION = 6
+PLAN_MIGRATION_VERSION = 6
 PROVENANCE_SCHEMA_VERSION = 1
 RENDERER_MANIFEST_SCHEMA_VERSION = 3
 MANIFEST_ACTION_KINDS = {
@@ -133,7 +135,7 @@ _STEP_LINE_RE = re.compile(
     re.IGNORECASE,
 )
 _HEADING_RE = re.compile(r"^\s*#{2,4}\s+(?P<title>.+?)\s*$")
-_STEP_ID_RE = re.compile(r"\bStep\s*(?P<num>\d+)\b", re.IGNORECASE)
+_STEP_ID_RE = re.compile(r"\bStep(?:\s*[-_]\s*|\s*)(?P<num>\d+)\b", re.IGNORECASE)
 _ACTION_FIELD_RE = re.compile(r"(?:^|\|)\s*Action\s*:\s*(?P<value>[A-Za-z_]+)", re.IGNORECASE)
 _PURPOSE_FIELD_RE = re.compile(r"(?:^|\|)\s*Purpose\s*:\s*(?P<value>[A-Za-z_]+)", re.IGNORECASE)
 _SUCCESS_FIELD_NAMES = (
@@ -1684,6 +1686,11 @@ def normalize_renderer_manifest(
         for item in value.get("requirements", []) or []
         if isinstance(item, (dict, str))
     ]
+    declared_outputs = [
+        deepcopy(item) if isinstance(item, dict) else {"path": str(item)}
+        for item in value.get("outputs", []) or []
+        if isinstance(item, (dict, str)) and _output_path_or_name(item)
+    ]
     manifest_fingerprint = _stable_payload_hash({
         "renderer": renderer,
         "provenance": provenance,
@@ -1692,6 +1699,7 @@ def normalize_renderer_manifest(
             {key: item.get(key) for key in ("artifact_id", "path", "validator", "required", "producer")}
             for item in artifacts
         ],
+        "outputs": declared_outputs,
         "requirements": requirements,
     })
     manifest_id = str(value.get("manifest_id") or _stable_id("manifest", manifest_fingerprint))
@@ -1738,6 +1746,7 @@ def normalize_renderer_manifest(
         "scripts": scripts or [str(item.get("script") or "") for item in actions if item.get("script")],
         "artifacts": artifacts,
         "actions": actions,
+        "outputs": declared_outputs,
         "requirements": requirements,
         "renderer": renderer,
         "provenance": provenance,
@@ -1747,6 +1756,102 @@ def normalize_renderer_manifest(
     }
     normalized["manifest_fingerprint"] = manifest_fingerprint
     return normalized
+
+
+def validate_renderer_manifest_outputs(
+    state: PlanState,
+    step_id: str,
+    manifest: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Compare approved renderer output bindings with manifest declarations."""
+    normalized = normalize_renderer_manifest(manifest, manifest.get("manifest_path", ""))
+    step = next(
+        (
+            item for item in state.get("steps", []) or []
+            if isinstance(item, dict) and str(item.get("step_id") or "") == str(step_id)
+        ),
+        {},
+    )
+    invocation = dict(step.get("renderer_invocation_contract") or {})
+    approved = [
+        dict(item) for item in step.get("bound_outputs", []) or []
+        if isinstance(item, dict)
+    ]
+    if not approved:
+        return {
+            "valid": True,
+            "violation_code": "",
+            "status": "not_applicable_no_approved_bound_outputs",
+            "expected_outputs": [],
+            "manifest_outputs": [],
+            "missing_outputs": [],
+            "unexpected_outputs": [],
+        }
+
+    task_outputs = list(
+        (state.get("task_spec") or {}).get("output_contracts")
+        or (state.get("task_spec") or {}).get("expected_outputs")
+        or []
+    )
+    approved_dir = _canonical_output_dir(task_outputs, state.get("task_spec") or {}) or str(invocation.get("outdir") or "")
+    manifest_dir = str(normalized.get("outdir") or approved_dir)
+    expected_by_identity = {
+        canonical_output_identity(
+            item.get("canonical_path") or item.get("required_output"),
+            approved_dir,
+        ): item
+        for item in approved
+        if canonical_output_identity(
+            item.get("canonical_path") or item.get("required_output"),
+            approved_dir,
+        )
+    }
+    explicit_outputs = list(normalized.get("outputs") or [])
+    if explicit_outputs:
+        manifest_values = explicit_outputs
+    else:
+        # Legacy manifests did not distinguish final outputs from scripts and
+        # intermediates.  They may prove expected paths, but extra artifacts
+        # are not promoted to approved outputs.
+        manifest_values = [
+            item for item in normalized.get("artifacts", []) or []
+            if canonical_output_identity(item, manifest_dir) in expected_by_identity
+        ]
+    actual_by_identity = {
+        canonical_output_identity(item, manifest_dir): item
+        for item in manifest_values
+        if canonical_output_identity(item, manifest_dir)
+    }
+    missing = sorted(set(expected_by_identity) - set(actual_by_identity))
+    unexpected = sorted(set(actual_by_identity) - set(expected_by_identity)) if explicit_outputs else []
+    expected_renderer = str(invocation.get("renderer_id") or step.get("renderer_id") or "")
+    actual_renderer = str((normalized.get("renderer") or {}).get("id") or "")
+    expected_step = str(step.get("step_id") or step_id)
+    actual_step = str((normalized.get("provenance") or {}).get("step_id") or "")
+    producer_mismatch = bool(
+        (expected_renderer and actual_renderer != expected_renderer)
+        or (expected_step and actual_step != expected_step)
+    )
+    valid = not missing and not unexpected and not producer_mismatch
+    return {
+        "valid": valid,
+        "violation_code": "" if valid else "MANIFEST_OUTPUT_MISMATCH",
+        "status": "matched" if valid else "mismatch",
+        "expected_outputs": sorted(expected_by_identity),
+        "manifest_outputs": sorted(actual_by_identity),
+        "missing_outputs": missing,
+        "unexpected_outputs": unexpected,
+        "expected_renderer_id": expected_renderer,
+        "manifest_renderer_id": actual_renderer,
+        "expected_step_id": expected_step,
+        "manifest_step_id": actual_step,
+        "producer_mismatch": producer_mismatch,
+        "reason": (
+            "Approved bound outputs match the renderer manifest."
+            if valid
+            else "MANIFEST_OUTPUT_MISMATCH: approved renderer outputs and manifest declarations differ."
+        ),
+    }
 
 
 def validate_renderer_manifest_provenance(
@@ -1810,6 +1915,12 @@ def register_renderer_manifest(
     )
     if not step:
         raise ValueError(f"Unknown plan step for renderer manifest: {step_id}")
+    output_gate = validate_renderer_manifest_outputs(state, step_id, normalized)
+    if not output_gate["valid"]:
+        raise ValueError(
+            "MANIFEST_OUTPUT_MISMATCH: "
+            + json.dumps(output_gate, ensure_ascii=False, sort_keys=True)
+        )
     previous = dict(step.get("renderer_execution") or {})
     same_manifest = str(previous.get("manifest_fingerprint") or "") == str(normalized["manifest_fingerprint"])
     completed = list(previous.get("completed_action_ids") or []) if same_manifest else []
@@ -1826,6 +1937,7 @@ def register_renderer_manifest(
         "action_evidence": action_evidence,
         "registered_at": _now(),
         "legacy_recovery_only": bool(provenance.get("legacy_recovery_only")),
+        "output_contract_gate": output_gate,
     }
     step["updated_at"] = _now()
     reconcile_step_artifacts(step, normalized, manifest_path=manifest_path)
@@ -2205,9 +2317,17 @@ def normalize_plan_step(step: PlanStep, index: int = 1) -> PlanStep:
         step.get("outputs") if step.get("outputs") not in (None, "", []) else (step.get("output_contracts") or parsed.get("outputs")),
         dict_keys=("path", "description", "role"),
     )
-    step["dependencies"] = _string_list(
+    raw_dependencies = _string_list(
         step.get("dependencies") if step.get("dependencies") not in (None, "", []) else (step.get("depends_on") or parsed.get("dependencies"))
     )
+    step["dependencies"] = []
+    for dependency in raw_dependencies:
+        if str(dependency).strip().lower() in {"none", "n/a", "na", "[]", "无"}:
+            continue
+        match = re.fullmatch(r"\s*step(?:\s*[-_]\s*|\s*)(\d+)\s*", str(dependency), re.IGNORECASE)
+        stable_dependency = f"step-{int(match.group(1))}" if match else str(dependency).strip()
+        if stable_dependency and stable_dependency not in step["dependencies"]:
+            step["dependencies"].append(stable_dependency)
     step["depends_on"] = list(step["dependencies"])
     step["step_type"] = str(step.get("step_type") or ("renderer_composite" if step.get("renderer_id") else "atomic")).strip().lower()
     step["renderer_id"] = str(step.get("renderer_id") or "").strip()
@@ -2312,7 +2432,13 @@ def _dedupe_steps(steps: List[PlanStep]) -> List[PlanStep]:
 
 
 def _enrich_plan_steps(steps: List[PlanStep], plan_text: str) -> List[PlanStep]:
-    """Capture explicit planner contracts while keeping the legacy dict API."""
+    """Capture checklist contracts and enrich them from stable detailed steps.
+
+    The checklist remains the primary scheduler structure.  A matching
+    detailed ``Step N`` section may add compatible fields that the concise
+    checklist omitted.  Field labels accept the historical bold/non-bold,
+    singular/plural Markdown variants.
+    """
     lines = str(plan_text or "").splitlines()
     labels = {
         "assumptions": "assumptions",
@@ -2322,8 +2448,17 @@ def _enrich_plan_steps(steps: List[PlanStep], plan_text: str) -> List[PlanStep]:
         "input contract": "input_contracts",
         "output contract": "output_contracts",
         "environment contract": "environment_contract",
+        "action": "action",
+        "purpose": "purpose",
+        "skills": "skill_ids",
+        "skill": "skill_ids",
+        "stage": "workflow_stage_ids",
+        "stages": "workflow_stage_ids",
+        "batch": "batch_id",
         "tool": "tool",
+        "input": "inputs",
         "inputs": "inputs",
+        "output": "outputs",
         "outputs": "outputs",
         "dependencies": "dependencies",
         "depends on": "depends_on",
@@ -2337,40 +2472,48 @@ def _enrich_plan_steps(steps: List[PlanStep], plan_text: str) -> List[PlanStep]:
         "completion criteria": "success_criteria",
         "verify": "success_criteria",
     }
-    marker_positions = [
-        index for index, line in enumerate(lines)
-        if _CHECKBOX_RE.match(line) or _STEP_LINE_RE.match(line)
-    ]
-    for index, step in enumerate(steps):
-        title = str(step.get("title") or "").lower()
-        start = next((pos for pos in marker_positions if title and title[:60] in lines[pos].lower()), None)
-        if start is None:
-            start = marker_positions[index] if index < len(marker_positions) else 0
-        end = next((pos for pos in marker_positions if pos > start), len(lines))
-        segment = lines[start:end]
-        values: Dict[str, List[Any]] = {}
-        inline_success = _SUCCESS_FIELD_RE.search(str(step.get("title") or ""))
+    label_pattern = "|".join(
+        re.escape(value) for value in sorted(labels, key=len, reverse=True)
+    )
+    field_re = re.compile(
+        rf"^\s*(?:[-*]\s*)?(?:\*\*)?(?P<label>{label_pattern})(?:\*\*)?\s*:\s*(?P<value>.*)$",
+        re.IGNORECASE,
+    )
+
+    def parse_segment(segment: List[str], *, title: str = "") -> Dict[str, Any]:
+        values: Dict[str, Any] = {}
+        inline_success = _SUCCESS_FIELD_RE.search(title)
         active_multiline_key = (
             "success_criteria"
             if inline_success and not _valid_contract_text(inline_success.group("value"))
             else ""
         )
         for raw in segment:
-            match = re.match(
-                r"^\s*(?:[-*]\s*)?(?P<label>assumptions?|required constraints?|input contract|output contract|environment contract|tool|inputs|outputs|dependencies|depends on|risk|risk level|allowed fallbacks|forbidden fallbacks|done|success|success criteria|completion criteria|verify)\s*:\s*(?P<value>.*)$",
-                raw,
-                re.IGNORECASE,
-            )
+            # The first line of a primary segment is the step marker itself.
+            # An inline empty ``Done:`` on that marker intentionally opens a
+            # multiline field; do not mistake ``Step N:`` for a new unknown
+            # label and clear the active field before its bullets are read.
+            if _CHECKBOX_RE.match(raw) or _STEP_LINE_RE.match(raw):
+                continue
+            match = field_re.match(raw)
             if not match:
+                if re.match(
+                    r"^\s*(?:[-*]\s*)?(?:\*\*)?[^:：]{1,60}(?:\*\*)?\s*[:：]",
+                    raw,
+                ):
+                    active_multiline_key = ""
+                    continue
                 if active_multiline_key:
                     bullet = re.match(r"^\s+[-*]\s+(?P<value>.+?)\s*$", raw)
                     value = _valid_contract_text(bullet.group("value")) if bullet else ""
                     if value:
-                        if active_multiline_key == "success_criteria":
-                            values.setdefault(active_multiline_key, []).append(value)
-                        elif active_multiline_key in {"input_contracts", "output_contracts"}:
+                        if active_multiline_key in {"input_contracts", "output_contracts"}:
                             values.setdefault(active_multiline_key, []).append({"description": value})
-                        elif active_multiline_key in {"inputs", "outputs", "dependencies", "depends_on"}:
+                        elif active_multiline_key in {"inputs", "outputs", "skill_ids", "workflow_stage_ids"}:
+                            values.setdefault(active_multiline_key, []).extend(_list_field(value))
+                        elif active_multiline_key in {
+                            "dependencies", "depends_on", "success_criteria",
+                        }:
                             values.setdefault(active_multiline_key, []).append(value)
                 continue
             key = labels.get(match.group("label").lower())
@@ -2379,19 +2522,87 @@ def _enrich_plan_steps(steps: List[PlanStep], plan_text: str) -> List[PlanStep]:
             if not key or not value:
                 continue
             if key in {"depends_on", "dependencies"}:
-                values.setdefault(key, []).extend(re.findall(r"step[- ]?\d+", value, re.IGNORECASE))
+                for dependency in re.findall(r"step[-_ ]?\d+", value, re.IGNORECASE):
+                    number = re.search(r"\d+", dependency)
+                    stable_id = f"step-{int(number.group(0))}" if number else ""
+                    if stable_id and stable_id not in values.setdefault(key, []):
+                        values[key].append(stable_id)
             elif key in {"input_contracts", "output_contracts"}:
                 values.setdefault(key, []).append({"description": value})
-            elif key in {"inputs", "outputs"}:
+            elif key in {"inputs", "outputs", "skill_ids", "workflow_stage_ids"}:
                 values.setdefault(key, []).extend(_list_field(value))
             elif key == "success_criteria":
                 values.setdefault(key, []).append(value)
-            elif key in {"tool", "risk_level"}:
+            elif key in {
+                "action", "purpose", "batch_id", "tool", "risk_level", "environment_contract",
+            }:
                 values[key] = value
             else:
                 values.setdefault(key, []).append(value)
-        for key, value in values.items():
+        return values
+
+    detailed_by_step: Dict[str, Dict[str, Any]] = {}
+    detailed_markers: List[Tuple[int, str, int]] = []
+    detailed_heading_re = re.compile(
+        r"^\s*(?P<marks>#{2,6})\s+(?:\[(?P<stable>step[-_ ]?\d+)\]|Step\s*(?P<number>\d+)\b)",
+        re.IGNORECASE,
+    )
+    for position, line in enumerate(lines):
+        match = detailed_heading_re.match(line)
+        if not match:
+            continue
+        raw_id = match.group("stable") or f"step-{match.group('number')}"
+        digits = re.search(r"\d+", raw_id)
+        if digits:
+            detailed_markers.append((
+                position,
+                f"step-{int(digits.group(0))}",
+                len(match.group("marks")),
+            ))
+    for start, step_id, heading_level in detailed_markers:
+        end = len(lines)
+        for position in range(start + 1, len(lines)):
+            heading = re.match(r"^\s*(?P<marks>#{1,6})\s+", lines[position])
+            if heading and len(heading.group("marks")) <= heading_level:
+                end = position
+                break
+        detailed_by_step[step_id] = parse_segment(lines[start:end])
+
+    marker_positions = [
+        index for index, line in enumerate(lines)
+        if _CHECKBOX_RE.match(line) or _STEP_LINE_RE.match(line)
+    ]
+    list_fields = {
+        "assumptions", "required_constraints", "input_contracts", "output_contracts",
+        "inputs", "outputs", "dependencies", "depends_on", "allowed_fallbacks",
+        "forbidden_fallbacks", "success_criteria",
+        "skill_ids", "workflow_stage_ids",
+    }
+    for index, step in enumerate(steps):
+        title = str(step.get("title") or "").lower()
+        start = next((pos for pos in marker_positions if title and title[:60] in lines[pos].lower()), None)
+        if start is None:
+            start = marker_positions[index] if index < len(marker_positions) else 0
+        end = next((pos for pos in marker_positions if pos > start), len(lines))
+        primary = parse_segment(lines[start:end], title=str(step.get("title") or ""))
+        for key, value in primary.items():
             step[key] = value
+
+        detailed = detailed_by_step.get(str(step.get("step_id") or ""), {})
+        for key, value in detailed.items():
+            if key in list_fields:
+                current = list(step.get(key) or [])
+                for item in value if isinstance(value, list) else [value]:
+                    marker = json.dumps(item, ensure_ascii=False, sort_keys=True, default=str)
+                    if all(
+                        json.dumps(existing, ensure_ascii=False, sort_keys=True, default=str) != marker
+                        for existing in current
+                    ):
+                        current.append(item)
+                step[key] = current
+            elif step.get(key) in (None, "", "unspecified"):
+                step[key] = value
+
         step.setdefault("command_intent", str(step.get("title") or "").strip())
         structured = _structured_step_fields(str(step.get("title") or ""))
         for key, value in structured.items():
@@ -2562,6 +2773,10 @@ def _semantic_step(step: PlanStep) -> Dict[str, Any]:
     payload = {field: normalized.get(field) for field in PLAN_STEP_FIELDS if field != "status"}
     payload["title"] = semantic_title
     payload["selected_skill_id"] = str(normalized.get("selected_skill_id") or "")
+    payload["bound_outputs"] = deepcopy(list(normalized.get("bound_outputs") or []))
+    payload["renderer_invocation_contract"] = deepcopy(
+        dict(normalized.get("renderer_invocation_contract") or {})
+    )
     payload["artifacts"] = sorted(
         [
             {
@@ -3134,19 +3349,27 @@ def render_structured_plan(state: PlanState) -> str:
         skills = ",".join(step.get("skill_ids") or [])
         stages = ",".join(step.get("workflow_stage_ids") or []) or "none"
         batch = str(step.get("batch_id") or "none")
-        done = "; ".join(step.get("success_criteria") or [])
-        lines.append(
-            f"- [{mark}] [{step.get('step_id')}] {_display_step_title(str(step.get('title') or ''))} "
-            f"| Action: {str(step.get('action') or '').upper()} "
-            f"| Purpose: {str(step.get('purpose') or 'analysis').upper()} "
-            f"| Skills: [{skills}] | Stage: [{stages}] | Batch: {batch} | Done: {done}"
-        )
+        lines.extend([
+            f"- [{mark}] [{step.get('step_id')}] {_display_step_title(str(step.get('title') or ''))}",
+            f"  - Action: {str(step.get('action') or '').upper()}",
+            f"  - Purpose: {str(step.get('purpose') or 'analysis').upper()}",
+            f"  - Skills: [{skills}]",
+            "  - Inputs:",
+            *([f"    - {item}" for item in step.get("inputs", []) or []] or ["    - []"]),
+            "  - Outputs:",
+            *([f"    - {item}" for item in step.get("outputs", []) or []] or ["    - []"]),
+            f"  - Depends on: [{', '.join(step.get('depends_on') or step.get('dependencies') or [])}]",
+            f"  - Success criteria: {'; '.join(step.get('success_criteria') or [])}",
+            f"  - Stage: [{stages}]",
+            f"  - Batch: {batch}",
+        ])
     return "\n".join(lines).rstrip() + "\n"
 
 
 def _render_output_ownership(state: PlanState) -> List[str]:
     task_spec = dict(state.get("task_spec") or {})
     outputs = list(task_spec.get("output_contracts") or task_spec.get("expected_outputs") or [])
+    output_dir = _canonical_output_dir(outputs, task_spec)
     steps = [
         normalize_plan_step(dict(raw), index)
         for index, raw in enumerate(state.get("steps", []) or [], 1)
@@ -3159,16 +3382,25 @@ def _render_output_ownership(state: PlanState) -> List[str]:
         path = str(binding.get("path") or binding.get("filename") or binding.get("value") or "")
         if not path:
             continue
-        name = Path(path).name
+        identity = canonical_output_identity(binding, output_dir)
         owner = next(
             (
                 step
                 for step in steps
-                if any(Path(str(item)).name == name for item in step.get("outputs", []) or [])
-                or any(
-                    Path(str(item.get("path") or "")).name == name
-                    for item in step.get("artifacts", []) or []
-                    if isinstance(item, dict)
+                if (
+                    any(
+                        canonical_output_identity(
+                            item.get("required_output") or item.get("canonical_path"),
+                            output_dir,
+                        ) == identity
+                        for item in step.get("bound_outputs", []) or []
+                        if isinstance(item, dict)
+                    )
+                    if str(step.get("step_type") or "") == "renderer_composite"
+                    else any(
+                        canonical_output_identity(item, output_dir) == identity
+                        for item in step.get("outputs", []) or []
+                    )
                 )
             ),
             {},
@@ -3185,10 +3417,20 @@ def _render_output_ownership(state: PlanState) -> List[str]:
                 or ""
             )
             producer_action = str(owner.get("action") or "").upper()
-            for artifact in owner.get("artifacts", []) or []:
-                if isinstance(artifact, dict) and Path(str(artifact.get("path") or "")).name == name:
-                    producer_action = str(artifact.get("producer") or producer_action)
-                    break
+            if renderer_bound:
+                # Internal artifact metadata is descriptive only.  It may
+                # identify the producing renderer action after exact output
+                # ownership has already been established by ``bound_outputs``;
+                # it must never establish ownership by itself.
+                artifact = next(
+                    (
+                        item for item in owner.get("artifacts", []) or []
+                        if isinstance(item, dict)
+                        and canonical_output_identity(item.get("path"), output_dir) == identity
+                    ),
+                    {},
+                )
+                producer_action = str(artifact.get("producer") or producer_action)
         else:
             producer_type = "unassigned"
             producer_id = "none"
@@ -3238,6 +3480,14 @@ def render_plan_review_content(state: PlanState, plan_text: str = "") -> str:
             f"- Depends on: `{', '.join(step['depends_on']) or 'none'}`",
             f"- Success criteria: `{'; '.join(step['success_criteria']) or 'none'}`",
         ])
+        invocation = dict(step.get("renderer_invocation_contract") or {})
+        if invocation:
+            lines.extend([
+                f"- Renderer arguments: `{json.dumps(invocation.get('arguments') or {}, ensure_ascii=False, sort_keys=True)}`",
+                f"- Renderer outdir: `{invocation.get('outdir') or 'none'}`",
+                f"- Bound outputs: `{json.dumps(step.get('bound_outputs') or [], ensure_ascii=False, sort_keys=True)}`",
+                f"- Renderer manifest: `{invocation.get('manifest_path') or 'none'}`",
+            ])
     ownership = _render_output_ownership(state)
     if ownership:
         lines.extend(["", "## Output Ownership", *ownership])
@@ -3528,7 +3778,7 @@ def plan_identity(state: PlanState) -> Dict[str, str]:
 def _approval_task_spec_view(state: PlanState) -> Dict[str, Any]:
     spec = dict(state.get("task_spec") or {})
     binding_fields = (
-        "role", "path", "resolved_path", "filename", "path_or_name", "required",
+        "output_id", "role", "path", "resolved_path", "filename", "path_or_name", "required",
         "value", "level", "condition", "source_type", "source_ref", "provenance",
     )
 
@@ -3549,6 +3799,8 @@ def _approval_task_spec_view(state: PlanState) -> Dict[str, Any]:
 
 def _approval_output_ownership(state: PlanState) -> List[Dict[str, Any]]:
     owners: Dict[str, List[Dict[str, str]]] = {}
+    task_spec = _approval_task_spec_view(state)
+    output_dir = _canonical_output_dir(task_spec.get("output_contracts") or [])
     for index, raw in enumerate(state.get("steps", []) or [], 1):
         if not isinstance(raw, dict):
             continue
@@ -3562,8 +3814,14 @@ def _approval_output_ownership(state: PlanState) -> List[Dict[str, Any]]:
             or renderer_execution.get("manifest_id")
             or step.get("step_id")
         )
-        for value in step.get("outputs", []) or []:
-            identity = _output_identity(value)
+        renderer_step = str(step.get("step_type") or "") == "renderer_composite"
+        values = (
+            [item.get("required_output") or item.get("canonical_path") for item in step.get("bound_outputs", []) or []]
+            if renderer_step
+            else list(step.get("outputs", []) or [])
+        )
+        for value in values:
+            identity = _output_identity(value, output_dir)
             if identity:
                 owners.setdefault(identity, []).append({
                     "producer_type": producer_type,
@@ -3572,9 +3830,8 @@ def _approval_output_ownership(state: PlanState) -> List[Dict[str, Any]]:
                     "action": str(step.get("action") or "").upper(),
                 })
     result: List[Dict[str, Any]] = []
-    task_spec = _approval_task_spec_view(state)
     for output in task_spec["output_contracts"]:
-        identity = _output_identity(output)
+        identity = _output_identity(output, output_dir)
         if not identity or str(output.get("role") or "") == "output_dir":
             continue
         result.append({
@@ -3605,9 +3862,13 @@ def build_approval_projection(state: PlanState) -> Dict[str, Any]:
             "success_criteria": list(step.get("success_criteria") or []),
             "step_type": str(step.get("step_type") or "atomic"),
             "renderer_id": str(step.get("renderer_id") or ""),
+            "bound_outputs": deepcopy(list(step.get("bound_outputs") or [])),
+            "renderer_invocation_contract": deepcopy(
+                dict(step.get("renderer_invocation_contract") or {})
+            ),
         })
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "task_id": str(state.get("task_id") or ""),
         "plan_id": str(state.get("plan_id") or ""),
         "plan_version": str(state.get("plan_version") or "plan_v1"),
@@ -3629,6 +3890,10 @@ def build_approval_scope(
             "renderer_id": str(step.get("renderer_id") or ""),
             "inputs": list(step.get("inputs") or []),
             "outputs": list(step.get("outputs") or []),
+            "bound_outputs": deepcopy(list(step.get("bound_outputs") or [])),
+            "renderer_invocation_contract": deepcopy(
+                dict(step.get("renderer_invocation_contract") or {})
+            ),
         }
         for step in state.get("steps", []) or [] if isinstance(step, dict)
         if step.get("renderer_id") or step.get("renderer_invocation_contract")
@@ -3773,13 +4038,62 @@ def plan_contract_violations(state: PlanState) -> List[Dict[str, str]]:
     return violations
 
 
-def _output_identity(value: Any) -> str:
+def _output_path_or_name(value: Any) -> str:
     if isinstance(value, dict):
-        value = value.get("path_or_name") or value.get("path") or value.get("filename") or value.get("output_id")
-    text = str(value or "").strip().strip("`'\"")
+        value = (
+            value.get("resolved_path")
+            or value.get("path_or_name")
+            or value.get("path")
+            or value.get("filename")
+            or value.get("value")
+            or value.get("output_id")
+        )
+    return str(value or "").strip().strip("`'\"")
+
+
+def canonical_output_identity(value: Any, canonical_output_dir: str | Path = "") -> str:
+    """Return a POSIX-safe lexical identity for a planned output path.
+
+    Relative paths are rooted in the TaskSpec output directory.  No file must
+    exist and case is preserved, so same basenames in different directories do
+    not collapse into one logical output.
+    """
+    text = _output_path_or_name(value)
     if not text:
         return ""
-    return Path(text).name.lower() or text.lower()
+    path = os.path.expanduser(text)
+    base = os.path.expanduser(str(canonical_output_dir or "").strip())
+    if not os.path.isabs(path):
+        path = os.path.join(base or os.getcwd(), path)
+    return os.path.abspath(os.path.normpath(path))
+
+
+def _output_identity(value: Any, canonical_output_dir: str | Path = "") -> str:
+    """Compatibility wrapper for the canonical path identity."""
+    return canonical_output_identity(value, canonical_output_dir)
+
+
+def _canonical_output_dir(
+    output_contracts: List[Dict[str, Any]] | None = None,
+    task_spec: Optional[Mapping[str, Any]] = None,
+) -> str:
+    values = list(output_contracts or [])
+    if isinstance(task_spec, Mapping):
+        for item in task_spec.get("output_contracts") or task_spec.get("expected_outputs") or []:
+            if isinstance(item, Mapping) and item not in values:
+                values.append(dict(item))
+    for item in values:
+        if not isinstance(item, Mapping) or str(item.get("role") or "") != "output_dir":
+            continue
+        path = str(
+            item.get("resolved_path")
+            or item.get("path")
+            or item.get("path_or_name")
+            or ""
+        ).strip()
+        if path:
+            return canonical_output_identity(path)
+    return ""
 
 
 def _renderer_owned_outputs(record: Dict[str, Any]) -> List[str]:
@@ -3821,7 +4135,6 @@ def collapse_renderer_composite_steps(
     for skill_id in sorted(renderer_ids):
         renderer = records_by_skill.get(skill_id, {})
         owned_outputs = _renderer_owned_outputs(renderer)
-        owned_identities = {_output_identity(item) for item in owned_outputs if _output_identity(item)}
         matches = [
             (index, step)
             for index, step in enumerate(steps)
@@ -3915,8 +4228,11 @@ def collapse_renderer_composite_steps(
 def validate_output_contracts(
     state: PlanState,
     output_contracts: List[Dict[str, Any]],
+    *,
+    canonical_output_dir: str | Path = "",
 ) -> List[Dict[str, Any]]:
-    """Validate required coverage and single active producer ownership."""
+    """Validate exact required coverage and single materializable ownership."""
+    output_dir = str(canonical_output_dir or _canonical_output_dir(output_contracts))
     producers: Dict[str, List[str]] = {}
     for index, raw_step in enumerate(state.get("steps", []) or [], start=1):
         if not isinstance(raw_step, dict):
@@ -3924,20 +4240,31 @@ def validate_output_contracts(
         step = normalize_plan_step(dict(raw_step), index)
         step_id = str(step.get("step_id") or "")
         renderer_step = str(step.get("step_type") or "") == "renderer_composite"
-        if renderer_step and not step.get("renderer_invocation_contract"):
-            continue
-        for output in step.get("outputs", []) or []:
-            identity = _output_identity(output)
+        # Renderer prose and owned_outputs are capabilities, not producer
+        # evidence.  Only deterministic bound_outputs establish ownership.
+        outputs = (
+            [item.get("required_output") or item.get("bound_path") or item.get("canonical_path") for item in step.get("bound_outputs", []) or []]
+            if renderer_step
+            else list(step.get("outputs", []) or [])
+        )
+        for output in outputs:
+            identity = _output_identity(output, output_dir)
             if identity and step_id not in producers.setdefault(identity, []):
                 producers[identity].append(step_id)
 
-    violations: List[Dict[str, Any]] = []
+    violations: List[Dict[str, Any]] = list(state.get("output_binding_violations") or [])
+    unresolved_ids = {
+        str(item.get("canonical_identity") or "")
+        for item in violations
+        if isinstance(item, dict)
+        and str(item.get("violation_code") or "") == "RENDERER_OUTPUT_BINDING_UNRESOLVED"
+    }
     for contract in output_contracts or []:
         if not isinstance(contract, dict) or not bool(contract.get("required", True)):
             continue
         if str(contract.get("role") or "") == "output_dir":
             continue
-        identity = _output_identity(contract)
+        identity = _output_identity(contract, output_dir)
         if not identity:
             continue
         owner_ids = producers.get(identity, [])
@@ -3950,7 +4277,7 @@ def validate_output_contracts(
             "affected_step_ids": list(owner_ids),
             "allowed_changed_step_ids": list(owner_ids),
         }
-        if not owner_ids:
+        if not owner_ids and identity not in unresolved_ids:
             violations.append({
                 **common,
                 "violation_code": "REQUIRED_OUTPUT_UNCOVERED",
@@ -3961,7 +4288,7 @@ def validate_output_contracts(
         elif len(owner_ids) > 1:
             violations.append({
                 **common,
-                "violation_code": "DUPLICATE_OUTPUT_PRODUCER",
+                "violation_code": "OUTPUT_PRODUCER_AMBIGUOUS",
                 "step_id": owner_ids[0],
                 "field": "outputs",
                 "reason": f"Output `{common['path_or_name'] or identity}` has multiple active producers: {', '.join(owner_ids)}.",
@@ -4002,17 +4329,289 @@ def bind_renderer_invocation_contracts(
         if not projection.get("complete") or projection.get("conflicts"):
             continue
         payload = {
+            "schema_version": 2,
             "renderer_id": str(renderer.get("renderer_id") or step.get("renderer_id") or ""),
             "producer_step_id": str(step.get("step_id") or ""),
             "arguments": projection.get("arguments") or {},
             "outdir": str(projection.get("outdir") or ""),
-            "outputs": list(step.get("outputs") or []),
+            "outputs": [],
+            "bound_outputs": [],
         }
         payload["invocation_id"] = "renderer-invocation-" + _stable_payload_hash(payload)[:20]
         payload["projection_hash"] = _stable_payload_hash(projection)
         payload["source"] = "task_spec_renderer_projection"
         step["renderer_invocation_contract"] = payload
         candidate["steps"][index - 1] = step
+    return candidate
+
+
+def _field_identity(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", str(value or "").strip().lower()).strip("_")
+
+
+def _renderer_binding_for_output(
+    contract: Mapping[str, Any],
+    renderer: Mapping[str, Any],
+) -> Tuple[str, Dict[str, Any]]:
+    role = _field_identity(contract.get("role"))
+    output_id = str(contract.get("output_id") or "")
+    requested_name = Path(_output_path_or_name(contract)).name
+    for logical, raw_binding in dict(renderer.get("output_bindings") or {}).items():
+        binding = dict(raw_binding or {}) if isinstance(raw_binding, Mapping) else {"mode": str(raw_binding or "")}
+        declared = str(
+            binding.get("logical_output")
+            or binding.get("path")
+            or binding.get("filename")
+            or logical
+        )
+        if (
+            role == _field_identity(logical)
+            or output_id == str(logical)
+            or (requested_name and Path(declared).name == requested_name)
+        ):
+            return str(logical), binding
+    return "", {}
+
+
+def _renderer_has_output_capability(
+    contract: Mapping[str, Any],
+    renderer: Mapping[str, Any],
+    logical_output: str,
+    binding: Mapping[str, Any],
+) -> Tuple[bool, str]:
+    requested_name = Path(_output_path_or_name(contract)).name
+    role = _field_identity(contract.get("role"))
+    declared_name = Path(str(binding.get("filename") or binding.get("path") or "")).name
+    for owned in _renderer_owned_outputs(dict(renderer)):
+        owned_name = Path(str(owned)).name
+        if requested_name and owned_name == requested_name:
+            return True, str(owned)
+        if declared_name and owned_name == declared_name and role == _field_identity(logical_output):
+            return True, str(owned)
+    return False, ""
+
+
+def bind_renderer_output_contracts(
+    state: PlanState,
+    renderer_records: List[Dict[str, Any]],
+    output_contracts: List[Dict[str, Any]],
+    task_spec: Optional[Dict[str, Any]] = None,
+) -> PlanState:
+    """Bind TaskSpec outputs to exact renderer arguments or fixed paths.
+
+    ``owned_outputs`` only authorizes consideration of a capability.  A bound
+    producer is written only after the declarative materialization rule proves
+    the exact canonical path requested by TaskSpec.
+    """
+    candidate = deepcopy(state)
+    records = {
+        str(item.get("skill_id") or ""): dict(item)
+        for item in renderer_records or []
+        if isinstance(item, dict) and str(item.get("skill_id") or "")
+    }
+    output_dir = _canonical_output_dir(output_contracts, task_spec)
+    violations: List[Dict[str, Any]] = []
+    binding_audit: List[Dict[str, Any]] = []
+    contracts = [
+        dict(item) for item in output_contracts or []
+        if isinstance(item, dict) and str(item.get("role") or "") != "output_dir"
+    ]
+    for index, raw in enumerate(candidate.get("steps", []) or [], 1):
+        if not isinstance(raw, dict):
+            continue
+        step = normalize_plan_step(raw, index)
+        if str(step.get("step_type") or "") != "renderer_composite":
+            continue
+        skill_id = str(step.get("selected_skill_id") or "")
+        if not skill_id:
+            skill_id = next((str(item) for item in step.get("skill_ids", []) or [] if str(item) in records), "")
+        renderer = records.get(skill_id, {})
+        invocation = dict(step.get("renderer_invocation_contract") or {})
+        if not renderer or not invocation:
+            continue
+        outdir = str(invocation.get("outdir") or output_dir)
+        argument_specs = dict((renderer.get("invocation") or {}).get("arguments") or {})
+        bound_outputs: List[Dict[str, Any]] = []
+        bound_paths: List[str] = []
+        arguments = dict(invocation.get("arguments") or {})
+
+        for contract in contracts:
+            logical_output, binding = _renderer_binding_for_output(contract, renderer)
+            capable, owned_capability = _renderer_has_output_capability(
+                contract,
+                renderer,
+                logical_output,
+                binding,
+            )
+            if not capable:
+                continue
+            requested = _output_path_or_name(contract)
+            required_identity = canonical_output_identity(contract, output_dir)
+            mode = str(binding.get("mode") or "").strip().lower()
+            argument = str(binding.get("argument") or "").strip()
+            materialized = ""
+            status = "bound"
+            reason = ""
+            if not binding:
+                status = "unresolved"
+                reason = "Renderer capability has no declarative output binding metadata."
+            elif mode == "argument":
+                if not argument or argument not in argument_specs:
+                    status = "unresolved"
+                    reason = f"Declared output argument `{argument or '<missing>'}` is absent from the renderer invocation schema."
+                else:
+                    arguments[argument] = requested
+                    materialized = canonical_output_identity(requested, outdir)
+            elif mode == "fixed":
+                fixed = str(binding.get("path") or binding.get("filename") or "").strip()
+                if not fixed:
+                    status = "unresolved"
+                    reason = "Fixed output binding has no deterministic path."
+                else:
+                    materialized = canonical_output_identity(fixed, outdir)
+            else:
+                status = "unresolved"
+                reason = f"Unsupported renderer output binding mode `{mode or '<missing>'}`."
+            if status == "bound" and materialized != required_identity:
+                status = "unresolved"
+                reason = (
+                    f"Renderer materializes `{materialized}` but TaskSpec requires `{required_identity}`."
+                )
+
+            audit = {
+                "task": str(candidate.get("task_id") or ""),
+                "step_id": str(step.get("step_id") or ""),
+                "renderer_id": str(renderer.get("renderer_id") or step.get("renderer_id") or ""),
+                "required_output": requested,
+                "canonical_identity": required_identity,
+                "owned_capability": owned_capability,
+                "binding_mode": mode,
+                "binding_argument": argument,
+                "bound_path": materialized,
+                "binding_source": "skill_metadata.output_bindings",
+                "status": status,
+            }
+            binding_audit.append(audit)
+            logger.info(
+                "Renderer output binding: task=%s step=%s renderer=%s required=%s capability=%s mode=%s arg=%s bound=%s source=%s status=%s",
+                audit["task"], audit["step_id"], audit["renderer_id"], requested,
+                owned_capability or "-", mode or "-", argument or "-",
+                materialized or "-", audit["binding_source"], status,
+            )
+            if status != "bound":
+                violations.append({
+                    **audit,
+                    "violation_code": "RENDERER_OUTPUT_BINDING_UNRESOLVED",
+                    "field": "bound_outputs",
+                    "output_id": str(contract.get("output_id") or ""),
+                    "path_or_name": requested,
+                    "affected_output_ids": [str(contract.get("output_id") or required_identity)],
+                    "affected_step_ids": [str(step.get("step_id") or "")],
+                    "allowed_changed_step_ids": [],
+                    "reason": reason,
+                })
+                continue
+            record = {
+                "output_id": str(contract.get("output_id") or ""),
+                "logical_output": logical_output,
+                "required_output": requested,
+                "canonical_path": required_identity,
+                "materialized_path": materialized,
+                "binding_mode": mode,
+                "binding_argument": argument,
+                "binding_source": "skill_metadata.output_bindings",
+                "renderer_id": str(renderer.get("renderer_id") or step.get("renderer_id") or ""),
+                "producer_step_id": str(step.get("step_id") or ""),
+                "required": bool(contract.get("required", True)),
+            }
+            bound_outputs.append(record)
+            if requested and requested not in bound_paths:
+                bound_paths.append(requested)
+
+        if contracts:
+            step["bound_outputs"] = bound_outputs
+            step["outputs"] = bound_paths
+            step["output_contracts"] = list(bound_paths)
+        invocation["arguments"] = arguments
+        invocation["outdir"] = outdir
+        invocation["outputs"] = list(bound_paths)
+        invocation["bound_outputs"] = deepcopy(bound_outputs)
+        invocation["manifest_path"] = canonical_output_identity(
+            str(renderer.get("manifest_filename") or "manifest.json"),
+            outdir,
+        ) if outdir else ""
+        invocation["arguments_hash"] = _stable_payload_hash({
+            "arguments": arguments,
+            "outdir": outdir,
+            "outputs": bound_outputs,
+        })
+        invocation_payload = {
+            key: value for key, value in invocation.items()
+            if key != "invocation_id"
+        }
+        invocation["invocation_id"] = "renderer-invocation-" + _stable_payload_hash(invocation_payload)[:20]
+        step["renderer_invocation_contract"] = invocation
+        candidate["steps"][index - 1] = step
+
+    candidate["output_binding_violations"] = violations
+    if binding_audit:
+        candidate.setdefault("normalization_audit", []).append({
+            "phase": "bind_renderer_output_contracts",
+            "bindings": binding_audit,
+        })
+    candidate["semantic_plan_hash"] = semantic_plan_hash(candidate)
+    return candidate
+
+
+def normalize_plan_output_count_criteria(
+    state: PlanState,
+    output_contracts: List[Dict[str, Any]],
+) -> PlanState:
+    """Remove stale machine-generated output counts from review criteria."""
+    candidate = deepcopy(state)
+    required_count = sum(
+        1 for item in output_contracts or []
+        if isinstance(item, dict)
+        and bool(item.get("required", True))
+        and str(item.get("role") or "") != "output_dir"
+    )
+    changes: List[Dict[str, Any]] = []
+    english = re.compile(r"\ball\s+(?P<count>\d+)\s+(?:required\s+)?output(?:\s+files?|s)\b", re.IGNORECASE)
+    chinese = re.compile(r"所有\s*(?P<count>\d+)\s*个\s*输出(?:文件|产物)?\s*均?")
+    for index, raw in enumerate(candidate.get("steps", []) or [], 1):
+        if not isinstance(raw, dict):
+            continue
+        step = normalize_plan_step(raw, index)
+        normalized_criteria: List[str] = []
+        for criterion in step.get("success_criteria", []) or []:
+            text = str(criterion)
+            counts = [int(value) for value in [
+                *(match.group("count") for match in english.finditer(text)),
+                *(match.group("count") for match in chinese.finditer(text)),
+            ]]
+            replaced = english.sub("all required outputs", text)
+            replaced = chinese.sub("所有 required outputs 均", replaced)
+            if replaced != text:
+                changes.append({
+                    "violation_code": (
+                        "PLAN_OUTPUT_COUNT_MISMATCH"
+                        if any(count != required_count for count in counts)
+                        else "PLAN_OUTPUT_COUNT_NORMALIZED"
+                    ),
+                    "step_id": str(step.get("step_id") or ""),
+                    "declared_counts": counts,
+                    "required_count": required_count,
+                    "before": text,
+                    "after": replaced,
+                })
+            normalized_criteria.append(replaced)
+        step["success_criteria"] = normalized_criteria
+        candidate["steps"][index - 1] = step
+    if changes:
+        candidate.setdefault("normalization_audit", []).append({
+            "phase": "normalize_plan_output_count_criteria",
+            "changes": changes,
+        })
     return candidate
 
 
@@ -4028,9 +4627,20 @@ def normalize_plan_contracts(
     renderer_skill_ids = [str(item.get("skill_id") or "") for item in records if str(item.get("skill_id") or "")]
     normalized, audit = collapse_renderer_composite_steps(state, renderer_skill_ids, records)
     normalized = bind_renderer_invocation_contracts(normalized, records, task_spec)
+    normalized = bind_renderer_output_contracts(
+        normalized,
+        records,
+        list(output_contracts or []),
+        task_spec,
+    )
+    normalized = normalize_plan_output_count_criteria(normalized, list(output_contracts or []))
     violations: List[Dict[str, Any]] = []
     violations.extend(plan_contract_violations(normalized))
-    violations.extend(validate_output_contracts(normalized, list(output_contracts or [])))
+    violations.extend(validate_output_contracts(
+        normalized,
+        list(output_contracts or []),
+        canonical_output_dir=_canonical_output_dir(list(output_contracts or []), task_spec),
+    ))
     return normalized, audit, violations
 
 
