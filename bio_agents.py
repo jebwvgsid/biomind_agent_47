@@ -338,6 +338,7 @@ def _consultant_validation_is_format_repair_error(text: str) -> bool:
             "finish must include either a workflow handoff",
             "selected invalid skills",
             "raw selected items",
+            "consultant_skill_reselection_error",
         )
     )
 
@@ -6978,8 +6979,8 @@ class BioAnalystAgent:
         normalized_selected: List[str],
         issues: List[str],
     ) -> str:
-        """Replace an invalid Consultant skill marker with canonical IDs and keep an audit note."""
-        marker = "[SELECTED_SKILLS: " + ", ".join(repaired_skills) + "]"
+        """Write the validated Consultant selection and retain a repair audit note."""
+        marker = "[SELECTED_SKILLS: " + (", ".join(repaired_skills) or "none") + "]"
         repaired_summary = re.sub(
             r"\[SELECTED_SKILLS\s*:\s*.*?\]",
             marker,
@@ -6992,14 +6993,75 @@ class BioAnalystAgent:
 
         audit_note = (
             "[CONSULTANT_SKILL_REPAIR]\n"
-            "- Deterministically replaced invalid Consultant-selected skills before Planner handoff.\n"
+            "- Valid selections were preserved; invalid IDs were either repaired inside the original candidate allowlist or dropped.\n"
             f"- raw_selected: {', '.join(raw_selected) if raw_selected else 'None'}\n"
             f"- normalized_selected_before_repair: {', '.join(normalized_selected) if normalized_selected else 'None'}\n"
             f"- validation_issues: {'; '.join(issues) if issues else 'None'}\n"
-            f"- repair_selected: {', '.join(repaired_skills) if repaired_skills else 'None'}\n"
+            f"- final_selected: {', '.join(repaired_skills) if repaired_skills else 'None'}\n"
             "[/CONSULTANT_SKILL_REPAIR]"
         )
         return repaired_summary.strip() + "\n" + audit_note
+
+    def _consultant_skill_repair_decision(
+        self,
+        raw_selected: List[str],
+        candidate_skill_ids: List[str],
+        validation_errors: List[str],
+        max_skills: int,
+    ) -> Dict[str, Any]:
+        """Choose deterministic ID repair, one restricted reselection, or safe drop."""
+        if not self.skill_manager:
+            return {
+                "action": "handoff",
+                "selected": [],
+                "valid_selected": [],
+                "invalid_ids": list(raw_selected or []),
+                "repaired_ids": [],
+                "unresolved_invalid_ids": list(raw_selected or []),
+                "feedback": "",
+            }
+
+        previous_feedback = "\n".join(str(item or "") for item in validation_errors or [])
+        prior_preserved: List[str] = []
+        for match in re.finditer(
+            r"\[VALID_SELECTIONS_PRESERVED\s*:\s*(.*?)\]",
+            previous_feedback,
+            flags=re.IGNORECASE | re.DOTALL,
+        ):
+            prior_preserved.extend(
+                item.strip()
+                for item in re.split(r"\s*(?:,|，|;|；)\s*", match.group(1))
+                if item.strip() and item.strip().lower() not in {"none", "n/a", "null"}
+            )
+
+        result = self.skill_manager.repair_selected_skill_ids(
+            raw_selected,
+            candidate_skill_ids,
+            preserved_ids=prior_preserved,
+            max_results=max_skills,
+        )
+        reselection_already_requested = "<consultant_skill_reselection_error>" in previous_feedback
+        if result["unresolved_invalid_ids"] and not reselection_already_requested:
+            preserved = result["selected"]
+            candidates = result["candidate_ids"]
+            feedback = (
+                "<consultant_validation_error>\n"
+                "<consultant_skill_reselection_error>\n"
+                "Your previous skill selection contained unknown IDs. Select zero or more IDs ONLY from "
+                "the original candidate allowlist below. Copy canonical IDs exactly; do not invent IDs and "
+                "do not expand the candidate scope.\n"
+                f"Invalid previous IDs: {', '.join(result['unresolved_invalid_ids'])}\n"
+                f"Original candidate allowlist: {', '.join(candidates) if candidates else 'None'}\n"
+                f"[VALID_SELECTIONS_PRESERVED: {', '.join(preserved) if preserved else 'none'}]\n"
+                "Return FINISH with exactly one [SELECTED_SKILLS: ...] marker.\n"
+                "</consultant_skill_reselection_error>\n"
+                "</consultant_validation_error>"
+            )
+            return {**result, "action": "reselect", "feedback": feedback}
+
+        # A repeated invalid reselection is not retried globally. Unknown IDs
+        # are dropped and only preserved/uniquely repaired canonical IDs remain.
+        return {**result, "action": "handoff", "feedback": ""}
 
     def _selection_max_skills(self, text: str) -> int:
         """Return the task-wide selection bound; Planner owns per-step narrowing."""
@@ -7348,12 +7410,6 @@ class BioAnalystAgent:
         if not self.skill_manager:
             return {}
         raw_selected = list(dict.fromkeys([sid for sid in (fallback_raw or []) if str(sid).strip()]))
-        if not raw_selected:
-            raw_selected = self.skill_manager.match_skills(consultant_context, max_results=max_skills)
-        discovery_hints: Dict[str, Any] = {}
-        if not raw_selected:
-            discovery_hints = self._controlled_runtime_discovery_hints(consultant_context, task_id)
-            raw_selected = list(discovery_hints.get("candidate_skills") or [])[:max_skills]
         selected = self.skill_manager.normalize_selected_skills(raw_selected, max_results=max_skills)
         if not selected:
             return {}
@@ -7372,16 +7428,6 @@ class BioAnalystAgent:
         if audit:
             summary_parts.extend(["", audit])
         runtime_audits, runtime_summary = self._consultant_runtime_preflight(selected, task_id)
-        if discovery_hints:
-            summary_parts.extend([
-                "",
-                "[CONTROLLED_DISCOVERY_HINTS]",
-                f"- candidate_skills: {', '.join(discovery_hints.get('candidate_skills', []) or []) or 'none'}",
-                f"- candidate_envs: {', '.join(discovery_hints.get('candidate_envs', []) or []) or 'none'}",
-                f"- candidate_tools: {', '.join(discovery_hints.get('candidate_tools', []) or []) or 'none'}",
-                "- evidence_only: true; readiness still requires PackageManager evidence plus a passing healthcheck.",
-                "[/CONTROLLED_DISCOVERY_HINTS]",
-            ])
         if runtime_summary:
             summary_parts.extend(["", runtime_summary])
         summary = "\n".join(summary_parts).strip()
@@ -9681,10 +9727,12 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     parts = action.split(maxsplit=2)
                     if len(parts) >= 2:
                         fallback_raw.append(parts[1])
-                if not fallback_raw:
-                    fallback_raw = self.skill_manager.match_skills(consultant_context, max_results=consultant_max_skills)
                 selected = self.skill_manager.normalize_selected_skills(fallback_raw, max_results=consultant_max_skills)
-                hints = ", ".join(selected) if selected else "None"
+                candidate_hints = self.skill_manager.candidate_skill_ids_for_prompt(
+                    consultant_context,
+                    max_results=consultant_max_skills,
+                )
+                hints = ", ".join(candidate_hints) if candidate_hints else "None"
                 skill_only_handoff = self._consultant_skill_only_fallback_handoff(
                     consultant_context=consultant_context,
                     fallback_raw=fallback_raw,
@@ -9736,10 +9784,11 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 }
 
             if len(execute_actions) >= 4 and len(failed_consultant_execs) < 3:
-                fallback_raw = self.skill_manager.candidate_skill_ids_for_prompt(
-                    consultant_context,
-                    max_results=consultant_max_skills,
-                ) if self.skill_manager else []
+                fallback_raw = []
+                for action in load_actions:
+                    parts = action.split(maxsplit=2)
+                    if len(parts) >= 2:
+                        fallback_raw.append(parts[1])
                 skill_only_handoff = self._consultant_skill_only_fallback_handoff(
                     consultant_context=consultant_context,
                     fallback_raw=fallback_raw,
@@ -10444,68 +10493,67 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         raw_selected = self.skill_manager.parse_selected_skill_ids(summary)
                         selected = self.skill_manager.normalize_selected_skills(raw_selected, max_results=consultant_max_skills)
                         issues = self.skill_manager.validate_selected_skills(raw_selected, max_results=consultant_max_skills) if raw_selected else []
-                    if not has_workflow_handoff and issues:
-                        repair_context = consultant_context + "\n" + summary
-                        repair_raw = self.skill_manager.match_skills(
-                            repair_context,
-                            max_results=consultant_max_skills,
-                        )
-                        repair_selected = self.skill_manager.normalize_selected_skills(repair_raw, max_results=consultant_max_skills)
-                        repair_hint = (
-                            "\nUse these exact canonical skill IDs if they match the request: "
-                            + (", ".join(repair_selected) if repair_selected else "None")
-                        )
-                        obs = (
-                            "<consultant_validation_error>\n"
-                            + "\n".join(f"- {issue}" for issue in issues)
-                            + f"\nRaw selected items: {', '.join(raw_selected) if raw_selected else 'None'}"
-                            + repair_hint
-                            + "\n</consultant_validation_error>"
+                    reselection_pending = any(
+                        "<consultant_skill_reselection_error>" in error
+                        for error in validation_errors
+                    )
+                    if not has_workflow_handoff and (issues or reselection_pending):
+                        repair_decision = self._consultant_skill_repair_decision(
+                            raw_selected,
+                            candidate_skill_ids,
+                            validation_errors,
+                            consultant_max_skills,
                         )
                         output.print_once(
                             f"consultant_validation:{len(validation_errors)}",
                             (
-                                "⚠️ Consultant selected invalid skills; "
+                                "⚠️ Consultant skill selection required bounded repair; "
                                 f"raw_selected={raw_selected}; "
                                 f"normalized_selected={selected}; "
                                 f"issues={issues}; "
-                                f"repair_selected={repair_selected or []}"
+                                f"repair_action={repair_decision['action']}; "
+                                f"final_selected={repair_decision['selected']}"
                             ),
                             Fore.YELLOW,
                         )
-                        if repair_selected:
-                            runtime_audits, runtime_summary = self._consultant_runtime_preflight(
-                                repair_selected,
-                                task_id,
-                            )
-                            repaired_summary = self._repair_consultant_skill_summary(
-                                summary,
-                                repair_selected,
-                                list(raw_selected),
-                                list(selected),
-                                list(issues),
-                            )
-                            if runtime_summary:
-                                repaired_summary = (repaired_summary.rstrip() + "\n\n" + runtime_summary).strip()
-                            output.print_once(
-                                f"consultant_auto_repair:{len(validation_errors)}",
-                                "✓ Consultant skill selection auto-repaired. Handing to Planner.",
-                                Fore.GREEN,
-                            )
+                        if repair_decision["action"] == "reselect":
                             return {
-                                "messages": [AIMessage(content="FINISH\n" + repaired_summary)],
-                                "input_audit": input_resolution_result,
-                                "selected_skills": repair_selected,
-                                "selected_skills_raw": list(raw_selected),
-                                "skill_selection_source": "consultant_auto_repair",
-                                "requirements_summary": repaired_summary,
-                                "runtime_audit": runtime_audits,
-                                "runtime_status": self._runtime_status_for_task(task_id),
-                                "memory_packet_context": self._consultant_handoff_memory_packet(repaired_summary, consultant_memory_retrieval_context),
-                                "wiki_memory_context": consultant_wiki_context,
-                                "next_step": "planner",
+                                "messages": [
+                                    AIMessage(content=content),
+                                    SystemMessage(content=repair_decision["feedback"]),
+                                ],
+                                "next_step": "consultant",
                             }
-                        return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
+
+                        selected = list(repair_decision["selected"])
+                        runtime_audits, runtime_summary = self._consultant_runtime_preflight(selected, task_id)
+                        repaired_summary = self._repair_consultant_skill_summary(
+                            summary,
+                            selected,
+                            list(raw_selected),
+                            list(repair_decision["valid_selected"]),
+                            list(issues),
+                        )
+                        if runtime_summary:
+                            repaired_summary = (repaired_summary.rstrip() + "\n\n" + runtime_summary).strip()
+                        output.print_once(
+                            f"consultant_bounded_repair:{len(validation_errors)}",
+                            "✓ Consultant skill repair converged inside the original candidate allowlist. Handing to Planner.",
+                            Fore.GREEN,
+                        )
+                        return {
+                            "messages": [AIMessage(content="FINISH\n" + repaired_summary)],
+                            "input_audit": input_resolution_result,
+                            "selected_skills": selected,
+                            "selected_skills_raw": list(raw_selected),
+                            "skill_selection_source": "consultant_bounded_repair",
+                            "requirements_summary": repaired_summary,
+                            "runtime_audit": runtime_audits,
+                            "runtime_status": self._runtime_status_for_task(task_id),
+                            "memory_packet_context": self._consultant_handoff_memory_packet(repaired_summary, consultant_memory_retrieval_context),
+                            "wiki_memory_context": consultant_wiki_context,
+                            "next_step": "planner",
+                        }
                 else:
                     raw_selected = []
                     selected = []

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from agent_core.task_spec import extract_path_tokens
+from memory.task_semantics import is_explicit_tad_boundary_artifact_intent
 
 
 ALWAYS_FORBIDDEN_PATH_TOKENS = (
@@ -63,11 +64,10 @@ ARTIFACT_SPECS: Tuple[ArtifactSpec, ...] = (
         query_tokens=(
             "tad boundary",
             "tad boundaries",
-            "boundary",
-            "boundaries",
             "_boundaries.bed",
-            "边界",
             "tad边界",
+            "tad 边界",
+            "拓扑结构域边界",
         ),
         task_id_tokens=("-BOUNDARY-",),
         preferred_task_token="-TAD-",
@@ -838,7 +838,12 @@ def _dedupe_group_records(records: Iterable[Dict[str, Any]], key_fields: Sequenc
 def _select_artifact_spec(text: str, task_id: str = "") -> Optional[ArtifactSpec]:
     task_upper = str(task_id or "").upper()
     for spec in ARTIFACT_SPECS:
-        if any(token in task_upper for token in spec.task_id_tokens):
+        canonical_benchmark_task = task_upper.startswith("BM-")
+        if spec.kind == "tad_boundaries":
+            canonical_benchmark_task = canonical_benchmark_task and any(
+                token in task_upper for token in ("3DDNA", "3D-DNA", "TAD", "HIC")
+            )
+        if canonical_benchmark_task and any(token in task_upper for token in spec.task_id_tokens):
             return spec
 
     lower = str(text or "").lower()
@@ -853,11 +858,7 @@ def _query_matches_spec(lower_text: str, spec: ArtifactSpec) -> bool:
     if spec.kind == "tad_domains":
         return has_tad_context and any(token in lower_text for token in spec.query_tokens)
     if spec.kind == "tad_boundaries":
-        return (
-            has_tad_context
-            or "_boundaries.bed" in lower_text
-            or "边界" in lower_text
-        ) and any(token in lower_text for token in spec.query_tokens)
+        return is_explicit_tad_boundary_artifact_intent(lower_text)
     return False
 
 

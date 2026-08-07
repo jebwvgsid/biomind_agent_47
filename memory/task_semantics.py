@@ -37,6 +37,7 @@ def infer_task_semantics(
     messages = messages or []
     text = _semantic_context_text(task_id, stage, payload, messages)
     intent_text = _semantic_intent_text(task_id, stage, payload, messages)
+    sample_text = _semantic_sample_text(payload, messages)
 
     workflow_id = _first_text(
         payload.get("workflow_id"),
@@ -59,7 +60,7 @@ def infer_task_semantics(
         payload.get("sample_id"),
         payload.get("sample_name"),
         _nested_get(payload, ("task_semantics", "samples")),
-        _extract_samples(text),
+        _extract_samples(sample_text),
     )
     resolutions = _semantic_list(
         payload.get("resolution"),
@@ -297,7 +298,9 @@ def _semantic_intent_text(
         }
 
     context = {
-        "task_id": task_id,
+        # A generated task title can contain stale inferred semantics. Treat it
+        # as fallback evidence only when no user-authored message is available.
+        "task_id": task_id if not user_messages else "",
         "stage": stage,
         "payload": sanitize_value(intent_payload),
         "messages": user_messages,
@@ -305,15 +308,85 @@ def _semantic_intent_text(
     return json.dumps(context, ensure_ascii=False, default=str)[:40_000]
 
 
+def _semantic_sample_text(payload: Dict[str, Any], messages: Sequence[Any]) -> str:
+    """Project only user-authored and explicitly sample-bearing text."""
+    parts: List[str] = []
+    for message in list(messages)[-12:]:
+        if _role_of(message).lower() in {"human", "message", "str"}:
+            parts.append(_content_of(message))
+    if not parts:
+        parts.extend(_content_of(message) for message in list(messages)[-2:])
+
+    for key in (
+        "user_query",
+        "original_user_query",
+        "original_request",
+        "user_request",
+        "query",
+        "prompt",
+    ):
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            parts.append(value)
+    return "\n".join(parts)[:40_000]
+
+
 def _extract_samples(text: str) -> List[str]:
+    """Extract biological sample candidates with role-aware evidence.
+
+    Explicit sample declarations are strong evidence. Basenames from primary
+    input data are medium evidence, but report/status/output filenames and
+    ambiguous aggregate formats such as VCF/TSV are not sample identities.
+    """
     samples: List[str] = []
-    for match in re.finditer(r"(?i)(?:sample|samples|sample_id|sample_name)\s*[:=]\s*([A-Za-z0-9_.-][A-Za-z0-9_. ,;-]{0,160})", text):
+    for match in re.finditer(
+        r"(?i)(?:sample|samples|sample_id|sample_name|样本(?:id|编号|名称)?)\s*[:=：]\s*"
+        r"([A-Za-z0-9_.-][A-Za-z0-9_. ,;-]{0,160})",
+        text,
+    ):
         raw = re.split(r"[\n\r\]\[{}()]", match.group(1), maxsplit=1)[0]
         samples.extend(part.strip(" ,;") for part in re.split(r"[,;]\s*", raw) if part.strip(" ,;"))
-    for match in re.finditer(r"(?i)([A-Za-z0-9][A-Za-z0-9_.-]{1,80})\.(?:mcool|cool|hic|bed|tsv|csv|bw|bigwig|bam|fastq|fq|rds|h5ad)\b", text):
-        stem = match.group(1).strip("._-")
-        if stem and stem.lower() not in {"tad_domains", "tad_boundaries", "summary", "matrix"}:
-            samples.append(stem)
+
+    section_role = "neutral"
+    for line in str(text or "").splitlines():
+        stripped = line.strip()
+        lower = stripped.lower()
+        if not stripped:
+            continue
+        if re.search(r"(?:输入文件|输入数据|正式输入|数据位置|input files?|input data|data location)\s*[:：]?", lower):
+            section_role = "input"
+        elif re.search(
+            r"(?:输出目录|输出文件|预期产物|最终产物|通用要求|停止条件|边界条件|禁止|允许|"
+            r"output directory|expected outputs?|deliverables?|constraints?)\s*[:：]?",
+            lower,
+        ):
+            section_role = "non_sample"
+        elif stripped.endswith((":", "：")) and len(stripped) <= 100:
+            section_role = "neutral"
+
+        if section_role == "non_sample" or re.search(
+            r"(?:预期产物|最终至少生成|输出目录|输出文件|report|status|audit|log file|禁止|边界条件)",
+            lower,
+        ):
+            continue
+
+        for match in re.finditer(
+            r"(?i)([A-Za-z0-9][A-Za-z0-9_.-]{1,100})\."
+            r"(?:mcool|cool|hic|bam|cram|fastq|fq|rds|h5ad)(?:\.gz)?\b",
+            stripped,
+        ):
+            stem = match.group(1).strip("._-")
+            stem = re.sub(r"(?i)(?:[._-](?:R?[12]|READ[12]))$", "", stem).strip("._-")
+            if stem and stem.lower() not in {
+                "tad_domains",
+                "tad_boundaries",
+                "summary",
+                "matrix",
+                "contact_matrix",
+                "reference",
+                "genome",
+            }:
+                samples.append(stem)
     return _dedupe_semantic_items(samples, limit=12)
 
 
@@ -412,7 +485,7 @@ def _infer_analysis_type(text: str, skills: Sequence[str], workflow_id: str) -> 
         return "compartment_calling"
     if any(token in haystack for token in ("differential-tad", "differential_tad", "differential tad", "hicdifferentialtad", "差异tad", "差异 tad", "差异拓扑结构域")):
         return "differential_tad"
-    if any(token in haystack for token in ("boundary-change", "boundary_change", "boundary changes", "tad boundary", "边界")):
+    if is_tad_boundary_change_intent(haystack):
         return "tad_boundary_change"
     if any(token in haystack for token in ("tad-calling", "tad_calling", "tad calling", "hicfindtads", "call tads", "tad 鉴定", "tad鉴定")):
         return "tad_calling"
@@ -421,6 +494,47 @@ def _infer_analysis_type(text: str, skills: Sequence[str], workflow_id: str) -> 
     if any(token in haystack for token in ("scrna", "seurat", "single-cell")):
         return "scrna_analysis"
     return "general_analysis"
+
+
+def is_explicit_tad_boundary_artifact_intent(text: str) -> bool:
+    """Return whether text explicitly names a TAD/domain boundary artifact."""
+    value = str(text or "").lower()
+    if "_boundaries.bed" in value:
+        return True
+    return bool(
+        re.search(
+            r"(?:\btad[\s_-]*boundar(?:y|ies)\b|"
+            r"\b(?:topological(?:ly)? associating|chromatin) domain[\s_-]*boundar(?:y|ies)\b|"
+            r"\btad\s*边界|拓扑结构域\s*边界|染色质结构域\s*边界)",
+            value,
+            flags=re.IGNORECASE,
+        )
+    )
+
+
+def is_tad_boundary_change_intent(text: str) -> bool:
+    """Require explicit TAD boundary objects plus change/comparison intent."""
+    value = str(text or "").lower()
+    if re.search(r"\btad[-_ ]boundary[-_ ]change(?:s)?\b", value):
+        return True
+    domain_evidence = bool(
+        re.search(
+            r"(?:\btad\b|topological(?:ly)? associating domain|topology domain|"
+            r"chromatin domain|3d genome|3d-dna|hi-c|\bhic\b|拓扑结构域|染色质结构域)",
+            value,
+            flags=re.IGNORECASE,
+        )
+    )
+    change_evidence = bool(
+        re.search(
+            r"(?:\bchange(?:s|d)?\b|\bdifference(?:s)?\b|\bdifferential\b|\bcompare\b|"
+            r"\bcomparison\b|\bgain(?:ed|s)?\b|\bloss(?:es)?\b|\blost\b|\bshift(?:s|ed)?\b|"
+            r"变化|差异|比较|新增|丢失|移动)",
+            value,
+            flags=re.IGNORECASE,
+        )
+    )
+    return domain_evidence and is_explicit_tad_boundary_artifact_intent(value) and change_evidence
 
 
 def _build_task_title(samples: Sequence[str], analysis_type: str, task_date: str) -> str:

@@ -1084,6 +1084,113 @@ class SkillManager:
             issues.append(f"Too many selected skills: {len(raw)} > {max_results}")
         return issues
 
+    @staticmethod
+    def _normalized_skill_id_for_repair(skill_id: Any) -> str:
+        """Normalize ID spelling only; this is not a semantic matcher."""
+        parts = []
+        for part in str(skill_id or "").strip().lower().split("/"):
+            normalized = re.sub(r"[-_]+", "-", part).strip("-")
+            if normalized:
+                parts.append(normalized)
+        return "/".join(parts)
+
+    @staticmethod
+    def _skill_id_is_single_edit_neighbor(left: str, right: str) -> bool:
+        """Return true for one insertion, deletion, or substitution in an ID."""
+        if left == right:
+            return True
+        if abs(len(left) - len(right)) > 1:
+            return False
+        if len(left) == len(right):
+            return sum(a != b for a, b in zip(left, right)) == 1
+        shorter, longer = (left, right) if len(left) < len(right) else (right, left)
+        index_short = index_long = differences = 0
+        while index_short < len(shorter) and index_long < len(longer):
+            if shorter[index_short] == longer[index_long]:
+                index_short += 1
+                index_long += 1
+                continue
+            differences += 1
+            index_long += 1
+            if differences > 1:
+                return False
+        return True
+
+    def repair_selected_skill_ids(
+        self,
+        raw_ids: List[str],
+        candidate_ids: List[str],
+        preserved_ids: List[str] = None,
+        max_results: int = None,
+    ) -> Dict[str, List[str]]:
+        """Repair misspelled IDs inside one fixed Consultant candidate allowlist.
+
+        Valid registry selections are preserved. Unknown IDs can map only to a
+        unique spelling neighbor among the original candidates; token overlap or
+        global skill relevance never authorizes a replacement.
+        """
+        limit = max_results or self.MAX_SELECTED_SKILLS
+        candidate_allowlist = self.normalize_selected_skills(candidate_ids or [], max_results=limit)
+        valid_selected = [
+            skill_id
+            for skill_id in self.normalize_selected_skills(preserved_ids or [], max_results=limit)
+            if skill_id in candidate_allowlist
+        ]
+        invalid_ids: List[str] = []
+        for raw_id in raw_ids or []:
+            value = str(raw_id or "").strip()
+            if not value:
+                continue
+            canonical = self._resolve_skill_id(value)
+            if canonical and canonical in candidate_allowlist:
+                if canonical not in valid_selected:
+                    valid_selected.append(canonical)
+            elif value not in invalid_ids:
+                invalid_ids.append(value)
+
+        repair_keys: Dict[str, set[str]] = {}
+        candidate_spellings: Dict[str, set[str]] = {}
+        for candidate in candidate_allowlist:
+            meta = self.get_skill_meta(candidate)
+            identifiers = self._skill_identifier_candidates(meta) if meta else [candidate]
+            identifiers.append(candidate)
+            normalized_spellings = {
+                self._normalized_skill_id_for_repair(identifier)
+                for identifier in identifiers
+                if str(identifier or "").strip()
+            }
+            candidate_spellings[candidate] = normalized_spellings
+            for spelling in normalized_spellings:
+                repair_keys.setdefault(spelling, set()).add(candidate)
+
+        repaired_ids: List[str] = []
+        unresolved: List[str] = []
+        for invalid_id in invalid_ids:
+            invalid_key = self._normalized_skill_id_for_repair(invalid_id)
+            matches = set(repair_keys.get(invalid_key, set()))
+            if not matches and invalid_key:
+                matches = {
+                    candidate
+                    for candidate, spellings in candidate_spellings.items()
+                    if any(self._skill_id_is_single_edit_neighbor(invalid_key, spelling) for spelling in spellings)
+                }
+            if len(matches) == 1:
+                replacement = next(iter(matches))
+                if replacement not in valid_selected and replacement not in repaired_ids:
+                    repaired_ids.append(replacement)
+            else:
+                unresolved.append(invalid_id)
+
+        selected = list(dict.fromkeys([*valid_selected, *repaired_ids]))[:limit]
+        return {
+            "candidate_ids": candidate_allowlist,
+            "valid_selected": valid_selected[:limit],
+            "invalid_ids": invalid_ids,
+            "repaired_ids": repaired_ids[:limit],
+            "unresolved_invalid_ids": unresolved,
+            "selected": selected,
+        }
+
     def validate_selected_skills_for_analysis(self, analysis_type: str, skill_ids: List[str]) -> List[str]:
         """Check selected skills against inferred analysis type using declared stage tags."""
         expected = str(analysis_type or "").strip().lower().replace("-", "_")
@@ -1545,7 +1652,7 @@ class SkillManager:
         self._save_runtime_registry()
 
     def match_skills(self, text: str, max_results: int = 3) -> List[str]:
-        """Fallback deterministic matcher when LLM-side selection is missing or invalid."""
+        """Retrieve metadata candidates; callers must not treat them as selected."""
         text_l = (text or "").lower()
         scored: List[tuple] = []
         for skill in self.discovered_skills:
@@ -1561,6 +1668,8 @@ class SkillManager:
             seen_hits = set()
             score = 0
             if self._matches_known_alias(skill, text_l):
+                score += 8
+            if self._matches_declared_runtime_tool(skill, text_l):
                 score += 8
             for term, allow_token_match in self._skill_match_term_entries(skill):
                 term_l = str(term).lower().strip()
@@ -1580,6 +1689,17 @@ class SkillManager:
                 scored.append((score, skill_id))
         scored.sort(key=lambda item: (-item[0], item[1]))
         return [skill_id for _, skill_id in scored[:max_results]]
+
+    def _matches_declared_runtime_tool(self, skill: Dict[str, Any], text_l: str) -> bool:
+        """Use exact declared tool names as high-confidence retrieval evidence."""
+        runtime = skill.get("runtime") or {}
+        for tool in self._ensure_list(runtime.get("tools")):
+            token = str(tool or "").strip().lower()
+            if len(token) < 3:
+                continue
+            if re.search(rf"(?<![a-z0-9]){re.escape(token)}(?![a-z0-9])", text_l):
+                return True
+        return False
 
     def score_skill_for_stage(self, skill_id: str, stage: Dict[str, Any], workflow_task_types: List[str] = None) -> Dict[str, Any]:
         """Score one skill against a workflow stage using structured metadata first."""
