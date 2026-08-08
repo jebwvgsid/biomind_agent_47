@@ -155,6 +155,9 @@ class SkillManager:
             str(path.relative_to(skill_dir)).replace("\\", "/")
             for path in sorted(folder.rglob("*"))
             if path.is_file()
+            and "__pycache__" not in path.parts
+            and not any(part.startswith(".") for part in path.relative_to(skill_dir).parts)
+            and path.suffix.lower() not in {".pyc", ".pyo"}
         ]
 
     def _skill_tree_structure(self) -> Dict[str, Any]:

@@ -4,6 +4,7 @@ import contextlib
 import contextvars
 import csv
 import json
+import os
 import time
 import uuid
 from collections.abc import Iterable
@@ -419,6 +420,63 @@ class RunProfiler:
         self.output_root = Path(output_root)
         self._tasks: Dict[str, Dict[str, Any]] = {}
 
+    @staticmethod
+    def _process_identity(pid: int) -> str:
+        """Return a PID reuse-resistant Linux process identity when available."""
+        try:
+            fields = Path(f"/proc/{int(pid)}/stat").read_text(encoding="utf-8").split()
+            return f"{int(pid)}:{fields[21]}"
+        except (OSError, ValueError, IndexError):
+            return f"{int(pid)}:unknown"
+
+    @classmethod
+    def _lease_owner_alive(cls, lease: Dict[str, Any]) -> bool:
+        try:
+            pid = int(lease.get("owner_pid") or 0)
+            if pid <= 0:
+                return False
+            os.kill(pid, 0)
+        except (OSError, TypeError, ValueError):
+            return False
+        expected = str(lease.get("process_identity") or "")
+        return not expected or expected.endswith(":unknown") or cls._process_identity(pid) == expected
+
+    def reconcile_stale_run(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """Convert an orphaned on-disk `running` snapshot into `interrupted`."""
+        metrics_path = self.output_root / task_id / "run_metrics.json"
+        if not metrics_path.is_file():
+            return None
+        try:
+            snapshot = json.loads(metrics_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        if str(snapshot.get("status") or "") != "running":
+            return None
+        lease = dict(snapshot.get("run_lease") or {})
+        if self._lease_owner_alive(lease):
+            return None
+        now = _now_iso()
+        snapshot["status"] = "interrupted"
+        snapshot["ended_at"] = now
+        snapshot["last_updated_at"] = now
+        snapshot["run_lease"] = {
+            **lease,
+            "state": "orphaned",
+            "released_at": now,
+            "reconciliation_reason": "owner_process_identity_not_alive",
+        }
+        events = list(snapshot.get("events") or [])
+        events.append({
+            "id": self._new_event_id("lease"),
+            "type": "run_lifecycle",
+            "stage": "ORPHAN_RECONCILED",
+            "started_at": now,
+            "reason": "owner_process_identity_not_alive",
+        })
+        snapshot["events"] = events
+        metrics_path.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False), encoding="utf-8")
+        return snapshot
+
     def start_task(self, task_id: str, status: str = "running") -> None:
         task = self._tasks.get(task_id)
         if task:
@@ -426,17 +484,37 @@ class RunProfiler:
             if status == "running":
                 task["ended_at"] = None
                 task.pop("_ended_wall_seconds", None)
+                now = _now_iso()
+                pid = os.getpid()
+                lease = task.setdefault("run_lease", {})
+                if lease.get("state") != "active":
+                    lease.update({
+                        "run_uuid": str(uuid.uuid4()),
+                        "owner_pid": pid,
+                        "process_identity": self._process_identity(pid),
+                        "state": "active",
+                        "acquired_at": now,
+                        "last_heartbeat_at": now,
+                    })
             task["last_updated_at"] = _now_iso()
             return
+        reconciled = self.reconcile_stale_run(task_id)
+        now = _now_iso()
+        pid = os.getpid()
         self._tasks[task_id] = {
             "task_id": task_id,
             "status": status,
-            "started_at": _now_iso(),
+            "started_at": now,
             "_started_monotonic": time.perf_counter(),
-            "last_updated_at": _now_iso(),
+            "last_updated_at": now,
             "ended_at": None,
-            "events": [],
-            "metadata": {},
+            "events": list((reconciled or {}).get("events") or [])[-1:] if reconciled else [],
+            "metadata": {
+                "previous_run_reconciliation": {
+                    "status": reconciled.get("status"),
+                    "run_lease": reconciled.get("run_lease"),
+                }
+            } if reconciled else {},
             "skills": {
                 "selected": [],
                 "selected_raw": [],
@@ -452,6 +530,14 @@ class RunProfiler:
             "correction_count": 0,
             "max_retry_count": 0,
             "final_result": {},
+            "run_lease": {
+                "run_uuid": str(uuid.uuid4()),
+                "owner_pid": pid,
+                "process_identity": self._process_identity(pid),
+                "state": "active",
+                "acquired_at": now,
+                "last_heartbeat_at": now,
+            },
         }
 
     def finish_task(self, task_id: str, status: str = "completed") -> None:
@@ -459,8 +545,52 @@ class RunProfiler:
         task["status"] = status
         task["ended_at"] = _now_iso()
         task["last_updated_at"] = task["ended_at"]
+        lease = task.setdefault("run_lease", {})
+        lease.update({"state": "released", "released_at": task["ended_at"], "last_heartbeat_at": task["ended_at"]})
         task["_ended_wall_seconds"] = round(time.perf_counter() - task["_started_monotonic"], 3)
         self.flush(task_id)
+
+    def finish_for_exception(self, task_id: str, exc: BaseException) -> str:
+        """Map controller termination modes to a durable non-running state."""
+        if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+            status = "interrupted"
+        elif isinstance(exc, TimeoutError):
+            status = "timeout"
+        elif exc.__class__.__name__ == "CancelledError":
+            status = "cancelled"
+        else:
+            status = "failed"
+        self.finish_task(task_id, status)
+        return status
+
+    def heartbeat(self, task_id: str) -> None:
+        task = self._ensure_task(task_id)
+        now = _now_iso()
+        task["last_updated_at"] = now
+        task.setdefault("run_lease", {})["last_heartbeat_at"] = now
+
+    def record_executor_lifecycle(
+        self,
+        task_id: str,
+        stage: str,
+        *,
+        action_fingerprint: str = "",
+        consultation_id: str = "",
+        requirement_ids: Optional[List[str]] = None,
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        self._append_event(task_id, {
+            "id": self._new_event_id("executor"),
+            "type": "executor_lifecycle",
+            "stage": str(stage),
+            "node": get_current_node(),
+            "started_at": _now_iso(),
+            "action_fingerprint": str(action_fingerprint),
+            "consultation_id": str(consultation_id),
+            "requirement_ids": list(requirement_ids or []),
+            "detail": dict(detail or {}),
+        })
+        self.heartbeat(task_id)
 
     @contextlib.contextmanager
     def task_context(self, task_id: str):
@@ -903,6 +1033,7 @@ class RunProfiler:
             "started_at": task.get("started_at"),
             "last_updated_at": _now_iso(),
             "ended_at": task.get("ended_at"),
+            "run_lease": dict(task.get("run_lease") or {}),
             "metadata": dict(task.get("metadata") or {}),
             "skills": dict(task.get("skills") or {}),
             "final_result": final_result,
@@ -1069,7 +1200,9 @@ class RunProfiler:
     def _append_event(self, task_id: str, event: Dict[str, Any]) -> None:
         task = self._ensure_task(task_id)
         task["events"].append(event)
-        task["last_updated_at"] = _now_iso()
+        now = _now_iso()
+        task["last_updated_at"] = now
+        task.setdefault("run_lease", {})["last_heartbeat_at"] = now
 
     def _ensure_task(self, task_id: str) -> Dict[str, Any]:
         if task_id not in self._tasks:

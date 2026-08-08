@@ -10,6 +10,7 @@ from agent_core.workflow_manager import (
     parse_workflow_state,
     repair_workflow_handoff,
     repair_workflow_state,
+    strip_workflow_activation,
     validate_workflow_handoff,
     validate_workflow_state,
 )
@@ -87,7 +88,51 @@ class WorkflowManagerTests(unittest.TestCase):
         self.assertIn("workflow_id: crop_gwas_analysis", catalog)
         self.assertIn("aliases: crop-gwas-pipeline, crop_gwas_pipeline, crop-breeding/crop-gwas-pipeline", catalog)
         self.assertIn("Use a workflow only when it clearly matches the requested analysis", catalog)
-        self.assertIn("otherwise skip workflow handoff and select local skill(s) directly", catalog)
+        self.assertIn("Otherwise, select local skill(s) directly and skip workflow handoff", catalog)
+
+    def test_strip_workflow_activation_preserves_only_coarse_stage_state(self):
+        coarse = strip_workflow_activation(
+            {
+                "workflow_id": "scrna_standard_analysis",
+                "workflow_decision": {"workflow_id": "scrna_standard_analysis", "active_batch_id": "2"},
+                "active_batch_id": "2",
+                "active_skills": ["scrna/preprocess/basic"],
+                "future_skills": ["scrna/cluster/basic"],
+                "workflow_stages": [
+                    {
+                        "stage": "preprocess",
+                        "status": "selected_skill",
+                        "skill": "scrna/preprocess/basic",
+                        "batch_id": "2",
+                        "active_now": True,
+                    }
+                ],
+            }
+        )
+
+        self.assertEqual(coarse["active_batch_id"], "")
+        self.assertEqual(coarse["active_skills"], [])
+        self.assertEqual(coarse["future_skills"], [])
+        self.assertNotIn("active_batch_id", coarse["workflow_decision"])
+        self.assertNotIn("active_now", coarse["workflow_stages"][0])
+        self.assertEqual(coarse["workflow_stages"][0]["skill"], "scrna/preprocess/basic")
+
+    def test_workflow_candidate_retrieval_is_bounded(self):
+        candidates = self.workflow_manager.candidate_workflow_ids_for_prompt(
+            "Continue after QC from an existing QC-filtered Seurat object through clustering and markers",
+            max_results=2,
+        )
+
+        self.assertLessEqual(len(candidates), 2)
+        self.assertIn("scrna_downstream_after_qc", candidates)
+
+        catalog = self.workflow_manager.get_workflow_catalog_prompt(
+            workflow_ids=candidates[:1],
+            max_entries=1,
+            description_chars=120,
+        )
+        self.assertIn(candidates[0], catalog)
+        self.assertNotIn("workflow_id: scrna_tutorial_standard_analysis", catalog)
 
     def test_load_workflow_template_by_id(self):
         template = self.workflow_manager.load_workflow_prompt("scrna_standard_analysis")

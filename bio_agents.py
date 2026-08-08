@@ -59,6 +59,9 @@ from config.config import (
     LLM_MAX_HISTORY_MESSAGES, LLM_MAX_HISTORY_CHARS,
     LLM_STEP_CONTEXT_MESSAGES, LLM_STEP_CONTEXT_CHARS, LLM_STEP_PLAN_CHARS,
     LLM_STEP_SKILL_DOC_CHARS, LLM_STEP_EPHEMERAL_CHARS,
+    CONSULTANT_HISTORY_TOKEN_BUDGET, CONSULTANT_SKILL_TOKEN_BUDGET,
+    CONSULTANT_HISTORY_MAX_MESSAGES, CONSULTANT_CANDIDATE_SKILL_LIMIT,
+    CONSULTANT_RESERVED_HEADROOM_TOKENS,
     PLANNER_NOMINAL_CHAR_BUDGET, PLANNER_SOFT_TOKEN_RATIO,
     PLANNER_COMPRESSION_TOKEN_RATIO, PLANNER_HARD_TOKEN_RATIO,
     PLANNER_RESERVED_HEADROOM_TOKENS,
@@ -75,6 +78,15 @@ except ImportError:
     from package_manager import PackageManager
 
 from agent_core.state import AgentState
+from agent_core.consultation_state import (
+    begin_finalize,
+    consultation_prompt_context,
+    evaluate_consultation_completion,
+    new_consultation_state,
+    preflight_execute,
+    record_execution_observation,
+    seed_structured_evidence,
+)
 from agent_core.human_io import (
     HumanInputUnavailable,
     clear_waiting_state,
@@ -152,9 +164,14 @@ from agent_core.llm_safety import (
     llm_failure_summary,
 )
 from agent_core.context_budget import (
+    ContextBlock,
+    ContextBudgetManager,
     RequiredContextOverflow,
     assess_prompt_budget,
     build_prompt_budget_telemetry,
+    compress_lines,
+    compress_markdown_sections,
+    compress_paragraphs,
     compress_tagged_text,
 )
 from agent_core.formal_artifact_resolver import (
@@ -307,18 +324,74 @@ CONSULTANT_PARSE_REPAIR_LIMIT = 3
 CONSULTANT_INTERNAL_VALIDATION_ERROR_LIMIT = 3
 CONSULTANT_LOAD_ACTION_LOOP_LIMIT = 6
 CONSULTANT_LOAD_ERROR_LOOP_LIMIT = 3
-CONSULTANT_PROMPT_COMPONENT_BUDGETS = {
-    "workflow_catalog": 800,
-    "skill_tree": 400,
-    "skill_catalog": 1400,
-    "skills_summary": 1800,
-    "runtime_evidence": 700,
-    "memory_context": 400,
-    "input_resolution": 1200,
-    "rag_history": 300,
-    "user_preferences": 300,
-}
-CONSULTANT_PROMPT_WARNING_CHARS = 12000
+CONSULTANT_ESTIMATED_CHARS_PER_TOKEN = 4
+CONSULTANT_HISTORY_CHAR_BUDGET = (
+    CONSULTANT_HISTORY_TOKEN_BUDGET * CONSULTANT_ESTIMATED_CHARS_PER_TOKEN
+)
+CONSULTANT_SKILL_CHAR_BUDGET = (
+    CONSULTANT_SKILL_TOKEN_BUDGET * CONSULTANT_ESTIMATED_CHARS_PER_TOKEN
+)
+_CONSULTANT_TOKEN_ENCODER: Any = None
+_CONSULTANT_TOKEN_ENCODER_READY = False
+
+
+def _consultant_token_encoder() -> Any:
+    """Load a reference tokenizer lazily; keep deployment fallback optional."""
+    global _CONSULTANT_TOKEN_ENCODER, _CONSULTANT_TOKEN_ENCODER_READY
+    if _CONSULTANT_TOKEN_ENCODER_READY:
+        return _CONSULTANT_TOKEN_ENCODER
+    _CONSULTANT_TOKEN_ENCODER_READY = True
+    try:
+        import tiktoken  # type: ignore
+
+        _CONSULTANT_TOKEN_ENCODER = tiktoken.get_encoding("cl100k_base")
+    except Exception:
+        _CONSULTANT_TOKEN_ENCODER = None
+    return _CONSULTANT_TOKEN_ENCODER
+
+
+def _consultant_estimate_text_tokens(text: str) -> int:
+    """Estimate tokens without assuming four characters per token.
+
+    DeepSeek does not expose its tokenizer through this client.  ``cl100k`` is
+    used as a stable reference when available; the fallback deliberately
+    charges CJK characters much more heavily than ASCII text.
+    """
+    value = str(text or "")
+    if not value:
+        return 0
+    encoder = _consultant_token_encoder()
+    if encoder is not None:
+        try:
+            return len(encoder.encode(value, disallowed_special=()))
+        except Exception:
+            pass
+    ascii_chars = 0
+    cjk_chars = 0
+    other_chars = 0
+    for char in value:
+        codepoint = ord(char)
+        if codepoint < 128:
+            ascii_chars += 1
+        elif (
+            0x3400 <= codepoint <= 0x9FFF
+            or 0xF900 <= codepoint <= 0xFAFF
+            or 0x3040 <= codepoint <= 0x30FF
+            or 0xAC00 <= codepoint <= 0xD7AF
+        ):
+            cjk_chars += 1
+        else:
+            other_chars += 1
+    return max(
+        1,
+        (ascii_chars + 2) // 3
+        + (cjk_chars * 5 + 3) // 4
+        + (other_chars + 1) // 2,
+    )
+
+
+def _consultant_tokenizer_name() -> str:
+    return "cl100k_base_reference" if _consultant_token_encoder() is not None else "mixed_script_fallback"
 
 
 def _llm_extra_body(model: str, base_url: str) -> dict[str, Any]:
@@ -1311,6 +1384,7 @@ class BioAnalystAgent:
         query: str,
         project_id: Optional[str] = None,
         limit: int = 4,
+        exclude_task_id: Optional[str] = None,
     ) -> str:
         if not query.strip():
             return ""
@@ -1319,8 +1393,13 @@ class BioAnalystAgent:
                 query,
                 task_id=task_id or None,
                 project_id=project_id,
-                limit=limit,
+                limit=limit * 3 if exclude_task_id else limit,
             )
+            if exclude_task_id:
+                excluded = str(exclude_task_id).strip()
+                hits = [hit for hit in hits if str(hit.task_id).strip() != excluded][:limit]
+            if not hits:
+                return ""
             return self.session_archive.format_hits(hits, title="Retrieved Session Archive")
         except Exception as e:
             logger.warning(f"Session archive retrieval failed for {task_id or 'project'}: {e}")
@@ -2147,6 +2226,18 @@ class BioAnalystAgent:
         )
         return policy + "\n\n" + "\n\n".join(parts)
 
+    @staticmethod
+    def _dedupe_current_query_from_retrieval(text: str, query: str) -> str:
+        """Replace an exact current-request replay with an authority pointer."""
+        value = str(text or "")
+        current = str(query or "").strip()
+        if len(current) < 120 or current not in value:
+            return value
+        return value.replace(
+            current,
+            "[current request omitted here; use the lossless Human message and canonical TaskSpec above]",
+        )
+
     async def _consultant_memory_retrieval_context(
         self,
         task_id: str,
@@ -2163,43 +2254,85 @@ class BioAnalystAgent:
             "</memory_broker_policy>"
         ]
         if wiki_context.strip():
+            wiki_context = self._dedupe_current_query_from_retrieval(wiki_context, query)
             sections.append(f"<wiki_memory_retrieval>\n{wiki_context}\n</wiki_memory_retrieval>")
 
-        try:
-            task_context = await self._task_summary_prompt_context(task_id, query)
-        except Exception as exc:
-            logger.warning("Consultant task memory retrieval failed for %s: %s", task_id, exc)
-            task_context = {"long_term_memory": "", "task_memory": "", "related_memory": ""}
-
-        task_memory = str(task_context.get("task_memory") or "").strip()
-        related_memory = str(task_context.get("related_memory") or "").strip()
-        if task_memory:
-            sections.append(
-                "<task_summary_retrieval>\n"
-                f"{self._clip_prompt_text(task_memory, 1800)}\n"
-                "</task_summary_retrieval>"
-            )
-        if related_memory:
-            sections.append(
-                "<task_related_archive_retrieval>\n"
-                f"{self._clip_prompt_text(related_memory, 1800)}\n"
-                "</task_related_archive_retrieval>"
-            )
-
-        archive_context = self._archive_prompt_context(
-            None,
-            query,
+        # TaskSummary and generic archive renderers contain old prompts, commands,
+        # and transcripts. Consultant receives only typed durable projections.
+        archive_context = self._consultant_archive_facts_context(
+            query=query,
             project_id=project_id,
+            exclude_task_id=task_id,
             limit=4,
         )
         if archive_context.strip():
+            archive_context = self._dedupe_current_query_from_retrieval(archive_context, query)
             sections.append(
                 "<project_session_archive_retrieval>\n"
-                f"{self._clip_prompt_text(archive_context, 2400)}\n"
+                f"{archive_context}\n"
                 "</project_session_archive_retrieval>"
             )
 
-        return self._clip_prompt_text("\n\n".join(sections), 10_000)
+        return "\n\n".join(sections)
+
+    def _consultant_archive_facts_context(
+        self,
+        *,
+        query: str,
+        project_id: str,
+        exclude_task_id: str,
+        limit: int = 4,
+    ) -> str:
+        """Project archive hits to durable facts; never forward raw transcripts."""
+        if not str(query or "").strip():
+            return ""
+        allowed_event_types = {
+            "artifact_created",
+            "error_detected",
+            "supervisor_verdict",
+            "task_finalized",
+            "knowledge_conflict_resolved",
+            "root_cause_analysis",
+        }
+        try:
+            hits = self.session_archive.search(
+                query,
+                project_id=project_id,
+                limit=max(limit * 4, limit),
+            )
+        except Exception as exc:
+            logger.warning("Consultant structured archive retrieval failed for %s: %s", exclude_task_id, exc)
+            return ""
+        rows: List[Dict[str, Any]] = []
+        durable_keys = {
+            "status", "root_cause", "root_cause_analysis", "failure_conclusion",
+            "lesson", "lessons", "artifact_ref", "artifacts", "selected_skills",
+            "constraint_summary", "conclusion", "verdict",
+        }
+        for hit in hits:
+            if str(getattr(hit, "task_id", "")) == str(exclude_task_id):
+                continue
+            event_type = str(getattr(hit, "event_type", ""))
+            if event_type not in allowed_event_types:
+                continue
+            metadata = dict(getattr(hit, "metadata", {}) or {})
+            facts = {key: metadata[key] for key in durable_keys if key in metadata}
+            summary = str(getattr(hit, "summary", "") or "").strip()
+            row = {
+                "evidence_ref": str(getattr(hit, "evidence_ref", "")),
+                "task_id": str(getattr(hit, "task_id", "")),
+                "event_type": event_type,
+                "status": facts.pop("status", ""),
+                "durable_facts": facts,
+                "summary": self._clip_prompt_text(summary, 600) if summary else "",
+                "paths": list(getattr(hit, "paths", []) or [])[:8],
+            }
+            rows.append(row)
+            if len(rows) >= limit:
+                break
+        if not rows:
+            return ""
+        return json.dumps({"schema_version": 1, "durable_archive_facts": rows}, ensure_ascii=False, sort_keys=True, indent=2, default=str)
 
     def _consultant_handoff_memory_packet(
         self,
@@ -4377,6 +4510,361 @@ class BioAnalystAgent:
         )
 
     @staticmethod
+    def _consultant_effective_pool_budgets(context_limit_tokens: int) -> Dict[str, int]:
+        """Return nominal and provider-safe Consultant pool sizes.
+
+        The two configured pools are independent 100k-token ceilings.  When
+        their sum reaches the provider context window, output headroom is
+        deducted proportionally instead of waiting for the API to reject the
+        request.
+        """
+        history_nominal = max(1, int(CONSULTANT_HISTORY_TOKEN_BUDGET))
+        skill_nominal = max(1, int(CONSULTANT_SKILL_TOKEN_BUDGET))
+        nominal_total = history_nominal + skill_nominal
+        provider_limit = max(1, int(context_limit_tokens or nominal_total))
+        provider_safe_input = max(
+            1,
+            provider_limit
+            - min(CONSULTANT_RESERVED_HEADROOM_TOKENS, max(0, provider_limit - 1)),
+        )
+        safe_total = min(nominal_total, provider_safe_input)
+        if safe_total >= nominal_total:
+            history_effective = history_nominal
+            skill_effective = skill_nominal
+        else:
+            history_effective = max(1, (safe_total * history_nominal) // nominal_total)
+            skill_effective = max(1, safe_total - history_effective)
+        return {
+            "history_nominal_tokens": history_nominal,
+            "skill_nominal_tokens": skill_nominal,
+            "nominal_total_tokens": nominal_total,
+            "provider_context_limit_tokens": provider_limit,
+            "reserved_headroom_tokens": CONSULTANT_RESERVED_HEADROOM_TOKENS,
+            "history_effective_tokens": history_effective,
+            "skill_effective_tokens": skill_effective,
+            "effective_input_tokens": history_effective + skill_effective,
+            "history_effective_chars": history_effective * CONSULTANT_ESTIMATED_CHARS_PER_TOKEN,
+            "skill_effective_chars": skill_effective * CONSULTANT_ESTIMATED_CHARS_PER_TOKEN,
+        }
+
+    @staticmethod
+    def _consultant_message_partitions(
+        messages: List[BaseMessage],
+        *,
+        max_messages: int,
+    ) -> tuple[List[tuple[int, BaseMessage]], List[tuple[int, BaseMessage]]]:
+        skill_tags = (
+            "<loaded_workflow_template",
+            "<loaded_skill_doc",
+            "<loaded_skill_reference",
+            "<loaded_skill_script",
+        )
+        control_tags = (
+            "<observation>",
+            "<consultant_validation_error>",
+            "<consultant_semantic_constraint_validation_error>",
+            "<consultant_semantic_resolution_request>",
+            "<load_error",
+            "<llm_transient_retry>",
+            "<llm_transient_failure>",
+        )
+        action_prefixes = (
+            "EXECUTE",
+            "SEARCH",
+            "LOAD_",
+            "ASK",
+            "FINISH",
+            "<action_json>",
+        )
+        history_items: List[tuple[int, BaseMessage]] = []
+        skill_items: List[tuple[int, BaseMessage]] = []
+        for index, message in enumerate(messages or []):
+            content = str(getattr(message, "content", message) or "")
+            stripped = content.strip()
+            if isinstance(message, SystemMessage) and any(tag in content for tag in skill_tags):
+                skill_items.append((index, message))
+            elif isinstance(message, HumanMessage):
+                history_items.append((index, message))
+            elif isinstance(message, AIMessage) and (
+                stripped.startswith(action_prefixes)
+                or "<execute>" in stripped
+                or "<install_tool" in stripped
+                or "<activate_batch" in stripped
+            ):
+                history_items.append((index, message))
+            elif isinstance(message, SystemMessage) and any(tag in content for tag in control_tags):
+                history_items.append((index, message))
+
+        authoritative = [item for item in history_items if isinstance(item[1], HumanMessage)]
+        optional_history = [item for item in history_items if not isinstance(item[1], HumanMessage)]
+        optional_slots = max(0, int(max_messages) - len(authoritative))
+        recent_optional = optional_history[-optional_slots:] if optional_slots else []
+        bounded_history = sorted(
+            [*authoritative, *recent_optional],
+            key=lambda item: item[0],
+        )
+        bounded_skills = skill_items[-max(1, int(max_messages)):]
+        return bounded_history, bounded_skills
+
+    @staticmethod
+    def _copy_message_content(message: BaseMessage, content: str) -> BaseMessage:
+        try:
+            return message.model_copy(update={"content": content})
+        except AttributeError:
+            if isinstance(message, HumanMessage):
+                return HumanMessage(content=content)
+            if isinstance(message, AIMessage):
+                return AIMessage(content=content)
+            return SystemMessage(content=content)
+
+    @staticmethod
+    def _pack_consultant_blocks_to_token_budget(
+        blocks: List[ContextBlock],
+        *,
+        max_chars: int,
+        max_tokens: Optional[int],
+        pool_name: str,
+    ) -> tuple[Any, int]:
+        """Use character packing as a first pass, then enforce real token units."""
+        current_char_budget = max(1, int(max_chars))
+        token_budget = max(1, int(max_tokens)) if max_tokens is not None else None
+        last_tokens = 0
+        for attempt in range(12):
+            try:
+                packed = ContextBudgetManager().pack(blocks, current_char_budget)
+            except RequiredContextOverflow as exc:
+                exc.report.update({
+                    "pool": pool_name,
+                    "token_budget": token_budget,
+                    "tokenizer": _consultant_tokenizer_name(),
+                })
+                raise
+            joined = "\n".join(value for value in packed.contents.values() if value)
+            last_tokens = _consultant_estimate_text_tokens(joined)
+            packed.report.update({
+                "pool": pool_name,
+                "estimated_tokens": last_tokens,
+                "token_budget": token_budget,
+                "tokenizer": _consultant_tokenizer_name(),
+                "token_pack_attempts": attempt + 1,
+            })
+            if token_budget is None or last_tokens <= token_budget:
+                return packed, last_tokens
+            packed_chars = max(1, int(packed.report.get("packed_chars") or 1))
+            next_char_budget = max(
+                1,
+                int(packed_chars * token_budget / max(1, last_tokens) * 0.97),
+            )
+            if next_char_budget >= current_char_budget:
+                next_char_budget = current_char_budget - 1
+            if next_char_budget <= 0:
+                break
+            current_char_budget = next_char_budget
+        raise RequiredContextOverflow(
+            f"Consultant {pool_name} context cannot fit the token budget.",
+            report={
+                "pool": pool_name,
+                "budget_chars": current_char_budget,
+                "token_budget": token_budget,
+                "estimated_tokens": last_tokens,
+                "tokenizer": _consultant_tokenizer_name(),
+                "overflow": True,
+            },
+        )
+
+    @staticmethod
+    def _pack_consultant_context(
+        messages: List[BaseMessage],
+        *,
+        history_components: Dict[str, str],
+        skill_components: Dict[str, str],
+        history_max_chars: int,
+        skill_max_chars: int,
+        static_prompt_chars: int = 0,
+        history_max_tokens: Optional[int] = None,
+        skill_max_tokens: Optional[int] = None,
+        static_prompt_tokens: int = 0,
+        max_messages: int = CONSULTANT_HISTORY_MAX_MESSAGES,
+    ) -> tuple[Dict[str, str], Dict[str, str], List[BaseMessage], Dict[str, Any]]:
+        """Pack Consultant inputs into true shared history and skill pools.
+
+        Human messages and the canonical task contract are lossless required
+        blocks.  Explicitly preloaded docs and the newest controller-loaded doc
+        are also lossless.  Older observations, memory, catalogs, and older
+        loaded docs are compressed or removed only when their pool overflows.
+        """
+        history_items, skill_items = BioAnalystAgent._consultant_message_partitions(
+            messages,
+            max_messages=max_messages,
+        )
+        history_budget = int(history_max_chars) - max(0, int(static_prompt_chars))
+        if history_budget <= 0:
+            raise RequiredContextOverflow(
+                "Consultant static policy exceeds the history pool.",
+                report={
+                    "pool": "history",
+                    "budget_chars": int(history_max_chars),
+                    "static_prompt_chars": int(static_prompt_chars),
+                    "overflow": True,
+                },
+            )
+
+        history_specs = {
+            "task_spec": dict(priority=100, pinned=True, droppable=False),
+            "input_resolution": dict(
+                priority=92,
+                pinned=False,
+                droppable=False,
+                min_chars=3000,
+                compress_fn=compress_lines,
+            ),
+            "user_preferences": dict(
+                priority=60,
+                min_chars=400,
+                compress_fn=compress_paragraphs,
+            ),
+            "memory_context": dict(
+                priority=35,
+                min_chars=800,
+                compress_fn=compress_paragraphs,
+            ),
+            "rag_history": dict(
+                priority=30,
+                min_chars=800,
+                compress_fn=compress_paragraphs,
+            ),
+        }
+        history_blocks: List[ContextBlock] = []
+        for key, value in history_components.items():
+            spec = history_specs.get(key, dict(priority=50, compress_fn=compress_paragraphs))
+            history_blocks.append(ContextBlock(
+                f"history_component:{key}",
+                "consultant_history",
+                str(value or ""),
+                **spec,
+            ))
+        for ordinal, (index, message) in enumerate(history_items):
+            is_human = isinstance(message, HumanMessage)
+            history_blocks.append(ContextBlock(
+                f"history_message:{index}",
+                "user_authority" if is_human else "consultant_action_history",
+                str(getattr(message, "content", message) or ""),
+                100 if is_human else 65 + min(20, ordinal),
+                pinned=is_human,
+                droppable=not is_human,
+                min_chars=0 if is_human else 500,
+                compress_fn=None if is_human else compress_tagged_text,
+            ))
+        history_token_budget = (
+            max(1, int(history_max_tokens) - max(0, int(static_prompt_tokens)))
+            if history_max_tokens is not None else None
+        )
+        packed_history, history_tokens = BioAnalystAgent._pack_consultant_blocks_to_token_budget(
+            history_blocks,
+            max_chars=history_budget,
+            max_tokens=history_token_budget,
+            pool_name="history",
+        )
+
+        skill_specs = {
+            "preloaded_skill_docs": dict(priority=100, pinned=True, droppable=False),
+            "runtime_evidence": dict(
+                priority=92,
+                droppable=False,
+                min_chars=1500,
+                compress_fn=compress_lines,
+            ),
+            "skill_catalog": dict(priority=75, min_chars=1200, compress_fn=compress_lines),
+            "skill_tree": dict(priority=65, min_chars=1200, compress_fn=compress_lines),
+            "workflow_catalog": dict(priority=70, min_chars=800, compress_fn=compress_lines),
+            "controlled_discovery_hints": dict(
+                priority=72,
+                min_chars=500,
+                compress_fn=compress_lines,
+            ),
+        }
+        skill_blocks: List[ContextBlock] = []
+        for key, value in skill_components.items():
+            spec = skill_specs.get(key, dict(priority=60, compress_fn=compress_markdown_sections))
+            skill_blocks.append(ContextBlock(
+                f"skill_component:{key}",
+                "consultant_skill",
+                str(value or ""),
+                **spec,
+            ))
+        newest_skill_index = skill_items[-1][0] if skill_items else None
+        for ordinal, (index, message) in enumerate(skill_items):
+            newest = index == newest_skill_index
+            skill_blocks.append(ContextBlock(
+                f"skill_message:{index}",
+                "loaded_skill_doc",
+                str(getattr(message, "content", message) or ""),
+                100 if newest else 75 + min(20, ordinal),
+                pinned=newest,
+                droppable=not newest,
+                min_chars=0 if newest else 2500,
+                compress_fn=None if newest else compress_markdown_sections,
+            ))
+        packed_skills, skill_tokens = BioAnalystAgent._pack_consultant_blocks_to_token_budget(
+            skill_blocks,
+            max_chars=int(skill_max_chars),
+            max_tokens=skill_max_tokens,
+            pool_name="skills",
+        )
+
+        packed_history_components = {
+            key: packed_history.contents.get(f"history_component:{key}", "")
+            for key in history_components
+        }
+        packed_skill_components = {
+            key: packed_skills.contents.get(f"skill_component:{key}", "")
+            for key in skill_components
+        }
+        packed_messages: List[tuple[int, BaseMessage]] = []
+        for index, message in history_items:
+            content = packed_history.contents.get(f"history_message:{index}", "")
+            if content:
+                packed_messages.append((index, BioAnalystAgent._copy_message_content(message, content)))
+        for index, message in skill_items:
+            content = packed_skills.contents.get(f"skill_message:{index}", "")
+            if content:
+                packed_messages.append((index, BioAnalystAgent._copy_message_content(message, content)))
+        report = {
+            "history": packed_history.report,
+            "skills": packed_skills.report,
+            "static_prompt_chars": int(static_prompt_chars),
+            "static_prompt_tokens": int(static_prompt_tokens),
+            "estimated_history_pool_tokens": history_tokens + max(0, int(static_prompt_tokens)),
+            "estimated_skill_pool_tokens": skill_tokens,
+            "tokenizer": _consultant_tokenizer_name(),
+        }
+        return (
+            packed_history_components,
+            packed_skill_components,
+            [message for _, message in sorted(packed_messages, key=lambda item: item[0])],
+            report,
+        )
+
+    @staticmethod
+    def _consultant_visible_messages(
+        messages: List[BaseMessage],
+        *,
+        history_max_chars: int = CONSULTANT_HISTORY_CHAR_BUDGET,
+        skill_max_chars: int = CONSULTANT_SKILL_CHAR_BUDGET,
+        max_messages: int = CONSULTANT_HISTORY_MAX_MESSAGES,
+    ) -> List[BaseMessage]:
+        """Compatibility wrapper for tests and other Consultant callers."""
+        _, _, visible, _ = BioAnalystAgent._pack_consultant_context(
+            messages,
+            history_components={},
+            skill_components={},
+            history_max_chars=history_max_chars,
+            skill_max_chars=skill_max_chars,
+            max_messages=max_messages,
+        )
+        return visible
+
+    @staticmethod
     def _generate_visible_messages(
         messages: List[BaseMessage],
         *,
@@ -5937,7 +6425,7 @@ class BioAnalystAgent:
         prompt_telemetry = build_prompt_budget_telemetry(
             messages,
             component_chars=trace_metadata.get("component_chars") or {},
-            context_limit_tokens=self.llm_context_limit_tokens,
+            context_limit_tokens=getattr(self, "llm_context_limit_tokens", 200_000),
         )
         started = time.monotonic()
         logger.info(
@@ -5963,7 +6451,8 @@ class BioAnalystAgent:
                 prompt_telemetry["remaining_headroom_tokens"],
                 prompt_telemetry["duplicate_chars"],
             )
-        trace_store = ContextLineageStore(self.data_path, task_id) if task_id else None
+        trace_data_path = str(getattr(self, "data_path", "") or "")
+        trace_store = ContextLineageStore(trace_data_path, task_id) if task_id and trace_data_path else None
         snapshot: Dict[str, Any] = {}
         if trace_store:
             metadata = dict(trace_metadata or {})
@@ -8238,6 +8727,7 @@ class BioAnalystAgent:
                     "input_audit": merged.get("input_audit") or {},
                     "selected_skills": list(merged.get("selected_skills") or []),
                     "runtime_audit": list(merged.get("runtime_audit") or []),
+                    "consultation_state": dict(merged.get("consultation_state") or {}),
                     "step_states": step_states,
                     "current_step_id": str(current_step.get("step_id") or ""),
                     "latest_execution": latest_execution,
@@ -9778,9 +10268,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
             messages = state["messages"]
             rag_history = state.get("rag_history", [])
             task_spec = self._task_spec_for_state(dict(state), messages)
-            semantic_contract_ready = (
-                (task_spec.get("semantic_compilation") or {}).get("schema_validation") == "passed"
-            )
             later_directives = [
                 str(item.get("text") or "").strip()
                 for item in task_spec.get("user_directives", [])
@@ -9801,11 +10288,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 str(m.content).strip()
                 for m in recent_consultant_messages
                 if isinstance(m, AIMessage) and str(m.content).strip().startswith("LOAD_")
-            ]
-            execute_actions = [
-                str(m.content).strip()
-                for m in recent_consultant_messages
-                if isinstance(m, AIMessage) and str(m.content).strip().startswith("EXECUTE")
             ]
             consultant_observations = [
                 str(m.content)
@@ -9848,20 +10330,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 if isinstance(m, SystemMessage)
                 and "<observation>" in str(m.content)
                 and "❌" in str(m.content)
-            ]
-            force_finish_indices = [
-                idx
-                for idx, msg in enumerate(recent_consultant_messages)
-                if isinstance(msg, SystemMessage)
-                and "<consultant_force_finish_from_observations>" in str(msg.content)
-            ]
-            last_force_finish_index = force_finish_indices[-1] if force_finish_indices else -1
-            execute_after_force_finish = [
-                str(msg.content).strip()
-                for idx, msg in enumerate(recent_consultant_messages)
-                if idx > last_force_finish_index
-                and isinstance(msg, AIMessage)
-                and str(msg.content).strip().startswith("EXECUTE")
             ]
             task_id = state.get("task_id", "default")
             project_id = state.get("project_id") or self.default_project_id
@@ -9934,26 +10402,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     max_results=consultant_max_skills,
                 )
                 hints = ", ".join(candidate_hints) if candidate_hints else "None"
-                skill_only_handoff = self._consultant_skill_only_fallback_handoff(
-                    consultant_context=consultant_context,
-                    fallback_raw=fallback_raw,
-                    task_id=task_id,
-                    consultant_memory_retrieval_context=consultant_memory_retrieval_context,
-                    consultant_wiki_context=consultant_wiki_context,
-                    input_resolution_context=input_resolution_context,
-                    max_skills=consultant_max_skills,
-                )
-                if skill_only_handoff and semantic_contract_ready:
-                    skill_only_handoff["input_audit"] = input_resolution_result
-                    output.print_once(
-                        "consultant_loop_guard_skill_only",
-                        (
-                            "✓ Consultant loop guard found canonical skills; "
-                            "skipping workflow_state and handing skill-only context to Planner."
-                        ),
-                        Fore.GREEN,
-                    )
-                    return skill_only_handoff
                 message = (
                     "<consultant_loop_guard_blocked>\n"
                     "Consultant handoff validation or skill loading failed repeatedly. "
@@ -9978,51 +10426,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             "Consultant failed to produce a valid handoff after repeated internal actions. "
                             f"Candidate skill hints: {hints}. If no workflow template clearly matches, provide canonical skill id(s) only; "
                             "otherwise provide a corrected workflow_state, or `blocked: <reason>`."
-                        ),
-                        "resume_step": "consultant",
-                    },
-                    "next_step": "ask_user",
-                }
-
-            if len(execute_actions) >= 4 and len(failed_consultant_execs) < 3:
-                fallback_raw = []
-                for action in load_actions:
-                    parts = action.split(maxsplit=2)
-                    if len(parts) >= 2:
-                        fallback_raw.append(parts[1])
-                skill_only_handoff = self._consultant_skill_only_fallback_handoff(
-                    consultant_context=consultant_context,
-                    fallback_raw=fallback_raw,
-                    task_id=task_id,
-                    consultant_memory_retrieval_context=consultant_memory_retrieval_context,
-                    consultant_wiki_context=consultant_wiki_context,
-                    input_resolution_context=input_resolution_context,
-                    max_skills=consultant_max_skills,
-                )
-                if skill_only_handoff and semantic_contract_ready:
-                    output.print_once(
-                        "consultant_execute_count_loop_guard_handoff",
-                        (
-                            "✓ Consultant read-only loop guard reached; handing verified evidence "
-                            "and canonical skills directly to Planner."
-                        ),
-                        Fore.GREEN,
-                    )
-                    return skill_only_handoff
-                message = (
-                    "<consultant_loop_guard_blocked>\n"
-                    "Repeated Consultant read-only checks reached the loop guard, but no canonical skill "
-                    "could be resolved for Planner.\n"
-                    "</consultant_loop_guard_blocked>"
-                )
-                return {
-                    "messages": [SystemMessage(content=message)],
-                    "pending_human_question": {
-                        "type": "consultant_question",
-                        "stage": "consultant",
-                        "question": (
-                            "Consultant completed the bounded read-only checks but could not resolve a canonical "
-                            "skill. Please provide the skill ID or clarify the analysis goal."
                         ),
                         "resume_step": "consultant",
                     },
@@ -10084,39 +10487,47 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     )
             else:
                 workflow_catalog = "<workflow_catalog>\nNo workflow templates available.\n</workflow_catalog>"
-            workflow_catalog = self._clip_observation_text(
-                workflow_catalog,
-                CONSULTANT_PROMPT_COMPONENT_BUDGETS["workflow_catalog"],
-            )
             candidate_skill_ids: List[str] = []
             skill_tree = ""
             skill_catalog = ""
+            preloaded_skill_docs = ""
+            preloaded_skill_docs_context = ""
+            explicit_candidate_ids: List[str] = []
             if self.skill_manager:
                 candidate_skill_ids = self.skill_manager.candidate_skill_ids_for_prompt(
                     consultant_context,
-                    max_results=consultant_max_skills,
+                    max_results=CONSULTANT_CANDIDATE_SKILL_LIMIT,
                 )
                 if candidate_skill_ids:
-                    skill_catalog = self._clip_observation_text(
-                        self.skill_manager.get_skill_catalog_prompt(candidate_skill_ids),
-                        CONSULTANT_PROMPT_COMPONENT_BUDGETS["skill_catalog"],
-                    )
+                    skill_catalog = self.skill_manager.get_skill_catalog_prompt(candidate_skill_ids)
                     skill_tree = ""
                 else:
-                    skill_tree = self.skill_manager.get_skill_tree_prompt(
-                        max_chars=CONSULTANT_PROMPT_COMPONENT_BUDGETS["skill_tree"],
-                    )
+                    skill_tree = self.skill_manager.get_skill_tree_prompt()
                     skill_catalog = (
                         "<skill_catalog>\n"
                         "No metadata candidate matched this request. Do not invent an ID; use the visible canonical tree only to choose a documented candidate, or ask for clarification.\n"
                         "</skill_catalog>"
                     )
-                skills_summary = (
-                    f"{skill_catalog}\n{skill_tree}" if skill_tree else skill_catalog
+                explicit_candidate_ids = [
+                    skill_id
+                    for skill_id in candidate_skill_ids
+                    if skill_id.lower() in consultant_context.lower()
+                ]
+                preloaded_skill_docs = self.skill_manager.load_skills_for_prompt(
+                    explicit_candidate_ids
                 )
+                if preloaded_skill_docs:
+                    preloaded_skill_docs_context = (
+                        "<preloaded_skill_docs>\n"
+                        "These full documents are already loaded because the user explicitly named "
+                        "their canonical skill IDs. Do not request LOAD_SKILL_DOC for them again.\n"
+                        f"{preloaded_skill_docs}\n"
+                        "</preloaded_skill_docs>"
+                    )
             else:
-                skills_summary = "None"
+                skill_catalog = "None"
             runtime_discovery_hints: Dict[str, Any] = {}
+            controlled_discovery_hints = ""
             needs_controlled_discovery = not candidate_skill_ids or any(
                 not self._skill_runtime_requirements(skill_id).get("metadata_present", True)
                 for skill_id in candidate_skill_ids
@@ -10127,56 +10538,177 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     task_id,
                 )
                 if runtime_discovery_hints:
-                    skills_summary += (
-                        "\n<controlled_discovery_hints>\n"
+                    controlled_discovery_hints = (
+                        "<controlled_discovery_hints>\n"
                         f"candidate_skills: {', '.join(runtime_discovery_hints.get('candidate_skills', []) or []) or 'none'}\n"
                         f"candidate_envs: {', '.join(runtime_discovery_hints.get('candidate_envs', []) or []) or 'none'}\n"
                         f"candidate_tools: {', '.join(runtime_discovery_hints.get('candidate_tools', []) or []) or 'none'}\n"
                         "evidence_only: true; do not claim runtime readiness without PackageManager evidence and a passing healthcheck.\n"
                         "</controlled_discovery_hints>"
                     )
-            skills_summary = self._clip_observation_text(
-                skills_summary,
-                CONSULTANT_PROMPT_COMPONENT_BUDGETS["skills_summary"],
-            )
-            runtime_evidence_context = self._clip_observation_text(
-                self._consultant_runtime_context(candidate_skill_ids),
-                CONSULTANT_PROMPT_COMPONENT_BUDGETS["runtime_evidence"],
-            )
-            consultant_memory_retrieval_context = self._clip_observation_text(
-                consultant_memory_retrieval_context,
-                CONSULTANT_PROMPT_COMPONENT_BUDGETS["memory_context"],
-            )
-            input_resolution_context = self._clip_observation_text(
-                input_resolution_context,
-                CONSULTANT_PROMPT_COMPONENT_BUDGETS["input_resolution"],
-            )
-            rag_history_text = self._clip_observation_text(
-                "\n".join(str(item) for item in rag_history),
-                CONSULTANT_PROMPT_COMPONENT_BUDGETS["rag_history"],
-            )
-            rag_history_for_prompt = [rag_history_text] if rag_history_text else []
-            user_preferences_context = self._clip_prompt_text(
-                self._load_user_preferences(),
-                CONSULTANT_PROMPT_COMPONENT_BUDGETS["user_preferences"],
-            )
-            consultant_visible_messages = self._step_local_messages(
-                messages,
-                max_messages=LLM_STEP_CONTEXT_MESSAGES,
-                max_chars=LLM_STEP_CONTEXT_CHARS,
-            )
-            original_goal = str(task_spec.get("goal") or "").strip()
-            consultant_visible_messages = [
-                message
-                for message in consultant_visible_messages
-                if not (
-                    isinstance(message, HumanMessage)
-                    and str(getattr(message, "content", "")).strip() == original_goal
+            runtime_evidence_context = self._consultant_runtime_context(candidate_skill_ids)
+            consultation_state = dict(state.get("consultation_state") or {})
+            if not consultation_state:
+                consultation_state = new_consultation_state(
+                    f"{task_id}:consultant:{task_spec_revision(task_spec)}",
+                    task_id,
+                    max_total_execute=4,
+                    max_no_progress=2,
                 )
+            consultation_state["iteration"] = int(consultation_state.get("iteration") or 0) + 1
+            loaded_skill_ids = [
+                action.split(maxsplit=1)[1]
+                for action in load_actions
+                if action.startswith("LOAD_SKILL_DOC ") and len(action.split(maxsplit=1)) == 2
             ]
+            consultation_state = seed_structured_evidence(
+                consultation_state,
+                input_audit=input_resolution_result,
+                # A user-named canonical skill is an actual selection. Broad metadata
+                # candidates remain discovery hints and must not all become mandatory.
+                candidate_skill_ids=[*explicit_candidate_ids, *loaded_skill_ids],
+                routing_candidate_ids=[*explicit_candidate_ids, *loaded_skill_ids],
+            )
+            if consultation_state.get("completion_decision") == "ready_to_finalize":
+                consultation_state = begin_finalize(consultation_state)
+            consultation_state_context = consultation_prompt_context(consultation_state)
+            rag_history_text = "\n".join(str(item) for item in rag_history)
+            user_preferences_context = self._load_user_preferences()
+            task_spec_context = format_effective_user_facts_context(
+                task_spec,
+                audience="consultant",
+                max_chars=CONSULTANT_HISTORY_CHAR_BUDGET,
+                include_task_goal=not any(isinstance(message, HumanMessage) for message in messages),
+            )
+            if "CONTEXT_BUDGET_UNSATISFIED" in task_spec_context:
+                reason = (
+                    "CONSULTANT_CONTEXT_BUDGET_UNSATISFIED: the lossless canonical user "
+                    "contract exceeds the configured 100k-token history pool."
+                )
+                logger.error("%s task=%s", reason, task_id)
+                return {
+                    "messages": [SystemMessage(content=reason)],
+                    "plan_progress": self._mark_plan_current_blocked(task_id, reason),
+                    "next_step": "finish",
+                }
+
+            pool_budgets = self._consultant_effective_pool_budgets(
+                self.llm_context_limit_tokens
+            )
+            dynamic_marker = "__CONSULTANT_DYNAMIC_BLOCK__"
+            static_probe = PromptManager.get_consultant_prompt(
+                intent=str(state.get("task_mode") or "managed"),
+                kb_list_desc=kb_list_desc,
+                rag_history=[dynamic_marker],
+                skills_summary=dynamic_marker,
+                runtime_evidence_context=dynamic_marker,
+                work_dir=self.pm.work_dir if self.pm else ".",
+                max_skills=consultant_max_skills,
+                wiki_memory_context=dynamic_marker,
+                input_resolution_context=dynamic_marker,
+                workflow_catalog=dynamic_marker,
+                user_preferences_context=dynamic_marker,
+                task_spec_context=dynamic_marker,
+                consultation_state_context=dynamic_marker,
+            )
+            dynamic_slots = static_probe.count(dynamic_marker)
+            static_prompt_chars = (
+                len(static_probe)
+                - dynamic_slots * len(dynamic_marker)
+                + dynamic_slots * len("None")
+            )
+            static_token_probe = PromptManager.get_consultant_prompt(
+                intent=str(state.get("task_mode") or "managed"),
+                kb_list_desc=kb_list_desc,
+                rag_history=["None"],
+                skills_summary="None",
+                runtime_evidence_context="None",
+                work_dir=self.pm.work_dir if self.pm else ".",
+                max_skills=consultant_max_skills,
+                wiki_memory_context="None",
+                input_resolution_context="None",
+                workflow_catalog="None",
+                user_preferences_context="None",
+                task_spec_context="None",
+                consultation_state_context="None",
+            )
+            static_prompt_tokens = _consultant_estimate_text_tokens(static_token_probe)
+            try:
+                (
+                    packed_history,
+                    packed_skills,
+                    consultant_visible_messages,
+                    consultant_pack_report,
+                ) = self._pack_consultant_context(
+                    messages,
+                    history_components={
+                        "task_spec": task_spec_context,
+                        "input_resolution": input_resolution_context,
+                        "user_preferences": user_preferences_context,
+                        "memory_context": consultant_memory_retrieval_context,
+                        "rag_history": rag_history_text,
+                    },
+                    skill_components={
+                        "workflow_catalog": workflow_catalog,
+                        "skill_catalog": skill_catalog,
+                        "skill_tree": skill_tree,
+                        "controlled_discovery_hints": controlled_discovery_hints,
+                        "preloaded_skill_docs": preloaded_skill_docs_context,
+                        "runtime_evidence": runtime_evidence_context,
+                    },
+                    history_max_chars=pool_budgets["history_effective_chars"],
+                    skill_max_chars=pool_budgets["skill_effective_chars"],
+                    static_prompt_chars=static_prompt_chars,
+                    history_max_tokens=pool_budgets["history_effective_tokens"],
+                    skill_max_tokens=pool_budgets["skill_effective_tokens"],
+                    static_prompt_tokens=static_prompt_tokens,
+                    max_messages=CONSULTANT_HISTORY_MAX_MESSAGES,
+                )
+            except RequiredContextOverflow as exc:
+                reason = (
+                    "CONSULTANT_CONTEXT_BUDGET_UNSATISFIED: required user authority or "
+                    f"complete selected-skill documentation cannot fit safely. {exc}"
+                )
+                logger.error(
+                    "%s task=%s report=%s",
+                    reason,
+                    task_id,
+                    json.dumps(exc.report, ensure_ascii=False, sort_keys=True),
+                )
+                return {
+                    "messages": [SystemMessage(content=reason)],
+                    "plan_progress": self._mark_plan_current_blocked(task_id, reason),
+                    "next_step": "finish",
+                }
+
+            task_spec_context = packed_history.get("task_spec") or "None"
+            input_resolution_context = packed_history.get("input_resolution") or "None"
+            user_preferences_context = packed_history.get("user_preferences") or "None"
+            consultant_memory_retrieval_context = packed_history.get("memory_context") or "None"
+            rag_history_text = packed_history.get("rag_history") or "None"
+            rag_history_for_prompt = [rag_history_text]
+            workflow_catalog = packed_skills.get("workflow_catalog") or "None"
+            skill_catalog = packed_skills.get("skill_catalog") or ""
+            skill_tree = packed_skills.get("skill_tree") or ""
+            controlled_discovery_hints = packed_skills.get("controlled_discovery_hints") or ""
+            preloaded_skill_docs_context = packed_skills.get("preloaded_skill_docs") or ""
+            runtime_evidence_context = packed_skills.get("runtime_evidence") or "None"
+            skills_summary = "\n".join(
+                value
+                for value in (
+                    skill_catalog,
+                    skill_tree,
+                    controlled_discovery_hints,
+                    preloaded_skill_docs_context,
+                )
+                if value
+            ) or "None"
+
+            # Formerly: consultant_visible_messages = self._step_local_messages(
+            # That generic selector hid original Human authority and loaded skill docs.
 
             consultant_prompt = PromptManager.get_consultant_prompt(
-                intent="General Inquiry",
+                intent=str(state.get("task_mode") or "managed"),
                 kb_list_desc=kb_list_desc,
                 rag_history=rag_history_for_prompt,
                 skills_summary=skills_summary,
@@ -10187,22 +10719,29 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 input_resolution_context=input_resolution_context,
                 workflow_catalog=workflow_catalog,
                 user_preferences_context=user_preferences_context,
-                task_spec_context=format_effective_user_facts_context(
-                    task_spec,
-                    audience="consultant",
-                    max_chars=4500,
-                ),
+                task_spec_context=task_spec_context,
+                consultation_state_context=consultation_state_context,
             )
-            history_chars = sum(
+            visible_message_chars = sum(
                 len(str(getattr(message, "content", message) or ""))
                 for message in consultant_visible_messages
             )
-            prompt_chars = len(consultant_prompt) + history_chars
+            history_message_chars = sum(
+                int(block.get("final_chars") or 0)
+                for block in consultant_pack_report["history"].get("blocks", [])
+                if str(block.get("id") or "").startswith("history_message:")
+            )
+            skill_message_chars = sum(
+                int(block.get("final_chars") or 0)
+                for block in consultant_pack_report["skills"].get("blocks", [])
+                if str(block.get("id") or "").startswith("skill_message:")
+            )
+            prompt_chars = len(consultant_prompt) + visible_message_chars
             consultant_prompt_accounting = {
                 "assembled_prompt_chars": prompt_chars,
                 "component_chars": {
                     "assembled_system_prompt": len(consultant_prompt),
-                    "history": history_chars,
+                    "visible_messages": visible_message_chars,
                 },
                 "inclusive_subcomponent_chars": {
                 "skill_tree": len(skill_tree),
@@ -10215,6 +10754,11 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "user_preferences": len(user_preferences_context),
                 },
                 "candidate_skill_count": len(candidate_skill_ids),
+                "preloaded_skill_doc_chars": len(preloaded_skill_docs_context),
+                "history_message_chars": history_message_chars,
+                "skill_message_chars": skill_message_chars,
+                "pool_budgets": pool_budgets,
+                "pack_report": consultant_pack_report,
                 "component_accounting": "component_chars are non-overlapping; inclusive_subcomponent_chars are children of assembled_system_prompt",
             }
             logger.info(
@@ -10222,17 +10766,99 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 task_id,
                 json.dumps(consultant_prompt_accounting, ensure_ascii=False, sort_keys=True),
             )
-            if prompt_chars > CONSULTANT_PROMPT_WARNING_CHARS:
+            effective_prompt_budget_chars = (
+                pool_budgets["effective_input_tokens"]
+                * CONSULTANT_ESTIMATED_CHARS_PER_TOKEN
+            )
+            if prompt_chars > effective_prompt_budget_chars:
                 logger.warning(
                     "Consultant prompt exceeds warning budget: task=%s chars=%s warning=%s",
                     task_id,
                     prompt_chars,
-                    CONSULTANT_PROMPT_WARNING_CHARS,
+                    effective_prompt_budget_chars,
                 )
+
+            consultant_llm_messages = [
+                SystemMessage(content=consultant_prompt),
+                *consultant_visible_messages,
+            ]
+            consultant_budget = assess_prompt_budget(
+                consultant_llm_messages,
+                component_chars=consultant_prompt_accounting["component_chars"],
+                context_limit_tokens=self.llm_context_limit_tokens,
+                nominal_char_budget=effective_prompt_budget_chars,
+                compressible_chars=sum(
+                    len(value)
+                    for value in (
+                        consultant_memory_retrieval_context,
+                        rag_history_text,
+                        workflow_catalog,
+                        runtime_evidence_context,
+                    )
+                ),
+                noncompressible_chars=max(
+                    0,
+                    prompt_chars
+                    - sum(
+                        len(value)
+                        for value in (
+                            consultant_memory_retrieval_context,
+                            rag_history_text,
+                            workflow_catalog,
+                            runtime_evidence_context,
+                        )
+                    ),
+                ),
+                soft_warning_ratio=0.75,
+                compression_ratio=0.90,
+                hard_safety_ratio=1.0,
+                reserved_headroom_tokens=CONSULTANT_RESERVED_HEADROOM_TOKENS,
+            )
+            consultant_token_estimate = sum(
+                _consultant_estimate_text_tokens(
+                    str(getattr(message, "content", message) or "")
+                ) + 4
+                for message in consultant_llm_messages
+            )
+            consultant_safe_input_tokens = max(
+                1,
+                int(self.llm_context_limit_tokens)
+                - min(
+                    CONSULTANT_RESERVED_HEADROOM_TOKENS,
+                    max(0, int(self.llm_context_limit_tokens) - 1),
+                ),
+            )
+            legacy_estimator_hard_block = bool(consultant_budget.get("hard_block"))
+            accurate_hard_block = consultant_token_estimate > consultant_safe_input_tokens
+            consultant_budget.update({
+                "consultant_tokenizer": _consultant_tokenizer_name(),
+                "consultant_estimated_input_tokens": consultant_token_estimate,
+                "consultant_safe_input_tokens": consultant_safe_input_tokens,
+                "pool_pack_report": consultant_pack_report,
+                "legacy_char_estimator_hard_block": legacy_estimator_hard_block,
+                "hard_block": accurate_hard_block,
+                "decision": "block_context_safety" if accurate_hard_block else "no_compression",
+            })
+            if consultant_budget["hard_block"]:
+                reason = (
+                    "CONSULTANT_CONTEXT_BUDGET_UNSATISFIED: estimated input is "
+                    f"{consultant_budget['consultant_estimated_input_tokens']} / "
+                    f"{consultant_budget['context_limit_tokens']} tokens with "
+                    f"{max(0, consultant_budget['context_limit_tokens'] - consultant_budget['consultant_estimated_input_tokens'])} "
+                    "tokens remaining. "
+                    "The current user request and canonical contract were not silently truncated."
+                )
+                logger.error("%s task=%s", reason, task_id)
+                plan_progress = self._mark_plan_current_blocked(task_id, reason)
+                return {
+                    "messages": [SystemMessage(content=reason)],
+                    "plan_progress": plan_progress,
+                    "next_step": "finish",
+                }
 
             try:
                 response = await self._ainvoke_llm(
-                    [SystemMessage(content=consultant_prompt)] + consultant_visible_messages,
+                    consultant_llm_messages,
                     stage="consultant",
                     task_id=task_id,
                     task_mode=str(state.get("task_mode") or "managed"),
@@ -10250,12 +10876,17 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             for item in list(state.get("rag_history") or [])
                         ],
                         "component_token_counts": {
-                            key: max(0, int(value) // 4)
-                            for key, value in consultant_prompt_accounting["component_chars"].items()
-                            if isinstance(value, int)
+                            "assembled_system_prompt": _consultant_estimate_text_tokens(consultant_prompt),
+                            "visible_messages": sum(
+                                _consultant_estimate_text_tokens(
+                                    str(getattr(message, "content", message) or "")
+                                )
+                                for message in consultant_visible_messages
+                            ),
                         },
                         "component_chars": consultant_prompt_accounting["component_chars"],
                         "prompt_component_accounting": consultant_prompt_accounting,
+                        "consultant_budget": consultant_budget,
                         "formal_input_audit": input_resolution_context,
                         "user_source_refs": list(state.get("user_source_refs") or []),
                     },
@@ -10336,20 +10967,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
 
             # EXECUTE 动作
             if content.startswith("EXECUTE"):
-                if last_force_finish_index >= 0 and not execute_after_force_finish:
-                    obs = (
-                        "<consultant_validation_error>\n"
-                        "A read-only EXECUTE loop guard has already fired in this Consultant turn. "
-                        "Do not run another EXECUTE. Use the verified observations already collected "
-                        "to FINISH with [SELECTED_SKILLS: ...] or ASK the user for the one unresolved decision.\n"
-                        "</consultant_validation_error>"
-                    )
-                    output.print_once(
-                        "consultant_execute_after_force_finish_blocked",
-                        "⚠️ Consultant tried another EXECUTE after the read-only loop guard; blocking it and requesting FINISH/ASK.",
-                        Fore.YELLOW,
-                    )
-                    return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
                 output.print_node_header("execute")
                 code_match = re.search(r"```(?:bash|python)?\n(.*?)```", content, re.DOTALL)
                 clean_code = code_match.group(1).strip() if code_match else content.replace("EXECUTE", "").strip()
@@ -10363,6 +10980,100 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     )
                     return {
                         "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+
+                proposal = {
+                    "command": clean_code,
+                    "requirement_ids": consultant_json_payload.get("requirement_ids") or [],
+                    "purpose": consultant_json_payload.get("purpose") or "",
+                    "expected_evidence": consultant_json_payload.get("expected_evidence"),
+                }
+                environment_identity = {
+                    "conda_prefix": str(os.environ.get("CONDA_PREFIX") or ""),
+                    "path_digest": hashlib.sha256(str(os.environ.get("PATH") or "").encode("utf-8")).hexdigest(),
+                }
+                action_context = {"task_spec_revision": task_spec_revision(task_spec)}
+                preflight = preflight_execute(
+                    consultation_state,
+                    proposal,
+                    cwd=work_dir,
+                    environment=environment_identity,
+                    context=action_context,
+                )
+                consultation_state = dict(preflight.get("state") or consultation_state)
+                fingerprint = str(preflight.get("fingerprint") or "")
+
+                def record_lifecycle(stage: str, detail: Optional[Dict[str, Any]] = None) -> None:
+                    requirement_status_counts: Dict[str, int] = {}
+                    for requirement in (consultation_state.get("requirements") or {}).values():
+                        status_key = str(requirement.get("status") or "unknown")
+                        requirement_status_counts[status_key] = requirement_status_counts.get(status_key, 0) + 1
+                    lifecycle_payload = {
+                        "stage": stage,
+                        "consultation_id": consultation_state.get("consultation_id"),
+                        "iteration": consultation_state.get("iteration"),
+                        "action_fingerprint": fingerprint,
+                        "requirement_ids": list(proposal.get("requirement_ids") or []),
+                        "execute_call_count": consultation_state.get("execute_call_count", 0),
+                        "duplicate_reuse_count": consultation_state.get("duplicate_reuse_count", 0),
+                        "no_progress_count": consultation_state.get("no_progress_count", 0),
+                        "phase": consultation_state.get("phase"),
+                        "completion_decision": consultation_state.get("completion_decision"),
+                        "completion_reason": consultation_state.get("completion_reason"),
+                        "requirement_count": len(consultation_state.get("requirements") or {}),
+                        "requirement_status_counts": requirement_status_counts,
+                        "detail": dict(detail or {}),
+                    }
+                    self.profiler.record_executor_lifecycle(
+                        task_id,
+                        stage,
+                        action_fingerprint=fingerprint,
+                        consultation_id=str(consultation_state.get("consultation_id") or ""),
+                        requirement_ids=list(proposal.get("requirement_ids") or []),
+                        detail=lifecycle_payload,
+                    )
+                    try:
+                        ContextLineageStore(self.data_path, task_id).record_event(
+                            "consultant_executor_lifecycle",
+                            lifecycle_payload,
+                            event_id=(
+                                f"consultant-executor-{consultation_state.get('iteration', 0)}-"
+                                f"{stage.lower()}-{fingerprint[:16] or 'unfingerprinted'}"
+                            ),
+                        )
+                    except Exception as exc:
+                        logger.warning("Could not persist Consultant executor lifecycle: %s", exc)
+
+                record_lifecycle("REQUESTED", {"purpose": proposal.get("purpose")})
+                if preflight.get("decision") in {"evidence_already_satisfied", "duplicate_action_reused", "duplicate_failed_action_suppressed", "finalize_execute_forbidden"}:
+                    if consultation_state.get("completion_decision") == "ready_to_finalize":
+                        consultation_state = begin_finalize(consultation_state)
+                    reused_observation = str(preflight.get("observation") or "Previously recorded structured evidence already satisfies the declared requirement.")
+                    obs = (
+                        "<consultant_evidence_reused>\n"
+                        f"{self._clip_observation_text(reused_observation, 1200)}\n"
+                        "No executor call was made. The completion evaluator now requires FINISH or ASK.\n"
+                        "</consultant_evidence_reused>"
+                    )
+                    record_lifecycle("OBSERVATION_REUSED", {"decision": preflight.get("decision")})
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                if preflight.get("decision") != "allow":
+                    obs = (
+                        "<consultant_validation_error>\n"
+                        f"EXECUTE proposal rejected by the consultation controller: {preflight.get('decision')}. "
+                        "Every probe must declare unresolved requirement_ids, purpose, and expected_evidence.\n"
+                        "</consultant_validation_error>"
+                    )
+                    record_lifecycle("REQUEST_REJECTED", {"decision": preflight.get("decision"), "reason": preflight.get("reason")})
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
                         "next_step": "consultant",
                     }
 
@@ -10381,14 +11092,52 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     started_at=wait_started_at,
                 )
                 if user_response == 'y':
+                    record_lifecycle("APPROVED")
                     shim_path = self.pm.get_shim_dir_str()
-                    stdout, stderr, ret = await run_bash_script(f'export PATH="$PATH:{shim_path}"\n{clean_code}')
+                    record_lifecycle("SPAWN_STARTED")
+                    record_lifecycle("PROCESS_STARTED")
+                    try:
+                        stdout, stderr, ret = await run_bash_script(f'export PATH="$PATH:{shim_path}"\n{clean_code}')
+                    except asyncio.CancelledError:
+                        record_lifecycle("CANCELLED")
+                        raise
+                    except TimeoutError:
+                        record_lifecycle("TIMEOUT")
+                        raise
+                    except BaseException as exc:
+                        failure_stage = "SPAWN_FAILED" if isinstance(exc, OSError) else "PROCESS_TERMINATED"
+                        record_lifecycle(failure_stage, {"error": type(exc).__name__})
+                        raise
+                    record_lifecycle(
+                        "PROCESS_TERMINATED" if int(ret) < 0 else "PROCESS_COMPLETED",
+                        {"returncode": ret},
+                    )
                     obs = (
                         f"<observation>\n{'✅' if ret==0 else '❌'}\n"
                         f"{self._clip_observation_text(stdout, 1000)}\n"
                         f"{self._clip_observation_text(stderr, 500)}\n"
                         "</observation>"
                     )
+                    consultation_state = record_execution_observation(
+                        consultation_state,
+                        fingerprint=fingerprint,
+                        proposal=proposal,
+                        returncode=ret,
+                        observation=obs,
+                        provenance={
+                            "kind": "consultant_read_only_execute",
+                            "action_fingerprint": fingerprint,
+                            "cwd": os.path.realpath(work_dir),
+                            "task_spec_revision": task_spec_revision(task_spec),
+                        },
+                    )
+                    if consultation_state.get("completion_decision") == "ready_to_finalize":
+                        consultation_state = begin_finalize(consultation_state)
+                    record_lifecycle("OBSERVATION_RECORDED", {
+                        "returncode": ret,
+                        "completion_decision": consultation_state.get("completion_decision"),
+                        "phase": consultation_state.get("phase"),
+                    })
                     output.print_observation(obs)
                     if (
                         ret != 0
@@ -10408,7 +11157,12 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         )
                 else:
                     obs = f"User denied. Feedback: {user_response}" if len(user_response) > 1 else "User denied execution."
-                return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
+                    record_lifecycle("APPROVAL_REJECTED", {"response": str(user_response)[:200]})
+                return {
+                    "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                    "consultation_state": consultation_state,
+                    "next_step": "consultant",
+                }
 
             # SEARCH 动作
             if content.startswith("SEARCH"):
@@ -10434,6 +11188,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         "messages": [AIMessage(content=f"(Searching {kb_cat}...)"),
                                      SystemMessage(content=f"Search Result:\n{new_knowledge}")],
                         "rag_history": rag_history,
+                        "consultation_state": consultation_state,
                         "next_step": "consultant",
                     }
 
@@ -10446,7 +11201,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         f"The workflow requested by `{content}` is already loaded. Use the loaded template to FINISH or ASK.\n"
                         "</consultant_validation_error>"
                     )
-                    return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
+                    return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "consultation_state": consultation_state, "next_step": "consultant"}
                 output.print_once(f"consultant_load:{content}", f"📖 Consultant loading workflow template: {workflow_id}", Fore.CYAN)
                 loaded = self.workflow_manager.load_workflow_prompt(workflow_id) if self.workflow_manager and workflow_id else ""
                 if loaded:
@@ -10459,6 +11214,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     )
                 return {
                     "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                    "consultation_state": consultation_state,
                     "next_step": "consultant",
                 }
 
@@ -10466,32 +11222,12 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 parts = content.split(maxsplit=1)
                 skill_id = parts[1].strip() if len(parts) == 2 else ""
                 if content in load_actions:
-                    skill_only_handoff = self._consultant_skill_only_fallback_handoff(
-                        consultant_context=consultant_context,
-                        fallback_raw=[skill_id],
-                        task_id=task_id,
-                        consultant_memory_retrieval_context=consultant_memory_retrieval_context,
-                        consultant_wiki_context=consultant_wiki_context,
-                        input_resolution_context=input_resolution_context,
-                        max_skills=consultant_max_skills,
-                    )
-                    if skill_only_handoff and semantic_contract_ready:
-                        skill_only_handoff["input_audit"] = input_resolution_result
-                        output.print_once(
-                            f"consultant_duplicate_skill_handoff:{skill_id}",
-                            (
-                                f"✓ Consultant already loaded {skill_id}; "
-                                "handing the selected skill and runtime audit to Planner."
-                            ),
-                            Fore.GREEN,
-                        )
-                        return skill_only_handoff
                     obs = (
                         "<consultant_validation_error>\n"
                         f"The artifact requested by `{content}` is already loaded. Do not request it again; FINISH or ASK.\n"
                         "</consultant_validation_error>"
                     )
-                    return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
+                    return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "consultation_state": consultation_state, "next_step": "consultant"}
                 output.print_once(f"consultant_load:{content}", f"📖 Consultant loading skill doc: {skill_id}", Fore.CYAN)
                 loaded = self.skill_manager.load_skill(skill_id) if self.skill_manager and skill_id else ""
                 if loaded:
@@ -10504,6 +11240,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     )
                 return {
                     "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                    "consultation_state": consultation_state,
                     "next_step": "consultant",
                 }
 
@@ -10517,7 +11254,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         f"The artifact requested by `{content}` is already loaded. Do not request it again; FINISH or ASK.\n"
                         "</consultant_validation_error>"
                     )
-                    return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
+                    return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "consultation_state": consultation_state, "next_step": "consultant"}
                 output.print_once(f"consultant_load:{content}", f"📖 Consultant loading reference: {skill_id} {ref_path}", Fore.CYAN)
                 loaded = self.skill_manager.load_reference(skill_id, ref_path) if self.skill_manager and skill_id and ref_path else ""
                 if loaded:
@@ -10534,6 +11271,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     )
                 return {
                     "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                    "consultation_state": consultation_state,
                     "next_step": "consultant",
                 }
 
@@ -10547,7 +11285,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         f"The artifact requested by `{content}` is already loaded. Do not request it again; FINISH or ASK.\n"
                         "</consultant_validation_error>"
                     )
-                    return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
+                    return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "consultation_state": consultation_state, "next_step": "consultant"}
                 output.print_once(f"consultant_load:{content}", f"📖 Consultant loading script: {skill_id} {script_path}", Fore.CYAN)
                 loaded = self.skill_manager.load_script(skill_id, script_path) if self.skill_manager and skill_id and script_path else ""
                 if loaded:
@@ -10564,6 +11302,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     )
                 return {
                     "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                    "consultation_state": consultation_state,
                     "next_step": "consultant",
                 }
 
@@ -10572,6 +11311,13 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 question = content.replace("ASK", "").strip()
                 return {
                     "messages": [AIMessage(content=content)],
+                    "consultation_state": {
+                        **consultation_state,
+                        "phase": "needs_user",
+                        "consultation_status": "needs_user",
+                        "completion_decision": "needs_user",
+                        "completion_reason": "consultant_requested_user_decision",
+                    },
                     "pending_human_question": {
                         "type": "consultant_question",
                         "stage": "consultant",
@@ -10588,6 +11334,21 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 or "[SELECTED_SKILLS:" in content
             )
             if content.startswith("FINISH") or looks_like_structured_handoff:
+                consultation_state = evaluate_consultation_completion(consultation_state)
+                if consultation_state.get("completion_decision") != "ready_to_finalize":
+                    obs = (
+                        "<consultant_validation_error>\n"
+                        "FINISH was rejected because mandatory evidence is unresolved. "
+                        f"Unresolved requirement IDs: {', '.join(consultation_state.get('unresolved_requirement_ids') or []) or 'unknown'}. "
+                        "Use one purpose-bound EXECUTE for a listed evidence requirement or ASK for the missing user decision.\n"
+                        "</consultant_validation_error>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                consultation_state = begin_finalize(consultation_state)
                 summary = content[len("FINISH"):].strip() if content.startswith("FINISH") else content.strip()
                 payload_type = str(
                     consultant_json_payload.get("action_type")
@@ -10845,6 +11606,28 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             "✓ Consultant skill repair converged inside the original candidate allowlist. Handing to Planner.",
                             Fore.GREEN,
                         )
+                        consultation_state.update({
+                            "phase": "finalize",
+                            "consultation_status": "completed",
+                            "completion_decision": "ready_to_finalize",
+                            "completion_reason": "formal_contract_compiled_with_bounded_skill_repair",
+                            "final_contract": {
+                                "intent": str(compiled_task_spec.get("goal") or consultant_context),
+                                "selected_skills": list(selected),
+                                "summary": repaired_summary,
+                                "constraints": list(semantic_validation.get("constraints") or []),
+                                "verified_evidence": [
+                                    dict(item) for item in (consultation_state.get("requirements") or {}).values()
+                                    if item.get("status") == "satisfied"
+                                ],
+                                "remaining_uncertainty": list(consultation_state.get("unresolved_requirement_ids") or []),
+                                "required_capabilities": list(selected),
+                                "input_status": str(input_resolution_result.get("status") or "not_applicable"),
+                                "runtime_status": runtime_audits,
+                                "semantic_constraint_count": len(semantic_validation.get("constraints") or []),
+                                "task_spec_revision": task_spec_revision(compiled_task_spec),
+                            },
+                        })
                         return {
                             "messages": [AIMessage(content="FINISH\n" + repaired_summary)],
                             "input_audit": input_resolution_result,
@@ -10859,6 +11642,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             "task_spec": compiled_task_spec,
                             "task_revision": task_spec_revision(compiled_task_spec),
                             "consultant_constraint_metrics": semantic_metrics,
+                            "consultation_state": consultation_state,
                             "contract_status": "semantic_contract_compiled",
                             "next_step": "planner",
                         }
@@ -10869,6 +11653,29 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 if runtime_preflight_summary:
                     summary = (summary.rstrip() + "\n\n" + runtime_preflight_summary).strip()
                 output.print_once("consultant_finish", "✓ Consultant complete. Handing to Planner.", Fore.GREEN)
+                consultation_state.update({
+                    "phase": "finalize",
+                    "consultation_status": "completed",
+                    "completion_decision": "ready_to_finalize",
+                    "completion_reason": "formal_contract_compiled",
+                    "final_contract": {
+                        "intent": str(compiled_task_spec.get("goal") or consultant_context),
+                        "selected_skills": list(selected),
+                        "summary": summary,
+                        "constraints": list(semantic_validation.get("constraints") or []),
+                        "verified_evidence": [
+                            dict(item) for item in (consultation_state.get("requirements") or {}).values()
+                            if item.get("status") == "satisfied"
+                        ],
+                        "remaining_uncertainty": list(consultation_state.get("unresolved_requirement_ids") or []),
+                        "required_capabilities": list(selected),
+                        "input_status": str(input_resolution_result.get("status") or "not_applicable"),
+                        "runtime_status": runtime_audits,
+                        "handoff": workflow_handoff if has_workflow_handoff else {"selected_skills": list(selected)},
+                        "semantic_constraint_count": len(semantic_validation.get("constraints") or []),
+                        "task_spec_revision": task_spec_revision(compiled_task_spec),
+                    },
+                })
                 return {
                     "messages": [AIMessage(content=content)],
                     "input_audit": input_resolution_result,
@@ -10890,6 +11697,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "task_spec": compiled_task_spec,
                     "task_revision": task_spec_revision(compiled_task_spec),
                     "consultant_constraint_metrics": semantic_metrics,
+                    "consultation_state": consultation_state,
                     "contract_status": "semantic_contract_compiled",
                     "memory_packet_context": self._consultant_handoff_memory_packet(summary, consultant_memory_retrieval_context),
                     "wiki_memory_context": consultant_wiki_context,
@@ -11014,7 +11822,14 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 ]
             ).strip()
             user_msg = str(task_spec.get("goal") or "")
-            summary = str(state.get("requirements_summary", "") or "")
+            consultant_result = dict((state.get("consultation_state") or {}).get("final_contract") or {})
+            summary = (
+                "<consultant_result>\n"
+                + json.dumps(consultant_result, ensure_ascii=False, sort_keys=True, indent=2, default=str)
+                + "\n</consultant_result>"
+                if consultant_result
+                else str(state.get("requirements_summary", "") or "")
+            )
             rag_history = state.get("rag_history", [])
             rag_knowledge = str(rag_history[-1]) if rag_history else ""
 
@@ -16524,7 +17339,19 @@ If the user is actually asking you to run analysis or inspect local files, say t
         with self.profiler.task_context(task_id):
             try:
                 async for event in self.app.astream(runner_input, config=config):
-                    pass   # 所有打印由 OutputRouter 在节点内处理，此处不重复
+                    self.profiler.heartbeat(task_id)
+            except asyncio.CancelledError:
+                self.profiler.finish_for_exception(task_id, asyncio.CancelledError())
+                raise
+            except TimeoutError as exc:
+                self.profiler.finish_for_exception(task_id, exc)
+                raise
+            except KeyboardInterrupt as exc:
+                self.profiler.finish_for_exception(task_id, exc)
+                raise
+            except BaseException as exc:
+                self.profiler.finish_for_exception(task_id, exc)
+                raise
             finally:
                 self.profiler.flush(task_id)
 

@@ -45,6 +45,7 @@ class AgentState(TypedDict, total=False):
     user_constraints: List[str]
     requirements_summary: str  # 存储咨询阶段确认的参数（如基因组大小、物种等）
     consultant_constraint_metrics: dict
+    consultation_state: dict
     canonical_constraint_hash: Optional[str]
     knowledge_claim_set_hash: Optional[str]
     task_spec: dict  # User-owned effective task facts and later confirmed decisions.

@@ -101,38 +101,66 @@ class WorkflowManager:
         if not query or not self.workflows:
             return []
 
+        def phrase_present(value: Any) -> bool:
+            phrase = str(value or "").strip().lower()
+            if not phrase:
+                return False
+            if re.search(r"[^\x00-\x7f]", phrase):
+                return phrase in query
+            tokens = [token for token in re.split(r"[^a-z0-9]+", phrase) if token]
+            if not tokens:
+                return False
+            pattern = r"(?<![a-z0-9])" + r"[^a-z0-9]+".join(map(re.escape, tokens)) + r"(?![a-z0-9])"
+            return bool(re.search(pattern, query))
+
+        # Explicit canonical IDs and aliases are authoritative retrieval hints.
+        explicit: List[str] = []
+        for workflow_id, workflow in self.workflows.items():
+            identifiers = [workflow_id, *self._ensure_list(workflow.get("aliases"))]
+            if any(phrase_present(identifier) for identifier in identifiers):
+                explicit.append(workflow_id)
+        if explicit:
+            return explicit[: max(1, int(max_results or 1))]
+
+        generic_tokens = {
+            "analysis", "workflow", "standard", "complete", "data", "input",
+            "output", "report", "summary", "stage", "task", "result", "run",
+            "annotation", "genome", "sample", "file", "project", "custom",
+        }
+        query_tokens = {
+            token
+            for token in re.split(r"[^a-z0-9]+", query)
+            if len(token) >= 3 and token not in generic_tokens
+        }
         scored: List[tuple[int, str]] = []
         for workflow_id, workflow in self.workflows.items():
-            fields = [
+            exclude_when = workflow.get("exclude_when")
+            if isinstance(exclude_when, dict):
+                excluded = self._ensure_list(exclude_when.get("any"))
+            else:
+                excluded = self._ensure_list(exclude_when)
+            if any(phrase_present(value) for value in excluded):
+                continue
+            triggers = self._ensure_list(workflow.get("triggers"))
+            task_types = self._ensure_list(workflow.get("task_types"))
+            exact_matches = sum(1 for value in [*triggers, *task_types] if phrase_present(value))
+            primary_text = " ".join([
                 workflow_id,
-                workflow.get("name", ""),
-                workflow.get("description", ""),
-                *self._ensure_list(workflow.get("aliases")),
-                *self._ensure_list(workflow.get("task_types")),
-                *self._ensure_list(workflow.get("triggers")),
-                *[
-                    value
-                    for stage in workflow.get("stages", []) or []
-                    if isinstance(stage, dict)
-                    for value in (
-                        stage.get("stage", ""),
-                        *self._ensure_list(stage.get("task_types")),
-                        *self._ensure_list(stage.get("inputs")),
-                        *self._ensure_list(stage.get("outputs")),
-                    )
-                ],
-            ]
-            score = 0
-            seen: set[str] = set()
-            for field in fields:
-                for token in re.split(r"[^a-z0-9]+", str(field or "").lower()):
-                    if len(token) < 3 or token in seen:
-                        continue
-                    if token in query:
-                        score += 2 if token in workflow_id.lower() else 1
-                        seen.add(token)
-            if score:
-                scored.append((score, workflow_id))
+                str(workflow.get("name") or ""),
+                *triggers,
+                *task_types,
+            ]).lower()
+            field_tokens = {
+                token
+                for token in re.split(r"[^a-z0-9]+", primary_text)
+                if len(token) >= 3 and token not in generic_tokens
+            }
+            overlap = query_tokens & field_tokens
+            # One generic substring is not enough.  Accept an exact structured
+            # trigger/task type or at least two distinctive tokens.  A single
+            # token such as "filtered" from a VCF filename is not sufficient.
+            if exact_matches or len(overlap) >= 2:
+                scored.append((exact_matches * 10 + len(overlap), workflow_id))
 
         scored.sort(key=lambda item: (-item[0], item[1]))
         return [workflow_id for _, workflow_id in scored[: max(1, int(max_results or 1))]]

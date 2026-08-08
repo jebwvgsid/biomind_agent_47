@@ -396,9 +396,55 @@ def _discover_local_inputs(
     _discover_sidecars(result, explicit_files)
     if _should_discover_reference_annotation(text, explicit_files):
         _discover_reference_annotation_pairs(result, explicit_files, explicit_dirs, work_dir, project_root, max_candidates)
+    result["resolved_inputs"] = _dedupe_resolved_inputs(result.get("resolved_inputs") or [])
     result["missing_roles"] = _dedupe_strings(result.get("missing_roles") or [])
     result["ambiguous_roles"] = _dedupe_strings(result.get("ambiguous_roles") or [])
     return result
+
+
+def _dedupe_resolved_inputs(records: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Merge explicit and discovery evidence for the same role/path."""
+    def as_list(value: Any) -> List[Any]:
+        if value in (None, ""):
+            return []
+        if isinstance(value, (list, tuple, set)):
+            return list(value)
+        return [value]
+
+    merged: Dict[tuple[str, str], Dict[str, Any]] = {}
+    order: List[tuple[str, str]] = []
+    for raw in records:
+        item = dict(raw or {})
+        path_value = item.get("path") or item.get("resolved_path") or item.get("paths") or ""
+        if isinstance(path_value, (list, tuple)):
+            normalized_path = "|".join(str(value) for value in path_value)
+        else:
+            normalized_path = str(path_value)
+        key = (str(item.get("role") or "unknown"), normalized_path)
+        if key not in merged:
+            merged[key] = item
+            order.append(key)
+            continue
+        current = merged[key]
+        source_values = as_list(current.get("sources") or current.get("source"))
+        source_values.append(item.get("source"))
+        sources = [str(value) for value in source_values if str(value or "").strip()]
+        current["sources"] = list(dict.fromkeys(sources))
+        if str(item.get("source") or "") == "explicit":
+            current["source"] = "explicit"
+        for field in ("detail", "verified_at"):
+            if item.get(field) and not current.get(field):
+                current[field] = item[field]
+        for field in ("exists", "is_file", "is_directory", "non_empty", "readable", "verified"):
+            if item.get(field) is True:
+                current[field] = True
+        evidence = [
+            *as_list(current.get("verification_evidence")),
+            *as_list(item.get("verification_evidence")),
+        ]
+        if evidence:
+            current["verification_evidence"] = list(dict.fromkeys(evidence))
+    return [merged[key] for key in order]
 
 
 def _input_record(role: str, path: Path, source: str, detail: str = "", **extra: Any) -> Dict[str, Any]:

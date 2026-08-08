@@ -505,7 +505,21 @@ def classify_path_mentions(text: str) -> List[Dict[str, Any]]:
     example = re.compile(r"(?:例如|示例|example|e\.g\.)", re.IGNORECASE)
     control_prefixes = ("ask_user/", "blocked_", "stage_blocked/", "finish/", "execute/")
     skill_pattern = re.compile(r"^[a-z][a-z0-9_-]+/[a-z][a-z0-9_.-]+$")
+    section_classification = ""
     for line_no, line in enumerate(str(text or "").splitlines(), start=1):
+        stripped_line = line.strip().lstrip("#").strip()
+        if re.match(r"^(?:输入文件(?:或数据位置)?|输入数据|数据位置|inputs?)\s*[:：]?\s*$", stripped_line, re.IGNORECASE):
+            section_classification = "input"
+        elif re.match(r"^(?:输出目录|输出文件|预期产物|expected\s+outputs?|outputs?)\s*[:：]?\s*$", stripped_line, re.IGNORECASE):
+            section_classification = "output"
+        elif re.match(r"^(?:禁止|禁用|forbidden|must\s+not)\s*[:：]?\s*$", stripped_line, re.IGNORECASE):
+            section_classification = "forbidden"
+        elif re.match(
+            r"^(?:允许|依赖规则|停止条件|通用要求|说明|allow(?:ed)?|dependency\s+rules?|stop\s+conditions?|general\s+requirements?)\s*[:：]?\s*$",
+            stripped_line,
+            re.IGNORECASE,
+        ):
+            section_classification = "control_token"
         for match in re.finditer(
             r"(?P<path>(?:/|\.{0,2}/|[A-Za-z0-9_.-]+/)[^\s`'\"，,、;；。)）\]】]+)",
             line,
@@ -516,7 +530,7 @@ def classify_path_mentions(text: str) -> List[Dict[str, Any]]:
             lower = token.lower()
             if not _looks_like_path_mention(token):
                 continue
-            classification = "input"
+            classification = section_classification or "input"
             if re.search(r"(?:输出目录|output\s*(?:directory|dir))\s*[:：=]?\s*$", clause_prefix, re.IGNORECASE):
                 classification = "output"
             elif lower.startswith(control_prefixes) or lower in {"benchmark/hidden/fixture", "benchmark/hidden/fixtures"}:
@@ -2787,6 +2801,7 @@ def format_effective_user_facts_context(
     audience: str,
     step: Mapping[str, Any] | None = None,
     max_chars: int = 12000,
+    include_task_goal: bool = True,
 ) -> str:
     """Render the shared projection with explicit fact/source boundaries."""
     projection = project_effective_user_facts(
@@ -2795,12 +2810,171 @@ def format_effective_user_facts_context(
         step=step,
         max_chars=max_chars,
     )
-    refs = list(projection.get("source_refs") or [])
+    refs = [
+        {
+            key: ref.get(key)
+            for key in (
+                "fact_id",
+                "source_type",
+                "source_message_id",
+                "source_task_id",
+                "source_ref",
+            )
+            if ref.get(key) not in (None, "", [])
+        }
+        if isinstance(ref, Mapping) else str(ref)[:160]
+        for ref in list(projection.get("source_refs") or [])
+    ]
     fact_payload = {
         key: deepcopy(value)
         for key, value in projection.items()
         if key not in {"projection_text", "projection_chars", "projection_budget", "source_refs"}
     }
+    if not include_task_goal:
+        fact_payload.pop("task_goal", None)
+
+    # The durable projection intentionally carries full merge bookkeeping.
+    # The LLM-facing form keeps semantic meaning and provenance but removes
+    # repetitive timestamps/supersession metadata.  Artifacts are deduplicated
+    # by role plus filename, preferring a resolved absolute locator.
+    semantic_constraints = [
+        item for item in fact_payload.get("semantic_constraints", [])
+        if isinstance(item, Mapping)
+    ]
+    desired_by_role: Dict[tuple[str, str], set[str]] = {}
+    for item in semantic_constraints:
+        semantic_key = str(item.get("semantic_key") or "")
+        if "." not in semantic_key:
+            continue
+        category, slot = semantic_key.split(".", 1)
+        direction = "input" if category == "required_input" else "output" if category == "required_output" else ""
+        if not direction:
+            continue
+        role = str(item.get("role") or slot).strip()
+        values: List[Any] = [item.get("value"), item.get("path"), item.get("resolved_path")]
+        aliases = item.get("aliases")
+        if isinstance(aliases, (list, tuple, set)):
+            values.extend(aliases)
+        elif aliases:
+            values.append(aliases)
+        desired_by_role.setdefault((direction, role), set()).update(
+            str(value).strip().replace("\\", "/")
+            for value in values
+            if str(value or "").strip()
+        )
+
+    artifact_fields = (
+        "fact_id", "direction", "role", "locator", "format", "artifact_type",
+        "cardinality", "required", "status", "verified", "source_type",
+        "source_message_id", "source_task_id",
+    )
+    selected_artifacts: Dict[tuple[str, str, str], tuple[int, int, Mapping[str, Any]]] = {}
+    has_typed_inputs = any(direction == "input" for direction, _ in desired_by_role)
+    for index, item in enumerate(fact_payload.get("active_artifacts", []) or []):
+        if not isinstance(item, Mapping):
+            continue
+        direction = str(item.get("direction") or "").strip()
+        role = str(item.get("role") or "").strip()
+        locator = str(item.get("locator") or item.get("path") or "").strip()
+        normalized = locator.replace("\\", "/").rstrip("/")
+        basename = Path(normalized).name.lower() if normalized else ""
+        desired = desired_by_role.get((direction, role), set())
+        desired_basenames = {Path(value.rstrip("/")).name.lower() for value in desired if value}
+        if (
+            has_typed_inputs
+            and direction == "input"
+            and role in {"input", "input_file", "input_dir", "unknown"}
+            and normalized not in desired
+            and basename not in desired_basenames
+        ):
+            continue
+        identity = basename or normalized.lower() or str(item.get("fact_id") or index)
+        key = (direction, role, identity)
+        score = 0
+        if normalized in desired:
+            score += 100
+        elif basename and basename in desired_basenames:
+            score += 50
+        if Path(locator).is_absolute():
+            score += 20
+        if str(item.get("resolved_path") or "").strip():
+            score += 10
+        if str(item.get("source_message_id") or "").strip():
+            score += 5
+        previous = selected_artifacts.get(key)
+        if previous is None or score > previous[0]:
+            selected_artifacts[key] = (score, index, item)
+    fact_payload["active_artifacts"] = [
+        {
+            key: item.get(key)
+            for key in artifact_fields
+            if item.get(key) not in (None, "", [])
+        }
+        for _, _, item in sorted(selected_artifacts.values(), key=lambda value: value[1])
+    ]
+
+    semantic_fields = (
+        "constraint_id", "requirement_id", "semantic_key", "operator", "value",
+        "strength", "level", "confidence", "condition", "ambiguity",
+        "needs_clarification", "source_text", "source_type", "source_ref",
+        "source_span", "provenance", "role", "path", "resolved_path",
+        "resolution_status", "status", "required", "verified", "aliases",
+    )
+    fact_payload["semantic_constraints"] = [
+        {
+            key: item.get(key)
+            for key in semantic_fields
+            if item.get(key) not in (None, "", [])
+        }
+        for item in semantic_constraints
+    ]
+
+    fact_fields = (
+        "fact_id", "fact_kind", "key", "name", "value", "value_type", "unit",
+        "namespace", "subject", "predicate", "object", "relation", "entity_type",
+        "required", "status", "source_type", "source_message_id", "source_task_id",
+    )
+    for field in (
+        "active_decisions",
+        "active_parameters",
+        "active_entities",
+        "active_relations",
+        "unresolved_facts",
+        "inherited_facts",
+    ):
+        compacted = []
+        for item in fact_payload.get(field, []) or []:
+            if not isinstance(item, Mapping):
+                compacted.append(item)
+                continue
+            compacted.append({
+                key: item.get(key)
+                for key in fact_fields
+                if item.get(key) not in (None, "", [])
+            })
+        fact_payload[field] = compacted
+
+    visible_fact_ids = {
+        str(item.get("fact_id"))
+        for field in (
+            "active_artifacts",
+            "active_decisions",
+            "active_parameters",
+            "active_entities",
+            "active_relations",
+            "unresolved_facts",
+            "inherited_facts",
+        )
+        for item in fact_payload.get(field, []) or []
+        if isinstance(item, Mapping) and str(item.get("fact_id") or "").strip()
+    }
+    refs = [
+        ref for ref in refs
+        if not isinstance(ref, Mapping)
+        or not str(ref.get("fact_id") or "").strip()
+        or str(ref.get("fact_id")) in visible_fact_ids
+    ]
+
     def render(payload: Mapping[str, Any], source_refs: List[Any]) -> str:
         return (
             "[EFFECTIVE USER FACTS]\n"
@@ -2813,15 +2987,7 @@ def format_effective_user_facts_context(
     if len(rendered) <= max_chars:
         return rendered
 
-    compact_refs = [
-        {
-            key: ref.get(key)
-            for key in ("fact_id", "source_type", "source_message_id", "source_task_id", "source_ref")
-            if ref.get(key) not in (None, "", [])
-        }
-        if isinstance(ref, Mapping) else str(ref)[:160]
-        for ref in refs
-    ]
+    compact_refs = list(refs)
     fact_payload["projection_truncated"] = True
     fact_payload.setdefault("omitted_sections", []).append("source_reference_excerpts")
     rendered = render(fact_payload, compact_refs)
@@ -2831,7 +2997,14 @@ def format_effective_user_facts_context(
     if len(rendered) <= max_chars:
         return rendered
 
-    for field in ("decisions", "parameters", "entities", "relations", "unresolved_facts", "inactive_facts"):
+    for field in (
+        "active_decisions",
+        "active_parameters",
+        "active_entities",
+        "active_relations",
+        "unresolved_facts",
+        "inherited_facts",
+    ):
         if field in fact_payload and fact_payload[field]:
             fact_payload[field] = []
             fact_payload.setdefault("omitted_sections", []).append(field)
@@ -2839,24 +3012,19 @@ def format_effective_user_facts_context(
             if len(rendered) <= max_chars:
                 return rendered
 
-    # Required contracts and their source identifiers are retained; optional
-    # narrative fields have already been removed by this point.
-    for field in ("active_artifacts", "requirements", "output_contracts", "inputs", "constraints"):
-        values = fact_payload.get(field)
-        while isinstance(values, list) and len(rendered) > max_chars and len(values) > 1:
-            values.pop()
-            fact_payload.setdefault("omitted_sections", []).append(f"{field}:tail")
-            rendered = render(fact_payload, compact_refs)
-    if len(rendered) <= max_chars:
-        return rendered
+    # Required artifacts, legacy constraints, typed semantic constraints, and
+    # their source identifiers are lossless.  If they cannot fit, return an
+    # explicit budget error instead of a plausible-looking partial contract.
     fallback = {
         "projection_truncated": True,
         "effective_facts_revision": fact_payload.get("effective_facts_revision", ""),
         "required_contract_counts": {
             field: len(fact_payload.get(field) or [])
-            for field in ("active_artifacts", "requirements", "output_contracts", "inputs", "constraints")
+            for field in ("active_artifacts", "active_constraints", "semantic_constraints")
         },
-        "error": "PLANNER_CONTEXT_BUDGET_UNSATISFIED",
+        "error": (
+            f"{_field_key(audience).upper() or 'NODE'}_CONTEXT_BUDGET_UNSATISFIED"
+        ),
     }
     return render(fallback, [])[:max_chars]
 

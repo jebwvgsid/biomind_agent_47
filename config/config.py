@@ -130,6 +130,37 @@ LLM_STEP_CONTEXT_CHARS = _env_int("BIOMIND_LLM_STEP_CONTEXT_CHARS", 12000, minim
 LLM_STEP_PLAN_CHARS = _env_int("BIOMIND_LLM_STEP_PLAN_CHARS", 6000, minimum=2000)
 LLM_STEP_SKILL_DOC_CHARS = _env_int("BIOMIND_LLM_STEP_SKILL_DOC_CHARS", 18000, minimum=4000)
 LLM_STEP_EPHEMERAL_CHARS = _env_int("BIOMIND_LLM_STEP_EPHEMERAL_CHARS", 26000, minimum=8000)
+# Consultant compiles natural-language intent and may need both a substantial
+# conversation/audit history and complete documentation for several candidate
+# skills.  Keep these limits in tokens (rather than reusing the older character
+# caps) so they can be compared directly with the provider context window.
+# Each pool may grow to 100k tokens, while the assembled request is still
+# constrained by ``BioAnalystAgent.llm_context_limit_tokens`` (200k by default).
+CONSULTANT_HISTORY_TOKEN_BUDGET = _env_int(
+    "BIOMIND_CONSULTANT_HISTORY_TOKEN_BUDGET",
+    100_000,
+    minimum=4_000,
+)
+CONSULTANT_SKILL_TOKEN_BUDGET = _env_int(
+    "BIOMIND_CONSULTANT_SKILL_TOKEN_BUDGET",
+    100_000,
+    minimum=4_000,
+)
+CONSULTANT_HISTORY_MAX_MESSAGES = _env_int(
+    "BIOMIND_CONSULTANT_HISTORY_MAX_MESSAGES",
+    128,
+    minimum=8,
+)
+CONSULTANT_CANDIDATE_SKILL_LIMIT = _env_int(
+    "BIOMIND_CONSULTANT_CANDIDATE_SKILL_LIMIT",
+    64,
+    minimum=12,
+)
+CONSULTANT_RESERVED_HEADROOM_TOKENS = _env_int(
+    "BIOMIND_CONSULTANT_RESERVED_HEADROOM_TOKENS",
+    8_192,
+    minimum=0,
+)
 # Planner prompt sizing uses a nominal engineering budget plus real token
 # headroom thresholds.  The character budget is not a model context proxy.
 PLANNER_NOMINAL_CHAR_BUDGET = _env_int("BIOMIND_PLANNER_NOMINAL_CHAR_BUDGET", 50000, minimum=8000)

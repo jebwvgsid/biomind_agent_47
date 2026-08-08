@@ -109,6 +109,7 @@ else:
 from agent_core.plan_tracker import build_plan_state, save_plan_state
 from agent_core.skill_manager import SkillManager
 from agent_core.workflow_manager import WorkflowManager
+from agent_core.task_spec import create_task_spec
 from langchain_core.messages import AIMessage
 
 
@@ -348,7 +349,7 @@ class RuntimePreflightTests(unittest.TestCase):
         )
 
         self.assertIn("cd ", resolved)
-        self.assertIn("Biomind_v1", resolved)
+        self.assertIn(str(Path(__file__).resolve().parents[1]), resolved)
         self.assertIn("skills/scrna/env/bootstrap/scripts/check_scrna_env.R", resolved)
 
     def test_runtime_block_continues_when_reporting_steps_remain(self):
@@ -368,9 +369,9 @@ class RuntimePreflightTests(unittest.TestCase):
             progress = agent._mark_plan_current_blocked(task_id, "blocked: missing runtime")
             next_step = agent._next_step_after_runtime_block(task_id)
 
-        self.assertEqual(next_step, "generate")
+        self.assertEqual(next_step, "finish")
         self.assertIn("- [!] Step 1: Run workflow", progress)
-        self.assertIn("- [ ] Step 2: Generate stage_status.tsv", progress)
+        self.assertIn("- [-] Step 2: Generate stage_status.tsv", progress)
 
     def test_install_tool_owner_skill_prefers_calder_runtime_when_multiple_skills_active(self):
         agent = BioAnalystAgent.__new__(BioAnalystAgent)
@@ -629,19 +630,36 @@ class RuntimePreflightTests(unittest.TestCase):
         self.assertIn("makeblastdb: command not found", cache["detail"])
 
     def test_runtime_install_policy_context_blocks_install_when_requested(self):
+        blocked_spec = create_task_spec("runtime policy")
+        blocked_spec["requirements"] = [{
+            "requirement_id": "failure-policy-runtime",
+            "semantic_key": "failure_policy.runtime_missing",
+            "operator": "on_condition",
+            "value": "block",
+            "strength": "hard",
+        }]
+        forbidden_spec = create_task_spec("runtime policy")
+        forbidden_spec["requirements"] = [{
+            "requirement_id": "forbid-install",
+            "semantic_key": "forbidden_behavior.runtime_install",
+            "operator": "forbid",
+            "value": True,
+            "strength": "hard",
+        }]
+        allowed_spec = create_task_spec("runtime policy")
         self.assertTrue(
-            BioAnalystAgent._runtime_install_disallowed_by_context(
-                "请使用 scrna/workflows/ingest-qc，环境缺失时 blocked。"
+            BioAnalystAgent._runtime_install_disallowed_by_task_spec(
+                blocked_spec
             )
         )
         self.assertTrue(
-            BioAnalystAgent._runtime_install_disallowed_by_context(
-                "Do not install dependencies; block if the runtime is missing."
+            BioAnalystAgent._runtime_install_disallowed_by_task_spec(
+                forbidden_spec
             )
         )
         self.assertFalse(
-            BioAnalystAgent._runtime_install_disallowed_by_context(
-                "If the skill runtime is missing, use the declared install_tool."
+            BioAnalystAgent._runtime_install_disallowed_by_task_spec(
+                allowed_spec
             )
         )
 
@@ -689,17 +707,20 @@ class RuntimePreflightTests(unittest.TestCase):
     def test_consultant_execute_loop_guard_is_present(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
-        self.assertIn("execute_actions", source)
-        self.assertIn("len(execute_actions) >= 6", source)
-        self.assertIn("consultant_execute_count_loop_guard_blocked", source)
-        self.assertIn("Repeated Consultant EXECUTE actions reached the loop guard", source)
+        self.assertIn("max_total_execute=4", source)
+        self.assertIn("preflight_execute(", source)
+        self.assertIn("record_execution_observation(", source)
+        self.assertIn("evaluate_consultation_completion", source)
+        self.assertIn("candidate_skill_ids_for_prompt", source)
+        self.assertIn("finalize_execute_forbidden", source)
 
     def test_consultant_loop_guard_does_not_deterministically_choose_workflow(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
         self.assertNotIn("def _consultant_auto_workflow_handoff", source)
-        self.assertIn("Consultant read-only verification has already run several times", source)
-        self.assertIn('"next_step": "ask_user"', source)
+        self.assertNotIn("semantic_contract_ready", source)
+        self.assertIn("merge_compiled_constraints(", source)
+        self.assertIn('"next_step": "planner"', source)
 
     def test_loop_guard_has_no_modality_auto_handoff(self):
         repo_root = Path(__file__).resolve().parents[1]
@@ -754,7 +775,8 @@ class RuntimePreflightTests(unittest.TestCase):
 
         self.assertEqual(update["next_step"], "planner")
         self.assertEqual(update["workflow_id"], "")
-        self.assertEqual(update["active_skills"], ["scrna/workflows/ingest-qc"])
+        self.assertEqual(update["selected_skills"], ["scrna/workflows/ingest-qc"])
+        self.assertEqual(update["active_skills"], [])
         self.assertEqual(update["workflow_handoff"], {})
         self.assertEqual(update["workflow_stages"], [])
         self.assertIn("scrna/workflows/ingest-qc::bio_scrna_core", update["runtime_status"])

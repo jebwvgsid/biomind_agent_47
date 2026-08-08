@@ -470,6 +470,7 @@ class PromptManager:
         user_preferences_context: str = "",
         task_spec_context: str = "",
         runtime_evidence_context: str = "",
+        consultation_state_context: str = "",
     ) -> str:
         rag_history_str = "\n".join(rag_history) if rag_history else "No previous context."
         return CONSULTANT_PROMPT.format(
@@ -489,6 +490,10 @@ class PromptManager:
             workflow_catalog=workflow_catalog or "No workflow templates available.",
             user_preferences_context=user_preferences_context or "No user preferences file loaded for this consultation.",
             task_spec_context=task_spec_context or "No structured task spec is available.",
+            consultation_state_context=(
+                consultation_state_context
+                or "None"
+            ),
         )
 
     @staticmethod

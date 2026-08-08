@@ -212,10 +212,10 @@ class BioAgentMemoryTests(unittest.TestCase):
 
         self.assertIn("candidate_skill_ids_for_prompt", source)
         self.assertIn("get_skill_catalog_prompt(candidate_skill_ids)", source)
-        self.assertIn("consultant_visible_messages = self._step_local_messages(", source)
+        self.assertIn("self._pack_consultant_context(", source)
         self.assertIn("Consultant prompt components", source)
         self.assertNotIn("skill_catalog = self.skill_manager.get_skill_catalog_prompt()", source)
-        self.assertIn("handing verified evidence", source)
+        self.assertIn("consultation_state_context=consultation_state_context", source)
         self.assertNotIn("requesting FINISH/ASK repair.", source)
         self.assertIn("llm_transient_retry", source)
         self.assertIn("llm_retry_counts", source)
@@ -251,23 +251,21 @@ class BioAgentMemoryTests(unittest.TestCase):
     def test_consultant_readonly_loop_handoffs_before_another_llm_repair(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
-        self.assertIn("consultant_execute_count_loop_guard_handoff", source)
-        self.assertIn("handing verified evidence", source)
-        self.assertIn("_consultant_skill_only_fallback_handoff", source)
-        self.assertIn('"next_step": "planner"', source)
-        self.assertNotIn("consultant_readonly_loop_decision", source)
-        self.assertNotIn("_main_controller_recovered_consultant_update", source)
+        self.assertIn("preflight_execute(", source)
+        self.assertIn("record_execution_observation(", source)
+        self.assertIn("begin_finalize(consultation_state)", source)
+        self.assertIn('"duplicate_action_reused"', source)
+        self.assertNotIn("consultant_execute_count_loop_guard_handoff", source)
+        self.assertNotIn("<consultant_force_finish_from_observations>", source)
 
     def test_consultant_internal_failures_use_skill_only_fallback_without_main_controller(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
         self.assertIn("<consultant_loop_guard_blocked>", source)
         self.assertIn("Candidate skill hints", source)
-        self.assertIn("consultant_loop_guard_skill_only", source)
-        self.assertIn('"skill_selection_source": "consultant_skill_only_fallback"', source)
-        self.assertIn('"workflow_state": {}', source)
-        self.assertIn('"active_skills": []', source)
-        self.assertIn('"next_step": "planner"', source)
+        self.assertNotIn("consultant_loop_guard_skill_only", source)
+        self.assertNotIn("semantic_contract_ready", source)
+        self.assertIn('"next_step": "ask_user"', source)
         self.assertNotIn("from agent_core.main_controller import MainController", source)
         self.assertNotIn("self.main_controller = MainController()", source)
         self.assertNotIn("consultant_internal_failure_decision", source)
@@ -374,8 +372,8 @@ class BioAgentMemoryTests(unittest.TestCase):
         prompt = (root / "prompts" / "manager.py").read_text(encoding="utf-8")
 
         self.assertIn("Plan coverage missing workflow handoff stage", source)
-        self.assertIn("Plan coverage missing user-expected output", source)
-        self.assertIn("user_msg=str(user_msg)", source)
+        self.assertIn("effective_output_contracts(", source)
+        self.assertIn('"user_msg": str(user_msg)', source)
         self.assertIn("workflow as a minimum coverage scaffold, not a ceiling", prompt)
         self.assertIn("custom stages beyond the workflow", prompt)
 
@@ -560,7 +558,8 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertIn("def _load_user_preferences", source)
         self.assertIn('os.getenv("BIOMIND_USER_PREFERENCES"', source)
         self.assertIn('"user_preferences.md"', source)
-        self.assertIn("user_preferences_context=self._clip_prompt_text(self._load_user_preferences(), 500)", source)
+        self.assertIn("user_preferences_context = self._load_user_preferences()", source)
+        self.assertIn('"user_preferences": user_preferences_context', source)
 
     def test_skill_runtime_guard_blocks_bare_managed_cli(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
@@ -801,10 +800,9 @@ class BioAgentMemoryTests(unittest.TestCase):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
         self.assertIn("consultant_loop_guard_blocked", source)
-        self.assertIn("consultant_loop_guard_skill_only", source)
-        self.assertIn("_consultant_skill_only_fallback_handoff", source)
-        self.assertIn("skipping workflow_state and handing skill-only context to Planner", source)
-        self.assertIn('"skill_selection_source": "consultant_skill_only_fallback"', source)
+        self.assertNotIn("consultant_loop_guard_skill_only", source)
+        self.assertNotIn("semantic_contract_ready", source)
+        self.assertIn("FINISH", source)
         self.assertIn("BioMind could not derive any valid canonical skills", source)
 
     def test_consultant_loop_guard_counts_since_latest_human_message(self):
@@ -835,10 +833,10 @@ class BioAgentMemoryTests(unittest.TestCase):
     def test_consultant_execute_after_readonly_loop_guard_is_blocked(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
-        self.assertIn("consultant_execute_after_force_finish_blocked", source)
-        self.assertIn("A read-only EXECUTE loop guard has already fired", source)
-        self.assertIn("Do not run another EXECUTE", source)
-        self.assertIn('return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}', source)
+        self.assertIn("finalize_execute_forbidden", source)
+        self.assertIn("Every probe must declare unresolved requirement_ids", source)
+        self.assertIn('"consultation_state": consultation_state', source)
+        self.assertNotIn("consultant_execute_after_force_finish_blocked", source)
 
 
 if __name__ == "__main__":
