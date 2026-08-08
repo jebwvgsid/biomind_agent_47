@@ -104,24 +104,6 @@ SOURCE_PRIORITY = {
     "llm_inference": 10,
 }
 
-_NEGATIVE = {
-    "absent", "against", "cannot", "does", "failed", "false", "forbidden",
-    "incompatible", "invalid", "missing", "must-not", "no", "not", "none",
-    "unsupported", "unknown", "unavailable", "without", "cannot", "zero",
-    "delete", "deleted", "drop", "dropped", "remove", "removed", "removes", "replace",
-}
-_POSITIVE = {
-    "available", "complete", "contains", "exists", "passed", "present", "ready",
-    "required", "supported", "true", "valid", "verified", "usable", "must",
-}
-_STOPWORDS = {
-    "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has",
-    "have", "in", "is", "it", "of", "on", "or", "the", "to", "use", "using",
-    "with", "that", "this", "must", "should", "step", "plan", "runtime", "actual",
-    "expected", "command", "output", "file", "tool", "environment", "the", "user",
-}
-
-
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -136,13 +118,6 @@ def _normalize(value: Any) -> str:
     text = re.sub(r"[`\"']", "", text)
     text = re.sub(r"\s+", " ", text)
     return text
-
-
-def _tokens(value: Any) -> set[str]:
-    return {
-        token for token in re.findall(r"[a-z0-9][a-z0-9_.:/+\-]*", _normalize(value))
-        if token not in _STOPWORDS and len(token) > 1
-    }
 
 
 def _safe_float(value: Any, default: float = 0.0) -> float:
@@ -253,6 +228,14 @@ class ClaimRegistry:
 
     @staticmethod
     def fingerprint(claim: KnowledgeClaim) -> str:
+        semantic_key = str(claim.attributes.get("semantic_key") or claim.attributes.get("fact_key") or "").strip().lower()
+        if semantic_key:
+            return _stable_id(
+                "claimfp", claim.source_type, claim.strength, claim.scope, claim.scope_id,
+                semantic_key, claim.attributes.get("operator", "eq"),
+                _canonical_semantic_value(claim.attributes.get("value", claim.proposition), semantic_key),
+                claim.tool_name, claim.tool_version, claim.environment_name,
+            )
         return _stable_id(
             "claimfp", claim.source_type, claim.strength, claim.scope, claim.scope_id,
             claim.normalized_proposition, claim.tool_name, claim.tool_version, claim.environment_name,
@@ -497,90 +480,116 @@ def _source_group(source_type: str) -> str:
     return "inference"
 
 
-def _related(left: KnowledgeClaim, right: KnowledgeClaim) -> bool:
-    if left.attributes.get("fact_key") and left.attributes.get("fact_key") == right.attributes.get("fact_key"):
-        return True
-    if {left.source_type, right.source_type} & {"task_contract"} and _source_group(left.source_type) != _source_group(right.source_type):
-        # TaskSpec entries are atomic contracts. They must be linked to a plan
-        # by a shared fact key or an explicit contradiction edge, never by
-        # generic words such as input/output/missing.
+def _claim_semantic_key(claim: KnowledgeClaim) -> str:
+    return str(claim.attributes.get("semantic_key") or claim.attributes.get("fact_key") or "").strip().lower()
+
+
+def _canonical_semantic_value(value: Any, semantic_key: str = "") -> str:
+    if isinstance(value, (dict, list, tuple, set)):
+        serializable = sorted(value) if isinstance(value, set) else value
+        return json.dumps(serializable, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return json.dumps(value)
+    text = str(value or "").strip().strip("`\"'")
+    if semantic_key.startswith(("required_input.", "required_output.")) and ("/" in text or "\\" in text):
+        text = os.path.normpath(os.path.expanduser(text))
+    return text.casefold()
+
+
+def _claim_operator(claim: KnowledgeClaim) -> str:
+    value = str(claim.attributes.get("operator") or "eq").strip().lower()
+    return value if value in {"eq", "neq", "contains", "forbid", "require", "prefer", "on_condition"} else ""
+
+
+def _condition_identity(claim: KnowledgeClaim) -> str:
+    return _canonical_semantic_value(claim.attributes.get("condition"))
+
+
+def _typed_values_contradict(left: KnowledgeClaim, right: KnowledgeClaim, semantic_key: str) -> bool:
+    left_op, right_op = _claim_operator(left), _claim_operator(right)
+    if not left_op or not right_op:
         return False
-    context = {"genome", "reference", "database", "environment", "format", "option", "tool", "method", "command", "input", "output", "contrast", "launcher", "subcommand", "version"}
-    shared = _tokens(left.proposition) & _tokens(right.proposition)
-    shared_context = {item for item in context if item in left.normalized_proposition and item in right.normalized_proposition}
-    distinctive = {item for item in shared if item not in {"use", "uses", "required", "requires", "preserve", "preserves"}}
-    return len(shared) >= 2 or bool(shared_context) or any(
-        len(item) >= 4 and (any(char.isdigit() for char in item) or "." in item or "/" in item or "-" in item)
-        for item in distinctive
-    )
+    left_value = _canonical_semantic_value(left.attributes.get("value", left.proposition), semantic_key)
+    right_value = _canonical_semantic_value(right.attributes.get("value", right.proposition), semantic_key)
+    if not left_value or not right_value:
+        return False
+    if "on_condition" in {left_op, right_op}:
+        if left_op != right_op or _condition_identity(left) != _condition_identity(right):
+            return False
+        return left_value != right_value
+    if left_op == "forbid" or right_op == "forbid":
+        if left_op == right_op:
+            return False
+        forbidden = left_value if left_op == "forbid" else right_value
+        other = right if left_op == "forbid" else left
+        other_op = _claim_operator(other)
+        other_value = right_value if left_op == "forbid" else left_value
+        if other_op in {"eq", "require", "prefer"}:
+            return forbidden == other_value
+        if other_op == "contains":
+            return forbidden in other_value
+        return False
+    if left_op == "neq" or right_op == "neq":
+        if left_op == right_op:
+            return False
+        excluded = left_value if left_op == "neq" else right_value
+        asserted = right_value if left_op == "neq" else left_value
+        return excluded == asserted
+    if left_op == "contains" or right_op == "contains":
+        if left_op == right_op:
+            return left_value != right_value
+        container = left_value if left_op == "contains" else right_value
+        required = right_value if left_op == "contains" else left_value
+        return required not in container
+    return left_value != right_value
 
 
 def _contradicts(left: KnowledgeClaim, right: KnowledgeClaim) -> Tuple[bool, bool]:
     if right.claim_id in left.attributes.get("contradicts_claim_ids", []) or left.claim_id in right.attributes.get("contradicts_claim_ids", []):
         return True, True
-    left_fact = str(left.attributes.get("fact_key") or "").strip().lower()
-    right_fact = str(right.attributes.get("fact_key") or "").strip().lower()
-    if (
-        "task_contract" in {left.source_type, right.source_type}
-        and _source_group(left.source_type) != _source_group(right.source_type)
-        and not (left_fact and left_fact == right_fact)
+    if left.attributes.get("provenance_only") or right.attributes.get("provenance_only"):
+        return False, False
+    if any(
+        claim.attributes.get("needs_clarification")
+        or claim.attributes.get("ambiguity") not in (None, "", False, "false", "False", "none")
+        for claim in (left, right)
     ):
         return False, False
-    if left_fact and right_fact and left_fact != right_fact:
+    left_key, right_key = _claim_semantic_key(left), _claim_semantic_key(right)
+    comparable = (
+        right_key in {str(item).strip().lower() for item in left.attributes.get("comparable_semantic_keys", [])}
+        or left_key in {str(item).strip().lower() for item in right.attributes.get("comparable_semantic_keys", [])}
+    )
+    if not left_key or not right_key or (left_key != right_key and not comparable):
         return False, False
-    if (
-        {_source_group(left.source_type), _source_group(right.source_type)} == {"plan", "runtime"}
-        and max(len(left.proposition), len(right.proposition)) > 2000
-        and not (left_fact and left_fact == right_fact)
-    ):
-        # A complete plan document is context, not an atomic runtime claim.
-        # Comparing it to a concrete argv by token overlap creates a conflict
-        # for every generated script path.
-        return False, False
-    if left_fact and left_fact == right_fact:
-        left_value = _normalize(left.attributes.get("value", left.proposition))
-        right_value = _normalize(right.attributes.get("value", right.proposition))
-        if left_value and right_value and left_value != right_value:
-            return True, True
-    atomic_fact = left_fact or right_fact
-    unkeyed = right if left_fact else left
-    if atomic_fact == "returncode" and not re.search(
-        r"\b(?:return|exit)\s*(?:code|status)|\bstatus\s*(?:is|=)|\b(?:succeed|fail|pass)(?:ed|s|ure)?\b",
-        unkeyed.normalized_proposition,
-    ):
-        return False, False
-    if atomic_fact == "execution_command" and not re.search(
-        r"\b(?:command|argv|executable|launcher|subcommand)\b",
-        unkeyed.normalized_proposition,
-    ):
-        return False, False
-    shared_context = {
-        item for item in {"genome", "reference", "database", "environment", "format", "option", "tool", "method", "command", "input", "output", "contrast"}
-        if item in left.normalized_proposition and item in right.normalized_proposition
-    }
-    if shared_context:
-        left_values = _tokens(left.proposition) - shared_context - _NEGATIVE - _POSITIVE
-        right_values = _tokens(right.proposition) - shared_context - _NEGATIVE - _POSITIVE
-        if left_values and right_values and left_values.isdisjoint(right_values):
-            return True, True
-    if not _related(left, right):
-        return False, False
-    ltext, rtext = left.normalized_proposition, right.normalized_proposition
-    lneg = bool(_tokens(ltext) & _NEGATIVE) or bool(re.search(r"\b(?:not|no|never|without|missing|unknown|failed|unsupported)\b", ltext))
-    rneg = bool(_tokens(rtext) & _NEGATIVE) or bool(re.search(r"\b(?:not|no|never|without|missing|unknown|failed|unsupported)\b", rtext))
-    lpos = bool(_tokens(ltext) & _POSITIVE)
-    rpos = bool(_tokens(rtext) & _POSITIVE)
-    if lneg != rneg:
-        return True, False
-    # A command/subcommand or explicit executable mismatch is a contradiction
-    # even when neither side contains a natural-language negation.
-    command_tokens = {"command", "argv", "executable", "subcommand", "launcher", "version", "format", "output"}
-    if (_tokens(ltext) & command_tokens or _tokens(rtext) & command_tokens):
-        lverbs = set(re.findall(r"\b(?:build|ann|call|map|align|convert|index|annotat\w*|run|execute|generate|install)\b", ltext))
-        rverbs = set(re.findall(r"\b(?:build|ann|call|map|align|convert|index|annotat\w*|run|execute|generate|install)\b", rtext))
-        if lverbs and rverbs and lverbs != rverbs and _tokens(ltext) & _tokens(rtext):
-            return True, True
-    return False, False
+    return _typed_values_contradict(left, right, left_key), True
+
+
+def semantic_claim_set_hash(registry: ClaimRegistry | Dict[str, Any] | Iterable[Any]) -> str:
+    """Hash active typed claims only; prose retained for audit cannot affect it."""
+    if not isinstance(registry, ClaimRegistry):
+        registry = ClaimRegistry.from_mapping(registry)
+    rows = []
+    for claim in registry.active_claims():
+        key = _claim_semantic_key(claim)
+        if not key or claim.attributes.get("provenance_only"):
+            continue
+        rows.append({
+            "semantic_key": key,
+            "operator": _claim_operator(claim),
+            "value": _canonical_semantic_value(claim.attributes.get("value", claim.proposition), key),
+            "condition": _condition_identity(claim),
+            "strength": claim.strength,
+            "source_type": claim.source_type,
+            "scope": claim.scope,
+            "scope_id": claim.scope_id,
+            "status": claim.status,
+        })
+    rows.sort(key=lambda item: json.dumps(item, ensure_ascii=False, sort_keys=True, default=str))
+    encoded = json.dumps(rows, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
 def _conflict_type(left: KnowledgeClaim, right: KnowledgeClaim) -> Optional[str]:
@@ -640,8 +649,18 @@ class KnowledgeConflictDetector:
                 hard = left.hard or right.hard
                 hard_constraint = left.hard_constraint or right.hard_constraint
                 safety = left.source_type == "system_policy" or right.source_type == "system_policy"
+                user_claims = [
+                    claim for claim in (left, right)
+                    if _source_group(claim.source_type) == "user"
+                ]
+                user_hard = any(claim.hard for claim in user_claims)
                 if safety:
                     severity = "critical"
+                elif conflict_type in {"USER_PLAN_CONFLICT", "USER_RECOVERY_CONFLICT"}:
+                    # A required plan assertion does not upgrade a user's
+                    # preference into a hard constraint.  The typed user-side
+                    # strength is authoritative for this boundary.
+                    severity = "blocking" if user_hard else "warning"
                 elif hard or conflict_type in {
                     "PLAN_RUNTIME_CONFLICT", "PLAN_ARTIFACT_CONFLICT", "STAGE_CONTRACT_CONFLICT",
                     "SCIENTIFIC_METHOD_CONFLICT", "TOOL_BEHAVIOR_CONFLICT", "PLAN_ENVIRONMENT_CONFLICT",

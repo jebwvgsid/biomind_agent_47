@@ -10,12 +10,14 @@ from agent_core.task_spec import (
     create_task_spec,
     ensure_task_spec,
     merge_task_spec_input_audit,
+    merge_compiled_constraints,
     merge_task_spec,
     project_task_spec_to_renderer,
     render_task_spec,
     evaluate_requirements,
     task_spec_constraints,
     task_spec_revision,
+    validate_compiled_constraints,
 )
 
 
@@ -93,14 +95,15 @@ class TaskSpecTests(unittest.TestCase):
         self.assertEqual(spec["goal"], "legacy goal")
         self.assertEqual(spec["revision"], 1)
 
-    def test_later_user_feedback_is_exposed_to_conflict_detector(self):
+    def test_later_user_feedback_stays_provenance_until_consultant_compiles_it(self):
         spec = apply_user_feedback(
             create_task_spec("run analysis"),
             "do not replace the custom reference",
             kind="plan_review_feedback",
         )
 
-        self.assertEqual(task_spec_constraints(spec), ["do not replace the custom reference"])
+        self.assertEqual(task_spec_constraints(spec), [])
+        self.assertEqual(spec["user_directives"][-1]["text"], "do not replace the custom reference")
 
     def test_required_path_is_rechecked_instead_of_trusting_present_snapshot(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -145,15 +148,53 @@ class TaskSpecTests(unittest.TestCase):
             )
 
             spec = create_task_spec(request, base_dir=root, project_root=root)
+            mocked_consultant_output = [
+                {
+                    "constraint_id": "format",
+                    "semantic_key": "required_behavior.annotation_format",
+                    "operator": "eq",
+                    "value": "gtf22",
+                    "strength": "hard",
+                    "confidence": 0.99,
+                    "source_text": "with -gtf22",
+                },
+                {
+                    "constraint_id": "database",
+                    "semantic_key": "required_behavior.database_source",
+                    "operator": "eq",
+                    "value": "custom_genome",
+                    "strength": "hard",
+                    "confidence": 0.99,
+                    "source_text": "custom genome",
+                },
+                {
+                    "constraint_id": "no-guess",
+                    "semantic_key": "forbidden_behavior.species_database_guess",
+                    "operator": "forbid",
+                    "value": True,
+                    "strength": "hard",
+                    "confidence": 0.99,
+                    "source_text": "do not guess a species database",
+                },
+            ]
+            validated = validate_compiled_constraints(mocked_consultant_output)
+            self.assertTrue(validated["valid"], validated["errors"])
+            spec = merge_compiled_constraints(
+                spec,
+                validated["constraints"],
+                base_dir=root,
+                project_root=root,
+                metrics=validated["metrics"],
+            )
 
         inputs = {item["role"]: item for item in spec["inputs"]}
         requirements = {item["requirement_id"]: item for item in spec["requirements"]}
         outputs = {item["role"]: item for item in spec["expected_outputs"]}
         self.assertEqual(set(inputs), {"variant_vcf", "reference_fasta", "annotation_gtf"})
         self.assertTrue(all(item["source"] == "user_explicit" for item in inputs.values()))
-        self.assertEqual(requirements["annotation_format"]["value"], "gtf22")
-        self.assertEqual(requirements["database_source"]["value"], "custom_genome")
-        self.assertTrue(requirements["forbid_species_database_guess"]["value"])
+        self.assertEqual(requirements["format"]["value"], "gtf22")
+        self.assertEqual(requirements["database"]["value"], "custom_genome")
+        self.assertTrue(requirements["no-guess"]["value"])
         self.assertTrue(outputs["output_dir"]["path"].endswith("results/strict"))
         self.assertIn("annotated_vcf", outputs)
 

@@ -7,7 +7,13 @@ from agent_core.plan_tracker import (
     validate_output_contracts,
 )
 from agent_core.skill_manager import SkillManager
-from agent_core.task_spec import create_task_spec, effective_output_contracts, ensure_task_spec
+from agent_core.task_spec import (
+    create_task_spec,
+    effective_output_contracts,
+    ensure_task_spec,
+    merge_compiled_constraints,
+    validate_compiled_constraints,
+)
 
 
 SKILLS_ROOT = Path(__file__).resolve().parents[1] / "skills"
@@ -53,16 +59,27 @@ class RendererPlanOwnershipTests(unittest.TestCase):
             ]
         })
 
+        task_spec = create_task_spec(
+            "Use /tmp/input.vcf with a custom genome /tmp/reference.fasta and /tmp/annotation.gtf using -gtf22. "
+            "Output directory: /tmp/renderer-output",
+            task_id="task-renderer",
+            project_root="/tmp",
+        )
+        compiled = validate_compiled_constraints([
+            {"constraint_id": "renderer-db", "semantic_key": "required_behavior.database_source", "operator": "eq", "value": "custom_genome", "strength": "hard", "confidence": 0.99, "source_ref": "mock_consultant"},
+            {"constraint_id": "renderer-format", "semantic_key": "required_behavior.annotation_format", "operator": "eq", "value": "gtf22", "strength": "hard", "confidence": 0.99, "source_ref": "mock_consultant"},
+        ])
+        task_spec = merge_compiled_constraints(
+            task_spec,
+            compiled["constraints"],
+            metrics=compiled["metrics"],
+        )
+
         normalized, audit, violations = normalize_plan_contracts(
             state,
             renderer_records=[self.renderer],
             output_contracts=contracts,
-            task_spec=create_task_spec(
-                "Use /tmp/input.vcf with a custom genome /tmp/reference.fasta and /tmp/annotation.gtf using -gtf22. "
-                "Output directory: /tmp/renderer-output",
-                task_id="task-renderer",
-                project_root="/tmp",
-            ),
+            task_spec=task_spec,
         )
 
         self.assertTrue(violations)
@@ -77,6 +94,12 @@ class RendererPlanOwnershipTests(unittest.TestCase):
         self.assertEqual(anchor["selected_skill_id"], "genomics/snpeff-annotation")
         self.assertIn("report.md", anchor["outputs"])
         self.assertTrue(anchor["renderer_invocation_contract"]["invocation_id"])
+        invocation_claim_keys = {
+            item["semantic_key"]
+            for item in anchor["renderer_invocation_contract"]["semantic_claims"]
+        }
+        self.assertIn("required_output.annotated_vcf", invocation_claim_keys)
+        self.assertIn("required_output.report_md", invocation_claim_keys)
         self.assertEqual(audit[0]["removed_step_ids"], [])
 
     def test_duplicate_output_producer_is_blocking(self):

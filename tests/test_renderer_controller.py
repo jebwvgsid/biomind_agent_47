@@ -11,7 +11,12 @@ from agent_core.plan_tracker import (
 )
 from agent_core.recovery import ExecutionRecord, RecoveryStateStore
 from agent_core.skill_manager import SkillManager
-from agent_core.task_spec import create_task_spec, merge_task_spec_input_audit
+from agent_core.task_spec import (
+    create_task_spec,
+    merge_compiled_constraints,
+    merge_task_spec_input_audit,
+    validate_compiled_constraints,
+)
 from bio_agents import BioAnalystAgent
 
 
@@ -299,9 +304,18 @@ class RendererControllerTests(unittest.TestCase):
                 ]
             }
             state = self._state()
-            state["task_spec"] = merge_task_spec_input_audit(
+            task_spec = merge_task_spec_input_audit(
                 create_task_spec(request, base_dir=root),
                 audit,
+            )
+            compiled = validate_compiled_constraints([
+                {"constraint_id": "controller-db", "semantic_key": "required_behavior.database_source", "operator": "eq", "value": "custom_genome", "strength": "hard", "confidence": 0.99, "source_ref": "mock_consultant"},
+                {"constraint_id": "controller-format", "semantic_key": "required_behavior.annotation_format", "operator": "eq", "value": "gtf22", "strength": "hard", "confidence": 0.99, "source_ref": "mock_consultant"},
+            ])
+            state["task_spec"] = merge_compiled_constraints(
+                task_spec,
+                compiled["constraints"],
+                metrics=compiled["metrics"],
             )
             state["input_audit"] = audit
             state["runtime_audit"] = [{

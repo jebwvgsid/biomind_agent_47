@@ -15,6 +15,15 @@ from agent_core.knowledge_conflicts import (
 
 
 class KnowledgeConflictTests(unittest.TestCase):
+    @staticmethod
+    def _semantic(semantic_key, value, operator="eq"):
+        return {
+            "semantic_key": semantic_key,
+            "fact_key": semantic_key,
+            "operator": operator,
+            "value": value,
+        }
+
     def test_generic_task_contract_prose_does_not_create_keyword_conflict(self):
         registry = ClaimRegistry()
         registry.register(
@@ -71,8 +80,16 @@ class KnowledgeConflictTests(unittest.TestCase):
 
     def test_user_plan_conflict_requires_decision(self):
         registry = ClaimRegistry()
-        registry.register_user_constraint("must use custom genome")
-        registry.register_plan_assumption("plan uses preset genome", scope="stage", scope_id="step-1")
+        registry.register_user_constraint(
+            "required_behavior.database_source eq custom_genome",
+            attributes=self._semantic("required_behavior.database_source", "custom_genome"),
+        )
+        registry.register_plan_assumption(
+            "required_behavior.database_source eq preset",
+            scope="stage",
+            scope_id="step-1",
+            attributes=self._semantic("required_behavior.database_source", "preset"),
+        )
         conflicts = KnowledgeConflictDetector.detect(registry)
         self.assertEqual(conflicts[0].conflict_type, "USER_PLAN_CONFLICT")
         self.assertTrue(conflicts[0].blocking)
@@ -80,34 +97,38 @@ class KnowledgeConflictTests(unittest.TestCase):
 
     def test_user_recovery_conflict_never_allows_constraint_removal(self):
         registry = ClaimRegistry()
-        registry.register_user_constraint("must preserve required option")
+        registry.register_user_constraint(
+            "required_behavior.required_option eq true",
+            attributes=self._semantic("required_behavior.required_option", True),
+        )
         registry.register(
-            "Recovery removes required option",
+            "required_behavior.required_option eq false",
             source_type="recovery_proposal",
             strength="inference",
             scope="stage",
             scope_id="step-1",
+            attributes=self._semantic("required_behavior.required_option", False),
         )
         conflict = KnowledgeConflictDetector.detect(registry)[0]
         decision = ConflictResolver.resolve(conflict, registry)
         self.assertEqual(conflict.conflict_type, "USER_RECOVERY_CONFLICT")
         self.assertEqual(decision.decision, "require_probe")
-        self.assertTrue(any("preserve" in item for item in decision.forbidden_changes))
+        self.assertTrue(any("required_option" in item for item in decision.forbidden_changes))
 
     def test_plan_runtime_and_environment_conflicts_are_distinct(self):
         registry = ClaimRegistry()
-        registry.register("plan command uses build subcommand", source_type="plan", strength="required", scope="stage", scope_id="step-1")
-        registry.register("runtime command uses ann subcommand", source_type="runtime_argv", strength="observation", scope="stage", scope_id="step-1")
-        registry.register("plan requires environment env_a", source_type="plan_assumption", strength="assumption", scope="environment", scope_id="env_a")
-        registry.register("verified environment is env_b", source_type="environment_probe", strength="observation", scope="environment", scope_id="env_a")
+        registry.register("subcommand=build", source_type="plan", strength="required", scope="stage", scope_id="step-1", attributes=self._semantic("runtime_constraint.subcommand", "build"))
+        registry.register("subcommand=ann", source_type="runtime_argv", strength="observation", scope="stage", scope_id="step-1", attributes=self._semantic("runtime_constraint.subcommand", "ann"))
+        registry.register("environment=env_a", source_type="plan_assumption", strength="assumption", scope="environment", scope_id="env_a", attributes=self._semantic("runtime_constraint.environment", "env_a"))
+        registry.register("environment=env_b", source_type="environment_probe", strength="observation", scope="environment", scope_id="env_a", attributes=self._semantic("runtime_constraint.environment", "env_b"))
         types = {item.conflict_type for item in KnowledgeConflictDetector.detect(registry)}
         self.assertIn("PLAN_RUNTIME_CONFLICT", types)
         self.assertIn("PLAN_ENVIRONMENT_CONFLICT", types)
 
     def test_plan_runtime_conflict_requires_probe_before_replanning(self):
         registry = ClaimRegistry()
-        registry.register("plan command uses build subcommand", source_type="plan", strength="required", scope="stage", scope_id="step-1")
-        registry.register("runtime command uses ann subcommand", source_type="runtime_argv", strength="observation", scope="stage", scope_id="step-1")
+        registry.register("subcommand=build", source_type="plan", strength="required", scope="stage", scope_id="step-1", attributes=self._semantic("runtime_constraint.subcommand", "build"))
+        registry.register("subcommand=ann", source_type="runtime_argv", strength="observation", scope="stage", scope_id="step-1", attributes=self._semantic("runtime_constraint.subcommand", "ann"))
         conflict = next(item for item in KnowledgeConflictDetector.detect(registry) if item.conflict_type == "PLAN_RUNTIME_CONFLICT")
         decision = ConflictResolver.resolve(conflict, registry)
         self.assertEqual(decision.decision, "require_probe")
@@ -171,19 +192,19 @@ class KnowledgeConflictTests(unittest.TestCase):
 
     def test_artifact_and_stage_contract_conflicts(self):
         registry = ClaimRegistry()
-        registry.register("plan expects non-empty output format A", source_type="plan", strength="required", scope="artifact", scope_id="out")
-        registry.register("artifact validation reports output format B", source_type="artifact_validation", strength="observation", scope="artifact", scope_id="out")
-        registry.register("upstream stage produced format C", source_type="upstream_stage", strength="observation", scope="artifact", scope_id="out")
+        registry.register("output_format=A", source_type="plan", strength="required", scope="artifact", scope_id="out", attributes=self._semantic("required_output.result_format", "A"))
+        registry.register("output_format=B", source_type="artifact_validation", strength="observation", scope="artifact", scope_id="out", attributes=self._semantic("required_output.result_format", "B"))
+        registry.register("output_format=C", source_type="upstream_stage", strength="observation", scope="artifact", scope_id="out", attributes=self._semantic("required_output.result_format", "C"))
         types = {item.conflict_type for item in KnowledgeConflictDetector.detect(registry)}
         self.assertIn("PLAN_ARTIFACT_CONFLICT", types)
         self.assertIn("STAGE_CONTRACT_CONFLICT", types)
 
     def test_tool_skill_and_recovery_conflicts_require_probe(self):
         registry = ClaimRegistry()
-        registry.register("skill requires option format_x", source_type="skill_document", strength="required", scope="command", scope_id="step-1")
-        registry.register("runtime reports option format_y", source_type="runtime_output", strength="observation", scope="command", scope_id="step-1")
-        registry.register("tool help supports option format_x", source_type="tool_help", strength="observation", scope="command", scope_id="step-1")
-        registry.register("runtime reports option format_y", source_type="runtime_output", strength="observation", scope="command", scope_id="step-1", deduplicate=False)
+        registry.register("option=format_x", source_type="skill_document", strength="required", scope="command", scope_id="step-1", attributes=self._semantic("runtime_constraint.option_format", "format_x"))
+        registry.register("option=format_y", source_type="runtime_output", strength="observation", scope="command", scope_id="step-1", attributes=self._semantic("runtime_constraint.option_format", "format_y"))
+        registry.register("option=format_x", source_type="tool_help", strength="observation", scope="command", scope_id="step-1", attributes=self._semantic("runtime_constraint.option_format", "format_x"))
+        registry.register("option=format_y", source_type="runtime_output", strength="observation", scope="command", scope_id="step-1", attributes=self._semantic("runtime_constraint.option_format", "format_y"), deduplicate=False)
         types = {item.conflict_type for item in KnowledgeConflictDetector.detect(registry)}
         self.assertIn("SKILL_RUNTIME_CONFLICT", types)
         self.assertIn("TOOL_BEHAVIOR_CONFLICT", types)

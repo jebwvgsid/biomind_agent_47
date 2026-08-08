@@ -17,7 +17,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
-from agent_core.task_spec import normalize_requirement, project_task_spec_to_renderer
+from agent_core.task_spec import (
+    canonical_constraint_hash,
+    normalize_requirement,
+    project_task_spec_to_renderer,
+    semantic_constraints_from_task_spec,
+    validate_compiled_constraints,
+)
 
 PlanState = Dict[str, Any]
 PlanStep = Dict[str, Any]
@@ -61,6 +67,7 @@ PLAN_STEP_FIELDS = (
     "depends_on",
     "step_type",
     "renderer_id",
+    "semantic_claims",
     "success_criteria",
     "skill_ids",
     "status",
@@ -158,6 +165,16 @@ _INPUTS_FIELD_RE = re.compile(r"(?:^|\|)\s*Inputs?\s*:\s*(?P<value>[^|]+)", re.I
 _OUTPUTS_FIELD_RE = re.compile(r"(?:^|\|)\s*Outputs?\s*:\s*(?P<value>[^|]+)", re.IGNORECASE)
 _DEPENDENCIES_FIELD_RE = re.compile(r"(?:^|\|)\s*(?:Dependencies|Depends on)\s*:\s*(?P<value>[^|]+)", re.IGNORECASE)
 _RISK_FIELD_RE = re.compile(r"(?:^|\|)\s*Risk(?: level)?\s*:\s*(?P<value>[^|]+)", re.IGNORECASE)
+_SEMANTIC_CLAIMS_FIELD_RE = re.compile(
+    r"(?:^|\|)\s*Semantic claims?\s*:\s*",
+    re.IGNORECASE,
+)
+
+_CONTRACT_PLACEHOLDER_WORDS = {
+    "bam", "bcf", "csv", "fasta", "fastq", "file", "files", "gff", "gff3",
+    "gtf", "input", "inputs", "java", "path", "paths", "python", "r", "sam",
+    "table", "tsv", "vcf", "文件", "输入", "表", "路径",
+}
 
 _PROGRESS_START = "<!-- BIOMIND_PLAN_PROGRESS_START -->"
 _PROGRESS_END = "<!-- BIOMIND_PLAN_PROGRESS_END -->"
@@ -276,7 +293,7 @@ def _list_field(value: str) -> List[str]:
     ignored = {"", "none", "null", "n/a", "na", "[]", "no_skill_needed"}
     values: List[str] = []
     for item in re.split(r"[,，;；\n]+", text):
-        cleaned = item.strip().strip("`'\" ")
+        cleaned = _valid_contract_text(item)
         if cleaned.lower() in ignored or cleaned in values:
             continue
         values.append(cleaned)
@@ -285,9 +302,59 @@ def _list_field(value: str) -> List[str]:
 
 def _valid_contract_text(value: Any) -> str:
     text = _clean_step_title(str(value or ""))
+    previous = None
+    while text != previous:
+        previous = text
+        text = re.sub(r"^(?:\*\*|__|`)+\s*", "", text).strip()
+        text = re.sub(r"\s*(?:\*\*|__|`)+$", "", text).strip()
     if text.lower() in {"", "none", "null", "n/a", "na", "-", "unknown", "tbd"}:
         return ""
+    # A machine plan needs a concrete path or logical binding, not a display
+    # label such as ``VCF`` or ``Java 路径``.  This is parser hygiene over a
+    # closed set of artifact-type words; it does not interpret user prose.
+    placeholder_tokens = {
+        token.lower()
+        for token in re.findall(r"[A-Za-z0-9_+-]+|[\u4e00-\u9fff]+", text)
+    }
+    if (
+        placeholder_tokens
+        and placeholder_tokens.issubset(_CONTRACT_PLACEHOLDER_WORDS)
+        and not re.search(r"[/\\]|\.[A-Za-z0-9]{1,12}(?:$|[?#])", text)
+    ):
+        return ""
     return text
+
+
+def _semantic_claims_field(value: Any) -> List[Dict[str, Any]]:
+    if isinstance(value, list):
+        payload = value
+    else:
+        try:
+            payload = json.loads(str(value or ""))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return []
+    validation = validate_compiled_constraints(payload)
+    if not validation.get("valid"):
+        return []
+    return [dict(item) for item in validation.get("constraints", [])]
+
+
+def _semantic_claims_from_step_payload(value: Any) -> List[Dict[str, Any]]:
+    """Decode the first complete JSON value after an inline claims label.
+
+    Planner checklist fields can follow the JSON array on the same line and
+    may themselves contain square brackets.  ``JSONDecoder.raw_decode`` owns
+    the boundary so those later fields cannot be consumed as claim content.
+    """
+    text = str(value or "")
+    marker = _SEMANTIC_CLAIMS_FIELD_RE.search(text)
+    if not marker:
+        return []
+    try:
+        payload, _ = json.JSONDecoder().raw_decode(text[marker.end():].lstrip())
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return []
+    return _semantic_claims_field(payload)
 
 
 def _string_list(value: Any, *, dict_keys: Tuple[str, ...] = ()) -> List[str]:
@@ -1510,6 +1577,7 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
     task_state["recovery_state"] = recovery_state
     task_state["last_recovery_decision"] = value
     state["task_state"] = task_state
+    normalized = task_status(state)
     if normalized == TASK_STATUS_COMPLETED:
         state["execution_status"] = "completed"
     elif normalized in {TASK_STATUS_FAILED, TASK_STATUS_BLOCKED, TASK_STATUS_CANCELLED}:
@@ -2331,6 +2399,9 @@ def normalize_plan_step(step: PlanStep, index: int = 1) -> PlanStep:
     step["depends_on"] = list(step["dependencies"])
     step["step_type"] = str(step.get("step_type") or ("renderer_composite" if step.get("renderer_id") else "atomic")).strip().lower()
     step["renderer_id"] = str(step.get("renderer_id") or "").strip()
+    step["semantic_claims"] = _semantic_claims_field(
+        step.get("semantic_claims") or parsed.get("semantic_claims") or []
+    )
     step["input_artifact_ids"] = _string_list(step.get("input_artifact_ids"))
     step["output_artifact_ids"] = _string_list(step.get("output_artifact_ids"))
     dependency_sources = step.get("dependency_sources")
@@ -2396,6 +2467,7 @@ def _structured_step_fields(text: str) -> Dict[str, Any]:
         "outputs": _list_field(outputs_match.group("value")) if outputs_match else [],
         "dependencies": _list_field(dependencies_match.group("value")) if dependencies_match else [],
         "risk_level": _valid_contract_text(risk_match.group("value")).lower() if risk_match else "unspecified",
+        "semantic_claims": _semantic_claims_from_step_payload(payload),
         "success_criteria": (
             [_valid_contract_text(success_match.group("value"))]
             if success_match and _valid_contract_text(success_match.group("value"))
@@ -2466,6 +2538,7 @@ def _enrich_plan_steps(steps: List[PlanStep], plan_text: str) -> List[PlanStep]:
         "risk level": "risk_level",
         "allowed fallbacks": "allowed_fallbacks",
         "forbidden fallbacks": "forbidden_fallbacks",
+        "semantic claims": "semantic_claims",
         "done": "success_criteria",
         "success": "success_criteria",
         "success criteria": "success_criteria",
@@ -2531,6 +2604,8 @@ def _enrich_plan_steps(steps: List[PlanStep], plan_text: str) -> List[PlanStep]:
                 values.setdefault(key, []).append({"description": value})
             elif key in {"inputs", "outputs", "skill_ids", "workflow_stage_ids"}:
                 values.setdefault(key, []).extend(_list_field(value))
+            elif key == "semantic_claims":
+                values.setdefault(key, []).extend(_semantic_claims_field(value))
             elif key == "success_criteria":
                 values.setdefault(key, []).append(value)
             elif key in {
@@ -2576,7 +2651,7 @@ def _enrich_plan_steps(steps: List[PlanStep], plan_text: str) -> List[PlanStep]:
         "assumptions", "required_constraints", "input_contracts", "output_contracts",
         "inputs", "outputs", "dependencies", "depends_on", "allowed_fallbacks",
         "forbidden_fallbacks", "success_criteria",
-        "skill_ids", "workflow_stage_ids",
+        "skill_ids", "workflow_stage_ids", "semantic_claims",
     }
     for index, step in enumerate(steps):
         title = str(step.get("title") or "").lower()
@@ -2617,6 +2692,7 @@ def _enrich_plan_steps(steps: List[PlanStep], plan_text: str) -> List[PlanStep]:
         step.setdefault("depends_on", [])
         step.setdefault("assumptions", [])
         step.setdefault("required_constraints", [])
+        step.setdefault("semantic_claims", [])
         normalize_plan_step(step, index + 1)
     return steps
 
@@ -3358,6 +3434,13 @@ def render_structured_plan(state: PlanState) -> str:
             *([f"    - {item}" for item in step.get("inputs", []) or []] or ["    - []"]),
             "  - Outputs:",
             *([f"    - {item}" for item in step.get("outputs", []) or []] or ["    - []"]),
+            "  - Semantic claims: " + json.dumps(
+                step.get("semantic_claims") or [],
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+                default=str,
+            ),
             f"  - Depends on: [{', '.join(step.get('depends_on') or step.get('dependencies') or [])}]",
             f"  - Success criteria: {'; '.join(step.get('success_criteria') or [])}",
             f"  - Stage: [{stages}]",
@@ -3779,7 +3862,8 @@ def _approval_task_spec_view(state: PlanState) -> Dict[str, Any]:
     spec = dict(state.get("task_spec") or {})
     binding_fields = (
         "output_id", "role", "path", "resolved_path", "filename", "path_or_name", "required",
-        "value", "level", "condition", "source_type", "source_ref", "provenance",
+        "value", "level", "condition", "semantic_key", "operator", "strength", "confidence",
+        "ambiguity", "needs_clarification", "source_type", "source_ref", "provenance",
     )
 
     def compact(values: Any) -> List[Dict[str, Any]]:
@@ -3866,6 +3950,7 @@ def build_approval_projection(state: PlanState) -> Dict[str, Any]:
             "renderer_invocation_contract": deepcopy(
                 dict(step.get("renderer_invocation_contract") or {})
             ),
+            "semantic_claims": deepcopy(list(step.get("semantic_claims") or [])),
         })
     return {
         "schema_version": 2,
@@ -3900,10 +3985,16 @@ def build_approval_scope(
     ]
     scope = {
         "task_hash": _stable_payload_hash({"task_id": state.get("task_id"), "goal": task_spec_view.get("goal")}),
+        "task_revision": str(task_spec_view.get("revision") or state.get("generated_from_task_revision") or 0),
         "plan_id": str(state.get("plan_id") or ""),
         "plan_version": str(state.get("plan_version") or "plan_v1"),
         "plan_hash": semantic_plan_hash(state),
         "task_spec_hash": _stable_payload_hash(task_spec_view),
+        "canonical_constraint_hash": str(
+            state.get("canonical_constraint_hash")
+            or canonical_constraint_hash(state.get("task_spec") or {})
+        ),
+        "claim_set_hash": str(state.get("knowledge_claim_set_hash") or ""),
         "input_bindings_hash": _stable_payload_hash(task_spec_view.get("inputs") or []),
         "renderer_invocation_hash": _stable_payload_hash(renderer_contracts),
         "selected_skills_hash": _stable_payload_hash(sorted(str(item) for item in state.get("selected_skill_ids", []) or [])),
@@ -3935,6 +4026,8 @@ def approve_plan_state(
     scope = build_approval_scope(state, projection)
     state["approval_projection"] = projection
     state["approval_scope"] = scope
+    state["approved_canonical_constraint_hash"] = scope["canonical_constraint_hash"]
+    state["approved_claim_set_hash"] = scope["claim_set_hash"]
     state["approval_status"] = "approved"
     state["revision_status"] = "current"
     state["current_effective_plan_version"] = identity["plan_version"]
@@ -3955,9 +4048,31 @@ def approve_plan_state(
         "approval_scope_hash": scope["approval_scope_hash"],
         "approval_scope": deepcopy(scope),
         "projection_hash": scope["projection_hash"],
+        "canonical_constraint_hash": scope["canonical_constraint_hash"],
+        "claim_set_hash": scope["claim_set_hash"],
     }
     state["pending_review_diff"] = []
     return state
+
+
+def approval_semantic_delta(
+    state: PlanState,
+    *,
+    current_constraint_hash: str,
+    current_claim_set_hash: str,
+) -> Dict[str, Any]:
+    """Compare current typed meaning with the human-approved snapshot."""
+    scope = dict((state.get("approval_record") or {}).get("approval_scope") or state.get("approval_scope") or {})
+    reasons: List[str] = []
+    if not scope:
+        reasons.append("approval_scope_missing")
+    if str(scope.get("canonical_constraint_hash") or "") != str(current_constraint_hash or ""):
+        reasons.append("canonical_constraints_changed")
+    if str(scope.get("claim_set_hash") or "") != str(current_claim_set_hash or ""):
+        reasons.append("semantic_claim_set_changed")
+    if str(scope.get("renderer_invocation_hash") or "") != build_approval_scope(state).get("renderer_invocation_hash"):
+        reasons.append("renderer_projection_changed")
+    return {"changed": bool(reasons), "reasons": reasons}
 
 
 def plan_approval_is_current(state: PlanState, task_revision: int) -> bool:
@@ -4035,6 +4150,46 @@ def plan_contract_violations(state: PlanState) -> List[Dict[str, str]]:
                 "field": "success_criteria",
                 "reason": f"steps[{index}].success_criteria is required.",
             })
+    task_spec = dict(state.get("task_spec") or {})
+    if (task_spec.get("semantic_compilation") or {}).get("schema_validation") == "passed":
+        plan_claims: List[Dict[str, Any]] = []
+        all_inputs: set[str] = set()
+        all_outputs: set[str] = set()
+        all_skills: set[str] = set()
+        for index, raw_step in enumerate(steps, 1):
+            step = normalize_plan_step(dict(raw_step), index)
+            all_inputs.update(str(item) for item in step.get("inputs") or [])
+            all_outputs.update(str(item) for item in step.get("outputs") or [])
+            all_skills.update(str(item) for item in step.get("skill_ids") or [])
+            plan_claims.extend(dict(item) for item in step.get("semantic_claims") or [] if isinstance(item, Mapping))
+            invocation = dict(step.get("renderer_invocation_contract") or {})
+            plan_claims.extend(dict(item) for item in invocation.get("semantic_claims") or [] if isinstance(item, Mapping))
+        for constraint in semantic_constraints_from_task_spec(task_spec):
+            if constraint.get("strength") not in {"hard", "required"} or constraint.get("needs_clarification"):
+                continue
+            semantic_key = str(constraint.get("semantic_key") or "")
+            category = semantic_key.split(".", 1)[0]
+            value = constraint.get("value")
+            if category in {"failure_policy", "conditional_policy", "runtime_constraint"}:
+                continue
+            covered = any(
+                str(item.get("semantic_key") or "") == semantic_key
+                and item.get("value") == value
+                for item in plan_claims
+            )
+            if category == "required_input":
+                covered = covered or str(value) in all_inputs
+            elif category == "required_output":
+                covered = covered or str(value) in all_outputs
+            elif category == "required_skill":
+                covered = covered or str(value) in all_skills
+            if not covered:
+                violations.append({
+                    "violation_code": "SEMANTIC_CONSTRAINT_UNCOVERED",
+                    "step_id": "",
+                    "field": "semantic_claims",
+                    "reason": f"Hard semantic constraint `{semantic_key}` is not projected by any plan step.",
+                })
     return violations
 
 
@@ -4334,6 +4489,7 @@ def bind_renderer_invocation_contracts(
             "producer_step_id": str(step.get("step_id") or ""),
             "arguments": projection.get("arguments") or {},
             "outdir": str(projection.get("outdir") or ""),
+            "semantic_claims": deepcopy(list(projection.get("semantic_claims") or [])),
             "outputs": [],
             "bound_outputs": [],
         }
@@ -4341,6 +4497,19 @@ def bind_renderer_invocation_contracts(
         payload["projection_hash"] = _stable_payload_hash(projection)
         payload["source"] = "task_spec_renderer_projection"
         step["renderer_invocation_contract"] = payload
+        canonical_inputs: List[str] = []
+        for argument, source in dict(projection.get("binding_sources") or {}).items():
+            if not isinstance(source, Mapping) or source.get("kind") != "input":
+                continue
+            value = (projection.get("arguments") or {}).get(argument)
+            text = _valid_contract_text(value)
+            if text and text not in canonical_inputs:
+                canonical_inputs.append(text)
+        if canonical_inputs:
+            # Renderer projection, not merged Planner prose, owns its concrete
+            # input contract.  Runtime dependencies remain in runtime schema.
+            step["inputs"] = canonical_inputs
+            step["input_contracts"] = list(canonical_inputs)
         candidate["steps"][index - 1] = step
     return candidate
 
@@ -4416,6 +4585,15 @@ def bind_renderer_output_contracts(
         dict(item) for item in output_contracts or []
         if isinstance(item, dict) and str(item.get("role") or "") != "output_dir"
     ]
+    task_output_constraints: Dict[str, Dict[str, Any]] = {}
+    for item in semantic_constraints_from_task_spec(task_spec or {}):
+        if not str(item.get("semantic_key") or "").startswith("required_output."):
+            continue
+        value = str(item.get("value") or "").strip()
+        if not value:
+            continue
+        task_output_constraints[value] = dict(item)
+        task_output_constraints.setdefault(Path(value).name, dict(item))
     for index, raw in enumerate(candidate.get("steps", []) or [], 1):
         if not isinstance(raw, dict):
             continue
@@ -4434,6 +4612,11 @@ def bind_renderer_output_contracts(
         bound_outputs: List[Dict[str, Any]] = []
         bound_paths: List[str] = []
         arguments = dict(invocation.get("arguments") or {})
+        invocation_semantic_claims = [
+            dict(item)
+            for item in invocation.get("semantic_claims", []) or []
+            if isinstance(item, Mapping)
+        ]
 
         for contract in contracts:
             logical_output, binding = _renderer_binding_for_output(contract, renderer)
@@ -4527,6 +4710,40 @@ def bind_renderer_output_contracts(
             bound_outputs.append(record)
             if requested and requested not in bound_paths:
                 bound_paths.append(requested)
+            task_constraint = (
+                task_output_constraints.get(requested)
+                or task_output_constraints.get(required_identity)
+                or task_output_constraints.get(Path(requested).name)
+            )
+            semantic_key = str(
+                (task_constraint or {}).get("semantic_key")
+                or f"required_output.{_field_identity(contract.get('role') or logical_output or 'output')}"
+            )
+            semantic_value = (task_constraint or {}).get("value", requested)
+            output_claim = {
+                "semantic_key": semantic_key,
+                "operator": "eq",
+                "value": semantic_value,
+                "strength": "required",
+                "confidence": 1.0,
+                "source_ref": f"renderer_output_binding:{step.get('step_id') or ''}:{logical_output or contract.get('role') or ''}",
+            }
+            identity = json.dumps(
+                {key: output_claim.get(key) for key in ("semantic_key", "operator", "value")},
+                ensure_ascii=False,
+                sort_keys=True,
+                default=str,
+            )
+            if all(
+                json.dumps(
+                    {key: existing.get(key) for key in ("semantic_key", "operator", "value")},
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    default=str,
+                ) != identity
+                for existing in invocation_semantic_claims
+            ):
+                invocation_semantic_claims.append(output_claim)
 
         if contracts:
             step["bound_outputs"] = bound_outputs
@@ -4536,6 +4753,7 @@ def bind_renderer_output_contracts(
         invocation["outdir"] = outdir
         invocation["outputs"] = list(bound_paths)
         invocation["bound_outputs"] = deepcopy(bound_outputs)
+        invocation["semantic_claims"] = invocation_semantic_claims
         invocation["manifest_path"] = canonical_output_identity(
             str(renderer.get("manifest_filename") or "manifest.json"),
             outdir,
@@ -4626,6 +4844,8 @@ def normalize_plan_contracts(
     records = [dict(item) for item in (renderer_records or []) if isinstance(item, dict)]
     renderer_skill_ids = [str(item.get("skill_id") or "") for item in records if str(item.get("skill_id") or "")]
     normalized, audit = collapse_renderer_composite_steps(state, renderer_skill_ids, records)
+    if task_spec:
+        normalized["task_spec"] = deepcopy(task_spec)
     normalized = bind_renderer_invocation_contracts(normalized, records, task_spec)
     normalized = bind_renderer_output_contracts(
         normalized,

@@ -1,0 +1,47 @@
+{
+  "session_id": "session_1786157669",
+  "audited_before_user_plan_conflicts": 11,
+  "audited_claim_count": 37,
+  "raw_prompt_provenance": "必须使用 genome.fasta 和 genome.gtf，以 -gtf22 构建本地数据库；如果 snpEff/java missing 可以 blocked；不要猜物种数据库。",
+  "legacy_plan_propositions": [
+    "Run renderer-backed workflow for genomics/snpeff-annotation",
+    "/formal/all.filtered.snp.vcf",
+    "/formal/genome.fasta",
+    "/formal/genome.gtf",
+    "annotated.vcf",
+    "snpEff_summary.html",
+    "ann_effect_summary.tsv",
+    "ann_gene_summary.tsv",
+    "report.md",
+    "reproduce.sh",
+    "stage_status.tsv"
+  ],
+  "semantic_constraints": [
+    {"constraint_id":"session-vcf","semantic_key":"required_input.variant_vcf","operator":"eq","value":"/formal/all.filtered.snp.vcf","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-fasta","semantic_key":"required_input.reference_fasta","operator":"eq","value":"/formal/genome.fasta","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-gtf","semantic_key":"required_input.annotation_gtf","operator":"eq","value":"/formal/genome.gtf","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-format","semantic_key":"required_behavior.annotation_format","operator":"eq","value":"gtf22","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-database","semantic_key":"required_behavior.database_source","operator":"eq","value":"custom_genome","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-forbid-db","semantic_key":"forbidden_behavior.species_database_guess","operator":"forbid","value":true,"strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-java-policy","semantic_key":"failure_policy.java_missing","operator":"on_condition","value":"block","strength":"conditional","confidence":0.99,"condition":"java_missing","source_ref":"session_1786157669"},
+    {"constraint_id":"session-output-vcf","semantic_key":"required_output.annotated_vcf","operator":"eq","value":"annotated.vcf","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-output-html","semantic_key":"required_output.snpeff_summary_html","operator":"eq","value":"snpEff_summary.html","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-output-effect","semantic_key":"required_output.ann_effect_summary_tsv","operator":"eq","value":"ann_effect_summary.tsv","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-output-gene","semantic_key":"required_output.ann_gene_summary_tsv","operator":"eq","value":"ann_gene_summary.tsv","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-output-report","semantic_key":"required_output.report_md","operator":"eq","value":"report.md","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-output-reproduce","semantic_key":"required_output.reproduce_sh","operator":"eq","value":"reproduce.sh","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"},
+    {"constraint_id":"session-output-stage","semantic_key":"required_output.stage_status_tsv","operator":"eq","value":"stage_status.tsv","strength":"hard","confidence":0.99,"source_ref":"session_1786157669"}
+  ],
+  "renderer_invocation": {
+    "arguments": {
+      "vcf": "/formal/all.filtered.snp.vcf",
+      "reference_fasta": "/formal/genome.fasta",
+      "annotation_gtf": "/formal/genome.gtf",
+      "genome_version": "biomind_session_1786157669",
+      "output_vcf": "annotated.vcf"
+    },
+    "bound_outputs": [
+      {"binding_argument":"output_vcf","required_output":"annotated.vcf"}
+    ]
+  }
+}

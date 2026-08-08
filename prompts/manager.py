@@ -530,7 +530,7 @@ class PromptManager:
 [USER PREFERENCES]
 {user_preferences_context or "No user preferences file loaded for this plan."}
 
-User Goal: {user_msg}
+User Goal (provenance/supplemental context only): {user_msg}
 
 {task_spec_context or "No structured task spec is available. Use the user goal without inventing missing requirements."}
 
@@ -558,13 +558,13 @@ Do NOT invent commands for skills. If a matching skill is present in ACTIVE SKIL
 plan to use its documented script path and documented arguments exactly.
 Use only [CURRENT TASK RUNTIME AUDIT] for runtime scheduling:
 - `status: ready`: proceed with the verified runtime and do not add installation.
-- `install_required: true`: add INSTALL unless the user explicitly forbids installation.
+- `install_required: true`: add INSTALL unless the typed TaskSpec policy forbids installation.
 - `status: unknown` or `status: healthcheck_failed`: add a targeted diagnosis, repair, or registration step; do not assume the runtime is usable and do not jump directly to installation.
 - Controlled rg/discovery hints are evidence-only and can never establish `ready` without PackageManager evidence plus a passing healthcheck.
-If the user request, benchmark instruction, Consultant Summary, or resume
-context explicitly says missing environments/dependencies should be `blocked`,
-`do not install`, or equivalent, do NOT plan INSTALL. Plan a blocked FINISH
-after documenting the failed runtime check.
+Natural-language policy interpretation is already complete. Do not infer a
+policy from words in User Goal or Consultant prose. Use only canonical
+`failure_policy.*`, `forbidden_behavior.*`, and `runtime_constraint.*` rows in
+TaskSpec for install/block decisions.
 Every step must also include explicit `Assumptions`, `Required constraints`,
 `Input contract`, `Output contract`, `Environment contract`, `Depends on`,
 `Allowed fallbacks`, `Forbidden fallbacks`, and `Success criteria`. These are
@@ -600,6 +600,7 @@ For EACH step, provide:
     - Depends on: [step IDs]
     - Allowed fallbacks: [explicitly permitted alternatives]
     - Forbidden fallbacks: [methods/inputs/options that must not be substituted]
+    - Semantic claims: [JSON array of atomic ontology rows implemented by this step]
 
 ## Execution Checklist
 After the detailed plan, include a machine-trackable checklist.
@@ -613,12 +614,18 @@ primary scheduler record and the indented fields are its typed contract):
     - [logical or exact input]
   - Outputs:
     - [logical or exact output]
+  - Semantic claims: [{{"semantic_key":"required_input.role","operator":"eq","value":"exact value","strength":"required","confidence":0.95,"source_ref":"task_spec"}}]
   - Depends on: [step IDs or none]
   - Success criteria: [count-free completion criterion]
   - Stage: [workflow_stage_id or none]
   - Batch: [batch_id or none]
 `Inputs:` and `Outputs:` are mandatory, even when their value is an explicit
 empty list. Keep values concise and place explanations in Section 2.
+`Semantic claims:` is mandatory and must be a valid one-line JSON array. Use
+only the closed TaskSpec ontology and copy canonical keys/values; do not
+reinterpret User Goal. Use `[]` only when a control step implements no task
+constraint. Renderer-backed steps must include only claims established by
+their bound invocation or declared renderer behavior.
 Legacy `- [ ] Step N:` records remain parser-compatible, but emit the canonical
 stable-ID form above for every new plan.
 The checklist order MUST match Section 2 and should be executable one step at a time.
@@ -633,7 +640,7 @@ The checklist order MUST match Section 2 and should be executable one step at a 
 
 RULES:
 - Never infer availability from a global historical tool list. Use only the current selected-skill runtime audit.
-- User/benchmark install policy overrides skill defaults: if missing runtime must be blocked or installation is forbidden, do not add INSTALL even when a skill declares `install_tool`.
+- Typed TaskSpec install/failure policy overrides skill defaults. Do not derive that policy from raw user or benchmark prose.
 - Do not infer runtime absence from `which tool` in the current shell when a skill declares `default_env` or `healthcheck`; use `[RUNTIME_AUDIT]`, the skill healthcheck, registered envs, or registered shims.
 - For workflow tasks, use the workflow as a minimum coverage scaffold, not a ceiling. Plan every user-requested stage/output, including custom stages beyond the workflow.
 - Consultant decomposes coarse workflow stages; Planner owns execution scheduling. The plan must decide which skill(s) are active for each executable step or batch.

@@ -5,7 +5,10 @@ from agent_core.task_spec import (
     apply_user_feedback,
     create_task_spec,
     ensure_task_spec,
+    merge_compiled_constraints,
     normalize_fact_candidates_with_skill,
+    semantic_constraints_from_task_spec,
+    validate_compiled_constraints,
 )
 
 
@@ -36,19 +39,43 @@ class Batch8AUserFactTests(unittest.TestCase):
                 source_task_id="task-a",
                 message_origin="user",
             )
+        compiled = validate_compiled_constraints([
+            {
+                "constraint_id": "annotation-format",
+                "semantic_key": "required_behavior.annotation_format",
+                "operator": "eq",
+                "value": "gtf22",
+                "strength": "hard",
+                "confidence": 0.99,
+                "source_text": turns[3],
+            },
+            {
+                "constraint_id": "forbid-species-db-guess",
+                "semantic_key": "forbidden_behavior.species_database_guess",
+                "operator": "forbid",
+                "value": True,
+                "strength": "hard",
+                "confidence": 0.98,
+                "source_text": turns[4],
+            },
+        ])
+        self.assertTrue(compiled["valid"], compiled["errors"])
+        spec = merge_compiled_constraints(spec, compiled["constraints"], metrics=compiled["metrics"])
 
         artifact_roles = {item["role"] for item in active(spec, "artifact_bindings")}
         entities = {(item["entity_type"], item["value"]) for item in active(spec, "entity_bindings")}
         parameters = {(item["namespace"], item["key"]): item["value"] for item in active(spec, "parameter_bindings")}
-        requirements = {item["requirement_id"]: item["value"] for item in spec["requirements"]}
-        constraints = "\n".join(item["text"] for item in active(spec, "constraint_bindings"))
+        constraints = {
+            item["semantic_key"]: item["value"]
+            for item in semantic_constraints_from_task_spec(spec)
+        }
         outputs = [item for item in active(spec, "artifact_bindings") if item["direction"] == "output"]
 
         self.assertTrue({"variant_vcf", "reference_fasta", "annotation_gtf"} <= artifact_roles)
         self.assertIn(("species", "花生 Arachis hypogaea"), entities)
         self.assertTrue(parameters[("cli", "gtf22")])
-        self.assertEqual(requirements["annotation_format"], "gtf22")
-        self.assertIn("不要猜已有物种数据库", constraints)
+        self.assertEqual(constraints["required_behavior.annotation_format"], "gtf22")
+        self.assertTrue(constraints["forbidden_behavior.species_database_guess"])
         self.assertEqual(outputs[-1]["locator"], "/tmp/test/output/strict")
         self.assertTrue(all(item.get("source_message_id") for item in active(spec, "facts")))
 
@@ -61,13 +88,29 @@ class Batch8AUserFactTests(unittest.TestCase):
             "上游缺失时必须 blocked_missing_upstream。",
         ):
             spec = apply_user_feedback(spec, text, kind="consultant_answer", message_origin="user")
+        compiled = validate_compiled_constraints([{
+            "constraint_id": "missing-upstream-policy",
+            "semantic_key": "failure_policy.upstream_missing",
+            "operator": "on_condition",
+            "value": "blocked_missing_upstream",
+            "strength": "conditional",
+            "confidence": 0.96,
+            "condition": "upstream_missing",
+            "source_text": "上游缺失时必须 blocked_missing_upstream。",
+        }])
+        self.assertTrue(compiled["valid"], compiled["errors"])
+        spec = merge_compiled_constraints(spec, compiled["constraints"], metrics=compiled["metrics"])
 
         roles = {item["role"] for item in active(spec, "artifact_bindings")}
         params = {item["key"]: item["value"] for item in active(spec, "parameter_bindings")}
         self.assertIn("seurat_qc_object", roles)
         self.assertIn("marker_reference", roles)
         self.assertEqual(params["clustering_resolution"], 0.6)
-        self.assertTrue(any("blocked_missing_upstream" in item["text"] for item in active(spec, "constraint_bindings")))
+        policies = {
+            item["semantic_key"]: item["value"]
+            for item in semantic_constraints_from_task_spec(spec)
+        }
+        self.assertEqual(policies["failure_policy.upstream_missing"], "blocked_missing_upstream")
 
     def test_hic_many_artifacts_and_relation_are_preserved(self):
         spec = create_task_spec("比较 /data/leaf.mcool 和 /data/bud.mcool，resolution=40000，leaf compared_with bud", task_id="hic")

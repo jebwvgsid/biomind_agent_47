@@ -4,10 +4,27 @@ import unittest
 from agent_core.task_spec import (
     apply_user_feedback,
     create_task_spec,
+    merge_compiled_constraints,
     merge_task_spec,
     project_effective_user_facts,
     resolve_effective_user_facts,
+    validate_compiled_constraints,
 )
+
+
+def compile_constraint(spec, key, value, *, operator="forbid", source_text="typed test constraint"):
+    validated = validate_compiled_constraints([{
+        "constraint_id": "test-" + key.replace(".", "-"),
+        "semantic_key": key,
+        "operator": operator,
+        "value": value,
+        "strength": "hard",
+        "confidence": 0.98,
+        "source_text": source_text,
+    }])
+    if not validated["valid"]:
+        raise AssertionError(validated["errors"])
+    return merge_compiled_constraints(spec, validated["constraints"], metrics=validated["metrics"])
 
 
 class EffectiveUserFactsTests(unittest.TestCase):
@@ -81,6 +98,12 @@ class EffectiveUserFactsTests(unittest.TestCase):
         long_path = "/very/long/path/" + "segment/" * 30 + "input.mcool"
         spec = apply_user_feedback(spec, f"输入 {long_path}", kind="consultant_answer", source_task_id="budget")
         spec = apply_user_feedback(spec, "绝对不得猜测输入类型", kind="consultant_answer", source_task_id="budget")
+        spec = compile_constraint(
+            spec,
+            "forbidden_behavior.input_type_guess",
+            True,
+            source_text="绝对不得猜测输入类型",
+        )
         for index in range(20):
             spec = apply_user_feedback(spec, f"low_priority_{index}=value_{index}", kind="consultant_answer", source_task_id="budget")
 
@@ -101,6 +124,12 @@ class EffectiveUserFactsTests(unittest.TestCase):
             "输入 /data/a.vcf 和 /data/b.mcool；输出目录: /out；不得覆盖输入",
             task_id="scope",
         )
+        spec = compile_constraint(
+            spec,
+            "forbidden_behavior.input_overwrite",
+            True,
+            source_text="不得覆盖输入",
+        )
         resolved = resolve_effective_user_facts(spec)
         projected = project_effective_user_facts(
             resolved,
@@ -111,7 +140,10 @@ class EffectiveUserFactsTests(unittest.TestCase):
         self.assertIn("/data/b.mcool", paths)
         self.assertIn("/out", paths)
         self.assertNotIn("/data/a.vcf", paths)
-        self.assertTrue(projected["active_constraints"])
+        self.assertIn(
+            "forbidden_behavior.input_overwrite",
+            {item["semantic_key"] for item in projected["semantic_constraints"]},
+        )
 
     def test_resolution_and_serialization_are_deterministic(self):
         spec = create_task_spec("输入 /data/a.vcf，threads=8，不得猜测", task_id="stable")

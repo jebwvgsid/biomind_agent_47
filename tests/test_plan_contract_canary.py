@@ -12,7 +12,12 @@ from agent_core.plan_tracker import (
     validate_action_approval_lineage,
 )
 from agent_core.skill_manager import SkillManager
-from agent_core.task_spec import create_task_spec, effective_output_contracts
+from agent_core.task_spec import (
+    create_task_spec,
+    effective_output_contracts,
+    merge_compiled_constraints,
+    validate_compiled_constraints,
+)
 
 
 class PlanContractCanaryTests(unittest.TestCase):
@@ -25,6 +30,15 @@ class PlanContractCanaryTests(unittest.TestCase):
             "Output annotated.vcf, ann_gene_summary.tsv, report.md and reproduce.sh.",
             task_id=self.TASK_ID,
             project_root="/tmp",
+        )
+        compiled = validate_compiled_constraints([
+            {"constraint_id": "canary-db", "semantic_key": "required_behavior.database_source", "operator": "eq", "value": "custom_genome", "strength": "hard", "confidence": 0.99, "source_ref": "mock_consultant"},
+            {"constraint_id": "canary-format", "semantic_key": "required_behavior.annotation_format", "operator": "eq", "value": "gtf22", "strength": "hard", "confidence": 0.99, "source_ref": "mock_consultant"},
+        ])
+        self.task_spec = merge_compiled_constraints(
+            self.task_spec,
+            compiled["constraints"],
+            metrics=compiled["metrics"],
         )
         self.renderer = SkillManager("skills").get_renderer_record("genomics/snpeff-annotation")
         self.outputs = effective_output_contracts(self.task_spec)

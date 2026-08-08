@@ -33,6 +33,26 @@ REQUIREMENT_LEVELS = {
     "unknown",
 }
 
+# Natural-language interpretation stops at Consultant.  From TaskSpec onward
+# these small, closed vocabularies are the deterministic semantic contract.
+SEMANTIC_CONSTRAINT_CATEGORIES = {
+    "required_input",
+    "required_output",
+    "required_skill",
+    "required_behavior",
+    "forbidden_behavior",
+    "preference",
+    "conditional_policy",
+    "failure_policy",
+    "runtime_constraint",
+}
+SEMANTIC_CONSTRAINT_OPERATORS = {
+    "eq", "neq", "contains", "forbid", "require", "prefer", "on_condition",
+}
+SEMANTIC_CONSTRAINT_STRENGTHS = {
+    "hard", "required", "preference", "conditional", "advisory", "ambiguous",
+}
+
 TASK_SPEC_SCHEMA_VERSION = 4
 TASK_SPEC_MIGRATION_REQUEST_BACKFILL = "task_spec_v3_request_backfill"
 TASK_SPEC_MIGRATION_GENERIC_FACTS = "task_spec_v4_generic_user_facts"
@@ -142,6 +162,27 @@ def _text(value: Any) -> str:
 
 def _field_key(value: Any) -> str:
     return re.sub(r"[^a-z0-9]+", "_", _text(value).lower().lstrip("-")).strip("_")
+
+
+def _semantic_key(value: Any) -> str:
+    """Normalize a schema key, never a natural-language sentence."""
+    raw = _text(value).lower().strip(".")
+    if "." not in raw:
+        return ""
+    category, slot = raw.split(".", 1)
+    category = _field_key(category)
+    slot = ".".join(_field_key(part) for part in slot.split(".") if _field_key(part))
+    if category not in SEMANTIC_CONSTRAINT_CATEGORIES or not slot:
+        return ""
+    return f"{category}.{slot}"
+
+
+def _bounded_confidence(value: Any, default: float) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        number = default
+    return max(0.0, min(1.0, number))
 
 
 def _stable_fact_id(*parts: Any) -> str:
@@ -384,35 +425,10 @@ def extract_user_fact_candidates(text: str) -> List[Dict[str, Any]]:
             "status": "active",
         })
 
-    constraint_match = re.search(
-        r"\b(?:must|must not|do not|don't|never|only|at least|at most|prefer)\b|必须|禁止|不得|不要|只允许|仅允许|优先|至少|最多",
-        raw,
-        re.IGNORECASE,
-    )
-    if constraint_match:
-        marker = constraint_match.group(0).lower()
-        mode = "prohibit" if marker in {"must not", "do not", "don't", "never", "禁止", "不得", "不要"} else "require"
-        if marker in {"prefer", "优先"}:
-            mode = "prefer"
-        candidates.append({
-            "fact_kind": "constraint",
-            "constraint_type": mode,
-            "text": raw,
-            "scope": "task",
-            "cardinality": "many",
-            "status": "active",
-        })
-
-    decision_match = re.search(r"确认|拒绝|替换|撤销|选择|改为|换成|\b(?:confirm|reject|replace|withdraw|select)\b", raw, re.IGNORECASE)
-    if decision_match:
-        candidates.append({
-            "fact_kind": "decision",
-            "decision_type": _field_key(decision_match.group(0)),
-            "text": raw,
-            "scope": "task",
-            "cardinality": "many",
-            "status": "active",
-        })
+    # The complete utterance remains in ``user_directives`` as provenance.
+    # It is deliberately not promoted to one constraint/decision fact based on
+    # words such as "must", "prefer", or "missing".  Consultant compiles those
+    # meanings into typed TaskSpec requirements instead.
 
     relation_patterns = (
         re.compile(r"(?P<left>[A-Za-z0-9_.-]+)\s+(?P<predicate>compared_with|derived_from|belongs_to|depends_on|consumes|produced_by)\s+(?P<right>[A-Za-z0-9_.-]+)", re.IGNORECASE),
@@ -896,39 +912,6 @@ def extract_request_contracts(
             default_level="required",
             source=source_type,
         ))
-    lower = str(request or "").lower()
-    format_match = re.search(r"(?<![\w.])-?(gtf22|gff3|genbank)\b", lower)
-    if format_match:
-        requirements.append(normalize_requirement({
-            "requirement_id": "annotation_format",
-            "role": "annotation_format",
-            "value": format_match.group(1),
-            "level": "required",
-            "status": "satisfied",
-            "source": source_type,
-            "source_ref": source_ref,
-        }))
-    if re.search(r"\bcustom[ _-]+genome\b|自定义(?:基因组|参考)", lower):
-        requirements.append(normalize_requirement({
-            "requirement_id": "database_source",
-            "role": "database_source",
-            "value": "custom_genome",
-            "level": "required",
-            "status": "satisfied",
-            "source": source_type,
-            "source_ref": source_ref,
-        }))
-    if re.search(r"(?:do not|don't|never|禁止|不得|不要).{0,24}(?:guess|猜).{0,24}(?:species|物种).{0,16}(?:database|数据库)", lower):
-        requirements.append(normalize_requirement({
-            "requirement_id": "forbid_species_database_guess",
-            "role": "forbid_species_database_guess",
-            "value": True,
-            "level": "required",
-            "status": "satisfied",
-            "source": source_type,
-            "source_ref": source_ref,
-        }))
-
     expected_outputs = [
         normalize_output_binding(
             {"role": "output_dir", "path": output_dir_raw, "source": source_type, "source_ref": source_ref},
@@ -1449,6 +1432,46 @@ def normalize_requirement(
     if not requirement_id:
         requirement_id = _text(Path(path).name if path else requirement_value)
     source_value = _binding_source(_text(raw.get("source_type") or raw.get("source") or source))
+    semantic_key = _semantic_key(raw.get("semantic_key"))
+    if not semantic_key:
+        normalized_role = _field_key(role or requirement_id) or "requirement"
+        if path:
+            semantic_key = f"required_input.{canonical_input_role(normalized_role, path)}"
+        elif normalized_role.startswith("forbid_"):
+            semantic_key = f"forbidden_behavior.{normalized_role[len('forbid_'):]}"
+        elif level == "conditional":
+            semantic_key = f"conditional_policy.{normalized_role}"
+        elif level == "recommended":
+            semantic_key = f"preference.{normalized_role}"
+        else:
+            semantic_key = f"required_behavior.{normalized_role}"
+    category = semantic_key.split(".", 1)[0]
+    operator = _field_key(raw.get("operator"))
+    if operator not in SEMANTIC_CONSTRAINT_OPERATORS:
+        operator = {
+            "forbidden_behavior": "forbid",
+            "preference": "prefer",
+            "conditional_policy": "on_condition",
+            "failure_policy": "on_condition",
+            "runtime_constraint": "require",
+        }.get(category, "eq")
+    strength = _field_key(raw.get("strength"))
+    if strength not in SEMANTIC_CONSTRAINT_STRENGTHS:
+        strength = {
+            "required": "hard",
+            "conditional": "conditional",
+            "recommended": "preference",
+            "optional_validation": "advisory",
+            "known_absent": "advisory",
+            "unknown": "ambiguous",
+        }.get(level, "ambiguous")
+    ambiguity = raw.get("ambiguity", False)
+    needs_clarification = bool(
+        raw.get("needs_clarification")
+        or ambiguity not in (False, None, "", "none", "false", "False")
+        or strength == "ambiguous"
+    )
+    confidence_default = 1.0 if source_value in {"user_explicit", "current_task_user_explicit"} else 0.8
     return {
         **raw,
         "requirement_id": requirement_id or "requirement",
@@ -1457,6 +1480,14 @@ def normalize_requirement(
         "value": requirement_value,
         "level": level,
         "condition": raw.get("condition"),
+        "semantic_key": semantic_key,
+        "operator": operator,
+        "strength": strength,
+        "confidence": _bounded_confidence(raw.get("confidence"), confidence_default),
+        "ambiguity": ambiguity,
+        "needs_clarification": needs_clarification,
+        "source_text": _text(raw.get("source_text")),
+        "source_span": deepcopy(raw.get("source_span")),
         "status": _text(raw.get("status") or "unresolved").lower(),
         "source": source_value,
         "source_type": source_value,
@@ -1464,6 +1495,77 @@ def normalize_requirement(
         "provenance": _binding_provenance(raw, source_value),
         "evidence": list(raw.get("evidence") or []) if isinstance(raw.get("evidence"), list) else [],
     }
+
+
+def validate_compiled_constraints(values: Any) -> Dict[str, Any]:
+    """Validate Consultant output as schema, without interpreting its prose."""
+    errors: List[Dict[str, Any]] = []
+    normalized: List[Dict[str, Any]] = []
+    if not isinstance(values, list):
+        values = []
+        errors.append({"index": -1, "field": "semantic_constraints", "reason": "must be a JSON array"})
+    for index, value in enumerate(values):
+        if not isinstance(value, Mapping):
+            errors.append({"index": index, "field": "constraint", "reason": "must be a JSON object"})
+            continue
+        raw = dict(value)
+        semantic_key = _semantic_key(raw.get("semantic_key"))
+        operator = _field_key(raw.get("operator"))
+        strength = _field_key(raw.get("strength"))
+        if not semantic_key:
+            errors.append({"index": index, "field": "semantic_key", "reason": "unknown or missing ontology key"})
+        if operator not in SEMANTIC_CONSTRAINT_OPERATORS:
+            errors.append({"index": index, "field": "operator", "reason": "unknown or missing operator"})
+        if strength not in SEMANTIC_CONSTRAINT_STRENGTHS:
+            errors.append({"index": index, "field": "strength", "reason": "unknown or missing strength"})
+        if "confidence" not in raw:
+            errors.append({"index": index, "field": "confidence", "reason": "is required"})
+        else:
+            try:
+                confidence = float(raw.get("confidence"))
+            except (TypeError, ValueError):
+                confidence = -1.0
+            if not 0.0 <= confidence <= 1.0:
+                errors.append({"index": index, "field": "confidence", "reason": "must be between 0 and 1"})
+        if raw.get("value") in (None, ""):
+            errors.append({"index": index, "field": "value", "reason": "is required"})
+        if not _text(raw.get("source_text")) and not raw.get("provenance") and not _text(raw.get("source_ref")):
+            errors.append({"index": index, "field": "provenance", "reason": "source_text, source_ref, or provenance is required"})
+        if semantic_key and operator in SEMANTIC_CONSTRAINT_OPERATORS and strength in SEMANTIC_CONSTRAINT_STRENGTHS:
+            normalized.append(normalize_requirement({
+                **raw,
+                "requirement_id": _text(raw.get("constraint_id") or raw.get("requirement_id") or semantic_key),
+                "role": semantic_key.split(".", 1)[1],
+                "semantic_key": semantic_key,
+                "operator": operator,
+                "strength": strength,
+                "level": {
+                    "hard": "required",
+                    "required": "required",
+                    "preference": "recommended",
+                    "conditional": "conditional",
+                    "advisory": "optional_validation",
+                    "ambiguous": "unknown",
+                }[strength],
+                "status": "unresolved" if raw.get("needs_clarification") else "satisfied",
+                "source": raw.get("source_type") or raw.get("source") or "consultant_inferred",
+            }, source="consultant_inferred"))
+    confidence_values = [float(item.get("confidence") or 0.0) for item in normalized]
+    metrics = {
+        "constraint_count": len(normalized),
+        "hard_count": sum(item.get("strength") in {"hard", "required"} for item in normalized),
+        "preference_count": sum(item.get("strength") == "preference" for item in normalized),
+        "conditional_count": sum(item.get("strength") == "conditional" for item in normalized),
+        "ambiguous_count": sum(bool(item.get("needs_clarification")) for item in normalized),
+        "confidence": confidence_values,
+        "confidence_distribution": {
+            "minimum": min(confidence_values) if confidence_values else None,
+            "maximum": max(confidence_values) if confidence_values else None,
+            "mean": (sum(confidence_values) / len(confidence_values)) if confidence_values else None,
+        },
+        "schema_validation": "passed" if not errors else "failed",
+    }
+    return {"valid": not errors, "constraints": normalized, "errors": errors, "metrics": metrics}
 
 
 def _requirement_is_present(requirement: Mapping[str, Any]) -> bool:
@@ -1534,6 +1636,8 @@ def evaluate_requirements(requirements: Iterable[Any]) -> Dict[str, Any]:
 
 def _item_key(value: Any) -> str:
     if isinstance(value, Mapping):
+        if _semantic_key(value.get("semantic_key")):
+            return "semantic:" + _semantic_key(value.get("semantic_key"))
         for fields in (("path", "role"), ("question", "answer"), ("text", "kind")):
             parts = [_text(value.get(field)) for field in fields]
             if any(parts):
@@ -1653,6 +1757,278 @@ def merge_task_spec(
     return merged
 
 
+def merge_compiled_constraints(
+    spec: Mapping[str, Any] | None,
+    constraints: Iterable[Mapping[str, Any]],
+    *,
+    base_dir: str | Path | None = None,
+    project_root: str | Path | None = None,
+    metrics: Mapping[str, Any] | None = None,
+) -> TaskSpec:
+    """Merge already-validated Consultant IR into existing TaskSpec models."""
+    requirements: List[Dict[str, Any]] = []
+    inputs: List[Dict[str, Any]] = []
+    outputs: List[Dict[str, Any]] = []
+    for raw in constraints or []:
+        requirement = normalize_requirement(raw, source="consultant_inferred")
+        semantic_key = _semantic_key(requirement.get("semantic_key"))
+        if not semantic_key:
+            continue
+        category, slot = semantic_key.split(".", 1)
+        requirements.append(requirement)
+        if category == "required_input" and requirement.get("value") not in (None, ""):
+            inputs.append(normalize_input_binding(
+                {
+                    "role": slot,
+                    "path": requirement.get("value"),
+                    "required": requirement.get("strength") in {"hard", "required"},
+                    "source": "consultant_inferred",
+                    "source_ref": requirement.get("source_ref"),
+                    "provenance": requirement.get("provenance"),
+                    "confidence": requirement.get("confidence"),
+                },
+                source="consultant_inferred",
+                base_dir=base_dir,
+                project_root=project_root,
+            ))
+        elif category == "required_output" and requirement.get("value") not in (None, ""):
+            output_value = requirement.get("value")
+            if isinstance(output_value, Mapping):
+                output_raw = dict(output_value)
+            elif slot == "output_dir":
+                output_raw = {"role": slot, "path": _text(output_value)}
+            else:
+                output_raw = {"role": slot, "filename": _text(output_value)}
+            output_raw.update({
+                "source": "consultant_inferred",
+                "source_ref": requirement.get("source_ref"),
+                "provenance": requirement.get("provenance"),
+                "required": requirement.get("strength") in {"hard", "required"},
+            })
+            outputs.append(normalize_output_binding(
+                output_raw,
+                source="consultant_inferred",
+                base_dir=base_dir,
+                project_root=project_root,
+            ))
+    merged = merge_task_spec(
+        spec,
+        {
+            "requirements": requirements,
+            "inputs": inputs,
+            "output_contracts": outputs,
+        },
+        source="consultant_inferred",
+        reason="consultant_semantic_compilation",
+        increment_revision=False,
+    )
+    merged["semantic_compilation"] = {
+        "schema_version": 1,
+        "schema_validation": "passed",
+        "compiled_at": _now(),
+        **deepcopy(dict(metrics or {})),
+    }
+    return merged
+
+
+def semantic_constraints_from_task_spec(
+    spec: Mapping[str, Any] | None,
+    *,
+    selected_skill_ids: Iterable[Any] = (),
+) -> List[Dict[str, Any]]:
+    """Return the canonical semantic contract carried by existing TaskSpec rows."""
+    normalized = ensure_task_spec(spec)
+    constraints: List[Dict[str, Any]] = []
+
+    def add(value: Mapping[str, Any]) -> None:
+        item = normalize_requirement(value, source=_text(value.get("source") or "task_contract"))
+        key = _semantic_key(item.get("semantic_key"))
+        if not key or item.get("value") in (None, ""):
+            return
+        item["semantic_key"] = key
+        identity = json.dumps(
+            {
+                "semantic_key": key,
+                "operator": item.get("operator"),
+                "value": item.get("value"),
+                "condition": item.get("condition"),
+                "strength": item.get("strength"),
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        )
+        if not any(existing.get("semantic_identity") == identity for existing in constraints):
+            item["semantic_identity"] = identity
+            constraints.append(item)
+
+    for value in normalized.get("requirements", []) or []:
+        if isinstance(value, Mapping):
+            add(value)
+    known_input_keys = {
+        str(item.get("semantic_key") or "")
+        for item in constraints
+        if str(item.get("semantic_key") or "").startswith("required_input.")
+    }
+    for value in normalized.get("inputs", []) or []:
+        if not isinstance(value, Mapping):
+            continue
+        path = _text(value.get("resolved_path") or value.get("path"))
+        role = canonical_input_role(_text(value.get("role")), path)
+        key = f"required_input.{role}"
+        if path and key not in known_input_keys:
+            add({
+                **dict(value),
+                "requirement_id": key,
+                "role": role,
+                "semantic_key": key,
+                "operator": "eq",
+                "value": path,
+                "level": "required" if value.get("required", True) else "recommended",
+                "strength": "hard" if value.get("required", True) else "preference",
+                "status": value.get("status") or "declared",
+            })
+            known_input_keys.add(key)
+    known_output_keys = {
+        str(item.get("semantic_key") or "")
+        for item in constraints
+        if str(item.get("semantic_key") or "").startswith("required_output.")
+    }
+    for value in effective_output_contracts(normalized):
+        role = _field_key(value.get("role")) or _field_key(value.get("output_id")) or "output"
+        locator = _text(value.get("path_or_name") or value.get("path") or value.get("filename"))
+        key = f"required_output.{role}"
+        if locator and key not in known_output_keys:
+            add({
+                **dict(value),
+                "requirement_id": key,
+                "semantic_key": key,
+                "operator": "eq",
+                "value": locator,
+                "level": "required" if value.get("required", True) else "recommended",
+                "strength": "hard" if value.get("required", True) else "preference",
+                "status": "satisfied",
+            })
+            known_output_keys.add(key)
+    for skill_id in selected_skill_ids or []:
+        value = _text(skill_id)
+        if value:
+            add({
+                "requirement_id": f"required_skill.{_field_key(value)}",
+                "role": _field_key(value),
+                "semantic_key": f"required_skill.{_field_key(value)}",
+                "operator": "eq",
+                "value": value,
+                "level": "required",
+                "strength": "hard",
+                "status": "satisfied",
+                "source": "task_contract",
+                "source_ref": "selected_skill_ids",
+            })
+    for item in constraints:
+        item.pop("semantic_identity", None)
+    return constraints
+
+
+def canonical_constraint_hash(spec: Mapping[str, Any] | None) -> str:
+    """Hash semantic meaning only; raw prompt text and timestamps are provenance."""
+    payload = [
+        {
+            key: deepcopy(item.get(key))
+            for key in (
+                "semantic_key", "operator", "value", "strength", "condition",
+                "needs_clarification", "ambiguity",
+            )
+            if item.get(key) not in (None, "", [], {})
+        }
+        for item in semantic_constraints_from_task_spec(spec)
+    ]
+    payload.sort(key=lambda item: json.dumps(item, ensure_ascii=False, sort_keys=True, default=str))
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def semantic_install_policy(
+    spec: Mapping[str, Any] | None,
+    *,
+    dependency_key: str = "",
+) -> Dict[str, Any]:
+    """Resolve install policy from typed constraints only.
+
+    ``dependency_key`` is an ontology slot (for example ``java``), never raw
+    user prose.  Runtime code must not recover this policy with language
+    keywords after Consultant has compiled the request.
+    """
+    dependency_slot = _field_key(dependency_key)
+    accepted_failure_keys = {"failure_policy.runtime_missing"}
+    if dependency_slot:
+        accepted_failure_keys.add(f"failure_policy.{dependency_slot}_missing")
+    for item in semantic_constraints_from_task_spec(spec):
+        semantic_key = str(item.get("semantic_key") or "")
+        operator = str(item.get("operator") or "")
+        value = _field_key(item.get("value"))
+        if (
+            semantic_key == "forbidden_behavior.runtime_install"
+            and operator == "forbid"
+            and item.get("value") not in (False, 0, "false", "False")
+        ):
+            return {"install_allowed": False, "reason": semantic_key, "constraint": deepcopy(item)}
+        if semantic_key in accepted_failure_keys and operator == "on_condition" and value in {"block", "blocked", "stop"}:
+            return {"install_allowed": False, "reason": semantic_key, "constraint": deepcopy(item)}
+    return {"install_allowed": True, "reason": "", "constraint": {}}
+
+
+def evaluate_failure_policies(
+    spec: Mapping[str, Any] | None,
+    observed_conditions: Mapping[str, Any] | None,
+) -> Dict[str, Any]:
+    """Apply typed ``failure_policy`` rows to typed runtime conditions."""
+    observed = {
+        str(key).strip().lower(): value
+        for key, value in dict(observed_conditions or {}).items()
+        if str(key).strip()
+    }
+    triggered: List[Dict[str, Any]] = []
+    for item in semantic_constraints_from_task_spec(spec):
+        semantic_key = str(item.get("semantic_key") or "")
+        if not semantic_key.startswith("failure_policy.") or str(item.get("operator") or "") != "on_condition":
+            continue
+        slot = semantic_key.split(".", 1)[1]
+        condition = item.get("condition")
+        active = False
+        if isinstance(condition, Mapping):
+            condition_key = str(condition.get("semantic_key") or condition.get("key") or "").strip().lower()
+            expected = condition.get("value", True)
+            condition_operator = str(condition.get("operator") or "eq").strip().lower()
+            if condition_key in observed:
+                active = (
+                    observed[condition_key] == expected
+                    if condition_operator == "eq"
+                    else observed[condition_key] != expected
+                )
+        elif str(condition or "").strip():
+            active = bool(observed.get(str(condition).strip().lower()))
+        else:
+            active = bool(
+                observed.get(slot)
+                or observed.get(semantic_key)
+                or observed.get(f"runtime_constraint.{slot}")
+            )
+        policy = _field_key(item.get("value"))
+        if active and policy in {"block", "blocked", "stop"}:
+            triggered.append(deepcopy(item))
+    return {
+        "blocked": bool(triggered),
+        "triggered": triggered,
+        "reason": (
+            "Typed failure policy blocked execution: "
+            + ", ".join(str(item.get("semantic_key")) for item in triggered)
+            if triggered else ""
+        ),
+    }
+
+
 def merge_task_spec_input_audit(
     spec: Mapping[str, Any] | None,
     input_audit: Mapping[str, Any] | None,
@@ -1751,10 +2127,14 @@ def project_task_spec_to_renderer(
             continue
         binding = normalize_input_binding(item)
         candidates.setdefault(binding["role"], []).append(binding)
-    requirements = {
-        _field_key(item.get("role") or item.get("requirement_id")): item
+    requirement_rows = [
+        normalize_requirement(item)
         for item in normalized.get("requirements", []) or []
         if isinstance(item, Mapping)
+    ]
+    requirements = {
+        _field_key(item.get("role") or item.get("requirement_id")): item
+        for item in requirement_rows
     }
     outputs = {
         _field_key(item.get("role")): item
@@ -1768,6 +2148,29 @@ def project_task_spec_to_renderer(
 
     def choose(role: str) -> Dict[str, Any]:
         items = list(candidates.get(role, []))
+        canonical = requirements.get(role)
+        canonical_key = _semantic_key(canonical.get("semantic_key")) if canonical else ""
+        canonical_path = _text(
+            (canonical or {}).get("path") or (canonical or {}).get("value")
+        )
+        if canonical_key == f"required_input.{role}" and canonical_path:
+            matching = [
+                item for item in items
+                if _text(item.get("resolved_path") or item.get("path")) == canonical_path
+            ]
+            if matching:
+                items = matching
+            else:
+                # The compiled requirement is the semantic authority, but a
+                # requirement row alone is not a resolved input binding.
+                if items:
+                    conflicts.append({
+                        "role": role,
+                        "paths": sorted({_text(item.get("path")) for item in items if _text(item.get("path"))}),
+                        "required_path": canonical_path,
+                        "reason": "canonical_requirement_binding_mismatch",
+                    })
+                return {}
         items.sort(
             key=lambda item: (
                 SOURCE_PRIORITY.get(_binding_source(_text(item.get("source"))), 0),
@@ -1822,6 +2225,49 @@ def project_task_spec_to_renderer(
             sources[argument] = source_detail
 
     outdir = projected.pop("outdir", projected.pop("output_dir", ""))
+    semantic_claims: List[Dict[str, Any]] = []
+    routed_arguments = dict((invocation_schema or {}).get("routed_arguments") or {})
+    for requirement in requirement_rows:
+        semantic_key = _semantic_key(requirement.get("semantic_key"))
+        role = _field_key(requirement.get("role") or requirement.get("requirement_id"))
+        if not semantic_key or not role:
+            continue
+        mapped = role in projected and projected.get(role) == requirement.get("value")
+        mapped = mapped or any(
+            _field_key(detail.get("role")) == role
+            for detail in sources.values()
+            if isinstance(detail, Mapping)
+        )
+        route = routed_arguments.get(role)
+        if not isinstance(route, Mapping):
+            route = next(
+                (
+                    value for value in routed_arguments.values()
+                    if isinstance(value, Mapping) and _field_key(value.get("selector")) == role
+                ),
+                None,
+            )
+        if isinstance(route, Mapping):
+            target = dict(route.get("routes") or {}).get(str(requirement.get("value")))
+            mapped = mapped or bool(target and _field_key(target) in projected)
+        if mapped:
+            semantic_claims.append({
+                "semantic_key": semantic_key,
+                "operator": requirement.get("operator") or "eq",
+                "value": deepcopy(requirement.get("value")),
+                "strength": "required",
+                "confidence": 1.0,
+                "source_ref": f"renderer_projection:{role}",
+            })
+    if outdir:
+        semantic_claims.append({
+            "semantic_key": "required_output.output_dir",
+            "operator": "eq",
+            "value": outdir,
+            "strength": "required",
+            "confidence": 1.0,
+            "source_ref": "renderer_projection:output_dir",
+        })
     missing = [
         argument for argument, meta in argument_specs.items()
         if meta.get("required") and argument not in projected and not (
@@ -1835,6 +2281,7 @@ def project_task_spec_to_renderer(
         "conflicts": conflicts,
         "unverified_bindings": sorted(set(unverified)),
         "binding_sources": sources,
+        "semantic_claims": semantic_claims,
         "complete": not missing and not conflicts,
         "schema_arguments": sorted(argument_specs),
     }
@@ -2212,6 +2659,7 @@ def resolve_effective_user_facts(spec: Mapping[str, Any] | None) -> Dict[str, An
         "active_constraints": active_by_kind["constraint"],
         "active_decisions": active_by_kind["decision"],
         "active_relations": active_by_kind["relation"],
+        "semantic_constraints": semantic_constraints_from_task_spec(normalized),
         "unresolved_facts": unresolved,
         "inherited_facts": inherited,
         "source_refs": source_ref_payload,
@@ -2291,6 +2739,7 @@ def project_effective_user_facts(
         "effective_facts_revision": _text(resolved.get("effective_facts_revision")),
         "active_artifacts": artifacts,
         "active_constraints": deepcopy(list(resolved.get("active_constraints") or [])),
+        "semantic_constraints": deepcopy(list(resolved.get("semantic_constraints") or [])),
     }
     optional_sections = (
         ("task_goal", _text(resolved.get("task_goal"))),
@@ -2477,7 +2926,17 @@ def format_planner_task_contract_context(spec: Mapping[str, Any] | None) -> str:
             normalized.get("requirements"),
             (
                 "requirement_id", "role", "value", "path", "text", "description",
-                "level", "status", "condition", "source_type", "source_ref", "provenance",
+                "level", "status", "condition", "semantic_key", "operator", "strength",
+                "confidence", "ambiguity", "needs_clarification", "source_text", "source_span",
+                "source_type", "source_ref", "provenance",
+            ),
+        ),
+        "semantic_constraints": compact(
+            semantic_constraints_from_task_spec(normalized),
+            (
+                "requirement_id", "semantic_key", "operator", "value", "strength",
+                "condition", "confidence", "ambiguity", "needs_clarification",
+                "source_text", "source_span", "source_type", "source_ref", "provenance",
             ),
         ),
         "parameters": deepcopy(dict(normalized.get("parameters") or {})),
@@ -2552,6 +3011,30 @@ def effective_task_contract(spec: Mapping[str, Any] | None) -> Dict[str, Any]:
     resolved = resolve_effective_user_facts(normalized)
     inputs: List[Dict[str, Any]] = []
     outputs: List[Dict[str, Any]] = effective_output_contracts(normalized)
+    active_output_locators = {
+        _text(item.get("locator"))
+        for item in resolved["active_artifacts"]
+        if _text(item.get("direction")).lower() == "output" and _text(item.get("locator"))
+    }
+    inactive_output_locators = {
+        _text(item.get("locator"))
+        for item in resolved["inactive_facts"]
+        if (
+            _field_key(item.get("fact_kind")) == "artifact"
+            and _text(item.get("direction")).lower() == "output"
+            and _text(item.get("locator"))
+        )
+    }
+    outputs = [
+        item
+        for item in outputs
+        if (
+            _text(item.get("path_or_name") or item.get("path") or item.get("filename"))
+            not in inactive_output_locators
+            or _text(item.get("path_or_name") or item.get("path") or item.get("filename"))
+            in active_output_locators
+        )
+    ]
     has_canonical_outputs = bool(outputs)
     for artifact in resolved["active_artifacts"]:
         locator = _text(artifact.get("locator"))

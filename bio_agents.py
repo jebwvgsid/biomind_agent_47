@@ -142,6 +142,7 @@ from agent_core.knowledge_conflicts import (
     KnowledgeConflictStore,
     PlanRevisionManager,
     feature_enabled,
+    semantic_claim_set_hash,
 )
 from agent_core.llm_safety import (
     clip_text,
@@ -190,6 +191,7 @@ from agent_core.plan_tracker import (
     apply_artifact_reconciliation,
     apply_plan_patch,
     approve_plan_state,
+    approval_semantic_delta,
     bind_plan_to_task_revision,
     block_plan_and_downstream,
     build_approval_projection,
@@ -243,20 +245,27 @@ from agent_core.plan_tracker import (
 )
 from agent_core.task_spec import (
     apply_user_feedback,
+    canonical_constraint_hash,
+    canonical_input_role,
     classify_user_feedback_change,
     create_task_spec,
     evaluate_requirements,
     effective_output_contracts,
     effective_task_contract,
     ensure_task_spec,
+    evaluate_failure_policies,
     format_effective_user_facts_context,
     format_planner_task_contract_context,
+    merge_compiled_constraints,
     merge_task_spec_input_audit,
     project_effective_user_facts,
     project_task_spec_to_renderer,
     resolve_effective_user_facts,
+    semantic_constraints_from_task_spec,
+    semantic_install_policy,
     task_spec_constraints,
     task_spec_revision,
+    validate_compiled_constraints,
 )
 from agent_core.completion_gate import CompletionGate
 from execution.executor import (
@@ -5137,130 +5146,179 @@ class BioAnalystAgent:
         plan_state: Optional[Dict[str, Any]] = None,
         extra_claims: Optional[Iterable[Any]] = None,
     ) -> ClaimRegistry:
-        """Build the shared claim view from existing state without trusting prose as evidence."""
+        """Build the current typed claim view; persisted prose is audit-only."""
         state = state or {}
-        root = self._knowledge_conflict_root(task_id)
-        registry = ClaimRegistry.load(root)
-        for item in state.get("knowledge_claims", []) or []:
-            if isinstance(item, dict):
-                registry.register(item)
+        registry = ClaimRegistry()
 
-        for constraint in state.get("user_constraints", []) or []:
-            text = str(constraint or "").strip()
-            if text:
-                registry.register_user_constraint(text, scope="task", scope_id=str(task_id))
-
-        # Consultant prose is a handoff summary, not one atomic fact. Register
-        # only user-owned TaskSpec fields so warnings such as "missing candidate"
-        # cannot contradict an otherwise valid plan through keyword overlap.
-        task_spec = ensure_task_spec(state.get("task_spec") or {}, task_id=task_id)
-        for field in (
-            "inputs", "parameters", "output_contracts", "must_do", "must_not_do",
-            "stop_conditions", "acceptance_criteria", "confirmed_decisions",
-        ):
-            value = task_spec.get(field)
-            items = list(value) if isinstance(value, list) else ([value] if value not in (None, "", {}) else [])
-            if isinstance(value, dict):
-                items = [{"name": name, "value": item} for name, item in value.items()]
-            for index, item in enumerate(items):
-                proposition = (
-                    json.dumps(item, ensure_ascii=False, sort_keys=True, default=str)
-                    if isinstance(item, dict) else str(item or "").strip()
+        def register_semantic(
+            value: Dict[str, Any],
+            source_type: str,
+            *,
+            scope: str,
+            scope_id: str,
+            step_ids: Optional[List[str]] = None,
+            reliability: float = 0.9,
+            confidence: Optional[float] = None,
+        ) -> None:
+            semantic_key = str(value.get("semantic_key") or value.get("fact_key") or "").strip().lower()
+            operator = str(value.get("operator") or "eq").strip().lower()
+            semantic_value = value.get("value")
+            if not semantic_key or semantic_value in (None, ""):
+                return
+            semantic_strength = str(value.get("strength") or "required").strip().lower()
+            claim_strength = {
+                "hard": "hard_constraint",
+                "required": "required",
+                "conditional": "required",
+                "preference": "preferred",
+                "advisory": "inference",
+                "ambiguous": "inference",
+            }.get(semantic_strength, "required")
+            proposition = f"{semantic_key} {operator} {json.dumps(semantic_value, ensure_ascii=False, sort_keys=True, default=str)}"
+            try:
+                claim_confidence = float(
+                    confidence if confidence is not None else value.get("confidence", 0.9)
                 )
-                if not proposition:
-                    continue
-                registry.register_proposition(
-                    proposition,
-                    "task_contract",
-                    strength="required",
-                    scope="task",
-                    scope_id=str(task_id),
-                    reliability=0.95,
-                    confidence=0.95,
-                    attributes={
-                        "fact_key": f"task_spec.{field}.{index}",
-                        "value": proposition,
-                        "task_revision": task_spec_revision(task_spec),
-                    },
-                )
+            except (TypeError, ValueError):
+                claim_confidence = 0.9
+            registry.register_proposition(
+                proposition,
+                source_type,
+                strength=claim_strength,
+                scope=scope,
+                scope_id=scope_id,
+                source_reference=str(value.get("source_ref") or "") or None,
+                reliability=reliability,
+                confidence=claim_confidence,
+                attributes={
+                    "semantic_key": semantic_key,
+                    "fact_key": semantic_key,
+                    "operator": operator,
+                    "value": deepcopy(semantic_value),
+                    "condition": deepcopy(value.get("condition")),
+                    "ambiguity": deepcopy(value.get("ambiguity")),
+                    "needs_clarification": bool(value.get("needs_clarification")),
+                    "source_text": str(value.get("source_text") or "")[:1000],
+                    "provenance": deepcopy(value.get("provenance") or []),
+                    "step_ids": list(step_ids or []),
+                },
+            )
 
         plan_state = plan_state or load_plan_state(self.data_path, task_id)
-        plan_text = str(state.get("current_plan") or "")
+        task_spec = ensure_task_spec(state.get("task_spec") or plan_state.get("task_spec") or {}, task_id=task_id)
+        task_constraints = semantic_constraints_from_task_spec(
+            task_spec,
+            selected_skill_ids=state.get("selected_skills") or plan_state.get("selected_skill_ids", []),
+        )
+        for item in task_constraints:
+            register_semantic(
+                item,
+                "task_contract",
+                scope="task",
+                scope_id=str(task_id),
+                reliability=0.98,
+                confidence=float(item.get("confidence", 0.95)),
+            )
+
         plan_version = str(plan_state.get("plan_version") or "plan_v1")
+        task_inputs_by_value = {
+            str(item.get("value") or "").strip(): str(item.get("semantic_key") or "")
+            for item in task_constraints
+            if str(item.get("semantic_key") or "").startswith("required_input.")
+        }
+        task_outputs_by_value = {
+            str(item.get("value") or "").strip(): str(item.get("semantic_key") or "")
+            for item in task_constraints
+            if str(item.get("semantic_key") or "").startswith("required_output.")
+        }
+
+        def plan_binding(value: Any, *, output_binding: bool, step_id: str) -> None:
+            text = str(value or "").strip()
+            if not text:
+                return
+            known = task_outputs_by_value if output_binding else task_inputs_by_value
+            semantic_key = known.get(text)
+            if not semantic_key and not output_binding:
+                role = canonical_input_role("", text)
+                if role != "input_file":
+                    semantic_key = f"required_input.{role}"
+            if not semantic_key:
+                return
+            register_semantic(
+                {"semantic_key": semantic_key, "operator": "eq", "value": text, "strength": "required"},
+                "plan",
+                scope="stage",
+                scope_id=step_id or str(task_id),
+                step_ids=[step_id] if step_id else [],
+                reliability=0.9,
+                confidence=0.95,
+            )
+
         for step in plan_state.get("steps", []) or []:
             if not isinstance(step, dict):
                 continue
             step_id = str(step.get("step_id") or "")
-            title = str(step.get("title") or "").strip()
-            if title:
-                registry.register_proposition(
-                    title,
-                    "plan",
-                    strength="required",
-                    scope="stage",
-                    scope_id=step_id or str(task_id),
-                    reliability=0.55,
-                    confidence=0.7,
-                    attributes={"step_ids": [step_id] if step_id else [], "plan_version": plan_version},
-                )
-            for key, source_type, strength in (
-                ("assumptions", "plan_assumption", "assumption"),
-                ("required_constraints", "plan", "required"),
-                ("required_inputs", "plan", "required"),
-                ("expected_outputs", "plan", "required"),
-                ("input_contracts", "plan", "required"),
-                ("output_contracts", "plan", "required"),
-                ("environment_contract", "plan", "required"),
-                ("expected_tool_versions", "plan", "required"),
-            ):
-                values = step.get(key, [])
-                if isinstance(values, str):
-                    values = [values]
-                elif isinstance(values, dict):
-                    values = [f"{name}={value}" for name, value in values.items()]
-                for value in values if isinstance(values, list) else []:
-                    if isinstance(value, dict):
-                        text = json.dumps(value, ensure_ascii=False, sort_keys=True)
-                    else:
-                        text = str(value or "").strip()
-                    if not text:
-                        continue
-                    registry.register_proposition(
-                        text,
-                        source_type,
-                        strength=strength,
-                        scope="stage",
-                        scope_id=step_id or str(task_id),
-                        reliability=0.5 if source_type == "plan_assumption" else 0.6,
-                        confidence=0.65,
-                        attributes={"step_ids": [step_id] if step_id else [], "plan_version": plan_version},
+            for value in step.get("inputs", []) or step.get("input_contracts", []) or []:
+                plan_binding(value, output_binding=False, step_id=step_id)
+            for value in step.get("outputs", []) or step.get("output_contracts", []) or []:
+                plan_binding(value, output_binding=True, step_id=step_id)
+            for skill_id in step.get("skill_ids", []) or []:
+                skill = str(skill_id or "").strip()
+                if skill:
+                    register_semantic(
+                        {
+                            "semantic_key": "required_skill." + re.sub(r"[^a-z0-9]+", "_", skill.lower()).strip("_"),
+                            "operator": "eq", "value": skill, "strength": "required",
+                        },
+                        "plan", scope="stage", scope_id=step_id or str(task_id),
+                        step_ids=[step_id] if step_id else [], reliability=0.95, confidence=0.98,
+                    )
+            for item in step.get("semantic_claims", []) or []:
+                if isinstance(item, dict):
+                    register_semantic(
+                        item, "plan", scope="stage", scope_id=step_id or str(task_id),
+                        step_ids=[step_id] if step_id else [], reliability=0.9, confidence=0.9,
+                    )
+            invocation = dict(step.get("renderer_invocation_contract") or {})
+            output_arguments = {
+                str(item.get("binding_argument") or "").strip()
+                for item in invocation.get("bound_outputs", []) or []
+                if isinstance(item, dict) and str(item.get("binding_argument") or "").strip()
+            }
+            for argument, value in dict(invocation.get("arguments") or {}).items():
+                # Output bindings are already projected from ``bound_outputs``
+                # and the plan output contract.  File extensions must never
+                # make an output argument look like an input semantic slot.
+                argument_key = re.sub(r"[^a-z0-9]+", "_", str(argument).strip().lower()).strip("_")
+                if (
+                    str(argument).strip() in output_arguments
+                    or argument_key in {"output", "output_dir", "outdir"}
+                    or argument_key.startswith("output_")
+                ):
+                    continue
+                semantic_key = task_inputs_by_value.get(str(value or "").strip())
+                if not semantic_key:
+                    role = canonical_input_role(str(argument), str(value or ""))
+                    if role != "input_file":
+                        semantic_key = f"required_input.{role}"
+                if semantic_key:
+                    register_semantic(
+                        {"semantic_key": semantic_key, "operator": "eq", "value": value, "strength": "required"},
+                        "plan", scope="stage", scope_id=step_id or str(task_id),
+                        step_ids=[step_id] if step_id else [], reliability=0.99, confidence=0.99,
+                    )
+            for item in invocation.get("semantic_claims", []) or []:
+                if isinstance(item, dict):
+                    register_semantic(
+                        item, "plan", scope="stage", scope_id=step_id or str(task_id),
+                        step_ids=[step_id] if step_id else [], reliability=0.99, confidence=0.99,
                     )
             required_environment = str(step.get("required_environment") or "").strip()
             if required_environment:
-                registry.register_proposition(
-                    f"Required environment: {required_environment}",
-                    "plan",
-                    strength="required",
-                    scope="environment",
-                    scope_id=required_environment,
-                    reliability=0.6,
-                    confidence=0.7,
-                    attributes={"step_ids": [step_id] if step_id else [], "fact_key": "environment", "value": required_environment, "plan_version": plan_version},
-                )
-
-        # Legacy markdown plans do not have structured assumptions yet. Only
-        # claim lines from explicit assumption/contract sections so ordinary
-        # explanatory prose cannot become a false runtime constraint.
-        for line in self._knowledge_plan_section_lines(plan_text, ("assumption", "contract", "success criteria")):
-            cleaned = re.sub(r"^[-*]\s+", "", line).strip()
-            if cleaned:
-                registry.register_plan_assumption(
-                    cleaned,
-                    scope="workflow",
-                    scope_id=str(task_id),
-                    reliability=0.45,
-                    confidence=0.6,
-                    attributes={"plan_version": plan_version},
+                register_semantic(
+                    {"semantic_key": "runtime_constraint.environment", "operator": "eq", "value": required_environment, "strength": "required"},
+                    "plan", scope="environment", scope_id=step_id or str(task_id),
+                    step_ids=[step_id] if step_id else [], reliability=0.9, confidence=0.9,
                 )
 
         evidence = state.get("execution_evidence") or {}
@@ -5278,7 +5336,7 @@ class BioAnalystAgent:
                     confidence=0.95,
                     reliability=0.95,
                     evidence_ids=[f"execute:{task_id}"],
-                    attributes={"fact_key": "execution_command", "value": command[:3000], "step_ids": [step_id] if step_id else []},
+                    attributes={"semantic_key": "runtime_constraint.execution_command", "fact_key": "runtime_constraint.execution_command", "operator": "eq", "value": command[:3000], "step_ids": [step_id] if step_id else []},
                 )
             if evidence.get("returncode") is not None:
                 returncode = str(evidence.get("returncode"))
@@ -5291,23 +5349,42 @@ class BioAnalystAgent:
                     confidence=0.98,
                     reliability=0.98,
                     evidence_ids=[f"execute:{task_id}"],
-                    attributes={"fact_key": "returncode", "value": returncode, "step_ids": [step_id] if step_id else []},
+                    attributes={"semantic_key": "runtime_constraint.returncode", "fact_key": "runtime_constraint.returncode", "operator": "eq", "value": returncode, "step_ids": [step_id] if step_id else []},
                 )
+            for item in evidence.get("semantic_claims", []) or []:
+                if isinstance(item, dict):
+                    register_semantic(
+                        item, "runtime_output", scope="command", scope_id=step_id or str(task_id),
+                        step_ids=[step_id] if step_id else [], reliability=0.98, confidence=0.98,
+                    )
 
         runtime_status = state.get("runtime_status") or {}
         if isinstance(runtime_status, dict):
             environment = str(runtime_status.get("env") or runtime_status.get("environment") or "").strip()
             if environment:
-                registry.register_observation(
-                    f"Verified runtime environment: {environment}",
-                    "environment_probe",
-                    strength="observation",
-                    scope="environment",
-                    scope_id=environment,
-                    confidence=0.85,
-                    reliability=0.9,
-                    attributes={"fact_key": "environment", "value": environment},
+                register_semantic(
+                    {"semantic_key": "runtime_constraint.environment", "operator": "eq", "value": environment, "strength": "required"},
+                    "environment_probe", scope="environment", scope_id=str(task_id),
+                    reliability=0.95, confidence=0.9,
                 )
+            for item in runtime_status.get("semantic_claims", []) or []:
+                if isinstance(item, dict):
+                    register_semantic(
+                        item, "environment_probe", scope="environment", scope_id=str(task_id),
+                        reliability=0.95, confidence=0.9,
+                    )
+
+        for recovery_state in (state.get("pending_recovery_action"), state.get("recovery_decision")):
+            if not isinstance(recovery_state, dict):
+                continue
+            for item in recovery_state.get("semantic_claims", []) or []:
+                if isinstance(item, dict):
+                    register_semantic(
+                        item, "recovery_proposal", scope="stage",
+                        scope_id=str(item.get("step_id") or state.get("failed_step_id") or task_id),
+                        step_ids=[str(item.get("step_id"))] if item.get("step_id") else [],
+                        reliability=0.8, confidence=0.8,
+                    )
 
         for claim in extra_claims or []:
             registry.register(claim)
@@ -5399,6 +5476,11 @@ class BioAnalystAgent:
             user_hard_constraints=state.get("user_constraints", []),
         )
         blocking = [item for item in all_conflicts if item.blocking]
+        claim_set_hash = semantic_claim_set_hash(registry)
+        typed_claims = [
+            item for item in registry.active_claims()
+            if str(item.attributes.get("semantic_key") or item.attributes.get("fact_key") or "").strip()
+        ]
         summary = {
             "phase": phase,
             "unresolved_count": len([item for item in all_conflicts if item.status not in {"resolved", "accepted_exception", "superseded"}]),
@@ -5408,6 +5490,11 @@ class BioAnalystAgent:
             "active_plan_version": current_plan_state.get("plan_version", "plan_v1"),
             "stale_steps": sorted(stale),
             "revalidation_required_steps": sorted(revalidation),
+            "claim_set_hash": claim_set_hash,
+            "typed_claim_count": len(typed_claims),
+            "hard_claim_count": sum(item.hard for item in typed_claims),
+            "preference_claim_count": sum(item.strength == "preferred" for item in typed_claims),
+            "ambiguous_claim_count": sum(bool(item.attributes.get("needs_clarification")) for item in typed_claims),
             "progress_events": [
                 {
                     "event": "knowledge_conflict_detected",
@@ -5423,6 +5510,10 @@ class BioAnalystAgent:
             "knowledge_conflicts": [item.to_dict() for item in all_conflicts],
             "knowledge_conflict_summary": summary,
             "knowledge_progress_events": summary["progress_events"],
+            "knowledge_claim_set_hash": claim_set_hash,
+            "canonical_constraint_hash": canonical_constraint_hash(
+                state.get("task_spec") or current_plan_state.get("task_spec") or {}
+            ),
             "conflict_resolution": resolutions[-1].to_dict() if resolutions else {},
             "plan_revision": (
                 current_plan_state.get("revision_history", [])[-1]
@@ -7356,27 +7447,14 @@ class BioAnalystAgent:
         return f'<install_tool env="{declared_env or env}">{name or "skill_runtime"}</install_tool>'
 
     @staticmethod
-    def _runtime_install_disallowed_by_context(text: str) -> bool:
-        haystack = str(text or "")
-        patterns = (
-            r"(?:环境|运行环境|依赖|runtime|env|environment|dependency).{0,40}(?:缺失|missing|not found|不存在|unavailable).{0,40}(?:blocked|block|阻塞|终止|停止)",
-            r"(?:缺失|missing|not found|不存在|unavailable).{0,40}(?:环境|运行环境|依赖|runtime|env|environment|dependency).{0,40}(?:blocked|block|阻塞|终止|停止)",
-            r"(?:不要|不得|禁止|不允许).{0,30}(?:安装|install)",
-            r"(?:do not|don't|never).{0,30}(?:install|installation)",
-            r"\bno\s+(?:runtime\s+)?install(?:ation)?\b(?!\s+required)",
-        )
-        return any(re.search(pattern, haystack, re.IGNORECASE) for pattern in patterns)
-
-    @staticmethod
-    def _runtime_policy_context_from_state(state: Dict[str, Any]) -> str:
-        messages = list((state or {}).get("messages", []) or [])
-        sampled = messages[:6] + messages[-6:]
-        parts = [
-            str((state or {}).get("requirements_summary") or ""),
-            str((state or {}).get("current_plan") or ""),
-        ]
-        parts.extend(str(getattr(message, "content", message)) for message in sampled)
-        return "\n".join(part for part in parts if part)
+    def _runtime_install_disallowed_by_task_spec(
+        task_spec: Dict[str, Any],
+        dependency_key: str = "",
+    ) -> bool:
+        return not semantic_install_policy(
+            task_spec,
+            dependency_key=dependency_key,
+        ).get("install_allowed", True)
 
     def _runtime_block_message(self, redirect: str, selected_skills: Optional[List[str]], evidence: str = "") -> str:
         env = ""
@@ -8642,6 +8720,25 @@ class BioAnalystAgent:
         return ""
 
     @classmethod
+    def _consultant_json_payload(cls, text: str) -> Dict[str, Any]:
+        """Return the original Consultant action object without dropping IR fields."""
+        raw = str(text or "").strip()
+        candidates: List[str] = [
+            match.group(1).strip()
+            for match in re.finditer(r"<action_json>(.*?)</action_json>", raw, re.DOTALL | re.IGNORECASE)
+        ]
+        fenced = re.search(r"```(?:json)?\s*(.*?)```", raw, re.DOTALL | re.IGNORECASE)
+        if fenced:
+            candidates.append(fenced.group(1).strip())
+        if raw.startswith("{"):
+            candidates.append(raw)
+        for candidate in candidates:
+            obj = cls._extract_json_object(candidate)
+            if isinstance(obj, dict) and obj:
+                return obj
+        return {}
+
+    @classmethod
     def _looks_like_plain_final_solution(cls, text: str) -> bool:
         raw = str(text or "").strip()
         if not raw:
@@ -9681,6 +9778,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
             messages = state["messages"]
             rag_history = state.get("rag_history", [])
             task_spec = self._task_spec_for_state(dict(state), messages)
+            semantic_contract_ready = (
+                (task_spec.get("semantic_compilation") or {}).get("schema_validation") == "passed"
+            )
             later_directives = [
                 str(item.get("text") or "").strip()
                 for item in task_spec.get("user_directives", [])
@@ -9716,6 +9816,18 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 str(m.content)
                 for m in recent_consultant_messages
                 if isinstance(m, SystemMessage) and "<consultant_validation_error>" in str(m.content)
+            ]
+            semantic_validation_errors = [
+                str(m.content)
+                for m in recent_consultant_messages
+                if isinstance(m, SystemMessage)
+                and "<consultant_semantic_constraint_validation_error>" in str(m.content)
+            ]
+            semantic_resolution_requests = [
+                str(m.content)
+                for m in recent_consultant_messages
+                if isinstance(m, SystemMessage)
+                and "<consultant_semantic_resolution_request>" in str(m.content)
             ]
             format_repair_errors = [
                 err for err in validation_errors
@@ -9780,6 +9892,31 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     Fore.CYAN,
                 )
 
+            if len(semantic_validation_errors) >= 2 or len(semantic_resolution_requests) >= 2:
+                reason = (
+                    "Consultant could not produce an unambiguous, schema-valid semantic contract "
+                    "after the bounded structured retries. Raw-prompt heuristics are disabled."
+                )
+                return {
+                    "messages": [SystemMessage(content=f"<blocked_need_user_decision>{reason}</blocked_need_user_decision>")],
+                    "consultant_constraint_metrics": {
+                        "schema_validation": "failed",
+                        "parse_retry_count": len(semantic_validation_errors),
+                        "semantic_resolution_retry_count": len(semantic_resolution_requests),
+                    },
+                    "pending_human_question": {
+                        "type": "semantic_constraint_clarification",
+                        "stage": "consultant",
+                        "question": (
+                            reason
+                            + " Please restate the critical input, behavior, or failure policy that must be preserved."
+                        ),
+                        "resume_step": "consultant",
+                    },
+                    "contract_status": "blocked_need_user_decision",
+                    "next_step": "ask_user",
+                }
+
             if self.skill_manager and (
                 len(load_actions) >= CONSULTANT_LOAD_ACTION_LOOP_LIMIT
                 or len(internal_validation_errors) >= CONSULTANT_INTERNAL_VALIDATION_ERROR_LIMIT
@@ -9806,7 +9943,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     input_resolution_context=input_resolution_context,
                     max_skills=consultant_max_skills,
                 )
-                if skill_only_handoff:
+                if skill_only_handoff and semantic_contract_ready:
                     skill_only_handoff["input_audit"] = input_resolution_result
                     output.print_once(
                         "consultant_loop_guard_skill_only",
@@ -9862,7 +9999,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     input_resolution_context=input_resolution_context,
                     max_skills=consultant_max_skills,
                 )
-                if skill_only_handoff:
+                if skill_only_handoff and semantic_contract_ready:
                     output.print_once(
                         "consultant_execute_count_loop_guard_handoff",
                         (
@@ -10187,6 +10324,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 messages + [response],
                 {"consultant_output": content[:3000]},
             )
+            consultant_json_payload = self._consultant_json_payload(content)
             consultant_json_command = self._consultant_command_from_json(content)
             if consultant_json_command:
                 output.print_once(
@@ -10255,7 +10393,10 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     if (
                         ret != 0
                         and self._looks_like_missing_runtime_dependency("\n".join([clean_code, stdout, stderr]))
-                        and self._runtime_install_disallowed_by_context(consultant_context)
+                        and self._runtime_install_disallowed_by_task_spec(
+                            task_spec,
+                            (self._runtime_tool_candidates_from_text("\n".join([clean_code, stdout, stderr])) or [""])[0],
+                        )
                     ):
                         return self._consultant_runtime_block_handoff(
                             consultant_context,
@@ -10334,7 +10475,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         input_resolution_context=input_resolution_context,
                         max_skills=consultant_max_skills,
                     )
-                    if skill_only_handoff:
+                    if skill_only_handoff and semantic_contract_ready:
                         skill_only_handoff["input_audit"] = input_resolution_result
                         output.print_once(
                             f"consultant_duplicate_skill_handoff:{skill_id}",
@@ -10448,6 +10589,99 @@ If the user is actually asking you to run analysis or inspect local files, say t
             )
             if content.startswith("FINISH") or looks_like_structured_handoff:
                 summary = content[len("FINISH"):].strip() if content.startswith("FINISH") else content.strip()
+                payload_type = str(
+                    consultant_json_payload.get("action_type")
+                    or consultant_json_payload.get("type")
+                    or consultant_json_payload.get("action")
+                    or ""
+                ).strip().lower().replace("-", "_")
+                payload_type = {"final": "finish", "solution": "finish", "answer": "finish"}.get(payload_type, payload_type)
+                if payload_type != "finish" or "semantic_constraints" not in consultant_json_payload:
+                    semantic_validation = {
+                        "valid": False,
+                        "constraints": [],
+                        "errors": [{
+                            "index": -1,
+                            "field": "semantic_constraints",
+                            "reason": "finish must be JSON and explicitly include the semantic_constraints array",
+                        }],
+                        "metrics": {"schema_validation": "failed", "constraint_count": 0},
+                    }
+                else:
+                    semantic_validation = validate_compiled_constraints(
+                        consultant_json_payload.get("semantic_constraints")
+                    )
+                if not semantic_validation.get("valid"):
+                    errors = list(semantic_validation.get("errors") or [])[:8]
+                    obs = (
+                        "<consultant_semantic_constraint_validation_error>\n"
+                        "The FINISH semantic contract failed deterministic schema validation. "
+                        "Retry one complete JSON finish; do not omit constraints and do not return raw prompt text as one claim.\n"
+                        + json.dumps(errors, ensure_ascii=False, sort_keys=True, default=str)
+                        + "\n</consultant_semantic_constraint_validation_error>"
+                    )
+                    logger.warning(
+                        "Consultant semantic constraint validation failed: task=%s errors=%s",
+                        task_id,
+                        json.dumps(errors, ensure_ascii=False, sort_keys=True, default=str),
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultant_constraint_metrics": semantic_validation.get("metrics") or {},
+                        "contract_status": "semantic_schema_retry",
+                        "next_step": "consultant",
+                    }
+                critical_ambiguities = [
+                    item for item in semantic_validation.get("constraints", [])
+                    if item.get("needs_clarification")
+                    and item.get("strength") in {"hard", "required", "conditional", "ambiguous"}
+                ]
+                if critical_ambiguities:
+                    unresolved = [
+                        {
+                            "constraint_id": item.get("requirement_id"),
+                            "semantic_key": item.get("semantic_key"),
+                            "ambiguity": item.get("ambiguity"),
+                            "source_text": str(item.get("source_text") or "")[:300],
+                        }
+                        for item in critical_ambiguities[:6]
+                    ]
+                    obs = (
+                        "<consultant_semantic_resolution_request>\n"
+                        "Critical compiled meaning is AMBIGUOUS/UNKNOWN/UNMAPPED. Resolve it only from available context; "
+                        "if it remains ambiguous, return ASK instead of guessing or finishing.\n"
+                        + json.dumps(unresolved, ensure_ascii=False, sort_keys=True, default=str)
+                        + "\n</consultant_semantic_resolution_request>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultant_constraint_metrics": semantic_validation.get("metrics") or {},
+                        "contract_status": "semantic_resolution_required",
+                        "next_step": "consultant",
+                    }
+                compiled_task_spec = merge_compiled_constraints(
+                    task_spec,
+                    semantic_validation.get("constraints", []),
+                    project_root=project_root,
+                    metrics=semantic_validation.get("metrics") or {},
+                )
+                semantic_metrics = dict(semantic_validation.get("metrics") or {})
+                logger.info(
+                    "Consultant constraint extraction: task=%s %s",
+                    task_id,
+                    json.dumps(semantic_metrics, ensure_ascii=False, sort_keys=True, default=str),
+                )
+                for item in semantic_validation.get("constraints", []):
+                    logger.debug(
+                        "Consultant constraint: task=%s id=%s key=%s value=%s strength=%s confidence=%s source=%s",
+                        task_id,
+                        item.get("requirement_id"),
+                        item.get("semantic_key"),
+                        json.dumps(item.get("value"), ensure_ascii=False, sort_keys=True, default=str)[:500],
+                        item.get("strength"),
+                        item.get("confidence"),
+                        item.get("source_ref") or "source_text",
+                    )
                 workflow_handoff = parse_workflow_handoff(summary)
                 has_workflow_handoff = bool(
                     workflow_handoff.get("workflow_id")
@@ -10622,6 +10856,10 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             "runtime_status": self._runtime_status_for_task(task_id),
                             "memory_packet_context": self._consultant_handoff_memory_packet(repaired_summary, consultant_memory_retrieval_context),
                             "wiki_memory_context": consultant_wiki_context,
+                            "task_spec": compiled_task_spec,
+                            "task_revision": task_spec_revision(compiled_task_spec),
+                            "consultant_constraint_metrics": semantic_metrics,
+                            "contract_status": "semantic_contract_compiled",
                             "next_step": "planner",
                         }
                 else:
@@ -10649,6 +10887,10 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "runtime_audit": runtime_audits,
                     "skill_selection_source": "consultant_finish",
                     "requirements_summary": summary,
+                    "task_spec": compiled_task_spec,
+                    "task_revision": task_spec_revision(compiled_task_spec),
+                    "consultant_constraint_metrics": semantic_metrics,
+                    "contract_status": "semantic_contract_compiled",
                     "memory_packet_context": self._consultant_handoff_memory_packet(summary, consultant_memory_retrieval_context),
                     "wiki_memory_context": consultant_wiki_context,
                     "next_step": "planner",
@@ -11602,7 +11844,21 @@ If the user is actually asking you to run analysis or inspect local files, say t
             messages = state.get("messages", [])
             task_revision = self._task_revision_for_state(dict(state))
             persisted_plan = load_plan_state(self.data_path, task_id)
-            if plan_approval_is_current(persisted_plan, task_revision):
+            task_spec = self._task_spec_for_state(dict(state), messages)
+            persisted_plan["task_spec"] = task_spec
+            current_registry = self._knowledge_claim_registry(
+                task_id,
+                {**dict(state), "task_spec": task_spec},
+                persisted_plan,
+            )
+            current_claim_hash = semantic_claim_set_hash(current_registry)
+            current_constraint_hash = canonical_constraint_hash(task_spec)
+            semantic_delta = approval_semantic_delta(
+                persisted_plan,
+                current_constraint_hash=current_constraint_hash,
+                current_claim_set_hash=current_claim_hash,
+            )
+            if plan_approval_is_current(persisted_plan, task_revision) and not semantic_delta["changed"]:
                 plan_progress = render_plan_progress(persisted_plan)
                 logger.info(
                     "Plan Review skipped for unchanged approved plan: task=%s plan_revision=%s semantic_hash=%s",
@@ -11614,6 +11870,65 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "messages": [SystemMessage(content="<control_event type=\"plan_approval_reused\" />")],
                     "plan_progress": plan_progress,
                     "next_step": "generate",
+                }
+
+            ambiguous_critical = [
+                item for item in semantic_constraints_from_task_spec(task_spec)
+                if item.get("needs_clarification")
+                and item.get("strength") in {"hard", "required", "conditional", "ambiguous"}
+            ]
+            if ambiguous_critical:
+                keys = ", ".join(str(item.get("semantic_key")) for item in ambiguous_critical[:5])
+                return {
+                    "messages": [SystemMessage(content=(
+                        "Plan Review cannot approve unresolved critical semantic constraints: " + keys
+                    ))],
+                    "pending_human_question": {
+                        "type": "semantic_constraint_clarification",
+                        "stage": "plan_review",
+                        "question": "Please clarify the unresolved critical constraint(s): " + keys,
+                        "resume_step": "consultant",
+                    },
+                    "next_step": "ask_user",
+                }
+
+            conflict_update = self._knowledge_conflict_update(
+                task_id,
+                {**dict(state), "task_spec": task_spec},
+                phase="before_plan_review",
+                plan_state=persisted_plan,
+            )
+            persisted_plan["canonical_constraint_hash"] = current_constraint_hash
+            persisted_plan["knowledge_claim_set_hash"] = current_claim_hash
+            persisted_plan["approved_conflict_validation"] = {
+                "phase": "before_plan_review",
+                "blocking_conflicts": list(
+                    (conflict_update.get("knowledge_conflict_summary") or {}).get("blocking_conflicts") or []
+                ),
+                "claim_set_hash": current_claim_hash,
+                "canonical_constraint_hash": current_constraint_hash,
+            }
+            save_plan_state(self.data_path, task_id, persisted_plan)
+            blocking_conflicts = list(
+                (conflict_update.get("knowledge_conflict_summary") or {}).get("blocking_conflicts") or []
+            )
+            if blocking_conflicts:
+                conflict_types = sorted({
+                    str(item.get("conflict_type") or "")
+                    for item in conflict_update.get("knowledge_conflicts", []) or []
+                    if isinstance(item, dict) and item.get("conflict_id") in blocking_conflicts
+                })
+                reason = (
+                    "Plan Review blocked before approval by typed semantic conflict(s): "
+                    + ", ".join(conflict_types or blocking_conflicts)
+                )
+                return {
+                    **conflict_update,
+                    "messages": [SystemMessage(content=reason)],
+                    "pending_action": {},
+                    "required_next_action": "PLAN_PATCH",
+                    "failure_owner": RecoveryFailureOwner.PLAN.value,
+                    "next_step": "planner",
                 }
 
             identity = plan_identity(persisted_plan)
@@ -11670,6 +11985,15 @@ If the user is actually asking you to run analysis or inspect local files, say t
             if il in ["y", "yes", "approve", ""]:
                 print(f"{Fore.GREEN}✓ Plan approved. Executing...{Style.RESET_ALL}")
                 plan_state = self._ensure_plan_tracker(task_id, plan)
+                plan_state["task_spec"] = task_spec
+                plan_state["canonical_constraint_hash"] = current_constraint_hash
+                plan_state["knowledge_claim_set_hash"] = current_claim_hash
+                plan_state["approved_conflict_validation"] = {
+                    "phase": "before_plan_review",
+                    "blocking_conflicts": [],
+                    "claim_set_hash": current_claim_hash,
+                    "canonical_constraint_hash": current_constraint_hash,
+                }
                 review_event_id = "review-" + hashlib.sha256(
                     f"{task_id}|{identity['plan_version']}|{identity['plan_semantic_hash']}".encode("utf-8")
                 ).hexdigest()[:20]
@@ -11694,8 +12018,11 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     {"decision": "approved", "plan_excerpt": plan[:2000], "plan_progress": plan_progress},
                 )
                 return {
+                    **conflict_update,
                     "messages": [approval_event],
                     "plan_progress": plan_progress,
+                    "approval_scope": dict(plan_state.get("approval_scope") or {}),
+                    "approval_projection": dict(plan_state.get("approval_projection") or {}),
                     "next_step": "generate",
                 }
             elif il in ["q", "quit", "exit"]:
@@ -12904,11 +13231,74 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "next_step": "planner",
                 }
 
-            preflight_conflicts = self._knowledge_conflict_update(
+            task_spec = self._task_spec_for_state(dict(state), state.get("messages", []))
+            observed_conditions: Dict[str, Any] = {}
+            for source in (state.get("runtime_status"), state.get("execution_evidence")):
+                if not isinstance(source, dict):
+                    continue
+                observed_conditions.update(dict(source.get("conditions") or {}))
+                for item in source.get("semantic_claims", []) or []:
+                    if isinstance(item, dict) and item.get("semantic_key"):
+                        observed_conditions[str(item.get("semantic_key"))] = item.get("value")
+            failure_policy = evaluate_failure_policies(task_spec, observed_conditions)
+            if failure_policy.get("blocked"):
+                reason = str(failure_policy.get("reason") or "Typed failure policy blocked execution.")
+                plan_progress = self._mark_plan_current_blocked(task_id, reason)
+                return {
+                    "messages": [SystemMessage(content=f"<observation>⛔ {reason}</observation>")],
+                    "plan_progress": plan_progress,
+                    "pending_action": {},
+                    "contract_status": "blocked_by_failure_policy",
+                    "task_status": TASK_STATUS_BLOCKED,
+                    "next_step": "finish",
+                }
+
+            approved_plan = load_plan_state(self.data_path, task_id)
+            current_registry = self._knowledge_claim_registry(
                 task_id,
-                dict(state),
-                phase="before_execute",
+                {**dict(state), "task_spec": task_spec},
+                approved_plan,
             )
+            current_claim_hash = semantic_claim_set_hash(current_registry)
+            current_constraint_hash = canonical_constraint_hash(task_spec)
+            semantic_delta = approval_semantic_delta(
+                approved_plan,
+                current_constraint_hash=current_constraint_hash,
+                current_claim_set_hash=current_claim_hash,
+            )
+            if plan_approval_is_current(approved_plan, task_spec_revision(task_spec)) and not semantic_delta["changed"]:
+                preflight_conflicts = {
+                    "knowledge_claims": [item.to_dict() for item in current_registry.all()],
+                    "knowledge_conflicts": [],
+                    "knowledge_claim_set_hash": current_claim_hash,
+                    "canonical_constraint_hash": current_constraint_hash,
+                    "knowledge_conflict_summary": {
+                        "phase": "before_execute_approval_reused",
+                        "unresolved_count": 0,
+                        "blocking_conflicts": [],
+                        "requires_probe": [],
+                        "decisions": [],
+                        "claim_set_hash": current_claim_hash,
+                        "delta_validation": "unchanged",
+                    },
+                }
+                logger.info(
+                    "Execute semantic delta validation reused approval: task=%s constraint_hash=%s claim_set_hash=%s",
+                    task_id,
+                    current_constraint_hash[:16],
+                    current_claim_hash[:16],
+                )
+            else:
+                preflight_conflicts = self._knowledge_conflict_update(
+                    task_id,
+                    {**dict(state), "task_spec": task_spec},
+                    phase="before_execute_delta",
+                    plan_state=approved_plan,
+                )
+                summary = dict(preflight_conflicts.get("knowledge_conflict_summary") or {})
+                summary["delta_validation"] = "changed"
+                summary["delta_reasons"] = list(semantic_delta.get("reasons") or [])
+                preflight_conflicts["knowledge_conflict_summary"] = summary
             guarded_state = {**dict(state), **preflight_conflicts}
             guard_action, guard_reason = self._knowledge_conflict_execution_guard(task_id, guarded_state)
             if guard_action == "ask_user":
@@ -12928,6 +13318,19 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     },
                     "next_step": "ask_user",
                     "pending_action": {},
+                }
+            if guard_action == "probe":
+                return {
+                    **preflight_conflicts,
+                    "messages": [SystemMessage(content=(
+                        "Execute stopped before running a command because typed post-approval facts require "
+                        "revalidation or a compatible scoped plan repair. " + guard_reason
+                    ))],
+                    "pending_action": {},
+                    "required_next_action": "PLAN_PATCH",
+                    "failure_owner": RecoveryFailureOwner.PLAN.value,
+                    "recovery_scope": "CURRENT_STEP",
+                    "next_step": "planner",
                 }
             pending_action = state.get("pending_action") or {}
             managed_mode = str(state.get("task_mode") or "managed").lower() == "managed"
@@ -13245,8 +13648,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 str(getattr(message, "content", message))
                 for message in state.get("messages", [])[:8]
             )
-            runtime_policy_context = self._runtime_policy_context_from_state(state)
-            install_disallowed = self._runtime_install_disallowed_by_context(runtime_policy_context)
             boundary_gate = CompletionGate.validate_code_boundary(code, task_boundary_context)
             if not boundary_gate.passed:
                 plan_progress = self._record_plan_current_evidence(
@@ -13267,6 +13668,11 @@ If the user is actually asking you to run analysis or inspect local files, say t
             selected_skill_pool_state = state.get("selected_skills", []) or runtime_skills_state
             install_redirect = self._redirect_install_command(code, runtime_skills_state)
             if install_redirect:
+                install_tool_name = self._install_tool_name(install_redirect)
+                install_disallowed = self._runtime_install_disallowed_by_task_spec(
+                    self._task_spec_for_state(dict(state), state.get("messages", [])),
+                    install_tool_name,
+                )
                 if install_disallowed:
                     final_res = self._runtime_block_message(install_redirect, runtime_skills_state, code[:1000])
                     plan_progress = self._mark_plan_current_blocked(task_id, final_res)
@@ -15857,12 +16263,13 @@ If the user is actually asking you to run analysis or inspect local files, say t
         def plan_review_router(state):
             step = state.get("next_step")
             if step == "planner": return "planner"
+            if step == "ask_user": return "ask_user"
             if step == "finish":  return END
             if step == "human_input": return END
             return "generate"
 
         workflow.add_conditional_edges("plan_review", plan_review_router,
-                                       ["generate", "planner", END])
+                                       ["generate", "planner", "ask_user", END])
 
         def generate_router(state):
             recovery_route = committed_recovery_route(state, "generate")

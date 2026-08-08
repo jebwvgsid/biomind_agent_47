@@ -13,7 +13,9 @@ from agent_core.task_spec import (
     create_task_spec,
     effective_task_contract,
     format_effective_user_facts_context,
+    merge_compiled_constraints,
     resolve_effective_user_facts,
+    validate_compiled_constraints,
 )
 from bio_agents import BioAnalystAgent
 from prompts.manager import PromptManager
@@ -40,7 +42,33 @@ def _seven_fact_spec(task_id="task-a"):
         kind="consultant_answer",
         source_task_id=task_id,
     )
-    return spec
+    validated = validate_compiled_constraints([{
+        "constraint_id": "forbid-species-db-guess",
+        "semantic_key": "forbidden_behavior.species_database_guess",
+        "operator": "forbid",
+        "value": True,
+        "strength": "hard",
+        "confidence": 0.98,
+        "source_text": "不得猜测物种数据库",
+    }])
+    if not validated["valid"]:
+        raise AssertionError(validated["errors"])
+    return merge_compiled_constraints(spec, validated["constraints"], metrics=validated["metrics"])
+
+
+def _with_input_overwrite_constraint(spec):
+    validated = validate_compiled_constraints([{
+        "constraint_id": "forbid-input-overwrite",
+        "semantic_key": "forbidden_behavior.input_overwrite",
+        "operator": "forbid",
+        "value": True,
+        "strength": "hard",
+        "confidence": 0.98,
+        "source_text": "不得覆盖输入",
+    }])
+    if not validated["valid"]:
+        raise AssertionError(validated["errors"])
+    return merge_compiled_constraints(spec, validated["constraints"], metrics=validated["metrics"])
 
 
 class EffectiveContextProjectionTests(unittest.TestCase):
@@ -105,6 +133,7 @@ class EffectiveContextProjectionTests(unittest.TestCase):
                 "输入 /data/a.vcf 和 /data/b.mcool；输出目录: /out；不得覆盖输入",
                 task_id="task-a",
             )
+            spec = _with_input_overwrite_constraint(spec)
             projection = json.loads(agent._generate_task_spec_projection(
                 {"task_id": "task-a", "task_spec": spec},
                 [],
@@ -114,7 +143,10 @@ class EffectiveContextProjectionTests(unittest.TestCase):
         self.assertIn("/data/b.mcool", paths)
         self.assertIn("/out", paths)
         self.assertNotIn("/data/a.vcf", paths)
-        self.assertTrue(projection["active_constraints"])
+        self.assertIn(
+            "forbidden_behavior.input_overwrite",
+            {item["semantic_key"] for item in projection["semantic_constraints"]},
+        )
         self.assertNotIn("user_directives", projection)
 
     def test_recovery_level_one_contains_same_effective_fact_revision(self):
