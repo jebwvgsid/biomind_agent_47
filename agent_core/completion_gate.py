@@ -14,9 +14,10 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 from .plan_tracker import (
+    CanonicalTaskStateError,
     STEP_RECOVERABLE_STATUSES,
     STEP_SUCCESS_STATUSES,
     STEP_TERMINAL_STATUSES,
@@ -28,8 +29,10 @@ from .plan_tracker import (
     step_artifact_contracts,
     validate_renderer_action_artifacts,
     ensure_provenance_state,
+    approval_applicability_v2,
+    canonical_task_spec_for_state,
 )
-from .task_spec import effective_task_contract, evaluate_requirements
+from .task_spec import effective_output_contracts, effective_task_contract, evaluate_requirements
 
 
 ARTIFACT_RE = re.compile(
@@ -1592,14 +1595,14 @@ def _expected_artifacts_from_final_plan(plan_state: Dict[str, Any], current_plan
     snippets: List[str] = []
     canonical_artifacts: List[str] = []
     superseded_artifacts: set[str] = set()
-    task_spec = plan_state.get("task_spec") if isinstance(plan_state.get("task_spec"), dict) else {}
+    task_spec = canonical_task_spec_for_state(plan_state)
     if task_spec:
         for output in effective_task_contract(task_spec).get("outputs", []) or []:
             if not isinstance(output, dict) or not bool(output.get("required", True)):
                 continue
             if str(output.get("role") or "") == "output_dir":
                 continue
-            artifact = str(output.get("path") or output.get("filename") or "").strip()
+            artifact = str(output.get("canonical_path") or output.get("path") or output.get("filename") or "").strip()
             if artifact:
                 canonical_artifacts.append(artifact)
     for step in _steps(plan_state):
@@ -1621,6 +1624,22 @@ def _expected_artifacts_from_final_plan(plan_state: Dict[str, Any], current_plan
                 superseded_artifacts.add(declared.lower())
         if _looks_like_artifact_step(title):
             snippets.append(title)
+
+    # V2 completion is contract driven.  Human plan prose, compatibility
+    # aliases and status/report text are not authoritative output declarations.
+    # Keep the text parser only as an explicit legacy-session read adapter.
+    if _uses_canonical_completion_contract(plan_state):
+        artifacts: List[str] = []
+        seen: set[str] = set()
+        superseded_names = {Path(item).name.lower() for item in superseded_artifacts}
+        for artifact in canonical_artifacts:
+            key = artifact.lower()
+            if key in superseded_artifacts or Path(artifact).name.lower() in superseded_names:
+                continue
+            if key not in seen:
+                seen.add(key)
+                artifacts.append(artifact)
+        return artifacts
 
     text = str(current_plan or "")
     for key in ("expected_artifacts", "final_artifacts", "declared_artifacts"):
@@ -1668,28 +1687,72 @@ def _expected_artifacts_from_final_plan(plan_state: Dict[str, Any], current_plan
     return artifacts
 
 
+def _canonical_output_alternative_groups(plan_state: Mapping[str, Any]) -> List[List[str]]:
+    """Return one-of output groups declared by canonical TaskSpec contracts.
+
+    V2 completion must not reinterpret the natural-language plan to decide
+    whether an output is optional.  The grouping is therefore carried by the
+    output bindings themselves via ``alternative_group``.
+    """
+    task_spec = canonical_task_spec_for_state(plan_state)
+    grouped: Dict[str, List[str]] = {}
+    for output in effective_output_contracts(task_spec):
+        if not isinstance(output, Mapping) or not bool(output.get("required", True)):
+            continue
+        group = str(output.get("alternative_group") or "").strip()
+        artifact = str(
+            output.get("canonical_path")
+            or output.get("required_basename")
+            or ""
+        ).strip()
+        if group and artifact:
+            grouped.setdefault(group, []).append(artifact)
+    return [members for members in grouped.values() if len(members) >= 2]
+
+
+def _uses_canonical_completion_contract(plan_state: Mapping[str, Any]) -> bool:
+    """Distinguish live V2 state from an explicitly migrated legacy session."""
+    compatibility = plan_state.get("compatibility")
+    source_version = (
+        compatibility.get("source_schema_version")
+        if isinstance(compatibility, Mapping)
+        else plan_state.get("schema_version")
+    )
+    try:
+        return int(source_version or 1) >= 8
+    except (TypeError, ValueError):
+        return False
+
+
 def _text_for_output_root_discovery(plan_state: Dict[str, Any], current_plan: str) -> str:
-    chunks = [str(current_plan or "")]
-    task_spec = plan_state.get("task_spec") if isinstance(plan_state.get("task_spec"), dict) else {}
+    is_v2 = _uses_canonical_completion_contract(plan_state)
+    chunks = [] if is_v2 else [str(current_plan or "")]
+    task_spec = canonical_task_spec_for_state(plan_state)
     if task_spec:
         for output in effective_task_contract(task_spec).get("outputs", []) or []:
             if isinstance(output, dict) and str(output.get("role") or "") == "output_dir":
-                path = str(output.get("path") or "").strip()
+                path = str(output.get("canonical_path") or output.get("path") or "").strip()
                 if path:
                     chunks.append(f"declared_output_dir: {path}")
-    for key in ("output_dir", "output_root", "declared_output_dir", "output_roots", "output_paths"):
-        value = plan_state.get(key)
-        if isinstance(value, (list, tuple)):
-            chunks.append(f"{key}: " + " ".join(str(item) for item in value))
-        elif value:
-            chunks.append(f"{key}: {value}")
+    if not is_v2:
+        for key in ("output_dir", "output_root", "declared_output_dir", "output_roots", "output_paths"):
+            value = plan_state.get(key)
+            if isinstance(value, (list, tuple)):
+                chunks.append(f"{key}: " + " ".join(str(item) for item in value))
+            elif value:
+                chunks.append(f"{key}: {value}")
     for step in _steps(plan_state):
-        chunks.append(_step_title(step))
-        evidence = step.get("evidence")
-        if isinstance(evidence, list):
-            for item in evidence:
-                if isinstance(item, dict):
-                    chunks.append(str(item.get("detail") or ""))
+        for contract in step_artifact_contracts(step):
+            path = str(contract.get("path") or "").strip()
+            if path:
+                chunks.append(f"contract_artifact: {path}")
+        if not is_v2:
+            chunks.append(_step_title(step))
+            evidence = step.get("evidence")
+            if isinstance(evidence, list):
+                for item in evidence:
+                    if isinstance(item, dict):
+                        chunks.append(str(item.get("detail") or ""))
     return "\n".join(chunks)
 
 
@@ -2379,27 +2442,6 @@ class CompletionGate:
                     checked_artifacts=checked,
                 )
 
-        declared = _declared_completed_artifacts(output_roots)
-        if declared:
-            checked.extend(artifact for artifact in declared if artifact not in checked)
-            missing_declared = [
-                artifact for artifact in declared
-                if not _artifact_exists_in_roots(output_roots, artifact)
-            ]
-            if missing_declared:
-                roots_text = ", ".join(str(root) for root in output_roots)
-                return GateResult(
-                    passed=False,
-                    message=f"Current step status/report declares completed artifacts that are missing: {', '.join(missing_declared)}",
-                    feedback=(
-                        "Step completion gate failed: a status/report file declares these artifacts as generated or complete, "
-                        f"but they are missing or empty under searched roots ({roots_text}): {', '.join(missing_declared)}. "
-                        "Create the missing artifacts or correct the status file before advancing."
-                    ),
-                    missing_artifacts=missing_declared,
-                    checked_artifacts=checked,
-                )
-
         return GateResult(True, checked_artifacts=checked)
 
     @staticmethod
@@ -2413,6 +2455,18 @@ class CompletionGate:
         require_supervisor_evidence: bool = False,
     ) -> GateResult:
         output_root = Path(data_path)
+        if isinstance(plan_state.get("approval_snapshot"), dict) and plan_state.get("approval_snapshot"):
+            approval_gate = approval_applicability_v2(plan_state)
+            if not approval_gate.get("applicable"):
+                return GateResult(
+                    False,
+                    message="Final validation requires an applicable immutable approval snapshot.",
+                    feedback=(
+                        "Approval Gate rejected completion: "
+                        + str(approval_gate.get("status") or "unverifiable")
+                    ),
+                    classification="approval_" + str(approval_gate.get("status") or "unverifiable"),
+                )
         task_evidence = CompletionGate.validate_task_evidence(plan_state)
         if task_evidence.invalidated_steps or task_evidence.waiting_upstream_steps:
             return GateResult(
@@ -2441,26 +2495,46 @@ class CompletionGate:
         renderer_gate = _validate_renderer_execution_state(plan_state)
         if not renderer_gate.passed:
             return renderer_gate
+        try:
+            task_spec = canonical_task_spec_for_state(plan_state)
+        except CanonicalTaskStateError as exc:
+            return GateResult(
+                False,
+                message="Final validation cannot read the canonical TaskSpec.",
+                feedback=str(exc),
+                classification="canonical_task_state_corrupt",
+            )
+        is_v2 = _uses_canonical_completion_contract(plan_state)
+        if is_v2 and not task_spec:
+            return GateResult(
+                False,
+                message="Final validation requires an initialized canonical TaskSpec.",
+                feedback="V2 current_task is uninitialized; route through Consultant before completion.",
+                classification="canonical_task_uninitialized",
+            )
         expected = _expected_artifacts_from_final_plan(plan_state, current_plan)
-        output_roots = _final_output_roots(output_root, plan_state, current_plan)
+        # A V2 final gate derives roots and exclusions from canonical contracts;
+        # plan prose is only a one-version legacy read adapter.
+        gate_plan_text = "" if is_v2 else current_plan
+        output_roots = _final_output_roots(output_root, plan_state, gate_plan_text)
         not_before = _plan_start_epoch(plan_state)
         degraded_disclosures = _validate_degraded_manifest_disclosures(output_roots)
         if not degraded_disclosures.passed:
             return degraded_disclosures
         expected = [
             artifact for artifact in expected
-            if _artifact_allowed_for_final(artifact, current_plan, output_roots)
+            if _artifact_allowed_for_final(artifact, gate_plan_text, output_roots)
         ]
-        declared = _declared_completed_artifacts(output_roots)
-        for artifact in declared:
-            if not _artifact_allowed_for_final(artifact, current_plan, output_roots):
-                continue
-            if artifact not in expected:
-                expected.append(artifact)
-        alternative_context = "\n".join([current_plan] + [_step_title(step) for step in _steps(plan_state)])
+        alternative_groups = (
+            _canonical_output_alternative_groups(plan_state)
+            if is_v2
+            else _artifact_alternative_groups(
+                "\n".join([current_plan] + [_step_title(step) for step in _steps(plan_state)])
+            )
+        )
         missing, _ = _missing_artifacts_considering_alternatives(
             expected,
-            _artifact_alternative_groups(alternative_context),
+            alternative_groups,
             output_roots,
             not_before=not_before,
         )

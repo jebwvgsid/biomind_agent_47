@@ -42,12 +42,18 @@ from agent_core.recovery import (
 )
 from agent_core.context_lineage import ainvoke_with_snapshot
 from agent_core.task_spec import effective_task_contract, evaluate_requirements
+from agent_core.plan_tracker import canonical_task_spec_for_state, load_plan_state
+from agent_core.node_context import (
+    InvocationRegistry,
+    build_node_context,
+    evaluate_node_staleness,
+)
 
 logger = logging.getLogger("BioMind.Supervisor")
 
 
 def _effective_declared_requirements(state: Dict[str, Any]) -> List[Dict[str, Any]]:
-    task_spec = state.get("task_spec") if isinstance(state.get("task_spec"), dict) else {}
+    task_spec = canonical_task_spec_for_state(state)
     if task_spec:
         return list(effective_task_contract(task_spec).get("requirements") or [])
     return list(state.get("requirements") or []) if isinstance(state.get("requirements"), list) else []
@@ -479,6 +485,7 @@ class LLMReviewer:
     def __init__(self, llm, *, data_path: str = ""):
         self.llm = llm
         self.data_path = str(data_path or "")
+        self._invocations = InvocationRegistry(max_entries=128, max_stale_signatures=128)
 
     @staticmethod
     def _parse_decision(text: str) -> Dict[str, Any]:
@@ -529,22 +536,56 @@ class LLMReviewer:
         task_id: str = "",
         trace_metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
+        plan_state = load_plan_state(self.data_path, task_id) if self.data_path and task_id else {}
+        task_spec = (
+            canonical_task_spec_for_state(plan_state)
+            if plan_state
+            else {"goal": str(task_context or "")}
+        )
+        metadata = dict(trace_metadata or {})
+        reviewer_context = build_node_context(
+            node_type="supervisor",
+            task_spec=task_spec,
+            plan_state=plan_state,
+            state_generation=int(plan_state.get("state_generation") or 0),
+            current_step_id=str(metadata.get("step_id") or ""),
+            runtime={
+                "return_code": int(returncode),
+                "executed_action": str(code or "")[:4000],
+                "scientific_review_context": str(task_context or "")[:2000],
+            },
+            evidence=[
+                {
+                    "evidence_id": "supervisor-stdout",
+                    "kind": "stdout",
+                    "excerpt": str(stdout or "")[:6000],
+                    "truncated": len(str(stdout or "")) > 6000,
+                },
+                {
+                    "evidence_id": "supervisor-stderr",
+                    "kind": "stderr",
+                    "excerpt": str(stderr or "")[-4000:],
+                    "truncated": len(str(stderr or "")) > 4000,
+                },
+            ],
+            allowed_operations=["scientific_advisory"],
+            attempt_id=str(metadata.get("attempt_id") or ""),
+            action_identity=str(metadata.get("action_id") or ""),
+            evidence_identity=hashlib.sha256(
+                (str(stdout or "") + "\n" + str(stderr or "")).encode("utf-8", errors="replace")
+            ).hexdigest(),
+            trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
+        )
+        payload = reviewer_context.llm_payload.to_json(indent=2)
         prompt = f"""You are a senior bioinformatics scientist reviewing an agent's execution step.
 
-[RETURN CODE]
-{returncode}
+The Controller supplied a non-authoritative semantic payload. Provide advisory
+scientific assessment only. Do not return state identity, approval, storage,
+concurrency, routing, retry, blocking, plan mutation, or completion decisions.
 
-[EXECUTED CODE]
-{code[:1500]}
-
-[STDOUT]
-{stdout[:3000]}
-
-[STDERR]
-{stderr[:1200]}
-
-[TASK CONTEXT]
-{task_context[:1500]}
+<llm_payload>
+{payload}
+</llm_payload>
 
 Evaluate only as a scientific advisory:
 1. Is the scientific approach correct for this bioinformatics task?
@@ -594,6 +635,7 @@ Return exactly one JSON object and no prose:
 }}
 """
         try:
+            self._invocations.register(reviewer_context.binding)
             r, first_snapshot = await ainvoke_with_snapshot(
                 self.llm,
                 [HumanMessage(content=prompt)],
@@ -602,30 +644,56 @@ Return exactly one JSON object and no prose:
                 metadata={
                     "node_name": "supervisor",
                     "call_kind": "supervisor_reviewer",
-                    **dict(trace_metadata or {}),
+                    "controller_binding": reviewer_context.binding.to_dict(),
+                    **metadata,
                 },
             )
+            self._invocations.consume(reviewer_context.binding.invocation_id)
+            latest_plan_state = (
+                load_plan_state(self.data_path, task_id)
+                if self.data_path and task_id else plan_state
+            )
+            latest_task_spec = (
+                canonical_task_spec_for_state(latest_plan_state)
+                if latest_plan_state
+                else task_spec
+            )
+            latest_binding = build_node_context(
+                node_type="supervisor",
+                task_spec=latest_task_spec,
+                plan_state=latest_plan_state,
+                state_generation=int(latest_plan_state.get("state_generation") or 0),
+                current_step_id=str(metadata.get("step_id") or ""),
+                attempt_id=str(metadata.get("attempt_id") or ""),
+                action_identity=str(metadata.get("action_id") or ""),
+                evidence_identity=reviewer_context.binding.evidence_identity,
+            ).binding
+            staleness = evaluate_node_staleness(
+                reviewer_context.binding,
+                latest_binding.to_dict(),
+            )
+            if not staleness.usable:
+                self._invocations.mark_stale_signature_handled(
+                    staleness.stale_signature
+                )
+                return json.dumps({
+                    "assessment": "UNKNOWN",
+                    "concerns": ["Supervisor advisory became stale and was ignored."],
+                    "suggestions": [],
+                    "confidence": None,
+                    "parse_status": "stale_ignored",
+                }, ensure_ascii=False, sort_keys=True)
             decision = self._parse_decision(r.content)
             if not decision:
-                repair = (
-                    "Your previous advisory was not valid JSON in the required schema. "
-                    "Return exactly one JSON object with assessment, concerns, suggestions, and confidence. "
-                    "Do not include Markdown or prose.\n\nInvalid response:\n" + str(r.content)[:2000]
-                )
-                repaired, _ = await ainvoke_with_snapshot(
-                    self.llm,
-                    [HumanMessage(content=prompt), HumanMessage(content=repair)],
-                    data_path=self.data_path,
-                    task_id=task_id,
-                    metadata={
-                        "node_name": "supervisor",
-                        "call_kind": "supervisor_reviewer",
-                        "parent_call_id": str(first_snapshot.get("call_id") or ""),
-                        "repair": True,
-                        **dict(trace_metadata or {}),
-                    },
-                )
-                decision = self._parse_decision(repaired.content)
+                # A malformed advisory is non-authoritative.  Treat it as
+                # unavailable instead of paying for an equivalent rerender.
+                decision = {
+                    "assessment": "UNKNOWN",
+                    "concerns": ["Supervisor advisory failed schema validation and was ignored."],
+                    "suggestions": [],
+                    "confidence": None,
+                    "parse_status": "invalid_ignored",
+                }
             if not decision:
                 decision = {
                     "assessment": "UNKNOWN",
@@ -636,6 +704,13 @@ Return exactly one JSON object and no prose:
                 }
             return json.dumps(decision, ensure_ascii=False, sort_keys=True)
         except Exception as e:
+            for context in (locals().get("reviewer_context"), locals().get("repair_context")):
+                if context is None:
+                    continue
+                try:
+                    self._invocations.terminate(context.binding.invocation_id, status="failed")
+                except Exception:
+                    pass
             return json.dumps({
                 "assessment": "UNKNOWN",
                 "concerns": [f"LLM advisory failed and was ignored: {type(e).__name__}: {e}"],

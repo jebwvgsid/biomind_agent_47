@@ -46,9 +46,18 @@ class AgentState(TypedDict, total=False):
     requirements_summary: str  # 存储咨询阶段确认的参数（如基因组大小、物种等）
     consultant_constraint_metrics: dict
     consultation_state: dict
+    conversation_evidence: dict
+    resolved_bindings: dict
+    planner_feedback: dict
+    canonical_commit: dict
+    # Deprecated read-compatible projection of
+    # consultation_state["finalize_protocol"]["repair"].  New code must never
+    # treat this top-level field as an independent state owner.
+    consultant_contract_repair: dict
+    task_spec_repair_history: List[dict]
     canonical_constraint_hash: Optional[str]
     knowledge_claim_set_hash: Optional[str]
-    task_spec: dict  # User-owned effective task facts and later confirmed decisions.
+    task_spec: dict  # Graph projection of the durable canonical TaskSpec after Consultant commit.
     task_revision: int
     effective_user_facts_revision: str
     normalized_fact_mappings: dict
@@ -121,6 +130,10 @@ class AgentState(TypedDict, total=False):
     execution_status: Optional[str]
     approval_scope: dict
     approval_projection: dict
+    validation_issues: List[dict]
+    repair_convergence: dict
+    can_request_approval: bool
+    can_generate: bool
     plan_stale_steps: List[str]
     plan_revalidation_steps: List[str]
     verification_checks: List[dict]

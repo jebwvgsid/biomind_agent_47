@@ -8,6 +8,8 @@ skill responsibility.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import re
 from dataclasses import dataclass
@@ -452,6 +454,32 @@ def _input_record(role: str, path: Path, source: str, detail: str = "", **extra:
     exists = resolved.exists()
     is_file = exists and resolved.is_file()
     is_directory = exists and resolved.is_dir()
+    readable = exists and os.access(resolved, os.R_OK)
+    stat_identity: Dict[str, Any] = {}
+    try:
+        stat = resolved.stat()
+        stat_identity = {
+            "kind": "file" if is_file else "directory" if is_directory else "other",
+            "size": int(stat.st_size),
+            "mtime_ns": int(stat.st_mtime_ns),
+            "mode": int(stat.st_mode),
+        }
+        # A bounded sample catches same-size rewrites without reading a large
+        # genomics artifact in full.  The fingerprint (not wall-clock fields)
+        # is what the immutable finalize context binds to.
+        content_sample_hash = ""
+        if is_file and readable:
+            sample_hasher = hashlib.sha256()
+            with resolved.open("rb") as handle:
+                head = handle.read(65536)
+                sample_hasher.update(head)
+                if stat.st_size > 65536:
+                    handle.seek(max(0, stat.st_size - 65536))
+                    sample_hasher.update(handle.read(65536))
+            content_sample_hash = sample_hasher.hexdigest()
+        stat_identity["content_sample_sha256"] = content_sample_hash
+    except OSError:
+        stat_identity = {}
     try:
         non_empty = bool(
             (is_file and resolved.stat().st_size > 0)
@@ -459,7 +487,6 @@ def _input_record(role: str, path: Path, source: str, detail: str = "", **extra:
         )
     except OSError:
         non_empty = False
-    readable = exists and os.access(resolved, os.R_OK)
     verified = bool(exists and readable and (non_empty if is_file else is_directory))
     evidence = [
         label for label, present in (
@@ -483,6 +510,17 @@ def _input_record(role: str, path: Path, source: str, detail: str = "", **extra:
         "verified": verified,
         "verified_at": datetime.now().isoformat(timespec="seconds"),
         "verification_evidence": evidence,
+        "evidence_fingerprint": (
+            hashlib.sha256(
+                json.dumps(
+                    stat_identity,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest()
+            if stat_identity
+            else ""
+        ),
     }
     if detail:
         record["detail"] = detail

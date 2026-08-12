@@ -129,7 +129,14 @@ LLM_STEP_CONTEXT_MESSAGES = _env_int("BIOMIND_LLM_STEP_CONTEXT_MESSAGES", 6, min
 LLM_STEP_CONTEXT_CHARS = _env_int("BIOMIND_LLM_STEP_CONTEXT_CHARS", 12000, minimum=4000)
 LLM_STEP_PLAN_CHARS = _env_int("BIOMIND_LLM_STEP_PLAN_CHARS", 6000, minimum=2000)
 LLM_STEP_SKILL_DOC_CHARS = _env_int("BIOMIND_LLM_STEP_SKILL_DOC_CHARS", 18000, minimum=4000)
-LLM_STEP_EPHEMERAL_CHARS = _env_int("BIOMIND_LLM_STEP_EPHEMERAL_CHARS", 26000, minimum=8000)
+# Generate still applies the provider-level token/headroom gate before an LLM
+# call.  This larger character budget prevents the older 26k engineering cap
+# from rejecting valid current-step contracts far below a 200k-token window.
+LLM_STEP_EPHEMERAL_CHARS = _env_int(
+    "BIOMIND_LLM_STEP_EPHEMERAL_CHARS",
+    200_000,
+    minimum=8_000,
+)
 # Consultant compiles natural-language intent and may need both a substantial
 # conversation/audit history and complete documentation for several candidate
 # skills.  Keep these limits in tokens (rather than reusing the older character
@@ -160,6 +167,96 @@ CONSULTANT_RESERVED_HEADROOM_TOKENS = _env_int(
     "BIOMIND_CONSULTANT_RESERVED_HEADROOM_TOKENS",
     8_192,
     minimum=0,
+)
+# Consultant FINALIZE has an independent output budget.  The history/skill
+# pools above are input-only limits and must never be reused as an implicit
+# completion cap.  ``MAX_OUTPUT`` is the requested semantic setting; the
+# provider capability resolver and the per-request context calculation may
+# lower it, but may not silently raise it.
+CONSULTANT_FINALIZE_MAX_OUTPUT_TOKENS = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_MAX_OUTPUT_TOKENS",
+    100_000,
+    minimum=1,
+)
+CONSULTANT_FINALIZE_REQUESTED_OUTPUT_TOKENS = (
+    CONSULTANT_FINALIZE_MAX_OUTPUT_TOKENS
+)
+CONSULTANT_FINALIZE_PROVIDER_OUTPUT_CAP_TOKENS = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_PROVIDER_OUTPUT_CAP_TOKENS",
+    100_000,
+    minimum=1,
+)
+CONSULTANT_FINALIZE_CONTEXT_LIMIT_TOKENS = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_CONTEXT_LIMIT_TOKENS",
+    200_000,
+    minimum=2,
+)
+CONSULTANT_FINALIZE_OUTPUT_HEADROOM_TOKENS = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_OUTPUT_HEADROOM_TOKENS",
+    2_048,
+    minimum=0,
+)
+
+# Finite run-level limits are required in addition to a per-call token cap.
+# These defaults are deliberately roomy for long bioinformatics contracts, but
+# still make runaway repartition/retry loops impossible.  All values are
+# persisted into the versioned work-budget artifact before provider I/O.
+CONSULTANT_FINALIZE_BUDGET_POLICY_VERSION = os.getenv(
+    "BIOMIND_CONSULTANT_FINALIZE_BUDGET_POLICY_VERSION",
+    "finalize-work-budget-v1",
+).strip() or "finalize-work-budget-v1"
+CONSULTANT_FINALIZE_MAX_RESOLUTION_ITEMS = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_MAX_RESOLUTION_ITEMS",
+    1_024,
+    minimum=1,
+)
+CONSULTANT_FINALIZE_MAX_BATCH_ITEMS = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_MAX_BATCH_ITEMS",
+    64,
+    minimum=1,
+)
+CONSULTANT_FINALIZE_MAX_CREATED_BATCHES = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_MAX_CREATED_BATCHES",
+    128,
+    minimum=1,
+)
+CONSULTANT_FINALIZE_MAX_PROVIDER_CALLS = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_MAX_PROVIDER_CALLS",
+    128,
+    minimum=1,
+)
+CONSULTANT_FINALIZE_MAX_REPARTITION_DEPTH = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_MAX_REPARTITION_DEPTH",
+    8,
+    minimum=1,
+)
+CONSULTANT_FINALIZE_MAX_TOTAL_COMPLETION_TOKENS = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_MAX_TOTAL_COMPLETION_TOKENS",
+    200_000,
+    minimum=1,
+)
+CONSULTANT_FINALIZE_MAX_TOTAL_ESTIMATED_COST_MICROUSD = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_MAX_TOTAL_ESTIMATED_COST_MICROUSD",
+    50_000_000,
+    minimum=1,
+)
+# Versioned controller-side accounting rate.  It is intentionally conservative
+# and does not pretend to be a provider invoice; its purpose is to make the
+# finite cost guard operational even when the provider omits billing metadata.
+CONSULTANT_FINALIZE_ESTIMATED_MICROUSD_PER_TOKEN = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_ESTIMATED_MICROUSD_PER_TOKEN",
+    1,
+    minimum=1,
+)
+CONSULTANT_FINALIZE_MAX_WALL_TIME_MS = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_MAX_WALL_TIME_MS",
+    900_000,
+    minimum=1,
+)
+CONSULTANT_FINALIZE_PER_CALL_TIMEOUT_MS = _env_int(
+    "BIOMIND_CONSULTANT_FINALIZE_PER_CALL_TIMEOUT_MS",
+    max(1, int(LLM_TIMEOUT_SECONDS * 1_000)),
+    minimum=1,
 )
 # Planner prompt sizing uses a nominal engineering budget plus real token
 # headroom thresholds.  The character budget is not a model context proxy.

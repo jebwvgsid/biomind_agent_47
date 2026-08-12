@@ -394,7 +394,7 @@ class FailureContext:
                 stage_status=stage_status,
                 log_metadata_before=log_metadata_before,
             )
-            root_analysis_dict = root_analysis.llm_view()
+            root_analysis_dict = _redact_mapping(root_analysis.llm_view())
         except Exception:
             root_analysis = None
             root_analysis_dict = {}
@@ -474,7 +474,7 @@ class FailureContext:
                 for item in list((self.failure_log_projection or {}).get("matched_lines") or [])[-80:]
             ],
         }
-        return data
+        return _redact_mapping(data)
 
     def persisted_view(self) -> Dict[str, Any]:
         data = asdict(self)
@@ -482,7 +482,7 @@ class FailureContext:
         data["stderr"] = ""
         data["stdout_tail"] = _clip(self.stdout_tail, 8000)
         data["stderr_tail"] = _clip(self.stderr_tail, 8000)
-        return data
+        return _redact_mapping(data)
 
 
 @dataclass
@@ -611,9 +611,9 @@ class ExecutionRecord:
             code_path=str(data.get("code_path") or data.get("approved_code_path") or ""),
             code_hash=code_hash,
             script_path=str(data.get("script_path") or data.get("script_file") or data.get("generated_script_path") or ""),
-            generated_script=dict(data.get("generated_script") or {}),
-            approved_script=dict(data.get("approved_script") or {}),
-            executed_script=dict(data.get("executed_script") or {}),
+            generated_script=_redact_mapping(data.get("generated_script") or {}),
+            approved_script=_redact_mapping(data.get("approved_script") or {}),
+            executed_script=_redact_mapping(data.get("executed_script") or {}),
             working_directory=str(data.get("working_directory") or data.get("cwd") or ""),
             environment=str(data.get("environment") or data.get("environment_name") or ""),
             started_at=str(data.get("started_at") or ""),
@@ -635,18 +635,18 @@ class ExecutionRecord:
             ),
             failed_command=_redact(data.get("failed_command") or ""),
             script_context=_redact(data.get("script_context") or ""),
-            expected_runtime_contract=dict(data.get("expected_runtime_contract") or {}),
-            actual_environment=dict(data.get("actual_environment") or {}),
-            runtime_drift=dict(data.get("runtime_drift") or {}),
-            renderer_manifest_summary=dict(data.get("renderer_manifest_summary") or {}),
+            expected_runtime_contract=_redact_mapping(data.get("expected_runtime_contract") or {}),
+            actual_environment=_redact_mapping(data.get("actual_environment") or {}),
+            runtime_drift=_redact_mapping(data.get("runtime_drift") or {}),
+            renderer_manifest_summary=_redact_mapping(data.get("renderer_manifest_summary") or {}),
             renderer_manifest_error=str(data.get("renderer_manifest_error") or ""),
-            action_contract={
+            action_contract=_redact_mapping({
                 str(key): item
                 for key, item in dict(data.get("action_contract") or {}).items()
                 if str(key) not in {"code", "command", "messages", "raw_response"}
-            },
+            }),
             recent_attempts=[
-                dict(item) for item in data.get("recent_attempts", []) or [] if isinstance(item, dict)
+                _redact_mapping(item) for item in data.get("recent_attempts", []) or [] if isinstance(item, dict)
             ][-3:],
             declared_outputs=[str(item) for item in data.get("declared_outputs", []) or []],
             observed_outputs=observed,

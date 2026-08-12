@@ -10,6 +10,16 @@ metadata:
     manifest_type: renderer_artifact_contract
     schema_version: 3
     composite_step: true
+    task_spec_rules:
+      - rule_id: snpeff.custom_database.typed_inputs.v1
+        semantic_key: required_behavior.database_source
+        role: database_source
+        operator: eq
+        value: custom_genome
+        strength: hard
+        level: required
+        when_all_input_roles: [variant_vcf, reference_fasta]
+        when_any_input_roles: [annotation_gtf, annotation_gff3, annotation_genbank]
     owned_outputs:
       - annotated.vcf
       - snpEff_summary.html
@@ -27,6 +37,17 @@ metadata:
       reproduce_sh: {mode: fixed, filename: reproduce.sh}
       stage_status_tsv: {mode: fixed, filename: stage_status.tsv}
     invocation:
+      binding_rules:
+        genome_version:
+          owner: task_spec
+          repair_target: task_spec.requirements[role=database_source]
+          sources:
+            - {kind: requirement, role: genome_version, rule_id: snpeff.genome_version.explicit.v1}
+            - kind: stable_task_identifier
+              role: database_source
+              prefix: biomind
+              rule_id: snpeff.custom_database.task_id.v1
+              when: {role: database_source, operator: eq, value: custom_genome}
       arguments:
         vcf: {flag: --vcf, required: true, aliases: [variant_file]}
         genome_version: {flag: --genome-version, required: true}

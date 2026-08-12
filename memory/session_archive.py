@@ -14,6 +14,7 @@ from .utils import DEFAULT_PROJECT_ID, now_iso, query_terms, safe_id
 
 
 ARCHIVE_SCHEMA_VERSION = 2
+ARCHIVE_BUSY_TIMEOUT_SECONDS = 15.0
 
 
 def _now() -> str:
@@ -135,12 +136,19 @@ class ArchiveHit:
 class SessionArchive:
     """SQLite/FTS-backed source of truth for cross-session process events."""
 
-    def __init__(self, db_path: str | Path, max_inline_chars: int = 4_000):
+    def __init__(
+        self,
+        db_path: str | Path,
+        max_inline_chars: int = 4_000,
+        busy_timeout_seconds: float = ARCHIVE_BUSY_TIMEOUT_SECONDS,
+    ):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.large_outputs_dir = self.db_path.parent / "archive_large_outputs"
         self.large_outputs_dir.mkdir(parents=True, exist_ok=True)
         self.max_inline_chars = max_inline_chars
+        self.busy_timeout_seconds = max(0.1, float(busy_timeout_seconds))
+        self.busy_timeout_ms = max(100, int(self.busy_timeout_seconds * 1000))
         self.fts_enabled = False
         self.fts_tokenizer = "none"
         self._init_db()
@@ -574,13 +582,23 @@ class SessionArchive:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_session_events_project_id ON session_events(project_id)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_wiki_ingest_events_project_status ON wiki_ingest_events(project_id, status)")
             self._ensure_fts(conn)
-            conn.execute(
-                """
-                INSERT OR REPLACE INTO schema_version (component, version, updated_at)
-                VALUES ('session_archive', ?, ?)
-                """,
-                (ARCHIVE_SCHEMA_VERSION, _now()),
-            )
+            current_schema = conn.execute(
+                "SELECT version FROM schema_version WHERE component = 'session_archive'"
+            ).fetchone()
+            if (
+                current_schema is None
+                or int(current_schema["version"]) != ARCHIVE_SCHEMA_VERSION
+            ):
+                conn.execute(
+                    """
+                    INSERT INTO schema_version (component, version, updated_at)
+                    VALUES ('session_archive', ?, ?)
+                    ON CONFLICT(component) DO UPDATE SET
+                        version=excluded.version,
+                        updated_at=excluded.updated_at
+                    """,
+                    (ARCHIVE_SCHEMA_VERSION, _now()),
+                )
             conn.commit()
 
     @staticmethod
@@ -867,9 +885,22 @@ class SessionArchive:
 
     @contextmanager
     def _connect(self) -> Iterable[sqlite3.Connection]:
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(
+            self.db_path,
+            timeout=self.busy_timeout_seconds,
+        )
         conn.row_factory = sqlite3.Row
         try:
+            conn.execute(f"PRAGMA busy_timeout = {self.busy_timeout_ms}")
             yield conn
+        except sqlite3.OperationalError as exc:
+            if "locked" in str(exc).casefold():
+                raise sqlite3.OperationalError(
+                    "SessionArchive database remained locked for "
+                    f"{self.busy_timeout_seconds:g}s: {self.db_path}. "
+                    "Another BioMind process may be writing, or a suspended "
+                    "Ctrl-Z process may still hold a transaction."
+                ) from exc
+            raise
         finally:
             conn.close()

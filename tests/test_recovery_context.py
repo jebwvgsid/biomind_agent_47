@@ -14,6 +14,7 @@ from agent_core.diagnostics import (
 )
 from agent_core.middleware import error_recovery_middleware
 from agent_core.recovery import RecoveryAction, RecoveryStateStore
+from agent_core.task_spec import create_task_spec
 from prompts.manager import PromptManager
 
 
@@ -114,6 +115,30 @@ class RecoveryContextTests(unittest.TestCase):
         self.assertEqual(json.loads(json.dumps(payload)), payload)
         self.assertNotIn("secret-value", json.dumps(payload))
         self.assertNotIn("must-not-leak", json.dumps(payload))
+
+    def test_durable_canonical_task_spec_wins_checkpoint_projection(self):
+        state = self._state()
+        state["task_spec"] = create_task_spec(
+            "输入 /data/stale.vcf",
+            task_id="task-a",
+        )
+        plan = self._plan()
+        plan["current_task"] = {
+            "task_spec": create_task_spec(
+                "输入 /data/canonical.vcf",
+                task_id="task-a",
+            )
+        }
+
+        context = build_recovery_context(
+            state,
+            {"execution_id": "exec-1", "step_id": "step-2", "returncode": 1},
+            plan_state=plan,
+        )
+        projected = json.dumps(context.effective_user_facts, ensure_ascii=False)
+
+        self.assertIn("/data/canonical.vcf", projected)
+        self.assertNotIn("/data/stale.vcf", projected)
 
     def test_context_contains_canonical_step_validation_and_related_attempts(self):
         history = [

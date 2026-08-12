@@ -5,7 +5,12 @@ import time
 import unittest
 from pathlib import Path
 
-from agent_core.completion_gate import CompletionGate, _candidate_output_roots_from_text, _contract_exists
+from agent_core.completion_gate import (
+    CompletionGate,
+    _candidate_output_roots_from_text,
+    _canonical_output_alternative_groups,
+    _contract_exists,
+)
 from agent_core.plan_tracker import (
     apply_artifact_reconciliation,
     build_plan_state,
@@ -20,6 +25,44 @@ from agent_core.plan_tracker import (
 
 
 class CompletionGateTests(unittest.TestCase):
+    def test_v2_output_alternatives_come_only_from_canonical_contracts(self):
+        state = {
+            "current_task": {
+                "task_spec": {
+                    "schema_version": 4,
+                    "revision": 1,
+                    "goal": "Produce one valid sequence follow-up result",
+                    "output_contracts": [
+                        {
+                            "artifact_id": "artifact-output-rbh",
+                            "role": "rbh_results",
+                            "canonical_path": "rbh_results.tsv",
+                            "alternative_group": "sequence_followup",
+                            "required": True,
+                        },
+                        {
+                            "artifact_id": "artifact-output-followup",
+                            "role": "followup_plan",
+                            "canonical_path": "similarity_followup_plan.md",
+                            "alternative_group": "sequence_followup",
+                            "required": True,
+                        },
+                        {
+                            "artifact_id": "artifact-output-report",
+                            "role": "report",
+                            "canonical_path": "report.md",
+                            "required": True,
+                        },
+                    ]
+                }
+            },
+            "steps": [{"title": "Ignore fake.tsv or fake.md in prose"}],
+        }
+        self.assertEqual(
+            _canonical_output_alternative_groups(state),
+            [["rbh_results.tsv", "similarity_followup_plan.md"]],
+        )
+
     def test_registered_renderer_actions_must_finish_before_step_or_final_gate(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

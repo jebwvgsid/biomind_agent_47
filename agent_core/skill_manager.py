@@ -5,9 +5,10 @@ import shlex
 import shutil
 import subprocess
 import yaml
+from copy import deepcopy
 from pathlib import Path
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 class SkillManager:
     """遵循 Agent Skills 标准的技能加载器"""
@@ -1396,6 +1397,126 @@ class SkillManager:
                 "  - If exact CLI details are needed, load and follow this skill's SKILL.md body.",
             ])
         return "\n".join(cards)
+
+    def get_semantic_execution_capabilities(
+        self,
+        skill_ids: List[str],
+    ) -> tuple[List[Dict[str, Any]], Dict[str, str]]:
+        """Project execution meaning without contract IDs, hashes or paths.
+
+        Operation handles are invocation vocabulary.  The returned controller
+        map is never serialized to the model and resolves each handle to the
+        pinned script path from the selected skill contract.
+        """
+        capabilities: List[Dict[str, Any]] = []
+        operation_bindings: Dict[str, str] = {}
+        for capability_index, sid in enumerate(
+            self.normalize_selected_skills(skill_ids, max_results=self.MAX_SELECTED_SKILLS),
+            start=1,
+        ):
+            meta = self.get_skill_meta(sid)
+            if not meta:
+                continue
+            capability_handle = f"capability.C{capability_index}"
+            renderer = self.get_renderer_record(sid)
+            requirements = self.get_runtime_requirements(sid)
+            skill_dir = Path(meta.get("_skill_dir") or (self.skills_root / sid)).resolve()
+            operations: List[Dict[str, Any]] = []
+            for operation_index, relative in enumerate(meta.get("_scripts", []) or [], start=1):
+                path = (skill_dir / str(relative)).resolve()
+                if not path.is_file():
+                    continue
+                handle = f"operation.C{capability_index}.O{operation_index}"
+                try:
+                    source = path.read_text(encoding="utf-8", errors="replace")
+                except OSError:
+                    source = ""
+                flags = sorted(set(
+                    re.findall(r"['\"](--[A-Za-z0-9][A-Za-z0-9-]*)['\"]", source)
+                ))
+                operations.append({
+                    "handle": handle,
+                    "operation": path.stem,
+                    "placeholder": "{" + f"operation:{handle}" + "}",
+                    "declared_cli_flags": flags[:60],
+                })
+                operation_bindings[handle] = str(path)
+            row: Dict[str, Any] = {
+                "handle": capability_handle,
+                "skill_id": sid,
+                "purpose": str(meta.get("description") or meta.get("summary") or "").strip(),
+                "task_types": self.metadata_list(meta, "task_types"),
+                "stage_tags": self.metadata_list(meta, "stage_tags"),
+                "action_mode": (
+                    "controller_renderer"
+                    if renderer.get("status") == "declared"
+                    else "managed_operation"
+                ),
+                "operations": operations,
+                "runtime": {
+                    key: deepcopy(value)
+                    for key, value in requirements.items()
+                    if key in {"language", "capabilities"}
+                    and value not in (None, "", [], {})
+                },
+            }
+            if renderer.get("status") == "declared":
+                invocation = dict(renderer.get("invocation") or {})
+                arguments = invocation.get("arguments") or {}
+                binding_rules = dict(invocation.get("binding_rules") or {})
+                runtime_only = {
+                    str(value) for value in invocation.get("runtime_only_arguments", []) or []
+                }
+                controller_owned = {
+                    str(value) for value in invocation.get("controller_owned_arguments", []) or []
+                }
+
+                def argument_projection(name: str, spec: Mapping[str, Any]) -> Dict[str, Any]:
+                    rule = binding_rules.get(name)
+                    rule = dict(rule) if isinstance(rule, Mapping) else {}
+                    sources = rule.get("sources") or []
+                    if isinstance(sources, Mapping):
+                        sources = [sources]
+                    sources = [dict(item) for item in sources if isinstance(item, Mapping)]
+                    source_kinds = [str(item.get("kind") or "") for item in sources]
+                    required = bool(spec.get("required"))
+                    declared_owner = str(rule.get("owner") or "").strip().lower()
+                    if name in runtime_only:
+                        owner = "runtime"
+                        resolution = "runtime_discovery"
+                    elif name in controller_owned or "stable_task_identifier" in source_kinds:
+                        owner = "controller"
+                        resolution = (
+                            "stable_task_identifier"
+                            if "stable_task_identifier" in source_kinds
+                            else "controller_binding"
+                        )
+                    elif declared_owner == "runtime":
+                        owner = "runtime"
+                        resolution = "runtime_discovery"
+                    elif declared_owner == "controller":
+                        owner = "controller"
+                        resolution = source_kinds[0] if source_kinds else "controller_binding"
+                    else:
+                        owner = "user"
+                        resolution = source_kinds[0] if source_kinds else "task_semantics"
+                    return {
+                        "name": str(name),
+                        "required": required,
+                        "required_for_execution": required,
+                        "owner": owner,
+                        "user_input_required": bool(required and owner == "user"),
+                        "resolution": resolution,
+                        "aliases": [str(value) for value in spec.get("aliases") or []],
+                    }
+
+                row["renderer_arguments"] = [
+                    argument_projection(str(name), spec)
+                    for name, spec in arguments.items()
+                    if isinstance(spec, Mapping)
+                ]
+            capabilities.append(row)
+        return capabilities, operation_bindings
 
     def validate_plan(self, plan: str, selected_skill_ids: List[str]) -> List[str]:
         """Generic skill-plan checks. Returns human-readable violations."""

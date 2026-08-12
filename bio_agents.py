@@ -25,9 +25,11 @@ import subprocess
 import sys
 import tempfile
 import time
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Literal, Mapping, MutableMapping, Optional, Sequence, Tuple
+from urllib.parse import urlsplit
 
 from colorama import Fore, Style
 
@@ -62,6 +64,21 @@ from config.config import (
     CONSULTANT_HISTORY_TOKEN_BUDGET, CONSULTANT_SKILL_TOKEN_BUDGET,
     CONSULTANT_HISTORY_MAX_MESSAGES, CONSULTANT_CANDIDATE_SKILL_LIMIT,
     CONSULTANT_RESERVED_HEADROOM_TOKENS,
+    CONSULTANT_FINALIZE_MAX_OUTPUT_TOKENS,
+    CONSULTANT_FINALIZE_PROVIDER_OUTPUT_CAP_TOKENS,
+    CONSULTANT_FINALIZE_CONTEXT_LIMIT_TOKENS,
+    CONSULTANT_FINALIZE_OUTPUT_HEADROOM_TOKENS,
+    CONSULTANT_FINALIZE_BUDGET_POLICY_VERSION,
+    CONSULTANT_FINALIZE_MAX_RESOLUTION_ITEMS,
+    CONSULTANT_FINALIZE_MAX_BATCH_ITEMS,
+    CONSULTANT_FINALIZE_MAX_CREATED_BATCHES,
+    CONSULTANT_FINALIZE_MAX_PROVIDER_CALLS,
+    CONSULTANT_FINALIZE_MAX_REPARTITION_DEPTH,
+    CONSULTANT_FINALIZE_MAX_TOTAL_COMPLETION_TOKENS,
+    CONSULTANT_FINALIZE_MAX_TOTAL_ESTIMATED_COST_MICROUSD,
+    CONSULTANT_FINALIZE_ESTIMATED_MICROUSD_PER_TOKEN,
+    CONSULTANT_FINALIZE_MAX_WALL_TIME_MS,
+    CONSULTANT_FINALIZE_PER_CALL_TIMEOUT_MS,
     PLANNER_NOMINAL_CHAR_BUDGET, PLANNER_SOFT_TOKEN_RATIO,
     PLANNER_COMPRESSION_TOKEN_RATIO, PLANNER_HARD_TOKEN_RATIO,
     PLANNER_RESERVED_HEADROOM_TOKENS,
@@ -80,12 +97,25 @@ except ImportError:
 from agent_core.state import AgentState
 from agent_core.consultation_state import (
     begin_finalize,
+    build_consultant_candidate,
+    commit_finalize_v4_transition,
+    commit_finalize_decision,
     consultation_prompt_context,
+    emit_finalize_repair_projection,
     evaluate_consultation_completion,
+    evaluate_consultant_ask,
+    consultant_no_progress_decision,
+    finalize_repair_projection,
+    finalize_protocol_runner,
+    initialize_finalize_protocol,
+    initialize_finalize_protocol_v4,
+    legacy_finalize_migration_eligibility,
+    migrate_finalize_protocol_state,
     new_consultation_state,
     preflight_execute,
     record_execution_observation,
     seed_structured_evidence,
+    validate_finalize_protocol_v4,
 )
 from agent_core.human_io import (
     HumanInputUnavailable,
@@ -144,7 +174,55 @@ from agent_core.diagnostics import (
     build_recovery_context,
     enrich_execution_evidence,
 )
-from agent_core.context_lineage import ContextLineageStore
+from agent_core.context_lineage import (
+    ContextLineageStore,
+    SnapshotConflictError,
+    begin_finalize_attempt as persist_finalize_attempt_intent,
+    canonical_finalize_request_hash as durable_finalize_request_hash,
+    list_finalize_attempts,
+    lookup_finalize_attempt,
+    persist_finalize_response,
+    redact_text as redact_lineage_text,
+    reconcile_finalize_attempt,
+    record_finalize_protocol_outcome,
+)
+from agent_core.wiki_lifecycle import (
+    WikiLifecycleStore,
+    evaluate_wiki_eligibility,
+    terminal_snapshot_projection,
+)
+from agent_core.consultant_finalize import (
+    build_finalize_batch_messages,
+    build_finalize_batch_schema,
+    build_finalize_candidate_catalog,
+    build_finalize_context,
+    build_finalize_decision_batch,
+    build_finalize_messages,
+    build_finalize_capacity_profile,
+    build_finalize_work_preflight,
+    build_field_repair_messages,
+    build_partition_capacity_basis,
+    build_wire_repair_messages,
+    canonical_compiled_contract_hash,
+    canonicalize_finalize_constraints,
+    canonical_payload_hash as finalize_payload_hash,
+    classify_directive_coverage,
+    compile_deterministic_coverage,
+    field_patch_schema,
+    finalize_coverage_audit,
+    finalize_result_schema,
+    finalize_batch_llm_response_schema,
+    merge_finalize_batch_decisions,
+    parse_finalize_response,
+    propose_finalize_decision,
+    stable_partition_finalize_batches,
+    strict_decode_finalize_batch_response,
+    thaw_finalize_value,
+    typed_finalize_failure,
+    validate_directive_coverage,
+    validate_finalize_batch_response,
+    validate_field_patch,
+)
 from agent_core.knowledge_conflicts import (
     ClaimRegistry,
     ConflictResolver,
@@ -190,6 +268,7 @@ from agent_core.plan_tracker import (
     ATTEMPT_VALIDATED,
     PLAN_OPERATION_LOCAL_REPLAN,
     PLAN_OPERATION_REPAIR,
+    PlanStructureError,
     TASK_STATUS_BLOCKED,
     TASK_STATUS_CANCELLED,
     TASK_STATUS_COMPLETED,
@@ -199,6 +278,7 @@ from agent_core.plan_tracker import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING_USER,
     TASK_TERMINAL_STATUSES,
+    CanonicalTaskStateError,
     STATUS_BLOCKED,
     STATUS_FAILED,
     STATUS_SKIPPED_UPSTREAM_BLOCKED,
@@ -215,12 +295,16 @@ from agent_core.plan_tracker import (
     build_approval_scope,
     build_plan_repair_request,
     build_plan_state,
+    canonical_task_spec_for_state,
+    commit_consultant_candidate_state,
     increment_plan_budget,
+    initialize_consultant_bootstrap_state,
     carry_forward_plan_lifecycle,
     changed_plan_step_ids,
     current_plan_step_with_index,
     classify_attempt_resume,
     default_plan_file,
+    derive_plan_validation_state,
     ensure_plan_state,
     load_plan_state,
     mark_first_pending_running,
@@ -246,25 +330,30 @@ from agent_core.plan_tracker import (
     resolve_renderer_action_script,
     reopen_last_done_step,
     restore_step_status_authority,
-    reset_plan_state,
+    reset_plan_for_replanning,
     save_plan_state,
+    semantic_plan_hash,
     set_task_status,
     step_requires_execution_evidence,
     step_artifact_contracts,
     validate_renderer_action_artifacts,
     validate_action_approval_lineage,
     parse_plan_patch,
+    stamp_plan_patch_control_binding,
     sync_plan_state_from_stage_status,
     task_status,
     update_plan_markdown_status,
     update_task_state_projection,
     validate_plan_for_generate,
+    validation_issue,
 )
 from agent_core.task_spec import (
-    apply_user_feedback,
+    apply_task_spec_mutation_proposal,
+    apply_authorized_task_spec_constraint_repair,
+    apply_declarative_task_spec_rules,
     canonical_constraint_hash,
     canonical_input_role,
-    classify_user_feedback_change,
+    constraint_mutation_proposal,
     create_task_spec,
     evaluate_requirements,
     effective_output_contracts,
@@ -273,18 +362,60 @@ from agent_core.task_spec import (
     evaluate_failure_policies,
     format_effective_user_facts_context,
     format_planner_task_contract_context,
+    finalize_task_spec_binding_hash,
     merge_compiled_constraints,
     merge_task_spec_input_audit,
     project_effective_user_facts,
     project_task_spec_to_renderer,
+    register_validated_semantic_ambiguity,
+    resolve_registered_semantic_ambiguity,
     resolve_effective_user_facts,
+    semantic_constraint_enforcement_scope,
     semantic_constraints_from_task_spec,
+    semantic_provenance_catalog,
     semantic_install_policy,
     task_spec_constraints,
+    task_spec_is_initialized,
+    task_spec_is_semantic_empty,
     task_spec_revision,
     validate_compiled_constraints,
 )
+from agent_core.node_context import (
+    InvocationProtocolError,
+    InvocationRegistry,
+    NodeContext,
+    build_node_context,
+    evaluate_node_staleness,
+    payload_observability_report,
+    resolve_plan_proposal_handles,
+    resolve_response_handles,
+)
+from agent_core.managed_artifacts import (
+    build_managed_artifact_bindings,
+    materialize_managed_action,
+    validate_materialized_artifacts,
+)
+from agent_core.state_contract_store import StateContractStore
 from agent_core.completion_gate import CompletionGate
+
+
+def _bind_current_task_spec_record(
+    plan_state: Dict[str, Any],
+    task_spec: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Bind the sole persisted CurrentTaskSpec without creating aliases."""
+    canonical = ensure_task_spec(task_spec)
+    current = dict(plan_state.get("current_task") or {})
+    current.update({
+        "task_spec": deepcopy(canonical),
+        "task_revision": task_spec_revision(canonical),
+    })
+    plan_state["current_task"] = current
+    plan_state.pop("task_spec", None)
+    task_state = dict(plan_state.get("task_state") or {})
+    task_state.pop("task_spec", None)
+    plan_state["task_state"] = task_state
+    return plan_state
 from execution.executor import (
     BASH_SCRIPT_PROLOGUE,
     detect_script_language,
@@ -321,6 +452,7 @@ from supervisor import SupervisorNode, log_plan_to_cot
 
 
 CONSULTANT_PARSE_REPAIR_LIMIT = 3
+CONSULTANT_SEMANTIC_REPAIR_LIMIT = 3
 CONSULTANT_INTERNAL_VALIDATION_ERROR_LIMIT = 3
 CONSULTANT_LOAD_ACTION_LOOP_LIMIT = 6
 CONSULTANT_LOAD_ERROR_LOOP_LIMIT = 3
@@ -419,8 +551,15 @@ def _consultant_validation_is_format_repair_error(text: str) -> bool:
     return any(
         marker in lower
         for marker in (
+            'code="action_format_invalid"',
+            'code="controller_evidence_echo"',
             "response did not use any supported command",
+            "response did not use any supported action format",
             "reply with exactly one command",
+            "reply with exactly one <action_json>",
+            "execute.code is required",
+            "execute.command_groups is unsupported",
+            "tool_result is controller-owned evidence",
             "workflow handoff is invalid",
             "finish must include either a workflow handoff",
             "selected invalid skills",
@@ -430,6 +569,278 @@ def _consultant_validation_is_format_repair_error(text: str) -> bool:
     )
 
 logger = logging.getLogger("BioMind.Agent")
+
+
+class FinalizeResponsePersistenceError(RuntimeError):
+    """Provider returned, but the protected finalize artifact was not committed."""
+
+    def __init__(self, message: str, *, response_content_hash: str = "") -> None:
+        super().__init__(message)
+        self.response_content_hash = str(response_content_hash or "")
+
+
+def _finalize_endpoint_identity(endpoint: str) -> Tuple[str, str]:
+    """Return an exact parsed hostname and a credential-free endpoint digest."""
+    raw = str(endpoint or "").strip()
+    parsed = urlsplit(raw)
+    hostname = str(parsed.hostname or "").lower().rstrip(".")
+    if not hostname:
+        raise ValueError("Finalize provider endpoint requires a valid hostname")
+    scheme = str(parsed.scheme or "https").lower()
+    port = f":{parsed.port}" if parsed.port is not None else ""
+    path = "/" + str(parsed.path or "").lstrip("/")
+    normalized = f"{scheme}://{hostname}{port}{path.rstrip('/') or '/'}"
+    return hostname, "sha256:" + hashlib.sha256(
+        normalized.encode("utf-8")
+    ).hexdigest()
+
+
+def _finalize_provider_http_status(exc: BaseException) -> Optional[int]:
+    """Read typed SDK/HTTP status fields without inspecting exception prose."""
+    candidates = [
+        getattr(exc, "status_code", None),
+        getattr(exc, "http_status", None),
+        getattr(getattr(exc, "response", None), "status_code", None),
+    ]
+    for value in candidates:
+        if isinstance(value, bool):
+            continue
+        try:
+            status = int(value)
+        except (TypeError, ValueError):
+            continue
+        if 100 <= status <= 599:
+            return status
+    return None
+
+
+def _classify_finalize_provider_exception(
+    exc: BaseException,
+    *,
+    idempotency_supported: bool,
+) -> Dict[str, Any]:
+    """Classify provider delivery from typed exception/status evidence only."""
+    if isinstance(exc, (TimeoutError, asyncio.TimeoutError)):
+        return {
+            "provider_status": "outcome_unknown",
+            "error_code": "FINALIZE_PROVIDER_OUTCOME_UNKNOWN",
+            "error_owner": "controller_provider",
+            "retry_safe": False,
+        }
+    if isinstance(exc, (PermissionError, TypeError, ValueError)):
+        return {
+            "provider_status": "fatal_failed",
+            "error_code": "FINALIZE_PROVIDER_FATAL",
+            "error_owner": "provider",
+            "retry_safe": False,
+        }
+
+    status = _finalize_provider_http_status(exc)
+    definite_retryable_rejections = {408, 409, 425, 429}
+    if status in definite_retryable_rejections:
+        if not idempotency_supported:
+            return {
+                "provider_status": "outcome_unknown",
+                "error_code": "FINALIZE_PROVIDER_OUTCOME_UNKNOWN",
+                "error_owner": "controller_provider",
+                "retry_safe": False,
+            }
+        return {
+            "provider_status": "transient_failed",
+            "error_code": "FINALIZE_PROVIDER_TRANSIENT",
+            "error_owner": "provider",
+            "retry_safe": True,
+        }
+    if status is not None:
+        if status >= 500 and idempotency_supported:
+            return {
+                "provider_status": "transient_failed",
+                "error_code": "FINALIZE_PROVIDER_TRANSIENT",
+                "error_owner": "provider",
+                "retry_safe": True,
+            }
+        if status >= 500:
+            return {
+                "provider_status": "outcome_unknown",
+                "error_code": "FINALIZE_PROVIDER_OUTCOME_UNKNOWN",
+                "error_owner": "controller_provider",
+                "retry_safe": False,
+            }
+        return {
+            "provider_status": "fatal_failed",
+            "error_code": "FINALIZE_PROVIDER_FATAL",
+            "error_owner": "provider",
+            "retry_safe": False,
+        }
+
+    if isinstance(exc, ConnectionRefusedError):
+        return {
+            "provider_status": "transient_failed",
+            "error_code": "FINALIZE_PROVIDER_TRANSIENT",
+            "error_owner": "provider",
+            "retry_safe": True,
+        }
+    if isinstance(exc, (ConnectionError, OSError)):
+        if idempotency_supported:
+            return {
+                "provider_status": "transient_failed",
+                "error_code": "FINALIZE_PROVIDER_TRANSIENT",
+                "error_owner": "provider",
+                "retry_safe": True,
+            }
+        return {
+            "provider_status": "outcome_unknown",
+            "error_code": "FINALIZE_PROVIDER_OUTCOME_UNKNOWN",
+            "error_owner": "controller_provider",
+            "retry_safe": False,
+        }
+    return {
+        "provider_status": "outcome_unknown",
+        "error_code": "FINALIZE_PROVIDER_OUTCOME_UNKNOWN",
+        "error_owner": "controller_provider",
+        "retry_safe": False,
+    }
+
+
+def _finalize_message_wire_rows(messages: Sequence[BaseMessage]) -> List[Dict[str, str]]:
+    """Convert the isolated FINALIZE request to exact Chat Completions rows."""
+    rows: List[Dict[str, str]] = []
+    for message in messages:
+        role = str(getattr(message, "type", "") or "").lower()
+        if role == "human":
+            role = "user"
+        elif role == "ai":
+            role = "assistant"
+        if role not in {"system", "user", "assistant"}:
+            raise ValueError(f"Unsupported FINALIZE wire role: {role or type(message).__name__}")
+        content = getattr(message, "content", "")
+        if not isinstance(content, str):
+            raise TypeError("FINALIZE wire messages require exact string content")
+        rows.append({"role": role, "content": content})
+    if [row["role"] for row in rows] != ["system", "user"]:
+        raise ValueError("New FINALIZE requests require exactly system,user roles")
+    return rows
+
+
+def _build_finalize_wire_payload(
+    messages: Sequence[BaseMessage],
+    settings: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Build the provider body without allowing a generic max-token rewrite."""
+    provider_id = str(settings.get("provider_id") or "").lower()
+    output_tokens = int(settings.get("max_output_tokens") or 0)
+    if output_tokens <= 0:
+        raise ValueError("FINALIZE output token cap must be a positive integer")
+    token_parameter = str(settings.get("output_token_parameter") or "")
+    if provider_id == "deepseek":
+        token_parameter = token_parameter or "max_tokens"
+        if token_parameter != "max_tokens":
+            raise ValueError(
+                "FINALIZE_PROVIDER_PARAMETER_UNSUPPORTED: DeepSeek requires max_tokens"
+            )
+    else:
+        token_parameter = token_parameter or "max_tokens"
+    body: Dict[str, Any] = {
+        "model": str(settings.get("model") or ""),
+        "messages": _finalize_message_wire_rows(messages),
+        "temperature": float(settings.get("temperature") or 0.0),
+        "top_p": float(settings.get("top_p") or 1.0),
+        token_parameter: output_tokens,
+        "stream": False,
+    }
+    response_format = settings.get("response_format")
+    if isinstance(response_format, Mapping):
+        body["response_format"] = deepcopy(dict(response_format))
+    extra_body = settings.get("extra_body_allowlist")
+    if isinstance(extra_body, Mapping) and extra_body:
+        # ``openai`` merges extra_body into the serialized JSON. Keep it
+        # separate in the SDK call but bind its keys into the wire digest below.
+        body["extra_body"] = deepcopy(dict(extra_body))
+    if not body["model"]:
+        raise ValueError("FINALIZE provider model is required")
+    if provider_id == "deepseek" and (
+        "max_tokens" not in body or "max_completion_tokens" in body
+    ):
+        raise ValueError(
+            "FINALIZE_PROVIDER_PARAMETER_UNSUPPORTED: effective DeepSeek payload is miswired"
+        )
+    return body
+
+
+def _finalize_effective_wire_projection(
+    payload: Mapping[str, Any],
+    settings: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Return a credential-free projection of the exact SDK call arguments."""
+    provider_id = str(settings.get("provider_id") or "").lower()
+    token_key = "max_tokens" if "max_tokens" in payload else (
+        "max_completion_tokens" if "max_completion_tokens" in payload else ""
+    )
+    semantic_body = deepcopy(dict(payload))
+    body_hash = hashlib.sha256(
+        json.dumps(
+            semantic_body,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")
+    ).hexdigest()
+    return {
+        "record_type": "finalize_effective_wire_settings",
+        "api_surface": "chat_completions",
+        "provider_id": provider_id,
+        "model": str(payload.get("model") or ""),
+        "stream": bool(payload.get("stream")),
+        "response_format": deepcopy(payload.get("response_format")),
+        "thinking": str(settings.get("thinking") or "disabled"),
+        "output_token_parameter": token_key,
+        "output_token_value": int(payload.get(token_key) or 0) if token_key else 0,
+        "payload_key_set": sorted(str(key) for key in payload),
+        "payload_digest": body_hash,
+        "max_completion_tokens_present": "max_completion_tokens" in payload,
+        "max_tokens_present": "max_tokens" in payload,
+    }
+
+
+def _finalize_completion_projection(completion: Any) -> Dict[str, Any]:
+    """Extract raw content, finish reason, IDs and usage from an SDK object."""
+    choices = list(getattr(completion, "choices", None) or [])
+    first = choices[0] if choices else None
+    message = getattr(first, "message", None)
+    content = getattr(message, "content", "") if message is not None else ""
+    raw_response = content if isinstance(content, str) else ""
+    finish_reason = str(getattr(first, "finish_reason", "") or "")
+    usage_obj = getattr(completion, "usage", None)
+    usage: Dict[str, Any] = {}
+    if usage_obj is not None:
+        for source, target in (
+            ("prompt_tokens", "prompt_tokens"),
+            ("completion_tokens", "completion_tokens"),
+            ("total_tokens", "total_tokens"),
+        ):
+            value = getattr(usage_obj, source, None)
+            if value is not None:
+                usage[target] = int(value)
+    return {
+        "raw_response": raw_response,
+        "finish_reason": finish_reason,
+        "usage": usage,
+        "provider_metadata": {
+            "response_id": str(getattr(completion, "id", "") or ""),
+            "model": str(getattr(completion, "model", "") or ""),
+            "finish_reason": finish_reason,
+            "usage": usage,
+        },
+    }
+
+
+def _finalize_exception_completion(exc: BaseException) -> Optional[Any]:
+    """Return an SDK-delivered completion carried by a typed exception."""
+    completion = getattr(exc, "completion", None)
+    if completion is not None:
+        return completion
+    return None
 
 SUPERVISOR_RETRY_FIELDS = (
     "retry_reason",
@@ -762,6 +1173,13 @@ class BioAnalystAgent:
         extra_body = _llm_extra_body(llm_model, LLM_BASE_URL)
         if extra_body:
             llm_kwargs["extra_body"] = extra_body
+        # Persist the effective, credential-free response settings separately
+        # from the provider client.  Consultant FINALIZE hashes this allowlist
+        # so checkpoint replay cannot confuse materially different requests.
+        self.llm_model_id = str(llm_model)
+        self.llm_provider_id = str(model_provider)
+        self.llm_endpoint_id = str(LLM_BASE_URL)
+        self.llm_response_extra_body = deepcopy(extra_body)
         self.llm = init_chat_model(**llm_kwargs)
         logger.info(
             "LLM request policy: timeout=%ss readonly_timeout=%ss max_retries=%s",
@@ -857,6 +1275,10 @@ class BioAnalystAgent:
         self._stable_prompt_cache: Dict[str, Dict[str, str]] = {}
         self._stable_prompt_dir = self.runtime_memory_dir / "session_prompts"
         self._latest_llm_call_refs: Dict[str, List[Dict[str, Any]]] = {}
+        self._node_invocations = InvocationRegistry(
+            max_entries=512,
+            max_stale_signatures=512,
+        )
         if self.wiki_enabled:
             self.wiki_memory_manager = WikiMemoryManager(
                 llm=self.llm,
@@ -1076,28 +1498,388 @@ class BioAnalystAgent:
         except Exception as e:
             logger.warning(f"Task memory finalize failed for {task_id}: {e}")
 
+    @staticmethod
+    def _finalize_semantic_identity(
+        constraint: Mapping[str, Any],
+    ) -> Tuple[str, str, str, str]:
+        return (
+            str(constraint.get("semantic_key") or "").strip().casefold(),
+            str(constraint.get("operator") or "").strip().casefold(),
+            json.dumps(
+                constraint.get("value"),
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+                default=str,
+            ),
+            json.dumps(
+                constraint.get("condition"),
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+                default=str,
+            ),
+        )
+
+    def _load_verified_finalize_v4_contract(
+        self,
+        *,
+        task_id: str,
+        protocol: Mapping[str, Any],
+        task_spec: Mapping[str, Any],
+        selected_skill_ids: Sequence[Any],
+        enforce_task_spec_binding_hash: bool = True,
+    ) -> Dict[str, Any]:
+        """Reload and bind a compiled v4 contract to current business state."""
+        owner = deepcopy(dict(protocol or {}))
+        if (
+            int(owner.get("schema_version") or 0) != 4
+            or int(owner.get("wire_schema_version") or 0) != 3
+        ):
+            raise SnapshotConflictError(
+                "FINALIZE_PROTOCOL_VERSION_UNSUPPORTED"
+            )
+        validate_finalize_protocol_v4(owner)
+        outcome = dict(owner.get("compile_outcome") or {})
+        if (
+            str(owner.get("finalize_status") or "") != "compiled"
+            or str(owner.get("protocol_status") or "") != "valid"
+            or str(outcome.get("status") or "") != "compiled"
+            or str(outcome.get("protocol_status") or "") != "valid"
+        ):
+            raise SnapshotConflictError(
+                "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+            )
+        store = ContextLineageStore(self.data_path, task_id)
+        context_artifact = dict(
+            store.lookup_finalize_context_artifact(
+                finalize_context_id=str(
+                    owner.get("finalize_context_id") or ""
+                ),
+                base_contract_hash=str(
+                    owner.get("base_contract_hash") or ""
+                ),
+            )
+            or {}
+        )
+        frozen_context = dict(
+            context_artifact.get("finalize_context") or {}
+        )
+        selected = list(dict.fromkeys(
+            str(item).strip()
+            for item in selected_skill_ids or []
+            if str(item).strip()
+        ))
+        current_task_binding_hash = (
+            finalize_task_spec_binding_hash(
+                task_spec,
+                selected_skill_ids=selected,
+            )
+            if enforce_task_spec_binding_hash
+            else ""
+        )
+        if (
+            not context_artifact
+            or not frozen_context
+            or (
+                enforce_task_spec_binding_hash
+                and str(frozen_context.get("task_spec_binding_hash") or "")
+                != current_task_binding_hash
+            )
+            or list(frozen_context.get("resolved_selected_skill_ids") or [])
+            != selected
+        ):
+            raise SnapshotConflictError(
+                "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+            )
+        compiled = dict(
+            store.lookup_finalize_compiled_contract(
+                compiled_contract_hash=str(
+                    outcome.get("compiled_contract_hash") or ""
+                ),
+                finalize_context_id=str(
+                    owner.get("finalize_context_id") or ""
+                ),
+            )
+            or {}
+        )
+        aggregate = dict(owner.get("aggregate") or {})
+        expected_resolution_ids = sorted(
+            str(item)
+            for item in aggregate.get("expected_resolution_ids") or []
+        )
+        resolved_resolution_ids = sorted(
+            str(item)
+            for item in aggregate.get("resolved_resolution_ids") or []
+        )
+        protocol_leaves = sorted(
+            (
+                str(item.get("batch_id") or ""),
+                str(item.get("batch_hash") or ""),
+                str(item.get("decision_artifact_ref") or ""),
+                str(item.get("decision_artifact_hash") or ""),
+            )
+            for item in owner.get("batches") or []
+            if isinstance(item, Mapping)
+            and str(item.get("status") or "") == "resolved"
+        )
+        compiled_leaves = sorted(
+            (
+                str(item.get("batch_id") or ""),
+                str(item.get("batch_hash") or ""),
+                str(item.get("decision_artifact_ref") or ""),
+                str(item.get("decision_artifact_hash") or ""),
+            )
+            for item in compiled.get("active_leaf_decisions") or []
+            if isinstance(item, Mapping)
+        )
+        compile_mode = str(compiled.get("compile_mode") or "")
+        if (
+            not compiled
+            or str(compiled.get("compiled_contract_ref") or "")
+            != str(outcome.get("compiled_contract_ref") or "")
+            or str(compiled.get("compiled_contract_hash") or "")
+            != str(outcome.get("compiled_contract_hash") or "")
+            or str(compiled.get("coverage_artifact_ref") or "")
+            != str(outcome.get("coverage_artifact_ref") or "")
+            or str(compiled.get("coverage_artifact_hash") or "")
+            != str(outcome.get("coverage_artifact_hash") or "")
+            or str(owner.get("coverage_artifact_ref") or "")
+            != str(outcome.get("coverage_artifact_ref") or "")
+            or str(owner.get("coverage_artifact_hash") or "")
+            != str(outcome.get("coverage_artifact_hash") or "")
+            or str(compiled.get("finalize_context_id") or "")
+            != str(owner.get("finalize_context_id") or "")
+            or str(compiled.get("base_contract_hash") or "")
+            != str(owner.get("base_contract_hash") or "")
+            or str(compiled.get("finalize_context_artifact_ref") or "")
+            != str(context_artifact.get("finalize_context_artifact_ref") or "")
+            or str(compiled.get("finalize_context_artifact_hash") or "")
+            != str(context_artifact.get("finalize_context_artifact_hash") or "")
+            or int(compiled.get("protocol_schema_version") or 0) != 4
+            or int(compiled.get("wire_schema_version") or 0) != 3
+            or compile_mode != str(owner.get("compile_mode") or "")
+            or compile_mode != str(outcome.get("mode") or "")
+            or list(compiled.get("selected_skills") or []) != selected
+            or int(compiled.get("task_spec_revision") or -1)
+            != task_spec_revision(task_spec)
+            or expected_resolution_ids != resolved_resolution_ids
+            or len(expected_resolution_ids) != len(set(expected_resolution_ids))
+            or (
+                compile_mode == "model_batched"
+                and (not protocol_leaves or protocol_leaves != compiled_leaves)
+            )
+            or (
+                compile_mode == "controller_deterministic"
+                and (protocol_leaves or compiled_leaves)
+            )
+        ):
+            raise SnapshotConflictError(
+                "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+            )
+
+        return compiled
+
+    def _wiki_terminal_snapshot(
+        self,
+        task_id: str,
+        *,
+        terminal_status: str = "",
+        values: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Build one fail-closed snapshot for both Wiki offer and ingestion."""
+        try:
+            durable_plan = load_plan_state(self.data_path, task_id)
+        except Exception:
+            durable_plan = {}
+        value_map = dict(values or {})
+        task_state = dict(durable_plan.get("task_state") or {})
+        consultation = value_map.get("consultation_state")
+        if not isinstance(consultation, Mapping):
+            consultation = task_state.get("consultation_state") or {}
+        waiting = bool(
+            value_map.get("pending_human_question")
+            or task_state.get("pending_question")
+            or self._business_waiting_state(
+                load_waiting_state(self.data_path, task_id)
+            )
+        )
+        durable_status = str(task_status(durable_plan) or "").lower()
+        observed_terminal = str(terminal_status or durable_status or "").lower()
+        managed_task = bool(
+            durable_plan.get("plan_schema_version")
+            or durable_plan.get("plan_id")
+            or str(value_map.get("task_mode") or "managed") == "managed"
+        )
+        compiled_contract_verified = False
+        consultation_map = dict(consultation or {})
+        wiki_protocol = dict(
+            consultation_map.get("finalize_protocol") or {}
+        )
+        # Terminal decisions are verified only against durable canonical
+        # state.  Corruption disables Wiki eligibility instead of falling back
+        # to a checkpoint alias.
+        try:
+            wiki_task_spec = canonical_task_spec_for_state(durable_plan)
+        except CanonicalTaskStateError:
+            wiki_task_spec = {}
+        wiki_selected_skills = (
+            value_map.get("selected_skills")
+            or consultation_map.get("resolved_selected_skill_ids")
+            or task_state.get("selected_skills")
+            or []
+        )
+        if (
+            int(wiki_protocol.get("schema_version") or 0) == 4
+            and int(wiki_protocol.get("wire_schema_version") or 0) == 3
+            and str(wiki_protocol.get("finalize_status") or "") == "compiled"
+            and isinstance(wiki_task_spec, Mapping)
+        ):
+            try:
+                durable_compiled = self._load_verified_finalize_v4_contract(
+                    task_id=task_id,
+                    protocol=wiki_protocol,
+                    task_spec=wiki_task_spec,
+                    selected_skill_ids=wiki_selected_skills,
+                )
+                compiled_contract_verified = bool(durable_compiled)
+            except (OSError, ValueError, SnapshotConflictError):
+                compiled_contract_verified = False
+        return terminal_snapshot_projection(
+            task_id=task_id,
+            terminal_status=observed_terminal,
+            task_status=durable_status,
+            plan_state=durable_plan,
+            consultation_state=consultation_map,
+            waiting_business_question=waiting,
+            managed_task=managed_task,
+            compiled_contract_verified=compiled_contract_verified,
+        )
+
+    def _persist_wiki_eligibility_decision(
+        self,
+        task_id: str,
+        *,
+        decision_kind: str,
+        terminal_status: str = "",
+        values: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        snapshot = self._wiki_terminal_snapshot(
+            task_id,
+            terminal_status=terminal_status,
+            values=values,
+        )
+        decision = evaluate_wiki_eligibility(
+            snapshot,
+            decision_kind=decision_kind,
+        )
+        # Persistence is part of the eligibility gate.  Any exception is
+        # intentionally allowed to fail closed at the caller boundary.
+        return WikiLifecycleStore(self.data_path, task_id).persist_decision(decision)
+
+    async def _ingest_wiki_task_with_gate(
+        self,
+        task_id: str,
+        *,
+        project_id: str,
+        expected_snapshot_hash: str = "",
+        limit: Optional[int] = None,
+    ) -> Tuple[bool, Any]:
+        """Re-evaluate eligibility, journal the side effect, then ingest once."""
+        decision = self._persist_wiki_eligibility_decision(
+            task_id,
+            decision_kind="ingest",
+            terminal_status="completed",
+        )
+        if not bool(decision.get("eligible")):
+            return False, f"Wiki ingest denied: {decision.get('reason') or 'ineligible'}"
+        if expected_snapshot_hash and str(decision.get("terminal_snapshot_hash") or "") != str(
+            expected_snapshot_hash
+        ):
+            return False, "Wiki ingest denied: terminal_snapshot_changed"
+        pending_count = self.session_archive.pending_for_wiki_count(
+            project_id=project_id,
+            task_id=task_id,
+        )
+        if pending_count <= 0:
+            return False, "Wiki ingest skipped: no pending events"
+        content_identity = {
+            "task_id": task_id,
+            "project_id": project_id,
+            "pending_count": int(pending_count),
+            "terminal_snapshot_hash": decision.get("terminal_snapshot_hash"),
+            "compiled_contract_hash": decision.get("compiled_contract_hash"),
+        }
+        content_hash = hashlib.sha256(
+            json.dumps(
+                content_identity,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        lifecycle = WikiLifecycleStore(self.data_path, task_id)
+        outbox = lifecycle.prepare_outbox(
+            eligibility_decision=decision,
+            project_id=project_id,
+            operation="archive_ingest",
+            content_hash=content_hash,
+        )
+        outbox_status = str(outbox.get("status") or "")
+        if outbox_status == "succeeded":
+            return True, dict(outbox.get("destination_result") or {})
+        if outbox_status in {"dispatched", "outcome_unknown"}:
+            return False, "Wiki ingest outcome requires reconciliation; duplicate dispatch blocked"
+        lifecycle.transition_outbox(outbox["outbox_id"], status="dispatched")
+        try:
+            result = await self.wiki_memory_manager.ingest_from_archive(
+                self.session_archive,
+                project_id=project_id,
+                task_id=task_id,
+                limit=max(1, int(limit or pending_count)),
+            )
+        except BaseException as exc:
+            lifecycle.transition_outbox(
+                outbox["outbox_id"],
+                status="outcome_unknown",
+                destination_result={
+                    "error_type": type(exc).__name__,
+                    "message": str(exc)[:2000],
+                },
+            )
+            raise
+        lifecycle.transition_outbox(
+            outbox["outbox_id"],
+            status="succeeded",
+            destination_result={"acknowledged": True, "result": str(result)},
+        )
+        return True, result
+
     async def _maybe_auto_wiki_ingest_after_finalize(self, task_id: str, status: str) -> None:
-        if not self.wiki_enabled or self.wiki_ingest_mode != "auto" or status != "completed":
+        if not self.wiki_enabled or self.wiki_ingest_mode != "auto":
             return
         project_id = self.default_project_id
         key = f"{project_id}:{task_id}"
         if key in self._wiki_auto_ingest_done:
             return
-        self._wiki_auto_ingest_done.add(key)
         try:
-            pending_count = self.session_archive.pending_for_wiki_count(
-                project_id=project_id,
-                task_id=task_id,
+            decision = self._persist_wiki_eligibility_decision(
+                task_id,
+                decision_kind="ingest",
+                terminal_status=status,
             )
-            if pending_count <= 0:
+            if not bool(decision.get("eligible")):
                 return
-            result = await self.wiki_memory_manager.ingest_from_archive(
-                self.session_archive,
+            succeeded, result = await self._ingest_wiki_task_with_gate(
+                task_id,
                 project_id=project_id,
-                task_id=task_id,
-                limit=max(1, pending_count),
+                expected_snapshot_hash=str(decision.get("terminal_snapshot_hash") or ""),
             )
-            logger.info("Auto wiki ingest after %s: %s", task_id, result)
+            if succeeded:
+                self._wiki_auto_ingest_done.add(key)
+                logger.info("Auto wiki ingest after %s: %s", task_id, result)
         except Exception as e:
             logger.warning(f"Auto wiki ingest failed for {task_id}: {e}")
 
@@ -1108,7 +1890,17 @@ class BioAnalystAgent:
         key = f"{project_id}:{task_id}"
         if key in self._wiki_ingest_offer_done:
             return
-        self._wiki_ingest_offer_done.add(key)
+        try:
+            offer_decision = self._persist_wiki_eligibility_decision(
+                task_id,
+                decision_kind="offer",
+                terminal_status="completed",
+            )
+        except Exception as exc:
+            logger.warning("Wiki offer decision persistence failed closed for %s: %s", task_id, exc)
+            return
+        if not bool(offer_decision.get("eligible")):
+            return
         try:
             task_pending = self.session_archive.pending_for_wiki_count(
                 project_id=project_id,
@@ -1120,6 +1912,7 @@ class BioAnalystAgent:
         except Exception as e:
             logger.warning(f"Wiki ingest pending check failed for {task_id}: {e}")
             return
+        self._wiki_ingest_offer_done.add(key)
 
         prompt = (
             f"\n{Fore.CYAN}Wiki memory: {task_pending} pending event(s) from this task "
@@ -1165,13 +1958,13 @@ class BioAnalystAgent:
         if response.strip().lower() not in {"y", "yes"}:
             print(f"{Fore.CYAN}Wiki ingest skipped. Run /wiki ingest later, or set BIOMIND_WIKI_INGEST_MODE=manual/auto.{Style.RESET_ALL}")
             return
-        result = await self.wiki_memory_manager.ingest_from_archive(
-            self.session_archive,
+        succeeded, result = await self._ingest_wiki_task_with_gate(
+            task_id,
             project_id=project_id,
-            task_id=task_id,
+            expected_snapshot_hash=str(offer_decision.get("terminal_snapshot_hash") or ""),
             limit=max(1, task_pending),
         )
-        output.page_text("Wiki Ingest", result, Fore.CYAN)
+        output.page_text("Wiki Ingest", result, Fore.CYAN if succeeded else Fore.YELLOW)
 
     async def _task_summary_prompt_context(self, task_id: str, query: str) -> Dict[str, str]:
         try:
@@ -1217,13 +2010,13 @@ class BioAnalystAgent:
         """Project final artifacts only from TaskSpec and Plan ownership."""
         plan = load_plan_state(self.data_path, task_id)
         task_spec = ensure_task_spec(
-            payload.get("task_spec") or plan.get("task_spec") or {},
+            canonical_task_spec_for_state(plan),
             task_id=task_id,
         )
         contracts = effective_output_contracts(task_spec)
         output_dir = next(
             (
-                str(item.get("path") or item.get("path_or_name") or "")
+                str(item.get("canonical_path") or "")
                 for item in contracts
                 if str(item.get("role") or "") == "output_dir"
             ),
@@ -1234,7 +2027,7 @@ class BioAnalystAgent:
         for contract in contracts:
             if str(contract.get("role") or "") == "output_dir":
                 continue
-            requested = str(contract.get("path_or_name") or contract.get("path") or contract.get("filename") or "")
+            requested = str(contract.get("canonical_path") or "")
             if not requested:
                 continue
             path = Path(requested).expanduser()
@@ -1258,15 +2051,15 @@ class BioAnalystAgent:
             artifact = artifacts[0] if artifacts else {}
             producer_id = str(producer.get("step_id") or "")
             records.append({
-                "artifact_ref": str(artifact.get("artifact_id") or contract.get("output_id") or identity),
-                "output_id": str(contract.get("output_id") or identity),
+                "artifact_ref": str(artifact.get("artifact_id") or contract.get("artifact_id") or identity),
+                "output_id": str(contract.get("artifact_id") or contract.get("output_id") or identity),
                 "path": str(path),
                 "producer_id": producer_id,
                 "producer_type": "renderer" if producer.get("renderer_composite") else ("plan_step" if producer_id else "unresolved"),
                 "required": bool(contract.get("required", True)),
                 "exists": path.is_file() and path.stat().st_size > 0,
-                "validation_ref": str(artifact.get("validator") or contract.get("validation") or ""),
-                "source_contract_ref": str(contract.get("source_ref") or contract.get("output_id") or ""),
+                "validation_ref": str(artifact.get("validator") or contract.get("validation_contract_id") or ""),
+                "source_contract_ref": str(contract.get("source_ref") or contract.get("artifact_id") or ""),
             })
         return records
 
@@ -1775,7 +2568,14 @@ class BioAnalystAgent:
 
     @staticmethod
     def _business_waiting_state(waiting: Dict[str, Any]) -> bool:
-        return bool(waiting and str(waiting.get("stage") or "") not in {"", "interactive_prompt"})
+        # Wiki ingestion is optional post-processing after a task has already
+        # reached a terminal state.  A stale/timeout Wiki offer must never
+        # resurrect that task as business-level ``waiting_user``.
+        return bool(
+            waiting
+            and str(waiting.get("stage") or "")
+            not in {"", "interactive_prompt", "wiki_ingest_offer"}
+        )
 
     @staticmethod
     def _recovery_state_is_resolved(recovery_state: Dict[str, Any]) -> bool:
@@ -1796,16 +2596,16 @@ class BioAnalystAgent:
         recovery_state = dict(task_state.get("recovery_state") or {})
         if persisted_recovery:
             recovery_state.update(persisted_recovery)
-        task_record = self._persistent_task_record(task_id)
-        task_spec = ensure_task_spec(
-            values.get("task_spec") or task_state.get("task_spec") or plan_state.get("task_spec"),
-            str(task_record.get("user_query") or ""),
-            task_id=task_id,
+        durable_task_spec = canonical_task_spec_for_state(plan_state)
+        # Resume must not promote a parser/fallback projection to canonical
+        # truth.  An uninitialized or legacy semantic-empty task returns to
+        # Consultant with its durable conversation evidence.
+        task_spec = (
+            ensure_task_spec(durable_task_spec, "", task_id=task_id)
+            if task_spec_is_initialized(durable_task_spec)
+            else {}
         )
-        task_revision = max(
-            task_spec_revision(task_spec),
-            int(plan_state.get("generated_from_task_revision") or 0),
-        )
+        task_revision = task_spec_revision(task_spec)
         selected_skills = list(
             values.get("selected_skills")
             or plan_state.get("selected_skill_ids")
@@ -1837,13 +2637,78 @@ class BioAnalystAgent:
             "pending", "ready", "running", "diagnosing", "repairing", "retry_pending"
         })
         attempt_resume = classify_attempt_resume(plan_state)
+        consultation_owner = dict(
+            values.get("consultation_state")
+            or task_state.get("consultation_state")
+            or {}
+        )
+        resume_finalize_protocol = dict(
+            consultation_owner.get("finalize_protocol") or {}
+        )
+        resume_protocol_schema = int(
+            resume_finalize_protocol.get("schema_version") or 0
+        )
+        resume_compile_outcome = dict(
+            resume_finalize_protocol.get("compile_outcome") or {}
+        )
+        finalize_compiled_for_planner = bool(
+            resume_protocol_schema == 4
+            and str(
+                resume_finalize_protocol.get("finalize_status") or ""
+            ) == "compiled"
+            and str(resume_compile_outcome.get("status") or "")
+            == "compiled"
+        )
+        resume_finalize_status = str(
+            resume_finalize_protocol.get("finalize_status")
+            or resume_finalize_protocol.get("status")
+            or ""
+        ).strip().lower()
+        finalize_owner_present = bool(
+            resume_finalize_protocol
+            or str(consultation_owner.get("phase") or "").strip().lower()
+            == "finalize"
+        )
+        finalize_owner_blocked = bool(
+            resume_finalize_status
+            in {
+                "blocked", "blocked_internal_contract",
+                "blocked_internal_provider",
+            }
+            or str(consultation_owner.get("phase") or "").strip().lower()
+            == "blocked"
+        )
+        # A stale plan/task projection must never outrank an in-flight FINALIZE
+        # owner.  Frozen legacy compiled state also returns through Consultant
+        # once so its protected artifact chain can be verified before Planner.
+        finalize_owner_requires_consultant = bool(
+            finalize_owner_present
+            and not finalize_owner_blocked
+            and not finalize_compiled_for_planner
+        )
+        legacy_bootstrap_recovery = bool(
+            not task_spec_is_initialized(task_spec)
+            and str((plan_state.get("audit_index") or {}).get("raw_submission_ref") or "")
+        )
 
-        if durable_task_status in {TASK_STATUS_BLOCKED, TASK_STATUS_FAILED, TASK_STATUS_CANCELLED}:
+        if durable_task_status == TASK_STATUS_CANCELLED:
+            node = "finish"
+            reason = "task_cancelled"
+        elif legacy_bootstrap_recovery:
+            node = "consultant"
+            reason = "legacy_uninitialized_taskspec_recovery"
+        elif durable_task_status in {TASK_STATUS_BLOCKED, TASK_STATUS_FAILED}:
             node = "finish"
             reason = "legacy_terminal_state" if active_or_pending else f"task_{durable_task_status}"
         elif recovery_phase in {"blocked", "exhausted"} or recovery_action_type == "blocked":
             node = "finish"
             reason = "legacy_terminal_recovery_with_active_steps" if active_or_pending else "recovery_terminal_without_new_evidence"
+        elif finalize_owner_blocked:
+            node = "finish"
+            reason = "finalize_owner_terminal_block"
+        elif finalize_owner_requires_consultant:
+            node = "consultant"
+            reason = "versioned_finalize_required_before_planner"
         elif durable_task_status == TASK_STATUS_COMPLETED:
             node = "finish"
             reason = "task_already_terminal"
@@ -1873,9 +2738,6 @@ class BioAnalystAgent:
         } or pending_recovery_action:
             node = "generate"
             reason = "resume_persisted_local_recovery"
-        elif str(task_record.get("status") or "") == "completed":
-            node = "finish"
-            reason = "task_already_terminal"
         elif steps and statuses and statuses <= {"done", "passed", "skipped", "skipped_upstream_blocked", "cancelled"}:
             node = "finish"
             reason = "task_already_terminal"
@@ -1886,8 +2748,12 @@ class BioAnalystAgent:
             node = "plan_review"
             reason = "plan_requires_approval"
         elif str(task_spec.get("goal") or "").strip() and selected_skills:
-            node = "planner"
-            reason = "task_spec_and_skills_without_valid_plan"
+            if finalize_compiled_for_planner:
+                node = "planner"
+                reason = "compiled_task_spec_and_skills_without_valid_plan"
+            else:
+                node = "consultant"
+                reason = "versioned_finalize_required_before_planner"
         else:
             node = "consultant"
             reason = "task_requires_consultation"
@@ -1909,6 +2775,11 @@ class BioAnalystAgent:
             "current_step_id": str(current_step.get("step_id") or ""),
             "current_step_index": current_step_index,
             "selected_skill_ids": selected_skills,
+            "finalize_protocol_schema": resume_protocol_schema,
+            "finalize_compiled_for_planner": finalize_compiled_for_planner,
+            "finalize_owner_requires_consultant": (
+                finalize_owner_requires_consultant
+            ),
             "resolved_input_count": len(task_spec.get("inputs", []) or []),
             "failure_stage": str(failure.get("failure_stage") or values.get("failure_stage") or ""),
             "recovery_phase": str(recovery_state.get("phase") or ""),
@@ -2068,13 +2939,19 @@ class BioAnalystAgent:
         recovery_resolved = self._recovery_state_is_resolved(recovery_state)
         task_record = self._persistent_task_record(task_id)
         original_query = str(task_record.get("user_query") or "")
-        task_spec = ensure_task_spec(
-            values.get("task_spec") or task_state.get("task_spec") or plan_state.get("task_spec"),
-            original_query,
-            task_id=task_id,
+        durable_task_spec = canonical_task_spec_for_state(plan_state)
+        task_spec = (
+            ensure_task_spec(durable_task_spec, "", task_id=task_id)
+            if task_spec_is_initialized(durable_task_spec)
+            else {}
         )
-        task_revision = max(task_spec_revision(task_spec), int(plan_state.get("generated_from_task_revision") or 0))
+        task_revision = task_spec_revision(task_spec)
         selected_skills = list(values.get("selected_skills") or task_state.get("selected_skills") or plan_state.get("selected_skill_ids") or [])
+        consultation_state = deepcopy(dict(
+            values.get("consultation_state")
+            or task_state.get("consultation_state")
+            or {}
+        ))
         if not selected_skills:
             selected_skills = list(dict.fromkeys(
                 str(skill_id)
@@ -2095,12 +2972,13 @@ class BioAnalystAgent:
                 "task_spec": task_spec,
                 "task_revision": task_revision,
                 "selected_skills": selected_skills,
+                "consultation_state": consultation_state,
             },
         )
         project_id = str(values.get("project_id") or self.default_project_id)
         stable_record = self._get_or_create_stable_prompt(task_id, project_id)
         resume_message = str(user_prompt or "").strip()
-        messages = [] if values.get("messages") else list(values.get("messages") or [])
+        messages = list(values.get("messages") or [])
         if not messages:
             if not values.get("messages"):
                 messages = [HumanMessage(content=str(task_spec.get("goal") or original_query or resume_message))]
@@ -2122,6 +3000,28 @@ class BioAnalystAgent:
             "selected_skills": selected_skills,
             "selected_skills_raw": list(values.get("selected_skills_raw") or selected_skills),
             "active_skills": list(values.get("active_skills") or []),
+            "consultation_state": consultation_state,
+            "conversation_evidence": deepcopy(dict(plan_state.get("conversation_evidence") or {})),
+            "resolved_bindings": deepcopy(dict(
+                values.get("resolved_bindings")
+                or task_state.get("resolved_bindings")
+                or {}
+            )),
+            "planner_feedback": deepcopy(dict(
+                values.get("planner_feedback")
+                or task_state.get("planner_feedback")
+                or {}
+            )),
+            "consultant_contract_repair": deepcopy(dict(
+                values.get("consultant_contract_repair")
+                or task_state.get("consultant_contract_repair")
+                or {}
+            )),
+            "contract_status": str(
+                values.get("contract_status")
+                or task_state.get("contract_status")
+                or ""
+            ),
             "runtime_status": values.get("runtime_status") or self._runtime_status_for_task(task_id),
             "runtime_audit": values.get("runtime_audit") or task_state.get("runtime_audit") or [],
             "input_audit": values.get("input_audit") or task_state.get("input_audit") or {},
@@ -2136,7 +3036,14 @@ class BioAnalystAgent:
                 None if recovery_resolved else recovery_state.get("phase") or values.get("recovery_phase")
             ),
             "recovery_context": (
-                {} if recovery_resolved else values.get("recovery_context") or recovery_store.load_context()
+                {}
+                if recovery_resolved
+                else values.get("recovery_context")
+                or {
+                    "context_ref": str(recovery_store.root / "recovery_context.json"),
+                    "context_id": str(recovery_state.get("context_id") or ""),
+                    "error_fingerprint": str(recovery_state.get("error_fingerprint") or ""),
+                }
             ),
             "diagnostic_summary": (
                 {} if recovery_resolved else values.get("diagnostic_summary") or recovery_store.load_diagnostic_summary()
@@ -2174,7 +3081,7 @@ class BioAnalystAgent:
         if self._business_waiting_state(waiting):
             return {"action": "waiting_user", "waiting": waiting}
         resume_node, audit = self._resolve_resume_node(task_id)
-        if str(task_record.get("status") or "") == "completed" or resume_node == "finish":
+        if resume_node == "finish":
             return {"action": "completed", "resume_audit": audit}
         return {"action": "resume", "resume_audit": audit}
 
@@ -2357,6 +3264,43 @@ class BioAnalystAgent:
             "</memory_source_refs>\n"
             "</consultant_memory_packet>"
         )
+
+    @staticmethod
+    def _planner_consultant_contract_projection(
+        contract: Mapping[str, Any] | None,
+    ) -> Dict[str, Any]:
+        """Keep FINALIZE proof metadata without duplicating TaskSpec in Planner."""
+        raw = dict(contract or {})
+        if not raw:
+            return {}
+        constraints = [
+            dict(item) for item in raw.get("constraints") or []
+            if isinstance(item, Mapping)
+        ]
+        scope_counts = {"plan": 0, "runtime_global": 0, "context_only": 0}
+        for item in constraints:
+            scope_counts[semantic_constraint_enforcement_scope(item)] += 1
+        keep = (
+            "record_type", "schema_version", "artifact_schema_version",
+            "protocol_schema_version", "wire_schema_version", "finalize_context_id",
+            "base_contract_hash", "coverage_artifact_hash", "candidate_catalog_hash",
+            "compile_mode", "compiled_contract_id", "compiled_contract_hash",
+            "selected_skills",
+        )
+        projection = {
+            key: deepcopy(raw.get(key))
+            for key in keep
+            if raw.get(key) not in (None, "", [], {})
+        }
+        projection["constraint_counts_by_scope"] = scope_counts
+        projection["constraint_count"] = len(constraints)
+        projection["contract_authority"] = (
+            "Constraint details are projected once through the canonical TaskSpec context."
+        )
+        summary = str(raw.get("summary") or raw.get("requirements_summary") or "").strip()
+        if summary:
+            projection["summary"] = summary[:1500]
+        return projection
 
     @staticmethod
     def _memory_source_refs(text: str, limit: int = 24) -> List[str]:
@@ -2547,7 +3491,7 @@ class BioAnalystAgent:
         state: AgentState,
         messages: List[BaseMessage],
     ) -> str:
-        """Project user-owned facts needed to generate only the current step."""
+        """Compatibility entrypoint backed by the V2 deterministic LLMPayload."""
         spec = self._task_spec_for_state(dict(state), messages)
         task_id = str(state.get("task_id") or "default")
         plan_state = load_plan_state(self.data_path, task_id)
@@ -2555,23 +3499,35 @@ class BioAnalystAgent:
         if isinstance(input_audit, dict) and input_audit:
             spec = merge_task_spec_input_audit(spec, input_audit)
         _, current_step = current_plan_step_with_index(plan_state)
-        payload = project_effective_user_facts(
-            resolve_effective_user_facts(spec),
-            audience="generate",
-            step=current_step or {},
-            max_chars=6000,
+        protocol = self._renderer_action_protocol(state, task_id)
+        context = build_node_context(
+            node_type="generate",
+            task_spec=spec,
+            plan_state=plan_state,
+            state_generation=int(plan_state.get("state_generation") or 0),
+            current_step_id=str((current_step or {}).get("step_id") or ""),
+            runtime={
+                "progress": {
+                    "current_step_status": str((current_step or {}).get("status") or "pending"),
+                    "remaining_step_count": sum(
+                        1
+                        for step in plan_state.get("steps", []) or []
+                        if isinstance(step, Mapping)
+                        and str(step.get("status") or "").lower()
+                        not in {"done", "completed", "skipped"}
+                    ),
+                },
+                "renderer_status": str(protocol.get("manifest_status") or ""),
+            },
+            feedback=dict(state.get("last_supervisor_feedback") or {}),
+            allowed_operations=list(protocol.get("allowed_actions") or []),
+            trace_enabled=False,
+            max_payload_chars=max(
+                1,
+                int(getattr(self, "llm_context_limit_tokens", 200_000)) * 4,
+            ),
         )
-        payload.pop("projection_text", None)
-        contract = effective_task_contract(spec)
-        # Compatibility aliases remain derived from the same resolved facts;
-        # Generate no longer walks user_directives or a separate constraint list.
-        payload["user_constraints"] = [
-            str(item.get("text") or "")
-            for item in payload.get("active_constraints", [])
-            if str(item.get("text") or "").strip()
-        ]
-        payload["resolved_inputs"] = contract["inputs"]
-        return json.dumps(payload, ensure_ascii=False, separators=(",", ":"), default=str)
+        return context.llm_payload.to_json()
 
     @staticmethod
     def _bounded_message_history(
@@ -2631,35 +3587,104 @@ class BioAnalystAgent:
             selected.append(later_humans[-1])
         return selected
 
-    @staticmethod
     def _task_spec_for_state(
+        self,
         state: Optional[Dict[str, Any]],
         messages: Optional[List[BaseMessage]] = None,
     ) -> Dict[str, Any]:
         mapping = state if isinstance(state, dict) else {}
-        fallback = "\n".join(
-            str(getattr(message, "content", "")).strip()
-            for message in BioAnalystAgent._user_goal_messages(list(messages or mapping.get("messages", []) or []))
-            if str(getattr(message, "content", "")).strip()
-        )
-        return ensure_task_spec(
-            mapping.get("task_spec"),
-            fallback,
-            task_id=str(mapping.get("task_id") or mapping.get("session_id") or ""),
-            project_root=project_root,
+        task_id = str(mapping.get("task_id") or mapping.get("session_id") or "")
+        if not task_id:
+            return {}
+        durable = load_plan_state(self.data_path, task_id)
+        if durable.get("canonical_state_error"):
+            raise CanonicalTaskStateError(
+                str((durable.get("canonical_state_error") or {}).get("detail") or "")
+            )
+        authoritative = canonical_task_spec_for_state(durable)
+        return (
+            ensure_task_spec(authoritative, "", task_id=task_id)
+            if task_spec_is_initialized(authoritative)
+            else {}
         )
 
-    @classmethod
-    def _task_revision_for_state(cls, state: Optional[Dict[str, Any]]) -> int:
+    def _task_revision_for_state(self, state: Optional[Dict[str, Any]]) -> int:
         mapping = state if isinstance(state, dict) else {}
-        try:
-            explicit_revision = int(mapping.get("task_revision") or 0)
-        except (TypeError, ValueError):
-            explicit_revision = 0
-        return max(
-            task_spec_revision(mapping.get("task_spec")),
-            explicit_revision,
+        return task_spec_revision(self._task_spec_for_state(mapping))
+
+    def _commit_consultant_update(
+        self,
+        task_id: str,
+        update: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Commit a validated Consultant proposal before it leaves the node."""
+        projected = dict(update or {})
+        proposed_task = projected.get("task_spec")
+        if not task_spec_is_initialized(proposed_task):
+            return projected
+        durable_before = load_plan_state(self.data_path, task_id)
+        task_state_before = dict(durable_before.get("task_state") or {})
+        if "pending_human_question" in projected:
+            pending_question = projected.get("pending_human_question") or {}
+        else:
+            pending_question = task_state_before.get("pending_question") or {}
+        candidate = {
+            "task_spec": proposed_task,
+            "selected_skills": list(
+                projected.get("selected_skills")
+                or task_state_before.get("selected_skills")
+                or durable_before.get("selected_skill_ids")
+                or []
+            ),
+            "resolved_bindings": dict(
+                projected.get("resolved_bindings")
+                or task_state_before.get("resolved_bindings")
+                or {}
+            ),
+            "consultation_state": dict(
+                projected.get("consultation_state")
+                or task_state_before.get("consultation_state")
+                or {}
+            ),
+            "pending_question": dict(pending_question),
+        }
+        if "planner_feedback" in projected:
+            candidate["planner_feedback"] = dict(
+                projected.get("planner_feedback") or {}
+            )
+        committed = commit_consultant_candidate_state(
+            self.data_path,
+            task_id,
+            candidate,
         )
+        committed_task = canonical_task_spec_for_state(committed)
+        committed_state = dict(committed.get("task_state") or {})
+        projected.update({
+            "task_spec": deepcopy(committed_task),
+            "task_revision": task_spec_revision(committed_task),
+            "selected_skills": list(committed_state.get("selected_skills") or []),
+            "resolved_bindings": deepcopy(dict(
+                committed_state.get("resolved_bindings") or {}
+            )),
+            "consultation_state": deepcopy(dict(
+                committed_state.get("consultation_state") or {}
+            )),
+            "pending_human_question": deepcopy(dict(
+                committed_state.get("pending_question") or {}
+            )),
+            "conversation_evidence": deepcopy(dict(
+                committed.get("conversation_evidence") or {}
+            )),
+            "canonical_commit": {
+                "succeeded": True,
+                "task_revision": task_spec_revision(committed_task),
+                "state_generation": int(committed.get("state_generation") or 0),
+            },
+        })
+        planner_feedback = committed_state.get("planner_feedback")
+        if isinstance(planner_feedback, Mapping):
+            projected["planner_feedback"] = deepcopy(dict(planner_feedback))
+        return projected
 
     def _stale_plan_task_revision_reason(self, state: AgentState, task_id: str) -> str:
         plan_state = load_plan_state(self.data_path, task_id)
@@ -2774,8 +3799,57 @@ class BioAnalystAgent:
             },
             recovery_history=history,
         )
-        prompt_context = context.prompt_view()
-        diagnosis = dict(prompt_context.get("diagnosis") or {})
+        # RecoveryContext remains the durable evidence record.  The model does
+        # not receive its control IDs/refs or the legacy load-all/compact view.
+        diagnosis = dict(context.diagnosis or {})
+        recovery_task_spec = canonical_task_spec_for_state(plan_state)
+        recovery_evidence: List[Dict[str, Any]] = []
+        if context.bounded_log_excerpt:
+            recovery_evidence.append({
+                "evidence_id": context.context_id + ":log",
+                "kind": "execution_log",
+                "excerpt": context.bounded_log_excerpt,
+                "truncated": True,
+            })
+        for index, item in enumerate(diagnosis.get("evidence") or [], start=1):
+            recovery_evidence.append({
+                "evidence_id": context.context_id + f":diagnosis:{index}",
+                "kind": "diagnostic_fact",
+                "excerpt": str(item),
+                "truncated": False,
+            })
+        recovery_node_context = build_node_context(
+            node_type="recovery",
+            task_spec=recovery_task_spec,
+            plan_state=plan_state,
+            state_generation=int(plan_state.get("state_generation") or 0),
+            current_step_id=str(context.step_id or evidence.get("step_id") or ""),
+            runtime={
+                "action_contract": dict(context.action_contract or {}),
+                "execution": dict(context.execution or {}),
+                "validation": dict(context.validation or {}),
+                "completion": dict(context.completion or {}),
+                "progress": dict(context.progress or {}),
+                "recent_attempts": list(context.recent_attempts or []),
+                "already_tried_strategies": list(context.already_tried_strategies or []),
+                "skill_policy": dict(context.skill_policy or {}),
+            },
+            feedback={
+                "diagnosis": {
+                    key: value for key, value in diagnosis.items()
+                    if key != "evidence"
+                },
+                "conflicts": list(context.conflicts or []),
+            },
+            evidence=recovery_evidence,
+            allowed_operations=[item.value for item in RecoveryAction],
+            attempt_id=str(context.attempt_id or evidence.get("attempt_id") or ""),
+            failure_fingerprint=str(context.error_fingerprint or ""),
+            evidence_identity=str(context.context_id or ""),
+            trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
+            max_payload_chars=max(1, int(self.llm_context_limit_tokens) * 4),
+        )
+        prompt_context = recovery_node_context.llm_payload.to_dict()
         try:
             evidence_returncode = int(
                 evidence.get("returncode")
@@ -2805,10 +3879,11 @@ class BioAnalystAgent:
             if not cached_judge:
                 increment_plan_budget(plan_state, "recovery_judge_count")
                 save_plan_state(self.data_path, task_id, plan_state)
-                prompt = PromptManager.get_recovery_judge_prompt(prompt_context)
+                prompt = PromptManager.get_recovery_v2_prompt(prompt_context)
                 try:
-                    response = await self._ainvoke_llm(
+                    response = await self._ainvoke_node_llm(
                         [HumanMessage(content=prompt)],
+                        node_context=recovery_node_context,
                         stage="recovery_judge",
                         task_id=task_id,
                         task_mode=str(state.get("task_mode") or "managed"),
@@ -2821,6 +3896,28 @@ class BioAnalystAgent:
                         },
                     )
                     raw_response = str(getattr(response, "content", response) or "")
+                    current_plan_state = load_plan_state(self.data_path, task_id)
+                    current_task_spec = canonical_task_spec_for_state(
+                        current_plan_state
+                    )
+                    current_binding = build_node_context(
+                        node_type="recovery",
+                        task_spec=current_task_spec,
+                        plan_state=current_plan_state,
+                        state_generation=int(current_plan_state.get("state_generation") or 0),
+                        current_step_id=str(context.step_id or evidence.get("step_id") or ""),
+                        attempt_id=str(context.attempt_id or evidence.get("attempt_id") or ""),
+                        failure_fingerprint=str(context.error_fingerprint or ""),
+                    ).binding
+                    staleness = evaluate_node_staleness(
+                        recovery_node_context.binding,
+                        current_binding.to_dict(),
+                    )
+                    if not staleness.usable:
+                        self._node_invocations.mark_stale_signature_handled(
+                            staleness.stale_signature
+                        )
+                        raise RuntimeError(staleness.code)
                     decision = parse_recovery_judge_decision(raw_response)
                     store.save_llm_result(
                         context.context_id,
@@ -2912,12 +4009,18 @@ class BioAnalystAgent:
             "requires_user_input": decision.requires_user_input,
             "diagnostic_context_path": str(store.root / "recovery_context.json"),
         }
+        recovery_context_ref = str(store.root / "recovery_context.json")
+        compact_recovery_binding = {
+            "context_ref": recovery_context_ref,
+            "context_id": context.context_id,
+            "error_fingerprint": context.error_fingerprint,
+            "failure_owner": decision.failure_owner,
+            "evidence_handles": list(decision.evidence),
+        }
         update.update({
-            "diagnostic_context": prompt_context,
-            "recovery_context": prompt_context,
+            "diagnostic_context": compact_recovery_binding,
+            "recovery_context": compact_recovery_binding,
             "recovery_context_digest": context.context_id,
-            "current_step_context": dict(prompt_context.get("current_step") or {}),
-            "progress_evidence": dict(prompt_context.get("progress") or {}),
             "recovery_decision": decision.to_dict(),
             "diagnostic_summary": diagnosis,
             "structured_diagnosis": diagnosis,
@@ -3396,13 +4499,24 @@ class BioAnalystAgent:
             "created_at": datetime.now().isoformat(timespec="seconds"),
         }
 
-    def _bind_pending_action(self, action: Dict[str, Any], state: AgentState, task_id: str) -> Dict[str, Any]:
+    def _bind_pending_action(
+        self,
+        action: Dict[str, Any],
+        state: AgentState,
+        task_id: str,
+        *,
+        plan_state: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Bind one generated action to the exact task revision and plan step."""
         if not isinstance(action, dict) or not action:
             return {}
         raw_action = dict(action)
         bound = dict(action)
-        plan_state = load_plan_state(self.data_path, task_id)
+        # Controller callers that already own a freshly loaded PlanState pass it
+        # through so binding and their runtime mutation share one CAS commit.
+        # Loading and saving a second copy here would advance the generation and
+        # make the caller's otherwise valid snapshot stale.
+        plan_state = plan_state if plan_state is not None else load_plan_state(self.data_path, task_id)
         step = self._running_plan_step(plan_state) or {}
         task_revision = self._task_revision_for_state(dict(state))
         plan_version = str(plan_state.get("plan_version") or "plan_v1")
@@ -3974,6 +5088,8 @@ class BioAnalystAgent:
             for item in action.get("expected_artifact_ids", []) or []
             if item in artifact_by_id
         ]
+        execution["current_action_id"] = str(action.get("id") or "")
+        step["renderer_execution"] = execution
         pending = self._bind_pending_action({
             "type": "execute",
             "language": "bash",
@@ -3988,10 +5104,7 @@ class BioAnalystAgent:
             "manifest_script_hash": manifest_script_hash,
             "expected_outputs": expected_outputs,
             "success_checks": list(action.get("success_checks") or []),
-        }, state, task_id)
-        execution["current_action_id"] = str(action.get("id") or "")
-        step["renderer_execution"] = execution
-        save_plan_state(self.data_path, task_id, plan_state)
+        }, state, task_id, plan_state=plan_state)
         return {
             "messages": [SystemMessage(content=f"Manifest Runner selected action {action.get('id')}: {script_path.name}")],
             "pending_action": pending,
@@ -4080,6 +5193,16 @@ class BioAnalystAgent:
         stale = self._pending_action_stale_reason(action, state, task_id)
         if stale:
             return stale
+        task_spec = self._task_spec_for_state(dict(state), list(state.get("messages", []) or []))
+        managed_bindings = build_managed_artifact_bindings(task_spec)
+        if action.get("managed_artifact_handles") or action.get("materialized_artifacts"):
+            managed_violations = validate_materialized_artifacts(action, managed_bindings)
+            if managed_violations:
+                return json.dumps(
+                    managed_violations[0].to_dict(),
+                    ensure_ascii=False,
+                    sort_keys=True,
+                )
         if expected_type == "execute":
             code = str(action.get("code") or "").strip()
             if not code:
@@ -4219,7 +5342,7 @@ class BioAnalystAgent:
             plan_state,
             self._task_revision_for_state(dict(state)),
         )
-        task_spec = state.get("task_spec") or plan_state.get("task_spec") or {}
+        task_spec = canonical_task_spec_for_state(plan_state)
         if validation.get("valid") and (
             not isinstance(task_spec, dict) or not str(task_spec.get("goal") or "").strip()
         ):
@@ -4239,7 +5362,7 @@ class BioAnalystAgent:
         *,
         message: str = "",
     ) -> Dict[str, Any]:
-        """Persist and log one observable Generate -> Planner decision."""
+        """Persist and log one observable, issue-owner-driven Generate redirect."""
         plan_state = load_plan_state(self.data_path, task_id)
         steps = [step for step in plan_state.get("steps", []) or [] if isinstance(step, dict)]
         current_index = int(validation.get("current_step_index", -1))
@@ -4263,7 +5386,15 @@ class BioAnalystAgent:
         approval_reason = audit["redirect_reason"] in {
             "plan_not_approved", "stale_task_revision", "plan_approval_stale",
         }
-        target_node = "plan_review" if approval_reason else "planner"
+        repair_owner = str(validation.get("repair_owner") or "planner")
+        if approval_reason:
+            target_node = "plan_review"
+        elif repair_owner == "planner":
+            target_node = "planner"
+        elif repair_owner in {"task_spec", "external_input"}:
+            target_node = "consultant"
+        else:
+            target_node = "finish"
         logger.warning(
             "Generate redirected to %s: %s",
             target_node,
@@ -4271,18 +5402,38 @@ class BioAnalystAgent:
         )
         detail = json.dumps(audit, ensure_ascii=False, sort_keys=True)
         plan_progress = self._record_plan_current_evidence(task_id, "generate_plan_redirect", detail)
+        repair_instruction = {
+            "planner": "Planner must repair the canonical current-step contract.",
+            "consultant": (
+                "Consultant must repair the affected TaskSpec field, or request the exact "
+                "missing external value when it is not inferable."
+            ),
+            "finish": (
+                "Automatic LLM repair is not authorized for this internal contract failure; "
+                "the task is blocked with structured diagnostics."
+            ),
+        }.get(target_node, "Controller validation must be completed before execution.")
         user_message = message or (
             f"Generate cannot continue ({audit['redirect_reason']}). "
             f"Missing fields: {', '.join(audit['missing_fields']) or 'none'}. "
-            "Planner must repair the canonical current-step contract."
+            + repair_instruction
+        )
+        required_next_action = (
+            "PLAN_APPROVAL_REQUIRED"
+            if approval_reason
+            else "PLAN_PATCH"
+            if target_node == "planner"
+            else "TASKSPEC_REPAIR"
+            if target_node == "consultant"
+            else "INTERNAL_CONTRACT_BLOCKED"
         )
         update = {
             "messages": [SystemMessage(content=user_message)],
             "plan_progress": plan_progress,
             "pending_action": {},
             "resume_audit": audit,
-            "required_next_action": "PLAN_APPROVAL_REQUIRED" if approval_reason else "PLAN_PATCH",
-            "failure_owner": "" if approval_reason else RecoveryFailureOwner.PLAN.value,
+            "required_next_action": required_next_action,
+            "failure_owner": "" if approval_reason else repair_owner,
             "recovery_scope": "" if approval_reason else "CURRENT_STEP",
             "recovery_phase": "" if approval_reason else "plan_repair",
             "next_step": target_node,
@@ -4411,6 +5562,45 @@ class BioAnalystAgent:
         if fixes:
             lines.append("required_fix: " + " | ".join(fixes[:3]))
         return "\n".join(lines)
+
+    def _current_action_semantic_contract(
+        self,
+        state: AgentState,
+        task_id: str,
+    ) -> Dict[str, Any]:
+        """Project action meaning without plan/renderer identity or paths."""
+        protocol = self._renderer_action_protocol(state, task_id)
+        feedback = self._fresh_supervisor_feedback(state, task_id)
+        argument_schema = protocol.get("argument_schema") or {}
+        arguments: List[Dict[str, Any]] = []
+        if isinstance(argument_schema, Mapping):
+            for name, raw in argument_schema.items():
+                spec = dict(raw) if isinstance(raw, Mapping) else {}
+                arguments.append({
+                    "name": str(name),
+                    "required": bool(spec.get("required")),
+                    "semantic_type": str(
+                        spec.get("semantic_type")
+                        or spec.get("type")
+                        or spec.get("role")
+                        or ""
+                    ),
+                    "description": str(spec.get("description") or spec.get("purpose") or ""),
+                })
+        result: Dict[str, Any] = {
+            "policy": "one_structured_action_for_current_step",
+            "manifest_status": str(protocol.get("manifest_status") or ""),
+            "renderer_managed": bool(protocol.get("renderer_composite")),
+        }
+        if arguments:
+            result["renderer_arguments"] = arguments
+        fixes = [
+            str(item) for item in feedback.get("required_fix", []) or []
+            if str(item).strip()
+        ]
+        if fixes and not (state.get("recovery_context") or state.get("recovery_decision")):
+            result["required_fixes"] = fixes[:3]
+        return result
 
     @staticmethod
     def _step_local_messages(
@@ -4563,6 +5753,7 @@ class BioAnalystAgent:
             "<observation>",
             "<consultant_validation_error>",
             "<consultant_semantic_constraint_validation_error>",
+            "<consultant_contract_repair_error>",
             "<consultant_semantic_resolution_request>",
             "<load_error",
             "<llm_transient_retry>",
@@ -4711,6 +5902,10 @@ class BioAnalystAgent:
 
         history_specs = {
             "task_spec": dict(priority=100, pinned=True, droppable=False),
+            "deterministic_base_constraints": dict(priority=100, pinned=True, droppable=False),
+            "semantic_provenance_catalog": dict(priority=100, pinned=True, droppable=False),
+            "contract_repair": dict(priority=100, pinned=True, droppable=False),
+            "selected_skill_context": dict(priority=95, pinned=True, droppable=False),
             "input_resolution": dict(
                 priority=92,
                 pinned=False,
@@ -4863,6 +6058,164 @@ class BioAnalystAgent:
             max_messages=max_messages,
         )
         return visible
+
+    def _append_semantic_conversation_turn(
+        self,
+        task_id: str,
+        *,
+        role: str,
+        content: str,
+        question_id: str = "",
+        content_ref: str = "",
+    ) -> Tuple[List[Dict[str, Any]], str]:
+        """Append one durable user/question turn and return the full chain.
+
+        The plan state owns only the bounded chain index.  Turn content is an
+        immutable object, so checkpoint compaction and graph-message pruning
+        cannot erase semantic user authority.
+        """
+        plan_state = load_plan_state(self.data_path, task_id)
+        store = StateContractStore(self.data_path, task_id)
+        index = dict(plan_state.get("conversation_evidence") or {})
+        existing = store.read_conversation_evidence(index) if index.get("head_ref") else []
+        normalized_role = str(role or "").strip().lower()
+        normalized_question = str(question_id or "")
+        # LangGraph can re-enter an interrupting node.  A stable question_id
+        # makes persisting the displayed question idempotent.
+        for turn in existing:
+            if (
+                normalized_question
+                and str(turn.get("question_id") or "") == normalized_question
+                and str(turn.get("role") or "") == normalized_role
+                and (
+                    normalized_role == "consultant_question"
+                    or str(turn.get("content") or "") == str(content or "")
+                )
+            ):
+                return existing, str(turn.get("turn_ref") or "")
+        next_index, turn_ref = store.append_conversation_turn(
+            index,
+            role=normalized_role,
+            content=str(content or ""),
+            content_ref=str(content_ref or ""),
+            question_id=normalized_question,
+        )
+        plan_state["conversation_evidence"] = next_index
+        save_plan_state(self.data_path, task_id, plan_state)
+        return store.read_conversation_evidence(next_index), turn_ref
+
+    def _persist_user_submission(
+        self,
+        task_id: str,
+        prompt: Any,
+        *,
+        structured_source: Optional[Mapping[str, Any]] = None,
+    ) -> Tuple[Dict[str, Any], bool, str]:
+        """Append U(n), or create U1 plus the uninitialized bootstrap state.
+
+        This is the sole normal-entry turn allocator used by ``go``.  Reusing
+        a task ID therefore extends one durable evidence chain instead of
+        creating another root or replacing earlier user authority.
+        """
+        store = StateContractStore(self.data_path, task_id)
+        raw_submission_ref = store.put_object(
+            "raw_user_submission",
+            {
+                "text": str(prompt),
+                "structured_source": dict(structured_source or {}),
+            },
+        )
+        existing_path = plan_state_path(self.data_path, task_id)
+        existing_plan = (
+            load_plan_state(self.data_path, task_id)
+            if existing_path.is_file()
+            else {}
+        )
+        existing_conversation = dict(
+            existing_plan.get("conversation_evidence") or {}
+        )
+        is_continuation = bool(existing_conversation.get("head_ref"))
+        if is_continuation:
+            self._append_semantic_conversation_turn(
+                task_id,
+                role="user",
+                content=str(prompt),
+                content_ref=raw_submission_ref,
+            )
+        else:
+            conversation_evidence, _ = store.append_conversation_turn(
+                None,
+                role="user",
+                content=str(prompt),
+                content_ref=raw_submission_ref,
+            )
+            initialize_consultant_bootstrap_state(
+                self.data_path,
+                task_id,
+                raw_submission_ref=raw_submission_ref,
+                conversation_evidence=conversation_evidence,
+            )
+        durable = load_plan_state(self.data_path, task_id)
+        return durable, is_continuation, raw_submission_ref
+
+    def _consultant_semantic_conversation(
+        self,
+        task_id: str,
+        messages: Sequence[BaseMessage] = (),
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        """Rebuild complete chronological semantic evidence for Consultant.
+
+        A damaged legacy session may have only ``raw_submission_ref``.  That
+        is treated as an uninitialized bootstrap and linked as U1 without any
+        snpEff- or filename-specific interpretation.
+        """
+        plan_state = load_plan_state(self.data_path, task_id)
+        store = StateContractStore(self.data_path, task_id)
+        index = dict(plan_state.get("conversation_evidence") or {})
+        turns = store.read_conversation_evidence(index) if index.get("head_ref") else []
+        if not turns:
+            raw_ref = str((plan_state.get("audit_index") or {}).get("raw_submission_ref") or "")
+            raw_text = ""
+            if raw_ref:
+                try:
+                    raw_payload = store.read_object(raw_ref, expected_type="raw_user_submission")
+                    if isinstance(raw_payload, Mapping):
+                        raw_text = str(raw_payload.get("text") or "")
+                except Exception as exc:
+                    logger.warning("Could not recover raw conversation evidence for %s: %s", task_id, exc)
+            if raw_text:
+                turns, _ = self._append_semantic_conversation_turn(
+                    task_id,
+                    role="user",
+                    content=raw_text,
+                    content_ref=raw_ref,
+                )
+            else:
+                # Last-resort compatibility for sessions predating the raw
+                # object convention.  Preserve every actual HumanMessage in
+                # order; do not select only the newest one.
+                for message in messages:
+                    if not isinstance(message, HumanMessage):
+                        continue
+                    text = str(getattr(message, "content", "") or "").strip()
+                    if text:
+                        turns, _ = self._append_semantic_conversation_turn(
+                            task_id,
+                            role="user",
+                            content=text,
+                        )
+        evidence: List[Dict[str, Any]] = []
+        for turn in turns:
+            role = str(turn.get("role") or "")
+            turn_id = str(turn.get("turn_id") or "")
+            label = "USER" if role == "user" else "CONSULTANT"
+            evidence.append({
+                "evidence_id": str(turn.get("turn_ref") or turn_id),
+                "kind": "user_message" if role == "user" else "consultant_question",
+                "excerpt": f"[{turn_id} {label}]\n{str(turn.get('content') or '')}",
+                "truncated": False,
+            })
+        return turns, evidence
 
     @staticmethod
     def _generate_visible_messages(
@@ -5176,7 +6529,7 @@ class BioAnalystAgent:
         activation = self._activate_workflow_batch(state, next_batch_id)
         if not activation.get("active_skills"):
             return None
-        reset_plan_state(self.data_path, task_id)
+        reset_plan_for_replanning(self.data_path, task_id)
         activation["next_step"] = "planner"
         activation["current_plan"] = ""
         activation["plan_progress"] = ""
@@ -5343,12 +6696,13 @@ class BioAnalystAgent:
         """Reconcile a final claim from formal status evidence without trusting Generate."""
         plan_state = load_plan_state(self.data_path, task_id)
         candidate = state.get("completion_candidate") if isinstance(state.get("completion_candidate"), dict) else {}
+        canonical_task_spec = canonical_task_spec_for_state(plan_state)
         changed = self._sync_plan_tracker_from_stage_status(
             task_id,
             plan_state,
             str(state.get("current_plan") or ""),
             str(candidate.get("text") or ""),
-            json.dumps(state.get("task_spec") or {}, ensure_ascii=False),
+            json.dumps(canonical_task_spec, ensure_ascii=False),
         )
         return changed, render_plan_progress(load_plan_state(self.data_path, task_id))
 
@@ -5693,7 +7047,10 @@ class BioAnalystAgent:
             )
 
         plan_state = plan_state or load_plan_state(self.data_path, task_id)
-        task_spec = ensure_task_spec(state.get("task_spec") or plan_state.get("task_spec") or {}, task_id=task_id)
+        task_spec = ensure_task_spec(
+            canonical_task_spec_for_state(plan_state),
+            task_id=task_id,
+        )
         task_constraints = semantic_constraints_from_task_spec(
             task_spec,
             selected_skill_ids=state.get("selected_skills") or plan_state.get("selected_skill_ids", []),
@@ -6000,7 +7357,7 @@ class BioAnalystAgent:
             "knowledge_progress_events": summary["progress_events"],
             "knowledge_claim_set_hash": claim_set_hash,
             "canonical_constraint_hash": canonical_constraint_hash(
-                state.get("task_spec") or current_plan_state.get("task_spec") or {}
+                canonical_task_spec_for_state(current_plan_state)
             ),
             "conflict_resolution": resolutions[-1].to_dict() if resolutions else {},
             "plan_revision": (
@@ -6315,7 +7672,9 @@ class BioAnalystAgent:
         plan_state = build_plan_state(task_id, plan_content, plan_file=plan_file)
         task_revision = int(previous.get("generated_from_task_revision") or 0)
         bind_plan_to_task_revision(plan_state, task_revision)
-        plan_state["task_spec"] = previous.get("task_spec") or {}
+        previous_task_spec = canonical_task_spec_for_state(previous)
+        if previous_task_spec:
+            _bind_current_task_spec_record(plan_state, previous_task_spec)
         plan_state["selected_skill_ids"] = list(previous.get("selected_skill_ids") or [])
         plan_state = carry_forward_plan_lifecycle(previous, plan_state)
         approve_plan_state(plan_state, task_revision)
@@ -6393,6 +7752,75 @@ class BioAnalystAgent:
                     pass
         return versions
 
+    @staticmethod
+    def _assert_v2_llm_messages_clean(messages: List[BaseMessage]) -> None:
+        """Fail before dispatch when a V2 prompt leaks control-plane identity."""
+        text = "\n".join(str(getattr(message, "content", message) or "") for message in messages)
+        forbidden_patterns = (
+            r"\b(?:object|audit|evidence):sha256:[0-9a-f]{16,}\b",
+            r"\bsha256:[0-9a-f]{32,}\b",
+            r'(?i)["\'](?:task|plan)_(?:semantic|record)_hash["\']\s*:',
+            r'(?i)["\']state_generation["\']\s*:',
+            r'(?i)["\'](?:approval_ref|cas_token|node_context_hash|projection_semantic_hash)["\']\s*:',
+        )
+        matched = [pattern for pattern in forbidden_patterns if re.search(pattern, text)]
+        if matched:
+            raise ValueError(
+                "LLM_CONTROL_METADATA_LEAK: V2 message contains prohibited control-plane metadata"
+            )
+
+    async def _ainvoke_node_llm(
+        self,
+        messages: List[BaseMessage],
+        *,
+        node_context: NodeContext,
+        stage: str,
+        task_id: str,
+        task_mode: str = "",
+        trace_metadata: Optional[Dict[str, Any]] = None,
+        temperature: Optional[float] = None,
+    ) -> BaseMessage:
+        """Dispatch one immutable ControllerBinding and consume it exactly once."""
+        self._assert_v2_llm_messages_clean(messages)
+        binding = node_context.binding
+        self._node_invocations.register(binding)
+        report = payload_observability_report(node_context.llm_payload.to_dict())
+        logger.info(
+            "NodeContext V2 dispatch: task=%s node=%s invocation=%s payload=%s",
+            task_id,
+            binding.node_type,
+            binding.invocation_id,
+            json.dumps(report, ensure_ascii=False, sort_keys=True),
+        )
+        metadata = dict(trace_metadata or {})
+        metadata.update({
+            "node_context_schema_version": 2,
+            "controller_binding": binding.to_dict(),
+            "projection_trace": (
+                node_context.projection_trace.to_dict()
+                if node_context.projection_trace is not None
+                else {}
+            ),
+            "llm_payload_observability": report,
+        })
+        try:
+            response = await self._ainvoke_llm(
+                messages,
+                stage=stage,
+                task_id=task_id,
+                task_mode=task_mode,
+                trace_metadata=metadata,
+                temperature=temperature,
+            )
+        except BaseException:
+            try:
+                self._node_invocations.terminate(binding.invocation_id, status="failed")
+            except InvocationProtocolError:
+                pass
+            raise
+        self._node_invocations.consume(binding.invocation_id)
+        return response
+
     async def _ainvoke_llm(
         self,
         messages: List[BaseMessage],
@@ -6401,6 +7829,7 @@ class BioAnalystAgent:
         task_id: str = "",
         task_mode: str = "",
         trace_metadata: Optional[Dict[str, Any]] = None,
+        temperature: Optional[float] = None,
     ) -> BaseMessage:
         """Invoke the shared model with a hard wall-clock bound.
 
@@ -6422,6 +7851,8 @@ class BioAnalystAgent:
             for message in messages
         )
         trace_metadata = dict(trace_metadata or {})
+        if temperature is not None:
+            trace_metadata.setdefault("temperature", float(temperature))
         prompt_telemetry = build_prompt_budget_telemetry(
             messages,
             component_chars=trace_metadata.get("component_chars") or {},
@@ -6491,7 +7922,10 @@ class BioAnalystAgent:
                     f"{hashlib.sha256(identity.encode('utf-8')).hexdigest()[:12]}"
                 )
             snapshot = trace_store.start_call(messages, metadata)
-        invoke_task = asyncio.create_task(self.llm.ainvoke(messages))
+        invocation_llm = self.llm
+        if temperature is not None and hasattr(invocation_llm, "bind"):
+            invocation_llm = invocation_llm.bind(temperature=float(temperature))
+        invoke_task = asyncio.create_task(invocation_llm.ainvoke(messages))
         try:
             done, _ = await asyncio.wait({invoke_task}, timeout=timeout)
             if not done:
@@ -7263,6 +8697,23 @@ class BioAnalystAgent:
             + ("\n\n" + runtime_audit if runtime_audit else "")
         )
         return audits, summary
+
+    def _consultant_runtime_seed_evidence(
+        self,
+        selected_skills: Sequence[str],
+        task_id: str,
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, Dict[str, Any]], str]:
+        """Run controller-owned runtime checks and key them for the evidence ledger."""
+        audits, summary = self._consultant_runtime_preflight(
+            list(selected_skills or []),
+            task_id,
+        )
+        evidence: Dict[str, Dict[str, Any]] = {}
+        for audit in audits:
+            skill_id = str(audit.get("skill_id") or audit.get("skill") or "").strip()
+            if skill_id:
+                evidence[skill_id] = dict(audit)
+        return audits, evidence, summary
 
     def _consultant_runtime_preflight_summary(self, selected_skills: Optional[List[str]], task_id: str) -> str:
         """Backward-compatible textual view for callers and tests."""
@@ -8705,9 +10156,12 @@ class BioAnalystAgent:
                     "plan_version": str(durable_plan.get("plan_version") or ""),
                 }
             projected_task_status = task_status(durable_plan)
+            explicit_task_status = str(update.get("task_status") or "").strip().lower()
             projected_next = str(update.get("next_step") or "")
             projected_phase = str(recovery_projection.get("phase") or "").lower()
-            if projected_task_status in TASK_TERMINAL_STATUSES:
+            if explicit_task_status in TASK_TERMINAL_STATUSES:
+                projected_task_status = explicit_task_status
+            elif projected_task_status in TASK_TERMINAL_STATUSES:
                 pass
             elif projected_next in {"ask_user", "human_input", "waiting_user"}:
                 projected_task_status = TASK_STATUS_WAITING_USER
@@ -8721,11 +10175,11 @@ class BioAnalystAgent:
                 self.data_path,
                 task_id,
                 {
-                    "task_spec": merged.get("task_spec") or durable_plan.get("task_spec") or {},
                     "status": projected_task_status,
                     "user_constraints": list(merged.get("user_constraints") or []),
                     "input_audit": merged.get("input_audit") or {},
                     "selected_skills": list(merged.get("selected_skills") or []),
+                    "resolved_bindings": dict(merged.get("resolved_bindings") or {}),
                     "runtime_audit": list(merged.get("runtime_audit") or []),
                     "consultation_state": dict(merged.get("consultation_state") or {}),
                     "step_states": step_states,
@@ -8742,7 +10196,7 @@ class BioAnalystAgent:
                     "last_transition": {
                         "from_node": node_name,
                         "to_node": str(update.get("next_step") or ""),
-                        "task_status": task_status(durable_plan),
+                        "task_status": projected_task_status,
                         "step_id": str(current_step.get("step_id") or ""),
                         "trigger": str(update.get("node_recommended_next_step") or update.get("next_step") or ""),
                         "guard": str(update.get("transition_guard") or "allowed"),
@@ -8835,27 +10289,32 @@ class BioAnalystAgent:
         if not isinstance(update, dict):
             return update
         normalized = dict(update)
-        task_spec = self._task_spec_for_state(
-            {**dict(state), **normalized},
-            list(state.get("messages", []) or []),
-        )
-        input_audit = normalized.get("input_audit") or state.get("input_audit") or {}
-        if isinstance(input_audit, dict) and input_audit:
-            task_spec = merge_task_spec_input_audit(task_spec, input_audit)
-        normalized["task_spec"] = task_spec
-        normalized.setdefault("task_revision", task_spec_revision(task_spec))
-        effective_facts = resolve_effective_user_facts(task_spec)
-        normalized.setdefault("effective_user_facts_revision", effective_facts["effective_facts_revision"])
-        if node_name == "consultant":
-            normalized.setdefault("normalized_fact_mappings", {
-                key: effective_facts[key]
-                for key in (
-                    "active_artifacts", "active_entities", "active_parameters",
-                    "active_constraints", "active_decisions", "active_relations",
-                    "unresolved_facts",
-                )
-            })
-            normalized.setdefault("user_source_refs", effective_facts["source_refs"])
+        # Normalize is projection-only.  It may expose a successfully
+        # committed durable TaskSpec, but it never arbitrates between a graph
+        # candidate, legacy alias, input audit, and durable state.
+        task_spec = self._task_spec_for_state(dict(state))
+        if task_spec_is_initialized(task_spec):
+            normalized["task_spec"] = deepcopy(task_spec)
+            normalized["task_revision"] = task_spec_revision(task_spec)
+            effective_facts = resolve_effective_user_facts(task_spec)
+            normalized["effective_user_facts_revision"] = effective_facts[
+                "effective_facts_revision"
+            ]
+            if node_name == "consultant":
+                normalized.setdefault("normalized_fact_mappings", {
+                    key: effective_facts[key]
+                    for key in (
+                        "active_artifacts", "active_entities", "active_parameters",
+                        "active_constraints", "active_decisions", "active_relations",
+                        "unresolved_facts",
+                    )
+                })
+                normalized.setdefault("user_source_refs", effective_facts["source_refs"])
+        else:
+            # An uncommitted candidate must not enter graph truth.  Omitting
+            # these keys leaves any prior committed projection unchanged.
+            normalized.pop("task_spec", None)
+            normalized.pop("task_revision", None)
         constraints = list(state.get("user_constraints", []) or [])
         for constraint in task_spec_constraints(task_spec):
             if constraint not in constraints:
@@ -8982,9 +10441,34 @@ class BioAnalystAgent:
             return action
         if action_type == "execute":
             code = str(obj.get("code") or obj.get("body") or obj.get("command") or "").strip()
-            if not code:
+            argv = obj.get("argv")
+            if argv is not None and (
+                not isinstance(argv, list)
+                or not argv
+                or any(not isinstance(item, str) or not item for item in argv)
+            ):
                 return {}
-            action.update({"code": code, "language": str(obj.get("language") or "").strip()})
+            if not code and not argv:
+                return {}
+            raw_outputs = obj.get("outputs") or []
+            if isinstance(raw_outputs, str):
+                raw_outputs = [raw_outputs]
+            if not isinstance(raw_outputs, list):
+                return {}
+            raw_evidence = obj.get("expected_evidence") or []
+            if isinstance(raw_evidence, str):
+                raw_evidence = [raw_evidence]
+            env = obj.get("env") or {}
+            if not isinstance(env, Mapping):
+                return {}
+            action.update({
+                "code": code,
+                "argv": deepcopy(argv) if isinstance(argv, list) else [],
+                "env": deepcopy(dict(env)),
+                "outputs": [str(item) for item in raw_outputs if str(item).strip()],
+                "expected_evidence": [str(item) for item in raw_evidence if str(item).strip()],
+                "language": str(obj.get("language") or "").strip(),
+            })
             purpose = str(obj.get("purpose") or "").strip().lower()
             if purpose in {"analysis", "probe", "validation", "record_failure"}:
                 action["purpose"] = purpose
@@ -9227,6 +10711,517 @@ class BioAnalystAgent:
             if isinstance(obj, dict) and obj:
                 return obj
         return {}
+
+    @staticmethod
+    def _consultant_task_spec_mutation_proposal(
+        payload: Mapping[str, Any],
+        binding: Any,
+    ) -> Dict[str, Any]:
+        """Translate the finite public mutation ABI into Controller IR.
+
+        This is schema translation and evidence-handle resolution only.  It
+        deliberately does not parse user prose, infer file roles, or invent
+        biological meaning.
+        """
+        raw_operations = payload.get("task_spec_operations", [])
+        if not isinstance(raw_operations, list):
+            raise ValueError("TASKSPEC_MUTATION_STRUCTURE_INVALID: task_spec_operations must be a list")
+        aliases = {
+            "add_input": "upsert_input",
+            "replace_input": "upsert_input",
+            "add_output_contract": "upsert_output_contract",
+            "replace_output_contract": "upsert_output_contract",
+            "add_requirement": "upsert_constraint",
+            "replace_requirement": "upsert_constraint",
+            "remove_requirement": "remove_constraint",
+            "supersede_decision": "confirm_decision",
+        }
+        nested_field = {
+            "upsert_input": "input",
+            "upsert_constraint": "constraint",
+            "upsert_output_contract": "output_contract",
+            "confirm_decision": "decision",
+            "mark_ambiguity": "ambiguity",
+        }
+        normalized: List[Dict[str, Any]] = []
+        all_source_refs: List[str] = []
+        for index, raw in enumerate(raw_operations):
+            if not isinstance(raw, Mapping):
+                raise ValueError(
+                    f"TASKSPEC_MUTATION_STRUCTURE_INVALID: operation {index} must be an object"
+                )
+            public_kind = str(raw.get("operation") or raw.get("op") or "").strip().lower()
+            kind = aliases.get(public_kind, public_kind)
+            operation: Dict[str, Any] = {
+                "op": kind,
+                "reason": str(raw.get("reason") or "consultant_semantic_proposal"),
+            }
+            handles = raw.get("supporting_evidence", raw.get("supporting_handles", []))
+            if not handles and str(raw.get("source_turn") or "").strip():
+                handles = [str(raw.get("source_turn") or "").strip()]
+            if not isinstance(handles, list) or not all(isinstance(item, str) for item in handles):
+                raise ValueError(
+                    "TASKSPEC_MUTATION_STRUCTURE_INVALID: supporting_evidence must be a handle list"
+                )
+            resolved = resolve_response_handles(
+                binding,
+                handles,
+                object_type="evidence",
+                usage="cite",
+            ) if handles else []
+            source_refs = [str(item.get("stable_identity") or "") for item in resolved]
+            source_refs = [value for value in source_refs if value]
+            all_source_refs.extend(source_refs)
+            operation["supporting_evidence"] = source_refs
+
+            if kind == "set_goal":
+                operation["value"] = raw.get("value", raw.get("goal"))
+            elif kind in nested_field:
+                field = nested_field[kind]
+                value = raw.get(field)
+                if not isinstance(value, Mapping):
+                    # Public aliases in the specification may use a compact
+                    # semantic_key/value form.  Expanding it is deterministic
+                    # ABI normalization, not natural-language interpretation.
+                    semantic_key = str(raw.get("semantic_key") or raw.get("role") or "").strip()
+                    if kind == "upsert_input":
+                        value = {
+                            "role": semantic_key,
+                            "path": raw.get("value"),
+                            "required": bool(raw.get("required", True)),
+                        }
+                    elif kind == "upsert_output_contract":
+                        value = {
+                            "role": semantic_key,
+                            "path": raw.get("value"),
+                            "required": bool(raw.get("required", True)),
+                        }
+                    elif kind == "upsert_constraint":
+                        category = str(raw.get("kind") or "required_behavior").strip()
+                        if not semantic_key:
+                            digest = hashlib.sha256(
+                                json.dumps(raw.get("value"), ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
+                            ).hexdigest()[:12]
+                            semantic_key = f"{category}.{digest}"
+                        value = {
+                            "semantic_key": semantic_key,
+                            "category": category,
+                            "operator": raw.get("operator") or "require",
+                            "value": raw.get("value"),
+                            "strength": raw.get("strength") or "hard",
+                            "confidence": raw.get("confidence", 1.0),
+                        }
+                    else:
+                        value = {
+                            "semantic_key": semantic_key,
+                            "value": raw.get("value"),
+                        }
+                value = deepcopy(dict(value))
+                if source_refs:
+                    value.setdefault("source_ref", source_refs[0])
+                    value.setdefault("source_id", source_refs[0])
+                    value.setdefault("source_type", "user_explicit")
+                    value.setdefault("source", "user_explicit")
+                    value.setdefault("provenance", [{
+                        "source_id": source_refs[0],
+                        "source_type": "user_explicit",
+                    }])
+                operation[field] = value
+            elif kind == "remove_input" or kind == "remove_output_contract":
+                operation["role"] = raw.get("role") or raw.get("semantic_key")
+            elif kind == "remove_constraint":
+                operation["constraint_id"] = (
+                    raw.get("constraint_id") or raw.get("semantic_key") or raw.get("requirement_id")
+                )
+            elif kind == "remove_decision":
+                operation["semantic_key"] = raw.get("semantic_key")
+            else:
+                # The closed IR validator owns the authoritative allow-list
+                # and emits the stable forbidden-operation error.
+                operation.update({
+                    key: deepcopy(value)
+                    for key, value in raw.items()
+                    if key not in {
+                        "operation", "op", "supporting_evidence",
+                        "supporting_handles", "source_turn",
+                    }
+                })
+            normalized.append(operation)
+        unresolved = payload.get("unresolved_ambiguities", [])
+        if not isinstance(unresolved, list):
+            raise ValueError("TASKSPEC_MUTATION_STRUCTURE_INVALID: unresolved_ambiguities must be a list")
+        return {
+            "proposal_type": "task_spec_mutation",
+            "schema_version": 1,
+            "operations": normalized,
+            "unresolved_ambiguities": deepcopy(unresolved),
+            "proposal_evidence_refs": list(dict.fromkeys(all_source_refs)),
+        }
+
+    @staticmethod
+    def _consultant_planner_feedback_proposal(
+        payload: Mapping[str, Any],
+        binding: Any,
+    ) -> Dict[str, Any]:
+        """Validate typed plan-level feedback without interpreting user prose."""
+        raw = payload.get("planner_feedback")
+        if raw in (None, "", [], {}):
+            return {}
+        if not isinstance(raw, Mapping):
+            raise ValueError("PLANNER_FEEDBACK_PROPOSAL_INVALID: expected object")
+        allowed = {"instructions", "supporting_evidence"}
+        if set(raw) - allowed:
+            raise ValueError("PLANNER_FEEDBACK_PROPOSAL_INVALID: unexpected fields")
+        instructions = raw.get("instructions")
+        if not isinstance(instructions, list) or not instructions or not all(
+            isinstance(item, str) and item.strip() for item in instructions
+        ):
+            raise ValueError(
+                "PLANNER_FEEDBACK_PROPOSAL_INVALID: instructions must be a non-empty string list"
+            )
+        handles = raw.get("supporting_evidence") or []
+        if not isinstance(handles, list) or not handles or not all(
+            isinstance(item, str) and item.strip() for item in handles
+        ):
+            raise ValueError(
+                "PLANNER_FEEDBACK_PROPOSAL_INVALID: supporting_evidence is required"
+            )
+        resolved = resolve_response_handles(
+            binding,
+            handles,
+            object_type="evidence",
+            usage="cite",
+        )
+        return {
+            "schema_version": 1,
+            "instructions": [str(item).strip() for item in instructions],
+            "source_refs": [
+                str(item.get("stable_identity") or "") for item in resolved
+                if str(item.get("stable_identity") or "")
+            ],
+            "status": "pending",
+        }
+
+    @classmethod
+    def _consultant_action_contract_error(
+        cls,
+        text: str,
+        payload: Optional[Mapping[str, Any]] = None,
+    ) -> Tuple[str, str]:
+        """Return a stable error code and field-specific repair instruction.
+
+        Consultant actions deliberately use a single-command ABI.  Richer command
+        graph shapes belong to Planner/Generate and must not be silently flattened
+        here because doing so would discard runner, environment, ordering, and
+        confirmation semantics.
+        """
+        raw = str(text or "").strip()
+        if re.search(r"<\s*tool_result\b", raw, re.IGNORECASE):
+            return (
+                "CONTROLLER_EVIDENCE_ECHO",
+                "tool_result is controller-owned evidence and cannot be emitted by Consultant. "
+                "Return one supported action_json object; for a read-only probe use the exact "
+                "single-command execute schema shown below.",
+            )
+
+        obj = dict(payload or cls._consultant_json_payload(raw) or {})
+        action_type = cls._normalize_action_type(
+            obj.get("action_type") or obj.get("type") or obj.get("action") or ""
+        )
+        if action_type == "execute" and not str(
+            obj.get("code") or obj.get("command") or obj.get("body") or ""
+        ).strip():
+            if obj.get("command_groups") is not None:
+                return (
+                    "ACTION_FORMAT_INVALID",
+                    "execute.command_groups is unsupported in Consultant. execute.code is required "
+                    "and must contain exactly one bounded read-only shell script. Do not emit "
+                    "commands, command_groups, runner, or env fields.",
+                )
+            return (
+                "ACTION_FORMAT_INVALID",
+                "execute.code is required and must contain exactly one bounded read-only shell script.",
+            )
+        return (
+            "ACTION_FORMAT_INVALID",
+            "Consultant response did not use any supported action format.",
+        )
+
+    @staticmethod
+    def _consultant_verified_loaded_skill_ids(messages: Sequence[BaseMessage]) -> List[str]:
+        """Read canonical skill IDs only from successful controller load evidence."""
+        loaded: List[str] = []
+        pattern = re.compile(
+            r'<loaded_skill_(?:doc|reference|script)\b[^>]*\bskill_id=["\']([^"\']+)["\']',
+            re.IGNORECASE,
+        )
+        for message in messages or []:
+            if not isinstance(message, SystemMessage):
+                continue
+            for match in pattern.finditer(str(message.content or "")):
+                skill_id = match.group(1).strip()
+                if skill_id and skill_id not in loaded:
+                    loaded.append(skill_id)
+        return loaded
+
+    @staticmethod
+    def _consultant_payload_hash(payload: Dict[str, Any]) -> str:
+        canonical = json.dumps(
+            payload or {},
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _consultant_errors_by_field(errors: List[Dict[str, Any]]) -> Dict[str, List[int]]:
+        grouped: Dict[str, List[int]] = {}
+        for error in errors or []:
+            if not isinstance(error, dict):
+                continue
+            field = str(error.get("field") or "unknown").strip() or "unknown"
+            try:
+                index = int(error.get("index", -1))
+            except (TypeError, ValueError):
+                index = -1
+            grouped.setdefault(field, [])
+            if index not in grouped[field]:
+                grouped[field].append(index)
+        return {field: sorted(indexes) for field, indexes in sorted(grouped.items())}
+
+    @classmethod
+    def _consultant_contract_repair_state(
+        cls,
+        payload: Dict[str, Any],
+        errors: List[Dict[str, Any]],
+        previous: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Checkpoint an immutable first payload plus the current repair base."""
+        previous = dict(previous or {})
+        base = deepcopy(dict(payload or {}))
+        payload_hash = cls._consultant_payload_hash(base)
+        original_payload = deepcopy(
+            previous.get("original_payload")
+            if isinstance(previous.get("original_payload"), dict)
+            else base
+        )
+        initial_payload_hash = str(previous.get("initial_payload_hash") or "").strip()
+        if not initial_payload_hash:
+            initial_payload_hash = cls._consultant_payload_hash(original_payload)
+        allowed_fields: Dict[str, List[str]] = {}
+        allowed_payload_fields: List[str] = []
+        for error in errors or []:
+            if not isinstance(error, dict):
+                continue
+            field = str(error.get("field") or "").strip()
+            try:
+                index = int(error.get("index", -1))
+            except (TypeError, ValueError):
+                index = -1
+            if not field:
+                continue
+            if index < 0:
+                if field not in allowed_payload_fields:
+                    allowed_payload_fields.append(field)
+                continue
+            key = str(index)
+            allowed_fields.setdefault(key, [])
+            if field not in allowed_fields[key]:
+                allowed_fields[key].append(field)
+        for fields in allowed_fields.values():
+            fields.sort()
+        return {
+            "schema_version": 2,
+            "original_payload": original_payload,
+            "base_payload": base,
+            "payload_hash": payload_hash,
+            "initial_payload_hash": initial_payload_hash,
+            "validation_errors": deepcopy(list(errors or [])),
+            "error_count": len(errors or []),
+            "errors_by_field": cls._consultant_errors_by_field(list(errors or [])),
+            "allowed_fields_by_index": allowed_fields,
+            "allowed_payload_fields": sorted(allowed_payload_fields),
+            "repair_attempt": int(previous.get("repair_attempt") or 0) + 1,
+        }
+
+    @classmethod
+    def _apply_consultant_contract_repair(
+        cls,
+        repair_state: Dict[str, Any],
+        repair_payload: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Apply a hash-bound field patch without permitting schema drift."""
+        state = dict(repair_state or {})
+        proposal = dict(repair_payload or {})
+        errors: List[Dict[str, Any]] = []
+        current_base = state.get("base_payload")
+        if not isinstance(current_base, dict):
+            # Compatibility with repair checkpoints written before schema v2.
+            current_base = state.get("original_payload")
+        base = deepcopy(dict(current_base or {}))
+        unmodified_base = deepcopy(base)
+        expected_hash = str(state.get("payload_hash") or "").strip()
+        actual_hash = cls._consultant_payload_hash(base)
+        action_type = str(
+            proposal.get("action_type") or proposal.get("type") or proposal.get("action") or ""
+        ).strip().lower().replace("-", "_")
+        if action_type != "repair_finish":
+            errors.append({
+                "index": -1,
+                "field": "action_type",
+                "reason": "active contract repair accepts only action_type=repair_finish",
+            })
+        if not expected_hash or actual_hash != expected_hash:
+            errors.append({
+                "index": -1,
+                "field": "base_payload_hash",
+                "reason": "controller repair base hash is missing or inconsistent",
+            })
+        supplied_hash = str(proposal.get("base_payload_hash") or "").strip()
+        if supplied_hash != expected_hash:
+            errors.append({
+                "index": -1,
+                "field": "base_payload_hash",
+                "reason": "base_payload_hash does not match the controller-owned payload",
+            })
+
+        allowed_fields = {
+            str(index): {str(field) for field in fields or [] if str(field).strip()}
+            for index, fields in (state.get("allowed_fields_by_index") or {}).items()
+        }
+        constraints = base.get("semantic_constraints")
+        if not isinstance(constraints, list):
+            constraints = []
+        applied: List[Dict[str, Any]] = []
+        seen_targets: set[tuple[int, str]] = set()
+        patches = proposal.get("constraint_patches")
+        if patches is None:
+            patches = []
+        if not isinstance(patches, list):
+            errors.append({"index": -1, "field": "constraint_patches", "reason": "must be a JSON array"})
+            patches = []
+        for patch in patches:
+            if not isinstance(patch, dict):
+                errors.append({"index": -1, "field": "constraint_patches", "reason": "each patch must be an object"})
+                continue
+            raw_index = patch.get("index")
+            if isinstance(raw_index, bool):
+                index = -1
+            else:
+                try:
+                    index = int(raw_index)
+                except (TypeError, ValueError):
+                    index = -1
+            changes = patch.get("set")
+            if index < 0 or index >= len(constraints):
+                errors.append({"index": index, "field": "index", "reason": "constraint patch index is out of range"})
+                continue
+            if not isinstance(changes, dict) or not changes:
+                errors.append({"index": index, "field": "set", "reason": "constraint patch set must be a non-empty object"})
+                continue
+            permitted = allowed_fields.get(str(index), set())
+            for field, value in changes.items():
+                field_name = str(field).strip()
+                if field_name not in permitted:
+                    errors.append({
+                        "index": index,
+                        "field": field_name or "set",
+                        "reason": "field was not reported by deterministic validation and cannot be patched",
+                    })
+                    continue
+                target = (index, field_name)
+                if target in seen_targets:
+                    errors.append({"index": index, "field": field_name, "reason": "duplicate patch target"})
+                    continue
+                seen_targets.add(target)
+                if field_name == "constraint":
+                    if not isinstance(value, dict):
+                        errors.append({"index": index, "field": field_name, "reason": "replacement constraint must be an object"})
+                        continue
+                    constraints[index] = deepcopy(value)
+                    applied.append({"index": index, "field": field_name})
+                    continue
+                if not isinstance(constraints[index], dict):
+                    errors.append({"index": index, "field": "constraint", "reason": "repair base row is not an object"})
+                    continue
+                constraints[index][field_name] = deepcopy(value)
+                applied.append({"index": index, "field": field_name})
+
+        base["semantic_constraints"] = constraints
+        payload_set = proposal.get("set")
+        if payload_set is not None:
+            if not isinstance(payload_set, dict) or not payload_set:
+                errors.append({"index": -1, "field": "set", "reason": "payload set must be a non-empty object"})
+            else:
+                allowed_payload = {
+                    str(field) for field in state.get("allowed_payload_fields", []) or []
+                }
+                for field, value in payload_set.items():
+                    field_name = str(field).strip()
+                    if field_name not in allowed_payload:
+                        errors.append({
+                            "index": -1,
+                            "field": field_name or "set",
+                            "reason": "top-level field was not reported by deterministic validation",
+                        })
+                        continue
+                    base[field_name] = deepcopy(value)
+                    applied.append({"index": -1, "field": field_name})
+        if not applied and not errors:
+            errors.append({"index": -1, "field": "constraint_patches", "reason": "repair did not modify an allowed field"})
+        if errors:
+            return {"valid": False, "payload": unmodified_base, "errors": errors, "applied": []}
+        base["action_type"] = "finish"
+        return {"valid": True, "payload": base, "errors": [], "applied": applied}
+
+    @staticmethod
+    def _consultant_semantic_failure_route(
+        *,
+        repair_attempt: int = 0,
+        ambiguity_retry_count: int = 0,
+    ) -> str:
+        """Keep internal schema failures separate from genuine user ambiguity."""
+        if int(repair_attempt or 0) >= CONSULTANT_SEMANTIC_REPAIR_LIMIT:
+            return "blocked_internal_contract_error"
+        if int(ambiguity_retry_count or 0) >= 2:
+            return "ask_user"
+        return "consultant"
+
+    @classmethod
+    def _consultant_contract_repair_context(cls, repair_state: Dict[str, Any]) -> str:
+        if not repair_state:
+            return "None"
+        payload = {
+            "action": "repair_finish",
+            "base_payload_hash": repair_state.get("payload_hash"),
+            "repair_attempt": repair_state.get("repair_attempt"),
+            "error_count": repair_state.get("error_count"),
+            "errors": repair_state.get("validation_errors") or [],
+            "errors_by_field": repair_state.get("errors_by_field") or {},
+            "allowed_fields_by_index": repair_state.get("allowed_fields_by_index") or {},
+            "allowed_payload_fields": repair_state.get("allowed_payload_fields") or [],
+            "original_payload": repair_state.get("original_payload") or {},
+            "base_payload": (
+                repair_state.get("base_payload")
+                or repair_state.get("original_payload")
+                or {}
+            ),
+            "required_response_shape": {
+                "action_type": "repair_finish",
+                "base_payload_hash": repair_state.get("payload_hash"),
+                "constraint_patches": [{
+                    "index": 0,
+                    "set": {"provenance": [{"source_type": "user_explicit", "source_id": "choose-from-source-catalog"}]},
+                }],
+            },
+        }
+        return (
+            "<consultant_contract_repair>\n"
+            + json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2, default=str)
+            + "\n</consultant_contract_repair>"
+        )
 
     @classmethod
     def _looks_like_plain_final_solution(cls, text: str) -> bool:
@@ -9771,7 +11766,11 @@ class BioAnalystAgent:
             patch_signature = f"{patch_step_id}:{patch_hash}"
             budgets = dict((plan_state.get("task_state") or {}).get("budgets") or {})
             no_op_counts = dict(budgets.get("no_op_plan_patch_by_signature") or {})
-            if int(no_op_counts.get(patch_signature) or 0) >= 1:
+            approved_same_step_recovery = validate_plan_for_generate(
+                plan_state,
+                self._task_revision_for_state(merged),
+            ).get("valid")
+            if int(no_op_counts.get(patch_signature) or 0) >= 1 and approved_same_step_recovery:
                 guarded.update({
                     "next_step": "generate",
                     "pending_action": {},
@@ -10006,6 +12005,13 @@ class BioAnalystAgent:
             clear_waiting_state(self.data_path, task_id)
             return response
         except HumanInputUnavailable as exc:
+            if stage == "wiki_ingest_offer":
+                # This prompt is optional terminal post-processing.  Do not
+                # persist it as resumable task input or overwrite the task's
+                # completed status when no interactive stdin is available.
+                clear_waiting_state(self.data_path, task_id)
+                restore_terminal_state()
+                raise
             path = save_waiting_state(
                 self.data_path,
                 task_id,
@@ -10076,6 +12082,6144 @@ class BioAnalystAgent:
             "next_step": "human_input",
         }
 
+    @staticmethod
+    def _finalize_digest(value: Any) -> str:
+        encoded = json.dumps(
+            value,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        )
+        return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _finalize_constraint_source_ids(value: Mapping[str, Any]) -> List[str]:
+        source_ids = [
+            str(item.get("source_id") or item.get("source_ref") or "").strip()
+            for item in value.get("provenance", []) or []
+            if isinstance(item, Mapping)
+        ]
+        fallback = str(value.get("source_id") or value.get("source_ref") or "").strip()
+        if fallback:
+            source_ids.append(fallback)
+        return list(dict.fromkeys(item for item in source_ids if item))
+
+    def _consultant_finalize_contract_projection(
+        self,
+        task_spec: Mapping[str, Any],
+        deterministic_base_constraints: Sequence[Mapping[str, Any]],
+        *,
+        fallback_source_id: str,
+    ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        """Build the complete source-addressable TaskSpec projection for v2."""
+        normalized = ensure_task_spec(task_spec)
+        effective = effective_task_contract(normalized)
+        directives: List[Dict[str, Any]] = []
+        coverage_gaps: List[Dict[str, Any]] = []
+
+        def semantic_identity(value: Mapping[str, Any]) -> str:
+            return json.dumps({
+                "semantic_key": str(value.get("semantic_key") or "").strip().lower(),
+                "operator": str(value.get("operator") or "").strip().lower(),
+                "value": value.get("normalized_value") if "normalized_value" in value else value.get("value"),
+            }, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+
+        base_identities = {
+            semantic_identity(item)
+            for item in deterministic_base_constraints
+            if isinstance(item, Mapping)
+        }
+
+        def add_directive(
+            value: Mapping[str, Any],
+            *,
+            directive_kind: str,
+            gap_if_uncovered: bool,
+        ) -> None:
+            raw = dict(value)
+            semantic_key = str(raw.get("semantic_key") or "").strip()
+            operator = str(raw.get("operator") or "").strip()
+            normalized_value = deepcopy(raw.get("value"))
+            source_ids = self._finalize_constraint_source_ids(raw) or [fallback_source_id]
+            identity_seed = {
+                "semantic_key": semantic_key,
+                "operator": operator,
+                "value": normalized_value,
+                "source_ids": source_ids,
+            }
+            declared_id = str(
+                raw.get("directive_id")
+                or raw.get("constraint_id")
+                or raw.get("requirement_id")
+                or ""
+            ).strip()
+            directive_id = declared_id or "directive-" + self._finalize_digest(identity_seed)[:20]
+            normalized_text = str(
+                raw.get("normalized_text")
+                or raw.get("source_text")
+                or raw.get("text")
+                or raw.get("description")
+                or normalized_value
+                or ""
+            ).strip()
+            directive = {
+                "directive_id": directive_id,
+                "directive_kind": directive_kind,
+                "semantic_key": semantic_key,
+                "operator": operator,
+                "normalized_value": normalized_value,
+                "normalized_text": normalized_text,
+                "strength": str(raw.get("strength") or "hard"),
+                "enforcement_scope": semantic_constraint_enforcement_scope(raw),
+                "condition": deepcopy(raw.get("condition")),
+                "source_ids": source_ids,
+            }
+            if not any(item.get("directive_id") == directive_id for item in directives):
+                directives.append(directive)
+            if (
+                gap_if_uncovered
+                and semantic_key
+                and operator
+                and semantic_identity(directive) not in base_identities
+            ):
+                coverage_gaps.append({
+                    "directive_id": directive_id,
+                    "semantic_key": semantic_key,
+                    "operator": operator,
+                    "normalized_value": normalized_value,
+                    "strength": directive["strength"],
+                    "enforcement_scope": directive["enforcement_scope"],
+                    "condition": deepcopy(directive.get("condition")),
+                    "source_ids": source_ids,
+                    "reason": "not_represented_in_deterministic_base",
+                })
+
+        for constraint in deterministic_base_constraints:
+            if not isinstance(constraint, Mapping):
+                continue
+            category = str(constraint.get("semantic_key") or "").split(".", 1)[0]
+            add_directive(
+                constraint,
+                directive_kind=category or "semantic_constraint",
+                gap_if_uncovered=False,
+            )
+
+        structured_fields = (
+            ("must_do", "required_behavior", "require", "hard"),
+            ("must_not_do", "forbidden_behavior", "forbid", "hard"),
+            ("stop_conditions", "failure_policy", "on_condition", "conditional"),
+            ("acceptance_criteria", "required_behavior", "require", "required"),
+        )
+        for field, category, operator, strength in structured_fields:
+            for index, raw_value in enumerate(normalized.get(field, []) or []):
+                raw = dict(raw_value) if isinstance(raw_value, Mapping) else {"value": raw_value}
+                text = str(
+                    raw.get("text")
+                    or raw.get("description")
+                    or raw.get("value")
+                    or ""
+                ).strip()
+                if not text:
+                    continue
+                slot = self._finalize_digest({"field": field, "index": index, "text": text})[:16]
+                raw.setdefault("semantic_key", f"{category}.directive_{slot}")
+                raw.setdefault("operator", operator)
+                raw.setdefault("value", text)
+                raw.setdefault("strength", strength)
+                raw.setdefault("source_id", fallback_source_id)
+                add_directive(raw, directive_kind=field, gap_if_uncovered=True)
+
+        def raw_directive_segments(text: str) -> List[str]:
+            """Split an active user directive without discarding its wording.
+
+            TaskSpec intentionally preserves the raw submission even when its
+            generic request extractor cannot assign domain ontology keys.  A
+            finalize context may not silently classify that text as
+            non-semantic: every material clause must remain source-addressable
+            and get an exact controller-owned coverage identity.
+            """
+            pieces = re.split(
+                r"(?:\r?\n)+|(?<=[。！？；])\s*|(?<=[.!?;])(?:\s+|$)",
+                str(text or "").strip(),
+            )
+            normalized: List[str] = []
+            for piece in pieces:
+                value = re.sub(
+                    r"^\s*(?:[-*•]+|\d+[.)、]|[A-Za-z][.)])\s*",
+                    "",
+                    piece,
+                ).strip()
+                if value and value not in normalized:
+                    normalized.append(value)
+            return normalized or ([str(text).strip()] if str(text).strip() else [])
+
+        def raw_directive_semantics(text: str) -> Tuple[str, str]:
+            explicit_prohibition = re.search(
+                r"^\s*(?:(?:please\s+)?(?:do\s+not|don't|must\s+not|shall\s+not|never|forbid(?:den)?)\b"
+                r"|(?:[A-Za-z0-9_-]+\s+){1,5}(?:must\s+not|shall\s+not|is\s+forbidden\s+to)\b"
+                r"|(?:请)?(?:不要|不得|禁止|严禁|切勿|不可|不能))",
+                text,
+                flags=re.IGNORECASE,
+            )
+            if explicit_prohibition:
+                return "forbidden_behavior", "forbid"
+            return "required_behavior", "require"
+
+        # Schema-v5 stores the canonical goal once and raw text in an immutable
+        # object.  The source-addressable clause list is a deterministic
+        # projection, not another persisted TaskSpec copy.
+        directive_source = list(normalized.get("user_directives", []) or [])
+        if not directive_source and str(normalized.get("goal") or "").strip():
+            directive_source = [{
+                "text": str(normalized.get("goal") or "").strip(),
+                "source_message_id": str(normalized.get("raw_submission_ref") or fallback_source_id),
+                "active": True,
+            }]
+        for index, item in enumerate(directive_source):
+            if not isinstance(item, Mapping) or not bool(item.get("active", True)):
+                continue
+            text = str(item.get("text") or "").strip()
+            source_id = str(item.get("source_message_id") or fallback_source_id).strip()
+            if not text:
+                continue
+            directive_id = str(item.get("directive_id") or "").strip() or (
+                "request-envelope-" + self._finalize_digest({"source_id": source_id, "text": text, "index": index})[:20]
+            )
+            if not any(row.get("directive_id") == directive_id for row in directives):
+                directives.append({
+                    "directive_id": directive_id,
+                    "directive_kind": "request_envelope",
+                    "normalized_text": text,
+                    "strength": "source_authority",
+                    "source_ids": [source_id],
+                    "semantic_classification": "typed_task_spec_projection_authority",
+                })
+            for segment_index, segment in enumerate(raw_directive_segments(text)):
+                category, operator = raw_directive_semantics(segment)
+                slot = self._finalize_digest({
+                    "parent_directive_id": directive_id,
+                    "segment_index": segment_index,
+                    "normalized_text": segment,
+                    "category": category,
+                    "operator": operator,
+                })[:20]
+                add_directive(
+                    {
+                        "directive_id": f"{directive_id}:segment:{slot}",
+                        "semantic_key": f"{category}.user_directive_{slot}",
+                        "operator": operator,
+                        "value": segment,
+                        "normalized_text": segment,
+                        "strength": "hard",
+                        "enforcement_scope": "runtime_global",
+                        "source_id": source_id,
+                    },
+                    directive_kind=category,
+                    gap_if_uncovered=True,
+                )
+
+        categorized: Dict[str, List[Dict[str, Any]]] = {
+            "required_behavior": [],
+            "forbidden_behavior": [],
+            "preference": [],
+            "conditional_policy": [],
+            "failure_policy": [],
+            "runtime_constraint": [],
+        }
+        for constraint in deterministic_base_constraints:
+            if not isinstance(constraint, Mapping):
+                continue
+            category = str(constraint.get("semantic_key") or "").split(".", 1)[0]
+            if category in categorized:
+                categorized[category].append(deepcopy(dict(constraint)))
+        contract = {
+            "goal": str(normalized.get("goal") or ""),
+            "required_inputs": deepcopy(list(effective.get("inputs") or [])),
+            "required_outputs": deepcopy(list(effective.get("outputs") or [])),
+            "required_behaviors": categorized["required_behavior"],
+            "forbidden_behaviors": categorized["forbidden_behavior"],
+            "preferences": categorized["preference"],
+            "conditional_policies": categorized["conditional_policy"],
+            "failure_policies": categorized["failure_policy"],
+            "runtime_constraints": categorized["runtime_constraint"],
+            # ``effective_task_contract`` exposes active parameter facts as an
+            # ordered array.  Treating that array as ``dict(...)`` crashes as
+            # soon as a task has a real parameter binding (for example
+            # ``cli.gtf22=true``), before FINALIZE can initialize its durable
+            # protocol state.
+            "parameters": deepcopy(list(effective.get("parameters") or [])),
+            "decisions": deepcopy(list(effective.get("decisions") or [])),
+            "source_refs": deepcopy(list(effective.get("source_refs") or [])),
+            "source_addressable_directives": directives,
+        }
+        return contract, coverage_gaps
+
+    @staticmethod
+    def _consultant_finalize_runtime_evidence(
+        consultation_state: Mapping[str, Any],
+    ) -> List[Dict[str, Any]]:
+        rows: List[Dict[str, Any]] = []
+        for fingerprint, action in sorted((consultation_state.get("actions") or {}).items()):
+            if not isinstance(action, Mapping):
+                continue
+            rows.append({
+                "evidence_id": f"action:{fingerprint}",
+                "fingerprint": str(fingerprint),
+                "status": str(action.get("status") or ""),
+                "requirement_ids": list(action.get("requirement_ids") or []),
+                "purpose": str(action.get("purpose") or ""),
+                "expected_evidence": deepcopy(action.get("expected_evidence")),
+                "observation": str(action.get("observation") or ""),
+                "returncode": action.get("returncode"),
+                "provenance": deepcopy(dict(action.get("provenance") or {})),
+                "trust": "untrusted_runtime_data",
+            })
+        for evidence in consultation_state.get("evidence", []) or []:
+            if not isinstance(evidence, Mapping):
+                continue
+            evidence_id = str(evidence.get("evidence_id") or "")
+            if evidence_id and not any(row.get("evidence_id") == evidence_id for row in rows):
+                rows.append({
+                    key: deepcopy(value)
+                    for key, value in evidence.items()
+                    if key not in {"recorded_at", "updated_at", "created_at"}
+                })
+        return rows
+
+    def _build_consultant_finalize_context(
+        self,
+        *,
+        task_id: str,
+        task_spec: Mapping[str, Any],
+        consultation_state: Mapping[str, Any],
+        resolved_selected_skill_ids: Sequence[str],
+        input_audit: Mapping[str, Any],
+        task_is_skill_free: bool = False,
+    ):
+        task_revision = task_spec_revision(task_spec)
+        fallback_source_id = f"task-contract:{task_id}:revision:{task_revision}"
+        base_constraints = semantic_constraints_from_task_spec(task_spec)
+        provenance_catalog = semantic_provenance_catalog(
+            task_spec,
+            consultation_state=consultation_state,
+            selected_skill_ids=resolved_selected_skill_ids,
+        )
+        if not any(str(item.get("source_id") or "") == fallback_source_id for item in provenance_catalog):
+            provenance_catalog.append({
+                "source_id": fallback_source_id,
+                "source_type": "task_contract",
+                "label": "controller TaskSpec binding",
+            })
+        effective_contract, coverage_gaps = self._consultant_finalize_contract_projection(
+            task_spec,
+            base_constraints,
+            fallback_source_id=fallback_source_id,
+        )
+        catalog_ids = {
+            str(item.get("source_id") or "")
+            for item in provenance_catalog
+            if isinstance(item, Mapping)
+        }
+        unresolved_semantics: List[Dict[str, Any]] = []
+        for constraint in base_constraints:
+            if not isinstance(constraint, Mapping) or not bool(constraint.get("needs_clarification")):
+                continue
+            item = deepcopy(dict(constraint))
+            identifier = str(item.get("constraint_id") or item.get("requirement_id") or "").strip()
+            if not identifier:
+                identifier = "ambiguity-" + self._finalize_digest(item)[:20]
+            item["constraint_id"] = identifier
+            item.setdefault(
+                "unresolved_reason",
+                f"TaskSpec marks {item.get('semantic_key') or identifier} as unresolved.",
+            )
+            source_ids = self._finalize_constraint_source_ids(item)
+            if not source_ids:
+                item["provenance"] = [{
+                    "source_type": "task_contract",
+                    "source_id": fallback_source_id,
+                }]
+            elif not set(source_ids).issubset(catalog_ids):
+                # An unresolved ambiguity without a resolvable source is an
+                # internal contract defect, never a user question.
+                raise ValueError(
+                    "Unresolved semantic ambiguity has provenance outside the active catalog: "
+                    + identifier
+                )
+            unresolved_semantics.append(item)
+
+        effective_revision = str(
+            effective_task_contract(task_spec).get("effective_facts_revision")
+            or resolve_effective_user_facts(task_spec).get("effective_facts_revision")
+            or canonical_constraint_hash(task_spec)
+        )
+        requirements = [
+            {
+                key: deepcopy(value)
+                for key, value in dict(item).items()
+                if key not in {"created_at", "updated_at", "recorded_at"}
+            }
+            for item in (consultation_state.get("requirements") or {}).values()
+            if isinstance(item, Mapping)
+        ]
+        controller_required_constraints = canonicalize_finalize_constraints(
+            semantic_constraints_from_task_spec(
+                task_spec,
+                selected_skill_ids=resolved_selected_skill_ids,
+            )
+        )
+        return build_finalize_context(
+            task_id=task_id,
+            task_spec_revision=task_revision,
+            effective_facts_revision=effective_revision,
+            resolved_selected_skill_ids=list(resolved_selected_skill_ids),
+            effective_task_contract=effective_contract,
+            coverage_gaps=coverage_gaps,
+            deterministic_base_constraints=base_constraints,
+            semantic_provenance_catalog=provenance_catalog,
+            runtime_evidence=self._consultant_finalize_runtime_evidence(consultation_state),
+            input_audit=input_audit,
+            consultation_requirements=requirements,
+            unresolved_semantics=unresolved_semantics,
+            task_spec_binding_hash=finalize_task_spec_binding_hash(
+                task_spec,
+                selected_skill_ids=resolved_selected_skill_ids,
+            ),
+            controller_required_constraints=controller_required_constraints,
+            task_is_skill_free=bool(task_is_skill_free),
+        )
+
+    def _consultant_finalize_provider_settings(
+        self,
+        response_schema: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        endpoint = str(getattr(self, "llm_endpoint_id", LLM_BASE_URL) or "")
+        model = str(getattr(self, "llm_model_id", LLM_DEFAULT_MODEL) or "")
+        endpoint_hostname, endpoint_identity = _finalize_endpoint_identity(endpoint)
+        provider_id = str(getattr(self, "llm_provider_id", "openai") or "openai")
+        if endpoint_hostname in {"api.deepseek.com", "platform.deepseek.com"}:
+            provider_id = "deepseek"
+        elif endpoint_hostname in {
+            "dashscope.aliyuncs.com",
+            "dashscope-intl.aliyuncs.com",
+        }:
+            provider_id = "dashscope"
+        strict_schema = bool(
+            getattr(self, "llm_finalize_strict_schema_supported", None)
+            if getattr(self, "llm_finalize_strict_schema_supported", None) is not None
+            else provider_id == "openai" and endpoint_hostname == "api.openai.com"
+        )
+        idempotency_supported = bool(
+            getattr(self, "llm_finalize_idempotency_supported", False)
+        )
+        # Every newly emitted v2 request asks for a structured JSON object.
+        # ``compat_text`` is parse-only support for historical persisted
+        # payloads; selecting it for an unknown current provider would silently
+        # weaken the wire contract.
+        structured_mode = "strict_schema" if strict_schema else "json_object"
+        response_format: Optional[Dict[str, Any]] = None
+        if structured_mode == "strict_schema":
+            response_format = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": str(response_schema.get("$id") or "ConsultantFinalizeResult_v2").replace(".", "_"),
+                    "strict": True,
+                    "schema": deepcopy(dict(response_schema)),
+                },
+            }
+        elif structured_mode == "json_object":
+            response_format = {"type": "json_object"}
+        extra_body = deepcopy(dict(getattr(self, "llm_response_extra_body", {}) or {}))
+        thinking = "disabled"
+        if isinstance(extra_body.get("thinking"), Mapping):
+            thinking = str(extra_body["thinking"].get("type") or "disabled")
+        elif "enable_thinking" in extra_body:
+            thinking = "enabled" if bool(extra_body.get("enable_thinking")) else "disabled"
+        schema_encoded = json.dumps(
+            response_schema,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        )
+        return {
+            "provider_id": provider_id,
+            "endpoint_id": endpoint_identity,
+            "endpoint_hostname": endpoint_hostname,
+            "idempotency_supported": idempotency_supported,
+            "model": model,
+            "temperature": 0.0,
+            "top_p": 1.0,
+            "max_output_tokens": int(CONSULTANT_FINALIZE_MAX_OUTPUT_TOKENS),
+            "requested_output_tokens": int(CONSULTANT_FINALIZE_MAX_OUTPUT_TOKENS),
+            "provider_output_cap": int(
+                CONSULTANT_FINALIZE_PROVIDER_OUTPUT_CAP_TOKENS
+            ),
+            "provider_context_limit": int(
+                min(
+                    int(CONSULTANT_FINALIZE_CONTEXT_LIMIT_TOKENS),
+                    int(getattr(self, "llm_context_limit_tokens", 200_000)),
+                )
+            ),
+            "output_safety_headroom_tokens": int(
+                CONSULTANT_FINALIZE_OUTPUT_HEADROOM_TOKENS
+            ),
+            "per_call_timeout_ms": int(
+                CONSULTANT_FINALIZE_PER_CALL_TIMEOUT_MS
+            ),
+            "output_token_parameter": "max_tokens",
+            "stream": False,
+            "structured_output_mode": structured_mode,
+            "response_format": response_format,
+            "schema_id": str(response_schema.get("$id") or "ConsultantFinalizeResult.v2"),
+            "schema_hash": hashlib.sha256(schema_encoded.encode("utf-8")).hexdigest(),
+            "thinking": thinking,
+            "extra_body_allowlist": extra_body,
+        }
+
+    @staticmethod
+    def _consultant_finalize_patch_permissions(
+        errors: Sequence[Mapping[str, Any]],
+        *,
+        previous_allowed_fields_by_index: Optional[Mapping[Any, Sequence[str]]] = None,
+        previous_allowed_payload_fields: Optional[Sequence[str]] = None,
+        preserve_previous: bool = False,
+    ) -> Tuple[Dict[str, List[str]], List[str], Dict[str, List[int]]]:
+        """Derive field-patch authority only from machine validation errors."""
+        if preserve_previous:
+            allowed_by_index = {
+                str(int(index)): sorted({
+                    str(field).strip()
+                    for field in fields or []
+                    if str(field).strip()
+                })
+                for index, fields in (previous_allowed_fields_by_index or {}).items()
+            }
+            allowed_payload = sorted({
+                str(field).strip()
+                for field in (previous_allowed_payload_fields or [])
+                if str(field).strip()
+            })
+        else:
+            allowed_by_index: Dict[str, List[str]] = {}
+            allowed_payload: List[str] = []
+
+        errors_by_field: Dict[str, List[int]] = {}
+        for error in errors or []:
+            if not isinstance(error, Mapping):
+                continue
+            try:
+                index = int(error.get("index", -1))
+            except (TypeError, ValueError):
+                index = -1
+            field = str(error.get("field") or "").strip()
+            path = str(error.get("path") or "").strip()
+            if not field and path.startswith("$."):
+                first = path[2:].split("[", 1)[0].split(".", 1)[0]
+                field = first.strip()
+            if not field:
+                continue
+            errors_by_field.setdefault(field, [])
+            if index not in errors_by_field[field]:
+                errors_by_field[field].append(index)
+            if preserve_previous:
+                continue
+            if index >= 0:
+                key = str(index)
+                allowed_by_index.setdefault(key, [])
+                if field not in allowed_by_index[key]:
+                    allowed_by_index[key].append(field)
+            elif field not in allowed_payload:
+                allowed_payload.append(field)
+        for fields in allowed_by_index.values():
+            fields.sort()
+        return (
+            dict(sorted(allowed_by_index.items(), key=lambda item: int(item[0]))),
+            sorted(allowed_payload),
+            {
+                field: sorted(indexes)
+                for field, indexes in sorted(errors_by_field.items())
+            },
+        )
+
+    @staticmethod
+    def _consultant_finalize_ambiguity_question(
+        ambiguity: Mapping[str, Any],
+    ) -> str:
+        """Render one controller-owned question; never trust model wording."""
+        semantic_key = str(
+            ambiguity.get("semantic_key")
+            or ambiguity.get("constraint_id")
+            or "semantic decision"
+        ).strip()
+        reason = str(
+            ambiguity.get("unresolved_reason")
+            or ambiguity.get("ambiguity")
+            or "The current task contract does not determine one required value."
+        ).strip()
+        alternatives = [
+            str(item).strip()
+            for item in ambiguity.get("alternatives", []) or []
+            if str(item).strip()
+        ]
+        suffix = (
+            " Available choices: " + "; ".join(alternatives) + "."
+            if alternatives
+            else ""
+        )
+        return f"Please clarify `{semantic_key}`: {reason}.{suffix}".replace("..", ".")
+
+    def _resolve_consultant_finalize_skills(
+        self,
+        *,
+        state: Mapping[str, Any],
+        consultation_state: Mapping[str, Any],
+        explicit_candidate_ids: Sequence[str],
+        loaded_skill_ids: Sequence[str],
+        max_skills: int,
+    ) -> List[str]:
+        """Resolve controller-owned skills without promoting metadata candidates."""
+        declared = [
+            *list(state.get("selected_skills") or []),
+            *list(consultation_state.get("resolved_selected_skill_ids") or []),
+            *list(explicit_candidate_ids or []),
+        ]
+        if self.skill_manager:
+            resolved = self.skill_manager.normalize_selected_skills(
+                declared,
+                max_results=max_skills,
+            )
+        else:
+            resolved = list(dict.fromkeys(
+                str(item).strip() for item in declared if str(item).strip()
+            ))[:max_skills]
+        if resolved:
+            return resolved
+
+        # A LOAD action by itself is not selection. A single loaded canonical
+        # skill may be promoted only when the controller ledger independently
+        # proves both routing and runtime readiness for that same skill.
+        if not self.skill_manager:
+            return []
+        loaded = self.skill_manager.normalize_selected_skills(
+            loaded_skill_ids,
+            max_results=max_skills,
+        )
+        if len(loaded) != 1:
+            return []
+        skill_id = loaded[0]
+        requirements = consultation_state.get("requirements") or {}
+        routing = requirements.get("skill-routing") if isinstance(requirements, Mapping) else None
+        routing_candidates = set(
+            str(item).strip()
+            for item in ((routing or {}).get("evidence_provenance") or {}).get("candidate_ids", [])
+            if str(item).strip()
+        ) if isinstance(routing, Mapping) else set()
+        runtime_ready = any(
+            isinstance(requirement, Mapping)
+            and str((requirement.get("evidence_provenance") or {}).get("skill_id") or "") == skill_id
+            and str(requirement.get("status") or "") in {"satisfied", "waived"}
+            for requirement in (requirements.values() if isinstance(requirements, Mapping) else [])
+        )
+        if (
+            isinstance(routing, Mapping)
+            and str(routing.get("status") or "") in {"satisfied", "waived"}
+            and skill_id in routing_candidates
+            and runtime_ready
+        ):
+            return [skill_id]
+        return []
+
+    @staticmethod
+    def _consultant_task_is_explicitly_skill_free(
+        task_spec: Mapping[str, Any],
+    ) -> bool:
+        parameters = task_spec.get("parameters") or {}
+        return bool(
+            task_spec.get("task_is_skill_free") is True
+            or (
+                isinstance(parameters, Mapping)
+                and parameters.get("task_is_skill_free") is True
+            )
+        )
+
+    def _consultant_finalize_precondition_errors(
+        self,
+        *,
+        task_spec: Mapping[str, Any],
+        consultation_state: Mapping[str, Any],
+        resolved_selected_skill_ids: Sequence[str],
+        input_audit: Mapping[str, Any],
+        task_is_skill_free: bool,
+    ) -> List[str]:
+        """Revalidate every controller-owned FINALIZE entry invariant."""
+        errors: List[str] = []
+        requirements = consultation_state.get("requirements") or {}
+        requirement_rows = (
+            list(requirements.values()) if isinstance(requirements, Mapping) else []
+        )
+        if not requirement_rows:
+            errors.append("consultation evidence requirements are not seeded")
+        else:
+            unresolved = [
+                str(item.get("id") or "unknown")
+                for item in requirement_rows
+                if isinstance(item, Mapping)
+                and bool(item.get("mandatory", True))
+                and str(item.get("status") or "") not in {"satisfied", "waived"}
+            ]
+            if unresolved:
+                errors.append(
+                    "mandatory evidence is unresolved: " + ", ".join(sorted(unresolved))
+                )
+
+        selected = [
+            str(item).strip()
+            for item in resolved_selected_skill_ids or []
+            if str(item).strip()
+        ]
+        if not selected and not task_is_skill_free:
+            errors.append("no controller-resolved canonical skill is bound")
+        elif selected:
+            if not self.skill_manager:
+                errors.append("selected skill IDs cannot be validated without the skill catalog")
+            else:
+                canonical = self.skill_manager.normalize_selected_skills(
+                    selected,
+                    max_results=max(len(selected), 1),
+                )
+                if canonical != selected:
+                    errors.append("selected skill IDs are unknown, aliases, duplicated, or non-canonical")
+            ledger_selected = [
+                str(item).strip()
+                for item in consultation_state.get("resolved_selected_skill_ids", []) or []
+                if str(item).strip()
+            ]
+            if ledger_selected and ledger_selected != selected:
+                errors.append("resolved skill binding disagrees with the consultation ledger")
+
+        audit = dict(input_audit or {})
+        if bool(audit.get("relevant")):
+            status = str(audit.get("status") or "").strip().lower()
+            unresolved_inputs = bool(
+                audit.get("unresolved")
+                or audit.get("missing")
+                or audit.get("missing_required_inputs")
+                or audit.get("missing_roles")
+                or audit.get("ambiguous_roles")
+                or audit.get("ambiguous_samples")
+                or audit.get("ambiguous_resolutions")
+            )
+            if status not in {"resolved", "passed", "complete", "satisfied", "success"}:
+                errors.append(f"formal input audit is not complete: {status or 'missing_status'}")
+            if unresolved_inputs:
+                errors.append("formal input audit retains unresolved or ambiguous inputs")
+
+        if task_spec_revision(task_spec) <= 0:
+            errors.append("TaskSpec revision is not fixed")
+        return errors
+
+    async def _invoke_consultant_finalize_provider(
+        self,
+        messages: Sequence[BaseMessage],
+        *,
+        task_id: str,
+        store: ContextLineageStore,
+        attempt_id: str,
+        call_id: str,
+        call_kind: str,
+        canonical_request_hash: str,
+        settings: Mapping[str, Any],
+        trace_metadata: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Provider adapter that protects exact content before diagnostics."""
+        metadata = {
+            **dict(trace_metadata or {}),
+            "call_id": call_id,
+            "attempt_id": attempt_id,
+            "call_kind": call_kind,
+            "canonical_request_hash": canonical_request_hash,
+            "message_role_sequence": [str(getattr(item, "type", "")) for item in messages],
+            "structured_output_mode": settings.get("structured_output_mode"),
+            "diagnostic_only": True,
+            "exact_content_in_projection": False,
+        }
+        diagnostic_messages: List[Dict[str, Any]] = []
+        for item in messages:
+            exact_content = str(getattr(item, "content", "") or "")
+            redacted_content = redact_lineage_text(exact_content)
+            excerpt_limit = 2048
+            diagnostic_messages.append({
+                "role": str(getattr(item, "type", "") or "message"),
+                "content": redacted_content[:excerpt_limit],
+                "content_char_count": len(exact_content),
+                "content_sha256": hashlib.sha256(exact_content.encode("utf-8")).hexdigest(),
+                "content_excerpt_truncated": len(redacted_content) > excerpt_limit,
+                "diagnostic_only": True,
+                "exact_content_in_projection": False,
+            })
+        try:
+            store.start_call(diagnostic_messages, metadata)
+        except Exception as exc:
+            # Diagnostic lineage is intentionally non-authoritative.  Its
+            # failure must neither prevent the protected provider call nor be
+            # confused with request-intent/response-artifact persistence.
+            logger.warning("Finalize diagnostic request projection failed: %s", exc)
+        wire_payload = _build_finalize_wire_payload(messages, settings)
+        effective_wire = _finalize_effective_wire_projection(
+            wire_payload,
+            settings,
+        )
+        expected_token_key = str(settings.get("output_token_parameter") or "max_tokens")
+        if (
+            str(effective_wire.get("output_token_parameter") or "")
+            != expected_token_key
+            or int(effective_wire.get("output_token_value") or 0)
+            != int(settings.get("max_output_tokens") or 0)
+        ):
+            raise ValueError(
+                "FINALIZE_PROVIDER_PARAMETER_UNSUPPORTED: requested and effective wire settings disagree"
+            )
+        wire_artifact = store.persist_finalize_effective_wire_settings(
+            attempt_id=attempt_id,
+            call_id=call_id,
+            canonical_request_hash=canonical_request_hash,
+            settings=effective_wire,
+        )
+        timeout_ms = int(settings.get("per_call_timeout_ms") or 0)
+        if timeout_ms <= 0:
+            raise ValueError(
+                "FINALIZE_GLOBAL_BUDGET_EXHAUSTED:per_call_timeout_ms"
+            )
+
+        # The installed ChatOpenAI wrapper rewrites ``max_tokens`` to
+        # ``max_completion_tokens``.  For DeepSeek, bypass only that wrapper
+        # and call its already-configured AsyncCompletions resource with the
+        # inspected body above.  Test doubles and non-DeepSeek providers retain
+        # the ordinary LangChain invocation path.
+        direct_async_client = getattr(self.llm, "async_client", None)
+        use_direct_chat_completions = bool(
+            str(settings.get("provider_id") or "").lower() == "deepseek"
+            and direct_async_client is not None
+            and callable(getattr(direct_async_client, "create", None))
+        )
+        completion_usage: Dict[str, Any] = {}
+        if use_direct_chat_completions:
+            direct_kwargs = deepcopy(wire_payload)
+            if bool(settings.get("idempotency_supported")):
+                direct_kwargs["extra_headers"] = {
+                    "Idempotency-Key": f"finalize:{canonical_request_hash}"
+                }
+            invoke_task = asyncio.create_task(
+                direct_async_client.create(**direct_kwargs)
+            )
+        else:
+            invocation_llm = self.llm
+            if hasattr(invocation_llm, "model_copy"):
+                try:
+                    invocation_llm = invocation_llm.model_copy(
+                        update={"max_retries": 0, "streaming": False}
+                    )
+                except Exception:
+                    pass
+            bind_kwargs: Dict[str, Any] = {
+                "temperature": float(settings.get("temperature") or 0.0),
+                "top_p": float(settings.get("top_p") or 1.0),
+                expected_token_key: int(settings.get("max_output_tokens") or 0),
+                "stream": False,
+            }
+            if settings.get("response_format"):
+                bind_kwargs["response_format"] = deepcopy(settings["response_format"])
+            if bool(settings.get("idempotency_supported")):
+                bind_kwargs["extra_headers"] = {
+                    "Idempotency-Key": f"finalize:{canonical_request_hash}"
+                }
+            if hasattr(invocation_llm, "bind"):
+                invocation_llm = invocation_llm.bind(**bind_kwargs)
+            invoke_task = asyncio.create_task(invocation_llm.ainvoke(list(messages)))
+        # The adapter and durable reservation must enforce one authoritative
+        # timeout.  A generic LLM wrapper timeout may differ and therefore
+        # cannot override the versioned FINALIZE work-budget policy.
+        timeout = float(timeout_ms) / 1_000.0
+        try:
+            done, _ = await asyncio.wait({invoke_task}, timeout=timeout)
+            if not done:
+                invoke_task.cancel()
+                raise TimeoutError(f"consultant finalize provider outcome unknown after {timeout:.0f}s")
+            try:
+                response = invoke_task.result()
+            except asyncio.CancelledError as exc:
+                raise TimeoutError("consultant finalize provider call was cancelled") from exc
+            if use_direct_chat_completions:
+                completion_projection = _finalize_completion_projection(response)
+                completion_usage = deepcopy(
+                    dict(completion_projection.get("usage") or {})
+                )
+                raw_response = str(completion_projection.get("raw_response") or "")
+                finish_reason = str(completion_projection.get("finish_reason") or "")
+                provider_metadata = deepcopy(
+                    dict(completion_projection.get("provider_metadata") or {})
+                )
+                provider_metadata["effective_wire_settings_ref"] = str(
+                    wire_artifact.get("effective_wire_settings_ref") or ""
+                )
+                provider_metadata["effective_wire_settings_hash"] = str(
+                    wire_artifact.get("effective_wire_settings_hash") or ""
+                )
+                if finish_reason not in {"stop", "tool_calls"}:
+                    integrity = (
+                        "truncated" if finish_reason == "length"
+                        else "content_filtered"
+                        if finish_reason == "content_filter"
+                        else "unknown"
+                    )
+                    content_available = bool(raw_response)
+                    partial = store.persist_finalize_partial_response(
+                        attempt_id=attempt_id,
+                        call_id=call_id,
+                        canonical_request_hash=canonical_request_hash,
+                        raw_partial_response=(raw_response if content_available else None),
+                        finish_reason=finish_reason or "unknown",
+                        usage=dict(completion_projection.get("usage") or {}),
+                        provider_metadata=provider_metadata,
+                        content_available=content_available,
+                        content_unavailable_reason=(
+                            "" if content_available
+                            else "provider_completion_content_unavailable"
+                        ),
+                        completion_integrity=integrity,
+                    )
+                    try:
+                        store.finish_call(
+                            call_id,
+                            {
+                                "role": "diagnostic",
+                                "content": "",
+                                "finish_reason": finish_reason,
+                                "completion_integrity": integrity,
+                                "partial_response_artifact_ref": partial.get(
+                                    "partial_response_artifact_ref"
+                                ),
+                                "usage": completion_projection.get("usage") or {},
+                            },
+                            status="truncated" if integrity == "truncated" else "blocked",
+                        )
+                    except Exception as trace_exc:
+                        logger.warning(
+                            "Finalize partial diagnostic projection failed: %s",
+                            trace_exc,
+                        )
+                    return {
+                        "response": response,
+                        "raw_response": "",
+                        "structured_object": None,
+                        "artifact": {},
+                        "partial_artifact": partial,
+                        "finish_reason": finish_reason,
+                        "usage": deepcopy(dict(completion_projection.get("usage") or {})),
+                        "completion_integrity": integrity,
+                        "provider_status": "succeeded",
+                        "protocol_status": "not_validated",
+                        "response_reused_from_checkpoint": False,
+                    }
+                additional: Mapping[str, Any] = {}
+                structured_object = None
+            else:
+                additional = getattr(response, "additional_kwargs", {}) or {}
+                raw_response = ""
+                finish_reason = str(
+                    (getattr(response, "response_metadata", {}) or {}).get(
+                        "finish_reason"
+                    )
+                    or "stop"
+                )
+            structured_object = None
+            if isinstance(additional, Mapping):
+                parsed = additional.get("parsed")
+                if isinstance(parsed, Mapping):
+                    structured_object = deepcopy(dict(parsed))
+                elif hasattr(parsed, "model_dump"):
+                    dumped = parsed.model_dump()
+                    if isinstance(dumped, Mapping):
+                        structured_object = deepcopy(dict(dumped))
+
+            # Preserve only exact text actually exposed by the SDK.  A Python
+            # list/dict serialization invented by this adapter is not an exact
+            # assistant wire response and must not masquerade as one.
+            content = getattr(response, "content", "")
+            if not raw_response:
+                raw_response = content if isinstance(content, str) else ""
+            if not raw_response and isinstance(additional, Mapping):
+                sdk_raw = additional.get("raw")
+                sdk_raw_content = (
+                    sdk_raw
+                    if isinstance(sdk_raw, str)
+                    else getattr(sdk_raw, "content", "")
+                )
+                if isinstance(sdk_raw_content, str):
+                    raw_response = sdk_raw_content
+            if not use_direct_chat_completions:
+                provider_metadata = deepcopy(
+                    dict(getattr(response, "response_metadata", {}) or {})
+                )
+                provider_metadata["finish_reason"] = finish_reason
+                provider_metadata["effective_wire_settings_ref"] = str(
+                    wire_artifact.get("effective_wire_settings_ref") or ""
+                )
+                provider_metadata["effective_wire_settings_hash"] = str(
+                    wire_artifact.get("effective_wire_settings_hash") or ""
+                )
+                completion_usage = deepcopy(dict(
+                    provider_metadata.get("token_usage")
+                    or provider_metadata.get("usage")
+                    or {}
+                ))
+            if finish_reason not in {"stop", "tool_calls"}:
+                integrity = (
+                    "truncated" if finish_reason == "length"
+                    else "content_filtered"
+                    if finish_reason == "content_filter"
+                    else "unknown"
+                )
+                usage = dict(
+                    provider_metadata.get("token_usage")
+                    or provider_metadata.get("usage")
+                    or {}
+                )
+                content_available = bool(raw_response)
+                partial = store.persist_finalize_partial_response(
+                    attempt_id=attempt_id,
+                    call_id=call_id,
+                    canonical_request_hash=canonical_request_hash,
+                    raw_partial_response=(raw_response if content_available else None),
+                    finish_reason=finish_reason or "unknown",
+                    usage=usage,
+                    provider_metadata=provider_metadata,
+                    content_available=content_available,
+                    content_unavailable_reason=(
+                        "" if content_available
+                        else "provider_completion_content_unavailable"
+                    ),
+                    completion_integrity=integrity,
+                )
+                try:
+                    store.finish_call(
+                        call_id,
+                        {
+                            "role": "diagnostic",
+                            "content": "",
+                            "finish_reason": finish_reason,
+                            "completion_integrity": integrity,
+                            "partial_response_artifact_ref": partial.get(
+                                "partial_response_artifact_ref"
+                            ),
+                            "usage": usage,
+                        },
+                        status="truncated" if integrity == "truncated" else "blocked",
+                    )
+                except Exception as trace_exc:
+                    logger.warning(
+                        "Finalize returned-partial diagnostic projection failed: %s",
+                        trace_exc,
+                    )
+                return {
+                    "response": response,
+                    "raw_response": "",
+                    "structured_object": None,
+                    "artifact": {},
+                    "partial_artifact": partial,
+                    "finish_reason": finish_reason,
+                    "usage": usage,
+                    "completion_integrity": integrity,
+                    "provider_status": "succeeded",
+                    "protocol_status": "not_validated",
+                    "response_reused_from_checkpoint": False,
+                }
+            try:
+                artifact = persist_finalize_response(
+                    store,
+                    attempt_id=attempt_id,
+                    call_id=call_id,
+                    canonical_request_hash=canonical_request_hash,
+                    raw_response=raw_response,
+                    structured_object=structured_object,
+                    provider_metadata=provider_metadata,
+                )
+            except Exception as exc:
+                raise FinalizeResponsePersistenceError(
+                    "provider returned but protected finalize persistence failed",
+                    response_content_hash=hashlib.sha256(
+                        raw_response.encode("utf-8")
+                    ).hexdigest(),
+                ) from exc
+            try:
+                diagnostic = store.finalize_diagnostic_projection({
+                    **artifact,
+                    "raw_response": raw_response,
+                })
+                store.finish_call(
+                    call_id,
+                    {
+                        "role": "diagnostic",
+                        "content": "",
+                        "finalize_response_projection": diagnostic,
+                    },
+                )
+            except Exception as exc:
+                logger.warning("Finalize diagnostic projection failed after protected persistence: %s", exc)
+            return {
+                "response": response,
+                "raw_response": raw_response,
+                "structured_object": structured_object,
+                "artifact": artifact,
+                "finish_reason": finish_reason or "stop",
+                "usage": completion_usage,
+                "completion_integrity": "complete",
+                "provider_status": "succeeded",
+                "protocol_status": "not_validated",
+                "response_reused_from_checkpoint": False,
+            }
+        except BaseException as exc:
+            delivered_completion = _finalize_exception_completion(exc)
+            if delivered_completion is not None:
+                projection = _finalize_completion_projection(delivered_completion)
+                finish_reason = str(projection.get("finish_reason") or "unknown")
+                integrity = (
+                    "truncated" if finish_reason == "length"
+                    else "content_filtered"
+                    if finish_reason == "content_filter"
+                    else "unknown"
+                )
+                raw_partial = str(projection.get("raw_response") or "")
+                content_available = bool(raw_partial)
+                provider_metadata = deepcopy(
+                    dict(projection.get("provider_metadata") or {})
+                )
+                provider_metadata["exception_type"] = type(exc).__name__
+                provider_metadata["effective_wire_settings_ref"] = str(
+                    wire_artifact.get("effective_wire_settings_ref") or ""
+                )
+                provider_metadata["effective_wire_settings_hash"] = str(
+                    wire_artifact.get("effective_wire_settings_hash") or ""
+                )
+                try:
+                    partial = store.persist_finalize_partial_response(
+                        attempt_id=attempt_id,
+                        call_id=call_id,
+                        canonical_request_hash=canonical_request_hash,
+                        raw_partial_response=(raw_partial if content_available else None),
+                        finish_reason=finish_reason,
+                        usage=dict(projection.get("usage") or {}),
+                        provider_metadata=provider_metadata,
+                        content_available=content_available,
+                        content_unavailable_reason=(
+                            "" if content_available
+                            else "provider_exception_completion_content_unavailable"
+                        ),
+                        completion_integrity=integrity,
+                    )
+                except Exception as persist_exc:
+                    raise FinalizeResponsePersistenceError(
+                        "provider delivered a partial completion but protected persistence failed",
+                        response_content_hash=hashlib.sha256(
+                            raw_partial.encode("utf-8")
+                        ).hexdigest(),
+                    ) from persist_exc
+                try:
+                    store.finish_call(
+                        call_id,
+                        {
+                            "role": "diagnostic",
+                            "content": "",
+                            "finish_reason": finish_reason,
+                            "completion_integrity": integrity,
+                            "partial_response_artifact_ref": partial.get(
+                                "partial_response_artifact_ref"
+                            ),
+                            "usage": projection.get("usage") or {},
+                        },
+                        status="truncated" if integrity == "truncated" else "blocked",
+                    )
+                except Exception as trace_exc:
+                    logger.warning(
+                        "Finalize typed partial diagnostic projection failed: %s",
+                        trace_exc,
+                    )
+                return {
+                    "response": delivered_completion,
+                    "raw_response": "",
+                    "structured_object": None,
+                    "artifact": {},
+                    "partial_artifact": partial,
+                    "finish_reason": finish_reason,
+                    "usage": deepcopy(dict(projection.get("usage") or {})),
+                    "completion_integrity": integrity,
+                    "provider_status": "succeeded",
+                    "protocol_status": "not_validated",
+                    "response_reused_from_checkpoint": False,
+                }
+            try:
+                store.fail_call(call_id, exc)
+            except Exception as trace_exc:
+                logger.warning("Failed to persist finalize diagnostic failure: %s", trace_exc)
+            raise
+        finally:
+            if not invoke_task.done():
+                invoke_task.cancel()
+
+    async def _run_consultant_finalize(
+        self,
+        *,
+        state: Mapping[str, Any],
+        task_id: str,
+        task_spec: Mapping[str, Any],
+        consultation_state: Mapping[str, Any],
+        resolved_selected_skill_ids: Sequence[str],
+        input_audit: Mapping[str, Any],
+        consultant_wiki_context: str = "",
+        consultant_memory_retrieval_context: str = "",
+    ) -> Dict[str, Any]:
+        """Dispatch FINALIZE without ever interpreting one wire ABI as another.
+
+        Fresh work is schema-v4/wire-v3.  A legacy protocol that has already
+        emitted an intent remains pinned to the frozen v2 runner.  The only
+        automatic migration is a ready v2 owner with no provider intent; that
+        creates a newly bound v4 child rather than mutating an in-flight ABI.
+        """
+        current = deepcopy(dict(consultation_state or {}))
+        protocol_value = current.get("finalize_protocol")
+        try:
+            runner = finalize_protocol_runner(
+                protocol_value if isinstance(protocol_value, Mapping) else None
+            )
+        except (TypeError, ValueError) as exc:
+            diagnostic = {
+                "error_code": "FINALIZE_PROTOCOL_VERSION_UNSUPPORTED",
+                "error_owner": "controller",
+                "detail": redact_lineage_text(str(exc))[:2000],
+            }
+            current.update({
+                "phase": "blocked",
+                "consultation_status": "blocked",
+                "completion_decision": "blocked",
+                "completion_reason": diagnostic["error_code"],
+                "terminal_diagnostic": deepcopy(diagnostic),
+                "resolved_selected_skill_ids": list(resolved_selected_skill_ids),
+            })
+            return {
+                "messages": [SystemMessage(content=(
+                    "<consultant_finalize_internal_error>"
+                    + json.dumps(diagnostic, ensure_ascii=False, sort_keys=True)
+                    + "</consultant_finalize_internal_error>"
+                ))],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "task_spec": deepcopy(dict(task_spec or {})),
+                "task_revision": task_spec_revision(task_spec),
+                "selected_skills": list(resolved_selected_skill_ids),
+                "selected_skills_raw": list(resolved_selected_skill_ids),
+                "active_skills": list(resolved_selected_skill_ids),
+                "required_skills_all": list(resolved_selected_skill_ids),
+                "consultation_state": current,
+                "pending_human_question": {},
+                "contract_status": "blocked_internal_contract_error",
+                "task_status": TASK_STATUS_BLOCKED,
+                "failure_type": diagnostic["error_code"],
+                "failure_owner": diagnostic["error_owner"],
+                "next_step": "finish",
+            }
+
+        migrate_legacy = False
+        if runner == "legacy_v2":
+            eligibility = legacy_finalize_migration_eligibility(
+                dict(protocol_value or {})
+            )
+            migrate_legacy = bool(eligibility.get("eligible"))
+            if not migrate_legacy:
+                return await self._run_consultant_finalize_v2(
+                    state=state,
+                    task_id=task_id,
+                    task_spec=task_spec,
+                    consultation_state=current,
+                    resolved_selected_skill_ids=resolved_selected_skill_ids,
+                    input_audit=input_audit,
+                    consultant_wiki_context=consultant_wiki_context,
+                    consultant_memory_retrieval_context=(
+                        consultant_memory_retrieval_context
+                    ),
+                )
+
+        return await self._run_consultant_finalize_v4(
+            state=state,
+            task_id=task_id,
+            task_spec=task_spec,
+            consultation_state=current,
+            resolved_selected_skill_ids=resolved_selected_skill_ids,
+            input_audit=input_audit,
+            consultant_wiki_context=consultant_wiki_context,
+            consultant_memory_retrieval_context=(
+                consultant_memory_retrieval_context
+            ),
+            migrate_legacy_ready=migrate_legacy,
+        )
+
+    async def _run_consultant_finalize_v4(
+        self,
+        *,
+        state: Mapping[str, Any],
+        task_id: str,
+        task_spec: Mapping[str, Any],
+        consultation_state: Mapping[str, Any],
+        resolved_selected_skill_ids: Sequence[str],
+        input_audit: Mapping[str, Any],
+        consultant_wiki_context: str = "",
+        consultant_memory_retrieval_context: str = "",
+        migrate_legacy_ready: bool = False,
+    ) -> Dict[str, Any]:
+        """Run the artifact-first schema-v4 controller and compact wire-v3 path."""
+        current_task_spec = merge_task_spec_input_audit(task_spec, input_audit)
+        current_consultation = deepcopy(dict(consultation_state or {}))
+        selected = list(dict.fromkeys(
+            str(item).strip()
+            for item in resolved_selected_skill_ids or []
+            if str(item).strip()
+        ))
+        current_consultation["resolved_selected_skill_ids"] = list(selected)
+        task_is_skill_free = self._consultant_task_is_explicitly_skill_free(
+            current_task_spec
+        )
+
+        def protocol() -> Dict[str, Any]:
+            value = current_consultation.get("finalize_protocol")
+            return dict(value) if isinstance(value, Mapping) else {}
+
+        def terminal_update(
+            *,
+            error_code: str,
+            error_owner: str,
+            detail: str,
+            context_initialized: bool = True,
+        ) -> Dict[str, Any]:
+            nonlocal current_consultation
+            safe_detail = redact_lineage_text(detail or error_code).strip()[:4000]
+            diagnostic = {
+                "error_code": str(error_code),
+                "error_owner": str(error_owner),
+                "finalize_context_id": str(protocol().get("finalize_context_id") or ""),
+                "base_contract_hash": str(protocol().get("base_contract_hash") or ""),
+                "detail": safe_detail,
+            }
+            for prefix in ("work_budget", "work_preflight"):
+                ref = str(protocol().get(f"{prefix}_ref") or "")
+                digest = str(protocol().get(f"{prefix}_hash") or "")
+                if ref and digest:
+                    diagnostic[f"{prefix}_ref"] = ref
+                    diagnostic[f"{prefix}_hash"] = digest
+            if context_initialized and protocol() and str(
+                protocol().get("finalize_status") or ""
+            ) not in {"blocked", "compiled", "needs_user"}:
+                try:
+                    current_consultation = commit_finalize_v4_transition(
+                        current_consultation,
+                        {
+                            "transition": "blocked",
+                            "error_code": error_code,
+                            "error_owner": error_owner,
+                            "terminal_diagnostic": diagnostic,
+                        },
+                    )
+                except Exception as commit_exc:
+                    diagnostic["transition_error"] = (
+                        f"{type(commit_exc).__name__}: {commit_exc}"
+                    )[:1000]
+            current_consultation.pop("final_contract", None)
+            current_consultation.update({
+                "phase": "blocked",
+                "consultation_status": "blocked",
+                "completion_decision": "blocked",
+                "completion_reason": error_code,
+                "resolved_selected_skill_ids": list(selected),
+                "terminal_diagnostic": deepcopy(diagnostic),
+            })
+            output.print_once(
+                f"consultant_finalize_v4_internal:{task_id}:{error_code}",
+                f"⛔ Consultant FINALIZE v4 stopped before Planner: {error_code}. {safe_detail[:500]}",
+                Fore.RED,
+            )
+            return {
+                "messages": [SystemMessage(content=(
+                    "<consultant_finalize_internal_error>\n"
+                    + json.dumps(diagnostic, ensure_ascii=False, sort_keys=True)
+                    + "\n</consultant_finalize_internal_error>"
+                ))],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "task_spec": current_task_spec,
+                "task_revision": task_spec_revision(current_task_spec),
+                "selected_skills": list(selected),
+                "selected_skills_raw": list(selected),
+                "active_skills": list(selected),
+                "required_skills_all": list(selected),
+                "consultation_state": current_consultation,
+                "consultant_contract_repair": {},
+                "pending_human_question": {},
+                "contract_status": (
+                    "blocked_internal_provider_error"
+                    if error_owner in {"provider", "controller_provider"}
+                    else "blocked_internal_contract_error"
+                ),
+                "consultant_constraint_metrics": {
+                    "schema_validation": "failed",
+                    "protocol_schema_version": 4,
+                    "wire_schema_version": 3,
+                    "provider_status": str(protocol().get("provider_status") or "not_called"),
+                    "completion_integrity": str(protocol().get("completion_integrity") or "not_called"),
+                    "protocol_status": str(protocol().get("protocol_status") or "blocked"),
+                    "error_code": error_code,
+                    "error_owner": error_owner,
+                },
+                "task_status": TASK_STATUS_BLOCKED,
+                "failure_type": error_code,
+                "failure_owner": error_owner,
+                "next_step": "finish",
+            }
+
+        precondition_errors = self._consultant_finalize_precondition_errors(
+            task_spec=current_task_spec,
+            consultation_state=current_consultation,
+            resolved_selected_skill_ids=selected,
+            input_audit=input_audit,
+            task_is_skill_free=task_is_skill_free,
+        )
+        existing_protocol = protocol()
+        existing_terminal_v4 = bool(
+            int(existing_protocol.get("schema_version") or 0) == 4
+            and int(existing_protocol.get("wire_schema_version") or 0) == 3
+            and str(existing_protocol.get("finalize_status") or "")
+            in {"compiled", "blocked", "needs_user"}
+        )
+        if existing_terminal_v4:
+            # Terminal replay is artifact-first.  Rebuilding the pre-finalize
+            # context from an already compiled TaskSpec would manufacture a new
+            # base hash and incorrectly rebind a terminal protocol.
+            context_value = {}
+            context_id = str(existing_protocol.get("finalize_context_id") or "")
+            base_contract_hash = str(
+                existing_protocol.get("base_contract_hash") or ""
+            )
+        else:
+            try:
+                finalize_context = self._build_consultant_finalize_context(
+                    task_id=task_id,
+                    task_spec=current_task_spec,
+                    consultation_state=current_consultation,
+                    resolved_selected_skill_ids=selected,
+                    input_audit=input_audit,
+                    task_is_skill_free=task_is_skill_free,
+                )
+                context_value = thaw_finalize_value(finalize_context)
+                context_id = str(context_value.get("finalize_context_id") or "")
+                base_contract_hash = str(context_value.get("base_contract_hash") or "")
+                previous = protocol()
+                current_consultation = initialize_finalize_protocol_v4(
+                    current_consultation,
+                    finalize_context_id=context_id,
+                    base_contract_hash=base_contract_hash,
+                    replay_scope_id=f"{task_id}:finalize:{task_spec_revision(current_task_spec)}",
+                    source_task_spec_revision=task_spec_revision(current_task_spec),
+                    parent_finalize_context_id=(
+                        str(previous.get("finalize_context_id") or "")
+                        if migrate_legacy_ready else ""
+                    ),
+                    migration_reason=(
+                        "ready_without_provider_intent" if migrate_legacy_ready else ""
+                    ),
+                    source_protocol_schema_version=(
+                        int(previous.get("schema_version") or 0)
+                        if migrate_legacy_ready else None
+                    ),
+                    source_wire_schema_version=(
+                        int(previous.get("wire_schema_version") or 0)
+                        if migrate_legacy_ready else None
+                    ),
+                    replace=migrate_legacy_ready,
+                )
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_CONTEXT_INVALID",
+                    error_owner="controller",
+                    detail=f"Finalize context construction failed: {type(exc).__name__}: {exc}",
+                    context_initialized=False,
+                )
+
+        active_v4 = protocol()
+        existing_status = str(active_v4.get("finalize_status") or "")
+        if existing_status == "blocked":
+            return terminal_update(
+                error_code=str(
+                    active_v4.get("terminal_error_code")
+                    or "FINALIZE_REPAIR_EXHAUSTED"
+                ),
+                error_owner=str(active_v4.get("terminal_owner") or "controller"),
+                detail=str(
+                    (active_v4.get("terminal_diagnostic") or {}).get("detail")
+                    or "FINALIZE v4 is already in a typed blocked state."
+                ),
+            )
+        if existing_status == "needs_user":
+            pending = current_consultation.get("pending_human_question")
+            if not isinstance(pending, Mapping) or not str(
+                pending.get("ambiguity_id") or ""
+            ):
+                return terminal_update(
+                    error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                    error_owner="controller_storage",
+                    detail="A needs-user v4 checkpoint has no durable question projection.",
+                )
+            current_consultation.update({
+                "phase": "needs_user",
+                "consultation_status": "needs_user",
+                "completion_decision": "needs_user",
+                "completion_reason": "validated_semantic_ambiguity",
+            })
+            return {
+                "messages": [SystemMessage(content=(
+                    "<consultant_semantic_resolution_request>"
+                    + json.dumps({
+                        "ambiguity_id": pending.get("ambiguity_id"),
+                    }, ensure_ascii=False, sort_keys=True)
+                    + "</consultant_semantic_resolution_request>"
+                ))],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "task_spec": current_task_spec,
+                "task_revision": task_spec_revision(current_task_spec),
+                "selected_skills": list(selected),
+                "selected_skills_raw": list(selected),
+                "active_skills": list(selected),
+                "required_skills_all": list(selected),
+                "consultation_state": current_consultation,
+                "consultant_contract_repair": {},
+                "pending_human_question": deepcopy(dict(pending)),
+                "contract_status": "blocked_need_user_decision",
+                "next_step": "ask_user",
+            }
+        if existing_status == "compiled":
+            try:
+                durable_compiled = self._load_verified_finalize_v4_contract(
+                    task_id=task_id,
+                    protocol=active_v4,
+                    task_spec=current_task_spec,
+                    selected_skill_ids=selected,
+                )
+                compiled_task_spec = apply_task_spec_mutation_proposal(
+                    current_task_spec,
+                    constraint_mutation_proposal(
+                        durable_compiled.get("constraints") or []
+                    ),
+                    project_root=project_root,
+                )
+                summary = str(
+                    durable_compiled.get("summary")
+                    or "Consultant FINALIZE v4 reused a verified compiled contract."
+                )
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                    error_owner="controller_storage",
+                    detail=f"Compiled v4 replay failed: {type(exc).__name__}: {exc}",
+                )
+            current_consultation.pop("final_contract", None)
+            current_consultation.update({
+                "phase": "finalize",
+                "consultation_status": "completed",
+                "completion_decision": "ready_to_finalize",
+                "completion_reason": "formal_contract_compiled_v4_replay",
+                "resolved_selected_skill_ids": list(selected),
+                "compiled_contract_ref": str(durable_compiled.get("compiled_contract_ref") or ""),
+                "compiled_contract_hash": str(durable_compiled.get("compiled_contract_hash") or ""),
+            })
+            return {
+                "messages": [AIMessage(content="FINISH\n" + summary)],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "selected_skills": list(selected),
+                "selected_skills_raw": list(selected),
+                "active_skills": list(selected),
+                "future_skills": [],
+                "required_skills_all": list(selected),
+                "candidate_skills": [],
+                "runtime_status": self._runtime_status_for_task(task_id, selected),
+                "runtime_audit": [],
+                "skill_selection_source": "consultation_controller_finalize_v4",
+                "requirements_summary": summary,
+                "task_spec": compiled_task_spec,
+                "task_revision": task_spec_revision(compiled_task_spec),
+                "consultant_constraint_metrics": {
+                    "schema_validation": "passed",
+                    "protocol_schema_version": 4,
+                    "wire_schema_version": 3,
+                    "compile_mode": str(active_v4.get("compile_mode") or ""),
+                    "provider_status": str(active_v4.get("provider_status") or ""),
+                    "completion_integrity": str(
+                        active_v4.get("completion_integrity") or ""
+                    ),
+                    "protocol_status": "valid",
+                    "compiled_contract_ref": durable_compiled["compiled_contract_ref"],
+                    "compiled_contract_hash": durable_compiled["compiled_contract_hash"],
+                    "reused_from_checkpoint": True,
+                },
+                "consultation_state": current_consultation,
+                "consultant_contract_repair": {},
+                "pending_human_question": {},
+                "contract_status": "semantic_contract_compiled",
+                "memory_packet_context": self._consultant_handoff_memory_packet(
+                    summary,
+                    consultant_memory_retrieval_context,
+                ),
+                "wiki_memory_context": consultant_wiki_context,
+                "next_step": "planner",
+            }
+
+        if precondition_errors:
+            return terminal_update(
+                error_code="FINALIZE_PRECONDITION_FAILED",
+                error_owner="controller",
+                detail="; ".join(precondition_errors),
+            )
+
+        store = ContextLineageStore(self.data_path, task_id)
+        try:
+            durable_context = store.persist_finalize_context_artifact(
+                context_value
+            )
+            verified_context = store.lookup_finalize_context_artifact(
+                finalize_context_id=context_id,
+                base_contract_hash=base_contract_hash,
+            )
+            if verified_context != durable_context:
+                raise SnapshotConflictError(
+                    "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                )
+            domain_coverage = classify_directive_coverage(context_value)
+            validation = validate_directive_coverage(
+                domain_coverage,
+                finalize_context=context_value,
+            )
+            if not bool(validation.get("valid")):
+                raise ValueError(
+                    "coverage validation failed: "
+                    + json.dumps(validation.get("errors") or [], ensure_ascii=False)
+                )
+            # The protected store owns its own envelope hash.  Retain the pure
+            # controller hash explicitly so both identities remain auditable.
+            coverage_to_persist = deepcopy(dict(domain_coverage))
+            coverage_to_persist["domain_record_type"] = str(
+                coverage_to_persist.pop("record_type", "")
+            )
+            coverage_to_persist["record_type"] = "directive_coverage_artifact"
+            coverage_to_persist.update({
+                "finalize_context_artifact_ref": durable_context[
+                    "finalize_context_artifact_ref"
+                ],
+                "finalize_context_artifact_hash": durable_context[
+                    "finalize_context_artifact_hash"
+                ],
+            })
+            if str(protocol().get("coverage_artifact_hash") or ""):
+                durable_coverage = store.lookup_finalize_coverage_artifact(
+                    coverage_artifact_hash=str(
+                        protocol().get("coverage_artifact_hash") or ""
+                    ),
+                    finalize_context_id=context_id,
+                )
+                if (
+                    durable_coverage is None
+                    or str(durable_coverage.get("coverage_artifact_ref") or "")
+                    != str(protocol().get("coverage_artifact_ref") or "")
+                    or str(durable_coverage.get("coverage_artifact_hash") or "")
+                    != str(domain_coverage.get("coverage_artifact_hash") or "")
+                ):
+                    raise SnapshotConflictError(
+                        "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    )
+            else:
+                durable_coverage = store.persist_finalize_coverage_artifact(
+                    coverage_to_persist
+                )
+            expected_resolution_ids = [
+                str(item.get("resolution_id") or "")
+                for item in domain_coverage.get("model_resolution_items") or []
+                if isinstance(item, Mapping)
+                and str(item.get("resolution_id") or "")
+            ]
+            if (
+                not str(protocol().get("coverage_artifact_hash") or "")
+                and not expected_resolution_ids
+            ):
+                current_consultation = commit_finalize_v4_transition(
+                    current_consultation,
+                    {
+                        "transition": "coverage_ready",
+                        "coverage_artifact_ref": durable_coverage["coverage_artifact_ref"],
+                        "coverage_artifact_hash": durable_coverage["coverage_artifact_hash"],
+                        "expected_resolution_ids": expected_resolution_ids,
+                    },
+                )
+        except Exception as exc:
+            return terminal_update(
+                error_code="FINALIZE_COVERAGE_CLASSIFICATION_INCOMPLETE",
+                error_owner="controller",
+                detail=f"Coverage classification/persistence failed: {type(exc).__name__}: {exc}",
+            )
+
+        unresolved = [
+            deepcopy(dict(item))
+            for item in context_value.get("unresolved_semantics") or []
+            if isinstance(item, Mapping)
+        ]
+        if unresolved:
+            ambiguity = unresolved[0]
+            ambiguity_id = str(
+                ambiguity.get("constraint_id")
+                or ambiguity.get("ambiguity_id")
+                or ""
+            ).strip()
+            if not ambiguity_id:
+                return terminal_update(
+                    error_code="FINALIZE_UNAUTHORIZED_ASK",
+                    error_owner="controller",
+                    detail="Validated user ambiguity has no stable ambiguity ID.",
+                )
+            pending_question = {
+                "type": "semantic_constraint_clarification_v4",
+                "stage": "consultant",
+                "question": self._consultant_finalize_ambiguity_question(ambiguity),
+                "ambiguity_id": ambiguity_id,
+                "finalize_context_id": context_id,
+                "base_contract_hash": base_contract_hash,
+                "task_spec_revision": task_spec_revision(current_task_spec),
+                "resume_step": "consultant",
+            }
+            try:
+                current_consultation["pending_human_question"] = deepcopy(
+                    pending_question
+                )
+                current_consultation = commit_finalize_v4_transition(
+                    current_consultation,
+                    {
+                        "transition": "needs_user",
+                        "pending_ambiguity_id": ambiguity_id,
+                    },
+                )
+                current_consultation.update({
+                    "phase": "needs_user",
+                    "consultation_status": "needs_user",
+                    "completion_decision": "needs_user",
+                    "completion_reason": "validated_semantic_ambiguity",
+                    "pending_human_question": deepcopy(pending_question),
+                })
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_UNAUTHORIZED_ASK",
+                    error_owner="controller",
+                    detail=f"Ambiguity transition failed: {type(exc).__name__}: {exc}",
+                )
+            return {
+                "messages": [SystemMessage(content=(
+                    "<consultant_semantic_resolution_request>"
+                    + json.dumps({
+                        "ambiguity_id": ambiguity_id,
+                        "semantic_key": ambiguity.get("semantic_key"),
+                    }, ensure_ascii=False, sort_keys=True)
+                    + "</consultant_semantic_resolution_request>"
+                ))],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "task_spec": current_task_spec,
+                "task_revision": task_spec_revision(current_task_spec),
+                "selected_skills": list(selected),
+                "selected_skills_raw": list(selected),
+                "active_skills": list(selected),
+                "required_skills_all": list(selected),
+                "consultation_state": current_consultation,
+                "consultant_contract_repair": {},
+                "pending_human_question": pending_question,
+                "consultant_constraint_metrics": {
+                    "schema_validation": "passed",
+                    "compile_mode": str(protocol().get("compile_mode") or ""),
+                    "provider_status": "not_called",
+                    "completion_integrity": "not_called",
+                    "protocol_status": "needs_user",
+                    "error_code": "FINALIZE_SEMANTIC_AMBIGUITY",
+                    "error_owner": "user_semantic",
+                },
+                "contract_status": "blocked_need_user_decision",
+                "next_step": "ask_user",
+            }
+
+        if expected_resolution_ids:
+            return await self._run_consultant_finalize_v4_batches(
+                state=state,
+                task_id=task_id,
+                current_task_spec=current_task_spec,
+                current_consultation=current_consultation,
+                context_value=context_value,
+                domain_coverage=domain_coverage,
+                durable_coverage=durable_coverage,
+                durable_context=durable_context,
+                selected=selected,
+                input_audit=input_audit,
+                consultant_wiki_context=consultant_wiki_context,
+                consultant_memory_retrieval_context=(
+                    consultant_memory_retrieval_context
+                ),
+                terminal_update=terminal_update,
+            )
+
+        try:
+            deterministic = compile_deterministic_coverage(
+                context_value,
+                domain_coverage,
+                required_skill_constraints=context_value.get(
+                    "controller_required_constraints"
+                ) or [],
+            )
+            domain_compiled = deepcopy(dict(deterministic["compiled_contract"]))
+            semantic_metrics = {
+                "schema_validation": "passed",
+                "protocol_schema_version": 4,
+                "wire_schema_version": 3,
+                "compile_mode": "controller_deterministic",
+                "provider_status": "not_called",
+                "completion_integrity": "not_called",
+                "protocol_status": "valid",
+                "directive_count": int(domain_coverage.get("directive_count") or 0),
+                "coverage_counts": deepcopy(dict(domain_coverage.get("counts") or {})),
+                "coverage_artifact_ref": durable_coverage["coverage_artifact_ref"],
+                "coverage_artifact_hash": durable_coverage["coverage_artifact_hash"],
+                "domain_coverage_artifact_hash": domain_coverage["coverage_artifact_hash"],
+            }
+            compiled_task_spec = apply_task_spec_mutation_proposal(
+                current_task_spec,
+                constraint_mutation_proposal(
+                    domain_compiled.get("constraints") or []
+                ),
+                project_root=project_root,
+            )
+            selected_constraints = semantic_constraints_from_task_spec(
+                compiled_task_spec,
+                selected_skill_ids=selected,
+            )
+            compiled_task_spec = merge_compiled_constraints(
+                compiled_task_spec,
+                selected_constraints,
+                project_root=project_root,
+                metrics=semantic_metrics,
+            )
+            final_constraints = semantic_constraints_from_task_spec(
+                compiled_task_spec,
+                selected_skill_ids=selected,
+            )
+            compiled_to_persist = deepcopy(domain_compiled)
+            compiled_to_persist["domain_record_type"] = str(
+                compiled_to_persist.pop("record_type", "")
+            )
+            compiled_to_persist["record_type"] = "finalize_compiled_contract"
+            compiled_to_persist.update({
+                "finalize_context_artifact_ref": durable_context[
+                    "finalize_context_artifact_ref"
+                ],
+                "finalize_context_artifact_hash": durable_context[
+                    "finalize_context_artifact_hash"
+                ],
+                "coverage_artifact_ref": durable_coverage["coverage_artifact_ref"],
+                "coverage_artifact_hash": durable_coverage["coverage_artifact_hash"],
+                "selected_skills": list(selected),
+                "task_spec_revision": task_spec_revision(compiled_task_spec),
+                "semantic_constraint_count": len(
+                    domain_compiled.get("constraints") or []
+                ),
+                "summary": (
+                    "Consultant FINALIZE v4 deterministically compiled the "
+                    f"complete {int(domain_coverage.get('directive_count') or 0)}-directive "
+                    "coverage proof; no finalizer provider call was required."
+                ),
+            })
+            durable_compiled = store.persist_finalize_compiled_contract(
+                compiled_to_persist
+            )
+            verified_compiled = store.lookup_finalize_compiled_contract(
+                compiled_contract_id=str(durable_compiled["compiled_contract_id"]),
+                compiled_contract_hash=str(durable_compiled["compiled_contract_hash"]),
+                finalize_context_id=context_id,
+            )
+            if verified_compiled != durable_compiled:
+                raise SnapshotConflictError(
+                    "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                )
+            current_consultation = commit_finalize_v4_transition(
+                current_consultation,
+                {
+                    "transition": "compiled",
+                    "compile_mode": "controller_deterministic",
+                    "coverage_artifact_ref": durable_coverage["coverage_artifact_ref"],
+                    "coverage_artifact_hash": durable_coverage["coverage_artifact_hash"],
+                    "compiled_contract_ref": durable_compiled["compiled_contract_ref"],
+                    "compiled_contract_hash": durable_compiled["compiled_contract_hash"],
+                },
+            )
+            validate_finalize_protocol_v4(protocol())
+        except Exception as exc:
+            return terminal_update(
+                error_code="FINALIZE_COMPILE_FAILED",
+                error_owner=(
+                    "controller_storage"
+                    if isinstance(exc, (SnapshotConflictError, OSError))
+                    else "controller"
+                ),
+                detail=f"Deterministic compile failed: {type(exc).__name__}: {exc}",
+            )
+
+        summary = str(durable_compiled.get("summary") or "")
+        current_consultation.pop("final_contract", None)
+        current_consultation.update({
+            "phase": "finalize",
+            "consultation_status": "completed",
+            "completion_decision": "ready_to_finalize",
+            "completion_reason": "formal_contract_compiled_v4_deterministic",
+            "resolved_selected_skill_ids": list(selected),
+            "compiled_contract_ref": str(durable_compiled.get("compiled_contract_ref") or ""),
+            "compiled_contract_hash": str(durable_compiled.get("compiled_contract_hash") or ""),
+        })
+        output.print_once(
+            f"consultant_finalize_v4:{task_id}",
+            "✓ Consultant FINALIZE v4 compiled complete coverage without a provider call.",
+            Fore.GREEN,
+        )
+        return {
+            "messages": [AIMessage(content="FINISH\n" + summary)],
+            "input_audit": deepcopy(dict(input_audit or {})),
+            "selected_skills": list(selected),
+            "selected_skills_raw": list(selected),
+            "active_skills": list(selected),
+            "future_skills": [],
+            "required_skills_all": list(selected),
+            "candidate_skills": [],
+            "runtime_status": self._runtime_status_for_task(task_id, selected),
+            "runtime_audit": [],
+            "skill_selection_source": "consultation_controller_finalize_v4",
+            "requirements_summary": summary,
+            "task_spec": compiled_task_spec,
+            "task_revision": task_spec_revision(compiled_task_spec),
+            "consultant_constraint_metrics": {
+                **semantic_metrics,
+                "compiled_contract_ref": durable_compiled["compiled_contract_ref"],
+                "compiled_contract_hash": durable_compiled["compiled_contract_hash"],
+            },
+            "consultation_state": current_consultation,
+            "consultant_contract_repair": {},
+            "pending_human_question": {},
+            "contract_status": "semantic_contract_compiled",
+            "memory_packet_context": self._consultant_handoff_memory_packet(
+                summary,
+                consultant_memory_retrieval_context,
+            ),
+            "wiki_memory_context": consultant_wiki_context,
+            "next_step": "planner",
+        }
+
+    async def _run_consultant_finalize_v4_batches(
+        self,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Resolve only finite candidate IDs under capacity and work budgets."""
+        task_id = str(kwargs["task_id"])
+        current_task_spec = deepcopy(dict(kwargs["current_task_spec"]))
+        current_consultation: Dict[str, Any] = kwargs["current_consultation"]
+        context_value = deepcopy(dict(kwargs["context_value"]))
+        domain_coverage = deepcopy(dict(kwargs["domain_coverage"]))
+        durable_coverage = deepcopy(dict(kwargs["durable_coverage"]))
+        durable_context = deepcopy(dict(kwargs["durable_context"]))
+        selected = list(kwargs["selected"])
+        input_audit = deepcopy(dict(kwargs["input_audit"] or {}))
+        consultant_wiki_context = str(kwargs.get("consultant_wiki_context") or "")
+        consultant_memory_retrieval_context = str(
+            kwargs.get("consultant_memory_retrieval_context") or ""
+        )
+        terminal_update: Callable[..., Dict[str, Any]] = kwargs["terminal_update"]
+        context_id = str(context_value.get("finalize_context_id") or "")
+        base_contract_hash = str(context_value.get("base_contract_hash") or "")
+        store = ContextLineageStore(self.data_path, task_id)
+
+        def protocol() -> Dict[str, Any]:
+            value = current_consultation.get("finalize_protocol")
+            return dict(value) if isinstance(value, Mapping) else {}
+
+        def commit(decision: Mapping[str, Any]) -> None:
+            updated = commit_finalize_v4_transition(
+                current_consultation,
+                decision,
+            )
+            current_consultation.clear()
+            current_consultation.update(updated)
+
+        def persist_controller(
+            kind: str,
+            artifact: Mapping[str, Any],
+            *,
+            record_type: str,
+            id_rename: Optional[Tuple[str, str]] = None,
+            hash_rename: Optional[Tuple[str, str]] = None,
+        ) -> Dict[str, Any]:
+            payload = deepcopy(dict(artifact))
+            domain_record_type = str(payload.pop("record_type", ""))
+            payload["record_type"] = record_type
+            payload["domain_record_type"] = domain_record_type
+            if id_rename:
+                old, new = id_rename
+                payload[f"domain_{old}"] = str(payload.pop(old, ""))
+                payload[new] = ""
+            if hash_rename:
+                old, new = hash_rename
+                payload[f"domain_{old}"] = str(payload.pop(old, ""))
+                payload[new] = ""
+            return store.persist_finalize_controller_artifact(kind, payload)
+
+        try:
+            candidate_catalog = build_finalize_candidate_catalog(domain_coverage)
+        except Exception as exc:
+            return terminal_update(
+                error_code="FINALIZE_CANDIDATE_CATALOG_INCOMPLETE",
+                error_owner="controller",
+                detail=(
+                    "Model-owned coverage has no finite source-bound candidate set: "
+                    f"{type(exc).__name__}: {exc}"
+                ),
+            )
+        try:
+            durable_catalog = persist_controller(
+                "candidate_catalog",
+                candidate_catalog,
+                record_type="finalize_candidate_catalog",
+            )
+            probe_batch = build_finalize_decision_batch(candidate_catalog)
+            probe_schema = build_finalize_batch_schema(probe_batch)
+            probe_messages = build_finalize_batch_messages(
+                probe_batch,
+                probe_schema,
+            )
+            probe_settings = self._consultant_finalize_provider_settings(
+                finalize_batch_llm_response_schema(probe_schema, probe_batch)
+            )
+            direct_client = getattr(self.llm, "async_client", None)
+            exact_wire_cap_verified = bool(
+                str(probe_settings.get("provider_id") or "") == "deepseek"
+                and direct_client is not None
+                and callable(getattr(direct_client, "create", None))
+                and str(probe_settings.get("output_token_parameter") or "")
+                == "max_tokens"
+            )
+            provider_capability = {
+                "record_type": "finalize_provider_capability",
+                "provider_id": str(probe_settings.get("provider_id") or ""),
+                "endpoint_id": str(probe_settings.get("endpoint_id") or ""),
+                "model": str(probe_settings.get("model") or ""),
+                "api_surface": "chat_completions",
+                "output_token_parameter": str(
+                    probe_settings.get("output_token_parameter") or ""
+                ),
+                "effective_token_cap_verified": exact_wire_cap_verified,
+                "supports_bounded_output_grammar": False,
+                "maximum_raw_wire_tokens": None,
+                "stream": False,
+            }
+            if not exact_wire_cap_verified:
+                raise ValueError("FINALIZE_PROVIDER_PARAMETER_UNSUPPORTED")
+            # The full-catalog wire is an upper bound for every stable child;
+            # the profile then adds the batch projection again, deliberately
+            # preferring safe over-admission to optimistic token estimates.
+            base_input_tokens = sum(
+                len(str(getattr(item, "content", "") or "").encode("utf-8")) + 4
+                for item in probe_messages
+            )
+            budget_policy_projection = {
+                "budget_policy_id": str(
+                    CONSULTANT_FINALIZE_BUDGET_POLICY_VERSION
+                ),
+                "max_resolution_items": int(
+                    CONSULTANT_FINALIZE_MAX_RESOLUTION_ITEMS
+                ),
+                "max_created_batches": int(
+                    CONSULTANT_FINALIZE_MAX_CREATED_BATCHES
+                ),
+                "max_provider_calls": int(
+                    CONSULTANT_FINALIZE_MAX_PROVIDER_CALLS
+                ),
+                "max_repartition_depth": int(
+                    CONSULTANT_FINALIZE_MAX_REPARTITION_DEPTH
+                ),
+                "max_total_completion_tokens": int(
+                    CONSULTANT_FINALIZE_MAX_TOTAL_COMPLETION_TOKENS
+                ),
+                "max_total_estimated_cost_microusd": int(
+                    CONSULTANT_FINALIZE_MAX_TOTAL_ESTIMATED_COST_MICROUSD
+                ),
+                "max_wall_time_ms": int(
+                    CONSULTANT_FINALIZE_MAX_WALL_TIME_MS
+                ),
+                "per_call_timeout_ms": int(
+                    CONSULTANT_FINALIZE_PER_CALL_TIMEOUT_MS
+                ),
+                "estimated_cost_microusd_per_token": int(
+                    CONSULTANT_FINALIZE_ESTIMATED_MICROUSD_PER_TOKEN
+                ),
+            }
+            partition_basis = build_partition_capacity_basis(
+                candidate_catalog,
+                provider_capability=provider_capability,
+                requested_output_tokens=int(
+                    probe_settings["requested_output_tokens"]
+                ),
+                provider_output_cap=int(probe_settings["provider_output_cap"]),
+                provider_context_limit=int(
+                    probe_settings["provider_context_limit"]
+                ),
+                safety_headroom_tokens=int(
+                    probe_settings["output_safety_headroom_tokens"]
+                ),
+                max_batch_items=int(CONSULTANT_FINALIZE_MAX_BATCH_ITEMS),
+                base_input_tokens=base_input_tokens,
+                budget_policy=budget_policy_projection,
+            )
+            durable_basis = persist_controller(
+                "partition_basis",
+                partition_basis,
+                record_type="finalize_partition_capacity_basis",
+            )
+            now = datetime.now(timezone.utc)
+            work_budget = store.persist_finalize_work_budget({
+                "record_type": "finalize_work_budget",
+                "finalize_context_id": context_id,
+                "replay_scope_id": str(protocol().get("replay_scope_id") or ""),
+                **budget_policy_projection,
+                "run_started_at": now.isoformat(),
+                "absolute_deadline_at": (
+                    now
+                    + timedelta(
+                        milliseconds=int(CONSULTANT_FINALIZE_MAX_WALL_TIME_MS)
+                    )
+                ).isoformat(),
+            })
+            if str(work_budget.get("budget_policy_hash") or "") != str(
+                partition_basis.get("budget_policy_hash") or ""
+            ):
+                raise SnapshotConflictError(
+                    "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                )
+            stable_partition = stable_partition_finalize_batches(
+                candidate_catalog,
+                partition_basis,
+            )
+            durable_partition = persist_controller(
+                "stable_partition",
+                stable_partition,
+                record_type="finalize_stable_partition",
+                id_rename=("partition_id", "stable_partition_id"),
+                hash_rename=("partition_hash", "stable_partition_hash"),
+            )
+            work_preflight = build_finalize_work_preflight(
+                stable_partition,
+                candidate_catalog,
+                partition_basis,
+                max_resolution_items=int(
+                    CONSULTANT_FINALIZE_MAX_RESOLUTION_ITEMS
+                ),
+                max_created_batches=int(
+                    CONSULTANT_FINALIZE_MAX_CREATED_BATCHES
+                ),
+                max_provider_calls=int(
+                    CONSULTANT_FINALIZE_MAX_PROVIDER_CALLS
+                ),
+                max_repartition_depth=int(
+                    CONSULTANT_FINALIZE_MAX_REPARTITION_DEPTH
+                ),
+                max_total_completion_tokens=int(
+                    CONSULTANT_FINALIZE_MAX_TOTAL_COMPLETION_TOKENS
+                ),
+                max_total_estimated_cost_microusd=int(
+                    CONSULTANT_FINALIZE_MAX_TOTAL_ESTIMATED_COST_MICROUSD
+                ),
+                estimated_cost_microusd_per_token=int(
+                    CONSULTANT_FINALIZE_ESTIMATED_MICROUSD_PER_TOKEN
+                ),
+                work_budget_ref=str(work_budget["work_budget_ref"]),
+                work_budget_hash=str(work_budget["work_budget_hash"]),
+                budget_policy_hash=str(work_budget["budget_policy_hash"]),
+            )
+            preflight_to_persist = {
+                **work_preflight,
+                "candidate_catalog_ref": durable_catalog[
+                    "candidate_catalog_ref"
+                ],
+                "partition_capacity_basis_ref": durable_basis[
+                    "partition_capacity_basis_ref"
+                ],
+                "stable_partition_ref": durable_partition[
+                    "stable_partition_ref"
+                ],
+                "durable_stable_partition_hash": durable_partition[
+                    "stable_partition_hash"
+                ],
+            }
+            durable_preflight = persist_controller(
+                "work_preflight",
+                preflight_to_persist,
+                record_type="finalize_work_preflight",
+                id_rename=("preflight_id", "work_preflight_id"),
+                hash_rename=("preflight_hash", "work_preflight_hash"),
+            )
+            verified_preflight = store.lookup_finalize_controller_artifact(
+                "work_preflight",
+                artifact_hash=str(
+                    durable_preflight["work_preflight_hash"]
+                ),
+                finalize_context_id=context_id,
+            )
+            if verified_preflight != durable_preflight:
+                raise SnapshotConflictError(
+                    "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                )
+            if not str(protocol().get("coverage_artifact_hash") or ""):
+                commit({
+                    "transition": "coverage_ready",
+                    "coverage_artifact_ref": durable_coverage["coverage_artifact_ref"],
+                    "coverage_artifact_hash": durable_coverage["coverage_artifact_hash"],
+                    "candidate_catalog_ref": durable_catalog["candidate_catalog_ref"],
+                    "candidate_catalog_hash": durable_catalog["candidate_catalog_hash"],
+                    "partition_capacity_basis_ref": durable_basis[
+                        "partition_capacity_basis_ref"
+                    ],
+                    "partition_capacity_basis_hash": durable_basis[
+                        "partition_capacity_basis_hash"
+                    ],
+                    "work_budget_ref": work_budget["work_budget_ref"],
+                    "work_budget_hash": work_budget["work_budget_hash"],
+                    "work_preflight_ref": durable_preflight[
+                        "work_preflight_ref"
+                    ],
+                    "work_preflight_hash": durable_preflight[
+                        "work_preflight_hash"
+                    ],
+                    "expected_resolution_ids": list(
+                        stable_partition.get("ordered_resolution_ids") or []
+                    ),
+                })
+            else:
+                existing = protocol()
+                expected_bindings = {
+                    "coverage_artifact_ref": durable_coverage[
+                        "coverage_artifact_ref"
+                    ],
+                    "coverage_artifact_hash": durable_coverage[
+                        "coverage_artifact_hash"
+                    ],
+                    "candidate_catalog_ref": durable_catalog[
+                        "candidate_catalog_ref"
+                    ],
+                    "candidate_catalog_hash": durable_catalog[
+                        "candidate_catalog_hash"
+                    ],
+                    "partition_capacity_basis_ref": durable_basis[
+                        "partition_capacity_basis_ref"
+                    ],
+                    "partition_capacity_basis_hash": durable_basis[
+                        "partition_capacity_basis_hash"
+                    ],
+                    "work_budget_ref": work_budget["work_budget_ref"],
+                    "work_budget_hash": work_budget["work_budget_hash"],
+                    "work_preflight_ref": durable_preflight[
+                        "work_preflight_ref"
+                    ],
+                    "work_preflight_hash": durable_preflight[
+                        "work_preflight_hash"
+                    ],
+                }
+                if (
+                    any(
+                        str(existing.get(field) or "") != str(value or "")
+                        for field, value in expected_bindings.items()
+                    )
+                    or sorted(
+                        str(item)
+                        for item in (
+                            existing.get("aggregate") or {}
+                        ).get("expected_resolution_ids") or []
+                    )
+                    != sorted(
+                        str(item)
+                        for item in stable_partition.get(
+                            "ordered_resolution_ids"
+                        ) or []
+                    )
+                ):
+                    raise SnapshotConflictError(
+                        "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    )
+            if not bool(durable_preflight.get("admitted")):
+                raise ValueError(
+                    "FINALIZE_GLOBAL_BUDGET_EXHAUSTED:"
+                    + ",".join(
+                        durable_preflight.get("exceeded_fields") or []
+                    )
+                )
+        except Exception as exc:
+            return terminal_update(
+                error_code=(
+                    "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    if isinstance(exc, (SnapshotConflictError, OSError))
+                    else "FINALIZE_PROVIDER_PARAMETER_UNSUPPORTED"
+                    if "FINALIZE_PROVIDER_PARAMETER_UNSUPPORTED" in str(exc)
+                    else "FINALIZE_GLOBAL_BUDGET_EXHAUSTED"
+                    if "FINALIZE_GLOBAL_BUDGET_EXHAUSTED" in str(exc)
+                    else "FINALIZE_OUTPUT_CAPACITY_UNSATISFIED"
+                ),
+                error_owner=(
+                    "controller_storage"
+                    if isinstance(exc, (SnapshotConflictError, OSError))
+                    else "controller"
+                ),
+                detail=f"Batch capacity admission failed: {type(exc).__name__}: {exc}",
+            )
+
+        queue: List[Dict[str, Any]] = []
+        validated_decisions: List[Dict[str, Any]] = []
+        cost_rate_microusd_per_token = int(
+            work_budget.get("estimated_cost_microusd_per_token") or 0
+        )
+        if (
+            cost_rate_microusd_per_token <= 0
+            or cost_rate_microusd_per_token
+            != int(
+                durable_preflight.get(
+                    "estimated_cost_microusd_per_token"
+                ) or 0
+            )
+        ):
+            return terminal_update(
+                error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                error_owner="controller_storage",
+                detail="Durable work budget and preflight cost policies disagree.",
+            )
+        created_batch_ids = {
+            str(item.get("batch_id") or "")
+            for item in protocol().get("batches") or []
+            if isinstance(item, Mapping)
+        }
+
+        def prepare_batch_row(
+            batch: Mapping[str, Any],
+            schema: Mapping[str, Any],
+            profile: Mapping[str, Any],
+        ) -> Dict[str, Any]:
+            durable_batch = persist_controller(
+                "decision_batch",
+                batch,
+                record_type="finalize_decision_batch",
+            )
+            durable_schema = persist_controller(
+                "response_schema",
+                schema,
+                record_type="finalize_response_schema",
+            )
+            durable_profile = store.persist_finalize_capacity_profile(profile)
+            batch_id = str(batch.get("decision_batch_id") or "")
+            if batch_id not in created_batch_ids:
+                commit({
+                    "transition": "batch_created",
+                    "batch": {
+                        "batch_id": batch_id,
+                        "batch_hash": str(batch.get("decision_batch_hash") or ""),
+                        "item_ids": list(batch.get("item_ids") or []),
+                        "parent_batch_id": str(batch.get("parent_batch_id") or ""),
+                        "repartition_depth": int(batch.get("repartition_depth") or 0),
+                        "derivation_kind": str(batch.get("derivation_kind") or ""),
+                        "decision_batch_ref": durable_batch["decision_batch_ref"],
+                        "response_schema_ref": durable_schema["response_schema_ref"],
+                        "response_schema_hash": durable_schema["response_schema_hash"],
+                        "capacity_profile_ref": durable_profile[
+                            "capacity_profile_ref"
+                        ],
+                        "capacity_profile_hash": durable_profile["profile_hash"],
+                    },
+                })
+                created_batch_ids.add(batch_id)
+            return {
+                "batch": deepcopy(dict(batch)),
+                "response_schema_artifact": deepcopy(dict(schema)),
+                "capacity_profile": deepcopy(dict(profile)),
+                "durable_batch": durable_batch,
+                "durable_schema": durable_schema,
+                "durable_profile": durable_profile,
+            }
+
+        try:
+            for row in stable_partition.get("batches") or []:
+                queue.append(prepare_batch_row(
+                    row["batch"],
+                    row["response_schema_artifact"],
+                    row["capacity_profile"],
+                ))
+        except Exception as exc:
+            return terminal_update(
+                error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                error_owner="controller_storage",
+                detail=f"Batch artifact commit failed: {type(exc).__name__}: {exc}",
+            )
+
+        def project_reservation(record: Mapping[str, Any]) -> Dict[str, Any]:
+            ledger = store.aggregate_finalize_budget_reservations(
+                work_budget_ref=str(work_budget["work_budget_ref"]),
+                work_budget_hash=str(work_budget["work_budget_hash"]),
+                finalize_context_id=context_id,
+            )
+            commit({
+                "transition": "reservation_projected",
+                "reservation_ledger_ref": ledger["reservation_ledger_ref"],
+                "reservation_ledger_hash": ledger["reservation_ledger_hash"],
+                "reservation_id": str(record.get("reservation_id") or ""),
+                "reservation_hash": str(record.get("reservation_hash") or ""),
+                "reservation_ref": str(record.get("reservation_ref") or ""),
+                "attempt_lineage_hash": str(
+                    record.get("attempt_lineage_hash") or ""
+                ),
+                "wire_request_hash": str(
+                    record.get("wire_request_hash") or ""
+                ),
+                "status": str(record.get("status") or ""),
+                "record_revision": int(record.get("record_revision") or 0),
+            })
+            return ledger
+
+        def graph_attempt(attempt_id: str) -> Optional[Dict[str, Any]]:
+            return next(
+                (
+                    dict(item)
+                    for item in protocol().get("attempts") or []
+                    if isinstance(item, Mapping)
+                    and str(item.get("attempt_id") or "") == str(attempt_id)
+                ),
+                None,
+            )
+
+        def graph_batch(batch_id: str) -> Optional[Dict[str, Any]]:
+            return next(
+                (
+                    dict(item)
+                    for item in protocol().get("batches") or []
+                    if isinstance(item, Mapping)
+                    and str(item.get("batch_id") or "") == str(batch_id)
+                ),
+                None,
+            )
+
+        def usage_value(usage: Mapping[str, Any], field: str) -> Optional[int]:
+            if field not in usage or usage.get(field) is None:
+                return None
+            return max(0, int(usage[field]))
+
+        def actual_estimated_cost(usage: Mapping[str, Any]) -> Optional[int]:
+            total = usage_value(usage, "total_tokens")
+            if total is None:
+                prompt = usage_value(usage, "prompt_tokens")
+                completion = usage_value(usage, "completion_tokens")
+                if prompt is None or completion is None:
+                    return None
+                total = prompt + completion
+            return int(total) * cost_rate_microusd_per_token
+
+        def matching_reservation(
+            wire_request_hash: str,
+            *,
+            attempt_id: str = "",
+        ) -> Optional[Dict[str, Any]]:
+            rows = store.list_finalize_budget_reservations(
+                replay_scope_id=str(protocol().get("replay_scope_id") or ""),
+                wire_request_hash=wire_request_hash,
+            )
+            active_or_consumed = [
+                row for row in rows
+                if str(row.get("status") or "") != "released"
+                and (
+                    not attempt_id
+                    or str(row.get("attempt_id") or "") == str(attempt_id)
+                )
+            ]
+            if len(active_or_consumed) > 1:
+                raise SnapshotConflictError(
+                    "FINALIZE_RESERVATION_LEDGER_INVALID"
+                )
+            return deepcopy(active_or_consumed[0]) if active_or_consumed else None
+
+        def ensure_graph_request_started(
+            *,
+            attempt_id: str,
+            call_id: str,
+            call_kind: str,
+            batch: Mapping[str, Any],
+            claim: Mapping[str, Any],
+            request_intent_hash: str,
+            protocol_request_hash: str,
+            wire_request_hash: str,
+            row: Mapping[str, Any],
+            wire_artifact: Mapping[str, Any],
+            reservation: Mapping[str, Any],
+        ) -> None:
+            existing = graph_attempt(attempt_id)
+            if existing is not None:
+                if (
+                    str(existing.get("call_id") or "") != str(call_id)
+                    or str(existing.get("wire_request_hash") or "")
+                    != str(wire_request_hash)
+                    or str(existing.get("protocol_request_hash") or "")
+                    != str(protocol_request_hash)
+                    or str(existing.get("decision_batch_id") or "")
+                    != str(batch.get("decision_batch_id") or "")
+                    or str(existing.get("decision_batch_hash") or "")
+                    != str(batch.get("decision_batch_hash") or "")
+                    or str(existing.get("capacity_profile_ref") or "")
+                    != str(row["durable_profile"]["capacity_profile_ref"])
+                    or str(existing.get("capacity_profile_hash") or "")
+                    != str(row["durable_profile"]["profile_hash"])
+                    or str(existing.get("response_schema_ref") or "")
+                    != str(row["durable_schema"]["response_schema_ref"])
+                    or str(existing.get("response_schema_hash") or "")
+                    != str(row["durable_schema"]["response_schema_hash"])
+                ):
+                    raise SnapshotConflictError(
+                        "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    )
+                return
+            commit({
+                "transition": "request_started",
+                "attempt": {
+                    "attempt_id": attempt_id,
+                    "call_id": call_id,
+                    "call_kind": call_kind,
+                    "parent_attempt_id": str(
+                        reservation.get("parent_attempt_id") or ""
+                    ),
+                    "decision_batch_id": batch["decision_batch_id"],
+                    "decision_batch_hash": batch["decision_batch_hash"],
+                    "request_intent_ref": str(
+                        claim.get("intent_ref")
+                        or (claim.get("intent") or {}).get("intent_ref")
+                        or ""
+                    ),
+                    "request_intent_hash": request_intent_hash,
+                    "protocol_request_hash": protocol_request_hash,
+                    "wire_request_hash": wire_request_hash,
+                    "capacity_profile_ref": row["durable_profile"][
+                        "capacity_profile_ref"
+                    ],
+                    "capacity_profile_hash": row["durable_profile"][
+                        "profile_hash"
+                    ],
+                    "response_schema_ref": row["durable_schema"][
+                        "response_schema_ref"
+                    ],
+                    "response_schema_hash": row["durable_schema"][
+                        "response_schema_hash"
+                    ],
+                    "effective_wire_settings_ref": wire_artifact[
+                        "effective_wire_settings_ref"
+                    ],
+                    "effective_wire_settings_hash": wire_artifact[
+                        "effective_wire_settings_hash"
+                    ],
+                    "reservation_id": reservation["reservation_id"],
+                    "reservation_hash": reservation["reservation_hash"],
+                    "reservation_ref": reservation["reservation_ref"],
+                    "attempt_lineage_hash": reservation[
+                        "attempt_lineage_hash"
+                    ],
+                    "lease_epoch": reservation["lease_epoch"],
+                },
+            })
+
+        def reconcile_result_reservation(
+            reservation: Mapping[str, Any],
+            *,
+            provider_status: str,
+            completion_integrity: str,
+            usage: Mapping[str, Any],
+            artifact_ref: str,
+            artifact_hash: str,
+            actual_wall_time_ms: Optional[int],
+        ) -> Dict[str, Any]:
+            current = deepcopy(dict(reservation))
+            status = str(current.get("status") or "")
+            if status == "consumed":
+                if (
+                    str(current.get("provider_status") or "") != provider_status
+                    or str(current.get("completion_integrity") or "")
+                    != completion_integrity
+                    or str(current.get("reconciled_artifact_ref") or "")
+                    != str(artifact_ref)
+                    or str(current.get("reconciled_artifact_hash") or "")
+                    != str(artifact_hash)
+                ):
+                    raise SnapshotConflictError(
+                        "FINALIZE_RESERVATION_RECONCILIATION_FAILED"
+                    )
+                project_reservation(current)
+                return current
+            consume = (
+                store.reconcile_finalize_budget_reservation
+                if status == "reconcile_required"
+                else store.consume_finalize_budget_reservation
+            )
+            if status not in {"dispatched", "reconcile_required"}:
+                raise SnapshotConflictError(
+                    "FINALIZE_RESERVATION_RECONCILIATION_FAILED"
+                )
+            current = consume(
+                str(current["reservation_id"]),
+                provider_status=provider_status,
+                completion_integrity=completion_integrity,
+                retry_safe=False,
+                actual_completion_tokens=usage_value(
+                    usage, "completion_tokens"
+                ),
+                actual_cost_microusd=actual_estimated_cost(usage),
+                actual_wall_time_ms=actual_wall_time_ms,
+                reconciled_artifact_ref=artifact_ref,
+                reconciled_artifact_hash=artifact_hash,
+                expected_reservation_hash=str(current["reservation_hash"]),
+                expected_protected_record_hash=str(
+                    current["protected_record_hash"]
+                ),
+                lease_owner=str(current["lease_owner"]),
+                lease_epoch=int(current["lease_epoch"]),
+            )
+            project_reservation(current)
+            return current
+
+        def provider_in_progress_update(
+            *, attempt_id: str, call_id: str, wire_request_hash: str
+        ) -> Dict[str, Any]:
+            current_consultation.update({
+                "phase": "finalize",
+                "consultation_status": "ready",
+                "completion_decision": "ready_to_finalize",
+                "completion_reason": "provider_attempt_in_progress",
+            })
+            return {
+                "messages": [SystemMessage(content=(
+                    "<consultant_finalize_provider_in_progress>"
+                    + json.dumps({
+                        "attempt_id": attempt_id,
+                        "call_id": call_id,
+                        "wire_request_hash": wire_request_hash,
+                        "provider_status": "in_flight",
+                    }, ensure_ascii=False, sort_keys=True)
+                    + "</consultant_finalize_provider_in_progress>"
+                ))],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "task_spec": current_task_spec,
+                "task_revision": task_spec_revision(current_task_spec),
+                "selected_skills": list(selected),
+                "selected_skills_raw": list(selected),
+                "active_skills": list(selected),
+                "required_skills_all": list(selected),
+                "consultation_state": current_consultation,
+                "consultant_contract_repair": {},
+                "pending_human_question": {},
+                "consultant_constraint_metrics": {
+                    "schema_validation": "not_run",
+                    "protocol_schema_version": 4,
+                    "wire_schema_version": 3,
+                    "provider_status": "in_flight",
+                    "protocol_status": "not_validated",
+                },
+                "contract_status": "finalize_provider_in_progress",
+                "next_step": "consultant",
+            }
+
+        def provider_retry_pending_update(
+            *,
+            attempt_id: str,
+            call_id: str,
+            wire_request_hash: str,
+            error_code: str,
+            error_owner: str,
+        ) -> Dict[str, Any]:
+            current_consultation.update({
+                "phase": "finalize",
+                "consultation_status": "ready",
+                "completion_decision": "ready_to_finalize",
+                "completion_reason": "safe_transport_retry_pending",
+            })
+            return {
+                "messages": [SystemMessage(content=(
+                    "<consultant_finalize_provider_retry>"
+                    + json.dumps({
+                        "attempt_id": attempt_id,
+                        "call_id": call_id,
+                        "wire_request_hash": wire_request_hash,
+                        "provider_status": "transient_failed",
+                        "retry_safe": True,
+                        "error_code": error_code,
+                        "error_owner": error_owner,
+                    }, ensure_ascii=False, sort_keys=True)
+                    + "</consultant_finalize_provider_retry>"
+                ))],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "task_spec": current_task_spec,
+                "task_revision": task_spec_revision(current_task_spec),
+                "selected_skills": list(selected),
+                "selected_skills_raw": list(selected),
+                "active_skills": list(selected),
+                "required_skills_all": list(selected),
+                "consultation_state": current_consultation,
+                "consultant_contract_repair": {},
+                "pending_human_question": {},
+                "consultant_constraint_metrics": {
+                    "schema_validation": "not_run",
+                    "protocol_schema_version": 4,
+                    "wire_schema_version": 3,
+                    "provider_status": "transient_failed",
+                    "completion_integrity": "missing",
+                    "protocol_status": "not_validated",
+                    "error_code": error_code,
+                    "error_owner": error_owner,
+                    "retry_safe": True,
+                },
+                "contract_status": "semantic_schema_retry",
+                "next_step": "consultant",
+            }
+
+        async def obtain_provider_result(
+            *,
+            row: Mapping[str, Any],
+            batch: Mapping[str, Any],
+            messages: Sequence[BaseMessage],
+            settings: Mapping[str, Any],
+            provider_parameters: Mapping[str, Any],
+            canonical_request_hash: str,
+        ) -> Dict[str, Any]:
+            """Resume protected provider evidence or dispatch exactly once."""
+            protocol_request_hash = self._finalize_digest({
+                "wire_request_hash": canonical_request_hash,
+                "provider_parameters": provider_parameters,
+            })
+            existing = store.lookup_finalize_attempt(canonical_request_hash)
+            reservation = matching_reservation(
+                canonical_request_hash,
+                attempt_id=str((existing or {}).get("attempt_id") or ""),
+            )
+            derivation_kind = str(
+                batch.get("derivation_kind") or "initial"
+            )
+            if derivation_kind == "length_repartition":
+                call_kind = "length_repair"
+            elif derivation_kind in {"wire_repair", "field_repair"}:
+                call_kind = derivation_kind
+            else:
+                call_kind = "decision_batch"
+            request_metadata = {
+                "finalize_context_id": context_id,
+                "base_contract_hash": base_contract_hash,
+                "wire_schema_version": 3,
+                "decision_batch_id": batch["decision_batch_id"],
+                "decision_batch_hash": batch["decision_batch_hash"],
+                "capacity_profile_ref": row["durable_profile"][
+                    "capacity_profile_ref"
+                ],
+                "capacity_profile_hash": row["durable_profile"][
+                    "profile_hash"
+                ],
+                "response_schema_ref": row["durable_schema"][
+                    "response_schema_ref"
+                ],
+                "response_schema_hash": row["durable_schema"][
+                    "response_schema_hash"
+                ],
+            }
+            if reservation is not None and (
+                str(reservation.get("finalize_context_id") or "")
+                != context_id
+                or str(reservation.get("protocol_request_hash") or "")
+                != protocol_request_hash
+                or str(reservation.get("wire_request_hash") or "")
+                != canonical_request_hash
+                or str(reservation.get("work_budget_ref") or "")
+                != str(work_budget["work_budget_ref"])
+                or str(reservation.get("work_budget_hash") or "")
+                != str(work_budget["work_budget_hash"])
+                or str(reservation.get("batch_id") or "")
+                != str(batch["decision_batch_id"])
+                or int(reservation.get("reserved_completion_tokens") or 0)
+                != int(settings["max_output_tokens"])
+                or int(reservation.get("timeout_ms") or 0)
+                != int(settings["per_call_timeout_ms"])
+            ):
+                return {"terminal": terminal_update(
+                    error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                    error_owner="controller_storage",
+                    detail=(
+                        "Durable reservation conflicts with the current "
+                        "budget/preflight/request identity closure."
+                    ),
+                )}
+            retry_authorization: Dict[str, Any] = {}
+            parent_attempt_id = ""
+            retry_dispatch = False
+            if existing is not None:
+                attempt_id = str(existing.get("attempt_id") or "")
+                call_id = str(existing.get("call_id") or "")
+                intent = dict(existing.get("intent") or {})
+                intent_metadata = dict(
+                    intent.get("request_metadata") or {}
+                )
+                if (
+                    not attempt_id
+                    or not call_id
+                    or str(intent.get("call_kind") or call_kind) != call_kind
+                    or any(
+                        intent_metadata.get(field) != value
+                        for field, value in request_metadata.items()
+                    )
+                ):
+                    return {"terminal": terminal_update(
+                        error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                        error_owner="controller_storage",
+                        detail="Durable batch attempt identity conflicts with the stable partition.",
+                    )}
+                # ``held`` (or intent-only) proves provider dispatch did not
+                # begin.  Every later ledger status must reconcile artifacts
+                # before any network operation.
+                safe_to_resume_dispatch = reservation is None or str(
+                    reservation.get("status") or ""
+                ) == "held"
+                if not safe_to_resume_dispatch:
+                    if graph_attempt(attempt_id) is None:
+                        wire_ref = str(
+                            existing.get("effective_wire_settings_ref") or ""
+                        )
+                        wire_hash = str(
+                            existing.get("effective_wire_settings_hash") or ""
+                        )
+                        if reservation is None or not wire_ref or not wire_hash:
+                            return {"terminal": terminal_update(
+                                error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                                error_owner="controller_storage",
+                                detail="Dispatched attempt is missing its wire/reservation projection.",
+                            )}
+                        ensure_graph_request_started(
+                            attempt_id=attempt_id,
+                            call_id=call_id,
+                            call_kind=call_kind,
+                            batch=batch,
+                            claim=existing,
+                            request_intent_hash=str(
+                                reservation.get("request_intent_hash") or ""
+                            ),
+                            protocol_request_hash=protocol_request_hash,
+                            wire_request_hash=canonical_request_hash,
+                            row=row,
+                            wire_artifact={
+                                "effective_wire_settings_ref": wire_ref,
+                                "effective_wire_settings_hash": wire_hash,
+                            },
+                            reservation=reservation,
+                        )
+                    reconciliation = reconcile_finalize_attempt(
+                        store,
+                        attempt_id=attempt_id,
+                        call_id=call_id,
+                        canonical_request_hash=canonical_request_hash,
+                    )
+                    decision = str(reconciliation.get("decision") or "")
+                    if decision == "reuse_response":
+                        return {
+                            "attempt_id": attempt_id,
+                            "call_id": call_id,
+                            "reservation": reservation,
+                            "provider_result": {
+                                "raw_response": str(
+                                    reconciliation.get("raw_response") or ""
+                                ),
+                                "artifact": deepcopy(dict(reconciliation)),
+                                "finish_reason": str(
+                                    reconciliation.get("finish_reason") or "stop"
+                                ),
+                                "usage": deepcopy(dict(
+                                    reconciliation.get("usage") or {}
+                                )),
+                                "completion_integrity": "complete",
+                                "provider_status": "succeeded",
+                                "protocol_status": str(
+                                    reconciliation.get("protocol_status")
+                                    or "not_validated"
+                                ),
+                                "response_reused_from_checkpoint": True,
+                            },
+                            "provider_wall_time_ms": None,
+                            "reused": True,
+                        }
+                    if decision == "reuse_partial_response":
+                        return {
+                            "attempt_id": attempt_id,
+                            "call_id": call_id,
+                            "reservation": reservation,
+                            "provider_result": {
+                                "raw_response": "",
+                                "artifact": {},
+                                "partial_artifact": deepcopy(dict(reconciliation)),
+                                "finish_reason": str(
+                                    reconciliation.get("finish_reason") or "unknown"
+                                ),
+                                "usage": deepcopy(dict(
+                                    reconciliation.get("usage") or {}
+                                )),
+                                "completion_integrity": str(
+                                    reconciliation.get("completion_integrity")
+                                    or "unknown"
+                                ),
+                                "provider_status": "succeeded",
+                                "protocol_status": "not_validated",
+                                "response_reused_from_checkpoint": True,
+                            },
+                            "provider_wall_time_ms": None,
+                            "reused": True,
+                        }
+                    if decision == "attempt_in_progress":
+                        return {"terminal": provider_in_progress_update(
+                            attempt_id=attempt_id,
+                            call_id=call_id,
+                            wire_request_hash=canonical_request_hash,
+                        )}
+                    if decision == "safe_transport_retry":
+                        try:
+                            if (
+                                reservation is None
+                                or str(reservation.get("status") or "")
+                                != "consumed"
+                                or str(reservation.get("provider_status") or "")
+                                != "transient_failed"
+                                or str(
+                                    reservation.get("completion_integrity") or ""
+                                ) != "missing"
+                                or reservation.get("retry_safe") is not True
+                            ):
+                                raise SnapshotConflictError(
+                                    "FINALIZE_RESERVATION_RECONCILIATION_FAILED"
+                                )
+                            parent_attempt_id = attempt_id
+                            retry_authorization = (
+                                store.persist_finalize_retry_authorization({
+                                    "retry_authorization_id": (
+                                        "retry-auth-"
+                                        + self._finalize_digest({
+                                            "reservation_id": reservation[
+                                                "reservation_id"
+                                            ],
+                                            "reservation_hash": reservation[
+                                                "reservation_hash"
+                                            ],
+                                        })[:24]
+                                    ),
+                                    "finalize_context_id": context_id,
+                                    "replay_scope_id": str(
+                                        protocol().get("replay_scope_id") or ""
+                                    ),
+                                    "wire_request_hash": canonical_request_hash,
+                                    "prior_reservation_id": reservation[
+                                        "reservation_id"
+                                    ],
+                                    "prior_reservation_hash": reservation[
+                                        "reservation_hash"
+                                    ],
+                                    "provider_status": "transient_failed",
+                                    "completion_integrity": "missing",
+                                    "retry_safe": True,
+                                    "no_completion_proven": True,
+                                    "authorized_retry_count": 1,
+                                })
+                            )
+                            suffix = uuid.uuid4().hex
+                            attempt_id = f"finalize-v4-{suffix}"
+                            call_id = (
+                                f"consultant-finalize-v4-transport-retry-{suffix}"
+                            )
+                            call_kind = "transport_retry"
+                            claim = persist_finalize_attempt_intent(
+                                store,
+                                attempt_id=attempt_id,
+                                call_id=call_id,
+                                call_kind=call_kind,
+                                canonical_request_hash=canonical_request_hash,
+                                request_metadata=request_metadata,
+                            )
+                            request_intent_hash = self._finalize_digest({
+                                key: value for key, value in claim.items()
+                                if key not in {
+                                    "claim_acquired", "claim_reused"
+                                }
+                            })
+                            reservation = None
+                            retry_dispatch = True
+                        except Exception as exc:
+                            return {"terminal": terminal_update(
+                                error_code="FINALIZE_RESERVATION_RECONCILIATION_FAILED",
+                                error_owner="controller_storage",
+                                detail=(
+                                    "Safe transport-retry authorization failed: "
+                                    f"{type(exc).__name__}: {exc}"
+                                ),
+                            )}
+                    else:
+                        try:
+                            if reservation is not None and str(
+                                reservation.get("status") or ""
+                            ) == "dispatched":
+                                reservation = store.mark_finalize_reservation_reconcile_required(
+                                    str(reservation["reservation_id"]),
+                                    reason="provider outcome cannot be proven after checkpoint resume",
+                                    expected_reservation_hash=str(
+                                        reservation["reservation_hash"]
+                                    ),
+                                    expected_protected_record_hash=str(
+                                        reservation["protected_record_hash"]
+                                    ),
+                                    lease_owner=str(reservation["lease_owner"]),
+                                    lease_epoch=int(reservation["lease_epoch"]),
+                                )
+                                project_reservation(reservation)
+                            if reservation is not None and str(
+                                reservation.get("status") or ""
+                            ) == "reconcile_required":
+                                reservation = store.reconcile_finalize_budget_reservation(
+                                    str(reservation["reservation_id"]),
+                                    provider_status="outcome_unknown",
+                                    completion_integrity="unknown",
+                                    expected_reservation_hash=str(
+                                        reservation["reservation_hash"]
+                                    ),
+                                    expected_protected_record_hash=str(
+                                        reservation["protected_record_hash"]
+                                    ),
+                                    lease_owner=str(reservation["lease_owner"]),
+                                    lease_epoch=int(reservation["lease_epoch"]),
+                                )
+                                project_reservation(reservation)
+                            projection = graph_attempt(attempt_id)
+                            if projection is not None and str(
+                                projection.get("provider_status") or ""
+                            ) == "in_flight":
+                                commit({
+                                    "transition": "provider_failed",
+                                    "attempt_id": attempt_id,
+                                    "provider_status": "outcome_unknown",
+                                    "error_code": str(
+                                        reconciliation.get("error_code")
+                                        or "FINALIZE_PROVIDER_OUTCOME_UNKNOWN"
+                                    ),
+                                    "error_owner": str(
+                                        reconciliation.get("error_owner")
+                                        or "controller_provider"
+                                    ),
+                                    "retry_safe": False,
+                                })
+                        except Exception as exc:
+                            return {"terminal": terminal_update(
+                                error_code="FINALIZE_RESERVATION_RECONCILIATION_FAILED",
+                                error_owner="controller_storage",
+                                detail=f"Stale dispatched attempt reconciliation failed: {type(exc).__name__}: {exc}",
+                            )}
+                        return {"terminal": terminal_update(
+                            error_code=str(
+                                reconciliation.get("error_code")
+                                or "FINALIZE_PROVIDER_OUTCOME_UNKNOWN"
+                            ),
+                            error_owner=str(
+                                reconciliation.get("error_owner")
+                                or "controller_provider"
+                            ),
+                            detail="A dispatched provider attempt has no safely reusable completion.",
+                        )}
+                if not retry_dispatch:
+                    claim = deepcopy(dict(existing))
+                    status_record = dict(existing.get("status_record") or {})
+                    request_intent_hash = (
+                        str((reservation or {}).get("request_intent_hash") or "")
+                        or self._finalize_digest(status_record)
+                    )
+                    try:
+                        store.acquire_finalize_provider_lease(attempt_id)
+                    except (BlockingIOError, SnapshotConflictError):
+                        return {"terminal": provider_in_progress_update(
+                            attempt_id=attempt_id,
+                            call_id=call_id,
+                            wire_request_hash=canonical_request_hash,
+                        )}
+            else:
+                suffix = uuid.uuid4().hex
+                attempt_id = f"finalize-v4-{suffix}"
+                call_id = f"consultant-finalize-v4-{suffix}"
+                try:
+                    claim = persist_finalize_attempt_intent(
+                        store,
+                        attempt_id=attempt_id,
+                        call_id=call_id,
+                        call_kind=call_kind,
+                        canonical_request_hash=canonical_request_hash,
+                        request_metadata=request_metadata,
+                    )
+                    request_intent_hash = self._finalize_digest({
+                        key: value for key, value in claim.items()
+                        if key not in {"claim_acquired", "claim_reused"}
+                    })
+                except SnapshotConflictError:
+                    competing = store.lookup_finalize_attempt(
+                        canonical_request_hash
+                    )
+                    if competing is not None:
+                        return {"terminal": provider_in_progress_update(
+                            attempt_id=str(competing.get("attempt_id") or ""),
+                            call_id=str(competing.get("call_id") or ""),
+                            wire_request_hash=canonical_request_hash,
+                        )}
+                    raise
+
+            reservation_dispatched = False
+            provider_started_monotonic = time.monotonic()
+            try:
+                wire_payload = _build_finalize_wire_payload(messages, settings)
+                effective_wire = _finalize_effective_wire_projection(
+                    wire_payload, settings
+                )
+                rebuilt_wire_hash = self._finalize_digest({
+                    "wire_hash_schema_version": 1,
+                    "endpoint_id": str(settings["endpoint_id"]),
+                    "api_surface": "chat_completions",
+                    "method": "POST",
+                    "provider_id": str(settings["provider_id"]),
+                    "payload_digest": str(effective_wire["payload_digest"]),
+                })
+                if rebuilt_wire_hash != canonical_request_hash:
+                    raise SnapshotConflictError(
+                        "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    )
+                wire_artifact = store.persist_finalize_effective_wire_settings(
+                    attempt_id=attempt_id,
+                    call_id=call_id,
+                    canonical_request_hash=canonical_request_hash,
+                    settings=effective_wire,
+                )
+                if reservation is None:
+                    reserved_cost = (
+                        int(row["capacity_profile"].get("input_token_estimate") or 0)
+                        + int(settings["max_output_tokens"])
+                    ) * cost_rate_microusd_per_token
+                    reservation = store.hold_finalize_budget_reservation(
+                        replay_scope_id=str(protocol().get("replay_scope_id") or ""),
+                        finalize_context_id=context_id,
+                        attempt_id=attempt_id,
+                        call_id=call_id,
+                        protocol_request_hash=protocol_request_hash,
+                        wire_request_hash=canonical_request_hash,
+                        work_budget_ref=str(work_budget["work_budget_ref"]),
+                        work_budget_hash=str(work_budget["work_budget_hash"]),
+                        reserved_completion_tokens=int(settings["max_output_tokens"]),
+                        reserved_cost_microusd=reserved_cost,
+                        reserved_wall_time_ms=min(
+                            int(settings["per_call_timeout_ms"]),
+                            int(CONSULTANT_FINALIZE_MAX_WALL_TIME_MS),
+                        ),
+                        timeout_ms=int(settings["per_call_timeout_ms"]),
+                        batch_id=str(batch["decision_batch_id"]),
+                        request_intent_hash=request_intent_hash,
+                        call_kind=call_kind,
+                        parent_attempt_id=parent_attempt_id,
+                        retry_authorization_ref=(
+                            str(
+                                retry_authorization.get(
+                                    "retry_authorization_ref"
+                                ) or ""
+                            )
+                            or None
+                        ),
+                        retry_authorization_hash=(
+                            str(
+                                retry_authorization.get(
+                                    "retry_authorization_hash"
+                                ) or ""
+                            )
+                            or None
+                        ),
+                        resolution_item_count=(
+                            len(batch.get("item_ids") or [])
+                            if str(batch.get("derivation_kind") or "initial")
+                            == "initial"
+                            and call_kind != "transport_retry"
+                            else 0
+                        ),
+                        created_batch_count=(
+                            0 if call_kind == "transport_retry" else 1
+                        ),
+                        repartition_depth=int(batch.get("repartition_depth") or 0),
+                    )
+                project_reservation(reservation)
+                ensure_graph_request_started(
+                    attempt_id=attempt_id,
+                    call_id=call_id,
+                    call_kind=call_kind,
+                    batch=batch,
+                    claim=claim,
+                    request_intent_hash=request_intent_hash,
+                    protocol_request_hash=protocol_request_hash,
+                    wire_request_hash=canonical_request_hash,
+                    row=row,
+                    wire_artifact=wire_artifact,
+                    reservation=reservation,
+                )
+                reservation = store.dispatch_finalize_budget_reservation(
+                    str(reservation["reservation_id"]),
+                    expected_reservation_hash=str(reservation["reservation_hash"]),
+                    expected_protected_record_hash=str(
+                        reservation["protected_record_hash"]
+                    ),
+                    lease_owner=str(reservation["lease_owner"]),
+                    lease_epoch=int(reservation["lease_epoch"]),
+                    call_started_at=datetime.now(timezone.utc).isoformat(),
+                )
+                reservation_dispatched = True
+                project_reservation(reservation)
+                provider_started_monotonic = time.monotonic()
+                provider_result = await self._invoke_consultant_finalize_provider(
+                    messages,
+                    task_id=task_id,
+                    store=store,
+                    attempt_id=attempt_id,
+                    call_id=call_id,
+                    call_kind=call_kind,
+                    canonical_request_hash=canonical_request_hash,
+                    settings=settings,
+                    trace_metadata={
+                        "node_name": "consultant",
+                        "protocol_schema_version": 4,
+                        "wire_schema_version": 3,
+                        "finalize_context_id": context_id,
+                        "decision_batch_id": batch["decision_batch_id"],
+                    },
+                )
+                return {
+                    "attempt_id": attempt_id,
+                    "call_id": call_id,
+                    "reservation": reservation,
+                    "provider_result": provider_result,
+                    "provider_wall_time_ms": max(
+                        0,
+                        int((time.monotonic() - provider_started_monotonic) * 1000),
+                    ),
+                    "reused": False,
+                }
+            except BaseException as exc:
+                if isinstance(exc, asyncio.CancelledError):
+                    store.release_finalize_provider_lease(attempt_id)
+                    raise
+                if reservation is None or not reservation_dispatched:
+                    try:
+                        if reservation is not None and str(
+                            reservation.get("status") or ""
+                        ) == "held":
+                            reservation = store.release_finalize_budget_reservation(
+                                str(reservation["reservation_id"]),
+                                dispatch_never_began=True,
+                                release_reason="controller_failure_before_provider_dispatch",
+                                expected_reservation_hash=str(
+                                    reservation["reservation_hash"]
+                                ),
+                                expected_protected_record_hash=str(
+                                    reservation["protected_record_hash"]
+                                ),
+                                lease_owner=str(reservation["lease_owner"]),
+                                lease_epoch=int(reservation["lease_epoch"]),
+                            )
+                            project_reservation(reservation)
+                    except Exception as release_exc:
+                        logger.error(
+                            "Could not release pre-dispatch v4 reservation: %s",
+                            release_exc,
+                        )
+                    finally:
+                        store.release_finalize_provider_lease(attempt_id)
+                    return {"terminal": terminal_update(
+                        error_code=(
+                            "FINALIZE_GLOBAL_BUDGET_EXHAUSTED"
+                            if "FINALIZE_GLOBAL_BUDGET_EXHAUSTED" in str(exc)
+                            else "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        ),
+                        error_owner="controller_storage",
+                        detail=f"Bounded batch preparation failed before provider dispatch: {type(exc).__name__}: {exc}",
+                    )}
+                failure = _classify_finalize_provider_exception(
+                    exc,
+                    idempotency_supported=bool(settings.get("idempotency_supported")),
+                )
+                try:
+                    failure_integrity = (
+                        "unknown"
+                        if str(failure["provider_status"]) == "outcome_unknown"
+                        else "missing"
+                    )
+                    store.record_finalize_attempt_failure(
+                        attempt_id=attempt_id,
+                        call_id=call_id,
+                        canonical_request_hash=canonical_request_hash,
+                        provider_status=str(failure["provider_status"]),
+                        error_code=str(failure["error_code"]),
+                        error_owner=str(failure["error_owner"]),
+                        error_details={
+                            "error_type": type(exc).__name__,
+                            "message": str(exc)[:2000],
+                        },
+                        retry_safe=bool(failure["retry_safe"]),
+                    )
+                    reservation = store.consume_finalize_budget_reservation(
+                        str(reservation["reservation_id"]),
+                        provider_status=str(failure["provider_status"]),
+                        completion_integrity=failure_integrity,
+                        retry_safe=bool(failure["retry_safe"]),
+                        actual_wall_time_ms=max(
+                            0,
+                            int((time.monotonic() - provider_started_monotonic) * 1000),
+                        ),
+                        expected_reservation_hash=str(reservation["reservation_hash"]),
+                        expected_protected_record_hash=str(
+                            reservation["protected_record_hash"]
+                        ),
+                        lease_owner=str(reservation["lease_owner"]),
+                        lease_epoch=int(reservation["lease_epoch"]),
+                    )
+                    project_reservation(reservation)
+                    if str((graph_attempt(attempt_id) or {}).get("provider_status") or "") == "in_flight":
+                        commit({
+                            "transition": "provider_failed",
+                            "attempt_id": attempt_id,
+                            "provider_status": str(failure["provider_status"]),
+                            "error_code": str(failure["error_code"]),
+                            "error_owner": str(failure["error_owner"]),
+                            "retry_safe": bool(failure["retry_safe"]),
+                        })
+                except Exception as persist_exc:
+                    logger.error("Could not persist/commit v4 provider failure: %s", persist_exc)
+                finally:
+                    store.release_finalize_provider_lease(attempt_id)
+                if bool(failure["retry_safe"]) and call_kind != "transport_retry":
+                    return {"terminal": provider_retry_pending_update(
+                        attempt_id=attempt_id,
+                        call_id=call_id,
+                        wire_request_hash=canonical_request_hash,
+                        error_code=str(failure["error_code"]),
+                        error_owner=str(failure["error_owner"]),
+                    )}
+                return {"terminal": terminal_update(
+                    error_code=str(failure["error_code"]),
+                    error_owner=str(failure["error_owner"]),
+                    detail=f"Bounded batch provider call failed: {type(exc).__name__}: {exc}",
+                )}
+
+        while queue:
+            if int(protocol().get("aggregate", {}).get("used_provider_calls") or 0) >= int(
+                CONSULTANT_FINALIZE_MAX_PROVIDER_CALLS
+            ):
+                return terminal_update(
+                    error_code="FINALIZE_GLOBAL_BUDGET_EXHAUSTED",
+                    error_owner="controller",
+                    detail="Provider-call budget was exhausted before all batches resolved.",
+                )
+            row = queue.pop(0)
+            batch = row["batch"]
+            schema_artifact = row["response_schema_artifact"]
+            capacity_profile = row["capacity_profile"]
+            if not bool(capacity_profile.get("canonical_admissible")):
+                return terminal_update(
+                    error_code="FINALIZE_OUTPUT_CAPACITY_UNSATISFIED",
+                    error_owner="controller",
+                    detail="A batch lost canonical capacity admission before dispatch.",
+                )
+            messages = build_finalize_batch_messages(batch, schema_artifact)
+            settings = self._consultant_finalize_provider_settings(
+                finalize_batch_llm_response_schema(schema_artifact, batch)
+            )
+            settings["per_call_timeout_ms"] = int(
+                work_budget["per_call_timeout_ms"]
+            )
+            settings["max_output_tokens"] = int(
+                capacity_profile.get("effective_output_tokens") or 0
+            )
+            if settings["max_output_tokens"] <= int(
+                capacity_profile.get("safety_headroom_tokens") or 0
+            ):
+                return terminal_update(
+                    error_code="FINALIZE_OUTPUT_CAPACITY_UNSATISFIED",
+                    error_owner="controller",
+                    detail="Effective output cap does not retain mandatory headroom.",
+                )
+            provider_parameters = {
+                "top_p": settings["top_p"],
+                "max_output_tokens": settings["max_output_tokens"],
+                "output_token_parameter": settings["output_token_parameter"],
+                "stream": False,
+                "coverage_artifact_hash": domain_coverage[
+                    "coverage_artifact_hash"
+                ],
+                "candidate_catalog_hash": candidate_catalog[
+                    "candidate_catalog_hash"
+                ],
+                "decision_batch_hash": batch["decision_batch_hash"],
+                "response_schema_hash": schema_artifact["response_schema_hash"],
+                "capacity_profile_hash": capacity_profile["profile_hash"],
+                "provider_capability_hash": partition_basis[
+                    "provider_capability_hash"
+                ],
+                "partition_capacity_basis_hash": partition_basis[
+                    "partition_capacity_basis_hash"
+                ],
+                "stable_partition_hash": stable_partition["partition_hash"],
+                "work_preflight_hash": durable_preflight[
+                    "work_preflight_hash"
+                ],
+                "work_budget_hash": work_budget["work_budget_hash"],
+                "budget_policy_hash": work_budget["budget_policy_hash"],
+                "safety_policy_version": partition_basis[
+                    "safety_policy_version"
+                ],
+                "tokenizer_id": capacity_profile["tokenizer_id"],
+                "tokenizer_version": capacity_profile["tokenizer_version"],
+                "estimator_mode": capacity_profile["estimator_mode"],
+            }
+            planned_wire = _finalize_effective_wire_projection(
+                _build_finalize_wire_payload(messages, settings),
+                settings,
+            )
+            canonical_request_hash = self._finalize_digest({
+                "wire_hash_schema_version": 1,
+                "endpoint_id": str(settings["endpoint_id"]),
+                "api_surface": "chat_completions",
+                "method": "POST",
+                "provider_id": str(settings["provider_id"]),
+                "payload_digest": str(planned_wire["payload_digest"]),
+            })
+
+            obtained = await obtain_provider_result(
+                row=row,
+                batch=batch,
+                messages=messages,
+                settings=settings,
+                provider_parameters=provider_parameters,
+                canonical_request_hash=canonical_request_hash,
+            )
+            if "terminal" in obtained:
+                return deepcopy(dict(obtained["terminal"]))
+            attempt_id = str(obtained["attempt_id"])
+            call_id = str(obtained["call_id"])
+            reservation = deepcopy(dict(obtained["reservation"]))
+            provider_result = deepcopy(dict(obtained["provider_result"]))
+            provider_wall_time_ms = obtained.get("provider_wall_time_ms")
+            integrity = str(
+                provider_result.get("completion_integrity") or "complete"
+            )
+            usage = deepcopy(dict(provider_result.get("usage") or {}))
+
+            if integrity != "complete":
+                partial = dict(provider_result.get("partial_artifact") or {})
+                finish_reason = str(
+                    provider_result.get("finish_reason") or "unknown"
+                )
+                try:
+                    reservation = reconcile_result_reservation(
+                        reservation,
+                        provider_status="succeeded",
+                        completion_integrity=integrity,
+                        usage=usage,
+                        artifact_ref=str(
+                            partial["partial_response_artifact_ref"]
+                        ),
+                        artifact_hash=str(
+                            partial["partial_response_artifact_hash"]
+                        ),
+                        actual_wall_time_ms=provider_wall_time_ms,
+                    )
+                    attempt_projection = graph_attempt(attempt_id)
+                    if attempt_projection is None:
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                    if str(attempt_projection.get("provider_status") or "") == "in_flight":
+                        commit({
+                            "transition": (
+                                "response_truncated"
+                                if integrity == "truncated"
+                                else "response_blocked"
+                            ),
+                            "attempt_id": attempt_id,
+                            "finish_reason": finish_reason,
+                            "usage": usage,
+                            "completion_integrity": integrity,
+                            "partial_response_artifact_ref": partial[
+                                "partial_response_artifact_ref"
+                            ],
+                            "partial_response_artifact_hash": partial[
+                                "partial_response_artifact_hash"
+                            ],
+                        })
+                    elif (
+                        str(attempt_projection.get("provider_status") or "")
+                        != "succeeded"
+                        or str(attempt_projection.get("completion_integrity") or "")
+                        != integrity
+                        or str(attempt_projection.get("partial_response_artifact_hash") or "")
+                        != str(partial["partial_response_artifact_hash"])
+                    ):
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                except Exception as exc:
+                    store.release_finalize_provider_lease(attempt_id)
+                    return terminal_update(
+                        error_code="FINALIZE_RESERVATION_RECONCILIATION_FAILED",
+                        error_owner="controller_storage",
+                        detail=(
+                            "Non-committable response is protected but checkpoint "
+                            f"reconciliation failed: {type(exc).__name__}: {exc}"
+                        ),
+                    )
+                finally:
+                    store.release_finalize_provider_lease(attempt_id)
+
+                item_ids = list(batch.get("item_ids") or [])
+                depth = int(batch.get("repartition_depth") or 0)
+                if (
+                    integrity != "truncated"
+                    or len(item_ids) <= 1
+                    or depth >= int(CONSULTANT_FINALIZE_MAX_REPARTITION_DEPTH)
+                ):
+                    return terminal_update(
+                        error_code=(
+                            "FINALIZE_RESPONSE_TRUNCATED"
+                            if integrity == "truncated"
+                            else "FINALIZE_RESPONSE_CONTENT_FILTERED"
+                            if integrity == "content_filtered"
+                            else "FINALIZE_PROVIDER_RESOURCE_UNKNOWN"
+                        ),
+                        error_owner="controller_model_protocol",
+                        detail=(
+                            "The protected partial completion was retained and never "
+                            "parsed; no smaller safe partition remains."
+                        ),
+                    )
+                midpoint = max(1, len(item_ids) // 2)
+                children: List[Dict[str, Any]] = []
+                child_ids: List[str] = []
+                try:
+                    for child_item_ids in (
+                        item_ids[:midpoint], item_ids[midpoint:]
+                    ):
+                        if not child_item_ids:
+                            continue
+                        child = build_finalize_decision_batch(
+                            candidate_catalog,
+                            child_item_ids,
+                            parent_batch_id=str(batch["decision_batch_id"]),
+                            repartition_depth=depth + 1,
+                            derivation_kind="length_repartition",
+                        )
+                        child_schema = build_finalize_batch_schema(child)
+                        child_profile = build_finalize_capacity_profile(
+                            child, child_schema, partition_basis
+                        )
+                        if not bool(child_profile.get("canonical_admissible")):
+                            raise ValueError(
+                                "FINALIZE_OUTPUT_CAPACITY_UNSATISFIED"
+                            )
+                        children.append(prepare_batch_row(
+                            child, child_schema, child_profile
+                        ))
+                        child_ids.append(str(child["decision_batch_id"]))
+                    parent_projection = graph_batch(
+                        str(batch["decision_batch_id"])
+                    )
+                    if str((parent_projection or {}).get("status") or "") != "superseded":
+                        commit({
+                            "transition": "batch_superseded",
+                            "parent_batch_id": batch["decision_batch_id"],
+                            "child_batch_ids": child_ids,
+                        })
+                    elif list(
+                        (parent_projection or {}).get("superseded_by_batch_ids")
+                        or []
+                    ) != child_ids:
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                    queue = [*children, *queue]
+                    continue
+                except Exception as exc:
+                    return terminal_update(
+                        error_code="FINALIZE_OUTPUT_CAPACITY_UNSATISFIED",
+                        error_owner="controller",
+                        detail=f"Length repartition failed: {type(exc).__name__}: {exc}",
+                    )
+
+            raw_response = str(provider_result.get("raw_response") or "")
+            response_artifact = dict(provider_result.get("artifact") or {})
+            try:
+                reservation = reconcile_result_reservation(
+                    reservation,
+                    provider_status="succeeded",
+                    completion_integrity="complete",
+                    usage=usage,
+                    artifact_ref=str(response_artifact["response_artifact_ref"]),
+                    artifact_hash=str(response_artifact["response_content_hash"]),
+                    actual_wall_time_ms=provider_wall_time_ms,
+                )
+                validation = validate_finalize_batch_response(
+                    raw_response,
+                    decision_batch=batch,
+                    candidate_catalog=candidate_catalog,
+                    response_schema_artifact=schema_artifact,
+                )
+                delivered_finish_reason = str(
+                    provider_result.get("finish_reason") or "stop"
+                )
+                if delivered_finish_reason == "tool_calls":
+                    validation = {
+                        "valid": False,
+                        "protocol_status": "wire_invalid",
+                        "errors": [{
+                            "path": "$",
+                            "reason": "tool_calls finish reason is not legal for FINALIZE",
+                        }],
+                        "parsed_payload": validation.get("parsed_payload"),
+                    }
+                protocol_status = str(
+                    validation.get("protocol_status") or "wire_invalid"
+                )
+                record_finalize_protocol_outcome(
+                    store,
+                    attempt_id=attempt_id,
+                    call_id=call_id,
+                    canonical_request_hash=canonical_request_hash,
+                    protocol_status=protocol_status,
+                    error_code=(
+                        "" if validation.get("valid")
+                        else "FINALIZE_SCHEMA_INVALID"
+                    ),
+                    error_owner=(
+                        "" if validation.get("valid")
+                        else "controller_model_protocol"
+                    ),
+                    validation_summary={
+                        "decision_batch_hash": batch["decision_batch_hash"],
+                        "response_schema_hash": schema_artifact[
+                            "response_schema_hash"
+                        ],
+                        "capacity_profile_hash": capacity_profile["profile_hash"],
+                        "errors": validation.get("errors") or [],
+                    },
+                )
+                attempt_projection = graph_attempt(attempt_id)
+                if attempt_projection is None:
+                    raise SnapshotConflictError(
+                        "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    )
+                if str(attempt_projection.get("provider_status") or "") == "in_flight":
+                    commit({
+                        "transition": "response_complete",
+                        "attempt_id": attempt_id,
+                        "finish_reason": delivered_finish_reason,
+                        "usage": usage,
+                        "protocol_status": protocol_status,
+                        "response_artifact_ref": response_artifact[
+                            "response_artifact_ref"
+                        ],
+                        "response_artifact_hash": response_artifact[
+                            "response_content_hash"
+                        ],
+                    })
+                elif (
+                    str(attempt_projection.get("provider_status") or "")
+                    != "succeeded"
+                    or str(attempt_projection.get("completion_integrity") or "")
+                    != "complete"
+                    or str(attempt_projection.get("response_artifact_hash") or "")
+                    != str(response_artifact["response_content_hash"])
+                ):
+                    raise SnapshotConflictError(
+                        "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    )
+            except Exception as exc:
+                store.release_finalize_provider_lease(attempt_id)
+                return terminal_update(
+                    error_code=(
+                        "FINALIZE_RESERVATION_RECONCILIATION_FAILED"
+                        if "RESERVATION" in str(exc)
+                        else "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    ),
+                    error_owner="controller_storage",
+                    detail=f"Complete batch checkpoint reconciliation failed: {type(exc).__name__}: {exc}",
+                )
+            finally:
+                store.release_finalize_provider_lease(attempt_id)
+
+            if not bool(validation.get("valid")):
+                repair_kind = {
+                    "wire_invalid": "wire_repair",
+                    "field_invalid": "field_repair",
+                }.get(protocol_status, "")
+                prior_derivation = str(
+                    batch.get("derivation_kind") or "initial"
+                )
+                repair_depth = int(batch.get("repartition_depth") or 0)
+                if (
+                    not repair_kind
+                    or prior_derivation in {"wire_repair", "field_repair"}
+                    or repair_depth >= int(
+                        CONSULTANT_FINALIZE_MAX_REPARTITION_DEPTH
+                    )
+                ):
+                    return terminal_update(
+                        error_code="FINALIZE_BATCH_PROTOCOL_INVALID",
+                        error_owner="controller_model_protocol",
+                        detail=(
+                            "A complete bounded response failed strict "
+                            "wire/field validation. The protected response was "
+                            "never merged and the sole bounded repair is "
+                            "unavailable or exhausted."
+                        ),
+                    )
+                try:
+                    repair_batch = build_finalize_decision_batch(
+                        candidate_catalog,
+                        list(batch.get("item_ids") or []),
+                        parent_batch_id=str(batch["decision_batch_id"]),
+                        repartition_depth=repair_depth + 1,
+                        derivation_kind=repair_kind,
+                    )
+                    repair_schema = build_finalize_batch_schema(repair_batch)
+                    repair_profile = build_finalize_capacity_profile(
+                        repair_batch,
+                        repair_schema,
+                        partition_basis,
+                    )
+                    if not bool(repair_profile.get("canonical_admissible")):
+                        raise ValueError(
+                            "FINALIZE_OUTPUT_CAPACITY_UNSATISFIED"
+                        )
+                    repair_row = prepare_batch_row(
+                        repair_batch,
+                        repair_schema,
+                        repair_profile,
+                    )
+                    child_ids = [str(repair_batch["decision_batch_id"])]
+                    parent_projection = graph_batch(
+                        str(batch["decision_batch_id"])
+                    )
+                    if str((parent_projection or {}).get("status") or "") != "superseded":
+                        commit({
+                            "transition": "batch_superseded",
+                            "parent_batch_id": batch["decision_batch_id"],
+                            "child_batch_ids": child_ids,
+                        })
+                    elif list(
+                        (parent_projection or {}).get(
+                            "superseded_by_batch_ids"
+                        ) or []
+                    ) != child_ids:
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                    queue = [repair_row, *queue]
+                    continue
+                except Exception as exc:
+                    return terminal_update(
+                        error_code=(
+                            "FINALIZE_OUTPUT_CAPACITY_UNSATISFIED"
+                            if "FINALIZE_OUTPUT_CAPACITY_UNSATISFIED" in str(exc)
+                            else "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                            if isinstance(exc, (SnapshotConflictError, OSError))
+                            else "FINALIZE_BATCH_PROTOCOL_INVALID"
+                        ),
+                        error_owner=(
+                            "controller_storage"
+                            if isinstance(exc, (SnapshotConflictError, OSError))
+                            else "controller_model_protocol"
+                        ),
+                        detail=(
+                            "Bounded protocol-repair child creation failed: "
+                            f"{type(exc).__name__}: {exc}"
+                        ),
+                    )
+            if protocol_status == "needs_user":
+                return terminal_update(
+                    error_code="FINALIZE_UNAUTHORIZED_ASK",
+                    error_owner="controller_model_protocol",
+                    detail="A batch attempted user routing without a controller-owned ambiguity transition.",
+                )
+            decision_artifact = deepcopy(dict(validation["decision_artifact"]))
+            try:
+                durable_decision = persist_controller(
+                    "batch_decision",
+                    decision_artifact,
+                    record_type="finalize_batch_decision",
+                    id_rename=("decision_artifact_id", "batch_decision_id"),
+                    hash_rename=("decision_artifact_hash", "batch_decision_hash"),
+                )
+                resolved_ids = [
+                    str(item.get("resolution_id") or "")
+                    for item in decision_artifact.get("resolutions") or []
+                    if isinstance(item, Mapping)
+                ]
+                batch_projection = graph_batch(
+                    str(batch["decision_batch_id"])
+                )
+                if str((batch_projection or {}).get("status") or "") != "resolved":
+                    commit({
+                        "transition": "batch_resolved",
+                        "batch_id": batch["decision_batch_id"],
+                        "resolved_resolution_ids": resolved_ids,
+                        "decision_artifact_ref": durable_decision[
+                            "batch_decision_ref"
+                        ],
+                        "decision_artifact_hash": durable_decision[
+                            "batch_decision_hash"
+                        ],
+                    })
+                elif (
+                    str((batch_projection or {}).get("decision_artifact_hash") or "")
+                    != str(durable_decision["batch_decision_hash"])
+                ):
+                    raise SnapshotConflictError(
+                        "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    )
+                validated_decisions.append(validation)
+                # The artifact-first branch handles both new calls and replay.
+                continue
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                    error_owner="controller_storage",
+                    detail=f"Validated batch checkpoint commit failed: {type(exc).__name__}: {exc}",
+                )
+
+        try:
+            required_skill_constraints = list(
+                context_value.get("controller_required_constraints") or []
+            )
+            merged = merge_finalize_batch_decisions(
+                context_value,
+                domain_coverage,
+                candidate_catalog,
+                validated_decisions,
+                required_skill_constraints=required_skill_constraints,
+            )
+            domain_compiled = deepcopy(dict(merged["compiled_contract"]))
+            final_ledger = store.aggregate_finalize_budget_reservations(
+                work_budget_ref=str(work_budget["work_budget_ref"]),
+                work_budget_hash=str(work_budget["work_budget_hash"]),
+                finalize_context_id=context_id,
+            )
+            ledger_totals = dict(final_ledger.get("totals") or {})
+            reservation_rows = store.list_finalize_budget_reservations(
+                replay_scope_id=str(protocol().get("replay_scope_id") or "")
+            )
+            completion_usage_known = all(
+                row.get("actual_completion_tokens") is not None
+                for row in reservation_rows
+                if str(row.get("status") or "") == "consumed"
+            )
+            semantic_metrics = {
+                "schema_validation": "passed",
+                "protocol_schema_version": 4,
+                "wire_schema_version": 3,
+                "compile_mode": "model_batched",
+                "provider_status": "succeeded",
+                "completion_integrity": "complete",
+                "protocol_status": "valid",
+                "directive_count": int(domain_coverage.get("directive_count") or 0),
+                "coverage_counts": deepcopy(dict(domain_coverage.get("counts") or {})),
+                "coverage_artifact_ref": durable_coverage["coverage_artifact_ref"],
+                "coverage_artifact_hash": durable_coverage["coverage_artifact_hash"],
+                "candidate_catalog_ref": durable_catalog["candidate_catalog_ref"],
+                "candidate_catalog_hash": durable_catalog["candidate_catalog_hash"],
+                "stable_partition_ref": durable_partition["stable_partition_ref"],
+                "stable_partition_hash": durable_partition["stable_partition_hash"],
+                "work_budget_ref": work_budget["work_budget_ref"],
+                "work_budget_hash": work_budget["work_budget_hash"],
+                "work_preflight_ref": durable_preflight[
+                    "work_preflight_ref"
+                ],
+                "work_preflight_hash": durable_preflight[
+                    "work_preflight_hash"
+                ],
+                "reservation_ledger_ref": final_ledger[
+                    "reservation_ledger_ref"
+                ],
+                "reservation_ledger_hash": final_ledger[
+                    "reservation_ledger_hash"
+                ],
+                "provider_call_count": int(
+                    ledger_totals.get("provider_calls") or 0
+                ),
+                "completion_tokens": int(
+                    ledger_totals.get("completion_tokens") or 0
+                ),
+                "completion_usage_known": completion_usage_known,
+                "estimated_cost_microusd": int(
+                    ledger_totals.get("estimated_cost_microusd") or 0
+                ),
+            }
+            compiled_task_spec = apply_task_spec_mutation_proposal(
+                current_task_spec,
+                constraint_mutation_proposal(
+                    domain_compiled.get("constraints") or []
+                ),
+                project_root=project_root,
+            )
+            selected_constraints = required_skill_constraints
+            compiled_task_spec = merge_compiled_constraints(
+                compiled_task_spec,
+                selected_constraints,
+                project_root=project_root,
+                metrics=semantic_metrics,
+            )
+            active_leaf_decisions: List[Dict[str, Any]] = []
+            for leaf in protocol().get("batches") or []:
+                if (
+                    not isinstance(leaf, Mapping)
+                    or str(leaf.get("status") or "") != "resolved"
+                ):
+                    continue
+                decision_hash = str(
+                    leaf.get("decision_artifact_hash") or ""
+                )
+                decision_ref = str(
+                    leaf.get("decision_artifact_ref") or ""
+                )
+                durable_leaf = store.lookup_finalize_controller_artifact(
+                    "batch_decision",
+                    artifact_hash=decision_hash,
+                    finalize_context_id=context_id,
+                )
+                if (
+                    not durable_leaf
+                    or str(durable_leaf.get("batch_decision_ref") or "")
+                    != decision_ref
+                ):
+                    raise SnapshotConflictError(
+                        "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    )
+                active_leaf_decisions.append({
+                    "batch_id": str(leaf.get("batch_id") or ""),
+                    "batch_hash": str(leaf.get("batch_hash") or ""),
+                    "decision_artifact_ref": decision_ref,
+                    "decision_artifact_hash": decision_hash,
+                    "domain_decision_artifact_hash": str(
+                        durable_leaf.get("domain_decision_artifact_hash") or ""
+                    ),
+                })
+            compiled_to_persist = deepcopy(domain_compiled)
+            compiled_to_persist["domain_record_type"] = str(
+                compiled_to_persist.pop("record_type", "")
+            )
+            compiled_to_persist.update({
+                "record_type": "finalize_compiled_contract",
+                "finalize_context_artifact_ref": durable_context[
+                    "finalize_context_artifact_ref"
+                ],
+                "finalize_context_artifact_hash": durable_context[
+                    "finalize_context_artifact_hash"
+                ],
+                "coverage_artifact_ref": durable_coverage[
+                    "coverage_artifact_ref"
+                ],
+                "candidate_catalog_ref": durable_catalog[
+                    "candidate_catalog_ref"
+                ],
+                "active_leaf_decisions": active_leaf_decisions,
+                "summary": (
+                    "Consultant FINALIZE v4 resolved the finite candidate catalog "
+                    f"in {semantic_metrics['provider_call_count']} bounded provider call(s)."
+                ),
+                "task_spec_revision": task_spec_revision(compiled_task_spec),
+                "semantic_constraint_count": len(
+                    domain_compiled.get("constraints") or []
+                ),
+            })
+            durable_compiled = store.persist_finalize_compiled_contract(
+                compiled_to_persist
+            )
+            verified = store.lookup_finalize_compiled_contract(
+                compiled_contract_hash=durable_compiled["compiled_contract_hash"],
+                finalize_context_id=context_id,
+            )
+            if verified != durable_compiled:
+                raise SnapshotConflictError(
+                    "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                )
+            commit({
+                "transition": "compiled",
+                "compile_mode": "model_batched",
+                "coverage_artifact_ref": durable_coverage[
+                    "coverage_artifact_ref"
+                ],
+                "coverage_artifact_hash": durable_coverage[
+                    "coverage_artifact_hash"
+                ],
+                "compiled_contract_ref": durable_compiled[
+                    "compiled_contract_ref"
+                ],
+                "compiled_contract_hash": durable_compiled[
+                    "compiled_contract_hash"
+                ],
+            })
+            validate_finalize_protocol_v4(protocol())
+        except Exception as exc:
+            return terminal_update(
+                error_code="FINALIZE_COMPILE_FAILED",
+                error_owner=(
+                    "controller_storage"
+                    if isinstance(exc, (SnapshotConflictError, OSError))
+                    else "controller"
+                ),
+                detail=f"Atomic batch merge failed: {type(exc).__name__}: {exc}",
+            )
+
+        summary = str(durable_compiled.get("summary") or "")
+        current_consultation.pop("final_contract", None)
+        current_consultation.update({
+            "phase": "finalize",
+            "consultation_status": "completed",
+            "completion_decision": "ready_to_finalize",
+            "completion_reason": "formal_contract_compiled_v4_batched",
+            "resolved_selected_skill_ids": list(selected),
+            "compiled_contract_ref": str(durable_compiled.get("compiled_contract_ref") or ""),
+            "compiled_contract_hash": str(durable_compiled.get("compiled_contract_hash") or ""),
+        })
+        return {
+            "messages": [AIMessage(content="FINISH\n" + summary)],
+            "input_audit": input_audit,
+            "selected_skills": list(selected),
+            "selected_skills_raw": list(selected),
+            "active_skills": list(selected),
+            "future_skills": [],
+            "required_skills_all": list(selected),
+            "candidate_skills": [],
+            "runtime_status": self._runtime_status_for_task(task_id, selected),
+            "runtime_audit": [],
+            "skill_selection_source": "consultation_controller_finalize_v4",
+            "requirements_summary": summary,
+            "task_spec": compiled_task_spec,
+            "task_revision": task_spec_revision(compiled_task_spec),
+            "consultant_constraint_metrics": {
+                **semantic_metrics,
+                "compiled_contract_ref": durable_compiled[
+                    "compiled_contract_ref"
+                ],
+                "compiled_contract_hash": durable_compiled[
+                    "compiled_contract_hash"
+                ],
+            },
+            "consultation_state": current_consultation,
+            "consultant_contract_repair": {},
+            "pending_human_question": {},
+            "contract_status": "semantic_contract_compiled",
+            "memory_packet_context": self._consultant_handoff_memory_packet(
+                summary,
+                consultant_memory_retrieval_context,
+            ),
+            "wiki_memory_context": consultant_wiki_context,
+            "next_step": "planner",
+        }
+
+    async def _run_consultant_finalize_v2(
+        self,
+        *,
+        state: Mapping[str, Any],
+        task_id: str,
+        task_spec: Mapping[str, Any],
+        consultation_state: Mapping[str, Any],
+        resolved_selected_skill_ids: Sequence[str],
+        input_audit: Mapping[str, Any],
+        consultant_wiki_context: str = "",
+        consultant_memory_retrieval_context: str = "",
+    ) -> Dict[str, Any]:
+        """Run the isolated, artifact-first Consultant FINALIZE protocol."""
+        current_task_spec = merge_task_spec_input_audit(task_spec, input_audit)
+        current_consultation = deepcopy(dict(consultation_state or {}))
+        legacy_projection = state.get("consultant_contract_repair")
+        historical_legacy_migration = bool(
+            isinstance(legacy_projection, Mapping)
+            and legacy_projection
+            and not isinstance(current_consultation.get("finalize_protocol"), Mapping)
+            and int(legacy_projection.get("schema_version") or 0) < 3
+        )
+        if isinstance(legacy_projection, Mapping) and legacy_projection:
+            migration_input = deepcopy(current_consultation)
+            migration_input["consultant_contract_repair"] = deepcopy(dict(legacy_projection))
+            current_consultation = migrate_finalize_protocol_state(migration_input)
+        elif isinstance(current_consultation.get("finalize_protocol"), Mapping):
+            current_consultation = migrate_finalize_protocol_state(current_consultation)
+
+        task_is_skill_free = self._consultant_task_is_explicitly_skill_free(
+            current_task_spec
+        )
+
+        def protocol() -> Dict[str, Any]:
+            value = current_consultation.get("finalize_protocol")
+            return dict(value) if isinstance(value, Mapping) else {}
+
+        def terminal_update(
+            *,
+            error_code: str,
+            error_owner: str,
+            detail: str,
+            provider_block: Optional[bool] = None,
+        ) -> Dict[str, Any]:
+            nonlocal current_consultation
+            active = protocol()
+            if active and str(active.get("status") or "") not in {
+                "compiled",
+                "blocked_internal_contract",
+                "blocked_internal_provider",
+            }:
+                current_consultation = commit_finalize_decision(
+                    current_consultation,
+                    {
+                        "transition": "blocked_internal",
+                        "error_code": error_code,
+                        "error_owner": error_owner,
+                        "provider_block": provider_block,
+                    },
+                )
+            current_consultation.update({
+                "phase": "blocked",
+                "consultation_status": "blocked",
+                "completion_decision": "blocked",
+                "completion_reason": error_code,
+                "resolved_selected_skill_ids": list(
+                    resolved_selected_skill_ids
+                ),
+            })
+            active = protocol()
+            provider_terminal = str(active.get("status") or "") == "blocked_internal_provider"
+            safe_detail = redact_lineage_text(detail or error_code).strip()[:4000]
+            diagnostic = {
+                "error_code": error_code,
+                "error_owner": error_owner,
+                "finalize_context_id": str(active.get("finalize_context_id") or ""),
+                "base_contract_hash": str(active.get("base_contract_hash") or ""),
+                "detail": safe_detail,
+            }
+            current_consultation["terminal_diagnostic"] = deepcopy(diagnostic)
+            logger.error(
+                "Consultant FINALIZE v2 stopped internally: task=%s code=%s owner=%s detail=%s",
+                task_id,
+                error_code,
+                error_owner,
+                safe_detail,
+            )
+            output.print_once(
+                f"consultant_finalize_internal:{task_id}:{error_code}",
+                (
+                    "⛔ Consultant FINALIZE stopped before Planner: "
+                    f"{error_code}. {safe_detail[:500]}"
+                ),
+                Fore.RED,
+            )
+            return {
+                "messages": [SystemMessage(content=(
+                    "<consultant_finalize_internal_error>\n"
+                    + json.dumps(diagnostic, ensure_ascii=False, sort_keys=True)
+                    + "\n</consultant_finalize_internal_error>"
+                ))],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "task_spec": current_task_spec,
+                "task_revision": task_spec_revision(current_task_spec),
+                "selected_skills": list(resolved_selected_skill_ids),
+                "selected_skills_raw": list(resolved_selected_skill_ids),
+                "active_skills": list(resolved_selected_skill_ids),
+                "required_skills_all": list(resolved_selected_skill_ids),
+                "consultation_state": current_consultation,
+                "consultant_contract_repair": finalize_repair_projection(current_consultation),
+                "pending_human_question": {},
+                "contract_status": (
+                    "blocked_internal_provider_error"
+                    if provider_terminal
+                    else "blocked_internal_contract_error"
+                ),
+                "consultant_constraint_metrics": {
+                    "schema_validation": "failed",
+                    "error_code": error_code,
+                    "error_owner": error_owner,
+                },
+                "task_status": TASK_STATUS_BLOCKED,
+                "failure_type": error_code,
+                "failure_owner": error_owner,
+                "next_step": "finish",
+            }
+
+        def resume_existing_terminal_protocol() -> Optional[Dict[str, Any]]:
+            """Project an already-terminal protocol without rebuilding its context.
+
+            A compiled TaskSpec contains the Consultant's accepted delta, so using it
+            to rebuild the *pre-finalize* context would manufacture a different
+            binding before the durable response can be verified.  Terminal replay is
+            therefore artifact-first and uses only the binding already committed in
+            ``finalize_protocol``.
+            """
+            nonlocal current_consultation
+            active = protocol()
+            status = str(active.get("status") or "")
+
+            def fail_checkpoint_integrity(detail: str) -> Dict[str, Any]:
+                nonlocal current_consultation
+                try:
+                    current_consultation = commit_finalize_decision(
+                        current_consultation,
+                        {
+                            "transition": "checkpoint_integrity_failure",
+                            "error_code": "FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                            "error_owner": "controller_storage",
+                        },
+                    )
+                except Exception as commit_exc:
+                    logger.error(
+                        "Could not commit finalize checkpoint failure: %s",
+                        commit_exc,
+                    )
+                return terminal_update(
+                    error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                    error_owner="controller_storage",
+                    detail=detail,
+                )
+
+            def verified_terminal_artifact(
+                expected_protocol_status: str,
+            ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+                attempts = [
+                    dict(item)
+                    for item in active.get("attempts", []) or []
+                    if isinstance(item, Mapping)
+                ]
+                if not attempts:
+                    raise SnapshotConflictError(
+                        "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    )
+                completed_attempt = attempts[-1]
+                attempt_id = str(completed_attempt.get("attempt_id") or "")
+                call_id = str(completed_attempt.get("call_id") or "")
+                request_hash = str(
+                    completed_attempt.get("canonical_request_hash") or ""
+                )
+                response_ref = str(
+                    completed_attempt.get("response_artifact_ref") or ""
+                )
+                response_hash = str(
+                    completed_attempt.get("response_content_hash") or ""
+                )
+                if (
+                    not attempt_id
+                    or not call_id
+                    or not request_hash
+                    or not response_ref
+                    or not response_hash
+                    or request_hash
+                    != str(active.get("active_canonical_request_hash") or "")
+                    or str(completed_attempt.get("provider_status") or "")
+                    != "succeeded"
+                    or str(completed_attempt.get("protocol_status") or "")
+                    != expected_protocol_status
+                ):
+                    raise SnapshotConflictError(
+                        "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    )
+                artifact = ContextLineageStore(
+                    self.data_path,
+                    task_id,
+                ).lookup_finalize_response_artifact(
+                    attempt_id=attempt_id,
+                    call_id=call_id,
+                    canonical_request_hash=request_hash,
+                )
+                if (
+                    not artifact
+                    or str(artifact.get("provider_status") or "") != "succeeded"
+                    or str(artifact.get("protocol_status") or "")
+                    != expected_protocol_status
+                    or not str(artifact.get("protocol_outcome_ref") or "")
+                    or str(artifact.get("canonical_request_hash") or "")
+                    != request_hash
+                    or str(artifact.get("response_artifact_ref") or "")
+                    != response_ref
+                    or str(artifact.get("response_content_hash") or "")
+                    != response_hash
+                ):
+                    raise SnapshotConflictError(
+                        "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    )
+                if expected_protocol_status == "valid":
+                    if (
+                        str(completed_attempt.get("error_code") or "")
+                        or str(completed_attempt.get("error_owner") or "")
+                        or str(artifact.get("error_code") or "")
+                        or str(artifact.get("error_owner") or "")
+                    ):
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                elif expected_protocol_status == "needs_user":
+                    if (
+                        str(completed_attempt.get("error_code") or "")
+                        != "FINALIZE_SEMANTIC_AMBIGUITY"
+                        or str(completed_attempt.get("error_owner") or "")
+                        != "user_semantic"
+                        or str(artifact.get("error_code") or "")
+                        != "FINALIZE_SEMANTIC_AMBIGUITY"
+                        or str(artifact.get("error_owner") or "")
+                        != "user_semantic"
+                    ):
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                return completed_attempt, dict(artifact)
+
+            if status in {"blocked_internal_contract", "blocked_internal_provider"}:
+                return terminal_update(
+                    error_code=str(
+                        active.get("terminal_error_code")
+                        or "FINALIZE_REPAIR_EXHAUSTED"
+                    ),
+                    error_owner=str(active.get("terminal_owner") or "controller"),
+                    detail="Finalize protocol is already in a typed terminal state.",
+                    provider_block=status == "blocked_internal_provider",
+                )
+            if status == "compiled":
+                final_contract = deepcopy(
+                    dict(current_consultation.get("final_contract") or {})
+                )
+                try:
+                    completed_attempt, completed_artifact = (
+                        verified_terminal_artifact("valid")
+                    )
+                    outcome_summary = completed_artifact.get(
+                        "validation_summary"
+                    )
+                    if not isinstance(outcome_summary, Mapping):
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                    durable_contract_hash = str(
+                        outcome_summary.get("compiled_contract_hash") or ""
+                    )
+                    controller_selected = list(
+                        current_consultation.get("resolved_selected_skill_ids") or []
+                    )
+                    final_selected = final_contract.get("selected_skills")
+                    final_constraints_value = final_contract.get("constraints")
+                    if (
+                        not durable_contract_hash
+                        or str(final_contract.get("compiled_contract_hash") or "")
+                        != durable_contract_hash
+                        or canonical_compiled_contract_hash(final_contract)
+                        != durable_contract_hash
+                        or deepcopy(outcome_summary.get("coverage_audit"))
+                        != deepcopy(final_contract.get("coverage_audit"))
+                        or int(outcome_summary.get("constraint_count") or -1)
+                        != int(final_contract.get("semantic_constraint_count") or -2)
+                        or not isinstance(final_constraints_value, list)
+                        or int(final_contract.get("semantic_constraint_count") or -1)
+                        != len(final_constraints_value or [])
+                        or not isinstance(final_selected, list)
+                        or final_selected != controller_selected
+                        or controller_selected != list(resolved_selected_skill_ids)
+                        or str(final_contract.get("finalize_context_id") or "")
+                        != str(active.get("finalize_context_id") or "")
+                        or str(final_contract.get("base_contract_hash") or "")
+                        != str(active.get("base_contract_hash") or "")
+                        or str(final_contract.get("canonical_request_hash") or "")
+                        != str(completed_attempt.get("canonical_request_hash") or "")
+                        or str(final_contract.get("response_artifact_ref") or "")
+                        != str(completed_artifact.get("response_artifact_ref") or "")
+                        or str(final_contract.get("response_content_hash") or "")
+                        != str(completed_artifact.get("response_content_hash") or "")
+                        or int(final_contract.get("task_spec_revision") or -1)
+                        != task_spec_revision(current_task_spec)
+                    ):
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                except (SnapshotConflictError, OSError, TypeError, ValueError) as exc:
+                    return fail_checkpoint_integrity(
+                        detail=(
+                            "Compiled finalize artifact verification failed: "
+                            f"{type(exc).__name__}: {exc}"
+                        ),
+                    )
+                return {
+                    "messages": [AIMessage(content=(
+                        "FINISH\n"
+                        + str(
+                            final_contract.get("summary")
+                            or "Contract already compiled."
+                        )
+                    ))],
+                    "input_audit": deepcopy(dict(input_audit or {})),
+                    "task_spec": current_task_spec,
+                    "task_revision": task_spec_revision(current_task_spec),
+                    "selected_skills": deepcopy(final_contract["selected_skills"]),
+                    "consultation_state": current_consultation,
+                    "consultant_contract_repair": finalize_repair_projection(
+                        current_consultation
+                    ),
+                    "pending_human_question": {},
+                    "contract_status": "semantic_contract_compiled",
+                    "next_step": "planner",
+                }
+            if status == "needs_user":
+                try:
+                    verified_terminal_artifact("needs_user")
+                    pending = current_consultation.get("pending_human_question")
+                    if not isinstance(pending, Mapping):
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                    pending = dict(pending)
+                    ambiguity_id = str(pending.get("ambiguity_id") or "").strip()
+                    current_revision = task_spec_revision(current_task_spec)
+                    requirements = [
+                        dict(item)
+                        for item in current_task_spec.get("requirements", []) or []
+                        if isinstance(item, Mapping)
+                        and str(
+                            item.get("constraint_id")
+                            or item.get("requirement_id")
+                            or ""
+                        ).strip()
+                        == ambiguity_id
+                    ]
+                    if len(requirements) != 1:
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                    ambiguity = requirements[0]
+                    catalog = semantic_provenance_catalog(
+                        current_task_spec,
+                        consultation_state=current_consultation,
+                        selected_skill_ids=list(resolved_selected_skill_ids),
+                    )
+                    catalog_ids = {
+                        str(item.get("source_id") or "").strip()
+                        for item in catalog
+                        if isinstance(item, Mapping)
+                        and str(item.get("source_id") or "").strip()
+                    }
+                    source_ids = set(
+                        self._finalize_constraint_source_ids(ambiguity)
+                    )
+                    unresolved_rows = [
+                        dict(item)
+                        for item in current_task_spec.get("unresolved_questions", []) or []
+                        if isinstance(item, Mapping)
+                        and bool(item.get("active", True))
+                        and str(
+                            item.get("ambiguity_id")
+                            or item.get("constraint_id")
+                            or ""
+                        ).strip()
+                        == ambiguity_id
+                    ]
+                    if unresolved_rows:
+                        unresolved = unresolved_rows[0]
+                        if (
+                            len(unresolved_rows) != 1
+                            or not bool(unresolved.get("needs_clarification"))
+                            or str(unresolved.get("semantic_key") or "").strip()
+                            != str(ambiguity.get("semantic_key") or "").strip()
+                        ):
+                            raise SnapshotConflictError(
+                                "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                            )
+                    if (
+                        not ambiguity_id
+                        or ambiguity_id
+                        != str(active.get("pending_ambiguity_id") or "").strip()
+                        or str(pending.get("question") or "").strip()
+                        != self._consultant_finalize_ambiguity_question(ambiguity)
+                        or str(pending.get("finalize_context_id") or "")
+                        != str(active.get("finalize_context_id") or "")
+                        or str(pending.get("base_contract_hash") or "")
+                        != str(active.get("base_contract_hash") or "")
+                        or int(pending.get("task_spec_revision") or -1)
+                        != current_revision
+                        or not bool(ambiguity.get("needs_clarification"))
+                        or str(ambiguity.get("strength") or "").strip().lower()
+                        not in {"hard", "required", "conditional", "ambiguous"}
+                        or not str(ambiguity.get("semantic_key") or "").strip()
+                        or not str(ambiguity.get("unresolved_reason") or "").strip()
+                        or not source_ids
+                        or not source_ids.issubset(catalog_ids)
+                        or (
+                            active.get("superseded_by_task_spec_revision")
+                            not in (None, "")
+                            and str(active.get("superseded_by_task_spec_revision"))
+                            != str(current_revision)
+                        )
+                    ):
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                except (SnapshotConflictError, OSError, TypeError, ValueError) as exc:
+                    return fail_checkpoint_integrity(
+                        "Needs-user finalize binding verification failed: "
+                        f"{type(exc).__name__}: {exc}"
+                    )
+                else:
+                    return {
+                        "messages": [],
+                        "input_audit": deepcopy(dict(input_audit or {})),
+                        "task_spec": current_task_spec,
+                        "task_revision": task_spec_revision(current_task_spec),
+                        "consultation_state": current_consultation,
+                        "consultant_contract_repair": finalize_repair_projection(
+                            current_consultation
+                        ),
+                        "pending_human_question": deepcopy(dict(pending)),
+                        "contract_status": "blocked_need_user_decision",
+                        "next_step": "ask_user",
+                    }
+            return None
+
+        terminal_projection = resume_existing_terminal_protocol()
+        if terminal_projection is not None:
+            return terminal_projection
+
+        precondition_errors = self._consultant_finalize_precondition_errors(
+            task_spec=current_task_spec,
+            consultation_state=current_consultation,
+            resolved_selected_skill_ids=resolved_selected_skill_ids,
+            input_audit=input_audit,
+            task_is_skill_free=task_is_skill_free,
+        )
+        if precondition_errors:
+            return terminal_update(
+                error_code="FINALIZE_REPAIR_EXHAUSTED",
+                error_owner="controller",
+                detail="Finalize entry preconditions failed: " + "; ".join(precondition_errors),
+            )
+
+        try:
+            finalize_context = self._build_consultant_finalize_context(
+                task_id=task_id,
+                task_spec=current_task_spec,
+                consultation_state=current_consultation,
+                resolved_selected_skill_ids=resolved_selected_skill_ids,
+                input_audit=input_audit,
+                task_is_skill_free=task_is_skill_free,
+            )
+        except Exception as exc:
+            return terminal_update(
+                error_code="FINALIZE_REPAIR_EXHAUSTED",
+                error_owner="controller",
+                detail=f"Finalize context construction failed: {type(exc).__name__}: {exc}",
+            )
+        context_value = thaw_finalize_value(finalize_context)
+        context_id = str(context_value.get("finalize_context_id") or "")
+        base_contract_hash = str(context_value.get("base_contract_hash") or "")
+        wire_schema_version = int(context_value.get("wire_schema_version") or 2)
+
+        active = protocol()
+        if active and str(active.get("terminal_error_code") or "") == (
+            "FINALIZE_CONTEXT_BINDING_UNRECOVERABLE"
+        ):
+            return terminal_update(
+                error_code="FINALIZE_CONTEXT_BINDING_UNRECOVERABLE",
+                error_owner="controller_storage",
+                detail="Historical repair state has no deterministically recoverable v2 context binding.",
+            )
+        if not active:
+            current_consultation = initialize_finalize_protocol(
+                current_consultation,
+                finalize_context_id=context_id,
+                base_contract_hash=base_contract_hash,
+                wire_schema_version=wire_schema_version,
+            )
+        elif (
+            str(active.get("finalize_context_id") or "") != context_id
+            or str(active.get("base_contract_hash") or "") != base_contract_hash
+            or int(active.get("wire_schema_version") or 0) != wire_schema_version
+        ):
+            superseded_revision = active.get("superseded_by_task_spec_revision")
+            if superseded_revision not in (None, ""):
+                if (
+                    str(active.get("status") or "") != "ready"
+                    or str(superseded_revision)
+                    != str(task_spec_revision(current_task_spec))
+                ):
+                    return terminal_update(
+                        error_code="FINALIZE_CONTEXT_BINDING_UNRECOVERABLE",
+                        error_owner="controller_storage",
+                        detail=(
+                            "Superseded finalize binding does not match one exact "
+                            "applied-answer TaskSpec revision."
+                        ),
+                    )
+                try:
+                    current_consultation = commit_finalize_decision(
+                        current_consultation,
+                        {
+                            "transition": "replace_context",
+                            "new_finalize_context_id": context_id,
+                            "new_base_contract_hash": base_contract_hash,
+                            "new_wire_schema_version": wire_schema_version,
+                            "max_wire_repair_attempts": 2,
+                            "max_field_repair_attempts": 2,
+                        },
+                    )
+                except Exception as exc:
+                    return terminal_update(
+                        error_code="FINALIZE_CONTEXT_BINDING_UNRECOVERABLE",
+                        error_owner="controller_storage",
+                        detail=f"Superseded context replacement failed: {type(exc).__name__}: {exc}",
+                    )
+            else:
+                return terminal_update(
+                    error_code="FINALIZE_CONTEXT_BINDING_UNRECOVERABLE",
+                    error_owner="controller_storage",
+                    detail=(
+                        "The active finalize binding differs from the current immutable "
+                        "TaskSpec/evidence context without a recorded user-answer supersession."
+                    ),
+                )
+
+        active = protocol()
+        repair = deepcopy(dict(active.get("repair") or {}))
+        prior_attempts = [
+            deepcopy(dict(item))
+            for item in active.get("attempts", []) or []
+            if isinstance(item, Mapping)
+        ]
+        last_attempt = prior_attempts[-1] if prior_attempts else {}
+        transport_retry = bool(
+            str(last_attempt.get("provider_status") or "") == "transient_failed"
+            and bool(last_attempt.get("retry_safe"))
+            and not str(last_attempt.get("response_artifact_ref") or "")
+        )
+        repair_kind = str(repair.get("repair_kind") or "none")
+        message_kind = "initial"
+        if repair_kind == "wire_format":
+            message_kind = "wire_repair"
+        elif repair_kind == "field_patch":
+            message_kind = "field_repair"
+        call_kind = "transport_retry" if transport_retry else message_kind
+        store = ContextLineageStore(self.data_path, task_id)
+
+        try:
+            if message_kind == "initial":
+                response_schema = finalize_result_schema(finalize_context)
+                system_policy = PromptManager.get_consultant_finalize_system_prompt(
+                    finalize_context_id=context_id,
+                    base_contract_hash=base_contract_hash,
+                    allowed_actions=list(context_value.get("allowed_actions") or []),
+                    response_schema=response_schema,
+                )
+                finalize_messages = build_finalize_messages(
+                    finalize_context,
+                    system_policy=system_policy,
+                    response_schema=response_schema,
+                )
+            elif message_kind == "wire_repair":
+                artifact = None
+                for attempt in reversed(prior_attempts):
+                    if not str(attempt.get("response_artifact_ref") or ""):
+                        continue
+                    artifact = store.lookup_finalize_response_artifact(
+                        attempt_id=str(attempt.get("attempt_id") or ""),
+                        call_id=str(attempt.get("call_id") or ""),
+                        canonical_request_hash=str(attempt.get("canonical_request_hash") or ""),
+                    )
+                    if artifact:
+                        break
+                if not artifact:
+                    return terminal_update(
+                        error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                        error_owner="controller_storage",
+                        detail="Wire repair cannot locate its protected preceding response artifact.",
+                    )
+                wire_attempt = int(repair.get("wire_repair_attempt") or 0)
+                if not transport_retry:
+                    wire_attempt += 1
+                failure = {
+                    "error_code": str(repair.get("error_code") or "FINALIZE_RESPONSE_NOT_JSON"),
+                    "response_content_hash": str(artifact.get("response_content_hash") or ""),
+                    "errors": deepcopy(list(repair.get("validation_errors") or [])),
+                }
+                response_schema = finalize_result_schema(finalize_context)
+                system_policy = PromptManager.get_consultant_finalize_wire_repair_prompt(
+                    finalize_context_id=context_id,
+                    base_contract_hash=base_contract_hash,
+                    allowed_actions=list(context_value.get("allowed_actions") or []),
+                    response_schema=response_schema,
+                )
+                finalize_messages = build_wire_repair_messages(
+                    finalize_context,
+                    failure,
+                    wire_repair_attempt=wire_attempt,
+                    system_policy=system_policy,
+                    response_schema=response_schema,
+                    invalid_response=str(artifact.get("raw_response") or ""),
+                )
+            else:
+                base_payload = repair.get("base_payload")
+                allowed_by_index = repair.get("allowed_fields_by_index") or {}
+                allowed_payload = repair.get("allowed_payload_fields") or []
+                if not isinstance(base_payload, Mapping):
+                    return terminal_update(
+                        error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                        error_owner="controller_storage",
+                        detail="Field repair has no immutable parsed base payload.",
+                    )
+                field_attempt = int(repair.get("field_repair_attempt") or 0)
+                if not transport_retry:
+                    field_attempt += 1
+                response_schema = field_patch_schema(
+                    finalize_context=finalize_context,
+                    base_payload_hash=finalize_payload_hash(base_payload),
+                    allowed_fields_by_index=allowed_by_index,
+                    allowed_payload_fields=allowed_payload,
+                )
+                system_policy = PromptManager.get_consultant_finalize_field_repair_prompt(
+                    finalize_context_id=context_id,
+                    base_contract_hash=base_contract_hash,
+                    base_payload_hash=finalize_payload_hash(base_payload),
+                    allowed_fields_by_index=allowed_by_index,
+                    allowed_payload_fields=allowed_payload,
+                    response_schema=response_schema,
+                )
+                finalize_messages = build_field_repair_messages(
+                    finalize_context,
+                    base_payload=base_payload,
+                    field_repair_attempt=field_attempt,
+                    validation_errors=list(repair.get("validation_errors") or []),
+                    allowed_fields_by_index=allowed_by_index,
+                    allowed_payload_fields=allowed_payload,
+                    last_patch_protocol_errors=list(
+                        repair.get("last_patch_protocol_errors") or []
+                    ),
+                    system_policy=system_policy,
+                    response_schema=response_schema,
+                )
+        except (SnapshotConflictError, OSError, ValueError, TypeError) as exc:
+            return terminal_update(
+                error_code=(
+                    "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                    if isinstance(exc, (SnapshotConflictError, OSError))
+                    else "FINALIZE_REPAIR_EXHAUSTED"
+                ),
+                error_owner=(
+                    "controller_storage"
+                    if isinstance(exc, (SnapshotConflictError, OSError))
+                    else "controller"
+                ),
+                detail=f"Finalize request construction failed: {type(exc).__name__}: {exc}",
+            )
+
+        if [str(getattr(item, "type", "")) for item in finalize_messages] != ["system", "human"]:
+            return terminal_update(
+                error_code="FINALIZE_REPAIR_EXHAUSTED",
+                error_owner="controller",
+                detail="Finalize request role sequence is not exactly system,human.",
+            )
+        estimated_tokens = sum(
+            _consultant_estimate_text_tokens(str(getattr(item, "content", "") or "")) + 4
+            for item in finalize_messages
+        )
+        safe_input_tokens = max(
+            1,
+            int(self.llm_context_limit_tokens)
+            - min(
+                CONSULTANT_RESERVED_HEADROOM_TOKENS,
+                max(0, int(self.llm_context_limit_tokens) - 1),
+            ),
+        )
+        if estimated_tokens > safe_input_tokens:
+            return terminal_update(
+                error_code="FINALIZE_REPAIR_EXHAUSTED",
+                error_owner="controller",
+                detail=(
+                    "Lossless finalize context exceeds the safe provider input budget: "
+                    f"{estimated_tokens}>{safe_input_tokens} tokens."
+                ),
+            )
+
+        try:
+            settings = self._consultant_finalize_provider_settings(response_schema)
+        except (TypeError, ValueError) as exc:
+            return terminal_update(
+                error_code="FINALIZE_REPAIR_EXHAUSTED",
+                error_owner="controller",
+                detail=(
+                    "Finalize provider capability resolution failed: "
+                    f"{type(exc).__name__}: {exc}"
+                ),
+            )
+        provider_parameters = {
+            "top_p": settings["top_p"],
+            "max_output_tokens": settings["max_output_tokens"],
+            "schema_id": settings["schema_id"],
+            "schema_hash": settings["schema_hash"],
+            "provider_response_options": {
+                "thinking": settings["thinking"],
+                "extra_body_allowlist": deepcopy(settings["extra_body_allowlist"]),
+            },
+        }
+        canonical_request_hash = durable_finalize_request_hash(
+            finalize_messages,
+            finalize_context_id=context_id,
+            wire_schema_version=wire_schema_version,
+            provider_id=str(settings["provider_id"]),
+            endpoint_id=str(settings["endpoint_id"]),
+            model=str(settings["model"]),
+            temperature=float(settings["temperature"]),
+            structured_output_mode=str(settings["structured_output_mode"]),
+            provider_parameters=provider_parameters,
+        )
+
+        request_metadata = {
+            "finalize_context_id": context_id,
+            "base_contract_hash": base_contract_hash,
+            "wire_schema_version": wire_schema_version,
+            "provider_id": settings["provider_id"],
+            "endpoint_id": settings["endpoint_id"],
+            "model": settings["model"],
+            "structured_output_mode": settings["structured_output_mode"],
+            "provider_parameters": provider_parameters,
+            "message_role_sequence": ["system", "human"],
+            "task_spec_revision": task_spec_revision(current_task_spec),
+            "effective_facts_revision": context_value.get("effective_facts_revision"),
+            "selected_skill_ids": list(resolved_selected_skill_ids),
+        }
+
+        def hydrate_durable_chain() -> None:
+            """Project monotonic durable attempts into a stale graph checkpoint."""
+            nonlocal current_consultation
+            rows = list_finalize_attempts(
+                store,
+                canonical_request_hash=canonical_request_hash,
+            )
+            for row in rows:
+                intent = dict(row.get("intent") or {})
+                durable_attempt_id = str(intent.get("attempt_id") or row.get("attempt_id") or "")
+                durable_call_id = str(intent.get("call_id") or row.get("call_id") or "")
+                if not durable_attempt_id or not durable_call_id:
+                    raise SnapshotConflictError("Durable finalize intent has incomplete identity")
+                graph_row = next(
+                    (
+                        item for item in protocol().get("attempts", []) or []
+                        if str((item or {}).get("attempt_id") or "") == durable_attempt_id
+                    ),
+                    None,
+                )
+                if graph_row is None:
+                    current_consultation = commit_finalize_decision(
+                        current_consultation,
+                        {
+                            "transition": "request_started",
+                            "attempt_id": durable_attempt_id,
+                            "call_id": durable_call_id,
+                            "call_kind": str(intent.get("call_kind") or row.get("call_kind") or "initial"),
+                            "canonical_request_hash": canonical_request_hash,
+                            "finalize_context_id": context_id,
+                            "base_contract_hash": base_contract_hash,
+                            "started_at": str(intent.get("created_at") or ""),
+                        },
+                    )
+                    graph_row = next(
+                        item for item in protocol().get("attempts", []) or []
+                        if str((item or {}).get("attempt_id") or "") == durable_attempt_id
+                    )
+                provider_status = str(row.get("provider_status") or "in_flight")
+                if provider_status == "succeeded":
+                    artifact = store.lookup_finalize_response_artifact(
+                        attempt_id=durable_attempt_id,
+                        call_id=durable_call_id,
+                        canonical_request_hash=canonical_request_hash,
+                    )
+                    if artifact is None:
+                        # A dedicated storage-failure marker is projected below;
+                        # any other succeeded-without-artifact record is corrupt.
+                        if str(row.get("error_code") or "") != "FINALIZE_CHECKPOINT_ARTIFACT_MISSING":
+                            raise SnapshotConflictError("FINALIZE_CHECKPOINT_ARTIFACT_MISSING")
+                        if str(graph_row.get("provider_status") or "") != "succeeded":
+                            current_consultation = commit_finalize_decision(
+                                current_consultation,
+                                {
+                                    "transition": "response_persistence_failure",
+                                    "attempt_id": durable_attempt_id,
+                                },
+                            )
+                        continue
+                    if not str(graph_row.get("response_artifact_ref") or ""):
+                        diagnostic = store.finalize_diagnostic_projection(artifact)
+                        current_consultation = commit_finalize_decision(
+                            current_consultation,
+                            {
+                                "transition": "provider_response",
+                                "attempt_id": durable_attempt_id,
+                                "call_id": durable_call_id,
+                                "canonical_request_hash": canonical_request_hash,
+                                "response_artifact_ref": str(artifact.get("response_artifact_ref") or ""),
+                                "response_content_hash": str(artifact.get("response_content_hash") or ""),
+                                "response_excerpt": str(diagnostic.get("response_excerpt") or ""),
+                                "response_excerpt_truncated": bool(
+                                    diagnostic.get("response_excerpt_truncated")
+                                ),
+                            },
+                        )
+                elif provider_status in {"transient_failed", "fatal_failed", "outcome_unknown"}:
+                    if str(graph_row.get("provider_status") or "") in {"in_flight", "not_called"}:
+                        current_consultation = commit_finalize_decision(
+                            current_consultation,
+                            {
+                                "transition": "provider_failure",
+                                "attempt_id": durable_attempt_id,
+                                "provider_status": provider_status,
+                                "error_code": str(row.get("error_code") or ""),
+                                "error_owner": str(row.get("error_owner") or "provider"),
+                                "retry_safe": bool(row.get("retry_safe", False)),
+                                "completed_at": str(row.get("failed_at") or row.get("updated_at") or ""),
+                            },
+                        )
+
+        replay_artifact: Optional[Dict[str, Any]] = None
+        durable_existing: Optional[Dict[str, Any]] = None
+
+        async def reconcile_with_live_wait(
+            *,
+            durable_attempt_id: str,
+            durable_call_id: str,
+        ) -> Dict[str, Any]:
+            """Wait briefly for a live owner; never terminalize its active call."""
+            loop = asyncio.get_running_loop()
+            wait_budget = min(
+                max(float(getattr(self, "llm_timeout_seconds", 0) or 0) + 1.0, 1.0),
+                30.0,
+            )
+            deadline = loop.time() + wait_budget
+            while True:
+                value = reconcile_finalize_attempt(
+                    store,
+                    attempt_id=durable_attempt_id,
+                    call_id=durable_call_id,
+                    canonical_request_hash=canonical_request_hash,
+                )
+                if str(value.get("decision") or "") != "attempt_in_progress":
+                    return dict(value)
+                remaining = deadline - loop.time()
+                if remaining <= 0:
+                    return dict(value)
+                await asyncio.sleep(min(0.05, remaining))
+
+        def provider_in_progress_update(
+            reconciliation: Mapping[str, Any],
+        ) -> Dict[str, Any]:
+            current_consultation.update({
+                "phase": "finalize",
+                "consultation_status": "ready",
+                "completion_decision": "ready_to_finalize",
+                "completion_reason": "provider_attempt_in_progress",
+            })
+            return {
+                "messages": [SystemMessage(content=(
+                    "<consultant_finalize_provider_in_progress>"
+                    + json.dumps({
+                        "attempt_id": str(reconciliation.get("attempt_id") or ""),
+                        "call_id": str(reconciliation.get("call_id") or ""),
+                        "canonical_request_hash": canonical_request_hash,
+                        "provider_status": "in_flight",
+                    }, ensure_ascii=False, sort_keys=True)
+                    + "</consultant_finalize_provider_in_progress>"
+                ))],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "task_spec": current_task_spec,
+                "task_revision": task_spec_revision(current_task_spec),
+                "consultation_state": current_consultation,
+                "consultant_contract_repair": finalize_repair_projection(
+                    current_consultation
+                ),
+                "pending_human_question": {},
+                "consultant_constraint_metrics": {
+                    "schema_validation": "not_run",
+                    "provider_status": "in_flight",
+                    "protocol_status": "not_validated",
+                },
+                "contract_status": "finalize_provider_in_progress",
+                "next_step": "consultant",
+            }
+
+        try:
+            durable_existing = lookup_finalize_attempt(store, canonical_request_hash)
+            graph_same_hash = [
+                item for item in protocol().get("attempts", []) or []
+                if str((item or {}).get("canonical_request_hash") or "") == canonical_request_hash
+                and str((item or {}).get("provider_status") or "") != "not_called"
+            ]
+            if graph_same_hash and not durable_existing:
+                raise SnapshotConflictError("FINALIZE_CHECKPOINT_ARTIFACT_MISSING")
+            if durable_existing:
+                hydrate_durable_chain()
+                reconciliation = await reconcile_with_live_wait(
+                    durable_attempt_id=str(durable_existing.get("attempt_id") or ""),
+                    durable_call_id=str(durable_existing.get("call_id") or ""),
+                )
+                # Reconciliation may have persisted a failure/unknown marker.
+                hydrate_durable_chain()
+                durable_decision = str(reconciliation.get("decision") or "")
+                if durable_decision == "reuse_response":
+                    replay_artifact = dict(reconciliation)
+                elif durable_decision == "safe_transport_retry":
+                    call_kind = "transport_retry"
+                    transport_retry = True
+                elif durable_decision == "attempt_in_progress":
+                    return provider_in_progress_update(reconciliation)
+                else:
+                    return terminal_update(
+                        error_code=str(
+                            reconciliation.get("error_code")
+                            or "FINALIZE_PROVIDER_OUTCOME_UNKNOWN"
+                        ),
+                        error_owner=str(
+                            reconciliation.get("error_owner")
+                            or "controller_provider"
+                        ),
+                        detail="Durable finalize attempt cannot be invoked again safely.",
+                        provider_block=str(reconciliation.get("error_owner") or "") in {
+                            "provider", "controller_provider"
+                        },
+                    )
+        except (SnapshotConflictError, OSError, ValueError) as exc:
+            return terminal_update(
+                error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                error_owner="controller_storage",
+                detail=f"Finalize checkpoint reconciliation failed: {type(exc).__name__}: {exc}",
+            )
+
+        unique_suffix = uuid.uuid4().hex
+        attempt_id = (
+            str((replay_artifact or {}).get("attempt_id") or "")
+            or f"finalize-{context_id[-12:]}-{unique_suffix}"
+        )
+        call_id = (
+            str((replay_artifact or {}).get("call_id") or "")
+            or f"consultant-finalize-{call_kind}-{unique_suffix}"
+        )
+
+        # The durable canonical-hash claim precedes graph projection.  This
+        # closes the lookup/begin window in which two workers could both call.
+        if replay_artifact is None:
+            try:
+                claim = persist_finalize_attempt_intent(
+                    store,
+                    attempt_id=attempt_id,
+                    call_id=call_id,
+                    call_kind=call_kind,
+                    canonical_request_hash=canonical_request_hash,
+                    request_metadata=request_metadata,
+                )
+                if not bool(claim.get("claim_acquired")):
+                    reconciliation = await reconcile_with_live_wait(
+                        durable_attempt_id=attempt_id,
+                        durable_call_id=call_id,
+                    )
+                    hydrate_durable_chain()
+                    if str(reconciliation.get("decision") or "") == "reuse_response":
+                        replay_artifact = dict(reconciliation)
+                    elif str(reconciliation.get("decision") or "") == "attempt_in_progress":
+                        return provider_in_progress_update(reconciliation)
+                    else:
+                        return terminal_update(
+                            error_code=str(
+                                reconciliation.get("error_code")
+                                or "FINALIZE_PROVIDER_OUTCOME_UNKNOWN"
+                            ),
+                            error_owner=str(
+                                reconciliation.get("error_owner")
+                                or "controller_provider"
+                            ),
+                            detail="This finalize attempt was already durably claimed; it was not invoked again.",
+                            provider_block=True,
+                        )
+            except SnapshotConflictError:
+                try:
+                    competing = lookup_finalize_attempt(store, canonical_request_hash)
+                    if not competing:
+                        raise SnapshotConflictError("Finalize claim conflict has no durable winner")
+                    reconciliation = await reconcile_with_live_wait(
+                        durable_attempt_id=str(competing.get("attempt_id") or ""),
+                        durable_call_id=str(competing.get("call_id") or ""),
+                    )
+                    hydrate_durable_chain()
+                    if str(reconciliation.get("decision") or "") == "reuse_response":
+                        replay_artifact = dict(reconciliation)
+                        attempt_id = str(replay_artifact.get("attempt_id") or "")
+                        call_id = str(replay_artifact.get("call_id") or "")
+                    elif str(reconciliation.get("decision") or "") == "attempt_in_progress":
+                        return provider_in_progress_update(reconciliation)
+                    else:
+                        return terminal_update(
+                            error_code=str(
+                                reconciliation.get("error_code")
+                                or "FINALIZE_PROVIDER_OUTCOME_UNKNOWN"
+                            ),
+                            error_owner=str(
+                                reconciliation.get("error_owner")
+                                or "controller_provider"
+                            ),
+                            detail="Another worker already owns this canonical finalize request.",
+                            provider_block=True,
+                        )
+                except (SnapshotConflictError, OSError, ValueError) as exc:
+                    return terminal_update(
+                        error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                        error_owner="controller_storage",
+                        detail=f"Finalize atomic claim reconciliation failed: {type(exc).__name__}: {exc}",
+                    )
+            except (OSError, ValueError) as exc:
+                return terminal_update(
+                    error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                    error_owner="controller_storage",
+                    detail=f"Could not persist finalize request intent: {type(exc).__name__}: {exc}",
+                )
+
+        graph_attempt = next(
+            (
+                item for item in protocol().get("attempts", []) or []
+                if str((item or {}).get("attempt_id") or "") == attempt_id
+            ),
+            None,
+        )
+        if graph_attempt is None:
+            try:
+                current_consultation = commit_finalize_decision(
+                    current_consultation,
+                    {
+                        "transition": "request_started",
+                        "attempt_id": attempt_id,
+                        "call_id": call_id,
+                        "call_kind": call_kind,
+                        "canonical_request_hash": canonical_request_hash,
+                        "finalize_context_id": context_id,
+                        "base_contract_hash": base_contract_hash,
+                    },
+                )
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_IDENTICAL_REQUEST_BLOCKED",
+                    error_owner="controller",
+                    detail=f"Finalize request state commit was rejected: {type(exc).__name__}: {exc}",
+                )
+            if str(protocol().get("status") or "") in {
+                "blocked_internal_contract", "blocked_internal_provider"
+            }:
+                return terminal_update(
+                    error_code=str(protocol().get("terminal_error_code") or "FINALIZE_REPAIR_EXHAUSTED"),
+                    error_owner=str(protocol().get("terminal_owner") or "controller"),
+                    detail="Finalize request was blocked before provider invocation by controller budget/identity guards.",
+                )
+
+        if replay_artifact is None:
+            try:
+                provider_result = await self._invoke_consultant_finalize_provider(
+                    finalize_messages,
+                    task_id=task_id,
+                    store=store,
+                    attempt_id=attempt_id,
+                    call_id=call_id,
+                    call_kind=call_kind,
+                    canonical_request_hash=canonical_request_hash,
+                    settings=settings,
+                    trace_metadata={
+                        "node_name": "consultant",
+                        "finalize_context_id": context_id,
+                        "base_contract_hash": base_contract_hash,
+                        "wire_schema_version": wire_schema_version,
+                        "task_spec_revision": task_spec_revision(current_task_spec),
+                        "effective_facts_revision": context_value.get("effective_facts_revision"),
+                        "selected_skill_ids": list(resolved_selected_skill_ids),
+                        "repair_kind": repair_kind,
+                        "wire_repair_attempt": int(repair.get("wire_repair_attempt") or 0),
+                        "field_repair_attempt": int(repair.get("field_repair_attempt") or 0),
+                    },
+                )
+            except BaseException as exc:
+                if isinstance(exc, asyncio.CancelledError):
+                    store.release_finalize_provider_lease(attempt_id)
+                    raise
+                if isinstance(exc, FinalizeResponsePersistenceError):
+                    try:
+                        store.record_finalize_response_persistence_failure(
+                            attempt_id=attempt_id,
+                            call_id=call_id,
+                            canonical_request_hash=canonical_request_hash,
+                            response_content_hash=exc.response_content_hash,
+                            error_details={
+                                "error_type": type(exc.__cause__ or exc).__name__,
+                                "message": str(exc.__cause__ or exc)[:2000],
+                            },
+                        )
+                    except Exception as persist_exc:
+                        logger.error(
+                            "Could not persist finalize storage-failure marker: %s",
+                            persist_exc,
+                        )
+                    finally:
+                        store.release_finalize_provider_lease(attempt_id)
+                    try:
+                        current_consultation = commit_finalize_decision(
+                            current_consultation,
+                            {
+                                "transition": "response_persistence_failure",
+                                "attempt_id": attempt_id,
+                            },
+                        )
+                    except Exception as commit_exc:
+                        logger.error(
+                            "Could not commit finalize response-persistence failure: %s",
+                            commit_exc,
+                        )
+                    return terminal_update(
+                        error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                        error_owner="controller_storage",
+                        detail=(
+                            "Finalize provider returned successfully, but its exact protected "
+                            "response could not be committed. The provider will not be invoked again."
+                        ),
+                        provider_block=False,
+                    )
+                provider_failure = _classify_finalize_provider_exception(
+                    exc,
+                    idempotency_supported=bool(
+                        settings.get("idempotency_supported")
+                    ),
+                )
+                provider_status = str(provider_failure["provider_status"])
+                error_code = str(provider_failure["error_code"])
+                error_owner = str(provider_failure["error_owner"])
+                retry_safe = bool(provider_failure["retry_safe"])
+                try:
+                    store.record_finalize_attempt_failure(
+                        attempt_id=attempt_id,
+                        call_id=call_id,
+                        canonical_request_hash=canonical_request_hash,
+                        provider_status=provider_status,
+                        error_code=error_code,
+                        error_owner=error_owner,
+                        error_details={
+                            "error_type": type(exc).__name__,
+                            "message": str(exc)[:2000],
+                        },
+                        retry_safe=retry_safe,
+                    )
+                except Exception as persist_exc:
+                    logger.error("Could not persist finalize provider failure: %s", persist_exc)
+                finally:
+                    store.release_finalize_provider_lease(attempt_id)
+                try:
+                    current_consultation = commit_finalize_decision(
+                        current_consultation,
+                        {
+                            "transition": "provider_failure",
+                            "attempt_id": attempt_id,
+                            "provider_status": provider_status,
+                            "error_code": error_code,
+                            "error_owner": error_owner,
+                            "retry_safe": retry_safe,
+                        },
+                    )
+                except Exception as commit_exc:
+                    logger.error("Could not commit finalize provider failure: %s", commit_exc)
+                if retry_safe:
+                    current_consultation.update({
+                        "phase": "finalize",
+                        "consultation_status": "ready",
+                        "completion_decision": "ready_to_finalize",
+                        "completion_reason": "safe_transport_retry_pending",
+                    })
+                    return {
+                        "messages": [SystemMessage(content=(
+                            "<consultant_finalize_provider_retry>\n"
+                            + json.dumps({
+                                "error_code": error_code,
+                                "error_owner": error_owner,
+                                "provider_status": provider_status,
+                                "retry_safe": True,
+                                "canonical_request_hash": canonical_request_hash,
+                            }, ensure_ascii=False, sort_keys=True)
+                            + "\n</consultant_finalize_provider_retry>"
+                        ))],
+                        "input_audit": deepcopy(dict(input_audit or {})),
+                        "task_spec": current_task_spec,
+                        "task_revision": task_spec_revision(current_task_spec),
+                        "consultation_state": current_consultation,
+                        "consultant_contract_repair": finalize_repair_projection(
+                            current_consultation
+                        ),
+                        "pending_human_question": {},
+                        "contract_status": "semantic_schema_retry",
+                        "next_step": "consultant",
+                    }
+                return terminal_update(
+                    error_code=error_code,
+                    error_owner=error_owner,
+                    detail=f"Finalize provider call failed: {type(exc).__name__}: {exc}",
+                    provider_block=True,
+                )
+            completion_integrity = str(
+                provider_result.get("completion_integrity") or "complete"
+            )
+            if completion_integrity != "complete":
+                partial = dict(provider_result.get("partial_artifact") or {})
+                finish_reason = str(
+                    provider_result.get("finish_reason") or "unknown"
+                )
+                error_code = (
+                    "FINALIZE_RESPONSE_TRUNCATED"
+                    if completion_integrity == "truncated"
+                    else "FINALIZE_RESPONSE_CONTENT_FILTERED"
+                    if completion_integrity == "content_filtered"
+                    else "FINALIZE_PROVIDER_RESOURCE_UNKNOWN"
+                )
+                try:
+                    current_consultation = commit_finalize_decision(
+                        current_consultation,
+                        {
+                            "transition": "provider_partial_response",
+                            "attempt_id": attempt_id,
+                            "completion_integrity": completion_integrity,
+                            "finish_reason": finish_reason,
+                            "usage": deepcopy(
+                                dict(provider_result.get("usage") or {})
+                            ),
+                            "partial_response_artifact_ref": str(
+                                partial.get("partial_response_artifact_ref") or ""
+                            ),
+                            "partial_response_artifact_hash": str(
+                                partial.get("partial_response_artifact_hash") or ""
+                            ),
+                        },
+                    )
+                except Exception as commit_exc:
+                    return terminal_update(
+                        error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                        error_owner="controller_storage",
+                        detail=(
+                            "Partial FINALIZE response was durable but its graph transition failed: "
+                            f"{type(commit_exc).__name__}: {commit_exc}"
+                        ),
+                    )
+                return terminal_update(
+                    error_code=error_code,
+                    error_owner="controller_model_protocol",
+                    detail=(
+                        f"Provider delivered a non-committable FINALIZE response "
+                        f"(finish_reason={finish_reason}, completion_integrity={completion_integrity}). "
+                        "The protected partial artifact was retained and was not parsed or retried."
+                    ),
+                    provider_block=False,
+                )
+            raw_response = str(provider_result.get("raw_response") or "")
+            structured_object = provider_result.get("structured_object")
+            response_artifact = dict(provider_result.get("artifact") or {})
+            response_reused = False
+        else:
+            raw_response = str(replay_artifact.get("raw_response") or "")
+            structured_object = replay_artifact.get("structured_object")
+            response_artifact = dict(replay_artifact)
+            response_reused = True
+
+        def persist_protocol_outcome_once(
+            *,
+            protocol_status: str,
+            error_code: str = "",
+            error_owner: str = "",
+            validation_summary: Optional[Mapping[str, Any]] = None,
+        ) -> Dict[str, Any]:
+            existing_ref = str(response_artifact.get("protocol_outcome_ref") or "")
+            if response_reused and existing_ref:
+                existing_status = str(response_artifact.get("protocol_status") or "")
+                existing_code = str(response_artifact.get("error_code") or "")
+                existing_owner = str(response_artifact.get("error_owner") or "")
+                if (
+                    existing_status != protocol_status
+                    or existing_code != str(error_code or "")
+                    or existing_owner != str(error_owner or "")
+                ):
+                    raise SnapshotConflictError(
+                        "Replayed protected response has a conflicting durable protocol outcome"
+                    )
+                return response_artifact
+            return record_finalize_protocol_outcome(
+                store,
+                attempt_id=attempt_id,
+                call_id=call_id,
+                canonical_request_hash=canonical_request_hash,
+                protocol_status=protocol_status,
+                error_code=error_code,
+                error_owner=error_owner,
+                validation_summary=validation_summary,
+            )
+
+        diagnostic = store.finalize_diagnostic_projection({
+            **response_artifact,
+            "raw_response": raw_response,
+        })
+        graph_attempt = next(
+            (
+                item for item in protocol().get("attempts", []) or []
+                if str((item or {}).get("attempt_id") or "") == attempt_id
+            ),
+            None,
+        )
+        if not isinstance(graph_attempt, Mapping) or not str(graph_attempt.get("response_artifact_ref") or ""):
+            try:
+                current_consultation = commit_finalize_decision(
+                    current_consultation,
+                    {
+                        "transition": "provider_response",
+                        "attempt_id": attempt_id,
+                        "call_id": call_id,
+                        "canonical_request_hash": canonical_request_hash,
+                        "response_artifact_ref": str(response_artifact.get("response_artifact_ref") or ""),
+                        "response_content_hash": str(response_artifact.get("response_content_hash") or ""),
+                        "response_excerpt": diagnostic.get("response_excerpt") or "",
+                        "response_excerpt_truncated": bool(diagnostic.get("response_excerpt_truncated")),
+                    },
+                )
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                    error_owner="controller_storage",
+                    detail=f"Protected response pointer commit failed: {type(exc).__name__}: {exc}",
+                )
+        if str(protocol().get("status") or "") in {
+            "blocked_internal_contract", "blocked_internal_provider"
+        }:
+            error_code = str(protocol().get("terminal_error_code") or "FINALIZE_IDENTICAL_RESPONSE_LOOP")
+            error_owner = str(protocol().get("terminal_owner") or "controller_model_protocol")
+            try:
+                persist_protocol_outcome_once(
+                    protocol_status="blocked",
+                    error_code=error_code,
+                    error_owner=error_owner,
+                    validation_summary={"identical_response_detected": True},
+                )
+            except Exception as exc:
+                logger.warning("Could not record identical-response outcome: %s", exc)
+            return terminal_update(
+                error_code=error_code,
+                error_owner=error_owner,
+                detail="A repair returned a response content hash already seen in this context.",
+            )
+
+        if message_kind == "field_repair":
+            immutable_base = deepcopy(dict(repair.get("base_payload") or {}))
+            patch_result = validate_field_patch(
+                (
+                    structured_object
+                    if isinstance(structured_object, Mapping)
+                    else raw_response
+                ),
+                finalize_context=finalize_context,
+                base_payload=immutable_base,
+                allowed_fields_by_index=repair.get("allowed_fields_by_index") or {},
+                allowed_payload_fields=repair.get("allowed_payload_fields") or [],
+                validation_errors=repair.get("validation_errors") or [],
+            )
+            if patch_result.get("valid"):
+                repaired_payload = deepcopy(dict(patch_result.get("payload") or {}))
+                repaired_wire = json.dumps(
+                    repaired_payload,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    default=str,
+                )
+                result = parse_finalize_response(
+                    repaired_wire,
+                    finalize_context=finalize_context,
+                    allow_compatibility=False,
+                    provider_status="succeeded",
+                )
+                # Loop identity and observability always bind to the exact
+                # provider response, not the controller-rendered merged payload.
+                result["response_content_hash"] = str(
+                    response_artifact.get("response_content_hash") or ""
+                )
+                result["raw_response"] = raw_response
+                if not result.get("valid"):
+                    result["parsed_payload"] = repaired_payload
+            else:
+                result = dict(patch_result)
+                result["response_content_hash"] = str(
+                    response_artifact.get("response_content_hash") or ""
+                )
+                result["raw_response"] = raw_response
+                # A rejected patch is atomic. The next attempt is bound to the
+                # unchanged base, never to the invalid repair envelope.
+                result["parsed_payload"] = immutable_base
+        else:
+            result = parse_finalize_response(
+                raw_response,
+                finalize_context=finalize_context,
+                structured_object=(
+                    structured_object if isinstance(structured_object, Mapping) else None
+                ),
+                allow_compatibility=historical_legacy_migration,
+                provider_status="succeeded",
+            )
+            result["response_content_hash"] = str(
+                response_artifact.get("response_content_hash") or ""
+            )
+
+        current_attempts = [
+            dict(item)
+            for item in protocol().get("attempts", []) or []
+            if isinstance(item, Mapping)
+        ]
+        previous_response_hashes = [
+            str(item.get("response_content_hash") or "")
+            for item in current_attempts
+            if str(item.get("attempt_id") or "") != attempt_id
+            and str(item.get("response_content_hash") or "")
+        ]
+        active_repair = dict(protocol().get("repair") or {})
+        decision = propose_finalize_decision(
+            result,
+            call_kind=message_kind,
+            wire_repair_attempt=int(active_repair.get("wire_repair_attempt") or 0),
+            max_wire_repair_attempts=int(active_repair.get("max_wire_repair_attempts") or 2),
+            field_repair_attempt=int(active_repair.get("field_repair_attempt") or 0),
+            max_field_repair_attempts=int(active_repair.get("max_field_repair_attempts") or 2),
+            previous_response_hashes=previous_response_hashes,
+            provider_retry_attempt=(1 if transport_retry else 0),
+            response_artifact_exists=True,
+        )
+
+        # A pre-existing, controller-validated ambiguity remains authoritative
+        # even if the model incorrectly returns finish instead of ask.
+        if (
+            str(decision.get("decision") or "") == "compile"
+            and list(context_value.get("unresolved_semantics") or [])
+        ):
+            ambiguity = deepcopy(dict(context_value["unresolved_semantics"][0]))
+            decision = {
+                "decision": "needs_user",
+                "next_step": "ask_user",
+                "finalize_status": "needs_user",
+                "protocol_status": "needs_user",
+                "error_code": "FINALIZE_SEMANTIC_AMBIGUITY",
+                "error_owner": "user_semantic",
+                "clear_pending_human_question": False,
+                "ambiguity": ambiguity,
+                "deterministic_question_required": True,
+                "repair_kind": "none",
+            }
+
+        validation_errors = [
+            deepcopy(dict(item))
+            for item in result.get("errors", []) or []
+            if isinstance(item, Mapping)
+        ]
+        for error in validation_errors:
+            try:
+                error["index"] = int(error.get("index", -1))
+            except (TypeError, ValueError):
+                error["index"] = -1
+            if not str(error.get("field") or "").strip():
+                path = str(error.get("path") or "")
+                if path.startswith("$."):
+                    error["field"] = (
+                        path[2:].split("[", 1)[0].split(".", 1)[0].strip()
+                    )
+        preserve_permissions = bool(
+            message_kind == "field_repair"
+            and str(result.get("error_code") or "") == "FINALIZE_PATCH_PROTOCOL_INVALID"
+        )
+        allowed_by_index, allowed_payload, errors_by_field = (
+            self._consultant_finalize_patch_permissions(
+                validation_errors,
+                previous_allowed_fields_by_index=active_repair.get("allowed_fields_by_index") or {},
+                previous_allowed_payload_fields=active_repair.get("allowed_payload_fields") or [],
+                preserve_previous=preserve_permissions,
+            )
+        )
+        parsed_base = result.get("parsed_payload")
+        if preserve_permissions:
+            parsed_base = deepcopy(dict(active_repair.get("base_payload") or {}))
+
+        decision_name = str(decision.get("decision") or "")
+        if decision_name == "compile":
+            payload = deepcopy(dict(decision.get("payload") or result.get("payload") or {}))
+            deterministic_base = [
+                deepcopy(dict(item))
+                for item in context_value.get("deterministic_base_constraints", []) or []
+                if isinstance(item, Mapping)
+            ]
+            semantic_delta = [
+                deepcopy(dict(item))
+                for item in payload.get("semantic_constraints", []) or []
+                if isinstance(item, Mapping)
+            ]
+            semantic_metrics = {
+                "schema_validation": "passed",
+                "deterministic_base_constraint_count": len(deterministic_base),
+                "consultant_semantic_delta_count": len(semantic_delta),
+                "provider_status": "succeeded",
+                "protocol_status": "valid",
+                "response_reused_from_checkpoint": response_reused,
+            }
+            coverage_internal_exception = False
+            try:
+                compiled_task_spec = apply_task_spec_mutation_proposal(
+                    current_task_spec,
+                    constraint_mutation_proposal(
+                        [*deterministic_base, *semantic_delta]
+                    ),
+                    project_root=project_root,
+                )
+                selected_constraints = semantic_constraints_from_task_spec(
+                    compiled_task_spec,
+                    selected_skill_ids=resolved_selected_skill_ids,
+                )
+                compiled_task_spec = merge_compiled_constraints(
+                    compiled_task_spec,
+                    selected_constraints,
+                    project_root=project_root,
+                    metrics=semantic_metrics,
+                )
+                final_constraints = semantic_constraints_from_task_spec(
+                    compiled_task_spec,
+                    selected_skill_ids=resolved_selected_skill_ids,
+                )
+                coverage = finalize_coverage_audit(
+                    finalize_context,
+                    {
+                        "selected_skills": list(resolved_selected_skill_ids),
+                        "semantic_constraints": final_constraints,
+                    },
+                )
+            except Exception as exc:
+                coverage_internal_exception = True
+                coverage = {
+                    "valid": False,
+                    "errors": [{
+                        "path": "$",
+                        "reason": f"controller merge failed: {type(exc).__name__}: {exc}",
+                    }],
+                }
+                compiled_task_spec = current_task_spec
+                final_constraints = []
+            if not coverage.get("valid"):
+                audit_errors = [
+                    deepcopy(dict(item))
+                    for item in coverage.get("errors", []) or []
+                    if isinstance(item, Mapping)
+                ]
+                if coverage_internal_exception:
+                    return terminal_update(
+                        error_code="FINALIZE_REPAIR_EXHAUSTED",
+                        error_owner="controller",
+                        detail="Controller merge failed before coverage could be evaluated.",
+                    )
+                for error in audit_errors:
+                    try:
+                        error["index"] = int(error.get("index", -1))
+                    except (TypeError, ValueError):
+                        error["index"] = -1
+                    if not str(error.get("field") or "").strip():
+                        path = str(error.get("path") or "")
+                        if path.startswith("$."):
+                            error["field"] = (
+                                path[2:].split("[", 1)[0].split(".", 1)[0].strip()
+                            )
+                (
+                    coverage_allowed_by_index,
+                    coverage_allowed_payload,
+                    coverage_errors_by_field,
+                ) = self._consultant_finalize_patch_permissions(audit_errors)
+                if not coverage_allowed_by_index and not coverage_allowed_payload:
+                    return terminal_update(
+                        error_code="FINALIZE_REPAIR_EXHAUSTED",
+                        error_owner="controller",
+                        detail="Coverage audit failed without a model-owned patchable field.",
+                    )
+                try:
+                    persist_protocol_outcome_once(
+                        protocol_status="field_invalid",
+                        error_code="FINALIZE_SCHEMA_INVALID",
+                        error_owner="controller_model_protocol",
+                        validation_summary={
+                            "coverage_audit": coverage,
+                            "response_reused_from_checkpoint": response_reused,
+                        },
+                    )
+                    current_consultation = commit_finalize_decision(
+                        current_consultation,
+                        {
+                            "transition": "protocol_validation",
+                            "attempt_id": attempt_id,
+                            "protocol_status": "field_invalid",
+                            "error_code": "FINALIZE_SCHEMA_INVALID",
+                            "error_owner": "controller_model_protocol",
+                            "validation_errors": audit_errors,
+                            "errors_by_field": coverage_errors_by_field,
+                            "allowed_fields_by_index": coverage_allowed_by_index,
+                            "allowed_payload_fields": coverage_allowed_payload,
+                            "parsed_payload": payload,
+                            "payload_hash": finalize_payload_hash(payload),
+                        },
+                    )
+                except Exception as exc:
+                    return terminal_update(
+                        error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                        error_owner="controller_storage",
+                        detail=f"Could not commit finalize coverage repair: {type(exc).__name__}: {exc}",
+                    )
+                current_consultation.update({
+                    "phase": "finalize",
+                    "consultation_status": "ready",
+                    "completion_decision": "ready_to_finalize",
+                    "completion_reason": "field_invalid_repair_pending",
+                    "resolved_selected_skill_ids": list(resolved_selected_skill_ids),
+                })
+                return {
+                    "messages": [SystemMessage(content=(
+                        "<consultant_finalize_protocol_error>\n"
+                        + json.dumps({
+                            "error_code": "FINALIZE_SCHEMA_INVALID",
+                            "error_owner": "controller_model_protocol",
+                            "protocol_status": "field_invalid",
+                            "repair_kind": "field_patch",
+                            "coverage_audit_failed": True,
+                            "response_artifact_ref": str(response_artifact.get("response_artifact_ref") or ""),
+                            "response_content_hash": str(response_artifact.get("response_content_hash") or ""),
+                        }, ensure_ascii=False, sort_keys=True)
+                        + "\n</consultant_finalize_protocol_error>"
+                    ))],
+                    "input_audit": deepcopy(dict(input_audit or {})),
+                    "task_spec": current_task_spec,
+                    "task_revision": task_spec_revision(current_task_spec),
+                    "consultation_state": current_consultation,
+                    "consultant_contract_repair": finalize_repair_projection(current_consultation),
+                    "pending_human_question": {},
+                    "consultant_constraint_metrics": {
+                        **semantic_metrics,
+                        "schema_validation": "failed",
+                        "protocol_status": "field_invalid",
+                        "error_code": "FINALIZE_SCHEMA_INVALID",
+                        "coverage_audit": coverage,
+                    },
+                    "contract_status": "semantic_schema_retry",
+                    "next_step": "consultant",
+                }
+
+            try:
+                runtime_audits, runtime_summary = self._consultant_runtime_preflight(
+                    list(resolved_selected_skill_ids),
+                    task_id,
+                )
+                summary = str(payload.get("summary") or "").strip()
+                if runtime_summary:
+                    summary = (summary.rstrip() + "\n\n" + runtime_summary).strip()
+                final_contract = {
+                    "intent": str(compiled_task_spec.get("goal") or ""),
+                    "selected_skills": list(resolved_selected_skill_ids),
+                    "summary": summary,
+                    "constraints": final_constraints,
+                    "verified_evidence": [
+                        deepcopy(dict(item))
+                        for item in (current_consultation.get("requirements") or {}).values()
+                        if isinstance(item, Mapping) and item.get("status") == "satisfied"
+                    ],
+                    "remaining_uncertainty": [],
+                    "required_capabilities": list(resolved_selected_skill_ids),
+                    "input_status": str(input_audit.get("status") or "not_applicable"),
+                    "runtime_status": runtime_audits,
+                    "semantic_constraint_count": len(final_constraints),
+                    "task_spec_revision": task_spec_revision(compiled_task_spec),
+                    "finalize_context_id": context_id,
+                    "base_contract_hash": base_contract_hash,
+                    "canonical_request_hash": canonical_request_hash,
+                    "response_content_hash": str(response_artifact.get("response_content_hash") or ""),
+                    "response_artifact_ref": str(response_artifact.get("response_artifact_ref") or ""),
+                    "response_reused_from_checkpoint": response_reused,
+                    "coverage_audit": coverage,
+                }
+                compiled_contract_hash = canonical_compiled_contract_hash(
+                    final_contract
+                )
+                final_contract["compiled_contract_hash"] = compiled_contract_hash
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_REPAIR_EXHAUSTED",
+                    error_owner="controller",
+                    detail=(
+                        "Compiled final-contract construction failed before durable commit: "
+                        f"{type(exc).__name__}: {exc}"
+                    ),
+                )
+
+            try:
+                persist_protocol_outcome_once(
+                    protocol_status="valid",
+                    validation_summary={
+                        "coverage_audit": coverage,
+                        "constraint_count": len(final_constraints),
+                        "compiled_contract_hash": compiled_contract_hash,
+                        "response_reused_from_checkpoint": response_reused,
+                    },
+                )
+                current_consultation = commit_finalize_decision(
+                    current_consultation,
+                    {
+                        "transition": "protocol_validation",
+                        "attempt_id": attempt_id,
+                        "protocol_status": "valid",
+                        "error_code": "",
+                        "error_owner": "",
+                        "validation_errors": [],
+                        "errors_by_field": {},
+                        "allowed_fields_by_index": {},
+                        "allowed_payload_fields": [],
+                        "parsed_payload": payload,
+                        "payload_hash": finalize_payload_hash(payload),
+                    },
+                )
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                    error_owner="controller_storage",
+                    detail=f"Finalize success commit failed: {type(exc).__name__}: {exc}",
+                )
+            try:
+                current_consultation = commit_finalize_decision(
+                    current_consultation,
+                    {
+                        "transition": "compiled",
+                        "finalize_context_id": context_id,
+                        "base_contract_hash": base_contract_hash,
+                    },
+                )
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_REPAIR_EXHAUSTED",
+                    error_owner="controller",
+                    detail=f"Compiled finalize transition failed: {type(exc).__name__}: {exc}",
+                )
+            current_consultation.update({
+                "phase": "finalize",
+                "consultation_status": "completed",
+                "completion_decision": "ready_to_finalize",
+                "completion_reason": "formal_contract_compiled_v2",
+                "resolved_selected_skill_ids": list(resolved_selected_skill_ids),
+                "final_contract": final_contract,
+            })
+            output.print_once(
+                f"consultant_finalize_v2:{task_id}",
+                "✓ Consultant FINALIZE v2 compiled a hash-bound semantic contract.",
+                Fore.GREEN,
+            )
+            return {
+                "messages": [AIMessage(content="FINISH\n" + summary)],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "selected_skills": list(resolved_selected_skill_ids),
+                "selected_skills_raw": list(resolved_selected_skill_ids),
+                "active_skills": list(resolved_selected_skill_ids),
+                "future_skills": [],
+                "required_skills_all": list(resolved_selected_skill_ids),
+                "candidate_skills": [],
+                "runtime_status": self._runtime_status_for_task(
+                    task_id,
+                    list(resolved_selected_skill_ids),
+                ),
+                "runtime_audit": runtime_audits,
+                "skill_selection_source": "consultation_controller_finalize_v2",
+                "requirements_summary": summary,
+                "task_spec": compiled_task_spec,
+                "task_revision": task_spec_revision(compiled_task_spec),
+                "consultant_constraint_metrics": semantic_metrics,
+                "consultation_state": current_consultation,
+                "consultant_contract_repair": finalize_repair_projection(current_consultation),
+                "pending_human_question": {},
+                "contract_status": "semantic_contract_compiled",
+                "memory_packet_context": self._consultant_handoff_memory_packet(
+                    summary,
+                    consultant_memory_retrieval_context,
+                ),
+                "wiki_memory_context": consultant_wiki_context,
+                "next_step": "planner",
+            }
+
+        if decision_name in {"needs_user", "register_ambiguity"}:
+            ambiguity = decision.get("ambiguity")
+            if not isinstance(ambiguity, Mapping):
+                return terminal_update(
+                    error_code="FINALIZE_UNAUTHORIZED_ASK",
+                    error_owner="controller_model_protocol",
+                    detail="User routing was proposed without one validated ambiguity record.",
+                )
+            ambiguity_record = deepcopy(dict(ambiguity))
+            ambiguity_id = str(
+                ambiguity_record.get("constraint_id")
+                or ambiguity_record.get("requirement_id")
+                or ""
+            ).strip()
+            question = self._consultant_finalize_ambiguity_question(ambiguity_record)
+            pending_question = {
+                "type": "semantic_constraint_clarification_v2",
+                "stage": "consultant",
+                "question": question,
+                "ambiguity_id": ambiguity_id,
+                "finalize_context_id": context_id,
+                "base_contract_hash": base_contract_hash,
+                "task_spec_revision": task_spec_revision(current_task_spec),
+                "resume_step": "consultant",
+            }
+            try:
+                persist_protocol_outcome_once(
+                    protocol_status="needs_user",
+                    error_code="FINALIZE_SEMANTIC_AMBIGUITY",
+                    error_owner="user_semantic",
+                    validation_summary={
+                        "ambiguity_id": ambiguity_id,
+                        "response_reused_from_checkpoint": response_reused,
+                    },
+                )
+                current_consultation = commit_finalize_decision(
+                    current_consultation,
+                    {
+                        "transition": "protocol_validation",
+                        "attempt_id": attempt_id,
+                        "protocol_status": "needs_user",
+                        "error_code": "FINALIZE_SEMANTIC_AMBIGUITY",
+                        "error_owner": "user_semantic",
+                        "validation_errors": [],
+                        "errors_by_field": {},
+                        "allowed_fields_by_index": {},
+                        "allowed_payload_fields": [],
+                        "parsed_payload": (
+                            deepcopy(dict(result.get("parsed_payload")))
+                            if isinstance(result.get("parsed_payload"), Mapping)
+                            else None
+                        ),
+                    },
+                )
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                    error_owner="controller_storage",
+                    detail=f"Ambiguity outcome commit failed: {type(exc).__name__}: {exc}",
+                )
+
+            updated_task_spec = current_task_spec
+            try:
+                if decision_name == "register_ambiguity":
+                    updated_task_spec = register_validated_semantic_ambiguity(
+                        current_task_spec,
+                        ambiguity_record,
+                        provenance_catalog=context_value.get("semantic_provenance_catalog") or [],
+                    )
+                    ambiguity_id = str(
+                        ambiguity_record.get("constraint_id")
+                        or ambiguity_record.get("requirement_id")
+                        or ambiguity_id
+                    ).strip()
+                    pending_question["ambiguity_id"] = ambiguity_id
+                    pending_question["task_spec_revision"] = task_spec_revision(
+                        updated_task_spec
+                    )
+                    current_consultation = commit_finalize_decision(
+                        current_consultation,
+                        {
+                            "transition": "supersede",
+                            "task_spec_revision": task_spec_revision(updated_task_spec),
+                            "ambiguity_id": ambiguity_id,
+                            "pending_human_question": pending_question,
+                        },
+                    )
+                else:
+                    current_consultation = commit_finalize_decision(
+                        current_consultation,
+                        {
+                            "transition": "needs_user",
+                            "ambiguity_id": ambiguity_id,
+                            "ambiguity_ids": [ambiguity_id],
+                            "context_unresolved_semantic_ids": list(
+                                context_value.get("unresolved_semantic_ids") or []
+                            ),
+                            "pending_human_question": pending_question,
+                        },
+                    )
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_UNAUTHORIZED_ASK",
+                    error_owner="controller_model_protocol",
+                    detail=f"Validated ambiguity transition failed: {type(exc).__name__}: {exc}",
+                )
+            current_consultation.update({
+                "phase": "needs_user",
+                "consultation_status": "needs_user",
+                "completion_decision": "needs_user",
+                "completion_reason": "validated_semantic_ambiguity",
+            })
+            return {
+                "messages": [SystemMessage(content=(
+                    "<consultant_semantic_resolution_request>\n"
+                    + json.dumps({
+                        "ambiguity_id": ambiguity_id,
+                        "semantic_key": ambiguity_record.get("semantic_key"),
+                        "unresolved_reason": ambiguity_record.get("unresolved_reason"),
+                    }, ensure_ascii=False, sort_keys=True)
+                    + "\n</consultant_semantic_resolution_request>"
+                ))],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "task_spec": updated_task_spec,
+                "task_revision": task_spec_revision(updated_task_spec),
+                "consultation_state": current_consultation,
+                "consultant_contract_repair": finalize_repair_projection(current_consultation),
+                "pending_human_question": pending_question,
+                "consultant_constraint_metrics": {
+                    "schema_validation": "passed",
+                    "error_code": "FINALIZE_SEMANTIC_AMBIGUITY",
+                    "error_owner": "user_semantic",
+                    "response_reused_from_checkpoint": response_reused,
+                },
+                "contract_status": "blocked_need_user_decision",
+                "next_step": "ask_user",
+            }
+
+        if decision_name in {"wire_repair", "field_patch", "block_internal"}:
+            protocol_status = (
+                "wire_invalid"
+                if decision_name == "wire_repair"
+                else "field_invalid"
+                if decision_name == "field_patch"
+                else "blocked"
+            )
+            error_code = str(
+                decision.get("error_code")
+                or result.get("error_code")
+                or "FINALIZE_REPAIR_EXHAUSTED"
+            )
+            error_owner = str(
+                decision.get("error_owner")
+                or result.get("error_owner")
+                or "controller_model_protocol"
+            )
+            validation_transition: Dict[str, Any] = {
+                "transition": "protocol_validation",
+                "attempt_id": attempt_id,
+                "protocol_status": protocol_status,
+                "error_code": error_code,
+                "error_owner": error_owner,
+                "validation_errors": validation_errors,
+                "errors_by_field": errors_by_field,
+                "allowed_fields_by_index": allowed_by_index,
+                "allowed_payload_fields": allowed_payload,
+            }
+            if preserve_permissions:
+                validation_transition.update({
+                    "preserve_patch_targets": True,
+                    "patch_protocol_errors": validation_errors,
+                })
+            if isinstance(parsed_base, Mapping):
+                validation_transition["parsed_payload"] = deepcopy(dict(parsed_base))
+                validation_transition["payload_hash"] = finalize_payload_hash(parsed_base)
+            try:
+                persist_protocol_outcome_once(
+                    protocol_status=protocol_status,
+                    error_code=error_code,
+                    error_owner=error_owner,
+                    validation_summary={
+                        "errors": validation_errors,
+                        "errors_by_field": errors_by_field,
+                        "response_reused_from_checkpoint": response_reused,
+                    },
+                )
+                current_consultation = commit_finalize_decision(
+                    current_consultation,
+                    validation_transition,
+                )
+            except Exception as exc:
+                return terminal_update(
+                    error_code="FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                    error_owner="controller_storage",
+                    detail=f"Finalize protocol outcome commit failed: {type(exc).__name__}: {exc}",
+                )
+            if decision_name == "block_internal":
+                return terminal_update(
+                    error_code=error_code,
+                    error_owner=error_owner,
+                    detail="Finalize repair budget or typed loop guard reached a terminal state.",
+                    provider_block=error_owner in {"provider", "controller_provider"},
+                )
+            current_consultation.update({
+                "phase": "finalize",
+                "consultation_status": "ready",
+                "completion_decision": "ready_to_finalize",
+                "completion_reason": f"{protocol_status}_repair_pending",
+                "resolved_selected_skill_ids": list(resolved_selected_skill_ids),
+            })
+            feedback = {
+                "error_code": error_code,
+                "error_owner": error_owner,
+                "protocol_status": protocol_status,
+                "repair_kind": str(protocol().get("repair", {}).get("repair_kind") or "none"),
+                "wire_repair_attempt": int(protocol().get("repair", {}).get("wire_repair_attempt") or 0),
+                "field_repair_attempt": int(protocol().get("repair", {}).get("field_repair_attempt") or 0),
+                "response_artifact_ref": str(response_artifact.get("response_artifact_ref") or ""),
+                "response_content_hash": str(response_artifact.get("response_content_hash") or ""),
+            }
+            return {
+                "messages": [SystemMessage(content=(
+                    "<consultant_finalize_protocol_error>\n"
+                    + json.dumps(feedback, ensure_ascii=False, sort_keys=True)
+                    + "\n</consultant_finalize_protocol_error>"
+                ))],
+                "input_audit": deepcopy(dict(input_audit or {})),
+                "task_spec": current_task_spec,
+                "task_revision": task_spec_revision(current_task_spec),
+                "consultation_state": current_consultation,
+                "consultant_contract_repair": finalize_repair_projection(current_consultation),
+                "pending_human_question": {},
+                "consultant_constraint_metrics": {
+                    "schema_validation": "failed",
+                    "provider_status": "succeeded",
+                    "protocol_status": protocol_status,
+                    "error_code": error_code,
+                    "error_owner": error_owner,
+                    "response_reused_from_checkpoint": response_reused,
+                },
+                "contract_status": "semantic_schema_retry",
+                "next_step": "consultant",
+            }
+
+        return terminal_update(
+            error_code="FINALIZE_REPAIR_EXHAUSTED",
+            error_owner="controller",
+            detail=f"Unsupported finalize controller decision: {decision_name or 'empty'}.",
+        )
+
     # ────────────────────────────────────────────────────────────
     #  图构建
     # ────────────────────────────────────────────────────────────
@@ -10090,16 +18234,6 @@ class BioAnalystAgent:
             output.print_node_header("triage")
             messages = state.get("messages", [])
             task_id = state.get("task_id", "default")
-            task_spec = self._task_spec_for_state(dict(state), messages)
-            routing_context = format_effective_user_facts_context(
-                task_spec,
-                audience="triage",
-                max_chars=3000,
-            )
-            user_text = "\n\n".join(
-                part for part in [str(task_spec.get("goal") or "").strip(), routing_context]
-                if part
-            )
 
             resume_node = str(state.get("resolved_resume_node") or "").strip()
             if str(state.get("resume_mode") or "") == "business_state" and resume_node:
@@ -10117,6 +18251,17 @@ class BioAnalystAgent:
                     "next_step": resume_node,
                 }
 
+            conversation_turns, _ = self._consultant_semantic_conversation(
+                task_id,
+                messages,
+            )
+            user_text = "\n\n".join(
+                str(turn.get("content") or "").strip()
+                for turn in conversation_turns
+                if str(turn.get("role") or "") == "user"
+                and str(turn.get("content") or "").strip()
+            )
+
             decision = await classify_task_mode(self.llm,
                 user_text,
                 data_path=self.data_path,
@@ -10128,22 +18273,26 @@ class BioAnalystAgent:
                     "user_source_refs": list(state.get("user_source_refs") or []),
                 },
             )
-            mode = str(decision.get("task_mode") or "managed").strip().lower()
+            classified_mode = str(
+                decision.get("task_mode") or "managed"
+            ).strip().lower()
+            # Phase 1 correctness rule: any non-chat natural-language request
+            # requires Consultant semantic interpretation and a committed
+            # canonical execution contract before downstream execution nodes.
+            mode = "chat" if classified_mode == "chat" else "managed"
             retrieval_mode = str(decision.get("retrieval_mode") or "kb").strip().lower()
-            if mode not in {"chat", "readonly", "simple_execute", "managed"}:
+            if mode == "managed":
+                retrieval_mode = "kb"
+            if mode not in {"chat", "managed"}:
                 mode = "managed"
                 retrieval_mode = "kb"
 
             validation_by_mode = {
                 "chat": "none",
-                "readonly": "none",
-                "simple_execute": "basic",
                 "managed": "scientific",
             }
             next_by_mode = {
                 "chat": "direct_chat",
-                "readonly": "generate",
-                "simple_execute": "generate",
                 "managed": "consultant",
             }
             update = {
@@ -10158,16 +18307,11 @@ class BioAnalystAgent:
                 update["context_lineage_ref"] = str(
                     Path(self.data_path) / "task_outputs" / task_id / "context_trace"
                 )
-            if mode in {"readonly", "simple_execute"}:
-                update["current_plan"] = (
-                    f"Lightweight {mode} task. Satisfy the user request with one minimal command, "
-                    "then stop. Do not plan a workflow.\n\n"
-                    f"User request:\n{user_text}"
-                )
             output.print_once(
                 f"triage:{task_id}",
                 (
-                    f"↪ Fast router: {mode}"
+                    f"↪ Router: {mode}"
+                    f" | classified={classified_mode}"
                     f" | retrieval={retrieval_mode}"
                     f" | confidence={decision.get('confidence', 0):.2f}"
                     f" | {decision.get('reason', '')}"
@@ -10267,16 +18411,399 @@ If the user is actually asking you to run analysis or inspect local files, say t
             output.print_node_header("consultant")
             messages = state["messages"]
             rag_history = state.get("rag_history", [])
+            task_id = state.get("task_id", "default")
+
+            def commit_candidate_update(
+                update: Mapping[str, Any],
+            ) -> Dict[str, Any]:
+                return self._commit_consultant_update(task_id, update)
+
             task_spec = self._task_spec_for_state(dict(state), messages)
-            later_directives = [
-                str(item.get("text") or "").strip()
-                for item in task_spec.get("user_directives", [])
-                if isinstance(item, dict)
-                and str(item.get("kind") or "") != "initial_request"
-                and str(item.get("text") or "").strip()
+            if not task_spec_is_initialized(task_spec):
+                stale_consultation = dict(state.get("consultation_state") or {})
+                if (
+                    state.get("consultant_contract_repair")
+                    or isinstance(stale_consultation.get("finalize_protocol"), Mapping)
+                    or str(stale_consultation.get("phase") or "") in {
+                        "finalize", "ready_to_finalize", "ready_to_plan",
+                    }
+                ):
+                    # A legacy semantic-empty TaskSpec cannot own a valid
+                    # finalized contract.  Preserve raw conversation and any
+                    # skill hint, but reset only the stale consultation phase
+                    # so Consultant can perform a general bootstrap repair.
+                    recovered_consultation = new_consultation_state(
+                        f"{task_id}:consultant:legacy-bootstrap",
+                        task_id,
+                        max_total_execute=4,
+                        max_no_progress=2,
+                    )
+                    recovered_consultation["last_feedback"] = [{
+                        "code": "LEGACY_UNINITIALIZED_TASKSPEC",
+                        "instruction": (
+                            "The prior semantic-empty TaskSpec was not canonical. "
+                            "Rebuild candidate semantics from the complete conversation evidence."
+                        ),
+                    }]
+                    state = {
+                        **dict(state),
+                        "consultation_state": recovered_consultation,
+                        "consultant_contract_repair": {},
+                        "pending_human_question": {},
+                    }
+            task_spec_repair_issues = [
+                dict(item) for item in state.get("validation_issues", []) or []
+                if isinstance(item, Mapping)
+                and str(item.get("owner") or "") in {"task_spec", "external_input"}
+                and str(item.get("severity") or "").lower() in {"error", "blocking", "fatal"}
             ]
+            if task_spec_repair_issues:
+                external_issues = [
+                    item for item in task_spec_repair_issues
+                    if str(item.get("owner") or "") == "external_input"
+                ]
+                selected_for_repair = list(state.get("selected_skills") or [])
+                repair_renderer_records = [
+                    self.skill_manager.get_renderer_record(skill_id)
+                    for skill_id in selected_for_repair
+                    if self.skill_manager and self.skill_manager.has_renderer(skill_id)
+                ]
+                declarative_repair = apply_declarative_task_spec_rules(
+                    task_spec,
+                    repair_renderer_records,
+                )
+                if canonical_constraint_hash(declarative_repair) != canonical_constraint_hash(task_spec):
+                    old_revision = task_spec_revision(task_spec)
+                    declarative_repair["revision"] = old_revision + 1
+                    declarative_repair.setdefault("change_log", []).append({
+                        "revision": declarative_repair["revision"],
+                        "source": "skill_contract_derived",
+                        "reason": "validation_issue_owned_taskspec_repair",
+                        "recorded_at": datetime.now().isoformat(),
+                    })
+                    return commit_candidate_update({
+                        "messages": [SystemMessage(content=(
+                            "<consultant_task_spec_repair status=\"deterministic_committed\" />"
+                        ))],
+                        "task_spec": declarative_repair,
+                        "task_revision": declarative_repair["revision"],
+                        "validation_issues": task_spec_repair_issues,
+                        "next_step": "planner",
+                    })
+                missing_fields = list(dict.fromkeys(
+                    str(item.get("renderer_field") or item.get("field_path") or item.get("repair_target") or "required value")
+                    for item in task_spec_repair_issues
+                ))
+                if external_issues:
+                    question = (
+                        "The deterministic plan contract is missing authoritative external value(s): "
+                        + ", ".join(missing_fields)
+                        + ". Please provide the exact value or input path; BioMind will not guess it."
+                    )
+                    return {
+                        "messages": [SystemMessage(content=(
+                            "<consultant_task_spec_repair>"
+                            + json.dumps(external_issues, ensure_ascii=False, sort_keys=True, default=str)
+                            + "</consultant_task_spec_repair>"
+                        ))],
+                        "pending_human_question": {
+                            "type": "task_spec_contract_repair",
+                            "stage": "consultant",
+                            "question": question,
+                            "resume_step": "consultant",
+                            "validation_issue_fingerprints": [
+                                str(item.get("fingerprint") or "") for item in external_issues
+                            ],
+                        },
+                        "consultant_repair_scope": {
+                            "allowed_target": "task_spec",
+                            "forbidden_targets": ["selected_skills", "plan", "renderer_contract", "validation_issues"],
+                        },
+                        "next_step": "ask_user",
+                    }
+
+                issue_fingerprints = sorted(
+                    str(item.get("fingerprint") or "") for item in task_spec_repair_issues
+                )
+                repair_fingerprint = hashlib.sha256(json.dumps({
+                    "task_spec_hash": canonical_constraint_hash(task_spec),
+                    "issue_fingerprints": issue_fingerprints,
+                }, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+                repair_history = [
+                    dict(item) for item in state.get("task_spec_repair_history", []) or []
+                    if isinstance(item, Mapping)
+                ]
+                if any(str(item.get("fingerprint") or "") == repair_fingerprint for item in repair_history):
+                    reason = (
+                        "TASKSPEC_REPAIR_NON_CONVERGENT: the same TaskSpec and blocking issue set "
+                        "reappeared without new user or external evidence."
+                    )
+                    return {
+                        "messages": [SystemMessage(content=reason)],
+                        "task_spec_repair_history": repair_history,
+                        "plan_progress": self._mark_plan_current_blocked(state.get("task_id", "default"), reason),
+                        "task_status": TASK_STATUS_BLOCKED,
+                        "failure_owner": "task_spec",
+                        "next_step": "finish",
+                    }
+
+                allowed_slots: List[str] = []
+                for issue in task_spec_repair_issues:
+                    target_text = " ".join([
+                        str(issue.get("repair_target") or ""),
+                        str(issue.get("field_path") or ""),
+                    ])
+                    for match in re.finditer(r"role=([A-Za-z0-9_.-]+)", target_text):
+                        slot = match.group(1).strip()
+                        if slot and slot not in allowed_slots:
+                            allowed_slots.append(slot)
+                    for match in re.finditer(
+                        r"(?:required_behavior|required_input|required_output|runtime_constraint|failure_policy)\.([A-Za-z0-9_.-]+)",
+                        target_text,
+                    ):
+                        slot = match.group(1).strip()
+                        if slot and slot not in allowed_slots:
+                            allowed_slots.append(slot)
+                if not allowed_slots:
+                    reason = (
+                        "TASKSPEC_REPAIR_SCOPE_EMPTY: TaskSpec-owned validation issues did not "
+                        "identify an authorized semantic slot."
+                    )
+                    return {
+                        "messages": [SystemMessage(content=reason)],
+                        "plan_progress": self._mark_plan_current_blocked(state.get("task_id", "default"), reason),
+                        "task_status": TASK_STATUS_BLOCKED,
+                        "failure_owner": "internal",
+                        "next_step": "finish",
+                    }
+
+                provenance_catalog = semantic_provenance_catalog(
+                    task_spec,
+                    consultation_state=state.get("consultation_state") or {},
+                    selected_skill_ids=selected_for_repair,
+                )
+                repair_source_evidence = [
+                    {
+                        "evidence_id": str(item.get("source_id") or item.get("source_ref") or f"source:{index}"),
+                        "kind": str(item.get("source_type") or "task_source"),
+                        "excerpt": str(item.get("label") or item.get("source_text") or "Authorized semantic source"),
+                        "truncated": False,
+                    }
+                    for index, item in enumerate(provenance_catalog, start=1)
+                    if isinstance(item, Mapping)
+                ]
+                repair_plan_state = load_plan_state(
+                    self.data_path, state.get("task_id", "default")
+                )
+                repair_node_context = build_node_context(
+                    node_type="consultant",
+                    task_spec=task_spec,
+                    plan_state=repair_plan_state,
+                    state_generation=int(repair_plan_state.get("state_generation") or 0),
+                    feedback={"allowed_semantic_slots": allowed_slots},
+                    evidence=repair_source_evidence,
+                    violations=task_spec_repair_issues,
+                    allowed_operations=[
+                        "add_constraint", "replace_constraint", "request_user_input",
+                    ],
+                    violation_set_identity=repair_fingerprint,
+                    trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
+                    max_payload_chars=max(1, int(self.llm_context_limit_tokens) * 4),
+                )
+                repair_prompt = f"""You are performing a constrained TaskSpec repair.
+Return exactly one JSON object and no prose with these exact fields:
+{{
+  "constraints": [],
+  "needs_user_input": false,
+  "question": ""
+}}
+
+You may add or replace constraints only for these semantic slots:
+{json.dumps(allowed_slots, ensure_ascii=False)}
+
+Every constraint must contain constraint_id, semantic_key, operator, value,
+strength, confidence, and provenance. Each provenance entry must contain only
+one `source_handle`, copied from an evidence handle in the payload. The
+Controller resolves it to the immutable source identity. Preserve all unaffected TaskSpec
+semantics. Do not modify selected skills, plan steps, renderer metadata,
+validation issues, or approval state. If no catalog source authorizes the
+missing value, return constraints=[], needs_user_input=true, and one exact
+question. Never guess a scientific or database identity.
+
+<llm_payload>
+{repair_node_context.llm_payload.to_json(indent=2)}
+</llm_payload>"""
+                try:
+                    repair_response = await self._ainvoke_node_llm(
+                        [HumanMessage(content=repair_prompt)],
+                        node_context=repair_node_context,
+                        stage="consultant_task_spec_repair",
+                        task_id=state.get("task_id", "default"),
+                        task_mode=str(state.get("task_mode") or "managed"),
+                        trace_metadata={
+                            "call_kind": "consultant_task_spec_repair",
+                            "task_spec_revision": task_spec_revision(task_spec),
+                            "issue_fingerprints": issue_fingerprints,
+                            "allowed_semantic_slots": allowed_slots,
+                        },
+                    )
+                    raw_repair = str(repair_response.content or "").strip()
+                    fence = re.fullmatch(
+                        r"```(?:json)?\s*\n?(?P<body>.*)\n?```",
+                        raw_repair,
+                        re.IGNORECASE | re.DOTALL,
+                    )
+                    if raw_repair.startswith("```"):
+                        if not fence:
+                            raise ValueError("TASKSPEC_REPAIR_STRUCTURE_INVALID: mixed JSON fence")
+                        raw_repair = fence.group("body").strip()
+                    repair_payload = json.loads(raw_repair)
+                    if not isinstance(repair_payload, Mapping):
+                        raise ValueError("TASKSPEC_REPAIR_STRUCTURE_INVALID: response must be an object")
+                    expected_repair_fields = {
+                        "constraints", "needs_user_input", "question",
+                    }
+                    if set(repair_payload) != expected_repair_fields:
+                        raise ValueError("TASKSPEC_REPAIR_STRUCTURE_INVALID: unexpected or missing fields")
+                    repair_payload = dict(repair_payload)
+                    current_repair_state = load_plan_state(
+                        self.data_path, state.get("task_id", "default")
+                    )
+                    current_repair_task = canonical_task_spec_for_state(
+                        current_repair_state
+                    )
+                    current_repair_binding = build_node_context(
+                        node_type="consultant",
+                        task_spec=current_repair_task,
+                        plan_state=current_repair_state,
+                        state_generation=int(current_repair_state.get("state_generation") or 0),
+                    ).binding
+                    repair_staleness = evaluate_node_staleness(
+                        repair_node_context.binding,
+                        current_repair_binding.to_dict(),
+                    )
+                    if not repair_staleness.usable:
+                        self._node_invocations.mark_stale_signature_handled(
+                            repair_staleness.stale_signature
+                        )
+                        raise RuntimeError(repair_staleness.code)
+                    source_types = {
+                        str(item.get("source_id") or item.get("source_ref") or ""):
+                        str(item.get("source_type") or "")
+                        for item in provenance_catalog
+                        if isinstance(item, Mapping)
+                    }
+                    for constraint in repair_payload.get("constraints") or []:
+                        if not isinstance(constraint, MutableMapping):
+                            raise ValueError("TASKSPEC_REPAIR_STRUCTURE_INVALID: constraint must be an object")
+                        resolved_provenance: List[Dict[str, str]] = []
+                        for source in constraint.get("provenance") or []:
+                            if not isinstance(source, Mapping) or set(source) != {"source_handle"}:
+                                raise ValueError("TASKSPEC_REPAIR_STRUCTURE_INVALID: provenance must use source_handle")
+                            resolved = resolve_response_handles(
+                                repair_node_context.binding,
+                                [str(source.get("source_handle") or "")],
+                                object_type="evidence",
+                                usage="cite",
+                            )[0]
+                            source_id = str(resolved.get("stable_identity") or "")
+                            resolved_provenance.append({
+                                "source_id": source_id,
+                                "source_ref": source_id,
+                                "source_type": source_types.get(source_id, ""),
+                            })
+                        constraint["provenance"] = resolved_provenance
+                    repair_payload["base_task_spec_revision"] = task_spec_revision(task_spec)
+                    history_entry = {
+                        "fingerprint": repair_fingerprint,
+                        "issue_fingerprints": issue_fingerprints,
+                        "base_task_spec_revision": task_spec_revision(task_spec),
+                        "recorded_at": datetime.now().isoformat(),
+                    }
+                    repair_history.append(history_entry)
+                    if repair_payload.get("needs_user_input") is True:
+                        question = str(repair_payload.get("question") or "").strip()
+                        if repair_payload.get("constraints") or not question:
+                            raise ValueError("TASKSPEC_REPAIR_STRUCTURE_INVALID: invalid user-input response")
+                        history_entry["status"] = "needs_user_input"
+                        return {
+                            "messages": [SystemMessage(content="<consultant_task_spec_repair status=\"needs_user_input\" />")],
+                            "pending_human_question": {
+                                "type": "task_spec_contract_repair",
+                                "stage": "consultant",
+                                "question": question,
+                                "resume_step": "consultant",
+                                "validation_issue_fingerprints": issue_fingerprints,
+                            },
+                            "task_spec_repair_history": repair_history[-12:],
+                            "next_step": "ask_user",
+                        }
+                    repaired_task_spec = apply_authorized_task_spec_constraint_repair(
+                        task_spec,
+                        repair_payload,
+                        allowed_semantic_slots=allowed_slots,
+                        provenance_catalog=provenance_catalog,
+                        project_root=project_root,
+                    )
+                    history_entry["status"] = "committed_pending_revalidation"
+                    history_entry["new_task_spec_revision"] = task_spec_revision(repaired_task_spec)
+                    return commit_candidate_update({
+                        "messages": [SystemMessage(content="<consultant_task_spec_repair status=\"committed_pending_revalidation\" />")],
+                        "task_spec": repaired_task_spec,
+                        "task_revision": task_spec_revision(repaired_task_spec),
+                        "validation_issues": task_spec_repair_issues,
+                        "task_spec_repair_history": repair_history[-12:],
+                        "consultant_repair_scope": {
+                            "allowed_target": "task_spec.requirements",
+                            "allowed_semantic_slots": allowed_slots,
+                            "forbidden_targets": ["selected_skills", "plan", "renderer_contract", "validation_issues"],
+                        },
+                        "next_step": "planner",
+                    })
+                except Exception as exc:
+                    if is_transient_llm_failure(exc) and not is_llm_input_rejected(exc):
+                        return self._pause_retryable_llm_failure(
+                            state,
+                            state.get("task_id", "default"),
+                            "consultant_task_spec_repair",
+                            exc,
+                        )
+                    reason = (
+                        "TASKSPEC_REPAIR_REJECTED: constrained Consultant repair was not committed: "
+                        f"{type(exc).__name__}: {exc}"
+                    )
+                    repair_history.append({
+                        "fingerprint": repair_fingerprint,
+                        "issue_fingerprints": issue_fingerprints,
+                        "base_task_spec_revision": task_spec_revision(task_spec),
+                        "status": "rejected",
+                        "error_type": type(exc).__name__,
+                        "recorded_at": datetime.now().isoformat(),
+                    })
+                    return {
+                        "messages": [SystemMessage(content=reason)],
+                        "task_spec_repair_history": repair_history[-12:],
+                        "plan_progress": self._mark_plan_current_blocked(state.get("task_id", "default"), reason),
+                        "task_status": TASK_STATUS_BLOCKED,
+                        "failure_owner": "internal",
+                        "next_step": "finish",
+                    }
+            conversation_turns, semantic_conversation_evidence = (
+                self._consultant_semantic_conversation(task_id, messages)
+            )
             consultant_context = "\n".join(
-                [str(task_spec.get("goal") or "").strip(), *later_directives[-6:]]
+                dict.fromkeys(
+                    part
+                    for part in [
+                        str(task_spec.get("goal") or "").strip(),
+                        *[
+                            str(turn.get("content") or "").strip()
+                            for turn in conversation_turns
+                            if str(turn.get("role") or "") == "user"
+                        ],
+                    ]
+                    if part
+                )
             ).strip()
             consultant_max_skills = self._selection_max_skills(consultant_context)
             last_human_index = -1
@@ -10311,6 +18838,22 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 if isinstance(m, SystemMessage)
                 and "<consultant_semantic_resolution_request>" in str(m.content)
             ]
+            contract_repair_state = dict(state.get("consultant_contract_repair") or {})
+            existing_consultation_state = state.get("consultation_state") or {}
+            finalize_controller_active = bool(
+                contract_repair_state
+                or (
+                    isinstance(existing_consultation_state, Mapping)
+                    and (
+                        str(existing_consultation_state.get("phase") or "") in {
+                            "ready_to_finalize", "finalize"
+                        }
+                        or str(existing_consultation_state.get("completion_decision") or "")
+                        == "ready_to_finalize"
+                        or isinstance(existing_consultation_state.get("finalize_protocol"), Mapping)
+                    )
+                )
+            )
             format_repair_errors = [
                 err for err in validation_errors
                 if _consultant_validation_is_format_repair_error(err)
@@ -10331,6 +18874,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 and "<observation>" in str(m.content)
                 and "❌" in str(m.content)
             ]
+            verified_loaded_skill_ids = self._consultant_verified_loaded_skill_ids(
+                recent_consultant_messages
+            )
             task_id = state.get("task_id", "default")
             project_id = state.get("project_id") or self.default_project_id
             work_dir = self.pm.work_dir if self.pm else os.getcwd()
@@ -10360,110 +18906,97 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     Fore.CYAN,
                 )
 
-            if len(semantic_validation_errors) >= 2 or len(semantic_resolution_requests) >= 2:
+            semantic_failure_route = (
+                "consultant"
+                if finalize_controller_active
+                else self._consultant_semantic_failure_route(
+                    repair_attempt=(
+                        int(contract_repair_state.get("repair_attempt") or 0)
+                        if contract_repair_state
+                        else len(semantic_validation_errors)
+                    ),
+                    ambiguity_retry_count=len(semantic_resolution_requests),
+                )
+            )
+            if semantic_failure_route == "blocked_internal_contract_error":
                 reason = (
-                    "Consultant could not produce an unambiguous, schema-valid semantic contract "
-                    "after the bounded structured retries. Raw-prompt heuristics are disabled."
+                    "Consultant exhausted the bounded internal semantic-contract repair budget. "
+                    "The user request is preserved and was not treated as ambiguous."
+                )
+                blocked_consultation = dict(state.get("consultation_state") or {})
+                blocked_consultation.update({
+                    "phase": "blocked",
+                    "consultation_status": "blocked",
+                    "completion_decision": "blocked",
+                    "completion_reason": "internal_semantic_contract_error",
+                })
+                return {
+                    "messages": [SystemMessage(content=f"<blocked_internal_contract_error>{reason}</blocked_internal_contract_error>")],
+                    "consultant_constraint_metrics": {
+                        "schema_validation": "failed",
+                        "parse_retry_count": int(contract_repair_state.get("repair_attempt") or len(semantic_validation_errors)),
+                        "semantic_resolution_retry_count": len(semantic_resolution_requests),
+                    },
+                    "consultation_state": blocked_consultation,
+                    "consultant_contract_repair": contract_repair_state,
+                    "pending_human_question": {},
+                    "contract_status": "blocked_internal_contract_error",
+                    "next_step": "finish",
+                }
+            if semantic_failure_route == "ask_user":
+                reason = (
+                    "A schema-valid critical constraint remains explicitly marked "
+                    "needs_clarification after bounded context resolution."
                 )
                 return {
                     "messages": [SystemMessage(content=f"<blocked_need_user_decision>{reason}</blocked_need_user_decision>")],
                     "consultant_constraint_metrics": {
-                        "schema_validation": "failed",
-                        "parse_retry_count": len(semantic_validation_errors),
+                        "schema_validation": "passed",
+                        "parse_retry_count": int(contract_repair_state.get("repair_attempt") or len(semantic_validation_errors)),
                         "semantic_resolution_retry_count": len(semantic_resolution_requests),
                     },
                     "pending_human_question": {
                         "type": "semantic_constraint_clarification",
                         "stage": "consultant",
-                        "question": (
-                            reason
-                            + " Please restate the critical input, behavior, or failure policy that must be preserved."
-                        ),
+                        "question": reason + " Please clarify that specific semantic decision.",
                         "resume_step": "consultant",
                     },
                     "contract_status": "blocked_need_user_decision",
                     "next_step": "ask_user",
                 }
 
-            if self.skill_manager and (
-                len(load_actions) >= CONSULTANT_LOAD_ACTION_LOOP_LIMIT
-                or len(internal_validation_errors) >= CONSULTANT_INTERNAL_VALIDATION_ERROR_LIMIT
-                or len(load_errors) >= CONSULTANT_LOAD_ERROR_LOOP_LIMIT
-                or len(format_repair_errors) > CONSULTANT_PARSE_REPAIR_LIMIT
-            ):
-                fallback_raw = []
-                for action in load_actions:
-                    parts = action.split(maxsplit=2)
-                    if len(parts) >= 2:
-                        fallback_raw.append(parts[1])
-                selected = self.skill_manager.normalize_selected_skills(fallback_raw, max_results=consultant_max_skills)
-                candidate_hints = self.skill_manager.candidate_skill_ids_for_prompt(
-                    consultant_context,
-                    max_results=consultant_max_skills,
-                )
-                hints = ", ".join(candidate_hints) if candidate_hints else "None"
-                message = (
-                    "<consultant_loop_guard_blocked>\n"
-                    "Consultant handoff validation or skill loading failed repeatedly. "
-                    "BioMind could not derive any valid canonical skills for an automatic Planner handoff.\n"
-                    f"Candidate skill hints from metadata matching: {hints}\n"
-                    "If no workflow template clearly matches, provide canonical skill id(s) only; "
-                    "otherwise provide a corrected workflow_state. You may also reply with `blocked: <reason>`.\n"
-                    "</consultant_loop_guard_blocked>"
-                )
-                output.print_once(
-                    "consultant_loop_guard_blocked",
-                    "⚠️ Consultant repeated internal actions and no valid canonical skill fallback was available.",
-                    Fore.YELLOW,
-                )
-                return {
-                    "messages": [SystemMessage(content=message)],
-                    "input_audit": input_resolution_result,
-                    "pending_human_question": {
-                        "type": "consultant_question",
-                        "stage": "consultant",
-                        "question": (
-                            "Consultant failed to produce a valid handoff after repeated internal actions. "
-                            f"Candidate skill hints: {hints}. If no workflow template clearly matches, provide canonical skill id(s) only; "
-                            "otherwise provide a corrected workflow_state, or `blocked: <reason>`."
-                        ),
-                        "resume_step": "consultant",
-                    },
-                    "next_step": "ask_user",
-                }
-
-            if len(failed_consultant_execs) >= 3:
+            if not finalize_controller_active and len(failed_consultant_execs) >= 3:
                 recent_error_preview = "\n".join(
                     f"- {re.sub(r'<[^>]+>', '', err).strip()[:500]}"
                     for err in failed_consultant_execs[-3:]
                     if str(err).strip()
                 )
-                question = (
-                    "Consultant read-only verification failed repeatedly in the current turn, so BioMind stopped "
-                    "the Consultant EXECUTE loop.\n"
-                    f"Recent failed observations:\n{recent_error_preview or '- none'}\n\n"
-                    "Please provide corrected inputs/runtime instructions, or reply with `blocked: <reason>`."
-                )
                 obs = (
-                    "<consultant_loop_guard_blocked>\n"
+                    '<blocked_internal_contract_error code="CONSULTANT_EXECUTE_REPAIR_EXHAUSTED">\n'
                     "Repeated Consultant EXECUTE failures reached the loop guard. "
-                    "Automatic read-only checks are paused.\n"
-                    "</consultant_loop_guard_blocked>"
+                    "Automatic read-only checks are stopped as a controller/runtime-evidence failure, "
+                    "not a missing user decision.\n"
+                    f"Recent failed observations:\n{recent_error_preview or '- none'}\n"
+                    "</blocked_internal_contract_error>"
                 )
+                blocked_consultation = deepcopy(dict(state.get("consultation_state") or {}))
+                blocked_consultation.update({
+                    "phase": "blocked",
+                    "consultation_status": "blocked",
+                    "completion_decision": "blocked",
+                    "completion_reason": "consultant_execute_repair_exhausted",
+                })
                 output.print_once(
-                    "consultant_execute_loop_guard_blocked",
-                    "⚠️ Consultant read-only checks failed repeatedly; asking for explicit repair instead of looping.",
+                    "consultant_execute_loop_guard_internal_block",
+                    "⚠️ Consultant read-only checks failed repeatedly; stopping as an internal/runtime-evidence failure.",
                     Fore.YELLOW,
                 )
                 return {
                     "messages": [SystemMessage(content=obs)],
-                    "pending_human_question": {
-                        "type": "consultant_question",
-                        "stage": "consultant",
-                        "question": question,
-                        "resume_step": "consultant",
-                    },
-                    "next_step": "ask_user",
+                    "consultation_state": blocked_consultation,
+                    "pending_human_question": {},
+                    "contract_status": "blocked_internal_contract_error",
+                    "next_step": "finish",
                 }
 
             kb_list_desc = ", ".join(KB_MAP.keys())
@@ -10556,11 +19089,16 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     max_no_progress=2,
                 )
             consultation_state["iteration"] = int(consultation_state.get("iteration") or 0) + 1
-            loaded_skill_ids = [
-                action.split(maxsplit=1)[1]
-                for action in load_actions
-                if action.startswith("LOAD_SKILL_DOC ") and len(action.split(maxsplit=1)) == 2
-            ]
+            loaded_skill_ids = list(verified_loaded_skill_ids)
+            runtime_seed_skill_ids = list(dict.fromkeys([
+                *explicit_candidate_ids,
+                *loaded_skill_ids,
+            ]))
+            runtime_seed_audits, runtime_seed_evidence, _runtime_seed_summary = (
+                self._consultant_runtime_seed_evidence(runtime_seed_skill_ids, task_id)
+                if runtime_seed_skill_ids
+                else ([], {}, "")
+            )
             consultation_state = seed_structured_evidence(
                 consultation_state,
                 input_audit=input_resolution_result,
@@ -10568,9 +19106,154 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 # candidates remain discovery hints and must not all become mandatory.
                 candidate_skill_ids=[*explicit_candidate_ids, *loaded_skill_ids],
                 routing_candidate_ids=[*explicit_candidate_ids, *loaded_skill_ids],
+                runtime_evidence=runtime_seed_evidence,
             )
-            if consultation_state.get("completion_decision") == "ready_to_finalize":
-                consultation_state = begin_finalize(consultation_state)
+            # Do not enter FINALIZE from the pre-response state.  Candidate
+            # mutations, selected skills and Controller bindings must be
+            # applied before completion is evaluated.
+            finalize_mode = bool(contract_repair_state) or consultation_state.get("phase") == "finalize"
+            if isinstance(consultation_state.get("finalize_protocol"), Mapping):
+                finalize_mode = True
+            loop_guard_exhausted = bool(
+                self.skill_manager
+                and (
+                    len(load_actions) >= CONSULTANT_LOAD_ACTION_LOOP_LIMIT
+                    or len(internal_validation_errors) >= CONSULTANT_INTERNAL_VALIDATION_ERROR_LIMIT
+                    or len(load_errors) >= CONSULTANT_LOAD_ERROR_LOOP_LIMIT
+                    or len(format_repair_errors) > CONSULTANT_PARSE_REPAIR_LIMIT
+                )
+            )
+            if not finalize_mode and loop_guard_exhausted:
+                selected = self.skill_manager.normalize_selected_skills(
+                    loaded_skill_ids,
+                    max_results=consultant_max_skills,
+                )
+                if selected:
+                    unresolved = list(consultation_state.get("unresolved_requirement_ids") or [])
+                    reason = (
+                        "Consultant action repair was exhausted after canonical skill loading, but "
+                        "controller-owned evidence is still unresolved. This is an internal protocol "
+                        "or runtime-evidence failure, not a missing user decision. "
+                        f"selected_skills={','.join(selected)}; unresolved={','.join(unresolved) or 'unknown'}"
+                    )
+                    blocked_consultation = deepcopy(consultation_state)
+                    blocked_consultation.update({
+                        "phase": "blocked",
+                        "consultation_status": "blocked",
+                        "completion_decision": "blocked",
+                        "completion_reason": "internal_action_contract_or_runtime_evidence_failure",
+                        "resolved_selected_skill_ids": list(selected),
+                    })
+                    output.print_once(
+                        "consultant_loop_guard_internal_block",
+                        "⚠️ Consultant repair budget exhausted after a canonical skill was verified; stopping as an internal failure without asking the user.",
+                        Fore.YELLOW,
+                    )
+                    return {
+                        "messages": [SystemMessage(content=(
+                            '<blocked_internal_contract_error code="CONSULTANT_ACTION_REPAIR_EXHAUSTED">'
+                            + reason
+                            + "</blocked_internal_contract_error>"
+                        ))],
+                        "input_audit": input_resolution_result,
+                        "selected_skills": list(selected),
+                        "runtime_audit": runtime_seed_audits,
+                        "consultation_state": blocked_consultation,
+                        "pending_human_question": {},
+                        "contract_status": "blocked_internal_contract_error",
+                        "next_step": "finish",
+                    }
+
+                candidate_hints = self.skill_manager.candidate_skill_ids_for_prompt(
+                    consultant_context,
+                    max_results=consultant_max_skills,
+                )
+                hints = ", ".join(candidate_hints) if candidate_hints else "None"
+                reason = (
+                    "Consultant action repair was exhausted before a canonical skill was successfully "
+                    "loaded. This is an internal action-contract failure, not a user ambiguity. "
+                    f"Candidate metadata hints (untrusted for automatic selection): {hints}."
+                )
+                blocked_consultation = deepcopy(consultation_state)
+                blocked_consultation.update({
+                    "phase": "blocked",
+                    "consultation_status": "blocked",
+                    "completion_decision": "blocked",
+                    "completion_reason": "consultant_action_repair_exhausted_without_canonical_skill",
+                })
+                output.print_once(
+                    "consultant_loop_guard_internal_block_no_skill",
+                    "⚠️ Consultant action repair exhausted before canonical skill verification; stopping without asking the user.",
+                    Fore.YELLOW,
+                )
+                return {
+                    "messages": [SystemMessage(content=(
+                        '<blocked_internal_contract_error code="CONSULTANT_ACTION_REPAIR_EXHAUSTED">'
+                        + reason
+                        + "</blocked_internal_contract_error>"
+                    ))],
+                    "input_audit": input_resolution_result,
+                    "consultation_state": blocked_consultation,
+                    "pending_human_question": {},
+                    "contract_status": "blocked_internal_contract_error",
+                    "next_step": "finish",
+                }
+            if finalize_mode:
+                resolved_selected_skill_ids = self._resolve_consultant_finalize_skills(
+                    state=state,
+                    consultation_state=consultation_state,
+                    explicit_candidate_ids=explicit_candidate_ids,
+                    loaded_skill_ids=loaded_skill_ids,
+                    max_skills=consultant_max_skills,
+                )
+                if resolved_selected_skill_ids:
+                    consultation_state["resolved_selected_skill_ids"] = list(
+                        resolved_selected_skill_ids
+                    )
+                return await self._run_consultant_finalize(
+                    state=state,
+                    task_id=task_id,
+                    task_spec=task_spec,
+                    consultation_state=consultation_state,
+                    resolved_selected_skill_ids=resolved_selected_skill_ids,
+                    input_audit=input_resolution_result,
+                    consultant_wiki_context=consultant_wiki_context,
+                    consultant_memory_retrieval_context=consultant_memory_retrieval_context,
+                )
+            deterministic_base_constraints = semantic_constraints_from_task_spec(task_spec)
+            provenance_catalog = semantic_provenance_catalog(
+                task_spec,
+                consultation_state=consultation_state,
+                selected_skill_ids=[
+                    *candidate_skill_ids,
+                    *loaded_skill_ids,
+                    *list(state.get("selected_skills") or []),
+                ],
+            )
+            deterministic_base_constraints_context = json.dumps(
+                deterministic_base_constraints,
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+                default=str,
+            )
+            semantic_provenance_catalog_context = json.dumps(
+                provenance_catalog,
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+                default=str,
+            )
+            selected_skill_context = json.dumps({
+                "candidate_skill_ids": candidate_skill_ids,
+                "explicit_candidate_ids": explicit_candidate_ids,
+                "loaded_skill_ids": loaded_skill_ids,
+                "current_selected_skill_ids": list(state.get("selected_skills") or []),
+                "workflow_candidate_ids": workflow_candidate_ids,
+            }, ensure_ascii=False, sort_keys=True, indent=2, default=str)
+            contract_repair_context = self._consultant_contract_repair_context(
+                contract_repair_state
+            )
             consultation_state_context = consultation_prompt_context(consultation_state)
             rag_history_text = "\n".join(str(item) for item in rag_history)
             user_preferences_context = self._load_user_preferences()
@@ -10596,42 +19279,85 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 self.llm_context_limit_tokens
             )
             dynamic_marker = "__CONSULTANT_DYNAMIC_BLOCK__"
-            static_probe = PromptManager.get_consultant_prompt(
-                intent=str(state.get("task_mode") or "managed"),
-                kb_list_desc=kb_list_desc,
-                rag_history=[dynamic_marker],
-                skills_summary=dynamic_marker,
-                runtime_evidence_context=dynamic_marker,
-                work_dir=self.pm.work_dir if self.pm else ".",
-                max_skills=consultant_max_skills,
-                wiki_memory_context=dynamic_marker,
-                input_resolution_context=dynamic_marker,
-                workflow_catalog=dynamic_marker,
-                user_preferences_context=dynamic_marker,
-                task_spec_context=dynamic_marker,
-                consultation_state_context=dynamic_marker,
-            )
+            if finalize_mode:
+                static_probe = PromptManager.get_consultant_finalize_prompt(
+                    work_dir=self.pm.work_dir if self.pm else ".",
+                    max_skills=consultant_max_skills,
+                    consultation_state_context=dynamic_marker,
+                    task_spec_context=dynamic_marker,
+                    input_resolution_context=dynamic_marker,
+                    runtime_evidence_context=dynamic_marker,
+                    selected_skill_context=dynamic_marker,
+                    deterministic_base_constraints_context=dynamic_marker,
+                    semantic_provenance_catalog_context=dynamic_marker,
+                    contract_repair_context=dynamic_marker,
+                )
+            else:
+                static_probe = PromptManager.get_consultant_prompt(
+                    intent=str(state.get("task_mode") or "managed"),
+                    kb_list_desc=kb_list_desc,
+                    rag_history=[dynamic_marker],
+                    skills_summary=dynamic_marker,
+                    runtime_evidence_context=dynamic_marker,
+                    work_dir=self.pm.work_dir if self.pm else ".",
+                    max_skills=consultant_max_skills,
+                    wiki_memory_context=dynamic_marker,
+                    input_resolution_context=dynamic_marker,
+                    workflow_catalog=dynamic_marker,
+                    user_preferences_context=dynamic_marker,
+                    task_spec_context=dynamic_marker,
+                    consultation_state_context=dynamic_marker,
+                )
             dynamic_slots = static_probe.count(dynamic_marker)
             static_prompt_chars = (
                 len(static_probe)
                 - dynamic_slots * len(dynamic_marker)
                 + dynamic_slots * len("None")
             )
-            static_token_probe = PromptManager.get_consultant_prompt(
-                intent=str(state.get("task_mode") or "managed"),
-                kb_list_desc=kb_list_desc,
-                rag_history=["None"],
-                skills_summary="None",
-                runtime_evidence_context="None",
-                work_dir=self.pm.work_dir if self.pm else ".",
-                max_skills=consultant_max_skills,
-                wiki_memory_context="None",
-                input_resolution_context="None",
-                workflow_catalog="None",
-                user_preferences_context="None",
-                task_spec_context="None",
-                consultation_state_context="None",
-            )
+            if finalize_mode:
+                static_token_probe = PromptManager.get_consultant_finalize_prompt(
+                    work_dir=self.pm.work_dir if self.pm else ".",
+                    max_skills=consultant_max_skills,
+                    consultation_state_context="None",
+                    task_spec_context="None",
+                    input_resolution_context="None",
+                    runtime_evidence_context="None",
+                    selected_skill_context="None",
+                    deterministic_base_constraints_context="None",
+                    semantic_provenance_catalog_context="None",
+                    contract_repair_context="None",
+                )
+                packing_messages = [
+                    message for message in messages
+                    if not (
+                        isinstance(message, SystemMessage)
+                        and any(tag in str(message.content) for tag in (
+                            "<loaded_skill_doc",
+                            "<loaded_skill_reference",
+                            "<loaded_skill_script",
+                        ))
+                    )
+                ]
+                history_components = {
+                    "task_spec": task_spec_context,
+                    "input_resolution": input_resolution_context,
+                    "selected_skill_context": selected_skill_context,
+                    "deterministic_base_constraints": deterministic_base_constraints_context,
+                    "semantic_provenance_catalog": semantic_provenance_catalog_context,
+                    "contract_repair": contract_repair_context,
+                }
+                skill_components = {
+                    "runtime_evidence": runtime_evidence_context,
+                }
+            else:
+                # V2 Consultant gets a deterministic NodeContext plus the
+                # bounded semantic capability catalog built below.  Running
+                # the legacy history/doc packer here could block a valid call
+                # because of material that is not sent to the model at all.
+                static_token_probe = ""
+                packing_messages = []
+                history_components = {}
+                skill_components = {}
             static_prompt_tokens = _consultant_estimate_text_tokens(static_token_probe)
             try:
                 (
@@ -10640,22 +19366,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     consultant_visible_messages,
                     consultant_pack_report,
                 ) = self._pack_consultant_context(
-                    messages,
-                    history_components={
-                        "task_spec": task_spec_context,
-                        "input_resolution": input_resolution_context,
-                        "user_preferences": user_preferences_context,
-                        "memory_context": consultant_memory_retrieval_context,
-                        "rag_history": rag_history_text,
-                    },
-                    skill_components={
-                        "workflow_catalog": workflow_catalog,
-                        "skill_catalog": skill_catalog,
-                        "skill_tree": skill_tree,
-                        "controlled_discovery_hints": controlled_discovery_hints,
-                        "preloaded_skill_docs": preloaded_skill_docs_context,
-                        "runtime_evidence": runtime_evidence_context,
-                    },
+                    packing_messages,
+                    history_components=history_components,
+                    skill_components=skill_components,
                     history_max_chars=pool_budgets["history_effective_chars"],
                     skill_max_chars=pool_budgets["skill_effective_chars"],
                     static_prompt_chars=static_prompt_chars,
@@ -10683,6 +19396,16 @@ If the user is actually asking you to run analysis or inspect local files, say t
 
             task_spec_context = packed_history.get("task_spec") or "None"
             input_resolution_context = packed_history.get("input_resolution") or "None"
+            selected_skill_context = packed_history.get("selected_skill_context") or selected_skill_context
+            deterministic_base_constraints_context = (
+                packed_history.get("deterministic_base_constraints")
+                or deterministic_base_constraints_context
+            )
+            semantic_provenance_catalog_context = (
+                packed_history.get("semantic_provenance_catalog")
+                or semantic_provenance_catalog_context
+            )
+            contract_repair_context = packed_history.get("contract_repair") or contract_repair_context
             user_preferences_context = packed_history.get("user_preferences") or "None"
             consultant_memory_retrieval_context = packed_history.get("memory_context") or "None"
             rag_history_text = packed_history.get("rag_history") or "None"
@@ -10707,21 +19430,130 @@ If the user is actually asking you to run analysis or inspect local files, say t
             # Formerly: consultant_visible_messages = self._step_local_messages(
             # That generic selector hid original Human authority and loaded skill docs.
 
-            consultant_prompt = PromptManager.get_consultant_prompt(
-                intent=str(state.get("task_mode") or "managed"),
-                kb_list_desc=kb_list_desc,
-                rag_history=rag_history_for_prompt,
-                skills_summary=skills_summary,
-                runtime_evidence_context=runtime_evidence_context,
-                work_dir=self.pm.work_dir if self.pm else ".",
-                max_skills=consultant_max_skills,
-                wiki_memory_context=consultant_memory_retrieval_context,
-                input_resolution_context=input_resolution_context,
-                workflow_catalog=workflow_catalog,
-                user_preferences_context=user_preferences_context,
-                task_spec_context=task_spec_context,
-                consultation_state_context=consultation_state_context,
-            )
+            if finalize_mode:
+                consultant_prompt = PromptManager.get_consultant_finalize_prompt(
+                    work_dir=self.pm.work_dir if self.pm else ".",
+                    max_skills=consultant_max_skills,
+                    consultation_state_context=consultation_state_context,
+                    task_spec_context=task_spec_context,
+                    input_resolution_context=input_resolution_context,
+                    runtime_evidence_context=runtime_evidence_context,
+                    selected_skill_context=selected_skill_context,
+                    deterministic_base_constraints_context=deterministic_base_constraints_context,
+                    semantic_provenance_catalog_context=semantic_provenance_catalog_context,
+                    contract_repair_context=contract_repair_context,
+                )
+            else:
+                durable_consultation = dict(
+                    (load_plan_state(self.data_path, task_id).get("task_state") or {}).get(
+                        "consultation_state"
+                    ) or {}
+                )
+                actionable_feedback = list(
+                    consultation_state.get("last_feedback")
+                    or durable_consultation.get("last_feedback")
+                    or []
+                )[-8:]
+                consultant_node_context = build_node_context(
+                    node_type="consultant",
+                    task_spec=task_spec,
+                    plan_state=load_plan_state(self.data_path, task_id),
+                    state_generation=int(
+                        load_plan_state(self.data_path, task_id).get("state_generation") or 0
+                    ),
+                    feedback={
+                        "consultation": {
+                            key: deepcopy(consultation_state.get(key))
+                            for key in (
+                                "phase", "consultation_status", "completion_decision",
+                                "completion_reason", "unresolved_requirement_ids",
+                                "selected_skills", "resolved_selected_skill_ids",
+                                "resolved_bindings", "pending_question",
+                            )
+                            if consultation_state.get(key) not in (None, "", [], {})
+                        },
+                        "last_actionable_feedback": actionable_feedback,
+                        "conversation_turn_count": len(conversation_turns),
+                        "formal_input_audit": {
+                            "status": str(input_resolution_result.get("status") or "not_applicable"),
+                            "artifact_role": str(input_resolution_result.get("artifact_role") or ""),
+                            "unresolved": bool(input_resolution_result.get("unresolved")),
+                            "unresolved_reasons": list(input_resolution_result.get("unresolved_reasons") or []),
+                            "missing_roles": list(input_resolution_result.get("missing_roles") or []),
+                            "ambiguous_roles": list(input_resolution_result.get("ambiguous_roles") or []),
+                            "candidate_basenames": sorted({
+                                Path(str(item.get("path") or "")).name
+                                for item in input_resolution_result.get("formal_candidates", []) or []
+                                if isinstance(item, Mapping) and str(item.get("path") or "")
+                            }),
+                        },
+                    },
+                    evidence=semantic_conversation_evidence,
+                    allowed_operations=[
+                        "set_goal", "upsert_input", "remove_input",
+                        "upsert_constraint", "remove_constraint",
+                        "upsert_output_contract", "remove_output_contract",
+                        "confirm_decision", "remove_decision", "mark_ambiguity",
+                        "ask_user", "finish",
+                    ],
+                    touched_entity_versions=dict(
+                        state.get("task_entity_versions") or {}
+                    ),
+                    trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
+                    max_payload_chars=max(1, int(self.llm_context_limit_tokens) * 4),
+                )
+                visible_capability_ids = self.skill_manager.normalize_selected_skills(
+                    [
+                        *candidate_skill_ids,
+                        *explicit_candidate_ids,
+                        *loaded_skill_ids,
+                        *list(state.get("selected_skills") or []),
+                    ],
+                    max_results=consultant_max_skills,
+                ) if self.skill_manager else []
+                semantic_capabilities, _consultant_operation_bindings = (
+                    self.skill_manager.get_semantic_execution_capabilities(
+                        visible_capability_ids
+                    )
+                    if self.skill_manager
+                    else ([], {})
+                )
+                consultant_capability_context = json.dumps(
+                    {
+                        "capabilities": semantic_capabilities,
+                        "catalog": [
+                            {
+                                "skill_id": str(meta.get("_skill_id") or ""),
+                                "name": str(meta.get("name") or ""),
+                                "description": str(meta.get("description") or ""),
+                                "task_types": self.skill_manager.metadata_list(meta, "task_types"),
+                                "stage_tags": self.skill_manager.metadata_list(meta, "stage_tags"),
+                                "inputs": self.skill_manager.metadata_list(meta, "inputs"),
+                                "outputs": self.skill_manager.metadata_list(meta, "outputs"),
+                            }
+                            for meta in (
+                                self.skill_manager.get_skill_meta(skill_id)
+                                for skill_id in visible_capability_ids
+                            )
+                            if meta
+                        ],
+                        "workflow_candidates": list(workflow_candidate_ids),
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    indent=2,
+                    default=str,
+                )
+                consultant_prompt = PromptManager.get_consultant_v2_prompt(
+                    consultant_node_context.llm_payload.to_dict(),
+                    capability_context=consultant_capability_context,
+                    consultation_context="Current semantic consultation state is included in LLMPayload.feedback.",
+                    max_skills=consultant_max_skills,
+                )
+                # Full semantic conversation is carried once, inside the
+                # payload evidence section.  Graph history is intentionally
+                # omitted so it cannot duplicate or replace that durable view.
+                consultant_visible_messages = []
             visible_message_chars = sum(
                 len(str(getattr(message, "content", message) or ""))
                 for message in consultant_visible_messages
@@ -10856,14 +19688,51 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "next_step": "finish",
                 }
 
+            if not finalize_mode:
+                no_progress = consultant_no_progress_decision(
+                    consultation_state.get("last_invocation_guard"),
+                    task_revision=task_spec_revision(task_spec),
+                    conversation_turn_count=len(conversation_turns),
+                    feedback=actionable_feedback,
+                    route="consultant",
+                )
+                if not no_progress.get("allow"):
+                    reason = (
+                        "CONSULTANT_NO_PROGRESS: the same task revision, conversation evidence, "
+                        "controller feedback, and Consultant route would be invoked again."
+                    )
+                    blocked = deepcopy(consultation_state)
+                    blocked.update({
+                        "phase": "blocked",
+                        "consultation_status": "blocked",
+                        "completion_decision": "blocked",
+                        "completion_reason": "CONSULTANT_NO_PROGRESS",
+                    })
+                    return {
+                        "messages": [SystemMessage(content=reason)],
+                        "consultation_state": blocked,
+                        "pending_human_question": {},
+                        "task_status": TASK_STATUS_BLOCKED,
+                        "failure_owner": "controller",
+                        "next_step": "finish",
+                    }
+                current_invocation_guard = dict(no_progress.get("guard") or {})
+            else:
+                current_invocation_guard = {}
+
             try:
-                response = await self._ainvoke_llm(
+                response = await self._ainvoke_node_llm(
                     consultant_llm_messages,
+                    node_context=consultant_node_context,
                     stage="consultant",
                     task_id=task_id,
                     task_mode=str(state.get("task_mode") or "managed"),
                     trace_metadata={
-                        "call_kind": "consultant",
+                        "call_kind": (
+                            "consultant_contract_repair"
+                            if contract_repair_state
+                            else "consultant_finalize" if finalize_mode else "consultant"
+                        ),
                         "task_spec_revision": task_spec_revision(task_spec),
                         "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
                         "candidate_skill_ids": candidate_skill_ids,
@@ -10890,6 +19759,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         "formal_input_audit": input_resolution_context,
                         "user_source_refs": list(state.get("user_source_refs") or []),
                     },
+                    temperature=0.0 if finalize_mode else None,
                 )
             except Exception as exc:
                 failure_summary = llm_failure_summary(exc, "consultant", task_id)
@@ -10948,15 +19818,101 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     {"reason": failure_summary, "plan_progress": plan_progress},
                 )
                 return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
-            content = response.content.strip()
+            raw_content = str(response.content or "").strip()
             await self._observe_session_memory(
                 task_id,
                 "consultant",
                 messages + [response],
-                {"consultant_output": content[:3000]},
+                {"consultant_output": raw_content[:3000]},
             )
-            consultant_json_payload = self._consultant_json_payload(content)
-            consultant_json_command = self._consultant_command_from_json(content)
+            consultant_json_payload = self._consultant_json_payload(raw_content)
+            contract_repair_audit: Dict[str, Any] = {}
+            if contract_repair_state:
+                repair_result = self._apply_consultant_contract_repair(
+                    contract_repair_state,
+                    consultant_json_payload,
+                )
+                if not repair_result.get("valid"):
+                    repair_errors = list(repair_result.get("errors") or [])
+                    next_repair_state = deepcopy(contract_repair_state)
+                    next_repair_state["repair_attempt"] = int(
+                        next_repair_state.get("repair_attempt") or 0
+                    ) + 1
+                    next_repair_state["last_repair_protocol_errors"] = repair_errors
+                    next_repair_state["last_repair_response_hash"] = hashlib.sha256(
+                        raw_content.encode("utf-8")
+                    ).hexdigest()
+                    obs = (
+                        "<consultant_contract_repair_error>\n"
+                        "The response violated the hash-bound repair protocol. The controller did not apply it; "
+                        "the complete base payload and original validation errors remain unchanged.\n"
+                        + json.dumps({
+                            "error_count": len(repair_errors),
+                            "errors": repair_errors,
+                            "required_action_type": "repair_finish",
+                            "base_payload_hash": contract_repair_state.get("payload_hash"),
+                            "allowed_fields_by_index": contract_repair_state.get("allowed_fields_by_index") or {},
+                            "allowed_payload_fields": contract_repair_state.get("allowed_payload_fields") or [],
+                        }, ensure_ascii=False, sort_keys=True, default=str)
+                        + "\n</consultant_contract_repair_error>"
+                    )
+                    route = self._consultant_semantic_failure_route(
+                        repair_attempt=int(next_repair_state.get("repair_attempt") or 0),
+                        ambiguity_retry_count=len(semantic_resolution_requests),
+                    )
+                    if route == "blocked_internal_contract_error":
+                        blocked_consultation = dict(consultation_state)
+                        blocked_consultation.update({
+                            "phase": "blocked",
+                            "consultation_status": "blocked",
+                            "completion_decision": "blocked",
+                            "completion_reason": "internal_semantic_contract_error",
+                        })
+                        return {
+                            "messages": [
+                                AIMessage(content=raw_content),
+                                SystemMessage(content=obs),
+                                SystemMessage(content=(
+                                    "<blocked_internal_contract_error>Semantic contract repair budget exhausted; "
+                                    "no user clarification is required.</blocked_internal_contract_error>"
+                                )),
+                            ],
+                            "consultation_state": blocked_consultation,
+                            "consultant_contract_repair": next_repair_state,
+                            "pending_human_question": {},
+                            "contract_status": "blocked_internal_contract_error",
+                            "next_step": "finish",
+                        }
+                    return {
+                        "messages": [AIMessage(content=raw_content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "consultant_contract_repair": next_repair_state,
+                        "consultant_constraint_metrics": {
+                            "schema_validation": "failed",
+                            "repair_attempt": next_repair_state.get("repair_attempt"),
+                        },
+                        "pending_human_question": {},
+                        "contract_status": "semantic_schema_retry",
+                        "next_step": "consultant",
+                    }
+                consultant_json_payload = dict(repair_result.get("payload") or {})
+                contract_repair_audit = {
+                    "status": "applied",
+                    "initial_payload_hash": contract_repair_state.get("initial_payload_hash"),
+                    "base_payload_hash": contract_repair_state.get("payload_hash"),
+                    "repaired_payload_hash": self._consultant_payload_hash(consultant_json_payload),
+                    "repair_attempt": contract_repair_state.get("repair_attempt"),
+                    "applied_fields": list(repair_result.get("applied") or []),
+                }
+                repaired_wire = (
+                    "<action_json>"
+                    + json.dumps(consultant_json_payload, ensure_ascii=False, sort_keys=True, default=str)
+                    + "</action_json>"
+                )
+                consultant_json_command = self._consultant_command_from_json(repaired_wire)
+            else:
+                consultant_json_command = self._consultant_command_from_json(raw_content)
+            content = raw_content
             if consultant_json_command:
                 output.print_once(
                     f"consultant_json_action:{task_id}:{consultant_json_command.splitlines()[0][:80]}",
@@ -11306,24 +20262,371 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "next_step": "consultant",
                 }
 
+            # Consultant-first typed ASK / FINISH.  Legacy semantic_constraints
+            # responses remain readable below, but all new V2 prompts use this
+            # candidate-state path.
+            payload_action_type = self._normalize_action_type(
+                consultant_json_payload.get("action_type")
+                or consultant_json_payload.get("type")
+                or consultant_json_payload.get("action")
+                or ""
+            )
+            if (
+                payload_action_type in {"ask_user", "solution"}
+                and "task_spec_operations" in consultant_json_payload
+            ):
+                durable_before = load_plan_state(self.data_path, task_id)
+                raw_submission_ref = str(
+                    (durable_before.get("audit_index") or {}).get("raw_submission_ref") or ""
+                )
+                raw_selected = consultant_json_payload.get("selected_skills") or []
+                if isinstance(raw_selected, str):
+                    raw_selected = [
+                        item.strip() for item in re.split(r"[,，;\n]+", raw_selected)
+                        if item.strip()
+                    ]
+                if not isinstance(raw_selected, list):
+                    raw_selected = []
+                if not raw_selected:
+                    raw_selected = list(
+                        state.get("selected_skills")
+                        or consultation_state.get("resolved_selected_skill_ids")
+                        or []
+                    )
+                selected = (
+                    self.skill_manager.normalize_selected_skills(
+                        raw_selected,
+                        max_results=consultant_max_skills,
+                    )
+                    if self.skill_manager
+                    else []
+                )
+                selection_issues = (
+                    self.skill_manager.validate_selected_skills(
+                        raw_selected,
+                        max_results=consultant_max_skills,
+                    )
+                    if self.skill_manager and raw_selected
+                    else []
+                )
+                planner_feedback: Dict[str, Any] = {}
+
+                def candidate_rejection(
+                    code: str,
+                    instruction: str,
+                    *,
+                    candidate: Optional[Mapping[str, Any]] = None,
+                ) -> Dict[str, Any]:
+                    candidate_state = dict(candidate or {})
+                    next_consultation = deepcopy(dict(
+                        candidate_state.get("consultation_state") or consultation_state
+                    ))
+                    feedback_item = {
+                        "code": str(code),
+                        "instruction": str(instruction),
+                    }
+                    if consultant_json_payload.get("requested_slots"):
+                        feedback_item["slots"] = list(
+                            consultant_json_payload.get("requested_slots") or []
+                        )
+                    next_consultation["last_feedback"] = [
+                        *list(next_consultation.get("last_feedback") or [])[-7:],
+                        feedback_item,
+                    ]
+                    next_consultation["last_invocation_guard"] = {
+                        **current_invocation_guard,
+                        "retry_pending": True,
+                    }
+                    next_consultation.update({
+                        "phase": "consulting",
+                        "consultation_status": "active",
+                        "completion_decision": "needs_evidence",
+                        "completion_reason": str(code),
+                    })
+                    obs = (
+                        f'<consultant_validation_error code="{code}">\n'
+                        f"{instruction}\n"
+                        "</consultant_validation_error>"
+                    )
+                    update: Dict[str, Any] = {
+                        "messages": [AIMessage(content=raw_content), SystemMessage(content=obs)],
+                        "consultation_state": next_consultation,
+                        "pending_human_question": {},
+                        "contract_status": "consultant_candidate_retry",
+                        "next_step": "consultant",
+                    }
+                    candidate_task = candidate_state.get("task_spec")
+                    if task_spec_is_initialized(candidate_task):
+                        update.update({
+                            "task_spec": candidate_task,
+                            "task_revision": task_spec_revision(candidate_task),
+                            "selected_skills": list(candidate_state.get("selected_skills") or selected),
+                            "resolved_bindings": dict(candidate_state.get("resolved_bindings") or {}),
+                        })
+                        if planner_feedback:
+                            update["planner_feedback"] = planner_feedback
+                    return commit_candidate_update(update)
+
+                if selection_issues:
+                    return candidate_rejection(
+                        "CONSULTANT_SKILL_SELECTION_INVALID",
+                        "Use only canonical skill IDs from the visible capability catalog: "
+                        + json.dumps(selection_issues, ensure_ascii=False, default=str),
+                    )
+                try:
+                    mutation_proposal = self._consultant_task_spec_mutation_proposal(
+                        consultant_json_payload,
+                        consultant_node_context.binding,
+                    )
+                    planner_feedback = self._consultant_planner_feedback_proposal(
+                        consultant_json_payload,
+                        consultant_node_context.binding,
+                    )
+                    renderer_records = [
+                        self.skill_manager.get_renderer_record(skill_id)
+                        for skill_id in selected
+                        if self.skill_manager and self.skill_manager.has_renderer(skill_id)
+                    ]
+                    candidate_runtime_audits, candidate_runtime_evidence, _ = (
+                        self._consultant_runtime_seed_evidence(selected, task_id)
+                        if selected
+                        else ([], {}, "")
+                    )
+                    candidate = build_consultant_candidate(
+                        task_spec if task_spec_is_initialized(task_spec) else None,
+                        consultation_state,
+                        mutation_proposal,
+                        selected_skills=selected,
+                        task_id=task_id,
+                        raw_submission_ref=raw_submission_ref,
+                        source_refs=mutation_proposal.get("proposal_evidence_refs") or [],
+                        renderer_records=renderer_records,
+                        input_audit=input_resolution_result,
+                        runtime_evidence=candidate_runtime_evidence,
+                        project_root=str(project_root),
+                    )
+                except (InvocationProtocolError, ValueError) as exc:
+                    return candidate_rejection(
+                        "TASKSPEC_MUTATION_REJECTED",
+                        str(exc),
+                    )
+
+                if payload_action_type == "ask_user":
+                    requested_slots = list(consultant_json_payload.get("requested_slots") or [])
+                    prior_asked = {
+                        str(item)
+                        for item in consultation_state.get("asked_slots", []) or []
+                        if str(item)
+                    }
+                    repeated = sorted(prior_asked.intersection(str(item) for item in requested_slots))
+                    ask_decision = evaluate_consultant_ask(
+                        consultant_json_payload,
+                        capabilities=semantic_capabilities,
+                        resolved_bindings=candidate.get("resolved_bindings") or {},
+                        task_spec=candidate.get("task_spec") or {},
+                    )
+                    if repeated and ask_decision.get("allowed"):
+                        ask_decision = {
+                            "allowed": False,
+                            "code": "INVALID_ASK_REPEATED_SLOT",
+                            "resolved_slots": {},
+                        }
+                    if not ask_decision.get("allowed"):
+                        code = str(ask_decision.get("code") or "INVALID_ASK")
+                        instruction = {
+                            "INVALID_ASK_CONTROLLER_OWNED_SLOT": (
+                                "Do not ask the user. This value is resolved by the Controller."
+                            ),
+                            "INVALID_ASK_RUNTIME_OWNED_SLOT": (
+                                "Do not ask the user. Resolve this value through runtime evidence."
+                            ),
+                            "INVALID_ASK_ALREADY_KNOWN_SLOT": (
+                                "Do not ask the user. The candidate state already contains this value."
+                            ),
+                            "INVALID_ASK_OPTIONAL_SLOT": (
+                                "Do not ask the user for an optional value."
+                            ),
+                            "INVALID_ASK_REPEATED_SLOT": (
+                                "Do not repeat the same question without new evidence."
+                            ),
+                        }.get(code, "ASK requires a missing, required, user-owned slot from the capability contract.")
+                        if (
+                            code in {
+                                "INVALID_ASK_CONTROLLER_OWNED_SLOT",
+                                "INVALID_ASK_ALREADY_KNOWN_SLOT",
+                                "INVALID_ASK_OPTIONAL_SLOT",
+                            }
+                            and candidate.get("completion", {}).get("decision") == "ready_to_finalize"
+                        ):
+                            resolved_consultation = deepcopy(dict(candidate.get("consultation_state") or {}))
+                            resolved_consultation.update({
+                                "phase": "ready_to_plan",
+                                "consultation_status": "ready",
+                                "completion_decision": "ready_to_finalize",
+                                "completion_reason": "controller_resolved_unnecessary_ask",
+                                "last_feedback": [{"code": code, "instruction": instruction}],
+                                "last_invocation_guard": {
+                                    **current_invocation_guard,
+                                    "retry_pending": False,
+                                },
+                                "pending_question": None,
+                                "pending_human_question": None,
+                            })
+                            return commit_candidate_update({
+                                "messages": [AIMessage(content=raw_content), SystemMessage(content=(
+                                    f'<consultant_ask_resolved code="{code}">{instruction}</consultant_ask_resolved>'
+                                ))],
+                                "task_spec": candidate["task_spec"],
+                                "task_revision": task_spec_revision(candidate["task_spec"]),
+                                "selected_skills": selected,
+                                "selected_skills_raw": list(raw_selected),
+                                "resolved_bindings": candidate.get("resolved_bindings") or {},
+                                "runtime_audit": candidate_runtime_audits,
+                                "consultation_state": resolved_consultation,
+                                "pending_human_question": {},
+                                "contract_status": "canonical_task_ready",
+                                "requirements_summary": instruction,
+                                **({"planner_feedback": planner_feedback} if planner_feedback else {}),
+                                "next_step": "planner",
+                            })
+                        return candidate_rejection(code, instruction, candidate=candidate)
+                    question = str(consultant_json_payload.get("question") or "").strip()
+                    if not question:
+                        return candidate_rejection(
+                            "ASK_QUESTION_REQUIRED",
+                            "Provide one precise question for the validated requested_slots.",
+                            candidate=candidate,
+                        )
+                    question_id = "Q-" + uuid.uuid4().hex[:12]
+                    pending = {
+                        "type": "consultant_question",
+                        "stage": "consultant",
+                        "question_id": question_id,
+                        "question": question,
+                        "requested_slots": requested_slots,
+                        "expected_type": str(consultant_json_payload.get("expected_type") or "string"),
+                        "owner": "user",
+                        "resume_step": "consultant",
+                    }
+                    candidate_consultation = deepcopy(dict(candidate.get("consultation_state") or {}))
+                    candidate_consultation["asked_slots"] = list(dict.fromkeys([
+                        *list(candidate_consultation.get("asked_slots") or []),
+                        *requested_slots,
+                    ]))
+                    candidate_consultation["last_feedback"] = []
+                    candidate["consultation_state"] = candidate_consultation
+                    candidate = build_consultant_candidate(
+                        candidate.get("task_spec"),
+                        candidate_consultation,
+                        {
+                            "proposal_type": "task_spec_mutation",
+                            "schema_version": 1,
+                            "operations": [],
+                            "unresolved_ambiguities": [],
+                            "proposal_evidence_refs": [],
+                        },
+                        selected_skills=selected,
+                        task_id=task_id,
+                        renderer_records=renderer_records,
+                        input_audit=input_resolution_result,
+                        runtime_evidence=candidate_runtime_evidence,
+                        pending_question=pending,
+                        project_root=str(project_root),
+                    )
+                    committed_update = commit_candidate_update({
+                        "messages": [AIMessage(content=raw_content)],
+                        "task_spec": candidate["task_spec"],
+                        "task_revision": task_spec_revision(candidate["task_spec"]),
+                        "selected_skills": selected,
+                        "resolved_bindings": candidate.get("resolved_bindings") or {},
+                        "runtime_audit": candidate_runtime_audits,
+                        "consultation_state": candidate["consultation_state"],
+                        "pending_human_question": pending,
+                        **({"planner_feedback": planner_feedback} if planner_feedback else {}),
+                        "contract_status": "needs_user",
+                        "next_step": "ask_user",
+                    })
+                    self._append_semantic_conversation_turn(
+                        task_id,
+                        role="consultant_question",
+                        content=question,
+                        question_id=question_id,
+                    )
+                    return committed_update
+
+                candidate_consultation = deepcopy(dict(candidate.get("consultation_state") or {}))
+                candidate_consultation["last_feedback"] = []
+                candidate_consultation["last_invocation_guard"] = {
+                    **current_invocation_guard,
+                    "retry_pending": False,
+                }
+                if candidate.get("completion", {}).get("decision") != "ready_to_finalize":
+                    candidate["consultation_state"] = candidate_consultation
+                    return candidate_rejection(
+                        "FINISH_CANDIDATE_INCOMPLETE",
+                        "Valid TaskSpec and skill progress was committed, but candidate completion still has unresolved Controller/runtime evidence: "
+                        + ", ".join(candidate.get("completion", {}).get("unresolved_requirement_ids") or [])[:1200],
+                        candidate=candidate,
+                    )
+                candidate_consultation.update({
+                    "phase": "ready_to_plan",
+                    "consultation_status": "ready",
+                    "completion_decision": "ready_to_finalize",
+                    "completion_reason": "candidate_state_complete",
+                    "pending_question": None,
+                    "pending_human_question": None,
+                })
+                summary = str(consultant_json_payload.get("summary") or "").strip()
+                return commit_candidate_update({
+                    "messages": [AIMessage(content=raw_content)],
+                    "input_audit": input_resolution_result,
+                    "selected_skills": selected,
+                    "selected_skills_raw": list(raw_selected),
+                    "resolved_bindings": candidate.get("resolved_bindings") or {},
+                    "runtime_audit": candidate_runtime_audits,
+                    "skill_selection_source": "consultant_candidate_finish",
+                    "requirements_summary": summary,
+                    "task_spec": candidate["task_spec"],
+                    "task_revision": task_spec_revision(candidate["task_spec"]),
+                    "consultation_state": candidate_consultation,
+                    "pending_human_question": {},
+                    **({"planner_feedback": planner_feedback} if planner_feedback else {}),
+                    "contract_status": "canonical_task_ready",
+                    "memory_packet_context": self._consultant_handoff_memory_packet(
+                        summary, consultant_memory_retrieval_context
+                    ),
+                    "wiki_memory_context": consultant_wiki_context,
+                    "next_step": "planner",
+                })
+
             # ASK 动作
             if content.startswith("ASK"):
                 question = content.replace("ASK", "").strip()
+                feedback_item = {
+                    "code": "ASK_REQUESTED_SLOTS_REQUIRED",
+                    "instruction": (
+                        "ASK must be a typed JSON action with requested_slots; "
+                        "do not display this untyped question to the user."
+                    ),
+                }
+                rejected_consultation = deepcopy(consultation_state)
+                rejected_consultation["last_feedback"] = [
+                    *list(rejected_consultation.get("last_feedback") or [])[-7:],
+                    feedback_item,
+                ]
+                rejected_consultation["last_invocation_guard"] = {
+                    **current_invocation_guard,
+                    "retry_pending": True,
+                }
                 return {
-                    "messages": [AIMessage(content=content)],
-                    "consultation_state": {
-                        **consultation_state,
-                        "phase": "needs_user",
-                        "consultation_status": "needs_user",
-                        "completion_decision": "needs_user",
-                        "completion_reason": "consultant_requested_user_decision",
-                    },
-                    "pending_human_question": {
-                        "type": "consultant_question",
-                        "stage": "consultant",
-                        "question": question,
-                    },
-                    "next_step": "ask_user",
+                    "messages": [AIMessage(content=content), SystemMessage(content=(
+                        '<consultant_validation_error code="ASK_REQUESTED_SLOTS_REQUIRED">'
+                        + feedback_item["instruction"]
+                        + "</consultant_validation_error>"
+                    ))],
+                    "consultation_state": rejected_consultation,
+                    "pending_human_question": {},
+                    "next_step": "consultant",
                 }
 
             # FINISH 动作. Some models omit the literal FINISH prefix while still
@@ -11357,6 +20660,32 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     or ""
                 ).strip().lower().replace("-", "_")
                 payload_type = {"final": "finish", "solution": "finish", "answer": "finish"}.get(payload_type, payload_type)
+                payload_selected = consultant_json_payload.get("selected_skills") or []
+                if isinstance(payload_selected, str):
+                    payload_selected = [
+                        item.strip()
+                        for item in re.split(r"[,，;\n]+", payload_selected)
+                        if item.strip()
+                    ]
+                payload_selected = [
+                    str(item).strip()
+                    for item in payload_selected
+                    if str(item).strip()
+                ] if isinstance(payload_selected, list) else []
+                validation_base_constraints = semantic_constraints_from_task_spec(
+                    task_spec,
+                    selected_skill_ids=payload_selected,
+                )
+                validation_provenance_catalog = semantic_provenance_catalog(
+                    task_spec,
+                    consultation_state=consultation_state,
+                    selected_skill_ids=[
+                        *candidate_skill_ids,
+                        *loaded_skill_ids,
+                        *list(state.get("selected_skills") or []),
+                        *payload_selected,
+                    ],
+                )
                 if payload_type != "finish" or "semantic_constraints" not in consultant_json_payload:
                     semantic_validation = {
                         "valid": False,
@@ -11370,25 +20699,93 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     }
                 else:
                     semantic_validation = validate_compiled_constraints(
-                        consultant_json_payload.get("semantic_constraints")
+                        consultant_json_payload.get("semantic_constraints"),
+                        provenance_catalog=validation_provenance_catalog,
+                        require_resolvable_provenance=True,
+                        base_constraints=validation_base_constraints,
                     )
                 if not semantic_validation.get("valid"):
-                    errors = list(semantic_validation.get("errors") or [])[:8]
+                    all_errors = list(semantic_validation.get("errors") or [])
+                    repair_base_payload = deepcopy(consultant_json_payload)
+                    if not repair_base_payload and content.startswith("FINISH"):
+                        repair_base_payload = {
+                            "action_type": "finish",
+                            "selected_skills": [],
+                            "summary": summary,
+                        }
+                    next_repair_state = self._consultant_contract_repair_state(
+                        repair_base_payload,
+                        all_errors,
+                        previous=contract_repair_state,
+                    )
+                    machine_feedback = {
+                        "error_count": len(all_errors),
+                        "errors": all_errors,
+                        "errors_by_field": next_repair_state.get("errors_by_field") or {},
+                        "base_payload_hash": next_repair_state.get("payload_hash"),
+                        "allowed_fields_by_index": next_repair_state.get("allowed_fields_by_index") or {},
+                        "allowed_payload_fields": next_repair_state.get("allowed_payload_fields") or [],
+                        "valid_categories": [
+                            "required_input", "required_output", "required_skill", "required_behavior",
+                            "forbidden_behavior", "preference", "conditional_policy", "failure_policy",
+                            "runtime_constraint",
+                        ],
+                        "valid_operators": [
+                            "eq", "neq", "contains", "forbid", "require", "prefer", "on_condition",
+                        ],
+                        "valid_strengths": [
+                            "hard", "required", "preference", "conditional", "advisory", "ambiguous",
+                        ],
+                        "required_action_type": "repair_finish",
+                    }
                     obs = (
                         "<consultant_semantic_constraint_validation_error>\n"
                         "The FINISH semantic contract failed deterministic schema validation. "
-                        "Retry one complete JSON finish; do not omit constraints and do not return raw prompt text as one claim.\n"
-                        + json.dumps(errors, ensure_ascii=False, sort_keys=True, default=str)
+                        "Return a hash-bound repair_finish patch for only the reported fields. "
+                        "Do not regenerate the FINISH payload or change any valid field.\n"
+                        + json.dumps(machine_feedback, ensure_ascii=False, sort_keys=True, default=str)
                         + "\n</consultant_semantic_constraint_validation_error>"
                     )
                     logger.warning(
-                        "Consultant semantic constraint validation failed: task=%s errors=%s",
+                        "Consultant semantic constraint validation failed: task=%s error_count=%s display_errors=%s",
                         task_id,
-                        json.dumps(errors, ensure_ascii=False, sort_keys=True, default=str),
+                        len(all_errors),
+                        json.dumps(all_errors[:8], ensure_ascii=False, sort_keys=True, default=str),
                     )
+                    route = self._consultant_semantic_failure_route(
+                        repair_attempt=int(next_repair_state.get("repair_attempt") or 0),
+                        ambiguity_retry_count=len(semantic_resolution_requests),
+                    )
+                    if route == "blocked_internal_contract_error":
+                        blocked_consultation = dict(consultation_state)
+                        blocked_consultation.update({
+                            "phase": "blocked",
+                            "consultation_status": "blocked",
+                            "completion_decision": "blocked",
+                            "completion_reason": "internal_semantic_contract_error",
+                        })
+                        return {
+                            "messages": [
+                                AIMessage(content=raw_content),
+                                SystemMessage(content=obs),
+                                SystemMessage(content=(
+                                    "<blocked_internal_contract_error>Semantic contract repair budget exhausted; "
+                                    "no user clarification is required.</blocked_internal_contract_error>"
+                                )),
+                            ],
+                            "consultation_state": blocked_consultation,
+                            "consultant_contract_repair": next_repair_state,
+                            "consultant_constraint_metrics": semantic_validation.get("metrics") or {},
+                            "pending_human_question": {},
+                            "contract_status": "blocked_internal_contract_error",
+                            "next_step": "finish",
+                        }
                     return {
-                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "messages": [AIMessage(content=raw_content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "consultant_contract_repair": next_repair_state,
                         "consultant_constraint_metrics": semantic_validation.get("metrics") or {},
+                        "pending_human_question": {},
                         "contract_status": "semantic_schema_retry",
                         "next_step": "consultant",
                     }
@@ -11409,24 +20806,61 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     ]
                     obs = (
                         "<consultant_semantic_resolution_request>\n"
-                        "Critical compiled meaning is AMBIGUOUS/UNKNOWN/UNMAPPED. Resolve it only from available context; "
-                        "if it remains ambiguous, return ASK instead of guessing or finishing.\n"
+                        "A schema-valid critical constraint is explicitly AMBIGUOUS/UNKNOWN/UNMAPPED after the "
+                        "Consultant received TaskSpec, input audit, and runtime evidence. This is a genuine semantic "
+                        "clarification, not an internal schema failure.\n"
                         + json.dumps(unresolved, ensure_ascii=False, sort_keys=True, default=str)
                         + "\n</consultant_semantic_resolution_request>"
                     )
+                    ambiguity_keys = ", ".join(
+                        str(item.get("semantic_key") or item.get("constraint_id") or "requirement")
+                        for item in unresolved
+                    )
+                    needs_user_consultation = dict(consultation_state)
+                    needs_user_consultation.update({
+                        "phase": "needs_user",
+                        "consultation_status": "needs_user",
+                        "completion_decision": "needs_user",
+                        "completion_reason": "validated_semantic_ambiguity",
+                    })
                     return {
-                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "messages": [AIMessage(content=raw_content), SystemMessage(content=obs)],
+                        "consultation_state": needs_user_consultation,
+                        "consultant_contract_repair": {},
                         "consultant_constraint_metrics": semantic_validation.get("metrics") or {},
-                        "contract_status": "semantic_resolution_required",
-                        "next_step": "consultant",
+                        "pending_human_question": {
+                            "type": "semantic_constraint_clarification",
+                            "stage": "consultant",
+                            "question": (
+                                "Please clarify the unresolved semantic decision for: "
+                                + (ambiguity_keys or "the critical requirement")
+                                + "."
+                            ),
+                            "resume_step": "consultant",
+                        },
+                        "contract_status": "blocked_need_user_decision",
+                        "next_step": "ask_user",
                     }
-                compiled_task_spec = merge_compiled_constraints(
-                    task_spec,
-                    semantic_validation.get("constraints", []),
-                    project_root=project_root,
-                    metrics=semantic_validation.get("metrics") or {},
-                )
+                controller_base_constraints = semantic_constraints_from_task_spec(task_spec)
+                consultant_semantic_delta = [
+                    item
+                    for item in semantic_validation.get("constraints", [])
+                    if not str(item.get("semantic_key") or "").startswith("required_skill.")
+                ]
                 semantic_metrics = dict(semantic_validation.get("metrics") or {})
+                semantic_metrics.update({
+                    "deterministic_base_constraint_count": len(controller_base_constraints),
+                    "consultant_semantic_delta_count": len(consultant_semantic_delta),
+                })
+                if contract_repair_audit:
+                    semantic_metrics["contract_repair"] = deepcopy(contract_repair_audit)
+                compiled_task_spec = apply_task_spec_mutation_proposal(
+                    task_spec,
+                    constraint_mutation_proposal(
+                        consultant_semantic_delta
+                    ),
+                    project_root=project_root,
+                )
                 logger.info(
                     "Consultant constraint extraction: task=%s %s",
                     task_id,
@@ -11508,7 +20942,11 @@ If the user is actually asking you to run analysis or inspect local files, say t
                                 "⚠️ Consultant workflow handoff failed validation; asking it to repair the stage coverage.",
                                 Fore.YELLOW,
                             )
-                            return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
+                            return {
+                                "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                                "consultant_contract_repair": {},
+                                "next_step": "consultant",
+                            }
                         workflow_handoff = strip_workflow_activation(validation["handoff"])
                         active_skills = []
                         future_skills = []
@@ -11553,7 +20991,11 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             "⚠️ Consultant FINISH was missing skill/workflow handoff markers; asking it to repair.",
                             Fore.YELLOW,
                         )
-                        return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
+                        return {
+                            "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                            "consultant_contract_repair": {},
+                            "next_step": "consultant",
+                        }
                     else:
                         raw_selected = self.skill_manager.parse_selected_skill_ids(summary)
                         selected = self.skill_manager.normalize_selected_skills(raw_selected, max_results=consultant_max_skills)
@@ -11587,10 +21029,26 @@ If the user is actually asking you to run analysis or inspect local files, say t
                                     AIMessage(content=content),
                                     SystemMessage(content=repair_decision["feedback"]),
                                 ],
+                                "consultant_contract_repair": {},
                                 "next_step": "consultant",
                             }
 
                         selected = list(repair_decision["selected"])
+                        selected_base_constraints = semantic_constraints_from_task_spec(
+                            compiled_task_spec,
+                            selected_skill_ids=selected,
+                        )
+                        compiled_task_spec = merge_compiled_constraints(
+                            compiled_task_spec,
+                            selected_base_constraints,
+                            project_root=project_root,
+                            metrics=semantic_metrics,
+                        )
+                        final_semantic_constraints = semantic_constraints_from_task_spec(
+                            compiled_task_spec,
+                            selected_skill_ids=selected,
+                        )
+                        semantic_metrics["final_constraint_count"] = len(final_semantic_constraints)
                         runtime_audits, runtime_summary = self._consultant_runtime_preflight(selected, task_id)
                         repaired_summary = self._repair_consultant_skill_summary(
                             summary,
@@ -11603,32 +21061,21 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             repaired_summary = (repaired_summary.rstrip() + "\n\n" + runtime_summary).strip()
                         output.print_once(
                             f"consultant_bounded_repair:{len(validation_errors)}",
-                            "✓ Consultant skill repair converged inside the original candidate allowlist. Handing to Planner.",
+                            "✓ Consultant skill repair converged; entering versioned FINALIZE.",
                             Fore.GREEN,
                         )
+                        # The FINISH handoff is represented by the committed
+                        # TaskSpec plus selected-skill/runtime projections.
+                        # Do not persist a second inline semantic contract;
+                        # FINALIZE v4 owns the immutable compiled artifact.
+                        consultation_state.pop("final_contract", None)
                         consultation_state.update({
                             "phase": "finalize",
-                            "consultation_status": "completed",
+                            "consultation_status": "ready",
                             "completion_decision": "ready_to_finalize",
-                            "completion_reason": "formal_contract_compiled_with_bounded_skill_repair",
-                            "final_contract": {
-                                "intent": str(compiled_task_spec.get("goal") or consultant_context),
-                                "selected_skills": list(selected),
-                                "summary": repaired_summary,
-                                "constraints": list(semantic_validation.get("constraints") or []),
-                                "verified_evidence": [
-                                    dict(item) for item in (consultation_state.get("requirements") or {}).values()
-                                    if item.get("status") == "satisfied"
-                                ],
-                                "remaining_uncertainty": list(consultation_state.get("unresolved_requirement_ids") or []),
-                                "required_capabilities": list(selected),
-                                "input_status": str(input_resolution_result.get("status") or "not_applicable"),
-                                "runtime_status": runtime_audits,
-                                "semantic_constraint_count": len(semantic_validation.get("constraints") or []),
-                                "task_spec_revision": task_spec_revision(compiled_task_spec),
-                            },
+                            "completion_reason": "formal_contract_ready_for_versioned_finalize",
                         })
-                        return {
+                        return commit_candidate_update({
                             "messages": [AIMessage(content="FINISH\n" + repaired_summary)],
                             "input_audit": input_resolution_result,
                             "selected_skills": selected,
@@ -11643,40 +21090,48 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             "task_revision": task_spec_revision(compiled_task_spec),
                             "consultant_constraint_metrics": semantic_metrics,
                             "consultation_state": consultation_state,
-                            "contract_status": "semantic_contract_compiled",
-                            "next_step": "planner",
-                        }
+                            "consultant_contract_repair": {},
+                            "pending_human_question": {},
+                            "contract_status": "semantic_contract_finalize_pending",
+                            "next_step": "consultant",
+                        })
                 else:
                     raw_selected = []
                     selected = []
+                selected_base_constraints = semantic_constraints_from_task_spec(
+                    compiled_task_spec,
+                    selected_skill_ids=selected,
+                )
+                compiled_task_spec = merge_compiled_constraints(
+                    compiled_task_spec,
+                    selected_base_constraints,
+                    project_root=project_root,
+                    metrics=semantic_metrics,
+                )
+                final_semantic_constraints = semantic_constraints_from_task_spec(
+                    compiled_task_spec,
+                    selected_skill_ids=selected,
+                )
+                semantic_metrics["final_constraint_count"] = len(final_semantic_constraints)
                 runtime_audits, runtime_preflight_summary = self._consultant_runtime_preflight(selected, task_id)
                 if runtime_preflight_summary:
                     summary = (summary.rstrip() + "\n\n" + runtime_preflight_summary).strip()
-                output.print_once("consultant_finish", "✓ Consultant complete. Handing to Planner.", Fore.GREEN)
+                output.print_once(
+                    "consultant_finish",
+                    "✓ Consultant evidence complete; entering versioned FINALIZE.",
+                    Fore.GREEN,
+                )
+                # Fresh work advances by reference into FINALIZE v4.  Inline
+                # ``final_contract`` is retained only in the frozen v2 replay
+                # implementation below; it is never a new-session write.
+                consultation_state.pop("final_contract", None)
                 consultation_state.update({
                     "phase": "finalize",
-                    "consultation_status": "completed",
+                    "consultation_status": "ready",
                     "completion_decision": "ready_to_finalize",
-                    "completion_reason": "formal_contract_compiled",
-                    "final_contract": {
-                        "intent": str(compiled_task_spec.get("goal") or consultant_context),
-                        "selected_skills": list(selected),
-                        "summary": summary,
-                        "constraints": list(semantic_validation.get("constraints") or []),
-                        "verified_evidence": [
-                            dict(item) for item in (consultation_state.get("requirements") or {}).values()
-                            if item.get("status") == "satisfied"
-                        ],
-                        "remaining_uncertainty": list(consultation_state.get("unresolved_requirement_ids") or []),
-                        "required_capabilities": list(selected),
-                        "input_status": str(input_resolution_result.get("status") or "not_applicable"),
-                        "runtime_status": runtime_audits,
-                        "handoff": workflow_handoff if has_workflow_handoff else {"selected_skills": list(selected)},
-                        "semantic_constraint_count": len(semantic_validation.get("constraints") or []),
-                        "task_spec_revision": task_spec_revision(compiled_task_spec),
-                    },
+                    "completion_reason": "formal_contract_ready_for_versioned_finalize",
                 })
-                return {
+                return commit_candidate_update({
                     "messages": [AIMessage(content=content)],
                     "input_audit": input_resolution_result,
                     "selected_skills": selected,
@@ -11698,17 +21153,27 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "task_revision": task_spec_revision(compiled_task_spec),
                     "consultant_constraint_metrics": semantic_metrics,
                     "consultation_state": consultation_state,
-                    "contract_status": "semantic_contract_compiled",
+                    "consultant_contract_repair": {},
+                    "pending_human_question": {},
+                    "contract_status": "semantic_contract_finalize_pending",
                     "memory_packet_context": self._consultant_handoff_memory_packet(summary, consultant_memory_retrieval_context),
                     "wiki_memory_context": consultant_wiki_context,
-                    "next_step": "planner",
-                }
+                    "next_step": "consultant",
+                })
+            error_code, repair_instruction = self._consultant_action_contract_error(
+                raw_content,
+                consultant_json_payload,
+            )
             obs = (
-                "<consultant_validation_error>\n"
-                "Consultant response did not use any supported action format. Reply with exactly one "
+                f'<consultant_validation_error code="{error_code}">\n'
+                f"{repair_instruction}\n"
+                "Reply with exactly one "
                 "<action_json> block or one legacy command: EXECUTE, SEARCH, LOAD_WORKFLOW_TEMPLATE, "
                 "LOAD_SKILL_DOC, LOAD_REFERENCE, LOAD_SCRIPT, ASK, or FINISH.\n"
                 "JSON examples: "
+                '<action_json>{"action_type":"execute","requirement_ids":["requirement-id"],'
+                '"purpose":"one bounded read-only verification","expected_evidence":{"field":"value"},'
+                '"language":"bash","code":"printf ready"}</action_json> '
                 '<action_json>{"action_type":"load_skill_doc","skill_id":"genomics/wgs-short-read-mapping"}</action_json> '
                 'or <action_json>{"action_type":"finish","selected_skills":["skill/id"],"summary":"verified context"}</action_json>.\n'
                 "If verification is complete, use FINISH with [SELECTED_SKILLS: ...] or a valid workflow handoff. "
@@ -11734,6 +21199,20 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "pending_human_question": {},
                     "next_step": "consultant",
                 }
+            question_id = str(pending.get("question_id") or "").strip()
+            if not question_id:
+                question_id = "Q-" + hashlib.sha256(
+                    f"{task_id}\n{question}".encode("utf-8")
+                ).hexdigest()[:12]
+                pending = {**dict(pending), "question_id": question_id}
+            # Persist the exact question before the interrupt.  Re-entry is
+            # idempotent by question_id, so a crash cannot create duplicates.
+            self._append_semantic_conversation_turn(
+                task_id,
+                role="consultant_question",
+                content=question,
+                question_id=question_id,
+            )
             output.print_once(
                 f"consultant_question:{task_id}:{question}",
                 f"{Fore.GREEN}🗣️  {question}{Style.RESET_ALL}",
@@ -11742,22 +21221,38 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "type": pending.get("type", "consultant_question"),
                 "stage": pending.get("stage", "consultant"),
                 "question": question,
+                "question_id": question_id,
+                "requested_slots": list(pending.get("requested_slots") or []),
             })
             stage = str(pending.get("stage") or "consultant")
-            resume_step = str(pending.get("resume_step") or ("planner" if stage == "generate" else "consultant"))
-            task_spec = apply_user_feedback(
-                self._task_spec_for_state(dict(state), state.get("messages", [])),
-                str(user_answer or ""),
-                kind=f"{stage}_answer",
-                question=question,
-                change_type="requirement_change",
-                source_task_id=task_id,
-                message_origin="user",
-                project_root=project_root,
+            current_task_spec = self._task_spec_for_state(
+                dict(state),
+                state.get("messages", []),
             )
-            if stage == "generate" and str(state.get("task_mode") or "managed") == "managed":
-                resume_step = "planner"
-            user_correction = self._state_update_for_user_skill_correction(str(user_answer or ""), state, task_id)
+            turns, answer_turn_ref = self._append_semantic_conversation_turn(
+                task_id,
+                role="user",
+                content=str(user_answer or ""),
+                question_id=question_id,
+            )
+            # requested_slots are context for Consultant interpretation, never
+            # a string-fill instruction.  The answer may also correct old
+            # facts, add constraints, or revoke requirements.
+            updated_consultation_state = deepcopy(dict(state.get("consultation_state") or {}))
+            answered_question = {
+                **dict(pending),
+                "status": "answered_pending_interpretation",
+                "answer_turn_ref": answer_turn_ref,
+            }
+            updated_consultation_state.update({
+                "phase": "consulting",
+                "consultation_status": "active",
+                "completion_decision": "needs_evidence",
+                "completion_reason": "user_answer_requires_consultant_interpretation",
+                "pending_question": answered_question,
+                "pending_human_question": answered_question,
+                "last_invocation_guard": {},
+            })
             plan_state = load_plan_state(self.data_path, task_id)
             running_step = self._running_plan_step(plan_state)
             if self._plan_step_action_is(running_step, "ask_user"):
@@ -11779,10 +21274,20 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "pending_human_question": {},
                 "llm_retry_counts": {},
                 "plan_progress": plan_progress,
-                "next_step": resume_step,
-                "task_spec": task_spec,
-                "task_revision": task_spec_revision(task_spec),
+                "conversation_evidence": dict(plan_state.get("conversation_evidence") or {}),
+                "consultation_state": updated_consultation_state,
+                "next_step": "consultant",
             }
+            if str(pending.get("type") or "") == "task_spec_contract_repair":
+                # The old issues describe the superseded TaskSpec revision.
+                # Planner will deterministically reproject and derive a fresh
+                # issue set; stale issues cannot force another identical ASK.
+                base_update["validation_issues"] = []
+            if task_spec_is_initialized(current_task_spec):
+                base_update.update({
+                    "task_spec": current_task_spec,
+                    "task_revision": task_spec_revision(current_task_spec),
+                })
             if stage == "recovery":
                 base_update.update({
                     "pending_recovery_action": {},
@@ -11791,14 +21296,6 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "recovery_status": "USER_DECISION_RECEIVED",
                     "forbidden_recovery_actions": [],
                 })
-            if user_correction:
-                base_update.update(user_correction)
-                base_update["messages"].append(SystemMessage(
-                    content=(
-                        "User explicitly corrected the active skill/workflow. "
-                        "Re-plan using the corrected active skill state; do not reuse the prior incompatible workflow."
-                    )
-                ))
             return base_update
 
         # ════════════════════════════════════════════
@@ -11810,6 +21307,309 @@ If the user is actually asking you to run analysis or inspect local files, say t
             task_spec = self._task_spec_for_state(dict(state), messages)
             task_revision = task_spec_revision(task_spec)
             task_id = state.get("task_id", "default")
+            consultation_owner = dict(state.get("consultation_state") or {})
+            planner_protocol = dict(
+                consultation_owner.get("finalize_protocol") or {}
+            )
+            canonical_candidate_ready = bool(
+                task_spec_is_initialized(task_spec)
+                and (state.get("selected_skills") or consultation_owner.get("resolved_selected_skill_ids"))
+                and str(consultation_owner.get("completion_decision") or "") == "ready_to_finalize"
+                and str(consultation_owner.get("phase") or "") in {"ready", "ready_to_plan", "ready_to_finalize"}
+            )
+            immutable_consultant_contract: Dict[str, Any] = {}
+            if (
+                str(state.get("task_mode") or "managed") == "managed"
+                and not planner_protocol
+                and not canonical_candidate_ready
+            ):
+                pending_consultation = deepcopy(consultation_owner)
+                pending_consultation.update({
+                    "phase": "finalize",
+                    "consultation_status": "ready",
+                    "completion_decision": "ready_to_finalize",
+                    "completion_reason": (
+                        "planner_gate_requires_versioned_finalize"
+                    ),
+                })
+                return {
+                    "messages": [SystemMessage(content=(
+                        "<planner_contract_gate_pending>"
+                        "Managed tasks require a versioned, immutable "
+                        "FINALIZE contract before Planner."
+                        "</planner_contract_gate_pending>"
+                    ))],
+                    "consultation_state": pending_consultation,
+                    "contract_status": "semantic_contract_finalize_pending",
+                    "next_step": "consultant",
+                }
+            planner_protocol_pair = (
+                int(planner_protocol.get("schema_version") or 0),
+                int(planner_protocol.get("wire_schema_version") or 0),
+            )
+            if planner_protocol_pair == (0, 0) and canonical_candidate_ready:
+                # Consultant-first candidate state is already the canonical
+                # contract.  Do not force a second LLM re-render/finalize pass.
+                pass
+            elif planner_protocol_pair == (4, 3):
+                try:
+                    immutable_consultant_contract = (
+                        self._load_verified_finalize_v4_contract(
+                            task_id=task_id,
+                            protocol=planner_protocol,
+                            task_spec=task_spec,
+                            selected_skill_ids=(
+                                state.get("selected_skills")
+                                or consultation_owner.get(
+                                    "resolved_selected_skill_ids"
+                                )
+                                or []
+                            ),
+                            # Planner still verifies every immutable FINALIZE
+                            # artifact and skill binding.  The live TaskSpec
+                            # projection may contain controller-owned merge
+                            # updates after the context was frozen, so do not
+                            # reject the checkpoint on that derived hash alone.
+                            enforce_task_spec_binding_hash=False,
+                        )
+                    )
+                except (OSError, ValueError, SnapshotConflictError) as exc:
+                    blocked_consultation = deepcopy(consultation_owner)
+                    blocked_consultation.update({
+                        "phase": "blocked",
+                        "consultation_status": "blocked",
+                        "completion_decision": "blocked",
+                        "completion_reason": "FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                        "terminal_diagnostic": {
+                            "error_code": "FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                            "error_owner": "controller_storage",
+                            "detail": (
+                                "Planner could not reload the immutable compiled "
+                                f"contract: {type(exc).__name__}: {exc}"
+                            ),
+                        },
+                    })
+                    return {
+                        "messages": [SystemMessage(content=(
+                            "<planner_contract_gate_error>"
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                            "</planner_contract_gate_error>"
+                        ))],
+                        "consultation_state": blocked_consultation,
+                        "task_status": TASK_STATUS_BLOCKED,
+                        "failure_type": "FINALIZE_CHECKPOINT_ARTIFACT_MISSING",
+                        "failure_owner": "controller_storage",
+                        "next_step": "finish",
+                    }
+            elif planner_protocol_pair in {(2, 0), (2, 2), (3, 2)}:
+                try:
+                    if str(planner_protocol.get("status") or "") != "compiled":
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                    legacy_attempts = [
+                        dict(item)
+                        for item in planner_protocol.get("attempts") or []
+                        if isinstance(item, Mapping)
+                    ]
+                    if not legacy_attempts:
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                    legacy_attempt = legacy_attempts[-1]
+                    if (
+                        str(legacy_attempt.get("provider_status") or "")
+                        != "succeeded"
+                        or str(legacy_attempt.get("protocol_status") or "")
+                        != "valid"
+                    ):
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                    legacy_artifact = (
+                        ContextLineageStore(
+                            self.data_path, task_id
+                        ).lookup_finalize_response_artifact(
+                            attempt_id=str(
+                                legacy_attempt.get("attempt_id") or ""
+                            ),
+                            call_id=str(legacy_attempt.get("call_id") or ""),
+                            canonical_request_hash=str(
+                                legacy_attempt.get("canonical_request_hash")
+                                or ""
+                            ),
+                        )
+                        or {}
+                    )
+                    legacy_contract = dict(
+                        consultation_owner.get("final_contract") or {}
+                    )
+                    outcome_summary = legacy_artifact.get(
+                        "validation_summary"
+                    )
+                    controller_selected = list(
+                        consultation_owner.get(
+                            "resolved_selected_skill_ids"
+                        ) or []
+                    )
+                    state_selected = list(
+                        state.get("selected_skills")
+                        or controller_selected
+                    )
+                    final_selected = legacy_contract.get("selected_skills")
+                    final_constraints = legacy_contract.get("constraints")
+                    durable_contract_hash = str(
+                        (outcome_summary or {}).get(
+                            "compiled_contract_hash"
+                        ) or ""
+                    ) if isinstance(outcome_summary, Mapping) else ""
+                    if (
+                        not legacy_artifact
+                        or not legacy_contract
+                        or not isinstance(outcome_summary, Mapping)
+                        or not str(
+                            legacy_artifact.get("protocol_outcome_ref") or ""
+                        )
+                        or str(
+                            legacy_artifact.get("provider_status") or ""
+                        ) != "succeeded"
+                        or str(
+                            legacy_artifact.get("protocol_status") or ""
+                        ) != "valid"
+                        or str(
+                            legacy_attempt.get("canonical_request_hash") or ""
+                        ) != str(
+                            planner_protocol.get(
+                                "active_canonical_request_hash"
+                            ) or ""
+                        )
+                        or str(
+                            legacy_contract.get("response_artifact_ref") or ""
+                        )
+                        != str(
+                            legacy_artifact.get("response_artifact_ref") or ""
+                        )
+                        or str(
+                            legacy_contract.get("response_content_hash") or ""
+                        )
+                        != str(
+                            legacy_artifact.get("response_content_hash") or ""
+                        )
+                        or str(
+                            legacy_contract.get("compiled_contract_hash") or ""
+                        )
+                        != durable_contract_hash
+                        or canonical_compiled_contract_hash(legacy_contract)
+                        != durable_contract_hash
+                        or deepcopy(outcome_summary.get("coverage_audit"))
+                        != deepcopy(legacy_contract.get("coverage_audit"))
+                        or int(outcome_summary.get("constraint_count") or -1)
+                        != int(
+                            legacy_contract.get(
+                                "semantic_constraint_count"
+                            ) or -2
+                        )
+                        or not isinstance(final_constraints, list)
+                        or int(
+                            legacy_contract.get(
+                                "semantic_constraint_count"
+                            ) or -1
+                        ) != len(final_constraints or [])
+                        or not isinstance(final_selected, list)
+                        or final_selected != controller_selected
+                        or controller_selected != state_selected
+                        or str(
+                            legacy_contract.get("finalize_context_id") or ""
+                        ) != str(
+                            planner_protocol.get("finalize_context_id") or ""
+                        )
+                        or str(
+                            legacy_contract.get("base_contract_hash") or ""
+                        ) != str(
+                            planner_protocol.get("base_contract_hash") or ""
+                        )
+                        or str(
+                            legacy_contract.get("canonical_request_hash") or ""
+                        ) != str(
+                            legacy_attempt.get("canonical_request_hash") or ""
+                        )
+                        or int(
+                            legacy_contract.get("task_spec_revision") or -1
+                        ) != task_revision
+                    ):
+                        raise SnapshotConflictError(
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        )
+                    immutable_consultant_contract = legacy_contract
+                except (OSError, ValueError, SnapshotConflictError) as exc:
+                    blocked_consultation = deepcopy(consultation_owner)
+                    blocked_consultation.update({
+                        "phase": "blocked",
+                        "consultation_status": "blocked",
+                        "completion_decision": "blocked",
+                        "completion_reason": (
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        ),
+                        "terminal_diagnostic": {
+                            "error_code": (
+                                "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                            ),
+                            "error_owner": "controller_storage",
+                            "detail": (
+                                "Planner could not verify the frozen legacy "
+                                "FINALIZE artifact chain: "
+                                f"{type(exc).__name__}: {exc}"
+                            ),
+                        },
+                    })
+                    return {
+                        "messages": [SystemMessage(content=(
+                            "<planner_contract_gate_error>"
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                            "</planner_contract_gate_error>"
+                        ))],
+                        "consultation_state": blocked_consultation,
+                        "task_status": TASK_STATUS_BLOCKED,
+                        "failure_type": (
+                            "FINALIZE_CHECKPOINT_ARTIFACT_MISSING"
+                        ),
+                        "failure_owner": "controller_storage",
+                        "next_step": "finish",
+                    }
+            else:
+                blocked_consultation = deepcopy(consultation_owner)
+                blocked_consultation.update({
+                    "phase": "blocked",
+                    "consultation_status": "blocked",
+                    "completion_decision": "blocked",
+                    "completion_reason": (
+                        "FINALIZE_PROTOCOL_VERSION_UNSUPPORTED"
+                    ),
+                    "terminal_diagnostic": {
+                        "error_code": (
+                            "FINALIZE_PROTOCOL_VERSION_UNSUPPORTED"
+                        ),
+                        "error_owner": "controller",
+                        "detail": (
+                            "Planner rejected unsupported FINALIZE protocol/"
+                            f"wire pair {planner_protocol_pair}."
+                        ),
+                    },
+                })
+                return {
+                    "messages": [SystemMessage(content=(
+                        "<planner_contract_gate_error>"
+                        "FINALIZE_PROTOCOL_VERSION_UNSUPPORTED"
+                        "</planner_contract_gate_error>"
+                    ))],
+                    "consultation_state": blocked_consultation,
+                    "task_status": TASK_STATUS_BLOCKED,
+                    "failure_type": (
+                        "FINALIZE_PROTOCOL_VERSION_UNSUPPORTED"
+                    ),
+                    "failure_owner": "controller",
+                    "next_step": "finish",
+                }
             task_spec_context = format_planner_task_contract_context(task_spec)
             task_requirement_text = "\n".join(
                 [
@@ -11822,10 +21622,19 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 ]
             ).strip()
             user_msg = str(task_spec.get("goal") or "")
-            consultant_result = dict((state.get("consultation_state") or {}).get("final_contract") or {})
+            consultant_result = (
+                immutable_consultant_contract
+                or dict(consultation_owner.get("final_contract") or {})
+            )
             summary = (
                 "<consultant_result>\n"
-                + json.dumps(consultant_result, ensure_ascii=False, sort_keys=True, indent=2, default=str)
+                + json.dumps(
+                    self._planner_consultant_contract_projection(consultant_result),
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    indent=2,
+                    default=str,
+                )
                 + "\n</consultant_result>"
                 if consultant_result
                 else str(state.get("requirements_summary", "") or "")
@@ -11917,6 +21726,17 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 for skill_id in selected_skills
                 if self.skill_manager and self.skill_manager.has_renderer(skill_id)
             ]
+            task_spec_context = format_planner_task_contract_context(task_spec)
+            task_requirement_text = "\n".join(
+                [
+                    str(task_spec.get("goal") or ""),
+                    *[
+                        str(item.get("text") or "")
+                        for item in task_spec.get("user_directives", [])
+                        if isinstance(item, dict) and str(item.get("kind") or "") != "initial_request"
+                    ],
+                ]
+            ).strip()
             canonical_output_contracts = effective_output_contracts(
                 task_spec,
                 project_root=project_root,
@@ -11964,28 +21784,71 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "candidate_skills_text": ", ".join(candidate_skills) if candidate_skills else "None",
                 "user_preferences_context": self._load_user_preferences(),
             }
-            detailed_plan_prompt = PromptManager.get_detailed_planner_prompt(**planner_prompt_args)
-
-            compressible_component_keys = {
-                "planner_wiki_context",
-                "rag_knowledge",
-            }
+            planner_source_state = load_plan_state(self.data_path, task_id)
+            planner_feedback = dict(
+                (planner_source_state.get("task_state") or {}).get("planner_feedback")
+                or state.get("planner_feedback")
+                or {}
+            )
+            if str(planner_feedback.get("status") or "pending") != "pending":
+                planner_feedback = {}
+            planner_node_context = build_node_context(
+                node_type="planner",
+                task_spec=task_spec,
+                plan_state=planner_source_state,
+                state_generation=int(planner_source_state.get("state_generation") or 0),
+                runtime={
+                    "input_audit": runtime_audits,
+                    "available_capabilities": list(selected_skills),
+                },
+                feedback={"planner_feedback": planner_feedback} if planner_feedback else {},
+                allowed_operations=["create_plan", "report_task_semantics_incomplete"],
+                trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
+                max_payload_chars=max(1, int(self.llm_context_limit_tokens) * 4),
+            )
+            planner_semantic_capabilities, _planner_operation_bindings = (
+                self.skill_manager.get_semantic_execution_capabilities(planner_context_skills)
+                if self.skill_manager
+                else ([], {})
+            )
+            planner_capability_context = json.dumps(
+                {
+                    "capabilities": planner_semantic_capabilities,
+                    "workflow": {
+                        "stages": [
+                            {
+                                "stage": str(stage.get("stage") or ""),
+                                "status": str(stage.get("status") or ""),
+                                "skill_id": str(stage.get("skill") or ""),
+                                "reason": str(stage.get("reason") or ""),
+                            }
+                            for stage in workflow_handoff.get("workflow_stages", []) or []
+                            if isinstance(stage, Mapping)
+                        ]
+                    },
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+                default=str,
+            )
+            detailed_plan_prompt = PromptManager.get_planner_v2_prompt(
+                planner_node_context.llm_payload.to_dict(),
+                capability_context=planner_capability_context,
+                user_preferences=self._load_user_preferences(),
+            )
 
             def planner_prompt_accounting(prompt: str) -> Dict[str, Any]:
                 component_map = {
-                    "task_spec": len(str(planner_prompt_args["task_spec_context"] or "")),
-                    "consultant_summary": len(str(planner_prompt_args["consultant_summary"] or "")),
-                    "runtime_audit": len(str(planner_prompt_args["runtime_audit_context"] or "")),
-                    "memory_context": len(str(planner_prompt_args["planner_wiki_context"] or "")),
-                    "rag_knowledge": len(str(planner_prompt_args["rag_knowledge"] or "")),
-                    "selected_skill_catalog": len(str(planner_prompt_args["skills_summary"] or "")),
-                    "active_skill_docs": len(str(planner_prompt_args["active_skill_docs"] or "")),
-                    "skill_reference_index": len(str(planner_prompt_args["skill_reference_index"] or "")),
-                    "skill_execution_context": len(str(planner_prompt_args["skill_execution_context"] or "")),
-                    "workflow_state": len(str(planner_prompt_args["workflow_handoff"] or "")),
-                    "user_goal": len(str(planner_prompt_args["user_msg"] or "")),
-                    "user_preferences": len(str(planner_prompt_args["user_preferences_context"] or "")),
-                    "selected_skill_ids": len(str(planner_prompt_args["selected_skills_text"] or "")),
+                    "llm_payload": len(json.dumps(
+                        planner_node_context.llm_payload.to_dict(),
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        indent=2,
+                        default=str,
+                    )),
+                    "semantic_capabilities": len(planner_capability_context),
+                    "user_preferences": len(self._load_user_preferences()),
                 }
                 component_map["base_template_and_protocol"] = max(
                     0,
@@ -11998,10 +21861,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 }
 
             planner_accounting = planner_prompt_accounting(detailed_plan_prompt)
-            compressible_chars = sum(
-                len(str(planner_prompt_args[key] or ""))
-                for key in compressible_component_keys
-            )
+            compressible_chars = 0
             planner_budget = assess_prompt_budget(
                 [detailed_plan_prompt],
                 component_chars=planner_accounting["component_chars"],
@@ -12014,32 +21874,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 hard_safety_ratio=PLANNER_HARD_TOKEN_RATIO,
                 reserved_headroom_tokens=PLANNER_RESERVED_HEADROOM_TOKENS,
             )
-            if planner_budget["decision"] in {"compress_optional_context", "block_context_safety"} and compressible_chars:
-                planner_prompt_args.update({
-                    "planner_wiki_context": self._clip_prompt_text(planner_wiki_context, 2000),
-                    "rag_knowledge": self._clip_prompt_text(rag_knowledge, 2000),
-                })
-                detailed_plan_prompt = PromptManager.get_detailed_planner_prompt(**planner_prompt_args)
-                planner_accounting = planner_prompt_accounting(detailed_plan_prompt)
-                compressible_chars = sum(
-                    len(str(planner_prompt_args[key] or ""))
-                    for key in compressible_component_keys
-                )
-                planner_budget = assess_prompt_budget(
-                    [detailed_plan_prompt],
-                    component_chars=planner_accounting["component_chars"],
-                    context_limit_tokens=self.llm_context_limit_tokens,
-                    nominal_char_budget=PLANNER_NOMINAL_CHAR_BUDGET,
-                    compressible_chars=compressible_chars,
-                    noncompressible_chars=max(0, len(detailed_plan_prompt) - compressible_chars),
-                    soft_warning_ratio=PLANNER_SOFT_TOKEN_RATIO,
-                    compression_ratio=PLANNER_COMPRESSION_TOKEN_RATIO,
-                    hard_safety_ratio=PLANNER_HARD_TOKEN_RATIO,
-                    reserved_headroom_tokens=PLANNER_RESERVED_HEADROOM_TOKENS,
-                )
-                planner_budget["optional_compression_applied"] = True
-            else:
-                planner_budget["optional_compression_applied"] = False
+            planner_budget["optional_compression_applied"] = False
             planner_prompt_components = planner_accounting["component_chars"]
             logger.info(
                 "Planner prompt components: task=%s %s",
@@ -12074,7 +21909,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
             # Persist the Planner input contract before the remote call so a
             # timeout/restart cannot erase Consultant-selected skills or task facts.
             durable_preplan = load_plan_state(self.data_path, task_id)
-            durable_preplan["task_spec"] = task_spec
+            _bind_current_task_spec_record(durable_preplan, task_spec)
             durable_preplan["selected_skill_ids"] = list(selected_skills)
             if not durable_preplan.get("steps"):
                 durable_preplan["generated_from_task_revision"] = task_revision
@@ -12159,8 +21994,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 )
             else:
                 try:
-                    response = await self._ainvoke_llm(
+                    response = await self._ainvoke_node_llm(
                         [HumanMessage(content=detailed_plan_prompt)],
+                        node_context=planner_node_context,
                         stage="planner",
                         task_id=task_id,
                         task_mode=str(state.get("task_mode") or "managed"),
@@ -12193,27 +22029,164 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     )
                     return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
 
-                plan_content = self._sanitize_completed_planner_plan(response.content)
-                candidate_for_repair = build_plan_state(task_id, plan_content)
-                candidate_for_repair, renderer_normalization, violations = normalize_plan_contracts(
-                    candidate_for_repair,
-                    renderer_records=renderer_records,
-                    output_contracts=canonical_output_contracts,
-                    task_spec=task_spec,
+                current_planner_state = load_plan_state(self.data_path, task_id)
+                current_planner_task = canonical_task_spec_for_state(
+                    current_planner_state
+                ) or task_spec
+                current_planner_context = build_node_context(
+                    node_type="planner",
+                    task_spec=current_planner_task,
+                    plan_state=current_planner_state,
                 )
-                if renderer_normalization:
-                    plan_content = render_structured_plan(candidate_for_repair)
-                violations.extend(self._skill_plan_violations(
-                    plan_content,
-                    selected_skills,
-                    user_msg=task_requirement_text,
-                    workflow_handoff=workflow_handoff,
-                ))
-                violations.extend(self._plan_step_skill_violations(candidate_for_repair, selected_skills))
+                planner_staleness = evaluate_node_staleness(
+                    planner_node_context.binding,
+                    {
+                        "task_semantic_hash": current_planner_context.binding.task_semantic_hash,
+                        "task_record_hash": current_planner_context.binding.task_record_hash,
+                        "state_generation": int(current_planner_state.get("state_generation") or 0),
+                    },
+                )
+                if not planner_staleness.usable:
+                    if self._node_invocations.mark_stale_signature_handled(planner_staleness.stale_signature):
+                        return {
+                            "messages": [SystemMessage(content=planner_staleness.code)],
+                            "pending_action": {},
+                            "next_step": "planner",
+                        }
+                    return {
+                        "messages": [SystemMessage(content=(
+                            "STALE_INVOCATION_NON_CONVERGENT: equivalent Planner stale result already handled."
+                        ))],
+                        "task_status": TASK_STATUS_BLOCKED,
+                        "next_step": "finish",
+                    }
+                plan_content = str(response.content or "").strip()
+                try:
+                    plan_proposal = json.loads(plan_content)
+                    if isinstance(plan_proposal, Mapping):
+                        plan_proposal = resolve_plan_proposal_handles(
+                            plan_proposal,
+                            planner_node_context.binding,
+                        )
+                        plan_content = json.dumps(
+                            plan_proposal,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        )
+                except json.JSONDecodeError:
+                    pass
+                structure_errors: List[Dict[str, Any]] = []
+                try:
+                    candidate_for_repair = build_plan_state(
+                        task_id,
+                        plan_content,
+                        strict=True,
+                    )
+                except PlanStructureError as first_error:
+                    structure_errors = list(first_error.diagnostics)
+                    structure_repair_prompt = (
+                        detailed_plan_prompt
+                        + "\n\nYour prior response failed the structured plan schema. "
+                        "Return a corrected complete JSON object; do not return a PlanPatch.\n"
+                        + json.dumps(structure_errors, ensure_ascii=False, sort_keys=True)
+                    )
+                    try:
+                        structure_repair_context = build_node_context(
+                            node_type="planner_repair",
+                            task_spec=task_spec,
+                            plan_state=planner_source_state,
+                            violations=structure_errors,
+                            allowed_operations=["replace_plan_document"],
+                        )
+                        structure_response = await self._ainvoke_node_llm(
+                            [HumanMessage(content=structure_repair_prompt)],
+                            node_context=structure_repair_context,
+                            stage="planner_structure_repair",
+                            task_id=task_id,
+                            task_mode=str(state.get("task_mode") or "managed"),
+                            trace_metadata={
+                                "call_kind": "planner_structure_repair",
+                                "task_spec_revision": task_spec_revision(task_spec),
+                                "selected_skill_ids": selected_skills,
+                                "validation_errors": structure_errors,
+                            },
+                        )
+                        plan_content = str(structure_response.content or "").strip()
+                        parsed_structure = json.loads(plan_content)
+                        parsed_structure = resolve_plan_proposal_handles(
+                            parsed_structure,
+                            structure_repair_context.binding,
+                        )
+                        plan_content = json.dumps(parsed_structure, ensure_ascii=False, sort_keys=True)
+                        candidate_for_repair = build_plan_state(
+                            task_id,
+                            plan_content,
+                            strict=True,
+                        )
+                        structure_errors = []
+                    except PlanStructureError as second_error:
+                        structure_errors = list(second_error.diagnostics)
+                    except Exception as exc:
+                        structure_errors = [{
+                            "field_path": "$",
+                            "message": f"structure repair call failed: {type(exc).__name__}: {exc}",
+                        }]
 
+                if structure_errors:
+                    invalid_dir = Path(self.data_path) / "task_outputs" / task_id / "planner_protocol"
+                    invalid_dir.mkdir(parents=True, exist_ok=True)
+                    invalid_hash = hashlib.sha256(plan_content.encode("utf-8")).hexdigest()
+                    invalid_path = invalid_dir / f"invalid_plan_{invalid_hash[:16]}.txt"
+                    invalid_path.write_text(plan_content, encoding="utf-8")
+                    candidate_for_repair = deepcopy(durable_preplan)
+                    candidate_for_repair.update({
+                        "selected_skill_ids": list(selected_skills),
+                        "generated_from_task_revision": task_revision,
+                        "plan_structure_status": "invalid",
+                        "plan_structure_diagnostics": deepcopy(structure_errors),
+                        "planner_raw_response_ref": str(invalid_path),
+                        "planner_raw_response_hash": invalid_hash,
+                    })
+                    _bind_current_task_spec_record(candidate_for_repair, task_spec)
+                    issue = validation_issue(
+                        "PLAN_STRUCTURE_INVALID",
+                        owner="planner",
+                        repair_target="plan_document",
+                        field_path="plan_document",
+                        message="Planner output failed the canonical structured-plan schema.",
+                        evidence=deepcopy(structure_errors),
+                    )
+                    candidate_for_repair = derive_plan_validation_state(
+                        candidate_for_repair,
+                        [issue],
+                        record_convergence=False,
+                    )
+                    renderer_normalization = []
+                    violations = list(candidate_for_repair.get("validation_issues") or [])
+                else:
+                    candidate_for_repair, renderer_normalization, violations = normalize_plan_contracts(
+                        candidate_for_repair,
+                        renderer_records=renderer_records,
+                        output_contracts=canonical_output_contracts,
+                        task_spec=task_spec,
+                    )
+                    plan_content = render_structured_plan(candidate_for_repair)
+                    violations.extend(self._skill_plan_violations(
+                        plan_content,
+                        selected_skills,
+                        user_msg=task_requirement_text,
+                        workflow_handoff=workflow_handoff,
+                    ))
+                    violations.extend(self._plan_step_skill_violations(candidate_for_repair, selected_skills))
+
+            candidate_for_repair = derive_plan_validation_state(
+                candidate_for_repair,
+                violations,
+            )
+            violations = list(candidate_for_repair.get("validation_issues") or [])
             initial_contract_violations = deepcopy(violations)
             repair_reason_codes = sorted({
-                str(item.get("violation_code") or item.get("field") or "semantic_plan_violation")
+                str(item.get("code") or item.get("violation_code") or item.get("field") or "semantic_plan_violation")
                 if isinstance(item, dict) else "semantic_plan_violation"
                 for item in violations
             })
@@ -12227,7 +22200,13 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 }.get(code, "dependency_violation" if "DEPEND" in code.upper() else "semantic_plan_violation")
                 for code in repair_reason_codes
             })
-            deterministic_blocking_codes = {"RENDERER_OUTPUT_BINDING_UNRESOLVED"}
+            deterministic_blocking_codes = {
+                "PLAN_STRUCTURE_INVALID",
+                "RENDERER_OUTPUT_BINDING_UNRESOLVED",
+                "RENDERER_MISSING_REQUIRED_BINDING",
+                "RENDERER_BINDING_CONFLICT",
+                "RENDERER_CONTRACT_MISSING",
+            }
             deterministic_binding_blocked = bool(
                 deterministic_blocking_codes.intersection(repair_reason_codes)
             )
@@ -12265,15 +22244,46 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     for item in candidate_for_repair.get("steps", []) or []
                     if isinstance(item, dict) and str(item.get("renderer_id") or "").strip()
                 ]
-                repair_prompt = PromptManager.get_plan_repair_prompt(
-                    repair_request,
-                    effective_facts_context=task_spec_context,
-                    selected_skill_context=(
-                        f"selected_skill_ids={json.dumps(selected_skills, ensure_ascii=False)}\n"
-                        + skill_execution_context
-                    ),
-                    renderer_route=json.dumps(renderer_routes, ensure_ascii=False),
+                violation_identity = hashlib.sha256(
+                    json.dumps(
+                        violations,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        default=str,
+                    ).encode("utf-8")
+                ).hexdigest()
+                repair_node_context = build_node_context(
+                    node_type="planner_repair",
+                    task_spec=task_spec,
+                    plan_state=candidate_for_repair,
+                    state_generation=int(candidate_for_repair.get("state_generation") or 0),
+                    violations=[item for item in violations if isinstance(item, Mapping)],
+                    allowed_operations=["replace_steps"],
+                    violation_set_identity=violation_identity,
+                    trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
                 )
+                step_handle_by_identity = {
+                    str(item.get("stable_identity") or ""): str(handle)
+                    for handle, item in repair_node_context.binding.semantic_handle_map.items()
+                    if isinstance(item, Mapping) and item.get("object_type") == "plan_step"
+                }
+                allowed_step_handles = [
+                    step_handle_by_identity[step_id]
+                    for step_id in repair_request.get("allowed_step_ids", []) or []
+                    if str(step_id) in step_handle_by_identity
+                ]
+                repair_prompt = PromptManager.get_plan_repair_v2_prompt(
+                    repair_node_context.llm_payload.to_dict(),
+                    allowed_step_handles=allowed_step_handles,
+                    capability_context=(
+                        f"selected capabilities={json.dumps(selected_skills, ensure_ascii=False)}\n"
+                        + skill_execution_context
+                        + "\nrenderer routes="
+                        + json.dumps(renderer_routes, ensure_ascii=False)
+                    ),
+                )
+                pre_patch_candidate = deepcopy(candidate_for_repair)
+                pre_patch_issues = deepcopy(violations)
                 try:
                     recovery_store = RecoveryStateStore(self.data_path, task_id)
                     repair_context_id = str(
@@ -12300,8 +22310,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     if cached_repair.get("raw_response"):
                         repair_response = AIMessage(content=str(cached_repair["raw_response"]))
                     else:
-                        repair_response = await self._ainvoke_llm(
+                        repair_response = await self._ainvoke_node_llm(
                             [HumanMessage(content=repair_prompt)],
+                            node_context=repair_node_context,
                             stage="planner_repair",
                             task_id=task_id,
                             task_mode=str(state.get("task_mode") or "managed"),
@@ -12325,6 +22336,28 @@ If the user is actually asking you to run analysis or inspect local files, say t
                             parsed_result={},
                         )
                     patch = parse_plan_patch(str(repair_response.content or ""))
+                    patch = resolve_plan_proposal_handles(
+                        patch,
+                        repair_node_context.binding,
+                    )
+                    patch = stamp_plan_patch_control_binding(
+                        patch,
+                        candidate_for_repair,
+                    )
+                    repair_staleness = evaluate_node_staleness(
+                        repair_node_context.binding,
+                        {
+                            "task_semantic_hash": repair_node_context.binding.task_semantic_hash,
+                            "plan_semantic_hash": (
+                                "sha256:" + semantic_plan_hash(candidate_for_repair)
+                                if not str(semantic_plan_hash(candidate_for_repair)).startswith("sha256:")
+                                else semantic_plan_hash(candidate_for_repair)
+                            ),
+                            "violation_set_identity": violation_identity,
+                        },
+                    )
+                    if not repair_staleness.usable:
+                        raise ValueError(repair_staleness.code)
                     candidate_for_repair, patch_audit = apply_plan_patch(
                         candidate_for_repair,
                         patch,
@@ -12333,10 +22366,14 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     patch_audit["effective_facts_revision"] = effective_revision
                     plan_patch_audits.append({**patch_audit, "request": repair_request})
                     if patch_audit.get("no_op"):
-                        # Repeating Planner with the same semantic plan cannot
-                        # repair an execution action. Preserve the failure
-                        # evidence and return ownership to same-step Generate.
-                        violations = []
+                        # A no-op is evidence of non-progress.  It never clears
+                        # the unresolved issues and never authorizes Generate.
+                        candidate_for_repair = derive_plan_validation_state(
+                            candidate_for_repair,
+                            violations,
+                        )
+                        violations = list(candidate_for_repair.get("validation_issues") or [])
+                        plan_patch_audits[-1]["transaction_status"] = "rejected_no_op"
                         break
                     candidate_for_repair, renderer_normalization, canonical_violations = normalize_plan_contracts(
                         candidate_for_repair,
@@ -12346,7 +22383,27 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     )
                     patch_audit["renderer_normalization"] = renderer_normalization
                 except Exception as exc:
-                    violations = [*violations, f"plan_patch_rejected: {type(exc).__name__}: {exc}"]
+                    candidate_for_repair = deepcopy(pre_patch_candidate)
+                    rejected_issue = validation_issue(
+                        "PLAN_PATCH_REJECTED",
+                        owner="planner",
+                        repair_target="plan_document",
+                        field_path="plan_patch",
+                        message=f"PlanPatch transaction was rejected: {type(exc).__name__}: {exc}",
+                    )
+                    violations = [*pre_patch_issues, rejected_issue]
+                    candidate_for_repair = derive_plan_validation_state(
+                        candidate_for_repair,
+                        violations,
+                    )
+                    violations = list(candidate_for_repair.get("validation_issues") or [])
+                    plan_patch_audits.append({
+                        "operation": repair_operation,
+                        "request": deepcopy(repair_request),
+                        "transaction_status": "rejected_exception",
+                        "error_type": type(exc).__name__,
+                        "issue_code": "PLAN_PATCH_REJECTED",
+                    })
                     break
                 plan_content = render_structured_plan(candidate_for_repair)
                 violations = list(canonical_violations)
@@ -12359,11 +22416,35 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 violations.extend(
                     self._plan_step_skill_violations(candidate_for_repair, selected_skills)
                 )
+                candidate_for_repair = derive_plan_validation_state(
+                    candidate_for_repair,
+                    violations,
+                )
+                violations = list(candidate_for_repair.get("validation_issues") or [])
+                if violations:
+                    # Commit only a fully reprojected, revalidated candidate.
+                    # Rejected proposals remain in the audit log without
+                    # replacing the canonical plan revision.
+                    plan_patch_audits[-1].update({
+                        "transaction_status": "rejected_validation",
+                        "proposed_validation_issues": deepcopy(violations),
+                    })
+                    candidate_for_repair = derive_plan_validation_state(
+                        pre_patch_candidate,
+                        pre_patch_issues,
+                        record_convergence=False,
+                    )
+                    violations = list(candidate_for_repair.get("validation_issues") or [])
+                else:
+                    plan_patch_audits[-1]["transaction_status"] = "committed"
 
             no_op_plan_patch = bool(plan_patch_audits) and all(
                 audit.get("no_op") for audit in plan_patch_audits
             )
-            if no_op_plan_patch:
+            # Legacy same-step Generate fallback is reachable only when the
+            # candidate is already valid.  A no-op with unresolved issues is
+            # preserved and handled by the convergence/ownership gate below.
+            if no_op_plan_patch and not violations:
                 plan_dir = os.path.join(self.data_path, "task_outputs", task_id)
                 os.makedirs(plan_dir, exist_ok=True)
                 patch_log = Path(plan_dir) / "plan_patches.jsonl"
@@ -12440,14 +22521,14 @@ If the user is actually asking you to run analysis or inspect local files, say t
             self._plan_step_skill_violations(candidate_plan_state, selected_skills)
             candidate_plan_state["user_constraints"] = list(state.get("user_constraints", []) or [])
             candidate_plan_state["selected_skill_ids"] = list(selected_skills)
-            candidate_plan_state["task_spec"] = task_spec
+            _bind_current_task_spec_record(candidate_plan_state, task_spec)
             candidate_plan_state["planner_quality_telemetry"] = {
                 "schema_version": 1,
                 "first_pass_schema_valid": bool(candidate_for_repair.get("steps")),
                 "first_pass_contract_valid": not bool(initial_contract_violations),
                 "repair_required": bool(initial_contract_violations),
                 "repair_reason_codes": sorted({
-                    str(item.get("violation_code") or item.get("field") or "contract_violation")
+                    str(item.get("code") or item.get("violation_code") or item.get("field") or "contract_violation")
                     if isinstance(item, dict) else str(item)[:120]
                     for item in initial_contract_violations
                 }),
@@ -12465,6 +22546,8 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 plan_patch_audits
                 and all(not audit.get("review_required") for audit in plan_patch_audits)
                 and str(previous_plan_state.get("plan_status") or "") == "approved"
+                and not violations
+                and bool(candidate_plan_state.get("can_request_approval"))
             ):
                 approve_plan_state(candidate_plan_state, task_revision)
             review_diffs = [
@@ -12538,24 +22621,40 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     plan_manager.persist_active()
             plan_state["user_constraints"] = list(state.get("user_constraints", []) or [])
             bind_plan_to_task_revision(plan_state, task_revision)
+            if planner_feedback:
+                task_state_for_plan = dict(plan_state.get("task_state") or {})
+                task_state_for_plan["planner_feedback"] = {
+                    **planner_feedback,
+                    "status": "applied",
+                    "applied_plan_version": str(plan_state.get("plan_version") or ""),
+                }
+                plan_state["task_state"] = task_state_for_plan
             save_plan_state(self.data_path, task_id, plan_state)
+            blocking_plan_issues = [
+                dict(item) for item in plan_state.get("validation_issues", []) or []
+                if isinstance(item, Mapping)
+                and str(item.get("severity") or "").lower() in {"error", "blocking", "fatal"}
+            ]
+            repair_status = str((plan_state.get("repair_convergence") or {}).get("status") or "")
             deterministic_block_reason = ""
-            if deterministic_binding_blocked:
+            validation_route = "plan_review"
+            if blocking_plan_issues:
+                owners = {str(item.get("owner") or "internal") for item in blocking_plan_issues}
                 deterministic_block_reason = (
-                    "Deterministic renderer output binding is unresolved: "
-                    + json.dumps(
-                        [
-                            item for item in violations
-                            if isinstance(item, dict)
-                            and item.get("violation_code") == "RENDERER_OUTPUT_BINDING_UNRESOLVED"
-                        ],
-                        ensure_ascii=False,
-                        sort_keys=True,
-                        default=str,
-                    )
+                    "Plan contract validation is unresolved: "
+                    + json.dumps(blocking_plan_issues, ensure_ascii=False, sort_keys=True, default=str)
                 )
-                self._mark_plan_current_blocked(task_id, deterministic_block_reason)
-                plan_state = load_plan_state(self.data_path, task_id)
+                if repair_status == "blocked_non_convergent":
+                    validation_route = "finish"
+                elif owners.issubset({"planner"}):
+                    validation_route = "planner"
+                elif owners.intersection({"task_spec", "external_input"}):
+                    validation_route = "consultant"
+                else:
+                    validation_route = "finish"
+                if validation_route == "finish":
+                    self._mark_plan_current_blocked(task_id, deterministic_block_reason)
+                    plan_state = load_plan_state(self.data_path, task_id)
             with open(plan_file, "w", encoding="utf-8") as f:
                 f.write(
                     "# Task Plan\n"
@@ -12617,6 +22716,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
             return {
                 "current_plan": plan_content,
                 "plan_progress": plan_progress,
+                "task_spec": task_spec,
+                "task_revision": task_revision,
+                "validation_issues": blocking_plan_issues,
                 "selected_skills": selected_skills,
                 "runtime_audit": runtime_audits,
                 "selected_skills_raw": selected_skills_raw,
@@ -12646,7 +22748,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 "recovery_status": "",
                 "supervisor_verdict": "",
                 "completion_gate_result": {},
-                "next_step": "finish" if deterministic_block_reason else "plan_review",
+                "next_step": validation_route,
             }
 
         # ════════════════════════════════════════════
@@ -12660,7 +22762,50 @@ If the user is actually asking you to run analysis or inspect local files, say t
             task_revision = self._task_revision_for_state(dict(state))
             persisted_plan = load_plan_state(self.data_path, task_id)
             task_spec = self._task_spec_for_state(dict(state), messages)
-            persisted_plan["task_spec"] = task_spec
+            review_skill_ids = list(
+                persisted_plan.get("selected_skill_ids")
+                or state.get("selected_skills")
+                or []
+            )
+            review_renderer_records = [
+                self.skill_manager.get_renderer_record(skill_id)
+                for skill_id in review_skill_ids
+                if self.skill_manager and self.skill_manager.has_renderer(skill_id)
+            ]
+            persisted_plan, _, review_issues = normalize_plan_contracts(
+                persisted_plan,
+                renderer_records=review_renderer_records,
+                output_contracts=effective_output_contracts(task_spec, project_root=project_root),
+                task_spec=task_spec,
+            )
+            bind_plan_to_task_revision(persisted_plan, task_revision)
+            save_plan_state(self.data_path, task_id, persisted_plan)
+            blocking_review_issues = [
+                dict(item) for item in review_issues
+                if isinstance(item, Mapping)
+                and str(item.get("severity") or "").lower() in {"error", "blocking", "fatal"}
+            ]
+            if blocking_review_issues:
+                owners = {str(item.get("owner") or "internal") for item in blocking_review_issues}
+                convergence = str((persisted_plan.get("repair_convergence") or {}).get("status") or "")
+                if convergence == "blocked_non_convergent":
+                    route = "finish"
+                elif owners.issubset({"planner"}):
+                    route = "planner"
+                elif owners.intersection({"task_spec", "external_input"}):
+                    route = "consultant"
+                else:
+                    route = "finish"
+                return {
+                    "messages": [SystemMessage(content=(
+                        "Plan Review refused an invalid plan before human approval: "
+                        + json.dumps(blocking_review_issues, ensure_ascii=False, sort_keys=True, default=str)
+                    ))],
+                    "validation_issues": blocking_review_issues,
+                    "required_next_action": "PLAN_CONTRACT_REPAIR",
+                    "next_step": route,
+                }
+            _bind_current_task_spec_record(persisted_plan, task_spec)
             current_registry = self._knowledge_claim_registry(
                 task_id,
                 {**dict(state), "task_spec": task_spec},
@@ -12673,7 +22818,8 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 current_constraint_hash=current_constraint_hash,
                 current_claim_set_hash=current_claim_hash,
             )
-            if plan_approval_is_current(persisted_plan, task_revision) and not semantic_delta["changed"]:
+            reused_validation = validate_plan_for_generate(persisted_plan, task_revision)
+            if reused_validation.get("valid") and not semantic_delta["changed"]:
                 plan_progress = render_plan_progress(persisted_plan)
                 logger.info(
                     "Plan Review skipped for unchanged approved plan: task=%s plan_revision=%s semantic_hash=%s",
@@ -12800,7 +22946,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
             if il in ["y", "yes", "approve", ""]:
                 print(f"{Fore.GREEN}✓ Plan approved. Executing...{Style.RESET_ALL}")
                 plan_state = self._ensure_plan_tracker(task_id, plan)
-                plan_state["task_spec"] = task_spec
+                _bind_current_task_spec_record(plan_state, task_spec)
                 plan_state["canonical_constraint_hash"] = current_constraint_hash
                 plan_state["knowledge_claim_set_hash"] = current_claim_hash
                 plan_state["approved_conflict_validation"] = {
@@ -12881,17 +23027,46 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     if not feedback:
                         feedback = "Rejected. Try a different approach."
                 print(f"{Fore.CYAN}📡 Feedback captured: {feedback}{Style.RESET_ALL}")
-                task_spec = apply_user_feedback(
-                    self._task_spec_for_state(dict(state), messages),
-                    feedback,
-                    kind="plan_review_feedback",
-                    question="Revise the proposed plan",
-                    change_type=classify_user_feedback_change("plan_review_feedback", feedback),
-                    source_task_id=task_id,
-                    message_origin="user",
-                    project_root=project_root,
+                turns, feedback_turn_ref = self._append_semantic_conversation_turn(
+                    task_id,
+                    role="user",
+                    content=feedback,
                 )
-                reset_plan_state(self.data_path, task_id)
+                feedback_turn = next(
+                    (
+                        item for item in reversed(turns)
+                        if str(item.get("turn_ref") or "") == feedback_turn_ref
+                    ),
+                    {},
+                )
+                feedback_handle = str(
+                    feedback_turn.get("turn_id") or feedback_turn_ref or "latest user turn"
+                )
+                review_consultation = deepcopy(dict(
+                    state.get("consultation_state")
+                    or (persisted_plan.get("task_state") or {}).get("consultation_state")
+                    or {}
+                ))
+                review_consultation.update({
+                    "phase": "consulting",
+                    "consultation_status": "active",
+                    "completion_decision": "needs_evidence",
+                    "completion_reason": "plan_review_feedback_requires_semantic_classification",
+                    "pending_question": None,
+                    "pending_human_question": None,
+                })
+                review_consultation["last_feedback"] = [
+                    *list(review_consultation.get("last_feedback") or [])[-7:],
+                    {
+                        "code": "PLAN_REVIEW_FEEDBACK",
+                        "source_turn": feedback_handle,
+                        "instruction": (
+                            "Classify the latest Plan Review UserTurn into typed "
+                            "TaskSpec operations, planner_feedback, both, or neither."
+                        ),
+                    },
+                ]
+                reset_plan_for_replanning(self.data_path, task_id)
                 await self._observe_session_memory(
                     task_id,
                     "plan_review",
@@ -12904,20 +23079,14 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         additional_kwargs={"message_origin": "user"},
                     )],
                     "current_plan": None,
-                    "selected_skills": [],
-                    "selected_skills_raw": [],
-                    "active_skills": [],
-                    "future_skills": [],
-                    "candidate_skills": [],
-                    "workflow_state": {},
-                    "workflow_handoff": {},
-                    "workflow_stages": [],
-                    "workflow_id": "",
-                    "active_batch_id": "",
-                    "skill_selection_source": "",
                     "plan_progress": "",
-                    "task_spec": task_spec,
-                    "task_revision": task_spec_revision(task_spec),
+                    "conversation_evidence": dict(
+                        load_plan_state(self.data_path, task_id).get("conversation_evidence")
+                        or {}
+                    ),
+                    "consultation_state": review_consultation,
+                    "pending_human_question": {},
+                    "validation_issues": [],
                     "next_step": "consultant",
                 }
 
@@ -13043,35 +23212,32 @@ If the user is actually asking you to run analysis or inspect local files, say t
 
             # 技能加载
             loaded_skills = ""
+            generate_operation_bindings: Dict[str, str] = {}
             if self.skill_manager and current_plan:
                 selected = state.get("active_skills", []) or []
                 if selected:
-                    loaded = self.skill_manager.load_skills_for_prompt(selected)
-                    if loaded:
-                        loaded_parts = [
-                            loaded.replace("<active_skill_docs>", "").replace("</active_skill_docs>", "").strip()
-                        ]
-                        ref_index = self.skill_manager.get_skill_reference_index_prompt(selected)
-                        if ref_index:
-                            loaded_parts.append(
-                                ref_index.replace("<skill_reference_index>", "### Skill Reference Index")
-                                .replace("</skill_reference_index>", "")
-                                .strip()
-                            )
-                        execution_cards = self._skill_execution_context(selected)
-                        if execution_cards:
-                            loaded_parts.append(execution_cards)
-                        loaded_skills = (
-                            "<active_skills_context>\n"
-                            + "\n\n".join(loaded_parts)
-                            + "\n</active_skills_context>"
+                    capability_view, generate_operation_bindings = (
+                        self.skill_manager.get_semantic_execution_capabilities(selected)
+                    )
+                    if capability_view:
+                        loaded_skills = json.dumps(
+                            {
+                                "capabilities": capability_view,
+                                "operation_protocol": (
+                                    "Use an operation placeholder as a complete argv value, "
+                                    "for example {operation:operation.C1.O1}. The Controller "
+                                    "resolves it to the pinned executable path."
+                                ),
+                            },
+                            ensure_ascii=False,
+                            sort_keys=True,
                         )
                         self.profiler.record_skill_usage(
                             task_id,
                             selected,
-                            usage_type="loaded_for_generate",
+                            usage_type="semantic_capability_projection_for_generate",
                             node="generate",
-                            detail="Active skill docs loaded into Generate context.",
+                            detail="Controller projected semantic capability and operation handles.",
                         )
 
             lightweight_policy = self._lightweight_task_policy(str(state.get("task_mode") or ""))
@@ -13093,20 +23259,12 @@ If the user is actually asking you to run analysis or inspect local files, say t
             session_id = state.get("session_id") or task_id
             project_id = state.get("project_id") or self.default_project_id
             memory_packet_context = state.get("memory_packet_context", "") or ""
-            on_demand_memory = await self._generate_on_demand_memory_contexts(
-                state=state,
-                messages=messages,
-                task_id=task_id,
-                project_id=project_id,
-                query=md_query,
-                memory_packet_context=memory_packet_context,
-                supervisor_verdict="",
-            )
-            task_summary_context = on_demand_memory["task_summary_context"]
-            archive_context = on_demand_memory["archive_context"]
-            wiki_context = on_demand_memory["wiki_context"]
-            wiki_digest = on_demand_memory["wiki_digest"]
-            task_summary_context = dict(task_summary_context or {})
+            # Generate V2 consumes only the current-step semantic closure.
+            # Broad archive/wiki retrieval remains a Consultant responsibility.
+            task_summary_context: Dict[str, Any] = {}
+            archive_context = ""
+            wiki_context = ""
+            wiki_digest = ""
 
             # RecoveryPolicy, not the compatibility Supervisor verdict, owns
             # repair context and routing.
@@ -13155,21 +23313,10 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 state["recovery_context"] = recovery_context_obj.to_dict()
                 state["recovery_context_digest"] = recovery_context_obj.context_id
                 state["current_step_context"] = canonical_step
-                recovery_payload = recovery_context_obj.prompt_view()
-                # CurrentStepContext has its own canonical block in this same
-                # prompt. Keeping it here would create a second, potentially
-                # divergent current-step source.
-                recovery_payload.pop("current_step", None)
-                recovery_instr = (
-                    "<recovery_context>\n"
-                    + json.dumps(
-                        recovery_payload,
-                        ensure_ascii=False,
-                        sort_keys=True,
-                        default=str,
-                    )
-                    + "\n</recovery_context>"
-                )
+                # The V2 builder below selects failure facts and evidence
+                # excerpts directly.  Do not invoke the legacy load-all then
+                # tail-compact prompt projection.
+                recovery_instr = ""
             conflict_summary = state.get("knowledge_conflict_summary") or {}
             if conflict_summary:
                 conflict_payload = self._clip_observation_text(
@@ -13194,95 +23341,146 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "request Planner rather than inventing a new workflow inside Generate.\n</knowledge_conflict_context>\n"
                 )
             task_mode = str(state.get("task_mode") or "").strip().lower()
-            stable_record = self._get_or_create_stable_prompt(session_id, project_id)
-            stable_sys = state.get("stable_system_prompt") or stable_record["prompt"]
-            compact_projection = False
-            try:
-                ephemeral_context, context_budget_report = self._ephemeral_prompt_context_result(
-                    state=state,
-                    messages=messages,
-                    current_plan=step_plan_context,
-                    loaded_skills=loaded_skills,
-                    task_summary_context=task_summary_context,
-                    memory_packet_context=memory_packet_context,
-                    wiki_context=wiki_context,
-                    wiki_digest=wiki_digest,
-                    archive_context=archive_context,
-                    supervisor_context=supervisor_instr,
-                    recovery_context=recovery_instr,
-                    plan_progress="PlanTracker owns status; use CurrentStepContext.",
-                )
-            except RequiredContextOverflow as exc:
-                report = dict(getattr(exc, "report", {}) or {})
-                self.profiler.record_context_budget(task_id, report, node="generate")
-                plan_progress = self._record_plan_current_evidence(
-                    task_id,
-                    "prompt_assembly_failure_compact_retry",
-                    str(exc),
-                )
-                try:
-                    ephemeral_context, context_budget_report = self._compact_generate_context_result(
-                        state=state,
-                        messages=messages,
-                        current_plan=step_plan_context,
-                        loaded_skills=loaded_skills,
-                        supervisor_context=supervisor_instr,
-                        recovery_context=recovery_instr,
-                    )
-                    compact_projection = True
-                except RequiredContextOverflow as compact_exc:
-                    compact_report = dict(getattr(compact_exc, "report", {}) or {})
-                    compact_report["projection_mode"] = "compact_required_state_failed"
-                    self.profiler.record_context_budget(task_id, compact_report, node="generate")
-                    reason = f"PROMPT_ASSEMBLY_FAILURE: {compact_exc}"
-                    plan_progress = self._record_plan_current_evidence(
-                        task_id,
-                        "internal_prompt_assembly_failure",
-                        reason,
-                    )
-                    failed_state = load_plan_state(self.data_path, task_id)
-                    set_task_status(failed_state, TASK_STATUS_FAILED, reason)
-                    save_plan_state(self.data_path, task_id, failed_state)
-                    return {
-                        "messages": [AIMessage(content=f"<observation>{reason}</observation>")],
-                        "context_budget_report": compact_report,
-                        "plan_progress": plan_progress,
-                        "pending_action": {},
-                        "pending_human_question": {},
-                        "task_status": TASK_STATUS_FAILED,
-                        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                        "recovery_status": "INTERNAL_PROTOCOL_ERROR",
-                        "pending_recovery_action": {
-                            "type": "internal_protocol_error",
-                            "reason": reason,
-                            "failure_scope": "CURRENT_STEP",
-                            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                        },
-                        "next_step": "finish",
-                        "generate_result": "BLOCKED",
-                        "generate_exit_reason": "prompt_assembly_internal_error",
-                    }
-            self.profiler.record_context_budget(task_id, context_budget_report, node="generate")
-            visible_messages = (
-                []
-                if compact_projection
-                else self._generate_visible_messages(
-                    messages,
-                    structured_recovery=bool(recovery_context_obj),
-                )
+            context_budget_report: Dict[str, Any] = {
+                "projection_mode": "node_context_v2_required_closure",
+                "truncation_manifest": [],
+                "component_token_counts": {},
+            }
+            generate_plan_state = load_plan_state(self.data_path, task_id)
+            generate_task_spec = self._task_spec_for_state(dict(state), messages)
+            generate_input_audit = (
+                state.get("input_audit")
+                or (generate_plan_state.get("task_state") or {}).get("input_audit")
+                or {}
             )
-            original_goal = str(
-                self._task_spec_for_state(dict(state), messages).get("goal") or ""
-            ).strip()
-            visible_messages = [
-                message
-                for message in visible_messages
-                if not (
-                    isinstance(message, HumanMessage)
-                    and str(getattr(message, "content", "")).strip() == original_goal
+            if isinstance(generate_input_audit, Mapping) and generate_input_audit:
+                generate_task_spec = merge_task_spec_input_audit(
+                    generate_task_spec,
+                    generate_input_audit,
                 )
-            ]
-            call_msgs = [SystemMessage(content=stable_sys + "\n\n" + ephemeral_context)] + visible_messages
+            _, generate_step = current_plan_step_with_index(generate_plan_state)
+            generate_step = generate_step or {}
+            generate_protocol = self._renderer_action_protocol(state, task_id)
+            generate_approval = validate_plan_for_generate(
+                generate_plan_state,
+                task_spec_revision(generate_task_spec),
+            )
+            recovery_evidence: List[Dict[str, Any]] = []
+            if recovery_context_obj and recovery_context_obj.bounded_log_excerpt:
+                recovery_evidence.append({
+                    "evidence_id": recovery_context_obj.context_id or "recovery-log",
+                    "kind": "execution_log",
+                    "excerpt": recovery_context_obj.bounded_log_excerpt,
+                    "truncated": True,
+                })
+            try:
+                generate_node_context = build_node_context(
+                    node_type="generate",
+                    task_spec=generate_task_spec,
+                    plan_state=generate_plan_state,
+                    state_generation=int(generate_plan_state.get("state_generation") or 0),
+                    current_step_id=str(generate_step.get("step_id") or current_step_id or ""),
+                    runtime={
+                        "progress": {
+                            "current_step_status": str(generate_step.get("status") or "pending"),
+                            "remaining_step_count": sum(
+                                1
+                                for step in generate_plan_state.get("steps", []) or []
+                                if isinstance(step, Mapping)
+                                and str(step.get("status") or "").lower()
+                                not in {"done", "completed", "skipped"}
+                            ),
+                        },
+                        "renderer_status": str(generate_protocol.get("manifest_status") or ""),
+                        "current_action_contract": self._current_action_semantic_contract(
+                            state, task_id
+                        ),
+                    },
+                    feedback={
+                        "supervisor": {
+                            key: deepcopy((state.get("last_supervisor_feedback") or {}).get(key))
+                            for key in ("assessment", "concerns", "suggestions", "required_fix")
+                            if (state.get("last_supervisor_feedback") or {}).get(key)
+                            not in (None, "", [], {})
+                        },
+                        "recovery_action": {
+                            key: deepcopy(recovery_action.get(key))
+                            for key in ("type", "reason", "failure_owner", "violation")
+                            if recovery_action.get(key) not in (None, "", [], {})
+                        },
+                        "recovery_decision": {
+                            key: deepcopy(recovery_decision.get(key))
+                            for key in (
+                                "verdict", "root_cause", "action_type", "failure_owner",
+                                "recommended_action", "missing_tools", "verification_checks",
+                                "expected_new_evidence", "forbidden_next_actions",
+                            )
+                            if recovery_decision.get(key) not in (None, "", [], {})
+                        },
+                    },
+                    evidence=recovery_evidence,
+                    allowed_operations=list(generate_protocol.get("allowed_actions") or []),
+                    approval_ref=str(
+                        generate_plan_state.get("approval_snapshot_ref")
+                        or (generate_plan_state.get("approval_snapshot") or {}).get("approval_id")
+                        or (generate_plan_state.get("approval_record") or {}).get("approval_id")
+                        or ""
+                    ),
+                    approval_applicability=(
+                        "applicable" if generate_approval.get("valid") else str(generate_approval.get("reason") or "unverifiable")
+                    ),
+                    execution_epoch=(
+                        generate_step.get("execution_epoch")
+                        or (generate_plan_state.get("runtime_state") or {}).get("execution_epoch")
+                        or state.get("execution_epoch")
+                        or 0
+                    ),
+                    attempt_id=str(
+                        state.get("attempt_id")
+                        or (state.get("execution_evidence") or {}).get("attempt_id")
+                        or ""
+                    ),
+                    failure_fingerprint=str(
+                        (recovery_context_obj.error_fingerprint if recovery_context_obj else "")
+                    ),
+                    trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
+                    max_payload_chars=max(
+                        1,
+                        int(getattr(self, "llm_context_limit_tokens", 200_000)) * 4,
+                    ),
+                )
+                call_msgs = [HumanMessage(content=PromptManager.get_generate_v2_prompt(
+                    generate_node_context.llm_payload.to_dict(),
+                    capability_instructions=loaded_skills,
+                ))]
+            except Exception as exc:
+                compact_exc = self._clip_observation_text(
+                    f"{type(exc).__name__}: {exc}",
+                    1200,
+                )
+                reason = f"PROMPT_ASSEMBLY_FAILURE: {compact_exc}"
+                logger.exception("Generate V2 LLMPayload assembly failed: task=%s", task_id)
+                await self._finalize_task_memory(
+                    task_id,
+                    "failed",
+                    messages,
+                    {"reason": reason, "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value},
+                )
+                return {
+                    "messages": [SystemMessage(content=reason)],
+                    "pending_action": {},
+                    "pending_recovery_action": {
+                        "type": "internal_protocol_error",
+                        "reason": reason,
+                        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    },
+                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    "required_next_action": "INTERNAL_PROTOCOL_ERROR",
+                    "generate_result": "BLOCKED",
+                    "generate_exit_reason": "prompt_assembly_failure",
+                    "task_status": TASK_STATUS_FAILED,
+                    "next_step": "finish",
+                }
             generate_response_cached = False
             try:
                 recovery_store = RecoveryStateStore(self.data_path, task_id)
@@ -13310,8 +23508,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     )
                 else:
                     generate_call_audit[str(task_id)] = True
-                    response = await self._ainvoke_llm(
+                    response = await self._ainvoke_node_llm(
                         call_msgs,
+                        node_context=generate_node_context,
                         stage="generate",
                         task_id=task_id,
                         task_mode=task_mode,
@@ -13351,6 +23550,70 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     {"reason": llm_failure_summary(exc, "generate", task_id), "plan_progress": plan_progress},
                 )
                 return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
+            if not generate_response_cached:
+                current_generate_plan = load_plan_state(self.data_path, task_id)
+                _, current_generate_step = current_plan_step_with_index(current_generate_plan)
+                current_generate_step = current_generate_step or {}
+                current_generate_task = canonical_task_spec_for_state(
+                    current_generate_plan
+                )
+                current_generate_context = build_node_context(
+                    node_type="generate",
+                    task_spec=current_generate_task,
+                    plan_state=current_generate_plan,
+                    current_step_id=str(current_generate_step.get("step_id") or ""),
+                    approval_ref=str(
+                        current_generate_plan.get("approval_snapshot_ref")
+                        or (current_generate_plan.get("approval_snapshot") or {}).get("approval_id")
+                        or (current_generate_plan.get("approval_record") or {}).get("approval_id")
+                        or ""
+                    ),
+                    approval_applicability=(
+                        "applicable"
+                        if validate_plan_for_generate(
+                            current_generate_plan,
+                            task_spec_revision(current_generate_task),
+                        ).get("valid")
+                        else "unverifiable"
+                    ),
+                    execution_epoch=(
+                        current_generate_step.get("execution_epoch")
+                        or (current_generate_plan.get("runtime_state") or {}).get("execution_epoch")
+                        or state.get("execution_epoch")
+                        or 0
+                    ),
+                )
+                generate_staleness = evaluate_node_staleness(
+                    generate_node_context.binding,
+                    {
+                        "task_semantic_hash": current_generate_context.binding.task_semantic_hash,
+                        "plan_semantic_hash": current_generate_context.binding.plan_semantic_hash,
+                        "approval_ref": current_generate_context.binding.approval_ref,
+                        "approval_applicability": current_generate_context.binding.approval_applicability,
+                        "step_id": current_generate_context.binding.step_id,
+                        "execution_epoch": current_generate_context.binding.execution_epoch,
+                        "state_generation": int(current_generate_plan.get("state_generation") or 0),
+                        "task_record_hash": current_generate_context.binding.task_record_hash,
+                        "plan_record_hash": current_generate_context.binding.plan_record_hash,
+                    },
+                )
+                if not generate_staleness.usable:
+                    if self._node_invocations.mark_stale_signature_handled(generate_staleness.stale_signature):
+                        return {
+                            "messages": [SystemMessage(content=generate_staleness.code)],
+                            "pending_action": {},
+                            "next_step": "generate",
+                            "generate_result": "NEEDS_RECOVERY",
+                            "generate_exit_reason": "node_context_stale",
+                        }
+                    return {
+                        "messages": [SystemMessage(content="STALE_INVOCATION_NON_CONVERGENT")],
+                        "pending_action": {},
+                        "task_status": TASK_STATUS_BLOCKED,
+                        "next_step": "finish",
+                        "generate_result": "BLOCKED",
+                        "generate_exit_reason": "stale_signature_repeated",
+                    }
             content   = response.content
 
             # 打印（去重）
@@ -13365,6 +23628,51 @@ If the user is actually asking you to run analysis or inspect local files, say t
             activate_match = re.search(r"<activate_batch\s+batch_id=[\"']?([^\"'\s>/]+)[\"']?\s*/?>", content, re.DOTALL)
             structured_action = self._extract_structured_action(content)
             renderer_contract_error: Dict[str, Any] = {}
+            if (
+                str(structured_action.get("type") or "") == "execute"
+                and isinstance(structured_action.get("argv"), list)
+                and structured_action.get("argv")
+            ):
+                task_spec_for_action = self._task_spec_for_state(dict(state), messages)
+                managed_bindings = build_managed_artifact_bindings(task_spec_for_action)
+                materialized_action, artifact_violations = materialize_managed_action(
+                    structured_action,
+                    managed_bindings,
+                    allow_legacy_exact_literals=False,
+                    operation_bindings=generate_operation_bindings,
+                )
+                artifact_violations.extend(
+                    validate_materialized_artifacts(materialized_action, managed_bindings)
+                )
+                if artifact_violations:
+                    violation_payload = [item.to_dict() for item in artifact_violations]
+                    first_violation = violation_payload[0]
+                    return {
+                        "messages": [response, SystemMessage(content=(
+                            "<managed_artifact_action_repair>\n"
+                            + json.dumps(violation_payload, ensure_ascii=False, sort_keys=True)
+                            + "\nUse the required semantic handle placeholder in structured argv/env. "
+                            "Do not modify the Task or Plan.\n"
+                            "</managed_artifact_action_repair>"
+                        ))],
+                        "pending_action": {},
+                        "pending_recovery_action": {
+                            "type": "ACTION_FORMAT_REPAIR",
+                            "reason": str(first_violation.get("message") or "managed artifact mismatch"),
+                            "failure_owner": str(first_violation.get("owner") or "action_generation"),
+                            "violation": first_violation,
+                        },
+                        "required_next_action": "ACTION_FORMAT_REPAIR",
+                        "failure_owner": str(first_violation.get("owner") or "action_generation"),
+                        "generate_result": "NEEDS_RECOVERY",
+                        "generate_exit_reason": "managed_artifact_preaction_rejected",
+                        "next_step": "generate" if first_violation.get("route") == "generate" else "finish",
+                    }
+                materialized_action["code"] = shlex.join(
+                    [str(item) for item in materialized_action.get("argv") or []]
+                )
+                materialized_action["language"] = "bash"
+                structured_action = materialized_action
             if str(structured_action.get("type") or "") == "renderer_invocation":
                 materialized_renderer = self._materialize_renderer_invocation(
                     structured_action,
@@ -16976,17 +27284,26 @@ If the user is actually asking you to run analysis or inspect local files, say t
         # ════════════════════════════════════════════
         # 节点注册 & 连线
         # ════════════════════════════════════════════
-        workflow.add_node("triage",          self._profile_node("triage", triage))
-        workflow.add_node("direct_chat",     self._profile_node("direct_chat", direct_chat))
-        workflow.add_node("consultant",      self._profile_node("consultant", consultant))
-        workflow.add_node("ask_user",        self._profile_node("ask_user", ask_user))
-        workflow.add_node("planner",         self._profile_node("planner", planner))
-        workflow.add_node("plan_review",     self._profile_node("plan_review", plan_review))
-        workflow.add_node("generate",        self._profile_node("generate", generate))
-        workflow.add_node("execute",         self._profile_node("execute", execute_node))
-        workflow.add_node("supervisor",      self._profile_node("supervisor", supervisor))          # ← 新节点
-        workflow.add_node("supervisor_final_audit", self._profile_node("supervisor_final_audit", supervisor_final_audit))
-        workflow.add_node("install_subagent", self._profile_node("install_subagent", install_subagent))
+        profiled_nodes = {
+            "triage": self._profile_node("triage", triage),
+            "direct_chat": self._profile_node("direct_chat", direct_chat),
+            "consultant": self._profile_node("consultant", consultant),
+            "ask_user": self._profile_node("ask_user", ask_user),
+            "planner": self._profile_node("planner", planner),
+            "plan_review": self._profile_node("plan_review", plan_review),
+            "generate": self._profile_node("generate", generate),
+            "execute": self._profile_node("execute", execute_node),
+            "supervisor": self._profile_node("supervisor", supervisor),
+            "supervisor_final_audit": self._profile_node(
+                "supervisor_final_audit", supervisor_final_audit
+            ),
+            "install_subagent": self._profile_node("install_subagent", install_subagent),
+        }
+        # Expose the exact registered wrappers to integration tests.  Tests do
+        # not receive a parallel implementation of routing or persistence.
+        self._graph_node_handlers = profiled_nodes
+        for node_name, handler in profiled_nodes.items():
+            workflow.add_node(node_name, handler)
 
         workflow.add_edge(START, "triage")
 
@@ -17060,11 +27377,12 @@ If the user is actually asking you to run analysis or inspect local files, say t
         def planner_router(state):
             step = state.get("next_step")
             if step == "consultant": return "consultant"
+            if step == "planner": return "planner"
             if step == "finish": return END
             return "plan_review"
 
         workflow.add_conditional_edges("planner", planner_router,
-                                       ["consultant", "plan_review", END])
+                                       ["consultant", "planner", "plan_review", END])
 
         def install_subagent_router(state):
             step = state.get("next_step", "generate")
@@ -17077,6 +27395,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
 
         def plan_review_router(state):
             step = state.get("next_step")
+            if step == "consultant": return "consultant"
             if step == "planner": return "planner"
             if step == "ask_user": return "ask_user"
             if step == "finish":  return END
@@ -17084,7 +27403,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
             return "generate"
 
         workflow.add_conditional_edges("plan_review", plan_review_router,
-                                       ["generate", "planner", "ask_user", END])
+                                       ["generate", "consultant", "planner", "ask_user", END])
 
         def generate_router(state):
             recovery_route = committed_recovery_route(state, "generate")
@@ -17095,6 +27414,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     return recovery_route
             step = state.get("next_step")
             if step == "finish":         return END
+            if step == "consultant":     return "consultant"
             if step == "planner":        return "planner" if self._plan_patch_requested(state) else "generate"
             if step == "generate":       return "generate"
             if step == "ask_user":       return "ask_user"
@@ -17105,7 +27425,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
             return "generate"
 
         workflow.add_conditional_edges("generate", generate_router,
-                                       ["planner", "ask_user", "execute", "install_subagent", "supervisor", "supervisor_final_audit", "generate", END])
+                                       ["consultant", "planner", "ask_user", "execute", "install_subagent", "supervisor", "supervisor_final_audit", "generate", END])
 
         # execute → supervisor → generate（managed 核心链路）；轻量任务直接结束。
         def execute_router(state):
@@ -17259,6 +27579,67 @@ If the user is actually asking you to run analysis or inspect local files, say t
             return "paused_retryable"
         if self._snapshot_next_step(snapshot) == "human_input" or self._business_waiting_state(load_waiting_state(self.data_path, task_id)):
             return "waiting_user"
+        try:
+            durable_plan = load_plan_state(self.data_path, task_id)
+        except Exception:
+            durable_plan = {}
+        durable_consultation = dict(
+            (durable_plan.get("task_state") or {}).get("consultation_state")
+            or {}
+        )
+        consultation_state = (
+            values.get("consultation_state") or durable_consultation or {}
+        )
+        if isinstance(consultation_state, Mapping):
+            finalize_protocol = consultation_state.get("finalize_protocol") or {}
+            finalize_status = (
+                str(
+                    finalize_protocol.get("finalize_status")
+                    or finalize_protocol.get("status")
+                    or ""
+                ).strip().lower()
+                if isinstance(finalize_protocol, Mapping)
+                else ""
+            )
+            if (
+                str(consultation_state.get("phase") or "").strip().lower() == "blocked"
+                or str(consultation_state.get("consultation_status") or "").strip().lower()
+                == "blocked"
+                or str(consultation_state.get("completion_decision") or "").strip().lower()
+                == "blocked"
+                or finalize_status
+                in {"blocked", "blocked_internal_contract", "blocked_internal_provider"}
+            ):
+                return "blocked"
+            if isinstance(finalize_protocol, Mapping):
+                schema = int(finalize_protocol.get("schema_version") or 0)
+                compile_outcome = dict(
+                    finalize_protocol.get("compile_outcome") or {}
+                )
+                compiled = bool(
+                    (
+                        schema == 4
+                        and finalize_status == "compiled"
+                        and str(compile_outcome.get("status") or "")
+                        == "compiled"
+                    )
+                    or (
+                        schema in {2, 3}
+                        and finalize_status == "compiled"
+                    )
+                )
+                owner_present = bool(
+                    finalize_protocol
+                    or str(consultation_state.get("phase") or "")
+                    .strip().lower() == "finalize"
+                )
+                if owner_present and not compiled:
+                    # Graph END while FINALIZE still owns the task is a typed
+                    # incomplete terminal projection, never completion.
+                    return "blocked"
+        snapshot_task_status = str(values.get("task_status") or "").strip().lower()
+        if snapshot_task_status in TASK_TERMINAL_STATUSES:
+            return snapshot_task_status
 
         plan_status = self._terminal_status_from_plan(task_id, values)
         if plan_status:
@@ -17269,7 +27650,10 @@ If the user is actually asking you to run analysis or inspect local files, say t
         )
         if text_status:
             return text_status
-        return "completed"
+        # Graph END is not proof of business completion.  Missing terminal
+        # evidence must fail closed so resume/Wiki cannot inherit an optimistic
+        # state-manager projection.
+        return "blocked"
 
     async def go(
         self,
@@ -17303,9 +27687,24 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 print(f"\n🔄 Resuming: {task_id}")
             else:
                 stable_record = self._get_or_create_stable_prompt(task_id, project_id)
-                self.task_summary_renderer.initialize_task(task_id, str(prompt), status="running")
-                if self.state_manager:
-                    self.state_manager.create_task(task_id, prompt)
+                durable_start, is_continuation, _ = self._persist_user_submission(
+                    task_id,
+                    prompt,
+                    structured_source=structured_source,
+                )
+                if not is_continuation:
+                    self.task_summary_renderer.initialize_task(
+                        task_id,
+                        str(prompt),
+                        status="running",
+                    )
+                    if self.state_manager:
+                        self.state_manager.create_task(task_id, prompt)
+                conversation_evidence = dict(
+                    durable_start.get("conversation_evidence") or {}
+                )
+                durable_task_spec = canonical_task_spec_for_state(durable_start)
+                durable_task_state = dict(durable_start.get("task_state") or {})
                 runner_input = {
                     "messages": [HumanMessage(
                         content=prompt,
@@ -17320,16 +27719,25 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "stable_system_prompt": stable_record["prompt"],
                     "core_memory_loaded_at": stable_record["core_memory_loaded_at"],
                     "runtime_status": self._runtime_status_for_task(task_id),
-                    "task_spec": create_task_spec(
-                        str(prompt),
-                        task_id=task_id,
-                        structured_source=structured_source,
-                        base_dir=project_root,
-                        project_root=project_root,
+                    "conversation_evidence": conversation_evidence,
+                    "task_spec": deepcopy(durable_task_spec),
+                    "task_revision": task_spec_revision(durable_task_spec),
+                    "selected_skills": list(
+                        durable_task_state.get("selected_skills") or []
                     ),
-                    "task_revision": 1,
+                    "resolved_bindings": deepcopy(dict(
+                        durable_task_state.get("resolved_bindings") or {}
+                    )),
+                    "consultation_state": deepcopy(dict(
+                        durable_task_state.get("consultation_state") or {}
+                    )),
+                    "planner_feedback": deepcopy(dict(
+                        durable_task_state.get("planner_feedback") or {}
+                    )),
                 }
-                print(f"\n🚀 Task: {task_id}")
+                print(
+                    f"\n{'↪ Continuing' if is_continuation else '🚀 Task'}: {task_id}"
+                )
 
         # 内存状态展示
         self.memory_manager.print_status(
@@ -17382,6 +27790,10 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         pass
                 self.profiler.finish_task(task_id, terminal_status)
                 if terminal_status == "completed":
+                    await self._maybe_auto_wiki_ingest_after_finalize(
+                        task_id,
+                        terminal_status,
+                    )
                     await self._maybe_offer_wiki_ingest(task_id, self.default_project_id)
                 return terminal_status
 
@@ -17694,13 +28106,34 @@ Commands:
                     continue
 
                 if user_input in {"/wiki ingest", "/wiki ingest task"}:
-                    ingest_task_id = current_session_id if user_input.endswith(" task") else None
-                    result = await self.wiki_memory_manager.ingest_from_archive(
-                        self.session_archive,
-                        project_id=self.default_project_id,
-                        task_id=ingest_task_id,
+                    if not current_session_id:
+                        output.page_text(
+                            "Wiki Ingest",
+                            "Wiki ingest denied: no snapshot-bound current task.",
+                            Fore.YELLOW,
+                        )
+                        continue
+                    if user_input == "/wiki ingest":
+                        output.page_text(
+                            "Wiki Ingest",
+                            "Project-wide blind ingestion is disabled. Use /wiki ingest task so every event is bound to one completed task snapshot.",
+                            Fore.YELLOW,
+                        )
+                        continue
+                    try:
+                        succeeded, result = await self._ingest_wiki_task_with_gate(
+                            current_session_id,
+                            project_id=self.default_project_id,
+                        )
+                    except Exception as exc:
+                        succeeded, result = False, (
+                            f"Wiki ingest failed after durable dispatch: {type(exc).__name__}: {exc}"
+                        )
+                    output.page_text(
+                        "Wiki Ingest",
+                        result,
+                        Fore.CYAN if succeeded else Fore.YELLOW,
                     )
-                    output.page_text("Wiki Ingest", result, Fore.CYAN)
                     continue
 
                 if user_input == "/wiki compile":

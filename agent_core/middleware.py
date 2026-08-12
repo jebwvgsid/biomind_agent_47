@@ -19,6 +19,12 @@ from config.config import (
 from colorama import Fore, Style
 from agent_core.llm_safety import clip_text, llm_failure_summary
 from agent_core.context_lineage import ainvoke_with_snapshot
+from agent_core.node_context import (
+    InvocationRegistry,
+    build_node_context,
+    evaluate_node_staleness,
+)
+from agent_core.task_spec import task_semantic_hash
 from agent_core.recovery import (
     ConstraintConflictDetector,
     ActionSignature,
@@ -62,6 +68,7 @@ from agent_core.knowledge_conflicts import (
 )
 from agent_core.plan_tracker import (
     apply_recovery_decision,
+    canonical_task_spec_for_state,
     increment_plan_budget,
     load_plan_state,
     save_plan_state,
@@ -70,6 +77,77 @@ from agent_core.plan_tracker import (
 from prompts.manager import PromptManager
 
 logger = logging.getLogger("BioMind.Middleware")
+_RECOVERY_INVOCATIONS = InvocationRegistry(max_entries=256)
+
+
+async def _invoke_recovery_v2(
+    llm: Any,
+    *,
+    data_path: str | Path | None,
+    task_id: str,
+    plan_state: Dict[str, Any],
+    step_id: str,
+    attempt_id: str = "",
+    failure_fingerprint: str = "",
+    runtime: Dict[str, Any] | None = None,
+    evidence: List[Dict[str, Any]] | None = None,
+) -> Tuple[Any, Dict[str, Any]]:
+    """Invoke Recovery through the same control/LLM-plane boundary as nodes."""
+    task_spec = canonical_task_spec_for_state(plan_state)
+    context = build_node_context(
+        node_type="recovery",
+        task_spec=task_spec,
+        plan_state=plan_state,
+        state_generation=int(plan_state.get("state_generation") or 0),
+        current_step_id=str(step_id or ""),
+        attempt_id=str(attempt_id or ""),
+        failure_fingerprint=str(failure_fingerprint or ""),
+        runtime=dict(runtime or {}),
+        evidence=list(evidence or []),
+        allowed_operations=[
+            "probe", "repair", "rerun", "rollback", "blocked", "escalate",
+        ],
+    )
+    stale_signature = "|".join(
+        [context.binding.task_semantic_hash, context.binding.plan_semantic_hash,
+         str(failure_fingerprint or ""), str(attempt_id or "")]
+    )
+    _RECOVERY_INVOCATIONS.register(context.binding, stale_signature=stale_signature)
+    invocation_consumed = False
+    try:
+        prompt = PromptManager.get_recovery_v2_prompt(context.llm_payload.to_dict())
+        message, snapshot = await ainvoke_with_snapshot(
+            llm,
+            [HumanMessage(content=prompt)],
+            data_path=data_path,
+            task_id=task_id,
+            metadata={
+                "node_name": "recovery_judge",
+                "call_kind": "recovery_judge_v2",
+            },
+        )
+        snapshot = dict(snapshot or {})
+        snapshot["prompt_projection_hash"] = hashlib.sha256(
+            prompt.encode("utf-8", errors="replace")
+        ).hexdigest()[:20]
+        _RECOVERY_INVOCATIONS.consume(context.binding.invocation_id)
+        invocation_consumed = True
+        latest = load_plan_state(data_path, task_id) if data_path else plan_state
+        latest_task = canonical_task_spec_for_state(latest)
+        decision = evaluate_node_staleness(context.binding, {
+            "task_semantic_hash": task_semantic_hash(latest_task),
+            "plan_semantic_hash": "sha256:" + semantic_plan_hash(latest).removeprefix("sha256:"),
+            "failure_fingerprint": str(failure_fingerprint or ""),
+            "attempt_id": str(attempt_id or ""),
+        })
+        if not decision.usable:
+            _RECOVERY_INVOCATIONS.mark_stale_signature_handled(decision.stale_signature)
+            raise RuntimeError(decision.code)
+        return message, snapshot
+    except Exception:
+        if not invocation_consumed:
+            _RECOVERY_INVOCATIONS.terminate(context.binding.invocation_id, status="failed")
+        raise
 
 LOG_TAIL_POLICY = (
     "When an error points to a .err, .log, .out, or trace file, inspect only a "
@@ -715,195 +793,29 @@ def _legacy_error_recovery_middleware(llm, retriever, skill_manager=None, data_p
                 # --- C. LLM 诊断 (开处方) ---
                 # 我们不直接修改代码，而是生成一个“专家会诊意见”，注入到对话历史中
                 # 让下一个 Generate 节点基于这个意见去重写代码
-                diagnosis_prompt = f"""
-You are a recovery engineer diagnosing exactly one failed execution. Your goal is
-to identify the proven root cause before proposing any retry. Do not continue the
-workflow blindly.
-
-Hard rules:
-1. If the observed exit code or validation status is failed, the step failed. Never call it PASS.
-2. Do not infer missing inputs unless the error evidence proves that exact missing input.
-3. First identify the failing command, failing line, and primary error class.
-4. If the traceback or tool log is truncated, the next action must inspect the relevant tail of the log or run a minimal availability check; do not guess.
-5. Do not proceed to downstream workflow steps until the failed step passes validation gates.
-6. Do not repeat the same command without changing the diagnosed cause.
-7. Prefer deterministic checks over clever shell constructs.
-8. For conda/subprocess errors, first check executable availability with 'which', '--version', and package import/load tests.
-9. For scientific file generation, success requires semantic validation, not only file existence.
-10. The deterministic RootCauseAnalyzer block below has precedence over prose:
-    do not replace executor argv, do not call a wrapper the primary failed tool,
-    and do not mark a probable cause as confirmed.
-11. If the analyzer reports a masked pipeline failure, the next action must repair
-    or verify the inner segment; a zero outer exit code is not success.
-12. Hypothesis state and progress are persisted across attempts.  Do not restart
-    diagnosis from prose.  Use the supplied evidence IDs and prior state.
-13. You may assess evidence with evidence_assessments, but never set confidence,
-    new_confidence, probability, or progress_score.  Deterministic code computes
-    those values.  Do not create a duplicate hypothesis merely with different wording.
-14. Recovery patches are ScriptPatch objects only: set patch_type=script_patch,
-    target_file, base_hash, operation, and the minimal text change. Ordinary path,
-    shell, parameter, redirection, or environment errors must not become PlanPatch.
-15. Evidence is source typed. Script source (including a trap that prints
-    `[ERROR]`) and validator summaries cannot confirm a runtime failed command.
-    Only stderr, a tool log, or shell trace may directly confirm it. If the
-    original command or exit status is unresolved, verdict must be `probe`, not
-    `repair` or `rerun`.
-16. A diagnostic command must preserve every failed check. Do not use `|| echo`,
-    `|| true`, or mixed `a && b || echo ... && c` chains. Use an explicit
-    `check_failed=0`, independent `if ! check; then ...; check_failed=1; fi`
-    blocks, and `exit "$check_failed"`.
-17. File, directory, config, and log existence are only partial-artifact
-    evidence. Validate the declared non-empty core artifacts, fatal-free final
-    log status, and a minimal load check when the active skill declares one.
-
-Classify the failure as exactly one primary class:
-- command_syntax_error
-- missing_executable
-- missing_package
-- missing_input_file
-- wrong_path_or_uri
-- format_or_schema_error
-- chromosome_name_mismatch
-- coordinate_system_mismatch
-- scientific_validation_failed
-- downstream_tool_runtime_error
-- unknown_truncated_log
-
-When the failure is dependency/runtime related, represent the repair hint in the
-mandatory JSON decision fields below:
-```json
-{{
-  "failure_class": "missing_executable|missing_package",
-  "missing_tools": ["tool_or_package_name"],
-  "affected_skill": "selected skill id if known",
-  "recommended_action": "install_runtime|verify_existing_runtime|block_runtime",
-  "suggested_package": "package name if known",
-  "healthcheck": ["exact minimal healthcheck commands to run after repair"]
-}}
-```
-If the active skill context includes a declared healthcheck or install command,
-use that exact command or a strict subset of it; do not invent a Python/R binding
-or alternative package name.
-
-Domain-specific recovery rule:
-- Do not rely on benchmark-case memories or one-off fixes. Use the active skill
-  context, the executed command, and the concrete error evidence to infer the
-  smallest valid repair.
-- If the failed step involves derived inputs, validate the invariant documented
-  by the active skill rather than inventing a new domain rule. General examples:
-  matched sample names, paired input completeness, chromosome/contig name
-  compatibility, coordinate system compatibility, non-empty required columns,
-  and tool-declared runtime healthchecks.
-- If no active skill context documents the invariant or repair, ask for the
-  missing decision/evidence or produce a truthful blocked/unresolved status
-  after retry limits; do not add another hard-coded workflow-specific patch.
-
-Analyze the following execution error:
-Recovery tier: {tier} (retry_count={retry_count})
-Primary failure class detected by rules: {failure_class}
-Rule-based next action: {failure_action}
-
-<error>
-STDOUT:
-{clip_text(raw_stdout[-4000:], 1800)}
-
-STDERR:
-{clip_text(raw_stderr[-4000:], 1800)}
-</error>
-
-<deterministic_root_cause>
-{deterministic_root_cause}
-</deterministic_root_cause>
-
-<command_execution_chain>
-{deterministic_command_chain}
-</command_execution_chain>
-
-<persisted_diagnostic_state>
-{clip_text(diagnostic_state_context, 12000)}
-</persisted_diagnostic_state>
-
-<persisted_progress_state>
-{clip_text(progress_state_context, 6000)}
-</persisted_progress_state>
-
-{clip_text(rag_advice, 1200)}
-
-{clip_text(skill_advice, 1800)}
-
-Output format:
-Root cause:
-- one sentence, evidence-backed.
-
-Evidence:
-- quote the exact error line or failed invariant.
-
-Do not do:
-- list commands or assumptions that must not be repeated.
-
-Next diagnostic command:
-- provide only if the root cause is not proven or the log is truncated.
-
-Corrected command/code:
-- provide only after the root cause is proven.
-
-Validation gates:
-- list concrete checks that must pass before continuing.
-
-Escalation:
-- if the same class failed twice, stop broad guessing and request the missing log,
-  environment path, or tool availability result.
-
-Machine-readable output contract (mandatory): return exactly one JSON object and
-no prose or markdown. It must contain at least:
-{{
-  "verdict": "probe|repair|rerun|rollback|blocked|escalate",
-  "root_cause": "evidence-backed root cause",
-  "confidence": 0.0,
-  "action_type": "inspect_file|inspect_log|run_probe|patch_file|replace_command|change_environment|install_dependency|regenerate_script|rerun_stage|fallback_method|block_task",
-  "evidence": [],
-  "commands": ["one complete executable command string per item; never emit command objects"],
-  "patches": [],
-  "verification_checks": [
-    {{"check_type": "file_nonempty|content_pattern|command_exit|artifact_bundle", "target": "path", "pattern": "actual regex for content_pattern only", "expected": "typed expected value for other checks", "required": true}}
-  ],
-  "expected_new_evidence": [],
-  "evidence_assessments": [
-    {{"evidence_id": "EV_id", "hypothesis_id": "H_id", "relation": "supports|contradicts|neutral|ambiguous", "strength": "weak|moderate|strong|decisive", "directness": "direct|indirect|inferred", "reason": "evidence-backed explanation"}}
-  ],
-  "new_hypothesis_proposals": [],
-  "recommended_probe_id": null,
-  "risk_level": "safe|low|medium|high",
-  "violates_user_constraint": false
-}}
-Do not emit a patch that removes a user-required option unless the evidence and
-constraint-conflict fields prove that no compatible invocation exists. A probe
-must name the hypothesis it will distinguish; a repair/rerun must name the
-changed strategy and its verification checks.
-For `content_pattern`, `pattern` must be a literal machine-evaluable regex that
-should occur in `target`; never write narrative conditions such as "must be
-identified". Probe actions should put the evidence they seek in
-`expected_new_evidence`, not in artifact `verification_checks`.
-
-Log policy:
-{LOG_TAIL_POLICY}
-{env_hint}
-{external_hint}
-{repeated_class_hint}
-"""
                 # 调用 LLM 生成诊断
+                diagnosis_snapshot: Dict[str, Any] = {}
                 try:
-                    diagnosis_msg, diagnosis_snapshot = await ainvoke_with_snapshot(
+                    legacy_plan_state = load_plan_state(data_path, task_id) if data_path else {}
+                    diagnosis_msg, diagnosis_snapshot = await _invoke_recovery_v2(
                         llm,
-                        [HumanMessage(content=diagnosis_prompt)],
                         data_path=data_path,
                         task_id=task_id,
-                        metadata={
-                            "node_name": "recovery_judge",
-                            "call_kind": "recovery_judge",
-                            "step_id": str((state or {}).get("current_step_id") or ""),
-                            "legacy_recovery": True,
+                        plan_state=legacy_plan_state,
+                        step_id=str((state or {}).get("current_step_id") or ""),
+                        attempt_id=str((state or {}).get("attempt_id") or ""),
+                        failure_fingerprint=legacy_error_fingerprint,
+                        runtime={
+                            "failure_context": recovery_context.llm_view(),
+                            "hypothesis_state": prompt_hypothesis_manager.to_dict(),
+                            "progress_state": asdict(prompt_progress) if prompt_progress else {},
+                            "failure_class": failure_class,
                         },
+                        evidence=[{
+                            "evidence_id": "legacy_execution_failure",
+                            "kind": "execution_failure",
+                            "excerpt": clip_text(error_text, 6000),
+                        }],
                     )
                     diagnosis_text = diagnosis_msg.content
                 except Exception as exc:
@@ -914,65 +826,23 @@ Log policy:
                         "do not repeat the same failing command."
                     )
 
-                # The text is retained in the observation for compatibility,
-                # but routing consumes one validated JSON decision. A single
-                # repair call is allowed; malformed output must never become
-                # an unbounded LLM repair loop.
+                # Routing consumes one validated semantic decision.  A schema
+                # failure is handled deterministically; it never triggers a
+                # rerender/format-repair provider call.
                 decision: RecoveryDecision
                 decision_parse_error = ""
                 try:
                     decision = parse_recovery_decision(diagnosis_text)
                 except Exception as exc:
                     decision_parse_error = str(exc)
-                    repair_prompt = (
-                        clip_text(diagnosis_prompt, 16000)
-                        + "\n\nReturn exactly one JSON object for the recovery decision. "
-                        "No markdown and no prose. Required keys: verdict, root_cause, confidence (legacy and ignored), "
-                        "action_type, evidence, commands, patches, verification_checks, "
-                        "rollback_steps, expected_new_evidence, evidence_assessments, new_hypothesis_proposals, "
-                        "recommended_probe_id, risk_level, violates_user_constraint. Never include confidence fields "
-                        "inside evidence_assessments.\n"
-                        "Every verification_checks item must be an object such as "
-                        '{"check_type":"file_nonempty","target":"output.tsv","required":true}; '
-                        "never return verification checks as strings.\n"
-                        "Allowed verdicts: probe, repair, rerun, rollback, blocked, escalate.\n"
-                        "Allowed action_type: inspect_file, inspect_log, run_probe, patch_file, "
-                        "replace_command, change_environment, install_dependency, regenerate_script, "
-                        "rerun_stage, fallback_method, block_task.\n"
-                        "The commands field must be an array of non-empty executable command strings, never objects. "
-                        "Actions inspect_file, inspect_log, run_probe, rerun_stage, and verdict rerun require a command.\n"
-                        f"Failure context:\n{json.dumps(recovery_context.llm_view(), ensure_ascii=False)}\n"
-                        f"Previous diagnosis:\n{clip_text(diagnosis_text, 3000)}\n"
-                        "Use the exact evidence; do not delete a user-required option merely because a wrapper rejected it."
+                    decision = RecoveryDecision(
+                        verdict="escalate",
+                        root_cause="recovery_decision_schema_invalid",
+                        confidence=0.0,
+                        action_type="block_task",
+                        evidence=[decision_parse_error, recovery_context.inner_error or error_text],
+                        expected_new_evidence=[],
                     )
-                    try:
-                        repaired_msg, _ = await ainvoke_with_snapshot(
-                            llm,
-                            [HumanMessage(content=repair_prompt)],
-                            data_path=data_path,
-                            task_id=task_id,
-                            metadata={
-                                "node_name": "recovery_judge",
-                                "call_kind": "recovery_judge",
-                                "parent_call_id": str(diagnosis_snapshot.get("call_id") or ""),
-                                "legacy_recovery": True,
-                                "repair": True,
-                            },
-                        )
-                        repaired_text = str(getattr(repaired_msg, "content", repaired_msg) or "")
-                        diagnosis_text = diagnosis_text + "\n\n[JSON repair response]\n" + repaired_text
-                        decision = parse_recovery_decision(repaired_text)
-                    except Exception as repair_exc:
-                        decision = RecoveryDecision(
-                            verdict="repair",
-                            root_cause="recovery_decision_unavailable_regenerate_from_deterministic_evidence",
-                            confidence=0.2,
-                            action_type="regenerate_script",
-                            evidence=[decision_parse_error, str(repair_exc), recovery_context.inner_error or error_text],
-                            expected_new_evidence=[
-                                "a changed command that addresses the confirmed failed command and primary error"
-                            ],
-                        )
 
                 recovery_requires_user = False
                 deterministic_status = str(
@@ -1357,7 +1227,9 @@ Log policy:
                     plan_hash=semantic_plan_hash(durable_plan) if durable_plan.get("steps") else "",
                     step_id=recovery_context.stage_id,
                     command_hash=hashlib.sha256(action_command.encode("utf-8", errors="replace")).hexdigest()[:20] if action_command else "",
-                    prompt_projection_hash=hashlib.sha256(diagnosis_prompt.encode("utf-8", errors="replace")).hexdigest()[:20],
+                    prompt_projection_hash=str(
+                        diagnosis_snapshot.get("prompt_projection_hash") or ""
+                    ),
                     new_evidence_count=len(independent_evidence_ids),
                 )
                 previous_attempts.append(asdict(attempt))
@@ -1737,6 +1609,7 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
             )
             prompt_context = diagnostic_context.prompt_view()
             diagnosis = dict(prompt_context.get("diagnosis") or {})
+            capacity_error = dict(prompt_context.get("error") or {})
             decision: RecoveryDecision
             judge_needed = diagnosis_required(trigger, evidence, merged_state)
 
@@ -1753,7 +1626,33 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                 or str(evidence.get("execution_status") or "").lower() == "failed"
             )
 
-            if diagnosis.get("collection_complete") and not judge_needed and (
+            if capacity_error.get("code") == "CONTEXT_CAPACITY_EXCEEDED":
+                # A semantic closure that does not fit is an internal capacity
+                # failure.  Never send a partial view to the judge and never
+                # turn it into a user clarification or a rerender loop.
+                decision = recovery_decision_from_diagnosis({
+                    "root_cause": str(
+                        capacity_error.get("message")
+                        or "The recovery semantic closure exceeds model capacity."
+                    ),
+                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    "failure_type": "context_capacity_exceeded",
+                    "evidence": [
+                        f"required_semantic_chars:{int(capacity_error.get('required_semantic_chars') or 0)}",
+                        f"max_context_chars:{int(capacity_error.get('max_context_chars') or 0)}",
+                    ],
+                    "confidence": 1.0,
+                    "missing_evidence": [],
+                    "repair_strategy": (
+                        "Increase model capacity or reduce the authoritative "
+                        "semantic contract through an explicit user-approved change."
+                    ),
+                    "next_action": RecoveryAction.ESCALATE.value,
+                    "requires_user_input": False,
+                    "evidence_sufficient": True,
+                    "collection_complete": True,
+                })
+            elif diagnosis.get("collection_complete") and not judge_needed and (
                 structured_execution_failed or diagnosis.get("evidence_sufficient")
             ):
                 # The builder has already read the persisted script, trace,
@@ -1761,7 +1660,6 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                 # to invent another shell probe for locally available facts.
                 decision = recovery_decision_from_diagnosis(diagnosis)
             elif judge_needed:
-                judge_prompt = PromptManager.get_recovery_judge_prompt(prompt_context)
                 cached_judge = (
                     store.load_llm_result(diagnostic_context.context_id, "recovery_judge")
                     if store else {}
@@ -1798,21 +1696,25 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                         increment_plan_budget(plan_state, "recovery_judge_count")
                         save_plan_state(data_path, task_id, plan_state)
                     try:
-                        judge_message, _ = await ainvoke_with_snapshot(
+                        judge_message, _ = await _invoke_recovery_v2(
                             llm,
-                            [HumanMessage(content=judge_prompt)],
                             data_path=data_path,
                             task_id=task_id,
-                            metadata={
-                                "node_name": "recovery_judge",
-                                "call_kind": "recovery_judge",
-                                "step_id": str(evidence.get("step_id") or ""),
-                                "action_id": str(evidence.get("action_id") or ""),
-                                "attempt_id": str(evidence.get("attempt_id") or ""),
-                                "recovery_context_ref": str(
-                                    Path(data_path) / "task_outputs" / task_id / "recovery" / "recovery_context.json"
-                                ) if data_path else "",
+                            plan_state=plan_state,
+                            step_id=str(evidence.get("step_id") or ""),
+                            attempt_id=str(evidence.get("attempt_id") or evidence.get("execution_id") or ""),
+                            failure_fingerprint=diagnostic_context.error_fingerprint,
+                            runtime={
+                                "diagnosis": diagnosis,
+                                "trigger": trigger.to_dict(),
+                                "progress": progress,
+                                "skill_policy": skill_policy,
                             },
+                            evidence=[{
+                                "evidence_id": str(evidence.get("execution_id") or "execution"),
+                                "kind": "execution_failure",
+                                "excerpt": json.dumps(evidence, ensure_ascii=False, default=str),
+                            }],
                         )
                         judge_text = str(getattr(judge_message, "content", judge_message) or "")
                         decision = parse_recovery_judge_decision(judge_text)
@@ -1918,12 +1820,19 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                 "diagnostic_context_path": str(store.root / "recovery_context.json") if store else "",
                 "do_not_repeat": [str(evidence.get("code_hash") or "")] if trigger.same_failure_count >= 2 else [],
             }
+            context_ref = str(store.root / "recovery_context.json") if store else ""
+            compact_recovery_binding = {
+                "context_ref": context_ref,
+                "context_id": diagnostic_context.context_id,
+                "error_fingerprint": diagnostic_context.error_fingerprint,
+                "failure_owner": decision.failure_owner,
+                "evidence_handles": list(decision.evidence),
+            }
             result.update({
                 "execution_evidence": evidence,
-                "diagnostic_context": prompt_context,
-                "recovery_context": prompt_context,
+                "diagnostic_context": compact_recovery_binding,
+                "recovery_context": compact_recovery_binding,
                 "recovery_context_digest": diagnostic_context.context_id,
-                "current_step_context": dict(prompt_context.get("current_step") or {}),
                 "recovery_decision": decision.to_dict(),
                 "diagnostic_summary": diagnosis,
                 "structured_diagnosis": diagnosis,

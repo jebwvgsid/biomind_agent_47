@@ -11,12 +11,14 @@ import itertools
 import json
 import math
 import re
+from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from agent_core.context_lineage import redact_text
+from agent_core.plan_tracker import canonical_task_spec_for_state
 from agent_core.root_cause import extract_failed_trace_event
 from agent_core.task_spec import project_effective_user_facts, resolve_effective_user_facts
 
@@ -230,152 +232,150 @@ class RecoveryContext:
         return f"recovery-context-{digest}"
 
     def prompt_view(self, max_chars: Optional[int] = None) -> Dict[str, Any]:
-        """Return a valid bounded object instead of truncating serialized JSON."""
+        """Return a bounded evidence view without truncating task semantics.
+
+        This method remains for legacy diagnostic callers.  RecoveryJudge v2
+        receives a Controller-built ``LLMPayload``, but a compatibility caller
+        must still never turn a complete constraint set into a misleading
+        prefix/tail.  Only evidence/history sections are compacted.  If the
+        semantic closure itself does not fit, return a typed capacity result
+        rather than a partial semantic view.
+        """
         budget = max(2_000, int(max_chars or self.limits.get("max_context_chars") or 32_000))
         value = self.to_dict()
         encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
         if len(encoded) <= budget:
             return value
 
-        execution = dict(value.get("execution") or {})
-        for key in ("code", "stdout_tail", "stderr_tail"):
-            if key in execution:
-                execution[key] = _clip(execution.get(key), 3_000)
-        value["execution"] = execution
-        value["recent_attempts"] = list(value.get("recent_attempts") or [])[-2:]
-        value["artifacts"] = list(value.get("artifacts") or [])[:24]
-        encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
-        if len(encoded) <= budget:
-            return value
-
-        def compact(item: Any, *, text_limit: int, list_limit: int, depth: int = 0) -> Any:
+        def compact_evidence(item: Any, *, text_limit: int, list_limit: int) -> Any:
             if isinstance(item, str):
                 return _clip(item, text_limit)
             if isinstance(item, dict):
                 return {
-                    str(key): compact(child, text_limit=text_limit, list_limit=list_limit, depth=depth + 1)
+                    str(key): compact_evidence(
+                        child,
+                        text_limit=text_limit,
+                        list_limit=list_limit,
+                    )
                     for key, child in item.items()
                 }
             if isinstance(item, list):
                 return [
-                    compact(child, text_limit=text_limit, list_limit=list_limit, depth=depth + 1)
+                    compact_evidence(
+                        child,
+                        text_limit=text_limit,
+                        list_limit=list_limit,
+                    )
                     for child in item[-list_limit:]
                 ]
             return item
 
-        # Preserve section names and source paths while progressively shrinking
-        # verbose nested values. Never return sliced or invalid JSON.
-        for text_limit, list_limit in ((800, 8), (320, 4), (120, 2)):
-            candidate = compact(value, text_limit=text_limit, list_limit=list_limit)
+        task_summary = dict(value.get("task_spec_summary") or {})
+        # Old checkpoints may carry the complete request under compatibility
+        # keys.  They are audit material, not a second semantic authority.
+        task_summary = {
+            key: task_summary.get(key)
+            for key in (
+                "goal",
+                "inputs",
+                "output_dir",
+                "constraints",
+                "required_outputs",
+                "output_contracts",
+                "confirmed_decisions",
+                "unresolved_questions",
+            )
+            if task_summary.get(key) not in (None, "", [], {})
+        }
+        semantic_sections = {
+            "task_spec_summary": task_summary,
+            "effective_user_facts": deepcopy(
+                dict(value.get("effective_user_facts") or {})
+            ),
+            "current_step": deepcopy(dict(value.get("current_step") or {})),
+            "action_contract": deepcopy(dict(value.get("action_contract") or {})),
+            "allowed_actions": deepcopy(list(value.get("allowed_actions") or [])),
+        }
+        identity = {
+            key: value.get(key)
+            for key in (
+                "schema_version",
+                "context_id",
+                "task_id",
+                "step_id",
+                "action_id",
+                "attempt_id",
+                "error_class",
+                "error_fingerprint",
+            )
+        }
+        evidence_sections = (
+            "execution",
+            "validation",
+            "completion",
+            "progress",
+            "runtime",
+            "manifest",
+            "artifacts",
+            "recent_attempts",
+            "already_tried_strategies",
+            "recovery_decision",
+            "log_references",
+            "bounded_log_excerpt",
+            "conflicts",
+            "skill_policy",
+            "diagnosis",
+        )
+
+        # Evidence is excerptable and attempt history is intentionally recent;
+        # task/step constraints above are copied byte-for-byte at every level.
+        for text_limit, list_limit in ((3_000, 24), (1_200, 12), (480, 6), (160, 3)):
+            candidate = {**identity, **deepcopy(semantic_sections)}
+            for key in evidence_sections:
+                candidate[key] = compact_evidence(
+                    value.get(key),
+                    text_limit=text_limit,
+                    list_limit=list_limit,
+                )
             candidate["limits"] = {
-                **dict(candidate.get("limits") or {}),
+                "max_context_chars": budget,
                 "context_truncated": True,
+                "semantic_projection_complete": True,
+                "compaction_scope": "evidence_only",
             }
             if len(json.dumps(candidate, ensure_ascii=False, sort_keys=True, default=str)) <= budget:
                 return candidate
 
-        def select(mapping: Any, keys: Tuple[str, ...], *, text_limit: int = 160) -> Dict[str, Any]:
-            source = mapping if isinstance(mapping, dict) else {}
-            return {
-                key: compact(source.get(key), text_limit=text_limit, list_limit=2)
-                for key in keys
-                if source.get(key) not in (None, "", [], {})
-            }
-
-        minimal = {
-            "schema_version": "3",
-            "context_id": value.get("context_id"),
-            "task_id": value.get("task_id"),
-            "step_id": value.get("step_id"),
-            "action_id": value.get("action_id"),
-            "attempt_id": value.get("attempt_id"),
-            "error_class": value.get("error_class"),
-            "error_fingerprint": value.get("error_fingerprint"),
-            "task_spec_summary": select(value.get("task_spec_summary"), (
-                "goal", "inputs", "output_dir", "constraints", "required_outputs",
-            ), text_limit=120),
-            "effective_user_facts": compact(
-                value.get("effective_user_facts") or {}, text_limit=160, list_limit=4
-            ),
-            "current_step": select(value.get("current_step"), (
-                "step_id", "step_type", "status", "title", "purpose", "skill_ids",
-                "renderer_id", "input_bindings", "output_contract", "success_criteria",
-                "dependencies", "manifest_status", "manifest_path", "allowed_actions",
-            ), text_limit=120),
-            "action_contract": compact(value.get("action_contract") or {}, text_limit=120, list_limit=3),
-            "execution": select(value.get("execution"), (
-                "execution_id", "attempt_id", "step_id", "script_path", "code_path", "code_hash",
-                "language", "command_role", "returncode", "execution_status", "failed_line_number",
-                "failed_command", "script_context", "stdout_tail", "stderr_tail", "stdout_log_path",
-                "stderr_log_path", "trace_file", "trace_tail", "expected_runtime_contract",
-                "actual_environment", "runtime_drift", "action_id", "action_kind", "action_source",
-                "manifest_path", "manifest_action_id", "renderer_manifest_error", "produced_artifacts",
-            ), text_limit=140),
-            "validation": compact(value.get("validation") or {}, text_limit=120, list_limit=4),
-            "completion": compact(value.get("completion") or {}, text_limit=120, list_limit=4),
-            "progress": compact(value.get("progress") or {}, text_limit=120, list_limit=4),
-            "runtime": compact(value.get("runtime") or {}, text_limit=120, list_limit=3),
-            "manifest": compact(value.get("manifest") or {}, text_limit=120, list_limit=3),
-            "artifacts": compact(value.get("artifacts") or [], text_limit=100, list_limit=4),
-            "recent_attempts": compact(value.get("recent_attempts") or [], text_limit=100, list_limit=3),
-            "already_tried_strategies": compact(
-                value.get("already_tried_strategies") or [], text_limit=100, list_limit=4
-            ),
-            "recovery_decision": compact(value.get("recovery_decision") or {}, text_limit=120, list_limit=3),
-            "allowed_actions": compact(value.get("allowed_actions") or [], text_limit=80, list_limit=8),
-            "log_references": compact(value.get("log_references") or [], text_limit=140, list_limit=6),
-            "bounded_log_excerpt": _clip(value.get("bounded_log_excerpt"), 800),
-            "conflicts": compact(value.get("conflicts") or [], text_limit=100, list_limit=4),
-            "skill_policy": select(value.get("skill_policy"), ("skill_ids", "relevant_context"), text_limit=100),
-            "diagnosis": select(value.get("diagnosis"), (
-                "root_cause", "failure_owner", "failure_type", "evidence", "confidence",
-                "missing_evidence", "repair_strategy", "next_action", "requires_user_input",
-                "evidence_sufficient", "collection_complete",
-            ), text_limit=140),
-            "limits": {"max_context_chars": budget, "context_truncated": True},
-        }
-        if len(json.dumps(minimal, ensure_ascii=False, sort_keys=True, default=str)) <= budget:
-            return minimal
-
-        # The final projection keeps only source-addressable repair evidence.
-        # It is intentionally sparse so persisted contexts with extra metadata
-        # cannot bypass the prompt budget.
+        required_semantic_chars = len(json.dumps(
+            {**identity, **semantic_sections},
+            ensure_ascii=False,
+            sort_keys=True,
+            default=str,
+        ))
         return {
-            "schema_version": "3",
+            "schema_version": str(value.get("schema_version") or "3"),
             "context_id": value.get("context_id"),
             "task_id": value.get("task_id"),
             "step_id": value.get("step_id"),
             "attempt_id": value.get("attempt_id"),
             "error_fingerprint": value.get("error_fingerprint"),
-            "task_spec_summary": select(
-                value.get("task_spec_summary"), ("goal", "output_dir"), text_limit=100
-            ),
-            "current_step": select(
-                value.get("current_step"), ("step_id", "step_type", "success_criteria", "allowed_actions"),
-                text_limit=100,
-            ),
-            "execution": select(value.get("execution"), (
-                "execution_id", "script_path", "returncode", "failed_line_number", "failed_command",
-                "stderr_tail", "stdout_log_path", "stderr_log_path", "runtime_drift",
-            ), text_limit=100),
-            "validation": select(
-                value.get("validation"), ("validation_id", "status", "errors", "failed_success_criteria"),
-                text_limit=100,
-            ),
-            "completion": select(
-                value.get("completion"), ("classification", "reason", "missing_artifacts"),
-                text_limit=100,
-            ),
-            "progress": select(
-                value.get("progress"), ("classification", "meaningful_progress", "no_progress_count"),
-                text_limit=100,
-            ),
-            "log_references": compact(value.get("log_references") or [], text_limit=100, list_limit=4),
-            "diagnosis": select(value.get("diagnosis"), (
-                "root_cause", "failure_owner", "failure_type", "evidence", "missing_evidence",
-                "repair_strategy", "next_action",
-            ), text_limit=100),
-            "limits": {"max_context_chars": budget, "context_truncated": True, "projection": "critical"},
+            "error": {
+                "code": "CONTEXT_CAPACITY_EXCEEDED",
+                "owner": "controller_projection",
+                "message": (
+                    "The complete recovery semantic closure exceeds the "
+                    "configured context capacity; no partial semantic view "
+                    "was produced."
+                ),
+                "required_semantic_chars": required_semantic_chars,
+                "max_context_chars": budget,
+            },
+            "limits": {
+                "max_context_chars": budget,
+                "context_truncated": False,
+                "semantic_projection_complete": False,
+                "capacity_exceeded": True,
+            },
         }
 
 
@@ -1075,7 +1075,10 @@ def build_recovery_context(
     state = dict(state or {})
     evidence = enrich_execution_evidence(state, execution_evidence, limits=limits)
     plan_state = dict(plan_state or {})
-    task_spec = dict(state.get("task_spec") or {})
+    # A supplied V2 plan is authoritative and corruption fails closed.  Graph
+    # aliases are accepted only when replaying a genuinely legacy state with
+    # no durable plan partition.
+    task_spec = canonical_task_spec_for_state(plan_state or state)
     step_id = str(evidence.get("step_id") or state.get("current_step_id") or "")
     current_step = _active_step(state, plan_state, step_id)
 

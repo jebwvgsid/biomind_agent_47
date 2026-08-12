@@ -7,7 +7,7 @@ import json
 import os
 import time
 import uuid
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -99,21 +99,46 @@ def _as_int(value: Any) -> Optional[int]:
         return None
 
 
+def _first_int(*values: Any) -> Optional[int]:
+    """Return the first integer-like value while preserving a real zero."""
+    for value in values:
+        normalized = _as_int(value)
+        if normalized is not None:
+            return normalized
+    return None
+
+
+def _mapping_view(value: Any) -> Optional[Dict[str, Any]]:
+    """Return a shallow mapping for SDK/Pydantic response objects when possible."""
+    if isinstance(value, Mapping):
+        return dict(value)
+    model_dump = getattr(value, "model_dump", None)
+    if callable(model_dump):
+        try:
+            dumped = model_dump()
+        except Exception:
+            dumped = None
+        if isinstance(dumped, Mapping):
+            return dict(dumped)
+    return None
+
+
 def _normalize_usage(data: Any) -> Dict[str, Optional[int]]:
-    if not isinstance(data, dict):
+    data = _mapping_view(data)
+    if data is None:
         return {"prompt_tokens": None, "completion_tokens": None, "total_tokens": None}
 
-    prompt = (
-        _as_int(data.get("prompt_tokens"))
-        or _as_int(data.get("input_tokens"))
-        or _as_int(data.get("prompt_token_count"))
+    prompt = _first_int(
+        data.get("prompt_tokens"),
+        data.get("input_tokens"),
+        data.get("prompt_token_count"),
     )
-    completion = (
-        _as_int(data.get("completion_tokens"))
-        or _as_int(data.get("output_tokens"))
-        or _as_int(data.get("completion_token_count"))
+    completion = _first_int(
+        data.get("completion_tokens"),
+        data.get("output_tokens"),
+        data.get("completion_token_count"),
     )
-    total = _as_int(data.get("total_tokens")) or _as_int(data.get("total_token_count"))
+    total = _first_int(data.get("total_tokens"), data.get("total_token_count"))
     if total is None and (prompt is not None or completion is not None):
         total = (prompt or 0) + (completion or 0)
     return {
@@ -126,16 +151,17 @@ def _normalize_usage(data: Any) -> Dict[str, Optional[int]]:
 def _find_usage_dict(value: Any, depth: int = 0) -> Optional[Dict[str, Any]]:
     if depth > 4:
         return None
-    if isinstance(value, dict):
-        normalized = _normalize_usage(value)
+    mapping = _mapping_view(value)
+    if mapping is not None:
+        normalized = _normalize_usage(mapping)
         if normalized["total_tokens"] is not None or normalized["prompt_tokens"] is not None:
-            return value
+            return mapping
         for key in ("token_usage", "usage", "usage_metadata", "response_metadata", "llm_output"):
-            nested = value.get(key)
+            nested = mapping.get(key)
             found = _find_usage_dict(nested, depth + 1)
             if found:
                 return found
-        for nested in value.values():
+        for nested in mapping.values():
             found = _find_usage_dict(nested, depth + 1)
             if found:
                 return found
@@ -160,7 +186,12 @@ def _response_text(response: Any) -> str:
 
 
 def _response_usage(response: Any) -> Dict[str, Optional[int]]:
-    candidates: List[Any] = [getattr(response, "llm_output", None)]
+    candidates: List[Any] = [
+        getattr(response, "usage", None),
+        getattr(response, "usage_metadata", None),
+        getattr(response, "llm_output", None),
+        response,
+    ]
     for generation_list in getattr(response, "generations", []) or []:
         for generation in generation_list or []:
             candidates.extend(
@@ -177,6 +208,95 @@ def _response_usage(response: Any) -> Dict[str, Optional[int]]:
         if normalized["total_tokens"] is not None or normalized["prompt_tokens"] is not None:
             return normalized
     return {"prompt_tokens": None, "completion_tokens": None, "total_tokens": None}
+
+
+def _response_finish_reason(response: Any) -> str:
+    """Extract a provider finish reason from LangChain or SDK response shapes."""
+    mapping = _mapping_view(response) or {}
+    direct = str(mapping.get("finish_reason") or getattr(response, "finish_reason", "") or "").strip()
+    if direct:
+        return direct
+
+    choices = mapping.get("choices") if isinstance(mapping.get("choices"), list) else getattr(response, "choices", None)
+    for choice in choices or []:
+        choice_mapping = _mapping_view(choice) or {}
+        reason = str(choice_mapping.get("finish_reason") or getattr(choice, "finish_reason", "") or "").strip()
+        if reason:
+            return reason
+
+    for generation_list in getattr(response, "generations", []) or []:
+        for generation in generation_list or []:
+            for candidate in (
+                getattr(generation, "generation_info", None),
+                getattr(getattr(generation, "message", None), "response_metadata", None),
+                getattr(getattr(generation, "message", None), "additional_kwargs", None),
+            ):
+                candidate_mapping = _mapping_view(candidate) or {}
+                reason = str(
+                    candidate_mapping.get("finish_reason")
+                    or candidate_mapping.get("stop_reason")
+                    or ""
+                ).strip()
+                if reason:
+                    return reason
+    return ""
+
+
+def _completion_text(completion: Any) -> str:
+    """Extract partial assistant text from an SDK ChatCompletion without persisting it."""
+    parts: List[str] = []
+    mapping = _mapping_view(completion) or {}
+    choices = mapping.get("choices") if isinstance(mapping.get("choices"), list) else getattr(completion, "choices", None)
+    for choice in choices or []:
+        choice_mapping = _mapping_view(choice) or {}
+        message = choice_mapping.get("message") or getattr(choice, "message", None)
+        message_mapping = _mapping_view(message) or {}
+        content = message_mapping.get("content") if message_mapping else getattr(message, "content", None)
+        if content not in (None, ""):
+            parts.append(str(content))
+            continue
+        text = choice_mapping.get("text") if choice_mapping else getattr(choice, "text", None)
+        if text not in (None, ""):
+            parts.append(str(text))
+    return "\n".join(parts)
+
+
+def _exception_completion(error: BaseException) -> Any:
+    """Return the typed provider completion retained by parsing exceptions."""
+    for candidate in (
+        getattr(error, "completion", None),
+        getattr(error, "response", None),
+    ):
+        if candidate is not None and (
+            getattr(candidate, "choices", None) is not None
+            or (_mapping_view(candidate) or {}).get("choices") is not None
+        ):
+            return candidate
+    return None
+
+
+def _collect_evidence_refs(value: Any) -> List[str]:
+    refs: List[str] = []
+
+    def visit(item: Any) -> None:
+        mapping = _mapping_view(item)
+        if mapping is not None:
+            for key, child in mapping.items():
+                normalized_key = str(key).strip().lower()
+                if normalized_key.endswith("_ref") and str(child or "").strip():
+                    refs.append(str(child).strip())
+                elif normalized_key.endswith("_refs"):
+                    for ref in _ensure_list(child):
+                        if str(ref or "").strip():
+                            refs.append(str(ref).strip())
+                else:
+                    visit(child)
+        elif isinstance(item, (list, tuple, set)):
+            for child in item:
+                visit(child)
+
+    visit(value)
+    return _dedupe_text(refs)
 
 
 def _shorten(text: Any, limit: int = 500) -> str:
@@ -542,6 +662,7 @@ class RunProfiler:
 
     def finish_task(self, task_id: str, status: str = "completed") -> None:
         task = self._ensure_task(task_id)
+        self._reconcile_durable_terminal_projection(task_id, status)
         task["status"] = status
         task["ended_at"] = _now_iso()
         task["last_updated_at"] = task["ended_at"]
@@ -646,6 +767,12 @@ class RunProfiler:
         model: str = "",
         error: Optional[str] = None,
         started_at: Optional[str] = None,
+        finish_reason: str = "",
+        provider_status: str = "",
+        completion_integrity: str = "",
+        protocol_status: str = "",
+        response_artifact_ref: str = "",
+        usage_source: str = "",
     ) -> None:
         self._append_event(
             task_id,
@@ -661,6 +788,12 @@ class RunProfiler:
                 "total_tokens": total_tokens,
                 "tokens_estimated": estimated,
                 "error": error,
+                "finish_reason": str(finish_reason or ""),
+                "provider_status": str(provider_status or ""),
+                "completion_integrity": str(completion_integrity or ""),
+                "protocol_status": str(protocol_status or ""),
+                "response_artifact_ref": str(response_artifact_ref or ""),
+                "usage_source": str(usage_source or ""),
             },
         )
 
@@ -803,12 +936,20 @@ class RunProfiler:
         workflow_id: str = "",
         active_batch_id: str = "",
         node: Optional[str] = None,
+        replace_selected: bool = False,
     ) -> None:
         task = self._ensure_task(task_id)
         skills = task.setdefault("skills", {})
         active = _dedupe_text(active_skills)
         future = _dedupe_text(future_skills)
-        selected = _dedupe_text([*active, *future]) or _dedupe_text(selected_skills)
+        explicitly_selected = _dedupe_text(selected_skills)
+        incoming_selected = _dedupe_text([*explicitly_selected, *active, *future])
+        previous_selected = _dedupe_text(skills.get("selected"))
+        selected = (
+            incoming_selected
+            if replace_selected
+            else _dedupe_text([*previous_selected, *incoming_selected])
+        )
         if selected_skills is not None or active or future:
             skills["selected"] = selected
         if selected_skills_raw is not None:
@@ -910,6 +1051,9 @@ class RunProfiler:
         output_result: str = "",
         output_artifacts: Any = None,
         node: Optional[str] = None,
+        terminal_diagnostic: Optional[Mapping[str, Any]] = None,
+        evidence_refs: Any = None,
+        evidence: Any = None,
     ) -> None:
         task = self._ensure_task(task_id)
         final_result = task.setdefault("final_result", {})
@@ -933,6 +1077,20 @@ class RunProfiler:
                 final_result["output_artifacts"] = deduped
             else:
                 final_result["output_artifacts"] = _dedupe_text(output_artifacts)
+        if terminal_diagnostic is not None:
+            diagnostic = dict(terminal_diagnostic or {})
+            final_result["terminal_diagnostic"] = diagnostic
+            if str(status or final_result.get("status") or "").strip().lower() in {
+                "blocked", "failed", "cancelled", "timeout", "interrupted",
+            }:
+                final_result["output_result"] = self._terminal_diagnostic_text(
+                    str(status or final_result.get("status") or "blocked"),
+                    diagnostic,
+                )
+        if evidence_refs is not None:
+            final_result["evidence_refs"] = _dedupe_text(evidence_refs)
+        if evidence is not None:
+            final_result["evidence"] = list(_ensure_list(evidence))
         final_result["updated_at"] = _now_iso()
         task["last_updated_at"] = final_result["updated_at"]
         self._append_event(
@@ -945,7 +1103,190 @@ class RunProfiler:
                 "status": final_result.get("status", ""),
                 "output_result": _shorten(final_result.get("output_result", ""), 800),
                 "output_artifacts": final_result.get("output_artifacts", []),
+                "terminal_diagnostic": final_result.get("terminal_diagnostic", {}),
+                "evidence_refs": final_result.get("evidence_refs", []),
             },
+        )
+
+    @staticmethod
+    def _terminal_diagnostic_text(status: str, diagnostic: Mapping[str, Any]) -> str:
+        code = str(
+            diagnostic.get("error_code")
+            or diagnostic.get("reason_code")
+            or diagnostic.get("code")
+            or str(status or "terminal").upper()
+        ).strip()
+        owner = str(diagnostic.get("error_owner") or diagnostic.get("owner") or "").strip()
+        detail = str(
+            diagnostic.get("detail")
+            or diagnostic.get("reason")
+            or diagnostic.get("message")
+            or ""
+        ).strip()
+        parts = [f"{str(status or 'terminal').strip().lower()}: {code}"]
+        if owner:
+            parts.append(f"owner={owner}")
+        if detail:
+            parts.append(detail)
+        refs = _collect_evidence_refs(diagnostic)
+        if refs:
+            parts.append("evidence_refs=" + ", ".join(refs))
+        return _shorten(" | ".join(parts), 3000)
+
+    def record_terminal_projection(
+        self,
+        task_id: str,
+        *,
+        status: str,
+        terminal_diagnostic: Optional[Mapping[str, Any]] = None,
+        evidence_refs: Any = None,
+        selected_skills: Any = None,
+        node: str = "terminal_projection",
+    ) -> None:
+        """Project one durable terminal verdict without reusing command stdout."""
+        normalized_status = str(status or "").strip().lower()
+        selected = _dedupe_text(selected_skills)
+        if selected:
+            current = _dedupe_text(self._ensure_task(task_id).setdefault("skills", {}).get("selected"))
+            if selected != current:
+                self.record_skill_selection(
+                    task_id,
+                    selected_skills=selected,
+                    source="durable_terminal_projection",
+                    node=node,
+                )
+
+        diagnostic = dict(terminal_diagnostic or {})
+        refs = _dedupe_text([*_ensure_list(evidence_refs), *_collect_evidence_refs(diagnostic)])
+        if normalized_status in {"blocked", "failed", "cancelled", "timeout", "interrupted"}:
+            if not diagnostic:
+                diagnostic = {
+                    "error_code": f"TASK_{normalized_status.upper()}",
+                    "detail": f"Task ended with terminal status {normalized_status}.",
+                }
+            self.record_final_result(
+                task_id,
+                status=normalized_status,
+                terminal_diagnostic=diagnostic,
+                evidence_refs=refs,
+                node=node,
+            )
+
+    def _durable_terminal_projection(self, task_id: str) -> Dict[str, Any]:
+        """Read the compact durable state used by resume and terminal routing."""
+        path = self.output_root / str(task_id) / "plan_state.json"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, TypeError):
+            return {}
+        if not isinstance(data, dict):
+            return {}
+        task_state = data.get("task_state") if isinstance(data.get("task_state"), dict) else {}
+        consultation = (
+            task_state.get("consultation_state")
+            if isinstance(task_state.get("consultation_state"), dict)
+            else {}
+        )
+        final_contract = (
+            consultation.get("final_contract")
+            if isinstance(consultation.get("final_contract"), dict)
+            else {}
+        )
+        finalize_protocol = (
+            consultation.get("finalize_protocol")
+            if isinstance(consultation.get("finalize_protocol"), dict)
+            else {}
+        )
+        skill_candidates = (
+            task_state.get("selected_skills"),
+            task_state.get("selected_skill_ids"),
+            data.get("selected_skill_ids"),
+            consultation.get("resolved_selected_skill_ids"),
+            final_contract.get("selected_skills"),
+        )
+        selected = next(
+            (_dedupe_text(candidate) for candidate in skill_candidates if _dedupe_text(candidate)),
+            [],
+        )
+        diagnostic_candidates = (
+            task_state.get("terminal_diagnostic"),
+            consultation.get("terminal_diagnostic"),
+            data.get("terminal_diagnostic"),
+            data.get("failure"),
+        )
+        diagnostic = next(
+            (dict(candidate) for candidate in diagnostic_candidates if isinstance(candidate, Mapping) and candidate),
+            {},
+        )
+        if not diagnostic and str(task_state.get("status_reason") or "").strip():
+            diagnostic = {
+                "error_code": f"TASK_{str(task_state.get('status') or 'terminal').upper()}",
+                "detail": str(task_state.get("status_reason") or ""),
+            }
+        finalize_status = str(
+            finalize_protocol.get("finalize_status")
+            or finalize_protocol.get("status")
+            or ""
+        ).strip().lower()
+        compile_outcome = (
+            finalize_protocol.get("compile_outcome")
+            if isinstance(finalize_protocol.get("compile_outcome"), dict)
+            else {}
+        )
+        if not diagnostic and (
+            finalize_status in {"blocked", "blocked_internal_contract", "blocked_internal_provider"}
+            or str(compile_outcome.get("status") or "").strip().lower() == "blocked"
+        ):
+            attempts = [
+                item for item in finalize_protocol.get("attempts", []) or []
+                if isinstance(item, Mapping)
+            ]
+            latest_attempt = dict(attempts[-1]) if attempts else {}
+            integrity = str(
+                latest_attempt.get("completion_integrity")
+                or finalize_protocol.get("completion_integrity")
+                or ""
+            ).strip().lower()
+            error_code = str(
+                latest_attempt.get("error_code")
+                or finalize_protocol.get("terminal_error_code")
+                or ("FINALIZE_RESPONSE_TRUNCATED" if integrity == "truncated" else "FINALIZE_BLOCKED")
+            )
+            diagnostic = {
+                "error_code": error_code,
+                "error_owner": str(
+                    latest_attempt.get("error_owner")
+                    or finalize_protocol.get("terminal_owner")
+                    or "controller"
+                ),
+                "detail": (
+                    "Consultant FINALIZE ended in a durable blocked state"
+                    + (f" with completion_integrity={integrity}" if integrity else "")
+                    + "."
+                ),
+                "evidence_refs": _collect_evidence_refs(finalize_protocol),
+            }
+        return {
+            "selected_skills": selected,
+            "terminal_diagnostic": diagnostic,
+            "evidence_refs": _collect_evidence_refs({
+                "diagnostic": diagnostic,
+                "consultation_state": consultation,
+            }),
+        }
+
+    def _reconcile_durable_terminal_projection(self, task_id: str, status: str) -> None:
+        projection = self._durable_terminal_projection(task_id)
+        if not projection and str(status or "").strip().lower() not in {
+            "blocked", "failed", "cancelled", "timeout", "interrupted",
+        }:
+            return
+        self.record_terminal_projection(
+            task_id,
+            status=status,
+            terminal_diagnostic=projection.get("terminal_diagnostic") or {},
+            evidence_refs=projection.get("evidence_refs") or [],
+            selected_skills=projection.get("selected_skills") or [],
         )
 
     def flush(self, task_id: str) -> Optional[Path]:
@@ -1024,8 +1365,16 @@ class RunProfiler:
             "tokens": token_totals,
         }
         final_result = dict(task.get("final_result") or {})
+        task_status = str(task.get("status") or "running").strip().lower()
+        if not final_result.get("status") and task_status in {
+            "blocked", "failed", "cancelled", "timeout", "interrupted", "completed",
+        }:
+            final_result["status"] = task_status
         if not final_result.get("output_result"):
-            final_result["output_result"] = self._fallback_output_result(events)
+            if task_status in {"blocked", "failed", "cancelled", "timeout", "interrupted"}:
+                final_result["output_result"] = f"Task ended with terminal status {task_status}."
+            else:
+                final_result["output_result"] = self._fallback_output_result(events)
 
         return {
             "task_id": task_id,
@@ -1271,6 +1620,8 @@ class ProfilingCallbackHandler(BaseCallbackHandler):
             or usage["completion_tokens"] is None
             or usage["total_tokens"] is None
         )
+        finish_reason = _response_finish_reason(response)
+        truncated = finish_reason == "length"
         self.profiler.record_llm(
             task_id=start["task_id"],
             node=start.get("node"),
@@ -1281,11 +1632,67 @@ class ProfilingCallbackHandler(BaseCallbackHandler):
             total_tokens=total_tokens,
             estimated=estimated,
             started_at=start.get("started_at"),
+            finish_reason=finish_reason,
+            provider_status="succeeded" if truncated else "",
+            completion_integrity="truncated" if truncated else "",
+            protocol_status="not_validated" if truncated else "",
+            usage_source="provider_response" if not estimated else "provider_response_with_estimate",
         )
 
     def on_llm_error(self, error: BaseException, run_id: Any, **kwargs: Any) -> None:
         start = self._starts.pop(str(run_id), None)
         if not start:
+            return
+        completion = _exception_completion(error)
+        finish_reason = _response_finish_reason(completion) if completion is not None else ""
+        typed_length = (
+            type(error).__name__ == "LengthFinishReasonError"
+            or finish_reason == "length"
+        ) and completion is not None
+        if typed_length:
+            usage = _response_usage(completion)
+            partial_tokens_estimate = _estimate_tokens(_completion_text(completion))
+            prompt_tokens = (
+                usage["prompt_tokens"]
+                if usage["prompt_tokens"] is not None
+                else start["prompt_tokens_estimate"]
+            )
+            completion_tokens = (
+                usage["completion_tokens"]
+                if usage["completion_tokens"] is not None
+                else partial_tokens_estimate
+            )
+            total_tokens = (
+                usage["total_tokens"]
+                if usage["total_tokens"] is not None
+                else prompt_tokens + completion_tokens
+            )
+            estimated = (
+                usage["prompt_tokens"] is None
+                or usage["completion_tokens"] is None
+                or usage["total_tokens"] is None
+            )
+            self.profiler.record_llm(
+                task_id=start["task_id"],
+                node=start.get("node"),
+                model=start.get("model", ""),
+                duration_seconds=time.perf_counter() - start["started_monotonic"],
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=total_tokens,
+                estimated=estimated,
+                error=type(error).__name__,
+                started_at=start.get("started_at"),
+                finish_reason=finish_reason or "length",
+                provider_status="succeeded",
+                completion_integrity="truncated",
+                protocol_status="not_validated",
+                usage_source=(
+                    "provider_exception_completion"
+                    if not estimated
+                    else "provider_exception_completion_with_estimate"
+                ),
+            )
             return
         self.profiler.record_llm(
             task_id=start["task_id"],
@@ -1298,6 +1705,7 @@ class ProfilingCallbackHandler(BaseCallbackHandler):
             estimated=True,
             error=type(error).__name__,
             started_at=start.get("started_at"),
+            usage_source="prompt_estimate_after_error",
         )
 
     def _record_start(self, run_id: Any, serialized: Dict[str, Any], messages: Any, kwargs: Dict[str, Any]) -> None:
