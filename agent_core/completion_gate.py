@@ -1374,6 +1374,14 @@ def _validate_renderer_execution_state(plan_state: Dict[str, Any]) -> GateResult
     return GateResult(True, checked_artifacts=sorted(set(checked_artifacts)))
 
 
+def _legacy_renderer_completion_enabled(plan_state: Mapping[str, Any]) -> bool:
+    task_state = dict(plan_state.get("task_state") or {})
+    return bool(
+        task_state.get("legacy_renderer_mode") is True
+        or str(task_state.get("execution_contract") or "") == "legacy_renderer_v1"
+    )
+
+
 def _bounded_contract_candidates(
     contracts: Iterable[Dict[str, Any]],
     output_roots: Iterable[Path],
@@ -1596,13 +1604,28 @@ def _expected_artifacts_from_final_plan(plan_state: Dict[str, Any], current_plan
     canonical_artifacts: List[str] = []
     superseded_artifacts: set[str] = set()
     task_spec = canonical_task_spec_for_state(plan_state)
+    materialized_by_ref: Dict[str, str] = {}
+    for row in plan_state.get("task_output_materializations", []) or []:
+        if not isinstance(row, Mapping):
+            continue
+        path = str(row.get("canonical_path") or row.get("path") or "").strip()
+        for ref in (row.get("output_ref"), row.get("output_id")):
+            if path and str(ref or ""):
+                materialized_by_ref[str(ref)] = path
     if task_spec:
         for output in effective_task_contract(task_spec).get("outputs", []) or []:
             if not isinstance(output, dict) or not bool(output.get("required", True)):
                 continue
             if str(output.get("role") or "") == "output_dir":
                 continue
-            artifact = str(output.get("canonical_path") or output.get("path") or output.get("filename") or "").strip()
+            artifact = str(
+                output.get("canonical_path")
+                or output.get("path")
+                or output.get("filename")
+                or materialized_by_ref.get(str(output.get("artifact_id") or ""))
+                or materialized_by_ref.get(str(output.get("output_id") or ""))
+                or ""
+            ).strip()
             if artifact:
                 canonical_artifacts.append(artifact)
     for step in _steps(plan_state):
@@ -1611,7 +1634,7 @@ def _expected_artifacts_from_final_plan(plan_state: Dict[str, Any], current_plan
         renderer_contracts = [
             contract for contract in contracts
             if str(contract.get("source") or "") == "renderer_manifest"
-        ]
+        ] if _legacy_renderer_completion_enabled(plan_state) else []
         for contract in renderer_contracts:
             path = str(contract.get("path") or "").strip()
             if path and bool(contract.get("required", True)):
@@ -2178,12 +2201,14 @@ class CompletionGate:
                     classification="step_candidate_cross_step_scope",
                 )
 
-        renderer_execution = step.get("renderer_execution") if isinstance(step.get("renderer_execution"), dict) else {}
-        renderer_manifest = _read_renderer_manifest(Path(str(renderer_execution.get("manifest_path") or "")))
-        renderer_complete = bool(
-            renderer_manifest
-            and renderer_manifest_complete(renderer_manifest, renderer_execution)
-        )
+        renderer_complete = False
+        if _legacy_renderer_completion_enabled(plan_state):
+            renderer_execution = step.get("renderer_execution") if isinstance(step.get("renderer_execution"), dict) else {}
+            renderer_manifest = _read_renderer_manifest(Path(str(renderer_execution.get("manifest_path") or "")))
+            renderer_complete = bool(
+                renderer_manifest
+                and renderer_manifest_complete(renderer_manifest, renderer_execution)
+            )
         evidence_text = "\n".join(_execution_record_text(record) for record in records)
         unsupported = [] if renderer_complete else [
             str(criterion)
@@ -2264,18 +2289,34 @@ class CompletionGate:
                 validation_ids=list(provenance_evidence.validation_ids),
                 plan_version=provenance_evidence.plan_version,
             )
-        renderer_gate = _validate_renderer_execution_state(plan_state)
-        if not renderer_gate.passed:
-            return renderer_gate
-        renderer_execution = step.get("renderer_execution") if isinstance(step.get("renderer_execution"), dict) else {}
-        renderer_manifest = _read_renderer_manifest(Path(str(renderer_execution.get("manifest_path") or "")))
-        if renderer_manifest and renderer_manifest_complete(renderer_manifest, renderer_execution):
+        if (
+            _uses_canonical_completion_contract(plan_state)
+            and bool(step.get("output_artifact_ids"))
+            and provenance_evidence.completion_satisfied
+        ):
             return GateResult(
                 True,
-                message="Renderer manifest actions and artifacts satisfy the composite step.",
-                checked_artifacts=list(renderer_gate.checked_artifacts),
-                classification="renderer_composite_step_valid",
+                message="Canonical output versions satisfy the current step.",
+                checked_artifacts=list(step.get("output_artifact_ids") or []),
+                classification="canonical_output_provenance_valid",
+                attempt_ids=list(provenance_evidence.attempt_ids),
+                artifact_version_ids=list(provenance_evidence.artifact_version_ids),
+                validation_ids=list(provenance_evidence.validation_ids),
+                plan_version=provenance_evidence.plan_version,
             )
+        if _legacy_renderer_completion_enabled(plan_state):
+            renderer_gate = _validate_renderer_execution_state(plan_state)
+            if not renderer_gate.passed:
+                return renderer_gate
+            renderer_execution = step.get("renderer_execution") if isinstance(step.get("renderer_execution"), dict) else {}
+            renderer_manifest = _read_renderer_manifest(Path(str(renderer_execution.get("manifest_path") or "")))
+            if renderer_manifest and renderer_manifest_complete(renderer_manifest, renderer_execution):
+                return GateResult(
+                    True,
+                    message="Renderer manifest actions and artifacts satisfy the composite step.",
+                    checked_artifacts=list(renderer_gate.checked_artifacts),
+                    classification="renderer_composite_step_valid",
+                )
         title = _step_contract_text(step)
         output_root = Path(data_path)
         script_path, stdout = _last_execution_evidence(step)
@@ -2291,7 +2332,7 @@ class CompletionGate:
             discovery_text,
             task_id=task_id,
             not_before=not_before,
-        )
+        ) if _legacy_renderer_completion_enabled(plan_state) else {}
         if reconciliation:
             events = reconciliation.get("events") or []
             summary = "; ".join(
@@ -2326,9 +2367,25 @@ class CompletionGate:
                 ),
             )
 
-        contracts = step_artifact_contracts(step)
+        is_v2 = _uses_canonical_completion_contract(plan_state)
+        contracts = [
+            contract for contract in step_artifact_contracts(step)
+            if not (
+                is_v2
+                and str(contract.get("source") or "") == "renderer_manifest"
+            )
+        ]
         artifacts = [str(item.get("path") or "") for item in contracts if str(item.get("path") or "")]
-        if not artifacts:
+        if not artifacts and is_v2:
+            task_spec = canonical_task_spec_for_state(plan_state)
+            task_output_ids = {
+                str(row.get("artifact_id") or row.get("output_id") or "")
+                for row in effective_output_contracts(task_spec)
+                if isinstance(row, Mapping)
+            }
+            if any(str(ref or "") in task_output_ids for ref in step.get("outputs", []) or []):
+                artifacts.extend(_expected_artifacts_from_final_plan(plan_state, ""))
+        if not artifacts and not is_v2:
             artifacts = _artifact_candidates(title)
             for artifact in _implicit_artifacts_from_output_text(title):
                 if artifact not in artifacts:
@@ -2492,9 +2549,10 @@ class CompletionGate:
                 invalid_artifacts=list(task_evidence.invalid_artifacts),
                 plan_version=task_evidence.plan_version,
             )
-        renderer_gate = _validate_renderer_execution_state(plan_state)
-        if not renderer_gate.passed:
-            return renderer_gate
+        if _legacy_renderer_completion_enabled(plan_state):
+            renderer_gate = _validate_renderer_execution_state(plan_state)
+            if not renderer_gate.passed:
+                return renderer_gate
         try:
             task_spec = canonical_task_spec_for_state(plan_state)
         except CanonicalTaskStateError as exc:
@@ -2612,7 +2670,7 @@ class CompletionGate:
                 checked_artifacts=expected,
             )
 
-        if not expected and not _non_task_output_files(output_root):
+        if not is_v2 and not expected and not _non_task_output_files(output_root):
             return GateResult(
                 passed=False,
                 message="Final validation found no user-facing artifacts outside task_outputs.",

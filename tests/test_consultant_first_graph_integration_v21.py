@@ -18,6 +18,7 @@ from agent_core.plan_tracker import (
     CanonicalTaskStateError,
     canonical_task_spec_for_state,
     load_plan_state,
+    save_plan_state,
 )
 from agent_core.state_contract_store import StateContractStore
 from agent_core.task_spec import task_spec_revision
@@ -40,10 +41,13 @@ class _RouterLLM:
         text = "\n".join(str(getattr(item, "content", item)) for item in messages)
         self.calls.append(text)
         return AIMessage(content=json.dumps({
-            "task_mode": "simple_execute",
-            "retrieval_mode": "none",
+            "schema_version": 1,
+            "request_kind": "execute",
+            "execution_scope": "managed",
+            "managed_intent_explicit": True,
+            "retrieval_mode": "kb",
             "confidence": 0.99,
-            "reason": "integration test lightweight route",
+            "reason": "integration test managed execution",
         }))
 
 
@@ -54,6 +58,9 @@ class _NoopGraph:
 
 
 def _planner_plan(input_path: str, output_path: str, *, two_steps: bool = False) -> str:
+    # Paths remain arguments for the surrounding TaskSpec assertions. Planner
+    # candidates themselves use only model-visible semantic handles.
+    del input_path, output_path
     steps = []
     if two_steps:
         steps.append({
@@ -62,7 +69,7 @@ def _planner_plan(input_path: str, output_path: str, *, two_steps: bool = False)
             "action": "execute",
             "purpose": "validation",
             "tool": "python",
-            "inputs": [input_path],
+            "inputs": ["input.reference_fasta"],
             "outputs": [],
             "dependencies": [],
             "success_criteria": ["the corrected FASTA is readable"],
@@ -78,8 +85,8 @@ def _planner_plan(input_path: str, output_path: str, *, two_steps: bool = False)
         "action": "execute",
         "purpose": "analysis",
         "tool": "python",
-        "inputs": [input_path],
-        "outputs": [output_path],
+        "inputs": ["input.reference_fasta"],
+        "outputs": ["output.report"],
         "dependencies": ["step-1"] if two_steps else [],
         "success_criteria": ["report exists and is non-empty"],
         "skill_ids": [SKILL_ID],
@@ -89,6 +96,7 @@ def _planner_plan(input_path: str, output_path: str, *, two_steps: bool = False)
         "semantic_constraint_ids": [],
     })
     return json.dumps({
+        "outcome_type": "PLAN_CANDIDATE",
         "steps": steps,
         "semantic_claims": [],
         "validation_checklist": [{
@@ -191,6 +199,22 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
 
     def _runner_state(self, task_id: str, prompt: str) -> dict[str, Any]:
         durable, _, _ = self.agent._persist_user_submission(task_id, prompt)
+        intent_admission = {
+            "schema_version": 1,
+            "request_kind": "execute",
+            "execution_scope": "managed",
+            "managed_intent_explicit": True,
+            "task_mode": "managed",
+            "retrieval_mode": "kb",
+            "confidence": 1.0,
+            "admission_status": "managed_execution_admitted",
+            "reason": "test fixture explicit managed execution",
+            "decision_source": "test_fixture",
+        }
+        task_state = dict(durable.get("task_state") or {})
+        task_state["intent_admission"] = intent_admission
+        durable["task_state"] = task_state
+        save_plan_state(self.root, task_id, durable)
         return {
             "messages": [HumanMessage(content=prompt)],
             "task_id": task_id,
@@ -203,6 +227,9 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             "resolved_bindings": {},
             "consultation_state": {},
             "planner_feedback": {},
+            "request_intent": intent_admission,
+            "intent_admission": intent_admission,
+            "managed_intent_admitted": True,
         }
 
     async def _run_through_planner(
@@ -430,7 +457,7 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             ["first instruction", "second instruction", "third instruction"],
         )
 
-    async def test_h_snpeff_scenario_keeps_paths_and_resolves_genome_version(self) -> None:
+    async def test_h_snpeff_scenario_keeps_paths_without_renderer_binding(self) -> None:
         task_id = "graph-h-snpeff"
         data_dir = self.root / "snpeff-data"
         data_dir.mkdir(parents=True, exist_ok=True)
@@ -500,9 +527,9 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             durable["task_state"]["selected_skills"],
             ["genomics/snpeff-annotation"],
         )
-        self.assertTrue(
-            durable["task_state"]["resolved_bindings"]
-            ["genomics/snpeff-annotation"]["arguments"]["genome_version"]
+        self.assertNotIn(
+            "genomics/snpeff-annotation",
+            durable["task_state"].get("resolved_bindings", {}),
         )
         self.assertFalse(durable["task_state"].get("pending_question"))
         input_paths = {
@@ -510,6 +537,231 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             for item in canonical_task_spec_for_state(durable).get("inputs", [])
         }
         self.assertTrue({str(vcf), str(fasta), str(gtf)}.issubset(input_paths))
+
+    async def test_i_snpeff_generate_only_full_graph_lifecycle(self) -> None:
+        task_id = "graph-i-snpeff-generate-only"
+        data_dir = self.root / "snpeff-full-data"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        vcf = data_dir / "variants.vcf"
+        fasta = data_dir / "reference.fasta"
+        gtf = data_dir / "annotation.gtf"
+        outdir = self.root / "snpeff-full-output"
+        outdir.mkdir(parents=True, exist_ok=True)
+        vcf.write_text(
+            "##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n",
+            encoding="utf-8",
+        )
+        fasta.write_text(">chr1\nACGT\n", encoding="utf-8")
+        gtf.write_text(
+            'chr1\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "g1";\n',
+            encoding="utf-8",
+        )
+        output_paths = {
+            "annotated_vcf": outdir / "annotated.vcf",
+            "ann_summary": outdir / "ann_summary.tsv",
+            "report": outdir / "report.md",
+            "reproduce_script": outdir / "reproduce.sh",
+        }
+        prompt = (
+            "请执行重测序 SNP 功能注释。\n"
+            f"VCF: {vcf}\nFASTA: {fasta}\nGTF: {gtf}\n输出目录: {outdir}"
+        )
+        runner = self._runner_state(task_id, prompt)
+        consultant_payload = {
+            "action_type": "finish",
+            "summary": "The canonical snpEff task is complete.",
+            "selected_skills": ["genomics/snpeff-annotation"],
+            "task_spec_operations": [
+                {
+                    "operation": "set_goal",
+                    "value": "Annotate the supplied SNP VCF with the supplied FASTA and GTF",
+                    "supporting_evidence": ["U1"],
+                },
+                *[
+                    {
+                        "operation": "upsert_input",
+                        "input": {"role": role, "path": str(path), "required": True},
+                        "supporting_evidence": ["U1"],
+                    }
+                    for role, path in (
+                        ("variant_vcf", vcf),
+                        ("reference_fasta", fasta),
+                        ("annotation_gtf", gtf),
+                    )
+                ],
+                {
+                    "operation": "upsert_output_contract",
+                    "output_contract": {
+                        "role": "output_dir",
+                        "artifact_kind": "directory",
+                        "path": str(outdir),
+                        "required": True,
+                    },
+                    "supporting_evidence": ["U1"],
+                },
+                *[
+                    {
+                        "operation": "upsert_output_contract",
+                        "output_contract": {
+                            "output_id": output_id,
+                            "role": output_id,
+                            "artifact_kind": "file",
+                            "path": str(path),
+                            "required": True,
+                        },
+                        "supporting_evidence": ["U1"],
+                    }
+                    for output_id, path in output_paths.items()
+                ],
+            ],
+            "unresolved_ambiguities": [],
+            "planner_feedback": None,
+        }
+        plan_payload = {
+            "outcome_type": "PLAN_CANDIDATE",
+            "steps": [{
+                "step_id": "step-1",
+                "title": "Annotate variants and produce all approved outputs",
+                "action": "execute",
+                "purpose": "analysis",
+                "tool": "snpEff",
+                "inputs": [
+                    "input.variant_vcf",
+                    "input.reference_fasta",
+                    "input.annotation_gtf",
+                ],
+                "outputs": [f"output.{output_id}" for output_id in output_paths],
+                "dependencies": [],
+                "success_criteria": ["all four approved outputs are non-empty"],
+                "skill_ids": ["genomics/snpeff-annotation"],
+                "workflow_stage_ids": [],
+                "batch_id": "",
+                "risk_level": "low",
+                "semantic_constraint_ids": [],
+            }],
+            "semantic_claims": [],
+            "validation_checklist": [{
+                "check_id": "all-outputs",
+                "description": "verify the four approved outputs",
+            }],
+            "metadata": {"schema_version": 1, "planner_contract": "structured_plan_v1"},
+        }
+        generate_calls = 0
+
+        async def scripted(messages: Any, *, node_context: Any, stage: str, **_kwargs: Any):
+            nonlocal generate_calls
+            if stage == "consultant":
+                return AIMessage(content=json.dumps(consultant_payload))
+            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+                return AIMessage(content=json.dumps(plan_payload))
+            if stage == "generate":
+                generate_calls += 1
+                if generate_calls == 1:
+                    return AIMessage(content=json.dumps({
+                        "action_type": "execute",
+                        "action_kind": "primary",
+                        "purpose": "analysis",
+                        "argv": [
+                            "/bin/true",
+                            *[f"{{output:{output_id}}}" for output_id in output_paths],
+                        ],
+                        "env": {},
+                        "outputs": [f"output.{output_id}" for output_id in output_paths],
+                        "produced_outputs": [
+                            {
+                                "output_id": output_id,
+                                "path": f"{{output:{output_id}}}",
+                            }
+                            for output_id in output_paths
+                        ],
+                        "expected_evidence": [
+                            f"artifact.output.{output_id}" for output_id in output_paths
+                        ],
+                    }))
+                return AIMessage(content=json.dumps({
+                    "action_type": "solution",
+                    "answer": "All four approved snpEff output contracts were produced.",
+                }))
+            raise AssertionError(f"unexpected LLM stage: {stage}")
+
+        async def fake_run_script(
+            _script_path: str,
+            *,
+            expected_sha256: str = "",
+            interpreter: str = "bash",
+            lifecycle_callback: Any = None,
+        ):
+            del expected_sha256, interpreter
+            if lifecycle_callback:
+                await lifecycle_callback("PROCESS_STARTED", {"pid": 1, "pgid": 1})
+            for output_id, path in output_paths.items():
+                path.write_text(f"generated {output_id}\n", encoding="utf-8")
+            if lifecycle_callback:
+                await lifecycle_callback("PROCESS_EXITED", {"returncode": 0})
+            return "generated four outputs\n", "", 0
+
+        self.agent._ainvoke_node_llm = scripted
+        self.agent._prompt_user = lambda *_args, **_kwargs: "y"
+        self.agent._ensure_skill_runtime_ready = lambda *_args, **_kwargs: (True, "")
+        self.agent._selected_skill_env_runner_violation = lambda *_args, **_kwargs: ""
+        self.agent._workflow_future_skill_violation = lambda *_args, **_kwargs: ""
+        self.agent.middleware.review_code = lambda code, _language: ("approve", code)
+        events: list[dict[str, Any]] = []
+
+        async def consume() -> None:
+            with patch.object(bio_agents, "run_script_path", new=fake_run_script):
+                stream = self.agent.app.astream(
+                    runner,
+                    config={
+                        "configurable": {"thread_id": task_id},
+                        "recursion_limit": 40,
+                    },
+                    stream_mode="updates",
+                )
+                try:
+                    async for event in stream:
+                        events.append(event)
+                finally:
+                    await stream.aclose()
+
+        await asyncio.wait_for(consume(), timeout=30)
+        visited = [next(iter(event)) for event in events]
+        self.assertIn("consultant", visited)
+        self.assertIn("planner", visited)
+        self.assertIn("plan_review", visited)
+        self.assertIn("generate", visited)
+        self.assertIn("execute", visited)
+        self.assertIn("supervisor", visited)
+        self.assertIn("supervisor_final_audit", visited)
+        self.assertNotIn("renderer", visited)
+        self.assertGreaterEqual(generate_calls, 1)
+        self.assertTrue(all(path.is_file() and path.stat().st_size > 0 for path in output_paths.values()))
+        durable = load_plan_state(self.root, task_id)
+        self.assertEqual((durable.get("task_state") or {}).get("status"), "completed")
+        self.assertEqual(
+            set(durable["steps"][0]["outputs"]),
+            set(output_paths),
+        )
+        canonical_task = canonical_task_spec_for_state(durable)
+        output_dir_contract = next(
+            row for row in canonical_task.get("output_contracts", [])
+            if row.get("output_id") == "output_dir"
+        )
+        self.assertEqual(output_dir_contract.get("canonical_path"), str(outdir))
+        self.assertFalse(any(
+            step.get("renderer_composite") or step.get("renderer_invocation_contract")
+            for step in durable.get("steps", [])
+        ))
+        provenance = durable.get("provenance_state") or {}
+        artifact_records = [
+            record for record in (provenance.get("artifacts") or {}).values()
+            if isinstance(record, dict)
+            and str(record.get("status") or "") == "valid"
+        ]
+        self.assertEqual(
+            {str(record.get("output_id") or "") for record in artifact_records},
+            set(output_paths),
+        )
 
     def test_f_v2_corruption_fails_closed_despite_valid_legacy_alias(self) -> None:
         valid_legacy = {

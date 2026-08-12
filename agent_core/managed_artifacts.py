@@ -17,6 +17,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 MANAGED_ARTIFACT_SCHEMA_VERSION = 2
 MANAGED_EXACT = "managed_exact"
 MODEL_SELECTABLE = "model_selectable"
+PLANNER_MATERIALIZED = "planner_materialized"
 _PLACEHOLDER_RE = re.compile(r"^\{(input|output):([A-Za-z][A-Za-z0-9_.-]*)\}$")
 _OPERATION_PLACEHOLDER_RE = re.compile(r"^\{operation:([A-Za-z][A-Za-z0-9_.-]*)\}$")
 
@@ -177,12 +178,15 @@ def _binding_from_row(
         metadata={
             "source_index": index,
             "role": str(role),
+            "output_id": str(raw.get("output_id") or "") if direction == "output" else "",
         },
     )
 
 
 def build_managed_artifact_bindings(
     task_spec: Mapping[str, Any],
+    *,
+    plan_state: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, ManagedArtifactBinding]:
     """Compile the canonical Task artifact contract into unique handles."""
     result: Dict[str, ManagedArtifactBinding] = {}
@@ -193,11 +197,35 @@ def build_managed_artifact_bindings(
         output_root = _canonical_path(raw)
         if output_root:
             break
+    materializations: Dict[str, Mapping[str, Any]] = {}
+    for row in (plan_state or {}).get("task_output_materializations", []) or []:
+        if not isinstance(row, Mapping):
+            continue
+        for ref in (row.get("output_ref"), row.get("output_id")):
+            if str(ref or ""):
+                materializations[str(ref)] = row
     for direction, field_name in (("input", "inputs"), ("output", "output_contracts")):
         for index, raw in enumerate(task_spec.get(field_name, []) or [], start=1):
             if not isinstance(raw, Mapping):
                 continue
-            binding = _binding_from_row(raw, direction=direction, index=index)
+            binding_row = dict(raw)
+            if direction == "output" and not _canonical_path(binding_row):
+                materialized = next((
+                    materializations.get(str(ref))
+                    for ref in (
+                        binding_row.get("artifact_id"),
+                        binding_row.get("output_id"),
+                        binding_row.get("semantic_handle"),
+                    )
+                    if materializations.get(str(ref)) is not None
+                ), None)
+                if materialized is not None:
+                    binding_row.update({
+                        "canonical_path": str(materialized.get("canonical_path") or materialized.get("path") or ""),
+                        "filename": Path(str(materialized.get("path") or "")).name,
+                        "path_policy": MANAGED_EXACT,
+                    })
+            binding = _binding_from_row(binding_row, direction=direction, index=index)
             if (
                 direction == "output"
                 and binding.path_policy == MANAGED_EXACT
@@ -282,7 +310,7 @@ def validate_plan_managed_artifacts(
     plan_state: Mapping[str, Any],
     bindings: Mapping[str, ManagedArtifactBinding],
 ) -> List[ArtifactViolation]:
-    """Reject a Plan that copies/redefines a task-owned managed path."""
+    """Validate managed identity/path bindings without inferring step usage."""
     violations: List[ArtifactViolation] = []
     output_by_basename = {
         value.required_basename: value
@@ -297,12 +325,12 @@ def validate_plan_managed_artifacts(
             handles = [handles]
         for item_index, handle in enumerate(handles):
             binding = bindings.get(str(handle))
-            if binding is None or binding.direction != "output":
+            if binding is None:
                 violations.append(_violation(
                     code="PLAN_ARTIFACT_HANDLE_INVALID",
                     owner="plan_binding",
                     route="planner_repair",
-                    message=f"Plan output handle {handle!r} is unknown or not an output.",
+                    message=f"Plan output handle {handle!r} is unknown.",
                     proposed=str(handle),
                     field_path=f"steps[{step_index}].output_artifact_handles[{item_index}]",
                 ))
@@ -316,15 +344,15 @@ def validate_plan_managed_artifacts(
                     proposed_handle = str(raw.get("semantic_handle") or raw.get("handle") or "")
                 else:
                     proposed_path = _canonical_path({"path": raw})
-                    proposed_handle = str(raw or "") if str(raw or "").startswith("output.") else ""
+                    proposed_handle = str(raw or "") if str(raw or "") in bindings else ""
                 if proposed_handle:
                     binding = bindings.get(proposed_handle)
-                    if binding is None or binding.direction != "output":
+                    if binding is None:
                         violations.append(_violation(
                             code="PLAN_ARTIFACT_HANDLE_INVALID",
                             owner="plan_binding",
                             route="planner_repair",
-                            message=f"Plan output handle {proposed_handle!r} is invalid.",
+                            message=f"Plan output handle {proposed_handle!r} is unknown.",
                             proposed=proposed_handle,
                             field_path=f"steps[{step_index}].{field_name}[{item_index}]",
                         ))
@@ -383,7 +411,47 @@ def materialize_managed_action(
     }
     used_operations: List[str] = []
 
-    declared_outputs = proposal.get("outputs", []) or []
+    produced_outputs = proposal.get("produced_outputs", []) or []
+    if produced_outputs and not isinstance(produced_outputs, list):
+        violations.append(_violation(
+            code="GENERATE_PRODUCED_OUTPUTS_INVALID",
+            owner="GENERATED_ACTION",
+            route="generate",
+            message="produced_outputs must be an array.",
+            field_path="produced_outputs",
+        ))
+        produced_outputs = []
+    bindings_by_output_id = {
+        str(binding.metadata.get("output_id") or binding.artifact_id): binding
+        for binding in bindings.values()
+        if binding.direction == "output"
+    }
+    produced_handles: List[str] = []
+    for index, raw in enumerate(produced_outputs):
+        if not isinstance(raw, Mapping):
+            violations.append(_violation(
+                code="GENERATE_PRODUCED_OUTPUT_INVALID",
+                owner="GENERATED_ACTION",
+                route="generate",
+                message="Each produced_outputs member must be an object.",
+                field_path=f"produced_outputs[{index}]",
+            ))
+            continue
+        output_id = str(raw.get("output_id") or "")
+        binding = bindings_by_output_id.get(output_id)
+        if binding is None:
+            violations.append(_violation(
+                code="GENERATE_OUTPUT_ID_UNKNOWN",
+                owner="GENERATED_ACTION",
+                route="generate",
+                message=f"Generate declared unknown output_id {output_id!r}.",
+                proposed=output_id,
+                field_path=f"produced_outputs[{index}].output_id",
+            ))
+            continue
+        produced_handles.append(binding.semantic_handle)
+
+    declared_outputs = proposal.get("outputs", []) or produced_handles
     if isinstance(declared_outputs, str):
         declared_outputs = [declared_outputs]
     seen_outputs: set[str] = set()
@@ -392,7 +460,7 @@ def materialize_managed_action(
         if handle in seen_outputs:
             violations.append(_violation(
                 code="MANAGED_ARTIFACT_HANDLE_DUPLICATE",
-                owner="action_generation",
+                owner="GENERATED_ACTION",
                 route="generate",
                 message=f"Output handle {handle!r} is declared more than once.",
                 binding=bindings.get(handle),
@@ -405,7 +473,7 @@ def materialize_managed_action(
         if binding is None:
             violations.append(_violation(
                 code="MANAGED_ARTIFACT_HANDLE_UNKNOWN",
-                owner="action_generation",
+                owner="GENERATED_ACTION",
                 route="generate",
                 message=f"Output handle {handle!r} is unknown.",
                 proposed=handle,
@@ -414,7 +482,7 @@ def materialize_managed_action(
         elif binding.direction != "output":
             violations.append(_violation(
                 code="MANAGED_ARTIFACT_DIRECTION_MISMATCH",
-                owner="action_generation",
+                owner="GENERATED_ACTION",
                 route="generate",
                 message=f"{handle!r} is an input and cannot be declared as an output.",
                 binding=binding,
@@ -432,7 +500,7 @@ def materialize_managed_action(
             if not resolved:
                 violations.append(_violation(
                     code="MANAGED_OPERATION_HANDLE_UNKNOWN",
-                    owner="action_generation",
+                    owner="GENERATED_ACTION",
                     route="generate",
                     message=f"Operation handle {handle!r} is not available in the pinned capability contract.",
                     proposed=value,
@@ -448,7 +516,7 @@ def materialize_managed_action(
             if binding is None:
                 violations.append(_violation(
                     code="MANAGED_ARTIFACT_HANDLE_UNKNOWN",
-                    owner="action_generation",
+                    owner="GENERATED_ACTION",
                     route="generate",
                     message=f"Placeholder {value!r} does not resolve to a managed artifact.",
                     proposed=value,
@@ -458,7 +526,7 @@ def materialize_managed_action(
             if binding.direction != direction:
                 violations.append(_violation(
                     code="MANAGED_ARTIFACT_DIRECTION_MISMATCH",
-                    owner="action_generation",
+                    owner="GENERATED_ACTION",
                     route="generate",
                     message=f"Placeholder {value!r} uses the wrong direction.",
                     binding=binding,
@@ -482,7 +550,7 @@ def materialize_managed_action(
         if "{input:" in value or "{output:" in value or "{operation:" in value:
             violations.append(_violation(
                 code="MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED",
-                owner="action_generation",
+                owner="GENERATED_ACTION",
                 route="generate",
                 message=(
                     "Managed placeholders must occupy a complete argv/env value; "
@@ -505,7 +573,7 @@ def materialize_managed_action(
                 return value
             violations.append(_violation(
                 code="MANAGED_ARTIFACT_HANDLE_REQUIRED",
-                owner="action_generation",
+                owner="GENERATED_ACTION",
                 route="generate",
                 message=(
                     f"Use {binding.placeholder} for {binding.semantic_handle}; "
@@ -517,12 +585,43 @@ def materialize_managed_action(
             ))
         return value
 
+    materialized_produced_outputs: List[Dict[str, Any]] = []
+    for index, raw in enumerate(produced_outputs):
+        if not isinstance(raw, Mapping):
+            continue
+        output_id = str(raw.get("output_id") or "")
+        binding = bindings_by_output_id.get(output_id)
+        if binding is None:
+            continue
+        proposed_path = materialize_value(
+            raw.get("path"), f"produced_outputs[{index}].path"
+        )
+        if str(proposed_path or "") != binding.canonical_path:
+            violations.append(_violation(
+                code="GENERATE_OUTPUT_PATH_MISMATCH",
+                owner="GENERATED_ACTION",
+                route="generate",
+                message=(
+                    f"Generate changed the approved path for output_id {output_id!r}."
+                ),
+                binding=binding,
+                proposed=str(proposed_path or ""),
+                field_path=f"produced_outputs[{index}].path",
+            ))
+        materialized_produced_outputs.append({
+            "output_id": output_id,
+            "semantic_handle": binding.semantic_handle,
+            "path": str(proposed_path or ""),
+        })
+    if produced_outputs:
+        materialized["produced_outputs"] = materialized_produced_outputs
+
     argv = proposal.get("argv")
     if argv is not None:
         if not isinstance(argv, list) or not argv:
             violations.append(_violation(
                 code="ACTION_ARGV_INVALID",
-                owner="action_generation",
+                owner="GENERATED_ACTION",
                 route="generate",
                 message="Structured action argv must be a non-empty array.",
                 field_path="argv",
@@ -537,7 +636,7 @@ def materialize_managed_action(
         if not isinstance(env, Mapping):
             violations.append(_violation(
                 code="ACTION_ENV_INVALID",
-                owner="action_generation",
+                owner="GENERATED_ACTION",
                 route="generate",
                 message="Structured action env must be an object.",
                 field_path="env",
@@ -555,7 +654,7 @@ def materialize_managed_action(
         if "{operation:" in code:
             violations.append(_violation(
                 code="MANAGED_OPERATION_PLACEHOLDER_IN_FREE_SHELL",
-                owner="action_generation",
+                owner="GENERATED_ACTION",
                 route="generate",
                 message="Managed operation placeholders are supported only as complete structured argv values.",
                 proposed=code,
@@ -569,7 +668,7 @@ def materialize_managed_action(
             if binding.placeholder in code:
                 violations.append(_violation(
                     code="MANAGED_ARTIFACT_PLACEHOLDER_IN_FREE_SHELL",
-                    owner="action_generation",
+                    owner="GENERATED_ACTION",
                     route="generate",
                     message="Managed placeholders are supported only in structured argv/env fields.",
                     binding=binding,
@@ -588,7 +687,7 @@ def materialize_managed_action(
                     proposed_path = literal if literal and literal in code else basename
                     violations.append(_violation(
                         code="ACTION_OUTPUT_BINDING_MISMATCH" if binding.direction == "output" else "MANAGED_ARTIFACT_HANDLE_REQUIRED",
-                        owner="action_generation",
+                        owner="GENERATED_ACTION",
                         route="generate",
                         message=(
                             f"The action uses literal {proposed_path!r}; use {binding.placeholder} "
@@ -604,7 +703,7 @@ def materialize_managed_action(
         if binding is not None and binding.required and handle not in used_handles:
             violations.append(_violation(
                 code="ACTION_OUTPUT_BINDING_MISMATCH",
-                owner="action_generation",
+                owner="GENERATED_ACTION",
                 route="generate",
                 message=(
                     f"Declared output {handle} is not materialised in argv/env; "
@@ -627,6 +726,65 @@ def materialize_managed_action(
     if compatibility_hits:
         materialized["compatibility_hits"] = compatibility_hits
     return materialized, violations
+
+
+def validate_generate_output_coverage(
+    plan_state: Mapping[str, Any],
+    materialized_action: Mapping[str, Any],
+    bindings: Mapping[str, ManagedArtifactBinding],
+) -> List[ArtifactViolation]:
+    """Compare current approved step outputs with Generate's typed declaration."""
+    steps = [row for row in plan_state.get("steps", []) or [] if isinstance(row, Mapping)]
+    current_step_id = str(plan_state.get("current_step_id") or "")
+    step = next(
+        (row for row in steps if str(row.get("step_id") or "") == current_step_id),
+        steps[0] if steps else {},
+    )
+    by_ref: Dict[str, ManagedArtifactBinding] = {}
+    for binding in bindings.values():
+        if binding.direction != "output":
+            continue
+        for ref in (
+            binding.artifact_id,
+            binding.semantic_handle,
+            binding.metadata.get("output_id"),
+        ):
+            if str(ref or ""):
+                by_ref[str(ref)] = binding
+    required: Dict[str, ManagedArtifactBinding] = {}
+    for raw_ref in step.get("outputs", []) or []:
+        if isinstance(raw_ref, Mapping):
+            ref = str(raw_ref.get("artifact_id") or raw_ref.get("output_id") or "")
+        else:
+            ref = str(raw_ref or "")
+        binding = by_ref.get(ref)
+        if binding is not None:
+            output_id = str(binding.metadata.get("output_id") or binding.artifact_id)
+            required[output_id] = binding
+    produced = {
+        str(row.get("output_id") or ""): str(row.get("path") or "")
+        for row in materialized_action.get("produced_outputs", []) or []
+        if isinstance(row, Mapping) and str(row.get("output_id") or "")
+    }
+    missing = sorted(set(required) - set(produced))
+    mismatched = sorted(
+        output_id for output_id in set(required).intersection(produced)
+        if produced[output_id] != required[output_id].canonical_path
+    )
+    if not missing and not mismatched:
+        return []
+    details = []
+    if missing:
+        details.append("missing=" + ",".join(missing))
+    if mismatched:
+        details.append("path_mismatch=" + ",".join(mismatched))
+    return [ArtifactViolation(
+        code="GENERATE_OUTPUT_COVERAGE_INCOMPLETE",
+        owner="GENERATED_ACTION",
+        route="generate",
+        message="Generate does not cover the approved current-step outputs: " + "; ".join(details),
+        field_path="produced_outputs",
+    )]
 
 
 def validate_materialized_artifacts(
@@ -789,7 +947,7 @@ def classify_output_mismatch(
     if proposed_path and _canonical_path({"path": proposed_path}) != expected:
         return _violation(
             code="ACTION_OUTPUT_BINDING_MISMATCH",
-            owner="action_generation",
+            owner="GENERATED_ACTION",
             route="generate",
             message="Generate proposed an output different from the managed artifact contract.",
             binding=task_binding,

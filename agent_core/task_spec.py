@@ -64,6 +64,9 @@ SEMANTIC_CONSTRAINT_CATEGORY_ALIASES = {
     "runtime": "runtime_constraint",
 }
 SEMANTIC_CONSTRAINT_ONTOLOGY_ALIASES = {
+    "execution.output_dir": {
+        "semantic_key": "required_output.output_dir",
+    },
     "param.gtf22": {
         "semantic_key": "required_behavior.annotation_format",
         "value": "gtf22",
@@ -89,7 +92,7 @@ SEMANTIC_CONSTRAINT_ONTOLOGY_ALIASES = {
     },
 }
 
-TASK_SPEC_SCHEMA_VERSION = 5
+TASK_SPEC_SCHEMA_VERSION = 6
 TASK_CANONICALIZATION_VERSION = "task-c14n-v2"
 TASK_SPEC_MUTATION_SCHEMA_VERSION = 1
 TASK_SPEC_MUTATION_OPERATIONS = {
@@ -962,35 +965,50 @@ def normalize_output_binding(
     else:
         resolution_base = _text(raw.get("resolution_base"))
     if not role:
-        role = _field_key(filename) or "output"
+        role = _field_key(raw.get("output_id")) or _field_key(filename) or "output"
     source_value = _binding_source(_text(raw.get("source_type") or raw.get("source") or source))
     path_or_name = path_value or filename
-    artifact_id = _text(raw.get("artifact_id") or raw.get("output_id"))
-    if not artifact_id:
-        artifact_id = _artifact_identity("output", role, path_or_name)
+    output_id = _field_key(raw.get("output_id") or raw.get("artifact_id") or role)
+    artifact_id = _text(raw.get("artifact_id")) or output_id
     semantic_handle = _text(raw.get("semantic_handle")) or _artifact_semantic_handle(
-        "output", role, "output"
+        "output", output_id or role, "output"
     )
-    file_format = _text(raw.get("format") or raw.get("type") or _artifact_format(path_or_name))
+    artifact_kind = _field_key(raw.get("artifact_kind") or raw.get("kind"))
+    if artifact_kind not in {"file", "directory"}:
+        artifact_kind = "directory" if role == "output_dir" else "file"
+    file_format = _text(raw.get("format") or raw.get("type"))
+    if not file_format:
+        file_format = (
+            "directory"
+            if artifact_kind == "directory"
+            else (_artifact_format(path_or_name) if path_or_name else "file")
+        )
+    root_ref = _field_key(raw.get("root_ref") or raw.get("output_root_ref"))
     path_policy = _field_key(raw.get("path_policy")) or (
-        "managed_exact" if path_or_name else "model_selectable"
+        "managed_exact"
+        if path_or_name
+        else ("planner_materialized" if root_ref else "model_selectable")
     )
     provenance = _binding_provenance(raw, source_value)
     normalized = _nonempty_fields({
         "artifact_id": artifact_id,
+        "output_id": output_id,
         "semantic_handle": semantic_handle,
         "direction": "output",
         "role": role,
+        "artifact_kind": artifact_kind,
         "format": file_format,
         "path_policy": path_policy,
         "canonical_path": path_or_name,
+        "filename": filename,
+        "root_ref": root_ref,
         "required_basename": filename or (Path(path_value).name if path_value else ""),
         "required": bool(raw.get("required", True)),
         "validation_contract_id": _text(
             raw.get("validation_contract_id")
             or raw.get("validator")
             or raw.get("validation")
-            or ("directory-v1" if role == "output_dir" else "nonempty-file-v1")
+            or ("directory-v1" if artifact_kind == "directory" else "nonempty-file-v1")
         ),
         "source": source_value,
         "source_type": source_value,
@@ -1013,8 +1031,6 @@ def normalize_output_binding(
         "description": _text(raw.get("description")),
         "aliases": list(raw.get("aliases") or []),
     })
-    if raw.get("output_id"):
-        normalized["output_id"] = _text(raw.get("output_id"))
     return normalized
 
 
@@ -1051,7 +1067,7 @@ def effective_output_contracts(
             base_dir=base_dir,
             project_root=project_root,
         )
-        key = _field_key(item.get("role")) + "|" + _text(item.get("canonical_path")).lower()
+        key = _field_key(item.get("output_id") or item.get("artifact_id") or item.get("role"))
         if key in indexes:
             existing = normalized[indexes[key]]
             existing["required"] = bool(existing.get("required", True) or item.get("required", True))
@@ -1065,6 +1081,117 @@ def effective_output_contracts(
             item.setdefault("migration_source", migration_source)
         normalized.append(item)
     return normalized
+
+
+def validate_task_spec_output_contracts(
+    spec: Mapping[str, Any] | None,
+) -> List[Dict[str, Any]]:
+    """Validate Consultant-proposed output semantics before FINISH.
+
+    This validator consumes only typed Consultant state.  It deliberately does
+    not scan the user transcript or infer output meaning from path/role words.
+    """
+    raw = dict(spec or {})
+    outputs = effective_output_contracts(raw)
+    violations: List[Dict[str, Any]] = []
+
+    typed_output_dir_claim = False
+    for field_name in ("semantic_constraints", "requirements"):
+        for row in raw.get(field_name, []) or []:
+            if not isinstance(row, Mapping):
+                continue
+            semantic_key = _semantic_key(row.get("semantic_key"))
+            value = row.get("value")
+            if semantic_key == "output_dir" or semantic_key.endswith(".output_dir"):
+                if value not in (None, "", [], {}):
+                    typed_output_dir_claim = True
+
+    output_dir = next(
+        (
+            row for row in outputs
+            if _field_key(row.get("output_id") or row.get("role")) == "output_dir"
+            or _field_key(row.get("role")) == "output_dir"
+        ),
+        None,
+    )
+    if typed_output_dir_claim and (
+        output_dir is None
+        or _field_key(output_dir.get("artifact_kind")) != "directory"
+        or not _text(output_dir.get("canonical_path"))
+    ):
+        violations.append({
+            "code": "TASK_OUTPUT_DIR_NOT_CANONICALIZED",
+            "owner": "CONSULTANT_CANDIDATE",
+            "route": "consultant_repair",
+            "message": (
+                "The typed Consultant semantics contain an explicit output_dir, "
+                "but the candidate has no canonical directory binding for it."
+            ),
+            "field": "output_contracts",
+        })
+
+    seen_ids: set[str] = set()
+    for index, row in enumerate(outputs):
+        output_id = _field_key(row.get("output_id"))
+        artifact_kind = _field_key(row.get("artifact_kind"))
+        file_format = _field_key(row.get("format"))
+        path = _text(row.get("canonical_path"))
+        root_ref = _field_key(row.get("root_ref"))
+        path_policy = _field_key(row.get("path_policy"))
+        required_basename = _text(row.get("required_basename"))
+
+        if output_id in seen_ids:
+            violations.append({
+                "code": "TASK_OUTPUT_ID_DUPLICATE",
+                "owner": "CONSULTANT_CANDIDATE",
+                "route": "consultant_repair",
+                "message": f"output_id {output_id!r} is declared more than once.",
+                "field": f"output_contracts[{index}].output_id",
+            })
+        seen_ids.add(output_id)
+
+        if (
+            (artifact_kind == "file" and file_format == "directory")
+            or (artifact_kind == "directory" and file_format not in {"", "directory", "dir"})
+            or (_field_key(row.get("role")) == "output_dir" and artifact_kind != "directory")
+        ):
+            violations.append({
+                "code": "TASK_OUTPUT_KIND_INCONSISTENT",
+                "owner": "CONSULTANT_CANDIDATE",
+                "route": "consultant_repair",
+                "message": f"Output {output_id!r} has inconsistent file/directory semantics.",
+                "field": f"output_contracts[{index}]",
+            })
+
+        if path and required_basename and Path(path).name != required_basename:
+            violations.append({
+                "code": "USER_OUTPUT_PATH_NOT_PRESERVED",
+                "owner": "CONSULTANT_CANDIDATE",
+                "route": "consultant_repair",
+                "message": f"Output {output_id!r} no longer preserves its declared filename.",
+                "field": f"output_contracts[{index}].canonical_path",
+            })
+
+        if (
+            bool(row.get("required", True))
+            and artifact_kind == "file"
+            and not path
+            and not (
+                root_ref
+                and path_policy in {"planner_materialized", "model_selectable"}
+            )
+        ):
+            violations.append({
+                "code": "TASK_OUTPUT_BINDING_INCOMPLETE",
+                "owner": "CONSULTANT_CANDIDATE",
+                "route": "consultant_repair",
+                "message": (
+                    f"Required file output {output_id!r} has neither an exact path nor a "
+                    "typed Planner-materializable output-root relationship."
+                ),
+                "field": f"output_contracts[{index}]",
+            })
+    return violations
 
 
 def _dedupe_input_aliases(inputs: List[Dict[str, Any]]) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
@@ -5399,7 +5526,8 @@ def format_planner_task_contract_context(spec: Mapping[str, Any] | None) -> str:
         ]
 
     output_fields = (
-        "artifact_id", "semantic_handle", "direction", "role", "format", "path_policy",
+        "artifact_id", "output_id", "semantic_handle", "direction", "role",
+        "artifact_kind", "format", "path_policy", "root_ref", "filename",
         "canonical_path", "required_basename", "required", "validation_contract_id",
         "source_type", "source_ref", "source_id", "producer_owner", "producer_step_id",
         "user_visible", "resolution_base", "provenance",

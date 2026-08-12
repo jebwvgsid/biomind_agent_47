@@ -36,6 +36,9 @@ class AgentState(TypedDict, total=False):
     llm_retry_counts: dict
     task_mode: Optional[str]
     retrieval_mode: Optional[str]
+    request_intent: dict
+    intent_admission: dict
+    managed_intent_admitted: bool
     use_scientific_review: bool
     validation_level: Optional[str]
     intent: Optional[str]

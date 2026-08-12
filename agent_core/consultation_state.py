@@ -21,6 +21,7 @@ from agent_core.task_spec import (
     project_task_spec_to_renderer,
     task_semantic_hash,
     task_spec_revision,
+    validate_task_spec_output_contracts,
 )
 
 
@@ -1834,6 +1835,7 @@ def build_consultant_candidate(
     runtime_evidence: Optional[Mapping[str, Mapping[str, Any]]] = None,
     pending_question: Optional[Mapping[str, Any]] = None,
     project_root: str = "",
+    legacy_renderer_mode: bool = False,
 ) -> Dict[str, Any]:
     """Build the complete candidate before evaluating Consultant FINISH.
 
@@ -1852,7 +1854,7 @@ def build_consultant_candidate(
         project_root=project_root or None,
     )
     records = [dict(item) for item in renderer_records if isinstance(item, Mapping)]
-    if records:
+    if legacy_renderer_mode and records:
         task_spec = apply_declarative_task_spec_rules(task_spec, records)
     if task_semantic_hash(task_spec) != base_hash:
         task_spec["revision"] = base_revision + 1
@@ -1868,7 +1870,7 @@ def build_consultant_candidate(
     )
     consultation["resolved_selected_skill_ids"] = list(selected)
     resolved_bindings: Dict[str, Any] = {}
-    for record in records:
+    for record in records if legacy_renderer_mode else []:
         skill_id = str(record.get("skill_id") or "")
         invocation = record.get("invocation") if isinstance(record.get("invocation"), Mapping) else {}
         projection = project_task_spec_to_renderer(
@@ -1897,6 +1899,7 @@ def build_consultant_candidate(
         "selected_skills": selected,
         "resolved_bindings": resolved_bindings,
         "pending_question": pending,
+        "output_contract_violations": validate_task_spec_output_contracts(task_spec),
         "consultation_state": consultation,
         "completion": {
             "decision": consultation.get("completion_decision"),
@@ -1931,7 +1934,11 @@ def evaluate_consultant_ask(
     for capability in capabilities or []:
         if not isinstance(capability, Mapping):
             continue
-        for item in capability.get("renderer_arguments", []) or []:
+        for item in [
+            *list(capability.get("required_bindings", []) or []),
+            # Read-only compatibility for persisted legacy capability cards.
+            *list(capability.get("renderer_arguments", []) or []),
+        ]:
             if isinstance(item, Mapping) and str(item.get("name") or ""):
                 arguments[str(item["name"])] = dict(item)
 

@@ -18,16 +18,18 @@ from agent_core.task_spec import (
     task_spec_constraints,
     task_spec_revision,
     validate_compiled_constraints,
+    semantic_constraints_from_task_spec,
 )
 
 
 class TaskSpecTests(unittest.TestCase):
-    def test_initial_request_is_preserved_as_user_owned_directive(self):
+    def test_initial_request_has_one_canonical_goal_and_source_reference(self):
         spec = create_task_spec("run annotation; do not guess the genome")
 
         self.assertEqual(spec["revision"], 1)
         self.assertEqual(spec["goal"], "run annotation; do not guess the genome")
-        self.assertEqual(spec["user_directives"][0]["source"], "user_initial")
+        self.assertEqual(len(spec["source_refs"]), 1)
+        self.assertNotIn("user_directives", spec)
 
     def test_user_feedback_appends_and_increments_revision(self):
         spec = create_task_spec("run DE")
@@ -53,7 +55,8 @@ class TaskSpecTests(unittest.TestCase):
         )
 
         self.assertEqual(task_spec_revision(updated), 1)
-        self.assertEqual(updated["user_directives"][-1]["change_type"], "plan_feedback")
+        self.assertEqual(updated["confirmed_decisions"], spec["confirmed_decisions"])
+        self.assertGreater(len(updated["source_refs"]), len(spec["source_refs"]))
         self.assertEqual(task_spec_constraints(updated), [])
 
     def test_requirement_feedback_classifier_distinguishes_plan_style(self):
@@ -95,7 +98,7 @@ class TaskSpecTests(unittest.TestCase):
         self.assertEqual(spec["goal"], "legacy goal")
         self.assertEqual(spec["revision"], 1)
 
-    def test_later_user_feedback_stays_provenance_until_consultant_compiles_it(self):
+    def test_later_user_feedback_is_a_current_decision_until_compiled(self):
         spec = apply_user_feedback(
             create_task_spec("run analysis"),
             "do not replace the custom reference",
@@ -103,7 +106,7 @@ class TaskSpecTests(unittest.TestCase):
         )
 
         self.assertEqual(task_spec_constraints(spec), [])
-        self.assertEqual(spec["user_directives"][-1]["text"], "do not replace the custom reference")
+        self.assertEqual(spec["confirmed_decisions"][-1]["answer"], "do not replace the custom reference")
 
     def test_required_path_is_rechecked_instead_of_trusting_present_snapshot(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -130,7 +133,9 @@ class TaskSpecTests(unittest.TestCase):
             reason="explicit_input",
         )
 
-        self.assertEqual(spec["requirements"][0]["level"], "required")
+        constraints = semantic_constraints_from_task_spec(spec)
+        self.assertEqual(constraints[0]["level"], "required")
+        self.assertEqual(constraints[0]["semantic_key"], "required_input.variant_vcf")
         self.assertIn("requirements", json.loads(render_task_spec(spec)))
 
     def test_request_extracts_explicit_inputs_requirements_and_outputs(self):
@@ -189,13 +194,13 @@ class TaskSpecTests(unittest.TestCase):
 
         inputs = {item["role"]: item for item in spec["inputs"]}
         requirements = {item["requirement_id"]: item for item in spec["requirements"]}
-        outputs = {item["role"]: item for item in spec["expected_outputs"]}
+        outputs = {item["role"]: item for item in spec["output_contracts"]}
         self.assertEqual(set(inputs), {"variant_vcf", "reference_fasta", "annotation_gtf"})
         self.assertTrue(all(item["source"] == "user_explicit" for item in inputs.values()))
         self.assertEqual(requirements["format"]["value"], "gtf22")
         self.assertEqual(requirements["database"]["value"], "custom_genome")
         self.assertTrue(requirements["no-guess"]["value"])
-        self.assertTrue(outputs["output_dir"]["path"].endswith("results/strict"))
+        self.assertTrue(outputs["output_dir"]["canonical_path"].endswith("results/strict"))
         self.assertIn("annotated_vcf", outputs)
 
     def test_task_spec_round_trip_preserves_structured_bindings(self):
@@ -207,7 +212,7 @@ class TaskSpecTests(unittest.TestCase):
         restored = ensure_task_spec(json.loads(json.dumps(spec)))
 
         self.assertEqual(restored["inputs"], spec["inputs"])
-        self.assertEqual(restored["expected_outputs"], spec["expected_outputs"])
+        self.assertEqual(restored["output_contracts"], spec["output_contracts"])
         self.assertEqual(restored["requirements"], spec["requirements"])
 
     def test_inferred_input_cannot_override_user_explicit_binding(self):
@@ -226,13 +231,13 @@ class TaskSpecTests(unittest.TestCase):
         )
 
         preferred = [item for item in updated["inputs"] if item["source"] == "user_explicit"]
-        self.assertEqual(preferred[0]["path"], "/user/input.vcf")
+        self.assertEqual(preferred[0]["canonical_path"], "/user/input.vcf")
 
     def test_multiple_explicit_bindings_are_preserved_for_conflict_resolution(self):
         spec = create_task_spec("Use /data/a.vcf and /data/b.vcf")
 
         self.assertEqual(
-            [item["path"] for item in spec["inputs"]],
+            [item["canonical_path"] for item in spec["inputs"]],
             ["/data/a.vcf", "/data/b.vcf"],
         )
 
@@ -268,7 +273,8 @@ class TaskSpecTests(unittest.TestCase):
         twice = merge_task_spec_input_audit(once, audit)
 
         self.assertEqual(twice["inputs"], once["inputs"])
-        self.assertEqual(twice["change_log"], once["change_log"])
+        self.assertEqual(twice["requirements"], once["requirements"])
+        self.assertNotIn("change_log", twice)
 
     def test_generic_renderer_projection_uses_roles_and_reports_missing(self):
         spec = merge_task_spec(
@@ -292,7 +298,22 @@ class TaskSpecTests(unittest.TestCase):
                 "annotation_gtf": {"flag": "--annotation-gtf"},
                 "genome_version": {"flag": "--genome-version", "required": True},
                 "outdir": {"flag": "--outdir", "top_level": True},
-            }
+            },
+            "binding_rules": {
+                "genome_version": {
+                    "sources": [{
+                        "kind": "stable_task_identifier",
+                        "role": "database_source",
+                        "prefix": "biomind",
+                        "rule_id": "test.custom_database.task_id.v1",
+                        "when": {
+                            "role": "database_source",
+                            "operator": "eq",
+                            "value": "custom_genome",
+                        },
+                    }],
+                },
+            },
         }
 
         projected = project_task_spec_to_renderer(spec, schema, task_id="task-a")
@@ -321,8 +342,9 @@ class TaskSpecTests(unittest.TestCase):
 
         self.assertEqual(migrated["schema_version"], TASK_SPEC_SCHEMA_VERSION)
         self.assertTrue(migrated["inputs"])
-        self.assertTrue(migrated["requirements"])
-        self.assertIn("task_spec_v3_request_backfill", migrated["migrations_applied"])
+        self.assertTrue(semantic_constraints_from_task_spec(migrated))
+        self.assertNotIn("migrations_applied", migrated)
+        self.assertNotIn("expected_outputs", migrated)
 
 
 if __name__ == "__main__":

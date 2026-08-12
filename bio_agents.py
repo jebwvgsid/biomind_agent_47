@@ -130,7 +130,7 @@ from agent_core.human_io import (
 )
 from agent_core.installer import InstallerAgent
 from agent_core.retriever import RAGFlowRetriever
-from agent_core.router import classify_task_mode
+from agent_core.router import classify_task_mode, managed_execution_admitted
 from agent_core.skill_manager import SkillManager
 from agent_core.workflow_manager import (
     WorkflowManager,
@@ -378,21 +378,44 @@ from agent_core.task_spec import (
     task_spec_is_initialized,
     task_spec_is_semantic_empty,
     task_spec_revision,
+    task_semantic_hash,
     validate_compiled_constraints,
 )
 from agent_core.node_context import (
     InvocationProtocolError,
     InvocationRegistry,
     NodeContext,
+    SemanticHandleError,
     build_node_context,
     evaluate_node_staleness,
     payload_observability_report,
     resolve_plan_proposal_handles,
     resolve_response_handles,
 )
+from agent_core.plan_contract import (
+    PLAN_CANDIDATE,
+    TASKSPEC_RECONCILIATION_REQUIRED,
+    PlannerCandidateError,
+    PlannerEnvelopeError,
+    StateCASConflict,
+    candidate_artifact_ref_keys,
+    classify_io_exception,
+    parse_planner_outcome_envelope,
+    planner_candidate_rejection_is_internal_conflict,
+    planning_epoch_matches,
+    prepare_allocation_intent,
+    relevant_reconciliation_evidence_revision,
+    record_reconciliation_outcome,
+    reconciliation_fingerprint,
+    reconciliation_guard_status,
+    start_planning_epoch,
+    validate_candidate_graph_and_flow,
+    validated_planner_candidate_wire_example,
+)
 from agent_core.managed_artifacts import (
     build_managed_artifact_bindings,
     materialize_managed_action,
+    validate_generate_output_coverage,
     validate_materialized_artifacts,
 )
 from agent_core.state_contract_store import StateContractStore
@@ -3624,6 +3647,30 @@ class BioAnalystAgent:
             return projected
         durable_before = load_plan_state(self.data_path, task_id)
         task_state_before = dict(durable_before.get("task_state") or {})
+        prior_task = canonical_task_spec_for_state(durable_before)
+        if (
+            not task_spec_is_initialized(canonical_task_spec_for_state(durable_before))
+            and not managed_execution_admitted(task_state_before.get("intent_admission"))
+        ):
+            blocked = dict(projected)
+            blocked.pop("task_spec", None)
+            blocked.update({
+                "task_status": TASK_STATUS_BLOCKED,
+                "next_step": "finish",
+                "canonical_commit": {
+                    "succeeded": False,
+                    "error_code": "MANAGED_INTENT_ADMISSION_REQUIRED",
+                    "reason": (
+                        "A new executable TaskSpec requires a current typed managed-execution "
+                        "admission from the LLM router."
+                    ),
+                },
+                "messages": [SystemMessage(content=(
+                    "MANAGED_INTENT_ADMISSION_REQUIRED: the request was not admitted as an "
+                    "explicit managed execution request; no executable TaskSpec was committed."
+                ))],
+            })
+            return blocked
         if "pending_human_question" in projected:
             pending_question = projected.get("pending_human_question") or {}
         else:
@@ -3649,9 +3696,102 @@ class BioAnalystAgent:
             "pending_question": dict(pending_question),
         }
         if "planner_feedback" in projected:
-            candidate["planner_feedback"] = dict(
-                projected.get("planner_feedback") or {}
+            incoming_feedback = dict(projected.get("planner_feedback") or {})
+            prior_feedback = dict(task_state_before.get("planner_feedback") or {})
+            incoming_semantics = {
+                "instructions": list(incoming_feedback.get("instructions") or []),
+                "source_refs": list(incoming_feedback.get("source_refs") or []),
+            }
+            prior_semantics = {
+                "instructions": list(prior_feedback.get("instructions") or []),
+                "source_refs": list(prior_feedback.get("source_refs") or []),
+            }
+            incoming_feedback["revision"] = (
+                int(prior_feedback.get("revision") or 0)
+                + (1 if incoming_semantics != prior_semantics else 0)
             )
+            candidate["planner_feedback"] = incoming_feedback
+        semantic_changed = bool(
+            not task_spec_is_initialized(prior_task)
+            or task_semantic_hash(prior_task) != task_semantic_hash(proposed_task)
+        )
+        pending_review_classification = dict(
+            task_state_before.get("pending_review_classification") or {}
+        )
+        planner_reconciliation = dict(
+            task_state_before.get("planner_reconciliation") or {}
+        )
+        planner_feedback_present = bool(
+            isinstance(projected.get("planner_feedback"), Mapping)
+            and projected.get("planner_feedback")
+        )
+        genuine_user_owned_ambiguity = bool(
+            str(projected.get("next_step") or "") == "ask_user"
+            and isinstance(pending_question, Mapping)
+            and str(pending_question.get("owner") or "") == "user"
+            and list(pending_question.get("requested_slots") or [])
+        )
+        reconciliation_completed = bool(
+            planner_reconciliation
+            and str(projected.get("next_step") or "") in {"planner", "ask_user", "finish"}
+        )
+        reconciliation_ledger: Dict[str, Any] = dict(
+            task_state_before.get("reconciliation_ledger") or {}
+        )
+        if reconciliation_completed:
+            if genuine_user_owned_ambiguity:
+                consultant_outcome = "genuine_user_owned_ambiguity"
+            elif semantic_changed:
+                consultant_outcome = "taskspec_semantic_mutation"
+            elif planner_feedback_present:
+                consultant_outcome = "planner_feedback_only"
+            else:
+                consultant_outcome = "no_semantic_progress"
+            reconciliation_ledger = record_reconciliation_outcome(
+                reconciliation_ledger,
+                fingerprint=str(planner_reconciliation.get("fingerprint") or ""),
+                task_semantic_revision=task_spec_revision(proposed_task),
+                task_semantic_identity=str(
+                    planner_reconciliation.get("task_semantic_identity") or ""
+                ),
+                relevant_evidence_revision=int(
+                    planner_reconciliation.get("relevant_evidence_revision") or 0
+                ),
+                consultant_outcome=consultant_outcome,
+                semantic_changed=semantic_changed,
+                genuine_user_owned_ambiguity=genuine_user_owned_ambiguity,
+            )
+            candidate["reconciliation_ledger"] = reconciliation_ledger
+            candidate["planner_reconciliation"] = {}
+            candidate["planning_epoch"] = {
+                **dict(task_state_before.get("planning_epoch") or {}),
+                "status": (
+                    "reconciliation_user_owned"
+                    if genuine_user_owned_ambiguity
+                    else "reconciliation_completed"
+                ),
+            }
+        if pending_review_classification:
+            # A Consultant invocation consumes exactly one pending review
+            # classification. Whether it invalidates approval is determined
+            # solely by the typed semantic result below; the Controller never
+            # inspects the user's review prose.
+            candidate["pending_review_classification"] = {}
+            if (
+                str(projected.get("next_step") or "")
+                in {"planner", "ask_user", "finish"}
+                and not genuine_user_owned_ambiguity
+                and (semantic_changed or planner_feedback_present)
+            ):
+                candidate["approval_transition"] = {
+                    "status": (
+                        "superseded" if semantic_changed else "changes_requested"
+                    ),
+                    "decision_source": "consultant_typed_review_classification",
+                    "review_event_id": str(
+                        pending_review_classification.get("review_event_id") or ""
+                    ),
+                }
         committed = commit_consultant_candidate_state(
             self.data_path,
             task_id,
@@ -3684,13 +3824,42 @@ class BioAnalystAgent:
         planner_feedback = committed_state.get("planner_feedback")
         if isinstance(planner_feedback, Mapping):
             projected["planner_feedback"] = deepcopy(dict(planner_feedback))
+        if reconciliation_completed:
+            terminal_status = str(reconciliation_ledger.get("terminal_status") or "")
+            if terminal_status:
+                projected.update({
+                    "task_status": TASK_STATUS_BLOCKED,
+                    "next_step": "finish",
+                    "messages": [SystemMessage(content=(
+                        "TASKSPEC_RECONCILIATION_NONPROGRESS: Planner and Consultant "
+                        "repeated the same typed reconciliation without TaskSpec or "
+                        "relevant-evidence progress."
+                    ))],
+                })
+            elif not genuine_user_owned_ambiguity:
+                projected["next_step"] = "planner"
+        if (
+            pending_review_classification
+            and not semantic_changed
+            and not planner_feedback_present
+            and not genuine_user_owned_ambiguity
+            and not reconciliation_completed
+        ):
+            # The Consultant's typed result was "neither": preserve the
+            # reviewed Plan/approval and return to Human Review.  The
+            # Controller does not inspect the user's free text.
+            projected["next_step"] = "plan_review"
+            projected["review_classification"] = "explanation_only"
         return projected
 
     def _stale_plan_task_revision_reason(self, state: AgentState, task_id: str) -> str:
         plan_state = load_plan_state(self.data_path, task_id)
         if not plan_state.get("steps"):
             return ""
-        task_revision = self._task_revision_for_state(dict(state))
+        task_revision = self._task_revision_for_state({
+            **dict(state),
+            "task_id": task_id,
+        })
         try:
             plan_revision = int(plan_state.get("generated_from_task_revision") or 0)
         except (TypeError, ValueError):
@@ -4201,6 +4370,24 @@ class BioAnalystAgent:
     ) -> Dict[str, Any]:
         """Return the controller-owned Renderer contract for the current step."""
         plan_state = load_plan_state(self.data_path, task_id)
+        task_state = dict(plan_state.get("task_state") or {})
+        if not (
+            task_state.get("legacy_renderer_mode") is True
+            or str(task_state.get("execution_contract") or "") == "legacy_renderer_v1"
+        ):
+            return {
+                "renderer_composite": False,
+                "renderer": {},
+                "renderer_id": "",
+                "argument_schema": {},
+                "argument_projection": {},
+                "manifest_path": "",
+                "manifest_status": "retired_v2",
+                "resolved_inputs": [],
+                "missing_roles": [],
+                "ambiguous_roles": [],
+                "allowed_actions": ["EXECUTE", "STEP_COMPLETION_CANDIDATE", "PLAN_PATCH", "BLOCKED"],
+            }
         step = self._running_plan_step(plan_state) or {}
         renderer_execution = dict(step.get("renderer_execution") or {})
         manifest_path = str(renderer_execution.get("manifest_path") or "").strip()
@@ -4518,7 +4705,10 @@ class BioAnalystAgent:
         # make the caller's otherwise valid snapshot stale.
         plan_state = plan_state if plan_state is not None else load_plan_state(self.data_path, task_id)
         step = self._running_plan_step(plan_state) or {}
-        task_revision = self._task_revision_for_state(dict(state))
+        task_revision = self._task_revision_for_state({
+            **dict(state),
+            "task_id": task_id,
+        })
         plan_version = str(plan_state.get("plan_version") or "plan_v1")
         step_id = str(step.get("step_id") or "")
         purpose = self._pending_action_purpose(bound, step)
@@ -5194,7 +5384,10 @@ class BioAnalystAgent:
         if stale:
             return stale
         task_spec = self._task_spec_for_state(dict(state), list(state.get("messages", []) or []))
-        managed_bindings = build_managed_artifact_bindings(task_spec)
+        managed_bindings = build_managed_artifact_bindings(
+            task_spec,
+            plan_state=plan_state,
+        )
         if action.get("managed_artifact_handles") or action.get("materialized_artifacts"):
             managed_violations = validate_materialized_artifacts(action, managed_bindings)
             if managed_violations:
@@ -5311,7 +5504,10 @@ class BioAnalystAgent:
         step = self._running_plan_step(plan_state) or {}
         expected = {
             "step_id": str(step.get("step_id") or ""),
-            "task_revision": str(self._task_revision_for_state(dict(state))),
+            "task_revision": str(self._task_revision_for_state({
+                **dict(state),
+                "task_id": task_id,
+            })),
             "plan_version": str(plan_state.get("plan_version") or "plan_v1"),
         }
         missing = [key for key in expected if str(action.get(key) or "") == ""]
@@ -5329,7 +5525,10 @@ class BioAnalystAgent:
             return validate_action_approval_lineage(
                 plan_state,
                 action,
-                self._task_revision_for_state(dict(state)),
+                self._task_revision_for_state({
+                    **dict(state),
+                    "task_id": task_id,
+                }),
             )
         return ""
 
@@ -5511,7 +5710,7 @@ class BioAnalystAgent:
             f"plan_version: {str(plan_state.get('plan_version') or 'plan_v1')}",
             "Generate exactly one structured action for the canonical current step; do not execute later steps.",
             "The plan is approved. Do not ask whether to continue; HITL handles execution approval.",
-            "Allowed actions and manifest status are authoritative in CurrentStepContext.",
+            "Allowed actions are authoritative in CurrentStepContext.",
         ]
         if protocol.get("renderer_composite"):
             lines.extend([
@@ -5589,11 +5788,15 @@ class BioAnalystAgent:
                 })
         result: Dict[str, Any] = {
             "policy": "one_structured_action_for_current_step",
-            "manifest_status": str(protocol.get("manifest_status") or ""),
-            "renderer_managed": bool(protocol.get("renderer_composite")),
         }
-        if arguments:
-            result["renderer_arguments"] = arguments
+        if protocol.get("renderer_composite"):
+            result.update({
+                "execution_contract": "legacy_renderer_v1",
+                "manifest_status": str(protocol.get("manifest_status") or ""),
+                "legacy_renderer_managed": True,
+            })
+            if arguments:
+                result["legacy_renderer_arguments"] = arguments
         fixes = [
             str(item) for item in feedback.get("required_fix", []) or []
             if str(item).strip()
@@ -10455,6 +10658,15 @@ class BioAnalystAgent:
                 raw_outputs = [raw_outputs]
             if not isinstance(raw_outputs, list):
                 return {}
+            produced_outputs = obj.get("produced_outputs") or []
+            if not isinstance(produced_outputs, list) or any(
+                not isinstance(item, Mapping)
+                or not str(item.get("output_id") or "").strip()
+                or not isinstance(item.get("path"), str)
+                or not str(item.get("path") or "").strip()
+                for item in produced_outputs
+            ):
+                return {}
             raw_evidence = obj.get("expected_evidence") or []
             if isinstance(raw_evidence, str):
                 raw_evidence = [raw_evidence]
@@ -10466,6 +10678,7 @@ class BioAnalystAgent:
                 "argv": deepcopy(argv) if isinstance(argv, list) else [],
                 "env": deepcopy(dict(env)),
                 "outputs": [str(item) for item in raw_outputs if str(item).strip()],
+                "produced_outputs": deepcopy(produced_outputs),
                 "expected_evidence": [str(item) for item in raw_evidence if str(item).strip()],
                 "language": str(obj.get("language") or "").strip(),
             })
@@ -11522,6 +11735,28 @@ class BioAnalystAgent:
                 "transition_guard": "terminal_completed",
             })
             return guarded
+
+        committed_kind = str((guarded.get("recovery_decision") or {}).get("kind") or "")
+        if (
+            node_name == "supervisor"
+            and committed_kind == RecoveryDecisionKind.COMPLETE_STEP.value
+            and bool(plan_state.get("steps"))
+            and all(
+                str(step.get("status") or "") in {"done", "passed", "skipped"}
+                for step in plan_state.get("steps", []) or []
+                if isinstance(step, dict)
+            )
+        ):
+            guarded.update({
+                "next_step": "supervisor_final_audit",
+                "final_audit_requested": True,
+                "completion_candidate": {
+                    "text": "Controller verified the final plan step from persisted execution evidence.",
+                    "source": "supervisor_completion_policy",
+                    "step_id": str((guarded.get("recovery_decision") or {}).get("step_id") or ""),
+                },
+                "transition_guard": "complete_step_requires_final_audit",
+            })
 
         step_candidate = guarded.get("step_completion_candidate")
         if node_name in {"generate", "execute"} and isinstance(step_candidate, dict) and step_candidate:
@@ -18238,6 +18473,12 @@ class BioAnalystAgent:
             resume_node = str(state.get("resolved_resume_node") or "").strip()
             if str(state.get("resume_mode") or "") == "business_state" and resume_node:
                 audit = state.get("resume_audit") or {}
+                durable_resume = load_plan_state(self.data_path, task_id)
+                durable_admission = dict(
+                    (durable_resume.get("task_state") or {}).get("intent_admission")
+                    or state.get("intent_admission")
+                    or {}
+                )
                 output.print_once(
                     f"resume_route:{task_id}:{resume_node}",
                     f"↪ Resume router: {resume_node} | {audit.get('resume_reason', 'durable business state')}",
@@ -18248,6 +18489,12 @@ class BioAnalystAgent:
                     "retrieval_mode": str(state.get("retrieval_mode") or "kb"),
                     "use_scientific_review": True,
                     "validation_level": str(state.get("validation_level") or "scientific"),
+                    "intent_admission": durable_admission,
+                    "request_intent": dict(state.get("request_intent") or durable_admission),
+                    "managed_intent_admitted": (
+                        managed_execution_admitted(durable_admission)
+                        or task_spec_is_initialized(canonical_task_spec_for_state(durable_resume))
+                    ),
                     "next_step": resume_node,
                 }
 
@@ -18273,34 +18520,66 @@ class BioAnalystAgent:
                     "user_source_refs": list(state.get("user_source_refs") or []),
                 },
             )
-            classified_mode = str(
-                decision.get("task_mode") or "managed"
-            ).strip().lower()
-            # Phase 1 correctness rule: any non-chat natural-language request
-            # requires Consultant semantic interpretation and a committed
-            # canonical execution contract before downstream execution nodes.
-            mode = "chat" if classified_mode == "chat" else "managed"
-            retrieval_mode = str(decision.get("retrieval_mode") or "kb").strip().lower()
-            if mode == "managed":
-                retrieval_mode = "kb"
-            if mode not in {"chat", "managed"}:
-                mode = "managed"
-                retrieval_mode = "kb"
+            mode = str(decision.get("task_mode") or "chat").strip().lower()
+            if mode not in {"chat", "readonly", "simple_execute", "managed"}:
+                mode = "chat"
+            retrieval_mode = str(decision.get("retrieval_mode") or "none").strip().lower()
+            request_intent = {
+                key: deepcopy(decision.get(key))
+                for key in (
+                    "schema_version", "request_kind", "execution_scope",
+                    "managed_intent_explicit", "task_mode", "retrieval_mode",
+                    "confidence", "admission_status", "consultation_required",
+                    "reason", "llm_call_ref",
+                )
+                if decision.get(key) is not None
+            }
+            intent_admission = {
+                **request_intent,
+                "decision_source": "llm_request_intent_router",
+                "task_id": task_id,
+                "admission_id": "intent-admission-" + self._finalize_digest({
+                    key: value
+                    for key, value in request_intent.items()
+                    if key != "llm_call_ref"
+                })[:20],
+                "decided_at": timestamp_now(),
+            }
+            if mode in {"readonly", "simple_execute", "managed"} or bool(
+                decision.get("consultation_required")
+            ):
+                durable_intent_state = load_plan_state(self.data_path, task_id)
+                durable_task_state = dict(durable_intent_state.get("task_state") or {})
+                durable_task_state["intent_admission"] = deepcopy(intent_admission)
+                durable_intent_state["task_state"] = durable_task_state
+                save_plan_state(self.data_path, task_id, durable_intent_state)
 
             validation_by_mode = {
                 "chat": "none",
+                "readonly": "basic",
+                "simple_execute": "basic",
                 "managed": "scientific",
             }
             next_by_mode = {
                 "chat": "direct_chat",
+                "readonly": "generate",
+                "simple_execute": "generate",
                 "managed": "consultant",
             }
+            next_step = (
+                "consultant"
+                if bool(decision.get("consultation_required"))
+                else next_by_mode.get(mode, "consultant")
+            )
             update = {
                 "task_mode": mode,
                 "retrieval_mode": retrieval_mode,
+                "request_intent": request_intent,
+                "intent_admission": intent_admission,
+                "managed_intent_admitted": managed_execution_admitted(intent_admission),
                 "use_scientific_review": mode == "managed",
-                "validation_level": validation_by_mode.get(mode, "scientific"),
-                "next_step": next_by_mode.get(mode, "consultant"),
+                "validation_level": validation_by_mode.get(mode, "none"),
+                "next_step": next_step,
             }
             if decision.get("llm_call_ref"):
                 update["llm_call_refs"] = [dict(decision["llm_call_ref"])]
@@ -18311,7 +18590,8 @@ class BioAnalystAgent:
                 f"triage:{task_id}",
                 (
                     f"↪ Router: {mode}"
-                    f" | classified={classified_mode}"
+                    f" | kind={decision.get('request_kind', 'question')}"
+                    f" | scope={decision.get('execution_scope', 'none')}"
                     f" | retrieval={retrieval_mode}"
                     f" | confidence={decision.get('confidence', 0):.2f}"
                     f" | {decision.get('reason', '')}"
@@ -18332,6 +18612,9 @@ class BioAnalystAgent:
                 str(m.content) for m in messages if isinstance(m, HumanMessage)
             ).strip()
             retrieval_mode = str(state.get("retrieval_mode") or "none").strip().lower()
+            request_kind = str(
+                (state.get("request_intent") or {}).get("request_kind") or "question"
+            ).strip().lower()
 
             context_parts = []
             if retrieval_mode in {"kb", "skill_docs"}:
@@ -18367,11 +18650,18 @@ class BioAnalystAgent:
                     logger.warning("Direct chat skill-doc retrieval failed: %s", exc)
 
             context = "\n\n".join(context_parts) if context_parts else "No retrieved context."
-            prompt = f"""You are BioMind's direct chat answerer.
+            response_contract = (
+                "Provide an advisory, reviewable plan, but do not execute it or create an executable TaskSpec."
+                if request_kind == "plan"
+                else "Answer the user's question directly."
+            )
+            prompt = f"""You are BioMind's non-executable response node.
 
-Answer the user directly and concisely.
+{response_contract}
+Be direct and concise.
 You may use the read-only context below.
-Do not plan workflows, execute commands, install tools, ask for code review, or emit XML action tags such as <execute>, <install_tool>, <search>, or <activate_batch>.
+Do not execute commands, install tools, mutate files, create an executable TaskSpec,
+or emit XML action tags such as <execute>, <install_tool>, <search>, or <activate_batch>.
 If the user is actually asking you to run analysis or inspect local files, say that it should be handled outside chat mode.
 
 <read_only_context>
@@ -18463,10 +18753,22 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     if str(item.get("owner") or "") == "external_input"
                 ]
                 selected_for_repair = list(state.get("selected_skills") or [])
+                repair_task_state = dict(
+                    load_plan_state(self.data_path, task_id).get("task_state") or {}
+                )
+                legacy_renderer_repair = bool(
+                    repair_task_state.get("legacy_renderer_mode") is True
+                    or str(repair_task_state.get("execution_contract") or "")
+                    == "legacy_renderer_v1"
+                )
                 repair_renderer_records = [
                     self.skill_manager.get_renderer_record(skill_id)
                     for skill_id in selected_for_repair
-                    if self.skill_manager and self.skill_manager.has_renderer(skill_id)
+                    if (
+                        legacy_renderer_repair
+                        and self.skill_manager
+                        and self.skill_manager.has_renderer(skill_id)
+                    )
                 ]
                 declarative_repair = apply_declarative_task_spec_rules(
                     task_spec,
@@ -19444,22 +19746,37 @@ question. Never guess a scientific or database identity.
                     contract_repair_context=contract_repair_context,
                 )
             else:
+                durable_consultant_state = load_plan_state(self.data_path, task_id)
+                durable_consultant_task_state = dict(
+                    durable_consultant_state.get("task_state") or {}
+                )
                 durable_consultation = dict(
-                    (load_plan_state(self.data_path, task_id).get("task_state") or {}).get(
-                        "consultation_state"
-                    ) or {}
+                    durable_consultant_task_state.get("consultation_state") or {}
                 )
                 actionable_feedback = list(
                     consultation_state.get("last_feedback")
                     or durable_consultation.get("last_feedback")
                     or []
                 )[-8:]
+                durable_reconciliation = dict(
+                    durable_consultant_task_state.get("planner_reconciliation")
+                    or {}
+                )
+                durable_reconciliation_ledger = dict(
+                    durable_consultant_task_state.get("reconciliation_ledger")
+                    or {}
+                )
+                durable_review_classification = dict(
+                    durable_consultant_task_state.get(
+                        "pending_review_classification"
+                    ) or {}
+                )
                 consultant_node_context = build_node_context(
                     node_type="consultant",
                     task_spec=task_spec,
-                    plan_state=load_plan_state(self.data_path, task_id),
+                    plan_state=durable_consultant_state,
                     state_generation=int(
-                        load_plan_state(self.data_path, task_id).get("state_generation") or 0
+                        durable_consultant_state.get("state_generation") or 0
                     ),
                     feedback={
                         "consultation": {
@@ -19473,6 +19790,31 @@ question. Never guess a scientific or database identity.
                             if consultation_state.get(key) not in (None, "", [], {})
                         },
                         "last_actionable_feedback": actionable_feedback,
+                        # The Consultant sees only semantic work to classify.
+                        # Controller fingerprints, revisions, refs, scopes and
+                        # approval pointers remain outside LLMPayload.
+                        "planner_reconciliation": {
+                            key: deepcopy(durable_reconciliation.get(key))
+                            for key in (
+                                "outcome_type", "missing_semantic_facts", "status",
+                            )
+                            if durable_reconciliation.get(key) not in (None, "", [], {})
+                        },
+                        "reconciliation_ledger": {
+                            key: deepcopy(durable_reconciliation_ledger.get(key))
+                            for key in (
+                                "reconciliation_nonprogress_count",
+                                "last_consultant_outcome", "terminal_status",
+                            )
+                            if durable_reconciliation_ledger.get(key) not in (None, "", [], {})
+                        },
+                        "pending_review_classification": {
+                            "classification_required": True,
+                            "status": str(
+                                durable_review_classification.get("status")
+                                or "pending_consultant_classification"
+                            ),
+                        } if durable_review_classification else {},
                         "conversation_turn_count": len(conversation_turns),
                         "formal_input_audit": {
                             "status": str(input_resolution_result.get("status") or "not_applicable"),
@@ -20560,6 +20902,16 @@ question. Never guess a scientific or database identity.
                     **current_invocation_guard,
                     "retry_pending": False,
                 }
+                output_contract_violations = list(
+                    candidate.get("output_contract_violations") or []
+                )
+                if output_contract_violations:
+                    first_output_violation = dict(output_contract_violations[0])
+                    return candidate_rejection(
+                        str(first_output_violation.get("code") or "TASK_OUTPUT_BINDING_INCOMPLETE"),
+                        str(first_output_violation.get("message") or "Repair the typed TaskSpec output contract."),
+                        candidate=candidate,
+                    )
                 if candidate.get("completion", {}).get("decision") != "ready_to_finalize":
                     candidate["consultation_state"] = candidate_consultation
                     return candidate_rejection(
@@ -21785,6 +22137,147 @@ question. Never guess a scientific or database identity.
                 "user_preferences_context": self._load_user_preferences(),
             }
             planner_source_state = load_plan_state(self.data_path, task_id)
+            try:
+                # Validate the Controller-owned prompt example before opening
+                # or charging a PlanningEpoch. Contract drift is an internal
+                # invariant failure, never a Planner candidate repair.
+                validated_planner_candidate_wire_example()
+            except Exception as exc:
+                classification = classify_io_exception(exc)
+                logger.exception(
+                    "Planner wire-contract self-check failed: task=%s class=%s code=%s",
+                    task_id,
+                    classification["error_class"],
+                    classification["code"],
+                )
+                return {
+                    "messages": [SystemMessage(content=(
+                        f"{classification['error_class']}: {classification['code']}"
+                    ))],
+                    "failure_type": classification["error_class"],
+                    "failure_stage": "planner_wire_contract",
+                    "recovery_status": "blocked_internal",
+                    "task_status": TASK_STATUS_BLOCKED,
+                    "next_step": "finish",
+                }
+
+            def reserve_planner_candidate_repair() -> Dict[str, Any]:
+                """Persist one bounded repair call in the active PlanningEpoch."""
+                repair_state = load_plan_state(self.data_path, task_id)
+                repair_task_state = dict(repair_state.get("task_state") or {})
+                repair_epoch = dict(repair_task_state.get("planning_epoch") or {})
+                if str(repair_epoch.get("planning_epoch_id") or "") != str(
+                    planning_epoch.get("planning_epoch_id") or ""
+                ):
+                    return {
+                        "allowed": False,
+                        "code": "STALE_PLANNING_EPOCH",
+                        "terminal": False,
+                    }
+                repair_epoch["candidate_repairs"] = int(
+                    repair_epoch.get("candidate_repairs") or 0
+                ) + 1
+                repair_epoch["planner_calls_total"] = int(
+                    repair_epoch.get("planner_calls_total") or 0
+                ) + 1
+                budgets = dict(repair_task_state.get("budgets") or {})
+                max_repairs = int(budgets.get("max_candidate_repairs_per_epoch", 2))
+                max_calls = int(budgets.get("max_planner_calls_per_epoch", 4))
+                terminal = bool(
+                    repair_epoch["candidate_repairs"] > max_repairs
+                    or repair_epoch["planner_calls_total"] > max_calls
+                )
+                if terminal:
+                    repair_epoch["status"] = "exhausted"
+                repair_task_state["planning_epoch"] = repair_epoch
+                repair_state["task_state"] = repair_task_state
+                save_plan_state(self.data_path, task_id, repair_state)
+                return {
+                    "allowed": not terminal,
+                    "code": "PLANNING_EPOCH_REPAIR_EXHAUSTED" if terminal else "CURRENT",
+                    "terminal": terminal,
+                    "planning_epoch": repair_epoch,
+                }
+            planner_task_state = dict(planner_source_state.get("task_state") or {})
+            prior_epoch = dict(planner_task_state.get("planning_epoch") or {})
+            committed_plan = dict(planner_source_state.get("current_plan") or {})
+            base_snapshot_id = str(committed_plan.get("plan_snapshot_ref") or "")
+            base_plan_semantic_identity = (
+                str(committed_plan.get("plan_semantic_hash") or "")
+                if base_snapshot_id
+                else ""
+            )
+            epoch_feedback = dict(planner_task_state.get("planner_feedback") or {})
+            planner_feedback_revision = int(epoch_feedback.get("revision") or 0)
+            task_semantic_identity = task_semantic_hash(task_spec)
+            if planning_epoch_matches(
+                prior_epoch,
+                task_semantic_identity=task_semantic_identity,
+                base_plan_snapshot_id=base_snapshot_id,
+                base_plan_semantic_identity=base_plan_semantic_identity,
+                planner_feedback_revision=planner_feedback_revision,
+            ):
+                planning_epoch = deepcopy(prior_epoch)
+            else:
+                prior_identity = str(
+                    prior_epoch.get("base_task_semantic_identity") or ""
+                )
+                prior_plan_identity = str(
+                    prior_epoch.get("base_plan_semantic_identity") or ""
+                )
+                prior_status = str(prior_epoch.get("status") or "")
+                planning_epoch = start_planning_epoch(
+                    task_revision=task_revision,
+                    task_semantic_identity=task_semantic_identity,
+                    base_plan_revision=(
+                        int(committed_plan.get("plan_revision") or 0)
+                        if base_snapshot_id
+                        else 0
+                    ),
+                    base_plan_snapshot_id=base_snapshot_id,
+                    base_plan_semantic_identity=base_plan_semantic_identity,
+                    parent_epoch_id=str(prior_epoch.get("planning_epoch_id") or ""),
+                    start_reason=(
+                        "semantic_base_stale"
+                        if (
+                            (prior_identity and prior_identity != task_semantic_identity)
+                            or (
+                                prior_plan_identity
+                                and prior_plan_identity != base_plan_semantic_identity
+                            )
+                        )
+                        else "reconciliation_successor"
+                        if prior_status == "reconciliation_completed"
+                        else "initial_planning"
+                    ),
+                    planner_feedback_revision=planner_feedback_revision,
+                )
+            planning_epoch["planner_calls_total"] = int(
+                planning_epoch.get("planner_calls_total") or 0
+            ) + 1
+            max_planner_calls = int(
+                (planner_task_state.get("budgets") or {}).get(
+                    "max_planner_calls_per_epoch", 4
+                )
+            )
+            if planning_epoch["planner_calls_total"] > max_planner_calls:
+                planning_epoch["status"] = "exhausted"
+                planner_task_state["planning_epoch"] = planning_epoch
+                planner_source_state["task_state"] = planner_task_state
+                save_plan_state(self.data_path, task_id, planner_source_state)
+                return {
+                    "messages": [SystemMessage(content=(
+                        "PLANNING_EPOCH_EXHAUSTED: Planner call budget was exhausted "
+                        "without a committed PlanSnapshot."
+                    ))],
+                    "task_status": TASK_STATUS_BLOCKED,
+                    "planning_epoch": planning_epoch,
+                    "next_step": "finish",
+                }
+            planner_task_state["planning_epoch"] = planning_epoch
+            planner_source_state["task_state"] = planner_task_state
+            save_plan_state(self.data_path, task_id, planner_source_state)
+            planner_source_state = load_plan_state(self.data_path, task_id)
             planner_feedback = dict(
                 (planner_source_state.get("task_state") or {}).get("planner_feedback")
                 or state.get("planner_feedback")
@@ -22029,6 +22522,21 @@ question. Never guess a scientific or database identity.
                     )
                     return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
 
+                raw_plan_content = str(response.content or "").strip()
+                planner_envelope = None
+                planner_envelope_error = ""
+                try:
+                    planner_envelope = parse_planner_outcome_envelope(
+                        raw_plan_content,
+                        # Every live Planner response is a new candidate and
+                        # therefore must use the typed 1.2.1 envelope. Legacy
+                        # persisted plans are migrated at the state-reader
+                        # boundary, never by weakening this admission gate.
+                        allow_legacy_plan=False,
+                    )
+                except PlannerEnvelopeError as exc:
+                    planner_envelope_error = str(exc)
+
                 current_planner_state = load_plan_state(self.data_path, task_id)
                 current_planner_task = canonical_task_spec_for_state(
                     current_planner_state
@@ -22043,10 +22551,19 @@ question. Never guess a scientific or database identity.
                     {
                         "task_semantic_hash": current_planner_context.binding.task_semantic_hash,
                         "task_record_hash": current_planner_context.binding.task_record_hash,
+                        "plan_semantic_hash": current_planner_context.binding.plan_semantic_hash,
+                        "plan_record_hash": current_planner_context.binding.plan_record_hash,
                         "state_generation": int(current_planner_state.get("state_generation") or 0),
                     },
                 )
                 if not planner_staleness.usable:
+                    stale_task_state = dict(current_planner_state.get("task_state") or {})
+                    stale_epoch = dict(stale_task_state.get("planning_epoch") or {})
+                    if stale_epoch:
+                        stale_epoch["status"] = "stale_semantic_base"
+                        stale_task_state["planning_epoch"] = stale_epoch
+                        current_planner_state["task_state"] = stale_task_state
+                        save_plan_state(self.data_path, task_id, current_planner_state)
                     if self._node_invocations.mark_stale_signature_handled(planner_staleness.stale_signature):
                         return {
                             "messages": [SystemMessage(content=planner_staleness.code)],
@@ -22060,10 +22577,161 @@ question. Never guess a scientific or database identity.
                         "task_status": TASK_STATUS_BLOCKED,
                         "next_step": "finish",
                     }
-                plan_content = str(response.content or "").strip()
+                if (
+                    planner_envelope is not None
+                    and planner_envelope.outcome_type == TASKSPEC_RECONCILIATION_REQUIRED
+                ):
+                    try:
+                        fingerprint, fingerprint_payload = reconciliation_fingerprint(
+                            planner_envelope.payload,
+                            task_semantic_identity=current_planner_context.binding.task_semantic_hash,
+                        )
+                    except PlannerCandidateError as exc:
+                        return {
+                            "messages": [SystemMessage(content=(
+                                "PLANNER_CANDIDATE_INVALID: " + str(exc)
+                            ))],
+                            "validation_issues": [exc.to_diagnostic()],
+                            "next_step": "planner",
+                        }
+                    current_task_state = dict(current_planner_state.get("task_state") or {})
+                    current_ledger = dict(
+                        current_task_state.get("reconciliation_ledger") or {}
+                    )
+                    relevant_evidence_revision = (
+                        relevant_reconciliation_evidence_revision(
+                            planner_envelope.payload,
+                            current_planner_task,
+                        )
+                    )
+                    guard = reconciliation_guard_status(
+                        current_ledger,
+                        fingerprint=fingerprint,
+                        task_semantic_identity=current_planner_context.binding.task_semantic_hash,
+                        relevant_evidence_revision=relevant_evidence_revision,
+                    )
+                    if guard["terminal"]:
+                        current_task_state["terminal_status"] = (
+                            "TASKSPEC_RECONCILIATION_NONPROGRESS"
+                        )
+                        current_planner_state["task_state"] = current_task_state
+                        save_plan_state(self.data_path, task_id, current_planner_state)
+                        return {
+                            "messages": [SystemMessage(content=(
+                                "TASKSPEC_RECONCILIATION_NONPROGRESS: the same typed "
+                                "reconciliation repeated without TaskSpec or relevant-evidence progress."
+                            ))],
+                            "task_status": TASK_STATUS_BLOCKED,
+                            "next_step": "finish",
+                        }
+                    reconciliation_record = {
+                        "outcome_type": TASKSPEC_RECONCILIATION_REQUIRED,
+                        "fingerprint": fingerprint,
+                        "fingerprint_payload": fingerprint_payload,
+                        "missing_semantic_facts": deepcopy(list(
+                            planner_envelope.payload.get("missing_semantic_facts") or []
+                        )),
+                        "task_semantic_revision": task_spec_revision(current_planner_task),
+                        "task_semantic_identity": current_planner_context.binding.task_semantic_hash,
+                        "relevant_evidence_revision": relevant_evidence_revision,
+                        "candidate_scope_id": planner_node_context.binding.candidate_scope_id,
+                        "status": "pending_consultant",
+                    }
+                    current_task_state["planner_reconciliation"] = reconciliation_record
+                    ended_epoch = dict(current_task_state.get("planning_epoch") or {})
+                    ended_epoch["status"] = "reconciliation_required"
+                    current_task_state["planning_epoch"] = ended_epoch
+                    current_planner_state["task_state"] = current_task_state
+                    save_plan_state(self.data_path, task_id, current_planner_state)
+                    return {
+                        "messages": [SystemMessage(content=(
+                            "<taskspec_reconciliation_required>"
+                            + json.dumps(fingerprint_payload, ensure_ascii=False, sort_keys=True)
+                            + "</taskspec_reconciliation_required>"
+                        ))],
+                        "planner_reconciliation": reconciliation_record,
+                        "planning_epoch": ended_epoch,
+                        "next_step": "consultant",
+                    }
+
+                plan_content = (
+                    json.dumps(
+                        planner_envelope.plan_candidate_body(),
+                        ensure_ascii=False,
+                        sort_keys=True,
+                    )
+                    if planner_envelope is not None
+                    else raw_plan_content
+                )
+                structure_errors: List[Dict[str, Any]] = (
+                    [{
+                        "field_path": "$",
+                        "code": "PLANNER_CANDIDATE_INVALID",
+                        "message": planner_envelope_error,
+                    }]
+                    if planner_envelope_error
+                    else []
+                )
+                candidate_ref_keys: Dict[str, Any] = {}
+                candidate_usage: List[Dict[str, Any]] = []
+                allocation_intent: Dict[str, Any] = {}
                 try:
                     plan_proposal = json.loads(plan_content)
                     if isinstance(plan_proposal, Mapping):
+                        if planner_envelope is not None and not planner_envelope.legacy_envelope:
+                            artifact_handles = {
+                                str(handle): str(item.get("stable_identity") or "")
+                                for handle, item in planner_node_context.binding.semantic_handle_map.items()
+                                if isinstance(item, Mapping)
+                                and item.get("object_type") == "artifact"
+                            }
+                            candidate_ref_keys, candidate_usage = candidate_artifact_ref_keys(
+                                plan_proposal,
+                                candidate_scope_id=(
+                                    planner_node_context.binding.candidate_scope_id
+                                ),
+                                authoritative_handles=artifact_handles,
+                            )
+                            availability_origins = {
+                                str(item.get("stable_identity") or ""): (
+                                    "verified_task_input"
+                                    if str(item.get("direction") or "") == "input"
+                                    else "not_yet_available"
+                                )
+                                for item in planner_node_context.binding.semantic_handle_map.values()
+                                if isinstance(item, Mapping)
+                                and item.get("object_type") == "artifact"
+                                and str(item.get("stable_identity") or "")
+                            }
+                            flow_issues = validate_candidate_graph_and_flow(
+                                plan_proposal,
+                                ref_keys=candidate_ref_keys,
+                                usage=candidate_usage,
+                                availability_origins=availability_origins,
+                            )
+                            if flow_issues:
+                                structure_errors = [
+                                    {
+                                        "field_path": "$",
+                                        "code": str(issue.get("code") or "PLANNER_CANDIDATE_INVALID"),
+                                        "message": json.dumps(
+                                            issue, ensure_ascii=False, sort_keys=True
+                                        ),
+                                        "owner": "planner",
+                                        "route": "planner_candidate_repair",
+                                    }
+                                    for issue in flow_issues
+                                ]
+                            else:
+                                allocation_intent = prepare_allocation_intent(
+                                    plan_proposal,
+                                    candidate_scope_id=(
+                                        planner_node_context.binding.candidate_scope_id
+                                    ),
+                                    planning_epoch_id=str(
+                                        planning_epoch.get("planning_epoch_id") or ""
+                                    ),
+                                )
                         plan_proposal = resolve_plan_proposal_handles(
                             plan_proposal,
                             planner_node_context.binding,
@@ -22075,15 +22743,32 @@ question. Never guess a scientific or database identity.
                         )
                 except json.JSONDecodeError:
                     pass
-                structure_errors: List[Dict[str, Any]] = []
-                try:
-                    candidate_for_repair = build_plan_state(
-                        task_id,
-                        plan_content,
-                        strict=True,
-                    )
-                except PlanStructureError as first_error:
-                    structure_errors = list(first_error.diagnostics)
+                except SemanticHandleError as exc:
+                    structure_errors = [{
+                        "field_path": "$",
+                        "code": "PLANNER_CANDIDATE_INVALID",
+                        "message": str(exc),
+                    }]
+                except PlannerCandidateError as exc:
+                    structure_errors = [exc.to_diagnostic()]
+                if not structure_errors:
+                    try:
+                        candidate_for_repair = build_plan_state(
+                            task_id,
+                            plan_content,
+                            strict=True,
+                        )
+                        candidate_for_repair["artifact_usage"] = deepcopy(candidate_usage)
+                        candidate_for_repair["allocation_intent"] = deepcopy(allocation_intent)
+                        candidate_for_repair["candidate_scope_id"] = str(
+                            planner_node_context.binding.candidate_scope_id
+                        )
+                        candidate_for_repair["planning_epoch_id"] = str(
+                            planning_epoch.get("planning_epoch_id") or ""
+                        )
+                    except PlanStructureError as first_error:
+                        structure_errors = list(first_error.diagnostics)
+                if structure_errors:
                     structure_repair_prompt = (
                         detailed_plan_prompt
                         + "\n\nYour prior response failed the structured plan schema. "
@@ -22097,7 +22782,24 @@ question. Never guess a scientific or database identity.
                             plan_state=planner_source_state,
                             violations=structure_errors,
                             allowed_operations=["replace_plan_document"],
+                            candidate_scope_id=planner_node_context.binding.candidate_scope_id,
                         )
+                        repair_reservation = reserve_planner_candidate_repair()
+                        if not repair_reservation.get("allowed"):
+                            if repair_reservation.get("terminal"):
+                                return {
+                                    "messages": [SystemMessage(content=str(
+                                        repair_reservation.get("code")
+                                    ))],
+                                    "task_status": TASK_STATUS_BLOCKED,
+                                    "next_step": "finish",
+                                }
+                            return {
+                                "messages": [SystemMessage(content=str(
+                                    repair_reservation.get("code")
+                                ))],
+                                "next_step": "planner",
+                            }
                         structure_response = await self._ainvoke_node_llm(
                             [HumanMessage(content=structure_repair_prompt)],
                             node_context=structure_repair_context,
@@ -22111,8 +22813,95 @@ question. Never guess a scientific or database identity.
                                 "validation_errors": structure_errors,
                             },
                         )
-                        plan_content = str(structure_response.content or "").strip()
-                        parsed_structure = json.loads(plan_content)
+                        repaired_raw = str(structure_response.content or "").strip()
+                        repaired_envelope = parse_planner_outcome_envelope(
+                            repaired_raw,
+                            allow_legacy_plan=False,
+                        )
+                        current_repair_base = load_plan_state(self.data_path, task_id)
+                        current_repair_task = canonical_task_spec_for_state(
+                            current_repair_base
+                        ) or task_spec
+                        current_repair_context = build_node_context(
+                            node_type="planner_repair",
+                            task_spec=current_repair_task,
+                            plan_state=current_repair_base,
+                            violations=structure_errors,
+                            allowed_operations=["replace_plan_document"],
+                            candidate_scope_id=(
+                                planner_node_context.binding.candidate_scope_id
+                            ),
+                        )
+                        structure_staleness = evaluate_node_staleness(
+                            structure_repair_context.binding,
+                            {
+                                "task_semantic_hash": current_repair_context.binding.task_semantic_hash,
+                                "plan_semantic_hash": current_repair_context.binding.plan_semantic_hash,
+                                "violation_set_identity": structure_repair_context.binding.violation_set_identity,
+                                "state_generation": int(
+                                    current_repair_base.get("state_generation") or 0
+                                ),
+                            },
+                        )
+                        if not structure_staleness.usable:
+                            raise InvocationProtocolError(structure_staleness.code)
+                        if repaired_envelope.outcome_type != PLAN_CANDIDATE:
+                            raise PlannerCandidateError(
+                                "PLANNER_REPAIR_OUTCOME_INVALID",
+                                "$.outcome_type",
+                                repaired_envelope.outcome_type,
+                            )
+                        parsed_structure = repaired_envelope.plan_candidate_body()
+                        if not repaired_envelope.legacy_envelope:
+                            repaired_handles = {
+                                str(handle): str(item.get("stable_identity") or "")
+                                for handle, item in structure_repair_context.binding.semantic_handle_map.items()
+                                if isinstance(item, Mapping)
+                                and item.get("object_type") == "artifact"
+                            }
+                            candidate_ref_keys, candidate_usage = candidate_artifact_ref_keys(
+                                parsed_structure,
+                                candidate_scope_id=(
+                                    structure_repair_context.binding.candidate_scope_id
+                                ),
+                                authoritative_handles=repaired_handles,
+                            )
+                            repaired_origins = {
+                                str(item.get("stable_identity") or ""): (
+                                    "verified_task_input"
+                                    if str(item.get("direction") or "") == "input"
+                                    else "not_yet_available"
+                                )
+                                for item in structure_repair_context.binding.semantic_handle_map.values()
+                                if isinstance(item, Mapping)
+                                and item.get("object_type") == "artifact"
+                                and str(item.get("stable_identity") or "")
+                            }
+                            repaired_flow_issues = validate_candidate_graph_and_flow(
+                                parsed_structure,
+                                ref_keys=candidate_ref_keys,
+                                usage=candidate_usage,
+                                availability_origins=repaired_origins,
+                            )
+                            if repaired_flow_issues:
+                                raise PlannerCandidateError(
+                                    str(repaired_flow_issues[0].get("code") or "PLAN_FLOW_INVALID"),
+                                    "$",
+                                    json.dumps(
+                                        repaired_flow_issues,
+                                        ensure_ascii=False,
+                                        sort_keys=True,
+                                    ),
+                                )
+                            allocation_intent = prepare_allocation_intent(
+                                parsed_structure,
+                                candidate_scope_id=(
+                                    structure_repair_context.binding.candidate_scope_id
+                                ),
+                                planning_epoch_id=str(
+                                    planning_epoch.get("planning_epoch_id") or ""
+                                ),
+                            )
                         parsed_structure = resolve_plan_proposal_handles(
                             parsed_structure,
                             structure_repair_context.binding,
@@ -22123,9 +22912,39 @@ question. Never guess a scientific or database identity.
                             plan_content,
                             strict=True,
                         )
+                        candidate_for_repair["artifact_usage"] = deepcopy(candidate_usage)
+                        candidate_for_repair["allocation_intent"] = deepcopy(allocation_intent)
+                        candidate_for_repair["candidate_scope_id"] = str(
+                            planner_node_context.binding.candidate_scope_id
+                        )
+                        candidate_for_repair["planning_epoch_id"] = str(
+                            planning_epoch.get("planning_epoch_id") or ""
+                        )
                         structure_errors = []
                     except PlanStructureError as second_error:
                         structure_errors = list(second_error.diagnostics)
+                    except SemanticHandleError as second_error:
+                        structure_errors = [{
+                            "field_path": "$",
+                            "code": "PLANNER_CANDIDATE_INVALID",
+                            "message": str(second_error),
+                        }]
+                    except (PlannerEnvelopeError, PlannerCandidateError) as second_error:
+                        structure_errors = [
+                            second_error.to_diagnostic()
+                            if isinstance(second_error, PlannerCandidateError)
+                            else {
+                                "field_path": "$",
+                                "code": "PLANNER_CANDIDATE_INVALID",
+                                "message": str(second_error),
+                            }
+                        ]
+                    except InvocationProtocolError as stale_error:
+                        return {
+                            "messages": [SystemMessage(content=str(stale_error))],
+                            "pending_action": {},
+                            "next_step": "planner",
+                        }
                     except Exception as exc:
                         structure_errors = [{
                             "field_path": "$",
@@ -22261,6 +23080,7 @@ question. Never guess a scientific or database identity.
                     allowed_operations=["replace_steps"],
                     violation_set_identity=violation_identity,
                     trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
+                    candidate_scope_id=planner_node_context.binding.candidate_scope_id,
                 )
                 step_handle_by_identity = {
                     str(item.get("stable_identity") or ""): str(handle)
@@ -22310,6 +23130,22 @@ question. Never guess a scientific or database identity.
                     if cached_repair.get("raw_response"):
                         repair_response = AIMessage(content=str(cached_repair["raw_response"]))
                     else:
+                        repair_reservation = reserve_planner_candidate_repair()
+                        if not repair_reservation.get("allowed"):
+                            if repair_reservation.get("terminal"):
+                                return {
+                                    "messages": [SystemMessage(content=str(
+                                        repair_reservation.get("code")
+                                    ))],
+                                    "task_status": TASK_STATUS_BLOCKED,
+                                    "next_step": "finish",
+                                }
+                            return {
+                                "messages": [SystemMessage(content=str(
+                                    repair_reservation.get("code")
+                                ))],
+                                "next_step": "planner",
+                            }
                         repair_response = await self._ainvoke_node_llm(
                             [HumanMessage(content=repair_prompt)],
                             node_context=repair_node_context,
@@ -22512,6 +23348,53 @@ question. Never guess a scientific or database identity.
             os.makedirs(plan_dir, exist_ok=True)
             plan_file = os.path.join(plan_dir, "plan.md")
             previous_plan_state = load_plan_state(self.data_path, task_id)
+            if violations:
+                # Rejected candidates are audit evidence, never a replacement
+                # for the last committed/working PlanSpec or PlanningEpoch base.
+                rejection_fingerprint = str(
+                    candidate_for_repair.get("validation_convergence_fingerprint")
+                    or hashlib.sha256(
+                        json.dumps(violations, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
+                    ).hexdigest()
+                )
+                preserved = deepcopy(previous_plan_state)
+                preserved_task_state = dict(preserved.get("task_state") or {})
+                prior_rejection = dict(
+                    preserved_task_state.get("planner_candidate_rejection") or {}
+                )
+                conflict = planner_candidate_rejection_is_internal_conflict(
+                    prior_fingerprint=str(prior_rejection.get("fingerprint") or ""),
+                    candidate_fingerprint=rejection_fingerprint,
+                    plan_patch_audits=plan_patch_audits,
+                    initial_violations=initial_contract_violations,
+                    final_violations=violations,
+                )
+                preserved_task_state["planning_epoch"] = deepcopy(planning_epoch)
+                preserved_task_state["planner_candidate_rejection"] = {
+                    "fingerprint": rejection_fingerprint,
+                    "issue_codes": sorted({
+                        str(row.get("code") or row.get("violation_code") or "")
+                        for row in violations
+                        if isinstance(row, Mapping)
+                    }),
+                    "candidate_semantic_hash": semantic_plan_hash(candidate_for_repair),
+                    "status": "internal_conflict" if conflict else "rejected",
+                    "owner": "internal" if conflict else "planner",
+                }
+                preserved["task_state"] = preserved_task_state
+                save_plan_state(self.data_path, task_id, preserved)
+                code = "INTERNAL_CONTRACT_CONFLICT" if conflict else "PLANNER_CANDIDATE_REJECTED"
+                return {
+                    "messages": [SystemMessage(content=(
+                        code + ": "
+                        + json.dumps(violations, ensure_ascii=False, sort_keys=True, default=str)
+                    ))],
+                    "pending_action": {},
+                    "failure_owner": "internal" if conflict else "planner",
+                    "planning_epoch": planning_epoch,
+                    "task_status": TASK_STATUS_BLOCKED if conflict else state.get("task_status", ""),
+                    "next_step": "finish" if conflict else "planner",
+                }
             # The normalized object contains controller-owned renderer args and
             # bound outputs that are intentionally absent from rendered
             # Markdown.  Never reparse the display text and discard them.
@@ -22522,6 +23405,10 @@ question. Never guess a scientific or database identity.
             candidate_plan_state["user_constraints"] = list(state.get("user_constraints", []) or [])
             candidate_plan_state["selected_skill_ids"] = list(selected_skills)
             _bind_current_task_spec_record(candidate_plan_state, task_spec)
+            # The atomic writer consumes this Controller marker only after all
+            # deterministic candidate validation has succeeded.  Legacy and
+            # runtime-only saves never create a new PlanSnapshot implicitly.
+            candidate_plan_state["plan_commit_requested"] = not bool(violations)
             candidate_plan_state["planner_quality_telemetry"] = {
                 "schema_version": 1,
                 "first_pass_schema_valid": bool(candidate_for_repair.get("steps")),
@@ -22629,7 +23516,124 @@ question. Never guess a scientific or database identity.
                     "applied_plan_version": str(plan_state.get("plan_version") or ""),
                 }
                 plan_state["task_state"] = task_state_for_plan
-            save_plan_state(self.data_path, task_id, plan_state)
+            try:
+                save_plan_state(self.data_path, task_id, plan_state)
+            except StateCASConflict:
+                # The candidate was valid, but another writer advanced the
+                # authoritative generation after this invocation's final
+                # staleness check.  This is not a Planner candidate defect and
+                # must never enter candidate repair.
+                stale_code = "STALE_PLANNER_INVOCATION_NON_SEMANTIC"
+                stale_epoch: Dict[str, Any] = {}
+                bookkeeping_committed = False
+                for _ in range(3):
+                    latest = load_plan_state(self.data_path, task_id)
+                    latest_task = canonical_task_spec_for_state(latest) or task_spec
+                    latest_context = build_node_context(
+                        node_type="planner",
+                        task_spec=latest_task,
+                        plan_state=latest,
+                    )
+                    semantic_base_changed = bool(
+                        latest_context.binding.task_semantic_hash
+                        != planner_node_context.binding.task_semantic_hash
+                        or latest_context.binding.plan_semantic_hash
+                        != planner_node_context.binding.plan_semantic_hash
+                    )
+                    latest_task_state = dict(latest.get("task_state") or {})
+                    stale_epoch = dict(latest_task_state.get("planning_epoch") or {})
+                    if (
+                        stale_epoch
+                        and str(stale_epoch.get("planning_epoch_id") or "")
+                        == str(planning_epoch.get("planning_epoch_id") or "")
+                    ):
+                        if semantic_base_changed:
+                            stale_code = "STALE_PLANNER_INVOCATION_SEMANTIC_BASE"
+                            stale_epoch["status"] = "semantic_base_stale"
+                        else:
+                            stale_epoch["stale_redispatches"] = int(
+                                stale_epoch.get("stale_redispatches") or 0
+                            ) + 1
+                            stale_epoch["status"] = "active"
+                        latest_task_state["planning_epoch"] = stale_epoch
+                        latest["task_state"] = latest_task_state
+                    elif semantic_base_changed:
+                        stale_code = "STALE_PLANNER_INVOCATION_SEMANTIC_BASE"
+                    try:
+                        save_plan_state(self.data_path, task_id, latest)
+                        bookkeeping_committed = True
+                        break
+                    except StateCASConflict:
+                        continue
+                    except Exception as exc:
+                        classification = classify_io_exception(exc)
+                        logger.exception(
+                            "Planner stale-redispatch bookkeeping failed: task=%s class=%s code=%s",
+                            task_id,
+                            classification["error_class"],
+                            classification["code"],
+                        )
+                        return {
+                            "messages": [SystemMessage(content=(
+                                f"{classification['error_class']}: {classification['code']}"
+                            ))],
+                            "failure_type": classification["error_class"],
+                            "failure_stage": "planner_atomic_commit",
+                            "recovery_status": (
+                                "paused_retryable"
+                                if classification["retry_safe"]
+                                else "blocked_internal"
+                            ),
+                            "task_status": (
+                                "paused_retryable"
+                                if classification["retry_safe"]
+                                else TASK_STATUS_BLOCKED
+                            ),
+                            "next_step": "finish",
+                        }
+                if not bookkeeping_committed:
+                    return {
+                        "messages": [SystemMessage(content=(
+                            "INTERNAL_CONTROLLER_INVARIANT_ERROR: "
+                            "STATE_CAS_REDISPATCH_NONCONVERGENT"
+                        ))],
+                        "failure_type": "INTERNAL_CONTROLLER_INVARIANT_ERROR",
+                        "failure_stage": "planner_atomic_commit",
+                        "task_status": TASK_STATUS_BLOCKED,
+                        "next_step": "finish",
+                    }
+                return {
+                    "messages": [SystemMessage(content=stale_code)],
+                    "planning_epoch": stale_epoch,
+                    "pending_action": {},
+                    "next_step": "planner",
+                }
+            except Exception as exc:
+                classification = classify_io_exception(exc)
+                logger.exception(
+                    "Planner atomic commit failed: task=%s class=%s code=%s",
+                    task_id,
+                    classification["error_class"],
+                    classification["code"],
+                )
+                return {
+                    "messages": [SystemMessage(content=(
+                        f"{classification['error_class']}: {classification['code']}"
+                    ))],
+                    "failure_type": classification["error_class"],
+                    "failure_stage": "planner_atomic_commit",
+                    "recovery_status": (
+                        "paused_retryable"
+                        if classification["retry_safe"]
+                        else "blocked_internal"
+                    ),
+                    "task_status": (
+                        "paused_retryable"
+                        if classification["retry_safe"]
+                        else TASK_STATUS_BLOCKED
+                    ),
+                    "next_step": "finish",
+                }
             blocking_plan_issues = [
                 dict(item) for item in plan_state.get("validation_issues", []) or []
                 if isinstance(item, Mapping)
@@ -23066,27 +24070,64 @@ question. Never guess a scientific or database identity.
                         ),
                     },
                 ]
-                reset_plan_for_replanning(self.data_path, task_id)
+                # Classification-first: durable free text alone does not
+                # invalidate the PlanSnapshot or approval.  The Consultant's
+                # typed result (TaskSpec mutation, PlannerFeedback, both, or
+                # neither) owns the later transition.
+                classification_state = load_plan_state(self.data_path, task_id)
+                classification_task_state = dict(
+                    classification_state.get("task_state") or {}
+                )
+                review_event_id = "review-classification-" + hashlib.sha256(
+                    f"{task_id}|{feedback_turn_ref}".encode("utf-8")
+                ).hexdigest()[:20]
+                classification_task_state["pending_review_classification"] = {
+                    "schema_version": 1,
+                    "review_event_id": review_event_id,
+                    "feedback_turn_ref": feedback_turn_ref,
+                    "feedback_turn_id": feedback_handle,
+                    "plan_snapshot_ref": str(
+                        (classification_state.get("current_plan") or {}).get(
+                            "plan_snapshot_ref"
+                        )
+                        or classification_state.get("plan_snapshot_ref")
+                        or ""
+                    ),
+                    "approval_record_ref": str(
+                        classification_state.get("approval_record_ref") or ""
+                    ),
+                    "status": "pending_consultant_classification",
+                }
+                classification_state["task_state"] = classification_task_state
+                save_plan_state(self.data_path, task_id, classification_state)
+                classification_state = load_plan_state(self.data_path, task_id)
                 await self._observe_session_memory(
                     task_id,
                     "plan_review",
-                    messages + [HumanMessage(content=f"Plan rejected. Feedback: {feedback}")],
-                    {"decision": "rejected", "feedback": feedback, "plan_excerpt": plan[:2000]},
+                    messages + [HumanMessage(content=f"Plan review input: {feedback}")],
+                    {
+                        "decision": "pending_typed_classification",
+                        "feedback": feedback,
+                        "plan_excerpt": plan[:2000],
+                        "review_event_id": review_event_id,
+                    },
                 )
                 return {
                     "messages": [HumanMessage(
-                        content=f"Plan rejected. Feedback: {feedback}",
+                        content=f"Plan review input: {feedback}",
                         additional_kwargs={"message_origin": "user"},
                     )],
-                    "current_plan": None,
-                    "plan_progress": "",
+                    "current_plan": plan,
+                    "plan_progress": render_plan_progress(classification_state),
                     "conversation_evidence": dict(
-                        load_plan_state(self.data_path, task_id).get("conversation_evidence")
+                        classification_state.get("conversation_evidence")
                         or {}
                     ),
                     "consultation_state": review_consultation,
                     "pending_human_question": {},
-                    "validation_issues": [],
+                    "validation_issues": deepcopy(list(
+                        classification_state.get("validation_issues") or []
+                    )),
                     "next_step": "consultant",
                 }
 
@@ -23155,19 +24196,6 @@ question. Never guess a scientific or database identity.
                     "active_skills_derived_from_plan_step",
                     ", ".join(step_skill_update.get("active_skills", [])),
                 )
-            renderer_update = self._registered_renderer_action_update(state, task_id)
-            if renderer_update:
-                renderer_update.setdefault("plan_progress", render_plan_progress(load_plan_state(self.data_path, task_id)))
-                renderer_update.setdefault("active_skills", state.get("active_skills", []))
-                return renderer_update
-            projected_renderer_update = self._projected_renderer_action_update(state, task_id)
-            if projected_renderer_update:
-                projected_renderer_update.setdefault(
-                    "plan_progress",
-                    render_plan_progress(load_plan_state(self.data_path, task_id)),
-                )
-                projected_renderer_update.setdefault("active_skills", state.get("active_skills", []))
-                return projected_renderer_update
             if self._current_plan_step_requests_finish(task_id):
                 solution_text = self._finish_solution_from_plan(str(current_plan or ""))
                 response = AIMessage(content=f"<solution>{solution_text}</solution>")
@@ -23348,18 +24376,18 @@ question. Never guess a scientific or database identity.
             }
             generate_plan_state = load_plan_state(self.data_path, task_id)
             generate_task_spec = self._task_spec_for_state(dict(state), messages)
-            generate_input_audit = (
-                state.get("input_audit")
-                or (generate_plan_state.get("task_state") or {}).get("input_audit")
-                or {}
-            )
-            if isinstance(generate_input_audit, Mapping) and generate_input_audit:
-                generate_task_spec = merge_task_spec_input_audit(
-                    generate_task_spec,
-                    generate_input_audit,
-                )
             _, generate_step = current_plan_step_with_index(generate_plan_state)
             generate_step = generate_step or {}
+            current_step_id = str(generate_step.get("step_id") or "")
+            active_skills = [
+                str(item)
+                for item in (
+                    state.get("active_skills")
+                    or generate_step.get("skill_ids")
+                    or []
+                )
+                if str(item).strip()
+            ]
             generate_protocol = self._renderer_action_protocol(state, task_id)
             generate_approval = validate_plan_for_generate(
                 generate_plan_state,
@@ -23379,7 +24407,7 @@ question. Never guess a scientific or database identity.
                     task_spec=generate_task_spec,
                     plan_state=generate_plan_state,
                     state_generation=int(generate_plan_state.get("state_generation") or 0),
-                    current_step_id=str(generate_step.get("step_id") or current_step_id or ""),
+                    current_step_id=current_step_id,
                     runtime={
                         "progress": {
                             "current_step_status": str(generate_step.get("status") or "pending"),
@@ -23391,7 +24419,6 @@ question. Never guess a scientific or database identity.
                                 not in {"done", "completed", "skipped"}
                             ),
                         },
-                        "renderer_status": str(generate_protocol.get("manifest_status") or ""),
                         "current_action_contract": self._current_action_semantic_contract(
                             state, task_id
                         ),
@@ -23634,7 +24661,11 @@ question. Never guess a scientific or database identity.
                 and structured_action.get("argv")
             ):
                 task_spec_for_action = self._task_spec_for_state(dict(state), messages)
-                managed_bindings = build_managed_artifact_bindings(task_spec_for_action)
+                current_action_plan = load_plan_state(self.data_path, task_id)
+                managed_bindings = build_managed_artifact_bindings(
+                    task_spec_for_action,
+                    plan_state=current_action_plan,
+                )
                 materialized_action, artifact_violations = materialize_managed_action(
                     structured_action,
                     managed_bindings,
@@ -23643,6 +24674,13 @@ question. Never guess a scientific or database identity.
                 )
                 artifact_violations.extend(
                     validate_materialized_artifacts(materialized_action, managed_bindings)
+                )
+                artifact_violations.extend(
+                    validate_generate_output_coverage(
+                        current_action_plan,
+                        materialized_action,
+                        managed_bindings,
+                    )
                 )
                 if artifact_violations:
                     violation_payload = [item.to_dict() for item in artifact_violations]
@@ -23659,11 +24697,11 @@ question. Never guess a scientific or database identity.
                         "pending_recovery_action": {
                             "type": "ACTION_FORMAT_REPAIR",
                             "reason": str(first_violation.get("message") or "managed artifact mismatch"),
-                            "failure_owner": str(first_violation.get("owner") or "action_generation"),
+                            "failure_owner": str(first_violation.get("owner") or "GENERATED_ACTION"),
                             "violation": first_violation,
                         },
                         "required_next_action": "ACTION_FORMAT_REPAIR",
-                        "failure_owner": str(first_violation.get("owner") or "action_generation"),
+                        "failure_owner": str(first_violation.get("owner") or "GENERATED_ACTION"),
                         "generate_result": "NEEDS_RECOVERY",
                         "generate_exit_reason": "managed_artifact_preaction_rejected",
                         "next_step": "generate" if first_violation.get("route") == "generate" else "finish",
@@ -23673,17 +24711,25 @@ question. Never guess a scientific or database identity.
                 )
                 materialized_action["language"] = "bash"
                 structured_action = materialized_action
-            if str(structured_action.get("type") or "") == "renderer_invocation":
-                materialized_renderer = self._materialize_renderer_invocation(
-                    structured_action,
-                    state,
-                    task_id,
-                )
-                if str(materialized_renderer.get("type") or "") == "renderer_contract_error":
-                    renderer_contract_error = dict(materialized_renderer.get("contract_error") or {})
-                    structured_action = {}
-                else:
-                    structured_action = materialized_renderer
+            active_plan_state = load_plan_state(self.data_path, task_id)
+            active_task_state = dict(active_plan_state.get("task_state") or {})
+            legacy_renderer_mode = bool(
+                active_task_state.get("legacy_renderer_mode") is True
+                or str(active_task_state.get("execution_contract") or "")
+                == "legacy_renderer_v1"
+            )
+            if (
+                str(structured_action.get("type") or "") == "renderer_invocation"
+                and not legacy_renderer_mode
+            ):
+                renderer_contract_error = {
+                    "error_type": "RENDERER_ACTIVE_PATH_RETIRED",
+                    "reason": (
+                        "V2 managed execution requires Generate to return an execute action "
+                        "with canonical produced_outputs."
+                    ),
+                }
+                structured_action = {}
             if structured_action and str(structured_action.get("type") or "") not in {
                 "step_completion_candidate", "plan_patch", "blocked"
             }:
@@ -25353,7 +26399,21 @@ question. Never guess a scientific or database identity.
                     logger.warning("RootCauseAnalyzer failed; keeping raw execution evidence: %s", exc)
             execution_plan_state = load_plan_state(self.data_path, task_id)
             execution_step = self._running_plan_step(execution_plan_state) or {}
-            execution_contracts = step_artifact_contracts(execution_step)
+            produced_output_contracts = [
+                {
+                    "artifact_id": str(item.get("output_id") or ""),
+                    "output_id": str(item.get("output_id") or ""),
+                    "role": str(item.get("output_id") or ""),
+                    "path": str(item.get("path") or ""),
+                    "required": True,
+                    "source": "generate_produced_outputs",
+                }
+                for item in pending_action.get("produced_outputs", []) or []
+                if isinstance(item, Mapping)
+                and str(item.get("output_id") or "")
+                and str(item.get("path") or "")
+            ]
+            execution_contracts = produced_output_contracts or step_artifact_contracts(execution_step)
             declared_outputs = [
                 str(item.get("path") or "")
                 for item in execution_contracts
@@ -25447,6 +26507,9 @@ question. Never guess a scientific or database identity.
                 "declared_outputs": declared_outputs,
                 "observed_outputs": observed_outputs,
                 "produced_artifacts": produced_artifacts,
+                "produced_outputs": deepcopy(list(
+                    pending_action.get("produced_outputs") or []
+                )),
                 "fallback_used": command_role == "fallback" or bool(pending_action.get("fallback_used")),
                 "retry_count_recorded": bool(
                     command_role == "primary"
@@ -25760,6 +26823,31 @@ question. Never guess a scientific or database identity.
                     "Knowledge conflict resolution explicitly requires a plan revision."
                 ]
 
+            current_task_state = dict(plan_state.get("task_state") or {})
+            legacy_renderer_mode = bool(
+                current_task_state.get("legacy_renderer_mode") is True
+                or str(current_task_state.get("execution_contract") or "")
+                == "legacy_renderer_v1"
+            )
+            # In V2 the Supervisor's deterministic ValidationEvidence closes
+            # the exact Generate -> Execute artifact versions before the
+            # Completion Gate reads them.  Delaying this write until a later
+            # legacy adapter leaves valid outputs in `materialized/unknown`
+            # state and causes a false Generate retry loop.
+            if not legacy_renderer_mode and str(execution.get("attempt_id") or ""):
+                try:
+                    provenance_plan = load_plan_state(self.data_path, task_id)
+                    record_provenance_event(provenance_plan, "validation_recorded", {
+                        "attempt_id": str(execution.get("attempt_id") or ""),
+                        "validation": validation.to_dict(),
+                    })
+                    save_plan_state(self.data_path, task_id, provenance_plan)
+                    plan_state = provenance_plan
+                    update["provenance_summary"] = provenance_debug_dump(provenance_plan)["summary"]
+                    update["provenance_state_path"] = str(plan_state_path(self.data_path, task_id))
+                except ValueError as exc:
+                    logger.warning("Could not associate V2 validation provenance for %s: %s", task_id, exc)
+
             def commit_policy(
                 *,
                 evidence: Optional[Dict[str, Any]] = None,
@@ -25812,8 +26900,11 @@ question. Never guess a scientific or database identity.
                 )))
             else:
                 renderer_controlled = bool(
-                    command_role == "renderer_invocation"
-                    or str(execution.get("action_source") or "") == "manifest_runner"
+                    legacy_renderer_mode
+                    and (
+                        command_role == "renderer_invocation"
+                        or str(execution.get("action_source") or "") == "manifest_runner"
+                    )
                 )
                 renderer_incomplete = False
                 if renderer_controlled:
@@ -27460,6 +28551,17 @@ question. Never guess a scientific or database identity.
         def supervisor_router(state):
             recovery_route = committed_recovery_route(state, "supervisor")
             if recovery_route:
+                decision = recovery_decision_from_state(dict(state or {}))
+                if (
+                    recovery_route == "generate"
+                    and decision is not None
+                    and decision.kind == RecoveryDecisionKind.COMPLETE_STEP.value
+                    and state.get("final_audit_requested") is True
+                ):
+                    # COMPLETE_STEP remains the policy-owned mutation.  The
+                    # Controller only recognizes that no next step exists and
+                    # closes through the deterministic final audit.
+                    return "supervisor_final_audit"
                 if recovery_route == "finish": return END
                 if recovery_route == "planner": return "planner"
                 if recovery_route in {"generate", "supervisor", "ask_user"}:

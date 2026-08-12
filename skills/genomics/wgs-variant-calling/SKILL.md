@@ -3,6 +3,8 @@ name: wgs-variant-calling
 description: Generate and validate WGS resequencing variant calling workflows from FASTQ/BAM through GATK gVCF, GenomicsDBImport, joint genotyping, VCF merge/filtering, PLINK LD pruning/PCA, SNP counting, and optional ANNOVAR-style SNP annotation. Use for large or many-sample genomes where intervals must be planned from FASTA .fai; keep chromosomes/contigs at or below 500 Mb unsplit and split only larger sequences unless the user overrides the threshold.
 metadata:
   renderer:
+    legacy_only: true
+    execution_contract: legacy_renderer_v1
     renderer_id: genomics.gatk_wgs
     entrypoint: scripts/render_gatk_wgs_scripts.py
     runner: controller_python
@@ -10,6 +12,23 @@ metadata:
     manifest_type: renderer_artifact_contract
     schema_version: 3
     composite_step: true
+  outputs:
+    - {output_id: interval_plan, default_filename: intervals.tsv, format: tsv}
+    - {output_id: cohort_vcf, default_filename: cohort.vcf.gz, format: vcf_gz}
+    - {output_id: filtered_snp_vcf, default_filename: filtered.snp.vcf.gz, format: vcf_gz}
+    - {output_id: pca_results, default_filename: cohort.eigenvec, format: tsv}
+    - {output_id: snp_counts, default_filename: snp_counts.tsv, format: tsv}
+    - {output_id: report, default_filename: report.md, format: markdown}
+    - {output_id: reproduce_script, default_filename: reproduce.sh, format: bash}
+  generate:
+    required_bindings:
+      - {name: reference_fasta, required: true, required_for_execution: true, owner: user, user_input_required: true, aliases: [ref, fasta]}
+      - {name: sample_bam_list, required: true, required_for_execution: true, owner: user, user_input_required: true}
+    execution_guidance:
+      - Generate executable actions directly from the approved Plan; never invoke the legacy render_gatk_wgs_scripts.py Renderer in V2.
+      - Derive interval boundaries from the verified FASTA index and preserve FASTA order across calling and joint genotyping.
+      - For multi-stage work, generate one current-step action at a time and declare every approved produced output_id at its managed path.
+      - Treat ploidy, filters, containers, and annotation database identifiers as project parameters rather than taxonomy-derived defaults.
 ---
 
 # WGS Variant Calling
@@ -28,7 +47,14 @@ Aliases and trigger phrases: `gatk-wgs`, `wgs-gatk`, `resequencing-variant-calli
 - Keep comments off line-continuation lines in Bash commands; `\ # comment` breaks PLINK/GATK commands.
 - Treat all paths, containers, species labels, annotation database names, ploidy, and filtering thresholds as project parameters unless the user explicitly provides them.
 
-## Reusable Scripts
+## Generate-Owned Execution (V2)
+
+Generate is the sole V2 action/script producer. It may call the interval-plan
+utility as a normal approved operation, or emit the documented GATK commands
+directly. It must preserve the Plan's canonical output IDs and paths and must
+not invoke the legacy renderer or use its manifest as output authority.
+
+## Reusable Operations
 
 Generate interval files from a FASTA index:
 
@@ -39,7 +65,8 @@ python skills/genomics/wgs-variant-calling/scripts/make_gatk_interval_plan.py \
   --max-interval-bp 500000000
 ```
 
-Render GATK/PLINK scripts from a normalized BAM list and interval plan:
+The following Renderer invocation is retained only as a
+`legacy_renderer_v1`/maintainer reference; it is not an active V2 command:
 
 ```bash
 python skills/genomics/wgs-variant-calling/scripts/render_gatk_wgs_scripts.py \
@@ -64,7 +91,11 @@ python skills/genomics/wgs-variant-calling/scripts/render_gatk_wgs_scripts.py \
   --annovar-buildver project_reference_or_annotation_release
 ```
 
-The renderer writes `00.preflight.sh`, `step1.HaplotypeCaller.sh`, `step2.GenomicsDBImport.sh`, `step3.GenotypeGVCFs.sh`, `step4.MergeVcfs.sh`, `step5.FilterSNPs.sh`, `step6.Plink_LD_PCA.sh`, and `step7.SNP_counts.sh`.
+In explicit legacy mode the renderer writes `00.preflight.sh`,
+`step1.HaplotypeCaller.sh`, `step2.GenomicsDBImport.sh`,
+`step3.GenotypeGVCFs.sh`, `step4.MergeVcfs.sh`, `step5.FilterSNPs.sh`,
+`step6.Plink_LD_PCA.sh`, and `step7.SNP_counts.sh`. V2 Generate may use the
+underlying command sequence as reference but owns its typed action itself.
 
 ## Recommended Workflow
 
@@ -74,7 +105,7 @@ The renderer writes `00.preflight.sh`, `step1.HaplotypeCaller.sh`, `step2.Genomi
 3. Build `sample_bam.list` with two columns. Prefer:
    `sample<TAB>/abs/path/sample_mapping.sorted.markdup.bam`.
 4. Run `make_gatk_interval_plan.py` on `reference.fa.fai`.
-5. Run `render_gatk_wgs_scripts.py` and inspect the rendered commands.
+5. Have Generate emit the approved current-step action and inspect the command before Execute.
 6. Execute in order: HaplotypeCaller gVCF, GenomicsDBImport, GenotypeGVCFs, MergeVcfs, SNP filtering, PLINK LD/PCA, SNP counts, then optional annotation.
 
 ## FASTQ Mapping Template
@@ -99,7 +130,7 @@ done < sample.list
 
 ## Variant Filtering Defaults
 
-The bundled renderer uses commonly used GATK hard filters for SNPs:
+The legacy helper documents these commonly used GATK hard filters for SNPs:
 
 - `QD < 2.0`
 - `QUAL < 30.0`
@@ -140,7 +171,7 @@ Annotation database selection is project-specific:
 - If the user provides an existing ANNOVAR database, use its documented `buildver`, `dbtype`, and database directory exactly.
 - If taxonomy or annotation source is unclear, inspect filenames/metadata when available and ask for the annotation source instead of guessing.
 - Keep `refGene` only when using the `gff3ToGenePred` route. Use another `dbtype` only when the provided database requires it.
-- The renderer does not default `--annovar-buildver`. Provide `--annovar-buildver` during rendering, or set `ANNOVAR_BUILDVER` before running `step8.ANNOVAR_annotation.sh`. If neither is known, stop and ask the user.
+- The legacy helper does not default `--annovar-buildver`. In V2, use an already resolved project-specific `ANNOVAR_BUILDVER` in the Generate-owned action. If it is a genuinely missing user-owned required fact, route through Consultant; do not guess it.
 
 Minimum command pattern for a custom GFF3/FASTA-derived database:
 

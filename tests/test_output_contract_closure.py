@@ -156,6 +156,7 @@ class OutputContractClosureTests(unittest.TestCase):
 
     def _normalize_fixture(self, renderer=None, outputs=None):
         state = build_plan_state(self.fixture_task_id, self.fixture_markdown)
+        state.setdefault("task_state", {})["execution_contract"] = "legacy_renderer_v1"
         state["task_spec"] = copy.deepcopy(self.fixture_spec)
         state["selected_skill_ids"] = list(self.fixture_selected_skills)
         normalized, audit, violations = normalize_plan_contracts(
@@ -198,6 +199,7 @@ class OutputContractClosureTests(unittest.TestCase):
 """,
         )
         state["task_spec"] = spec_value
+        state.setdefault("task_state", {})["execution_contract"] = "legacy_renderer_v1"
         state["selected_skill_ids"] = ["genomics/snpeff-annotation"]
         outputs = effective_output_contracts(spec_value)
         normalized, _audit, violations = normalize_plan_contracts(
@@ -218,10 +220,16 @@ class OutputContractClosureTests(unittest.TestCase):
         self.assertFalse(normalized["steps"][0]["bound_outputs"])
         self.assertTrue(violations)
         self.assertTrue(
-            all(
+            any(
                 item.get("violation_code") == "RENDERER_OUTPUT_BINDING_UNRESOLVED"
                 for item in violations
             )
+        )
+        self.assertTrue(
+            all(item.get("violation_code") in {
+                "RENDERER_OUTPUT_BINDING_UNRESOLVED",
+                "REQUIRED_OUTPUT_UNCOVERED",
+            } for item in violations)
         )
 
     def test_binding_fills_step_outputs_and_exact_renderer_argument(self):
@@ -245,7 +253,7 @@ class OutputContractClosureTests(unittest.TestCase):
             if item["required_output"] == "annotated.vcf"
         )
         output_dir = next(
-            item["path"] for item in self.fixture_outputs
+            item["canonical_path"] for item in self.fixture_outputs
             if item.get("role") == "output_dir"
         )
         self.assertEqual(
@@ -287,10 +295,9 @@ class OutputContractClosureTests(unittest.TestCase):
             item for item in violations
             if item.get("path_or_name") == "annotated.vcf"
         ]
-        self.assertEqual(len(annotated), 1)
         self.assertEqual(
-            annotated[0]["violation_code"],
-            "RENDERER_OUTPUT_BINDING_UNRESOLVED",
+            {item["violation_code"] for item in annotated},
+            {"RENDERER_OUTPUT_BINDING_UNRESOLVED", "REQUIRED_OUTPUT_UNCOVERED"},
         )
 
     def test_real_session_planner_fixture_replays_without_output_repair(self):
@@ -353,7 +360,10 @@ class OutputContractClosureTests(unittest.TestCase):
         self.assertFalse(plan_approval_is_current(mutated, 1))
 
     def test_execution_card_exposes_capability_and_binding_not_materialized_truth(self):
-        card = self.manager.get_execution_cards(["genomics/snpeff-annotation"])
+        card = self.manager.get_execution_cards(
+            ["genomics/snpeff-annotation"],
+            legacy_renderer_mode=True,
+        )
 
         self.assertIn("renderer_owned_output_capabilities", card)
         self.assertIn("renderer_output_binding_contract", card)

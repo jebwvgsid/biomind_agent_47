@@ -14,6 +14,7 @@ from agent_core.context_budget import (
     compress_tagged_text,
 )
 from agent_core.diagnostics import DiagnosticContext
+from agent_core.plan_contract import validated_planner_candidate_wire_example
 
 logger = logging.getLogger("BioMind.PromptManager")
 
@@ -1539,8 +1540,16 @@ Return exactly one JSON object:
       "risk_level": "low|medium|high"
     }}}}
   ],
+  "task_output_materializations": [
+    {{"output_ref": "output.semantic_handle", "path": "relative-name.ext"}}
+  ],
   "reason": "brief repair reason"
 }}
+
+Include `task_output_materializations` only when an actionable violation targets
+that table. It replaces the complete table, so preserve every valid existing
+row. Each path must be safe and relative to the typed TaskSpec output_dir. A
+materialization-only repair may return an empty `replace_steps` list.
 
 <plan_repair_request>
 {payload}
@@ -1556,6 +1565,11 @@ Return exactly one JSON object:
     ) -> str:
         """Planner policy over one non-authoritative semantic LLMPayload."""
         payload = json.dumps(llm_payload, ensure_ascii=False, sort_keys=True, indent=2, default=str)
+        candidate_example = json.dumps(
+            validated_planner_candidate_wire_example(),
+            ensure_ascii=False,
+            indent=2,
+        )
         return f"""You are the BioMind Planner.
 
 The JSON under <llm_payload> is a non-authoritative semantic view produced by
@@ -1563,37 +1577,43 @@ the Controller. Plan only from its facts and semantic handles. Do not invent,
 weaken, or rewrite Task semantics. Do not return controller identity,
 concurrency metadata, storage references, approval metadata, or fingerprints.
 If required task meaning is genuinely incomplete, return exactly
-{{"error":"TASK_SEMANTICS_INCOMPLETE","missing_handles":[],"question":"..."}}.
-
-Return exactly one JSON object and no Markdown or prose:
 {{
-  "steps": [
-    {{
-      "step_id": "step-1",
-      "title": "short semantic title",
-      "action": "search|execute|install|ask_user|finish",
-      "purpose": "analysis|validation|probe|record_failure|install|user_input",
-      "tool": "declared capability",
-      "inputs": ["input.semantic_handle"],
-      "outputs": ["output.semantic_handle"],
-      "dependencies": [],
-      "success_criteria": ["deterministic criterion"],
-      "skill_ids": [],
-      "workflow_stage_ids": [],
-      "batch_id": "",
-      "risk_level": "low|medium|high",
-      "semantic_constraint_ids": ["constraint.semantic_handle"]
-    }}
-  ],
-  "semantic_claims": [],
-  "validation_checklist": [
-    {{"check_id":"check-1","description":"controller-verifiable check"}}
-  ],
-  "execution_notes": []
-}}
+  "outcome_type":"TASKSPEC_RECONCILIATION_REQUIRED",
+  "missing_semantic_facts":[{{
+    "fact_key":"registered semantic fact key",
+    "reason":"why reproducible planning requires it",
+    "affected_operation_id":"registered operation ID",
+    "relevant_confirmed_decision_ids":[],
+    "durable_evidence_may_resolve":true
+  }}]
+}}.
 
-Use artifact and constraint handles exactly as shown. Required managed outputs
-must be referenced by handle; never copy or redefine their paths.
+Return exactly one JSON object and no Markdown or prose. The following object
+is generated from the same wire-contract definition used by the strict Plan
+reader; adapt its semantic content, steps, and references to this task:
+{candidate_example}
+
+Use artifact and constraint handles exactly as shown in <llm_payload>. Do not
+copy illustrative values from the example when they are not part of this task.
+Required managed outputs must be referenced by handle; never copy or redefine
+their TaskSpec paths. When a required file output has `path_policy` equal to
+`planner_materialized`, keep the same handle in `step.outputs` and add exactly
+one top-level `task_output_materializations` row such as
+{{"output_ref":"output.report","path":"report.md"}}. That path must be safe
+and relative to the typed output_dir. It chooses only the execution filename;
+it does not create a second output identity.
+`inputs` means consume and `outputs` means produce. Handle spelling never
+defines usage. Keep top-level `semantic_claims` empty; reference only canonical
+TaskSpec constraint handles through each step's `semantic_constraint_ids`.
+Omit the example plan-local declaration when no intermediate is needed.
+Otherwise declare each plan-local artifact in `proposed_artifacts`
+with the complete object-shaped `semantic_view` and `artifact_contract`, then
+refer to that exact `local_ref` in step fields. Registered V1 contracts require
+`object_kind` to be `file` or `directory`, `lifecycle` to be `plan_local`, and
+`materialization_policy_id` to be `managed_intermediate_v1`. Never return candidate_scope_id,
+logical/canonical artifact IDs, authoritative paths, revisions, hashes, object
+refs, CAS, or reservation fields. The sole path exception is the safe relative
+`task_output_materializations[].path` defined above.
 
 <llm_payload>
 {payload}
@@ -1661,7 +1681,8 @@ Mutation shapes use Controller vocabulary:
 - remove_input: {{"operation":"remove_input","role":"reference_fasta","supporting_evidence":["U2"]}}
 - upsert_constraint: {{"operation":"upsert_constraint","constraint":{{"semantic_key":"failure_policy.database_build","category":"failure_policy","operator":"require","value":"Block if database build fails","strength":"hard"}},"supporting_evidence":["U1"]}}
 - remove_constraint: {{"operation":"remove_constraint","semantic_key":"...","supporting_evidence":["U2"]}}
-- upsert_output_contract: {{"operation":"upsert_output_contract","output_contract":{{"role":"annotated_vcf","required":true}},"supporting_evidence":["U1"]}}
+- upsert_output_contract (directory): {{"operation":"upsert_output_contract","output_contract":{{"output_id":"output_dir","role":"output_dir","artifact_kind":"directory","path":"/data/result","required":true}},"supporting_evidence":["U1"]}}
+- upsert_output_contract (file with Planner-owned filename): {{"operation":"upsert_output_contract","output_contract":{{"output_id":"report","role":"report","artifact_kind":"file","root_ref":"output_dir","path_policy":"planner_materialized","required":true}},"supporting_evidence":["U1"]}}
 - remove_output_contract: {{"operation":"remove_output_contract","role":"report","supporting_evidence":["U2"]}}
 - confirm_decision/remove_decision/mark_ambiguity follow the same typed nested-object pattern.
 
@@ -1684,6 +1705,12 @@ Select at most {int(max_skills)} capabilities. Do not guess scientific database,
 species, assembly, annotation identity, or missing input roles. FINISH may include
 valid partial progress; the Controller applies mutations, selected skills and
 Controller-owned bindings before it evaluates completion.
+If the user supplied an output directory, represent it as the typed directory
+binding above, not only as a requirement. A pathless required deliverable remains
+`artifact_kind=file`; when output_dir is known, give it `root_ref=output_dir` and
+`path_policy=planner_materialized` rather than asking the user to choose a filename.
+Preserve an exact user-specified filename/path verbatim. Use one stable `output_id`
+for each deliverable and never mint Renderer-specific aliases.
 
 <capability_contract>
 {capability_context or "No capability catalog is available."}
@@ -1751,8 +1778,16 @@ Return exactly one JSON object:
       }}
     }}
   ],
+  "task_output_materializations": [
+    {{"output_ref": "output.semantic_handle", "path": "relative-name.ext"}}
+  ],
   "reason": "brief repair reason"
 }}
+
+Include `task_output_materializations` only when an actionable violation targets
+that table. It replaces the complete table, so preserve every valid existing
+row. Each path must be safe and relative to the typed TaskSpec output_dir. A
+materialization-only repair may return an empty `replace_steps` list.
 
 <llm_payload>
 {payload}
@@ -1788,12 +1823,20 @@ embed a placeholder inside shell text.
   "argv": ["tool", "{{input:role}}", "-o", "{{output:role}}"],
   "env": {{}},
   "outputs": ["output.semantic_handle"],
+  "produced_outputs": [
+    {{"output_id":"canonical_output_id","path":"{{output:role}}"}}
+  ],
   "expected_evidence": ["artifact.output.semantic_handle"]
 }}
 
+For every approved current-step task output, `produced_outputs` must contain the
+same canonical output_id and its complete managed placeholder. Do not rename,
+drop, or change an approved output path. Generate is the sole V2 producer of the
+executable action; do not request or invoke a Renderer protocol or manifest.
+
 If a command is not appropriate, return one supported semantic action object
 for ask_user, search, install_tool, step_completion_candidate, plan_patch,
-blocked, renderer_invocation, or solution. Do not wrap the JSON in Markdown.
+blocked, or solution. Do not wrap the JSON in Markdown.
 
 <llm_payload>
 {payload}

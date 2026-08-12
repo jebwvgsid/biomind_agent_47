@@ -14,7 +14,7 @@ from agent_core.completion_gate import (
 from agent_core.plan_tracker import (
     apply_artifact_reconciliation,
     build_plan_state,
-    ensure_plan_state,
+    ensure_plan_state as _ensure_plan_state,
     load_plan_state,
     mark_first_pending_running,
     mark_plan_step_done,
@@ -22,6 +22,15 @@ from agent_core.plan_tracker import (
     register_renderer_manifest,
     save_plan_state,
 )
+
+
+def ensure_plan_state(*args, **kwargs):
+    """Build an explicit pre-V2 fixture for the legacy completion tests below."""
+    state = _ensure_plan_state(*args, **kwargs)
+    compatibility = dict(state.get("compatibility") or {})
+    compatibility["source_schema_version"] = 7
+    state["compatibility"] = compatibility
+    return state
 
 
 class CompletionGateTests(unittest.TestCase):
@@ -89,6 +98,7 @@ class CompletionGateTests(unittest.TestCase):
                 "- [>] Step 1: Run renderer workflow | Action: EXECUTE | Skills: [test/renderer] "
                 "| Done: all manifest actions complete",
             )
+            state.setdefault("task_state", {})["execution_contract"] = "legacy_renderer_v1"
             register_renderer_manifest(
                 state,
                 "step-1",
@@ -196,6 +206,7 @@ class CompletionGateTests(unittest.TestCase):
             "task_contract",
             plan_text="- [ ] Step 1: Render database build script | Action: EXECUTE | Done: build_db.sh exists\n",
         )
+        state.setdefault("task_state", {})["execution_contract"] = "legacy_renderer_v1"
         mark_first_pending_running(state, "started")
         execution = root / "task_outputs" / "task_contract" / "step_1.sh"
         execution.parent.mkdir(parents=True, exist_ok=True)

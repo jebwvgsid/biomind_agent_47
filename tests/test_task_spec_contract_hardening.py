@@ -4,6 +4,7 @@ from pathlib import Path
 
 from agent_core.plan_tracker import build_plan_state, save_plan_state
 from agent_core.task_spec import (
+    artifact_locator,
     classify_path_mentions,
     create_task_spec,
     ensure_task_spec,
@@ -19,7 +20,7 @@ class TaskSpecContractHardeningTests(unittest.TestCase):
         contracts = extract_request_contracts("交付文件包括 annotated.vcf、report.md 和 reproduce.sh。")
 
         self.assertEqual(
-            [item["filename"] for item in contracts["output_contracts"]],
+            [item["required_basename"] for item in contracts["output_contracts"]],
             ["annotated.vcf", "report.md", "reproduce.sh"],
         )
 
@@ -39,7 +40,7 @@ class TaskSpecContractHardeningTests(unittest.TestCase):
         mentions = classify_path_mentions(request)
 
         self.assertEqual(
-            [Path(item["path"]).name for item in contracts["inputs"]],
+            [Path(artifact_locator(item)).name for item in contracts["inputs"]],
             ["all.filtered.snp.vcf", "genome.fasta", "genome.gtf"],
         )
         classes = {item["requested_path"]: item["classification"] for item in mentions}
@@ -50,12 +51,11 @@ class TaskSpecContractHardeningTests(unittest.TestCase):
         self.assertEqual(classes["benchmarks/output/strict"], "output")
 
         spec = create_task_spec(request)
-        forbidden = [
-            item for item in spec["artifact_bindings"]
-            if item.get("classification") == "forbidden"
-        ]
-        self.assertEqual(len(forbidden), 1)
-        self.assertTrue(all(not item["required"] and item["status"] == "withdrawn" for item in forbidden))
+        self.assertNotIn(
+            "tests/demo_ref.fa",
+            {artifact_locator(item) for item in spec["inputs"]},
+        )
+        self.assertNotIn("artifact_bindings", spec)
 
     def test_chinese_slash_prose_is_not_classified_as_a_path(self):
         mentions = classify_path_mentions(
@@ -87,7 +87,11 @@ class TaskSpecContractHardeningTests(unittest.TestCase):
             },
         )
 
-        outputs = {item["filename"]: item for item in spec["output_contracts"] if item.get("filename")}
+        outputs = {
+            item["required_basename"]: item
+            for item in spec["output_contracts"]
+            if item.get("required_basename")
+        }
         gene = outputs["ann_gene_summary.tsv"]
         self.assertTrue(gene["required"])
         self.assertEqual(gene["source_type"], "benchmark_contract")
@@ -99,7 +103,10 @@ class TaskSpecContractHardeningTests(unittest.TestCase):
 
     def test_manual_expected_output_remains_user_explicit(self):
         spec = create_task_spec("预期产物：\n- ann_gene_summary.tsv")
-        output = next(item for item in spec["output_contracts"] if item.get("filename") == "ann_gene_summary.tsv")
+        output = next(
+            item for item in spec["output_contracts"]
+            if item.get("required_basename") == "ann_gene_summary.tsv"
+        )
 
         self.assertEqual(output["source_type"], "user_explicit")
 
@@ -118,8 +125,8 @@ class TaskSpecContractHardeningTests(unittest.TestCase):
             }, project_root=root)
 
         self.assertEqual(len(spec["inputs"]), 1)
-        self.assertEqual(spec["inputs"][0]["path"], str(formal))
-        self.assertEqual(spec["input_alias_audit"][0]["status"], "INPUT_ALIAS_RESOLVED")
+        self.assertEqual(spec["inputs"][0]["canonical_path"], str(formal))
+        self.assertNotIn("input_alias_audit", spec)
 
     def test_effective_context_budget_includes_headers_and_source_refs(self):
         spec = create_task_spec(

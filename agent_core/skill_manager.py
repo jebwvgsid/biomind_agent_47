@@ -69,6 +69,7 @@ class SkillManager:
                         for key in (
                             "version", "tags", "legacy_ids", "runtime",
                             "renderer",
+                            "generate",
                             "task_types", "stage_tags", "inputs", "outputs",
                             "when_to_use", "when_not_to_use", "skill_type",
                         ):
@@ -1241,7 +1242,12 @@ class SkillManager:
             return record["env"]
         return ""
 
-    def get_execution_cards(self, skill_ids: List[str]) -> str:
+    def get_execution_cards(
+        self,
+        skill_ids: List[str],
+        *,
+        legacy_renderer_mode: bool = False,
+    ) -> str:
         """Concise, high-priority execution facts for Planner/Generator."""
         cards = []
         for sid in skill_ids:
@@ -1256,8 +1262,24 @@ class SkillManager:
             renderer = self.get_renderer_record(sid)
             cards.append(f"### Skill Execution Card: {sid}")
             cards.append(f"- absolute_dir: {skill_dir}")
-            if renderer.get("status") == "declared":
+            cards.append("- action_mode: managed_generate")
+            output_capabilities = [
+                dict(item) for item in meta.get("outputs", []) or []
+                if isinstance(item, Mapping)
+            ]
+            if output_capabilities:
+                cards.append(
+                    "- canonical_output_capabilities: "
+                    + json.dumps(output_capabilities, ensure_ascii=False, sort_keys=True)
+                )
+            generate = meta.get("generate") if isinstance(meta.get("generate"), Mapping) else {}
+            guidance = [str(item) for item in generate.get("execution_guidance", []) or [] if str(item)]
+            if guidance:
+                cards.append("- generate_execution_guidance:")
+                cards.extend(f"  - {item}" for item in guidance)
+            if legacy_renderer_mode and renderer.get("status") == "declared":
                 cards.extend([
+                    "- execution_contract: legacy_renderer_v1",
                     f"- renderer_id: {renderer.get('renderer_id')}",
                     f"- renderer_entrypoint: {renderer.get('resolved_entrypoint')}",
                     f"- renderer_runner: {renderer.get('runner')}",
@@ -1370,7 +1392,10 @@ class SkillManager:
             if self._is_environment_bootstrap_skill(sid, runtime, meta):
                 cards.append("- install_strategy: verify first; if verification fails, delegate installation via <install_tool>; then re-verify")
                 cards.append("- planner_restriction: do not inline conda/pip/R package installation commands in the plan for this skill")
+            legacy_renderer_entrypoint = str(renderer.get("entrypoint") or "")
             for script in scripts:
+                if not legacy_renderer_mode and str(script) == legacy_renderer_entrypoint:
+                    continue
                 script_path = skill_dir / script
                 cards.append(f"- script: {script_path}")
                 if script_path.suffix.lower() == ".py":
@@ -1422,7 +1447,10 @@ class SkillManager:
             requirements = self.get_runtime_requirements(sid)
             skill_dir = Path(meta.get("_skill_dir") or (self.skills_root / sid)).resolve()
             operations: List[Dict[str, Any]] = []
+            legacy_renderer_entrypoint = str(renderer.get("entrypoint") or "")
             for operation_index, relative in enumerate(meta.get("_scripts", []) or [], start=1):
+                if str(relative) == legacy_renderer_entrypoint:
+                    continue
                 path = (skill_dir / str(relative)).resolve()
                 if not path.is_file():
                     continue
@@ -1447,12 +1475,14 @@ class SkillManager:
                 "purpose": str(meta.get("description") or meta.get("summary") or "").strip(),
                 "task_types": self.metadata_list(meta, "task_types"),
                 "stage_tags": self.metadata_list(meta, "stage_tags"),
-                "action_mode": (
-                    "controller_renderer"
-                    if renderer.get("status") == "declared"
-                    else "managed_operation"
-                ),
+                "action_mode": "managed_generate",
                 "operations": operations,
+                "output_capabilities": deepcopy(list(meta.get("outputs") or [])),
+                "execution_guidance": deepcopy(
+                    list((meta.get("generate") or {}).get("execution_guidance") or [])
+                    if isinstance(meta.get("generate"), Mapping)
+                    else []
+                ),
                 "runtime": {
                     key: deepcopy(value)
                     for key, value in requirements.items()
@@ -1460,61 +1490,15 @@ class SkillManager:
                     and value not in (None, "", [], {})
                 },
             }
-            if renderer.get("status") == "declared":
-                invocation = dict(renderer.get("invocation") or {})
-                arguments = invocation.get("arguments") or {}
-                binding_rules = dict(invocation.get("binding_rules") or {})
-                runtime_only = {
-                    str(value) for value in invocation.get("runtime_only_arguments", []) or []
-                }
-                controller_owned = {
-                    str(value) for value in invocation.get("controller_owned_arguments", []) or []
-                }
-
-                def argument_projection(name: str, spec: Mapping[str, Any]) -> Dict[str, Any]:
-                    rule = binding_rules.get(name)
-                    rule = dict(rule) if isinstance(rule, Mapping) else {}
-                    sources = rule.get("sources") or []
-                    if isinstance(sources, Mapping):
-                        sources = [sources]
-                    sources = [dict(item) for item in sources if isinstance(item, Mapping)]
-                    source_kinds = [str(item.get("kind") or "") for item in sources]
-                    required = bool(spec.get("required"))
-                    declared_owner = str(rule.get("owner") or "").strip().lower()
-                    if name in runtime_only:
-                        owner = "runtime"
-                        resolution = "runtime_discovery"
-                    elif name in controller_owned or "stable_task_identifier" in source_kinds:
-                        owner = "controller"
-                        resolution = (
-                            "stable_task_identifier"
-                            if "stable_task_identifier" in source_kinds
-                            else "controller_binding"
-                        )
-                    elif declared_owner == "runtime":
-                        owner = "runtime"
-                        resolution = "runtime_discovery"
-                    elif declared_owner == "controller":
-                        owner = "controller"
-                        resolution = source_kinds[0] if source_kinds else "controller_binding"
-                    else:
-                        owner = "user"
-                        resolution = source_kinds[0] if source_kinds else "task_semantics"
-                    return {
-                        "name": str(name),
-                        "required": required,
-                        "required_for_execution": required,
-                        "owner": owner,
-                        "user_input_required": bool(required and owner == "user"),
-                        "resolution": resolution,
-                        "aliases": [str(value) for value in spec.get("aliases") or []],
-                    }
-
-                row["renderer_arguments"] = [
-                    argument_projection(str(name), spec)
-                    for name, spec in arguments.items()
-                    if isinstance(spec, Mapping)
-                ]
+            required_bindings = (
+                list((meta.get("generate") or {}).get("required_bindings") or [])
+                if isinstance(meta.get("generate"), Mapping)
+                else []
+            )
+            row["required_bindings"] = [
+                deepcopy(dict(item)) for item in required_bindings
+                if isinstance(item, Mapping) and str(item.get("name") or "")
+            ]
             capabilities.append(row)
         return capabilities, operation_bindings
 

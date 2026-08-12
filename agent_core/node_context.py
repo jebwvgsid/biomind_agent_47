@@ -23,6 +23,7 @@ from agent_core.task_spec import (
     task_record_hash,
     task_semantic_hash,
 )
+from agent_core.plan_contract import new_candidate_scope_id
 
 NODE_CONTEXT_SCHEMA_VERSION = 2
 
@@ -282,6 +283,7 @@ class ControllerBinding:
     violation_set_identity: str = ""
     action_identity: str = ""
     evidence_identity: str = ""
+    candidate_scope_id: str = ""
     touched_entity_versions: Mapping[str, str] = field(default_factory=dict)
     semantic_handle_map: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
     created_at_monotonic: float = field(default_factory=time.monotonic)
@@ -305,6 +307,7 @@ class ControllerBinding:
             "violation_set_identity": self.violation_set_identity,
             "action_identity": self.action_identity,
             "evidence_identity": self.evidence_identity,
+            "candidate_scope_id": self.candidate_scope_id,
             "touched_entity_versions": dict(self.touched_entity_versions),
             "semantic_handle_map": deepcopy(dict(self.semantic_handle_map)),
         }
@@ -758,12 +761,16 @@ def _select_current_step_closure(
     dependency_contracts: List[Dict[str, Any]] = []
     for index in dependency_indexes:
         dependency = deepcopy(dict(step_rows[index]))
-        dependency_artifacts = _visible_handles(dependency, known_artifact_handles)
-        # Only dependency outputs can satisfy the current step.  Inputs of the
-        # dependency are not part of the Generate/Recovery action closure.
-        dependency_outputs = {
-            value for value in dependency_artifacts if value.startswith("output.")
-        }
+        # Only explicitly declared dependency outputs can satisfy the current
+        # step. Handle spelling is identity-only and never supplies usage.
+        dependency_outputs: set[str] = set()
+        for field_name in (
+            "outputs", "output_refs", "output_artifacts",
+            "output_artifact_handles", "bound_outputs",
+        ):
+            dependency_outputs.update(
+                _visible_handles(dependency.get(field_name, []), known_artifact_handles)
+            )
         referenced_artifacts.update(dependency_outputs)
         referenced_constraints.update(
             _visible_handles(dependency, known_constraint_handles)
@@ -916,6 +923,7 @@ def build_node_context(
     trace_enabled: bool = False,
     max_payload_chars: Optional[int] = None,
     invocation_id: str = "",
+    candidate_scope_id: str = "",
 ) -> NodeContext:
     """Build the three-object invocation protocol from authoritative state.
 
@@ -1040,6 +1048,11 @@ def build_node_context(
         ),
         action_identity=str(action_identity or ""),
         evidence_identity=str(evidence_identity or ""),
+        candidate_scope_id=(
+            str(candidate_scope_id or new_candidate_scope_id())
+            if normalized_node in {"planner", "planner_repair"}
+            else ""
+        ),
         touched_entity_versions=dict(touched_entity_versions or {}),
         semantic_handle_map=handles.to_dict(),
     )
@@ -1085,7 +1098,7 @@ class StalenessDecision:
 
 _NODE_RELEVANT_PRECONDITIONS = {
     "consultant": ("task_semantic_hash", "touched_entity_versions"),
-    "planner": ("task_semantic_hash",),
+    "planner": ("task_semantic_hash", "plan_semantic_hash"),
     "planner_repair": (
         "task_semantic_hash", "plan_semantic_hash", "violation_set_identity",
     ),
@@ -1332,7 +1345,8 @@ def resolve_plan_proposal_handles(
         if isinstance(item, Mapping)
     )
 
-    def resolve_list(raw: Any, *, object_type: str = "", direction: str = "") -> Any:
+    def resolve_list(raw: Any, *, object_type: str = "") -> Any:
+        """Resolve identity only; the containing Plan field owns step usage."""
         if not isinstance(raw, list):
             return raw
         resolved: List[Any] = []
@@ -1342,7 +1356,6 @@ def resolve_plan_proposal_handles(
                 resolved.append(handle_map.resolve(
                     text,
                     object_type=object_type,
-                    direction=direction,
                 ).stable_identity)
             else:
                 resolved.append(deepcopy(item))
@@ -1357,11 +1370,23 @@ def resolve_plan_proposal_handles(
                 step.get("semantic_constraint_ids"), object_type="constraint",
             )
             step["inputs"] = resolve_list(
-                step.get("inputs"), object_type="artifact", direction="input",
+                step.get("inputs"), object_type="artifact",
             )
             step["outputs"] = resolve_list(
-                step.get("outputs"), object_type="artifact", direction="output",
+                step.get("outputs"), object_type="artifact",
             )
+    materializations = proposal.get("task_output_materializations")
+    if isinstance(materializations, list):
+        for row in materializations:
+            if not isinstance(row, MutableMapping):
+                continue
+            output_ref = str(row.get("output_ref") or "")
+            if output_ref in handle_map:
+                row["output_ref"] = handle_map.resolve(
+                    output_ref,
+                    object_type="artifact",
+                    direction="output",
+                ).stable_identity
     replacements = proposal.get("replace_steps")
     if isinstance(replacements, list):
         for replacement in replacements:
@@ -1379,10 +1404,10 @@ def resolve_plan_proposal_handles(
                     new_step.get("semantic_constraint_ids"), object_type="constraint",
                 )
                 new_step["inputs"] = resolve_list(
-                    new_step.get("inputs"), object_type="artifact", direction="input",
+                    new_step.get("inputs"), object_type="artifact",
                 )
                 new_step["outputs"] = resolve_list(
-                    new_step.get("outputs"), object_type="artifact", direction="output",
+                    new_step.get("outputs"), object_type="artifact",
                 )
     return proposal
 

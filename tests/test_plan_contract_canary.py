@@ -1,4 +1,5 @@
 import copy
+import json
 import unittest
 
 from agent_core.plan_tracker import (
@@ -15,7 +16,9 @@ from agent_core.skill_manager import SkillManager
 from agent_core.task_spec import (
     create_task_spec,
     effective_output_contracts,
+    ensure_task_spec,
     merge_compiled_constraints,
+    semantic_constraints_from_task_spec,
     validate_compiled_constraints,
 )
 
@@ -40,16 +43,91 @@ class PlanContractCanaryTests(unittest.TestCase):
             compiled["constraints"],
             metrics=compiled["metrics"],
         )
+        self.task_spec["output_contracts"] = [
+            {
+                "output_id": "output_dir",
+                "role": "output_dir",
+                "artifact_kind": "directory",
+                "path": "/tmp/snpeff-canary",
+                "required": True,
+            },
+            *[
+                {
+                    "output_id": output_id,
+                    "role": output_id,
+                    "artifact_kind": "file",
+                    "path": f"/tmp/snpeff-canary/{filename}",
+                    "required": True,
+                }
+                for output_id, filename in (
+                    ("annotated_vcf", "annotated.vcf"),
+                    ("ann_summary", "ann_gene_summary.tsv"),
+                    ("report", "report.md"),
+                    ("reproduce_script", "reproduce.sh"),
+                )
+            ],
+        ]
+        self.task_spec = ensure_task_spec(self.task_spec)
         self.renderer = SkillManager("skills").get_renderer_record("genomics/snpeff-annotation")
         self.outputs = effective_output_contracts(self.task_spec)
+
+    def _candidate(self, outputs, *, first_action="execute"):
+        constraint_ids = [
+            str(item.get("constraint_id") or "")
+            for item in semantic_constraints_from_task_spec(self.task_spec)
+            if str(item.get("constraint_id") or "")
+        ]
+        return {
+            "steps": [
+                {
+                    "step_id": "step-1",
+                    "title": "Validate inputs",
+                    "action": first_action,
+                    "purpose": "validation",
+                    "tool": "managed-shell",
+                    "inputs": [],
+                    "outputs": [],
+                    "dependencies": [],
+                    "success_criteria": ["inputs exist and are non-empty"],
+                    "skill_ids": [],
+                    "workflow_stage_ids": [],
+                    "batch_id": "",
+                    "risk_level": "low",
+                    "semantic_constraint_ids": [],
+                },
+                {
+                    "step_id": "step-2",
+                    "title": "Run annotation and produce required artifacts",
+                    "action": "execute",
+                    "purpose": "analysis",
+                    "tool": "snpEff",
+                    "inputs": [],
+                    "outputs": list(outputs),
+                    "dependencies": ["step-1"],
+                    "success_criteria": ["all declared outputs exist and are non-empty"],
+                    "skill_ids": ["genomics/snpeff-annotation"],
+                    "workflow_stage_ids": [],
+                    "batch_id": "",
+                    "risk_level": "low",
+                    "semantic_constraint_ids": constraint_ids,
+                },
+            ],
+            "semantic_claims": [],
+            "validation_checklist": [{
+                "check_id": "required-outputs",
+                "description": "validate all required task outputs",
+            }],
+            "metadata": {
+                "schema_version": 1,
+                "planner_contract": "structured_plan_v1",
+            },
+        }
 
     def test_canary_a_to_e_contract_lifecycle(self):
         first = build_plan_state(
             self.TASK_ID,
-            "- [ ] Step 1: Validate inputs | Action: SEARCH | Purpose: validation | Skills: [] "
-            "| Done: input files exist and are non-empty\n"
-            "- [ ] Step 2: Run annotation | Action: EXECUTE | Skills: [genomics/snpeff-annotation] "
-            "| Outputs: [annotated.vcf] | Done: annotated.vcf exists\n",
+            json.dumps(self._candidate(["annotated_vcf"], first_action="search")),
+            strict=True,
         )
         first["task_spec"] = self.task_spec
         first["selected_skill_ids"] = ["genomics/snpeff-annotation"]
@@ -60,16 +138,17 @@ class PlanContractCanaryTests(unittest.TestCase):
             task_spec=self.task_spec,
         )
         self.assertTrue(any(item.get("violation_code") == "INVALID_ACTION_FOR_STEP_PURPOSE" for item in first_violations))
-        self.assertFalse(any(item.get("violation_code") == "REQUIRED_OUTPUT_UNCOVERED" for item in first_violations))
+        self.assertTrue(any(item.get("violation_code") == "REQUIRED_OUTPUT_UNCOVERED" for item in first_violations))
 
         repaired = build_plan_state(
             self.TASK_ID,
-            "- [ ] Step 1: Validate inputs | Action: EXECUTE | Purpose: validation | Skills: [] "
-            "| Done: input files exist and are non-empty\n"
-            "- [ ] Step 2: Run renderer-backed annotation | Action: EXECUTE | Purpose: analysis "
-            "| Skills: [genomics/snpeff-annotation] "
-            "| Outputs: [annotated.vcf, ann_gene_summary.tsv, report.md, reproduce.sh] "
-            "| Done: all required outputs exist and are non-empty\n",
+            json.dumps(self._candidate([
+                "annotated_vcf",
+                "ann_summary",
+                "report",
+                "reproduce_script",
+            ])),
+            strict=True,
         )
         repaired["task_spec"] = self.task_spec
         repaired["selected_skill_ids"] = ["genomics/snpeff-annotation"]
@@ -80,8 +159,10 @@ class PlanContractCanaryTests(unittest.TestCase):
             task_spec=self.task_spec,
         )
         self.assertFalse(repaired_violations)
-        renderer_step = next(step for step in repaired["steps"] if step.get("renderer_invocation_contract"))
-        self.assertTrue(renderer_step["renderer_invocation_contract"]["invocation_id"])
+        self.assertFalse(any(
+            step.get("renderer_invocation_contract") or step.get("renderer_composite")
+            for step in repaired["steps"]
+        ))
 
         projection = build_approval_projection(repaired)
         approve_plan_state(repaired, 1, approval_projection=projection)
@@ -90,7 +171,7 @@ class PlanContractCanaryTests(unittest.TestCase):
         self.assertEqual(current_plan_step_with_index(repaired)[1]["step_id"], "step-1")
 
         mutated = copy.deepcopy(repaired)
-        mutated["steps"][1]["outputs"].append("undeclared.txt")
+        mutated["steps"][1]["outputs"].append("undeclared_output")
         self.assertFalse(plan_approval_is_current(mutated, 1))
 
         scope = build_approval_scope(repaired)

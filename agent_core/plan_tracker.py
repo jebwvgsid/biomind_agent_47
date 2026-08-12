@@ -35,6 +35,19 @@ from agent_core.task_spec import (
     validate_compiled_constraints,
 )
 from agent_core.state_contract_store import StateContractStore
+from agent_core.plan_contract import (
+    MINIMUM_PLAN_READER_VERSION,
+    PLAN_CONTRACT_VERSION,
+    PermanentInfrastructureError,
+    ReaderCompatibilityError,
+    StateCASConflict,
+    TransientInfrastructureError,
+    assert_reader_compatible,
+    promote_allocation_intent,
+    rewrite_candidate_local_refs,
+    structured_plan_candidate_diagnostics,
+    typed_task_plan_traceability,
+)
 
 PlanState = Dict[str, Any]
 PlanStep = Dict[str, Any]
@@ -167,8 +180,28 @@ def _current_task_spec(state: Mapping[str, Any] | None) -> Dict[str, Any]:
         value = raw.get("task_spec")
     return dict(value) if isinstance(value, Mapping) else {}
 
-PLAN_SCHEMA_VERSION = 8
-PLAN_MIGRATION_VERSION = 8
+
+def _normalize_in_memory_task_record(state: PlanState) -> None:
+    """Complete builder/API records; never heal an explicit persisted mismatch."""
+    current = state.get("current_task")
+    if not isinstance(current, Mapping):
+        return
+    payload = current.get("task_spec")
+    if "task_revision" in current or not task_spec_is_initialized(payload):
+        return
+    state["current_task"] = _canonical_task_record(
+        payload,
+        previous=current,
+        generation=int(state.get("state_generation") or 0),
+    )
+    # This marker never persists. It exists solely for the pre-V2 direct
+    # builder API, whose first save historically imported a complete task and
+    # plan together. New graph sessions bootstrap through Consultant CAS.
+    state["_legacy_builder_task_import_pending"] = True
+
+CANONICAL_TASK_SCHEMA_VERSION = 8
+PLAN_SCHEMA_VERSION = 9
+PLAN_MIGRATION_VERSION = 9
 PLAN_CANONICALIZATION_VERSION = "plan-c14n-v2"
 VALIDATION_ISSUE_SCHEMA_VERSION = 1
 PROJECTION_COMPLETE = "COMPLETE"
@@ -233,7 +266,7 @@ def canonical_task_spec_for_state(
     except (TypeError, ValueError):
         schema_version = 1
 
-    if schema_version < PLAN_SCHEMA_VERSION:
+    if schema_version < CANONICAL_TASK_SCHEMA_VERSION:
         legacy_current = raw.get("current_task")
         current_payload = (
             legacy_current.get("task_spec")
@@ -252,7 +285,7 @@ def canonical_task_spec_for_state(
         )
 
     if "current_task" not in raw:
-        if schema_version >= PLAN_SCHEMA_VERSION:
+        if schema_version >= CANONICAL_TASK_SCHEMA_VERSION:
             raise CanonicalTaskStateError(
                 "CANONICAL_TASK_STATE_CORRUPT: V2 current_task partition is missing"
             )
@@ -903,19 +936,70 @@ def _safe_action_payload(value: Dict[str, Any]) -> Dict[str, Any]:
 def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, Any]]:
     result: Dict[str, Dict[str, Any]] = {}
     task_id = str(state.get("task_id") or "default")
+    task_spec = _current_task_spec(state)
+    task_outputs = [
+        dict(row) for row in task_spec.get("output_contracts", []) or []
+        if isinstance(row, Mapping)
+    ]
+    task_output_by_ref: Dict[str, Dict[str, Any]] = {}
+    for row in task_outputs:
+        for ref in (row.get("artifact_id"), row.get("output_id"), row.get("semantic_handle")):
+            if str(ref or ""):
+                task_output_by_ref[str(ref)] = row
+    materialized_by_ref: Dict[str, Dict[str, Any]] = {}
+    for row in state.get("task_output_materializations", []) or []:
+        if not isinstance(row, Mapping):
+            continue
+        for ref in (row.get("output_ref"), row.get("output_id")):
+            if str(ref or ""):
+                materialized_by_ref[str(ref)] = dict(row)
     for index, raw_step in enumerate(state.get("steps", []) or [], start=1):
         if not isinstance(raw_step, dict):
             continue
         step = normalize_plan_step(raw_step, index)
         step_id = str(step.get("step_id") or "")
         output_ids: List[str] = []
-        for contract in step_artifact_contracts(step):
+        contracts: List[Dict[str, Any]] = []
+        for raw_ref in step.get("outputs", []) or []:
+            ref = str(
+                raw_ref.get("artifact_id") or raw_ref.get("output_id") or ""
+            ) if isinstance(raw_ref, Mapping) else str(raw_ref or "")
+            task_output = task_output_by_ref.get(ref)
+            if task_output is None:
+                continue
+            output_id = str(task_output.get("output_id") or task_output.get("artifact_id") or ref)
+            materialized = (
+                materialized_by_ref.get(str(task_output.get("artifact_id") or ""))
+                or materialized_by_ref.get(output_id)
+                or {}
+            )
+            path = str(
+                task_output.get("canonical_path")
+                or materialized.get("canonical_path")
+                or materialized.get("path")
+                or ""
+            )
+            if path:
+                contracts.append(normalize_artifact_contract({
+                    "artifact_id": output_id,
+                    "output_id": output_id,
+                    "role": str(task_output.get("role") or output_id),
+                    "path": path,
+                    "artifact_type": str(task_output.get("artifact_kind") or "file"),
+                    "required": bool(task_output.get("required", True)),
+                    "validator": str(task_output.get("validation_contract_id") or "nonempty_file"),
+                    "source": "task_spec_output_contract",
+                }, producer_step_id=step_id, source="task_spec_output_contract"))
+        if not contracts:
+            contracts = step_artifact_contracts(step)
+        for contract in contracts:
             path = _artifact_path(contract)
-            logical_id = str(contract.get("artifact_id") or infer_artifact_id(path))
+            logical_id = str(contract.get("output_id") or contract.get("artifact_id") or infer_artifact_id(path))
             artifact_id = _canonical_artifact_id(task_id, step_id, logical_id, path)
             result[artifact_id] = {
                 **deepcopy(contract),
                 "artifact_id": artifact_id,
+                "output_id": str(contract.get("output_id") or logical_id),
                 "logical_artifact_id": logical_id,
                 "path": path,
                 "producer_step_id": step_id,
@@ -3265,98 +3349,12 @@ def parse_structured_plan(plan_text: str) -> Dict[str, Any]:
             "field_path": "$",
             "message": f"response is not exactly one JSON object: {exc.msg} at character {exc.pos}",
         }], raw) from exc
-    diagnostics: List[Dict[str, Any]] = []
     if not isinstance(payload, dict):
-        diagnostics.append({"field_path": "$", "message": "plan must be a JSON object"})
-        payload = {}
-    top_level_fields = {"steps", "semantic_claims", "validation_checklist", "metadata"}
-    for key in top_level_fields:
-        if key not in payload:
-            diagnostics.append({"field_path": f"$.{key}", "message": "required field is missing"})
-    for key in sorted(set(payload) - top_level_fields):
-        diagnostics.append({
-            "field_path": f"$.{key}",
-            "message": "unexpected top-level field",
-        })
-    steps = payload.get("steps")
-    if not isinstance(steps, list) or not steps:
-        diagnostics.append({"field_path": "$.steps", "message": "must be a non-empty array"})
-        steps = []
-    for index, step in enumerate(steps):
-        if not isinstance(step, Mapping):
-            diagnostics.append({"field_path": f"$.steps[{index}]", "message": "must be an object"})
-            continue
-        scalar_fields = {
-            "step_id", "title", "action", "purpose", "tool", "batch_id", "risk_level",
-        }
-        list_fields = {
-            "inputs", "outputs", "dependencies", "success_criteria", "skill_ids",
-            "workflow_stage_ids", "semantic_constraint_ids",
-        }
-        for field in sorted(scalar_fields | list_fields):
-            if field not in step:
-                diagnostics.append({
-                    "field_path": f"$.steps[{index}].{field}",
-                    "message": "required field is missing",
-                })
-        for field in sorted(scalar_fields):
-            if field in step and not isinstance(step.get(field), str):
-                diagnostics.append({
-                    "field_path": f"$.steps[{index}].{field}",
-                    "message": "must be a string",
-                })
-        for field in sorted(list_fields):
-            if field in step and not isinstance(step.get(field), list):
-                diagnostics.append({
-                    "field_path": f"$.steps[{index}].{field}",
-                    "message": "must be an array",
-                })
-        if isinstance(step.get("skill_ids"), list) and len(step["skill_ids"]) > 3:
-            diagnostics.append({
-                "field_path": f"$.steps[{index}].skill_ids",
-                "message": "must contain at most three selected skill IDs",
-            })
-        if "semantic_claims" in step:
-            diagnostics.append({
-                "field_path": f"$.steps[{index}].semantic_claims",
-                "message": "new plans reference canonical semantic_constraint_ids; inline claims are not allowed",
-            })
-    if not isinstance(payload.get("semantic_claims"), list):
-        diagnostics.append({"field_path": "$.semantic_claims", "message": "must be an array"})
-    if payload.get("semantic_claims") not in (None, []):
-        diagnostics.append({
-            "field_path": "$.semantic_claims",
-            "message": "semantic truth is TaskSpec-owned; the Planner must not mint claim rows",
-        })
-    if not isinstance(payload.get("validation_checklist"), list):
-        diagnostics.append({"field_path": "$.validation_checklist", "message": "must be an array"})
-    else:
-        for index, check in enumerate(payload["validation_checklist"]):
-            if not isinstance(check, Mapping):
-                diagnostics.append({
-                    "field_path": f"$.validation_checklist[{index}]",
-                    "message": "must be an object",
-                })
-                continue
-            for field in ("check_id", "description"):
-                if not isinstance(check.get(field), str) or not str(check.get(field) or "").strip():
-                    diagnostics.append({
-                        "field_path": f"$.validation_checklist[{index}].{field}",
-                        "message": "must be a non-empty string",
-                    })
-    if not isinstance(payload.get("metadata"), Mapping):
-        diagnostics.append({"field_path": "$.metadata", "message": "must be an object"})
-    else:
-        if payload["metadata"].get("schema_version") != 1:
-            diagnostics.append({
-                "field_path": "$.metadata.schema_version",
-                "message": "must equal 1",
-            })
-        if payload["metadata"].get("planner_contract") != "structured_plan_v1":
-            diagnostics.append({
-                "field_path": "$.metadata.planner_contract",
-                "message": "must equal structured_plan_v1",
-            })
+        raise PlanStructureError([{
+            "field_path": "$",
+            "message": "plan must be a JSON object",
+        }], raw)
+    diagnostics = structured_plan_candidate_diagnostics(payload)
     if diagnostics:
         raise PlanStructureError(diagnostics, raw)
     return deepcopy(payload)
@@ -3458,6 +3456,9 @@ def semantic_plan_hash(state: PlanState) -> str:
     """Hash only execution semantics; progress, evidence, timestamps and aliases are excluded."""
     payload = {
         "steps": [_semantic_step(step) for step in state.get("steps", []) if isinstance(step, dict)],
+        "task_output_materializations": deepcopy(
+            list(state.get("task_output_materializations") or [])
+        ),
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
@@ -3490,6 +3491,9 @@ def plan_semantic_payload(state: PlanState) -> Dict[str, Any]:
             for step in state.get("steps", []) or []
             if isinstance(step, dict)
         ],
+        "task_output_materializations": deepcopy(
+            list(state.get("task_output_materializations") or [])
+        ),
     }
 
 
@@ -3887,6 +3891,9 @@ def build_plan_repair_request(
         "downstream_output_contracts": {
             str(step.get("step_id") or ""): list(step.get("outputs") or []) for step in affected
         },
+        "current_task_output_materializations": deepcopy(
+            list(state.get("task_output_materializations") or [])
+        ),
     }
 
 
@@ -3945,9 +3952,17 @@ def apply_plan_patch(
     base_hash = semantic_plan_hash(state)
     if str(patch.get("base_plan_hash") or "") != base_hash:
         raise ValueError("Plan patch base hash does not match the current plan")
-    replacements = patch.get("replace_steps")
-    if not isinstance(replacements, list) or not replacements:
-        raise ValueError("Plan patch replace_steps must be a non-empty list")
+    replacements = patch.get("replace_steps", [])
+    materializations_supplied = "task_output_materializations" in patch
+    if not isinstance(replacements, list):
+        raise ValueError("Plan patch replace_steps must be a list")
+    if not replacements and not materializations_supplied:
+        raise ValueError(
+            "Plan patch must replace at least one step or task output materialization"
+        )
+    replacement_materializations = patch.get("task_output_materializations")
+    if materializations_supplied and not isinstance(replacement_materializations, list):
+        raise ValueError("Plan patch task_output_materializations must be a list")
 
     allowed = {str(item) for item in (allowed_step_ids or []) if str(item)}
     current_steps = [deepcopy(step) for step in state.get("steps", []) if isinstance(step, dict)]
@@ -4019,6 +4034,23 @@ def apply_plan_patch(
 
     candidate_state = deepcopy(state)
     candidate_state["steps"] = current_steps
+    materializations_changed = False
+    if materializations_supplied:
+        before_materializations = deepcopy(
+            list(state.get("task_output_materializations") or [])
+        )
+        after_materializations = deepcopy(list(replacement_materializations or []))
+        candidate_state["task_output_materializations"] = after_materializations
+        materializations_changed = before_materializations != after_materializations
+        changed_fields["$plan"] = (
+            ["task_output_materializations"] if materializations_changed else []
+        )
+        field_changes["$plan"] = ({
+            "task_output_materializations": {
+                "before": before_materializations,
+                "after": after_materializations,
+            }
+        } if materializations_changed else {})
     candidate_state = carry_forward_plan_lifecycle(state, candidate_state)
     revision_delta = stable_plan_revision_delta(state, candidate_state)
     candidate_hash = semantic_plan_hash(candidate_state)
@@ -4042,7 +4074,7 @@ def apply_plan_patch(
         }
     candidate_state["parent_plan_version"] = str(state.get("plan_version") or "")
     candidate_state["plan_version"] = f"plan_v{int(candidate_state.get('plan_revision') or base_revision)}"
-    review_required = bool(changed_ids)
+    review_required = bool(changed_ids or materializations_changed)
     candidate_state.setdefault("revision_history", []).append(
         {
             "operation": PLAN_OPERATION_REPAIR,
@@ -4124,6 +4156,12 @@ def _render_output_ownership(state: PlanState) -> List[str]:
     task_spec = ensure_task_spec(_current_task_spec(state))
     outputs = list(task_spec.get("output_contracts") or [])
     output_dir = _canonical_output_dir(outputs, task_spec)
+    artifact_bindings = {
+        str(item.get("artifact_id") or item.get("output_id") or ""): dict(item)
+        for item in outputs
+        if isinstance(item, Mapping)
+        and str(item.get("artifact_id") or item.get("output_id") or "")
+    }
     steps = [
         normalize_plan_step(dict(raw), index)
         for index, raw in enumerate(state.get("steps", []) or [], 1)
@@ -4152,7 +4190,10 @@ def _render_output_ownership(state: PlanState) -> List[str]:
                     )
                     if str(step.get("step_type") or "") == "renderer_composite"
                     else any(
-                        canonical_output_identity(item, output_dir) == identity
+                        canonical_output_identity(
+                            artifact_bindings.get(str(item or "")) or item,
+                            output_dir,
+                        ) == identity
                         for item in step.get("outputs", []) or []
                     )
                 )
@@ -4272,6 +4313,8 @@ def _plan_defaults(task_id: str, data_path: str | Path | None = None) -> PlanSta
         "schema_version": PLAN_SCHEMA_VERSION,
         "plan_schema_version": PLAN_SCHEMA_VERSION,
         "migration_version": PLAN_MIGRATION_VERSION,
+        "plan_contract_version": PLAN_CONTRACT_VERSION,
+        "minimum_reader_version": MINIMUM_PLAN_READER_VERSION,
         "migrations_applied": [],
         "created_at": "",
         "updated_at": "",
@@ -4289,12 +4332,17 @@ def _plan_defaults(task_id: str, data_path: str | Path | None = None) -> PlanSta
         "approved_task_revision": 0,
         "approval_timestamp": "",
         "approval_record": {},
+        "approval_record_ref": "",
+        "plan_snapshot_ref": "",
+        "current_approval": {},
+        "plan_artifacts": {},
         "approval_projection": {},
         "approval_scope": {},
         "validation_issues": [],
         "blocking_validation_issue_fingerprints": [],
         "renderer_projections": [],
         "renderer_projection_issues": [],
+        "task_output_materializations": [],
         "validation_convergence_fingerprint": "",
         "validation_convergence_history": [],
         "repair_convergence": {
@@ -4359,6 +4407,8 @@ def _plan_defaults(task_id: str, data_path: str | Path | None = None) -> PlanSta
                 "same_action_count": 0,
                 "same_transition_count": 0,
                 "no_progress_count": 0,
+                "max_planner_calls_per_epoch": 4,
+                "max_candidate_repairs_per_epoch": 2,
             },
         },
         "failure": {},
@@ -4382,6 +4432,27 @@ def _legacy_plan_was_executing(state: PlanState) -> bool:
     return False
 
 
+def _assert_plan_state_reader_compatible(state: Mapping[str, Any]) -> None:
+    """Fail closed before migration, canonicalization, dereference, or writes."""
+    try:
+        source_schema_version = int(state.get("schema_version") or 1)
+    except (TypeError, ValueError):
+        source_schema_version = 1
+    if source_schema_version > PLAN_SCHEMA_VERSION:
+        raise ReaderCompatibilityError(
+            "PLAN_READER_TOO_OLD: "
+            f"schema={source_schema_version}, supported={PLAN_SCHEMA_VERSION}"
+        )
+    if source_schema_version >= 9:
+        if not str(state.get("plan_contract_version") or "") or not str(
+            state.get("minimum_reader_version") or ""
+        ):
+            raise ReaderCompatibilityError(
+                "PLAN_READER_COMPATIBILITY_ENVELOPE_MISSING"
+            )
+        assert_reader_compatible(state)
+
+
 def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | None = None) -> Tuple[PlanState, List[str]]:
     """Apply idempotent, non-destructive lifecycle/schema migrations."""
     data = state if isinstance(state, dict) else {}
@@ -4389,6 +4460,19 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
         source_schema_version = int(data.get("schema_version") or 1)
     except (TypeError, ValueError):
         source_schema_version = 1
+    try:
+        _assert_plan_state_reader_compatible(data)
+    except ReaderCompatibilityError as exc:
+        data["load_error"] = str(exc)
+        data["can_generate"] = False
+        data["approval_gate_v2"] = {
+            "status": "unverifiable",
+            "applicable": False,
+            "reason": "reader_incompatible",
+        }
+        # Reader-first fail closed: do not migrate, normalize, externalize,
+        # dereference, or write an unsupported record.
+        return data
     legacy_task_spec = data.get("task_spec")
     source_current_task_spec = (
         (data.get("current_task") or {}).get("task_spec")
@@ -4406,7 +4490,7 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
         if key not in data:
             data[key] = deepcopy(value)
     if (
-        source_schema_version < PLAN_SCHEMA_VERSION
+        source_schema_version < CANONICAL_TASK_SCHEMA_VERSION
         and not task_spec_is_initialized(source_current_task_spec)
         and task_spec_is_initialized(legacy_task_spec)
     ):
@@ -4417,7 +4501,7 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
         newly_applied.append("promote_legacy_taskspec_to_current_task_v8")
     compatibility = dict(data.get("compatibility") or {})
     compatibility.setdefault("source_schema_version", source_schema_version)
-    compatibility["read_aliases_enabled"] = source_schema_version < PLAN_SCHEMA_VERSION
+    compatibility["read_aliases_enabled"] = source_schema_version < CANONICAL_TASK_SCHEMA_VERSION
     data["compatibility"] = compatibility
     task_state = dict(data.get("task_state") or {})
     task_state.setdefault("status", TASK_STATUS_RUNNING)
@@ -4523,6 +4607,18 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
         data.setdefault("approval_snapshot", {})
         data.setdefault("approval_gate_v2", {"status": "missing"})
         newly_applied.append("state_contract_v2_logical_partitions_v8")
+
+    if prior_migration_version < 9:
+        # V9 installs the reader-first Plan Contract envelope.  Existing plans
+        # are not fabricated into immutable snapshots; the next deterministically
+        # valid Plan commit creates the first authoritative snapshot/approval pair.
+        data.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
+        data.setdefault("minimum_reader_version", MINIMUM_PLAN_READER_VERSION)
+        data.setdefault("plan_snapshot_ref", "")
+        data.setdefault("approval_record_ref", "")
+        data.setdefault("current_approval", {})
+        data.setdefault("plan_artifacts", {})
+        newly_applied.append("plan_contract_reader_envelope_v9")
 
     data["schema_version"] = PLAN_SCHEMA_VERSION
     data["plan_schema_version"] = PLAN_SCHEMA_VERSION
@@ -4821,6 +4917,7 @@ def approve_plan_state(
     review_event_id: str = "",
     approval_projection: Optional[Dict[str, Any]] = None,
 ) -> PlanState:
+    _normalize_in_memory_task_record(state)
     state, _ = migrate_plan_state(state, str(state.get("task_id") or "default"))
     refresh_state_contract_v2(state)
     blocking = [
@@ -4860,12 +4957,30 @@ def approve_plan_state(
         state["approval_timestamp"], str(review_event_id or ""),
     ])
     state["approval_record"] = {
+        "schema_version": 1,
+        "plan_contract_version": PLAN_CONTRACT_VERSION,
+        "minimum_reader_version": MINIMUM_PLAN_READER_VERSION,
         "approval_id": "approval-" + hashlib.sha256(approval_seed.encode("utf-8")).hexdigest()[:20],
+        "plan_snapshot_id": str(
+            (state.get("current_plan") or {}).get("plan_snapshot_id") or ""
+        ),
+        "plan_snapshot_ref": str(
+            (state.get("current_plan") or {}).get("plan_snapshot_ref")
+            or state.get("plan_snapshot_ref")
+            or ""
+        ),
+        "status": "approved",
         "task_id": str(state.get("task_id") or ""),
         "approved_plan_id": identity["plan_id"],
         "approved_plan_version": identity["plan_version"],
         "approved_plan_semantic_hash": identity["plan_semantic_hash"],
         "approved_at": state["approval_timestamp"],
+        "created_at": str(
+            (state.get("approval_record") or {}).get("created_at")
+            or state["approval_timestamp"]
+        ),
+        "decided_at": state["approval_timestamp"],
+        "decision_source": str(approval_source or "human_plan_review"),
         "approval_source": str(approval_source or "human_plan_review"),
         "review_event_id": str(review_event_id or ""),
         "approval_scope_hash": scope["approval_scope_hash"],
@@ -4921,6 +5036,70 @@ def approve_plan_state(
         "repair_status": "valid",
     }
     state["approval_gate_v2"] = approval_applicability_v2(state)
+    return state
+
+
+def transition_plan_approval_state(
+    state: PlanState,
+    status: str,
+    *,
+    decision_source: str,
+    review_event_id: str = "",
+) -> PlanState:
+    """Create the next immutable approval decision for the current snapshot."""
+    normalized = str(status or "").strip().lower()
+    if normalized not in {"changes_requested", "rejected", "superseded"}:
+        raise ValueError(f"PLAN_APPROVAL_TRANSITION_INVALID: {status}")
+    snapshot_ref = str(
+        (state.get("current_plan") or {}).get("plan_snapshot_ref")
+        or state.get("plan_snapshot_ref")
+        or ""
+    )
+    if not snapshot_ref:
+        # Legacy plans have no immutable v1.2.1 approval lineage. They remain
+        # non-executable, but the transition is retained in the compatibility
+        # record until a new snapshot is committed.
+        snapshot_id = ""
+    else:
+        snapshot_id = str(
+            (state.get("current_plan") or {}).get("plan_snapshot_id") or ""
+        )
+    decided_at = _now()
+    prior = dict(state.get("approval_record") or {})
+    approval_id = "approval-" + _stable_payload_hash({
+        "plan_snapshot_ref": snapshot_ref,
+        "prior_approval_id": str(prior.get("approval_id") or ""),
+        "status": normalized,
+        "review_event_id": str(review_event_id or ""),
+        "decided_at": decided_at,
+    })[:24]
+    state["approval_record"] = {
+        "schema_version": 1,
+        "plan_contract_version": PLAN_CONTRACT_VERSION,
+        "minimum_reader_version": MINIMUM_PLAN_READER_VERSION,
+        "approval_id": approval_id,
+        "plan_snapshot_id": snapshot_id,
+        "plan_snapshot_ref": snapshot_ref,
+        "status": normalized,
+        "decision_source": str(decision_source or "human_plan_review"),
+        "review_event_id": str(review_event_id or ""),
+        "approved_task_revision": None,
+        "created_at": str(prior.get("created_at") or decided_at),
+        "decided_at": decided_at,
+    }
+    state["approval_status"] = normalized
+    state["plan_status"] = PLAN_STATUS_PENDING_REVIEW
+    state["approved_plan_hash"] = ""
+    state["approved_plan_revision"] = 0
+    state["approved_task_revision"] = 0
+    state["approval_timestamp"] = ""
+    state["approval_snapshot"] = {}
+    state.pop("approval_snapshot_ref", None)
+    state["can_generate"] = False
+    state["approval_gate_v2"] = {
+        "status": normalized,
+        "applicable": False,
+    }
     return state
 
 
@@ -5045,72 +5224,10 @@ def plan_contract_violations(state: PlanState) -> List[Dict[str, str]]:
         if isinstance(item, Mapping)
         and str(item.get("artifact_id") or item.get("input_id") or "")
     }
-    task_input_ids = set(task_input_bindings)
-    task_output_paths = {
-        canonical_output_identity(item, _canonical_output_dir([], task_spec))
-        for item in task_output_bindings.values()
-        if isinstance(item, Mapping)
-        and str(item.get("role") or "") != "output_dir"
-        and canonical_output_identity(item, _canonical_output_dir([], task_spec))
-    }
-    for index, raw_step in enumerate(steps):
-        step = normalize_plan_step(dict(raw_step), index + 1)
-        for input_index, input_value in enumerate(step.get("inputs") or []):
-            input_ref = str(input_value or "")
-            bound_output = task_output_bindings.get(input_ref)
-            identity = canonical_output_identity(
-                bound_output or input_value,
-                _canonical_output_dir([], task_spec),
-            )
-            if identity and identity in task_output_paths:
-                producers = [
-                    str(candidate.get("step_id") or "")
-                    for candidate in steps[:index]
-                    if isinstance(candidate, Mapping)
-                    and identity in {
-                        canonical_output_identity(
-                            task_output_bindings.get(str(value or "")) or value,
-                            _canonical_output_dir([], task_spec),
-                        )
-                        for value in normalize_plan_step(dict(candidate), 1).get("outputs") or []
-                    }
-                ]
-                if not producers:
-                    violations.append({
-                        "violation_code": "ARTIFACT_ROLE_CONFLICT",
-                        "step_id": str(step.get("step_id") or ""),
-                        "field": "inputs",
-                        "owner": "planner",
-                        "repair_target": f"plan.steps[{step.get('step_id') or ''}].inputs",
-                        "reason": (
-                            f"TaskSpec output `{input_value}` is used as an input without an upstream producer; "
-                            "artifact direction cannot be inferred from its extension."
-                        ),
-                        "artifact_id": identity,
-                        "input_index": input_index,
-                    })
-            elif input_ref.startswith("artifact-") and input_ref not in task_input_ids:
-                violations.append({
-                    "violation_code": "ARTIFACT_REFERENCE_INVALID",
-                    "step_id": str(step.get("step_id") or ""),
-                    "field": "inputs",
-                    "owner": "planner",
-                    "repair_target": f"plan.steps[{step.get('step_id') or ''}].inputs",
-                    "reason": f"Unknown TaskSpec input artifact ID `{input_ref}`.",
-                    "input_index": input_index,
-                })
-        for output_index, output_value in enumerate(step.get("outputs") or []):
-            output_ref = str(output_value or "")
-            if output_ref.startswith("artifact-") and output_ref not in task_output_bindings:
-                violations.append({
-                    "violation_code": "ARTIFACT_REFERENCE_INVALID",
-                    "step_id": str(step.get("step_id") or ""),
-                    "field": "outputs",
-                    "owner": "planner",
-                    "repair_target": f"plan.steps[{step.get('step_id') or ''}].outputs",
-                    "reason": f"Unknown TaskSpec output artifact ID `{output_ref}`.",
-                    "output_index": output_index,
-                })
+    # Step usage and artifact-reference validity are owned by the typed
+    # ArtifactRefKey/DAG validator before commit.  This compatibility
+    # validator must not reconstruct consume/produce semantics from whether a
+    # value resembles a task input, task output, filename, or ID prefix.
     if task_spec:
         plan_claims: List[Dict[str, Any]] = []
         all_inputs: set[str] = set()
@@ -5379,6 +5496,11 @@ def validate_output_contracts(
     """Validate exact required coverage and single materializable ownership."""
     output_dir = str(canonical_output_dir or _canonical_output_dir(output_contracts))
     task_spec = _current_task_spec(state)
+    legacy_renderer_mode = bool(
+        ((state.get("task_state") or {}).get("legacy_renderer_mode") is True)
+        or str((state.get("task_state") or {}).get("execution_contract") or "")
+        == "legacy_renderer_v1"
+    )
     artifact_bindings = {
         str(item.get("artifact_id") or item.get("output_id") or ""): dict(item)
         for item in task_spec.get("output_contracts") or output_contracts or []
@@ -5391,35 +5513,29 @@ def validate_output_contracts(
             continue
         step = normalize_plan_step(dict(raw_step), index)
         step_id = str(step.get("step_id") or "")
-        renderer_step = str(step.get("step_type") or "") == "renderer_composite"
-        # Renderer prose and owned_outputs are capabilities, not producer
-        # evidence.  Only deterministic bound_outputs establish ownership.
-        outputs = (
-            [item.get("required_output") or item.get("bound_path") or item.get("canonical_path") for item in step.get("bound_outputs", []) or []]
-            if renderer_step
-            else list(step.get("outputs", []) or [])
-        )
+        outputs = list(step.get("outputs", []) or [])
         for output in outputs:
-            identity = _output_identity(
-                artifact_bindings.get(str(output or "")) or output,
-                output_dir,
+            output_text = str(output.get("artifact_id") or output.get("output_id") or "") if isinstance(output, Mapping) else str(output or "")
+            identity = (
+                _output_identity(output, output_dir)
+                if legacy_renderer_mode
+                else output_text if output_text in artifact_bindings else _output_identity(output, output_dir)
             )
             if identity and step_id not in producers.setdefault(identity, []):
                 producers[identity].append(step_id)
 
-    violations: List[Dict[str, Any]] = list(state.get("output_binding_violations") or [])
-    unresolved_ids = {
-        str(item.get("canonical_identity") or "")
-        for item in violations
-        if isinstance(item, dict)
-        and str(item.get("violation_code") or "") == "RENDERER_OUTPUT_BINDING_UNRESOLVED"
-    }
+    violations: List[Dict[str, Any]] = []
     for contract in output_contracts or []:
         if not isinstance(contract, dict) or not bool(contract.get("required", True)):
             continue
         if str(contract.get("role") or "") == "output_dir":
             continue
-        identity = _output_identity(contract, output_dir)
+        logical_id = str(contract.get("artifact_id") or contract.get("output_id") or "")
+        identity = (
+            _output_identity(contract, output_dir)
+            if legacy_renderer_mode
+            else logical_id or _output_identity(contract, output_dir)
+        )
         if not identity:
             continue
         owner_ids = producers.get(identity, [])
@@ -5432,7 +5548,7 @@ def validate_output_contracts(
             "affected_step_ids": list(owner_ids),
             "allowed_changed_step_ids": list(owner_ids),
         }
-        if not owner_ids and identity not in unresolved_ids:
+        if not owner_ids:
             violations.append({
                 **common,
                 "violation_code": "REQUIRED_OUTPUT_UNCOVERED",
@@ -5449,6 +5565,113 @@ def validate_output_contracts(
                 "reason": f"Output `{common['path_or_name'] or identity}` has multiple active producers: {', '.join(owner_ids)}.",
             })
     return violations
+
+
+def normalize_task_output_materializations(
+    state: PlanState,
+    task_spec: Mapping[str, Any] | None,
+) -> Tuple[PlanState, List[Dict[str, Any]]]:
+    """Validate Planner-owned filenames without creating another output identity."""
+    candidate = deepcopy(state)
+    spec = dict(task_spec or _current_task_spec(candidate))
+    contracts = [
+        dict(row) for row in spec.get("output_contracts", []) or []
+        if isinstance(row, Mapping)
+    ]
+    output_root = _canonical_output_dir(contracts, spec)
+    by_ref: Dict[str, Dict[str, Any]] = {}
+    for row in contracts:
+        for key in (
+            row.get("artifact_id"), row.get("output_id"), row.get("semantic_handle")
+        ):
+            if str(key or ""):
+                by_ref[str(key)] = row
+    normalized: List[Dict[str, Any]] = []
+    issues: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, raw in enumerate(candidate.get("task_output_materializations", []) or []):
+        if not isinstance(raw, Mapping):
+            continue
+        output_ref = str(raw.get("output_ref") or "")
+        path_text = str(raw.get("path") or "").strip()
+        contract = by_ref.get(output_ref)
+        if contract is None:
+            issues.append(validation_issue(
+                "TASK_OUTPUT_REFERENCE_UNKNOWN",
+                owner="planner",
+                repair_target="plan.task_output_materializations",
+                field_path=f"plan.task_output_materializations[{index}].output_ref",
+                message=f"Unknown TaskSpec output reference `{output_ref}`.",
+            ))
+            continue
+        output_id = str(contract.get("output_id") or contract.get("artifact_id") or output_ref)
+        if output_id in seen:
+            issues.append(validation_issue(
+                "TASK_OUTPUT_MATERIALIZATION_DUPLICATE",
+                owner="planner",
+                repair_target="plan.task_output_materializations",
+                field_path=f"plan.task_output_materializations[{index}]",
+                message=f"Task output `{output_id}` is materialized more than once.",
+            ))
+            continue
+        seen.add(output_id)
+        exact_path = str(contract.get("canonical_path") or "").strip()
+        artifact_kind = str(contract.get("artifact_kind") or "file").lower()
+        if artifact_kind == "directory" or str(contract.get("role") or "") == "output_dir":
+            issues.append(validation_issue(
+                "TASK_OUTPUT_MATERIALIZATION_KIND_INVALID",
+                owner="planner",
+                repair_target="plan.task_output_materializations",
+                field_path=f"plan.task_output_materializations[{index}]",
+                message=f"Directory output `{output_id}` cannot receive a Planner filename.",
+            ))
+            continue
+        path = Path(path_text)
+        if path.is_absolute() or ".." in path.parts:
+            issues.append(validation_issue(
+                "TASK_OUTPUT_MATERIALIZATION_PATH_INVALID",
+                owner="planner",
+                repair_target="plan.task_output_materializations",
+                field_path=f"plan.task_output_materializations[{index}].path",
+                message="Planner-owned output paths must be safe relative paths under output_dir.",
+            ))
+            continue
+        canonical_path = canonical_output_identity(path_text, output_root)
+        if exact_path and canonical_output_identity(exact_path, output_root) != canonical_path:
+            issues.append(validation_issue(
+                "USER_OUTPUT_PATH_NOT_PRESERVED",
+                owner="planner",
+                repair_target="plan.task_output_materializations",
+                field_path=f"plan.task_output_materializations[{index}].path",
+                message=f"Planner changed the exact TaskSpec path for `{output_id}`.",
+            ))
+            continue
+        normalized.append({
+            "output_ref": str(contract.get("artifact_id") or output_ref),
+            "output_id": output_id,
+            "path": path_text,
+            "canonical_path": canonical_path,
+            "origin": "planner",
+        })
+
+    for contract in contracts:
+        output_id = str(contract.get("output_id") or contract.get("artifact_id") or "")
+        if (
+            bool(contract.get("required", True))
+            and str(contract.get("artifact_kind") or "file").lower() == "file"
+            and not str(contract.get("canonical_path") or "").strip()
+            and str(contract.get("path_policy") or "") == "planner_materialized"
+            and output_id not in seen
+        ):
+            issues.append(validation_issue(
+                "TASK_OUTPUT_MATERIALIZATION_MISSING",
+                owner="planner",
+                repair_target="plan.task_output_materializations",
+                field_path="plan.task_output_materializations",
+                message=f"Required task output `{output_id}` needs a Planner-owned relative path.",
+            ))
+    candidate["task_output_materializations"] = normalized
+    return candidate, issues
 
 
 def bind_renderer_invocation_contracts(
@@ -5907,13 +6130,15 @@ def _validation_convergence_fingerprint(
     issues: List[Dict[str, Any]],
 ) -> str:
     payload = {
-        "plan_hash": semantic_plan_hash(state),
+        "plan_hash": (
+            str((state.get("current_plan") or {}).get("plan_semantic_hash") or "")
+            if str((state.get("current_plan") or {}).get("plan_snapshot_ref") or "")
+            else ""
+        ),
         "task_spec_hash": canonical_constraint_hash(_current_task_spec(state)),
         "task_revision": _int(state.get("generated_from_task_revision"), 0),
-        "projection_hashes": sorted(
-            str(item.get("projection_hash") or "")
-            for item in state.get("renderer_projections", []) or []
-            if isinstance(item, Mapping)
+        "planner_feedback_revision": int(
+            ((state.get("task_state") or {}).get("planner_feedback") or {}).get("revision") or 0
         ),
         "issue_fingerprints": sorted(
             str(item.get("fingerprint") or "") for item in issues
@@ -5987,12 +6212,17 @@ def derive_plan_validation_state(
         "max_attempts": int(max_repair_attempts),
         "fingerprint": fingerprint,
     }
-    non_complete_projection_ids = [
+    legacy_renderer_mode = bool(
+        ((candidate.get("task_state") or {}).get("legacy_renderer_mode") is True)
+        or str((candidate.get("task_state") or {}).get("execution_contract") or "")
+        == "legacy_renderer_v1"
+    )
+    non_complete_projection_ids = ([
         str(item.get("plan_step_id") or item.get("renderer_id") or "renderer")
         for item in candidate.get("renderer_projections", []) or []
         if isinstance(item, Mapping)
         and str(item.get("status") or "") != PROJECTION_COMPLETE
-    ]
+    ] if legacy_renderer_mode else [])
     candidate["can_request_approval"] = bool(
         not blocking
         and not non_convergent
@@ -6023,46 +6253,63 @@ def normalize_plan_contracts(
     task_spec: Optional[Dict[str, Any]] = None,
 ) -> Tuple[PlanState, List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Run the shared pre-review normalization and output validation pipeline."""
+    legacy_renderer_mode = bool(
+        ((state.get("task_state") or {}).get("legacy_renderer_mode") is True)
+        or str((state.get("task_state") or {}).get("execution_contract") or "")
+        == "legacy_renderer_v1"
+    )
     records = [dict(item) for item in (renderer_records or []) if isinstance(item, dict)]
-    renderer_skill_ids = [str(item.get("skill_id") or "") for item in records if str(item.get("skill_id") or "")]
-    normalized, audit = collapse_renderer_composite_steps(state, renderer_skill_ids, records)
+    if legacy_renderer_mode:
+        renderer_skill_ids = [
+            str(item.get("skill_id") or "") for item in records
+            if str(item.get("skill_id") or "")
+        ]
+        normalized, audit = collapse_renderer_composite_steps(
+            state, renderer_skill_ids, records
+        )
+    else:
+        normalized = deepcopy(state)
+        audit = []
     if task_spec:
-        normalized["current_task"] = {
-            **dict(normalized.get("current_task") or {}),
-            "task_spec": canonical_current_task_spec(task_spec),
-        }
+        canonical_task = canonical_current_task_spec(task_spec)
+        normalized["current_task"] = _canonical_task_record(
+            canonical_task,
+            previous=dict(normalized.get("current_task") or {}),
+            generation=int(normalized.get("state_generation") or 0),
+        )
     normalized, semantic_reference_issues = resolve_plan_semantic_claims(
         normalized,
         task_spec or _current_task_spec(normalized),
     )
-    normalized = bind_renderer_invocation_contracts(normalized, records, task_spec)
-    normalized = bind_renderer_output_contracts(
+    if legacy_renderer_mode:
+        normalized = bind_renderer_invocation_contracts(normalized, records, task_spec)
+        normalized = bind_renderer_output_contracts(
+            normalized,
+            records,
+            list(output_contracts or []),
+            task_spec,
+        )
+    else:
+        normalized["renderer_projections"] = []
+        normalized["renderer_projection_issues"] = []
+        normalized["output_binding_violations"] = []
+    normalized, materialization_issues = normalize_task_output_materializations(
         normalized,
-        records,
-        list(output_contracts or []),
-        task_spec,
+        task_spec or _current_task_spec(normalized),
     )
     normalized = normalize_plan_output_count_criteria(normalized, list(output_contracts or []))
     violations: List[Dict[str, Any]] = []
     violations.extend(semantic_reference_issues)
-    violations.extend(deepcopy(list(normalized.get("renderer_projection_issues") or [])))
+    violations.extend(materialization_issues)
+    if legacy_renderer_mode:
+        violations.extend(deepcopy(list(normalized.get("renderer_projection_issues") or [])))
+        violations.extend(deepcopy(list(normalized.get("output_binding_violations") or [])))
     violations.extend(plan_contract_violations(normalized))
     violations.extend(validate_output_contracts(
         normalized,
         list(output_contracts or []),
         canonical_output_dir=_canonical_output_dir(list(output_contracts or []), task_spec),
     ))
-    root_projection_fingerprints = [
-        str(item.get("fingerprint") or "")
-        for item in normalized.get("renderer_projection_issues", []) or []
-        if isinstance(item, Mapping)
-    ]
-    if root_projection_fingerprints:
-        for violation in violations:
-            if not isinstance(violation, dict):
-                continue
-            if str(violation.get("violation_code") or violation.get("code") or "") == "REQUIRED_OUTPUT_UNCOVERED":
-                violation.setdefault("caused_by", list(root_projection_fingerprints))
     normalized = derive_plan_validation_state(
         normalized,
         violations,
@@ -6251,6 +6498,10 @@ def build_plan_state(
             if isinstance(step, Mapping)
         ] if strict else raw_steps,
     }
+    if not strict:
+        state["schema_version"] = CANONICAL_TASK_SCHEMA_VERSION - 1
+        state["plan_schema_version"] = CANONICAL_TASK_SCHEMA_VERSION - 1
+        state["migration_version"] = CANONICAL_TASK_SCHEMA_VERSION - 1
     if strict:
         state["plan_document"] = {
             "schema_version": 1,
@@ -6259,6 +6510,12 @@ def build_plan_state(
             "metadata": deepcopy(dict(structured.get("metadata") or {})),
         }
         state["plan_structure_status"] = "valid"
+        state["proposed_artifacts"] = deepcopy(list(
+            structured.get("proposed_artifacts") or []
+        ))
+        state["task_output_materializations"] = deepcopy(list(
+            structured.get("task_output_materializations") or []
+        ))
     state["semantic_plan_hash"] = semantic_plan_hash(state)
     return state
 
@@ -6270,6 +6527,8 @@ def _plan_spec_v2_record(state: PlanState) -> Dict[str, Any]:
         for key in (
             "plan_id", "plan_version", "plan_revision", "generated_from_task_revision",
             "base_task_semantic_hash", "selected_skill_ids", "steps", "plan_document",
+            "plan_local_artifacts", "artifact_allocation_mapping", "artifact_usage",
+            "task_plan_traceability", "task_output_materializations",
         )
         if state.get(key) not in (None, "", [], {})
     }
@@ -6277,6 +6536,18 @@ def _plan_spec_v2_record(state: PlanState) -> Dict[str, Any]:
 
 def approval_applicability_v2(state: PlanState) -> Dict[str, Any]:
     """Dynamically evaluate an immutable ApprovalSnapshot."""
+    current_approval = dict(state.get("current_approval") or {})
+    current_plan = dict(state.get("current_plan") or {})
+    if current_approval:
+        if str(current_approval.get("status") or "") != "approved":
+            return {
+                "status": str(current_approval.get("status") or "missing"),
+                "applicable": False,
+            }
+        if str(current_approval.get("plan_snapshot_ref") or "") != str(
+            current_plan.get("plan_snapshot_ref") or ""
+        ):
+            return {"status": "snapshot_mismatch", "applicable": False}
     snapshot = state.get("approval_snapshot")
     if not isinstance(snapshot, Mapping) or not snapshot:
         return {"status": "missing", "applicable": False}
@@ -6319,13 +6590,13 @@ def refresh_state_contract_v2(state: PlanState) -> PlanState:
         except (TypeError, ValueError):
             source_schema = 1
         legacy_task = state.get("task_spec")
-        if source_schema < PLAN_SCHEMA_VERSION and task_spec_is_initialized(legacy_task):
+        if source_schema < CANONICAL_TASK_SCHEMA_VERSION and task_spec_is_initialized(legacy_task):
             current_value = _canonical_task_record(
                 legacy_task,
                 generation=int(state.get("state_generation") or 0),
             )
             state["current_task"] = current_value
-        elif source_schema < PLAN_SCHEMA_VERSION:
+        elif source_schema < CANONICAL_TASK_SCHEMA_VERSION:
             current_value = _plan_defaults(
                 str(state.get("task_id") or "default")
             )["current_task"]
@@ -6382,6 +6653,7 @@ def refresh_state_contract_v2(state: PlanState) -> PlanState:
     state["task_state"] = task_state
     plan_spec = _plan_spec_v2_record(state)
     if plan_spec.get("steps"):
+        prior_plan_pointer = dict(state.get("current_plan") or {})
         semantic_hash = "sha256:" + semantic_plan_hash(state).removeprefix("sha256:")
         record_hash = plan_record_hash(plan_spec)
         state["current_plan"] = {
@@ -6396,10 +6668,18 @@ def refresh_state_contract_v2(state: PlanState) -> PlanState:
                 or ""
             ),
             "created_generation": int(
-                (state.get("current_plan") or {}).get("created_generation")
+                prior_plan_pointer.get("created_generation")
                 or state.get("state_generation")
                 or 0
             ),
+            **{
+                key: deepcopy(prior_plan_pointer[key])
+                for key in (
+                    "plan_snapshot_id", "plan_snapshot_ref",
+                    "plan_contract_version", "minimum_reader_version",
+                )
+                if prior_plan_pointer.get(key) not in (None, "", [], {})
+            },
         }
         state["plan_record_hash"] = record_hash
     blocking = [
@@ -6443,6 +6723,8 @@ def refresh_state_contract_v2(state: PlanState) -> PlanState:
     )
     compatibility["read_aliases_enabled"] = False
     state["compatibility"] = compatibility
+    state["plan_contract_version"] = PLAN_CONTRACT_VERSION
+    state["minimum_reader_version"] = MINIMUM_PLAN_READER_VERSION
     return state
 
 
@@ -6459,10 +6741,25 @@ def load_plan_state(data_path: str | Path, task_id: str) -> PlanState:
     if not isinstance(data, dict):
         data = {}
     try:
+        _assert_plan_state_reader_compatible(data)
+    except ReaderCompatibilityError as exc:
+        # This is intentionally before canonical TaskSpec validation, legacy
+        # externalization, migration, object dereference, and any persistence.
+        # An old reader may report incompatibility but may not reinterpret or
+        # rewrite a newer contract.
+        data["load_error"] = str(exc)
+        data["can_generate"] = False
+        data["approval_gate_v2"] = {
+            "status": "unverifiable",
+            "applicable": False,
+            "reason": "reader_incompatible",
+        }
+        return data
+    try:
         source_schema_version = int(data.get("schema_version") or 1)
     except (TypeError, ValueError):
         source_schema_version = 1
-    if source_schema_version >= PLAN_SCHEMA_VERSION:
+    if source_schema_version >= CANONICAL_TASK_SCHEMA_VERSION:
         try:
             canonical_task_spec_for_state(data)
         except CanonicalTaskStateError as exc:
@@ -6546,6 +6843,41 @@ def load_plan_state(data_path: str | Path, task_id: str) -> PlanState:
                 )
                 if persisted_snapshot != data.get("approval_snapshot"):
                     raise ValueError("APPROVAL_SNAPSHOT_OBJECT_MISMATCH")
+            plan_snapshot_ref = str(
+                (data.get("current_plan") or {}).get("plan_snapshot_ref")
+                or data.get("plan_snapshot_ref")
+                or ""
+            )
+            if plan_snapshot_ref.startswith("object:sha256:"):
+                persisted_plan_snapshot = audit_store.read_object(
+                    plan_snapshot_ref,
+                    expected_type="plan_snapshot_v121",
+                )
+                assert_reader_compatible(persisted_plan_snapshot)
+                if str(persisted_plan_snapshot.get("plan_snapshot_id") or "") != str(
+                    (data.get("current_plan") or {}).get("plan_snapshot_id") or ""
+                ):
+                    raise ValueError("PLAN_SNAPSHOT_POINTER_MISMATCH")
+            plan_approval_ref = str(
+                (data.get("current_approval") or {}).get("approval_record_ref")
+                or data.get("approval_record_ref")
+                or ""
+            )
+            if plan_approval_ref.startswith("object:sha256:"):
+                persisted_plan_approval = audit_store.read_object(
+                    plan_approval_ref,
+                    expected_type="plan_approval_record_v121",
+                )
+                assert_reader_compatible(persisted_plan_approval)
+                if str(persisted_plan_approval.get("plan_snapshot_ref") or "") != plan_snapshot_ref:
+                    raise ValueError("PLAN_APPROVAL_SNAPSHOT_POINTER_MISMATCH")
+                current_status = str(
+                    (data.get("current_approval") or {}).get("status") or ""
+                )
+                if current_status and current_status != str(
+                    persisted_plan_approval.get("status") or ""
+                ):
+                    raise ValueError("PLAN_APPROVAL_STATUS_POINTER_MISMATCH")
         except Exception as exc:
             data["load_error"] = f"state_contract_audit_invalid:{type(exc).__name__}"
             data["approval_gate_v2"] = {
@@ -6591,6 +6923,10 @@ def save_plan_state(
 ) -> Path:
     path = plan_state_path(data_path, task_id)
     path.parent.mkdir(parents=True, exist_ok=True)
+    _normalize_in_memory_task_record(state)
+    legacy_builder_import = bool(
+        state.pop("_legacy_builder_task_import_pending", False)
+    )
     _externalize_legacy_task_spec_records(data_path, task_id, state)
     state, migrations = migrate_plan_state(state, task_id, data_path)
     state["task_id"] = str(task_id or state.get("task_id") or "default")
@@ -6608,6 +6944,7 @@ def save_plan_state(
         advance_generation=True,
         allow_canonical_task_write=(
             allow_canonical_task_write
+            or legacy_builder_import
             or "promote_legacy_taskspec_to_current_task_v8" in migrations
         ),
     )
@@ -6695,8 +7032,39 @@ def commit_consultant_candidate_state(
         if not isinstance(planner_feedback, Mapping):
             raise ValueError("PLANNER_FEEDBACK_PROPOSAL_INVALID")
         task_state["planner_feedback"] = deepcopy(dict(planner_feedback))
+    for controller_field in (
+        "reconciliation_ledger",
+        "planner_reconciliation",
+        "planning_epoch",
+        "pending_review_classification",
+    ):
+        if controller_field in proposed:
+            value = proposed.get(controller_field)
+            if value in (None, {}):
+                task_state.pop(controller_field, None)
+            elif isinstance(value, Mapping):
+                task_state[controller_field] = deepcopy(dict(value))
+            else:
+                raise ValueError(
+                    f"CONTROLLER_TASK_STATE_FIELD_INVALID: {controller_field}"
+                )
     state["task_state"] = task_state
     state["selected_skill_ids"] = list(task_state["selected_skills"])
+    approval_transition = proposed.get("approval_transition")
+    if approval_transition:
+        if not isinstance(approval_transition, Mapping):
+            raise ValueError("PLAN_APPROVAL_TRANSITION_PROPOSAL_INVALID")
+        transition_plan_approval_state(
+            state,
+            str(approval_transition.get("status") or ""),
+            decision_source=str(
+                approval_transition.get("decision_source")
+                or "consultant_typed_review_classification"
+            ),
+            review_event_id=str(
+                approval_transition.get("review_event_id") or ""
+            ),
+        )
     save_plan_state(
         data_path,
         task_id,
@@ -6741,6 +7109,236 @@ def update_task_state_projection(
     return state
 
 
+def _rewrite_usage_after_allocation(
+    rows: Any,
+    mapping: Mapping[str, str],
+) -> List[Dict[str, Any]]:
+    rewritten: List[Dict[str, Any]] = []
+    for raw in rows or []:
+        if not isinstance(raw, Mapping):
+            continue
+        row = deepcopy(dict(raw))
+        ref = dict(row.get("artifact_ref") or {})
+        if ref.get("kind") == "candidate_local":
+            local_ref = str(ref.get("identity") or "")
+            logical_id = str(mapping.get(local_ref) or "")
+            if not logical_id:
+                raise ValueError(
+                    f"ALLOCATION_MAPPING_INCOMPLETE: {local_ref}"
+                )
+            row["artifact_ref"] = {
+                "kind": "authoritative",
+                "identity": logical_id,
+            }
+        rewritten.append(row)
+    return rewritten
+
+
+def _immutable_plan_steps(state: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    return [
+        _semantic_step(dict(step))
+        for step in state.get("steps", []) or []
+        if isinstance(step, Mapping)
+    ]
+
+
+def _prepare_atomic_plan_objects(
+    *,
+    path: Path,
+    state: PlanState,
+    current_value: Mapping[str, Any],
+    store: StateContractStore,
+    current_generation: int,
+) -> Dict[str, str]:
+    """Prewrite one unreachable snapshot/approval pair under the state lock."""
+    previous_plan_hash = str(
+        ((current_value.get("current_plan") or {}).get("plan_semantic_hash")) or ""
+    )
+    intent = state.get("allocation_intent")
+    allocation_mapping: Dict[str, str] = {}
+    if isinstance(intent, Mapping) and intent:
+        managed_root = str(
+            path.parent / "plan_artifacts"
+        )
+        allocation_mapping, bindings = promote_allocation_intent(
+            intent,
+            task_id=str(state.get("task_id") or path.parent.name),
+            managed_root=managed_root,
+        )
+        rewritten = rewrite_candidate_local_refs(
+            {"steps": state.get("steps", []) or []},
+            allocation_mapping,
+        )
+        state["steps"] = list(rewritten.get("steps") or [])
+        state["artifact_usage"] = _rewrite_usage_after_allocation(
+            state.get("artifact_usage"), allocation_mapping
+        )
+        artifacts = dict(state.get("plan_artifacts") or {})
+        artifacts.update(bindings)
+        state["plan_artifacts"] = artifacts
+        state["artifact_allocation_mapping"] = {
+            "candidate_scope_id": str(intent.get("candidate_scope_id") or ""),
+            "planning_epoch_id": str(intent.get("planning_epoch_id") or ""),
+            "local_to_authoritative": dict(sorted(allocation_mapping.items())),
+        }
+        state.pop("allocation_intent", None)
+        state.pop("proposed_artifacts", None)
+        state.pop("candidate_scope_id", None)
+        state.pop("planning_epoch_id", None)
+        state["semantic_plan_hash"] = semantic_plan_hash(state)
+        refresh_state_contract_v2(state)
+
+    next_plan_hash = str(
+        ((state.get("current_plan") or {}).get("plan_semantic_hash")) or ""
+    )
+    valid_plan = bool(
+        state.get("steps")
+        and str((state.get("plan_validation_state") or {}).get("status") or "") == "valid"
+    )
+    result = {
+        "plan_snapshot_ref": str(state.get("plan_snapshot_ref") or ""),
+        "approval_record_ref": str(state.get("approval_record_ref") or ""),
+    }
+    if (
+        previous_plan_hash != next_plan_hash
+        and valid_plan
+        and state.get("plan_commit_requested") is True
+    ):
+        task_record = dict(state.get("current_task") or {})
+        parent_ref = str(
+            (current_value.get("current_plan") or {}).get("plan_snapshot_ref")
+            or current_value.get("plan_snapshot_ref")
+            or ""
+        )
+        traceability = typed_task_plan_traceability(
+            dict(task_record.get("task_spec") or {}),
+            list(state.get("steps") or []),
+        )
+        snapshot_identity_payload = {
+            "task_id": str(state.get("task_id") or ""),
+            "task_semantic_hash": str(task_record.get("task_semantic_hash") or ""),
+            "task_revision": int(task_record.get("task_revision") or 0),
+            "plan_semantic_hash": next_plan_hash,
+            "plan_revision": int(state.get("plan_revision") or 1),
+            "parent_plan_snapshot_ref": parent_ref,
+        }
+        snapshot_id = "plan-snapshot-" + _stable_payload_hash(
+            snapshot_identity_payload
+        )[:24]
+        snapshot = {
+            "schema_version": 1,
+            "plan_contract_version": PLAN_CONTRACT_VERSION,
+            "minimum_reader_version": MINIMUM_PLAN_READER_VERSION,
+            "plan_snapshot_id": snapshot_id,
+            **snapshot_identity_payload,
+            "plan_record_hash": str(
+                (state.get("current_plan") or {}).get("plan_record_hash") or ""
+            ),
+            "steps": _immutable_plan_steps(state),
+            "resolved_artifact_refs": deepcopy(list(state.get("artifact_usage") or [])),
+            "plan_local_artifacts": deepcopy(dict(state.get("plan_artifacts") or {})),
+            "artifact_allocation_mapping": deepcopy(dict(
+                state.get("artifact_allocation_mapping") or {}
+            )),
+            "capability_bindings": deepcopy(list(state.get("selected_skill_ids") or [])),
+            "validation": deepcopy(dict(state.get("plan_validation_state") or {})),
+            "task_plan_traceability": traceability,
+            "created_generation": int(state.get("state_generation") or current_generation),
+            "created_at": _now(),
+        }
+        snapshot_ref = store.put_object("plan_snapshot_v121", snapshot)
+        pending_id = "approval-" + _stable_payload_hash({
+            "plan_snapshot_ref": snapshot_ref,
+            "status": "pending",
+        })[:24]
+        pending_approval = {
+            "schema_version": 1,
+            "plan_contract_version": PLAN_CONTRACT_VERSION,
+            "minimum_reader_version": MINIMUM_PLAN_READER_VERSION,
+            "approval_id": pending_id,
+            "plan_snapshot_id": snapshot_id,
+            "plan_snapshot_ref": snapshot_ref,
+            "status": "pending",
+            "decision_source": "human_plan_review",
+            "review_event_id": "",
+            "approved_task_revision": None,
+            "created_at": _now(),
+            "decided_at": None,
+        }
+        approval_ref = store.put_object(
+            "plan_approval_record_v121", pending_approval
+        )
+        current_plan = dict(state.get("current_plan") or {})
+        current_plan.update({
+            "plan_snapshot_id": snapshot_id,
+            "plan_snapshot_ref": snapshot_ref,
+            "plan_contract_version": PLAN_CONTRACT_VERSION,
+            "minimum_reader_version": MINIMUM_PLAN_READER_VERSION,
+        })
+        state["current_plan"] = current_plan
+        state["plan_snapshot_ref"] = snapshot_ref
+        state["approval_record"] = pending_approval
+        state["approval_record_ref"] = approval_ref
+        state["current_approval"] = {
+            "approval_id": pending_id,
+            "approval_record_ref": approval_ref,
+            "plan_snapshot_ref": snapshot_ref,
+            "status": "pending",
+        }
+        state["approval_snapshot"] = {}
+        state.pop("approval_snapshot_ref", None)
+        state["approval_status"] = "awaiting_review"
+        state["plan_status"] = PLAN_STATUS_PENDING_REVIEW
+        state["can_generate"] = False
+        state.pop("plan_commit_requested", None)
+        task_state = dict(state.get("task_state") or {})
+        epoch = dict(task_state.get("planning_epoch") or {})
+        if epoch:
+            epoch["status"] = "plan_snapshot_committed"
+            epoch["committed_plan_snapshot_ref"] = snapshot_ref
+            task_state["planning_epoch"] = epoch
+            state["task_state"] = task_state
+        result.update({
+            "plan_snapshot_ref": snapshot_ref,
+            "approval_record_ref": approval_ref,
+        })
+        return result
+
+    approval = state.get("approval_record")
+    current_snapshot_ref = str(
+        (state.get("current_plan") or {}).get("plan_snapshot_ref")
+        or state.get("plan_snapshot_ref")
+        or ""
+    )
+    if isinstance(approval, Mapping) and approval and current_snapshot_ref:
+        approval_record = deepcopy(dict(approval))
+        approval_record.setdefault("schema_version", 1)
+        approval_record.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
+        approval_record.setdefault("minimum_reader_version", MINIMUM_PLAN_READER_VERSION)
+        approval_record.setdefault("plan_snapshot_ref", current_snapshot_ref)
+        approval_record.setdefault(
+            "plan_snapshot_id",
+            str((state.get("current_plan") or {}).get("plan_snapshot_id") or ""),
+        )
+        approval_record.setdefault(
+            "status",
+            "approved" if state.get("plan_status") == PLAN_STATUS_APPROVED else "pending",
+        )
+        approval_ref = store.put_object(
+            "plan_approval_record_v121", approval_record
+        )
+        state["approval_record"] = approval_record
+        state["approval_record_ref"] = approval_ref
+        state["current_approval"] = {
+            "approval_id": str(approval_record.get("approval_id") or ""),
+            "approval_record_ref": approval_ref,
+            "plan_snapshot_ref": current_snapshot_ref,
+            "status": str(approval_record.get("status") or ""),
+        }
+        result["approval_record_ref"] = approval_ref
+    return result
+
+
 def _atomic_write_plan_state(
     path: Path,
     state: PlanState,
@@ -6758,12 +7356,22 @@ def _atomic_write_plan_state(
         if path.is_file():
             try:
                 current_value = json.loads(path.read_text(encoding="utf-8"))
-                if isinstance(current_value, Mapping):
-                    current_generation = int(current_value.get("state_generation") or 0)
-            except (OSError, json.JSONDecodeError, TypeError, ValueError):
-                current_generation = 0
+                if not isinstance(current_value, Mapping):
+                    raise PermanentInfrastructureError(
+                        "PLAN_STATE_ROOT_INVALID",
+                        "authoritative root must be a JSON object",
+                    )
+                current_generation = int(current_value.get("state_generation") or 0)
+            except TimeoutError as exc:
+                raise TransientInfrastructureError(
+                    "PLAN_STATE_READ_TIMEOUT", type(exc).__name__
+                ) from exc
+            except (json.JSONDecodeError, TypeError, ValueError) as exc:
+                raise PermanentInfrastructureError(
+                    "PLAN_STATE_ROOT_INVALID", type(exc).__name__
+                ) from exc
         if expected_generation is not None and int(expected_generation) != current_generation:
-            raise ValueError(
+            raise StateCASConflict(
                 "STATE_CAS_CONFLICT: expected generation "
                 f"{int(expected_generation)}, current generation {current_generation}"
             )
@@ -6787,16 +7395,37 @@ def _atomic_write_plan_state(
             raise ValueError(
                 "CANONICAL_TASKSPEC_WRITE_FORBIDDEN: use Consultant Controller CAS commit"
             )
+        previous_index = dict(current_value.get("audit_index") or {})
+        candidate_index = dict(state.get("audit_index") or {})
+        store = StateContractStore(
+            path.parents[2], str(state.get("task_id") or path.parent.name)
+        )
+        committed_refs = _prepare_atomic_plan_objects(
+            path=path,
+            state=state,
+            current_value=current_value,
+            store=store,
+            current_generation=current_generation,
+        )
+        # Allocation may rewrite candidate-local refs. Recompute the hashes
+        # only after that promotion has completed inside this lock.
+        next_task_hash = str(
+            ((state.get("current_task") or {}).get("task_semantic_hash")) or ""
+        )
         next_plan_hash = str(
             ((state.get("current_plan") or {}).get("plan_semantic_hash"))
             or ""
         )
         previous_approval = str(
-            ((current_value.get("approval_snapshot") or {}).get("approval_id"))
+            ((current_value.get("current_approval") or {}).get("approval_record_ref"))
+            or current_value.get("approval_record_ref")
+            or ((current_value.get("approval_snapshot") or {}).get("approval_id"))
             or ""
         )
         next_approval = str(
-            ((state.get("approval_snapshot") or {}).get("approval_id"))
+            ((state.get("current_approval") or {}).get("approval_record_ref"))
+            or state.get("approval_record_ref")
+            or ((state.get("approval_snapshot") or {}).get("approval_id"))
             or ""
         )
         if previous_task_hash != next_task_hash:
@@ -6809,11 +7438,6 @@ def _atomic_write_plan_state(
             audit_type = "state_created"
         else:
             audit_type = "runtime_event"
-        previous_index = dict(current_value.get("audit_index") or {})
-        candidate_index = dict(state.get("audit_index") or {})
-        store = StateContractStore(
-            path.parents[2], str(state.get("task_id") or path.parent.name)
-        )
         approval_snapshot_ref = ""
         if isinstance(state.get("approval_snapshot"), Mapping) and state.get("approval_snapshot"):
             approval_snapshot_ref = store.put_object(
@@ -6836,6 +7460,16 @@ def _atomic_write_plan_state(
                 "approval_id_before": previous_approval,
                 "approval_id_after": next_approval,
                 "approval_snapshot_ref_after": approval_snapshot_ref,
+                "plan_snapshot_ref_after": str(
+                    committed_refs.get("plan_snapshot_ref")
+                    or state.get("plan_snapshot_ref")
+                    or ""
+                ),
+                "approval_record_ref_after": str(
+                    committed_refs.get("approval_record_ref")
+                    or state.get("approval_record_ref")
+                    or ""
+                ),
                 "task_source_object_refs_after": [
                     str(value)
                     for value in (

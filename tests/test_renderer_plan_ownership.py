@@ -38,7 +38,7 @@ class RendererPlanOwnershipTests(unittest.TestCase):
 
         contracts = effective_output_contracts(spec)
 
-        self.assertEqual([item["filename"] for item in contracts], ["annotated.vcf"])
+        self.assertEqual([item["required_basename"] for item in contracts], ["annotated.vcf"])
         self.assertEqual(contracts[0]["source_type"], "benchmark_contract")
         self.assertEqual(contracts[0]["source_ref"], "task.outputs[0]")
 
@@ -52,6 +52,7 @@ class RendererPlanOwnershipTests(unittest.TestCase):
             "- [ ] Step 3: Write gene summary | Action: EXECUTE | Skills: [] "
             "| Outputs: [ann_gene_summary.tsv] | Done: ann_gene_summary.tsv exists\n",
         )
+        state.setdefault("task_state", {})["execution_contract"] = "legacy_renderer_v1"
         contracts = effective_output_contracts({
             "output_contracts": [
                 {"filename": name, "required": True, "source_type": "user_explicit"}
@@ -108,6 +109,7 @@ class RendererPlanOwnershipTests(unittest.TestCase):
             "- [ ] Step 1: First | Action: EXECUTE | Skills: [] | Outputs: [report.md] | Done: report exists\n"
             "- [ ] Step 2: Second | Action: EXECUTE | Skills: [] | Outputs: [/tmp/out/report.md] | Done: report exists\n",
         )
+        state.setdefault("task_state", {})["execution_contract"] = "legacy_renderer_v1"
         contracts = effective_output_contracts({
             "output_contracts": [
                 {"role": "output_dir", "path": "/tmp/out", "required": True},
@@ -139,6 +141,7 @@ class RendererPlanOwnershipTests(unittest.TestCase):
             "task-optional",
             "- [ ] Step 1: Run | Action: EXECUTE | Skills: [] | Outputs: [required.tsv] | Done: required.tsv exists\n",
         )
+        state.setdefault("task_state", {})["execution_contract"] = "legacy_renderer_v1"
         contracts = effective_output_contracts({
             "output_contracts": [
                 {"filename": "required.tsv", "required": True},
