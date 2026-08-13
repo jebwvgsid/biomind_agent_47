@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import os
 import re
+import hashlib
+import json
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -38,6 +40,8 @@ class ArtifactViolation:
     required_filename: str = ""
     field_path: str = ""
     compatibility_hit: bool = False
+    subowner: str = ""
+    failure_stage: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -53,6 +57,8 @@ class ArtifactViolation:
                 "required_filename": self.required_filename,
                 "field_path": self.field_path,
                 "compatibility_hit": self.compatibility_hit,
+                "subowner": self.subowner,
+                "failure_stage": self.failure_stage,
             }.items()
             if value not in (None, "", False)
         }
@@ -74,6 +80,10 @@ class ManagedArtifactBinding:
     required: bool = True
     aliases: Tuple[str, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    artifact_kind: str = ""
+    source_authority: str = "task_spec"
+    snapshot_identity: str = ""
+    runtime_available: bool = True
 
     def __post_init__(self) -> None:
         if self.direction not in {"input", "output"}:
@@ -109,6 +119,10 @@ class ManagedArtifactBinding:
             "required": self.required,
             "aliases": list(self.aliases),
             "metadata": deepcopy(dict(self.metadata)),
+            "artifact_kind": self.artifact_kind,
+            "source_authority": self.source_authority,
+            "snapshot_identity": self.snapshot_identity,
+            "runtime_available": self.runtime_available,
         }
         if include_control_path:
             value["canonical_path"] = self.canonical_path
@@ -180,16 +194,241 @@ def _binding_from_row(
             "role": str(role),
             "output_id": str(raw.get("output_id") or "") if direction == "output" else "",
         },
+        artifact_kind=str(raw.get("artifact_kind") or raw.get("object_kind") or ""),
+        source_authority=str(raw.get("source_authority") or "task_spec"),
+        snapshot_identity=str(raw.get("snapshot_identity") or ""),
+        runtime_available=bool(raw.get("runtime_available", True)),
     )
+
+
+_STEP_SUCCESS = {"done", "completed", "passed", "skipped"}
+_ARTIFACT_VALID = {"valid", "passed", "pass"}
+
+
+def _runtime_plan_local_available(
+    plan_state: Mapping[str, Any],
+    artifact_id: str,
+    producer_step_id: str,
+) -> bool:
+    producer = next(
+        (
+            dict(step)
+            for step in plan_state.get("steps", []) or []
+            if isinstance(step, Mapping)
+            and str(step.get("step_id") or "") == str(producer_step_id or "")
+        ),
+        {},
+    )
+    if str(producer.get("status") or "").strip().lower() not in _STEP_SUCCESS:
+        return False
+    provenance = dict(plan_state.get("provenance_state") or {})
+    artifacts = dict(provenance.get("artifacts") or {})
+    heads = dict(provenance.get("artifact_heads") or {})
+    for head in heads.values():
+        record = dict(artifacts.get(str(head)) or {})
+        if str(record.get("logical_artifact_id") or "") != str(artifact_id):
+            continue
+        if (
+            str(record.get("status") or "").strip().lower() == "valid"
+            and str(record.get("validation_status") or "").strip().lower()
+            in _ARTIFACT_VALID
+        ):
+            return True
+    return False
+
+
+def build_approved_visible_artifact_set(
+    task_spec: Mapping[str, Any],
+    *,
+    plan_state: Optional[Mapping[str, Any]] = None,
+    approved_plan_snapshot: Optional[Mapping[str, Any]] = None,
+    current_step_id: str = "",
+) -> Dict[str, Dict[str, Any]]:
+    """Compile the authoritative artifact visibility set for one invocation.
+
+    Plans without plan-local artifacts retain the pre-v1.2.1 TaskSpec-wide
+    binding behaviour.  Once a plan-local ledger exists, the immutable
+    snapshot's typed usage edges scope both task and plan-local artifacts.
+    """
+    snapshot = dict(approved_plan_snapshot or {})
+    plan_local = dict(
+        snapshot.get("plan_local_artifacts")
+        or snapshot.get("plan_artifacts")
+        or {}
+    )
+    task_rows: Dict[str, Tuple[str, Dict[str, Any]]] = {}
+    for direction, field_name, identity_key in (
+        ("input", "inputs", "input_id"),
+        ("output", "output_contracts", "output_id"),
+    ):
+        for raw in task_spec.get(field_name, []) or []:
+            if not isinstance(raw, Mapping):
+                continue
+            row = dict(raw)
+            identity = str(
+                row.get("artifact_id")
+                or row.get(identity_key)
+                or row.get("semantic_handle")
+                or ""
+            )
+            for ref in (
+                identity,
+                row.get("artifact_id"),
+                row.get(identity_key),
+                row.get("semantic_handle"),
+            ):
+                if str(ref or ""):
+                    task_rows[str(ref)] = (direction, row)
+
+    # Compatibility: older approved plans have no plan-local ledger and keep
+    # the original TaskSpec binding universe.
+    if not plan_local:
+        visible: Dict[str, Dict[str, Any]] = {}
+        for identity, (direction, row) in task_rows.items():
+            canonical_identity = str(
+                row.get("artifact_id")
+                or row.get("input_id" if direction == "input" else "output_id")
+                or row.get("semantic_handle")
+                or identity
+            )
+            visible[canonical_identity] = {
+                "artifact_id": canonical_identity,
+                "direction": direction,
+                "source_authority": "task_spec",
+                "row": deepcopy(row),
+                "runtime_available": True,
+                "aliases": sorted({
+                    str(value)
+                    for value in (
+                        identity,
+                        row.get("artifact_id"),
+                        row.get("input_id"),
+                        row.get("output_id"),
+                        row.get("semantic_handle"),
+                    )
+                    if str(value or "")
+                }),
+            }
+        return visible
+
+    from agent_core.node_context import approved_current_step_artifact_usage
+
+    usage = approved_current_step_artifact_usage(snapshot, current_step_id)
+    visible = {}
+    snapshot_identity = str(
+        snapshot.get("plan_snapshot_id")
+        or snapshot.get("plan_semantic_hash")
+        or ""
+    )
+    for artifact_id, invocation in sorted(usage.items()):
+        direction = str(invocation.get("direction") or "")
+        if artifact_id in plan_local:
+            ledger_entry = deepcopy(dict(plan_local[artifact_id] or {}))
+            producer_step_id = str(invocation.get("producer_step_id") or "")
+            runtime_available = (
+                True
+                if direction == "output"
+                else _runtime_plan_local_available(
+                    dict(plan_state or {}), artifact_id, producer_step_id
+                )
+            )
+            visible[artifact_id] = {
+                "artifact_id": artifact_id,
+                "direction": direction,
+                "source_authority": "approved_plan_snapshot",
+                "snapshot_identity": snapshot_identity,
+                "producer_step_id": producer_step_id,
+                "row": ledger_entry,
+                "runtime_available": runtime_available,
+                "aliases": [artifact_id, f"{direction}.{artifact_id}"],
+            }
+            continue
+        task_match = task_rows.get(artifact_id)
+        if task_match is None:
+            continue
+        declared_direction, row = task_match
+        if declared_direction != direction:
+            continue
+        canonical_identity = str(
+            row.get("artifact_id")
+            or row.get("input_id" if direction == "input" else "output_id")
+            or artifact_id
+        )
+        visible[canonical_identity] = {
+            "artifact_id": canonical_identity,
+            "direction": direction,
+            "source_authority": "task_spec",
+            "snapshot_identity": snapshot_identity,
+            "row": deepcopy(row),
+            "runtime_available": True,
+            "aliases": sorted({
+                artifact_id,
+                canonical_identity,
+                str(row.get("semantic_handle") or ""),
+            } - {""}),
+        }
+    return visible
+
+
+def managed_action_fingerprint(action: Mapping[str, Any]) -> str:
+    """Hash normalized execution-relevant structured action fields."""
+    normalized = {
+        "type": str(action.get("type") or action.get("action_type") or "").strip().lower(),
+        "argv": [str(item) for item in action.get("argv", []) or []],
+        "env": {
+            str(key): str(value)
+            for key, value in sorted(dict(action.get("env") or {}).items())
+        },
+        "cwd": str(action.get("cwd") or ""),
+        "outputs": [str(item) for item in action.get("outputs", []) or []],
+        "produced_outputs": deepcopy(list(action.get("produced_outputs", []) or [])),
+    }
+    return hashlib.sha256(
+        json.dumps(
+            normalized,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8", errors="replace")
+    ).hexdigest()
 
 
 def build_managed_artifact_bindings(
     task_spec: Mapping[str, Any],
     *,
     plan_state: Optional[Mapping[str, Any]] = None,
+    approved_plan_snapshot: Optional[Mapping[str, Any]] = None,
+    current_step_id: str = "",
+    visible_artifacts: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> Dict[str, ManagedArtifactBinding]:
-    """Compile the canonical Task artifact contract into unique handles."""
+    """Compile the approved current-step artifact set into managed bindings."""
     result: Dict[str, ManagedArtifactBinding] = {}
+    visible = {
+        str(key): deepcopy(dict(value))
+        for key, value in dict(
+            visible_artifacts
+            or build_approved_visible_artifact_set(
+                task_spec,
+                plan_state=plan_state,
+                approved_plan_snapshot=approved_plan_snapshot,
+                current_step_id=current_step_id,
+            )
+        ).items()
+        if isinstance(value, Mapping)
+    }
+    plan_local = dict(
+        (approved_plan_snapshot or {}).get("plan_local_artifacts")
+        or (approved_plan_snapshot or {}).get("plan_artifacts")
+        or {}
+    )
+    scoped_to_approved_step = bool(plan_local)
+    visible_by_alias: Dict[str, Dict[str, Any]] = {}
+    for identity, row in visible.items():
+        visible_by_alias[identity] = row
+        for alias in row.get("aliases", []) or []:
+            if str(alias or ""):
+                visible_by_alias[str(alias)] = row
     output_root = ""
     for raw in task_spec.get("output_contracts", []) or []:
         if not isinstance(raw, Mapping) or str(raw.get("role") or "") != "output_dir":
@@ -208,7 +447,40 @@ def build_managed_artifact_bindings(
         for index, raw in enumerate(task_spec.get(field_name, []) or [], start=1):
             if not isinstance(raw, Mapping):
                 continue
+            if scoped_to_approved_step and not any(
+                str(ref or "") in visible_by_alias
+                for ref in (
+                    raw.get("artifact_id"),
+                    raw.get("input_id" if direction == "input" else "output_id"),
+                    raw.get("semantic_handle"),
+                )
+            ):
+                continue
             binding_row = dict(raw)
+            visible_row = next(
+                (
+                    visible_by_alias[str(ref)]
+                    for ref in (
+                        raw.get("artifact_id"),
+                        raw.get("input_id" if direction == "input" else "output_id"),
+                        raw.get("semantic_handle"),
+                    )
+                    if str(ref or "") in visible_by_alias
+                ),
+                {},
+            )
+            if visible_row:
+                binding_row.update({
+                    "source_authority": str(
+                        visible_row.get("source_authority") or "task_spec"
+                    ),
+                    "snapshot_identity": str(
+                        visible_row.get("snapshot_identity") or ""
+                    ),
+                    "runtime_available": bool(
+                        visible_row.get("runtime_available", True)
+                    ),
+                })
             if direction == "output" and not _canonical_path(binding_row):
                 materialized = next((
                     materializations.get(str(ref))
@@ -249,6 +521,54 @@ def build_managed_artifact_bindings(
                     f"MANAGED_ARTIFACT_HANDLE_AMBIGUOUS: {binding.semantic_handle}"
                 )
             result[binding.semantic_handle] = binding
+
+    for artifact_id, visible_row in sorted(visible.items()):
+        if str(visible_row.get("source_authority") or "") != "approved_plan_snapshot":
+            continue
+        direction = str(visible_row.get("direction") or "")
+        ledger_entry = dict(visible_row.get("row") or {})
+        semantic_view = dict(ledger_entry.get("semantic_view") or {})
+        canonical_path = _canonical_path(ledger_entry)
+        artifact_kind = str(ledger_entry.get("object_kind") or "")
+        validation_contract_id = str(
+            ledger_entry.get("validation_contract_id")
+            or (
+                "directory_exists"
+                if artifact_kind == "directory"
+                else "file_exists"
+            )
+        )
+        binding = ManagedArtifactBinding(
+            artifact_id=artifact_id,
+            semantic_handle=f"{direction}.{artifact_id}",
+            direction=direction,
+            format=str(semantic_view.get("format") or ""),
+            path_policy=MANAGED_EXACT,
+            canonical_path=canonical_path,
+            required_basename=Path(canonical_path).name if canonical_path else "",
+            producer_owner="approved_plan",
+            producer_step_id=str(visible_row.get("producer_step_id") or ""),
+            relocatable=False,
+            validation_contract_id=validation_contract_id,
+            required=True,
+            aliases=tuple(
+                str(value)
+                for value in visible_row.get("aliases", []) or []
+                if str(value or "")
+            ),
+            metadata={
+                "role": str(semantic_view.get("role") or artifact_id),
+                "output_id": artifact_id if direction == "output" else "",
+                "availability_origin": str(
+                    ledger_entry.get("availability_origin") or ""
+                ),
+            },
+            artifact_kind=artifact_kind,
+            source_authority="approved_plan_snapshot",
+            snapshot_identity=str(visible_row.get("snapshot_identity") or ""),
+            runtime_available=bool(visible_row.get("runtime_available", True)),
+        )
+        result[binding.semantic_handle] = binding
     return result
 
 
@@ -260,7 +580,10 @@ def managed_artifact_llm_view(
         {
             key: value
             for key, value in binding.to_dict(include_control_path=False).items()
-            if key not in {"artifact_id", "producer_step_id", "metadata", "aliases"}
+            if key not in {
+                "artifact_id", "producer_step_id", "metadata", "aliases",
+                "snapshot_identity", "source_authority",
+            }
         }
         for _, binding in sorted(bindings.items())
     ]
@@ -291,6 +614,8 @@ def _violation(
     proposed: str = "",
     field_path: str = "",
     compatibility_hit: bool = False,
+    subowner: str = "",
+    failure_stage: str = "",
 ) -> ArtifactViolation:
     return ArtifactViolation(
         code=code,
@@ -303,6 +628,8 @@ def _violation(
         required_filename=binding.required_basename if binding else "",
         field_path=field_path,
         compatibility_hit=compatibility_hit,
+        subowner=subowner,
+        failure_stage=failure_stage,
     )
 
 
@@ -393,6 +720,7 @@ def materialize_managed_action(
     *,
     allow_legacy_exact_literals: bool = False,
     operation_bindings: Optional[Mapping[str, str]] = None,
+    approved_visible_artifacts: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> Tuple[Dict[str, Any], List[ArtifactViolation]]:
     """Resolve typed placeholders in argv/env and validate declared handles.
 
@@ -410,6 +738,52 @@ def materialize_managed_action(
         if str(key) and str(value)
     }
     used_operations: List[str] = []
+    visible_by_alias: Dict[str, Mapping[str, Any]] = {}
+    for identity, row in dict(approved_visible_artifacts or {}).items():
+        if not isinstance(row, Mapping):
+            continue
+        visible_by_alias[str(identity)] = row
+        for alias in row.get("aliases", []) or []:
+            if str(alias or ""):
+                visible_by_alias[str(alias)] = row
+
+    def missing_binding_violation(
+        reference: str,
+        direction: str,
+        *,
+        field_path: str,
+        message: str,
+    ) -> ArtifactViolation:
+        visible = visible_by_alias.get(str(reference or ""))
+        if visible is None and str(reference or "").startswith(direction + "."):
+            visible = visible_by_alias.get(str(reference).split(".", 1)[1])
+        if visible is not None and str(visible.get("direction") or "") == direction:
+            return _violation(
+                code="PLAN_ARTIFACT_BINDING_PROJECTION_MISSING",
+                owner="INTERNAL_PROTOCOL",
+                subowner="controller_projection",
+                route="internal_reproject",
+                message=(
+                    "Approved current-step artifact is absent from the managed "
+                    f"binding projection: {reference!r}."
+                ),
+                proposed=reference,
+                field_path=field_path,
+                failure_stage="pre_action_contract",
+            )
+        return _violation(
+            code=(
+                "GENERATE_OUTPUT_ID_UNKNOWN"
+                if field_path.endswith(".output_id")
+                else "MANAGED_ARTIFACT_HANDLE_UNKNOWN"
+            ),
+            owner="GENERATED_ACTION",
+            route="generate",
+            message=message,
+            proposed=reference,
+            field_path=field_path,
+            failure_stage="pre_action_contract",
+        )
 
     produced_outputs = proposal.get("produced_outputs", []) or []
     if produced_outputs and not isinstance(produced_outputs, list):
@@ -440,13 +814,11 @@ def materialize_managed_action(
         output_id = str(raw.get("output_id") or "")
         binding = bindings_by_output_id.get(output_id)
         if binding is None:
-            violations.append(_violation(
-                code="GENERATE_OUTPUT_ID_UNKNOWN",
-                owner="GENERATED_ACTION",
-                route="generate",
-                message=f"Generate declared unknown output_id {output_id!r}.",
-                proposed=output_id,
+            violations.append(missing_binding_violation(
+                output_id,
+                "output",
                 field_path=f"produced_outputs[{index}].output_id",
+                message=f"Generate declared unknown output_id {output_id!r}.",
             ))
             continue
         produced_handles.append(binding.semantic_handle)
@@ -471,13 +843,11 @@ def materialize_managed_action(
         seen_outputs.add(handle)
         binding = bindings.get(handle)
         if binding is None:
-            violations.append(_violation(
-                code="MANAGED_ARTIFACT_HANDLE_UNKNOWN",
-                owner="GENERATED_ACTION",
-                route="generate",
-                message=f"Output handle {handle!r} is unknown.",
-                proposed=handle,
+            violations.append(missing_binding_violation(
+                handle,
+                "output",
                 field_path=f"outputs[{index}]",
+                message=f"Output handle {handle!r} is unknown.",
             ))
         elif binding.direction != "output":
             violations.append(_violation(
@@ -514,13 +884,11 @@ def materialize_managed_action(
             direction, handle = parsed
             binding = bindings.get(handle)
             if binding is None:
-                violations.append(_violation(
-                    code="MANAGED_ARTIFACT_HANDLE_UNKNOWN",
-                    owner="GENERATED_ACTION",
-                    route="generate",
-                    message=f"Placeholder {value!r} does not resolve to a managed artifact.",
-                    proposed=value,
+                violations.append(missing_binding_violation(
+                    handle,
+                    direction,
                     field_path=field_path,
+                    message=f"Placeholder {value!r} does not resolve to a managed artifact.",
                 ))
                 return value
             if binding.direction != direction:
@@ -534,15 +902,32 @@ def materialize_managed_action(
                     field_path=field_path,
                 ))
                 return value
+            if binding.direction == "input" and not binding.runtime_available:
+                violations.append(_violation(
+                    code="PLAN_ARTIFACT_DEPENDENCY_UNAVAILABLE",
+                    owner="DEPENDENCY",
+                    route="recovery",
+                    message=(
+                        f"Approved dependency artifact {binding.artifact_id!r} is not "
+                        "runtime-valid for consumption."
+                    ),
+                    binding=binding,
+                    proposed=value,
+                    field_path=field_path,
+                    failure_stage="pre_action_contract",
+                ))
+                return value
             if not binding.canonical_path:
                 violations.append(_violation(
-                    code="MANAGED_ARTIFACT_PATH_MISSING",
-                    owner="controller_projection",
-                    route="internal_block",
+                    code="PLAN_ARTIFACT_BINDING_PROJECTION_MISSING",
+                    owner="INTERNAL_PROTOCOL",
+                    subowner="controller_projection",
+                    route="internal_reproject",
                     message=f"Controller has no path for {handle}.",
                     binding=binding,
                     proposed=value,
                     field_path=field_path,
+                    failure_stage="pre_action_contract",
                 ))
                 return value
             used_handles.append(handle)

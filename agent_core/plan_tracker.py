@@ -16,7 +16,7 @@ import fcntl
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 from agent_core.task_spec import (
     TASK_CANONICALIZATION_VERSION,
@@ -856,7 +856,16 @@ def normalize_artifact_contract(
         "required": bool(raw.get("required", True)),
         "producer_step_id": str(raw.get("producer_step_id") or producer_step_id or ""),
         "producer": str(raw.get("producer") or ""),
-        "validator": str(raw.get("validator") or ("nonempty_executable_script" if artifact_type == "script" else "nonempty_file")),
+        "validator": str(
+            raw.get("validator")
+            or (
+                "nonempty_executable_script"
+                if artifact_type == "script"
+                else "directory_exists"
+                if artifact_type == "directory"
+                else "nonempty_file"
+            )
+        ),
         "source": str(raw.get("source") or source),
     }
     if raw.get("base_dir"):
@@ -946,6 +955,27 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
         for ref in (row.get("artifact_id"), row.get("output_id"), row.get("semantic_handle")):
             if str(ref or ""):
                 task_output_by_ref[str(ref)] = row
+    plan_local_by_ref = {
+        str(logical_id): dict(row)
+        for logical_id, row in dict(state.get("plan_artifacts") or {}).items()
+        if isinstance(row, Mapping) and str(logical_id)
+    }
+    existing_provenance = dict(state.get("provenance_state") or {})
+    existing_heads = dict(existing_provenance.get("artifact_heads") or {})
+    existing_artifacts = dict(existing_provenance.get("artifacts") or {})
+
+    def without_legacy_planner_text(artifact_ids: Iterable[Any]) -> List[str]:
+        """Drop prose-derived aliases once a typed plan-local edge exists."""
+        retained: List[str] = []
+        for raw_artifact_id in artifact_ids or []:
+            artifact_id = str(raw_artifact_id or "")
+            head = str(existing_heads.get(artifact_id) or "")
+            record = dict(existing_artifacts.get(head) or {})
+            if str(record.get("source") or "") == "planner_text":
+                continue
+            if artifact_id:
+                retained.append(artifact_id)
+        return retained
     materialized_by_ref: Dict[str, Dict[str, Any]] = {}
     for row in state.get("task_output_materializations", []) or []:
         if not isinstance(row, Mapping):
@@ -965,7 +995,30 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
                 raw_ref.get("artifact_id") or raw_ref.get("output_id") or ""
             ) if isinstance(raw_ref, Mapping) else str(raw_ref or "")
             task_output = task_output_by_ref.get(ref)
-            if task_output is None:
+            plan_local = plan_local_by_ref.get(ref)
+            if task_output is None and plan_local is None:
+                continue
+            if plan_local is not None:
+                object_kind = str(plan_local.get("object_kind") or "file")
+                path = str(plan_local.get("canonical_path") or "")
+                if path:
+                    contracts.append(normalize_artifact_contract({
+                        "artifact_id": ref,
+                        "output_id": ref,
+                        "role": str(
+                            (plan_local.get("semantic_view") or {}).get("role")
+                            or ref
+                        ),
+                        "path": path,
+                        "artifact_type": object_kind,
+                        "required": True,
+                        "validator": (
+                            "directory_exists"
+                            if object_kind == "directory"
+                            else "file_exists"
+                        ),
+                        "source": "approved_plan_artifact_ledger",
+                    }, producer_step_id=step_id, source="approved_plan_artifact_ledger"))
                 continue
             output_id = str(task_output.get("output_id") or task_output.get("artifact_id") or ref)
             materialized = (
@@ -987,7 +1040,14 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
                     "path": path,
                     "artifact_type": str(task_output.get("artifact_kind") or "file"),
                     "required": bool(task_output.get("required", True)),
-                    "validator": str(task_output.get("validation_contract_id") or "nonempty_file"),
+                    "validator": str(
+                        task_output.get("validation_contract_id")
+                        or (
+                            "directory_exists"
+                            if str(task_output.get("artifact_kind") or "") == "directory"
+                            else "nonempty_file"
+                        )
+                    ),
                     "source": "task_spec_output_contract",
                 }, producer_step_id=step_id, source="task_spec_output_contract"))
         if not contracts:
@@ -1008,7 +1068,15 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
             }
             output_ids.append(artifact_id)
         if output_ids:
-            step["output_artifact_ids"] = list(dict.fromkeys([*step.get("output_artifact_ids", []), *output_ids]))
+            typed_plan_local_output = any(
+                str(contract.get("source") or "") == "approved_plan_artifact_ledger"
+                for contract in contracts
+            )
+            prior_output_ids = list(step.get("output_artifact_ids", []))
+            if typed_plan_local_output:
+                prior_output_ids = without_legacy_planner_text(prior_output_ids)
+            step["output_artifact_ids"] = list(dict.fromkeys([*prior_output_ids, *output_ids]))
+            raw_step["output_artifact_ids"] = list(step["output_artifact_ids"])
 
     by_path = {str(item.get("path") or ""): artifact_id for artifact_id, item in result.items()}
     by_logical: Dict[str, List[str]] = {}
@@ -1040,7 +1108,18 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
                         step["dependencies"] = list(dependencies)
                         step.setdefault("dependency_sources", {})[producer_step_id] = "artifact_contract_inferred"
         if matched:
-            step["input_artifact_ids"] = list(dict.fromkeys([*step.get("input_artifact_ids", []), *matched]))
+            typed_plan_local_input = any(
+                str((result.get(artifact_id) or {}).get("source") or "")
+                == "approved_plan_artifact_ledger"
+                for artifact_id in matched
+            )
+            prior_input_ids = list(step.get("input_artifact_ids", []))
+            if typed_plan_local_input:
+                prior_input_ids = without_legacy_planner_text(prior_input_ids)
+            step["input_artifact_ids"] = list(dict.fromkeys([*prior_input_ids, *matched]))
+            raw_step["input_artifact_ids"] = list(step["input_artifact_ids"])
+            raw_step["dependencies"] = list(step.get("dependencies") or [])
+            raw_step["depends_on"] = list(step.get("depends_on") or [])
     return result
 
 
@@ -2588,7 +2667,11 @@ def validate_renderer_action_artifacts(
         candidate = path if path.is_absolute() else base / path
         validator = str(contract.get("validator") or "nonempty_file")
         try:
-            if validator == "nonempty_directory":
+            if validator == "directory_exists":
+                valid = candidate.is_dir()
+            elif validator == "file_exists":
+                valid = candidate.is_file()
+            elif validator == "nonempty_directory":
                 valid = candidate.is_dir() and any(candidate.iterdir())
             elif validator == "nonempty_executable_script":
                 valid = candidate.is_file() and candidate.stat().st_size > 0 and os.access(candidate, os.X_OK)
@@ -6527,11 +6610,53 @@ def _plan_spec_v2_record(state: PlanState) -> Dict[str, Any]:
         for key in (
             "plan_id", "plan_version", "plan_revision", "generated_from_task_revision",
             "base_task_semantic_hash", "selected_skill_ids", "steps", "plan_document",
-            "plan_local_artifacts", "artifact_allocation_mapping", "artifact_usage",
+            "plan_artifacts", "artifact_allocation_mapping", "artifact_usage",
             "task_plan_traceability", "task_output_materializations",
         )
         if state.get(key) not in (None, "", [], {})
     }
+
+
+def load_approved_plan_snapshot(
+    data_path: str | Path,
+    task_id: str,
+    *,
+    state: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Load the immutable PlanSnapshot pinned by the current approval.
+
+    Legacy approved plans may not have a content-addressed snapshot and return
+    an empty mapping so their existing TaskSpec-only execution path remains
+    available.  Once a snapshot ref exists, any approval/ref/identity mismatch
+    is an internal contract conflict and must fail closed.
+    """
+    current = dict(state or load_plan_state(data_path, task_id))
+    current_plan = dict(current.get("current_plan") or {})
+    current_approval = dict(current.get("current_approval") or {})
+    snapshot_ref = str(
+        current_approval.get("plan_snapshot_ref")
+        or current_plan.get("plan_snapshot_ref")
+        or current.get("plan_snapshot_ref")
+        or ""
+    )
+    if not snapshot_ref:
+        return {}
+    if str(current_approval.get("status") or "") != "approved":
+        raise ValueError("APPROVED_PLAN_SNAPSHOT_NOT_APPROVED")
+    if str(current_approval.get("plan_snapshot_ref") or "") != snapshot_ref:
+        raise ValueError("APPROVED_PLAN_SNAPSHOT_REF_MISMATCH")
+    snapshot = StateContractStore(data_path, task_id).read_object(
+        snapshot_ref,
+        expected_type="plan_snapshot_v121",
+    )
+    if not isinstance(snapshot, Mapping):
+        raise ValueError("APPROVED_PLAN_SNAPSHOT_INVALID")
+    assert_reader_compatible(snapshot)
+    expected_id = str(current_plan.get("plan_snapshot_id") or "")
+    observed_id = str(snapshot.get("plan_snapshot_id") or "")
+    if expected_id and observed_id != expected_id:
+        raise ValueError("APPROVED_PLAN_SNAPSHOT_ID_MISMATCH")
+    return deepcopy(dict(snapshot))
 
 
 def approval_applicability_v2(state: PlanState) -> Dict[str, Any]:

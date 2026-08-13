@@ -1230,7 +1230,13 @@ def _contract_exists(
     for candidate in candidates:
         try:
             stat = candidate.stat()
-            if validator == "nonempty_directory":
+            if validator == "directory_exists":
+                if not candidate.is_dir():
+                    continue
+            elif validator == "file_exists":
+                if not candidate.is_file():
+                    continue
+            elif validator == "nonempty_directory":
                 if not candidate.is_dir() or not any(candidate.iterdir()):
                     continue
             elif not candidate.is_file() or stat.st_size <= 0:

@@ -691,6 +691,130 @@ def _visible_handles(value: Any, known: set[str]) -> set[str]:
     return found
 
 
+def approved_current_step_artifact_usage(
+    approved_plan_snapshot: Mapping[str, Any],
+    current_step_id: str,
+) -> Dict[str, Dict[str, Any]]:
+    """Return invocation-local artifact roles from one approved snapshot.
+
+    The result is identity/ref driven.  It neither reads mutable step prose nor
+    exposes unrelated ledger entries.  A stable plan-local identity may be an
+    output for its producer invocation and an input for a later consumer.
+    """
+    snapshot = dict(approved_plan_snapshot or {})
+    steps = [
+        dict(item)
+        for item in snapshot.get("steps", []) or []
+        if isinstance(item, Mapping)
+    ]
+    step_id = str(current_step_id or "")
+    current = next(
+        (item for item in steps if str(item.get("step_id") or "") == step_id),
+        None,
+    )
+    if not current:
+        return {}
+
+    relations: Dict[str, Dict[str, Any]] = {}
+
+    def add(identity: Any, relation: str, *, field: str) -> None:
+        stable = str(identity or "").strip()
+        if not stable:
+            return
+        direction = "output" if relation == "produce" else "input"
+        prior = relations.get(stable)
+        if prior and str(prior.get("direction") or "") != direction:
+            raise NodeContextError(
+                f"APPROVED_ARTIFACT_ROLE_CONFLICT: {step_id}:{stable}"
+            )
+        relations[stable] = {
+            "artifact_id": stable,
+            "step_id": step_id,
+            "relation": relation,
+            "direction": direction,
+            "field": field,
+        }
+
+    for row in snapshot.get("resolved_artifact_refs", []) or []:
+        if not isinstance(row, Mapping) or str(row.get("step_id") or "") != step_id:
+            continue
+        ref = dict(row.get("artifact_ref") or {})
+        if str(ref.get("kind") or "") != "authoritative":
+            continue
+        relation = str(row.get("relation") or "")
+        if relation in {"consume", "produce"}:
+            add(ref.get("identity"), relation, field=str(row.get("field") or ""))
+
+    # Snapshot steps carry the same typed refs.  This is a compatibility
+    # projection for early v1.2.1 snapshots whose resolved usage list was
+    # absent, not a semantic inference from prose.
+    for field, relation in (("inputs", "consume"), ("outputs", "produce")):
+        for value in current.get(field, []) or []:
+            add(value, relation, field=field)
+
+    plan_local = dict(
+        snapshot.get("plan_local_artifacts")
+        or snapshot.get("plan_artifacts")
+        or {}
+    )
+    producer_by_artifact: Dict[str, str] = {}
+    for row in snapshot.get("resolved_artifact_refs", []) or []:
+        if not isinstance(row, Mapping) or str(row.get("relation") or "") != "produce":
+            continue
+        ref = dict(row.get("artifact_ref") or {})
+        if str(ref.get("kind") or "") == "authoritative":
+            producer_by_artifact[str(ref.get("identity") or "")] = str(
+                row.get("step_id") or ""
+            )
+    for step in steps:
+        producer_step_id = str(step.get("step_id") or "")
+        for artifact_id in step.get("outputs", []) or []:
+            stable = str(artifact_id or "")
+            if stable in plan_local:
+                producer_by_artifact.setdefault(stable, producer_step_id)
+    for artifact_id, value in relations.items():
+        if artifact_id in plan_local:
+            value["plan_local"] = True
+            value["producer_step_id"] = producer_by_artifact.get(artifact_id, "")
+            value["ledger_entry"] = deepcopy(dict(plan_local[artifact_id] or {}))
+        else:
+            value["plan_local"] = False
+    return relations
+
+
+def _plan_local_runtime_available(
+    plan_state: Mapping[str, Any],
+    artifact_id: str,
+    producer_step_id: str,
+) -> bool:
+    producer = next(
+        (
+            step
+            for step in plan_state.get("steps", []) or []
+            if isinstance(step, Mapping)
+            and str(step.get("step_id") or "") == str(producer_step_id or "")
+        ),
+        {},
+    )
+    if str(producer.get("status") or "").lower() not in {
+        "done", "completed", "passed", "skipped",
+    }:
+        return False
+    provenance = dict(plan_state.get("provenance_state") or {})
+    artifacts = dict(provenance.get("artifacts") or {})
+    for head in dict(provenance.get("artifact_heads") or {}).values():
+        record = dict(artifacts.get(str(head)) or {})
+        if str(record.get("logical_artifact_id") or "") != str(artifact_id):
+            continue
+        if (
+            str(record.get("status") or "").lower() == "valid"
+            and str(record.get("validation_status") or "").lower()
+            in {"valid", "passed", "pass"}
+        ):
+            return True
+    return False
+
+
 def _select_current_step_closure(
     *,
     node_type: str,
@@ -924,6 +1048,7 @@ def build_node_context(
     max_payload_chars: Optional[int] = None,
     invocation_id: str = "",
     candidate_scope_id: str = "",
+    approved_plan_snapshot: Optional[Mapping[str, Any]] = None,
 ) -> NodeContext:
     """Build the three-object invocation protocol from authoritative state.
 
@@ -934,11 +1059,75 @@ def build_node_context(
     if normalized_node not in NODE_STALENESS_DOMAINS:
         raise NodeContextError(f"NODE_TYPE_UNSUPPORTED: {node_type!r}")
     plan = dict(plan_state or {})
+    planning_plan = (
+        dict(approved_plan_snapshot or {})
+        if approved_plan_snapshot
+        else plan
+    )
     handles = SemanticHandleMap()
     used: Dict[str, int] = {}
     inputs, outputs = _semantic_artifact_rows(task_spec, handles, used)
+    if approved_plan_snapshot and current_step_id:
+        invocation_usage = approved_current_step_artifact_usage(
+            approved_plan_snapshot,
+            current_step_id,
+        )
+        for artifact_id, usage in sorted(invocation_usage.items()):
+            if not usage.get("plan_local"):
+                continue
+            direction = str(usage.get("direction") or "")
+            ledger_entry = dict(usage.get("ledger_entry") or {})
+            semantic_view = dict(ledger_entry.get("semantic_view") or {})
+            handle = _declared_or_unique_handle(
+                direction,
+                f"{direction}.{artifact_id}",
+                artifact_id,
+                used,
+            )
+            canonical_path = str(ledger_entry.get("canonical_path") or "")
+            handles.add(SemanticHandleBinding(
+                handle,
+                "artifact",
+                artifact_id,
+                direction=direction,
+                allowed_usage=(
+                    ("write", "declare_output", "materialize_output")
+                    if direction == "output"
+                    else ("read", "materialize_input")
+                ),
+                metadata={
+                    "role": str(semantic_view.get("role") or artifact_id),
+                    "canonical_path": canonical_path,
+                    "source_authority": "approved_plan_snapshot",
+                },
+            ))
+            row = {
+                "handle": handle,
+                "role": str(semantic_view.get("role") or artifact_id),
+                "format": str(semantic_view.get("format") or ""),
+                "artifact_kind": str(ledger_entry.get("object_kind") or ""),
+                "required": True,
+                "placeholder": "{" + direction + ":" + artifact_id + "}",
+                "availability": (
+                    "planned_writable_output"
+                    if direction == "output"
+                    else (
+                        "runtime_valid"
+                        if _plan_local_runtime_available(
+                            plan,
+                            artifact_id,
+                            str(usage.get("producer_step_id") or ""),
+                        )
+                        else "dependency_runtime_required"
+                    )
+                ),
+            }
+            if canonical_path:
+                basename = canonical_path.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
+                row["required_basename" if direction == "output" else "basename"] = basename
+            (outputs if direction == "output" else inputs).append(row)
     constraints = _constraint_rows(task_spec, handles, used)
-    steps, step_handles = _step_rows(plan, handles, used)
+    steps, step_handles = _step_rows(planning_plan, handles, used)
     _project_step_semantic_references(steps, handles)
     evidence_rows = _evidence_rows(evidence, handles)
 
@@ -948,7 +1137,7 @@ def build_node_context(
     selection_policy = "required-task-semantics-v2"
     if normalized_node in {"generate", "recovery", "supervisor"}:
         raw_steps = [
-            dict(item) for item in plan.get("steps", []) or []
+            dict(item) for item in planning_plan.get("steps", []) or []
             if isinstance(item, Mapping)
         ]
         raw_outputs = [
@@ -1025,8 +1214,8 @@ def build_node_context(
 
     task_sem_hash = task_semantic_hash(task_spec)
     task_rec_hash = task_record_hash(task_spec)
-    plan_sem_hash = _normalize_hash(semantic_plan_hash(plan)) if plan else ""
-    plan_rec_hash = plan_record_hash(plan) if plan else ""
+    plan_sem_hash = _normalize_hash(semantic_plan_hash(planning_plan)) if planning_plan else ""
+    plan_rec_hash = plan_record_hash(planning_plan) if planning_plan else ""
     binding = ControllerBinding(
         invocation_id=invocation_id or f"inv-{uuid.uuid4()}",
         node_type=normalized_node,

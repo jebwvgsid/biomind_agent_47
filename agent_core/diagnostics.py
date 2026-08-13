@@ -15,7 +15,7 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from agent_core.context_lineage import redact_text
 from agent_core.plan_tracker import canonical_task_spec_for_state
@@ -146,6 +146,11 @@ class RecoveryContext:
     attempt_id: str = ""
     error_class: str = ""
     error_fingerprint: str = ""
+    failure_stage: str = ""
+    approved_plan_snapshot_id: str = ""
+    candidate_fingerprint: str = ""
+    repair_ordinal: int = 0
+    authoritative_state_hash: str = ""
     task_spec_summary: Dict[str, Any] = field(default_factory=dict)
     effective_user_facts: Dict[str, Any] = field(default_factory=dict)
     current_step: Dict[str, Any] = field(default_factory=dict)
@@ -225,6 +230,11 @@ class RecoveryContext:
             "action_id": self.action_id,
             "attempt_id": self.attempt_id,
             "error_fingerprint": self.error_fingerprint,
+            "failure_stage": self.failure_stage,
+            "approved_plan_snapshot_id": self.approved_plan_snapshot_id,
+            "candidate_fingerprint": self.candidate_fingerprint,
+            "repair_ordinal": int(self.repair_ordinal or 0),
+            "authoritative_state_hash": self.authoritative_state_hash,
         }
         digest = hashlib.sha256(
             json.dumps(identity, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
@@ -382,6 +392,86 @@ class RecoveryContext:
 # Compatibility name used by pre-Batch-5 imports/checkpoints. It is the same
 # model, not a parallel diagnostic context.
 DiagnosticContext = RecoveryContext
+
+
+def build_preaction_recovery_context(
+    *,
+    task_id: str,
+    step_id: str,
+    approved_plan_snapshot_id: str,
+    authoritative_state_hash: str,
+    candidate: Mapping[str, Any],
+    candidate_fingerprint: str,
+    violations: Sequence[Mapping[str, Any]],
+    repair_ordinal: int,
+    visible_artifacts: Sequence[Mapping[str, Any]] = (),
+    current_step: Optional[Mapping[str, Any]] = None,
+) -> RecoveryContext:
+    """Build execution-free recovery evidence for a rejected Generate action."""
+    normalized_violations = [
+        _sanitize(dict(item))
+        for item in violations
+        if isinstance(item, Mapping)
+    ]
+    error_payload = {
+        "failure_stage": "pre_action_contract",
+        "step_id": str(step_id or ""),
+        "violations": normalized_violations,
+    }
+    error_fp = hashlib.sha256(
+        json.dumps(
+            error_payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8", errors="replace")
+    ).hexdigest()
+    ordinal = max(1, int(repair_ordinal or 1))
+    context = RecoveryContext(
+        schema_version="4",
+        task_id=str(task_id or ""),
+        step_id=str(step_id or ""),
+        action_id=f"generate-candidate:{candidate_fingerprint}",
+        attempt_id=f"pre-action:{ordinal}:{candidate_fingerprint}",
+        error_class=str(
+            normalized_violations[0].get("code")
+            if normalized_violations
+            else "PRE_ACTION_CONTRACT_FAILURE"
+        ),
+        error_fingerprint=error_fp,
+        failure_stage="pre_action_contract",
+        approved_plan_snapshot_id=str(approved_plan_snapshot_id or ""),
+        candidate_fingerprint=str(candidate_fingerprint or ""),
+        repair_ordinal=ordinal,
+        authoritative_state_hash=str(authoritative_state_hash or ""),
+        current_step=_sanitize(dict(current_step or {})),
+        action_contract={
+            "structured_candidate": _sanitize(dict(candidate or {})),
+            "candidate_fingerprint": str(candidate_fingerprint or ""),
+        },
+        execution={},
+        validation={
+            "status": "invalid",
+            "failure_stage": "pre_action_contract",
+            "violations": normalized_violations,
+        },
+        runtime={
+            "approved_plan_snapshot_id": str(approved_plan_snapshot_id or ""),
+            "authoritative_state_hash": str(authoritative_state_hash or ""),
+            "repair_ordinal": ordinal,
+        },
+        artifacts=[
+            _sanitize(dict(item))
+            for item in visible_artifacts
+            if isinstance(item, Mapping)
+        ],
+        recent_attempts=[],
+        log_references=[],
+        bounded_log_excerpt="",
+    )
+    context.context_id = context.stable_context_id()
+    return context
 
 
 @dataclass

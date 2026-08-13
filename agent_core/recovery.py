@@ -2427,6 +2427,17 @@ class RecoveryPolicy:
             )
 
         if pre and not bool(pre.get("valid", True)):
+            pre_owner = str(
+                pre.get("failure_owner")
+                or RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+            ).strip().upper()
+            if pre_owner not in {item.value for item in RecoveryFailureOwner}:
+                pre_owner = RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+            reason_code = (
+                "generated_action_contract_error"
+                if pre_owner == RecoveryFailureOwner.GENERATED_ACTION.value
+                else "internal_action_protocol_error"
+            )
             missing = [str(item) for item in pre.get("missing_bindings") or [] if str(item)]
             blocked = [str(item) for item in pre.get("blocked_evidence") or [] if str(item)]
             if missing and blocked and not bool(pre.get("repairable")):
@@ -2444,20 +2455,20 @@ class RecoveryPolicy:
             if self._budget(budget, "action_format_repair_count") < self.max_format_repairs:
                 return self._decision(
                     RecoveryDecisionKind.FORMAT_REPAIR.value,
-                    reason_code="internal_action_protocol_error",
+                    reason_code=reason_code,
                     reason="The proposed action violates the current action protocol.",
                     consume_budget="action_format_repair_count",
                     evidence=violations or missing,
-                    failure_owner=RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    failure_owner=pre_owner,
                     failure_class=RecoveryFailureClass.SCRIPT_BUG.value,
                     **base,
                 )
             return self._decision(
                 RecoveryDecisionKind.ESCALATE.value,
-                reason_code="internal_action_protocol_error",
+                reason_code=reason_code,
                 reason="The action-format repair budget is exhausted.",
                 evidence=violations or missing,
-                failure_owner=RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                failure_owner=pre_owner,
                 **base,
             )
 
@@ -2900,6 +2911,8 @@ class RecoveryStateStore:
         *,
         raw_response: str,
         parsed_result: Optional[Dict[str, Any]] = None,
+        cache_identity: Optional[Dict[str, Any]] = None,
+        candidate_fingerprint: str = "",
     ) -> Path:
         """Persist one attempt-scoped LLM result for checkpoint-safe reuse."""
         path = self.root / "llm_results.json"
@@ -2910,15 +2923,40 @@ class RecoveryStateStore:
             "recovery_stage": str(recovery_stage or ""),
             "raw_response": _clip(raw_response, 64_000),
             "parsed_result": dict(parsed_result or {}),
+            "cache_identity": dict(cache_identity or {}),
+            "candidate_fingerprint": str(candidate_fingerprint or ""),
             "saved_at": _now(),
         }
         _json_write(path, cache)
         return path
 
-    def load_llm_result(self, context_id: str, recovery_stage: str) -> Dict[str, Any]:
+    def load_llm_result(
+        self,
+        context_id: str,
+        recovery_stage: str,
+        *,
+        cache_identity: Optional[Dict[str, Any]] = None,
+        invalid_candidate_fingerprints: Optional[Iterable[str]] = None,
+    ) -> Dict[str, Any]:
         cache = self._load_json_object("llm_results.json")
         value = cache.get(self._llm_result_key(context_id, recovery_stage))
-        return dict(value) if isinstance(value, dict) else {}
+        if not isinstance(value, dict):
+            return {}
+        expected_identity = dict(cache_identity or {})
+        if expected_identity:
+            stored_identity = value.get("cache_identity")
+            # Legacy cache entries do not carry sufficient authority identity
+            # for a cross-repair replay.
+            if not isinstance(stored_identity, dict) or stored_identity != expected_identity:
+                return {}
+        invalid = {
+            str(item)
+            for item in invalid_candidate_fingerprints or []
+            if str(item or "")
+        }
+        if str(value.get("candidate_fingerprint") or "") in invalid:
+            return {}
+        return dict(value)
 
     def save_diagnostic_summary(self, manager: Any, tracker: Any, failure_fingerprint: str = "", recovery_budget: Optional[Dict[str, Any]] = None, forbidden_next_actions: Optional[Iterable[str]] = None) -> Path:
         hypotheses = list(getattr(manager, "hypotheses", []) or [])

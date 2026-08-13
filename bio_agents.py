@@ -171,6 +171,7 @@ from agent_core.recovery import (
 from agent_core.diagnostics import (
     RecoveryContext,
     build_current_step_context,
+    build_preaction_recovery_context,
     build_recovery_context,
     enrich_execution_evidence,
 )
@@ -306,6 +307,7 @@ from agent_core.plan_tracker import (
     default_plan_file,
     derive_plan_validation_state,
     ensure_plan_state,
+    load_approved_plan_snapshot,
     load_plan_state,
     mark_first_pending_running,
     mark_plan_step_blocked,
@@ -413,7 +415,9 @@ from agent_core.plan_contract import (
     validated_planner_candidate_wire_example,
 )
 from agent_core.managed_artifacts import (
+    build_approved_visible_artifact_set,
     build_managed_artifact_bindings,
+    managed_action_fingerprint,
     materialize_managed_action,
     validate_generate_output_coverage,
     validate_materialized_artifacts,
@@ -5384,9 +5388,17 @@ class BioAnalystAgent:
         if stale:
             return stale
         task_spec = self._task_spec_for_state(dict(state), list(state.get("messages", []) or []))
+        approved_snapshot = load_approved_plan_snapshot(
+            self.data_path,
+            task_id,
+            state=plan_state,
+        )
+        _, current_step = current_plan_step_with_index(plan_state)
         managed_bindings = build_managed_artifact_bindings(
             task_spec,
             plan_state=plan_state,
+            approved_plan_snapshot=approved_snapshot,
+            current_step_id=str((current_step or {}).get("step_id") or ""),
         )
         if action.get("managed_artifact_handles") or action.get("materialized_artifacts"):
             managed_violations = validate_materialized_artifacts(action, managed_bindings)
@@ -7146,6 +7158,10 @@ class BioAnalystAgent:
     ) -> RecoveryDecision:
         plan_state = load_plan_state(self.data_path, task_id)
         budgets = dict((plan_state.get("task_state") or {}).get("budgets") or {})
+        step_key = str(step_id or "task")
+        budgets["action_format_repair_count"] = int(
+            (budgets.get("action_format_repair_by_step") or {}).get(step_key) or 0
+        )
         decision = RecoveryPolicy().decide(
             pre_action_evidence={
                 "valid": False,
@@ -7159,6 +7175,105 @@ class BioAnalystAgent:
         )
         decision = contextualize_recovery_decision(decision, source_node=source_node)
         return decision
+
+    def _managed_preaction_recovery(
+        self,
+        *,
+        task_id: str,
+        plan_state: Mapping[str, Any],
+        approved_plan_snapshot: Mapping[str, Any],
+        step_id: str,
+        candidate: Mapping[str, Any],
+        candidate_fingerprint: str,
+        violations: Sequence[Mapping[str, Any]],
+        visible_artifacts: Mapping[str, Mapping[str, Any]],
+    ) -> Tuple[RecoveryContext, RecoveryDecision]:
+        """Create one bounded, execution-free Generate repair transition."""
+        task_state = dict(plan_state.get("task_state") or {})
+        budgets = dict(task_state.get("budgets") or {})
+        step_key = str(step_id or "task")
+        current_count = int(
+            (budgets.get("action_format_repair_by_step") or {}).get(step_key) or 0
+        )
+        repair_ordinal = current_count + 1
+        snapshot_identity = str(
+            approved_plan_snapshot.get("plan_snapshot_id")
+            or approved_plan_snapshot.get("plan_semantic_hash")
+            or ""
+        )
+        current_step = next(
+            (
+                dict(item)
+                for item in approved_plan_snapshot.get("steps", []) or []
+                if isinstance(item, Mapping)
+                and str(item.get("step_id") or "") == step_key
+            ),
+            {},
+        )
+        context = build_preaction_recovery_context(
+            task_id=task_id,
+            step_id=step_key,
+            approved_plan_snapshot_id=snapshot_identity,
+            authoritative_state_hash=str(
+                (plan_state.get("current_plan") or {}).get("plan_semantic_hash")
+                or plan_state.get("semantic_plan_hash")
+                or ""
+            ),
+            candidate=candidate,
+            candidate_fingerprint=candidate_fingerprint,
+            violations=violations,
+            repair_ordinal=repair_ordinal,
+            visible_artifacts=[
+                {
+                    "artifact_id": str(identity),
+                    "direction": str(row.get("direction") or ""),
+                    "artifact_kind": str(
+                        (row.get("row") or {}).get("object_kind") or ""
+                    ),
+                    "source_authority": str(row.get("source_authority") or ""),
+                    "runtime_available": bool(row.get("runtime_available", True)),
+                }
+                for identity, row in sorted(visible_artifacts.items())
+            ],
+            current_step=current_step,
+        )
+        first_owner = str(
+            (violations[0] if violations else {}).get("owner")
+            or RecoveryFailureOwner.GENERATED_ACTION.value
+        ).upper()
+        if first_owner == "CONTROLLER_PROJECTION":
+            first_owner = RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+        scoped_budgets = {
+            **budgets,
+            "action_format_repair_count": current_count,
+        }
+        decision = RecoveryPolicy(max_format_repairs=1).decide(
+            pre_action_evidence={
+                "valid": False,
+                "repairable": True,
+                "failure_owner": first_owner,
+                "violations": [
+                    str(item.get("code") or item.get("message") or "")
+                    for item in violations
+                ] + [
+                    f"error_fingerprint={context.error_fingerprint}",
+                    f"invalid_response_hash={candidate_fingerprint}",
+                ],
+            },
+            action_id=context.action_id,
+            step_id=step_key,
+            attempt_id=context.attempt_id,
+            budgets=scoped_budgets,
+        )
+        decision = contextualize_recovery_decision(
+            decision,
+            action_id=context.action_id,
+            step_id=step_key,
+            attempt_id=context.attempt_id,
+            source_node="generate",
+        )
+        context.recovery_decision = decision.to_dict()
+        return context, decision
 
     def _knowledge_conflict_root(self, task_id: str) -> Path:
         return Path(self.data_path) / "task_outputs" / str(task_id or "default")
@@ -11611,6 +11726,28 @@ class BioAnalystAgent:
                 policy_decision, application = commit_guard_decision(proposed_decision)
                 guarded["recovery_decision"] = policy_decision.to_dict()
                 guarded["recovery_application"] = application
+                recovery_context_value = guarded.get("recovery_context") or {}
+                if (
+                    policy_decision.kind == RecoveryDecisionKind.FORMAT_REPAIR.value
+                    and isinstance(recovery_context_value, dict)
+                    and str(recovery_context_value.get("failure_stage") or "")
+                    == "pre_action_contract"
+                ):
+                    logger.info(
+                        "FORMAT_REPAIR_COMMITTED task=%s step_id=%s snapshot_id=%s "
+                        "candidate_fingerprint=%s error_fingerprint=%s repair_ordinal=%s "
+                        "owner=%s route=%s budget_before=%s budget_after=%s",
+                        task_id,
+                        str(recovery_context_value.get("step_id") or ""),
+                        str(recovery_context_value.get("approved_plan_snapshot_id") or ""),
+                        str(recovery_context_value.get("candidate_fingerprint") or ""),
+                        str(recovery_context_value.get("error_fingerprint") or ""),
+                        int(recovery_context_value.get("repair_ordinal") or 0),
+                        policy_decision.failure_owner,
+                        policy_decision.next_route,
+                        dict(application.get("budget_before") or {}),
+                        dict(application.get("budget_after") or {}),
+                    )
                 if application.get("current_step_id"):
                     guarded["current_step_id"] = str(application["current_step_id"])
                 if application.get("current_stage_id"):
@@ -24315,17 +24452,27 @@ question. Never guess a scientific or database identity.
                     ),
                 }
                 renderer_protocol = self._renderer_action_protocol(recovery_state, task_id)
-                recovery_context_obj = build_recovery_context(
-                    recovery_state,
-                    dict(state.get("execution_evidence") or {}),
-                    plan_state=load_plan_state(self.data_path, task_id),
-                    task_root=Path(self.data_path) / "task_outputs" / task_id,
-                    skill_policy={
-                        "skill_ids": list(state.get("active_skills") or []),
-                        "relevant_context": self._clip_observation_text(loaded_skills, 3000),
-                    },
-                    recovery_history=recovery_history,
+                persisted_recovery_context = (
+                    dict(state.get("recovery_context") or {})
+                    if isinstance(state.get("recovery_context"), Mapping)
+                    else {}
                 )
+                if str(persisted_recovery_context.get("failure_stage") or "") == "pre_action_contract":
+                    recovery_context_obj = RecoveryContext.from_mapping(
+                        persisted_recovery_context
+                    )
+                else:
+                    recovery_context_obj = build_recovery_context(
+                        recovery_state,
+                        dict(state.get("execution_evidence") or {}),
+                        plan_state=load_plan_state(self.data_path, task_id),
+                        task_root=Path(self.data_path) / "task_outputs" / task_id,
+                        skill_policy={
+                            "skill_ids": list(state.get("active_skills") or []),
+                            "relevant_context": self._clip_observation_text(loaded_skills, 3000),
+                        },
+                        recovery_history=recovery_history,
+                    )
                 canonical_step = build_current_step_context(
                     recovery_state,
                     load_plan_state(self.data_path, task_id),
@@ -24393,6 +24540,7 @@ question. Never guess a scientific or database identity.
                 generate_plan_state,
                 task_spec_revision(generate_task_spec),
             )
+            generate_approved_snapshot: Dict[str, Any] = {}
             recovery_evidence: List[Dict[str, Any]] = []
             if recovery_context_obj and recovery_context_obj.bounded_log_excerpt:
                 recovery_evidence.append({
@@ -24402,6 +24550,11 @@ question. Never guess a scientific or database identity.
                     "truncated": True,
                 })
             try:
+                generate_approved_snapshot = load_approved_plan_snapshot(
+                    self.data_path,
+                    task_id,
+                    state=generate_plan_state,
+                )
                 generate_node_context = build_node_context(
                     node_type="generate",
                     task_spec=generate_task_spec,
@@ -24475,6 +24628,7 @@ question. Never guess a scientific or database identity.
                         1,
                         int(getattr(self, "llm_context_limit_tokens", 200_000)) * 4,
                     ),
+                    approved_plan_snapshot=generate_approved_snapshot,
                 )
                 call_msgs = [HumanMessage(content=PromptManager.get_generate_v2_prompt(
                     generate_node_context.llm_payload.to_dict(),
@@ -24516,10 +24670,58 @@ question. Never guess a scientific or database identity.
                     or recovery_action.get("type")
                     or ""
                 ).strip().upper()
+                recovery_cache_identity = {
+                    "approved_plan_snapshot_id": str(
+                        generate_approved_snapshot.get("plan_snapshot_id") or ""
+                    ),
+                    "approved_plan_snapshot_ref": str(
+                        (generate_plan_state.get("current_plan") or {}).get("plan_snapshot_ref")
+                        or generate_plan_state.get("plan_snapshot_ref")
+                        or ""
+                    ),
+                    "task_semantic_hash": str(
+                        generate_node_context.binding.task_semantic_hash or ""
+                    ),
+                    "step_id": str(current_step_id or ""),
+                    "failure_stage": str(
+                        recovery_context_obj.failure_stage
+                        if recovery_context_obj
+                        else ""
+                    ),
+                    "error_fingerprint": str(
+                        recovery_context_obj.error_fingerprint
+                        if recovery_context_obj
+                        else ""
+                    ),
+                    "candidate_fingerprint": str(
+                        recovery_context_obj.candidate_fingerprint
+                        if recovery_context_obj
+                        else ""
+                    ),
+                    "repair_ordinal": int(
+                        recovery_context_obj.repair_ordinal
+                        if recovery_context_obj
+                        else 0
+                    ),
+                }
+                cache_budgets = dict(
+                    (generate_plan_state.get("task_state") or {}).get("budgets")
+                    or {}
+                )
+                invalid_candidate_fingerprints = list(
+                    dict(
+                        (cache_budgets.get("invalid_action_hashes_by_step") or {}).get(
+                            str(current_step_id or "lightweight")
+                        )
+                        or {}
+                    ).keys()
+                )
                 cached_generate = (
                     recovery_store.load_llm_result(
                         recovery_context_obj.context_id,
                         f"generate:{recovery_stage or 'RECOVERY'}",
+                        cache_identity=recovery_cache_identity,
+                        invalid_candidate_fingerprints=invalid_candidate_fingerprints,
                     )
                     if recovery_context_obj
                     else {}
@@ -24528,12 +24730,32 @@ question. Never guess a scientific or database identity.
                     generate_response_cached = True
                     response = AIMessage(content=str(cached_generate["raw_response"]))
                     logger.info(
-                        "Generate reused attempt-scoped result: task=%s context_id=%s stage=%s",
+                        "RECOVERY_CACHE_HIT task=%s context_id=%s stage=%s step_id=%s "
+                        "snapshot_id=%s candidate_fingerprint=%s error_fingerprint=%s repair_ordinal=%s",
                         task_id,
                         recovery_context_obj.context_id,
                         recovery_stage or "RECOVERY",
+                        current_step_id,
+                        recovery_cache_identity["approved_plan_snapshot_id"],
+                        str(cached_generate.get("candidate_fingerprint") or ""),
+                        recovery_cache_identity["error_fingerprint"],
+                        recovery_cache_identity["repair_ordinal"],
                     )
                 else:
+                    if recovery_context_obj:
+                        logger.info(
+                            "RECOVERY_CACHE_REJECTED_AS_STALE_OR_INVALID task=%s context_id=%s "
+                            "stage=%s step_id=%s snapshot_id=%s candidate_fingerprint=%s "
+                            "error_fingerprint=%s repair_ordinal=%s",
+                            task_id,
+                            recovery_context_obj.context_id,
+                            recovery_stage or "RECOVERY",
+                            current_step_id,
+                            recovery_cache_identity["approved_plan_snapshot_id"],
+                            recovery_cache_identity["candidate_fingerprint"],
+                            recovery_cache_identity["error_fingerprint"],
+                            recovery_cache_identity["repair_ordinal"],
+                        )
                     generate_call_audit[str(task_id)] = True
                     response = await self._ainvoke_node_llm(
                         call_msgs,
@@ -24559,11 +24781,24 @@ question. Never guess a scientific or database identity.
                         },
                     )
                     if recovery_context_obj:
+                        cached_structured_action = self._extract_structured_action(
+                            str(response.content or "")
+                        )
                         recovery_store.save_llm_result(
                             recovery_context_obj.context_id,
                             f"generate:{recovery_stage or 'RECOVERY'}",
                             raw_response=str(response.content or ""),
-                            parsed_result={},
+                            parsed_result={
+                                "action_type": str(
+                                    cached_structured_action.get("type") or ""
+                                )
+                            },
+                            cache_identity=recovery_cache_identity,
+                            candidate_fingerprint=(
+                                managed_action_fingerprint(cached_structured_action)
+                                if cached_structured_action
+                                else ""
+                            ),
                         )
             except Exception as exc:
                 response = self._llm_failure_response("generate", exc, task_id)
@@ -24583,6 +24818,11 @@ question. Never guess a scientific or database identity.
                 current_generate_step = current_generate_step or {}
                 current_generate_task = canonical_task_spec_for_state(
                     current_generate_plan
+                )
+                current_generate_snapshot = load_approved_plan_snapshot(
+                    self.data_path,
+                    task_id,
+                    state=current_generate_plan,
                 )
                 current_generate_context = build_node_context(
                     node_type="generate",
@@ -24609,6 +24849,7 @@ question. Never guess a scientific or database identity.
                         or state.get("execution_epoch")
                         or 0
                     ),
+                    approved_plan_snapshot=current_generate_snapshot,
                 )
                 generate_staleness = evaluate_node_staleness(
                     generate_node_context.binding,
@@ -24654,6 +24895,11 @@ question. Never guess a scientific or database identity.
             answer_match  = re.search(r"<solution>(.*?)</solution>", content, re.DOTALL)
             activate_match = re.search(r"<activate_batch\s+batch_id=[\"']?([^\"'\s>/]+)[\"']?\s*/?>", content, re.DOTALL)
             structured_action = self._extract_structured_action(content)
+            candidate_fingerprint = (
+                managed_action_fingerprint(structured_action)
+                if structured_action
+                else ""
+            )
             renderer_contract_error: Dict[str, Any] = {}
             if (
                 str(structured_action.get("type") or "") == "execute"
@@ -24662,15 +24908,34 @@ question. Never guess a scientific or database identity.
             ):
                 task_spec_for_action = self._task_spec_for_state(dict(state), messages)
                 current_action_plan = load_plan_state(self.data_path, task_id)
+                _, current_action_step = current_plan_step_with_index(current_action_plan)
+                current_action_step_id = str(
+                    (current_action_step or {}).get("step_id") or current_step_id or "task"
+                )
+                approved_action_snapshot = load_approved_plan_snapshot(
+                    self.data_path,
+                    task_id,
+                    state=current_action_plan,
+                )
+                visible_artifacts = build_approved_visible_artifact_set(
+                    task_spec_for_action,
+                    plan_state=current_action_plan,
+                    approved_plan_snapshot=approved_action_snapshot,
+                    current_step_id=current_action_step_id,
+                )
                 managed_bindings = build_managed_artifact_bindings(
                     task_spec_for_action,
                     plan_state=current_action_plan,
+                    approved_plan_snapshot=approved_action_snapshot,
+                    current_step_id=current_action_step_id,
+                    visible_artifacts=visible_artifacts,
                 )
                 materialized_action, artifact_violations = materialize_managed_action(
                     structured_action,
                     managed_bindings,
                     allow_legacy_exact_literals=False,
                     operation_bindings=generate_operation_bindings,
+                    approved_visible_artifacts=visible_artifacts,
                 )
                 artifact_violations.extend(
                     validate_materialized_artifacts(materialized_action, managed_bindings)
@@ -24685,27 +24950,227 @@ question. Never guess a scientific or database identity.
                 if artifact_violations:
                     violation_payload = [item.to_dict() for item in artifact_violations]
                     first_violation = violation_payload[0]
-                    return {
-                        "messages": [response, SystemMessage(content=(
-                            "<managed_artifact_action_repair>\n"
-                            + json.dumps(violation_payload, ensure_ascii=False, sort_keys=True)
-                            + "\nUse the required semantic handle placeholder in structured argv/env. "
-                            "Do not modify the Task or Plan.\n"
-                            "</managed_artifact_action_repair>"
-                        ))],
-                        "pending_action": {},
-                        "pending_recovery_action": {
-                            "type": "ACTION_FORMAT_REPAIR",
-                            "reason": str(first_violation.get("message") or "managed artifact mismatch"),
-                            "failure_owner": str(first_violation.get("owner") or "GENERATED_ACTION"),
-                            "violation": first_violation,
-                        },
-                        "required_next_action": "ACTION_FORMAT_REPAIR",
-                        "failure_owner": str(first_violation.get("owner") or "GENERATED_ACTION"),
-                        "generate_result": "NEEDS_RECOVERY",
-                        "generate_exit_reason": "managed_artifact_preaction_rejected",
-                        "next_step": "generate" if first_violation.get("route") == "generate" else "finish",
-                    }
+                    raw_first_owner = str(
+                        first_violation.get("owner") or "GENERATED_ACTION"
+                    ).upper()
+                    first_owner = (
+                        RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+                        if raw_first_owner in {
+                            "CONTROLLER_PROJECTION",
+                            RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                        }
+                        else raw_first_owner
+                    )
+                    if first_owner == RecoveryFailureOwner.INTERNAL_PROTOCOL.value:
+                        # The only allowed internal recovery is a deterministic
+                        # recompile from the same pinned snapshot, at most once.
+                        reprojected_bindings = build_managed_artifact_bindings(
+                            task_spec_for_action,
+                            plan_state=current_action_plan,
+                            approved_plan_snapshot=approved_action_snapshot,
+                            current_step_id=current_action_step_id,
+                            visible_artifacts=visible_artifacts,
+                        )
+                        reprojected_action, reprojected_violations = materialize_managed_action(
+                            structured_action,
+                            reprojected_bindings,
+                            allow_legacy_exact_literals=False,
+                            operation_bindings=generate_operation_bindings,
+                            approved_visible_artifacts=visible_artifacts,
+                        )
+                        reprojected_violations.extend(
+                            validate_materialized_artifacts(
+                                reprojected_action,
+                                reprojected_bindings,
+                            )
+                        )
+                        reprojected_violations.extend(
+                            validate_generate_output_coverage(
+                                current_action_plan,
+                                reprojected_action,
+                                reprojected_bindings,
+                            )
+                        )
+                        if not reprojected_violations:
+                            managed_bindings = reprojected_bindings
+                            materialized_action = reprojected_action
+                            artifact_violations = []
+                        else:
+                            conflict = {
+                                "code": "INTERNAL_CONTRACT_CONFLICT",
+                                "owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                                "subowner": "controller_projection",
+                                "route": "terminal",
+                                "failure_stage": "pre_action_contract",
+                                "message": (
+                                    "Approved-visible artifact projection remained invalid "
+                                    "after one deterministic recompile."
+                                ),
+                                "candidate_fingerprint": candidate_fingerprint,
+                                "artifact_id": str(
+                                    first_violation.get("proposed")
+                                    or first_violation.get("artifact_handle")
+                                    or ""
+                                ),
+                            }
+                            return {
+                                "messages": [response, SystemMessage(content=(
+                                    "<managed_artifact_internal_conflict>\n"
+                                    + json.dumps(conflict, ensure_ascii=False, sort_keys=True)
+                                    + "\n</managed_artifact_internal_conflict>"
+                                ))],
+                                "pending_action": {},
+                                "pending_recovery_action": {
+                                    "type": "blocked",
+                                    "reason": conflict["message"],
+                                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                                    "violation": conflict,
+                                },
+                                "required_next_action": "INTERNAL_CONTRACT_CONFLICT",
+                                "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                                "generate_result": "BLOCKED",
+                                "generate_exit_reason": "managed_artifact_projection_conflict",
+                                "recovery_phase": "exhausted",
+                                "next_step": "finish",
+                            }
+                    if artifact_violations:
+                        violation_payload = [item.to_dict() for item in artifact_violations]
+                        first_violation = violation_payload[0]
+                        raw_first_owner = str(
+                            first_violation.get("owner") or "GENERATED_ACTION"
+                        ).upper()
+                        first_owner = (
+                            RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+                            if raw_first_owner in {
+                                "CONTROLLER_PROJECTION",
+                                RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                            }
+                            else raw_first_owner
+                        )
+                        if first_owner == RecoveryFailureOwner.DEPENDENCY.value:
+                            dependency_context = build_preaction_recovery_context(
+                                task_id=task_id,
+                                step_id=current_action_step_id,
+                                approved_plan_snapshot_id=str(
+                                    approved_action_snapshot.get("plan_snapshot_id") or ""
+                                ),
+                                authoritative_state_hash=str(
+                                    (current_action_plan.get("current_plan") or {}).get("plan_semantic_hash")
+                                    or ""
+                                ),
+                                candidate=structured_action,
+                                candidate_fingerprint=candidate_fingerprint,
+                                violations=violation_payload,
+                                repair_ordinal=1,
+                                visible_artifacts=[],
+                                current_step=current_action_step or {},
+                            )
+                            RecoveryStateStore(self.data_path, task_id).save_diagnostic_context(
+                                dependency_context
+                            )
+                            return {
+                                "messages": [response, SystemMessage(content=(
+                                    "<managed_artifact_dependency_unavailable>\n"
+                                    + json.dumps(violation_payload, ensure_ascii=False, sort_keys=True)
+                                    + "\n</managed_artifact_dependency_unavailable>"
+                                ))],
+                                "pending_action": {},
+                                "pending_recovery_action": {
+                                    "type": "dependency_not_ready",
+                                    "reason": str(first_violation.get("message") or "dependency unavailable"),
+                                    "failure_owner": RecoveryFailureOwner.DEPENDENCY.value,
+                                    "violation": first_violation,
+                                },
+                                "recovery_context": dependency_context.to_dict(),
+                                "recovery_context_digest": dependency_context.context_id,
+                                "required_next_action": "DEPENDENCY_NOT_READY",
+                                "failure_owner": RecoveryFailureOwner.DEPENDENCY.value,
+                                "generate_result": "NEEDS_RECOVERY",
+                                "generate_exit_reason": "managed_artifact_dependency_unavailable",
+                                "next_step": "supervisor",
+                            }
+                        recovery_context, policy_decision = self._managed_preaction_recovery(
+                            task_id=task_id,
+                            plan_state=current_action_plan,
+                            approved_plan_snapshot=approved_action_snapshot,
+                            step_id=current_action_step_id,
+                            candidate=structured_action,
+                            candidate_fingerprint=candidate_fingerprint,
+                            violations=violation_payload,
+                            visible_artifacts=visible_artifacts,
+                        )
+                        RecoveryStateStore(self.data_path, task_id).save_diagnostic_context(
+                            recovery_context
+                        )
+                        repair_allowed = (
+                            policy_decision.kind == RecoveryDecisionKind.FORMAT_REPAIR.value
+                        )
+                        pending_type = (
+                            "ACTION_FORMAT_REPAIR"
+                            if repair_allowed
+                            else "internal_protocol_error"
+                        )
+                        logger.info(
+                            "PRE_ACTION_CONTRACT_FAILURE task=%s step_id=%s snapshot_id=%s candidate_fingerprint=%s "
+                            "error_fingerprint=%s repair_ordinal=%s owner=%s route=%s",
+                            task_id,
+                            current_action_step_id,
+                            recovery_context.approved_plan_snapshot_id,
+                            candidate_fingerprint,
+                            recovery_context.error_fingerprint,
+                            recovery_context.repair_ordinal,
+                            first_owner,
+                            policy_decision.next_route,
+                        )
+                        if not repair_allowed:
+                            logger.info(
+                                "RECOVERY_NO_PROGRESS_TERMINAL task=%s step_id=%s snapshot_id=%s "
+                                "candidate_fingerprint=%s error_fingerprint=%s repair_ordinal=%s "
+                                "owner=%s route=%s",
+                                task_id,
+                                current_action_step_id,
+                                recovery_context.approved_plan_snapshot_id,
+                                candidate_fingerprint,
+                                recovery_context.error_fingerprint,
+                                recovery_context.repair_ordinal,
+                                first_owner,
+                                policy_decision.next_route,
+                            )
+                        return {
+                            "messages": [response, SystemMessage(content=(
+                                "<managed_artifact_action_repair>\n"
+                                + json.dumps(violation_payload, ensure_ascii=False, sort_keys=True)
+                                + "\nUse the required semantic handle placeholder in structured argv/env. "
+                                "Do not modify the Task or Plan.\n"
+                                "</managed_artifact_action_repair>"
+                            ))],
+                            "pending_action": {},
+                            "pending_recovery_action": {
+                                "type": pending_type,
+                                "reason": str(first_violation.get("message") or "managed artifact mismatch"),
+                                "failure_owner": first_owner,
+                                "violation": first_violation,
+                                "candidate_fingerprint": candidate_fingerprint,
+                                "error_fingerprint": recovery_context.error_fingerprint,
+                                "failure_stage": "pre_action_contract",
+                                "repair_ordinal": recovery_context.repair_ordinal,
+                            },
+                            "recovery_context": recovery_context.to_dict(),
+                            "recovery_context_digest": recovery_context.context_id,
+                            "recovery_decision": policy_decision.to_dict(),
+                            "required_next_action": (
+                                "ACTION_FORMAT_REPAIR"
+                                if repair_allowed
+                                else "INTERNAL_PROTOCOL_ERROR"
+                            ),
+                            "failure_owner": first_owner,
+                            "generate_result": (
+                                "NEEDS_RECOVERY" if repair_allowed else "BLOCKED"
+                            ),
+                            "generate_exit_reason": "managed_artifact_preaction_rejected",
+                            "next_step": policy_decision.next_route,
+                        }
+                materialized_action["candidate_fingerprint"] = candidate_fingerprint
                 materialized_action["code"] = shlex.join(
                     [str(item) for item in materialized_action.get("argv") or []]
                 )
@@ -25341,6 +25806,15 @@ question. Never guess a scientific or database identity.
                 result["pending_recovery_action"] = {}
                 result["required_next_action"] = ""
                 result["action_format_repair"] = {}
+                if str(result.get("next_step") or "") == "execute":
+                    # The committed FORMAT_REPAIR decision has been consumed
+                    # by this newly validated action.  Leaving it in graph
+                    # state makes the conditional router send the accepted
+                    # action back to Generate and replay the repair cache.
+                    result["recovery_decision"] = {}
+                    result["recovery_application"] = {}
+                    result["recovery_context"] = {}
+                    result["recovery_context_digest"] = ""
 
             next_node = str(result.get("next_step") or "")
             outcome = str(result.get("generate_result") or "").upper()
