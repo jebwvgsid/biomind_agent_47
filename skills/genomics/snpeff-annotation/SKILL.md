@@ -142,6 +142,18 @@ Aliases and trigger phrases: snpEff, SnpEff, ANN, variant effect annotation, fun
 - Treat CDS/protein consistency files as `optional_validation` for custom GTF/GFF builds. When absent, skip only the corresponding validation, record `skipped_optional_missing`, and continue; this is not an unchecked build because no required validation was skipped.
 - Do not hard-code codon tables. If organellar, bacterial, plastid, mitochondrial, or other non-standard codon usage may apply, ask for or inspect the required snpEff config lines.
 
+## Planning Contract
+
+When custom database construction and annotation are separate plan steps, the
+database directory must be declared as a plan-local directory artifact. The
+build step must produce it, and the annotation step must consume the same
+artifact. Do not use `mktemp` or a shell-local variable as a cross-step carrier.
+If the database is not reused across steps, build and annotate may be combined
+inside one managed action.
+
+Use the Controller-provided verified runtime as `"$SNPEFF_JAR"`. Do not emit
+`{runtime:snpeff_jar}`.
+
 ## Official Documentation Anchors
 
 - Running and annotation command pattern: `https://pcingola.github.io/SnpEff/snpeff/running/`

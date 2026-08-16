@@ -1605,6 +1605,11 @@ it does not create a second output identity.
 `inputs` means consume and `outputs` means produce. Handle spelling never
 defines usage. Keep top-level `semantic_claims` empty; reference only canonical
 TaskSpec constraint handles through each step's `semantic_constraint_ids`.
+Dependencies only express ordering. If a later step consumes a file or directory
+created by an earlier step, that object must also be an explicit artifact in the
+producer's `outputs` and the consumer's `inputs`. For one directory intermediate,
+declare a plan-local `local_ref` such as `database_dir`, produce it in the build
+step, and consume that same `database_dir` in the dependent annotation step.
 Omit the example plan-local declaration when no intermediate is needed.
 Otherwise declare each plan-local artifact in `proposed_artifacts`
 with the complete object-shaped `semantic_view` and `artifact_contract`, then
