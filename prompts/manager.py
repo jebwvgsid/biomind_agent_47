@@ -1816,6 +1816,13 @@ managed inputs/outputs must use their complete placeholders as individual argv
 or env values. Never emit an authoritative managed path as a literal and never
 embed a placeholder inside shell text.
 
+For `bash -lc`, this is invalid:
+{{"argv":["bash","-lc","FASTA=\"{{input:reference_fasta}}\"; tool \"$FASTA\""],"env":{{}}}}
+Move the complete placeholder to env instead:
+{{"argv":["bash","-lc","tool \"$FASTA\""],"env":{{"FASTA":"{{input:reference_fasta}}"}}}}
+Do not emit `{{runtime:*}}`. Runtime tools are already supplied as
+Controller-managed environment variables. For snpEff, reference `$SNPEFF_JAR`.
+
 {{
   "action_type": "execute",
   "action_kind": "primary|diagnostic|required_validation|recovery",

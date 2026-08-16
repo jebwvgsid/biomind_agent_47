@@ -22,6 +22,11 @@ MODEL_SELECTABLE = "model_selectable"
 PLANNER_MATERIALIZED = "planner_materialized"
 _PLACEHOLDER_RE = re.compile(r"^\{(input|output):([A-Za-z][A-Za-z0-9_.-]*)\}$")
 _OPERATION_PLACEHOLDER_RE = re.compile(r"^\{operation:([A-Za-z][A-Za-z0-9_.-]*)\}$")
+_RUNTIME_PLACEHOLDER_RE = re.compile(r"\{runtime:[A-Za-z][A-Za-z0-9_.-]*\}")
+_MANAGED_PLACEHOLDER_RE = re.compile(
+    r"\{(?:input|output|operation):[A-Za-z][A-Za-z0-9_.-]*\}"
+)
+_ENV_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 class ManagedArtifactError(ValueError):
@@ -42,9 +47,11 @@ class ArtifactViolation:
     compatibility_hit: bool = False
     subowner: str = ""
     failure_stage: str = ""
+    repair_hint: Mapping[str, str] = field(default_factory=dict)
+    offending_placeholders: Tuple[str, ...] = ()
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        value = {
             key: value
             for key, value in {
                 "code": self.code,
@@ -62,6 +69,11 @@ class ArtifactViolation:
             }.items()
             if value not in (None, "", False)
         }
+        if self.repair_hint:
+            value["repair_hint"] = dict(self.repair_hint)
+        if self.offending_placeholders:
+            value["offending_placeholders"] = list(self.offending_placeholders)
+        return value
 
 
 @dataclass(frozen=True)
@@ -616,6 +628,8 @@ def _violation(
     compatibility_hit: bool = False,
     subowner: str = "",
     failure_stage: str = "",
+    repair_hint: Optional[Mapping[str, str]] = None,
+    offending_placeholders: Sequence[str] = (),
 ) -> ArtifactViolation:
     return ArtifactViolation(
         code=code,
@@ -630,6 +644,8 @@ def _violation(
         compatibility_hit=compatibility_hit,
         subowner=subowner,
         failure_stage=failure_stage,
+        repair_hint=dict(repair_hint or {}),
+        offending_placeholders=tuple(str(item) for item in offending_placeholders if str(item)),
     )
 
 
@@ -863,6 +879,33 @@ def materialize_managed_action(
     def materialize_value(value: Any, field_path: str) -> Any:
         if not isinstance(value, str):
             return deepcopy(value)
+        runtime_placeholders = _RUNTIME_PLACEHOLDER_RE.findall(value)
+        if runtime_placeholders:
+            violations.append(_violation(
+                code="MANAGED_RUNTIME_PLACEHOLDER_UNSUPPORTED",
+                owner="GENERATED_ACTION",
+                route="generate",
+                message=(
+                    "Runtime resources are not managed artifact placeholders. "
+                    "Use the verified runtime environment variable supplied by Controller, "
+                    "for example $SNPEFF_JAR."
+                ),
+                proposed=value,
+                field_path=field_path,
+                failure_stage="pre_action_contract",
+                repair_hint={
+                    "strategy": "move_embedded_managed_placeholders_to_env",
+                    "rule": (
+                        "Each managed placeholder must be the complete value of one env entry. "
+                        "Replace the embedded placeholder in the shell script with the corresponding $ENV_NAME."
+                    ),
+                    "runtime_rule": (
+                        "Do not use {runtime:*}; use Controller-provided runtime environment variables."
+                    ),
+                },
+                offending_placeholders=runtime_placeholders,
+            ))
+            return value
         operation_match = _OPERATION_PLACEHOLDER_RE.fullmatch(value)
         if operation_match:
             handle = operation_match.group(1)
@@ -932,7 +975,8 @@ def materialize_managed_action(
                 return value
             used_handles.append(handle)
             return binding.canonical_path
-        if "{input:" in value or "{output:" in value or "{operation:" in value:
+        embedded_placeholders = _MANAGED_PLACEHOLDER_RE.findall(value)
+        if embedded_placeholders:
             violations.append(_violation(
                 code="MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED",
                 owner="GENERATED_ACTION",
@@ -943,6 +987,18 @@ def materialize_managed_action(
                 ),
                 proposed=value,
                 field_path=field_path,
+                failure_stage="pre_action_contract",
+                repair_hint={
+                    "strategy": "move_embedded_managed_placeholders_to_env",
+                    "rule": (
+                        "Each managed placeholder must be the complete value of one env entry. "
+                        "Replace the embedded placeholder in the shell script with the corresponding $ENV_NAME."
+                    ),
+                    "runtime_rule": (
+                        "Do not use {runtime:*}; use Controller-provided runtime environment variables."
+                    ),
+                },
+                offending_placeholders=embedded_placeholders,
             ))
             return value
         for binding in bindings.values():
@@ -1027,10 +1083,35 @@ def materialize_managed_action(
                 field_path="env",
             ))
         else:
-            materialized["env"] = {
-                str(key): materialize_value(value, f"env.{key}")
-                for key, value in env.items()
-            }
+            materialized_env: Dict[str, str] = {}
+            for key, value in env.items():
+                field_path = f"env.{key}"
+                if not isinstance(key, str) or not _ENV_KEY_RE.fullmatch(key):
+                    violations.append(_violation(
+                        code="ACTION_ENV_KEY_INVALID",
+                        owner="GENERATED_ACTION",
+                        route="generate",
+                        message=(
+                            "Structured action env keys must match "
+                            "^[A-Za-z_][A-Za-z0-9_]*$."
+                        ),
+                        proposed=str(key),
+                        field_path=field_path,
+                        failure_stage="pre_action_contract",
+                    ))
+                    continue
+                if not isinstance(value, str):
+                    violations.append(_violation(
+                        code="ACTION_ENV_VALUE_INVALID",
+                        owner="GENERATED_ACTION",
+                        route="generate",
+                        message="Structured action env values must be strings.",
+                        field_path=field_path,
+                        failure_stage="pre_action_contract",
+                    ))
+                    continue
+                materialized_env[key] = materialize_value(value, field_path)
+            materialized["env"] = materialized_env
 
     # New managed actions are structured.  Free shell code cannot be safely
     # materialised because quoting semantics depend on the shell/parser.

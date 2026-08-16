@@ -807,6 +807,8 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("GENERATE_OUTPUT_ID_UNKNOWN", json.dumps(events, default=str))
 
     async def test_graph_b_atomic_placeholder_repair_then_execute(self) -> None:
+        candidate_fingerprints: list[str] = []
+
         def candidate(payload: Mapping[str, Any], ordinal: int) -> dict[str, Any]:
             action = self._execute_action(payload)
             if ordinal == 1:
@@ -816,6 +818,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
                 placeholder = self._artifact_row(payload, "output")["placeholder"]
                 action["env"] = {"WORK_DIR": placeholder}
                 action["argv"] = ["/bin/true", "$WORK_DIR/child"]
+            candidate_fingerprints.append(managed_action_fingerprint(action))
             return action
 
         events, captures, _ = await self._run_graph("graph-b-repair", candidate)
@@ -823,6 +826,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         visited = [next(iter(event)) for event in events]
 
         self.assertGreaterEqual(len(captures), 3)
+        self.assertNotEqual(candidate_fingerprints[0], candidate_fingerprints[1])
         self.assertEqual(budgets["action_format_repair_by_step"]["step-1"], 1)
         self.assertEqual(visited.count("execute"), 2)
         self.assertNotIn("renderer", visited)
@@ -842,6 +846,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(captures), 2)
         self.assertEqual(budgets["action_format_repair_by_step"]["step-1"], 1)
         self.assertNotIn("execute", visited)
+        self.assertIn("repair_no_progress", json.dumps(events, default=str))
         self.assertIn(str((durable.get("task_state") or {}).get("status") or ""), {"blocked", "failed"})
 
     async def test_graph_d_projection_failure_is_internal_and_budget_neutral(self) -> None:

@@ -463,6 +463,79 @@ from execution.profiling import (
 from execution.validator import ResultValidator
 from execution.monitoring import ExecutionMonitor, LogCleaner, ErrorRecoverySystem
 from agent_core.middleware import error_recovery_middleware
+
+
+_MANAGED_ACTION_ENV_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _inject_managed_action_environment(
+    code: str,
+    language: str,
+    controller_runtime_bindings: Mapping[str, str],
+    action_env: Mapping[str, str],
+) -> Tuple[str, Dict[str, Any]]:
+    """Inject the managed V2 env without exposing values or overriding runtime keys."""
+    runtime = {
+        str(key): str(value)
+        for key, value in dict(controller_runtime_bindings or {}).items()
+    }
+    materialized_env: Dict[str, str] = {}
+    for key, value in dict(action_env or {}).items():
+        if not isinstance(key, str) or not _MANAGED_ACTION_ENV_KEY_RE.fullmatch(key):
+            return code, {
+                "code": "ACTION_ENV_KEY_INVALID",
+                "owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                "stage": "pre_action_contract",
+                "message": "Structured action env contains an invalid key.",
+                "env_key": str(key),
+                "execution_started": False,
+            }
+        if not isinstance(value, str):
+            return code, {
+                "code": "ACTION_ENV_VALUE_INVALID",
+                "owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                "stage": "pre_action_contract",
+                "message": "Structured action env values must be strings.",
+                "env_key": key,
+                "execution_started": False,
+            }
+        materialized_env[key] = value
+    conflicts = sorted(set(runtime) & set(materialized_env))
+    if conflicts:
+        return code, {
+            "code": "MANAGED_ACTION_ENV_KEY_CONFLICT",
+            "owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+            "stage": "pre_action_contract",
+            "message": (
+                "Structured action env conflicts with a Controller runtime binding. "
+                "Remove the action-owned definition and use the Controller-provided variable."
+            ),
+            "env_keys": conflicts,
+            "execution_started": False,
+        }
+    if language == "Bash":
+        binding_lines = [
+            f"if [[ -z \"${{{key}:-}}\" ]]; then export {key}={shlex.quote(value)}; fi"
+            for key, value in sorted(runtime.items())
+        ]
+        binding_lines.extend(
+            f"export {key}={shlex.quote(value)}"
+            for key, value in sorted(materialized_env.items())
+        )
+        if binding_lines:
+            code = "\n".join(binding_lines) + "\n" + code
+    elif language == "Python":
+        binding_lines = [
+            f"os.environ.setdefault({key!r}, {value!r})"
+            for key, value in sorted(runtime.items())
+        ]
+        binding_lines.extend(
+            f"os.environ[{key!r}] = {value!r}"
+            for key, value in sorted(materialized_env.items())
+        )
+        if binding_lines:
+            code = "import os\n" + "\n".join(binding_lines) + "\n" + code
+    return code, {}
 from agent_core.root_cause import RootCauseAnalyzer
 from memory.persistence import PersistentStateManager
 from memory.core_store import CoreMemoryStore
@@ -25105,6 +25178,32 @@ question. Never guess a scientific or database identity.
                         repair_allowed = (
                             policy_decision.kind == RecoveryDecisionKind.FORMAT_REPAIR.value
                         )
+                        previous_candidate_fingerprint = str(
+                            recovery_context_obj.candidate_fingerprint
+                            if recovery_context_obj
+                            and recovery_context_obj.failure_stage == "pre_action_contract"
+                            else ""
+                        )
+                        repair_no_progress = bool(
+                            not repair_allowed
+                            and previous_candidate_fingerprint
+                            and previous_candidate_fingerprint == candidate_fingerprint
+                        )
+                        termination_reason = (
+                            "repair_no_progress"
+                            if repair_no_progress
+                            else (
+                                "action_format_repair_budget_exhausted"
+                                if not repair_allowed
+                                else ""
+                            )
+                        )
+                        if repair_no_progress:
+                            policy_decision.reason_code = "repair_no_progress"
+                            policy_decision.reason = (
+                                "The repaired action retained the same executable contract."
+                            )
+                            recovery_context.recovery_decision = policy_decision.to_dict()
                         pending_type = (
                             "ACTION_FORMAT_REPAIR"
                             if repair_allowed
@@ -25122,7 +25221,7 @@ question. Never guess a scientific or database identity.
                             first_owner,
                             policy_decision.next_route,
                         )
-                        if not repair_allowed:
+                        if repair_no_progress:
                             logger.info(
                                 "RECOVERY_NO_PROGRESS_TERMINAL task=%s step_id=%s snapshot_id=%s "
                                 "candidate_fingerprint=%s error_fingerprint=%s repair_ordinal=%s "
@@ -25154,10 +25253,14 @@ question. Never guess a scientific or database identity.
                                 "error_fingerprint": recovery_context.error_fingerprint,
                                 "failure_stage": "pre_action_contract",
                                 "repair_ordinal": recovery_context.repair_ordinal,
+                                "termination_reason": termination_reason,
+                                "execution_started": False,
                             },
                             "recovery_context": recovery_context.to_dict(),
                             "recovery_context_digest": recovery_context.context_id,
                             "recovery_decision": policy_decision.to_dict(),
+                            "termination_reason": termination_reason,
+                            "execution_started": False,
                             "required_next_action": (
                                 "ACTION_FORMAT_REPAIR"
                                 if repair_allowed
@@ -26248,7 +26351,34 @@ question. Never guess a scientific or database identity.
                 "BIOMIND_ACTION_ID": str(pending_action.get("action_id") or ""),
                 "BIOMIND_STEP_ID": str(pending_action.get("step_id") or ""),
             })
-            if language == "Bash" and runtime_bindings:
+            if managed_mode:
+                original_code, managed_env_error = _inject_managed_action_environment(
+                    original_code,
+                    language,
+                    runtime_bindings,
+                    pending_action.get("env") or {},
+                )
+                if managed_env_error:
+                    return {
+                        "messages": [SystemMessage(content=(
+                            "Execute rejected the managed action before process start: "
+                            + str(managed_env_error.get("message") or "managed env contract violation")
+                        ))],
+                        "pending_action": {},
+                        "pending_recovery_action": {
+                            "type": "ACTION_FORMAT_REPAIR",
+                            "reason": str(managed_env_error.get("message") or "managed env contract violation"),
+                            "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                            "violation": managed_env_error,
+                            "failure_stage": "pre_action_contract",
+                            "execution_started": False,
+                        },
+                        "required_next_action": "ACTION_FORMAT_REPAIR",
+                        "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                        "generate_result": "NEEDS_RECOVERY",
+                        "next_step": "generate",
+                    }
+            elif language == "Bash" and runtime_bindings:
                 binding_lines = [
                     f"if [[ -z \"${{{key}:-}}\" ]]; then export {key}={shlex.quote(value)}; fi"
                     for key, value in sorted(runtime_bindings.items())
