@@ -2151,18 +2151,30 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
     }
 
 
-def step_artifact_contracts(step: PlanStep) -> List[Dict[str, Any]]:
-    """Project canonical artifacts, with a legacy text fallback for old plans."""
+def step_artifact_contracts(
+    step: PlanStep,
+    *,
+    allow_legacy_text_fallback: bool = False,
+) -> List[Dict[str, Any]]:
+    """Project structured artifacts; enable text extraction only in a legacy adapter."""
     step_id = str(step.get("step_id") or "")
-    values: List[Any] = list(step.get("artifacts") or [])
-    source = "structured_plan" if values else "planner_text"
+    explicit_artifacts = list(step.get("artifacts") or [])
+    values: List[Tuple[Any, str]] = [
+        (value, "structured_plan") for value in explicit_artifacts
+    ]
     if not values:
-        values.extend(step.get("outputs") or [])
+        values.extend(
+            (value, "structured_plan") for value in step.get("outputs") or []
+        )
+    if allow_legacy_text_fallback and not explicit_artifacts:
         for criterion in step.get("success_criteria") or []:
-            values.extend(match.group(1) for match in _ARTIFACT_PATH_RE.finditer(str(criterion or "")))
+            values.extend(
+                (match.group(1), "planner_text")
+                for match in _ARTIFACT_PATH_RE.finditer(str(criterion or ""))
+            )
     result: List[Dict[str, Any]] = []
     seen: set[Tuple[str, str]] = set()
-    for value in values:
+    for value, source in values:
         contract = normalize_artifact_contract(value, producer_step_id=step_id, source=source)
         key = (str(contract.get("artifact_id") or ""), str(contract.get("path") or ""))
         if not contract.get("path") or key in seen:
@@ -2902,7 +2914,12 @@ def _step_purpose(
     return "analysis"
 
 
-def normalize_plan_step(step: PlanStep, index: int = 1) -> PlanStep:
+def normalize_plan_step(
+    step: PlanStep,
+    index: int = 1,
+    *,
+    allow_legacy_artifact_inference: bool = False,
+) -> PlanStep:
     """Normalize one step in place while retaining unknown legacy fields."""
     if not isinstance(step, dict):
         step = {}
@@ -3000,7 +3017,10 @@ def normalize_plan_step(step: PlanStep, index: int = 1) -> PlanStep:
             for item in explicit_artifacts
         ]
     else:
-        step["artifacts"] = step_artifact_contracts(step)
+        step["artifacts"] = step_artifact_contracts(
+            step,
+            allow_legacy_text_fallback=allow_legacy_artifact_inference,
+        )
     step.setdefault("artifact_contract_revision", 0)
     step.setdefault("artifact_reconciliation_history", [])
     renderer_execution = step.get("renderer_execution")
@@ -3050,12 +3070,20 @@ def _structured_step_fields(text: str) -> Dict[str, Any]:
     }
 
 
-def _backfill_step_contracts(steps: List[PlanStep]) -> List[PlanStep]:
+def _backfill_step_contracts(
+    steps: List[PlanStep],
+    *,
+    allow_legacy_artifact_inference: bool = False,
+) -> List[PlanStep]:
     """Migrate persisted checklist fields without regenerating an approved plan."""
     for index, step in enumerate(steps, start=1):
         if not isinstance(step, dict):
             continue
-        normalize_plan_step(step, index)
+        normalize_plan_step(
+            step,
+            index,
+            allow_legacy_artifact_inference=allow_legacy_artifact_inference,
+        )
     return steps
 
 
@@ -3267,7 +3295,11 @@ def _enrich_plan_steps(steps: List[PlanStep], plan_text: str) -> List[PlanStep]:
         step.setdefault("assumptions", [])
         step.setdefault("required_constraints", [])
         step.setdefault("semantic_claims", [])
-        normalize_plan_step(step, index + 1)
+        normalize_plan_step(
+            step,
+            index + 1,
+            allow_legacy_artifact_inference=True,
+        )
     return steps
 
 
@@ -4601,7 +4633,10 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
     task_state["budgets"] = budgets
     data["task_state"] = task_state
     steps = data.get("steps") if isinstance(data.get("steps"), list) else []
-    data["steps"] = _backfill_step_contracts(steps)
+    data["steps"] = _backfill_step_contracts(
+        steps,
+        allow_legacy_artifact_inference=(source_schema_version < CANONICAL_TASK_SCHEMA_VERSION),
+    )
     known_step_ids = {
         str(step.get("step_id") or "") for step in data["steps"] if isinstance(step, dict)
     }

@@ -1609,6 +1609,7 @@ def _expected_artifacts_from_final_plan(plan_state: Dict[str, Any], current_plan
     snippets: List[str] = []
     canonical_artifacts: List[str] = []
     superseded_artifacts: set[str] = set()
+    is_v2 = _uses_canonical_completion_contract(plan_state)
     task_spec = canonical_task_spec_for_state(plan_state)
     materialized_by_ref: Dict[str, str] = {}
     for row in plan_state.get("task_output_materializations", []) or []:
@@ -1636,7 +1637,10 @@ def _expected_artifacts_from_final_plan(plan_state: Dict[str, Any], current_plan
                 canonical_artifacts.append(artifact)
     for step in _steps(plan_state):
         title = _step_title(step)
-        contracts = step_artifact_contracts(step)
+        contracts = step_artifact_contracts(
+            step,
+            allow_legacy_text_fallback=not is_v2,
+        )
         renderer_contracts = [
             contract for contract in contracts
             if str(contract.get("source") or "") == "renderer_manifest"
@@ -1657,7 +1661,7 @@ def _expected_artifacts_from_final_plan(plan_state: Dict[str, Any], current_plan
     # V2 completion is contract driven.  Human plan prose, compatibility
     # aliases and status/report text are not authoritative output declarations.
     # Keep the text parser only as an explicit legacy-session read adapter.
-    if _uses_canonical_completion_contract(plan_state):
+    if is_v2:
         artifacts: List[str] = []
         seen: set[str] = set()
         superseded_names = {Path(item).name.lower() for item in superseded_artifacts}
@@ -1771,7 +1775,10 @@ def _text_for_output_root_discovery(plan_state: Dict[str, Any], current_plan: st
             elif value:
                 chunks.append(f"{key}: {value}")
     for step in _steps(plan_state):
-        for contract in step_artifact_contracts(step):
+        for contract in step_artifact_contracts(
+            step,
+            allow_legacy_text_fallback=not is_v2,
+        ):
             path = str(contract.get("path") or "").strip()
             if path:
                 chunks.append(f"contract_artifact: {path}")
@@ -2375,7 +2382,10 @@ class CompletionGate:
 
         is_v2 = _uses_canonical_completion_contract(plan_state)
         contracts = [
-            contract for contract in step_artifact_contracts(step)
+            contract for contract in step_artifact_contracts(
+                step,
+                allow_legacy_text_fallback=not is_v2,
+            )
             if not (
                 is_v2
                 and str(contract.get("source") or "") == "renderer_manifest"
