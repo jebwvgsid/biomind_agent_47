@@ -1,0 +1,48 @@
+{
+  "fixture_schema_version": 1,
+  "source_session": "session_1786694833",
+  "sanitized": true,
+  "initial_action": {
+    "type": "execute",
+    "argv": [
+      "bash",
+      "-lc",
+      "SNPEFF_JAR=\"{runtime:snpeff_jar}\"\nFASTA=\"{input:reference_fasta}\"\nGTF=\"{input:reference_gtf}\"\njava -jar \"$SNPEFF_JAR\" build"
+    ],
+    "env": {},
+    "outputs": [],
+    "produced_outputs": []
+  },
+  "repair_action": {
+    "type": "execute",
+    "argv": [
+      "bash",
+      "-lc",
+      "SNPEFF_JAR=\"{runtime:snpeff_jar}\"\nFASTA=\"{input:reference_fasta}\"\nGTF=\"{input:reference_gtf}\"\njava -jar \"$SNPEFF_JAR\" build"
+    ],
+    "env": {},
+    "outputs": [],
+    "produced_outputs": []
+  },
+  "violation": {
+    "code": "MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED",
+    "owner": "GENERATED_ACTION",
+    "stage": "pre_action_contract",
+    "field_path": "argv[2]",
+    "message": "Managed placeholders must occupy a complete argv/env value."
+  },
+  "fingerprints": {
+    "initial_candidate": "f6101ad4d030062048cde8c56a7570974be54153a07d30194e29062a3fe1e0ea",
+    "repair_candidate": "f6101ad4d030062048cde8c56a7570974be54153a07d30194e29062a3fe1e0ea",
+    "error": "e9329e8e807ab8d9a00f161a5546b1c0e6357e14e0c2cd6d941d038cdc51d08b"
+  },
+  "terminal_recovery_decision": {
+    "kind": "ESCALATE",
+    "failure_owner": "GENERATED_ACTION",
+    "failure_type": "generated_action_contract_error",
+    "reason_code": "repair_no_progress",
+    "termination_reason": "repair_no_progress",
+    "execution_started": false,
+    "commands": []
+  }
+}

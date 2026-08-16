@@ -157,6 +157,10 @@ class AgentState(TypedDict, total=False):
     failure_type: Optional[str]
     failure_stage: Optional[str]
     failure_id: Optional[str]
+    failure: dict
+    primary_failure: dict
+    termination_reason: str
+    execution_started: bool
     provenance_summary: dict
     provenance_state_path: Optional[str]
     llm_call_refs: List[dict]

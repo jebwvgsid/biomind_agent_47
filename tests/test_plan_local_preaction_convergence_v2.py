@@ -822,7 +822,8 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
             return action
 
         events, captures, _ = await self._run_graph("graph-b-repair", candidate)
-        budgets = (load_plan_state(self.root, "graph-b-repair").get("task_state") or {}).get("budgets") or {}
+        durable = load_plan_state(self.root, "graph-b-repair")
+        budgets = (durable.get("task_state") or {}).get("budgets") or {}
         visited = [next(iter(event)) for event in events]
 
         self.assertGreaterEqual(len(captures), 3)
@@ -830,6 +831,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(budgets["action_format_repair_by_step"]["step-1"], 1)
         self.assertEqual(visited.count("execute"), 2)
         self.assertNotIn("renderer", visited)
+        self.assertIs((durable.get("failure") or {}).get("execution_started"), True)
 
     async def test_graph_c_same_invalid_candidate_converges(self) -> None:
         def invalid(payload: Mapping[str, Any], _ordinal: int) -> dict[str, Any]:
@@ -848,6 +850,19 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("execute", visited)
         self.assertIn("repair_no_progress", json.dumps(events, default=str))
         self.assertIn(str((durable.get("task_state") or {}).get("status") or ""), {"blocked", "failed"})
+        failure = dict(durable.get("failure") or {})
+        self.assertEqual(failure.get("error_code"), "MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED")
+        self.assertEqual(failure.get("owner"), "GENERATED_ACTION")
+        self.assertEqual(failure.get("stage"), "pre_action_contract")
+        self.assertEqual(failure.get("termination_reason"), "repair_no_progress")
+        self.assertIs(failure.get("execution_started"), False)
+        self.assertNotIn("internal_protocol_error", json.dumps(events, default=str))
+        self.assertNotIn("INCOMPLETE_EVIDENCE", json.dumps(events, default=str))
+        self.assertNotIn("RUN_ALLOWED_PROBE", json.dumps(events, default=str))
+        self.assertNotEqual(
+            str(next((step.get("status") for step in durable.get("steps", []) if step.get("step_id") == "step-1"), "")),
+            "diagnosing",
+        )
 
     async def test_graph_d_projection_failure_is_internal_and_budget_neutral(self) -> None:
         events, captures, _ = await self._run_graph(

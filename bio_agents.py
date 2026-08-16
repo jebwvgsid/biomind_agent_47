@@ -323,6 +323,7 @@ from agent_core.plan_tracker import (
     plan_state_path,
     provenance_debug_dump,
     record_current_step_evidence,
+    record_preaction_contract_failure,
     record_provenance_event,
     render_structured_plan,
     render_plan_review_content,
@@ -415,6 +416,7 @@ from agent_core.plan_contract import (
     validated_planner_candidate_wire_example,
 )
 from agent_core.managed_artifacts import (
+    ArtifactViolation,
     build_approved_visible_artifact_set,
     build_managed_artifact_bindings,
     managed_action_fingerprint,
@@ -25049,6 +25051,29 @@ question. Never guess a scientific or database identity.
                     operation_bindings=generate_operation_bindings,
                     approved_visible_artifacts=visible_artifacts,
                 )
+                controller_runtime_keys = {
+                    *self._runtime_bindings_from_state(dict(state)).keys(),
+                    "BIOMIND_TASK_ID",
+                    "BIOMIND_ACTION_ID",
+                    "BIOMIND_STEP_ID",
+                }
+                conflicting_env_keys = sorted(
+                    set((materialized_action.get("env") or {}).keys())
+                    & controller_runtime_keys
+                )
+                if conflicting_env_keys:
+                    artifact_violations.append(ArtifactViolation(
+                        code="MANAGED_ACTION_ENV_KEY_CONFLICT",
+                        owner="GENERATED_ACTION",
+                        route="generate",
+                        message=(
+                            "Structured action env conflicts with a Controller runtime binding. "
+                            "Remove the action-owned definition and use the Controller-provided variable."
+                        ),
+                        field_path="env",
+                        proposed=",".join(conflicting_env_keys),
+                        failure_stage="pre_action_contract",
+                    ))
                 artifact_violations.extend(
                     validate_materialized_artifacts(materialized_action, managed_bindings)
                 )
@@ -25243,10 +25268,27 @@ question. Never guess a scientific or database identity.
                                 "The repaired action retained the same executable contract."
                             )
                             recovery_context.recovery_decision = policy_decision.to_dict()
+                        durable_failure = record_preaction_contract_failure(
+                            current_action_plan,
+                            first_violation,
+                            error_fingerprint=recovery_context.error_fingerprint,
+                            candidate_fingerprint=candidate_fingerprint,
+                            repair_attempt_count=(
+                                recovery_context.repair_ordinal
+                                if not repair_allowed
+                                else max(0, recovery_context.repair_ordinal - 1)
+                            ),
+                            termination_reason=termination_reason,
+                        )
+                        save_plan_state(
+                            self.data_path,
+                            task_id,
+                            current_action_plan,
+                        )
                         pending_type = (
                             "ACTION_FORMAT_REPAIR"
                             if repair_allowed
-                            else "internal_protocol_error"
+                            else "generated_action_contract_error"
                         )
                         logger.info(
                             "PRE_ACTION_CONTRACT_FAILURE task=%s step_id=%s snapshot_id=%s candidate_fingerprint=%s "
@@ -25298,12 +25340,14 @@ question. Never guess a scientific or database identity.
                             "recovery_context": recovery_context.to_dict(),
                             "recovery_context_digest": recovery_context.context_id,
                             "recovery_decision": policy_decision.to_dict(),
+                            "failure": durable_failure,
+                            "primary_failure": durable_failure,
                             "termination_reason": termination_reason,
                             "execution_started": False,
                             "required_next_action": (
                                 "ACTION_FORMAT_REPAIR"
                                 if repair_allowed
-                                else "INTERNAL_PROTOCOL_ERROR"
+                                else "GENERATED_ACTION_CONTRACT_ERROR"
                             ),
                             "failure_owner": first_owner,
                             "generate_result": (
@@ -26807,6 +26851,26 @@ question. Never guess a scientific or database identity.
 
             async def persist_attempt_lifecycle(event: str, payload: Dict[str, Any]) -> None:
                 lifecycle_state = load_plan_state(self.data_path, task_id)
+                durable_failure = (
+                    dict(lifecycle_state.get("failure") or {})
+                    if isinstance(lifecycle_state.get("failure"), Mapping)
+                    else {}
+                )
+                if (
+                    event in {"RUNNING", "PROCESS_STARTED"}
+                    and str(
+                        durable_failure.get("stage")
+                        or durable_failure.get("failure_stage")
+                        or ""
+                    ) == "pre_action_contract"
+                ):
+                    # A repaired candidate has crossed the real process boundary.
+                    # Preserve the original violation identity, but prevent the
+                    # no-execution guard from treating the resolved repair as a
+                    # terminal pre-action failure.
+                    durable_failure["execution_started"] = True
+                    durable_failure["resolved_at"] = timestamp_now()
+                    lifecycle_state["failure"] = durable_failure
                 lifecycle_payload = {
                     "attempt_id": attempt_id,
                     "status": ATTEMPT_PROCESS_EXITED if event == "PROCESS_EXITED" else ATTEMPT_RUNNING,
@@ -27397,14 +27461,67 @@ question. Never guess a scientific or database identity.
             """Controller adapter for fact-only Supervisor validation."""
             output.print_node_header("supervisor")
             task_id = state.get("task_id", "default")
+            durable_plan = load_plan_state(self.data_path, task_id)
+            durable_failure = (
+                dict(durable_plan.get("failure") or {})
+                if isinstance(durable_plan.get("failure"), Mapping)
+                else {}
+            )
+            durable_failure_stage = str(
+                durable_failure.get("stage")
+                or durable_failure.get("failure_stage")
+                or ""
+            )
+            if (
+                durable_failure_stage == "pre_action_contract"
+                and durable_failure.get("execution_started") is False
+            ):
+                guarded_update = await self.supervisor_node.run({
+                    **dict(state),
+                    "failure": durable_failure,
+                    "primary_failure": durable_failure,
+                    "termination_reason": str(
+                        durable_failure.get("termination_reason")
+                        or state.get("termination_reason")
+                        or ""
+                    ),
+                    "execution_started": False,
+                })
+                guarded_update["plan_progress"] = render_plan_progress(durable_plan)
+                await self._observe_session_memory(
+                    task_id,
+                    "supervisor",
+                    state.get("messages", []) + list(guarded_update.get("messages") or []),
+                    {
+                        "pre_action_terminal": True,
+                        "error_code": str(durable_failure.get("error_code") or ""),
+                        "termination_reason": str(durable_failure.get("termination_reason") or ""),
+                        "execution_started": False,
+                    },
+                )
+                return guarded_update
             conflict_update = self._knowledge_conflict_update(
                 task_id,
                 dict(state),
                 phase="before_supervisor",
             )
             supervisor_state = {**dict(state), **conflict_update}
+            durable_failure_projection: Dict[str, Any] = {}
+            if durable_failure:
+                supervisor_state["failure"] = durable_failure
+                supervisor_state["primary_failure"] = durable_failure
+                supervisor_state["execution_started"] = durable_failure.get("execution_started")
+                durable_failure_projection = {
+                    "failure": durable_failure,
+                    "primary_failure": durable_failure,
+                    "execution_started": durable_failure.get("execution_started"),
+                }
             raw_update = await self.supervisor_node.run(supervisor_state)
-            update = {**conflict_update, **(raw_update if isinstance(raw_update, dict) else {})}
+            update = {
+                **conflict_update,
+                **durable_failure_projection,
+                **(raw_update if isinstance(raw_update, dict) else {}),
+            }
             execution = dict(state.get("execution_evidence") or {})
             validation = ValidationEvidence.from_mapping(update.get("validation_evidence") or {})
             plan_state = load_plan_state(self.data_path, task_id)
@@ -29192,6 +29309,20 @@ question. Never guess a scientific or database identity.
                                        ["ask_user"] + legacy_execute_routes)
 
         def supervisor_router(state):
+            durable_failure = (
+                dict(state.get("failure") or {})
+                if isinstance(state.get("failure"), Mapping)
+                else {}
+            )
+            if (
+                str(
+                    durable_failure.get("stage")
+                    or durable_failure.get("failure_stage")
+                    or ""
+                ) == "pre_action_contract"
+                and durable_failure.get("execution_started") is False
+            ):
+                return END
             recovery_route = committed_recovery_route(state, "supervisor")
             if recovery_route:
                 decision = recovery_decision_from_state(dict(state or {}))

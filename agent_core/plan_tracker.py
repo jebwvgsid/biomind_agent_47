@@ -964,14 +964,29 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
     existing_heads = dict(existing_provenance.get("artifact_heads") or {})
     existing_artifacts = dict(existing_provenance.get("artifacts") or {})
 
-    def without_legacy_planner_text(artifact_ids: Iterable[Any]) -> List[str]:
-        """Drop prose-derived aliases once a typed plan-local edge exists."""
+    artifact_allocation_mapping = state.get("artifact_allocation_mapping")
+    allocated_mapping = (
+        artifact_allocation_mapping.get("local_to_authoritative") or {}
+        if isinstance(artifact_allocation_mapping, Mapping)
+        else {}
+    )
+    allocated_local_refs = {
+        str(ref) for ref in allocated_mapping if str(ref)
+    }
+
+    def without_superseded_untyped_artifacts(artifact_ids: Iterable[Any]) -> List[str]:
+        """Drop legacy/unallocated aliases once a typed plan-local edge exists."""
         retained: List[str] = []
         for raw_artifact_id in artifact_ids or []:
             artifact_id = str(raw_artifact_id or "")
             head = str(existing_heads.get(artifact_id) or "")
             record = dict(existing_artifacts.get(head) or {})
             if str(record.get("source") or "") == "planner_text":
+                continue
+            if (
+                str(record.get("source") or "") == "structured_plan"
+                and Path(str(record.get("path") or "")).name in allocated_local_refs
+            ):
                 continue
             if artifact_id:
                 retained.append(artifact_id)
@@ -1074,7 +1089,7 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
             )
             prior_output_ids = list(step.get("output_artifact_ids", []))
             if typed_plan_local_output:
-                prior_output_ids = without_legacy_planner_text(prior_output_ids)
+                prior_output_ids = without_superseded_untyped_artifacts(prior_output_ids)
             step["output_artifact_ids"] = list(dict.fromkeys([*prior_output_ids, *output_ids]))
             raw_step["output_artifact_ids"] = list(step["output_artifact_ids"])
 
@@ -1115,7 +1130,7 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
             )
             prior_input_ids = list(step.get("input_artifact_ids", []))
             if typed_plan_local_input:
-                prior_input_ids = without_legacy_planner_text(prior_input_ids)
+                prior_input_ids = without_superseded_untyped_artifacts(prior_input_ids)
             step["input_artifact_ids"] = list(dict.fromkeys([*prior_input_ids, *matched]))
             raw_step["input_artifact_ids"] = list(step["input_artifact_ids"])
             raw_step["dependencies"] = list(step.get("dependencies") or [])
@@ -2182,6 +2197,71 @@ def step_artifact_contracts(
         seen.add(key)
         result.append(contract)
     return result
+
+
+def record_preaction_contract_failure(
+    state: PlanState,
+    violation: Mapping[str, Any],
+    *,
+    error_fingerprint: str,
+    candidate_fingerprint: str,
+    repair_attempt_count: int = 0,
+    termination_reason: str = "",
+) -> Dict[str, Any]:
+    """Persist the first Generate-owned pre-action failure without overwriting it."""
+    now = _now()
+    prior = dict(state.get("failure") or {}) if isinstance(state.get("failure"), Mapping) else {}
+    if not str(prior.get("error_code") or ""):
+        code = str(violation.get("code") or "PRE_ACTION_CONTRACT_FAILURE")
+        owner = str(violation.get("owner") or "GENERATED_ACTION").upper()
+        message = str(violation.get("message") or "Generated action failed its pre-action contract.")
+        prior = {
+            "error_code": code,
+            "owner": owner,
+            "stage": "pre_action_contract",
+            "message": message,
+            "fingerprint": str(error_fingerprint or ""),
+            "candidate_fingerprint": str(candidate_fingerprint or ""),
+            "execution_started": False,
+            # Compatibility aliases remain readable by existing terminal and
+            # resume projections, but they do not own the primary diagnosis.
+            "failure_type": "generated_action_contract_error",
+            "failure_stage": "pre_action_contract",
+            "error_owner": owner,
+            "detail": message,
+            "summary": message,
+            "recorded_at": now,
+        }
+    prior["last_seen_at"] = now
+    prior["repair_attempt_count"] = max(
+        int(prior.get("repair_attempt_count") or 0),
+        int(repair_attempt_count or 0),
+    )
+    prior["last_candidate_fingerprint"] = str(candidate_fingerprint or "")
+    if termination_reason:
+        prior["termination_reason"] = str(termination_reason)
+        prior["execution_started"] = False
+        task_state = dict(state.get("task_state") or {})
+        task_state["status"] = TASK_STATUS_FAILED
+        task_state["status_reason"] = str(
+            prior.get("message") or "Generated action failed its pre-action contract."
+        )
+        state["task_state"] = task_state
+        for step in state.get("steps", []) or []:
+            if not isinstance(step, dict):
+                continue
+            if str(step.get("status") or "").lower() in {
+                STATUS_RUNNING,
+                STATUS_READY,
+                STATUS_PENDING,
+                STATUS_DIAGNOSING,
+            }:
+                step["status"] = STATUS_FAILED
+                step["updated_at"] = now
+                break
+    state["failure"] = prior
+    state["updated_at"] = now
+    return deepcopy(prior)
 
 
 def manifest_artifact_contracts(manifest: Dict[str, Any], manifest_path: str | Path = "") -> List[Dict[str, Any]]:

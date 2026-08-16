@@ -1346,6 +1346,50 @@ class SupervisorNode:
 
     async def run(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Validate one execution attempt without choosing a state transition."""
+        durable_failure = (
+            dict(state.get("failure") or {})
+            if isinstance(state.get("failure"), dict)
+            else dict(state.get("primary_failure") or {})
+            if isinstance(state.get("primary_failure"), dict)
+            else {}
+        )
+        failure_stage = str(
+            durable_failure.get("stage")
+            or durable_failure.get("failure_stage")
+            or ""
+        )
+        if (
+            failure_stage == "pre_action_contract"
+            and durable_failure.get("execution_started") is False
+        ):
+            owner = str(
+                durable_failure.get("owner")
+                or durable_failure.get("error_owner")
+                or RecoveryFailureOwner.GENERATED_ACTION.value
+            )
+            termination_reason = str(
+                durable_failure.get("termination_reason")
+                or state.get("termination_reason")
+                or ""
+            )
+            return {
+                "messages": [SystemMessage(content=(
+                    "Supervisor skipped execution validation because the durable "
+                    "pre-action contract failure records execution_started=false."
+                ))],
+                "failure": durable_failure,
+                "primary_failure": durable_failure,
+                "termination_reason": termination_reason,
+                "execution_started": False,
+                "pending_action": {},
+                "pending_recovery_action": {},
+                "required_next_action": "GENERATED_ACTION_CONTRACT_ERROR",
+                "failure_owner": owner,
+                "supervisor_verdict": "ESCALATE",
+                "task_status": "failed",
+                "step_status": "failed",
+                "next_step": "finish",
+            }
         started = time.monotonic()
         context = self._structured_execution_context(state)
         execution = dict(context["execution"] or {})

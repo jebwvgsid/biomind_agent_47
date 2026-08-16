@@ -1208,16 +1208,42 @@ class RunProfiler:
             (_dedupe_text(candidate) for candidate in skill_candidates if _dedupe_text(candidate)),
             [],
         )
+        durable_failure = (
+            dict(data.get("failure") or {})
+            if isinstance(data.get("failure"), Mapping)
+            else {}
+        )
+        if (
+            durable_failure.get("execution_started") is True
+            and not str(durable_failure.get("termination_reason") or "")
+        ):
+            # A repaired candidate subsequently crossed the process boundary;
+            # retain that history in plan_state without projecting it as the
+            # terminal diagnosis for a later, unrelated outcome.
+            durable_failure = {}
         diagnostic_candidates = (
+            durable_failure,
             task_state.get("terminal_diagnostic"),
             consultation.get("terminal_diagnostic"),
             data.get("terminal_diagnostic"),
-            data.get("failure"),
         )
         diagnostic = next(
             (dict(candidate) for candidate in diagnostic_candidates if isinstance(candidate, Mapping) and candidate),
             {},
         )
+        if durable_failure:
+            diagnostic.setdefault(
+                "error_owner",
+                str(durable_failure.get("owner") or durable_failure.get("error_owner") or ""),
+            )
+            diagnostic.setdefault(
+                "stage",
+                str(durable_failure.get("stage") or durable_failure.get("failure_stage") or ""),
+            )
+            diagnostic.setdefault(
+                "detail",
+                str(durable_failure.get("message") or durable_failure.get("detail") or ""),
+            )
         if not diagnostic and str(task_state.get("status_reason") or "").strip():
             diagnostic = {
                 "error_code": f"TASK_{str(task_state.get('status') or 'terminal').upper()}",
@@ -1376,6 +1402,43 @@ class RunProfiler:
             else:
                 final_result["output_result"] = self._fallback_output_result(events)
 
+        terminal_diagnostic = (
+            dict(final_result.get("terminal_diagnostic") or {})
+            if isinstance(final_result.get("terminal_diagnostic"), Mapping)
+            else {}
+        )
+        failure_projection: Dict[str, Any] = {}
+        if terminal_diagnostic:
+            failure_projection = {
+                "error_code": str(
+                    terminal_diagnostic.get("error_code")
+                    or terminal_diagnostic.get("reason_code")
+                    or terminal_diagnostic.get("code")
+                    or ""
+                ),
+                "owner": str(
+                    terminal_diagnostic.get("owner")
+                    or terminal_diagnostic.get("error_owner")
+                    or ""
+                ),
+                "stage": str(
+                    terminal_diagnostic.get("stage")
+                    or terminal_diagnostic.get("failure_stage")
+                    or ""
+                ),
+                "termination_reason": str(
+                    terminal_diagnostic.get("termination_reason") or ""
+                ),
+                "execution_started": terminal_diagnostic.get("execution_started"),
+            }
+            failure_projection = {
+                key: value
+                for key, value in failure_projection.items()
+                if value not in (None, "")
+            }
+            for key, value in failure_projection.items():
+                final_result.setdefault(key, value)
+
         return {
             "task_id": task_id,
             "status": task.get("status", "running"),
@@ -1386,6 +1449,7 @@ class RunProfiler:
             "metadata": dict(task.get("metadata") or {}),
             "skills": dict(task.get("skills") or {}),
             "final_result": final_result,
+            "failure": failure_projection,
             "summary": summary,
             "events": events,
         }
