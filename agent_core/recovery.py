@@ -543,6 +543,12 @@ class ExecutionRecord:
     observed_outputs: List[str] = field(default_factory=list)
     produced_artifacts: List[str] = field(default_factory=list)
     produced_artifact_ids: List[str] = field(default_factory=list)
+    observed_output_records: List[Dict[str, Any]] = field(default_factory=list)
+    runtime_output_reconciliation: Dict[str, Any] = field(default_factory=dict)
+    reconciled_outputs: List[Dict[str, Any]] = field(default_factory=list)
+    output_reconciliation_status: str = ""
+    process_status: str = ""
+    failure_code: str = ""
     fallback_used: bool = False
     failure_fingerprint: str = ""
 
@@ -652,6 +658,22 @@ class ExecutionRecord:
             observed_outputs=observed,
             produced_artifacts=produced,
             produced_artifact_ids=[str(item) for item in data.get("produced_artifact_ids", []) or []],
+            observed_output_records=[
+                _redact_mapping(item)
+                for item in data.get("observed_output_records", []) or []
+                if isinstance(item, dict)
+            ],
+            runtime_output_reconciliation=_redact_mapping(
+                data.get("runtime_output_reconciliation") or {}
+            ),
+            reconciled_outputs=[
+                _redact_mapping(item)
+                for item in data.get("reconciled_outputs", []) or []
+                if isinstance(item, dict)
+            ],
+            output_reconciliation_status=str(data.get("output_reconciliation_status") or ""),
+            process_status=str(data.get("process_status") or ""),
+            failure_code=str(data.get("failure_code") or ""),
             fallback_used=bool(data.get("fallback_used")),
             failure_fingerprint=str(data.get("failure_fingerprint") or ""),
         )

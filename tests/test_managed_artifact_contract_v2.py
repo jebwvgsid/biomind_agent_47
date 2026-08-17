@@ -159,14 +159,16 @@ class ManagedArtifactMaterializationTests(unittest.TestCase):
             "LEGACY_MANAGED_LITERAL_EXACT",
         )
 
-    def test_declared_output_without_placeholder_is_action_mismatch(self) -> None:
-        _, violations = materialize_managed_action(
+    def test_semantic_output_declaration_supports_implicit_tool_outputs(self) -> None:
+        materialized, violations = materialize_managed_action(
             {"argv": ["tool"], "outputs": ["output.final_fasta"]},
             self.bindings,
         )
-        match = next(item for item in violations if item.code == "ACTION_OUTPUT_BINDING_MISMATCH")
-        self.assertEqual(match.owner, "GENERATED_ACTION")
-        self.assertEqual(match.route, "generate")
+        self.assertEqual(violations, [])
+        self.assertEqual(
+            materialized["referenced_output_handles"],
+            ["output.final_fasta"],
+        )
 
 
 class ArtifactMismatchOwnershipTests(unittest.TestCase):

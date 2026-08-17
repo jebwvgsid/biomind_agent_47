@@ -33,6 +33,11 @@ from .plan_tracker import (
     canonical_task_spec_for_state,
 )
 from .task_spec import effective_output_contracts, effective_task_contract, evaluate_requirements
+from .managed_artifacts import (
+    PHYSICAL_CONTRACT_BOUND,
+    PHYSICAL_HARD,
+    physical_constraint_origin,
+)
 
 
 ARTIFACT_RE = re.compile(
@@ -1611,28 +1616,54 @@ def _expected_artifacts_from_final_plan(plan_state: Dict[str, Any], current_plan
     superseded_artifacts: set[str] = set()
     is_v2 = _uses_canonical_completion_contract(plan_state)
     task_spec = canonical_task_spec_for_state(plan_state)
-    materialized_by_ref: Dict[str, str] = {}
+    materialized_by_ref: Dict[str, Dict[str, Any]] = {}
     for row in plan_state.get("task_output_materializations", []) or []:
         if not isinstance(row, Mapping):
             continue
         path = str(row.get("canonical_path") or row.get("path") or "").strip()
         for ref in (row.get("output_ref"), row.get("output_id")):
             if path and str(ref or ""):
-                materialized_by_ref[str(ref)] = path
+                materialized_by_ref[str(ref)] = dict(row)
+    provenance = ensure_provenance_state(plan_state)
+    realized_by_logical: Dict[str, str] = {}
+    for head in dict(provenance.get("artifact_heads") or {}).values():
+        artifact_version = dict((provenance.get("artifacts") or {}).get(str(head)) or {})
+        if (
+            str(artifact_version.get("status") or "").lower() == "valid"
+            and str(artifact_version.get("validation_status") or "").lower()
+            in {"valid", "passed", "pass"}
+            and str(artifact_version.get("path") or "").strip()
+        ):
+            realized_by_logical[str(artifact_version.get("logical_artifact_id") or "")] = str(
+                artifact_version.get("path")
+            )
     if task_spec:
         for output in effective_task_contract(task_spec).get("outputs", []) or []:
             if not isinstance(output, dict) or not bool(output.get("required", True)):
                 continue
             if str(output.get("role") or "") == "output_dir":
                 continue
-            artifact = str(
+            logical_id = str(output.get("artifact_id") or output.get("output_id") or "")
+            materialization = dict(materialized_by_ref.get(logical_id) or {})
+            predicted = str(
                 output.get("canonical_path")
                 or output.get("path")
                 or output.get("filename")
-                or materialized_by_ref.get(str(output.get("artifact_id") or ""))
-                or materialized_by_ref.get(str(output.get("output_id") or ""))
+                or materialization.get("canonical_path")
+                or materialization.get("path")
                 or ""
             ).strip()
+            constraint_origin = physical_constraint_origin(
+                {
+                    **output,
+                    "materialization_origin": str(materialization.get("origin") or ""),
+                }
+            )
+            artifact = (
+                predicted
+                if constraint_origin in {PHYSICAL_HARD, PHYSICAL_CONTRACT_BOUND}
+                else str(realized_by_logical.get(logical_id) or predicted)
+            )
             if artifact:
                 canonical_artifacts.append(artifact)
     for step in _steps(plan_state):
@@ -2045,6 +2076,16 @@ class CompletionGate:
             if status == "stale":
                 stale.append(artifact_id)
             elif status != "valid":
+                invalid.append(artifact_id)
+            physical_path = Path(str(artifact.get("path") or "")).expanduser()
+            try:
+                physical_valid = physical_path.exists() and (
+                    physical_path.is_dir()
+                    or (physical_path.is_file() and physical_path.stat().st_size > 0)
+                )
+            except OSError:
+                physical_valid = False
+            if status == "valid" and not physical_valid:
                 invalid.append(artifact_id)
             if str(artifact.get("producer_attempt_id") or ""):
                 attempts.append(str(artifact["producer_attempt_id"]))

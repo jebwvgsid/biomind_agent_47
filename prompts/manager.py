@@ -1833,18 +1833,17 @@ Controller-managed environment variables. For snpEff, reference `$SNPEFF_JAR`.
   "action_kind": "primary|diagnostic|required_validation|recovery",
   "purpose": "analysis|probe|validation|record_failure",
   "argv": ["tool", "{{input:role}}", "-o", "{{output:role}}"],
-  "env": {{}},
-  "outputs": ["output.semantic_handle"],
-  "produced_outputs": [
-    {{"output_id":"canonical_output_id","path":"{{output:role}}"}}
-  ],
-  "expected_evidence": ["artifact.output.semantic_handle"]
+  "env": {{}}
 }}
 
-For every approved current-step task output, `produced_outputs` must contain the
-same canonical output_id and its complete managed placeholder. Do not rename,
-drop, or change an approved output path. Generate is the sole V2 producer of the
-executable action; do not request or invoke a Renderer protocol or manifest.
+Controller derives input/output coverage, canonical identity, paths, evidence,
+and provenance from the typed placeholders in argv/env. Do not return
+`produced_outputs`, output IDs, artifact IDs, canonical paths, or evidence IDs.
+Only when a real tool creates a required output implicitly and no output
+placeholder can appear in argv/env, add `"outputs":["output.semantic_handle"]`.
+That optional field accepts exact semantic handles only. Generate is the sole
+V2 producer of the executable action; do not request or invoke a Renderer
+protocol or manifest.
 
 If a command is not appropriate, return one supported semantic action object
 for ask_user, search, install_tool, step_completion_candidate, plan_patch,

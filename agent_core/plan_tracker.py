@@ -1036,6 +1036,7 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
                     }, producer_step_id=step_id, source="approved_plan_artifact_ledger"))
                 continue
             output_id = str(task_output.get("output_id") or task_output.get("artifact_id") or ref)
+            logical_artifact_id = str(task_output.get("artifact_id") or output_id)
             materialized = (
                 materialized_by_ref.get(str(task_output.get("artifact_id") or ""))
                 or materialized_by_ref.get(output_id)
@@ -1049,7 +1050,7 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
             )
             if path:
                 contracts.append(normalize_artifact_contract({
-                    "artifact_id": output_id,
+                    "artifact_id": logical_artifact_id,
                     "output_id": output_id,
                     "role": str(task_output.get("role") or output_id),
                     "path": path,
@@ -1069,7 +1070,7 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
             contracts = step_artifact_contracts(step)
         for contract in contracts:
             path = _artifact_path(contract)
-            logical_id = str(contract.get("output_id") or contract.get("artifact_id") or infer_artifact_id(path))
+            logical_id = str(contract.get("artifact_id") or contract.get("output_id") or infer_artifact_id(path))
             artifact_id = _canonical_artifact_id(task_id, step_id, logical_id, path)
             result[artifact_id] = {
                 **deepcopy(contract),
@@ -1414,6 +1415,12 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                 "produced_artifact_ids": [],
                 "artifact_version_ids": [],
                 "before_artifacts": before,
+                "managed_output_contracts": deepcopy(
+                    list(value.get("managed_output_contracts") or [])
+                ),
+                "managed_output_snapshot_before": deepcopy(
+                    dict(value.get("managed_output_snapshot_before") or {})
+                ),
             }
             provenance["attempts"][attempt_id] = record
             if record["stage_id"] in provenance.get("stages", {}):
@@ -1501,13 +1508,29 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             stage["current_attempt_id"] = attempt_id
             stage["status"] = "passed" if attempt.get("returncode") == 0 and attempt.get("status") == "succeeded" else "failed"
         produced_paths = {str(Path(item).expanduser().resolve()) for item in execution.get("produced_artifacts", []) or [] if str(item)}
+        reconciled_by_logical = {
+            str(item.get("artifact_id") or item.get("logical_artifact_id") or ""): dict(item)
+            for item in execution.get("reconciled_outputs", []) or []
+            if isinstance(item, Mapping)
+            and str(item.get("artifact_id") or item.get("logical_artifact_id") or "")
+            and str(item.get("attempt_id") or "") == attempt_id
+        }
         for artifact_id in _step_by_id(state, str(attempt.get("step_id") or "")).get("output_artifact_ids", []) or []:
             head = provenance["artifact_heads"].get(artifact_id)
             definition = dict(provenance["artifacts"].get(head) or {})
-            path = str(definition.get("path") or "")
+            logical_id = str(definition.get("logical_artifact_id") or "")
+            reconciliation = dict(reconciled_by_logical.get(logical_id) or {})
+            predicted_path = str(definition.get("path") or "")
+            path = str(reconciliation.get("observed_path") or predicted_path)
             after = _artifact_signature(path)
             before = dict(attempt.get("before_artifacts", {}).get(artifact_id) or {})
-            changed = bool(after.get("exists") and after != before)
+            changed = bool(
+                after.get("exists")
+                and (
+                    bool(reconciliation)
+                    or after != before
+                )
+            )
             allow_probe = bool(definition.get("allow_probe_producer"))
             if path not in produced_paths or not changed or (is_probe and not allow_probe):
                 continue
@@ -1520,6 +1543,7 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                 "producer_stage_id": str(attempt.get("stage_id") or ""),
                 "producer_action_id": str(attempt.get("action_id") or ""),
                 "producer_attempt_id": attempt_id,
+                "path": path,
                 "status": "materialized",
                 "validation_status": "unknown",
                 "validation_id": "",
@@ -1527,6 +1551,11 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                 "size": int(after.get("size") or 0),
                 "digest_or_signature": after,
                 "source": "execution_observed",
+                "predicted_path": predicted_path,
+                "realization": str(reconciliation.get("realization") or "expected"),
+                "constraint_origin": str(reconciliation.get("constraint_origin") or ""),
+                "representation": str(reconciliation.get("representation") or ""),
+                "format": str(reconciliation.get("format") or definition.get("format") or ""),
                 "schema_version": PROVENANCE_SCHEMA_VERSION,
             }
             provenance["artifacts"][version_id] = artifact
@@ -2218,11 +2247,16 @@ def record_preaction_contract_failure(
         prior = {
             "error_code": code,
             "owner": owner,
+            "subsystem": str(violation.get("subowner") or "managed_artifacts"),
             "stage": "pre_action_contract",
             "message": message,
+            "reason": message,
+            "current_step": str(state.get("current_step_id") or ""),
             "fingerprint": str(error_fingerprint or ""),
             "candidate_fingerprint": str(candidate_fingerprint or ""),
             "execution_started": False,
+            "repair_attempted": bool(repair_attempt_count),
+            "repair_exhausted": False,
             # Compatibility aliases remain readable by existing terminal and
             # resume projections, but they do not own the primary diagnosis.
             "failure_type": "generated_action_contract_error",
@@ -2232,15 +2266,25 @@ def record_preaction_contract_failure(
             "summary": message,
             "recorded_at": now,
         }
+        for target, source in (
+            ("logical_artifact", "artifact_handle"),
+            ("expected_realization", "expected"),
+            ("observed_candidates", "proposed"),
+            ("constraint_origin", "constraint_origin"),
+        ):
+            if violation.get(source) not in (None, "", []):
+                prior[target] = deepcopy(violation.get(source))
     prior["last_seen_at"] = now
     prior["repair_attempt_count"] = max(
         int(prior.get("repair_attempt_count") or 0),
         int(repair_attempt_count or 0),
     )
+    prior["repair_attempted"] = bool(prior["repair_attempt_count"])
     prior["last_candidate_fingerprint"] = str(candidate_fingerprint or "")
     if termination_reason:
         prior["termination_reason"] = str(termination_reason)
         prior["execution_started"] = False
+        prior["repair_exhausted"] = True
         task_state = dict(state.get("task_state") or {})
         task_state["status"] = TASK_STATUS_FAILED
         task_state["status_reason"] = str(
@@ -2259,6 +2303,67 @@ def record_preaction_contract_failure(
                 step["status"] = STATUS_FAILED
                 step["updated_at"] = now
                 break
+    state["failure"] = prior
+    state["updated_at"] = now
+    return deepcopy(prior)
+
+
+def record_runtime_output_failure(
+    state: PlanState,
+    reconciliation: Mapping[str, Any],
+    *,
+    step_id: str,
+    attempt_id: str,
+    command_role: str = "",
+    repair_exhausted: bool = False,
+) -> Dict[str, Any]:
+    """Persist typed runtime output failure without flattening it to TASK_BLOCKED."""
+    violations = [
+        dict(item) for item in reconciliation.get("violations", []) or []
+        if isinstance(item, Mapping)
+    ]
+    if not violations:
+        prior = dict(state.get("failure") or {}) if isinstance(state.get("failure"), Mapping) else {}
+        if (
+            prior.get("subsystem") == "runtime_output_reconciliation"
+            and prior.get("execution_started") is True
+            and not prior.get("termination_reason")
+        ):
+            prior["resolved_at"] = _now()
+            state["failure"] = prior
+        return {}
+    first = violations[0]
+    now = _now()
+    prior = dict(state.get("failure") or {}) if isinstance(state.get("failure"), Mapping) else {}
+    if not prior or prior.get("resolved_at"):
+        prior = {
+            "error_code": str(first.get("code") or "OUTPUT_RECONCILIATION_FAILED"),
+            "owner": str(first.get("owner") or "ARTIFACT_CONTRACT").upper(),
+            "subsystem": "runtime_output_reconciliation",
+            "stage": "post_execution_reconciliation",
+            "message": str(first.get("message") or "Runtime output reconciliation failed."),
+            "reason": str(first.get("message") or "Runtime output reconciliation failed."),
+            "current_step": str(step_id or ""),
+            "execution_started": True,
+            "repair_attempted": str(command_role or "").lower() == "recovery",
+            "repair_exhausted": bool(repair_exhausted),
+            "logical_artifact": str(first.get("logical_artifact") or ""),
+            "expected_realization": str(first.get("expected_realization") or ""),
+            "observed_candidates": deepcopy(list(first.get("observed_candidates") or [])),
+            "constraint_origin": str(first.get("constraint_origin") or ""),
+            "attempt_id": str(attempt_id or ""),
+            "fingerprint": str(reconciliation.get("fingerprint") or ""),
+            "recorded_at": now,
+        }
+    prior["last_seen_at"] = now
+    prior["last_attempt_id"] = str(attempt_id or "")
+    prior["last_fingerprint"] = str(reconciliation.get("fingerprint") or "")
+    prior["repair_attempted"] = bool(
+        prior.get("repair_attempted") or str(command_role or "").lower() == "recovery"
+    )
+    if repair_exhausted:
+        prior["repair_exhausted"] = True
+        prior["termination_reason"] = "runtime_output_recovery_exhausted"
     state["failure"] = prior
     state["updated_at"] = now
     return deepcopy(prior)

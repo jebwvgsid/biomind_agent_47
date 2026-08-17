@@ -219,7 +219,7 @@ class GenerateOnlyOutputContractV2Tests(unittest.TestCase):
         self.assertEqual(issues[0].route, "generate")
         self.assertIn("ann_summary", issues[0].message)
 
-    def test_generate_cannot_change_approved_output_path(self):
+    def test_llm_authored_produced_output_identity_is_ignored(self):
         task_spec = _task_spec()
         plan_state = _strict_plan()
         plan_state["task_spec"] = task_spec
@@ -227,19 +227,16 @@ class GenerateOnlyOutputContractV2Tests(unittest.TestCase):
 
         _action, issues = materialize_managed_action({
             "action_type": "execute",
-            "argv": ["write-report", "/tmp/wrong-name.md"],
-            "outputs": ["output.report"],
+            "argv": ["write-report", "{output:report}"],
             "produced_outputs": [{
-                "output_id": "report",
+                "output_id": "output.report",
                 "path": "/tmp/wrong-name.md",
             }],
         }, bindings)
 
-        mismatch = next(
-            row for row in issues if row.code == "GENERATE_OUTPUT_PATH_MISMATCH"
-        )
-        self.assertEqual(mismatch.owner, "GENERATED_ACTION")
-        self.assertEqual(mismatch.route, "generate")
+        self.assertEqual(issues, [])
+        self.assertNotIn("produced_outputs", _action)
+        self.assertEqual(_action["referenced_output_handles"], ["output.report"])
 
     def test_renderer_declared_skills_are_generate_owned_in_v2(self):
         manager = SkillManager(str(Path(__file__).resolve().parents[1] / "skills"))

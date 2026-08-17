@@ -11,7 +11,7 @@ from agent_core.managed_artifacts import (
     managed_action_fingerprint,
     materialize_managed_action,
 )
-from bio_agents import _inject_managed_action_environment
+from bio_agents import BioAnalystAgent, _inject_managed_action_environment
 from prompts.manager import PromptManager
 
 
@@ -130,6 +130,26 @@ class ManagedActionEnvV2Tests(unittest.TestCase):
         self.assertIn('"env":{"FASTA":"{input:reference_fasta}"}', prompt)
         self.assertIn("Do not emit `{runtime:*}`", prompt)
         self.assertIn("$SNPEFF_JAR", prompt)
+        self.assertNotIn('"produced_outputs": [', prompt)
+        self.assertNotIn('"expected_evidence": [', prompt)
+        self.assertIn("Controller derives input/output coverage", prompt)
+        self.assertIn('"outputs":["output.semantic_handle"]', prompt)
+
+    def test_execute_parser_discards_legacy_duplicate_output_identity(self) -> None:
+        action = BioAnalystAgent._structured_action_from_object({
+            "action_type": "execute",
+            "argv": ["tool", "{output:reference_fasta}"],
+            "produced_outputs": [{
+                "output_id": "output.reference_fasta",
+                "path": "/model-invented/reference.fa",
+            }],
+            "expected_evidence": ["artifact.output.reference_fasta"],
+        })
+
+        self.assertEqual(action["type"], "execute")
+        self.assertEqual(action["argv"], ["tool", "{output:reference_fasta}"])
+        self.assertNotIn("produced_outputs", action)
+        self.assertNotIn("expected_evidence", action)
 
 
 if __name__ == "__main__":

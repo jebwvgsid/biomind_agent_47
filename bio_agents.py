@@ -324,6 +324,7 @@ from agent_core.plan_tracker import (
     provenance_debug_dump,
     record_current_step_evidence,
     record_preaction_contract_failure,
+    record_runtime_output_failure,
     record_provenance_event,
     render_structured_plan,
     render_plan_review_content,
@@ -419,8 +420,11 @@ from agent_core.managed_artifacts import (
     ArtifactViolation,
     build_approved_visible_artifact_set,
     build_managed_artifact_bindings,
+    capture_managed_output_snapshot,
+    discover_current_attempt_outputs,
     managed_action_fingerprint,
     materialize_managed_action,
+    reconcile_runtime_outputs,
     validate_generate_output_coverage,
     validate_materialized_artifacts,
 )
@@ -10851,18 +10855,6 @@ class BioAnalystAgent:
                 raw_outputs = [raw_outputs]
             if not isinstance(raw_outputs, list):
                 return {}
-            produced_outputs = obj.get("produced_outputs") or []
-            if not isinstance(produced_outputs, list) or any(
-                not isinstance(item, Mapping)
-                or not str(item.get("output_id") or "").strip()
-                or not isinstance(item.get("path"), str)
-                or not str(item.get("path") or "").strip()
-                for item in produced_outputs
-            ):
-                return {}
-            raw_evidence = obj.get("expected_evidence") or []
-            if isinstance(raw_evidence, str):
-                raw_evidence = [raw_evidence]
             env = obj.get("env") or {}
             if not isinstance(env, Mapping):
                 return {}
@@ -10871,8 +10863,6 @@ class BioAnalystAgent:
                 "argv": deepcopy(argv) if isinstance(argv, list) else [],
                 "env": deepcopy(dict(env)),
                 "outputs": [str(item) for item in raw_outputs if str(item).strip()],
-                "produced_outputs": deepcopy(produced_outputs),
-                "expected_evidence": [str(item) for item in raw_evidence if str(item).strip()],
                 "language": str(obj.get("language") or "").strip(),
             })
             purpose = str(obj.get("purpose") or "").strip().lower()
@@ -11711,6 +11701,16 @@ class BioAnalystAgent:
     def _finalize_blocked_state(self, task_id: str, reason: str) -> str:
         """Persist a truthful framework-level blocked result without another LLM call."""
         plan_state = load_plan_state(self.data_path, task_id)
+        durable_failure = (
+            dict(plan_state.get("failure") or {})
+            if isinstance(plan_state.get("failure"), Mapping)
+            else {}
+        )
+        if durable_failure and not durable_failure.get("resolved_at"):
+            durable_failure["repair_exhausted"] = True
+            durable_failure.setdefault("termination_reason", "bounded_recovery_exhausted")
+            durable_failure["last_seen_at"] = timestamp_now()
+            plan_state["failure"] = durable_failure
         block_plan_and_downstream(plan_state, str(reason or "Controller blocked the task."))
         progress = self._persist_plan_tracker(task_id, plan_state)
         root = Path(self.data_path) / "task_outputs" / str(task_id or "default")
@@ -11719,6 +11719,9 @@ class BioAnalystAgent:
             "task_id": str(task_id),
             "status": TASK_STATUS_BLOCKED,
             "reason": str(reason)[:8000],
+            "error_code": str(durable_failure.get("error_code") or "TASK_BLOCKED"),
+            "error_owner": str(durable_failure.get("owner") or ""),
+            "failure_stage": str(durable_failure.get("stage") or ""),
             "current_step_id": str((plan_state.get("task_state") or {}).get("current_step_id") or ""),
             "updated_at": datetime.now().isoformat(timespec="seconds"),
         }
@@ -25099,77 +25102,57 @@ question. Never guess a scientific or database identity.
                         else raw_first_owner
                     )
                     if first_owner == RecoveryFailureOwner.INTERNAL_PROTOCOL.value:
-                        # The only allowed internal recovery is a deterministic
-                        # recompile from the same pinned snapshot, at most once.
-                        reprojected_bindings = build_managed_artifact_bindings(
-                            task_spec_for_action,
-                            plan_state=current_action_plan,
-                            approved_plan_snapshot=approved_action_snapshot,
-                            current_step_id=current_action_step_id,
-                            visible_artifacts=visible_artifacts,
+                        # Rebuilding from the same snapshot, bindings, action,
+                        # and validator cannot change the result.  A visible
+                        # exact handle with no binding is a Controller defect,
+                        # so persist it and fail closed without a no-op retry.
+                        conflict = {
+                            **first_violation,
+                            "owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                            "subowner": "controller_projection",
+                            "route": "terminal",
+                            "failure_stage": "pre_action_contract",
+                            "candidate_fingerprint": candidate_fingerprint,
+                        }
+                        error_fingerprint = hashlib.sha256(json.dumps(
+                            conflict,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                            default=str,
+                        ).encode("utf-8", errors="replace")).hexdigest()
+                        durable_failure = record_preaction_contract_failure(
+                            current_action_plan,
+                            conflict,
+                            error_fingerprint=error_fingerprint,
+                            candidate_fingerprint=candidate_fingerprint,
+                            repair_attempt_count=0,
+                            termination_reason="internal_protocol_not_repairable",
                         )
-                        reprojected_action, reprojected_violations = materialize_managed_action(
-                            structured_action,
-                            reprojected_bindings,
-                            allow_legacy_exact_literals=False,
-                            operation_bindings=generate_operation_bindings,
-                            approved_visible_artifacts=visible_artifacts,
-                        )
-                        reprojected_violations.extend(
-                            validate_materialized_artifacts(
-                                reprojected_action,
-                                reprojected_bindings,
-                            )
-                        )
-                        reprojected_violations.extend(
-                            validate_generate_output_coverage(
-                                current_action_plan,
-                                reprojected_action,
-                                reprojected_bindings,
-                            )
-                        )
-                        if not reprojected_violations:
-                            managed_bindings = reprojected_bindings
-                            materialized_action = reprojected_action
-                            artifact_violations = []
-                        else:
-                            conflict = {
-                                "code": "INTERNAL_CONTRACT_CONFLICT",
-                                "owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                                "subowner": "controller_projection",
-                                "route": "terminal",
-                                "failure_stage": "pre_action_contract",
-                                "message": (
-                                    "Approved-visible artifact projection remained invalid "
-                                    "after one deterministic recompile."
-                                ),
-                                "candidate_fingerprint": candidate_fingerprint,
-                                "artifact_id": str(
-                                    first_violation.get("proposed")
-                                    or first_violation.get("artifact_handle")
-                                    or ""
-                                ),
-                            }
-                            return {
-                                "messages": [response, SystemMessage(content=(
-                                    "<managed_artifact_internal_conflict>\n"
-                                    + json.dumps(conflict, ensure_ascii=False, sort_keys=True)
-                                    + "\n</managed_artifact_internal_conflict>"
-                                ))],
-                                "pending_action": {},
-                                "pending_recovery_action": {
-                                    "type": "blocked",
-                                    "reason": conflict["message"],
-                                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                                    "violation": conflict,
-                                },
-                                "required_next_action": "INTERNAL_CONTRACT_CONFLICT",
+                        save_plan_state(self.data_path, task_id, current_action_plan)
+                        return {
+                            "messages": [response, SystemMessage(content=(
+                                "<managed_artifact_internal_conflict>\n"
+                                + json.dumps(conflict, ensure_ascii=False, sort_keys=True)
+                                + "\n</managed_artifact_internal_conflict>"
+                            ))],
+                            "pending_action": {},
+                            "pending_recovery_action": {
+                                "type": "blocked",
+                                "reason": str(conflict.get("message") or "Internal artifact binding conflict."),
                                 "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                                "generate_result": "BLOCKED",
-                                "generate_exit_reason": "managed_artifact_projection_conflict",
-                                "recovery_phase": "exhausted",
-                                "next_step": "finish",
-                            }
+                                "violation": conflict,
+                            },
+                            "failure": durable_failure,
+                            "primary_failure": durable_failure,
+                            "execution_started": False,
+                            "required_next_action": "INTERNAL_CONTRACT_CONFLICT",
+                            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                            "generate_result": "BLOCKED",
+                            "generate_exit_reason": "managed_artifact_projection_conflict",
+                            "recovery_phase": "exhausted",
+                            "next_step": "finish",
+                        }
                     if artifact_violations:
                         violation_payload = [item.to_dict() for item in artifact_violations]
                         first_violation = violation_payload[0]
@@ -25377,7 +25360,7 @@ question. Never guess a scientific or database identity.
                     "error_type": "RENDERER_ACTIVE_PATH_RETIRED",
                     "reason": (
                         "V2 managed execution requires Generate to return an execute action "
-                        "with canonical produced_outputs."
+                        "with typed managed-artifact references."
                     ),
                 }
                 structured_action = {}
@@ -26729,6 +26712,14 @@ question. Never guess a scientific or database identity.
             shim_path  = self.pm.get_shim_dir_str()
             started_at = datetime.now().isoformat(timespec="seconds")
             attempt_plan_state = load_plan_state(self.data_path, task_id)
+            managed_output_contracts = [
+                dict(item)
+                for item in pending_action.get("controller_output_bindings", []) or []
+                if isinstance(item, Mapping)
+            ]
+            managed_output_snapshot_before = capture_managed_output_snapshot(
+                managed_output_contracts
+            )
             record_provenance_event(attempt_plan_state, "action_bound", {
                 "task_id": task_id,
                 "action": dict(pending_action),
@@ -26740,6 +26731,8 @@ question. Never guess a scientific or database identity.
                 "step_id": str(pending_action.get("step_id") or ""),
                 "stage_id": str(pending_action.get("stage_id") or ""),
                 "generated_script": generated_ref,
+                "managed_output_contracts": managed_output_contracts,
+                "managed_output_snapshot_before": managed_output_snapshot_before,
             })
             attempt_id = str(attempt_record.get("attempt_id") or "")
             attempt_dir = (
@@ -26914,6 +26907,45 @@ question. Never guess a scientific or database identity.
                 stderr,
                 returncode,
             )
+            managed_output_snapshot_after = capture_managed_output_snapshot(
+                managed_output_contracts
+            )
+            observed_candidate_records = discover_current_attempt_outputs(
+                managed_output_snapshot_before,
+                managed_output_snapshot_after,
+                attempt_id=attempt_id,
+            )
+            runtime_output_reconciliation = reconcile_runtime_outputs(
+                managed_output_contracts,
+                observed_candidate_records,
+                attempt_id=attempt_id,
+                exit_code=returncode,
+            )
+            if runtime_output_reconciliation.get("status") == "recovery":
+                validation_result = dict(validation_result or {})
+                validation_result["passed"] = False
+                validation_result["output_reconciliation"] = runtime_output_reconciliation
+                validation_result["errors"] = list(dict.fromkeys([
+                    *list(validation_result.get("errors") or []),
+                    *[
+                        str(item.get("code") or "OUTPUT_RECONCILIATION_FAILED")
+                        + ": "
+                        + str(item.get("message") or "runtime output reconciliation failed")
+                        for item in runtime_output_reconciliation.get("violations", []) or []
+                        if isinstance(item, Mapping)
+                    ],
+                ]))
+                validation_block += (
+                    "\nRUNTIME_OUTPUT_RECONCILIATION:\n"
+                    + json.dumps(
+                        runtime_output_reconciliation,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        default=str,
+                    )[:6000]
+                    + "\n"
+                )
+                validation_level = "runtime_output_reconciliation"
             validation_failed = bool(validation_result and not validation_result.get("passed", True))
             benign_nonzero_preview = bool(
                 validation_result
@@ -27106,57 +27138,45 @@ question. Never guess a scientific or database identity.
                     logger.warning("RootCauseAnalyzer failed; keeping raw execution evidence: %s", exc)
             execution_plan_state = load_plan_state(self.data_path, task_id)
             execution_step = self._running_plan_step(execution_plan_state) or {}
-            produced_output_contracts = [
-                {
-                    "artifact_id": str(item.get("output_id") or ""),
-                    "output_id": str(item.get("output_id") or ""),
-                    "role": str(item.get("output_id") or ""),
-                    "path": str(item.get("path") or ""),
-                    "required": True,
-                    "source": "generate_produced_outputs",
-                }
-                for item in pending_action.get("produced_outputs", []) or []
-                if isinstance(item, Mapping)
-                and str(item.get("output_id") or "")
-                and str(item.get("path") or "")
-            ]
-            execution_contracts = produced_output_contracts or step_artifact_contracts(execution_step)
+            execution_contracts = managed_output_contracts or step_artifact_contracts(execution_step)
             declared_outputs = [
-                str(item.get("path") or "")
+                str(item.get("expected_path") or item.get("path") or "")
                 for item in execution_contracts
-                if str(item.get("path") or "").strip()
+                if str(item.get("expected_path") or item.get("path") or "").strip()
             ]
             if not declared_outputs:
                 declared_outputs = [
                     str(item) for item in execution_step.get("outputs", []) or [] if str(item).strip()
                 ]
-            observed_outputs: List[str] = []
-            produced_artifacts: List[str] = []
-            contract_by_path = {
-                str(item.get("path") or ""): item
-                for item in execution_contracts
+            observed_outputs = [
+                str(item.get("path") or "")
+                for item in observed_candidate_records
                 if str(item.get("path") or "")
-            }
-            for item in declared_outputs:
-                try:
-                    candidate_path = Path(item)
-                    if not candidate_path.is_absolute():
-                        base_dir = str((contract_by_path.get(item) or {}).get("base_dir") or "")
-                        candidate_path = (Path(base_dir) if base_dir else Path(os.getcwd())) / candidate_path
-                    if candidate_path.exists() and (not candidate_path.is_file() or candidate_path.stat().st_size > 0):
-                        resolved_output = str(candidate_path.resolve())
-                        observed_outputs.append(resolved_output)
-                        if candidate_path.stat().st_mtime + 1.0 >= start_time:
-                            produced_artifacts.append(resolved_output)
-                except OSError:
-                    continue
+            ]
+            reconciled_outputs = [
+                dict(item)
+                for item in runtime_output_reconciliation.get("bindings", []) or []
+                if isinstance(item, Mapping)
+            ]
+            produced_artifacts = [
+                str(item.get("observed_path") or "")
+                for item in reconciled_outputs
+                if str(item.get("observed_path") or "")
+            ]
             execution_failure_fingerprint = str(
                 (root_cause_analysis or {}).get("inner_fingerprint")
                 or (root_cause_analysis or {}).get("failure_fingerprint")
                 or ""
             )
             if not execution_failure_fingerprint and (returncode != 0 or validation_failed):
-                fingerprint_text = "\n".join([stderr[-4000:], stdout[-4000:], str(returncode)])
+                fingerprint_text = json.dumps({
+                    "command": execution_command,
+                    "returncode": returncode,
+                    "stderr": stderr[-4000:],
+                    "stdout": stdout[-4000:],
+                    "output_reconciliation": runtime_output_reconciliation.get("fingerprint") or "",
+                    "observed_outputs": sorted(observed_outputs),
+                }, ensure_ascii=False, sort_keys=True, default=str)
                 execution_failure_fingerprint = hashlib.sha256(
                     fingerprint_text.encode("utf-8", errors="replace")
                 ).hexdigest()[:20]
@@ -27165,8 +27185,9 @@ question. Never guess a scientific or database identity.
                 "plan_id": str(execution_plan_state.get("plan_id") or ""),
                 "action_id": str(pending_action.get("action_id") or ""),
                 "execution_status": (
-                    "succeeded" if effective_success and not validation_failed and not runtime_missing else "failed"
+                    "succeeded" if effective_success and not runtime_missing else "failed"
                 ),
+                "process_status": "succeeded" if returncode == 0 else "failed",
                 "purpose": declared_purpose,
                 "attempt_id": str(attempt_record.get("attempt_id") or ""),
                 "command_role": command_role,
@@ -27214,9 +27235,17 @@ question. Never guess a scientific or database identity.
                 "declared_outputs": declared_outputs,
                 "observed_outputs": observed_outputs,
                 "produced_artifacts": produced_artifacts,
-                "produced_outputs": deepcopy(list(
-                    pending_action.get("produced_outputs") or []
-                )),
+                "observed_output_records": observed_candidate_records,
+                "runtime_output_reconciliation": runtime_output_reconciliation,
+                "reconciled_outputs": reconciled_outputs,
+                "output_reconciliation_status": str(
+                    runtime_output_reconciliation.get("status") or "not_required"
+                ),
+                "failure_code": str(
+                    ((runtime_output_reconciliation.get("violations") or [{}])[0]).get("code")
+                    if runtime_output_reconciliation.get("violations")
+                    else ""
+                ),
                 "fallback_used": command_role == "fallback" or bool(pending_action.get("fallback_used")),
                 "retry_count_recorded": bool(
                     command_role == "primary"
@@ -27289,11 +27318,20 @@ question. Never guess a scientific or database identity.
                 record = ExecutionRecord.from_mapping(execution_evidence)
                 RecoveryStateStore(self.data_path, task_id).save_execution_record(record)
                 provenance_plan = load_plan_state(self.data_path, task_id)
+                runtime_artifact_failure = record_runtime_output_failure(
+                    provenance_plan,
+                    runtime_output_reconciliation,
+                    step_id=str(execution_step.get("step_id") or ""),
+                    attempt_id=record.attempt_id,
+                    command_role=command_role,
+                )
                 provenance_result = record_provenance_event(provenance_plan, "execution_finished", {
                     "attempt_id": record.attempt_id,
                     "execution_record": {**execution_evidence, **record.summary()},
                 })
                 record.produced_artifact_ids = list(provenance_result.get("produced_artifact_ids") or [])
+                if runtime_artifact_failure:
+                    execution_evidence["typed_failure"] = runtime_artifact_failure
                 RecoveryStateStore(self.data_path, task_id).save_execution_record(record)
                 provenance_task_state = dict(provenance_plan.get("task_state") or {})
                 provenance_task_state["pending_action"] = {}

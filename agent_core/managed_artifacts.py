@@ -11,6 +11,7 @@ import os
 import re
 import hashlib
 import json
+import gzip
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -20,6 +21,9 @@ MANAGED_ARTIFACT_SCHEMA_VERSION = 2
 MANAGED_EXACT = "managed_exact"
 MODEL_SELECTABLE = "model_selectable"
 PLANNER_MATERIALIZED = "planner_materialized"
+PHYSICAL_HARD = "HARD"
+PHYSICAL_CONTRACT_BOUND = "CONTRACT_BOUND"
+PHYSICAL_IMPLEMENTATION_DETAIL = "IMPLEMENTATION_DETAIL"
 _PLACEHOLDER_RE = re.compile(r"^\{(input|output):([A-Za-z][A-Za-z0-9_.-]*)\}$")
 _OPERATION_PLACEHOLDER_RE = re.compile(r"^\{operation:([A-Za-z][A-Za-z0-9_.-]*)\}$")
 _RUNTIME_PLACEHOLDER_RE = re.compile(r"\{runtime:[A-Za-z][A-Za-z0-9_.-]*\}")
@@ -96,6 +100,8 @@ class ManagedArtifactBinding:
     source_authority: str = "task_spec"
     snapshot_identity: str = ""
     runtime_available: bool = True
+    constraint_origin: str = PHYSICAL_IMPLEMENTATION_DETAIL
+    accepted_representations: Tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if self.direction not in {"input", "output"}:
@@ -135,6 +141,8 @@ class ManagedArtifactBinding:
             "source_authority": self.source_authority,
             "snapshot_identity": self.snapshot_identity,
             "runtime_available": self.runtime_available,
+            "constraint_origin": self.constraint_origin,
+            "accepted_representations": list(self.accepted_representations),
         }
         if include_control_path:
             value["canonical_path"] = self.canonical_path
@@ -162,6 +170,67 @@ def _canonical_path(raw: Mapping[str, Any]) -> str:
         return str(Path(value).expanduser().resolve(strict=False))
     except OSError:
         return os.path.abspath(os.path.expanduser(value))
+
+
+def physical_constraint_origin(
+    raw: Mapping[str, Any],
+    *,
+    materialization_origin: str = "",
+    source_authority: str = "",
+) -> str:
+    """Classify physical path strictness from Controller-owned provenance.
+
+    Logical requiredness does not make a Planner-selected basename a hard
+    physical contract.  Only an explicit user path or a typed tool/workflow
+    contract does that; approved plan-local paths remain implementation
+    expectations unless their durable metadata says otherwise.
+    """
+    explicit = str(raw.get("constraint_origin") or "").strip().upper()
+    if explicit in {
+        PHYSICAL_HARD,
+        PHYSICAL_CONTRACT_BOUND,
+        PHYSICAL_IMPLEMENTATION_DETAIL,
+    }:
+        return explicit
+    origin = str(materialization_origin or raw.get("materialization_origin") or "").strip().lower()
+    declared_policy = str(
+        raw.get("declared_path_policy") or raw.get("path_policy") or ""
+    ).strip().lower()
+    authority = str(source_authority or raw.get("source_authority") or "").strip().lower()
+    source_type = str(
+        raw.get("source_type") or raw.get("source") or raw.get("source_authority") or ""
+    ).strip().lower()
+    if origin == "planner" or declared_policy == PLANNER_MATERIALIZED:
+        return PHYSICAL_IMPLEMENTATION_DETAIL
+    if authority == "approved_plan_snapshot":
+        return PHYSICAL_IMPLEMENTATION_DETAIL
+    if source_type.startswith(("skill", "workflow", "tool_contract", "contract")):
+        return PHYSICAL_CONTRACT_BOUND
+    has_explicit_path = any(
+        str(raw.get(key) or "").strip()
+        for key in ("canonical_path", "path", "filename", "required_basename")
+    )
+    if source_type in {"user", "user_explicit", "task_user"} and has_explicit_path:
+        return PHYSICAL_HARD
+    return PHYSICAL_IMPLEMENTATION_DETAIL
+
+
+def _accepted_representations(raw: Mapping[str, Any]) -> Tuple[str, ...]:
+    metadata = dict(raw.get("metadata") or {})
+    values = (
+        raw.get("accepted_representations")
+        or raw.get("downstream_accepted_representations")
+        or metadata.get("accepted_representations")
+        or metadata.get("downstream_accepted_representations")
+        or []
+    )
+    if isinstance(values, str):
+        values = [values]
+    return tuple(dict.fromkeys(
+        str(value).strip().lower()
+        for value in values or []
+        if str(value or "").strip()
+    ))
 
 
 def _binding_from_row(
@@ -205,11 +274,18 @@ def _binding_from_row(
             "source_index": index,
             "role": str(role),
             "output_id": str(raw.get("output_id") or "") if direction == "output" else "",
+            "source_type": str(raw.get("source_type") or raw.get("source") or ""),
+            "source_ref": str(raw.get("source_ref") or raw.get("source_id") or ""),
+            "declared_path_policy": str(raw.get("declared_path_policy") or raw.get("path_policy") or ""),
+            "materialization_origin": str(raw.get("materialization_origin") or ""),
+            "user_visible": bool(raw.get("user_visible", False)),
         },
         artifact_kind=str(raw.get("artifact_kind") or raw.get("object_kind") or ""),
         source_authority=str(raw.get("source_authority") or "task_spec"),
         snapshot_identity=str(raw.get("snapshot_identity") or ""),
         runtime_available=bool(raw.get("runtime_available", True)),
+        constraint_origin=physical_constraint_origin(raw),
+        accepted_representations=_accepted_representations(raw),
     )
 
 
@@ -247,6 +323,27 @@ def _runtime_plan_local_available(
         ):
             return True
     return False
+
+
+def _validated_runtime_realization(
+    plan_state: Mapping[str, Any],
+    logical_artifact_id: str,
+) -> str:
+    """Return the validated physical head for one stable logical artifact."""
+    provenance = dict(plan_state.get("provenance_state") or {})
+    artifacts = dict(provenance.get("artifacts") or {})
+    for head in dict(provenance.get("artifact_heads") or {}).values():
+        record = dict(artifacts.get(str(head)) or {})
+        if str(record.get("logical_artifact_id") or "") != str(logical_artifact_id or ""):
+            continue
+        if (
+            str(record.get("status") or "").strip().lower() == "valid"
+            and str(record.get("validation_status") or "").strip().lower()
+            in _ARTIFACT_VALID
+            and str(record.get("path") or "").strip()
+        ):
+            return _canonical_path({"path": record.get("path")})
+    return ""
 
 
 def build_approved_visible_artifact_set(
@@ -294,7 +391,11 @@ def build_approved_visible_artifact_set(
 
     # Compatibility: older approved plans have no plan-local ledger and keep
     # the original TaskSpec binding universe.
-    if not plan_local:
+    has_typed_usage = bool(
+        snapshot.get("resolved_artifact_refs")
+        or snapshot.get("artifact_usage")
+    )
+    if not plan_local and not has_typed_usage:
         visible: Dict[str, Dict[str, Any]] = {}
         for identity, (direction, row) in task_rows.items():
             canonical_identity = str(
@@ -359,16 +460,25 @@ def build_approved_visible_artifact_set(
         if task_match is None:
             continue
         declared_direction, row = task_match
-        if declared_direction != direction:
+        if declared_direction != direction and not (
+            declared_direction == "output" and direction == "input"
+        ):
             continue
         canonical_identity = str(
             row.get("artifact_id")
-            or row.get("input_id" if direction == "input" else "output_id")
+            or row.get("input_id" if declared_direction == "input" else "output_id")
             or artifact_id
+        )
+        role = str(
+            row.get("role")
+            or row.get("name")
+            or row.get("input_id" if declared_direction == "input" else "output_id")
+            or canonical_identity
         )
         visible[canonical_identity] = {
             "artifact_id": canonical_identity,
             "direction": direction,
+            "declared_direction": declared_direction,
             "source_authority": "task_spec",
             "snapshot_identity": snapshot_identity,
             "row": deepcopy(row),
@@ -377,6 +487,7 @@ def build_approved_visible_artifact_set(
                 artifact_id,
                 canonical_identity,
                 str(row.get("semantic_handle") or ""),
+                f"{direction}.{_slug(role, canonical_identity)}",
             } - {""}),
         }
     return visible
@@ -393,7 +504,6 @@ def managed_action_fingerprint(action: Mapping[str, Any]) -> str:
         },
         "cwd": str(action.get("cwd") or ""),
         "outputs": [str(item) for item in action.get("outputs", []) or []],
-        "produced_outputs": deepcopy(list(action.get("produced_outputs", []) or [])),
     }
     return hashlib.sha256(
         json.dumps(
@@ -434,7 +544,11 @@ def build_managed_artifact_bindings(
         or (approved_plan_snapshot or {}).get("plan_artifacts")
         or {}
     )
-    scoped_to_approved_step = bool(plan_local)
+    scoped_to_approved_step = bool(
+        plan_local
+        or (approved_plan_snapshot or {}).get("resolved_artifact_refs")
+        or (approved_plan_snapshot or {}).get("artifact_usage")
+    )
     visible_by_alias: Dict[str, Dict[str, Any]] = {}
     for identity, row in visible.items():
         visible_by_alias[identity] = row
@@ -455,7 +569,7 @@ def build_managed_artifact_bindings(
         for ref in (row.get("output_ref"), row.get("output_id")):
             if str(ref or ""):
                 materializations[str(ref)] = row
-    for direction, field_name in (("input", "inputs"), ("output", "output_contracts")):
+    for declared_direction, field_name in (("input", "inputs"), ("output", "output_contracts")):
         for index, raw in enumerate(task_spec.get(field_name, []) or [], start=1):
             if not isinstance(raw, Mapping):
                 continue
@@ -463,7 +577,7 @@ def build_managed_artifact_bindings(
                 str(ref or "") in visible_by_alias
                 for ref in (
                     raw.get("artifact_id"),
-                    raw.get("input_id" if direction == "input" else "output_id"),
+                    raw.get("input_id" if declared_direction == "input" else "output_id"),
                     raw.get("semantic_handle"),
                 )
             ):
@@ -474,13 +588,14 @@ def build_managed_artifact_bindings(
                     visible_by_alias[str(ref)]
                     for ref in (
                         raw.get("artifact_id"),
-                        raw.get("input_id" if direction == "input" else "output_id"),
+                        raw.get("input_id" if declared_direction == "input" else "output_id"),
                         raw.get("semantic_handle"),
                     )
                     if str(ref or "") in visible_by_alias
                 ),
                 {},
             )
+            direction = str(visible_row.get("direction") or declared_direction)
             if visible_row:
                 binding_row.update({
                     "source_authority": str(
@@ -493,7 +608,18 @@ def build_managed_artifact_bindings(
                         visible_row.get("runtime_available", True)
                     ),
                 })
-            if direction == "output" and not _canonical_path(binding_row):
+                if direction != declared_direction:
+                    role = str(
+                        binding_row.get("role")
+                        or binding_row.get("name")
+                        or binding_row.get("output_id")
+                        or binding_row.get("artifact_id")
+                        or f"artifact_{index}"
+                    )
+                    binding_row["semantic_handle"] = (
+                        f"{direction}.{_slug(role, f'artifact_{index}')}"
+                    )
+            if declared_direction == "output" and not _canonical_path(binding_row):
                 materialized = next((
                     materializations.get(str(ref))
                     for ref in (
@@ -508,7 +634,21 @@ def build_managed_artifact_bindings(
                         "canonical_path": str(materialized.get("canonical_path") or materialized.get("path") or ""),
                         "filename": Path(str(materialized.get("path") or "")).name,
                         "path_policy": MANAGED_EXACT,
+                        "declared_path_policy": str(raw.get("path_policy") or ""),
+                        "materialization_origin": str(materialized.get("origin") or ""),
                     })
+            logical_identity = str(
+                binding_row.get("artifact_id")
+                or binding_row.get("input_id" if declared_direction == "input" else "output_id")
+                or ""
+            )
+            if direction == "input":
+                realized_path = _validated_runtime_realization(
+                    dict(plan_state or {}), logical_identity
+                )
+                if realized_path:
+                    binding_row["canonical_path"] = realized_path
+                    binding_row["runtime_available"] = True
             binding = _binding_from_row(binding_row, direction=direction, index=index)
             if (
                 direction == "output"
@@ -525,6 +665,7 @@ def build_managed_artifact_bindings(
                         "canonical_path": joined,
                         "required_basename": Path(joined).name,
                         "aliases": tuple(binding.aliases),
+                        "accepted_representations": tuple(binding.accepted_representations),
                     }
                 )
             existing = result.get(binding.semantic_handle)
@@ -541,6 +682,11 @@ def build_managed_artifact_bindings(
         ledger_entry = dict(visible_row.get("row") or {})
         semantic_view = dict(ledger_entry.get("semantic_view") or {})
         canonical_path = _canonical_path(ledger_entry)
+        if direction == "input":
+            canonical_path = (
+                _validated_runtime_realization(dict(plan_state or {}), artifact_id)
+                or canonical_path
+            )
         artifact_kind = str(ledger_entry.get("object_kind") or "")
         validation_contract_id = str(
             ledger_entry.get("validation_contract_id")
@@ -574,11 +720,21 @@ def build_managed_artifact_bindings(
                 "availability_origin": str(
                     ledger_entry.get("availability_origin") or ""
                 ),
+                "source_type": str(ledger_entry.get("source_type") or ""),
+                "declared_path_policy": str(ledger_entry.get("path_policy") or MANAGED_EXACT),
             },
             artifact_kind=artifact_kind,
             source_authority="approved_plan_snapshot",
             snapshot_identity=str(visible_row.get("snapshot_identity") or ""),
             runtime_available=bool(visible_row.get("runtime_available", True)),
+            constraint_origin=physical_constraint_origin(
+                ledger_entry,
+                source_authority="approved_plan_snapshot",
+            ),
+            accepted_representations=_accepted_representations({
+                **ledger_entry,
+                **semantic_view,
+            }),
         )
         result[binding.semantic_handle] = binding
     return result
@@ -594,7 +750,8 @@ def managed_artifact_llm_view(
             for key, value in binding.to_dict(include_control_path=False).items()
             if key not in {
                 "artifact_id", "producer_step_id", "metadata", "aliases",
-                "snapshot_identity", "source_authority",
+                "snapshot_identity", "source_authority", "constraint_origin",
+                "accepted_representations",
             }
         }
         for _, binding in sorted(bindings.items())
@@ -607,6 +764,23 @@ def _parse_placeholder(value: str) -> Optional[Tuple[str, str]]:
         return None
     direction, name = match.groups()
     return direction, f"{direction}.{name}"
+
+
+def normalize_bash_positional_argv(argv: Sequence[Any]) -> List[str]:
+    """Insert a Bash ``$0`` sentinel only when positional indexing requires it."""
+    values = [str(item) for item in argv or []]
+    if len(values) < 4 or Path(values[0]).name != "bash" or values[1] not in {"-c", "-lc"}:
+        return values
+    script = values[2]
+    indexes = [int(item) for item in re.findall(r"(?<!\\)\$\{?([1-9][0-9]*)\}?", script)]
+    if not indexes:
+        return values
+    # Every argument after SCRIPT is shifted once by Bash because the first
+    # becomes $0.  If the highest referenced positional parameter is not
+    # reachable, the caller omitted the sentinel.
+    if max(indexes) >= len(values) - 3:
+        return [*values[:3], "_", *values[3:]]
+    return values
 
 
 def _literal_mentions_path(value: str, path: str) -> bool:
@@ -771,8 +945,6 @@ def materialize_managed_action(
         message: str,
     ) -> ArtifactViolation:
         visible = visible_by_alias.get(str(reference or ""))
-        if visible is None and str(reference or "").startswith(direction + "."):
-            visible = visible_by_alias.get(str(reference).split(".", 1)[1])
         if visible is not None and str(visible.get("direction") or "") == direction:
             return _violation(
                 code="PLAN_ARTIFACT_BINDING_PROJECTION_MISSING",
@@ -789,9 +961,7 @@ def materialize_managed_action(
             )
         return _violation(
             code=(
-                "GENERATE_OUTPUT_ID_UNKNOWN"
-                if field_path.endswith(".output_id")
-                else "MANAGED_ARTIFACT_HANDLE_UNKNOWN"
+                "MANAGED_ARTIFACT_HANDLE_UNKNOWN"
             ),
             owner="GENERATED_ACTION",
             route="generate",
@@ -801,45 +971,13 @@ def materialize_managed_action(
             failure_stage="pre_action_contract",
         )
 
-    produced_outputs = proposal.get("produced_outputs", []) or []
-    if produced_outputs and not isinstance(produced_outputs, list):
-        violations.append(_violation(
-            code="GENERATE_PRODUCED_OUTPUTS_INVALID",
-            owner="GENERATED_ACTION",
-            route="generate",
-            message="produced_outputs must be an array.",
-            field_path="produced_outputs",
-        ))
-        produced_outputs = []
-    bindings_by_output_id = {
-        str(binding.metadata.get("output_id") or binding.artifact_id): binding
-        for binding in bindings.values()
-        if binding.direction == "output"
-    }
-    produced_handles: List[str] = []
-    for index, raw in enumerate(produced_outputs):
-        if not isinstance(raw, Mapping):
-            violations.append(_violation(
-                code="GENERATE_PRODUCED_OUTPUT_INVALID",
-                owner="GENERATED_ACTION",
-                route="generate",
-                message="Each produced_outputs member must be an object.",
-                field_path=f"produced_outputs[{index}]",
-            ))
-            continue
-        output_id = str(raw.get("output_id") or "")
-        binding = bindings_by_output_id.get(output_id)
-        if binding is None:
-            violations.append(missing_binding_violation(
-                output_id,
-                "output",
-                field_path=f"produced_outputs[{index}].output_id",
-                message=f"Generate declared unknown output_id {output_id!r}.",
-            ))
-            continue
-        produced_handles.append(binding.semantic_handle)
-
-    declared_outputs = proposal.get("outputs", []) or produced_handles
+    # ``produced_outputs`` used to ask the model to repeat Controller-owned
+    # canonical IDs and paths.  It is deliberately ignored at this boundary;
+    # output coverage is derived from typed argv/env references.  ``outputs``
+    # remains an optional semantic-handle-only escape hatch for tools whose
+    # outputs are implicit and therefore absent from argv/env.
+    materialized.pop("produced_outputs", None)
+    declared_outputs = proposal.get("outputs", []) or []
     if isinstance(declared_outputs, str):
         declared_outputs = [declared_outputs]
     seen_outputs: set[str] = set()
@@ -1026,37 +1164,6 @@ def materialize_managed_action(
             ))
         return value
 
-    materialized_produced_outputs: List[Dict[str, Any]] = []
-    for index, raw in enumerate(produced_outputs):
-        if not isinstance(raw, Mapping):
-            continue
-        output_id = str(raw.get("output_id") or "")
-        binding = bindings_by_output_id.get(output_id)
-        if binding is None:
-            continue
-        proposed_path = materialize_value(
-            raw.get("path"), f"produced_outputs[{index}].path"
-        )
-        if str(proposed_path or "") != binding.canonical_path:
-            violations.append(_violation(
-                code="GENERATE_OUTPUT_PATH_MISMATCH",
-                owner="GENERATED_ACTION",
-                route="generate",
-                message=(
-                    f"Generate changed the approved path for output_id {output_id!r}."
-                ),
-                binding=binding,
-                proposed=str(proposed_path or ""),
-                field_path=f"produced_outputs[{index}].path",
-            ))
-        materialized_produced_outputs.append({
-            "output_id": output_id,
-            "semantic_handle": binding.semantic_handle,
-            "path": str(proposed_path or ""),
-        })
-    if produced_outputs:
-        materialized["produced_outputs"] = materialized_produced_outputs
-
     argv = proposal.get("argv")
     if argv is not None:
         if not isinstance(argv, list) or not argv:
@@ -1068,10 +1175,10 @@ def materialize_managed_action(
                 field_path="argv",
             ))
         else:
-            materialized["argv"] = [
+            materialized["argv"] = normalize_bash_positional_argv([
                 materialize_value(value, f"argv[{index}]")
                 for index, value in enumerate(argv)
-            ]
+            ])
     env = proposal.get("env")
     if env is not None:
         if not isinstance(env, Mapping):
@@ -1164,27 +1271,33 @@ def materialize_managed_action(
                         field_path="code",
                     ))
 
-    for handle in sorted(seen_outputs):
-        binding = bindings.get(handle)
-        if binding is not None and binding.required and handle not in used_handles:
-            violations.append(_violation(
-                code="ACTION_OUTPUT_BINDING_MISMATCH",
-                owner="GENERATED_ACTION",
-                route="generate",
-                message=(
-                    f"Declared output {handle} is not materialised in argv/env; "
-                    f"use {binding.placeholder}."
-                ),
-                binding=binding,
-                proposed="missing_placeholder",
-                field_path="outputs",
-            ))
+    referenced_output_handles = sorted({
+        handle
+        for handle in [*used_handles, *seen_outputs]
+        if handle in bindings and bindings[handle].direction == "output"
+    })
     materialized["managed_artifact_handles"] = sorted(set(used_handles))
+    materialized["referenced_output_handles"] = referenced_output_handles
     materialized["materialized_artifacts"] = {
         handle: bindings[handle].canonical_path
         for handle in sorted(set(used_handles))
         if handle in bindings
     }
+    materialized["controller_output_bindings"] = [
+        {
+            "artifact_id": bindings[handle].artifact_id,
+            "semantic_handle": bindings[handle].semantic_handle,
+            "expected_path": bindings[handle].canonical_path,
+            "artifact_kind": bindings[handle].artifact_kind,
+            "format": bindings[handle].format,
+            "validation_contract_id": bindings[handle].validation_contract_id,
+            "required": bindings[handle].required,
+            "constraint_origin": bindings[handle].constraint_origin,
+            "accepted_representations": list(bindings[handle].accepted_representations),
+            "source_authority": bindings[handle].source_authority,
+        }
+        for handle in referenced_output_handles
+    ]
     materialized["materialized_operations"] = {
         handle: managed_operations[handle]
         for handle in sorted(set(used_operations))
@@ -1199,7 +1312,7 @@ def validate_generate_output_coverage(
     materialized_action: Mapping[str, Any],
     bindings: Mapping[str, ManagedArtifactBinding],
 ) -> List[ArtifactViolation]:
-    """Compare current approved step outputs with Generate's typed declaration."""
+    """Derive required-output coverage from typed action references."""
     steps = [row for row in plan_state.get("steps", []) or [] if isinstance(row, Mapping)]
     current_step_id = str(plan_state.get("current_step_id") or "")
     step = next(
@@ -1225,31 +1338,24 @@ def validate_generate_output_coverage(
             ref = str(raw_ref or "")
         binding = by_ref.get(ref)
         if binding is not None:
-            output_id = str(binding.metadata.get("output_id") or binding.artifact_id)
-            required[output_id] = binding
-    produced = {
-        str(row.get("output_id") or ""): str(row.get("path") or "")
-        for row in materialized_action.get("produced_outputs", []) or []
-        if isinstance(row, Mapping) and str(row.get("output_id") or "")
+            required[binding.semantic_handle] = binding
+    covered = {
+        str(handle)
+        for handle in materialized_action.get("referenced_output_handles", []) or []
+        if str(handle)
     }
-    missing = sorted(set(required) - set(produced))
-    mismatched = sorted(
-        output_id for output_id in set(required).intersection(produced)
-        if produced[output_id] != required[output_id].canonical_path
-    )
-    if not missing and not mismatched:
+    missing = sorted(set(required) - covered)
+    if not missing:
         return []
-    details = []
-    if missing:
-        details.append("missing=" + ",".join(missing))
-    if mismatched:
-        details.append("path_mismatch=" + ",".join(mismatched))
     return [ArtifactViolation(
         code="GENERATE_OUTPUT_COVERAGE_INCOMPLETE",
         owner="GENERATED_ACTION",
         route="generate",
-        message="Generate does not cover the approved current-step outputs: " + "; ".join(details),
-        field_path="produced_outputs",
+        message=(
+            "Generate does not reference the approved current-step outputs: "
+            + ",".join(missing)
+        ),
+        field_path="argv/env/outputs",
     )]
 
 
@@ -1292,6 +1398,343 @@ def validate_materialized_artifacts(
                 field_path=f"materialized_artifacts.{handle}",
             ))
     return violations
+
+
+def _observed_file_metadata(path: Path) -> Dict[str, Any]:
+    try:
+        stat = path.stat()
+    except OSError:
+        return {"path": str(path), "exists": False, "content_valid": False}
+    artifact_kind = "directory" if path.is_dir() else "file" if path.is_file() else "other"
+    value: Dict[str, Any] = {
+        "path": str(path.resolve(strict=False)),
+        "exists": True,
+        "artifact_kind": artifact_kind,
+        "size": int(stat.st_size),
+        "mtime_ns": int(stat.st_mtime_ns),
+        "ctime_ns": int(stat.st_ctime_ns),
+        "content_valid": bool(path.is_dir() or (path.is_file() and stat.st_size > 0)),
+        "format": "directory" if path.is_dir() else "",
+        "representation": "directory" if path.is_dir() else "plain",
+    }
+    if not path.is_file() or stat.st_size <= 0:
+        return value
+    try:
+        with path.open("rb") as handle:
+            prefix = handle.read(65536)
+        value["content_prefix_sha256"] = hashlib.sha256(prefix).hexdigest()
+        if prefix.startswith(b"\x1f\x8b"):
+            value["representation"] = "gzip"
+            try:
+                with gzip.open(path, "rb") as handle:
+                    prefix = handle.read(65536)
+            except (OSError, EOFError, gzip.BadGzipFile):
+                value["content_valid"] = False
+                return value
+        stripped = prefix.lstrip()
+        if stripped.startswith(b">"):
+            value["format"] = "fasta"
+        elif stripped.startswith(b"##fileformat=VCF") or b"\n#CHROM\t" in prefix:
+            value["format"] = "vcf"
+        elif stripped[:1] in {b"{", b"["}:
+            try:
+                json.loads(prefix.decode("utf-8", errors="strict"))
+                value["format"] = "json"
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                value["format"] = "text"
+        else:
+            try:
+                prefix.decode("utf-8", errors="strict")
+                value["format"] = "text"
+            except UnicodeDecodeError:
+                value["format"] = "binary"
+    except OSError:
+        value["content_valid"] = False
+    return value
+
+
+def _managed_output_roots(
+    output_contracts: Sequence[Mapping[str, Any]],
+) -> List[Path]:
+    roots: List[Path] = []
+    for contract in output_contracts or []:
+        if not isinstance(contract, Mapping):
+            continue
+        raw_path = str(contract.get("expected_path") or contract.get("path") or "").strip()
+        if not raw_path:
+            continue
+        path = Path(raw_path).expanduser().resolve(strict=False)
+        root = path.parent
+        if str(root) == "/":
+            continue
+        if root not in roots:
+            roots.append(root)
+    return roots[:16]
+
+
+def capture_managed_output_snapshot(
+    output_contracts: Sequence[Mapping[str, Any]],
+    *,
+    max_entries: int = 1024,
+    max_depth: int = 5,
+) -> Dict[str, Dict[str, Any]]:
+    """Capture a bounded snapshot under only the action's managed roots."""
+    snapshot: Dict[str, Dict[str, Any]] = {}
+    for root in _managed_output_roots(output_contracts):
+        stack: List[Tuple[Path, int]] = [(root, 0)]
+        while stack and len(snapshot) < max_entries:
+            path, depth = stack.pop()
+            if path.is_symlink():
+                continue
+            if path.exists():
+                metadata = _observed_file_metadata(path)
+                snapshot[metadata["path"]] = metadata
+            if depth >= max_depth or not path.is_dir():
+                continue
+            try:
+                children = sorted(path.iterdir(), key=lambda item: item.name, reverse=True)
+            except OSError:
+                continue
+            stack.extend((child, depth + 1) for child in children)
+    return snapshot
+
+
+def discover_current_attempt_outputs(
+    before: Mapping[str, Mapping[str, Any]],
+    after: Mapping[str, Mapping[str, Any]],
+    *,
+    attempt_id: str,
+) -> List[Dict[str, Any]]:
+    """Return only new or changed physical artifacts from the current attempt."""
+    observed: List[Dict[str, Any]] = []
+    for path, raw in sorted(dict(after or {}).items()):
+        current = dict(raw or {})
+        previous = dict((before or {}).get(path) or {})
+        if previous and all(
+            previous.get(key) == current.get(key)
+            for key in (
+                "artifact_kind", "size", "mtime_ns", "ctime_ns",
+                "content_valid", "content_prefix_sha256",
+            )
+        ):
+            continue
+        current.update({
+            "attempt_id": str(attempt_id or ""),
+            "current_attempt_owned": True,
+        })
+        observed.append(current)
+    return observed
+
+
+def _path_within(path: str, root: Path) -> bool:
+    try:
+        Path(path).resolve(strict=False).relative_to(root.resolve(strict=False))
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+def _format_compatible(expected: str, observed: str, artifact_kind: str) -> bool:
+    expected_value = str(expected or "").strip().lower()
+    observed_value = str(observed or "").strip().lower()
+    if artifact_kind == "directory":
+        return expected_value in {"", "directory", "dir"}
+    if expected_value in {"", "file", "text", "data", "output"}:
+        return True
+    # Markdown is a textual representation; a bounded content sniff cannot
+    # reliably distinguish prose-only Markdown from plain UTF-8 text.  This is
+    # format compatibility, not filename/extension equivalence.
+    if observed_value == "text" and expected_value in {
+        "markdown", "md", "plaintext", "plain_text", "report",
+    }:
+        return True
+    return expected_value == observed_value
+
+
+def reconcile_runtime_outputs(
+    output_contracts: Sequence[Mapping[str, Any]],
+    observed_candidates: Sequence[Mapping[str, Any]],
+    *,
+    attempt_id: str,
+    exit_code: int,
+) -> Dict[str, Any]:
+    """Reconcile logical outputs to attempt-owned physical realizations."""
+    contracts = [dict(item) for item in output_contracts or [] if isinstance(item, Mapping)]
+    candidates = [
+        dict(item) for item in observed_candidates or []
+        if isinstance(item, Mapping)
+        and str(item.get("attempt_id") or "") == str(attempt_id or "")
+        and bool(item.get("current_attempt_owned", True))
+    ]
+    result: Dict[str, Any] = {
+        "status": "accepted",
+        "attempt_id": str(attempt_id or ""),
+        "exit_code": int(exit_code),
+        "bindings": [],
+        "violations": [],
+        "observed_candidates": candidates,
+    }
+    if not contracts:
+        result["status"] = "not_required"
+        result["fingerprint"] = _runtime_reconciliation_fingerprint(result)
+        return result
+    if int(exit_code) != 0:
+        result["status"] = "recovery"
+        result["violations"].append({
+            "code": "TOOL_EXECUTION_FAILED",
+            "owner": "RUNTIME",
+            "route": "recovery",
+            "message": "The command exited non-zero; current-attempt files may be partial and were not adopted.",
+            "observed_candidates": [str(item.get("path") or "") for item in candidates],
+        })
+        result["fingerprint"] = _runtime_reconciliation_fingerprint(result)
+        return result
+
+    used_paths: set[str] = set()
+    for contract in contracts:
+        handle = str(contract.get("semantic_handle") or "")
+        logical_id = str(contract.get("artifact_id") or handle)
+        expected_path = _canonical_path({"path": contract.get("expected_path") or contract.get("path")})
+        expected_kind = str(contract.get("artifact_kind") or "file").strip().lower()
+        expected_format = str(contract.get("format") or "").strip().lower()
+        constraint_origin = str(
+            contract.get("constraint_origin") or PHYSICAL_IMPLEMENTATION_DETAIL
+        ).strip().upper()
+        root = Path(expected_path).parent.resolve(strict=False) if expected_path else None
+        eligible = [
+            item for item in candidates
+            if str(item.get("path") or "") not in used_paths
+            and (not root or _path_within(str(item.get("path") or ""), root))
+            and str(item.get("artifact_kind") or "") == expected_kind
+            and bool(item.get("content_valid", False))
+            and _format_compatible(expected_format, str(item.get("format") or ""), expected_kind)
+        ]
+        exact = next(
+            (item for item in eligible if _canonical_path({"path": item.get("path")}) == expected_path),
+            None,
+        )
+        if exact is not None:
+            observed_path = _canonical_path({"path": exact.get("path")})
+            used_paths.add(str(exact.get("path") or ""))
+            result["bindings"].append({
+                "artifact_id": logical_id,
+                "semantic_handle": handle,
+                "expected_path": expected_path,
+                "observed_path": observed_path,
+                "attempt_id": str(attempt_id or ""),
+                "constraint_origin": constraint_origin,
+                "realization": "expected",
+                "format": str(exact.get("format") or expected_format),
+                "representation": str(exact.get("representation") or ""),
+                "content_valid": True,
+            })
+            continue
+        if not eligible:
+            result["violations"].append({
+                "code": "OUTPUT_MISSING",
+                "owner": "ARTIFACT_CONTRACT",
+                "route": "recovery",
+                "message": f"No compatible current-attempt realization was found for {handle or logical_id}.",
+                "logical_artifact": logical_id,
+                "expected_realization": expected_path,
+                "constraint_origin": constraint_origin,
+                "observed_candidates": [str(item.get("path") or "") for item in candidates],
+            })
+            continue
+        if len(eligible) != 1:
+            result["violations"].append({
+                "code": "AMBIGUOUS_OUTPUT_REALIZATION",
+                "owner": "ARTIFACT_CONTRACT",
+                "route": "recovery",
+                "message": f"Multiple current-attempt realizations satisfy {handle or logical_id}; Controller will not guess.",
+                "logical_artifact": logical_id,
+                "expected_realization": expected_path,
+                "constraint_origin": constraint_origin,
+                "observed_candidates": [str(item.get("path") or "") for item in eligible],
+            })
+            continue
+        candidate = eligible[0]
+        observed_path = _canonical_path({"path": candidate.get("path")})
+        if constraint_origin in {PHYSICAL_HARD, PHYSICAL_CONTRACT_BOUND}:
+            result["violations"].append({
+                "code": "OUTPUT_REALIZATION_MISMATCH",
+                "owner": "ARTIFACT_CONTRACT",
+                "route": "recovery",
+                "message": f"The physical realization for {handle or logical_id} is contract-bound and requires normalization.",
+                "logical_artifact": logical_id,
+                "expected_realization": expected_path,
+                "observed_candidates": [observed_path],
+                "constraint_origin": constraint_origin,
+            })
+            continue
+        representation = str(candidate.get("representation") or "plain").strip().lower()
+        accepted_representations = {
+            str(item).strip().lower()
+            for item in contract.get("accepted_representations", []) or []
+            if str(item or "").strip()
+        }
+        downstream_compatible = (
+            representation in {"", "plain", "directory"}
+            or representation in accepted_representations
+        )
+        if not downstream_compatible:
+            result["violations"].append({
+                "code": "OUTPUT_REALIZATION_MISMATCH",
+                "owner": "ARTIFACT_CONTRACT",
+                "route": "recovery",
+                "message": f"Observed representation {representation!r} is not accepted by the downstream contract.",
+                "logical_artifact": logical_id,
+                "expected_realization": expected_path,
+                "observed_candidates": [observed_path],
+                "constraint_origin": constraint_origin,
+                "downstream_compatible": False,
+            })
+            continue
+        used_paths.add(str(candidate.get("path") or ""))
+        result["bindings"].append({
+            "artifact_id": logical_id,
+            "semantic_handle": handle,
+            "expected_path": expected_path,
+            "observed_path": observed_path,
+            "attempt_id": str(attempt_id or ""),
+            "constraint_origin": constraint_origin,
+            "realization": "reconciled",
+            "format": str(candidate.get("format") or expected_format),
+            "representation": representation,
+            "content_valid": True,
+            "downstream_compatible": True,
+        })
+    if result["violations"]:
+        result["status"] = "recovery"
+    result["fingerprint"] = _runtime_reconciliation_fingerprint(result)
+    return result
+
+
+def _runtime_reconciliation_fingerprint(result: Mapping[str, Any]) -> str:
+    observed = [
+        {
+            key: item.get(key)
+            for key in (
+                "path", "artifact_kind", "format", "representation",
+                "content_valid", "size", "content_prefix_sha256",
+            )
+        }
+        for item in result.get("observed_candidates", []) or []
+        if isinstance(item, Mapping)
+    ]
+    return hashlib.sha256(json.dumps(
+        {
+            "status": result.get("status"),
+            "exit_code": result.get("exit_code"),
+            "bindings": result.get("bindings", []),
+            "violations": result.get("violations", []),
+            "observed": observed,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    ).encode("utf-8", errors="replace")).hexdigest()
 
 
 def validate_observed_artifacts(
