@@ -61,6 +61,21 @@ The chain preserves path strings but does not preserve executable identity end t
 | Deterministic diagnosis precedence | Middleware checks capacity error before consuming the diagnosis included in the raw RecoveryContext. | IMPLEMENTED | `agent_core/middleware.py:1610-1661` |
 | Failure precedence | Applying `ESCALATE` sets durable task status to failed; terminal transition guards then route subsequent non-blocked recovery states to finish. | IMPLEMENTED | `agent_core/plan_tracker.py:2087-2090`; `bio_agents.py:11923-11930` |
 
+### Recovery disclosure topology
+
+The current architecture has two one-shot RecoveryJudge v2 projections:
+
+1. Execute recovery first builds a broad `RecoveryContext` and evaluates its legacy `prompt_view()` capacity gate. If a Judge is still required, `_invoke_recovery_v2()` builds a separate current-step NodeContext; the fitted `prompt_view()` object is not the provider payload.
+2. Post-review recovery retains `RecoveryContext` as durable evidence but bypasses its legacy compact view and builds a Recovery NodeContext directly.
+
+NodeContext projects canonical relevant TaskSpec facts, current step, and direct dependency contracts on the first call. It never projects the full Plan to a Recovery node. The response schema can report `evidence_sufficient` and `missing_evidence`, but no typed request names context sections, and neither caller performs a targeted second provider call. Current `prompt_view()` tiers are same-category value compression, not semantic disclosure levels.
+
+The active code therefore has no independent `initial disclosure target` and `hard ceiling`. `DiagnosticLimits.max_context_chars` is one legacy character limit; NodeContext accepts one complete required payload or raises capacity. Filesystem `context_trace` previews can affect the Execute legacy gate without becoming part of the separately built v2 provider payload.
+
+A third source-level mechanism is not an active path: `_legacy_error_recovery_middleware()` is explicitly deprecated/not registered, although it retains retry-count tiers that add skill/RAG/external-search hints across separate attempts. It must not be used as evidence that current RecoveryContext supports provider-requested section expansion.
+
+Code evidence: `agent_core/diagnostics.py:244-389`; `agent_core/middleware.py:83-150,323-328,404-416,720-750,1602-1707`; `agent_core/node_context.py:818-979,1026-1213`; `bio_agents.py:4015-4175`; `prompts/templates.py:340-399`.
+
 ## Exact capacity formula
 
 For the legacy RecoveryContext path, the budget applies to this local Python character count:
@@ -123,6 +138,11 @@ The primary execution evidence remains durable, but terminal user projection may
 | Capacity error numerator equals actual minimum candidate | MISSING | The diagnostic numerator omits evidence and structural overhead. |
 | Capacity gate prevents a partial semantic request | IMPLEMENTED | The provider is not invoked with a partial semantic view. |
 | Primary execution failure always wins terminal presentation | MISSING | A later capacity escalation can become the terminal detail. |
+| Recovery starts from an independent failure capsule | MISSING | Current facts are collected, but no small first-call capsule/projection exists. |
+| Recovery can request and receive one additional context section | MISSING | `missing_evidence` routes a decision; it does not drive a second provider call. |
+| Recovery first-call target and hard ceiling are separate controls | MISSING | Current paths expose only one-shot character capacities. |
+| Full Plan is withheld from Recovery provider by default | IMPLEMENTED | Recovery NodeContext projects current step/dependency closure; full Plan is for plan nodes. |
+| Internal trace previews cannot influence the Execute capacity gate | MISSING | Generic trace JSON may inflate the broad context even though v2 does not send the snapshot rows. |
 
 ## Evidence checklist for future audits
 
