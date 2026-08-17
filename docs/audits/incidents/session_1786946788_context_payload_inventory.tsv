@@ -1,0 +1,86 @@
+stage	call_id	section	source	raw_chars	projected_chars	sent_chars	estimated_tokens	sent_to_provider	duplicate_group	notes
+raw_submission	NONE	payload.text	state_contract/objects/38ee146e542712078144119649b2c3da16a1375a402a0222e318f4b1df91f05e.json	1294	UNKNOWN	0	324	false	raw_user	2192 UTF-8 bytes; no JAVA_HOME/path/version
+generate_provider_request	generate-0012-6756fa24988d	system_message	context_trace/generate-0012-6756fa24988d/request.json	0	0	0	0	false	NONE	No system message persisted
+generate_provider_request	generate-0012-6756fa24988d	developer_message	context_trace/generate-0012-6756fa24988d/request.json	0	0	0	0	false	NONE	No developer message persisted
+generate_provider_request	generate-0012-6756fa24988d	static_prefix	prompts/manager.py:get_generate_v2_prompt	1958	1958	1958	490	true	generate_wrapper	Static instructions before llm_payload
+generate_provider_request	generate-0012-6756fa24988d	allowed_operations	NodeContext.llm_payload	111	111	111	28	true	NONE	Top-level pretty-JSON field span
+generate_provider_request	generate-0012-6756fa24988d	current_step	NodeContext.llm_payload	1198	1198	1198	300	true	step_projection	Top-level pretty-JSON field span
+generate_provider_request	generate-0012-6756fa24988d	feedback	NodeContext.llm_payload	18	18	18	5	true	NONE	Top-level pretty-JSON field span
+generate_provider_request	generate-0012-6756fa24988d	runtime	NodeContext.llm_payload	213	213	213	54	true	runtime_semantic_only	Progress/current-action semantics; no runtime audit/bindings
+generate_provider_request	generate-0012-6756fa24988d	task	NodeContext.llm_payload	4883	4883	4883	1221	true	task_projection	Top-level pretty-JSON field span
+generate_provider_request	generate-0012-6756fa24988d	payload_outer_and_prompt_separators	PromptManager wrapper	88	88	88	22	true	generate_wrapper	Payload outer braces plus tags/newlines/separators
+generate_provider_request	generate-0012-6756fa24988d	capability_instructions	selected snpEff skill projection	2536	2536	2536	634	true	skill_projection	Names SNPEFF_JAR and generic Java runtime verification; no path
+generate_provider_request	generate-0012-6756fa24988d	human_message_total	context_trace/generate-0012-6756fa24988d/request.json	11005	11005	11005	2752	true	NONE	Actual provider prompt_tokens=2885; model=deepseek-v4-flash
+generate_trace	generate-0012-6756fa24988d	persisted_request_envelope	context_trace/generate-0012-6756fa24988d/request.json	12047	UNKNOWN	UNKNOWN	UNKNOWN	UNKNOWN	trace_envelope	12047 bytes; transport envelope outside trace is unknown
+generate_response	generate-0012-6756fa24988d	raw_structured_action	context_trace/generate-0012-6756fa24988d/response.json	UNKNOWN	UNKNOWN	0	UNKNOWN	false	action_shell	First bare java occurs in raw model response
+execute_materialization	NONE	runtime_bindings	plan_state pending action	UNKNOWN	UNKNOWN	0	UNKNOWN	false	runtime_contract	JAVA_HOME and SNPEFF_JAR aliases attached after Generate
+execute_materialization	NONE	approved_shell_body	attempts/attempt_a9b512093d864f3602ad/approved.sh	2552	2552	0	638	false	action_shell	Artifact preview length; env exports plus bare java retained
+recovery_raw	NONE	persisted_pretty_json	recovery/diagnostic_context.json	532259	UNKNOWN	0	133065	false	recovery_context	540854 UTF-8 bytes; byte-identical to recovery_context.json
+recovery_raw	NONE	prompt_view_canonical_serialization	RecoveryContext.to_dict + json.dumps sorted	519517	519517	0	129880	false	recovery_context	528112 UTF-8 bytes; exact local serializer
+recovery_raw	NONE	compact_serialization	RecoveryContext.to_dict + compact json.dumps	516879	UNKNOWN	0	129220	false	recovery_context	525474 UTF-8 bytes; source of mislabelled 525k
+recovery_section	NONE	artifacts	recovery/diagnostic_context.json	454463	1585	0	113616	false	filesystem_snapshot	87.478 percent raw; projected value is deepest 160/3 compaction
+recovery_section	NONE	execution	recovery/diagnostic_context.json	22721	11865	0	5681	false	execution_overlap	4.373 percent raw; action/log/runtime overlap
+recovery_section	NONE	runtime	recovery/diagnostic_context.json	11850	5439	0	2963	false	runtime_contract	2.281 percent raw; healthcheck repeated seven times
+recovery_section	NONE	effective_user_facts	recovery/diagnostic_context.json	10147	10147	0	2537	false	task_projection	Semantic section preserved complete
+recovery_section	NONE	action_contract	recovery/diagnostic_context.json	4478	4478	0	1120	false	action_shell	Semantic section preserved; nested duplicate in execution
+recovery_section	NONE	task_spec_summary	recovery/diagnostic_context.json	4273	UNKNOWN	0	1069	false	task_projection	Filtered before semantic projection; raw normalized goal duplicated
+recovery_section	NONE	progress	recovery/diagnostic_context.json	4232	2875	0	1058	false	progress_artifacts	Evidence section; artifact/path overlap
+recovery_section	NONE	bounded_log_excerpt	recovery/diagnostic_context.json	1832	186	0	458	false	stdout_stderr	Repeats stream tails
+recovery_section	NONE	skill_policy	recovery/diagnostic_context.json	1676	251	0	419	false	skill_projection	Clipped skill context
+recovery_section	NONE	diagnosis	recovery/diagnostic_context.json	971	635	0	243	false	diagnosis_execution	Deterministic diagnosis; omitted from capacity error object
+recovery_section	NONE	log_references	recovery/diagnostic_context.json	764	460	0	191	false	artifact_paths	Paths repeat in snapshot/execution
+recovery_section	NONE	current_step	recovery/diagnostic_context.json	672	672	0	168	false	step_projection	Semantic section preserved complete
+recovery_section	NONE	validation	recovery/diagnostic_context.json	295	295	0	74	false	NONE	Evidence section
+recovery_section	NONE	limits	recovery/diagnostic_context.json	180	UNKNOWN	0	45	false	NONE	Local projection limits
+recovery_section	NONE	completion	recovery/diagnostic_context.json	114	114	0	29	false	NONE	Evidence section
+recovery_artifact	NONE	consultant-0004 request	context_trace/consultant-0004-9d1905d0fd59/request.json	50019	UNKNOWN	0	12505	false	consultant_near_duplicate	Preview=44074
+recovery_artifact	NONE	consultant-0008 request	context_trace/consultant-0008-1083c0f321f5/request.json	48658	UNKNOWN	0	12165	false	consultant_near_duplicate	Preview=42769
+recovery_artifact	NONE	consultant-0006 request	context_trace/consultant-0006-67a52d569945/request.json	48352	UNKNOWN	0	12088	false	consultant_near_duplicate	Preview=42489
+recovery_artifact	NONE	consultant-0010 request	context_trace/consultant-0010-1bc3d215fd48/request.json	48167	UNKNOWN	0	12042	false	consultant_near_duplicate	Preview=42312
+recovery_artifact	NONE	consultant-0002 request	context_trace/consultant-0002-20c6fad71899/request.json	43723	UNKNOWN	0	10931	false	consultant_near_duplicate	Preview=38827
+recovery_artifact	NONE	consultant-0004 manifest	context_trace/consultant-0004-9d1905d0fd59/manifest.json	33980	UNKNOWN	0	8495	false	consultant_manifest_near_duplicate	Preview=30823
+recovery_artifact	NONE	consultant-0010 manifest	context_trace/consultant-0010-1bc3d215fd48/manifest.json	33976	UNKNOWN	0	8494	false	consultant_manifest_near_duplicate	Preview=30819
+recovery_artifact	NONE	consultant-0008 manifest	context_trace/consultant-0008-1083c0f321f5/manifest.json	33976	UNKNOWN	0	8494	false	consultant_manifest_near_duplicate	Preview=30819
+recovery_artifact	NONE	consultant-0006 manifest	context_trace/consultant-0006-67a52d569945/manifest.json	33976	UNKNOWN	0	8494	false	consultant_manifest_near_duplicate	Preview=30819
+recovery_artifact	NONE	consultant-0002 manifest	context_trace/consultant-0002-20c6fad71899/manifest.json	23226	UNKNOWN	0	5807	false	consultant_manifest_near_duplicate	Preview=21025
+recovery_artifact	NONE	plan.md	plan.md artifact snapshot	10804	UNKNOWN	0	2701	false	plan_projection	Preview=9841; full active_plan is metadata-only
+recovery_artifact	NONE	cot	cot_session_1786946788.md	10641	UNKNOWN	0	2661	false	terminal_history	Preview=9661
+recovery_artifact	NONE	consultant-0002 response	context_trace/consultant-0002-20c6fad71899/response.json	6933	UNKNOWN	0	1734	false	consultant_response	Preview=5689
+recovery_artifact	NONE	approved.sh	attempts/attempt_a9b512093d864f3602ad/approved.sh	2995	UNKNOWN	0	749	false	action_shell	Preview=2552
+recovery_artifact	NONE	executor stdout	executions/executor_1428473_1786949212430159043.stdout.full.log	2481	UNKNOWN	0	621	false	stdout_stderr	Tail=1736
+recovery_artifact	NONE	attempt stdout	attempts/attempt_a9b512093d864f3602ad/stdout.log	2466	UNKNOWN	0	617	false	stdout_stderr	Tail=1736
+recovery_artifact	NONE	consultant-0004 response	context_trace/consultant-0004-9d1905d0fd59/response.json	2383	UNKNOWN	0	596	false	consultant_response	Preview=1749
+recovery_artifact	NONE	executed.sh	attempts/attempt_a9b512093d864f3602ad/executed.sh	2188	UNKNOWN	0	547	false	action_shell	Preview=1834
+recovery_artifact	NONE	command trace	attempts/attempt_a9b512093d864f3602ad/command_trace.log	1204	UNKNOWN	0	301	false	command_trace	Tail=769
+recovery_artifact	NONE	consultant-0006 response	context_trace/consultant-0006-67a52d569945/response.json	913	UNKNOWN	0	229	false	consultant_response	Preview=516
+recovery_projection	NONE	semantic_core	RecoveryContext.prompt_view identity + semantic sections	18771	18771	0	4693	false	semantic_required	Complete and untruncated
+recovery_projection	NONE	candidate_text3000_list24	RecoveryContext.prompt_view	519517	119253	0	29814	false	projection_candidate	Rejected locally
+recovery_projection	NONE	candidate_text1200_list12	RecoveryContext.prompt_view	519517	78981	0	19746	false	projection_candidate	Rejected locally
+recovery_projection	NONE	candidate_text480_list6	RecoveryContext.prompt_view	519517	56284	0	14071	false	projection_candidate	Rejected locally
+recovery_projection	NONE	candidate_text160_list3	RecoveryContext.prompt_view	519517	42898	0	10725	false	projection_candidate	Rejected locally; actual minimum candidate
+recovery_projection	NONE	minimum_evidence_values	Deepest evidence compaction	UNKNOWN	23715	0	5929	false	evidence_required	Excluded from required_semantic_chars diagnostic numerator
+recovery_projection	NONE	wrapper_keys_limits	Deepest candidate structural overhead	UNKNOWN	412	0	103	false	projection_wrapper	Excluded from required_semantic_chars diagnostic numerator
+recovery_projection	NONE	capacity_error_object	RecoveryContext.prompt_view result	UNKNOWN	638	0	160	false	capacity_error	Not sent; reports 18771 vs 26000
+recovery_provider_request	NONE	recovery_judge_v2	agent_core/middleware.py capacity gate	519517	0	0	0	false	capacity_error	API_CALLED=false; no request trace
+recovery_provider_request	NONE	root_cause_analysis	local deterministic diagnosis	971	971	0	243	false	diagnosis_execution	No provider invocation
+recovery_provider_request	NONE	recovery_decision	local deterministic policy	UNKNOWN	UNKNOWN	0	UNKNOWN	false	capacity_error	ESCALATE built locally
+recovery_provider_request	NONE	script_patching	not reached	0	0	0	0	false	NONE	API_CALLED=false
+recovery_provider_request	NONE	generate_retry	terminal guard	0	0	0	0	false	NONE	API_CALLED=false; initial Generate is not retry
+supervisor_provider_request	supervisor_reviewer-0013-6bcf399dc77f	system_message	context_trace/supervisor_reviewer-0013-6bcf399dc77f/request.json	0	0	0	0	false	NONE	No system message persisted
+supervisor_provider_request	supervisor_reviewer-0013-6bcf399dc77f	developer_message	context_trace/supervisor_reviewer-0013-6bcf399dc77f/request.json	0	0	0	0	false	NONE	No developer message persisted
+supervisor_provider_request	supervisor_reviewer-0013-6bcf399dc77f	static_prefix	Supervisor prompt	316	316	316	79	true	supervisor_wrapper	Role/static prefix
+supervisor_provider_request	supervisor_reviewer-0013-6bcf399dc77f	allowed_operations	Supervisor payload	57	57	57	15	true	NONE	Top-level pretty-JSON field span
+supervisor_provider_request	supervisor_reviewer-0013-6bcf399dc77f	current_step	Supervisor payload	1425	1425	1425	357	true	step_projection	Current Plan step
+supervisor_provider_request	supervisor_reviewer-0013-6bcf399dc77f	evidence	Supervisor payload	2427	2427	2427	607	true	execution_overlap	Failure/log evidence
+supervisor_provider_request_nested	supervisor_reviewer-0013-6bcf399dc77f	stdout_excerpt	Supervisor payload evidence[0].excerpt	2099	2099	2099	525	true	stdout_stderr	Nested subset of evidence; do not add to parent total
+supervisor_provider_request_nested	supervisor_reviewer-0013-6bcf399dc77f	stderr_excerpt	Supervisor payload evidence[1].excerpt	29	29	29	8	true	stdout_stderr	Nested subset of evidence; do not add to parent total
+supervisor_provider_request	supervisor_reviewer-0013-6bcf399dc77f	runtime	Supervisor payload	2302	2302	2302	576	true	runtime_contract	Includes JAVA_HOME and bare action; no absolute Java executable
+supervisor_provider_request_nested	supervisor_reviewer-0013-6bcf399dc77f	executed_action	Supervisor payload runtime.executed_action	2006	2006	2006	502	true	action_shell	Nested subset of runtime; do not add to parent total
+supervisor_provider_request_nested	supervisor_reviewer-0013-6bcf399dc77f	return_code	Supervisor payload runtime.return_code	1	1	1	1	true	NONE	Nested subset of runtime; do not add to parent total
+supervisor_provider_request_nested	supervisor_reviewer-0013-6bcf399dc77f	scientific_review_context	Supervisor payload runtime.scientific_review_context	102	102	102	26	true	NONE	Nested subset of runtime; do not add to parent total
+supervisor_provider_request	supervisor_reviewer-0013-6bcf399dc77f	task	Supervisor payload	4453	4453	4453	1114	true	task_projection	TaskSpec projection
+supervisor_provider_request	supervisor_reviewer-0013-6bcf399dc77f	payload_outer_and_prompt_separators	Supervisor wrapper	32	32	32	8	true	supervisor_wrapper	Payload outer braces plus tags/newlines/separators
+supervisor_provider_request	supervisor_reviewer-0013-6bcf399dc77f	static_suffix_output_contract	Supervisor prompt	3334	3334	3334	834	true	supervisor_wrapper	Protocol/output contract
+supervisor_provider_request	supervisor_reviewer-0013-6bcf399dc77f	human_message_total	context_trace/supervisor_reviewer-0013-6bcf399dc77f/request.json	14346	14346	14346	3587	true	NONE	Actual provider prompt_tokens=3964; model=deepseek-v4-flash
+supervisor_trace	supervisor_reviewer-0013-6bcf399dc77f	persisted_request_envelope	context_trace/supervisor_reviewer-0013-6bcf399dc77f/request.json	15384	UNKNOWN	UNKNOWN	UNKNOWN	UNKNOWN	trace_envelope	15444 UTF-8 bytes; transport envelope outside trace is unknown
+minimum_fact_inventory	NONE	java_class_version_repair_facts	audit-derived exact incident values	665	665	0	167	false	minimal_fact_set	673 UTF-8 bytes; measurement only, not a proposed prompt
