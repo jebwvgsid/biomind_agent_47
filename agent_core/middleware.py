@@ -21,9 +21,11 @@ from agent_core.llm_safety import clip_text, llm_failure_summary
 from agent_core.context_lineage import ainvoke_with_snapshot
 from agent_core.node_context import (
     InvocationRegistry,
+    RECOVERY_PROVIDER_MAX_PAYLOAD_CHARS,
     build_node_context,
     evaluate_node_staleness,
 )
+from agent_core.state_contract_store import StateContractStore
 from agent_core.task_spec import task_semantic_hash
 from agent_core.recovery import (
     ConstraintConflictDetector,
@@ -71,6 +73,7 @@ from agent_core.plan_tracker import (
     canonical_task_spec_for_state,
     increment_plan_budget,
     load_plan_state,
+    load_approved_plan_snapshot,
     save_plan_state,
     semantic_plan_hash,
 )
@@ -94,6 +97,35 @@ async def _invoke_recovery_v2(
 ) -> Tuple[Any, Dict[str, Any]]:
     """Invoke Recovery through the same control/LLM-plane boundary as nodes."""
     task_spec = canonical_task_spec_for_state(plan_state)
+    semantic_inputs: Dict[str, Any] = {
+        "conversation_turns": [],
+        "consultant_handoff": dict(
+            (plan_state.get("task_state") or {}).get(
+                "accepted_consultant_handoff"
+            )
+            or {}
+        ),
+        "execution_records": [],
+        "recovery_decisions": [],
+    }
+    approved_snapshot: Dict[str, Any] = {}
+    if data_path:
+        contract_store = StateContractStore(data_path, task_id)
+        conversation_index = dict(plan_state.get("conversation_evidence") or {})
+        if conversation_index.get("head_ref"):
+            semantic_inputs["conversation_turns"] = (
+                contract_store.read_conversation_evidence(conversation_index)
+            )
+        recovery_store = RecoveryStateStore(data_path, task_id)
+        semantic_inputs["execution_records"] = (
+            recovery_store.load_execution_records()
+        )
+        semantic_inputs["recovery_decisions"] = recovery_store.load_attempts()
+        approved_snapshot = load_approved_plan_snapshot(
+            data_path,
+            task_id,
+            state=plan_state,
+        )
     context = build_node_context(
         node_type="recovery",
         task_spec=task_spec,
@@ -107,6 +139,9 @@ async def _invoke_recovery_v2(
         allowed_operations=[
             "probe", "repair", "rerun", "rollback", "blocked", "escalate",
         ],
+        max_payload_chars=RECOVERY_PROVIDER_MAX_PAYLOAD_CHARS,
+        approved_plan_snapshot=approved_snapshot or None,
+        **semantic_inputs,
     )
     stale_signature = "|".join(
         [context.binding.task_semantic_hash, context.binding.plan_semantic_hash,
@@ -1607,9 +1642,10 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                 skill_policy=skill_policy,
                 recovery_history=history,
             )
-            prompt_context = diagnostic_context.prompt_view()
-            diagnosis = dict(prompt_context.get("diagnosis") or {})
-            capacity_error = dict(prompt_context.get("error") or {})
+            # Managed V2 eligibility is based on the final NodeContext payload.
+            # The legacy prompt_view remains available to audit/compat callers,
+            # but cannot block deterministic diagnosis or the V2 provider call.
+            diagnosis = dict(diagnostic_context.diagnosis or {})
             decision: RecoveryDecision
             judge_needed = diagnosis_required(trigger, evidence, merged_state)
 
@@ -1626,33 +1662,7 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                 or str(evidence.get("execution_status") or "").lower() == "failed"
             )
 
-            if capacity_error.get("code") == "CONTEXT_CAPACITY_EXCEEDED":
-                # A semantic closure that does not fit is an internal capacity
-                # failure.  Never send a partial view to the judge and never
-                # turn it into a user clarification or a rerender loop.
-                decision = recovery_decision_from_diagnosis({
-                    "root_cause": str(
-                        capacity_error.get("message")
-                        or "The recovery semantic closure exceeds model capacity."
-                    ),
-                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                    "failure_type": "context_capacity_exceeded",
-                    "evidence": [
-                        f"required_semantic_chars:{int(capacity_error.get('required_semantic_chars') or 0)}",
-                        f"max_context_chars:{int(capacity_error.get('max_context_chars') or 0)}",
-                    ],
-                    "confidence": 1.0,
-                    "missing_evidence": [],
-                    "repair_strategy": (
-                        "Increase model capacity or reduce the authoritative "
-                        "semantic contract through an explicit user-approved change."
-                    ),
-                    "next_action": RecoveryAction.ESCALATE.value,
-                    "requires_user_input": False,
-                    "evidence_sufficient": True,
-                    "collection_complete": True,
-                })
-            elif diagnosis.get("collection_complete") and not judge_needed and (
+            if diagnosis.get("collection_complete") and not judge_needed and (
                 structured_execution_failed or diagnosis.get("evidence_sufficient")
             ):
                 # The builder has already read the persisted script, trace,
@@ -1779,7 +1789,7 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                     "error_fingerprint": diagnostic_context.error_fingerprint,
                     "returncode": evidence_returncode,
                     "validation_status": str(
-                        (prompt_context.get("validation") or {}).get("status") or ""
+                        (diagnostic_context.validation or {}).get("status") or ""
                     ),
                     "recovery_decision": decision.to_dict(),
                     "manifest_delta": progress.get("manifest_delta") or {},
@@ -1837,7 +1847,7 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                 "diagnostic_summary": diagnosis,
                 "structured_diagnosis": diagnosis,
                 "failure_owner": decision.failure_owner,
-                "recovery_history": list(prompt_context.get("recent_attempts") or []),
+                "recovery_history": list(diagnostic_context.recent_attempts or []),
                 "failure_fingerprint": str(
                     merged_state.get("failure_fingerprint")
                     or diagnostic_context.error_fingerprint
