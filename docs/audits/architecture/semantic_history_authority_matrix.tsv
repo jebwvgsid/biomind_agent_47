@@ -1,0 +1,30 @@
+fact_type	canonical_source	durable	planner_visible	generate_visible	recovery_visible	supervisor_visible	stable_history_candidate	audit_only	duplicate_sources
+raw_user_submission	StateContractStore raw_user_submission + conversation turn	YES	NONE	NONE	NONE	NONE	YES	NO	LangGraph HumanMessage; PersistentStateManager tasks.user_query; benchmark prompt metadata
+user_clarification_order	StateContractStore conversation_evidence linked turns	YES	NONE	NONE	NONE	NONE	YES	NO	graph messages when retained; context trace excerpts
+consultant_question	StateContractStore conversation turn role=consultant_question	YES	TASKSPEC_DERIVED	TASKSPEC_DERIVED	TASKSPEC_DERIVED	TASKSPEC_DERIVED	YES	NO	graph messages; consultation state
+raw_consultant_response	consultation response object + context_trace response.json	YES	NONE	NONE	NONE	NONE	NO	YES	graph AIMessage; profiler artifacts
+accepted_consultant_semantic_delta	TaskSpec mutation + consultation typed handoff/capability state	YES	FULL_CANONICAL_EFFECT	RELEVANT_CANONICAL_EFFECT	RELEVANT_CANONICAL_EFFECT	RELEVANT_CANONICAL_EFFECT	YES	NO	raw accepted response; summaries
+rejected_consultant_candidate	consultation history/context_trace	YES	NONE	NONE	NONE	NONE	NO	YES	graph AIMessage if retained
+canonical_task_requirements	TaskSpec/effective user facts	YES	FULL	RELEVANT_CURRENT_STEP	RELEVANT_CURRENT_STEP	RELEVANT_CURRENT_STEP	YES	NO	user raw; Plan; summaries; prompts
+selected_capabilities	consultation/plan selected skill and capability state	YES	FULL	FULL_SKILL_CONTEXT	RELEVANT	NONE	YES	NO	TaskSpec; Plan steps; run metrics
+runtime_input_audit	canonical runtime/input audit state	YES	FULL	RELEVANT	RELEVANT	RELEVANT	NO	NO	manifests; logs; context traces
+planner_raw_candidate	planner candidate/trace	YES	CURRENT_PARSE_ONLY	NONE	NONE	NONE	NO	YES	graph AIMessage; repair telemetry
+planner_rejected_candidate	planner candidate/repair history/trace	YES	TYPED_FEEDBACK_ONLY	NONE	NONE	NONE	NO	YES	validation issues; graph messages
+approved_procedure	Approved PlanSpec / PlanSnapshot	YES	FULL_AUTHORITY	CURRENT_STEP_DEPENDENCIES	CURRENT_STEP_DEPENDENCIES	CURRENT_STEP	YES	NO	plan.md; PlanState steps; prompt projections
+plan_prose	plan.md renderer projection	YES	NONE	NONE	NONE	NONE	NO	NO	Approved PlanSpec; PlanSnapshot
+current_step	PlanState current_step_id + approved step object	YES	RELEVANT	FULL	FULL	FULL	NO	NO	NodeContext projections; execution cursor
+accepted_generate_action	action contract + accepted materialization	YES	NONE	FULL_CURRENT	FULL_CURRENT	BOUNDED_CURRENT	YES	NO	generated raw response; script; manifest
+rejected_generate_candidate	generate trace/validation state	YES	NONE	NONE	NONE	NONE	NO	YES	graph AIMessage if retained
+materialized_script	materialization/manifest/script artifact	YES	NONE	REFERENCE_OR_CURRENT	REFERENCE_OR_EXCERPT	BOUNDED_ACTION	NO	NO	Generate response; actual command
+actual_executed_command	ExecutionRecord/provenance	YES	AUDIT_SUMMARY_ONLY	RELEVANT_CURRENT	FULL_CURRENT	BOUNDED_CURRENT	YES_SUMMARY	NO	script; shell trace; logs
+execution_exit_status	ExecutionRecord	YES	AUDIT_SUMMARY_ONLY	RELEVANT_FEEDBACK	FULL_CURRENT	FULL_CURRENT	YES	NO	run metrics; logs; recovery context
+stdout_stderr_tool_log	ExecutionRecord/log artifacts	YES	NONE_OR_SUMMARY	BOUNDED_RELEVANT	BOUNDED_RELEVANT	BOUNDED_CURRENT	NO	NO	context trace filesystem snapshot; reports
+observed_outputs_artifacts	artifact state + ExecutionRecord/output reconciliation	YES	RELEVANT_AUDIT	RELEVANT	RELEVANT	RELEVANT	YES_SUMMARY	NO	filesystem; manifests; PlanState usage
+recovery_decision	RecoveryStateStore/attempt record	YES	TYPED_FEEDBACK	FULL_CURRENT_FEEDBACK	FULL_CURRENT_OR_PRIOR_SUMMARY	RELEVANT_ROUTE	YES	NO	context trace; graph message; run metrics
+prior_attempt_history	Recovery/execution attempt records	YES	TYPED_SUMMARY	BOUNDED_SUMMARY	BOUNDED_SUMMARY	NONE	YES_SUMMARY	NO	logs; recovery context; graph messages
+graph_memory_summary	LangGraph messages + memory_index/compression audit	YES_ARCHIVED	NONE	NONE	NONE	NONE	NO	NO	MemoryManager SystemMessage; Direct Chat prompt
+memory_raw_archive	memory_archives archive JSONL	YES	NONE	NONE	NONE	NONE	NO	YES_FOR_REPLAY	original graph messages
+task_summary	SessionArchive/TaskSummary derived cache	YES	NONE_BY_DEFAULT	NONE_BY_DEFAULT	REFERENCE_WHEN_CALLED	NONE_BY_DEFAULT	NO	NO	SessionArchive events; canonical stores
+provider_request_response	context_trace request.json/response.json/manifest.json	YES	NONE	NONE	NONE	NONE	NO	YES	profiler event; graph messages; filesystem scanner legacy path
+run_metrics_profiling	run_metrics.json + profiler	YES	NONE	NONE	NONE	NONE	NO	YES	provider response usage projection
+cot_debug_internal_dump	debug/CoT/internal state artifacts	PATH_DEPENDENT	NONE	NONE	NONE_V2	NONE	NO	YES	legacy Recovery filesystem preview
