@@ -186,7 +186,7 @@ class NodeContextBoundaryTests(unittest.TestCase):
                 max_payload_chars=50,
             )
 
-    def test_generate_selects_exact_current_step_dependency_closure(self) -> None:
+    def test_generate_keeps_full_task_and_focuses_compatibility_closure(self) -> None:
         task = _task_spec()
         task["inputs"].append({
             "artifact_id": "unrelated-input",
@@ -215,12 +215,17 @@ class NodeContextBoundaryTests(unittest.TestCase):
             trace_enabled=True,
         )
         rendered = context.llm_payload.to_json()
-        self.assertNotIn("input.unrelated", rendered)
-        self.assertNotIn("output.unrelated", rendered)
-        self.assertNotIn("required_input.unrelated", rendered)
+        self.assertIn("input.unrelated", rendered)
+        self.assertIn("output.unrelated", rendered)
+        self.assertIn("required_input.unrelated", rendered)
+        compatibility_task = context.llm_payload.to_dict()["task"]
+        self.assertNotIn(
+            "input.unrelated",
+            json.dumps(compatibility_task, ensure_ascii=False),
+        )
         self.assertEqual(
             context.projection_trace.selection_policy,
-            "current-step-closure-v2",
+            "full-task-with-current-step-focus-v1",
         )
         self.assertIn(
             "input.unrelated",
