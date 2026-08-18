@@ -26,6 +26,10 @@ from agent_core.task_spec import (
 from agent_core.plan_contract import new_candidate_scope_id
 
 NODE_CONTEXT_SCHEMA_VERSION = 2
+# Recovery's 256k policy is explicitly measured in serialised provider-payload
+# characters.  Legacy DiagnosticContext limits use a different compatibility
+# surface and have no provider eligibility authority.
+RECOVERY_PROVIDER_MAX_PAYLOAD_CHARS = 256_000
 
 NODE_STALENESS_DOMAINS = {
     "consultant": "consultant-semantic-mutation-v1",
@@ -171,7 +175,13 @@ def control_metadata_leaks(value: Any, path: str = "$LLMPayload") -> List[str]:
             leaks.extend(control_metadata_leaks(item, f"{path}[{index}]"))
     elif isinstance(value, str):
         stripped = value.strip()
-        if any(pattern.match(stripped) for pattern in _CONTROL_VALUE_PATTERNS):
+        exact_user_turn = (
+            ".semantic_history.conversation[" in path
+            and path.endswith(".content")
+        )
+        if not exact_user_turn and any(
+            pattern.match(stripped) for pattern in _CONTROL_VALUE_PATTERNS
+        ):
             leaks.append(path)
     return sorted(set(leaks))
 
@@ -342,15 +352,52 @@ class LLMPayload:
     """Non-authoritative semantic data that may be serialised for the model."""
 
     value: Mapping[str, Any]
+    compatibility_value: Optional[Mapping[str, Any]] = None
 
     def __post_init__(self) -> None:
         assert_llm_payload_clean(self.value)
+        if self.compatibility_value:
+            assert_llm_payload_clean(self.compatibility_value)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the payload plus read-only V1 aliases for local callers.
+
+        The aliases keep older diagnostics/tests source-compatible.  Provider
+        prompt builders must select :meth:`to_provider_dict`, or equivalently
+        the two V2 sections, so aliases are never serialised twice.
+        """
+        result = deepcopy(dict(self.value))
+        if self.compatibility_value:
+            result.update(deepcopy(dict(self.compatibility_value)))
+        semantic = result.get("semantic_history")
+        focus = result.get("current_focus")
+        if isinstance(semantic, Mapping) and isinstance(focus, Mapping):
+            task = semantic.get("task_spec")
+            if isinstance(task, Mapping):
+                result.setdefault("task", deepcopy(dict(task)))
+            plan = semantic.get("approved_plan")
+            if isinstance(plan, Mapping):
+                result.setdefault("plan", deepcopy(dict(plan)))
+            elif isinstance(focus.get("candidate_plan"), Mapping):
+                result.setdefault(
+                    "plan", deepcopy(dict(focus.get("candidate_plan") or {}))
+                )
+            for key in (
+                "current_step", "dependency_contracts", "runtime", "feedback",
+                "violations", "evidence", "allowed_operations",
+            ):
+                if key in focus:
+                    result.setdefault(key, deepcopy(focus[key]))
+        return result
+
+    def to_provider_dict(self) -> Dict[str, Any]:
+        """Return exactly the provider-facing payload, without V1 aliases."""
         return deepcopy(dict(self.value))
 
     def to_json(self, *, indent: Optional[int] = None) -> str:
-        return json.dumps(self.value, ensure_ascii=False, sort_keys=True, indent=indent, default=str)
+        # Insertion order is a cache contract: stable semantics precede the
+        # invocation-local focus and must not be alphabetically reshuffled.
+        return json.dumps(self.value, ensure_ascii=False, sort_keys=False, indent=indent, default=str)
 
 
 @dataclass(frozen=True)
@@ -674,6 +721,8 @@ def _project_step_semantic_references(
 
     for row in rows:
         for key in tuple(row):
+            if key == "handle":
+                continue
             row[key] = project(row[key])
 
 
@@ -1023,6 +1072,242 @@ def _normalize_hash(value: str) -> str:
     return text if not text or text.startswith("sha256:") else f"sha256:{text}"
 
 
+def _semantic_conversation_rows(
+    turns: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Project complete ordered user semantics without storage/trace metadata."""
+    rows: List[Dict[str, Any]] = []
+    for raw in turns:
+        if not isinstance(raw, Mapping):
+            continue
+        role = str(raw.get("role") or "").strip().lower()
+        if role != "user":
+            continue
+        content = str(raw.get("content") or "")
+        if not content:
+            continue
+        rows.append({
+            "ordinal": len(rows) + 1,
+            "role": "user",
+            "content": content,
+        })
+    return rows
+
+
+def _accepted_consultant_handoff_view(
+    handoff: Optional[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Whitelist the accepted semantic handoff; never project retry chatter."""
+    raw = dict(handoff or {})
+    allowed = (
+        "summary", "requirements_summary", "goal_interpretation", "input_files",
+        "required_outputs", "hard_constraints", "selected_skills",
+        "capability_decisions", "runtime_requirements", "resolved_ambiguities",
+        "unresolved_questions", "database_strategy",
+    )
+    result = OrderedDict()
+    for key in allowed:
+        value = raw.get(key)
+        if value not in (None, "", [], {}):
+            result[key] = _without_control_metadata(value)
+    return dict(result)
+
+
+def _approved_plan_semantic_view(
+    snapshot: Mapping[str, Any],
+    steps: Sequence[Mapping[str, Any]],
+    handle_map: SemanticHandleMap,
+) -> Dict[str, Any]:
+    """Return one complete semantic Plan view, stripped of approval records."""
+    view: Dict[str, Any] = OrderedDict()
+    stable_to_handle = {
+        str(row.get("stable_identity") or ""): str(handle)
+        for handle, row in handle_map.to_dict().items()
+        if row.get("object_type") == "plan_step"
+    }
+    semantic_fields = {
+        "title", "action", "purpose", "tool", "inputs", "input_ids",
+        "input_artifacts", "input_refs", "input_contracts", "outputs",
+        "output_ids", "output_artifacts", "output_refs", "output_contracts",
+        "constraints", "constraint_ids", "semantic_constraint_ids",
+        "requirement_ids", "dependencies", "depends_on", "success_criteria",
+        "risk_level", "step_type", "skills_declared", "command_intent",
+        "artifacts",
+    }
+    approved_steps: List[Dict[str, Any]] = []
+    for index, raw in enumerate(snapshot.get("steps", []) or [], start=1):
+        if not isinstance(raw, Mapping):
+            continue
+        step_id = str(raw.get("step_id") or "")
+        row = {
+            str(key): _without_control_metadata(value)
+            for key, value in raw.items()
+            if str(key) in semantic_fields and value not in (None, "", [], {})
+        }
+        if isinstance(row.get("artifacts"), list):
+            row["artifacts"] = [
+                {
+                    str(key): deepcopy(value)
+                    for key, value in artifact.items()
+                    if str(key) in {
+                        "role", "artifact_type", "required", "validator",
+                        "format", "description", "producer_step_id",
+                    }
+                    and value not in (None, "", [], {})
+                }
+                for artifact in row["artifacts"]
+                if isinstance(artifact, Mapping)
+            ]
+        row["handle"] = stable_to_handle.get(step_id) or f"step.approved_{index}"
+        deps = raw.get("dependencies") or raw.get("depends_on") or []
+        if isinstance(deps, str):
+            deps = [deps]
+        row["dependencies"] = [
+            stable_to_handle.get(str(dep), str(dep)) for dep in deps
+        ]
+        approved_steps.append(row)
+    if not approved_steps:
+        approved_steps = [deepcopy(dict(item)) for item in steps]
+    _project_step_semantic_references(approved_steps, handle_map)
+    view["steps"] = approved_steps
+    proposed: List[Dict[str, Any]] = []
+    for raw in snapshot.get("proposed_artifacts", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        row = {
+            str(key): _without_control_metadata(value)
+            for key, value in raw.items()
+            if str(key) in {
+                "local_ref", "object_kind", "lifecycle", "semantic_view",
+                "artifact_contract", "materialization_policy_id",
+            }
+            and value not in (None, "", [], {})
+        }
+        if row:
+            proposed.append(row)
+    if proposed:
+        _project_step_semantic_references(proposed, handle_map)
+        view["proposed_artifacts"] = proposed
+    materializations: List[Dict[str, Any]] = []
+    for raw in snapshot.get("task_output_materializations", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        row = {
+            str(key): deepcopy(value)
+            for key, value in raw.items()
+            if str(key) in {"output_ref", "path"}
+            and value not in (None, "", [], {})
+        }
+        if row:
+            materializations.append(row)
+    if materializations:
+        _project_step_semantic_references(materializations, handle_map)
+        view["task_output_materializations"] = materializations
+    return dict(view)
+
+
+def _accepted_execution_outcomes(
+    plan_state: Mapping[str, Any],
+    execution_records: Sequence[Mapping[str, Any]],
+    step_handles: Mapping[str, str],
+    handle_map: SemanticHandleMap,
+) -> List[Dict[str, Any]]:
+    """Project successful durable outcomes, never historical code or logs."""
+    completed_steps = {
+        str(step.get("step_id") or ""): dict(step)
+        for step in plan_state.get("steps", []) or []
+        if isinstance(step, Mapping)
+        and str(step.get("status") or "").lower()
+        in {"done", "completed", "passed", "skipped"}
+    }
+    stable_to_handle = {
+        str(row.get("stable_identity") or ""): str(handle)
+        for handle, row in handle_map.to_dict().items()
+        if str(row.get("stable_identity") or "")
+    }
+    latest_by_step: Dict[str, Mapping[str, Any]] = {}
+    for raw in execution_records:
+        if not isinstance(raw, Mapping):
+            continue
+        step_id = str(raw.get("step_id") or "")
+        try:
+            exit_ok = raw.get("exit_code") is None or int(raw.get("exit_code")) == 0
+        except (TypeError, ValueError):
+            exit_ok = False
+        if (
+            step_id in completed_steps
+            and exit_ok
+            and str(raw.get("execution_status") or "").lower()
+            in {"succeeded", "success", "completed", "passed"}
+        ):
+            latest_by_step[step_id] = raw
+    rows: List[Dict[str, Any]] = []
+    for step_id, step in completed_steps.items():
+        raw = latest_by_step.get(step_id)
+        if raw is None:
+            continue
+        artifacts: List[str] = []
+        candidates = list(raw.get("produced_artifact_ids") or [])
+        for reconciled in raw.get("reconciled_outputs", []) or []:
+            if isinstance(reconciled, Mapping):
+                candidates.append(
+                    reconciled.get("logical_artifact_id")
+                    or reconciled.get("artifact_id")
+                    or reconciled.get("output_id")
+                )
+        for identity in candidates:
+            handle = stable_to_handle.get(str(identity or ""), "")
+            if handle and handle not in artifacts:
+                artifacts.append(handle)
+        row: Dict[str, Any] = {
+            "step": step_handles.get(step_id, "step.completed"),
+            "status": "completed",
+            "action_summary": str(
+                step.get("title") or step.get("action") or "completed plan step"
+            ),
+        }
+        if artifacts:
+            row["produced_artifacts"] = artifacts
+        reconciliation = str(raw.get("output_reconciliation_status") or "")
+        if reconciliation:
+            row["output_reconciliation_status"] = reconciliation
+        rows.append(row)
+    return rows
+
+
+def _accepted_recovery_decisions(
+    attempts: Sequence[Mapping[str, Any]],
+    step_handles: Mapping[str, str],
+) -> List[Dict[str, Any]]:
+    """Project accepted decisions only; omit attempts, IDs, evidence and traces."""
+    rows: List[Dict[str, Any]] = []
+    allowed = (
+        "recommended_action", "failure_owner", "failure_type", "root_cause",
+        "repair_strategy", "reason", "verdict", "action_type",
+        "requires_user_input",
+    )
+    for attempt in attempts:
+        if not isinstance(attempt, Mapping):
+            continue
+        raw = attempt.get("recovery_decision") or attempt.get("decision")
+        if not isinstance(raw, Mapping):
+            # Recovery decision files may themselves be supplied as rows.
+            raw = attempt if any(key in attempt for key in allowed) else {}
+        if not raw:
+            continue
+        row: Dict[str, Any] = OrderedDict()
+        step_id = str(attempt.get("step_id") or raw.get("step_id") or "")
+        if step_id and step_id in step_handles:
+            row["step"] = step_handles[step_id]
+        for key in allowed:
+            value = raw.get(key)
+            if value not in (None, "", [], {}):
+                row[key] = _without_control_metadata(value)
+        if row:
+            rows.append(dict(row))
+    return rows
+
+
 def build_node_context(
     *,
     node_type: str,
@@ -1049,6 +1334,10 @@ def build_node_context(
     invocation_id: str = "",
     candidate_scope_id: str = "",
     approved_plan_snapshot: Optional[Mapping[str, Any]] = None,
+    conversation_turns: Sequence[Mapping[str, Any]] = (),
+    consultant_handoff: Optional[Mapping[str, Any]] = None,
+    execution_records: Sequence[Mapping[str, Any]] = (),
+    recovery_decisions: Sequence[Mapping[str, Any]] = (),
 ) -> NodeContext:
     """Build the three-object invocation protocol from authoritative state.
 
@@ -1063,6 +1352,11 @@ def build_node_context(
         dict(approved_plan_snapshot or {})
         if approved_plan_snapshot
         else plan
+    )
+    step_plan = (
+        plan
+        if normalized_node == "planner_repair" and plan.get("steps")
+        else planning_plan
     )
     handles = SemanticHandleMap()
     used: Dict[str, int] = {}
@@ -1127,10 +1421,15 @@ def build_node_context(
                 row["required_basename" if direction == "output" else "basename"] = basename
             (outputs if direction == "output" else inputs).append(row)
     constraints = _constraint_rows(task_spec, handles, used)
-    steps, step_handles = _step_rows(planning_plan, handles, used)
+    steps, step_handles = _step_rows(step_plan, handles, used)
     _project_step_semantic_references(steps, handles)
     evidence_rows = _evidence_rows(evidence, handles)
 
+    # TaskSpec remains complete for every managed semantic node.  The closure
+    # below selects only invocation-local focus and never replaces task truth.
+    focus_constraints = constraints
+    focus_inputs = inputs
+    focus_outputs = outputs
     selected_step: Dict[str, Any] = {}
     dependency_contracts: List[Dict[str, Any]] = []
     excluded_handles: Dict[str, str] = {}
@@ -1145,9 +1444,9 @@ def build_node_context(
             if isinstance(item, Mapping)
         ]
         (
-            constraints,
-            inputs,
-            outputs,
+            focus_constraints,
+            focus_inputs,
+            focus_outputs,
             selected_step,
             dependency_contracts,
             excluded_handles,
@@ -1178,31 +1477,102 @@ def build_node_context(
             _project_step_semantic_references([semantic_values], handles)
             task_view[key] = semantic_values[key]
 
-    payload: Dict[str, Any] = {"task": task_view}
-    if normalized_node in {"planner_repair", "plan_review"}:
-        payload["plan"] = {"steps": steps}
-    if normalized_node in {"generate", "recovery", "supervisor"}:
-        payload["current_step"] = selected_step
-        if dependency_contracts:
-            payload["dependency_contracts"] = dependency_contracts
-    if runtime:
-        payload["runtime"] = _without_control_metadata(runtime)
-    if feedback:
-        payload["feedback"] = _without_control_metadata(feedback)
-    if violations:
-        visible_violations: List[Dict[str, Any]] = []
-        for index, raw in enumerate(violations, start=1):
-            row = _without_control_metadata(raw)
-            row.pop("violation_id", None)
-            row.setdefault("violation_handle", f"V{index}")
-            visible_violations.append(row)
-        payload["violations"] = visible_violations
-    if evidence_rows:
-        payload["evidence"] = evidence_rows
-    if allowed_operations:
-        payload["allowed_operations"] = [str(value) for value in allowed_operations]
+    visible_violations: List[Dict[str, Any]] = []
+    for index, raw in enumerate(violations, start=1):
+        row = _without_control_metadata(raw)
+        row.pop("violation_id", None)
+        row.setdefault("violation_handle", f"V{index}")
+        visible_violations.append(row)
 
-    llm_payload = LLMPayload(payload)
+    compatibility_payload: Optional[Dict[str, Any]] = None
+    semantic_nodes = {"planner", "planner_repair", "generate", "recovery"}
+    if normalized_node in semantic_nodes:
+        semantic_history: Dict[str, Any] = OrderedDict()
+        conversation = _semantic_conversation_rows(conversation_turns)
+        if conversation:
+            semantic_history["conversation"] = conversation
+        accepted_handoff = _accepted_consultant_handoff_view(consultant_handoff)
+        if accepted_handoff:
+            semantic_history["consultant_handoff"] = accepted_handoff
+        semantic_history["task_spec"] = task_view
+        if approved_plan_snapshot:
+            semantic_history["approved_plan"] = _approved_plan_semantic_view(
+                planning_plan,
+                steps,
+                handles,
+            )
+        outcomes = _accepted_execution_outcomes(
+            plan,
+            execution_records,
+            step_handles,
+            handles,
+        )
+        if outcomes:
+            semantic_history["accepted_execution_outcomes"] = outcomes
+        accepted_decisions = _accepted_recovery_decisions(
+            recovery_decisions,
+            step_handles,
+        )
+        if accepted_decisions:
+            semantic_history["accepted_recovery_decisions"] = accepted_decisions
+
+        current_focus: Dict[str, Any] = OrderedDict()
+        if normalized_node == "planner_repair":
+            current_focus["candidate_plan"] = {"steps": steps}
+        if normalized_node in {"generate", "recovery"}:
+            current_focus["current_step"] = selected_step
+            if dependency_contracts:
+                current_focus["dependency_contracts"] = dependency_contracts
+        if runtime:
+            current_focus["runtime"] = _without_control_metadata(runtime)
+        if feedback:
+            current_focus["feedback"] = _without_control_metadata(feedback)
+        if visible_violations:
+            current_focus["violations"] = visible_violations
+        if evidence_rows:
+            current_focus["evidence"] = evidence_rows
+        if allowed_operations:
+            current_focus["allowed_operations"] = [
+                str(value) for value in allowed_operations
+            ]
+        payload: Dict[str, Any] = OrderedDict((
+            ("semantic_history", semantic_history),
+            ("current_focus", current_focus),
+        ))
+        compatibility_task = deepcopy(task_view)
+        if normalized_node in {"generate", "recovery"}:
+            compatibility_task.update({
+                "constraints": focus_constraints,
+                "inputs": focus_inputs,
+                "outputs": focus_outputs,
+            })
+        compatibility_payload = {"task": compatibility_task}
+        if normalized_node == "planner_repair":
+            compatibility_payload["plan"] = {"steps": steps}
+        compatibility_payload.update(deepcopy(current_focus))
+        selection_policy = "full-task-with-current-step-focus-v1"
+    else:
+        # Consultant, Supervisor and PlanReview stay on their existing
+        # contracts; this repair does not expand those node boundaries.
+        payload = {"task": task_view}
+        if normalized_node in {"planner_repair", "plan_review"}:
+            payload["plan"] = {"steps": steps}
+        if normalized_node in {"generate", "recovery", "supervisor"}:
+            payload["current_step"] = selected_step
+            if dependency_contracts:
+                payload["dependency_contracts"] = dependency_contracts
+        if runtime:
+            payload["runtime"] = _without_control_metadata(runtime)
+        if feedback:
+            payload["feedback"] = _without_control_metadata(feedback)
+        if visible_violations:
+            payload["violations"] = visible_violations
+        if evidence_rows:
+            payload["evidence"] = evidence_rows
+        if allowed_operations:
+            payload["allowed_operations"] = [str(value) for value in allowed_operations]
+
+    llm_payload = LLMPayload(payload, compatibility_payload)
     payload_chars = len(llm_payload.to_json())
     if max_payload_chars is not None and payload_chars > int(max_payload_chars):
         report = payload_observability_report(payload)
@@ -1214,8 +1584,8 @@ def build_node_context(
 
     task_sem_hash = task_semantic_hash(task_spec)
     task_rec_hash = task_record_hash(task_spec)
-    plan_sem_hash = _normalize_hash(semantic_plan_hash(planning_plan)) if planning_plan else ""
-    plan_rec_hash = plan_record_hash(planning_plan) if planning_plan else ""
+    plan_sem_hash = _normalize_hash(semantic_plan_hash(step_plan)) if step_plan else ""
+    plan_rec_hash = plan_record_hash(step_plan) if step_plan else ""
     binding = ControllerBinding(
         invocation_id=invocation_id or f"inv-{uuid.uuid4()}",
         node_type=normalized_node,
@@ -1463,24 +1833,50 @@ class InvocationRegistry:
 
 def payload_observability_report(payload: Mapping[str, Any]) -> Dict[str, Any]:
     """Phase-0 metrics for prompt size and control-metadata leakage."""
+    provider_payload: Mapping[str, Any] = payload
+    if "semantic_history" in payload and "current_focus" in payload:
+        provider_payload = {
+            "semantic_history": payload.get("semantic_history") or {},
+            "current_focus": payload.get("current_focus") or {},
+        }
     section_chars = {
         str(key): len(json.dumps(value, ensure_ascii=False, sort_keys=True, default=str))
-        for key, value in payload.items()
+        for key, value in provider_payload.items()
     }
     top_sections = sorted(section_chars.items(), key=lambda item: (-item[1], item[0]))
-    serialised = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+    serialised = json.dumps(provider_payload, ensure_ascii=False, sort_keys=False, default=str)
     counts = {"constraints": 0, "inputs": 0, "outputs": 0, "evidence": 0}
-    task = payload.get("task") if isinstance(payload.get("task"), Mapping) else {}
+    semantic = (
+        provider_payload.get("semantic_history")
+        if isinstance(provider_payload.get("semantic_history"), Mapping)
+        else {}
+    )
+    focus = (
+        provider_payload.get("current_focus")
+        if isinstance(provider_payload.get("current_focus"), Mapping)
+        else {}
+    )
+    task = (
+        semantic.get("task_spec")
+        if isinstance(semantic, Mapping) and isinstance(semantic.get("task_spec"), Mapping)
+        else provider_payload.get("task")
+        if isinstance(provider_payload.get("task"), Mapping)
+        else {}
+    )
     for key in ("constraints", "inputs", "outputs"):
         value = task.get(key, []) if isinstance(task, Mapping) else []
         counts[key] = len(value) if isinstance(value, list) else 0
-    counts["evidence"] = len(payload.get("evidence", []) or [])
+    counts["evidence"] = len(
+        focus.get("evidence", [])
+        if isinstance(focus, Mapping)
+        else provider_payload.get("evidence", []) or []
+    )
     return {
         "total_chars": len(serialised),
         "section_chars": section_chars,
         "top_sections": top_sections,
         "included_counts": counts,
-        "control_metadata_leaks": control_metadata_leaks(payload),
+        "control_metadata_leaks": control_metadata_leaks(provider_payload),
     }
 
 

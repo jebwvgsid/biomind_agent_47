@@ -77,6 +77,19 @@ class PromptManager:
         return TASK_FAILURE_REPORT_TEMPLATE.format(analysis=analysis_text)
 
     @staticmethod
+    def _node_context_sections(
+        llm_payload: Mapping[str, Any],
+    ) -> Tuple[Mapping[str, Any], Mapping[str, Any]]:
+        """Select the two provider sections and discard compatibility aliases."""
+        payload = dict(llm_payload or {})
+        semantic = payload.get("semantic_history")
+        focus = payload.get("current_focus")
+        if isinstance(semantic, Mapping) and isinstance(focus, Mapping):
+            return semantic, focus
+        # Direct unit/legacy callers may still supply one flat semantic map.
+        return payload, {}
+
+    @staticmethod
     def _diagnostic_prompt_view(value: object, max_chars: int) -> object:
         """Project persisted or in-memory DiagnosticContext through one bounded path."""
         if not isinstance(value, dict):
@@ -1444,8 +1457,18 @@ Consultant owns skill discovery and SELECTED_SKILLS is the full allowed pool. Pl
     @staticmethod
     def get_recovery_v2_prompt(llm_payload: Mapping[str, Any]) -> str:
         """RecoveryJudge policy over an exact Controller-built semantic view."""
-        payload = json.dumps(llm_payload, ensure_ascii=False, sort_keys=True, indent=2, default=str)
-        return RECOVERY_JUDGE_PROMPT.format(diagnostic_context=payload).replace(
+        semantic, focus = PromptManager._node_context_sections(llm_payload)
+        semantic_json = json.dumps(
+            semantic, ensure_ascii=False, sort_keys=False, indent=2, default=str
+        )
+        focus_json = json.dumps(
+            focus, ensure_ascii=False, sort_keys=False, indent=2, default=str
+        )
+        ordered_context = (
+            "<semantic_history>\n" + semantic_json + "\n</semantic_history>\n\n"
+            "<current_focus>\n" + focus_json + "\n</current_focus>"
+        )
+        return RECOVERY_JUDGE_PROMPT.format(diagnostic_context=ordered_context).replace(
             "DiagnosticContextBuilder has already read bounded local scripts, traces, logs, runtime contracts, and manifests",
             "The Controller has projected the exact current-step contract, structured failure facts, and bounded evidence excerpts",
         ) + (
@@ -1564,7 +1587,13 @@ materialization-only repair may return an empty `replace_steps` list.
         user_preferences: str = "",
     ) -> str:
         """Planner policy over one non-authoritative semantic LLMPayload."""
-        payload = json.dumps(llm_payload, ensure_ascii=False, sort_keys=True, indent=2, default=str)
+        semantic, focus = PromptManager._node_context_sections(llm_payload)
+        semantic_json = json.dumps(
+            semantic, ensure_ascii=False, sort_keys=False, indent=2, default=str
+        )
+        focus_json = json.dumps(
+            focus, ensure_ascii=False, sort_keys=False, indent=2, default=str
+        )
         candidate_example = json.dumps(
             validated_planner_candidate_wire_example(),
             ensure_ascii=False,
@@ -1572,8 +1601,8 @@ materialization-only repair may return an empty `replace_steps` list.
         )
         return f"""You are the BioMind Planner.
 
-The JSON under <llm_payload> is a non-authoritative semantic view produced by
-the Controller. Plan only from its facts and semantic handles. Do not invent,
+The JSON under <semantic_history> and <current_focus> is a non-authoritative
+semantic view produced by the Controller. Plan only from its facts and semantic handles. Do not invent,
 weaken, or rewrite Task semantics. Do not return controller identity,
 concurrency metadata, storage references, approval metadata, or fingerprints.
 If required task meaning is genuinely incomplete, return exactly
@@ -1593,7 +1622,7 @@ is generated from the same wire-contract definition used by the strict Plan
 reader; adapt its semantic content, steps, and references to this task:
 {candidate_example}
 
-Use artifact and constraint handles exactly as shown in <llm_payload>. Do not
+Use artifact and constraint handles exactly as shown in the semantic context. Do not
 copy illustrative values from the example when they are not part of this task.
 Required managed outputs must be referenced by handle; never copy or redefine
 their TaskSpec paths. When a required file output has `path_policy` equal to
@@ -1620,9 +1649,9 @@ logical/canonical artifact IDs, authoritative paths, revisions, hashes, object
 refs, CAS, or reservation fields. The sole path exception is the safe relative
 `task_output_materializations[].path` defined above.
 
-<llm_payload>
-{payload}
-</llm_payload>
+<semantic_history>
+{semantic_json}
+</semantic_history>
 
 <capability_context>
 {capability_context or "No external capability is selected."}
@@ -1631,6 +1660,10 @@ refs, CAS, or reservation fields. The sole path exception is the safe relative
 <user_preferences>
 {user_preferences or "No user preferences were supplied."}
 </user_preferences>
+
+<current_focus>
+{focus_json}
+</current_focus>
 """
 
     @staticmethod
@@ -1750,7 +1783,13 @@ for each deliverable and never mint Renderer-specific aliases.
         allowed_step_handles: Sequence[str],
         capability_context: str = "",
     ) -> str:
-        payload = json.dumps(llm_payload, ensure_ascii=False, sort_keys=True, indent=2, default=str)
+        semantic, focus = PromptManager._node_context_sections(llm_payload)
+        semantic_json = json.dumps(
+            semantic, ensure_ascii=False, sort_keys=False, indent=2, default=str
+        )
+        focus_json = json.dumps(
+            focus, ensure_ascii=False, sort_keys=False, indent=2, default=str
+        )
         handles = json.dumps(list(allowed_step_handles), ensure_ascii=False)
         return f"""You are repairing an existing BioMind Plan semantic proposal.
 
@@ -1759,8 +1798,6 @@ semantic delta; do not return identity, version, approval, storage-reference,
 validation-state, status, evidence, or fingerprint fields. Modify only the
 allowed step handles and only fields needed by the actionable violations.
 Do not change Task semantics or controller/renderer bindings.
-
-Allowed step handles: {handles}
 
 Return exactly one JSON object:
 {{
@@ -1794,13 +1831,21 @@ that table. It replaces the complete table, so preserve every valid existing
 row. Each path must be safe and relative to the typed TaskSpec output_dir. A
 materialization-only repair may return an empty `replace_steps` list.
 
-<llm_payload>
-{payload}
-</llm_payload>
+<semantic_history>
+{semantic_json}
+</semantic_history>
 
 <capability_context>
 {capability_context or "No additional capability context."}
 </capability_context>
+
+<current_focus>
+{focus_json}
+</current_focus>
+
+<repair_scope>
+Allowed step handles: {handles}
+</repair_scope>
 """
 
     @staticmethod
@@ -1809,7 +1854,13 @@ materialization-only repair may return an empty `replace_steps` list.
         *,
         capability_instructions: str = "",
     ) -> str:
-        payload = json.dumps(llm_payload, ensure_ascii=False, sort_keys=True, indent=2, default=str)
+        semantic, focus = PromptManager._node_context_sections(llm_payload)
+        semantic_json = json.dumps(
+            semantic, ensure_ascii=False, sort_keys=False, indent=2, default=str
+        )
+        focus_json = json.dumps(
+            focus, ensure_ascii=False, sort_keys=False, indent=2, default=str
+        )
         return f"""You are BioMind Generate. Propose one action for the current step.
 
 The semantic payload is non-authoritative. You may not modify the Task, Plan,
@@ -1849,11 +1900,15 @@ If a command is not appropriate, return one supported semantic action object
 for ask_user, search, install_tool, step_completion_candidate, plan_patch,
 blocked, or solution. Do not wrap the JSON in Markdown.
 
-<llm_payload>
-{payload}
-</llm_payload>
+<semantic_history>
+{semantic_json}
+</semantic_history>
 
 <capability_instructions>
 {capability_instructions or "No capability-specific instructions."}
 </capability_instructions>
+
+<current_focus>
+{focus_json}
+</current_focus>
 """

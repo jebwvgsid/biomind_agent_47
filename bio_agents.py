@@ -389,6 +389,7 @@ from agent_core.node_context import (
     InvocationProtocolError,
     InvocationRegistry,
     NodeContext,
+    RECOVERY_PROVIDER_MAX_PAYLOAD_CHARS,
     SemanticHandleError,
     build_node_context,
     evaluate_node_staleness,
@@ -3412,6 +3413,96 @@ class BioAnalystAgent:
         return projection
 
     @staticmethod
+    def _accepted_consultant_handoff_projection(
+        source: Mapping[str, Any] | None,
+    ) -> Dict[str, Any]:
+        """Keep only the accepted semantic cross-node handoff."""
+        raw = dict(source or {})
+        task_spec = (
+            dict(raw.get("task_spec") or {})
+            if isinstance(raw.get("task_spec"), Mapping)
+            else {}
+        )
+        summary = str(
+            raw.get("summary") or raw.get("requirements_summary") or ""
+        ).strip()
+        projection: Dict[str, Any] = {}
+        if summary:
+            projection["summary"] = summary
+        for key in (
+            "goal_interpretation", "input_files", "required_outputs",
+            "hard_constraints", "selected_skills", "capability_decisions",
+            "runtime_requirements", "resolved_ambiguities",
+            "unresolved_questions", "database_strategy",
+        ):
+            value = raw.get(key)
+            if value not in (None, "", [], {}):
+                projection[key] = deepcopy(value)
+
+        # The accepted commit already contains the canonical interpretation.
+        # Project only semantic fields, never candidate/provider/audit records.
+        if task_spec and not projection.get("goal_interpretation"):
+            goal = str(task_spec.get("goal") or "").strip()
+            if goal:
+                projection["goal_interpretation"] = goal
+        if task_spec and not projection.get("input_files"):
+            inputs = [
+                {
+                    key: deepcopy(item[key])
+                    for key in ("role", "path", "format", "required")
+                    if item.get(key) not in (None, "", [], {})
+                }
+                for item in task_spec.get("inputs", []) or []
+                if isinstance(item, Mapping)
+            ]
+            if inputs:
+                projection["input_files"] = inputs
+        if task_spec and not projection.get("required_outputs"):
+            outputs = [
+                {
+                    key: deepcopy(item[key])
+                    for key in (
+                        "role", "path", "format", "required", "path_policy",
+                    )
+                    if item.get(key) not in (None, "", [], {})
+                }
+                for item in (
+                    task_spec.get("output_contracts")
+                    or task_spec.get("outputs")
+                    or []
+                )
+                if isinstance(item, Mapping)
+            ]
+            if outputs:
+                projection["required_outputs"] = outputs
+        if task_spec and not projection.get("hard_constraints"):
+            constraints = [
+                {
+                    key: deepcopy(item[key])
+                    for key in (
+                        "semantic_key", "operator", "value", "strength",
+                        "needs_clarification",
+                    )
+                    if item.get(key) not in (None, "", [], {})
+                }
+                for item in (
+                    task_spec.get("requirements")
+                    or task_spec.get("semantic_constraints")
+                    or []
+                )
+                if isinstance(item, Mapping)
+                and str(item.get("strength") or "hard").lower() == "hard"
+            ]
+            constraints = [item for item in constraints if item]
+            if constraints:
+                projection["hard_constraints"] = constraints
+        if task_spec and not projection.get("unresolved_questions"):
+            unresolved = deepcopy(list(task_spec.get("unresolved_questions") or []))
+            if unresolved:
+                projection["unresolved_questions"] = unresolved
+        return projection
+
+    @staticmethod
     def _memory_source_refs(text: str, limit: int = 24) -> List[str]:
         patterns = [
             r"\b(?:session_archive|task|artifact|raw):[A-Za-z0-9_.:/\\-]+",
@@ -3636,7 +3727,15 @@ class BioAnalystAgent:
                 int(getattr(self, "llm_context_limit_tokens", 200_000)) * 4,
             ),
         )
-        return context.llm_payload.to_json()
+        # This method is a legacy local projection API, not a provider call.
+        # Preserve its flat read shape while PromptManager serialises only the
+        # two provider-facing V2 sections.
+        return json.dumps(
+            context.llm_payload.to_dict(),
+            ensure_ascii=False,
+            sort_keys=True,
+            default=str,
+        )
 
     @staticmethod
     def _bounded_message_history(
@@ -3781,6 +3880,26 @@ class BioAnalystAgent:
             ),
             "pending_question": dict(pending_question),
         }
+        accepted_statuses = {
+            "semantic_contract_compiled",
+            "canonical_task_ready",
+        }
+        accepted_handoff = dict(
+            task_state_before.get("accepted_consultant_handoff") or {}
+        )
+        if (
+            str(projected.get("contract_status") or "") in accepted_statuses
+            or (
+                str(projected.get("next_step") or "") == "planner"
+                and str(projected.get("requirements_summary") or "").strip()
+            )
+        ):
+            accepted_handoff = self._accepted_consultant_handoff_projection({
+                **projected,
+                "selected_skills": list(candidate["selected_skills"]),
+            })
+        if accepted_handoff:
+            candidate["accepted_consultant_handoff"] = accepted_handoff
         if "planner_feedback" in projected:
             incoming_feedback = dict(projected.get("planner_feedback") or {})
             prior_feedback = dict(task_state_before.get("planner_feedback") or {})
@@ -3897,6 +4016,9 @@ class BioAnalystAgent:
             )),
             "pending_human_question": deepcopy(dict(
                 committed_state.get("pending_question") or {}
+            )),
+            "accepted_consultant_handoff": deepcopy(dict(
+                committed_state.get("accepted_consultant_handoff") or {}
             )),
             "conversation_evidence": deepcopy(dict(
                 committed.get("conversation_evidence") or {}
@@ -4073,13 +4195,13 @@ class BioAnalystAgent:
                 "excerpt": str(item),
                 "truncated": False,
             })
-        recovery_node_context = build_node_context(
-            node_type="recovery",
-            task_spec=recovery_task_spec,
-            plan_state=plan_state,
-            state_generation=int(plan_state.get("state_generation") or 0),
-            current_step_id=str(context.step_id or evidence.get("step_id") or ""),
-            runtime={
+        recovery_context_kwargs = {
+            "node_type": "recovery",
+            "task_spec": recovery_task_spec,
+            "plan_state": plan_state,
+            "state_generation": int(plan_state.get("state_generation") or 0),
+            "current_step_id": str(context.step_id or evidence.get("step_id") or ""),
+            "runtime": {
                 "action_contract": dict(context.action_contract or {}),
                 "execution": dict(context.execution or {}),
                 "validation": dict(context.validation or {}),
@@ -4089,22 +4211,21 @@ class BioAnalystAgent:
                 "already_tried_strategies": list(context.already_tried_strategies or []),
                 "skill_policy": dict(context.skill_policy or {}),
             },
-            feedback={
+            "feedback": {
                 "diagnosis": {
                     key: value for key, value in diagnosis.items()
                     if key != "evidence"
                 },
                 "conflicts": list(context.conflicts or []),
             },
-            evidence=recovery_evidence,
-            allowed_operations=[item.value for item in RecoveryAction],
-            attempt_id=str(context.attempt_id or evidence.get("attempt_id") or ""),
-            failure_fingerprint=str(context.error_fingerprint or ""),
-            evidence_identity=str(context.context_id or ""),
-            trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
-            max_payload_chars=max(1, int(self.llm_context_limit_tokens) * 4),
-        )
-        prompt_context = recovery_node_context.llm_payload.to_dict()
+            "evidence": recovery_evidence,
+            "allowed_operations": [item.value for item in RecoveryAction],
+            "attempt_id": str(context.attempt_id or evidence.get("attempt_id") or ""),
+            "failure_fingerprint": str(context.error_fingerprint or ""),
+            "evidence_identity": str(context.context_id or ""),
+            "trace_enabled": bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
+            "max_payload_chars": RECOVERY_PROVIDER_MAX_PAYLOAD_CHARS,
+        }
         try:
             evidence_returncode = int(
                 evidence.get("returncode")
@@ -4132,10 +4253,27 @@ class BioAnalystAgent:
                 except (TypeError, ValueError):
                     cached_judge_valid = False
             if not cached_judge:
-                increment_plan_budget(plan_state, "recovery_judge_count")
-                save_plan_state(self.data_path, task_id, plan_state)
-                prompt = PromptManager.get_recovery_v2_prompt(prompt_context)
                 try:
+                    recovery_approved_snapshot = load_approved_plan_snapshot(
+                        self.data_path,
+                        task_id,
+                        state=plan_state,
+                    )
+                    recovery_semantic_inputs = self._node_context_semantic_inputs(
+                        task_id,
+                        plan_state,
+                        messages=list(state.get("messages") or []),
+                    )
+                    recovery_node_context = build_node_context(
+                        **recovery_context_kwargs,
+                        approved_plan_snapshot=recovery_approved_snapshot,
+                        **recovery_semantic_inputs,
+                    )
+                    prompt = PromptManager.get_recovery_v2_prompt(
+                        recovery_node_context.llm_payload.to_dict()
+                    )
+                    increment_plan_budget(plan_state, "recovery_judge_count")
+                    save_plan_state(self.data_path, task_id, plan_state)
                     response = await self._ainvoke_node_llm(
                         [HumanMessage(content=prompt)],
                         node_context=recovery_node_context,
@@ -6513,6 +6651,30 @@ class BioAnalystAgent:
                 "truncated": False,
             })
         return turns, evidence
+
+    def _node_context_semantic_inputs(
+        self,
+        task_id: str,
+        plan_state: Mapping[str, Any],
+        *,
+        messages: Sequence[BaseMessage] = (),
+        accepted_contract: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Load reusable semantic authorities for Planner/Generate/Recovery."""
+        turns, _ = self._consultant_semantic_conversation(task_id, messages)
+        task_state = dict(plan_state.get("task_state") or {})
+        handoff = dict(task_state.get("accepted_consultant_handoff") or {})
+        if not handoff and accepted_contract:
+            handoff = self._accepted_consultant_handoff_projection(
+                accepted_contract
+            )
+        recovery_store = RecoveryStateStore(self.data_path, task_id)
+        return {
+            "conversation_turns": turns,
+            "consultant_handoff": handoff,
+            "execution_records": recovery_store.load_execution_records(),
+            "recovery_decisions": recovery_store.load_attempts(),
+        }
 
     @staticmethod
     def _generate_visible_messages(
@@ -22417,6 +22579,16 @@ question. Never guess a scientific or database identity.
                     "planning_epoch": repair_epoch,
                 }
             planner_task_state = dict(planner_source_state.get("task_state") or {})
+            if not planner_task_state.get("accepted_consultant_handoff"):
+                legacy_handoff = self._accepted_consultant_handoff_projection(
+                    consultant_result
+                )
+                if legacy_handoff:
+                    # Migration-on-read for verified pre-contract sessions.
+                    # Planner already verified the immutable FINALIZE chain.
+                    planner_task_state["accepted_consultant_handoff"] = (
+                        legacy_handoff
+                    )
             prior_epoch = dict(planner_task_state.get("planning_epoch") or {})
             committed_plan = dict(planner_source_state.get("current_plan") or {})
             base_snapshot_id = str(committed_plan.get("plan_snapshot_ref") or "")
@@ -22503,6 +22675,19 @@ question. Never guess a scientific or database identity.
             )
             if str(planner_feedback.get("status") or "pending") != "pending":
                 planner_feedback = {}
+            planner_approved_snapshot: Dict[str, Any] = {}
+            if base_snapshot_id:
+                planner_approved_snapshot = load_approved_plan_snapshot(
+                    self.data_path,
+                    task_id,
+                    state=planner_source_state,
+                )
+            planner_semantic_inputs = self._node_context_semantic_inputs(
+                task_id,
+                planner_source_state,
+                messages=messages,
+                accepted_contract=consultant_result,
+            )
             planner_node_context = build_node_context(
                 node_type="planner",
                 task_spec=task_spec,
@@ -22516,6 +22701,8 @@ question. Never guess a scientific or database identity.
                 allowed_operations=["create_plan", "report_task_semantics_incomplete"],
                 trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
                 max_payload_chars=max(1, int(self.llm_context_limit_tokens) * 4),
+                approved_plan_snapshot=planner_approved_snapshot or None,
+                **planner_semantic_inputs,
             )
             planner_semantic_capabilities, _planner_operation_bindings = (
                 self.skill_manager.get_semantic_execution_capabilities(planner_context_skills)
@@ -22987,12 +23174,6 @@ question. Never guess a scientific or database identity.
                     except PlanStructureError as first_error:
                         structure_errors = list(first_error.diagnostics)
                 if structure_errors:
-                    structure_repair_prompt = (
-                        detailed_plan_prompt
-                        + "\n\nYour prior response failed the structured plan schema. "
-                        "Return a corrected complete JSON object; do not return a PlanPatch.\n"
-                        + json.dumps(structure_errors, ensure_ascii=False, sort_keys=True)
-                    )
                     try:
                         structure_repair_context = build_node_context(
                             node_type="planner_repair",
@@ -23001,6 +23182,22 @@ question. Never guess a scientific or database identity.
                             violations=structure_errors,
                             allowed_operations=["replace_plan_document"],
                             candidate_scope_id=planner_node_context.binding.candidate_scope_id,
+                            approved_plan_snapshot=planner_approved_snapshot or None,
+                            **planner_semantic_inputs,
+                        )
+                        structure_repair_prompt = (
+                            PromptManager.get_planner_v2_prompt(
+                                structure_repair_context.llm_payload.to_dict(),
+                                capability_context=planner_capability_context,
+                                user_preferences=self._load_user_preferences(),
+                            )
+                            + "\n\nYour prior response failed the structured plan schema. "
+                            "Return a corrected complete JSON object; do not return a PlanPatch.\n"
+                            + json.dumps(
+                                structure_errors,
+                                ensure_ascii=False,
+                                sort_keys=True,
+                            )
                         )
                         repair_reservation = reserve_planner_candidate_repair()
                         if not repair_reservation.get("allowed"):
@@ -23299,6 +23496,8 @@ question. Never guess a scientific or database identity.
                     violation_set_identity=violation_identity,
                     trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
                     candidate_scope_id=planner_node_context.binding.candidate_scope_id,
+                    approved_plan_snapshot=planner_approved_snapshot or None,
+                    **planner_semantic_inputs,
                 )
                 step_handle_by_identity = {
                     str(item.get("stable_identity") or ""): str(handle)
@@ -24672,6 +24871,11 @@ question. Never guess a scientific or database identity.
                     task_id,
                     state=generate_plan_state,
                 )
+                generate_semantic_inputs = self._node_context_semantic_inputs(
+                    task_id,
+                    generate_plan_state,
+                    messages=messages,
+                )
                 generate_node_context = build_node_context(
                     node_type="generate",
                     task_spec=generate_task_spec,
@@ -24746,6 +24950,7 @@ question. Never guess a scientific or database identity.
                         int(getattr(self, "llm_context_limit_tokens", 200_000)) * 4,
                     ),
                     approved_plan_snapshot=generate_approved_snapshot,
+                    **generate_semantic_inputs,
                 )
                 call_msgs = [HumanMessage(content=PromptManager.get_generate_v2_prompt(
                     generate_node_context.llm_payload.to_dict(),

@@ -7379,6 +7379,13 @@ def commit_consultant_candidate_state(
     task_state["resolved_bindings"] = deepcopy(dict(proposed.get("resolved_bindings") or {}))
     pending = proposed.get("pending_question")
     task_state["pending_question"] = deepcopy(dict(pending or {}))
+    accepted_handoff = proposed.get("accepted_consultant_handoff")
+    if accepted_handoff is not None:
+        if not isinstance(accepted_handoff, Mapping):
+            raise ValueError("ACCEPTED_CONSULTANT_HANDOFF_INVALID")
+        task_state["accepted_consultant_handoff"] = deepcopy(
+            dict(accepted_handoff)
+        )
     planner_feedback = proposed.get("planner_feedback")
     if planner_feedback is not None:
         if not isinstance(planner_feedback, Mapping):
