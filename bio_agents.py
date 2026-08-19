@@ -318,6 +318,7 @@ from agent_core.plan_tracker import (
     next_action_title,
     next_renderer_manifest_action,
     normalize_plan_contracts,
+    normalize_validation_issue,
     normalize_renderer_manifest,
     plan_contract_violations,
     plan_approval_is_current,
@@ -405,10 +406,9 @@ from agent_core.plan_contract import (
     PlannerCandidateError,
     PlannerEnvelopeError,
     StateCASConflict,
-    candidate_artifact_ref_keys,
     classify_io_exception,
     parse_planner_outcome_envelope,
-    planner_candidate_rejection_is_internal_conflict,
+    planner_candidate_body_from_state,
     planning_epoch_matches,
     prepare_allocation_intent,
     relevant_reconciliation_evidence_revision,
@@ -416,7 +416,7 @@ from agent_core.plan_contract import (
     reconciliation_fingerprint,
     reconciliation_guard_status,
     start_planning_epoch,
-    validate_candidate_graph_and_flow,
+    validate_planner_candidate_deterministically,
     validated_planner_candidate_wire_example,
 )
 from agent_core.managed_artifacts import (
@@ -6933,16 +6933,36 @@ class BioAnalystAgent:
             ]
         return normalized, declared, step
 
-    def _plan_step_skill_violations(self, plan_state: Dict[str, Any], selected_skills: List[str]) -> List[str]:
+    def _plan_step_skill_violations(
+        self,
+        plan_state: Dict[str, Any],
+        selected_skills: List[str],
+    ) -> List[Dict[str, Any]]:
         selected = set(self._selected_skill_ids(selected_skills))
-        violations: List[str] = []
+        violations: List[Dict[str, Any]] = []
         steps = [step for step in plan_state.get("steps", []) or [] if isinstance(step, dict)]
         if not steps:
-            return ["Plan must include a machine-trackable Execution Checklist with explicit `Skills:` fields."]
-        for step in steps:
+            return [validation_issue(
+                "PLAN_STEPS_MISSING",
+                owner="planner",
+                repair_target="$.steps",
+                field_path="$.steps",
+                message="Plan must contain at least one structured step.",
+                validator_id="plan_skill_bindings",
+            )]
+        for step_index, step in enumerate(steps):
             step_id = str(step.get("step_id") or "unknown")
+            skill_path = f"$.steps[{step_index}].skill_ids"
             if not step.get("skills_declared"):
-                violations.append(f"{step_id} must declare `Skills: [...]` explicitly.")
+                violations.append(validation_issue(
+                    "PLAN_STEP_SKILLS_UNDECLARED",
+                    owner="planner",
+                    repair_target=skill_path,
+                    field_path=skill_path,
+                    message="Plan step must explicitly declare its skill_ids field.",
+                    validator_id="plan_skill_bindings",
+                    step_id=step_id,
+                ))
                 continue
             raw = [str(item).strip() for item in step.get("skill_ids", []) or [] if str(item).strip()]
             normalized = (
@@ -6953,18 +6973,49 @@ class BioAnalystAgent:
                 item for item in raw
                 if self.skill_manager and not self.skill_manager.normalize_selected_skills([item], max_results=1)
             ]
-            if unknown:
-                violations.append(f"{step_id} declares unknown skill IDs: {', '.join(unknown)}.")
+            for skill_id in unknown:
+                raw_index = raw.index(skill_id)
+                violations.append(validation_issue(
+                    "PLAN_STEP_SKILL_UNKNOWN",
+                    owner="planner",
+                    repair_target=f"{skill_path}[{raw_index}]",
+                    field_path=f"{skill_path}[{raw_index}]",
+                    message=f"Plan step declares an unknown skill ID: {skill_id}",
+                    validator_id="plan_skill_bindings",
+                    step_id=step_id,
+                    actual_value=skill_id,
+                ))
             if len(normalized) > SkillManager.MAX_ACTIVE_SKILLS:
-                violations.append(
-                    f"{step_id} declares {len(normalized)} skills; split it so each step has at most "
-                    f"{SkillManager.MAX_ACTIVE_SKILLS}."
-                )
+                violations.append(validation_issue(
+                    "PLAN_STEP_SKILL_LIMIT_EXCEEDED",
+                    owner="planner",
+                    repair_target=skill_path,
+                    field_path=skill_path,
+                    message=(
+                        f"Plan step declares {len(normalized)} skills; at most "
+                        f"{SkillManager.MAX_ACTIVE_SKILLS} are allowed."
+                    ),
+                    validator_id="plan_skill_bindings",
+                    step_id=step_id,
+                    actual_value=len(normalized),
+                    expected_contract={"max_active_skills": SkillManager.MAX_ACTIVE_SKILLS},
+                ))
             outside = [skill_id for skill_id in normalized if skill_id not in selected]
-            if outside:
-                violations.append(
-                    f"{step_id} uses skills outside Consultant SELECTED_SKILLS: {', '.join(outside)}."
-                )
+            for skill_id in outside:
+                normalized_index = normalized.index(skill_id)
+                violations.append(validation_issue(
+                    "PLAN_STEP_SKILL_OUTSIDE_SELECTED",
+                    owner="planner",
+                    repair_target=f"{skill_path}[{normalized_index}]",
+                    field_path=f"{skill_path}[{normalized_index}]",
+                    message=(
+                        "Plan step skill ID is outside the Consultant-selected "
+                        f"capability set: {skill_id}"
+                    ),
+                    validator_id="plan_skill_bindings",
+                    step_id=step_id,
+                    actual_value=skill_id,
+                ))
             if not unknown and not outside and len(normalized) <= SkillManager.MAX_ACTIVE_SKILLS:
                 step["skill_ids"] = normalized
         return violations
@@ -9705,45 +9756,28 @@ class BioAnalystAgent:
         selected_skills: List[str],
         user_msg: str = "",
         workflow_handoff: Optional[Dict[str, Any]] = None,
-    ) -> List[str]:
-        violations = self.skill_manager.validate_plan(plan, selected_skills) if self.skill_manager and selected_skills else []
-        plan_l = str(plan or "").lower()
-        request_text = str(user_msg or "")
-
-        if workflow_handoff:
-            template_by_stage: Dict[str, Dict[str, Any]] = {}
-            workflow_id = str(workflow_handoff.get("workflow_id") or "").strip()
-            if self.workflow_manager and workflow_id:
-                template = self.workflow_manager.get_workflow(workflow_id)
-                template_by_stage = {
-                    str(stage.get("stage") or "").strip(): dict(stage)
-                    for stage in template.get("stages", []) or []
-                    if str(stage.get("stage") or "").strip()
-                }
-            for stage in workflow_handoff.get("workflow_stages", []) or []:
-                if not isinstance(stage, dict):
-                    continue
-                stage_name = str(stage.get("stage") or "").strip()
-                if not stage_name:
-                    continue
-                template_stage = template_by_stage.get(stage_name, {})
-                output_terms = (
-                    [str(item) for item in self.workflow_manager._ensure_list(template_stage.get("outputs"))]
-                    if self.workflow_manager else []
+    ) -> List[Dict[str, Any]]:
+        # Compatibility parameters remain because older callers pass the user
+        # request and workflow handoff.  Neither is machine evidence that a
+        # rendered Plan string covers a skill or workflow stage.  Structured
+        # step fields are validated separately.
+        del user_msg, workflow_handoff
+        raw_issues = (
+            self.skill_manager.validate_plan(plan, selected_skills)
+            if self.skill_manager and selected_skills
+            else []
+        )
+        if self.skill_manager and selected_skills:
+            review_telemetry = self.skill_manager.plan_review_telemetry(
+                plan,
+                selected_skills,
+            )
+            if review_telemetry.get("undocumented_script_mentions"):
+                logger.info(
+                    "Planner non-authoritative script review telemetry: %s",
+                    json.dumps(review_telemetry, ensure_ascii=False, sort_keys=True),
                 )
-                terms = [
-                    stage_name,
-                    stage_name.replace("_", " "),
-                    str(stage.get("skill") or template_stage.get("default_skill") or ""),
-                    *output_terms,
-                ]
-                if not any(term and term.lower() in plan_l for term in terms):
-                    violations.append(
-                        f"Plan coverage missing workflow handoff stage `{stage_name}`. "
-                        "Include it as an executable step with `Stage:` and `Skills:` fields, an ASK_USER decision, or a stage_blocked item."
-                    )
-
-        return violations
+        return [normalize_validation_issue(issue) for issue in raw_issues]
 
     def _repair_consultant_skill_summary(
         self,
@@ -23433,11 +23467,14 @@ question. Never guess a scientific or database identity.
                     else raw_plan_content
                 )
                 structure_errors: List[Dict[str, Any]] = (
-                    [{
-                        "field_path": "$",
-                        "code": "PLANNER_CANDIDATE_INVALID",
-                        "message": planner_envelope_error,
-                    }]
+                    [validation_issue(
+                        "PLANNER_CANDIDATE_INVALID",
+                        owner="planner",
+                        repair_target="$",
+                        field_path="$",
+                        message=planner_envelope_error,
+                        validator_id="planner_envelope",
+                    )]
                     if planner_envelope_error
                     else []
                 )
@@ -23454,13 +23491,6 @@ question. Never guess a scientific or database identity.
                                 if isinstance(item, Mapping)
                                 and item.get("object_type") == "artifact"
                             }
-                            candidate_ref_keys, candidate_usage = candidate_artifact_ref_keys(
-                                plan_proposal,
-                                candidate_scope_id=(
-                                    planner_node_context.binding.candidate_scope_id
-                                ),
-                                authoritative_handles=artifact_handles,
-                            )
                             availability_origins = {
                                 str(item.get("stable_identity") or ""): (
                                     "verified_task_input"
@@ -23472,24 +23502,22 @@ question. Never guess a scientific or database identity.
                                 and item.get("object_type") == "artifact"
                                 and str(item.get("stable_identity") or "")
                             }
-                            flow_issues = validate_candidate_graph_and_flow(
+                            (
+                                candidate_ref_keys,
+                                candidate_usage,
+                                deterministic_issues,
+                            ) = validate_planner_candidate_deterministically(
                                 plan_proposal,
-                                ref_keys=candidate_ref_keys,
-                                usage=candidate_usage,
+                                candidate_scope_id=(
+                                    planner_node_context.binding.candidate_scope_id
+                                ),
+                                authoritative_handles=artifact_handles,
                                 availability_origins=availability_origins,
                             )
-                            if flow_issues:
+                            if deterministic_issues:
                                 structure_errors = [
-                                    {
-                                        "field_path": "$",
-                                        "code": str(issue.get("code") or "PLANNER_CANDIDATE_INVALID"),
-                                        "message": json.dumps(
-                                            issue, ensure_ascii=False, sort_keys=True
-                                        ),
-                                        "owner": "planner",
-                                        "route": "planner_candidate_repair",
-                                    }
-                                    for issue in flow_issues
+                                    normalize_validation_issue(issue)
+                                    for issue in deterministic_issues
                                 ]
                             else:
                                 allocation_intent = prepare_allocation_intent(
@@ -23513,13 +23541,20 @@ question. Never guess a scientific or database identity.
                 except json.JSONDecodeError:
                     pass
                 except SemanticHandleError as exc:
-                    structure_errors = [{
-                        "field_path": "$",
-                        "code": "PLANNER_CANDIDATE_INVALID",
-                        "message": str(exc),
-                    }]
+                    structure_errors = [validation_issue(
+                        "PLANNER_CANDIDATE_INVALID",
+                        owner="planner",
+                        repair_target="$",
+                        field_path="$",
+                        message=str(exc),
+                        validator_id="semantic_handle_resolver",
+                    )]
                 except PlannerCandidateError as exc:
-                    structure_errors = [exc.to_diagnostic()]
+                    structure_errors = [normalize_validation_issue({
+                        **exc.to_diagnostic(),
+                        "validator_id": "plan_artifact_refs",
+                        "repair_target": exc.field_path,
+                    })]
                 if not structure_errors:
                     try:
                         candidate_for_repair = build_plan_state(
@@ -23536,7 +23571,17 @@ question. Never guess a scientific or database identity.
                             planning_epoch.get("planning_epoch_id") or ""
                         )
                     except PlanStructureError as first_error:
-                        structure_errors = list(first_error.diagnostics)
+                        structure_errors = [
+                            validation_issue(
+                                "PLAN_STRUCTURE_INVALID",
+                                owner="planner",
+                                repair_target=str(item.get("field_path") or "$"),
+                                field_path=str(item.get("field_path") or "$"),
+                                message=str(item.get("message") or item),
+                                validator_id="structured_plan_schema",
+                            )
+                            for item in first_error.diagnostics
+                        ]
                 if structure_errors:
                     try:
                         structure_repair_context = build_node_context(
@@ -23631,6 +23676,7 @@ question. Never guess a scientific or database identity.
                                 repaired_envelope.outcome_type,
                             )
                         parsed_structure = repaired_envelope.plan_candidate_body()
+                        structure_errors = []
                         if not repaired_envelope.legacy_envelope:
                             repaired_handles = {
                                 str(handle): str(item.get("stable_identity") or "")
@@ -23638,13 +23684,6 @@ question. Never guess a scientific or database identity.
                                 if isinstance(item, Mapping)
                                 and item.get("object_type") == "artifact"
                             }
-                            candidate_ref_keys, candidate_usage = candidate_artifact_ref_keys(
-                                parsed_structure,
-                                candidate_scope_id=(
-                                    structure_repair_context.binding.candidate_scope_id
-                                ),
-                                authoritative_handles=repaired_handles,
-                            )
                             repaired_origins = {
                                 str(item.get("stable_identity") or ""): (
                                     "verified_task_input"
@@ -23656,67 +23695,89 @@ question. Never guess a scientific or database identity.
                                 and item.get("object_type") == "artifact"
                                 and str(item.get("stable_identity") or "")
                             }
-                            repaired_flow_issues = validate_candidate_graph_and_flow(
-                                parsed_structure,
-                                ref_keys=candidate_ref_keys,
-                                usage=candidate_usage,
-                                availability_origins=repaired_origins,
-                            )
-                            if repaired_flow_issues:
-                                raise PlannerCandidateError(
-                                    str(repaired_flow_issues[0].get("code") or "PLAN_FLOW_INVALID"),
-                                    "$",
-                                    json.dumps(
-                                        repaired_flow_issues,
-                                        ensure_ascii=False,
-                                        sort_keys=True,
-                                    ),
-                                )
-                            allocation_intent = prepare_allocation_intent(
+                            (
+                                candidate_ref_keys,
+                                candidate_usage,
+                                repaired_deterministic_issues,
+                            ) = validate_planner_candidate_deterministically(
                                 parsed_structure,
                                 candidate_scope_id=(
                                     structure_repair_context.binding.candidate_scope_id
                                 ),
-                                planning_epoch_id=str(
-                                    planning_epoch.get("planning_epoch_id") or ""
-                                ),
+                                authoritative_handles=repaired_handles,
+                                availability_origins=repaired_origins,
                             )
-                        parsed_structure = resolve_plan_proposal_handles(
-                            parsed_structure,
-                            structure_repair_context.binding,
-                        )
-                        plan_content = json.dumps(parsed_structure, ensure_ascii=False, sort_keys=True)
-                        candidate_for_repair = build_plan_state(
-                            task_id,
-                            plan_content,
-                            strict=True,
-                        )
-                        candidate_for_repair["artifact_usage"] = deepcopy(candidate_usage)
-                        candidate_for_repair["allocation_intent"] = deepcopy(allocation_intent)
-                        candidate_for_repair["candidate_scope_id"] = str(
-                            planner_node_context.binding.candidate_scope_id
-                        )
-                        candidate_for_repair["planning_epoch_id"] = str(
-                            planning_epoch.get("planning_epoch_id") or ""
-                        )
-                        structure_errors = []
+                            if repaired_deterministic_issues:
+                                structure_errors = [
+                                    normalize_validation_issue(issue)
+                                    for issue in repaired_deterministic_issues
+                                ]
+                            else:
+                                allocation_intent = prepare_allocation_intent(
+                                    parsed_structure,
+                                    candidate_scope_id=(
+                                        structure_repair_context.binding.candidate_scope_id
+                                    ),
+                                    planning_epoch_id=str(
+                                        planning_epoch.get("planning_epoch_id") or ""
+                                    ),
+                                )
+                        if not structure_errors:
+                            parsed_structure = resolve_plan_proposal_handles(
+                                parsed_structure,
+                                structure_repair_context.binding,
+                            )
+                            plan_content = json.dumps(parsed_structure, ensure_ascii=False, sort_keys=True)
+                            candidate_for_repair = build_plan_state(
+                                task_id,
+                                plan_content,
+                                strict=True,
+                            )
+                            candidate_for_repair["artifact_usage"] = deepcopy(candidate_usage)
+                            candidate_for_repair["allocation_intent"] = deepcopy(allocation_intent)
+                            candidate_for_repair["candidate_scope_id"] = str(
+                                planner_node_context.binding.candidate_scope_id
+                            )
+                            candidate_for_repair["planning_epoch_id"] = str(
+                                planning_epoch.get("planning_epoch_id") or ""
+                            )
                     except PlanStructureError as second_error:
-                        structure_errors = list(second_error.diagnostics)
+                        structure_errors = [
+                            validation_issue(
+                                "PLAN_STRUCTURE_INVALID",
+                                owner="planner",
+                                repair_target=str(item.get("field_path") or "$"),
+                                field_path=str(item.get("field_path") or "$"),
+                                message=str(item.get("message") or item),
+                                validator_id="structured_plan_schema",
+                            )
+                            for item in second_error.diagnostics
+                        ]
                     except SemanticHandleError as second_error:
-                        structure_errors = [{
-                            "field_path": "$",
-                            "code": "PLANNER_CANDIDATE_INVALID",
-                            "message": str(second_error),
-                        }]
+                        structure_errors = [validation_issue(
+                            "PLANNER_CANDIDATE_INVALID",
+                            owner="planner",
+                            repair_target="$",
+                            field_path="$",
+                            message=str(second_error),
+                            validator_id="semantic_handle_resolver",
+                        )]
                     except (PlannerEnvelopeError, PlannerCandidateError) as second_error:
                         structure_errors = [
-                            second_error.to_diagnostic()
+                            normalize_validation_issue({
+                                **second_error.to_diagnostic(),
+                                "validator_id": "planner_candidate_contract",
+                                "repair_target": second_error.field_path,
+                            })
                             if isinstance(second_error, PlannerCandidateError)
-                            else {
-                                "field_path": "$",
-                                "code": "PLANNER_CANDIDATE_INVALID",
-                                "message": str(second_error),
-                            }
+                            else validation_issue(
+                                "PLANNER_CANDIDATE_INVALID",
+                                owner="planner",
+                                repair_target="$",
+                                field_path="$",
+                                message=str(second_error),
+                                validator_id="planner_envelope",
+                            )
                         ]
                     except InvocationProtocolError as stale_error:
                         return {
@@ -23725,10 +23786,14 @@ question. Never guess a scientific or database identity.
                             "next_step": "planner",
                         }
                     except Exception as exc:
-                        structure_errors = [{
-                            "field_path": "$",
-                            "message": f"structure repair call failed: {type(exc).__name__}: {exc}",
-                        }]
+                        structure_errors = [validation_issue(
+                            "PLANNER_STRUCTURE_REPAIR_FAILED",
+                            owner="planner",
+                            repair_target="$",
+                            field_path="$",
+                            message=f"structure repair call failed: {type(exc).__name__}: {exc}",
+                            validator_id="planner_structure_repair",
+                        )]
 
                 if structure_errors:
                     invalid_dir = Path(self.data_path) / "task_outputs" / task_id / "planner_protocol"
@@ -23990,15 +24055,73 @@ question. Never guess a scientific or database identity.
                             violations,
                         )
                         violations = list(candidate_for_repair.get("validation_issues") or [])
-                        plan_patch_audits[-1]["transaction_status"] = "rejected_no_op"
+                        plan_patch_audits[-1].update({
+                            "transaction_status": "rejected_no_op",
+                            "proposed_candidate_semantic_hash": semantic_plan_hash(
+                                candidate_for_repair
+                            ),
+                            "proposed_validation_issues": deepcopy(violations),
+                            "proposed_issue_fingerprints": [
+                                str(item.get("fingerprint") or "")
+                                for item in violations
+                                if isinstance(item, Mapping)
+                            ],
+                            "proposed_repair_convergence": deepcopy(
+                                candidate_for_repair.get("repair_convergence") or {}
+                            ),
+                        })
                         break
+                    repaired_wire = planner_candidate_body_from_state(
+                        candidate_for_repair
+                    )
+                    repair_artifact_bindings = [
+                        dict(item)
+                        for item in repair_node_context.binding.semantic_handle_map.values()
+                        if isinstance(item, Mapping)
+                        and item.get("object_type") == "artifact"
+                        and str(item.get("stable_identity") or "")
+                    ]
+                    repair_authoritative_handles = {
+                        str(item.get("stable_identity")): str(item.get("stable_identity"))
+                        for item in repair_artifact_bindings
+                    }
+                    repair_availability_origins = {
+                        str(item.get("stable_identity")): (
+                            "verified_task_input"
+                            if str(item.get("direction") or "") == "input"
+                            else "not_yet_available"
+                        )
+                        for item in repair_artifact_bindings
+                    }
+                    (
+                        _repair_ref_keys,
+                        repaired_artifact_usage,
+                        repaired_deterministic_issues,
+                    ) = validate_planner_candidate_deterministically(
+                        repaired_wire,
+                        candidate_scope_id=(
+                            repair_node_context.binding.candidate_scope_id
+                        ),
+                        authoritative_handles=repair_authoritative_handles,
+                        availability_origins=repair_availability_origins,
+                    )
+                    candidate_for_repair["artifact_usage"] = deepcopy(
+                        repaired_artifact_usage
+                    )
                     candidate_for_repair, renderer_normalization, canonical_violations = normalize_plan_contracts(
                         candidate_for_repair,
                         renderer_records=renderer_records,
                         output_contracts=canonical_output_contracts,
                         task_spec=task_spec,
                     )
-                    patch_audit["renderer_normalization"] = renderer_normalization
+                    canonical_violations = [
+                        *[
+                            normalize_validation_issue(issue)
+                            for issue in repaired_deterministic_issues
+                        ],
+                        *canonical_violations,
+                    ]
+                    plan_patch_audits[-1]["renderer_normalization"] = renderer_normalization
                 except Exception as exc:
                     candidate_for_repair = deepcopy(pre_patch_candidate)
                     rejected_issue = validation_issue(
@@ -24045,6 +24168,17 @@ question. Never guess a scientific or database identity.
                     plan_patch_audits[-1].update({
                         "transaction_status": "rejected_validation",
                         "proposed_validation_issues": deepcopy(violations),
+                        "proposed_issue_fingerprints": [
+                            str(item.get("fingerprint") or "")
+                            for item in violations
+                            if isinstance(item, Mapping)
+                        ],
+                        "proposed_repair_convergence": deepcopy(
+                            candidate_for_repair.get("repair_convergence") or {}
+                        ),
+                        "proposed_candidate_semantic_hash": semantic_plan_hash(
+                            candidate_for_repair
+                        ),
                     })
                     candidate_for_repair = derive_plan_validation_state(
                         pre_patch_candidate,
@@ -24132,8 +24266,23 @@ question. Never guess a scientific or database identity.
             if violations:
                 # Rejected candidates are audit evidence, never a replacement
                 # for the last committed/working PlanSpec or PlanningEpoch base.
+                latest_patch_audit = (
+                    dict(plan_patch_audits[-1]) if plan_patch_audits else {}
+                )
+                proposed_audit = next(
+                    (
+                        dict(audit) for audit in reversed(plan_patch_audits)
+                        if audit.get("proposed_validation_issues")
+                        or audit.get("proposed_repair_convergence")
+                    ),
+                    {},
+                )
+                proposed_convergence = dict(
+                    proposed_audit.get("proposed_repair_convergence") or {}
+                )
                 rejection_fingerprint = str(
-                    candidate_for_repair.get("validation_convergence_fingerprint")
+                    proposed_convergence.get("fingerprint")
+                    or candidate_for_repair.get("validation_convergence_fingerprint")
                     or hashlib.sha256(
                         json.dumps(violations, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
                     ).hexdigest()
@@ -24143,38 +24292,96 @@ question. Never guess a scientific or database identity.
                 prior_rejection = dict(
                     preserved_task_state.get("planner_candidate_rejection") or {}
                 )
-                conflict = planner_candidate_rejection_is_internal_conflict(
-                    prior_fingerprint=str(prior_rejection.get("fingerprint") or ""),
-                    candidate_fingerprint=rejection_fingerprint,
-                    plan_patch_audits=plan_patch_audits,
-                    initial_violations=initial_contract_violations,
-                    final_violations=violations,
+                repeated_exact_rejection = bool(
+                    rejection_fingerprint
+                    and str(prior_rejection.get("fingerprint") or "")
+                    == rejection_fingerprint
                 )
+                no_progress = bool(
+                    proposed_convergence.get("status") == "blocked_non_convergent"
+                    or proposed_audit.get("no_op")
+                    or repeated_exact_rejection
+                )
+                proposed_issues = [
+                    dict(item)
+                    for item in proposed_audit.get("proposed_validation_issues", []) or []
+                    if isinstance(item, Mapping)
+                ]
+                diagnostic_issue = dict(
+                    (proposed_issues or [
+                        item for item in violations if isinstance(item, Mapping)
+                    ] or [{}])[0]
+                )
+                code = (
+                    "PLANNER_VALIDATION_NO_PROGRESS"
+                    if no_progress
+                    else "PLANNER_CANDIDATE_REJECTED"
+                )
+                durable_diagnostic = {
+                    "error_code": code,
+                    "owner": "planner",
+                    "validator_id": str(diagnostic_issue.get("validator_id") or ""),
+                    "step_id": str(
+                        diagnostic_issue.get("step_id")
+                        or diagnostic_issue.get("plan_step_id")
+                        or ""
+                    ),
+                    "field_path": str(diagnostic_issue.get("field_path") or ""),
+                    "message": str(diagnostic_issue.get("message") or ""),
+                    "issue_fingerprint": str(diagnostic_issue.get("fingerprint") or ""),
+                    "repair_attempted": bool(plan_patch_audits),
+                    "repair_outcome": str(
+                        proposed_audit.get("transaction_status")
+                        or latest_patch_audit.get("transaction_status")
+                        or "not_attempted"
+                    ),
+                    "execution_started": False,
+                }
                 preserved_task_state["planning_epoch"] = deepcopy(planning_epoch)
                 preserved_task_state["planner_candidate_rejection"] = {
                     "fingerprint": rejection_fingerprint,
                     "issue_codes": sorted({
                         str(row.get("code") or row.get("violation_code") or "")
-                        for row in violations
+                        for row in (proposed_issues or violations)
                         if isinstance(row, Mapping)
                     }),
-                    "candidate_semantic_hash": semantic_plan_hash(candidate_for_repair),
-                    "status": "internal_conflict" if conflict else "rejected",
-                    "owner": "internal" if conflict else "planner",
+                    "issue_fingerprints": sorted({
+                        str(row.get("fingerprint") or "")
+                        for row in (proposed_issues or violations)
+                        if isinstance(row, Mapping) and str(row.get("fingerprint") or "")
+                    }),
+                    "candidate_semantic_hash": str(
+                        proposed_audit.get("proposed_candidate_semantic_hash")
+                        or semantic_plan_hash(candidate_for_repair)
+                    ),
+                    "repair_convergence": deepcopy(proposed_convergence),
+                    "status": "blocked_non_convergent" if no_progress else "rejected",
+                    "owner": "planner",
+                    "terminal_diagnostic": durable_diagnostic,
                 }
                 preserved["task_state"] = preserved_task_state
+                if no_progress:
+                    set_task_status(
+                        preserved,
+                        TASK_STATUS_BLOCKED,
+                        reason=code,
+                    )
                 save_plan_state(self.data_path, task_id, preserved)
-                code = "INTERNAL_CONTRACT_CONFLICT" if conflict else "PLANNER_CANDIDATE_REJECTED"
                 return {
                     "messages": [SystemMessage(content=(
                         code + ": "
-                        + json.dumps(violations, ensure_ascii=False, sort_keys=True, default=str)
+                        + json.dumps(
+                            durable_diagnostic if no_progress else violations,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                            default=str,
+                        )
                     ))],
                     "pending_action": {},
-                    "failure_owner": "internal" if conflict else "planner",
+                    "failure_owner": "planner",
                     "planning_epoch": planning_epoch,
-                    "task_status": TASK_STATUS_BLOCKED if conflict else state.get("task_status", ""),
-                    "next_step": "finish" if conflict else "planner",
+                    "task_status": TASK_STATUS_BLOCKED if no_progress else state.get("task_status", ""),
+                    "next_step": "finish" if no_progress else "planner",
                 }
             # The normalized object contains controller-owned renderer args and
             # bound outputs that are intentionally absent from rendered

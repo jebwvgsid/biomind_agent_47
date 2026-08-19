@@ -473,22 +473,14 @@ def validated_planner_candidate_wire_example() -> Dict[str, Any]:
     try:
         envelope = parse_planner_outcome_envelope(json.dumps(example))
         body = envelope.plan_candidate_body()
-        diagnostics = structured_plan_candidate_diagnostics(body)
-        if diagnostics:
-            raise PlanContractError(_canonical_json(diagnostics))
-        keys, usage = candidate_artifact_ref_keys(
+        _keys, _usage, diagnostics = validate_planner_candidate_deterministically(
             body,
             candidate_scope_id="candidate-scope-wire-example",
             authoritative_handles={},
-        )
-        flow_issues = validate_candidate_graph_and_flow(
-            body,
-            ref_keys=keys,
-            usage=usage,
             availability_origins={},
         )
-        if flow_issues:
-            raise PlanContractError(_canonical_json(flow_issues))
+        if diagnostics:
+            raise PlanContractError(_canonical_json(diagnostics))
         prepare_allocation_intent(
             body,
             candidate_scope_id="candidate-scope-wire-example",
@@ -837,6 +829,235 @@ def validate_candidate_graph_and_flow(
     for issue in issues:
         unique[_canonical_json(issue)] = issue
     return [unique[key] for key in sorted(unique)]
+
+
+def planner_candidate_body_from_state(state: Mapping[str, Any]) -> Dict[str, Any]:
+    """Project one canonical PlanState back to the shared Planner wire shape.
+
+    PlanPatch application operates on the canonical state, while initial
+    admission operates on the Planner wire object.  Revalidation must not be a
+    weaker, state-specific path, so this projection deliberately retains only
+    the fields owned by the shared structured candidate contract.
+    """
+    plan_document = (
+        dict(state.get("plan_document") or {})
+        if isinstance(state.get("plan_document"), Mapping)
+        else {}
+    )
+    metadata = dict(plan_document.get("metadata") or {})
+    legacy_schema = bool(
+        str(metadata.get("schema_version") or STRUCTURED_PLAN_SCHEMA_VERSION)
+        == str(LEGACY_STRUCTURED_PLAN_SCHEMA_VERSION)
+        or str(metadata.get("planner_contract") or "")
+        == LEGACY_STRUCTURED_PLAN_CONTRACT
+    )
+    step_fields = set(
+        STRUCTURED_PLAN_STEP_SCALAR_FIELDS | STRUCTURED_PLAN_STEP_LIST_FIELDS
+    )
+    if legacy_schema:
+        step_fields.add("semantic_constraint_ids")
+    steps: List[Dict[str, Any]] = []
+    for raw in state.get("steps", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        step = {
+            key: deepcopy(raw.get(key))
+            for key in sorted(step_fields)
+            if key in raw
+        }
+        if legacy_schema:
+            # Canonical PlanState v10 has already retired legacy semantic-claim
+            # ownership, but the v1 wire reader still requires the compatibility
+            # slots to be present.
+            step.setdefault("semantic_constraint_ids", [])
+        steps.append(step)
+    candidate: Dict[str, Any] = {
+        "steps": steps,
+        "validation_checklist": deepcopy(list(
+            plan_document.get("validation_checklist") or []
+        )),
+        "metadata": deepcopy(metadata),
+    }
+    if legacy_schema:
+        candidate["semantic_claims"] = deepcopy(list(
+            state.get("semantic_claims") or []
+        ))
+    proposed = [
+        {
+            key: deepcopy(item.get(key))
+            for key in (
+                "local_ref",
+                "object_kind",
+                "lifecycle",
+                "semantic_view",
+                "artifact_contract",
+                "materialization_policy_id",
+            )
+            if key in item
+        }
+        for item in state.get("proposed_artifacts", []) or []
+        if isinstance(item, Mapping)
+    ]
+    if proposed:
+        candidate["proposed_artifacts"] = proposed
+    if "task_output_materializations" in state:
+        candidate["task_output_materializations"] = [
+            {
+                "output_ref": str(
+                    item.get("output_ref") or item.get("output_id") or ""
+                ),
+                "path": str(item.get("path") or ""),
+            }
+            for item in state.get("task_output_materializations", []) or []
+            if isinstance(item, Mapping)
+        ]
+    return candidate
+
+
+def _candidate_step_field_path(
+    candidate: Mapping[str, Any],
+    *,
+    step_id: str,
+    field: str,
+    value: str = "",
+) -> str:
+    for step_index, raw in enumerate(candidate.get("steps", []) or []):
+        if not isinstance(raw, Mapping) or str(raw.get("step_id") or "") != step_id:
+            continue
+        raw_value = raw.get(field)
+        values = list(raw_value or []) if isinstance(raw_value, (list, tuple)) else []
+        if value:
+            try:
+                return f"$.steps[{step_index}].{field}[{values.index(value)}]"
+            except ValueError:
+                pass
+        return f"$.steps[{step_index}].{field}"
+    return "$.steps"
+
+
+def _candidate_flow_diagnostic(
+    candidate: Mapping[str, Any],
+    issue: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Attach a stable owner, validator, and best exact field to a flow issue."""
+    row = deepcopy(dict(issue))
+    code = str(row.get("code") or "PLAN_CANDIDATE_INVALID")
+    step_id = str(row.get("step_id") or row.get("consumer_step_id") or "")
+    field_path = "$.steps"
+    validator_id = "plan_artifact_flow"
+    message = code
+    if code.startswith("PLAN_STEP_"):
+        validator_id = "plan_dag"
+        field_path = _candidate_step_field_path(
+            candidate, step_id=step_id, field="step_id"
+        )
+    elif code == "PLAN_DEPENDENCY_UNKNOWN":
+        validator_id = "plan_dag"
+        dependency = str(row.get("dependency_step_id") or "")
+        field_path = _candidate_step_field_path(
+            candidate,
+            step_id=step_id,
+            field="dependencies",
+            value=dependency,
+        )
+        message = f"Dependency {dependency!r} does not identify an existing plan step."
+    elif code == "PLAN_DEPENDENCY_SELF":
+        validator_id = "plan_dag"
+        field_path = _candidate_step_field_path(
+            candidate,
+            step_id=step_id,
+            field="dependencies",
+            value=step_id,
+        )
+        message = "A plan step may not depend on itself."
+    elif code == "PLAN_DEPENDENCY_CYCLE":
+        validator_id = "plan_dag"
+        field_path = "$.steps"
+        message = "Plan dependencies contain a cycle."
+    elif code == "PLAN_ARTIFACT_PRODUCER_CARDINALITY":
+        message = "A planned artifact must have exactly one producer."
+    elif code == "PLAN_ARTIFACT_UNAVAILABLE":
+        if step_id:
+            field_path = _candidate_step_field_path(
+                candidate, step_id=step_id, field="inputs"
+            )
+        message = (
+            "Consumed artifact is neither a verified task input nor produced "
+            "by exactly one reachable dependency."
+        )
+    elif code == "PLAN_ARTIFACT_ORIGIN_CONFLICT":
+        if step_id:
+            field_path = _candidate_step_field_path(
+                candidate, step_id=step_id, field="inputs"
+            )
+        message = "Plan declares conflicting production and consumption origins."
+    elif step_id:
+        field_path = _candidate_step_field_path(
+            candidate,
+            step_id=step_id,
+            field="inputs",
+        )
+    result = {
+        **row,
+        "code": code,
+        "owner": "planner",
+        "validator_id": validator_id,
+        "field_path": field_path,
+        "repair_target": field_path,
+        "message": message,
+        "route": "planner_candidate_repair",
+    }
+    if step_id:
+        result.setdefault("step_id", step_id)
+    return result
+
+
+def validate_planner_candidate_deterministically(
+    candidate: Mapping[str, Any],
+    *,
+    candidate_scope_id: str,
+    authoritative_handles: Mapping[str, str],
+    availability_origins: Mapping[str, str],
+) -> Tuple[Dict[str, ArtifactRefKey], List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Run the shared schema, identity, DAG, and artifact-flow admission path."""
+    structure = structured_plan_candidate_diagnostics(candidate)
+    if structure:
+        return {}, [], [
+            {
+                "code": "PLAN_STRUCTURE_INVALID",
+                "owner": "planner",
+                "validator_id": "structured_plan_schema",
+                "field_path": str(item.get("field_path") or "$"),
+                "repair_target": str(item.get("field_path") or "$"),
+                "message": str(item.get("message") or "Structured Plan is invalid."),
+                "route": "planner_candidate_repair",
+            }
+            for item in structure
+        ]
+    try:
+        ref_keys, usage = candidate_artifact_ref_keys(
+            candidate,
+            candidate_scope_id=candidate_scope_id,
+            authoritative_handles=authoritative_handles,
+        )
+    except PlannerCandidateError as exc:
+        diagnostic = exc.to_diagnostic()
+        diagnostic.update({
+            "validator_id": "plan_artifact_refs",
+            "repair_target": str(exc.field_path or "$"),
+        })
+        return {}, [], [diagnostic]
+    issues = validate_candidate_graph_and_flow(
+        candidate,
+        ref_keys=ref_keys,
+        usage=usage,
+        availability_origins=availability_origins,
+    )
+    return (
+        ref_keys,
+        usage,
+        [_candidate_flow_diagnostic(candidate, issue) for issue in issues],
+    )
 
 
 def prepare_allocation_intent(
@@ -1228,40 +1449,6 @@ def planning_epoch_matches(
         and int(value.get("base_planner_feedback_revision") or 0)
         == int(planner_feedback_revision or 0)
     )
-
-
-def planner_candidate_rejection_is_internal_conflict(
-    *,
-    prior_fingerprint: str,
-    candidate_fingerprint: str,
-    plan_patch_audits: Sequence[Mapping[str, Any]] = (),
-    initial_violations: Sequence[Mapping[str, Any]] = (),
-    final_violations: Sequence[Mapping[str, Any]] = (),
-) -> bool:
-    """Converge repeated candidate rejection on one authoritative base.
-
-    Candidate-local revisions/hashes are deliberately absent.  A conflict is
-    repeated evidence against the same committed PlanningEpoch, or a semantic
-    repair whose deterministic error-code set is unchanged downstream.
-    """
-
-    repeated = bool(
-        str(candidate_fingerprint or "")
-        and str(prior_fingerprint or "") == str(candidate_fingerprint or "")
-    )
-
-    def issue_codes(rows: Sequence[Mapping[str, Any]]) -> set[str]:
-        return {
-            str(row.get("code") or row.get("violation_code") or "")
-            for row in rows or ()
-            if isinstance(row, Mapping)
-        }
-
-    semantic_repair_repeated = bool(
-        any(bool(row.get("semantic_change")) for row in plan_patch_audits or ())
-        and issue_codes(initial_violations) == issue_codes(final_violations)
-    )
-    return repeated or semantic_repair_repeated
 
 
 def typed_task_plan_traceability(

@@ -624,7 +624,7 @@ def _step_rows(
             "output_ids", "output_artifacts", "output_refs", "output_contracts",
             "constraints", "constraint_ids", "semantic_constraint_ids",
             "requirement_ids", "dependencies", "depends_on", "success_criteria",
-            "risk_level", "step_type", "skills_declared", "command_intent",
+            "risk_level", "step_type", "skill_ids", "skills_declared", "command_intent",
             "artifacts",
         }
         row = {
@@ -660,70 +660,99 @@ def _project_step_semantic_references(
     rows: Sequence[MutableMapping[str, Any]],
     handle_map: SemanticHandleMap,
 ) -> None:
-    """Replace control-plane entity identities in Plan rows with handles.
+    """Project only typed identity fields to provider-visible handles.
 
     PlanSpec pins stable Task/Plan identities so that deterministic code can
     validate them.  Those identities are not model vocabulary.  The model sees
-    the invocation-local semantic handles and the Controller resolves them on
-    return.
+    invocation-local semantic handles and the Controller resolves them on
+    return.  Natural-language fields are intentionally opaque: an artifact
+    basename in a title or success criterion is not an identity reference.
     """
-    stable_to_handle: Dict[str, str] = {}
+    stable_to_handle: Dict[str, Dict[str, str]] = {}
     for handle, binding in handle_map.to_dict().items():
+        object_type = str(binding.get("object_type") or "")
+        by_type = stable_to_handle.setdefault(object_type, {})
         stable = str(binding.get("stable_identity") or "")
         if stable:
-            stable_to_handle[stable] = handle
+            by_type[stable] = handle
         metadata = binding.get("metadata") or {}
         if isinstance(metadata, Mapping):
             semantic_key = str(metadata.get("semantic_key") or "")
             if semantic_key:
-                stable_to_handle.setdefault(semantic_key, handle)
+                by_type.setdefault(semantic_key, handle)
             canonical_path = str(metadata.get("canonical_path") or "")
             if canonical_path:
-                stable_to_handle.setdefault(canonical_path, handle)
+                by_type.setdefault(canonical_path, handle)
 
-    def project(value: Any) -> Any:
+    list_identity_fields = {
+        "dependencies": "plan_step",
+        "depends_on": "plan_step",
+        "producer_step_ids": "plan_step",
+        "affected_step_ids": "plan_step",
+        "cycle": "plan_step",
+        "inputs": "artifact",
+        "input_ids": "artifact",
+        "input_artifacts": "artifact",
+        "input_refs": "artifact",
+        "outputs": "artifact",
+        "output_ids": "artifact",
+        "output_artifacts": "artifact",
+        "output_refs": "artifact",
+        "constraint_ids": "constraint",
+        "semantic_constraint_ids": "constraint",
+        "requirement_ids": "constraint",
+        "skill_ids": "skill",
+        "workflow_stage_ids": "workflow_stage",
+    }
+    scalar_identity_fields = {
+        "step_id": "plan_step",
+        "dependency_step_id": "plan_step",
+        "producer_step_id": "plan_step",
+        "consumer_step_id": "plan_step",
+        "input_ref": "artifact",
+        "output_ref": "artifact",
+        "artifact_id": "artifact",
+        "constraint_id": "constraint",
+        "requirement_id": "constraint",
+        "skill_id": "skill",
+        "workflow_stage_id": "workflow_stage",
+    }
+
+    def project_identity(value: Any, object_type: str) -> Any:
         if isinstance(value, str):
-            if value in stable_to_handle:
-                return stable_to_handle[value]
-            projected = value
-            for stable, handle in sorted(
-                stable_to_handle.items(),
-                key=lambda item: len(item[0]),
-                reverse=True,
-            ):
-                stable_suffix = stable.lstrip("./")
-                if stable_suffix and not stable.startswith("sha256:"):
-                    def replace_path_token(match: re.Match[str]) -> str:
-                        token = match.group(0)
-                        if token == stable or token.endswith("/" + stable_suffix):
-                            return handle
-                        return token
-
-                    # Legacy PlanSpec rows may contain an absolute resolution
-                    # of a canonical relative artifact. Replacing only the
-                    # relative suffix would leak the machine-specific prefix
-                    # (``/root/.../input.foo``), so replace the complete token.
-                    projected = re.sub(
-                        r"[^\s\[\](),，;；'\"`]+",
-                        replace_path_token,
-                        projected,
-                    )
-                if stable and stable in projected:
-                    projected = projected.replace(stable, handle)
-            return projected
-        if isinstance(value, list):
-            return [project(item) for item in value]
-        if isinstance(value, tuple):
-            return [project(item) for item in value]
+            # Exact lookup makes projection idempotent.  In particular,
+            # ``step.step-1`` is not rewritten because it merely contains the
+            # stable ID ``step-1`` as prose-like text.
+            return stable_to_handle.get(object_type, {}).get(value, value)
+        if isinstance(value, (list, tuple)):
+            return [project_identity(item, object_type) for item in value]
         if isinstance(value, Mapping):
-            return {str(key): project(item) for key, item in value.items()}
+            return project_record(value)
         return deepcopy(value)
 
+    def project_record(value: Mapping[str, Any]) -> Dict[str, Any]:
+        projected: Dict[str, Any] = {}
+        for raw_key, item in value.items():
+            key = str(raw_key)
+            if key in list_identity_fields:
+                projected[key] = project_identity(item, list_identity_fields[key])
+            elif key in scalar_identity_fields:
+                projected[key] = project_identity(item, scalar_identity_fields[key])
+            elif isinstance(item, Mapping):
+                projected[key] = project_record(item)
+            elif isinstance(item, list):
+                projected[key] = [
+                    project_record(child) if isinstance(child, Mapping) else deepcopy(child)
+                    for child in item
+                ]
+            else:
+                projected[key] = deepcopy(item)
+        return projected
+
     for row in rows:
-        for key in tuple(row):
-            if key == "handle":
-                continue
-            row[key] = project(row[key])
+        projected = project_record(row)
+        row.clear()
+        row.update(projected)
 
 
 def _visible_handles(value: Any, known: set[str]) -> set[str]:
@@ -1131,7 +1160,7 @@ def _approved_plan_semantic_view(
         "output_ids", "output_artifacts", "output_refs", "output_contracts",
         "constraints", "constraint_ids", "semantic_constraint_ids",
         "requirement_ids", "dependencies", "depends_on", "success_criteria",
-        "risk_level", "step_type", "skills_declared", "command_intent",
+        "risk_level", "step_type", "skill_ids", "skills_declared", "command_intent",
         "artifacts",
     }
     approved_steps: List[Dict[str, Any]] = []
@@ -2033,17 +2062,50 @@ def resolve_plan_proposal_handles(
                 resolved.append(deepcopy(item))
         return resolved
 
+    def resolve_scalar(raw: Any, *, object_type: str) -> Any:
+        text = str(raw or "")
+        if text in handle_map:
+            return handle_map.resolve(
+                text,
+                object_type=object_type,
+            ).stable_identity
+        return deepcopy(raw)
+
+    def resolve_step_fields(step: MutableMapping[str, Any]) -> None:
+        if "step_id" in step:
+            step["step_id"] = resolve_scalar(
+                step.get("step_id"), object_type="plan_step",
+            )
+        for field in ("dependencies", "depends_on"):
+            if field in step:
+                step[field] = resolve_list(
+                    step.get(field), object_type="plan_step",
+                )
+        for field in ("inputs", "input_ids", "input_artifacts", "input_refs"):
+            if field in step:
+                step[field] = resolve_list(
+                    step.get(field), object_type="artifact",
+                )
+        for field in ("outputs", "output_ids", "output_artifacts", "output_refs"):
+            if field in step:
+                step[field] = resolve_list(
+                    step.get(field), object_type="artifact",
+                )
+        if "skill_ids" in step:
+            step["skill_ids"] = resolve_list(
+                step.get("skill_ids"), object_type="skill",
+            )
+        if "workflow_stage_ids" in step:
+            step["workflow_stage_ids"] = resolve_list(
+                step.get("workflow_stage_ids"), object_type="workflow_stage",
+            )
+
     steps = proposal.get("steps")
     if isinstance(steps, list):
         for step in steps:
             if not isinstance(step, MutableMapping):
                 continue
-            step["inputs"] = resolve_list(
-                step.get("inputs"), object_type="artifact",
-            )
-            step["outputs"] = resolve_list(
-                step.get("outputs"), object_type="artifact",
-            )
+            resolve_step_fields(step)
     materializations = proposal.get("task_output_materializations")
     if isinstance(materializations, list):
         for row in materializations:
@@ -2067,14 +2129,13 @@ def resolve_plan_proposal_handles(
                     step_handle, object_type="plan_step",
                 ).stable_identity
                 replacement.pop("step_handle", None)
+            elif "step_id" in replacement:
+                replacement["step_id"] = resolve_scalar(
+                    replacement.get("step_id"), object_type="plan_step",
+                )
             new_step = replacement.get("new_step")
             if isinstance(new_step, MutableMapping):
-                new_step["inputs"] = resolve_list(
-                    new_step.get("inputs"), object_type="artifact",
-                )
-                new_step["outputs"] = resolve_list(
-                    new_step.get("outputs"), object_type="artifact",
-                )
+                resolve_step_fields(new_step)
     return proposal
 
 

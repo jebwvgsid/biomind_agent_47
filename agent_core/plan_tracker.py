@@ -3846,30 +3846,72 @@ def changed_plan_step_ids(previous: PlanState, candidate: PlanState) -> List[str
     return sorted(step_id for step_id in set(old) | set(new) if old.get(step_id) != new.get(step_id))
 
 
-def _violation_record(value: Any) -> Dict[str, str]:
-    """Normalize legacy validation prose without inventing a failing field."""
-    if isinstance(value, dict):
-        return {
-            "step_id": str(value.get("step_id") or "").strip(),
-            "field": str(value.get("field") or "").strip(),
-            "reason": str(value.get("reason") or value.get("message") or value).strip(),
-        }
-    reason = str(value or "").strip()
-    step_match = re.search(r"\b(step[-_ ]?\d+)\b", reason, re.IGNORECASE)
-    field_match = re.search(
-        r"\b(action|tool|skills?|skill_ids|inputs?|outputs?|dependencies|success_criteria|risk_level)\b",
-        reason,
-        re.IGNORECASE,
-    )
-    step_id = ""
-    if step_match:
-        digits = re.search(r"\d+", step_match.group(1))
-        step_id = f"step-{digits.group(0)}" if digits else ""
-    return {
-        "step_id": step_id,
-        "field": str(field_match.group(1) if field_match else "").lower(),
-        "reason": reason,
+def _violation_record(value: Any) -> Dict[str, Any]:
+    """Preserve exact issue identity and location for Planner Repair.
+
+    Legacy prose is still accepted at the compatibility boundary, but new
+    validators reach this function as typed validation issues.  In particular,
+    this projection must not collapse them back to ``step/field/reason``.
+    """
+    raw = dict(value) if isinstance(value, Mapping) else {
+        "message": str(value or "").strip()
     }
+    canonical = normalize_validation_issue(raw)
+    reason = str(
+        raw.get("message") or raw.get("reason") or canonical.get("message") or ""
+    ).strip()
+    step_id = str(raw.get("step_id") or raw.get("plan_step_id") or "").strip()
+    field_path = str(raw.get("field_path") or canonical.get("field_path") or "").strip()
+    field = str(raw.get("field") or "").strip()
+    if not step_id and not isinstance(value, Mapping):
+        step_match = re.search(r"\b(step[-_ ]?\d+)\b", reason, re.IGNORECASE)
+        if step_match:
+            digits = re.search(r"\d+", step_match.group(1))
+            step_id = f"step-{digits.group(0)}" if digits else ""
+    if not field and not isinstance(value, Mapping):
+        field_match = re.search(
+            r"\b(action|tool|skills?|skill_ids|inputs?|outputs?|dependencies|success_criteria|risk_level)\b",
+            reason,
+            re.IGNORECASE,
+        )
+        field = str(field_match.group(1) if field_match else "").lower()
+
+    affected_step_ids: List[str] = []
+    for key in ("step_id", "plan_step_id", "consumer_step_id"):
+        item = str(raw.get(key) or "").strip()
+        if item and item not in affected_step_ids:
+            affected_step_ids.append(item)
+    for key in ("affected_step_ids", "producer_step_ids", "cycle"):
+        for item in raw.get(key, []) or []:
+            text = str(item or "").strip()
+            if text and text not in affected_step_ids:
+                affected_step_ids.append(text)
+
+    excerpt = str(
+        raw.get("bounded_excerpt")
+        or raw.get("offending_excerpt")
+        or raw.get("excerpt")
+        or ""
+    )[:500]
+    record: Dict[str, Any] = {
+        "code": str(raw.get("code") or raw.get("violation_code") or canonical.get("code") or "VALIDATION_ERROR"),
+        "owner": str(raw.get("owner") or canonical.get("owner") or "planner"),
+        "validator_id": str(raw.get("validator_id") or ""),
+        "rule_id": str(raw.get("rule_id") or ""),
+        "step_id": step_id,
+        "affected_step_ids": affected_step_ids,
+        "field": field,
+        "field_path": field_path,
+        "message": reason,
+        "reason": reason,
+        "fingerprint": str(raw.get("fingerprint") or canonical.get("fingerprint") or ""),
+        "bounded_excerpt": excerpt,
+        "repair_target": str(raw.get("repair_target") or canonical.get("repair_target") or ""),
+    }
+    for key in ("expected_contract", "actual_value", "actual_value_summary"):
+        if raw.get(key) not in (None, "", [], {}):
+            record[key] = deepcopy(raw[key])
+    return record
 
 
 def plan_dependency_closure(state: PlanState, step_ids: List[str]) -> List[str]:
@@ -4179,13 +4221,28 @@ def build_plan_repair_request(
 ) -> Dict[str, Any]:
     """Project the minimum durable state required for a local plan repair."""
     normalized = [_violation_record(item) for item in violations if str(item).strip()]
-    explicit_ids = [item["step_id"] for item in normalized if item.get("step_id")]
     steps = [normalize_plan_step(dict(step), index) for index, step in enumerate(state.get("steps", []), 1) if isinstance(step, dict)]
-    if not explicit_ids:
-        # Legacy validators sometimes report only a global coverage violation.
-        # The model may inspect the plan, but it can replace only existing steps.
-        explicit_ids = [str(step.get("step_id") or "") for step in steps]
-    allowed = plan_dependency_closure(state, explicit_ids) or explicit_ids
+    step_ids = [str(step.get("step_id") or "") for step in steps]
+    explicit_ids: List[str] = []
+    for issue in normalized:
+        issue_has_location = False
+        for item in issue.get("affected_step_ids", []) or []:
+            text = str(item or "")
+            issue_has_location = issue_has_location or bool(text)
+            if text and text not in explicit_ids:
+                explicit_ids.append(text)
+        if issue_has_location:
+            continue
+        field_path = str(issue.get("field_path") or "")
+        index_match = re.search(r"(?:^|[.$])steps\[(\d+)\]", field_path)
+        if index_match:
+            index = int(index_match.group(1))
+            if 0 <= index < len(step_ids) and step_ids[index] not in explicit_ids:
+                explicit_ids.append(step_ids[index])
+    # Exact issue ownership is the authorization boundary.  A missing location
+    # no longer expands to every step, and an issue on one step no longer opens
+    # its entire dependency component.
+    allowed = [step_id for step_id in step_ids if step_id in set(explicit_ids)]
     affected = [step for step in steps if str(step.get("step_id") or "") in set(allowed)]
     return {
         "operation": operation,
@@ -4274,7 +4331,11 @@ def apply_plan_patch(
     if materializations_supplied and not isinstance(replacement_materializations, list):
         raise ValueError("Plan patch task_output_materializations must be a list")
 
-    allowed = {str(item) for item in (allowed_step_ids or []) if str(item)}
+    allowed = (
+        None
+        if allowed_step_ids is None
+        else {str(item) for item in allowed_step_ids if str(item)}
+    )
     current_steps = [deepcopy(step) for step in state.get("steps", []) if isinstance(step, dict)]
     positions = {str(step.get("step_id") or ""): index for index, step in enumerate(current_steps)}
     changed_ids: List[str] = []
@@ -4287,7 +4348,7 @@ def apply_plan_patch(
         new_step = replacement.get("new_step")
         if not step_id or step_id not in positions:
             raise ValueError(f"Plan patch references unknown step: {step_id or '<empty>'}")
-        if allowed and step_id not in allowed:
+        if allowed is not None and step_id not in allowed:
             raise ValueError(f"Plan patch modifies out-of-scope step: {step_id}")
         if not isinstance(new_step, dict):
             raise ValueError(f"Plan patch new_step for {step_id} must be an object")

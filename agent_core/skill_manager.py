@@ -1502,42 +1502,65 @@ class SkillManager:
             capabilities.append(row)
         return capabilities, operation_bindings
 
-    def validate_plan(self, plan: str, selected_skill_ids: List[str]) -> List[str]:
-        """Generic skill-plan checks. Returns human-readable violations."""
-        if not selected_skill_ids:
-            return []
-        violations = []
-        lower_plan = plan.lower()
-        generic_banned = [
-            "command template",
-            "placeholder",
-            "abstracted",
-            "internal skill module",
-            "assumed python-based pipeline",
-            "reconstruct it using standard",
-        ]
-        for phrase in generic_banned:
-            if phrase in lower_plan:
-                violations.append(f"Plan contains forbidden phrase for selected skill: '{phrase}'")
+    def validate_plan(
+        self,
+        plan: str,
+        selected_skill_ids: List[str],
+    ) -> List[Dict[str, Any]]:
+        """Validate catalog-backed skill facts without interpreting Plan prose.
 
+        Skill assignment is represented by structured ``step.skill_ids`` and
+        is validated by the Plan controller.  Free-text phrase, identifier
+        presence, and script-name scanners are therefore not authoritative
+        Plan validators.  Until a typed operation/script binding exists, a
+        ``*.py`` token in prose is deliberately neither accepted nor rejected
+        here; execution and provenance contracts remain responsible for what
+        can actually run or materialize.
+        """
+        del plan  # Compatibility parameter; prose is not validation evidence.
+        violations: List[Dict[str, Any]] = []
+        for index, skill_id in enumerate(selected_skill_ids or []):
+            sid = str(skill_id or "").strip()
+            if sid and not self.get_skill_meta(sid):
+                violations.append({
+                    "code": "PLAN_SELECTED_SKILL_UNAVAILABLE",
+                    "owner": "planner",
+                    "validator_id": "skill_catalog",
+                    "field_path": f"selected_skill_ids[{index}]",
+                    "repair_target": f"selected_skill_ids[{index}]",
+                    "message": f"Selected skill ID is not available in the catalog: {sid}",
+                    "selected_skill_id": sid,
+                })
+        return violations
+
+    def plan_review_telemetry(
+        self,
+        plan: str,
+        selected_skill_ids: List[str],
+    ) -> Dict[str, Any]:
+        """Return non-authoritative review signals for untyped script mentions.
+
+        There is not yet a complete typed operation-to-script binding for every
+        skill.  Preserve observability of the former script-name heuristic
+        without turning a prose token into a validation decision.
+        """
         known_script_names = {
             Path(path).name
-            for sid in selected_skill_ids
-            for path in (self.get_skill_meta(sid).get("_scripts", []) or [])
+            for skill_id in selected_skill_ids or []
+            for path in (self.get_skill_meta(skill_id).get("_scripts", []) or [])
         }
-        for sid in selected_skill_ids:
-            meta = self.get_skill_meta(sid)
-            if not meta:
-                violations.append(f"Selected skill id is not available: {sid}")
-                continue
-            identifiers = self._skill_identifier_candidates(meta)
-            if not any(identifier and identifier in plan for identifier in identifiers):
-                violations.append(f"Plan selected skill '{sid}' but does not mention its skill id.")
-        invented = re.findall(r"\b[\w.-]+(?:skill|plot|pipeline|workflow)[\w.-]*\.py\b", plan, re.IGNORECASE)
-        for name in invented:
-            if name not in known_script_names:
-                violations.append(f"Plan appears to invent an undocumented script name: {name}")
-        return violations
+        mentioned = re.findall(
+            r"\b[\w.-]+(?:skill|plot|pipeline|workflow)[\w.-]*\.py\b",
+            str(plan or ""),
+            re.IGNORECASE,
+        )
+        return {
+            "authoritative": False,
+            "review_reason": "typed_operation_script_binding_unavailable",
+            "undocumented_script_mentions": sorted({
+                name for name in mentioned if name not in known_script_names
+            }),
+        }
 
     def _runtime_record_from_info(self, skill_id: str, info: Dict[str, Any], env_override: str = "") -> Dict[str, Any]:
         requirements = self.get_runtime_requirements(skill_id)

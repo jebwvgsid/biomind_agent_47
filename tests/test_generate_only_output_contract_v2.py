@@ -12,17 +12,18 @@ from agent_core.managed_artifacts import (
     validate_generate_output_coverage,
 )
 from agent_core.plan_contract import (
-    planner_candidate_rejection_is_internal_conflict,
     planning_epoch_matches,
     start_planning_epoch,
 )
 from agent_core.plan_tracker import (
     apply_plan_patch,
     build_plan_state,
+    derive_plan_validation_state,
     ensure_provenance_state,
     normalize_plan_contracts,
     normalize_task_output_materializations,
     semantic_plan_hash,
+    validation_issue,
 )
 from agent_core.skill_manager import SkillManager
 from agent_core.task_spec import (
@@ -365,25 +366,31 @@ class GenerateOnlyOutputContractV2Tests(unittest.TestCase):
             planner_feedback_revision=8,
         ))
 
-    def test_repeated_candidate_conflict_terminates_on_same_authoritative_epoch(self):
-        self.assertTrue(planner_candidate_rejection_is_internal_conflict(
-            prior_fingerprint="same-contract-fingerprint",
-            candidate_fingerprint="same-contract-fingerprint",
-        ))
-        self.assertTrue(planner_candidate_rejection_is_internal_conflict(
-            prior_fingerprint="",
-            candidate_fingerprint="candidate",
-            plan_patch_audits=[{"semantic_change": True}],
-            initial_violations=[{"code": "REQUIRED_OUTPUT_UNCOVERED"}],
-            final_violations=[{"code": "REQUIRED_OUTPUT_UNCOVERED"}],
-        ))
-        self.assertFalse(planner_candidate_rejection_is_internal_conflict(
-            prior_fingerprint="old",
-            candidate_fingerprint="new",
-            plan_patch_audits=[{"semantic_change": True}],
-            initial_violations=[{"code": "REQUIRED_OUTPUT_UNCOVERED"}],
-            final_violations=[],
-        ))
+    def test_repeated_candidate_uses_exact_issue_convergence_not_internal_conflict(self):
+        issue_a = validation_issue(
+            "VALIDATION_ERROR",
+            owner="planner",
+            step_id="step-1",
+            field_path="$.steps[0].inputs[0]",
+            message="first exact issue",
+        )
+        issue_b = validation_issue(
+            "VALIDATION_ERROR",
+            owner="planner",
+            step_id="step-4",
+            field_path="$.steps[3].inputs[0]",
+            message="different issue with the same generic code",
+        )
+        first = derive_plan_validation_state(_strict_plan(), [issue_a])
+        repeated = derive_plan_validation_state(first, [issue_a])
+        changed = derive_plan_validation_state(first, [issue_b])
+
+        self.assertEqual(
+            repeated["repair_convergence"]["status"],
+            "blocked_non_convergent",
+        )
+        self.assertEqual(repeated["repair_convergence"]["cycle_type"], "A_TO_A")
+        self.assertEqual(changed["repair_convergence"]["status"], "converging")
 
     def test_final_completion_uses_task_and_plan_outputs_and_ignores_renderer(self):
         with tempfile.TemporaryDirectory() as tmpdir:
