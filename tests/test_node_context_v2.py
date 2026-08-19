@@ -217,7 +217,8 @@ class NodeContextBoundaryTests(unittest.TestCase):
         rendered = context.llm_payload.to_json()
         self.assertIn("input.unrelated", rendered)
         self.assertIn("output.unrelated", rendered)
-        self.assertIn("required_input.unrelated", rendered)
+        self.assertIn("/data/unrelated.txt", rendered)
+        self.assertNotIn("unrelated-constraint", rendered)
         compatibility_task = context.llm_payload.to_dict()["task"]
         self.assertNotIn(
             "input.unrelated",
@@ -231,6 +232,37 @@ class NodeContextBoundaryTests(unittest.TestCase):
             "input.unrelated",
             context.projection_trace.excluded_handles_with_reason,
         )
+
+    def test_semantic_nodes_receive_one_identical_ordered_highlight_list(self) -> None:
+        task = _task_spec()
+        task["requirements"].append({
+            "requirement_id": "requirement-2",
+            "value": "Do not rename contigs before annotation.",
+            "strength": "required",
+            "source_ref": "U2",
+        })
+        highlights = []
+        for node_type in ("planner", "planner_repair", "generate", "recovery"):
+            context = build_node_context(
+                node_type=node_type,
+                task_spec=task,
+                plan_state=_plan(),
+                current_step_id="step-1",
+            )
+            highlights.append(
+                context.llm_payload.to_dict()["task"]["highlighted_constraints"]
+            )
+
+        self.assertTrue(all(value == highlights[0] for value in highlights[1:]))
+        self.assertEqual(
+            [item["text"] for item in highlights[0]],
+            ["GTF2.2", "Do not rename contigs before annotation."],
+        )
+        self.assertTrue(all(
+            set(item) == {"text", "importance", "source_refs"}
+            for item in highlights[0]
+        ))
+        self.assertEqual(highlights[0][1]["source_refs"], ["U2"])
 
 
 class NodeSpecificStalenessTests(unittest.TestCase):

@@ -71,7 +71,7 @@ class CanonicalTaskSpecV2Tests(unittest.TestCase):
         self.assertEqual(updated["revision"], spec["revision"])
         self.assertIn("message-2", updated["source_refs"])
 
-    def test_consultant_constraint_delta_uses_closed_mutation_protocol(self) -> None:
+    def test_consultant_constraint_delta_uses_open_text_mutation_protocol(self) -> None:
         spec = create_task_spec("annotate variants", task_id="task-a")
         proposal = constraint_mutation_proposal([{
             "semantic_key": "required_behavior.database_source",
@@ -85,9 +85,11 @@ class CanonicalTaskSpecV2Tests(unittest.TestCase):
 
         self.assertEqual(updated["revision"], spec["revision"] + 1)
         self.assertEqual(
-            updated["requirements"][0]["semantic_key"],
-            "required_behavior.database_source",
+            updated["requirements"][0]["value"],
+            "custom_genome",
         )
+        self.assertNotIn("semantic_key", updated["requirements"][0])
+        self.assertNotIn("constraint_id", updated["requirements"][0])
         replay = apply_task_spec_mutation_proposal(updated, proposal)
         self.assertEqual(replay["revision"], updated["revision"])
 

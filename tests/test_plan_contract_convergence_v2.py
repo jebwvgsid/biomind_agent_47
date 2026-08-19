@@ -37,7 +37,7 @@ from agent_core.task_spec import (
 )
 
 
-def structured_plan(*, refs=None, input_value="/tmp/input.vcf"):
+def structured_plan(*, input_value="/tmp/input.vcf"):
     return json.dumps({
         "steps": [{
             "step_id": "step-1",
@@ -53,11 +53,9 @@ def structured_plan(*, refs=None, input_value="/tmp/input.vcf"):
             "workflow_stage_ids": [],
             "batch_id": "",
             "risk_level": "medium",
-            "semantic_constraint_ids": list(refs or []),
         }],
-        "semantic_claims": [],
         "validation_checklist": [{"check_id": "check-1", "description": "validate outputs"}],
-        "metadata": {"schema_version": 1, "planner_contract": "structured_plan_v1"},
+        "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2"},
     })
 
 
@@ -136,7 +134,7 @@ class StructuredPlanContractTests(unittest.TestCase):
 
     def test_10d_metadata_contract_version_is_enforced(self):
         payload = json.loads(structured_plan())
-        payload["metadata"]["schema_version"] = 2
+        payload["metadata"]["schema_version"] = 3
         with self.assertRaises(PlanStructureError):
             build_plan_state("t", json.dumps(payload), strict=True)
 
@@ -174,29 +172,27 @@ class TaskSpecRoleAndProjectionTests(unittest.TestCase):
         self.assertEqual(row["requirement_id"], "row-7")
         self.assertEqual(row["role"], "annotation_format")
 
-    def test_13_constraints_receive_stable_ids(self):
-        first = semantic_constraints_from_task_spec(self.custom_spec())
-        second = semantic_constraints_from_task_spec(self.custom_spec())
-        self.assertEqual([x["constraint_id"] for x in first], [x["constraint_id"] for x in second])
+    def test_13_skill_rules_do_not_create_generic_semantic_rows(self):
+        first = self.custom_spec()
+        second = self.custom_spec()
+        self.assertEqual(first["parameters"], second["parameters"])
+        self.assertEqual(semantic_constraints_from_task_spec(first), [])
 
-    def test_14_skill_rule_materializes_custom_database_semantics(self):
-        rows = semantic_constraints_from_task_spec(self.custom_spec())
-        self.assertIn(
-            ("required_behavior.database_source", "database_source", "custom_genome"),
-            {(x["semantic_key"], x["role"], x["value"]) for x in rows},
-        )
+    def test_14_skill_rule_materializes_custom_database_parameter(self):
+        spec = self.custom_spec()
+        self.assertEqual(spec["parameters"]["database_source"], "custom_genome")
+        self.assertFalse(spec["requirements"])
 
     def test_15_skill_rule_requires_typed_annotation_input(self):
         spec = create_task_spec("Use /tmp/input.vcf and /tmp/reference.fasta", task_id="t", project_root="/tmp")
         resolved = apply_declarative_task_spec_rules(spec, [self.renderer])
-        keys = {x["semantic_key"] for x in semantic_constraints_from_task_spec(resolved)}
-        self.assertNotIn("required_behavior.database_source", keys)
+        self.assertNotIn("database_source", resolved["parameters"])
 
     def test_16_skill_rule_is_idempotent(self):
         once = self.custom_spec()
         twice = apply_declarative_task_spec_rules(once, [self.renderer])
-        rows = [x for x in twice["requirements"] if x.get("semantic_key") == "required_behavior.database_source"]
-        self.assertEqual(len(rows), 1)
+        self.assertEqual(twice["parameters"], once["parameters"])
+        self.assertFalse(twice["requirements"])
 
     def test_17_custom_projection_is_complete(self):
         result = project_task_spec_to_renderer(self.custom_spec(), self.renderer["invocation"], task_id="task-custom")
@@ -233,17 +229,9 @@ class TaskSpecRoleAndProjectionTests(unittest.TestCase):
         result = project_task_spec_to_renderer(self.custom_spec(), schema, task_id="task-custom")
         self.assertIn("genome_version", result["missing_bindings"])
 
-    def test_24_generic_cross_skill_binding_rule(self):
-        compiled = validate_compiled_constraints([{
-            "constraint_id": "cohort-a",
-            "semantic_key": "required_behavior.cohort",
-            "operator": "eq",
-            "value": "A",
-            "strength": "hard",
-            "confidence": 1.0,
-            "source_ref": "test",
-        }])
-        spec = merge_compiled_constraints(create_task_spec("generic task"), compiled["constraints"])
+    def test_24_structured_parameter_cross_skill_binding_rule(self):
+        spec = create_task_spec("generic task")
+        spec["parameters"] = {"cohort": "A"}
         schema = {
             "arguments": {"workspace_key": {"required": True}},
             "binding_rules": {
@@ -275,8 +263,20 @@ class TaskSpecRoleAndProjectionTests(unittest.TestCase):
             "question": "",
         }
 
-    def test_24a_authorized_taskspec_repair_changes_only_allowed_slot(self):
-        spec = create_task_spec("Use strict mode", task_id="repair")
+    def test_24a_authorized_taskspec_repair_changes_only_existing_legacy_slot(self):
+        initial = validate_compiled_constraints([{
+            "constraint_id": "legacy:mode",
+            "semantic_key": "required_behavior.mode",
+            "operator": "eq",
+            "value": "permissive",
+            "strength": "hard",
+            "confidence": 1.0,
+            "source_text": "legacy mode",
+        }])
+        spec = merge_compiled_constraints(
+            create_task_spec("Use strict mode", task_id="repair"),
+            initial["constraints"],
+        )
         catalog, payload = self._authorized_repair_payload(spec)
         repaired = apply_authorized_task_spec_constraint_repair(
             spec,
@@ -316,7 +316,19 @@ class TaskSpecRoleAndProjectionTests(unittest.TestCase):
             )
 
     def test_24d_taskspec_repair_no_op_is_rejected(self):
-        spec = create_task_spec("Use strict mode", task_id="repair")
+        initial = validate_compiled_constraints([{
+            "constraint_id": "legacy:mode",
+            "semantic_key": "required_behavior.mode",
+            "operator": "eq",
+            "value": "permissive",
+            "strength": "hard",
+            "confidence": 1.0,
+            "source_text": "legacy mode",
+        }])
+        spec = merge_compiled_constraints(
+            create_task_spec("Use strict mode", task_id="repair"),
+            initial["constraints"],
+        )
         catalog, payload = self._authorized_repair_payload(spec)
         repaired = apply_authorized_task_spec_constraint_repair(
             spec,
@@ -331,6 +343,17 @@ class TaskSpecRoleAndProjectionTests(unittest.TestCase):
                 next_payload,
                 allowed_semantic_slots=["mode"],
                 provenance_catalog=next_catalog,
+            )
+
+    def test_24e_taskspec_repair_cannot_create_fresh_generic_ontology(self):
+        spec = create_task_spec("Use strict mode", task_id="repair")
+        catalog, payload = self._authorized_repair_payload(spec)
+        with self.assertRaisesRegex(ValueError, "GENERIC_ONTOLOGY_RETIRED"):
+            apply_authorized_task_spec_constraint_repair(
+                spec,
+                payload,
+                allowed_semantic_slots=["mode"],
+                provenance_catalog=catalog,
             )
 
 
@@ -360,27 +383,35 @@ class ValidationOwnershipAndGateTests(unittest.TestCase):
         state["steps"][0].pop("semantic_claims_validation", None)
         self.assertIn("SEMANTIC_CLAIMS_INVALID", {x.get("violation_code") for x in plan_contract_violations(state)})
 
-    def test_29_unknown_constraint_reference_is_explicit(self):
-        state = build_plan_state("t", structured_plan(refs=["missing"]), strict=True)
-        _, issues = resolve_plan_semantic_claims(state, create_task_spec("task"))
-        self.assertEqual(issues[0]["code"], "SEMANTIC_CONSTRAINT_REFERENCE_INVALID")
+    def test_29_fresh_plan_rejects_constraint_reference_fields(self):
+        payload = json.loads(structured_plan())
+        payload["steps"][0]["semantic_constraint_ids"] = ["missing"]
+        with self.assertRaises(PlanStructureError):
+            build_plan_state("t", json.dumps(payload), strict=True)
 
-    def test_30_valid_constraint_reference_resolves_once(self):
-        spec = create_task_spec("Use /tmp/input.vcf", task_id="t", project_root="/tmp")
+    def test_30_legacy_constraint_reference_resolves_once(self):
+        compiled = validate_compiled_constraints([{
+            "constraint_id": "legacy-format",
+            "semantic_key": "required_behavior.annotation_format",
+            "operator": "eq",
+            "value": "gtf22",
+            "strength": "hard",
+            "confidence": 1.0,
+            "source_ref": "legacy",
+        }])
+        spec = merge_compiled_constraints(create_task_spec("annotate", task_id="t"), compiled["constraints"])
         constraint = semantic_constraints_from_task_spec(spec)[0]
-        state = build_plan_state("t", structured_plan(refs=[constraint["constraint_id"]]), strict=True)
+        state = build_plan_state("t", structured_plan(), strict=True)
+        state["compatibility"] = {"source_schema_version": 9}
+        state["steps"][0]["semantic_constraint_ids"] = [constraint["constraint_id"]]
         resolved, issues = resolve_plan_semantic_claims(state, spec)
         self.assertFalse(issues)
         self.assertEqual(resolved["steps"][0]["semantic_claims"][0]["constraint_id"], constraint["constraint_id"])
 
-    def test_30a_anonymous_hard_directive_is_runtime_global_not_plan_binding(self):
+    def test_30a_anonymous_hard_directive_needs_no_plan_binding(self):
         compiled = validate_compiled_constraints([{
-            "constraint_id": "anonymous-policy",
-            "semantic_key": "forbidden_behavior.directive_a1b2c3d4e5f6",
-            "operator": "forbid",
             "value": "Do not invent annotation records",
-            "strength": "hard",
-            "confidence": 1.0,
+            "strength": "required",
             "source_ref": "test",
         }])
         spec = merge_compiled_constraints(
@@ -397,14 +428,10 @@ class ValidationOwnershipAndGateTests(unittest.TestCase):
             {item.get("violation_code") for item in violations},
         )
 
-    def test_30b_planner_context_projects_global_policy_without_claim_id(self):
+    def test_30b_planner_context_projects_open_text_without_claim_id(self):
         compiled = validate_compiled_constraints([{
-            "constraint_id": "anonymous-policy",
-            "semantic_key": "required_behavior.directive_a1b2c3d4e5f6",
-            "operator": "require",
             "value": "Record tool failures truthfully",
-            "strength": "hard",
-            "confidence": 1.0,
+            "strength": "required",
             "source_ref": "test",
         }])
         spec = merge_compiled_constraints(
@@ -417,12 +444,16 @@ class ValidationOwnershipAndGateTests(unittest.TestCase):
             context.split("\n", 1)[1].split("\n[CANONICAL REQUIRED OUTPUTS]", 1)[0]
         )
 
-        self.assertFalse(any(
-            item.get("constraint_id") == "anonymous-policy"
-            for item in contract["semantic_constraints"]
-        ))
-        self.assertEqual(contract["global_policies"][0]["value"], "Record tool failures truthfully")
-        self.assertNotIn("constraint_id", contract["global_policies"][0])
+        self.assertEqual(
+            contract["highlighted_constraints"][0]["text"],
+            "Record tool failures truthfully",
+        )
+        self.assertEqual(
+            set(contract["highlighted_constraints"][0]),
+            {"text", "importance", "source_refs"},
+        )
+        self.assertNotIn("semantic_constraints", contract)
+        self.assertNotIn("global_policies", contract)
 
     def test_31_incomplete_projection_is_persisted(self):
         state = build_plan_state("t", structured_plan(), strict=True)

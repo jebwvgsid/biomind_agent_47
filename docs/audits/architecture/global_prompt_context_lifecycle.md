@@ -1,12 +1,35 @@
 # BioMind Global Prompt / Context / Memory / Cache Lifecycle Audit
 
-Status: audit only; no implementation
+Status: historical audit with current-contract amendment
 
 Repository: `/public/home/liusiqi/03.毕设/Biomind_v1`
 
 Primary incident: `session_1786946788`
 
 Audit snapshot: branch `codex/save-current-work`, HEAD `02d8232f147160927e2f65b979769811c3dd209f` (`docs(audit): document recovery progressive disclosure contract`) plus the pre-existing dirty worktree on 2026-08-18. The inspected production prompt/context files had no local diff. No provider, workflow, or production/test/run artifact was mutated.
+
+## Current open-world requirement lifecycle (2026-08-19)
+
+Fresh generic requirements are canonical only in ordered
+`TaskSpec.requirements[]` rows. Consultant preserves accepted wording and
+provenance; it does not mint ontology keys, generic scope, constraint IDs, or
+aliases. Planner, Plan Repair, Generate, and Recovery receive one identical
+`highlighted_constraints` projection, while Human Plan Review displays that
+full list before the effective steps.
+
+Fresh Planner wire v2 and Plan schema v10 contain no top-level
+`semantic_claims` and no step `semantic_constraint_ids` or generic claim rows.
+Plan validation continues to prove structured input/output/artifact/DAG,
+renderer binding, output materialization, runtime-policy, and approval
+contracts, but emits no generic `SEMANTIC_CONSTRAINT_UNCOVERED` result.
+
+Generic open text is not registered as an exact Knowledge Claim. Fresh
+Consultant FINALIZE carries it as open text and creates no clause-split,
+polarity-derived semantic key or exact coverage gap. FINALIZE transport,
+context hashes, provenance, selected-skill equality, ambiguity state,
+capacity/reservation, artifact integrity, replay, and the legacy v2/v4 readers
+remain intact. The Controller no longer claims to prove arbitrary
+natural-language semantic compliance.
 
 ## Executive verdict
 

@@ -1,8 +1,25 @@
 # BioMind Context, Memory, and Compression Contract Audit
 
-Status: audit only; no implementation
+Status: historical audit with current-contract amendment
 
 Snapshot: `02d8232f147160927e2f65b979769811c3dd209f` plus the pre-existing dirty worktree on 2026-08-18. Production context code had no local diff.
+
+## Current semantic projection amendment (2026-08-19)
+
+Generic user requirements now have one canonical authority:
+`TaskSpec.requirements[]`. Fresh rows preserve ordered, self-contained open
+text and provenance without synthesizing semantic keys, categories, operators,
+enforcement scopes, constraint handles, or Plan claims. NodeContext projects
+the complete ordered list as `highlighted_constraints[{text, importance,
+source_refs}]` to Planner, Plan Repair, Generate, and Recovery. The same list
+is rendered before the steps in Human Plan Review.
+
+The Controller no longer claims to prove arbitrary natural-language semantic
+compliance. Planner reasoning plus human review own that semantic boundary.
+Typed input/output/artifact/DAG/renderer/runtime/approval contracts, explicit
+`failure_policy.*`, and `forbidden_behavior.runtime_install` remain
+deterministic. Historical constraint handles and claims remain read-only
+compatibility data.
 
 ## Verdict
 
@@ -105,7 +122,7 @@ Source: `agent_core/node_context.py:818-979,1026-1216`.
 NodeContext projects semantic facts by node:
 
 - Consultant/Planner get required task semantics;
-- Generate/Recovery/Supervisor use identity/reference-driven current-step dependency closure plus global hard constraints;
+- Generate/Recovery use identity/reference-driven current-step dependency closure plus the complete ordered open-text Highlighted Constraint List; Supervisor retains its post-execution structured QA projection;
 - optional runtime, feedback, evidence, and allowed operations are node-specific;
 - top-level JSON is deterministic/sorted, but alphabetic order often places dynamic state before stable TaskSpec.
 

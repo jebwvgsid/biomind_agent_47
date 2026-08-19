@@ -27,6 +27,7 @@ from agent_core.plan_contract import (
     reconciliation_guard_status,
     record_reconciliation_outcome,
     relevant_reconciliation_evidence_revision,
+    structured_plan_candidate_diagnostics,
     validate_candidate_graph_and_flow,
     validated_planner_candidate_wire_example,
 )
@@ -57,21 +58,19 @@ def _step(step_id: str, *, inputs=None, outputs=None, dependencies=None) -> dict
         "workflow_stage_ids": [],
         "batch_id": "",
         "risk_level": "low",
-        "semantic_constraint_ids": [],
     }
 
 
 def _candidate(steps, *, proposed_artifacts=None) -> dict:
     value = {
         "steps": list(steps),
-        "semantic_claims": [],
         "validation_checklist": [{
             "check_id": "check-1",
             "description": "validate typed outputs",
         }],
         "metadata": {
-            "schema_version": 1,
-            "planner_contract": "structured_plan_v1",
+            "schema_version": 2,
+            "planner_contract": "structured_plan_v2",
         },
     }
     if proposed_artifacts is not None:
@@ -253,7 +252,7 @@ class PlannerWireContractRegressionTests(unittest.TestCase):
     def test_prompt_and_reader_share_metadata_and_artifact_contract(self):
         prompt = PromptManager.get_planner_v2_prompt({"artifact_catalog": []})
 
-        self.assertIn('"planner_contract": "structured_plan_v1"', prompt)
+        self.assertIn('"planner_contract": "structured_plan_v2"', prompt)
         self.assertIn('"metadata": {', prompt)
         self.assertIn('"semantic_view": {', prompt)
         self.assertIn('"artifact_contract": {', prompt)
@@ -262,6 +261,28 @@ class PlannerWireContractRegressionTests(unittest.TestCase):
             prompt,
         )
         self.assertNotIn('"execution_notes"', prompt)
+        self.assertNotIn('"semantic_claims":', prompt)
+        self.assertNotIn("semantic_constraint_ids", prompt)
+
+    def test_legacy_v1_wire_is_readable_but_new_example_has_no_generic_claim_fields(self):
+        fresh = planner_candidate_wire_example()
+        self.assertNotIn("semantic_claims", fresh)
+        self.assertTrue(all(
+            "semantic_constraint_ids" not in step
+            and "semantic_claims" not in step
+            for step in fresh["steps"]
+        ))
+
+        legacy = deepcopy(fresh)
+        legacy.pop("outcome_type", None)
+        legacy["semantic_claims"] = []
+        legacy["metadata"] = {
+            "schema_version": 1,
+            "planner_contract": "structured_plan_v1",
+        }
+        for step in legacy["steps"]:
+            step["semantic_constraint_ids"] = []
+        self.assertEqual(structured_plan_candidate_diagnostics(legacy), [])
 
     def test_controller_owned_wire_drift_is_internal_not_planner_repair(self):
         invalid_example = planner_candidate_wire_example()

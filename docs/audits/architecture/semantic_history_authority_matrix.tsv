@@ -5,7 +5,7 @@ consultant_question	StateContractStore conversation turn role=consultant_questio
 raw_consultant_response	consultation response object + context_trace response.json	YES	NONE	NONE	NONE	NONE	NO	YES	graph AIMessage; profiler artifacts
 accepted_consultant_semantic_delta	TaskSpec mutation + consultation typed handoff/capability state	YES	FULL_CANONICAL_EFFECT	RELEVANT_CANONICAL_EFFECT	RELEVANT_CANONICAL_EFFECT	RELEVANT_CANONICAL_EFFECT	YES	NO	raw accepted response; summaries
 rejected_consultant_candidate	consultation history/context_trace	YES	NONE	NONE	NONE	NONE	NO	YES	graph AIMessage if retained
-canonical_task_requirements	TaskSpec/effective user facts	YES	FULL	RELEVANT_CURRENT_STEP	RELEVANT_CURRENT_STEP	RELEVANT_CURRENT_STEP	YES	NO	user raw; Plan; summaries; prompts
+canonical_task_requirements	TaskSpec.requirements open text + structured facts	YES	FULL_HIGHLIGHTED_AND_STRUCTURED	FULL_HIGHLIGHTED_PLUS_CURRENT_STEP_STRUCTURED	FULL_HIGHLIGHTED_PLUS_CURRENT_STEP_STRUCTURED	RELEVANT_STRUCTURED_QA	YES	NO	user raw; NodeContext display projection; Human Plan Review; prompts
 selected_capabilities	consultation/plan selected skill and capability state	YES	FULL	FULL_SKILL_CONTEXT	RELEVANT	NONE	YES	NO	TaskSpec; Plan steps; run metrics
 runtime_input_audit	canonical runtime/input audit state	YES	FULL	RELEVANT	RELEVANT	RELEVANT	NO	NO	manifests; logs; context traces
 planner_raw_candidate	planner candidate/trace	YES	CURRENT_PARSE_ONLY	NONE	NONE	NONE	NO	YES	graph AIMessage; repair telemetry

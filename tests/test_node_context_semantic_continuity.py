@@ -10,6 +10,7 @@ from langchain_core.messages import HumanMessage
 from agent_core.diagnostics import RecoveryContext
 from agent_core.middleware import error_recovery_middleware
 from agent_core.node_context import build_node_context
+from agent_core.task_spec import ensure_task_spec
 from bio_agents import BioAnalystAgent
 from prompts.manager import PromptManager
 
@@ -137,6 +138,81 @@ def _context(node_type: str, **overrides):
 
 
 class NodeContextSemanticContinuityTests(unittest.TestCase):
+    def test_knowledge_registry_ignores_open_text_but_keeps_typed_policy(self) -> None:
+        task_spec = _task_spec()
+        task_spec["requirements"] = [
+            {
+                "requirement_id": "requirement-1",
+                "value": "Keep every biologically relevant annotation.",
+                "strength": "hard",
+                "source_ref": "U1",
+            },
+            {
+                "constraint_id": "missing-java",
+                "semantic_key": "failure_policy.java_missing",
+                "operator": "on_condition",
+                "value": "block",
+                "condition": "java_missing",
+                "strength": "hard",
+                "source_ref": "U2",
+            },
+        ]
+        task_spec = ensure_task_spec(task_spec)
+        plan_state = {
+            "schema_version": 10,
+            "compatibility": {"source_schema_version": 10},
+            "current_task": {
+                "task_spec": task_spec,
+                "task_revision": task_spec["revision"],
+            },
+            "selected_skill_ids": [],
+            "steps": [],
+        }
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.data_path = "/nonexistent-read-only-replay"
+
+        registry = agent._knowledge_claim_registry(
+            task_spec["task_id"], {}, plan_state
+        )
+        task_claims = [
+            claim for claim in registry.all()
+            if claim.source_type == "task_contract"
+        ]
+
+        self.assertEqual(
+            [claim.attributes.get("semantic_key") for claim in task_claims],
+            ["failure_policy.java_missing"],
+        )
+        self.assertNotIn(
+            "Keep every biologically relevant annotation.",
+            "\n".join(claim.proposition for claim in registry.all()),
+        )
+
+    def test_finalize_projects_open_text_without_generic_coverage_gap(self) -> None:
+        task_spec = _task_spec()
+        task_spec["requirements"] = [{
+            "requirement_id": "requirement-1",
+            "value": "Do not use demo or hidden-answer files.",
+            "strength": "hard",
+            "source_ref": "U1",
+        }]
+        task_spec = ensure_task_spec(task_spec)
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+
+        contract, gaps = agent._consultant_finalize_contract_projection(
+            task_spec,
+            [],
+            fallback_source_id="task-contract:test",
+        )
+
+        self.assertEqual(gaps, [])
+        self.assertEqual(contract["source_addressable_directives"], [])
+        self.assertEqual(contract["highlighted_requirements"], [{
+            "text": "Do not use demo or hidden-answer files.",
+            "importance": "hard",
+            "source_refs": ["U1"],
+        }])
+
     def test_accepted_commit_builds_a_structured_handoff_snapshot(self) -> None:
         handoff = BioAnalystAgent._accepted_consultant_handoff_projection({
             "requirements_summary": "Accepted Consultant result.",
@@ -150,11 +226,18 @@ class NodeContextSemanticContinuityTests(unittest.TestCase):
         self.assertEqual(
             handoff["required_outputs"][0]["role"], "intermediate_vcf"
         )
-        self.assertEqual(
-            handoff["hard_constraints"][0]["semantic_key"],
-            "required_behavior.database_visibility",
-        )
+        self.assertNotIn("hard_constraints", handoff)
         self.assertNotIn("provider_response", handoff)
+
+        context = build_node_context(
+            node_type="planner",
+            task_spec=_task_spec(),
+            consultant_handoff=handoff,
+        )
+        self.assertEqual(
+            context.llm_payload.to_dict()["task"]["highlighted_constraints"][0]["text"],
+            "public",
+        )
 
     def test_planner_receives_raw_user_and_only_accepted_handoff(self) -> None:
         payload = _context("planner", approved_plan_snapshot=None).llm_payload.to_provider_dict()
@@ -166,7 +249,8 @@ class NodeContextSemanticContinuityTests(unittest.TestCase):
         self.assertNotIn("REJECTED CONSULTANT OUTPUT", rendered)
 
     def test_generate_receives_history_and_one_complete_approved_plan(self) -> None:
-        payload = _context("generate").llm_payload.to_provider_dict()
+        context = _context("generate")
+        payload = context.llm_payload.to_provider_dict()
         rendered = json.dumps(payload, ensure_ascii=False)
         self.assertIn("需要压缩，并生成索引。", rendered)
         self.assertIn("accepted database strategy", rendered)
@@ -180,6 +264,10 @@ class NodeContextSemanticContinuityTests(unittest.TestCase):
         self.assertEqual(
             payload["current_focus"]["current_step"]["handle"],
             "step.step-2",
+        )
+        self.assertEqual(
+            context.llm_payload.to_dict()["task"]["highlighted_constraints"][0]["text"],
+            "public",
         )
 
     def test_generate_retry_has_byte_identical_stable_prefix(self) -> None:
@@ -230,6 +318,9 @@ class NodeContextSemanticContinuityTests(unittest.TestCase):
             }],
         )
         payload = context.llm_payload.to_provider_dict()
+        recovery_prompt = PromptManager.get_recovery_v2_prompt(
+            context.llm_payload.to_dict()
+        )
         stable = json.dumps(payload["semantic_history"], ensure_ascii=False)
         focus = json.dumps(payload["current_focus"], ensure_ascii=False)
         for expected in (
@@ -245,6 +336,11 @@ class NodeContextSemanticContinuityTests(unittest.TestCase):
             self.assertIn(expected, focus)
         self.assertNotIn("OLD_STDOUT_FULL_", stable)
         self.assertNotIn("OLD_STDERR_FULL_", stable)
+        self.assertEqual(
+            context.llm_payload.to_dict()["task"]["highlighted_constraints"][0]["text"],
+            "public",
+        )
+        self.assertIn("may not silently waive", recovery_prompt)
         self.assertNotIn("historical command", stable)
 
     def test_internal_observability_and_memory_summary_are_absent(self) -> None:

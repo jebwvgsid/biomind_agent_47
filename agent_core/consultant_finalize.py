@@ -2501,7 +2501,12 @@ def finalize_coverage_audit(
     finalize_context: Mapping[str, Any],
     merged_contract: Mapping[str, Any],
 ) -> Dict[str, Any]:
-    """Prove that a merged contract covers the immutable finalize context."""
+    """Audit non-generic integrity plus persisted legacy coverage gaps.
+
+    Fresh open-world contexts emit no generic ``coverage_gaps``.  The loop is
+    intentionally retained as a read-old adapter for immutable v2 artifacts;
+    selected-skill equality and exact provenance remain active for every path.
+    """
     errors: list[Dict[str, Any]] = []
     context_validation = validate_finalize_context(finalize_context)
     if not context_validation["valid"]:
@@ -3494,7 +3499,8 @@ def validate_directive_coverage(
                 "a bijection"
             ),
         })
-    if int(coverage_artifact.get("directive_count") or -1) != len(entries):
+    directive_count = coverage_artifact.get("directive_count")
+    if int(directive_count if directive_count is not None else -1) != len(entries):
         errors.append({"path": "$.directive_count", "reason": "must equal entry count"})
     expected_counts = {
         disposition: sum(str(item.get("disposition") or "") == disposition for item in entries if isinstance(item, Mapping))

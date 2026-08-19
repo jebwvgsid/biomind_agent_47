@@ -1177,8 +1177,9 @@ class PromptManager:
         return f"""You are the Planner for BioAnalyst V4.
 
 Return exactly one JSON object and no Markdown, prose, comments, or additional
-JSON fragments. You are scheduling an immutable TaskSpec; you may reference
-its constraints but may not reinterpret, weaken, or mint semantic truth.
+JSON fragments. You are scheduling an immutable TaskSpec. Its ordered
+`highlighted_constraints` list is authoritative open-world text: read and obey
+every item, but do not reinterpret, weaken, identify, or mint semantic truth.
 
 [USER PREFERENCES]
 {user_preferences_context or "No user preferences file loaded for this plan."}
@@ -1224,15 +1225,13 @@ The object must have exactly these top-level semantic sections:
       "skill_ids": [],
       "workflow_stage_ids": [],
       "batch_id": "",
-      "risk_level": "low|medium|high",
-      "semantic_constraint_ids": ["constraint:<exact TaskSpec ID>"]
+      "risk_level": "low|medium|high"
     }}
   ],
-  "semantic_claims": [],
   "validation_checklist": [
-    {{"check_id": "check-1", "description": "what the controller should verify"}}
+    {{"check_id": "check-1", "description": "Planner semantic self-check plus structured verification"}}
   ],
-  "metadata": {{"schema_version": 1, "planner_contract": "structured_plan_v1"}}
+  "metadata": {{"schema_version": 2, "planner_contract": "structured_plan_v2"}}
 }}
 
 Rules:
@@ -1242,8 +1241,9 @@ Rules:
 - SELECTED_SKILLS is the full allowed skill pool. Candidate skills must never be loaded into generate. Do not create `ACTIVATE_BATCH` steps.
 - A tool-specific preflight must carry the selected skill whose runtime is
   being checked.
-- Copy only exact `constraint_id` values from TaskSpec into
-  `semantic_constraint_ids`. Do not output inline semantic claim objects.
+- Check every highlighted requirement in `validation_checklist`. This is a
+  Planner self-check and human-review aid; the Controller does not exact-match
+  arbitrary prose. Do not output constraint IDs or semantic claim objects.
 - Use only selected skill IDs. Every renderer-backed workflow is one composite
   execute step; renderer internals and outputs belong to its declared contract.
 - A required renderer binding that is absent from TaskSpec is not yours to
@@ -1318,8 +1318,9 @@ Use only [CURRENT TASK RUNTIME AUDIT] for runtime scheduling:
 - Controlled rg/discovery hints are evidence-only and can never establish `ready` without PackageManager evidence plus a passing healthcheck.
 Natural-language policy interpretation is already complete. Do not infer a
 policy from words in User Goal or Consultant prose. Use only canonical
-`failure_policy.*`, `forbidden_behavior.*`, and `runtime_constraint.*` rows in
-TaskSpec for install/block decisions.
+`failure_policy.*` rows and the exact
+`forbidden_behavior.runtime_install` row in TaskSpec for install/block
+decisions.
 Every step must also include explicit `Assumptions`, `Required constraints`,
 `Input contract`, `Output contract`, `Environment contract`, `Depends on`,
 `Allowed fallbacks`, `Forbidden fallbacks`, and `Success criteria`. These are
@@ -1355,7 +1356,7 @@ For EACH step, provide:
     - Depends on: [step IDs]
     - Allowed fallbacks: [explicitly permitted alternatives]
     - Forbidden fallbacks: [methods/inputs/options that must not be substituted]
-    - Semantic claims: [JSON array of atomic ontology rows implemented by this step]
+    - Highlighted requirements considered: [plain-language Planner self-check]
 
 ## Execution Checklist
 After the detailed plan, include a machine-trackable checklist.
@@ -1369,18 +1370,18 @@ primary scheduler record and the indented fields are its typed contract):
     - [logical or exact input]
   - Outputs:
     - [logical or exact output]
-  - Semantic claims: [{{"semantic_key":"required_input.role","operator":"eq","value":"exact value","strength":"required","confidence":0.95,"source_ref":"task_spec"}}]
+  - Highlighted requirements considered: [plain-language self-check; no IDs or claim objects]
   - Depends on: [step IDs or none]
   - Success criteria: [count-free completion criterion]
   - Stage: [workflow_stage_id or none]
   - Batch: [batch_id or none]
 `Inputs:` and `Outputs:` are mandatory, even when their value is an explicit
 empty list. Keep values concise and place explanations in Section 2.
-`Semantic claims:` is mandatory and must be a valid one-line JSON array. Use
-only the closed TaskSpec ontology and copy canonical keys/values; do not
-reinterpret User Goal. Use `[]` only when a control step implements no task
-constraint. Renderer-backed steps must include only claims established by
-their bound invocation or declared renderer behavior.
+The full ordered Highlighted Constraint List is authoritative open-world text.
+Use this display-only self-check to show Planner attention; do not emit IDs,
+ontology rows, scope labels, or compliance claims. The Controller validates
+structured input/output/artifact/DAG/renderer contracts but does not claim to
+prove arbitrary natural-language semantic compliance.
 Legacy `- [ ] Step N:` records remain parser-compatible, but emit the canonical
 stable-ID form above for every new plan.
 The checklist order MUST match Section 2 and should be executable one step at a time.
@@ -1474,7 +1475,11 @@ Consultant owns skill discovery and SELECTED_SKILLS is the full allowed pool. Pl
         ) + (
             "\n\nEvidence protocol: cite supporting evidence only by the handles shown "
             "in the payload (for example E1 or E2). Do not invent file refs, object "
-            "refs, hashes, invocation IDs, generations, or persistent evidence IDs."
+            "refs, hashes, invocation IDs, generations, or persistent evidence IDs. "
+            "The ordered task_spec.highlighted_constraints list is authoritative. "
+            "A recovery proposal must preserve every applicable item and may not "
+            "silently waive, weaken, or mutate it; a real requirement change routes "
+            "to Consultant/User through the existing path."
         )
 
     @staticmethod
@@ -1531,8 +1536,9 @@ Repair scope: schema/format/missing fields/references only.
 Do not change effective user facts, selected skills, scientific intent, or the renderer route.
 Do not emit or modify TaskSpec, renderer projections, renderer invocation
 contracts, validation issues, approval state, execution evidence, status, or
-any other controller-owned field. Semantic repair may only change the exact
-TaskSpec `semantic_constraint_ids` referenced by an allowed step.
+any other controller-owned field. Preserve the complete authoritative
+Highlighted Constraint List; semantic changes belong to Consultant/User, not
+Plan Repair.
 
 {effective_facts_context or "[EFFECTIVE USER FACTS]\nNo structured effective facts were available.\n[USER SOURCE REFERENCES]\n[]"}
 
@@ -1559,7 +1565,6 @@ Return exactly one JSON object:
       "dependencies": [],
       "success_criteria": [],
       "skill_ids": [],
-      "semantic_constraint_ids": [],
       "risk_level": "low|medium|high"
     }}}}
   ],
@@ -1609,9 +1614,9 @@ If required task meaning is genuinely incomplete, return exactly
 {{
   "outcome_type":"TASKSPEC_RECONCILIATION_REQUIRED",
   "missing_semantic_facts":[{{
-    "fact_key":"registered semantic fact key",
+    "fact_key":"missing structured input/output/parameter/decision fact",
     "reason":"why reproducible planning requires it",
-    "affected_operation_id":"registered operation ID",
+    "affected_operation_id":"affected structured planning operation",
     "relevant_confirmed_decision_ids":[],
     "durable_evidence_may_resolve":true
   }}]
@@ -1622,7 +1627,12 @@ is generated from the same wire-contract definition used by the strict Plan
 reader; adapt its semantic content, steps, and references to this task:
 {candidate_example}
 
-Use artifact and constraint handles exactly as shown in the semantic context. Do not
+Every item in `task_spec.highlighted_constraints` is authoritative open-world
+text. Read and obey the complete ordered list when choosing steps, tools, and
+artifacts, and include a Planner-authored semantic self-check in
+`validation_checklist`. The Controller validates checklist shape but does not
+claim to prove arbitrary natural-language compliance. Use artifact handles
+exactly as shown in the semantic context. Do not
 copy illustrative values from the example when they are not part of this task.
 Required managed outputs must be referenced by handle; never copy or redefine
 their TaskSpec paths. When a required file output has `path_policy` equal to
@@ -1632,8 +1642,8 @@ one top-level `task_output_materializations` row such as
 and relative to the typed output_dir. It chooses only the execution filename;
 it does not create a second output identity.
 `inputs` means consume and `outputs` means produce. Handle spelling never
-defines usage. Keep top-level `semantic_claims` empty; reference only canonical
-TaskSpec constraint handles through each step's `semantic_constraint_ids`.
+defines usage. Do not return semantic claim rows, constraint IDs, constraint
+handles, or compliance assertions.
 Dependencies only express ordering. If a later step consumes a file or directory
 created by an earlier step, that object must also be an explicit artifact in the
 producer's `outputs` and the consumer's `inputs`. For one directory intermediate,
@@ -1717,12 +1727,19 @@ Mutation shapes use Controller vocabulary:
 - set_goal: {{"operation":"set_goal","goal":"...","supporting_evidence":["U1"]}}
 - upsert_input: {{"operation":"upsert_input","input":{{"role":"reference_fasta","path":"/data/B.fa","required":true}},"supporting_evidence":["U1"]}}
 - remove_input: {{"operation":"remove_input","role":"reference_fasta","supporting_evidence":["U2"]}}
-- upsert_constraint: {{"operation":"upsert_constraint","constraint":{{"semantic_key":"failure_policy.database_build","category":"failure_policy","operator":"require","value":"Block if database build fails","strength":"hard"}},"supporting_evidence":["U1"]}}
-- remove_constraint: {{"operation":"remove_constraint","semantic_key":"...","supporting_evidence":["U2"]}}
+- upsert_constraint: {{"operation":"upsert_constraint","constraint":{{"value":"Preserve the user's complete, self-contained natural-language requirement.","strength":"required"}},"supporting_evidence":["U1"]}}
+- remove_constraint: {{"operation":"remove_constraint","requirement_id":"the current TaskSpec row identity","supporting_evidence":["U2"]}}
 - upsert_output_contract (directory): {{"operation":"upsert_output_contract","output_contract":{{"output_id":"output_dir","role":"output_dir","artifact_kind":"directory","path":"/data/result","required":true}},"supporting_evidence":["U1"]}}
 - upsert_output_contract (file with Planner-owned filename): {{"operation":"upsert_output_contract","output_contract":{{"output_id":"report","role":"report","artifact_kind":"file","root_ref":"output_dir","path_policy":"planner_materialized","required":true}},"supporting_evidence":["U1"]}}
 - remove_output_contract: {{"operation":"remove_output_contract","role":"report","supporting_evidence":["U2"]}}
 - confirm_decision/remove_decision/mark_ambiguity follow the same typed nested-object pattern.
+
+For an open-world requirement, preserve its full self-contained wording in
+`value`. Do not mint a semantic namespace, category, operator, enforcement
+scope, constraint ID, alias, or fallback key. `strength` is attention for
+models and human review, not a Controller enforcement promise. The only keyed
+exceptions are already-explicit machine policies in `failure_policy.*` and
+`forbidden_behavior.runtime_install`; never infer either policy from prose.
 
 Return exactly one JSON object and no prose. Supported actions are:
 
@@ -1798,6 +1815,10 @@ semantic delta; do not return identity, version, approval, storage-reference,
 validation-state, status, evidence, or fingerprint fields. Modify only the
 allowed step handles and only fields needed by the actionable violations.
 Do not change Task semantics or controller/renderer bindings.
+The same ordered `task_spec.highlighted_constraints` list shown to Planner is
+authoritative here. Do not weaken, waive, rewrite, identify, or reclassify any
+item; repair only the candidate Plan and supplied structured violations or
+human feedback within the allowed step scope.
 
 Return exactly one JSON object:
 {{
@@ -1815,7 +1836,6 @@ Return exactly one JSON object:
         "dependencies": [],
         "success_criteria": [],
         "skill_ids": [],
-        "semantic_constraint_ids": ["constraint.semantic_handle"],
         "risk_level": "low|medium|high"
       }}
     }}
@@ -1866,6 +1886,9 @@ Allowed step handles: {handles}
 The semantic payload is non-authoritative. You may not modify the Task, Plan,
 approval, budgets, validation state, or routing. Do not return controller
 identity, versions, storage references, approval metadata, or fingerprints.
+Every item in `task_spec.highlighted_constraints` is authoritative and must be
+honored by the proposed action. Do not weaken, waive, summarize, reclassify, or
+return IDs/compliance claims for these open-world requirements.
 
 For a command, return exactly one JSON object and use structured argv. Required
 managed inputs/outputs must use their complete placeholders as individual argv

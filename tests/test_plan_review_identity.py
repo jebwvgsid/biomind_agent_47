@@ -10,7 +10,7 @@ from agent_core.plan_tracker import (
     save_plan_state,
     validate_plan_for_generate,
 )
-from agent_core.task_spec import create_task_spec
+from agent_core.task_spec import create_task_spec, ensure_task_spec
 from bio_agents import BioAnalystAgent
 
 
@@ -59,6 +59,39 @@ class PlanReviewIdentityTests(unittest.TestCase):
         self.assertIn("Execution Cursor: `none`", rendered)
         self.assertIn("Next Executable Step: `step-1`", rendered)
 
+    def test_review_shows_every_highlight_in_task_order_before_steps(self):
+        state = self._plan()
+        task_spec = create_task_spec("annotate variants", task_id="task-review")
+        task_spec["requirements"] = [
+            {
+                "requirement_id": "requirement-1",
+                "value": "Must use the supplied FASTA and GTF.",
+                "strength": "hard",
+                "source_ref": "U1",
+            },
+            {
+                "requirement_id": "requirement-2",
+                "value": "Prefer reusing verified intermediate results.",
+                "strength": "preference",
+                "source_ref": "U2",
+            },
+        ]
+        task_spec = ensure_task_spec(task_spec)
+        state["current_task"] = {
+            "task_spec": task_spec,
+            "task_revision": task_spec["revision"],
+        }
+
+        rendered = render_plan_review_content(state)
+
+        first = rendered.index("Must use the supplied FASTA and GTF.")
+        second = rendered.index("Prefer reusing verified intermediate results.")
+        steps = rendered.index("## Effective Plan")
+        self.assertLess(first, second)
+        self.assertLess(second, steps)
+        self.assertIn('source_refs: ["U1"]', rendered)
+        self.assertIn('source_refs: ["U2"]', rendered)
+
     def test_review_shows_required_output_producer_ownership(self):
         state = self._plan()
         state["steps"][1].update({
@@ -80,12 +113,15 @@ class PlanReviewIdentityTests(unittest.TestCase):
                 "producer": "04.summarize_ann.sh",
             }],
         })
-        state["task_spec"] = {
-            "output_contracts": [{
-                "filename": "ann_gene_summary.tsv",
-                "required": True,
-                "source_type": "benchmark_contract",
-            }],
+        task_spec = create_task_spec("produce the gene summary", task_id="task-review")
+        task_spec["output_contracts"] = [{
+            "filename": "ann_gene_summary.tsv",
+            "required": True,
+            "source_type": "benchmark_contract",
+        }]
+        state["current_task"] = {
+            "task_spec": task_spec,
+            "task_revision": 1,
         }
 
         rendered = render_plan_review_content(state)

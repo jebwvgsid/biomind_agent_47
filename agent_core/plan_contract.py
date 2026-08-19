@@ -50,11 +50,12 @@ REGISTERED_MATERIALIZATION_POLICIES = {"managed_intermediate_v1"}
 
 # One shared structured Planner wire contract.  Prompt examples and the strict
 # Plan reader import these values instead of maintaining independent schemas.
-STRUCTURED_PLAN_SCHEMA_VERSION = 1
-STRUCTURED_PLAN_CONTRACT = "structured_plan_v1"
+LEGACY_STRUCTURED_PLAN_SCHEMA_VERSION = 1
+LEGACY_STRUCTURED_PLAN_CONTRACT = "structured_plan_v1"
+STRUCTURED_PLAN_SCHEMA_VERSION = 2
+STRUCTURED_PLAN_CONTRACT = "structured_plan_v2"
 STRUCTURED_PLAN_REQUIRED_TOP_LEVEL_FIELDS = frozenset({
     "steps",
-    "semantic_claims",
     "validation_checklist",
     "metadata",
 })
@@ -79,7 +80,6 @@ STRUCTURED_PLAN_STEP_LIST_FIELDS = frozenset({
     "success_criteria",
     "skill_ids",
     "workflow_stage_ids",
-    "semantic_constraint_ids",
 })
 
 _SINGLE_JSON_FENCE_RE = re.compile(
@@ -222,7 +222,7 @@ def planner_candidate_wire_example() -> Dict[str, Any]:
 
     The example deliberately uses only a candidate-local artifact so it never
     teaches the model a fake TaskSpec handle.  Real Task-owned input/output and
-    constraint handles must come from the invocation's ``llm_payload``.
+    artifact handles must come from the invocation's ``llm_payload``.
     """
     return {
         "outcome_type": PLAN_CANDIDATE,
@@ -253,9 +253,7 @@ def planner_candidate_wire_example() -> Dict[str, Any]:
             "workflow_stage_ids": [],
             "batch_id": "",
             "risk_level": "low",
-            "semantic_constraint_ids": [],
         }],
-        "semantic_claims": [],
         "validation_checklist": [{
             "check_id": "check-1",
             "description": "Verify every explicit artifact reference and dependency",
@@ -272,13 +270,35 @@ def structured_plan_candidate_diagnostics(
 ) -> List[Dict[str, str]]:
     """Validate the shared structured Plan body without semantic inference."""
     diagnostics: List[Dict[str, str]] = []
-    for key in STRUCTURED_PLAN_REQUIRED_TOP_LEVEL_FIELDS:
+    metadata_value = payload.get("metadata")
+    schema_version = (
+        metadata_value.get("schema_version")
+        if isinstance(metadata_value, Mapping)
+        else None
+    )
+    legacy_schema = schema_version == LEGACY_STRUCTURED_PLAN_SCHEMA_VERSION
+    required_top_level_fields = (
+        frozenset({*STRUCTURED_PLAN_REQUIRED_TOP_LEVEL_FIELDS, "semantic_claims"})
+        if legacy_schema
+        else STRUCTURED_PLAN_REQUIRED_TOP_LEVEL_FIELDS
+    )
+    allowed_top_level_fields = (
+        frozenset({*STRUCTURED_PLAN_ALLOWED_TOP_LEVEL_FIELDS, "semantic_claims"})
+        if legacy_schema
+        else STRUCTURED_PLAN_ALLOWED_TOP_LEVEL_FIELDS
+    )
+    step_list_fields = (
+        frozenset({*STRUCTURED_PLAN_STEP_LIST_FIELDS, "semantic_constraint_ids"})
+        if legacy_schema
+        else STRUCTURED_PLAN_STEP_LIST_FIELDS
+    )
+    for key in required_top_level_fields:
         if key not in payload:
             diagnostics.append({
                 "field_path": f"$.{key}",
                 "message": "required field is missing",
             })
-    for key in sorted(set(payload) - STRUCTURED_PLAN_ALLOWED_TOP_LEVEL_FIELDS):
+    for key in sorted(set(payload) - allowed_top_level_fields):
         diagnostics.append({
             "field_path": f"$.{key}",
             "message": "unexpected top-level field",
@@ -299,7 +319,7 @@ def structured_plan_candidate_diagnostics(
             })
             continue
         for field in sorted(
-            STRUCTURED_PLAN_STEP_SCALAR_FIELDS | STRUCTURED_PLAN_STEP_LIST_FIELDS
+            STRUCTURED_PLAN_STEP_SCALAR_FIELDS | step_list_fields
         ):
             if field not in step:
                 diagnostics.append({
@@ -312,7 +332,7 @@ def structured_plan_candidate_diagnostics(
                     "field_path": f"$.steps[{index}].{field}",
                     "message": "must be a string",
                 })
-        for field in sorted(STRUCTURED_PLAN_STEP_LIST_FIELDS):
+        for field in sorted(step_list_fields):
             if field in step and not isinstance(step.get(field), list):
                 diagnostics.append({
                     "field_path": f"$.steps[{index}].{field}",
@@ -323,27 +343,40 @@ def structured_plan_candidate_diagnostics(
                 "field_path": f"$.steps[{index}].skill_ids",
                 "message": "must contain at most three selected skill IDs",
             })
-        if "semantic_claims" in step:
+        unexpected_step_fields = sorted(
+            set(step) - (
+                STRUCTURED_PLAN_STEP_SCALAR_FIELDS
+                | step_list_fields
+                | (frozenset({"semantic_claims"}) if legacy_schema else frozenset())
+            )
+        )
+        for field in unexpected_step_fields:
+            diagnostics.append({
+                "field_path": f"$.steps[{index}].{field}",
+                "message": "unexpected step field",
+            })
+        if legacy_schema and "semantic_claims" in step:
             diagnostics.append({
                 "field_path": f"$.steps[{index}].semantic_claims",
                 "message": (
-                    "new plans reference canonical semantic_constraint_ids; "
+                    "legacy Planner wire accepts constraint references only; "
                     "inline claims are not allowed"
                 ),
             })
 
-    if not isinstance(payload.get("semantic_claims"), list):
-        diagnostics.append({
-            "field_path": "$.semantic_claims",
-            "message": "must be an array",
-        })
-    if payload.get("semantic_claims") not in (None, []):
-        diagnostics.append({
-            "field_path": "$.semantic_claims",
-            "message": (
-                "semantic truth is TaskSpec-owned; the Planner must not mint claim rows"
-            ),
-        })
+    if legacy_schema:
+        if not isinstance(payload.get("semantic_claims"), list):
+            diagnostics.append({
+                "field_path": "$.semantic_claims",
+                "message": "must be an array",
+            })
+        if payload.get("semantic_claims") not in (None, []):
+            diagnostics.append({
+                "field_path": "$.semantic_claims",
+                "message": (
+                    "semantic truth is TaskSpec-owned; the Planner must not mint claim rows"
+                ),
+            })
 
     checklist = payload.get("validation_checklist")
     if not isinstance(checklist, list):
@@ -376,15 +409,25 @@ def structured_plan_candidate_diagnostics(
             "message": "must be an object",
         })
     else:
-        if metadata.get("schema_version") != STRUCTURED_PLAN_SCHEMA_VERSION:
+        expected_schema_version = (
+            LEGACY_STRUCTURED_PLAN_SCHEMA_VERSION
+            if legacy_schema
+            else STRUCTURED_PLAN_SCHEMA_VERSION
+        )
+        expected_contract = (
+            LEGACY_STRUCTURED_PLAN_CONTRACT
+            if legacy_schema
+            else STRUCTURED_PLAN_CONTRACT
+        )
+        if metadata.get("schema_version") != expected_schema_version:
             diagnostics.append({
                 "field_path": "$.metadata.schema_version",
-                "message": f"must equal {STRUCTURED_PLAN_SCHEMA_VERSION}",
+                "message": f"must equal {expected_schema_version}",
             })
-        if metadata.get("planner_contract") != STRUCTURED_PLAN_CONTRACT:
+        if metadata.get("planner_contract") != expected_contract:
             diagnostics.append({
                 "field_path": "$.metadata.planner_contract",
-                "message": f"must equal {STRUCTURED_PLAN_CONTRACT}",
+                "message": f"must equal {expected_contract}",
             })
 
     if "proposed_artifacts" in payload and not isinstance(
@@ -1236,11 +1279,6 @@ def typed_task_plan_traceability(
         for item in task_spec.get("output_contracts", []) or []
         if isinstance(item, Mapping)
     }
-    constraint_ids = {
-        str(item.get("constraint_id") or item.get("requirement_id") or "")
-        for item in task_spec.get("semantic_constraints", []) or []
-        if isinstance(item, Mapping)
-    }
     edges: List[Dict[str, Any]] = []
     for step in steps:
         step_id = str(step.get("step_id") or "")
@@ -1258,13 +1296,6 @@ def typed_task_plan_traceability(
                     "source_id": ref_id, "target_id": step_id,
                     "relation": "task_output_produced_by_step", "validation_status": "valid",
                 })
-        for ref in step.get("semantic_constraint_ids", []) or []:
-            ref_id = str(ref or "")
-            edges.append({
-                "source_id": ref_id, "target_id": step_id,
-                "relation": "task_constraint_referenced_by_step",
-                "validation_status": "valid" if ref_id in constraint_ids else "invalid_reference",
-            })
     return sorted(
         edges,
         key=lambda item: (item["relation"], item["source_id"], item["target_id"]),

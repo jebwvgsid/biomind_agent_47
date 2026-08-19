@@ -5,9 +5,11 @@ from pathlib import Path
 
 from agent_core.task_spec import (
     TASK_SPEC_SCHEMA_VERSION,
+    apply_task_spec_mutation_proposal,
     apply_user_feedback,
     classify_user_feedback_change,
     create_task_spec,
+    constraint_mutation_proposal,
     ensure_task_spec,
     merge_task_spec_input_audit,
     merge_compiled_constraints,
@@ -15,8 +17,12 @@ from agent_core.task_spec import (
     project_task_spec_to_renderer,
     render_task_spec,
     evaluate_requirements,
+    evaluate_failure_policies,
+    semantic_install_policy,
     task_spec_constraints,
+    task_record_hash,
     task_spec_revision,
+    task_semantic_hash,
     validate_compiled_constraints,
     semantic_constraints_from_task_spec,
 )
@@ -114,7 +120,9 @@ class TaskSpecTests(unittest.TestCase):
             path.write_text("##fileformat=VCFv4.2\n", encoding="utf-8")
             requirement = {
                 "requirement_id": "input_vcf",
+                "semantic_key": "required_input.variant_vcf",
                 "path": str(path),
+                "value": str(path),
                 "level": "required",
                 "present": True,
             }
@@ -125,7 +133,7 @@ class TaskSpecTests(unittest.TestCase):
         self.assertTrue(result["blocked"])
         self.assertEqual(result["missing_required"], ["input_vcf"])
 
-    def test_user_supplied_inputs_become_required_requirements(self):
+    def test_user_supplied_inputs_remain_structured_bindings(self):
         spec = merge_task_spec(
             create_task_spec("annotate variants"),
             {"inputs": [{"path": "/data/input.vcf", "role": "variants"}]},
@@ -134,9 +142,188 @@ class TaskSpecTests(unittest.TestCase):
         )
 
         constraints = semantic_constraints_from_task_spec(spec)
-        self.assertEqual(constraints[0]["level"], "required")
-        self.assertEqual(constraints[0]["semantic_key"], "required_input.variant_vcf")
+        self.assertEqual(constraints, [])
+        self.assertEqual(spec["inputs"][0]["role"], "variant_vcf")
+        self.assertEqual(spec["inputs"][0]["canonical_path"], "/data/input.vcf")
         self.assertIn("requirements", json.loads(render_task_spec(spec)))
+
+    def test_user_feedback_artifact_update_does_not_duplicate_requirement(self):
+        spec = create_task_spec("annotate variants", task_id="task-artifact-update")
+
+        updated = apply_user_feedback(
+            spec,
+            "Use /data/input.vcf as the variant input.",
+            kind="consultant_answer",
+            source_message_id="U2",
+            message_origin="user",
+        )
+
+        self.assertEqual(updated["inputs"][0]["canonical_path"], "/data/input.vcf")
+        self.assertEqual(updated["requirements"], [])
+        self.assertEqual(semantic_constraints_from_task_spec(updated), [])
+
+    def test_open_world_requirements_preserve_text_without_synthesized_ontology(self):
+        texts = [
+            "不得使用 liftOver 后的 VCF 作为分析输入。",
+            "Do not rename contigs before annotation.",
+            "禁止使用 demo/toy/test/hidden/expected-answer 文件作为分析输入。",
+        ]
+        validated = validate_compiled_constraints([
+            {"value": text, "strength": "required", "source_text": text}
+            for text in texts
+        ])
+        self.assertTrue(validated["valid"], validated["errors"])
+
+        spec = merge_compiled_constraints(
+            create_task_spec("annotate variants"),
+            validated["constraints"],
+        )
+
+        self.assertEqual([item["value"] for item in spec["requirements"]], texts)
+        self.assertEqual(
+            [item["requirement_id"] for item in spec["requirements"]],
+            ["requirement-1", "requirement-2", "requirement-3"],
+        )
+        forbidden = {
+            "semantic_key", "category", "operator", "enforcement_scope",
+            "constraint_id", "semantic_claims", "handles",
+        }
+        self.assertTrue(all(not forbidden.intersection(item) for item in spec["requirements"]))
+        self.assertEqual(semantic_constraints_from_task_spec(spec), [])
+
+    def test_sequential_open_requirement_batches_append_and_explicit_update_stays_in_place(self):
+        spec = create_task_spec("annotate variants")
+        first = validate_compiled_constraints([{
+            "value": "Keep all ANN fields.",
+            "strength": "required",
+            "source_text": "Keep all ANN fields.",
+        }])
+        spec = merge_compiled_constraints(spec, first["constraints"])
+        second = validate_compiled_constraints([{
+            "value": "Do not rename contigs.",
+            "strength": "hard",
+            "source_text": "Do not rename contigs.",
+        }])
+        spec = merge_compiled_constraints(spec, second["constraints"])
+
+        self.assertEqual(
+            [item["requirement_id"] for item in spec["requirements"]],
+            ["requirement-1", "requirement-2"],
+        )
+        self.assertEqual(
+            [item["value"] for item in spec["requirements"]],
+            ["Keep all ANN fields.", "Do not rename contigs."],
+        )
+
+        replayed = merge_compiled_constraints(spec, second["constraints"])
+        self.assertEqual(replayed["revision"], spec["revision"])
+        self.assertEqual(replayed["requirements"], spec["requirements"])
+
+        update = validate_compiled_constraints([{
+            "requirement_id": "requirement-1",
+            "value": "Keep every ANN field.",
+            "strength": "required",
+            "source_text": "Keep every ANN field.",
+        }])
+        spec = merge_compiled_constraints(spec, update["constraints"])
+        self.assertEqual(
+            [item["value"] for item in spec["requirements"]],
+            ["Keep every ANN field.", "Do not rename contigs."],
+        )
+
+    def test_open_requirement_rejects_invalid_attention_shape(self):
+        invalid = validate_compiled_constraints([{
+            "value": "Keep all ANN fields.",
+            "strength": "absolute",
+            "level": "mandatory_forever",
+            "source_text": "Keep all ANN fields.",
+        }])
+
+        self.assertFalse(invalid["valid"])
+        self.assertEqual(
+            {item["field"] for item in invalid["errors"]},
+            {"strength", "level"},
+        )
+
+    def test_fresh_typed_looking_generic_mutation_cannot_bypass_open_text_admission(self):
+        spec = create_task_spec("annotate variants", task_id="task-open-admission")
+        proposal = constraint_mutation_proposal([{
+            "constraint_id": "invented-demo-policy",
+            "semantic_key": "forbidden_behavior.demo_hidden_answer",
+            "category": "forbidden_behavior",
+            "operator": "forbid",
+            "enforcement_scope": "plan",
+            "value": "禁止使用 demo/toy/test/hidden answer 文件作为分析输入。",
+            "strength": "hard",
+            "confidence": 1.0,
+            "source_ref": "U1",
+        }])
+
+        updated = apply_task_spec_mutation_proposal(spec, proposal)
+
+        requirement = updated["requirements"][0]
+        self.assertEqual(
+            requirement["value"],
+            "禁止使用 demo/toy/test/hidden answer 文件作为分析输入。",
+        )
+        self.assertEqual(requirement["requirement_id"], "requirement-1")
+        self.assertFalse({
+            "semantic_key", "category", "operator", "enforcement_scope",
+            "constraint_id",
+        }.intersection(requirement))
+        self.assertEqual(semantic_constraints_from_task_spec(updated), [])
+
+    def test_typed_runtime_and_failure_policies_remain_deterministic(self):
+        rows = [
+            {
+                "constraint_id": "no-install",
+                "semantic_key": "forbidden_behavior.runtime_install",
+                "operator": "forbid",
+                "value": True,
+                "strength": "hard",
+                "confidence": 1.0,
+                "source_text": "do not install runtimes",
+            },
+            {
+                "constraint_id": "missing-java",
+                "semantic_key": "failure_policy.java_missing",
+                "operator": "on_condition",
+                "value": "block",
+                "condition": "java_missing",
+                "strength": "hard",
+                "confidence": 1.0,
+                "source_text": "block if Java is missing",
+            },
+        ]
+        validated = validate_compiled_constraints(rows)
+        self.assertTrue(validated["valid"], validated["errors"])
+        spec = merge_compiled_constraints(create_task_spec("annotate"), validated["constraints"])
+
+        self.assertFalse(semantic_install_policy(spec, dependency_key="java")["install_allowed"])
+        self.assertTrue(evaluate_failure_policies(spec, {"java_missing": True})["blocked"])
+        self.assertFalse(evaluate_failure_policies(spec, {"java_missing": False})["blocked"])
+
+    def test_requirement_text_changes_semantic_hash_but_provenance_does_not(self):
+        validated = validate_compiled_constraints([{
+            "value": "Do not rename contigs before annotation.",
+            "strength": "required",
+            "source_text": "Do not rename contigs before annotation.",
+        }])
+        spec = merge_compiled_constraints(create_task_spec("annotate"), validated["constraints"])
+        semantic_before = task_semantic_hash(spec)
+        record_before = task_record_hash(spec)
+
+        provenance_only = json.loads(json.dumps(spec))
+        provenance_only["requirements"][0]["provenance"].append({
+            "source_type": "user_explicit",
+            "source_id": "msg-2",
+        })
+        self.assertEqual(task_semantic_hash(provenance_only), semantic_before)
+        self.assertNotEqual(task_record_hash(provenance_only), record_before)
+
+        changed = json.loads(json.dumps(spec))
+        changed["requirements"][0]["value"] = "Rename contigs before annotation."
+        self.assertNotEqual(task_semantic_hash(changed), semantic_before)
 
     def test_request_extracts_explicit_inputs_requirements_and_outputs(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -285,7 +472,7 @@ class TaskSpecTests(unittest.TestCase):
                     {"role": "reference_fasta", "path": "/data/genome.fa", "source": "user_explicit"},
                     {"role": "annotation_gtf", "path": "/data/genome.gtf", "source": "user_explicit"},
                 ],
-                "requirements": [{"requirement_id": "database_source", "role": "database_source", "value": "custom_genome", "source": "user_explicit"}],
+                "parameters": {"database_source": "custom_genome"},
                 "expected_outputs": [{"role": "output_dir", "path": "/out/strict", "source": "user_explicit"}],
             },
             source="user_explicit",
@@ -335,14 +522,26 @@ class TaskSpecTests(unittest.TestCase):
             "revision": 1,
             "goal": "Use /data/input.vcf with -gtf22 for a custom genome; output report.md",
             "inputs": [],
-            "requirements": [],
+            "requirements": [{
+                "requirement_id": "legacy-format",
+                "constraint_id": "legacy-format",
+                "semantic_key": "required_behavior.annotation_format",
+                "operator": "eq",
+                "value": "gtf22",
+                "strength": "hard",
+                "confidence": 1.0,
+                "source_text": "with -gtf22",
+            }],
         }
 
         migrated = ensure_task_spec(legacy)
 
         self.assertEqual(migrated["schema_version"], TASK_SPEC_SCHEMA_VERSION)
         self.assertTrue(migrated["inputs"])
-        self.assertTrue(semantic_constraints_from_task_spec(migrated))
+        self.assertEqual(
+            semantic_constraints_from_task_spec(migrated)[0]["semantic_key"],
+            "required_behavior.annotation_format",
+        )
         self.assertNotIn("migrations_applied", migrated)
         self.assertNotIn("expected_outputs", migrated)
 

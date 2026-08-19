@@ -148,7 +148,14 @@ class OutputContractClosureTests(unittest.TestCase):
         )
         cls.fixture_task_id = fixture["task_spec"]["task_id"]
         cls.fixture_selected_skills = fixture["selected_skill_ids"]
-        cls.fixture_spec = ensure_task_spec(fixture["task_spec"])
+        fresh_task = copy.deepcopy(fixture["task_spec"])
+        # Fresh renderer bindings come from structured parameters. Historical
+        # scalar requirement rows remain display-only highlighted text.
+        fresh_task["parameters"] = {
+            "annotation_format": "gtf22",
+            "database_source": "custom_genome",
+        }
+        cls.fixture_spec = ensure_task_spec(fresh_task)
         cls.fixture_outputs = effective_output_contracts(cls.fixture_spec)
         cls.fixture_markdown = (
             FIXTURE_ROOT / "session_1786114733_planner_initial.md"

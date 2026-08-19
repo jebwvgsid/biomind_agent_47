@@ -1101,7 +1101,7 @@ def _accepted_consultant_handoff_view(
     raw = dict(handoff or {})
     allowed = (
         "summary", "requirements_summary", "goal_interpretation", "input_files",
-        "required_outputs", "hard_constraints", "selected_skills",
+        "required_outputs", "selected_skills",
         "capability_decisions", "runtime_requirements", "resolved_ambiguities",
         "unresolved_questions", "database_strategy",
     )
@@ -1420,7 +1420,95 @@ def build_node_context(
                 basename = canonical_path.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
                 row["required_basename" if direction == "output" else "basename"] = basename
             (outputs if direction == "output" else inputs).append(row)
-    constraints = _constraint_rows(task_spec, handles, used)
+    # Open-world requirements are projected directly, in canonical order, and
+    # never enter the semantic-handle registry.  ``_constraint_rows`` remains
+    # only as a read-old adapter for historical payload tooling.
+    constraints: List[Dict[str, Any]] = []
+    highlighted_constraints: List[Dict[str, Any]] = []
+    for raw in task_spec.get("requirements", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        value = raw.get("value")
+        if isinstance(value, str):
+            text = value
+        else:
+            text = str(raw.get("source_text") or raw.get("description") or "").strip()
+            if not text:
+                key = str(raw.get("semantic_key") or raw.get("requirement_id") or "").strip()
+                encoded = json.dumps(
+                    value,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    default=str,
+                )
+                text = f"{key} = {encoded}" if key else encoded
+        if not text:
+            continue
+        importance = re.sub(
+            r"[^a-z0-9]+", "_", str(raw.get("strength") or "").lower()
+        ).strip("_")
+        if importance not in {
+            "hard", "required", "preference", "conditional", "advisory",
+            "ambiguous",
+        }:
+            level = re.sub(
+                r"[^a-z0-9]+", "_", str(raw.get("level") or "").lower()
+            ).strip("_")
+            importance = {
+                "required": "required",
+                "conditional": "conditional",
+                "recommended": "preference",
+                "optional_validation": "advisory",
+                "known_absent": "advisory",
+                "unknown": "ambiguous",
+            }.get(level, "ambiguous")
+        source_refs: List[str] = []
+        for ref in (raw.get("source_ref"), raw.get("source_id")):
+            ref_text = str(ref or "").strip()
+            if ref_text:
+                display_ref = (
+                    "source-ref-" + hashlib.sha256(
+                        ref_text.encode("utf-8")
+                    ).hexdigest()[:16]
+                    if re.match(
+                        r"^(?:sha256:[0-9a-f]{32,}|"
+                        r"(?:object|audit|evidence):sha256:[0-9a-f]{16,}|"
+                        r"cas:[A-Za-z0-9._:-]+)$",
+                        ref_text,
+                        flags=re.IGNORECASE,
+                    )
+                    else ref_text
+                )
+                if display_ref not in source_refs:
+                    source_refs.append(display_ref)
+        for provenance in raw.get("provenance", []) or []:
+            if not isinstance(provenance, Mapping):
+                continue
+            ref_text = str(
+                provenance.get("source_ref") or provenance.get("source_id") or ""
+            ).strip()
+            if ref_text:
+                display_ref = (
+                    "source-ref-" + hashlib.sha256(
+                        ref_text.encode("utf-8")
+                    ).hexdigest()[:16]
+                    if re.match(
+                        r"^(?:sha256:[0-9a-f]{32,}|"
+                        r"(?:object|audit|evidence):sha256:[0-9a-f]{16,}|"
+                        r"cas:[A-Za-z0-9._:-]+)$",
+                        ref_text,
+                        flags=re.IGNORECASE,
+                    )
+                    else ref_text
+                )
+                if display_ref not in source_refs:
+                    source_refs.append(display_ref)
+        highlighted_constraints.append({
+            "text": text,
+            "importance": importance,
+            "source_refs": source_refs,
+        })
     steps, step_handles = _step_rows(step_plan, handles, used)
     _project_step_semantic_references(steps, handles)
     evidence_rows = _evidence_rows(evidence, handles)
@@ -1466,7 +1554,7 @@ def build_node_context(
     _project_step_semantic_references([goal_view], handles)
     task_view: Dict[str, Any] = {
         "goal": str(goal_view.get("goal") or ""),
-        "constraints": constraints,
+        "highlighted_constraints": highlighted_constraints,
         "inputs": inputs,
         "outputs": outputs,
     }
@@ -1542,7 +1630,6 @@ def build_node_context(
         compatibility_task = deepcopy(task_view)
         if normalized_node in {"generate", "recovery"}:
             compatibility_task.update({
-                "constraints": focus_constraints,
                 "inputs": focus_inputs,
                 "outputs": focus_outputs,
             })
@@ -1951,9 +2038,6 @@ def resolve_plan_proposal_handles(
         for step in steps:
             if not isinstance(step, MutableMapping):
                 continue
-            step["semantic_constraint_ids"] = resolve_list(
-                step.get("semantic_constraint_ids"), object_type="constraint",
-            )
             step["inputs"] = resolve_list(
                 step.get("inputs"), object_type="artifact",
             )
@@ -1985,9 +2069,6 @@ def resolve_plan_proposal_handles(
                 replacement.pop("step_handle", None)
             new_step = replacement.get("new_step")
             if isinstance(new_step, MutableMapping):
-                new_step["semantic_constraint_ids"] = resolve_list(
-                    new_step.get("semantic_constraint_ids"), object_type="constraint",
-                )
                 new_step["inputs"] = resolve_list(
                     new_step.get("inputs"), object_type="artifact",
                 )

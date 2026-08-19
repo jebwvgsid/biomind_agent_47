@@ -200,9 +200,9 @@ def _normalize_in_memory_task_record(state: PlanState) -> None:
     state["_legacy_builder_task_import_pending"] = True
 
 CANONICAL_TASK_SCHEMA_VERSION = 8
-PLAN_SCHEMA_VERSION = 9
-PLAN_MIGRATION_VERSION = 9
-PLAN_CANONICALIZATION_VERSION = "plan-c14n-v2"
+PLAN_SCHEMA_VERSION = 10
+PLAN_MIGRATION_VERSION = 10
+PLAN_CANONICALIZATION_VERSION = "plan-c14n-v3"
 VALIDATION_ISSUE_SCHEMA_VERSION = 1
 PROJECTION_COMPLETE = "COMPLETE"
 PROJECTION_INCOMPLETE = "INCOMPLETE"
@@ -333,7 +333,7 @@ def canonical_task_spec_for_state(
     return canonical
 PLANNER_MUTABLE_STEP_FIELDS = {
     "step_id", "title", "action", "purpose", "tool", "inputs", "outputs",
-    "dependencies", "depends_on", "semantic_constraint_ids", "success_criteria",
+    "dependencies", "depends_on", "success_criteria",
     "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
 }
 PROVENANCE_SCHEMA_VERSION = 1
@@ -372,6 +372,8 @@ PLAN_STEP_FIELDS = (
     "depends_on",
     "step_type",
     "renderer_id",
+    # Retained in the semantic hash reader solely so immutable v9 approval
+    # identities remain stable. Fresh v10 writers strip both fields.
     "semantic_constraint_ids",
     "semantic_claims",
     "success_criteria",
@@ -3672,8 +3674,16 @@ def resolve_plan_semantic_claims(
     state: PlanState,
     task_spec: Mapping[str, Any] | None,
 ) -> Tuple[PlanState, List[Dict[str, Any]]]:
-    """Resolve Planner references against TaskSpec exactly once."""
+    """Resolve legacy Planner references; fresh v10 plans carry none."""
     candidate = deepcopy(state)
+    compatibility = dict(candidate.get("compatibility") or {})
+    source_schema_version = _int(
+        compatibility.get("source_schema_version")
+        or candidate.get("schema_version"),
+        PLAN_SCHEMA_VERSION,
+    )
+    if source_schema_version >= PLAN_SCHEMA_VERSION:
+        return candidate, []
     index = _constraint_index(task_spec)
     issues: List[Dict[str, Any]] = []
     for position, raw_step in enumerate(candidate.get("steps", []) or []):
@@ -4437,13 +4447,6 @@ def render_structured_plan(state: PlanState) -> str:
             *([f"    - {item}" for item in step.get("inputs", []) or []] or ["    - []"]),
             "  - Outputs:",
             *([f"    - {item}" for item in step.get("outputs", []) or []] or ["    - []"]),
-            "  - Semantic claims: " + json.dumps(
-                step.get("semantic_claims") or [],
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-                default=str,
-            ),
             f"  - Depends on: [{', '.join(step.get('depends_on') or step.get('dependencies') or [])}]",
             f"  - Success criteria: {'; '.join(step.get('success_criteria') or [])}",
             f"  - Stage: [{stages}]",
@@ -4550,6 +4553,91 @@ def render_plan_review_content(state: PlanState, plan_text: str = "") -> str:
         for step_id in item.get("changed_step_ids", []) or []
         if str(step_id)
     ))
+    highlighted_lines: List[str] = []
+    task_spec = canonical_current_task_spec(_current_task_spec(state))
+    for raw in task_spec.get("requirements", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        value = raw.get("value")
+        if isinstance(value, str):
+            text = value
+        else:
+            text = str(raw.get("source_text") or raw.get("description") or "").strip()
+            if not text:
+                key = str(raw.get("semantic_key") or raw.get("requirement_id") or "").strip()
+                encoded = json.dumps(
+                    value,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    default=str,
+                )
+                text = f"{key} = {encoded}" if key else encoded
+        if not text:
+            continue
+        importance = re.sub(
+            r"[^a-z0-9]+", "_", str(raw.get("strength") or "").lower()
+        ).strip("_")
+        if importance not in {
+            "hard", "required", "preference", "conditional", "advisory",
+            "ambiguous",
+        }:
+            level = re.sub(
+                r"[^a-z0-9]+", "_", str(raw.get("level") or "").lower()
+            ).strip("_")
+            importance = {
+                "required": "required",
+                "conditional": "conditional",
+                "recommended": "preference",
+                "optional_validation": "advisory",
+                "known_absent": "advisory",
+                "unknown": "ambiguous",
+            }.get(level, "ambiguous")
+        source_refs: List[str] = []
+        for ref in (raw.get("source_ref"), raw.get("source_id")):
+            ref_text = str(ref or "").strip()
+            if ref_text:
+                display_ref = (
+                    "source-ref-" + hashlib.sha256(
+                        ref_text.encode("utf-8")
+                    ).hexdigest()[:16]
+                    if re.match(
+                        r"^(?:sha256:[0-9a-f]{32,}|"
+                        r"(?:object|audit|evidence):sha256:[0-9a-f]{16,}|"
+                        r"cas:[A-Za-z0-9._:-]+)$",
+                        ref_text,
+                        flags=re.IGNORECASE,
+                    )
+                    else ref_text
+                )
+                if display_ref not in source_refs:
+                    source_refs.append(display_ref)
+        for provenance in raw.get("provenance", []) or []:
+            if not isinstance(provenance, Mapping):
+                continue
+            ref_text = str(
+                provenance.get("source_ref") or provenance.get("source_id") or ""
+            ).strip()
+            if ref_text:
+                display_ref = (
+                    "source-ref-" + hashlib.sha256(
+                        ref_text.encode("utf-8")
+                    ).hexdigest()[:16]
+                    if re.match(
+                        r"^(?:sha256:[0-9a-f]{32,}|"
+                        r"(?:object|audit|evidence):sha256:[0-9a-f]{16,}|"
+                        r"cas:[A-Za-z0-9._:-]+)$",
+                        ref_text,
+                        flags=re.IGNORECASE,
+                    )
+                    else ref_text
+                )
+                if display_ref not in source_refs:
+                    source_refs.append(display_ref)
+        highlighted_lines.append(
+            f"- [{importance}] {text} | source_refs: "
+            + json.dumps(source_refs, ensure_ascii=False)
+        )
     lines = [
         "## Plan Identity",
         f"- Plan ID: `{identity['plan_id']}`",
@@ -4560,6 +4648,9 @@ def render_plan_review_content(state: PlanState, plan_text: str = "") -> str:
         f"- Execution Cursor: `{state.get('execution_cursor_step_id') or 'none'}`",
         f"- Next Executable Step: `{(next_executable or {}).get('step_id') or 'none'}`",
         f"- Changed Stable Step IDs: `{', '.join(changed_ids) or 'none'}`",
+        "",
+        "## Highlighted Constraints",
+        *(highlighted_lines or ["- none"]),
         "",
         "## Effective Plan",
     ]
@@ -4767,6 +4858,11 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
         source_schema_version = int(data.get("schema_version") or 1)
     except (TypeError, ValueError):
         source_schema_version = 1
+    source_compatibility = dict(data.get("compatibility") or {})
+    semantic_source_schema_version = _int(
+        source_compatibility.get("source_schema_version"),
+        source_schema_version,
+    )
     try:
         _assert_plan_state_reader_compatible(data)
     except ReaderCompatibilityError as exc:
@@ -4822,6 +4918,14 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
         steps,
         allow_legacy_artifact_inference=(source_schema_version < CANONICAL_TASK_SCHEMA_VERSION),
     )
+    if semantic_source_schema_version >= PLAN_SCHEMA_VERSION:
+        for step in data["steps"]:
+            if not isinstance(step, dict):
+                continue
+            step.pop("semantic_constraint_ids", None)
+            step.pop("semantic_claims", None)
+            step.pop("semantic_claims_validation", None)
+            step.pop("semantic_claims_invalid_raw", None)
     known_step_ids = {
         str(step.get("step_id") or "") for step in data["steps"] if isinstance(step, dict)
     }
@@ -4930,6 +5034,11 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
         data.setdefault("plan_artifacts", {})
         newly_applied.append("plan_contract_reader_envelope_v9")
 
+    if prior_migration_version < 10:
+        # V10 retires generic semantic claims/constraint IDs for fresh plans.
+        # Historical v9 rows remain readable under compatibility.source_schema_version.
+        newly_applied.append("open_world_highlighted_requirements_plan_v10")
+
     data["schema_version"] = PLAN_SCHEMA_VERSION
     data["plan_schema_version"] = PLAN_SCHEMA_VERSION
     data["migration_version"] = PLAN_MIGRATION_VERSION
@@ -4949,10 +5058,24 @@ def carry_forward_plan_lifecycle(previous: PlanState, candidate: PlanState) -> P
     # creating a plan cannot reset conversation history or canonical state.
     for key in (
         "current_task", "conversation_evidence", "task_state", "audit_index",
-        "state_generation", "created_at", "compatibility", "provenance_state",
+        "state_generation", "created_at", "provenance_state",
     ):
         if key in previous:
             candidate[key] = deepcopy(previous[key])
+    # The candidate is a fresh Planner-v2/Plan-v10 write.  Historical reader
+    # compatibility belongs to the previous snapshot and must not make the new
+    # plan re-enter the retired generic semantic-claim validation path.
+    candidate["compatibility"] = {
+        "source_schema_version": PLAN_SCHEMA_VERSION,
+        "read_aliases_enabled": False,
+    }
+    for step in candidate.get("steps", []) or []:
+        if not isinstance(step, dict):
+            continue
+        step.pop("semantic_constraint_ids", None)
+        step.pop("semantic_claims", None)
+        step.pop("semantic_claims_validation", None)
+        step.pop("semantic_claims_invalid_raw", None)
     previous_hash = semantic_plan_hash(previous) if previous.get("steps") else ""
     candidate_hash = semantic_plan_hash(candidate) if candidate.get("steps") else ""
     previous_revision = max(1, _int(previous.get("plan_revision"), 1))
@@ -5164,7 +5287,6 @@ def build_approval_projection(state: PlanState) -> Dict[str, Any]:
             "renderer_invocation_contract": deepcopy(
                 dict(step.get("renderer_invocation_contract") or {})
             ),
-            "semantic_claims": deepcopy(list(step.get("semantic_claims") or [])),
         })
     return {
         "schema_version": 2,
@@ -5487,6 +5609,11 @@ def plan_contract_violations(state: PlanState) -> List[Dict[str, str]]:
     if not steps:
         return [{"step_id": "", "field": "steps", "reason": "Plan has no executable steps."}]
     violations: List[Dict[str, str]] = []
+    compatibility = dict(state.get("compatibility") or {})
+    legacy_plan_semantics = _int(
+        compatibility.get("source_schema_version") or state.get("schema_version"),
+        PLAN_SCHEMA_VERSION,
+    ) < PLAN_SCHEMA_VERSION
     for index, raw_step in enumerate(steps):
         raw_action = str(raw_step.get("action") or "").strip().lower()
         if raw_action == "search" and step_requires_execution_evidence(raw_step):
@@ -5499,7 +5626,7 @@ def plan_contract_violations(state: PlanState) -> List[Dict[str, str]]:
         step = normalize_plan_step(dict(raw_step), index + 1)
         step_id = str(step.get("step_id") or "")
         claim_validation = dict(step.get("semantic_claims_validation") or {})
-        if claim_validation.get("valid") is False:
+        if legacy_plan_semantics and claim_validation.get("valid") is False:
             violations.append({
                 "violation_code": "SEMANTIC_CLAIMS_INVALID",
                 "step_id": step_id,
@@ -5538,7 +5665,7 @@ def plan_contract_violations(state: PlanState) -> List[Dict[str, str]]:
     # ArtifactRefKey/DAG validator before commit.  This compatibility
     # validator must not reconstruct consume/produce semantics from whether a
     # value resembles a task input, task output, filename, or ID prefix.
-    if task_spec:
+    if task_spec and legacy_plan_semantics:
         plan_claims: List[Dict[str, Any]] = []
         all_inputs: set[str] = set()
         all_outputs: set[str] = set()
@@ -6808,14 +6935,19 @@ def build_plan_state(
             if isinstance(step, Mapping)
         ] if strict else raw_steps,
     }
+    if strict:
+        for step in state["steps"]:
+            step.pop("semantic_constraint_ids", None)
+            step.pop("semantic_claims", None)
+            step.pop("semantic_claims_validation", None)
+            step.pop("semantic_claims_invalid_raw", None)
     if not strict:
         state["schema_version"] = CANONICAL_TASK_SCHEMA_VERSION - 1
         state["plan_schema_version"] = CANONICAL_TASK_SCHEMA_VERSION - 1
         state["migration_version"] = CANONICAL_TASK_SCHEMA_VERSION - 1
     if strict:
         state["plan_document"] = {
-            "schema_version": 1,
-            "semantic_claims": [],
+            "schema_version": 2,
             "validation_checklist": deepcopy(list(structured.get("validation_checklist") or [])),
             "metadata": deepcopy(dict(structured.get("metadata") or {})),
         }

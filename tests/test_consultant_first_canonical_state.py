@@ -147,9 +147,11 @@ class ConsultantFirstCanonicalStateTests(unittest.TestCase):
         )
         self.assertEqual(repaired["revision"], 2)
         self.assertEqual(
-            repaired["requirements"][0]["semantic_key"],
-            "required_behavior.chromosome_naming",
+            repaired["requirements"][0]["value"],
+            "validate_and_resolve_mismatch",
         )
+        self.assertNotIn("semantic_key", repaired["requirements"][0])
+        self.assertNotIn("constraint_id", repaired["requirements"][0])
 
     def test_05_user_correction_replaces_current_input_without_erasing_history(self) -> None:
         first = apply_task_spec_mutation_proposal(
@@ -276,6 +278,7 @@ class ConsultantFirstCanonicalStateTests(unittest.TestCase):
             selected_skills=["genomics/snpeff-annotation"],
             task_id="session_11",
             renderer_records=[record],
+            legacy_renderer_mode=True,
         )
         projection = project_task_spec_to_renderer(
             candidate["task_spec"], record["invocation"], task_id="session_11"

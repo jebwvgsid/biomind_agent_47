@@ -21,6 +21,15 @@ Date: 2026-08-07
 
 ## Implemented Contract
 
+Current amendment (2026-08-19): generic natural-language requirements are
+reviewed through the full ordered Highlighted Constraint List. Fresh Planner
+wire v2 / Plan schema v10 no longer persist generic semantic claims or
+constraint references. `render_plan_review_content()` shows all highlights
+before the steps, and changing requirement text still invalidates the Task
+semantic/approval scope. Provenance-only enrichment does not. The Controller
+does not claim to prove arbitrary prose compliance; all structured approval,
+artifact, renderer, and action-lineage checks below remain deterministic.
+
 - RequestEnvelope separates canonical request text, raw submission text, benchmark source, and controls.
 - Input, requirement, and output bindings preserve a `provenance[]` list while retaining legacy scalar source fields.
 - `output_contracts` is authoritative; `expected_outputs` is a compatibility projection.

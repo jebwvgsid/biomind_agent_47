@@ -269,6 +269,7 @@ from agent_core.plan_tracker import (
     ATTEMPT_VALIDATED,
     PLAN_OPERATION_LOCAL_REPLAN,
     PLAN_OPERATION_REPAIR,
+    PLAN_SCHEMA_VERSION,
     PlanStructureError,
     TASK_STATUS_BLOCKED,
     TASK_STATUS_CANCELLED,
@@ -3431,7 +3432,7 @@ class BioAnalystAgent:
             projection["summary"] = summary
         for key in (
             "goal_interpretation", "input_files", "required_outputs",
-            "hard_constraints", "selected_skills", "capability_decisions",
+            "selected_skills", "capability_decisions",
             "runtime_requirements", "resolved_ambiguities",
             "unresolved_questions", "database_strategy",
         ):
@@ -3475,27 +3476,6 @@ class BioAnalystAgent:
             ]
             if outputs:
                 projection["required_outputs"] = outputs
-        if task_spec and not projection.get("hard_constraints"):
-            constraints = [
-                {
-                    key: deepcopy(item[key])
-                    for key in (
-                        "semantic_key", "operator", "value", "strength",
-                        "needs_clarification",
-                    )
-                    if item.get(key) not in (None, "", [], {})
-                }
-                for item in (
-                    task_spec.get("requirements")
-                    or task_spec.get("semantic_constraints")
-                    or []
-                )
-                if isinstance(item, Mapping)
-                and str(item.get("strength") or "hard").lower() == "hard"
-            ]
-            constraints = [item for item in constraints if item]
-            if constraints:
-                projection["hard_constraints"] = constraints
         if task_spec and not projection.get("unresolved_questions"):
             unresolved = deepcopy(list(task_spec.get("unresolved_questions") or []))
             if unresolved:
@@ -7618,6 +7598,12 @@ class BioAnalystAgent:
             selected_skill_ids=state.get("selected_skills") or plan_state.get("selected_skill_ids", []),
         )
         for item in task_constraints:
+            semantic_key = str(item.get("semantic_key") or "")
+            if not (
+                semantic_key.startswith("failure_policy.")
+                or semantic_key == "forbidden_behavior.runtime_install"
+            ):
+                continue
             register_semantic(
                 item,
                 "task_contract",
@@ -7629,15 +7615,34 @@ class BioAnalystAgent:
 
         plan_version = str(plan_state.get("plan_version") or "plan_v1")
         task_inputs_by_value = {
-            str(item.get("value") or "").strip(): str(item.get("semantic_key") or "")
-            for item in task_constraints
-            if str(item.get("semantic_key") or "").startswith("required_input.")
+            str(
+                item.get("canonical_path") or item.get("path")
+                or item.get("value") or ""
+            ).strip(): "required_input." + canonical_input_role(
+                str(item.get("role") or ""),
+                str(item.get("canonical_path") or item.get("path") or ""),
+            )
+            for item in task_spec.get("inputs", []) or []
+            if isinstance(item, Mapping)
+            and str(item.get("canonical_path") or item.get("path") or item.get("value") or "").strip()
         }
         task_outputs_by_value = {
-            str(item.get("value") or "").strip(): str(item.get("semantic_key") or "")
-            for item in task_constraints
-            if str(item.get("semantic_key") or "").startswith("required_output.")
+            str(
+                item.get("canonical_path") or item.get("path")
+                or item.get("filename") or item.get("value") or ""
+            ).strip(): "required_output." + re.sub(
+                r"[^a-z0-9]+", "_", str(item.get("role") or "output").lower()
+            ).strip("_")
+            for item in task_spec.get("output_contracts", []) or []
+            if isinstance(item, Mapping)
+            and str(item.get("canonical_path") or item.get("path") or item.get("filename") or item.get("value") or "").strip()
         }
+        compatibility = dict(plan_state.get("compatibility") or {})
+        legacy_plan_semantics = int(
+            compatibility.get("source_schema_version")
+            or plan_state.get("schema_version")
+            or 1
+        ) < PLAN_SCHEMA_VERSION
 
         def plan_binding(value: Any, *, output_binding: bool, step_id: str) -> None:
             text = str(value or "").strip()
@@ -7681,7 +7686,7 @@ class BioAnalystAgent:
                         step_ids=[step_id] if step_id else [], reliability=0.95, confidence=0.98,
                     )
             for item in step.get("semantic_claims", []) or []:
-                if isinstance(item, dict):
+                if legacy_plan_semantics and isinstance(item, dict):
                     register_semantic(
                         item, "plan", scope="stage", scope_id=step_id or str(task_id),
                         step_ids=[step_id] if step_id else [], reliability=0.9, confidence=0.9,
@@ -11338,9 +11343,6 @@ class BioAnalystAgent:
                 field = nested_field[kind]
                 value = raw.get(field)
                 if not isinstance(value, Mapping):
-                    # Public aliases in the specification may use a compact
-                    # semantic_key/value form.  Expanding it is deterministic
-                    # ABI normalization, not natural-language interpretation.
                     semantic_key = str(raw.get("semantic_key") or raw.get("role") or "").strip()
                     if kind == "upsert_input":
                         value = {
@@ -11355,26 +11357,34 @@ class BioAnalystAgent:
                             "required": bool(raw.get("required", True)),
                         }
                     elif kind == "upsert_constraint":
-                        category = str(raw.get("kind") or "required_behavior").strip()
-                        if not semantic_key:
-                            digest = hashlib.sha256(
-                                json.dumps(raw.get("value"), ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
-                            ).hexdigest()[:12]
-                            semantic_key = f"{category}.{digest}"
                         value = {
-                            "semantic_key": semantic_key,
-                            "category": category,
-                            "operator": raw.get("operator") or "require",
                             "value": raw.get("value"),
-                            "strength": raw.get("strength") or "hard",
-                            "confidence": raw.get("confidence", 1.0),
+                            "strength": raw.get("strength") or raw.get("level") or "required",
                         }
+                        if str(raw.get("requirement_id") or "").strip():
+                            value["requirement_id"] = str(raw["requirement_id"]).strip()
                     else:
                         value = {
                             "semantic_key": semantic_key,
                             "value": raw.get("value"),
                         }
                 value = deepcopy(dict(value))
+                if kind == "upsert_constraint":
+                    declared_key = str(value.get("semantic_key") or "").strip().lower()
+                    typed_policy = bool(
+                        declared_key.startswith("failure_policy.")
+                        or declared_key == "forbidden_behavior.runtime_install"
+                    )
+                    if not typed_policy:
+                        value = {
+                            key: deepcopy(value.get(key))
+                            for key in (
+                                "requirement_id", "value", "strength", "level",
+                                "ambiguity", "needs_clarification",
+                                "unresolved_reason", "status",
+                            )
+                            if value.get(key) not in (None, "", [], {})
+                        }
                 if source_refs:
                     value.setdefault("source_ref", source_refs[0])
                     value.setdefault("source_id", source_refs[0])
@@ -11388,9 +11398,13 @@ class BioAnalystAgent:
             elif kind == "remove_input" or kind == "remove_output_contract":
                 operation["role"] = raw.get("role") or raw.get("semantic_key")
             elif kind == "remove_constraint":
-                operation["constraint_id"] = (
-                    raw.get("constraint_id") or raw.get("semantic_key") or raw.get("requirement_id")
-                )
+                requirement_id = raw.get("requirement_id")
+                if requirement_id:
+                    operation["requirement_id"] = requirement_id
+                else:
+                    operation["constraint_id"] = (
+                        raw.get("constraint_id") or raw.get("semantic_key")
+                    )
             elif kind == "remove_decision":
                 operation["semantic_key"] = raw.get("semantic_key")
             else:
@@ -12727,212 +12741,48 @@ class BioAnalystAgent:
         *,
         fallback_source_id: str,
     ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
-        """Build the complete source-addressable TaskSpec projection for v2."""
+        """Project fresh open-text requirements without semantic compilation.
+
+        Source-addressable semantic directives are retained only for explicit
+        typed/legacy constraints already present in the deterministic base.
+        Arbitrary TaskSpec requirements remain ordered open text and therefore
+        create no fresh semantic tuple or exact coverage gap.
+        """
         normalized = ensure_task_spec(task_spec)
         effective = effective_task_contract(normalized)
         directives: List[Dict[str, Any]] = []
-        coverage_gaps: List[Dict[str, Any]] = []
-
-        def semantic_identity(value: Mapping[str, Any]) -> str:
-            return json.dumps({
-                "semantic_key": str(value.get("semantic_key") or "").strip().lower(),
-                "operator": str(value.get("operator") or "").strip().lower(),
-                "value": value.get("normalized_value") if "normalized_value" in value else value.get("value"),
-            }, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
-
-        base_identities = {
-            semantic_identity(item)
-            for item in deterministic_base_constraints
-            if isinstance(item, Mapping)
-        }
-
-        def add_directive(
-            value: Mapping[str, Any],
-            *,
-            directive_kind: str,
-            gap_if_uncovered: bool,
-        ) -> None:
-            raw = dict(value)
-            semantic_key = str(raw.get("semantic_key") or "").strip()
-            operator = str(raw.get("operator") or "").strip()
-            normalized_value = deepcopy(raw.get("value"))
-            source_ids = self._finalize_constraint_source_ids(raw) or [fallback_source_id]
-            identity_seed = {
-                "semantic_key": semantic_key,
-                "operator": operator,
-                "value": normalized_value,
-                "source_ids": source_ids,
-            }
-            declared_id = str(
-                raw.get("directive_id")
-                or raw.get("constraint_id")
-                or raw.get("requirement_id")
-                or ""
-            ).strip()
-            directive_id = declared_id or "directive-" + self._finalize_digest(identity_seed)[:20]
-            normalized_text = str(
-                raw.get("normalized_text")
-                or raw.get("source_text")
-                or raw.get("text")
-                or raw.get("description")
-                or normalized_value
-                or ""
-            ).strip()
-            directive = {
-                "directive_id": directive_id,
-                "directive_kind": directive_kind,
-                "semantic_key": semantic_key,
-                "operator": operator,
-                "normalized_value": normalized_value,
-                "normalized_text": normalized_text,
-                "strength": str(raw.get("strength") or "hard"),
-                "enforcement_scope": semantic_constraint_enforcement_scope(raw),
-                "condition": deepcopy(raw.get("condition")),
-                "source_ids": source_ids,
-            }
-            if not any(item.get("directive_id") == directive_id for item in directives):
-                directives.append(directive)
-            if (
-                gap_if_uncovered
-                and semantic_key
-                and operator
-                and semantic_identity(directive) not in base_identities
-            ):
-                coverage_gaps.append({
-                    "directive_id": directive_id,
-                    "semantic_key": semantic_key,
-                    "operator": operator,
-                    "normalized_value": normalized_value,
-                    "strength": directive["strength"],
-                    "enforcement_scope": directive["enforcement_scope"],
-                    "condition": deepcopy(directive.get("condition")),
-                    "source_ids": source_ids,
-                    "reason": "not_represented_in_deterministic_base",
-                })
-
         for constraint in deterministic_base_constraints:
             if not isinstance(constraint, Mapping):
                 continue
-            category = str(constraint.get("semantic_key") or "").split(".", 1)[0]
-            add_directive(
-                constraint,
-                directive_kind=category or "semantic_constraint",
-                gap_if_uncovered=False,
-            )
-
-        structured_fields = (
-            ("must_do", "required_behavior", "require", "hard"),
-            ("must_not_do", "forbidden_behavior", "forbid", "hard"),
-            ("stop_conditions", "failure_policy", "on_condition", "conditional"),
-            ("acceptance_criteria", "required_behavior", "require", "required"),
-        )
-        for field, category, operator, strength in structured_fields:
-            for index, raw_value in enumerate(normalized.get(field, []) or []):
-                raw = dict(raw_value) if isinstance(raw_value, Mapping) else {"value": raw_value}
-                text = str(
-                    raw.get("text")
-                    or raw.get("description")
-                    or raw.get("value")
-                    or ""
-                ).strip()
-                if not text:
-                    continue
-                slot = self._finalize_digest({"field": field, "index": index, "text": text})[:16]
-                raw.setdefault("semantic_key", f"{category}.directive_{slot}")
-                raw.setdefault("operator", operator)
-                raw.setdefault("value", text)
-                raw.setdefault("strength", strength)
-                raw.setdefault("source_id", fallback_source_id)
-                add_directive(raw, directive_kind=field, gap_if_uncovered=True)
-
-        def raw_directive_segments(text: str) -> List[str]:
-            """Split an active user directive without discarding its wording.
-
-            TaskSpec intentionally preserves the raw submission even when its
-            generic request extractor cannot assign domain ontology keys.  A
-            finalize context may not silently classify that text as
-            non-semantic: every material clause must remain source-addressable
-            and get an exact controller-owned coverage identity.
-            """
-            pieces = re.split(
-                r"(?:\r?\n)+|(?<=[。！？；])\s*|(?<=[.!?;])(?:\s+|$)",
-                str(text or "").strip(),
-            )
-            normalized: List[str] = []
-            for piece in pieces:
-                value = re.sub(
-                    r"^\s*(?:[-*•]+|\d+[.)、]|[A-Za-z][.)])\s*",
-                    "",
-                    piece,
-                ).strip()
-                if value and value not in normalized:
-                    normalized.append(value)
-            return normalized or ([str(text).strip()] if str(text).strip() else [])
-
-        def raw_directive_semantics(text: str) -> Tuple[str, str]:
-            explicit_prohibition = re.search(
-                r"^\s*(?:(?:please\s+)?(?:do\s+not|don't|must\s+not|shall\s+not|never|forbid(?:den)?)\b"
-                r"|(?:[A-Za-z0-9_-]+\s+){1,5}(?:must\s+not|shall\s+not|is\s+forbidden\s+to)\b"
-                r"|(?:请)?(?:不要|不得|禁止|严禁|切勿|不可|不能))",
-                text,
-                flags=re.IGNORECASE,
-            )
-            if explicit_prohibition:
-                return "forbidden_behavior", "forbid"
-            return "required_behavior", "require"
-
-        # Schema-v5 stores the canonical goal once and raw text in an immutable
-        # object.  The source-addressable clause list is a deterministic
-        # projection, not another persisted TaskSpec copy.
-        directive_source = list(normalized.get("user_directives", []) or [])
-        if not directive_source and str(normalized.get("goal") or "").strip():
-            directive_source = [{
-                "text": str(normalized.get("goal") or "").strip(),
-                "source_message_id": str(normalized.get("raw_submission_ref") or fallback_source_id),
-                "active": True,
-            }]
-        for index, item in enumerate(directive_source):
-            if not isinstance(item, Mapping) or not bool(item.get("active", True)):
+            semantic_key = str(constraint.get("semantic_key") or "").strip()
+            operator = str(constraint.get("operator") or "").strip()
+            if not semantic_key or not operator:
                 continue
-            text = str(item.get("text") or "").strip()
-            source_id = str(item.get("source_message_id") or fallback_source_id).strip()
-            if not text:
-                continue
-            directive_id = str(item.get("directive_id") or "").strip() or (
-                "request-envelope-" + self._finalize_digest({"source_id": source_id, "text": text, "index": index})[:20]
-            )
-            if not any(row.get("directive_id") == directive_id for row in directives):
-                directives.append({
-                    "directive_id": directive_id,
-                    "directive_kind": "request_envelope",
-                    "normalized_text": text,
-                    "strength": "source_authority",
-                    "source_ids": [source_id],
-                    "semantic_classification": "typed_task_spec_projection_authority",
-                })
-            for segment_index, segment in enumerate(raw_directive_segments(text)):
-                category, operator = raw_directive_semantics(segment)
-                slot = self._finalize_digest({
-                    "parent_directive_id": directive_id,
-                    "segment_index": segment_index,
-                    "normalized_text": segment,
-                    "category": category,
-                    "operator": operator,
-                })[:20]
-                add_directive(
-                    {
-                        "directive_id": f"{directive_id}:segment:{slot}",
-                        "semantic_key": f"{category}.user_directive_{slot}",
-                        "operator": operator,
-                        "value": segment,
-                        "normalized_text": segment,
-                        "strength": "hard",
-                        "enforcement_scope": "runtime_global",
-                        "source_id": source_id,
-                    },
-                    directive_kind=category,
-                    gap_if_uncovered=True,
-                )
+            category = semantic_key.split(".", 1)[0]
+            value = deepcopy(constraint.get("value"))
+            source_ids = self._finalize_constraint_source_ids(constraint) or [fallback_source_id]
+            directive_id = str(
+                constraint.get("constraint_id")
+                or constraint.get("directive_id")
+                or ""
+            ).strip() or "directive-" + self._finalize_digest({
+                "semantic_key": semantic_key,
+                "operator": operator,
+                "value": value,
+                "source_ids": source_ids,
+            })[:20]
+            directives.append({
+                "directive_id": directive_id,
+                "directive_kind": category or "typed_constraint",
+                "semantic_key": semantic_key,
+                "operator": operator,
+                "normalized_value": value,
+                "normalized_text": str(constraint.get("source_text") or value or "").strip(),
+                "strength": str(constraint.get("strength") or "hard"),
+                "enforcement_scope": semantic_constraint_enforcement_scope(constraint),
+                "condition": deepcopy(constraint.get("condition")),
+                "source_ids": source_ids,
+            })
 
         categorized: Dict[str, List[Dict[str, Any]]] = {
             "required_behavior": [],
@@ -12948,10 +12798,42 @@ class BioAnalystAgent:
             category = str(constraint.get("semantic_key") or "").split(".", 1)[0]
             if category in categorized:
                 categorized[category].append(deepcopy(dict(constraint)))
+        highlighted_requirements = []
+        for requirement in effective.get("requirements") or []:
+            if not isinstance(requirement, Mapping):
+                continue
+            source_refs = self._finalize_constraint_source_ids(requirement) or [
+                fallback_source_id
+            ]
+            highlighted_requirements.append({
+                "text": deepcopy(requirement.get("value")),
+                "importance": str(
+                    requirement.get("strength")
+                    or requirement.get("level")
+                    or "required"
+                ),
+                "source_refs": [
+                    (
+                        "source-ref-" + hashlib.sha256(
+                            str(source_ref).encode("utf-8")
+                        ).hexdigest()[:16]
+                        if re.match(
+                            r"^(?:sha256:[0-9a-f]{32,}|"
+                            r"(?:object|audit|evidence):sha256:[0-9a-f]{16,}|"
+                            r"cas:[A-Za-z0-9._:-]+)$",
+                            str(source_ref),
+                            flags=re.IGNORECASE,
+                        )
+                        else str(source_ref)
+                    )
+                    for source_ref in source_refs
+                ],
+            })
         contract = {
             "goal": str(normalized.get("goal") or ""),
             "required_inputs": deepcopy(list(effective.get("inputs") or [])),
             "required_outputs": deepcopy(list(effective.get("outputs") or [])),
+            "highlighted_requirements": highlighted_requirements,
             "required_behaviors": categorized["required_behavior"],
             "forbidden_behaviors": categorized["forbidden_behavior"],
             "preferences": categorized["preference"],
@@ -12968,7 +12850,7 @@ class BioAnalystAgent:
             "source_refs": deepcopy(list(effective.get("source_refs") or [])),
             "source_addressable_directives": directives,
         }
-        return contract, coverage_gaps
+        return contract, []
 
     @staticmethod
     def _consultant_finalize_runtime_evidence(
@@ -13037,17 +12919,20 @@ class BioAnalystAgent:
             if isinstance(item, Mapping)
         }
         unresolved_semantics: List[Dict[str, Any]] = []
-        for constraint in base_constraints:
-            if not isinstance(constraint, Mapping) or not bool(constraint.get("needs_clarification")):
+        for requirement in effective_task_contract(task_spec).get("requirements") or []:
+            if not isinstance(requirement, Mapping) or not bool(requirement.get("needs_clarification")):
                 continue
-            item = deepcopy(dict(constraint))
-            identifier = str(item.get("constraint_id") or item.get("requirement_id") or "").strip()
+            item = deepcopy(dict(requirement))
+            identifier = str(item.get("requirement_id") or item.get("constraint_id") or "").strip()
             if not identifier:
                 identifier = "ambiguity-" + self._finalize_digest(item)[:20]
+            # FINALIZE v2's immutable ambiguity index is named constraint_id;
+            # this is an ephemeral protocol alias for the canonical open-text
+            # requirement_id, not a TaskSpec semantic identity.
             item["constraint_id"] = identifier
             item.setdefault(
                 "unresolved_reason",
-                f"TaskSpec marks {item.get('semantic_key') or identifier} as unresolved.",
+                f"TaskSpec marks open-text requirement {identifier} as unresolved.",
             )
             source_ids = self._finalize_constraint_source_ids(item)
             if not source_ids:
@@ -19264,6 +19149,14 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     consultation_state=state.get("consultation_state") or {},
                     selected_skill_ids=selected_for_repair,
                 )
+                repairable_semantic_keys = sorted({
+                    str(item.get("semantic_key") or "").strip()
+                    for item in task_spec.get("requirements", []) or []
+                    if isinstance(item, Mapping)
+                    and str(item.get("semantic_key") or "").strip()
+                    and str(item.get("semantic_key") or "").split(".", 1)[-1]
+                    in allowed_slots
+                })
                 repair_source_evidence = [
                     {
                         "evidence_id": str(item.get("source_id") or item.get("source_ref") or f"source:{index}"),
@@ -19300,14 +19193,19 @@ Return exactly one JSON object and no prose with these exact fields:
   "question": ""
 }}
 
-You may add or replace constraints only for these semantic slots:
+You may replace only existing legacy keyed constraints for these semantic slots:
 {json.dumps(allowed_slots, ensure_ascii=False)}
+
+Existing repairable legacy keys:
+{json.dumps(repairable_semantic_keys, ensure_ascii=False)}
 
 Every constraint must contain constraint_id, semantic_key, operator, value,
 strength, confidence, and provenance. Each provenance entry must contain only
 one `source_handle`, copied from an evidence handle in the payload. The
 Controller resolves it to the immutable source identity. Preserve all unaffected TaskSpec
-semantics. Do not modify selected skills, plan steps, renderer metadata,
+semantics. Do not create a new generic semantic key or ontology row. If no
+listed legacy key is applicable, request user input instead. Do not modify
+selected skills, plan steps, renderer metadata,
 validation issues, or approval state. If no catalog source authorizes the
 missing value, return constraints=[], needs_user_input=true, and one exact
 question. Never guess a scientific or database identity.
