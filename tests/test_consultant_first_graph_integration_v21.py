@@ -16,12 +16,18 @@ from agent_core.completion_gate import CompletionGate
 from agent_core.diagnostics import build_recovery_context
 from agent_core.plan_tracker import (
     CanonicalTaskStateError,
+    approve_plan_state,
     canonical_task_spec_for_state,
+    load_approved_plan_snapshot,
     load_plan_state,
     save_plan_state,
 )
 from agent_core.state_contract_store import StateContractStore
-from agent_core.task_spec import task_spec_revision
+from agent_core.task_spec import (
+    create_task_spec,
+    merge_task_spec,
+    task_spec_revision,
+)
 
 
 SKILL_ID = "sequence/search/local-blast"
@@ -106,6 +112,35 @@ def _planner_plan(input_path: str, output_path: str, *, two_steps: bool = False)
         "metadata": {
             "schema_version": 1,
             "planner_contract": "structured_plan_v1",
+        },
+    })
+
+
+def _planner_v2_plan() -> str:
+    return json.dumps({
+        "outcome_type": "PLAN_CANDIDATE",
+        "steps": [{
+            "step_id": "step-1",
+            "title": "Write the requested report",
+            "action": "execute",
+            "purpose": "analysis",
+            "tool": "python",
+            "inputs": ["input.reference_fasta"],
+            "outputs": ["output.report"],
+            "dependencies": [],
+            "success_criteria": ["report exists and is non-empty"],
+            "skill_ids": [SKILL_ID],
+            "workflow_stage_ids": [],
+            "batch_id": "",
+            "risk_level": "low",
+        }],
+        "validation_checklist": [{
+            "check_id": "check-report",
+            "description": "verify report output",
+        }],
+        "metadata": {
+            "schema_version": 2,
+            "planner_contract": "structured_plan_v2",
         },
     })
 
@@ -231,6 +266,119 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             "intent_admission": intent_admission,
             "managed_intent_admitted": True,
         }
+
+    def _ready_planner_state(
+        self,
+        task_id: str,
+        *,
+        input_path: Path,
+        output_path: Path,
+    ) -> dict[str, Any]:
+        task_spec = merge_task_spec(
+            create_task_spec(
+                "Use the supplied FASTA and write the requested report",
+                task_id=task_id,
+            ),
+            {
+                "inputs": [{
+                    "artifact_id": "artifact-reference-fasta",
+                    "semantic_handle": "input.reference_fasta",
+                    "role": "reference_fasta",
+                    "canonical_path": str(input_path),
+                    "required": True,
+                }],
+                "output_contracts": [{
+                    "artifact_id": "artifact-report",
+                    "semantic_handle": "output.report",
+                    "role": "report",
+                    "canonical_path": str(output_path),
+                    "required": True,
+                }],
+            },
+            source="user_explicit",
+            reason="planner_snapshot_reentry_fixture",
+        )
+        save_plan_state(
+            self.root,
+            task_id,
+            {
+                "task_id": task_id,
+                "task_spec": task_spec,
+                "steps": [],
+                "state_generation": 0,
+            },
+        )
+        consultation_state = {
+            "phase": "ready_to_plan",
+            "consultation_status": "ready",
+            "completion_decision": "ready_to_finalize",
+            "completion_reason": "test_fixture_complete",
+            "resolved_selected_skill_ids": [SKILL_ID],
+            "final_contract": {
+                "summary": "The managed task contract is complete.",
+                "selected_skills": [SKILL_ID],
+                "constraints": [],
+            },
+        }
+        return {
+            "messages": [HumanMessage(content=str(task_spec.get("goal") or ""))],
+            "task_id": task_id,
+            "session_id": task_id,
+            "project_id": self.agent.default_project_id,
+            "task_mode": "managed",
+            "task_spec": task_spec,
+            "task_revision": task_spec_revision(task_spec),
+            "selected_skills": [SKILL_ID],
+            "selected_skills_raw": [SKILL_ID],
+            "skill_selection_source": "test_fixture",
+            "consultation_state": consultation_state,
+            "requirements_summary": "The managed task contract is complete.",
+            "resolved_bindings": {},
+            "runtime_audit": [],
+        }
+
+    async def _seed_pending_candidate(
+        self,
+        task_id: str,
+        *,
+        input_path: Path,
+        output_path: Path,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        planner_state = self._ready_planner_state(
+            task_id,
+            input_path=input_path,
+            output_path=output_path,
+        )
+
+        async def scripted(
+            _messages: Any,
+            *,
+            node_context: Any,
+            stage: str,
+            **_kwargs: Any,
+        ) -> AIMessage:
+            del node_context
+            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+                return AIMessage(content=_planner_v2_plan())
+            raise AssertionError(f"unexpected stage: {stage}")
+
+        self.agent._ainvoke_node_llm = scripted
+        planner_result = await self.agent._graph_node_handlers["planner"](
+            planner_state
+        )
+        self.assertEqual(planner_result["next_step"], "plan_review")
+        next_state = dict(planner_state)
+        next_state.update({
+            key: value for key, value in planner_result.items() if key != "messages"
+        })
+        next_state["messages"] = add_messages(
+            list(planner_state.get("messages") or []),
+            list(planner_result.get("messages") or []),
+        )
+        durable = load_plan_state(self.root, task_id)
+        self.assertTrue((durable.get("current_plan") or {}).get("plan_snapshot_ref"))
+        self.assertEqual((durable.get("current_approval") or {}).get("status"), "pending")
+        return next_state, durable
 
     async def _run_through_planner(
         self,
@@ -436,6 +584,168 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(planner_result["next_step"], "plan_review")
         feedback = load_plan_state(self.root, task_id)["task_state"]["planner_feedback"]
         self.assertEqual(feedback["status"], "applied")
+
+    async def test_pending_candidate_reentry_does_not_load_approved_snapshot(self) -> None:
+        task_id = "graph-pending-candidate-reentry"
+        input_path = self.root / "pending.fasta"
+        output_path = self.root / "out-pending" / "report.md"
+        input_path.write_text(">chr1\nACGT\n", encoding="utf-8")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        planner_state, _durable = await self._seed_pending_candidate(
+            task_id,
+            input_path=input_path,
+            output_path=output_path,
+        )
+
+        async def scripted(
+            _messages: Any,
+            *,
+            node_context: Any,
+            stage: str,
+            **_kwargs: Any,
+        ) -> AIMessage:
+            del node_context
+            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+                return AIMessage(content=_planner_v2_plan())
+            raise AssertionError(f"unexpected stage: {stage}")
+
+        self.agent._ainvoke_node_llm = scripted
+        with patch.object(bio_agents, "load_approved_plan_snapshot") as loader:
+            result = await self.agent._graph_node_handlers["planner"](planner_state)
+
+        loader.assert_not_called()
+        self.assertEqual(result["next_step"], "plan_review")
+
+    async def test_approved_snapshot_reentry_loads_approved_snapshot(self) -> None:
+        task_id = "graph-approved-snapshot-reentry"
+        input_path = self.root / "approved.fasta"
+        output_path = self.root / "out-approved" / "report.md"
+        input_path.write_text(">chr1\nACGT\n", encoding="utf-8")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        planner_state, durable = await self._seed_pending_candidate(
+            task_id,
+            input_path=input_path,
+            output_path=output_path,
+        )
+        task_spec = canonical_task_spec_for_state(durable)
+        approve_plan_state(
+            durable,
+            task_spec_revision(task_spec),
+            review_event_id="review-approved-reentry",
+        )
+        save_plan_state(self.root, task_id, durable)
+        approved = load_plan_state(self.root, task_id)
+        self.assertEqual((approved.get("current_approval") or {}).get("status"), "approved")
+
+        async def scripted(
+            _messages: Any,
+            *,
+            node_context: Any,
+            stage: str,
+            **_kwargs: Any,
+        ) -> AIMessage:
+            del node_context
+            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+                return AIMessage(content=_planner_v2_plan())
+            raise AssertionError(f"unexpected stage: {stage}")
+
+        self.agent._ainvoke_node_llm = scripted
+        real_loader = bio_agents.load_approved_plan_snapshot
+        with patch.object(
+            bio_agents,
+            "load_approved_plan_snapshot",
+            wraps=real_loader,
+        ) as loader:
+            result = await self.agent._graph_node_handlers["planner"](planner_state)
+
+        loader.assert_called_once()
+        self.assertEqual(result["next_step"], "plan_review")
+
+    async def test_approved_snapshot_loader_remains_strict_for_pending_candidate(self) -> None:
+        task_id = "graph-pending-loader-strict"
+        input_path = self.root / "strict.fasta"
+        output_path = self.root / "out-strict" / "report.md"
+        input_path.write_text(">chr1\nACGT\n", encoding="utf-8")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        _planner_state, durable = await self._seed_pending_candidate(
+            task_id,
+            input_path=input_path,
+            output_path=output_path,
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "APPROVED_PLAN_SNAPSHOT_NOT_APPROVED",
+        ):
+            load_approved_plan_snapshot(
+                self.root,
+                task_id,
+                state=durable,
+            )
+
+    async def test_plan_review_unknown_output_reference_reenters_pending_candidate(self) -> None:
+        task_id = "graph-plan-review-pending-roundtrip"
+        input_path = self.root / "roundtrip.fasta"
+        output_path = self.root / "out-roundtrip" / "report.md"
+        input_path.write_text(">chr1\nACGT\n", encoding="utf-8")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        graph_state, durable = await self._seed_pending_candidate(
+            task_id,
+            input_path=input_path,
+            output_path=output_path,
+        )
+        durable["task_output_materializations"] = [{
+            "output_ref": "unknown.output.artifact",
+            "path": "unknown.txt",
+        }]
+        save_plan_state(self.root, task_id, durable)
+        pending = load_plan_state(self.root, task_id)
+        self.assertTrue((pending.get("current_plan") or {}).get("plan_snapshot_ref"))
+        self.assertEqual((pending.get("current_approval") or {}).get("status"), "pending")
+
+        self.agent._prompt_user = lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("blocking structural issue must route before human review")
+        )
+        review_result = await self.agent._graph_node_handlers["plan_review"](
+            graph_state
+        )
+        self.assertEqual(review_result["next_step"], "planner")
+        self.assertIn(
+            "TASK_OUTPUT_REFERENCE_UNKNOWN",
+            {str(item.get("code") or "") for item in review_result["validation_issues"]},
+        )
+
+        reentry_state = dict(graph_state)
+        reentry_state.update({
+            key: value for key, value in review_result.items() if key != "messages"
+        })
+        reentry_state["messages"] = add_messages(
+            list(graph_state.get("messages") or []),
+            list(review_result.get("messages") or []),
+        )
+
+        async def scripted(
+            _messages: Any,
+            *,
+            node_context: Any,
+            stage: str,
+            **_kwargs: Any,
+        ) -> AIMessage:
+            del node_context
+            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+                return AIMessage(content=_planner_v2_plan())
+            raise AssertionError(f"unexpected stage: {stage}")
+
+        self.agent._ainvoke_node_llm = scripted
+        with patch.object(bio_agents, "load_approved_plan_snapshot") as loader:
+            planner_result = await self.agent._graph_node_handlers["planner"](
+                reentry_state
+            )
+
+        loader.assert_not_called()
+        self.assertEqual(planner_result["next_step"], "plan_review")
+        final_state = load_plan_state(self.root, task_id)
+        self.assertNotEqual((final_state.get("task_state") or {}).get("status"), "failed")
 
     async def test_d_go_appends_u1_u2_u3_on_one_task(self) -> None:
         task_id = "graph-d-turns"

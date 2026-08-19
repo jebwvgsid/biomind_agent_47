@@ -22574,7 +22574,16 @@ question. Never guess a scientific or database identity.
             if str(planner_feedback.get("status") or "pending") != "pending":
                 planner_feedback = {}
             planner_approved_snapshot: Dict[str, Any] = {}
-            if base_snapshot_id:
+            if (
+                base_snapshot_id
+                and str(
+                    (planner_source_state.get("current_approval") or {}).get(
+                        "status"
+                    )
+                    or ""
+                )
+                == "approved"
+            ):
                 planner_approved_snapshot = load_approved_plan_snapshot(
                     self.data_path,
                     task_id,
