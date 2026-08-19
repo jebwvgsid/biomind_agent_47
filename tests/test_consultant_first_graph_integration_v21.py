@@ -31,6 +31,7 @@ from agent_core.task_spec import (
 
 
 SKILL_ID = "sequence/search/local-blast"
+SNPEFF_SKILL_ID = "genomics/snpeff-annotation"
 
 
 class _RouterLLM:
@@ -134,6 +135,52 @@ def _planner_v2_plan() -> str:
             "batch_id": "",
             "risk_level": "low",
         }],
+        "validation_checklist": [{
+            "check_id": "check-report",
+            "description": "verify report output",
+        }],
+        "metadata": {
+            "schema_version": 2,
+            "planner_contract": "structured_plan_v2",
+        },
+    })
+
+
+def _planner_v2_ordering_only_plan() -> str:
+    return json.dumps({
+        "outcome_type": "PLAN_CANDIDATE",
+        "steps": [
+            {
+                "step_id": "step-1",
+                "title": "Validate the admitted reference input",
+                "action": "execute",
+                "purpose": "validation",
+                "tool": "python",
+                "inputs": ["input.reference_fasta"],
+                "outputs": [],
+                "dependencies": [],
+                "success_criteria": ["reference input is readable"],
+                "skill_ids": [SNPEFF_SKILL_ID],
+                "workflow_stage_ids": [],
+                "batch_id": "",
+                "risk_level": "low",
+            },
+            {
+                "step_id": "step-2",
+                "title": "Write the requested report",
+                "action": "execute",
+                "purpose": "analysis",
+                "tool": "python",
+                "inputs": ["input.reference_fasta"],
+                "outputs": ["output.report"],
+                "dependencies": ["step-1"],
+                "success_criteria": ["report exists and is non-empty"],
+                "skill_ids": [SNPEFF_SKILL_ID],
+                "workflow_stage_ids": [],
+                "batch_id": "",
+                "risk_level": "low",
+            },
+        ],
         "validation_checklist": [{
             "check_id": "check-report",
             "description": "verify report output",
@@ -273,6 +320,7 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
         *,
         input_path: Path,
         output_path: Path,
+        skill_id: str = SKILL_ID,
     ) -> dict[str, Any]:
         task_spec = merge_task_spec(
             create_task_spec(
@@ -313,10 +361,10 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             "consultation_status": "ready",
             "completion_decision": "ready_to_finalize",
             "completion_reason": "test_fixture_complete",
-            "resolved_selected_skill_ids": [SKILL_ID],
+            "resolved_selected_skill_ids": [skill_id],
             "final_contract": {
                 "summary": "The managed task contract is complete.",
-                "selected_skills": [SKILL_ID],
+                "selected_skills": [skill_id],
                 "constraints": [],
             },
         }
@@ -328,8 +376,8 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             "task_mode": "managed",
             "task_spec": task_spec,
             "task_revision": task_spec_revision(task_spec),
-            "selected_skills": [SKILL_ID],
-            "selected_skills_raw": [SKILL_ID],
+            "selected_skills": [skill_id],
+            "selected_skills_raw": [skill_id],
             "skill_selection_source": "test_fixture",
             "consultation_state": consultation_state,
             "requirements_summary": "The managed task contract is complete.",
@@ -343,11 +391,14 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
         *,
         input_path: Path,
         output_path: Path,
+        skill_id: str = SKILL_ID,
+        planner_payload: str | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         planner_state = self._ready_planner_state(
             task_id,
             input_path=input_path,
             output_path=output_path,
+            skill_id=skill_id,
         )
 
         async def scripted(
@@ -359,7 +410,7 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
         ) -> AIMessage:
             del node_context
             if stage in {"planner", "planner_structure_repair", "planner_repair"}:
-                return AIMessage(content=_planner_v2_plan())
+                return AIMessage(content=planner_payload or _planner_v2_plan())
             raise AssertionError(f"unexpected stage: {stage}")
 
         self.agent._ainvoke_node_llm = scripted
@@ -746,6 +797,34 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(planner_result["next_step"], "plan_review")
         final_state = load_plan_state(self.root, task_id)
         self.assertNotEqual((final_state.get("task_state") or {}).get("status"), "failed")
+
+    async def test_plan_review_accepts_snpeff_same_skill_ordering_only_dependency(
+        self,
+    ) -> None:
+        task_id = "graph-snpeff-ordering-only"
+        input_path = self.root / "ordering-only.fasta"
+        output_path = self.root / "out-ordering-only" / "report.md"
+        input_path.write_text(">chr1\nACGT\n", encoding="utf-8")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        graph_state, _durable = await self._seed_pending_candidate(
+            task_id,
+            input_path=input_path,
+            output_path=output_path,
+            skill_id=SNPEFF_SKILL_ID,
+            planner_payload=_planner_v2_ordering_only_plan(),
+        )
+
+        self.agent._prompt_user = lambda *_args, **_kwargs: "y"
+        review_result = await self.agent._graph_node_handlers["plan_review"](
+            graph_state
+        )
+
+        self.assertEqual(review_result["next_step"], "generate")
+        durable = load_plan_state(self.root, task_id)
+        self.assertEqual(
+            (durable.get("current_approval") or {}).get("status"),
+            "approved",
+        )
 
     async def test_d_go_appends_u1_u2_u3_on_one_task(self) -> None:
         task_id = "graph-d-turns"

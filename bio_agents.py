@@ -430,9 +430,6 @@ from agent_core.managed_artifacts import (
     validate_generate_output_coverage,
     validate_materialized_artifacts,
 )
-from agent_core.skill_planning_contracts import (
-    validate_selected_skill_planning_contracts,
-)
 from agent_core.state_contract_store import StateContractStore
 from agent_core.completion_gate import CompletionGate
 
@@ -24106,44 +24103,8 @@ question. Never guess a scientific or database identity.
                 output_contracts=effective_output_contracts(task_spec, project_root=project_root),
                 task_spec=task_spec,
             )
-            review_skill_documents = {
-                str(skill_id): self.skill_manager.load_skill(str(skill_id))
-                for skill_id in review_skill_ids
-                if self.skill_manager
-            }
-            planning_contract_issues = validate_selected_skill_planning_contracts(
-                persisted_plan,
-                review_skill_documents,
-            )
-            existing_validation_issues = [
-                dict(item)
-                for item in persisted_plan.get("validation_issues", []) or []
-                if isinstance(item, Mapping)
-                and str(item.get("code") or "")
-                != "PLAN_INTERMEDIATE_ARTIFACT_UNDECLARED"
-            ]
-            persisted_plan["validation_issues"] = [
-                *existing_validation_issues,
-                *planning_contract_issues,
-            ]
             bind_plan_to_task_revision(persisted_plan, task_revision)
             save_plan_state(self.data_path, task_id, persisted_plan)
-            if planning_contract_issues:
-                return {
-                    "messages": [SystemMessage(content=(
-                        "Plan Review requested Planner repair: "
-                        + json.dumps(
-                            planning_contract_issues,
-                            ensure_ascii=False,
-                            sort_keys=True,
-                            default=str,
-                        )
-                    ))],
-                    "validation_issues": planning_contract_issues,
-                    "required_next_action": "PLAN_CONTRACT_REPAIR",
-                    "failure_owner": RecoveryFailureOwner.PLAN.value,
-                    "next_step": "planner",
-                }
             blocking_review_issues = [
                 dict(item) for item in review_issues
                 if isinstance(item, Mapping)

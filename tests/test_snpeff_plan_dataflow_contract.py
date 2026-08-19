@@ -5,16 +5,15 @@ import unittest
 from pathlib import Path
 
 from agent_core.plan_contract import (
+    PlannerCandidateError,
     candidate_artifact_ref_keys,
     prepare_allocation_intent,
     promote_allocation_intent,
     rewrite_candidate_local_refs,
+    structured_plan_candidate_diagnostics,
     validate_candidate_graph_and_flow,
 )
 from agent_core.plan_tracker import render_plan_review_content
-from agent_core.skill_planning_contracts import (
-    validate_selected_skill_planning_contracts,
-)
 from prompts.manager import PromptManager
 
 
@@ -46,59 +45,86 @@ def _step(
         "workflow_stage_ids": [],
         "batch_id": "",
         "risk_level": "low",
-        "semantic_constraint_ids": [],
+    }
+
+
+def _candidate(
+    steps: list[dict],
+    *,
+    proposed_artifacts: list[dict] | None = None,
+) -> dict:
+    candidate = {
+        "steps": list(steps),
+        "validation_checklist": [{
+            "check_id": "check-dataflow",
+            "description": "verify typed artifact and dependency contracts",
+        }],
+        "metadata": {
+            "schema_version": 2,
+            "planner_contract": "structured_plan_v2",
+        },
+    }
+    if proposed_artifacts is not None:
+        candidate["proposed_artifacts"] = list(proposed_artifacts)
+    return candidate
+
+
+def _plan_local_directory(
+    local_ref: str = "snpeff_database_dir",
+    *,
+    policy_id: str = "managed_intermediate_v1",
+) -> dict:
+    return {
+        "local_ref": local_ref,
+        "semantic_view": {
+            "role": "snpeff_database_dir",
+            "format": "directory",
+            "description": "custom snpEff database",
+        },
+        "artifact_contract": {
+            "object_kind": "directory",
+            "lifecycle": "plan_local",
+            "materialization_policy_id": policy_id,
+        },
     }
 
 
 class SnpEffPlanDataflowContractTests(unittest.TestCase):
-    def test_split_plan_without_shared_artifact_requests_planner_repair(self) -> None:
-        plan = {
-            "steps": [
-                _step("build-db", inputs=["reference_fasta", "reference_gtf"], outputs=[], dependencies=[]),
-                _step("annotate", inputs=["input_vcf"], outputs=["annotated_vcf"], dependencies=["build-db"]),
-                _step("summarize", inputs=["annotated_vcf"], outputs=["summary"], dependencies=["annotate"]),
-            ]
-        }
-
-        violations = validate_selected_skill_planning_contracts(
-            plan,
-            {SKILL_ID: _skill_document()},
+    def test_same_skill_ordering_only_dependency_is_structurally_valid(self) -> None:
+        candidate = _candidate([
+            _step("validate-inputs", inputs=[], outputs=[], dependencies=[]),
+            _step(
+                "build-db",
+                inputs=[],
+                outputs=[],
+                dependencies=["validate-inputs"],
+            ),
+        ])
+        self.assertEqual(structured_plan_candidate_diagnostics(candidate), [])
+        ref_keys, usage = candidate_artifact_ref_keys(
+            candidate,
+            candidate_scope_id="candidate-scope-ordering-only",
+            authoritative_handles={},
         )
 
-        self.assertEqual(len(violations), 1)
-        self.assertEqual(violations[0]["code"], "PLAN_INTERMEDIATE_ARTIFACT_UNDECLARED")
-        self.assertEqual(violations[0]["owner"], "PLANNER")
-        self.assertEqual(violations[0]["producer_step_id"], "build-db")
-        self.assertEqual(violations[0]["consumer_step_id"], "annotate")
-        self.assertIn("plan-local directory artifact", violations[0]["message"])
+        self.assertEqual(
+            validate_candidate_graph_and_flow(
+                candidate,
+                ref_keys=ref_keys,
+                usage=usage,
+                availability_origins={},
+            ),
+            [],
+        )
 
     def test_split_plan_reuses_one_allocated_directory_identity(self) -> None:
-        candidate = {
-            "outcome_type": "PLAN_CANDIDATE",
-            "proposed_artifacts": [{
-                "local_ref": "snpeff_database_dir",
-                "semantic_view": {
-                    "role": "snpeff_database_dir",
-                    "format": "directory",
-                    "description": "custom snpEff database",
-                },
-                "artifact_contract": {
-                    "object_kind": "directory",
-                    "lifecycle": "plan_local",
-                    "materialization_policy_id": "managed_intermediate_v1",
-                },
-            }],
-            "steps": [
+        candidate = _candidate(
+            [
                 _step("build-db", inputs=[], outputs=["snpeff_database_dir"], dependencies=[]),
                 _step("annotate", inputs=["snpeff_database_dir"], outputs=[], dependencies=["build-db"]),
             ],
-            "semantic_claims": [],
-            "validation_checklist": [{
-                "check_id": "check-dataflow",
-                "description": "verify explicit cross-step artifact dataflow",
-            }],
-            "metadata": {"schema_version": 1, "planner_contract": "structured_plan_v1"},
-        }
+            proposed_artifacts=[_plan_local_directory()],
+        )
         scope = "candidate-scope-snpeff"
         ref_keys, usage = candidate_artifact_ref_keys(
             candidate,
@@ -133,23 +159,168 @@ class SnpEffPlanDataflowContractTests(unittest.TestCase):
         self.assertEqual(producer_id, mapping["snpeff_database_dir"])
         self.assertEqual(bindings[producer_id]["object_kind"], "directory")
         self.assertEqual(bindings[producer_id]["lifecycle"], "plan_local")
-        self.assertEqual(
-            validate_selected_skill_planning_contracts(
-                rewritten,
-                {SKILL_ID: _skill_document()},
+
+    def test_unknown_artifact_reference_fails_closed(self) -> None:
+        candidate = _candidate([
+            _step(
+                "annotate",
+                inputs=["undeclared_database_dir"],
+                outputs=[],
+                dependencies=[],
             ),
-            [],
+        ])
+
+        with self.assertRaises(PlannerCandidateError) as caught:
+            candidate_artifact_ref_keys(
+                candidate,
+                candidate_scope_id="candidate-scope-unknown-artifact",
+                authoritative_handles={},
+            )
+
+        self.assertEqual(caught.exception.code, "ARTIFACT_REFERENCE_UNKNOWN")
+
+    def test_declared_artifact_without_producer_fails_closed(self) -> None:
+        candidate = _candidate(
+            [_step(
+                "annotate",
+                inputs=["snpeff_database_dir"],
+                outputs=[],
+                dependencies=[],
+            )],
+            proposed_artifacts=[_plan_local_directory()],
+        )
+        ref_keys, usage = candidate_artifact_ref_keys(
+            candidate,
+            candidate_scope_id="candidate-scope-missing-producer",
+            authoritative_handles={},
         )
 
-    def test_composite_plan_needs_no_cross_step_artifact(self) -> None:
-        plan = {"steps": [_step("build-and-annotate", inputs=[], outputs=["annotated_vcf"], dependencies=[])]}
-        self.assertEqual(
-            validate_selected_skill_planning_contracts(
-                plan,
-                {SKILL_ID: _skill_document()},
-            ),
-            [],
+        issues = validate_candidate_graph_and_flow(
+            candidate,
+            ref_keys=ref_keys,
+            usage=usage,
+            availability_origins={},
         )
+
+        self.assertIn(
+            "PLAN_ARTIFACT_UNAVAILABLE",
+            {str(issue.get("code") or "") for issue in issues},
+        )
+
+    def test_multiple_artifact_producers_fail_closed(self) -> None:
+        candidate = _candidate(
+            [
+                _step(
+                    "build-db-a",
+                    inputs=[],
+                    outputs=["snpeff_database_dir"],
+                    dependencies=[],
+                ),
+                _step(
+                    "build-db-b",
+                    inputs=[],
+                    outputs=["snpeff_database_dir"],
+                    dependencies=[],
+                ),
+                _step(
+                    "annotate",
+                    inputs=["snpeff_database_dir"],
+                    outputs=[],
+                    dependencies=["build-db-a", "build-db-b"],
+                ),
+            ],
+            proposed_artifacts=[_plan_local_directory()],
+        )
+        ref_keys, usage = candidate_artifact_ref_keys(
+            candidate,
+            candidate_scope_id="candidate-scope-multiple-producers",
+            authoritative_handles={},
+        )
+
+        issues = validate_candidate_graph_and_flow(
+            candidate,
+            ref_keys=ref_keys,
+            usage=usage,
+            availability_origins={},
+        )
+
+        self.assertIn(
+            "PLAN_ARTIFACT_PRODUCER_CARDINALITY",
+            {str(issue.get("code") or "") for issue in issues},
+        )
+
+    def test_unknown_and_cyclic_dependencies_fail_closed(self) -> None:
+        cases = {
+            "unknown": (
+                _candidate([
+                    _step("prepare", inputs=[], outputs=[], dependencies=[]),
+                    _step(
+                        "annotate",
+                        inputs=[],
+                        outputs=[],
+                        dependencies=["missing-step"],
+                    ),
+                ]),
+                "PLAN_DEPENDENCY_UNKNOWN",
+            ),
+            "cycle": (
+                _candidate([
+                    _step(
+                        "prepare",
+                        inputs=[],
+                        outputs=[],
+                        dependencies=["annotate"],
+                    ),
+                    _step(
+                        "annotate",
+                        inputs=[],
+                        outputs=[],
+                        dependencies=["prepare"],
+                    ),
+                ]),
+                "PLAN_DEPENDENCY_CYCLE",
+            ),
+        }
+
+        for name, (candidate, expected_code) in cases.items():
+            with self.subTest(name=name):
+                ref_keys, usage = candidate_artifact_ref_keys(
+                    candidate,
+                    candidate_scope_id=f"candidate-scope-{name}-dependency",
+                    authoritative_handles={},
+                )
+                issues = validate_candidate_graph_and_flow(
+                    candidate,
+                    ref_keys=ref_keys,
+                    usage=usage,
+                    availability_origins={},
+                )
+                self.assertIn(
+                    expected_code,
+                    {str(issue.get("code") or "") for issue in issues},
+                )
+
+    def test_invalid_materialization_policy_fails_closed(self) -> None:
+        candidate = _candidate(
+            [_step(
+                "build-db",
+                inputs=[],
+                outputs=["snpeff_database_dir"],
+                dependencies=[],
+            )],
+            proposed_artifacts=[_plan_local_directory(
+                policy_id="unregistered_materialization_policy",
+            )],
+        )
+
+        with self.assertRaises(PlannerCandidateError) as caught:
+            prepare_allocation_intent(
+                candidate,
+                candidate_scope_id="candidate-scope-invalid-policy",
+                planning_epoch_id="planning-epoch-invalid-policy",
+            )
+
+        self.assertEqual(caught.exception.code, "ARTIFACT_POLICY_UNREGISTERED")
 
     def test_planner_prompt_and_plan_review_show_explicit_dataflow_rules(self) -> None:
         prompt = PromptManager.get_planner_v2_prompt({"task": {}, "current_step": {}})
