@@ -1230,7 +1230,7 @@ class RecoveryDecision:
     VERDICTS = {"probe", "repair", "rerun", "rollback", "blocked", "escalate", "continue"}
     ACTIONS = {
         "inspect_file", "inspect_log", "run_probe", "patch_file", "replace_command",
-        "change_environment", "install_dependency", "regenerate_script", "rerun_stage",
+        "change_environment", "install_dependency", "regenerate_script", "repair_previous_action", "rerun_stage",
         "fallback_method", "block_task", "patch_plan", "reconcile_artifacts",
         "pass_with_warning", "ask_user",
     }
@@ -1295,7 +1295,7 @@ class RecoveryDecision:
         )
         action_map = {
             RecoveryAction.CONTINUE.value: ("continue", "pass_with_warning"),
-            RecoveryAction.FORMAT_REPAIR.value: ("repair", "regenerate_script"),
+            RecoveryAction.FORMAT_REPAIR.value: ("repair", "repair_previous_action"),
             RecoveryAction.RETRY_EXECUTION.value: ("rerun", "rerun_stage"),
             RecoveryAction.PATCH_SCRIPT.value: ("repair", "regenerate_script"),
             RecoveryAction.PATCH_PLAN.value: ("repair", "patch_plan"),
@@ -1314,6 +1314,7 @@ class RecoveryDecision:
         }
         reverse_action_map = {
             ("rerun", "rerun_stage"): RecoveryAction.RETRY_EXECUTION.value,
+            ("repair", "repair_previous_action"): RecoveryAction.FORMAT_REPAIR.value,
             ("repair", "regenerate_script"): RecoveryAction.PATCH_SCRIPT.value,
             ("repair", "patch_file"): RecoveryAction.PATCH_SCRIPT.value,
             ("repair", "replace_command"): RecoveryAction.PATCH_SCRIPT.value,
@@ -1343,10 +1344,17 @@ class RecoveryDecision:
             existing_action = str(value.get("action_type") or "").strip().lower()
             if existing_verdict and existing_verdict != mapped_verdict:
                 raise ValueError("Recovery v2 recommended_action conflicts with legacy verdict")
-            if existing_action and existing_action != mapped_action:
+            legacy_format_action = bool(
+                recommended == RecoveryAction.FORMAT_REPAIR.value
+                and existing_action == "regenerate_script"
+            )
+            if existing_action and existing_action != mapped_action and not legacy_format_action:
                 raise ValueError("Recovery v2 recommended_action conflicts with legacy action_type")
             value.setdefault("verdict", mapped_verdict)
-            value.setdefault("action_type", mapped_action)
+            if legacy_format_action:
+                value["action_type"] = mapped_action
+            else:
+                value.setdefault("action_type", mapped_action)
         else:
             legacy_pair = (
                 str(value.get("verdict") or "").strip().lower(),
@@ -2191,7 +2199,7 @@ class ProgressDetector:
         action = str(action_type or "").lower()
         if action in {"inspect_file", "inspect_log", "run_probe"} and any(str(item).strip() for item in evidence):
             score += 1
-        if action in {"patch_file", "replace_command", "regenerate_script"}:
+        if action in {"patch_file", "replace_command", "regenerate_script", "repair_previous_action"}:
             score += 4
         if patch_applied:
             score += 5

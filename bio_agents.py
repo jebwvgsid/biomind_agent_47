@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 from copy import deepcopy
 import atexit
+from dataclasses import dataclass, field
 import hashlib
 import json
 import logging
@@ -1210,6 +1211,21 @@ class VibeThinkingHandler(BaseCallbackHandler):
 # ════════════════════════════════════════════════════════════════
 #  3.  BioAnalystAgent 主类
 # ════════════════════════════════════════════════════════════════
+
+
+@dataclass(frozen=True)
+class StructuredActionParseResult:
+    """Successful action plus bounded machine diagnostics for failed parsing."""
+
+    action: Dict[str, Any] = field(default_factory=dict)
+    error: Dict[str, Any] = field(default_factory=dict)
+    candidate: Any = None
+    raw_candidate: str = ""
+
+    @property
+    def succeeded(self) -> bool:
+        return bool(self.action)
+
 
 class BioAnalystAgent:
     @staticmethod
@@ -4793,6 +4809,94 @@ class BioAnalystAgent:
         reason = str(action.get("reason") or "").lower()
         return bool(known and (known & provided or any(item in reason for item in known)))
 
+    @staticmethod
+    def _corrective_action_repair_instruction() -> str:
+        return (
+            "Repair the previous generated action instead of regenerating the step from scratch. "
+            "Fix only the reported violation. Preserve all unrelated already-valid content. "
+            "Do not introduce unrelated inputs, outputs, managed artifact handles, checks, "
+            "working directories, or workflow logic. Do not re-plan the step."
+        )
+
+    @classmethod
+    def _action_repair_projection(
+        cls,
+        state: Mapping[str, Any],
+        recovery_action: Mapping[str, Any],
+        recovery_decision: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Project only the current machine failure into Generate V2 repair context."""
+        repair_type = str(recovery_action.get("type") or "").strip().lower()
+        decision_kind = str(recovery_decision.get("kind") or "").strip().upper()
+        recommended = str(recovery_decision.get("recommended_action") or "").strip().upper()
+        if (
+            repair_type not in {"action_format_repair", "format_repair"}
+            and decision_kind != RecoveryDecisionKind.FORMAT_REPAIR.value
+            and recommended != RecoveryAction.FORMAT_REPAIR.value
+        ):
+            return {}
+
+        format_state = (
+            dict(state.get("action_format_repair") or {})
+            if isinstance(state.get("action_format_repair"), Mapping)
+            else {}
+        )
+        protocol_error = recovery_action.get("protocol_error") or format_state.get("protocol_error") or {}
+        if not isinstance(protocol_error, Mapping):
+            protocol_error = {}
+        previous_candidate: Any = recovery_action.get("previous_candidate")
+        if previous_candidate in (None, "", [], {}):
+            previous_candidate = format_state.get("previous_candidate")
+
+        exact_violations: List[Dict[str, Any]] = []
+        repair_stage = str(protocol_error.get("stage") or "")
+        recovery_context = state.get("recovery_context")
+        if isinstance(recovery_context, Mapping):
+            validation = recovery_context.get("validation")
+            raw_violations = (
+                validation.get("violations")
+                if isinstance(validation, Mapping)
+                else []
+            ) or []
+            exact_violations = [
+                deepcopy(dict(item))
+                for item in raw_violations
+                if isinstance(item, Mapping)
+            ]
+            if exact_violations:
+                repair_stage = "managed_artifact"
+                action_contract = recovery_context.get("action_contract")
+                structured_candidate = (
+                    action_contract.get("structured_candidate")
+                    if isinstance(action_contract, Mapping)
+                    else None
+                )
+                if structured_candidate not in (None, "", [], {}):
+                    previous_candidate = deepcopy(structured_candidate)
+
+        if not repair_stage:
+            repair_stage = "action_schema"
+        if isinstance(previous_candidate, str):
+            position = protocol_error.get("position")
+            previous_candidate = cls._bounded_protocol_excerpt(
+                previous_candidate,
+                position=int(position) if isinstance(position, int) else None,
+            )
+        elif isinstance(previous_candidate, Mapping):
+            previous_candidate = deepcopy(dict(previous_candidate))
+
+        projection: Dict[str, Any] = {
+            "repair_mode": "corrective",
+            "repair_stage": repair_stage,
+            "previous_candidate": previous_candidate or "<previous candidate unavailable>",
+            "repair_instruction": cls._corrective_action_repair_instruction(),
+        }
+        if protocol_error:
+            projection["exact_error"] = deepcopy(dict(protocol_error))
+        if exact_violations:
+            projection["exact_violations"] = exact_violations
+        return projection
+
     def _action_format_repair_feedback(
         self,
         state: AgentState,
@@ -4825,6 +4929,7 @@ class BioAnalystAgent:
         lines.append("Allowed actions:")
         lines.extend(f"- {item}" for item in protocol.get("allowed_actions") or [])
         lines.extend([
+            self._corrective_action_repair_instruction(),
             "Return exactly one <action_json> block with one structured action.",
             "Do not provide a narrative summary or ask whether to continue.",
             "</action_format_repair>",
@@ -7292,6 +7397,7 @@ class BioAnalystAgent:
         response_text: str,
         schema_error: Optional[Dict[str, Any]] = None,
     ) -> Tuple[int, int, str, RecoveryDecision]:
+        protocol_error = dict(schema_error or {})
         response_hash = hashlib.sha256(
             str(response_text or "").strip().encode("utf-8", errors="replace")
         ).hexdigest()[:20]
@@ -7311,7 +7417,11 @@ class BioAnalystAgent:
                 "valid": False,
                 "repairable": True,
                 "violations": [
-                    "renderer_invocation_contract_error" if schema_error else "unrecognized_action",
+                    str(
+                        protocol_error.get("code")
+                        or protocol_error.get("error_type")
+                        or "unrecognized_action"
+                    ),
                     f"invalid_response_hash={response_hash}",
                 ],
             },
@@ -7337,34 +7447,39 @@ class BioAnalystAgent:
         diagnosis_path = protocol_dir / (
             f"{str(step_id or 'lightweight')}.invalid.{count}.{duplicate_count}.{response_hash}.json"
         )
-        schema_error = dict(schema_error or {})
+        protocol_stage = str(protocol_error.get("stage") or "")
+        failure_type = (
+            "json_decode_error"
+            if protocol_stage == "json_decode"
+            else "action_schema_error"
+            if protocol_stage == "action_schema"
+            else str(
+                protocol_error.get("error_type")
+                or protocol_error.get("code")
+                or "action_schema_error"
+            ).lower()
+        )
         diagnosis_path.write_text(json.dumps({
-            "root_cause": (
-                "Generate returned a renderer invocation that failed its declared contract."
-                if schema_error
-                else "Generate returned no recognized action for the approved current step."
+            "root_cause": str(
+                protocol_error.get("message")
+                or protocol_error.get("reason")
+                or "Generate returned no recognized action for the approved current step."
             ),
             "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-            "failure_type": (
-                str(schema_error.get("error_type") or "renderer_invocation_schema_error").lower()
-                if schema_error
-                else "action_schema_error"
-            ),
+            "failure_type": failure_type,
             "evidence": [
                 f"raw_response:{raw_path}",
                 f"response_hash:{response_hash}",
-                *([json.dumps(schema_error, ensure_ascii=False, sort_keys=True)] if schema_error else []),
+                *([json.dumps(protocol_error, ensure_ascii=False, sort_keys=True)] if protocol_error else []),
             ],
             "confidence": 1.0,
             "missing_evidence": [],
-            "repair_strategy": (
-                "Use the canonical renderer ID and declared invocation fields from the contract error."
-                if schema_error
-                else "Apply the deterministic action-format repair schema for the unchanged step."
-            ),
+            "repair_strategy": self._corrective_action_repair_instruction(),
             "next_action": "ACTION_FORMAT_REPAIR",
             "requires_user_input": False,
-            "schema_error": schema_error,
+            "protocol_error": protocol_error,
+            # Compatibility field for readers that have not migrated to protocol_error.
+            "schema_error": protocol_error,
         }, ensure_ascii=False, indent=2), encoding="utf-8")
         return count, duplicate_count, response_hash, decision
 
@@ -10932,25 +11047,131 @@ class BioAnalystAgent:
         return normalized
 
     @staticmethod
-    def _extract_json_object(text: str) -> Dict[str, Any]:
+    def _bounded_protocol_excerpt(
+        text: str,
+        *,
+        position: Optional[int] = None,
+        max_chars: int = 1200,
+    ) -> str:
+        raw = str(text or "")
+        if len(raw) <= max_chars:
+            return raw
+        if position is None:
+            return raw[:max_chars]
+        center = max(0, min(int(position), len(raw)))
+        start = max(0, center - max_chars // 2)
+        end = min(len(raw), start + max_chars)
+        start = max(0, end - max_chars)
+        prefix = "…" if start else ""
+        suffix = "…" if end < len(raw) else ""
+        return prefix + raw[start:end] + suffix
+
+    @staticmethod
+    def _json_value_type(value: Any) -> str:
+        if value is None:
+            return "null"
+        if isinstance(value, bool):
+            return "boolean"
+        if isinstance(value, str):
+            return "string"
+        if isinstance(value, Mapping):
+            return "object"
+        if isinstance(value, (list, tuple)):
+            return "array"
+        if isinstance(value, (int, float)):
+            return "number"
+        return type(value).__name__
+
+    @classmethod
+    def _extract_json_object_result(
+        cls,
+        text: str,
+    ) -> Tuple[Dict[str, Any], Dict[str, Any], str]:
+        """Try all legacy extraction candidates and retain the best parse error."""
         raw = str(text or "").strip()
         if not raw:
-            return {}
-        candidates = [raw]
+            return {}, {
+                "stage": "json_decode",
+                "code": "JSON_INPUT_EMPTY",
+                "message": "The structured action JSON candidate is empty.",
+                "raw_excerpt": "",
+            }, ""
+
+        candidates: List[str] = []
+
+        def add_candidate(candidate: str) -> None:
+            value = str(candidate or "").strip()
+            if value and value not in candidates:
+                candidates.append(value)
+
         fenced = re.search(r"```(?:json)?\s*(.*?)```", raw, re.DOTALL | re.IGNORECASE)
         if fenced:
-            candidates.insert(0, fenced.group(1).strip())
+            add_candidate(fenced.group(1))
+        add_candidate(raw)
         brace = re.search(r"\{.*\}", raw, re.DOTALL)
         if brace:
-            candidates.append(brace.group(0))
+            add_candidate(brace.group(0))
+
+        errors: List[Tuple[Dict[str, Any], str]] = []
         for candidate in candidates:
             try:
                 parsed = json.loads(candidate)
-            except Exception:
+            except json.JSONDecodeError as exc:
+                excerpt = cls._bounded_protocol_excerpt(
+                    candidate,
+                    position=exc.pos,
+                )
+                errors.append(({
+                    "stage": "json_decode",
+                    "code": "JSON_DECODE_ERROR",
+                    "message": str(exc.msg or "JSON decoding failed."),
+                    "line": int(exc.lineno),
+                    "column": int(exc.colno),
+                    "position": int(exc.pos),
+                    "raw_excerpt": excerpt,
+                }, excerpt))
+                continue
+            except Exception as exc:  # noqa: BLE001 - unexpected parser failures still fail closed.
+                excerpt = cls._bounded_protocol_excerpt(candidate)
+                errors.append(({
+                    "stage": "json_decode",
+                    "code": "JSON_PARSE_ERROR",
+                    "message": f"{type(exc).__name__}: {exc}",
+                    "raw_excerpt": excerpt,
+                }, excerpt))
                 continue
             if isinstance(parsed, dict):
-                return parsed
-        return {}
+                return parsed, {}, cls._bounded_protocol_excerpt(candidate)
+            excerpt = cls._bounded_protocol_excerpt(candidate)
+            errors.append(({
+                "stage": "action_schema",
+                "code": "ACTION_SCHEMA_TYPE_ERROR",
+                "field_path": "$",
+                "expected": "object",
+                "actual": cls._json_value_type(parsed),
+                "message": "The structured action JSON value must be an object.",
+            }, excerpt))
+
+        if not errors:
+            return {}, {
+                "stage": "json_decode",
+                "code": "JSON_DECODE_ERROR",
+                "message": "No JSON object candidate could be decoded.",
+                "raw_excerpt": cls._bounded_protocol_excerpt(raw),
+            }, cls._bounded_protocol_excerpt(raw)
+        schema_errors = [item for item in errors if item[0].get("stage") == "action_schema"]
+        if schema_errors:
+            return {}, schema_errors[0][0], schema_errors[0][1]
+        best_error, best_candidate = max(
+            errors,
+            key=lambda item: int(item[0].get("position") or -1),
+        )
+        return {}, best_error, best_candidate
+
+    @classmethod
+    def _extract_json_object(cls, text: str) -> Dict[str, Any]:
+        parsed, _, _ = cls._extract_json_object_result(text)
+        return parsed
 
     @staticmethod
     def _recent_nonempty_execute_body(messages: Any, window: int = 3) -> str:
@@ -10984,44 +11205,165 @@ class BioAnalystAgent:
         return aliases.get(value, value)
 
     @classmethod
-    def _structured_action_from_object(cls, obj: Dict[str, Any], source: str = "action_json") -> Dict[str, Any]:
+    def _structured_action_from_object_result(
+        cls,
+        obj: Any,
+        source: str = "action_json",
+    ) -> StructuredActionParseResult:
+        candidate = deepcopy(obj)
+
+        def fail(
+            code: str,
+            message: str,
+            *,
+            field_path: str = "",
+            expected: str = "",
+            actual: str = "",
+        ) -> StructuredActionParseResult:
+            error: Dict[str, Any] = {
+                "stage": "action_schema",
+                "code": code,
+                "message": message,
+            }
+            if field_path:
+                error["field_path"] = field_path
+            if expected:
+                error["expected"] = expected
+            if actual:
+                error["actual"] = actual
+            return StructuredActionParseResult(error=error, candidate=candidate)
+
         if not isinstance(obj, dict):
-            return {}
-        action_type = cls._normalize_action_type(
-            obj.get("action_type") or obj.get("type") or obj.get("action") or ""
-        )
+            return fail(
+                "ACTION_SCHEMA_TYPE_ERROR",
+                "The structured action must be a JSON object.",
+                field_path="$",
+                expected="object",
+                actual=cls._json_value_type(obj),
+            )
+        raw_action_type = obj.get("action_type") or obj.get("type") or obj.get("action") or ""
+        action_type = cls._normalize_action_type(raw_action_type)
         if not action_type:
-            return {}
+            return fail(
+                "ACTION_SCHEMA_REQUIRED_FIELD",
+                "A structured action requires action_type.",
+                field_path="action_type",
+                expected="supported action type",
+                actual="missing",
+            )
+        supported_action_types = {
+            "renderer_invocation", "execute", "ask_user", "search", "install_tool",
+            "activate_batch", "step_completion_candidate", "plan_patch", "blocked", "solution",
+        }
+        if action_type not in supported_action_types:
+            return fail(
+                "ACTION_SCHEMA_VALUE_ERROR",
+                f"Unsupported structured action type: {action_type!r}.",
+                field_path="action_type",
+                expected="supported action type",
+                actual=str(raw_action_type),
+            )
         action: Dict[str, Any] = {"type": action_type, "source": source}
         if action_type == "renderer_invocation":
             arguments = obj.get("arguments") or obj.get("args") or {}
             if not isinstance(arguments, (dict, list)):
-                return {}
+                return fail(
+                    "ACTION_SCHEMA_TYPE_ERROR",
+                    "renderer_invocation arguments must be an object or array.",
+                    field_path="arguments",
+                    expected="object or array",
+                    actual=cls._json_value_type(arguments),
+                )
             action.update({
                 "renderer_id": str(obj.get("renderer_id") or obj.get("renderer") or "").strip(),
                 "arguments": arguments,
                 "outdir": str(obj.get("outdir") or "").strip(),
             })
-            return action
+            return StructuredActionParseResult(action=action, candidate=candidate)
         if action_type == "execute":
             code = str(obj.get("code") or obj.get("body") or obj.get("command") or "").strip()
             argv = obj.get("argv")
-            if argv is not None and (
-                not isinstance(argv, list)
-                or not argv
-                or any(not isinstance(item, str) or not item for item in argv)
-            ):
-                return {}
+            if argv is not None and not isinstance(argv, list):
+                return fail(
+                    "ACTION_SCHEMA_TYPE_ERROR",
+                    "execute.argv must be a list of strings.",
+                    field_path="argv",
+                    expected="array",
+                    actual=cls._json_value_type(argv),
+                )
+            if isinstance(argv, list) and not argv:
+                return fail(
+                    "ACTION_SCHEMA_VALUE_ERROR",
+                    "execute.argv must not be empty when provided.",
+                    field_path="argv",
+                    expected="non-empty array",
+                    actual="empty array",
+                )
+            if isinstance(argv, list):
+                for index, item in enumerate(argv):
+                    if not isinstance(item, str):
+                        return fail(
+                            "ACTION_SCHEMA_TYPE_ERROR",
+                            "execute.argv items must be strings.",
+                            field_path=f"argv[{index}]",
+                            expected="string",
+                            actual=cls._json_value_type(item),
+                        )
+                    if not item:
+                        return fail(
+                            "ACTION_SCHEMA_VALUE_ERROR",
+                            "execute.argv items must be non-empty strings.",
+                            field_path=f"argv[{index}]",
+                            expected="non-empty string",
+                            actual="empty string",
+                        )
             if not code and not argv:
-                return {}
+                return fail(
+                    "ACTION_SCHEMA_REQUIRED_FIELD",
+                    "execute requires non-empty code or argv.",
+                    field_path="argv",
+                    expected="non-empty code or argv",
+                    actual="missing",
+                )
             raw_outputs = obj.get("outputs") or []
             if isinstance(raw_outputs, str):
                 raw_outputs = [raw_outputs]
             if not isinstance(raw_outputs, list):
-                return {}
-            env = obj.get("env") or {}
+                return fail(
+                    "ACTION_SCHEMA_TYPE_ERROR",
+                    "execute.outputs must be an array or string.",
+                    field_path="outputs",
+                    expected="array or string",
+                    actual=cls._json_value_type(raw_outputs),
+                )
+            env = obj.get("env") if "env" in obj else {}
+            if env is None:
+                env = {}
             if not isinstance(env, Mapping):
-                return {}
+                return fail(
+                    "ACTION_SCHEMA_TYPE_ERROR",
+                    "execute.env must be an object of string values.",
+                    field_path="env",
+                    expected="object",
+                    actual=cls._json_value_type(env),
+                )
+            for key, value in env.items():
+                if not isinstance(key, str) or not key:
+                    return fail(
+                        "ACTION_SCHEMA_TYPE_ERROR",
+                        "execute.env keys must be non-empty strings.",
+                        field_path="env",
+                        expected="non-empty string keys",
+                        actual=cls._json_value_type(key),
+                    )
+                if not isinstance(value, str):
+                    return fail(
+                        "ACTION_SCHEMA_TYPE_ERROR",
+                        "execute.env values must be strings.",
+                        field_path=f"env.{key}",
+                        expected="string",
+                        actual=cls._json_value_type(value),
+                    )
             action.update({
                 "code": code,
                 "argv": deepcopy(argv) if isinstance(argv, list) else [],
@@ -11042,31 +11384,55 @@ class BioAnalystAgent:
                 "renderer_invocation",
             }:
                 action["command_role"] = command_role
-            return action
+            return StructuredActionParseResult(action=action, candidate=candidate)
         if action_type == "ask_user":
             question = str(obj.get("question") or obj.get("body") or obj.get("prompt") or "").strip()
             if not question:
-                return {}
+                return fail(
+                    "ACTION_SCHEMA_REQUIRED_FIELD",
+                    "ask_user requires question.",
+                    field_path="question",
+                    expected="non-empty string",
+                    actual="missing",
+                )
             action["question"] = question
-            return action
+            return StructuredActionParseResult(action=action, candidate=candidate)
         if action_type == "search":
             query = str(obj.get("query") or obj.get("question") or obj.get("body") or "").strip()
             if not query:
-                return {}
+                return fail(
+                    "ACTION_SCHEMA_REQUIRED_FIELD",
+                    "search requires query.",
+                    field_path="query",
+                    expected="non-empty string",
+                    actual="missing",
+                )
             action["query"] = query
-            return action
+            return StructuredActionParseResult(action=action, candidate=candidate)
         if action_type == "install_tool":
             tool = str(obj.get("tool") or obj.get("tool_name") or obj.get("body") or "").strip()
             if not tool:
-                return {}
+                return fail(
+                    "ACTION_SCHEMA_REQUIRED_FIELD",
+                    "install_tool requires tool.",
+                    field_path="tool",
+                    expected="non-empty string",
+                    actual="missing",
+                )
             action.update({"tool": tool, "env": str(obj.get("env") or "").strip()})
-            return action
+            return StructuredActionParseResult(action=action, candidate=candidate)
         if action_type == "activate_batch":
             batch_id = str(obj.get("batch_id") or obj.get("batch") or "").strip()
             if not batch_id:
-                return {}
+                return fail(
+                    "ACTION_SCHEMA_REQUIRED_FIELD",
+                    "activate_batch requires batch_id.",
+                    field_path="batch_id",
+                    expected="non-empty string",
+                    actual="missing",
+                )
             action["batch_id"] = batch_id
-            return action
+            return StructuredActionParseResult(action=action, candidate=candidate)
         if action_type == "step_completion_candidate":
             step_id = str(obj.get("step_id") or "").strip()
             reason = str(obj.get("reason") or obj.get("body") or "").strip()
@@ -11079,23 +11445,41 @@ class BioAnalystAgent:
                 if str(item).strip()
             ]
             if not step_id or not reason or not evidence_ids:
-                return {}
+                return fail(
+                    "ACTION_SCHEMA_REQUIRED_FIELD",
+                    "step_completion_candidate requires step_id, reason, and evidence_ids.",
+                    field_path="step_completion_candidate",
+                    expected="step_id, reason, and evidence_ids",
+                    actual="one or more fields missing",
+                )
             action.update({"step_id": step_id, "reason": reason, "evidence_ids": evidence_ids})
-            return action
+            return StructuredActionParseResult(action=action, candidate=candidate)
         if action_type == "plan_patch":
             reason = str(obj.get("reason") or obj.get("body") or "").strip()
             if not reason:
-                return {}
+                return fail(
+                    "ACTION_SCHEMA_REQUIRED_FIELD",
+                    "plan_patch requires reason.",
+                    field_path="reason",
+                    expected="non-empty string",
+                    actual="missing",
+                )
             action.update({
                 "reason": reason,
                 "patch": obj.get("patch") or {},
                 "failure_owner": str(obj.get("failure_owner") or "").strip().upper(),
             })
-            return action
+            return StructuredActionParseResult(action=action, candidate=candidate)
         if action_type == "blocked":
             reason = str(obj.get("reason") or obj.get("body") or "").strip()
             if not reason:
-                return {}
+                return fail(
+                    "ACTION_SCHEMA_REQUIRED_FIELD",
+                    "blocked requires reason.",
+                    field_path="reason",
+                    expected="non-empty string",
+                    actual="missing",
+                )
             raw_missing = obj.get("missing_evidence") or obj.get("evidence") or []
             if isinstance(raw_missing, str):
                 raw_missing = [raw_missing]
@@ -11103,20 +11487,43 @@ class BioAnalystAgent:
                 "reason": reason,
                 "missing_evidence": [str(item).strip() for item in raw_missing if str(item).strip()],
             })
-            return action
+            return StructuredActionParseResult(action=action, candidate=candidate)
         if action_type == "solution":
             text = str(obj.get("text") or obj.get("answer") or obj.get("body") or "").strip()
             if not text:
-                return {}
+                return fail(
+                    "ACTION_SCHEMA_REQUIRED_FIELD",
+                    "solution requires text.",
+                    field_path="text",
+                    expected="non-empty string",
+                    actual="missing",
+                )
             action["text"] = text
-            return action
-        return {}
+            return StructuredActionParseResult(action=action, candidate=candidate)
+        return fail(
+            "ACTION_SCHEMA_VALUE_ERROR",
+            f"Unsupported structured action type: {action_type!r}.",
+            field_path="action_type",
+            expected="supported action type",
+            actual=action_type,
+        )
 
     @classmethod
-    def _extract_structured_action(cls, text: str) -> Dict[str, Any]:
+    def _structured_action_from_object(cls, obj: Dict[str, Any], source: str = "action_json") -> Dict[str, Any]:
+        return cls._structured_action_from_object_result(obj, source=source).action
+
+    @classmethod
+    def _extract_structured_action_result(cls, text: str) -> StructuredActionParseResult:
         raw = str(text or "").strip()
         if not raw:
-            return {}
+            return StructuredActionParseResult(error={
+                "stage": "action_schema",
+                "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+                "field_path": "$",
+                "expected": "structured action",
+                "actual": "empty response",
+                "message": "Generate returned an empty response instead of a structured action.",
+            })
 
         json_candidates: List[str] = []
         for match in re.finditer(r"<action_json>(.*?)</action_json>", raw, re.DOTALL | re.IGNORECASE):
@@ -11126,44 +11533,97 @@ class BioAnalystAgent:
             json_candidates.append(fenced.group(1).strip())
         if raw.startswith("{"):
             json_candidates.append(raw)
+        parse_failures: List[StructuredActionParseResult] = []
         for candidate in json_candidates:
-            action = cls._structured_action_from_object(cls._extract_json_object(candidate))
-            if action:
-                return action
+            obj, json_error, raw_candidate = cls._extract_json_object_result(candidate)
+            if obj or (not json_error and bool(raw_candidate)):
+                result = cls._structured_action_from_object_result(obj)
+                if result.succeeded:
+                    return StructuredActionParseResult(
+                        action=result.action,
+                        candidate=result.candidate,
+                        raw_candidate=raw_candidate,
+                    )
+                parse_failures.append(StructuredActionParseResult(
+                    error=result.error,
+                    candidate=result.candidate,
+                    raw_candidate=raw_candidate,
+                ))
+            elif json_error:
+                parse_failures.append(StructuredActionParseResult(
+                    error=json_error,
+                    raw_candidate=raw_candidate,
+                ))
 
         execute_match = re.search(r"<execute>(.*?)</execute>", raw, re.DOTALL | re.IGNORECASE)
         if execute_match and execute_match.group(1).strip():
             code = execute_match.group(1).strip()
-            return {"type": "execute", "code": code, "language": detect_script_language(code), "source": "xml"}
+            return StructuredActionParseResult(action={
+                "type": "execute", "code": code,
+                "language": detect_script_language(code), "source": "xml",
+            }, raw_candidate=cls._bounded_protocol_excerpt(raw))
         ask_match = re.search(r"<ask_user>(.*?)</ask_user>", raw, re.DOTALL | re.IGNORECASE)
         if ask_match and ask_match.group(1).strip():
-            return {"type": "ask_user", "question": ask_match.group(1).strip(), "source": "xml"}
+            return StructuredActionParseResult(action={
+                "type": "ask_user", "question": ask_match.group(1).strip(), "source": "xml",
+            }, raw_candidate=cls._bounded_protocol_excerpt(raw))
         search_match = re.search(r"<search>(.*?)</search>", raw, re.DOTALL | re.IGNORECASE)
         if search_match and search_match.group(1).strip():
-            return {"type": "search", "query": search_match.group(1).strip(), "source": "xml"}
+            return StructuredActionParseResult(action={
+                "type": "search", "query": search_match.group(1).strip(), "source": "xml",
+            }, raw_candidate=cls._bounded_protocol_excerpt(raw))
         install_match = re.search(
             r"<install_tool(?:\s+env=[\"'](.*?)[\"'])?>(.*?)</install_tool>",
             raw,
             re.DOTALL | re.IGNORECASE,
         )
         if install_match and install_match.group(2).strip():
-            return {
+            return StructuredActionParseResult(action={
                 "type": "install_tool",
                 "env": str(install_match.group(1) or "").strip(),
                 "tool": install_match.group(2).strip(),
                 "source": "xml",
-            }
+            }, raw_candidate=cls._bounded_protocol_excerpt(raw))
         activate_match = re.search(
             r"<activate_batch\s+batch_id=[\"']?([^\"'\s>/]+)[\"']?\s*/?>",
             raw,
             re.DOTALL | re.IGNORECASE,
         )
         if activate_match and activate_match.group(1).strip():
-            return {"type": "activate_batch", "batch_id": activate_match.group(1).strip(), "source": "xml"}
+            return StructuredActionParseResult(action={
+                "type": "activate_batch", "batch_id": activate_match.group(1).strip(), "source": "xml",
+            }, raw_candidate=cls._bounded_protocol_excerpt(raw))
         solution_match = re.search(r"<solution>(.*?)</solution>", raw, re.DOTALL | re.IGNORECASE)
         if solution_match and solution_match.group(1).strip():
-            return {"type": "solution", "text": solution_match.group(1).strip(), "source": "xml"}
-        return {}
+            return StructuredActionParseResult(action={
+                "type": "solution", "text": solution_match.group(1).strip(), "source": "xml",
+            }, raw_candidate=cls._bounded_protocol_excerpt(raw))
+        if parse_failures:
+            schema_failures = [
+                item for item in parse_failures
+                if str(item.error.get("stage") or "") == "action_schema"
+            ]
+            if schema_failures:
+                return schema_failures[0]
+            return max(
+                parse_failures,
+                key=lambda item: int(item.error.get("position") or -1),
+            )
+        return StructuredActionParseResult(
+            error={
+                "stage": "action_schema",
+                "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+                "field_path": "$",
+                "expected": "one supported structured action",
+                "actual": "unrecognized response",
+                "message": "Generate returned no supported structured action.",
+            },
+            raw_candidate=cls._bounded_protocol_excerpt(raw),
+        )
+
+    @classmethod
+    def _extract_structured_action(cls, text: str) -> Dict[str, Any]:
+        return cls._extract_structured_action_result(text).action
 
     @classmethod
     def _consultant_command_from_json(cls, text: str) -> str:
@@ -24720,6 +25180,35 @@ question. Never guess a scientific or database identity.
                 if str(item).strip()
             ]
             generate_protocol = self._renderer_action_protocol(state, task_id)
+            generate_feedback: Dict[str, Any] = {
+                "supervisor": {
+                    key: deepcopy((state.get("last_supervisor_feedback") or {}).get(key))
+                    for key in ("assessment", "concerns", "suggestions", "required_fix")
+                    if (state.get("last_supervisor_feedback") or {}).get(key)
+                    not in (None, "", [], {})
+                },
+                "recovery_action": {
+                    key: deepcopy(recovery_action.get(key))
+                    for key in ("type", "reason", "failure_owner", "violation")
+                    if recovery_action.get(key) not in (None, "", [], {})
+                },
+                "recovery_decision": {
+                    key: deepcopy(recovery_decision.get(key))
+                    for key in (
+                        "verdict", "root_cause", "action_type", "failure_owner",
+                        "recommended_action", "missing_tools", "verification_checks",
+                        "expected_new_evidence", "forbidden_next_actions",
+                    )
+                    if recovery_decision.get(key) not in (None, "", [], {})
+                },
+            }
+            action_repair_projection = self._action_repair_projection(
+                state,
+                recovery_action,
+                recovery_decision,
+            )
+            if action_repair_projection:
+                generate_feedback["action_repair"] = action_repair_projection
             generate_approval = validate_plan_for_generate(
                 generate_plan_state,
                 task_spec_revision(generate_task_spec),
@@ -24765,28 +25254,7 @@ question. Never guess a scientific or database identity.
                             state, task_id
                         ),
                     },
-                    feedback={
-                        "supervisor": {
-                            key: deepcopy((state.get("last_supervisor_feedback") or {}).get(key))
-                            for key in ("assessment", "concerns", "suggestions", "required_fix")
-                            if (state.get("last_supervisor_feedback") or {}).get(key)
-                            not in (None, "", [], {})
-                        },
-                        "recovery_action": {
-                            key: deepcopy(recovery_action.get(key))
-                            for key in ("type", "reason", "failure_owner", "violation")
-                            if recovery_action.get(key) not in (None, "", [], {})
-                        },
-                        "recovery_decision": {
-                            key: deepcopy(recovery_decision.get(key))
-                            for key in (
-                                "verdict", "root_cause", "action_type", "failure_owner",
-                                "recommended_action", "missing_tools", "verification_checks",
-                                "expected_new_evidence", "forbidden_next_actions",
-                            )
-                            if recovery_decision.get(key) not in (None, "", [], {})
-                        },
-                    },
+                    feedback=generate_feedback,
                     evidence=recovery_evidence,
                     allowed_operations=list(generate_protocol.get("allowed_actions") or []),
                     approval_ref=str(
@@ -25084,7 +25552,9 @@ question. Never guess a scientific or database identity.
             ask_user_match = re.search(r"<ask_user>(.*?)</ask_user>", content, re.DOTALL)
             answer_match  = re.search(r"<solution>(.*?)</solution>", content, re.DOTALL)
             activate_match = re.search(r"<activate_batch\s+batch_id=[\"']?([^\"'\s>/]+)[\"']?\s*/?>", content, re.DOTALL)
-            structured_action = self._extract_structured_action(content)
+            structured_parse_result = self._extract_structured_action_result(content)
+            structured_action = structured_parse_result.action
+            action_parse_error = deepcopy(structured_parse_result.error)
             candidate_fingerprint = (
                 managed_action_fingerprint(structured_action)
                 if structured_action
@@ -25791,11 +26261,21 @@ question. Never guess a scientific or database identity.
                 next_step = "execute"
 
             if generated_action == "continue":
+                protocol_error = deepcopy(renderer_contract_error or action_parse_error)
+                repair_stage = str(protocol_error.get("stage") or "action_schema")
+                previous_candidate: Any = (
+                    deepcopy(structured_parse_result.candidate)
+                    if repair_stage == "action_schema"
+                    and structured_parse_result.candidate not in (None, "", [], {})
+                    else structured_parse_result.raw_candidate
+                )
+                if previous_candidate in (None, "", [], {}):
+                    previous_candidate = self._bounded_protocol_excerpt(str(content or ""))
                 format_count, duplicate_count, invalid_hash, format_decision = self._record_action_format_failure(
                     task_id,
                     str((current_plan_step_with_index(load_plan_state(self.data_path, task_id))[1] or {}).get("step_id") or "lightweight"),
                     str(content or ""),
-                    renderer_contract_error,
+                    protocol_error,
                 )
                 plan_progress = self._record_plan_current_evidence(
                     task_id,
@@ -25806,7 +26286,8 @@ question. Never guess a scientific or database identity.
                             "format_attempt": format_count,
                             "duplicate_count": duplicate_count,
                             "response_excerpt": str(content or "")[:700],
-                            "schema_error": renderer_contract_error,
+                            "protocol_error": protocol_error,
+                            "schema_error": protocol_error,
                         },
                         ensure_ascii=False,
                     ),
@@ -25814,10 +26295,15 @@ question. Never guess a scientific or database identity.
                 current_step_state = load_plan_state(self.data_path, task_id)
                 _, format_step = current_plan_step_with_index(current_step_state)
                 format_step_id = str(format_step.get("step_id") or "lightweight")
-                schema_error_text = (
-                    json.dumps(renderer_contract_error, ensure_ascii=False, sort_keys=True)
-                    if renderer_contract_error
+                protocol_error_text = (
+                    json.dumps(protocol_error, ensure_ascii=False, sort_keys=True)
+                    if protocol_error
                     else ""
+                )
+                protocol_failure_type = (
+                    "json_decode_error"
+                    if repair_stage == "json_decode"
+                    else "action_schema_error"
                 )
                 format_repair_already_used = (
                     str((state.get("pending_recovery_action") or {}).get("type") or "").strip().lower()
@@ -25850,10 +26336,11 @@ question. Never guess a scientific or database identity.
                         "diagnostic_summary": {
                             "root_cause": internal_error,
                             "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                            "failure_type": "action_schema_error",
+                            "failure_type": protocol_failure_type,
+                            "protocol_error": protocol_error,
                             "evidence": [
                                 f"response_hash:{invalid_hash}",
-                                *([schema_error_text] if schema_error_text else []),
+                                *([protocol_error_text] if protocol_error_text else []),
                             ],
                             "confidence": 1.0,
                             "missing_evidence": [],
@@ -25875,7 +26362,7 @@ question. Never guess a scientific or database identity.
                     task_id,
                     invalid_hash=invalid_hash,
                     invalid_excerpt=str(content or ""),
-                    contract_error=renderer_contract_error,
+                    contract_error=protocol_error,
                 )
                 renderer_protocol = self._renderer_action_protocol(state, task_id)
                 return {
@@ -25892,13 +26379,20 @@ question. Never guess a scientific or database identity.
                         "invalid_response_excerpt": str(content or "")[:700],
                         "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
                         "allowed_actions": renderer_protocol.get("allowed_actions") or [],
-                        "schema_error": renderer_contract_error,
+                        "repair_stage": repair_stage,
+                        "previous_candidate": previous_candidate,
+                        "protocol_error": protocol_error,
+                        "schema_error": protocol_error,
+                        "repair_instruction": self._corrective_action_repair_instruction(),
                     },
                     "action_format_repair": {
                         "step_id": format_step_id,
                         "invalid_response_hash": invalid_hash,
                         "attempt": format_count,
                         "feedback": repair_feedback,
+                        "repair_stage": repair_stage,
+                        "previous_candidate": previous_candidate,
+                        "protocol_error": protocol_error,
                     },
                     "required_next_action": "ACTION_FORMAT_REPAIR",
                     "recovery_decision": format_decision.to_dict(),

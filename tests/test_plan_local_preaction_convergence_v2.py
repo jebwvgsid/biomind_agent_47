@@ -718,8 +718,15 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
                 return AIMessage(content=json.dumps(self._planner_payload()))
             if stage == "generate":
                 payload = node_context.llm_payload.to_dict()
+                payload["_provider_request"] = "\n".join(
+                    str(getattr(message, "content", "") or "")
+                    for message in _messages
+                )
                 captures.append(payload)
-                return AIMessage(content=json.dumps(generate_action(payload, len(captures))))
+                generated = generate_action(payload, len(captures))
+                return AIMessage(content=(
+                    generated if isinstance(generated, str) else json.dumps(generated)
+                ))
             raise AssertionError(f"unexpected stage: {stage}")
 
         async def fake_run_script(
@@ -814,6 +821,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
             if ordinal == 1:
                 placeholder = self._artifact_row(payload, "output")["placeholder"]
                 action["argv"] = [f"{placeholder}/child"]
+                action["env"] = {"ROOT": "{input:unknown_root}"}
             elif ordinal == 2:
                 placeholder = self._artifact_row(payload, "output")["placeholder"]
                 action["env"] = {"WORK_DIR": placeholder}
@@ -832,6 +840,79 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(visited.count("execute"), 2)
         self.assertNotIn("renderer", visited)
         self.assertIs((durable.get("failure") or {}).get("execution_started"), True)
+        repair_request = str(captures[1].get("_provider_request") or "")
+        self.assertIn("<action_repair>", repair_request)
+        self.assertIn('"repair_stage": "managed_artifact"', repair_request)
+        self.assertIn("MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED", repair_request)
+        self.assertIn("MANAGED_ARTIFACT_HANDLE_UNKNOWN", repair_request)
+        self.assertIn("env.ROOT", repair_request)
+        self.assertIn("{input:unknown_root}", repair_request)
+        self.assertIn('"allowed_inputs": []', repair_request)
+        self.assertIn("complete argv/env scalar value", repair_request)
+        self.assertIn('"previous_candidate"', repair_request)
+
+    async def test_graph_e_malformed_json_repair_is_visible_to_real_provider_request(self) -> None:
+        def candidate(payload: Mapping[str, Any], ordinal: int) -> dict[str, Any] | str:
+            if ordinal == 1:
+                placeholder = self._artifact_row(payload, "output")["placeholder"]
+                return "\n".join([
+                    "```json",
+                    "{",
+                    '  "action_type": "execute",',
+                    '  "action_kind": "primary",',
+                    '  "purpose": "analysis",',
+                    '  "argv": [',
+                    '    "bash",',
+                    '    "-lc",',
+                    '    "test -n \\"$OUT\\"",',
+                    '    "env": {',
+                    f'      "OUT": {json.dumps(placeholder)}',
+                    "    }",
+                    "  ]",
+                    "}",
+                    "```",
+                ])
+            if ordinal == 2:
+                placeholder = self._artifact_row(payload, "output")["placeholder"]
+                action = self._execute_action(payload)
+                action["env"] = {"OUT": placeholder}
+                action["argv"] = ["/bin/true", "$OUT/child"]
+                return action
+            return self._execute_action(payload)
+
+        events, captures, _ = await self._run_graph("graph-e-json-repair", candidate)
+        durable = load_plan_state(self.root, "graph-e-json-repair")
+        visited = [next(iter(event)) for event in events]
+
+        self.assertGreaterEqual(len(captures), 3)
+        repair_request = str(captures[1].get("_provider_request") or "")
+        self.assertIn("<semantic_history>", repair_request)
+        self.assertIn("<capability_instructions>", repair_request)
+        self.assertIn("sequence/search/local-blast", repair_request)
+        self.assertIn("Create the plan-local directory", repair_request)
+        self.assertIn(self._artifact_row(captures[1], "output")["placeholder"], repair_request)
+        self.assertIn("<action_repair>", repair_request)
+        self.assertIn('"repair_stage": "json_decode"', repair_request)
+        self.assertIn('"code": "JSON_DECODE_ERROR"', repair_request)
+        self.assertIn("Expecting ',' delimiter", repair_request)
+        self.assertIn('"line": 9', repair_request)
+        self.assertIn('"column": 10', repair_request)
+        self.assertIn('"previous_candidate"', repair_request)
+        self.assertIn('"env": {', repair_request)
+        self.assertIn("Repair the previous generated action instead of regenerating", repair_request)
+        self.assertIn("repair_previous_action", repair_request)
+        self.assertNotIn("regenerate_script", repair_request)
+        self.assertEqual(visited.count("execute"), 2)
+        self.assertNotEqual(
+            str((durable.get("task_state") or {}).get("status") or ""),
+            "failed",
+            json.dumps({
+                "task_state": durable.get("task_state"),
+                "failure": durable.get("failure"),
+                "primary_failure": durable.get("primary_failure"),
+                "steps": durable.get("steps"),
+            }, ensure_ascii=False, default=str),
+        )
 
     async def test_graph_c_same_invalid_candidate_converges(self) -> None:
         def invalid(payload: Mapping[str, Any], _ordinal: int) -> dict[str, Any]:

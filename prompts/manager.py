@@ -1,4 +1,5 @@
 import datetime
+from copy import deepcopy
 import json
 import logging
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
@@ -1875,11 +1876,100 @@ Allowed step handles: {handles}
         capability_instructions: str = "",
     ) -> str:
         semantic, focus = PromptManager._node_context_sections(llm_payload)
+        focus_for_prompt = deepcopy(dict(focus))
+        action_repair: Dict[str, Any] = {}
+        feedback = focus_for_prompt.get("feedback")
+        if isinstance(feedback, Mapping):
+            feedback_for_prompt = deepcopy(dict(feedback))
+            candidate_repair = feedback_for_prompt.pop("action_repair", {})
+            if isinstance(candidate_repair, Mapping):
+                action_repair = deepcopy(dict(candidate_repair))
+            if feedback_for_prompt:
+                focus_for_prompt["feedback"] = feedback_for_prompt
+            else:
+                focus_for_prompt.pop("feedback", None)
+
+        if action_repair:
+            current_step = focus_for_prompt.get("current_step")
+            if (
+                str(action_repair.get("repair_stage") or "") == "managed_artifact"
+                and isinstance(current_step, Mapping)
+            ):
+                action_repair.setdefault(
+                    "allowed_inputs",
+                    [str(item) for item in current_step.get("inputs", []) or []],
+                )
+                action_repair.setdefault(
+                    "allowed_outputs",
+                    [str(item) for item in current_step.get("outputs", []) or []],
+                )
+                violations = action_repair.get("exact_violations") or []
+                if any(
+                    str(item.get("code") or "")
+                    == "MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED"
+                    for item in violations
+                    if isinstance(item, Mapping)
+                ):
+                    action_repair.setdefault(
+                        "placeholder_rule",
+                        (
+                            "A managed artifact placeholder must occupy the complete argv/env "
+                            "scalar value. Do not append prefixes, suffixes, or child paths."
+                        ),
+                    )
+
         semantic_json = json.dumps(
             semantic, ensure_ascii=False, sort_keys=False, indent=2, default=str
         )
         focus_json = json.dumps(
-            focus, ensure_ascii=False, sort_keys=False, indent=2, default=str
+            focus_for_prompt, ensure_ascii=False, sort_keys=False, indent=2, default=str
+        )
+        action_repair_section = ""
+        if action_repair:
+            action_repair_section = (
+                "\n<action_repair>\n"
+                + json.dumps(
+                    action_repair,
+                    ensure_ascii=False,
+                    sort_keys=False,
+                    indent=2,
+                    default=str,
+                )
+                + "\n</action_repair>\n"
+            )
+
+        invalid_embedded_example = json.dumps(
+            {
+                "action_type": "execute",
+                "argv": [
+                    "bash",
+                    "-lc",
+                    'FASTA="{input:reference_fasta}"; tool "$FASTA"',
+                ],
+                "env": {},
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        valid_env_example = json.dumps(
+            {
+                "action_type": "execute",
+                "argv": ["bash", "-lc", 'tool "$FASTA"'],
+                "env": {"FASTA": "{input:reference_fasta}"},
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        canonical_execute_example = json.dumps(
+            {
+                "action_type": "execute",
+                "action_kind": "primary|diagnostic|required_validation|recovery",
+                "purpose": "analysis|probe|validation|record_failure",
+                "argv": ["tool", "{input:role}", "-o", "{output:role}"],
+                "env": {},
+            },
+            ensure_ascii=False,
+            indent=2,
         )
         return f"""You are BioMind Generate. Propose one action for the current step.
 
@@ -1896,19 +1986,32 @@ or env values. Never emit an authoritative managed path as a literal and never
 embed a placeholder inside shell text.
 
 For `bash -lc`, this is invalid:
-{{"argv":["bash","-lc","FASTA=\"{{input:reference_fasta}}\"; tool \"$FASTA\""],"env":{{}}}}
+<action_json_example name="invalid_embedded_placeholder">
+{invalid_embedded_example}
+</action_json_example>
+The invalid shell scalar above is
+`FASTA="{{input:reference_fasta}}"; tool "$FASTA"`.
 Move the complete placeholder to env instead:
-{{"argv":["bash","-lc","tool \"$FASTA\""],"env":{{"FASTA":"{{input:reference_fasta}}"}}}}
+<action_json_example name="valid_env_placeholder">
+{valid_env_example}
+</action_json_example>
 Do not emit `{{runtime:*}}`. Runtime tools are already supplied as
 Controller-managed environment variables. For snpEff, reference `$SNPEFF_JAR`.
 
-{{
-  "action_type": "execute",
-  "action_kind": "primary|diagnostic|required_validation|recovery",
-  "purpose": "analysis|probe|validation|record_failure",
-  "argv": ["tool", "{{input:role}}", "-o", "{{output:role}}"],
-  "env": {{}}
-}}
+Managed input/output handles may only use handles explicitly provided by the
+current step contract. A managed placeholder must occupy the entire argv/env
+scalar value. Values such as `{{output:x}}.tmp`, `prefix-{{output:x}}`, and
+`{{output:x}}/file` are invalid. Do not invent a managed project_root/workdir
+handle or rely on an undeclared working directory.
+
+Temporary files used only within the same execute action may use a local
+temporary directory such as `tmpdir="$(mktemp -d)"` with cleanup via
+`trap 'rm -rf "$tmpdir"' EXIT`. Never use such a directory as a cross-step
+artifact; cross-step intermediates must use Planner-declared managed artifacts.
+
+<action_json_example name="canonical_execute">
+{canonical_execute_example}
+</action_json_example>
 
 Controller derives input/output coverage, canonical identity, paths, evidence,
 and provenance from the typed placeholders in argv/env. Do not return
@@ -1934,4 +2037,5 @@ blocked, or solution. Do not wrap the JSON in Markdown.
 <current_focus>
 {focus_json}
 </current_focus>
+{action_repair_section}
 """
