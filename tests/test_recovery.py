@@ -166,7 +166,7 @@ class RecoveryPrimitiveTests(unittest.TestCase):
                 self.assertFalse(trigger.required)
                 self.assertEqual(trigger.reasons, ["diagnostic_returns_to_same_step_generate"])
 
-    def test_primary_command_not_found_never_requests_plan_patch(self):
+    def test_primary_command_not_found_requires_recovery_diagnosis_not_plan_patch(self):
         missing = evaluate_recovery_trigger({}, {
             "returncode": 127,
             "execution_status": "failed",
@@ -185,12 +185,14 @@ class RecoveryPrimitiveTests(unittest.TestCase):
             "stderr_summary": "snpEff: command not found",
         })
 
-        self.assertEqual(missing.deterministic_action, RecoveryAction.RUN_DIAGNOSTIC_PROBE.value)
-        self.assertEqual(ready_runtime.deterministic_action, RecoveryAction.PATCH_SCRIPT.value)
+        self.assertTrue(missing.judge_required)
+        self.assertTrue(ready_runtime.judge_required)
+        self.assertEqual(missing.deterministic_action, "")
+        self.assertEqual(ready_runtime.deterministic_action, "")
         self.assertNotEqual(missing.deterministic_action, RecoveryAction.PATCH_PLAN.value)
         self.assertNotEqual(ready_runtime.deterministic_action, RecoveryAction.PATCH_PLAN.value)
 
-    def test_required_artifact_missing_is_deterministic_even_after_supervisor_pass(self):
+    def test_required_artifact_missing_requires_causal_recovery_after_supervisor_pass(self):
         trigger = evaluate_recovery_trigger({
             "supervisor_verdict": "PASS",
             "completion_gate_result": {
@@ -203,13 +205,10 @@ class RecoveryPrimitiveTests(unittest.TestCase):
             "execution_status": "succeeded",
             "command_role": "primary",
         })
-        self.assertFalse(trigger.judge_required)
-        self.assertEqual(
-            trigger.deterministic_action,
-            RecoveryAction.PATCH_SCRIPT.value,
-        )
+        self.assertTrue(trigger.judge_required)
+        self.assertEqual(trigger.deterministic_action, "")
 
-    def test_changed_code_hash_is_not_same_failure_second_occurrence(self):
+    def test_changed_code_hash_is_new_failure_occurrence_but_still_requires_diagnosis(self):
         trigger = evaluate_recovery_trigger(
             {},
             {
@@ -226,9 +225,9 @@ class RecoveryPrimitiveTests(unittest.TestCase):
         )
 
         self.assertEqual(trigger.same_failure_count, 1)
-        self.assertFalse(trigger.judge_required)
+        self.assertTrue(trigger.judge_required)
 
-    def test_supervisor_retry_uses_structured_action_without_judge_when_failure_is_clear(self):
+    def test_supervisor_script_retry_is_advisory_until_recovery_diagnoses_failure(self):
         trigger = evaluate_recovery_trigger(
             {
                 "supervisor_verdict": "RETRY",
@@ -238,7 +237,7 @@ class RecoveryPrimitiveTests(unittest.TestCase):
             {"returncode": 1, "stderr_summary": "syntax failure"},
         )
 
-        self.assertFalse(trigger.judge_required)
+        self.assertTrue(trigger.judge_required)
         self.assertEqual(trigger.deterministic_action, RecoveryAction.PATCH_SCRIPT.value)
 
     def test_supervisor_retry_after_success_requires_judge(self):
@@ -265,7 +264,9 @@ class RecoveryPrimitiveTests(unittest.TestCase):
             "missing_required_input_confirmed": True,
         })
 
-        self.assertEqual(generic.deterministic_action, RecoveryAction.RUN_DIAGNOSTIC_PROBE.value)
+        self.assertTrue(generic.judge_required)
+        self.assertEqual(generic.deterministic_action, "")
+        self.assertFalse(confirmed.judge_required)
         self.assertEqual(confirmed.deterministic_action, RecoveryAction.BLOCK_MISSING_INPUT.value)
 
     def test_recovery_rejects_narrative_content_pattern(self):

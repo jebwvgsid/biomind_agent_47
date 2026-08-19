@@ -349,6 +349,8 @@ ATTEMPT_RUNNING = "RUNNING"
 ATTEMPT_PROCESS_EXITED = "PROCESS_EXITED"
 ATTEMPT_EVIDENCE_COMMITTED = "EVIDENCE_COMMITTED"
 ATTEMPT_VALIDATED = "VALIDATED"
+ATTEMPT_VALIDATION_PASSED = "VALIDATION_PASSED"
+ATTEMPT_VALIDATION_FAILED = "VALIDATION_FAILED"
 ATTEMPT_COMPLETED = "COMPLETED"
 ATTEMPT_FAILED = "FAILED"
 ATTEMPT_UNKNOWN_AFTER_CRASH = "UNKNOWN_AFTER_CRASH"
@@ -1229,7 +1231,37 @@ def _pid_is_alive(pid_value: Any) -> bool:
     return True
 
 
-def active_attempt(state: PlanState, step_id: str = "") -> Dict[str, Any]:
+def _attempt_matches_identity(
+    item: Mapping[str, Any],
+    *,
+    step_id: str = "",
+    action_id: str = "",
+    plan_id: str = "",
+    plan_version: str = "",
+    execution_epoch: Any = "",
+) -> bool:
+    expected = {
+        "step_id": str(step_id or ""),
+        "action_id": str(action_id or ""),
+        "plan_id": str(plan_id or ""),
+        "plan_version": str(plan_version or ""),
+        "execution_epoch": str(execution_epoch if execution_epoch not in (None, "") else ""),
+    }
+    return all(
+        not value or str(item.get(key) or "") == value
+        for key, value in expected.items()
+    )
+
+
+def active_attempt(
+    state: PlanState,
+    step_id: str = "",
+    *,
+    action_id: str = "",
+    plan_id: str = "",
+    plan_version: str = "",
+    execution_epoch: Any = "",
+) -> Dict[str, Any]:
     """Return the one durable active attempt, newest first."""
     provenance = ensure_provenance_state(state)
     current_plan_version = str(state.get("plan_version") or "")
@@ -1243,27 +1275,59 @@ def active_attempt(state: PlanState, step_id: str = "") -> Dict[str, Any]:
             or not str(item.get("plan_version") or "")
             or str(item.get("plan_version") or "") == current_plan_version
         )
-        and (not step_id or str(item.get("step_id") or "") == str(step_id))
+        and _attempt_matches_identity(
+            item,
+            step_id=step_id,
+            action_id=action_id,
+            plan_id=plan_id,
+            plan_version=plan_version,
+            execution_epoch=execution_epoch,
+        )
     ]
     rows.sort(key=lambda item: (str(item.get("created_at") or item.get("started_at") or ""), str(item.get("attempt_id") or "")), reverse=True)
     return rows[0] if rows else {}
 
 
-def classify_attempt_resume(state: PlanState) -> Dict[str, Any]:
+def classify_attempt_resume(
+    state: PlanState,
+    *,
+    step_id: str = "",
+    action_id: str = "",
+    plan_id: str = "",
+    plan_version: str = "",
+    execution_epoch: Any = "",
+) -> Dict[str, Any]:
     """Classify durable attempt recovery without creating or rerunning work."""
-    attempt = active_attempt(state)
+    attempt = active_attempt(
+        state,
+        step_id,
+        action_id=action_id,
+        plan_id=plan_id,
+        plan_version=plan_version,
+        execution_epoch=execution_epoch,
+    )
     if not attempt:
         provenance = ensure_provenance_state(state)
         pending_validation = [
             dict(item) for item in provenance.get("attempts", {}).values()
             if isinstance(item, dict)
             and str(item.get("status") or "").upper() in {
-                ATTEMPT_PROCESS_EXITED, ATTEMPT_EVIDENCE_COMMITTED, ATTEMPT_VALIDATED,
+                ATTEMPT_PROCESS_EXITED, ATTEMPT_EVIDENCE_COMMITTED,
+                ATTEMPT_VALIDATED, ATTEMPT_VALIDATION_PASSED,
+                ATTEMPT_VALIDATION_FAILED,
             }
             and (
                 not str(state.get("plan_version") or "")
                 or not str(item.get("plan_version") or "")
                 or str(item.get("plan_version") or "") == str(state.get("plan_version") or "")
+            )
+            and _attempt_matches_identity(
+                item,
+                step_id=step_id,
+                action_id=action_id,
+                plan_id=plan_id,
+                plan_version=plan_version,
+                execution_epoch=execution_epoch,
             )
         ]
         pending_validation.sort(
@@ -1293,8 +1357,10 @@ def classify_attempt_resume(state: PlanState) -> Dict[str, Any]:
             route, reason = "reconcile_attempt", "process_missing_without_exit_status"
     elif status in {ATTEMPT_PROCESS_EXITED, ATTEMPT_EVIDENCE_COMMITTED}:
         route, reason = "supervisor", "execution_finished_validation_pending"
-    elif status == ATTEMPT_VALIDATED:
+    elif status in {ATTEMPT_VALIDATED, ATTEMPT_VALIDATION_PASSED}:
         route, reason = "transition_guard", "validation_committed_plan_transition_pending"
+    elif status == ATTEMPT_VALIDATION_FAILED:
+        route, reason = "supervisor", "failed_validation_requires_recovery"
     elif status == ATTEMPT_UNKNOWN_AFTER_CRASH:
         route, reason = "reconcile_attempt", "unknown_after_crash"
     elif status in {ATTEMPT_CREATED, ATTEMPT_SCRIPT_READY, ATTEMPT_APPROVED}:
@@ -1332,6 +1398,8 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             "action_id": action_id,
             "plan_id": str(state.get("plan_id") or ""),
             "plan_version": str(action.get("plan_version") or state.get("plan_version") or ""),
+            "execution_epoch": str(action.get("execution_epoch") or ""),
+            "action_hash": str(action.get("action_hash") or ""),
             "step_id": str(action.get("step_id") or ""),
             "stage_id": str(action.get("stage_id") or ""),
             "manifest_id": manifest_id,
@@ -1369,10 +1437,28 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
         step_id = str(value.get("step_id") or action.get("step_id") or "")
         existing_active = active_attempt(state, step_id)
         if existing_active and str(existing_active.get("attempt_id") or "") != explicit_attempt_id:
-            raise ValueError(
-                f"Step {step_id or '<unknown>'} already has active attempt "
-                f"{existing_active.get('attempt_id')}"
+            existing_action_id = str(existing_active.get("action_id") or "")
+            if existing_action_id == action_id:
+                raise ValueError(
+                    f"Step {step_id or '<unknown>'} already has active attempt "
+                    f"{existing_active.get('attempt_id')}"
+                )
+            if (
+                str(existing_active.get("status") or "").upper()
+                in {ATTEMPT_STARTING, ATTEMPT_RUNNING}
+                and _pid_is_alive(existing_active.get("pid"))
+            ):
+                raise ValueError(
+                    "Cannot supersede a different action while its process is alive"
+                )
+            stale_attempt = provenance["attempts"].get(
+                str(existing_active.get("attempt_id") or "")
             )
+            if isinstance(stale_attempt, dict):
+                stale_attempt["status"] = ATTEMPT_FAILED
+                stale_attempt["termination_reason"] = "superseded_by_new_action"
+                stale_attempt["superseded_by_action_id"] = action_id
+                stale_attempt["updated_at"] = now
         counters = provenance["attempt_counters"]
         sequence = int(counters.get(action_id) or 0) + 1
         counters[action_id] = sequence
@@ -1393,6 +1479,8 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                 "action_id": action_id,
                 "plan_id": str(state.get("plan_id") or ""),
                 "plan_version": str(state.get("plan_version") or action.get("plan_version") or ""),
+                "execution_epoch": str(action.get("execution_epoch") or ""),
+                "action_hash": str(action.get("action_hash") or ""),
                 "step_id": step_id,
                 "stage_id": str(value.get("stage_id") or action.get("stage_id") or ""),
                 "generated_script": dict(value.get("generated_script") or {}),
@@ -1442,7 +1530,8 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
         allowed = {
             ATTEMPT_CREATED, ATTEMPT_SCRIPT_READY, ATTEMPT_APPROVED, ATTEMPT_STARTING,
             ATTEMPT_RUNNING, ATTEMPT_PROCESS_EXITED, ATTEMPT_EVIDENCE_COMMITTED,
-            ATTEMPT_VALIDATED, ATTEMPT_COMPLETED, ATTEMPT_FAILED, ATTEMPT_UNKNOWN_AFTER_CRASH,
+            ATTEMPT_VALIDATED, ATTEMPT_VALIDATION_PASSED, ATTEMPT_VALIDATION_FAILED,
+            ATTEMPT_COMPLETED, ATTEMPT_FAILED, ATTEMPT_UNKNOWN_AFTER_CRASH,
         }
         if status not in allowed:
             raise ValueError(f"Unsupported attempt status: {status}")
@@ -1454,8 +1543,13 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             ATTEMPT_STARTING: {ATTEMPT_RUNNING, ATTEMPT_PROCESS_EXITED, ATTEMPT_FAILED, ATTEMPT_UNKNOWN_AFTER_CRASH},
             ATTEMPT_RUNNING: {ATTEMPT_RUNNING, ATTEMPT_PROCESS_EXITED, ATTEMPT_FAILED, ATTEMPT_UNKNOWN_AFTER_CRASH},
             ATTEMPT_PROCESS_EXITED: {ATTEMPT_EVIDENCE_COMMITTED, ATTEMPT_FAILED, ATTEMPT_UNKNOWN_AFTER_CRASH},
-            ATTEMPT_EVIDENCE_COMMITTED: {ATTEMPT_VALIDATED, ATTEMPT_FAILED},
+            ATTEMPT_EVIDENCE_COMMITTED: {
+                ATTEMPT_VALIDATED, ATTEMPT_VALIDATION_PASSED,
+                ATTEMPT_VALIDATION_FAILED, ATTEMPT_FAILED,
+            },
             ATTEMPT_VALIDATED: {ATTEMPT_COMPLETED, ATTEMPT_FAILED},
+            ATTEMPT_VALIDATION_PASSED: {ATTEMPT_COMPLETED, ATTEMPT_FAILED},
+            ATTEMPT_VALIDATION_FAILED: {ATTEMPT_FAILED},
             ATTEMPT_UNKNOWN_AFTER_CRASH: {ATTEMPT_PROCESS_EXITED, ATTEMPT_EVIDENCE_COMMITTED, ATTEMPT_FAILED},
             ATTEMPT_COMPLETED: {ATTEMPT_COMPLETED},
             ATTEMPT_FAILED: {ATTEMPT_FAILED},
@@ -1477,6 +1571,8 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             ATTEMPT_PROCESS_EXITED,
             ATTEMPT_EVIDENCE_COMMITTED,
             ATTEMPT_VALIDATED,
+            ATTEMPT_VALIDATION_PASSED,
+            ATTEMPT_VALIDATION_FAILED,
             ATTEMPT_COMPLETED,
             ATTEMPT_FAILED,
             ATTEMPT_UNKNOWN_AFTER_CRASH,
@@ -1585,8 +1681,12 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
         validation.setdefault("recorded_at", now)
         provenance["validations"][validation_id] = validation
         attempt["validation_evidence_ref"] = str(value.get("validation_evidence_ref") or validation_id)
-        attempt["status"] = ATTEMPT_VALIDATED
         status = str(validation.get("status") or "unknown").lower()
+        attempt["status"] = (
+            ATTEMPT_VALIDATION_PASSED
+            if status in {"valid", "valid_with_warnings", "passed", "pass", "success"}
+            else ATTEMPT_VALIDATION_FAILED
+        )
         for version_id in attempt.get("artifact_version_ids", []) or []:
             artifact = provenance["artifacts"].get(version_id)
             if not isinstance(artifact, dict):
@@ -2107,6 +2207,7 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
         attempt = provenance.get("attempts", {}).get(attempt_id)
         if isinstance(attempt, dict) and str(attempt.get("status") or "").upper() in {
             ATTEMPT_EVIDENCE_COMMITTED, ATTEMPT_VALIDATED,
+            ATTEMPT_VALIDATION_PASSED,
         }:
             attempt["status"] = ATTEMPT_COMPLETED
             attempt["updated_at"] = _now()

@@ -344,7 +344,7 @@ Return one JSON object only. Never include shell, Python, R, patches, commands, 
 
 Rules:
 1. Decide whether the error is real and whether the primary execution succeeded.
-2. Treat structured execution evidence, artifact contracts, manifests, validators, and source-typed logs as authoritative.
+2. Treat structured execution evidence, artifact contracts, manifests, validators, and source-typed logs as authoritative machine facts. Controller machine findings are observations, not automatically the complete root cause; derive causality from them together with the Plan, previous script, runtime evidence, and bounded logs.
 3. Distinguish primary, required_validation, optional_probe, fallback, and diagnostic commands.
 4. Do not infer success from return code 0 alone or failure from the word `error` alone.
 5. Do not invent tool parameters, bypasses, alternate tools, or degraded modes absent from skill_policy.
@@ -372,7 +372,8 @@ PASS_WITH_WARNING, RUN_DIAGNOSTIC_PROBE, BLOCK_MISSING_INPUT, ASK_USER, ESCALATE
 
 Required schema:
 {{
-  "schema_version": 2,
+  "schema_version": 4,
+  "verdict": "probe|repair|rerun|rollback|blocked|escalate|continue",
   "failure_class": "...",
   "failure_owner": "...",
   "failure_type": "...",
@@ -387,8 +388,12 @@ Required schema:
   "reason": "brief evidence-grounded reason",
   "root_cause": "brief evidence-grounded root cause",
   "evidence": ["source-addressable evidence"],
+  "evidence_refs": ["provider-visible evidence handles only"],
+  "machine_findings_considered": ["codes of authoritative Controller findings considered"],
   "missing_evidence": [],
   "repair_strategy": "code-free repair direction",
+  "repair_target": "the precise part of the previous action to repair",
+  "repair_instruction": "code-free instruction for Corrective Generate",
   "next_action": "same value as recommended_action",
   "requires_user_input": false
 }}

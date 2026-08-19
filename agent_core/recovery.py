@@ -13,11 +13,12 @@ import hashlib
 import json
 import re
 import shutil
+from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 from agent_core.context_lineage import redact_payload, redact_text
 from agent_core.root_cause import RootCauseAnalyzer
@@ -689,6 +690,101 @@ class ExecutionRecord:
         return data
 
 
+@dataclass(frozen=True)
+class AttemptFailureEvidence:
+    """Immutable failure snapshot for one concrete action attempt."""
+
+    schema_version: int = 1
+    session_id: str = ""
+    task_id: str = ""
+    plan_id: str = ""
+    plan_version: str = ""
+    step_id: str = ""
+    action_id: str = ""
+    attempt_id: str = ""
+    failed_command: str = ""
+    exit_code: Optional[int] = None
+    stdout_ref: str = ""
+    stderr_ref: str = ""
+    trace_ref: str = ""
+    bounded_stdout_excerpt: str = ""
+    bounded_stderr_excerpt: str = ""
+    expected_runtime: Mapping[str, Any] = field(default_factory=dict)
+    actual_runtime: Mapping[str, Any] = field(default_factory=dict)
+    machine_audit_findings: Tuple[Mapping[str, Any], ...] = ()
+    diagnostic_code: str = ""
+    diagnostic_summary: str = ""
+    failure_fingerprint: str = ""
+    created_at: str = field(default_factory=_now)
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> "AttemptFailureEvidence":
+        source = dict(value or {})
+        if not str(source.get("attempt_id") or ""):
+            raise ValueError("AttemptFailureEvidence requires attempt_id")
+        try:
+            exit_code = (
+                int(source.get("exit_code"))
+                if source.get("exit_code") is not None
+                else int(source.get("returncode"))
+                if source.get("returncode") is not None
+                else None
+            )
+        except (TypeError, ValueError):
+            exit_code = None
+        return cls(
+            session_id=str(source.get("session_id") or ""),
+            task_id=str(source.get("task_id") or ""),
+            plan_id=str(source.get("plan_id") or ""),
+            plan_version=str(source.get("plan_version") or ""),
+            step_id=str(source.get("step_id") or ""),
+            action_id=str(source.get("action_id") or ""),
+            attempt_id=str(source.get("attempt_id") or ""),
+            failed_command=_redact(source.get("failed_command") or source.get("command") or ""),
+            exit_code=exit_code,
+            stdout_ref=str(source.get("stdout_ref") or source.get("stdout_log") or ""),
+            stderr_ref=str(source.get("stderr_ref") or source.get("stderr_log") or ""),
+            trace_ref=str(source.get("trace_ref") or source.get("trace_file") or ""),
+            bounded_stdout_excerpt=_clip(
+                source.get("bounded_stdout_excerpt") or source.get("stdout_summary") or "",
+                8000,
+            ),
+            bounded_stderr_excerpt=_clip(
+                source.get("bounded_stderr_excerpt") or source.get("stderr_summary") or "",
+                8000,
+            ),
+            expected_runtime=_redact_mapping(
+                source.get("expected_runtime") or source.get("expected_runtime_contract") or {}
+            ),
+            actual_runtime=_redact_mapping(
+                source.get("actual_runtime") or source.get("actual_environment") or {}
+            ),
+            machine_audit_findings=tuple(
+                _redact_mapping(item)
+                for item in source.get("machine_audit_findings", []) or []
+                if isinstance(item, Mapping)
+            ),
+            diagnostic_code=str(
+                source.get("diagnostic_code") or source.get("failure_code") or ""
+            ),
+            diagnostic_summary=_clip(
+                source.get("diagnostic_summary")
+                or (source.get("root_cause_analysis") or {}).get("root_cause_summary")
+                or "",
+                4000,
+            ),
+            failure_fingerprint=str(source.get("failure_fingerprint") or ""),
+            created_at=str(source.get("created_at") or _now()),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        value = asdict(self)
+        value["machine_audit_findings"] = [
+            dict(item) for item in self.machine_audit_findings
+        ]
+        return value
+
+
 @dataclass
 class RecoveryTrigger:
     required: bool = False
@@ -1218,6 +1314,9 @@ class RecoveryDecision:
     affected_step_ids: List[str] = field(default_factory=list)
     preserve_files_for_audit: bool = True
     evidence_refs: List[str] = field(default_factory=list)
+    machine_findings_considered: List[str] = field(default_factory=list)
+    repair_target: str = ""
+    repair_instruction: str = ""
     plan_step_id: str = ""
     manifest_id: str = ""
     failed_stage_id: str = ""
@@ -1519,7 +1618,7 @@ class RecoveryDecision:
         decision.confidence = float(decision.confidence or 0.0)
         if not 0 <= decision.confidence <= 1:
             raise ValueError("Recovery confidence must be between 0 and 1")
-        for name in ("evidence", "missing_evidence", "rejected_alternatives", "commands", "patches", "files_to_backup", "files_to_modify", "verification_checks", "rollback_steps", "expected_new_evidence", "evidence_assessments", "new_hypothesis_proposals", "blocked_evidence", "migration_conflicts", "invalid_artifact_ids", "affected_step_ids", "evidence_refs", "invalidate_stage_ids", "allowed_patch_scope"):
+        for name in ("evidence", "missing_evidence", "rejected_alternatives", "commands", "patches", "files_to_backup", "files_to_modify", "verification_checks", "rollback_steps", "expected_new_evidence", "evidence_assessments", "new_hypothesis_proposals", "blocked_evidence", "migration_conflicts", "invalid_artifact_ids", "affected_step_ids", "evidence_refs", "machine_findings_considered", "invalidate_stage_ids", "allowed_patch_scope"):
             value_for_name = getattr(decision, name)
             if not isinstance(value_for_name, list):
                 raise ValueError(f"Recovery field {name} must be a list")
@@ -1600,6 +1699,12 @@ def parse_recovery_judge_decision(text: str) -> RecoveryDecision:
         "rerun_required", "consume_retry_budget", "user_notification_required",
         "reason", "evidence",
     }
+    if int(value.get("schema_version") or 0) >= 4:
+        required.update({
+            "verdict", "root_cause", "evidence_refs",
+            "machine_findings_considered", "repair_target",
+            "repair_instruction",
+        })
     missing = sorted(required - set(value))
     if missing:
         raise ValueError("RecoveryJudge decision missing fields: " + ", ".join(missing))
@@ -1730,29 +1835,6 @@ def evaluate_recovery_trigger(
         str(evidence.get(key) or "")
         for key in ("stderr_summary", "stdout_summary")
     ).lower()
-    runtime_audits = state.get("runtime_audit") or []
-    runtime_ready = any(
-        isinstance(item, dict)
-        and str(item.get("status") or "").strip().lower() == "ready"
-        and bool(item.get("resolved_runtime_paths"))
-        for item in runtime_audits
-    )
-    if not runtime_ready:
-        # Older checkpoints store successful healthchecks under runtime_status.
-        # An acknowledged environment runner is enough to classify a later
-        # command-not-found as generated-script drift, not a plan defect.
-        legacy_runtime = state.get("runtime_status") or {}
-        legacy_records = (
-            legacy_runtime.values()
-            if isinstance(legacy_runtime, dict)
-            else legacy_runtime
-        )
-        runtime_ready = any(
-            isinstance(item, dict)
-            and bool(item.get("ok"))
-            and bool(item.get("env_runner") or item.get("healthcheck"))
-            for item in legacy_records
-        )
     normalized_gate_class = gate_class.strip().lower()
     if gate_class == "contract_reconciliation_required":
         reasons.append("completion_gate_detected_unique_contract_reconciliation")
@@ -1762,7 +1844,9 @@ def evaluate_recovery_trigger(
         "manifest_invalid", "invalid_manifest_json", "manifest_missing",
     }:
         reasons.append(f"deterministic_completion_failure:{normalized_gate_class}")
-        action = RecoveryAction.PATCH_SCRIPT.value
+        # The missing/invalid artifact is a machine fact. Whether the script,
+        # runtime, or current-step contract caused it is a Recovery diagnosis.
+        judge_required = True
     elif execution_failed and role in {"optional_probe", "diagnostic"} and bool(evidence.get("fallback_used")):
         reasons.append("optional_or_diagnostic_check_failed_after_successful_fallback")
         action = RecoveryAction.PASS_WITH_WARNING.value
@@ -1787,6 +1871,7 @@ def evaluate_recovery_trigger(
             judge_required = True
         elif requested in requested_actions:
             action = requested_actions[requested]
+            judge_required = True
         elif str(state.get("evidence_status") or "").strip().lower() == "insufficient":
             action = RecoveryAction.RUN_DIAGNOSTIC_PROBE.value
         else:
@@ -1807,30 +1892,16 @@ def evaluate_recovery_trigger(
         judge_required = True
     elif execution_failed:
         reasons.append("structured_execution_failure")
-        if re.search(r"command not found|not found on path|environmentlocationnotfound", diagnostic_text):
-            # A missing command from a generated script is not evidence that
-            # the approved scientific plan is wrong. Reuse a verified runtime
-            # binding when available; otherwise gather bounded runtime evidence.
-            action = (
-                RecoveryAction.PATCH_SCRIPT.value
-                if runtime_ready
-                else RecoveryAction.RUN_DIAGNOSTIC_PROBE.value
-            )
-        elif "permission denied" in diagnostic_text:
-            action = RecoveryAction.PATCH_SCRIPT.value
-        elif returncode in {124} or bool(evidence.get("timed_out")) or re.search(
-            r"\btimeout\b|timed out", diagnostic_text
-        ):
-            action = RecoveryAction.PATCH_SCRIPT.value
-        elif returncode in {137, -9} or re.search(r"out of memory|oom|killed", diagnostic_text):
-            action = RecoveryAction.PATCH_SCRIPT.value
-        elif (
+        if (
             bool(evidence.get("missing_required_input_confirmed"))
             or re.search(r"missing required input", diagnostic_text)
         ):
             action = RecoveryAction.BLOCK_MISSING_INPUT.value
         else:
-            action = RecoveryAction.RUN_DIAGNOSTIC_PROBE.value
+            # Exit codes, runtime mismatches and script lines are authoritative
+            # observations, not causal conclusions. Ordinary execution,
+            # runtime, script and output failures therefore go to RecoveryJudge.
+            judge_required = True
 
     return RecoveryTrigger(
         required=bool(reasons),
@@ -1849,51 +1920,23 @@ def diagnosis_required(
     execution_evidence: Dict[str, Any],
     state: Optional[Dict[str, Any]] = None,
 ) -> bool:
-    """Return whether one ambiguous attempt needs RecoveryJudge.
-
-    Explicit protocol, runtime and artifact facts stay deterministic even when
-    the same failure is seen again. This prevents repeated root-cause LLM calls
-    from replacing already structured evidence.
-    """
+    """Return whether this failure needs a causal RecoveryJudge diagnosis."""
     if not trigger.required or not trigger.judge_required:
         return False
     evidence = dict(execution_evidence or {})
     state = dict(state or {})
-    try:
-        returncode = int(
-            evidence.get("returncode")
-            if evidence.get("returncode") is not None
-            else evidence.get("exit_code")
-        )
-    except (TypeError, ValueError):
-        returncode = None
-    text = "\n".join(
-        str(evidence.get(key) or "")
-        for key in (
-            "stderr_summary", "stderr_tail", "stdout_summary", "stdout_tail",
-            "renderer_manifest_error",
-        )
-    ).lower()
-    gate_class = str((state.get("completion_gate_result") or {}).get("classification") or "").lower()
-    explicit_gate = gate_class in {
-        "contract_reconciliation_required",
-        "required_artifact_missing", "artifact_missing", "missing_required_artifact",
-        "manifest_invalid", "invalid_manifest_json", "manifest_missing",
-    }
-    explicit_failure = bool(
-        returncode == 127
-        or returncode in {124, 137, -9}
-        or evidence.get("timed_out")
-        or evidence.get("missing_required_input_confirmed")
-        or evidence.get("renderer_manifest_error")
-        or re.search(
-            r"command not found|not found on path|environmentlocationnotfound|"
-            r"permission denied|\btimeout\b|timed out|out of memory|\boom\b|"
-            r"missing required input|invalid manifest|manifest json",
-            text,
-        )
-    )
-    return not (explicit_gate or explicit_failure)
+    if evidence.get("missing_required_input_confirmed"):
+        return False
+    if str(evidence.get("command_role") or "").lower() in {
+        "optional_probe", "diagnostic"
+    } and bool(evidence.get("fallback_used")):
+        return False
+    # A failure owner left in graph state belongs to an earlier transition and
+    # cannot override the identity of this concrete Execute attempt.  Genuine
+    # controller/protocol failures avoid the judge by producing a trigger whose
+    # ``judge_required`` bit is false; a current non-zero process must not be
+    # silently downgraded because stale state once said INTERNAL_PROTOCOL.
+    return True
 
 
 def deterministic_recovery_decision(
@@ -2829,6 +2872,85 @@ class RecoveryStateStore:
         _json_write(path, decision.to_dict())
         return path
 
+    @classmethod
+    def _monotonic_merge(cls, older: Any, newer: Any) -> Any:
+        """Merge a refreshed view without letting empty reload fields erase facts."""
+        if newer in (None, "", [], {}):
+            return older
+        if isinstance(older, Mapping) and isinstance(newer, Mapping):
+            keys = list(older)
+            keys.extend(key for key in newer if key not in older)
+            return {
+                str(key): cls._monotonic_merge(older.get(key), newer.get(key))
+                if key in older and key in newer
+                else deepcopy(older.get(key) if key in older else newer.get(key))
+                for key in keys
+            }
+        if isinstance(older, list) and isinstance(newer, list):
+            merged = deepcopy(older)
+            fingerprints = {
+                json.dumps(item, ensure_ascii=False, sort_keys=True, default=str)
+                for item in merged
+            }
+            for item in newer:
+                fingerprint = json.dumps(
+                    item, ensure_ascii=False, sort_keys=True, default=str
+                )
+                if fingerprint not in fingerprints:
+                    merged.append(deepcopy(item))
+                    fingerprints.add(fingerprint)
+            return merged
+        return deepcopy(newer)
+
+    def save_attempt_failure_evidence(
+        self,
+        evidence: AttemptFailureEvidence | Mapping[str, Any],
+    ) -> Path:
+        """Create one immutable failure snapshot and return it idempotently."""
+        snapshot = (
+            evidence
+            if isinstance(evidence, AttemptFailureEvidence)
+            else AttemptFailureEvidence.from_mapping(evidence)
+        )
+        safe_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", snapshot.attempt_id) or "attempt"
+        path = self.root.parent / "attempts" / safe_id / "failure_evidence.json"
+        value = snapshot.to_dict()
+        if path.is_file():
+            try:
+                existing = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ValueError(
+                    f"Immutable failure evidence is unreadable: {path}"
+                ) from exc
+            identity_keys = (
+                "session_id", "task_id", "plan_id", "plan_version",
+                "step_id", "action_id", "attempt_id", "exit_code",
+            )
+            conflicts = [
+                key for key in identity_keys
+                if existing.get(key) not in (None, "")
+                and value.get(key) not in (None, "")
+                and existing.get(key) != value.get(key)
+            ]
+            if conflicts:
+                raise ValueError(
+                    "AttemptFailureEvidence identity conflict: " + ", ".join(conflicts)
+                )
+            return path
+        _json_write(path, value)
+        return path
+
+    def load_attempt_failure_evidence(self, attempt_id: str) -> Dict[str, Any]:
+        safe_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(attempt_id or "")) or "attempt"
+        path = self.root.parent / "attempts" / safe_id / "failure_evidence.json"
+        if not path.is_file():
+            return {}
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        return dict(value) if isinstance(value, dict) else {}
+
     def save_execution_record(self, record: ExecutionRecord) -> Path:
         execution_dir = self.root.parent / "executions"
         execution_dir.mkdir(parents=True, exist_ok=True)
@@ -2856,7 +2978,22 @@ class RecoveryStateStore:
         replaced = False
         for index, row in enumerate(rows):
             if record.attempt_id and str(row.get("attempt_id") or "") == record.attempt_id:
-                rows[index] = {**row, **value}
+                identity_keys = (
+                    "plan_id", "plan_version", "step_id", "action_id",
+                    "attempt_id",
+                )
+                conflicts = [
+                    key
+                    for key in identity_keys
+                    if row.get(key) not in (None, "")
+                    and value.get(key) not in (None, "")
+                    and row.get(key) != value.get(key)
+                ]
+                if conflicts:
+                    raise ValueError(
+                        "ExecutionRecord identity conflict: " + ", ".join(conflicts)
+                    )
+                rows[index] = self._monotonic_merge(row, value)
                 replaced = True
                 break
         if not replaced:

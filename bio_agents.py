@@ -86,7 +86,8 @@ from config.config import (
     DEFAULT_PROJECT_ID, BIOMIND_MEMORY_DIR, BIOMIND_WIKI_ENABLED, BIOMIND_WIKI_DIR, BIOMIND_WIKI_INGEST_MODE, WIKI_EMBEDDING_ENABLED, WIKI_EMBEDDING_BASE_URL,
     WIKI_EMBEDDING_API_KEY, WIKI_EMBEDDING_MODEL, WIKI_EMBEDDING_DIMENSIONS,
     ENABLE_ROOT_CAUSE_ANALYZER, ENABLE_COMMAND_TRACE, ENABLE_PIPESTATUS_CAPTURE,
-    ROOT_CAUSE_TIMEOUT_SECONDS,
+    ROOT_CAUSE_TIMEOUT_SECONDS, RECOVERY_THINKING_ENABLED,
+    RECOVERY_REASONING_EFFORT,
 )
 
 try:
@@ -146,6 +147,7 @@ from agent_core.workflow_manager import (
 from agent_core.middleware import HITLMiddleware
 from agent_core.recovery import (
     ActionSignature,
+    AttemptFailureEvidence,
     ExecutionRecord,
     RecoveryAction,
     RecoveryDecision,
@@ -268,6 +270,8 @@ from agent_core.plan_tracker import (
     ATTEMPT_STARTING,
     ATTEMPT_UNKNOWN_AFTER_CRASH,
     ATTEMPT_VALIDATED,
+    ATTEMPT_VALIDATION_FAILED,
+    ATTEMPT_VALIDATION_PASSED,
     PLAN_OPERATION_LOCAL_REPLAN,
     PLAN_OPERATION_REPAIR,
     PLAN_SCHEMA_VERSION,
@@ -397,6 +401,7 @@ from agent_core.node_context import (
     build_node_context,
     evaluate_node_staleness,
     payload_observability_report,
+    provider_context_manifest,
     resolve_plan_proposal_handles,
     resolve_response_handles,
 )
@@ -430,6 +435,17 @@ from agent_core.managed_artifacts import (
     reconcile_runtime_outputs,
     validate_generate_output_coverage,
     validate_materialized_artifacts,
+)
+from agent_core.controller_audit import (
+    ExecutableScriptBlock,
+    ScriptBlockError,
+    adapt_script_block_to_action,
+    audit_generated_script,
+    build_resolved_runtime_snapshot,
+    compare_runtime_machine_evidence,
+    parse_executable_script_block,
+    script_artifact_environment,
+    script_references_env,
 )
 from agent_core.state_contract_store import StateContractStore
 from agent_core.completion_gate import CompletionGate
@@ -477,6 +493,91 @@ from agent_core.middleware import error_recovery_middleware
 _MANAGED_ACTION_ENV_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
+def _controller_runtime_path_prefixes(
+    controller_runtime_bindings: Mapping[str, str],
+) -> List[str]:
+    runtime = {
+        str(key): str(value)
+        for key, value in dict(controller_runtime_bindings or {}).items()
+    }
+    prefixes = list(dict.fromkeys(
+        str(Path(value).parent)
+        for key, value in sorted(runtime.items())
+        if key.endswith("_BIN") and str(value).startswith("/")
+    ))
+    env_prefix = str(
+        runtime.get("ENV_PREFIX") or runtime.get("RESOLVED_ENV_PREFIX") or ""
+    )
+    if env_prefix:
+        prefixes.append(str(Path(env_prefix) / "bin"))
+    java_home = str(
+        runtime.get("JAVA_HOME") or runtime.get("RESOLVED_JAVA_HOME") or ""
+    )
+    if java_home:
+        prefixes.append(str(Path(java_home) / "bin"))
+    return list(dict.fromkeys(prefixes))
+
+
+def _observed_runtime_executables(
+    expected_runtime_contract: Mapping[str, Any],
+    runtime_bindings: Mapping[str, str],
+    approved_script: str,
+    language: str,
+    approved_runner: str,
+    *,
+    shim_path: str = "",
+) -> Dict[str, str]:
+    """Project executable identity from the exact materialized invocation."""
+    expected_executables = dict(
+        (expected_runtime_contract or {}).get("executables") or {}
+    )
+    bindings = {
+        str(key): str(value)
+        for key, value in dict(runtime_bindings or {}).items()
+    }
+    search_path = os.pathsep.join(
+        item
+        for item in [
+            *_controller_runtime_path_prefixes(bindings),
+            os.environ.get("PATH", ""),
+            str(shim_path or ""),
+        ]
+        if item
+    )
+    script_language = {"Bash": "bash", "Python": "python", "R": "r"}.get(
+        language, "bash"
+    )
+    observed: Dict[str, str] = {}
+    for tool, expected_path in expected_executables.items():
+        tool_name = Path(str(tool)).name
+        env_name = (
+            re.sub(r"[^A-Za-z0-9]+", "_", str(tool)).strip("_").upper()
+            + "_BIN"
+        )
+        variable_used = script_references_env(
+            approved_script,
+            env_name,
+            script_language,
+        )
+        bare_used = bool(re.search(
+            rf"(?<![A-Za-z0-9_.-]){re.escape(tool_name)}(?=\s|$)",
+            approved_script,
+            re.MULTILINE,
+        ))
+        if variable_used:
+            observed_path = str(bindings.get(env_name) or "")
+        elif str(bindings.get(env_name) or "") == str(approved_runner):
+            observed_path = str(approved_runner)
+        elif bare_used:
+            observed_path = str(shutil.which(tool_name, path=search_path) or "")
+        elif Path(str(approved_runner)).name == Path(str(expected_path)).name:
+            observed_path = str(approved_runner)
+        else:
+            observed_path = ""
+        observed[str(tool)] = observed_path
+    return observed
+
+
 def _inject_managed_action_environment(
     code: str,
     language: str,
@@ -522,11 +623,18 @@ def _inject_managed_action_environment(
             "env_keys": conflicts,
             "execution_started": False,
         }
+    path_prefixes = _controller_runtime_path_prefixes(runtime)
+
     if language == "Bash":
         binding_lines = [
-            f"if [[ -z \"${{{key}:-}}\" ]]; then export {key}={shlex.quote(value)}; fi"
+            f"export {key}={shlex.quote(value)}"
             for key, value in sorted(runtime.items())
         ]
+        if path_prefixes:
+            binding_lines.insert(
+                0,
+                f"export PATH={shlex.quote(os.pathsep.join(path_prefixes))}:\"${{PATH:-}}\"",
+            )
         binding_lines.extend(
             f"export {key}={shlex.quote(value)}"
             for key, value in sorted(materialized_env.items())
@@ -535,15 +643,37 @@ def _inject_managed_action_environment(
             code = "\n".join(binding_lines) + "\n" + code
     elif language == "Python":
         binding_lines = [
-            f"os.environ.setdefault({key!r}, {value!r})"
+            f"os.environ[{key!r}] = {value!r}"
             for key, value in sorted(runtime.items())
         ]
+        if path_prefixes:
+            binding_lines.insert(
+                0,
+                "os.environ['PATH'] = "
+                + repr(os.pathsep.join(path_prefixes))
+                + " + os.pathsep + os.environ.get('PATH', '')",
+            )
         binding_lines.extend(
             f"os.environ[{key!r}] = {value!r}"
             for key, value in sorted(materialized_env.items())
         )
         if binding_lines:
             code = "import os\n" + "\n".join(binding_lines) + "\n" + code
+    elif language == "R":
+        all_bindings = {**runtime, **materialized_env}
+        binding_lines = [
+            f"Sys.setenv({key}={json.dumps(value)})"
+            for key, value in sorted(all_bindings.items())
+        ]
+        if path_prefixes:
+            binding_lines.insert(
+                0,
+                "Sys.setenv(PATH=paste(c("
+                + json.dumps(os.pathsep.join(path_prefixes))
+                + ", Sys.getenv(\"PATH\")), collapse=.Platform$path.sep))",
+            )
+        if binding_lines:
+            code = "\n".join(binding_lines) + "\n" + code
     return code, {}
 from agent_core.root_cause import RootCauseAnalyzer
 from memory.persistence import PersistentStateManager
@@ -653,6 +783,37 @@ def _llm_extra_body(model: str, base_url: str) -> dict[str, Any]:
         return {"enable_thinking": False}
 
     return {}
+
+
+def bind_recovery_llm(
+    llm: Any,
+    *,
+    model: str,
+    base_url: str,
+    enabled: bool = RECOVERY_THINKING_ENABLED,
+    reasoning_effort: str = RECOVERY_REASONING_EFFORT,
+) -> Tuple[Any, Dict[str, Any]]:
+    """Bind DeepSeek Thinking to Recovery only; leave the shared client intact."""
+    is_deepseek = "deepseek" in str(model or "").lower() or "deepseek" in str(
+        base_url or ""
+    ).lower()
+    if not enabled or not is_deepseek or not hasattr(llm, "bind"):
+        return llm, {
+            "thinking_enabled": False,
+            "thinking": {"type": "disabled"},
+            "reasoning_effort": "",
+            "scope": "recovery_only",
+        }
+    bound = llm.bind(
+        extra_body={"thinking": {"type": "enabled"}},
+        reasoning_effort=str(reasoning_effort or "high"),
+    )
+    return bound, {
+        "thinking_enabled": True,
+        "thinking": {"type": "enabled"},
+        "reasoning_effort": str(reasoning_effort or "high"),
+        "scope": "recovery_only",
+    }
 
 
 def _consultant_validation_is_format_repair_error(text: str) -> bool:
@@ -1142,7 +1303,10 @@ class OutputRouter:
     def print_ai(self, content: str):
         """打印 AI 消息（过滤代码块和标签）"""
         # 不打印纯代码块（由 execute 节点负责展示）
-        if "<execute>" in content or "<install_tool>" in content:
+        if any(
+            tag in str(content or "").lower()
+            for tag in ("<execute>", "<install_tool", "<shell>", "<python>", "<r>")
+        ):
             return
         clean = str(content or "")
         # Drop known machine-only payloads, but preserve the text enclosed by
@@ -1305,6 +1469,11 @@ class BioAnalystAgent:
         self.llm_endpoint_id = str(LLM_BASE_URL)
         self.llm_response_extra_body = deepcopy(extra_body)
         self.llm = init_chat_model(**llm_kwargs)
+        self.recovery_llm, self.recovery_llm_policy = bind_recovery_llm(
+            self.llm,
+            model=llm_model,
+            base_url=LLM_BASE_URL,
+        )
         logger.info(
             "LLM request policy: timeout=%ss readonly_timeout=%ss max_retries=%s",
             self.llm_timeout_seconds,
@@ -2760,7 +2929,32 @@ class BioAnalystAgent:
         active_or_pending = bool(statuses & {
             "pending", "ready", "running", "diagnosing", "repairing", "retry_pending"
         })
-        attempt_resume = classify_attempt_resume(plan_state)
+        pending_action_id = str((pending_action or {}).get("action_id") or "")
+        attempt_resume = (
+            classify_attempt_resume(
+                plan_state,
+                step_id=str((pending_action or {}).get("step_id") or ""),
+                action_id=pending_action_id,
+                plan_id=str(
+                    (pending_action or {}).get("plan_id")
+                    or plan_state.get("plan_id")
+                    or ""
+                ),
+                plan_version=str(
+                    (pending_action or {}).get("plan_version")
+                    or plan_state.get("plan_version")
+                    or ""
+                ),
+                execution_epoch=(pending_action or {}).get("execution_epoch", ""),
+            )
+            if pending_action_id
+            else {
+                "route": "none",
+                "attempt": {},
+                "create_new_attempt": True,
+                "reason": "current_action_identity_missing",
+            }
+        )
         consultation_owner = dict(
             values.get("consultation_state")
             or task_state.get("consultation_state")
@@ -2922,14 +3116,34 @@ class BioAnalystAgent:
     ) -> Optional[Dict[str, Any]]:
         """Reconcile one persisted active attempt without allocating a replacement."""
         plan_state = load_plan_state(self.data_path, task_id)
-        resume = classify_attempt_resume(plan_state)
+        task_state = dict(plan_state.get("task_state") or {})
+        pending_action = dict(
+            state.get("pending_action")
+            or task_state.get("pending_action")
+            or {}
+        )
+        resume_identity = {
+            "step_id": str(pending_action.get("step_id") or ""),
+            "action_id": str(pending_action.get("action_id") or ""),
+            "plan_id": str(pending_action.get("plan_id") or plan_state.get("plan_id") or ""),
+            "plan_version": str(
+                pending_action.get("plan_version") or plan_state.get("plan_version") or ""
+            ),
+            "execution_epoch": pending_action.get("execution_epoch", ""),
+        }
+        if not resume_identity["action_id"]:
+            # Resume is legal only for the exact current action.  An orphaned
+            # attempt without a durable current-action identity is not
+            # permission to execute or resume it.
+            return None
+        resume = classify_attempt_resume(plan_state, **resume_identity)
         if resume.get("create_new_attempt") or not resume.get("attempt"):
             return None
 
         while resume.get("route") == "monitor_running_attempt":
             await asyncio.sleep(1.0)
             plan_state = load_plan_state(self.data_path, task_id)
-            resume = classify_attempt_resume(plan_state)
+            resume = classify_attempt_resume(plan_state, **resume_identity)
 
         attempt = dict(resume.get("attempt") or {})
         attempt_id = str(attempt.get("attempt_id") or "")
@@ -2980,6 +3194,16 @@ class BioAnalystAgent:
 
         stdout = read_tail(attempt.get("stdout_path"))
         stderr = read_tail(attempt.get("stderr_path"))
+        recovery_store = RecoveryStateStore(self.data_path, task_id)
+        immutable_failure = recovery_store.load_attempt_failure_evidence(attempt_id)
+        if immutable_failure:
+            if returncode is None and immutable_failure.get("exit_code") is not None:
+                try:
+                    returncode = int(immutable_failure["exit_code"])
+                except (TypeError, ValueError):
+                    returncode = None
+            stdout = stdout or str(immutable_failure.get("bounded_stdout_excerpt") or "")
+            stderr = stderr or str(immutable_failure.get("bounded_stderr_excerpt") or "")
         attempt_status = str(attempt.get("status") or "").upper()
         if returncode is None and attempt_status != ATTEMPT_UNKNOWN_AFTER_CRASH:
             record_provenance_event(plan_state, "attempt_state_changed", {
@@ -3018,9 +3242,67 @@ class BioAnalystAgent:
             "finished_at": str(exit_record.get("finished_at") or attempt.get("finished_at") or ""),
             "resumed_after_crash": True,
         }
+        if returncode not in {None, 0} and not immutable_failure:
+            # A controller crash may happen after the process writes its exit
+            # status but before Execute commits the immutable snapshot.  Resume
+            # closes that exact durability gap without re-running the action.
+            recovered_failure = AttemptFailureEvidence.from_mapping({
+                **evidence,
+                "session_id": str(state.get("session_id") or task_id),
+                "task_id": task_id,
+                "failed_command": str(
+                    attempt.get("command")
+                    or action.get("command")
+                    or action.get("code")
+                    or ""
+                ),
+                "expected_runtime": dict(
+                    attempt.get("runtime_snapshot")
+                    or action.get("runtime_snapshot")
+                    or {}
+                ),
+                "actual_runtime": dict(attempt.get("actual_environment") or {}),
+                "diagnostic_code": "RECOVERED_PROCESS_FAILURE",
+                "diagnostic_summary": (
+                    "The persisted process exit was non-zero; Resume captured "
+                    "the available per-attempt evidence without rerunning it."
+                ),
+            })
+            failure_path = recovery_store.save_attempt_failure_evidence(
+                recovered_failure
+            )
+            immutable_failure = recovered_failure.to_dict()
+            evidence["failure_evidence_path"] = str(failure_path)
+        for key, value in immutable_failure.items():
+            if key not in evidence or evidence.get(key) in (None, "", [], {}):
+                evidence[key] = deepcopy(value)
+        if immutable_failure:
+            snapshot_aliases = {
+                "command": immutable_failure.get("failed_command"),
+                "failed_command": immutable_failure.get("failed_command"),
+                "stdout_log": immutable_failure.get("stdout_ref"),
+                "stderr_log": immutable_failure.get("stderr_ref"),
+                "trace_file": immutable_failure.get("trace_ref"),
+                "stdout_summary": immutable_failure.get("bounded_stdout_excerpt"),
+                "stderr_summary": immutable_failure.get("bounded_stderr_excerpt"),
+                "expected_runtime_contract": immutable_failure.get("expected_runtime"),
+                "actual_environment": immutable_failure.get("actual_runtime"),
+            }
+            for key, value in snapshot_aliases.items():
+                if evidence.get(key) in (None, "", [], {}) and value not in (
+                    None, "", [], {},
+                ):
+                    evidence[key] = deepcopy(value)
+            evidence["failure_evidence_path"] = str(
+                recovery_store.root.parent
+                / "attempts"
+                / re.sub(r"[^A-Za-z0-9_.-]+", "_", attempt_id)
+                / "failure_evidence.json"
+            )
         if returncode is not None and attempt_status != ATTEMPT_EVIDENCE_COMMITTED:
             record = ExecutionRecord.from_mapping(evidence)
-            RecoveryStateStore(self.data_path, task_id).save_execution_record(record)
+            execution_record_path = recovery_store.save_execution_record(record)
+            evidence["execution_record_path"] = str(execution_record_path)
             record_provenance_event(plan_state, "execution_finished", {
                 "attempt_id": attempt_id,
                 "execution_record": {**evidence, **record.summary()},
@@ -4195,6 +4477,40 @@ class BioAnalystAgent:
             "state_generation": int(plan_state.get("state_generation") or 0),
             "current_step_id": str(context.step_id or evidence.get("step_id") or ""),
             "runtime": {
+                "recovery_focus": {
+                    "current_step": dict(context.current_step or {}),
+                    "success_criteria": list(
+                        (context.current_step or {}).get("success_criteria") or []
+                    ),
+                    "previous_action": dict(context.action_contract or {}),
+                    "previous_script": str((context.execution or {}).get("code") or ""),
+                    "previous_generated_script_ref": dict(
+                        evidence.get("generated_script") or {}
+                    ),
+                    "previous_approved_script_ref": dict(
+                        evidence.get("approved_script") or {}
+                    ),
+                    "failed_command": str(
+                        (context.execution or {}).get("failed_command") or ""
+                    ),
+                    "exit_code": (context.execution or {}).get("returncode"),
+                    "bounded_stdout": str(
+                        (context.execution or {}).get("stdout_tail") or ""
+                    ),
+                    "bounded_stderr": str(
+                        (context.execution or {}).get("stderr_tail") or ""
+                    ),
+                    "expected_runtime": dict(
+                        (context.execution or {}).get("expected_runtime_contract") or {}
+                    ),
+                    "actual_runtime": dict(
+                        (context.execution or {}).get("actual_environment") or {}
+                    ),
+                    "controller_machine_audit_findings": list(
+                        context.machine_audit_findings or []
+                    ),
+                    "available_evidence": list(context.available_evidence or []),
+                },
                 "action_contract": dict(context.action_contract or {}),
                 "execution": dict(context.execution or {}),
                 "validation": dict(context.validation or {}),
@@ -4232,7 +4548,10 @@ class BioAnalystAgent:
             or str(evidence.get("execution_status") or "").lower() == "failed"
         )
         judge_needed = diagnosis_required(trigger, evidence, merged)
-        if diagnosis.get("collection_complete") and not judge_needed and (
+        post_review_judge_invoked = False
+        if not judge_needed and trigger.deterministic_action:
+            decision = deterministic_recovery_decision(trigger, evidence)
+        elif diagnosis.get("collection_complete") and not judge_needed and (
             structured_execution_failed or diagnosis.get("evidence_sufficient")
         ):
             decision = recovery_decision_from_diagnosis(diagnosis)
@@ -4263,10 +4582,11 @@ class BioAnalystAgent:
                         **recovery_semantic_inputs,
                     )
                     prompt = PromptManager.get_recovery_v2_prompt(
-                        recovery_node_context.llm_payload.to_dict()
+                        recovery_node_context.llm_payload.to_provider_dict()
                     )
                     increment_plan_budget(plan_state, "recovery_judge_count")
                     save_plan_state(self.data_path, task_id, plan_state)
+                    post_review_judge_invoked = True
                     response = await self._ainvoke_node_llm(
                         [HumanMessage(content=prompt)],
                         node_context=recovery_node_context,
@@ -4279,7 +4599,12 @@ class BioAnalystAgent:
                             "action_id": str(evidence.get("action_id") or ""),
                             "step_id": str(evidence.get("step_id") or ""),
                             "recovery_context_ref": str(store.root / "recovery_context.json"),
+                            "provider_context_manifest": provider_context_manifest(
+                                recovery_node_context.llm_payload
+                            ),
+                            "recovery_llm_policy": dict(self.recovery_llm_policy),
                         },
+                        llm_override=self.recovery_llm,
                     )
                     raw_response = str(getattr(response, "content", response) or "")
                     current_plan_state = load_plan_state(self.data_path, task_id)
@@ -4370,11 +4695,15 @@ class BioAnalystAgent:
         decision = contextualize_recovery_decision(decision, source_node="supervisor")
         store.save_diagnostic_context(context)
         store.save_recovery_decision(decision)
-        store.append_trace("RECOVERY_JUDGE", {
+        store.append_trace(
+            "RECOVERY_JUDGE" if post_review_judge_invoked else "RECOVERY_POLICY",
+            {
             "trigger": trigger.to_dict(),
             "decision": decision.to_dict(),
             "source": "post_review",
-        })
+            "judge_invoked": post_review_judge_invoked,
+            },
+        )
         route = recovery_action_route(
             decision.recommended_action,
             interaction_allowed=not bool(state.get("non_interactive") or state.get("disable_user_questions")),
@@ -4392,6 +4721,10 @@ class BioAnalystAgent:
             "failure_type": decision.failure_type,
             "missing_evidence": list(decision.missing_evidence),
             "repair_strategy": decision.repair_strategy,
+            "root_cause": decision.root_cause,
+            "repair_target": decision.repair_target,
+            "repair_instruction": decision.repair_instruction,
+            "machine_audit_findings": list(context.machine_audit_findings or []),
             "requires_user_input": decision.requires_user_input,
             "diagnostic_context_path": str(store.root / "recovery_context.json"),
         }
@@ -4829,6 +5162,59 @@ class BioAnalystAgent:
         repair_type = str(recovery_action.get("type") or "").strip().lower()
         decision_kind = str(recovery_decision.get("kind") or "").strip().upper()
         recommended = str(recovery_decision.get("recommended_action") or "").strip().upper()
+        if repair_type in {
+            "controller_audit_repair", "script_repair", "repair_previous_action",
+        } or recommended == RecoveryAction.PATCH_SCRIPT.value:
+            execution = (
+                dict(state.get("execution_evidence") or {})
+                if isinstance(state.get("execution_evidence"), Mapping)
+                else {}
+            )
+            previous_script = str(
+                recovery_action.get("previous_script")
+                or execution.get("generated_code")
+                or execution.get("code_summary")
+                or ""
+            )
+            machine_findings = list(
+                recovery_action.get("machine_audit_findings")
+                or state.get("controller_machine_audit_findings")
+                or (execution.get("runtime_drift") or {}).get("machine_audit_findings")
+                or []
+            )
+            return {
+                "repair_mode": "corrective_script",
+                "repair_stage": (
+                    "controller_script_audit"
+                    if repair_type == "controller_audit_repair"
+                    else "post_execution_recovery"
+                ),
+                "previous_script": previous_script or "<previous script unavailable>",
+                "previous_script_ref": deepcopy(
+                    recovery_action.get("previous_script_ref")
+                    or execution.get("generated_script")
+                    or {}
+                ),
+                "controller_machine_audit_findings": deepcopy(machine_findings),
+                "recovery_root_cause": str(
+                    recovery_decision.get("root_cause")
+                    or recovery_action.get("root_cause")
+                    or recovery_action.get("reason")
+                    or ""
+                ),
+                "repair_target": str(
+                    recovery_decision.get("repair_target")
+                    or recovery_action.get("repair_target")
+                    or "previous_generated_script"
+                ),
+                "repair_instruction": str(
+                    recovery_decision.get("repair_instruction")
+                    or recovery_action.get("repair_instruction")
+                    or recovery_decision.get("repair_strategy")
+                    or cls._corrective_action_repair_instruction()
+                ),
+                "preservation_rule": cls._corrective_action_repair_instruction(),
+            }
         if (
             repair_type not in {"action_format_repair", "format_repair"}
             and decision_kind != RecoveryDecisionKind.FORMAT_REPAIR.value
@@ -4928,12 +5314,20 @@ class BioAnalystAgent:
             ])
         lines.append("Allowed actions:")
         lines.extend(f"- {item}" for item in protocol.get("allowed_actions") or [])
-        lines.extend([
-            self._corrective_action_repair_instruction(),
-            "Return exactly one <action_json> block with one structured action.",
-            "Do not provide a narrative summary or ask whether to continue.",
-            "</action_format_repair>",
-        ])
+        if str((contract_error or {}).get("stage") or "") == "script_block":
+            lines.extend([
+                self._corrective_action_repair_instruction(),
+                "Return exactly one non-empty <shell>, <python>, or <r> block.",
+                "Do not provide prose, Markdown fences, JSON, or multiple blocks.",
+                "</action_format_repair>",
+            ])
+        else:
+            lines.extend([
+                self._corrective_action_repair_instruction(),
+                "Return exactly one <action_json> block with one structured action.",
+                "Do not provide a narrative summary or ask whether to continue.",
+                "</action_format_repair>",
+            ])
         return "\n".join(lines)
 
     def _persist_script_version(
@@ -5016,7 +5410,22 @@ class BioAnalystAgent:
             "task_id": task_id,
         })
         plan_version = str(plan_state.get("plan_version") or "plan_v1")
+        plan_id = str(plan_state.get("plan_id") or "")
         step_id = str(step.get("step_id") or "")
+        execution_epoch = str(
+            step.get("execution_epoch")
+            or (plan_state.get("runtime_state") or {}).get("execution_epoch")
+            or state.get("execution_epoch")
+            or "0"
+        )
+        runtime_snapshot = dict(
+            bound.get("runtime_snapshot") or build_resolved_runtime_snapshot(state)
+        )
+        runtime_bindings = {
+            str(key): str(value)
+            for key, value in dict(runtime_snapshot.get("bindings") or {}).items()
+            if str(key) and str(value)
+        }
         purpose = self._pending_action_purpose(bound, step)
         skill_manager = getattr(self, "skill_manager", None)
         protocol = self._renderer_action_protocol(state, task_id)
@@ -5057,6 +5466,11 @@ class BioAnalystAgent:
                 "step_id": step_id,
                 "task_revision": task_revision,
                 "plan_version": plan_version,
+                "plan_id": plan_id,
+                "execution_epoch": execution_epoch,
+                "runtime_snapshot_digest": str(
+                    runtime_snapshot.get("runtime_snapshot_digest") or ""
+                ),
             },
             ensure_ascii=False,
             sort_keys=True,
@@ -5078,10 +5492,13 @@ class BioAnalystAgent:
                 "action_id": "action_" + hashlib.sha256(fingerprint_input.encode("utf-8")).hexdigest()[:16],
                 "step_id": step_id,
                 "task_revision": task_revision,
+                "plan_id": plan_id,
                 "plan_version": plan_version,
+                "execution_epoch": execution_epoch,
                 "purpose": purpose,
                 "command_role": command_role,
-                "runtime_bindings": self._runtime_bindings_from_state(state),
+                "runtime_bindings": runtime_bindings,
+                "runtime_snapshot": runtime_snapshot,
                 "expected_outputs": list(bound.get("expected_outputs") or step.get("outputs") or []),
                 "expected_evidence": list(bound.get("success_checks") or step.get("success_criteria") or []),
             }
@@ -5114,7 +5531,12 @@ class BioAnalystAgent:
                         plan_step["renderer_invocation_contract"] = deepcopy(invocation_contract)
                     break
         if str(bound.get("type") or "").lower() == "execute" and str(bound.get("code") or "").strip():
-            language = detect_script_language(str(bound.get("code") or ""))
+            declared_language = str(bound.get("language") or "").strip().lower()
+            language = {
+                "bash": "Bash", "shell": "Bash", "sh": "Bash",
+                "python": "Python", "py": "Python",
+                "r": "R", "rscript": "R",
+            }.get(declared_language, detect_script_language(str(bound.get("code") or "")))
             generated_ref = self._persist_script_version(
                 task_id,
                 plan_state,
@@ -5122,7 +5544,7 @@ class BioAnalystAgent:
                 str(bound["action_id"]),
                 "generated",
                 str(bound.get("code") or ""),
-                extension=".py" if language == "Python" else ".sh",
+                extension={"Python": ".py", "R": ".R"}.get(language, ".sh"),
                 mutation_reason="model_generation",
                 producer="generate",
             )
@@ -5616,26 +6038,12 @@ class BioAnalystAgent:
         Runtime audit remains the sole path resolver. Execute only transports
         bindings that already passed the audit's existing-path validation.
         """
-        bindings: Dict[str, str] = {}
-        for audit in state.get("runtime_audit", []) or []:
-            if not isinstance(audit, dict) or str(audit.get("status") or "").lower() != "ready":
-                continue
-            for key, value in (audit.get("resolved_runtime_paths") or {}).items():
-                name = str(key or "").strip()
-                path = Path(str(value or "")).expanduser()
-                if not re.fullmatch(r"[A-Z][A-Z0-9_]{1,63}", name):
-                    continue
-                try:
-                    valid = path.is_dir() or (path.is_file() and path.stat().st_size > 0)
-                except OSError:
-                    valid = False
-                if not valid:
-                    continue
-                resolved = str(path.resolve())
-                bindings[name] = resolved
-                if name.startswith("RESOLVED_"):
-                    bindings.setdefault(name[len("RESOLVED_"):], resolved)
-        return bindings
+        return {
+            str(key): str(value)
+            for key, value in dict(
+                build_resolved_runtime_snapshot(state).get("bindings") or {}
+            ).items()
+        }
 
     @staticmethod
     def _pending_action_purpose(action: Dict[str, Any], step: Dict[str, Any]) -> str:
@@ -7356,11 +7764,14 @@ class BioAnalystAgent:
         if str(attempt.get("status") or "").upper() == ATTEMPT_EVIDENCE_COMMITTED:
             record_provenance_event(plan_state, "attempt_state_changed", {
                 "attempt_id": attempt_id,
-                "status": ATTEMPT_VALIDATED,
+                "status": ATTEMPT_VALIDATION_PASSED,
                 "validation_evidence_ref": str((gate.reconciliation or {}).get("validation_id") or "completion_gate"),
             })
-            attempt["status"] = ATTEMPT_VALIDATED
-        if str(attempt.get("status") or "").upper() == ATTEMPT_VALIDATED:
+            attempt["status"] = ATTEMPT_VALIDATION_PASSED
+        if str(attempt.get("status") or "").upper() in {
+            ATTEMPT_VALIDATED,
+            ATTEMPT_VALIDATION_PASSED,
+        }:
             record_provenance_event(plan_state, "attempt_state_changed", {
                 "attempt_id": attempt_id,
                 "status": ATTEMPT_COMPLETED,
@@ -8509,12 +8920,15 @@ class BioAnalystAgent:
         task_mode: str = "",
         trace_metadata: Optional[Dict[str, Any]] = None,
         temperature: Optional[float] = None,
+        llm_override: Any = None,
     ) -> BaseMessage:
         """Dispatch one immutable ControllerBinding and consume it exactly once."""
         self._assert_v2_llm_messages_clean(messages)
         binding = node_context.binding
         self._node_invocations.register(binding)
-        report = payload_observability_report(node_context.llm_payload.to_dict())
+        report = payload_observability_report(
+            node_context.llm_payload.to_provider_dict()
+        )
         logger.info(
             "NodeContext V2 dispatch: task=%s node=%s invocation=%s payload=%s",
             task_id,
@@ -8541,6 +8955,7 @@ class BioAnalystAgent:
                 task_mode=task_mode,
                 trace_metadata=metadata,
                 temperature=temperature,
+                llm_override=llm_override,
             )
         except BaseException:
             try:
@@ -8560,6 +8975,7 @@ class BioAnalystAgent:
         task_mode: str = "",
         trace_metadata: Optional[Dict[str, Any]] = None,
         temperature: Optional[float] = None,
+        llm_override: Any = None,
     ) -> BaseMessage:
         """Invoke the shared model with a hard wall-clock bound.
 
@@ -8652,7 +9068,7 @@ class BioAnalystAgent:
                     f"{hashlib.sha256(identity.encode('utf-8')).hexdigest()[:12]}"
                 )
             snapshot = trace_store.start_call(messages, metadata)
-        invocation_llm = self.llm
+        invocation_llm = llm_override or self.llm
         if temperature is not None and hasattr(invocation_llm, "bind"):
             invocation_llm = invocation_llm.bind(temperature=float(temperature))
         invoke_task = asyncio.create_task(invocation_llm.ainvoke(messages))
@@ -25405,6 +25821,8 @@ question. Never guess a scientific or database identity.
                         "verdict", "root_cause", "action_type", "failure_owner",
                         "recommended_action", "missing_tools", "verification_checks",
                         "expected_new_evidence", "forbidden_next_actions",
+                        "repair_target", "repair_instruction",
+                        "machine_findings_considered",
                     )
                     if recovery_decision.get(key) not in (None, "", [], {})
                 },
@@ -25421,6 +25839,9 @@ question. Never guess a scientific or database identity.
                 task_spec_revision(generate_task_spec),
             )
             generate_approved_snapshot: Dict[str, Any] = {}
+            generate_runtime_snapshot: Dict[str, Any] = {}
+            generate_artifact_environment: List[Dict[str, Any]] = []
+            generate_script_protocol = False
             recovery_evidence: List[Dict[str, Any]] = []
             if recovery_context_obj and recovery_context_obj.bounded_log_excerpt:
                 recovery_evidence.append({
@@ -25435,6 +25856,30 @@ question. Never guess a scientific or database identity.
                     task_id,
                     state=generate_plan_state,
                 )
+                generate_runtime_snapshot = build_resolved_runtime_snapshot(state)
+                generate_visible_artifacts = build_approved_visible_artifact_set(
+                    generate_task_spec,
+                    plan_state=generate_plan_state,
+                    approved_plan_snapshot=generate_approved_snapshot,
+                    current_step_id=current_step_id,
+                )
+                generate_managed_bindings = build_managed_artifact_bindings(
+                    generate_task_spec,
+                    plan_state=generate_plan_state,
+                    approved_plan_snapshot=generate_approved_snapshot,
+                    current_step_id=current_step_id,
+                    visible_artifacts=generate_visible_artifacts,
+                )
+                generate_artifact_environment = script_artifact_environment(
+                    generate_managed_bindings
+                )
+                generate_step_action = str(
+                    generate_step.get("action") or "execute"
+                ).strip().lower()
+                generate_script_protocol = generate_step_action not in {
+                    "ask_user", "install", "install_tool", "search", "finish",
+                    "solution", "blocked", "plan_patch",
+                }
                 generate_semantic_inputs = self._node_context_semantic_inputs(
                     task_id,
                     generate_plan_state,
@@ -25459,6 +25904,13 @@ question. Never guess a scientific or database identity.
                         },
                         "current_action_contract": self._current_action_semantic_contract(
                             state, task_id
+                        ),
+                        "resolved_runtime": generate_runtime_snapshot,
+                        "artifact_environment": generate_artifact_environment,
+                        "generate_output_contract": (
+                            "script_block_v1"
+                            if generate_script_protocol
+                            else "semantic_action_v2"
                         ),
                     },
                     feedback=generate_feedback,
@@ -25496,7 +25948,7 @@ question. Never guess a scientific or database identity.
                     **generate_semantic_inputs,
                 )
                 call_msgs = [HumanMessage(content=PromptManager.get_generate_v2_prompt(
-                    generate_node_context.llm_payload.to_dict(),
+                    generate_node_context.llm_payload.to_provider_dict(),
                     capability_instructions=loaded_skills,
                 ))]
             except Exception as exc:
@@ -25643,12 +26095,24 @@ question. Never guess a scientific or database identity.
                             "action_contract_ref": str(
                                 Path(self.data_path) / "task_outputs" / task_id / "plan_state.json"
                             ),
+                            "provider_context_manifest": provider_context_manifest(
+                                generate_node_context.llm_payload
+                            ),
                         },
                     )
                     if recovery_context_obj:
-                        cached_structured_action = self._extract_structured_action(
-                            str(response.content or "")
-                        )
+                        if generate_script_protocol:
+                            try:
+                                cached_structured_action = adapt_script_block_to_action(
+                                    parse_executable_script_block(str(response.content or "")),
+                                    generate_artifact_environment,
+                                )
+                            except ScriptBlockError:
+                                cached_structured_action = {}
+                        else:
+                            cached_structured_action = self._extract_structured_action(
+                                str(response.content or "")
+                            )
                         recovery_store.save_llm_result(
                             recovery_context_obj.context_id,
                             f"generate:{recovery_stage or 'RECOVERY'}",
@@ -25762,6 +26226,133 @@ question. Never guess a scientific or database identity.
             structured_parse_result = self._extract_structured_action_result(content)
             structured_action = structured_parse_result.action
             action_parse_error = deepcopy(structured_parse_result.error)
+            if generate_script_protocol:
+                try:
+                    script_block = parse_executable_script_block(content)
+                    structured_action = adapt_script_block_to_action(
+                        script_block,
+                        generate_artifact_environment,
+                    )
+                    # Carry the exact provider-visible snapshot into the bound
+                    # action.  Binding/Execute must not silently re-resolve a
+                    # different runtime after Generate has authored the script.
+                    structured_action["runtime_snapshot"] = deepcopy(
+                        generate_runtime_snapshot
+                    )
+                    structured_action["runtime_bindings"] = dict(
+                        generate_runtime_snapshot.get("bindings") or {}
+                    )
+                    structured_action["controller_artifact_environment"] = deepcopy(
+                        generate_artifact_environment
+                    )
+                    action_parse_error = {}
+                    script_findings = audit_generated_script(
+                        script_block,
+                        runtime_snapshot=generate_runtime_snapshot,
+                        artifact_environment=generate_artifact_environment,
+                        evidence_refs=[
+                            str(
+                                Path(self.data_path)
+                                / "task_outputs"
+                                / task_id
+                                / "plan_state.json"
+                            )
+                        ],
+                    )
+                    if any(
+                        str(item.get("severity") or "").upper() == "HIGH"
+                        for item in script_findings
+                    ):
+                        candidate_hash = hashlib.sha256(
+                            script_block.body.encode("utf-8", errors="replace")
+                        ).hexdigest()
+                        candidate_ref = self._persist_script_version(
+                            task_id,
+                            load_plan_state(self.data_path, task_id),
+                            current_step_id,
+                            f"candidate_{candidate_hash[:16]}",
+                            "generated_candidate",
+                            script_block.body,
+                            extension={"python": ".py", "r": ".R"}.get(
+                                script_block.language, ".sh"
+                            ),
+                            mutation_reason="controller_pre_execution_audit",
+                            producer="generate",
+                        )
+                        audit_error = {
+                            "stage": "controller_script_audit",
+                            "code": "CONTROLLER_SCRIPT_AUDIT_FAILED",
+                            "findings": script_findings,
+                        }
+                        format_count, duplicate_count, invalid_hash, format_decision = (
+                            self._record_action_format_failure(
+                                task_id,
+                                current_step_id or "lightweight",
+                                script_block.body,
+                                audit_error,
+                            )
+                        )
+                        repeated_audit_repair = str(
+                            (state.get("pending_recovery_action") or {}).get("type") or ""
+                        ).lower() == "controller_audit_repair"
+                        if repeated_audit_repair or duplicate_count > 1:
+                            return {
+                                "messages": [response, SystemMessage(content=(
+                                    "Controller re-audit rejected the corrective script with the same "
+                                    "authoritative machine findings; no unmodified execution is allowed."
+                                ))],
+                                "pending_action": {},
+                                "pending_recovery_action": {
+                                    "type": "internal_protocol_error",
+                                    "reason": "controller_script_audit_non_convergent",
+                                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                                    "machine_audit_findings": script_findings,
+                                },
+                                "recovery_decision": format_decision.to_dict(),
+                                "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                                "required_next_action": "INTERNAL_PROTOCOL_ERROR",
+                                "generate_result": "BLOCKED",
+                                "generate_exit_reason": "controller_script_audit_non_convergent",
+                                "next_step": "finish",
+                            }
+                        return {
+                            "messages": [response, SystemMessage(content=(
+                                "<controller_machine_audit>\n"
+                                "These findings are authoritative machine observations, not a root-cause diagnosis.\n"
+                                + json.dumps(script_findings, ensure_ascii=False, indent=2)
+                                + "\nRepair only these findings and preserve unrelated valid script logic.\n"
+                                "</controller_machine_audit>"
+                            ))],
+                            "pending_action": {},
+                            "pending_recovery_action": {
+                                "type": "controller_audit_repair",
+                                "reason": "pre_execution_machine_audit_failed",
+                                "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                                "previous_script": script_block.body,
+                                "previous_script_ref": candidate_ref,
+                                "machine_audit_findings": script_findings,
+                                "repair_target": "previous_generated_script",
+                                "repair_instruction": (
+                                    "Fix the deterministic machine findings only; preserve unrelated valid logic."
+                                ),
+                                "invalid_response_hash": invalid_hash,
+                                "repair_ordinal": format_count,
+                            },
+                            "controller_machine_audit_findings": script_findings,
+                            "required_next_action": "CORRECTIVE_GENERATE",
+                            "recovery_decision": format_decision.to_dict(),
+                            "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                            "generate_result": "NEEDS_RECOVERY",
+                            "generate_exit_reason": "controller_script_audit_failed",
+                            "next_step": "generate",
+                        }
+                except ScriptBlockError as exc:
+                    structured_action = {}
+                    action_parse_error = {
+                        "stage": "script_block",
+                        "code": ScriptBlockError.code,
+                        "message": str(exc),
+                    }
             candidate_fingerprint = (
                 managed_action_fingerprint(structured_action)
                 if structured_action
@@ -26090,10 +26681,16 @@ question. Never guess a scientific or database identity.
                             "next_step": policy_decision.next_route,
                         }
                 materialized_action["candidate_fingerprint"] = candidate_fingerprint
-                materialized_action["code"] = shlex.join(
-                    [str(item) for item in materialized_action.get("argv") or []]
-                )
-                materialized_action["language"] = "bash"
+                if str(materialized_action.get("script_adapter") or "") == "script_block_v1":
+                    materialized_action["code"] = str(structured_action.get("code") or "")
+                    materialized_action["language"] = str(
+                        structured_action.get("language") or "bash"
+                    )
+                else:
+                    materialized_action["code"] = shlex.join(
+                        [str(item) for item in materialized_action.get("argv") or []]
+                    )
+                    materialized_action["language"] = "bash"
                 structured_action = materialized_action
             active_plan_state = load_plan_state(self.data_path, task_id)
             active_task_state = dict(active_plan_state.get("task_state") or {})
@@ -26742,7 +27339,11 @@ question. Never guess a scientific or database identity.
                 }
 
             if (
-                recovery_action_type == "action_format_repair"
+                recovery_action_type in {
+                    "action_format_repair", "controller_audit_repair",
+                    "script_patch", "runtime_recovery", "renderer_recovery",
+                    "same_step_repair", "repair_previous_action",
+                }
                 and str(result.get("generate_exit_reason") or "") != "unrecognized_action"
                 and not result.get("pending_recovery_action")
             ):
@@ -26750,10 +27351,9 @@ question. Never guess a scientific or database identity.
                 result["required_next_action"] = ""
                 result["action_format_repair"] = {}
                 if str(result.get("next_step") or "") == "execute":
-                    # The committed FORMAT_REPAIR decision has been consumed
-                    # by this newly validated action.  Leaving it in graph
-                    # state makes the conditional router send the accepted
-                    # action back to Generate and replay the repair cache.
+                    # The committed repair decision has been consumed by this
+                    # newly parsed and re-audited action. Leaving it in graph
+                    # state would replay the repair instead of executing it.
                     result["recovery_decision"] = {}
                     result["recovery_application"] = {}
                     result["recovery_context"] = {}
@@ -27016,12 +27616,12 @@ question. Never guess a scientific or database identity.
                             "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
                             "next_step": "supervisor",
                         }
-                    original_code = generated_bytes.decode("utf-8", errors="replace").strip()
+                    original_code = generated_bytes.decode("utf-8", errors="replace")
                 else:
-                    original_code = str(pending_action.get("code") or "").strip()
-            if not original_code and str(state.get("task_mode") or "managed").lower() in {"readonly", "simple_execute"}:
+                    original_code = str(pending_action.get("code") or "")
+            if not original_code.strip() and str(state.get("task_mode") or "managed").lower() in {"readonly", "simple_execute"}:
                 original_code = self._recent_nonempty_execute_body(state.get("messages", []), window=6)
-            if not original_code:
+            if not original_code.strip():
                 detail = "No current, revision-bound pending execute action was found."
                 plan_progress = self._record_plan_current_evidence(task_id, "execute_missing_code", detail)
                 return {"messages": [HumanMessage(content=f"<observation>❌ {detail}</observation>")],
@@ -27180,7 +27780,16 @@ question. Never guess a scientific or database identity.
                         "next_step": "generate",
                     }
 
-            language = detect_script_language(original_code)
+            declared_language = str(pending_action.get("language") or "").strip().lower()
+            language = {
+                "bash": "Bash", "shell": "Bash", "sh": "Bash",
+                "python": "Python", "py": "Python",
+                "r": "R", "rscript": "R",
+            }.get(declared_language, detect_script_language(original_code))
+            # Preserve the exact model-authored body separately from allowed
+            # Controller runtime materialization. Recovery repairs this source,
+            # while runtime comparison inspects the approved source that ran.
+            generated_model_code = original_code
             runtime_bindings = {
                 str(key): str(value)
                 for key, value in (pending_action.get("runtime_bindings") or {}).items()
@@ -27218,18 +27827,27 @@ question. Never guess a scientific or database identity.
                         "generate_result": "NEEDS_RECOVERY",
                         "next_step": "generate",
                     }
-            elif language == "Bash" and runtime_bindings:
-                binding_lines = [
-                    f"if [[ -z \"${{{key}:-}}\" ]]; then export {key}={shlex.quote(value)}; fi"
-                    for key, value in sorted(runtime_bindings.items())
-                ]
-                original_code = "\n".join(binding_lines) + "\n" + original_code
-            elif language == "Python" and runtime_bindings:
-                binding_lines = [
-                    f"os.environ.setdefault({key!r}, {value!r})"
-                    for key, value in sorted(runtime_bindings.items())
-                ]
-                original_code = "import os\n" + "\n".join(binding_lines) + "\n" + original_code
+            elif runtime_bindings:
+                # Legacy/non-managed execution still consumes the same exact
+                # Controller snapshot.  The helper supports Bash, Python and R
+                # and deliberately overrides ambient values with verified ones.
+                original_code, runtime_env_error = _inject_managed_action_environment(
+                    original_code,
+                    language,
+                    runtime_bindings,
+                    {},
+                )
+                if runtime_env_error:
+                    return {
+                        "messages": [SystemMessage(content=(
+                            "Execute rejected the runtime snapshot before process start: "
+                            + str(runtime_env_error.get("message") or "runtime env contract violation")
+                        ))],
+                        "pending_action": {},
+                        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                        "required_next_action": "INTERNAL_PROTOCOL_ERROR",
+                        "next_step": "finish",
+                    }
             code = normalize_script_code(original_code)
             forbidden_actions = [str(item).strip() for item in (state.get("forbidden_recovery_actions") or []) if str(item).strip()]
             if forbidden_actions:
@@ -27410,6 +28028,63 @@ question. Never guess a scientific or database identity.
                     "next_step": "generate",
                 }
 
+            # This is the exact approved source that the wrapper will run.
+            # Keep it for direct executable-identity evidence after the process.
+            approved_source_code = code_to_run
+            if str(pending_action.get("script_adapter") or "") == "script_block_v1":
+                audit_block = ExecutableScriptBlock(
+                    language={"Bash": "bash", "Python": "python", "R": "r"}.get(
+                        language, "bash"
+                    ),
+                    body=code_to_run,
+                    tag={"Bash": "shell", "Python": "python", "R": "r"}.get(
+                        language, "shell"
+                    ),
+                )
+                execution_audit_findings = audit_generated_script(
+                    audit_block,
+                    runtime_snapshot=(
+                        pending_action.get("runtime_snapshot")
+                        or build_resolved_runtime_snapshot(state)
+                    ),
+                    artifact_environment=list(
+                        pending_action.get("controller_artifact_environment") or []
+                    ),
+                    evidence_refs=[
+                        str(pending_action.get("generated_script_path") or "")
+                    ],
+                )
+                if any(
+                    str(item.get("severity") or "").upper() == "HIGH"
+                    for item in execution_audit_findings
+                ):
+                    return {
+                        "messages": [SystemMessage(content=(
+                            "Controller pre-execution re-audit blocked the script without "
+                            "modifying it. Corrective Generate must repair the authoritative findings."
+                        ))],
+                        "pending_action": {},
+                        "pending_recovery_action": {
+                            "type": "controller_audit_repair",
+                            "reason": "pre_execution_reaudit_failed",
+                            "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                            "previous_script": code_to_run,
+                            "previous_script_ref": dict(
+                                pending_action.get("generated_script") or {}
+                            ),
+                            "machine_audit_findings": execution_audit_findings,
+                            "repair_target": "previous_generated_script",
+                            "repair_instruction": (
+                                "Fix the deterministic findings only and preserve unrelated valid logic."
+                            ),
+                            "execution_started": False,
+                        },
+                        "controller_machine_audit_findings": execution_audit_findings,
+                        "required_next_action": "CORRECTIVE_GENERATE",
+                        "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                        "next_step": "generate",
+                    }
+
             runtime_skills_state = self._infer_runtime_skills_from_code(code_to_run, selected_skills_state)
             selected_skill_pool_state = state.get("selected_skills", []) or runtime_skills_state
             install_redirect = self._redirect_install_command(code_to_run, runtime_skills_state)
@@ -27516,10 +28191,18 @@ question. Never guess a scientific or database identity.
             stdout_path = attempt_dir / "stdout.log"
             stderr_path = attempt_dir / "stderr.log"
             exit_status_path = attempt_dir / "exit_status.json"
-            trace_file = str(attempt_dir / "command_trace.log") if language == "Bash" and ENABLE_COMMAND_TRACE else ""
+            # Every attempt has a minimal durable runner/return-code trace.
+            # ENABLE_COMMAND_TRACE controls only the richer Bash ERR/PIPESTATUS
+            # instrumentation, not whether the evidence file exists.
+            trace_file = str(attempt_dir / "command_trace.log")
+            stdout_path.touch(exist_ok=True)
+            stderr_path.touch(exist_ok=True)
+            Path(trace_file).touch(exist_ok=True)
             trace_prefix = ""
-            if trace_file:
-                trace_prefix = f"exec 9>{shlex.quote(trace_file)}\n"
+            if ENABLE_COMMAND_TRACE and language == "Bash":
+                # The durable wrapper records runner/script identity first;
+                # append Bash ERR/PIPESTATUS events without truncating it.
+                trace_prefix = f"exec 9>>{shlex.quote(trace_file)}\n"
                 if ENABLE_PIPESTATUS_CAPTURE:
                     trace_prefix += (
                         "set -o pipefail\n"
@@ -27539,7 +28222,7 @@ question. Never guess a scientific or database identity.
                 str(pending_action.get("action_id") or "action"),
                 "approved",
                 approved_content,
-                extension=".py" if language == "Python" else ".sh",
+                extension={"Python": ".py", "R": ".R"}.get(language, ".sh"),
                 parent_script_ref=generated_ref,
                 mutation_reason="user_approval_or_edit",
                 producer="hitl_approval",
@@ -27558,25 +28241,45 @@ question. Never guess a scientific or database identity.
                 "attempt_id": attempt_id,
                 "status": ATTEMPT_APPROVED,
             })
-            approved_runner = "bash" if language == "Bash" else sys.executable
-            status_tmp = f"{exit_status_path}.tmp.$$"
-            wrapper = (
-                "#!/bin/bash\n"
-                "set +e\n"
-                f"export PATH=\"$PATH:{shim_path}\"\n"
-                f": > {shlex.quote(str(stdout_path))}\n"
-                f": > {shlex.quote(str(stderr_path))}\n"
-                f"{shlex.quote(approved_runner)} {shlex.quote(approved_ref['path'])} "
-                f"> {shlex.quote(str(stdout_path))} 2> {shlex.quote(str(stderr_path))}\n"
-                "rc=$?\n"
-                "finished_at=$(date -Iseconds 2>/dev/null || date)\n"
-                f"printf '{{\"attempt_id\":\"{attempt_id}\",\"returncode\":%s,\"finished_at\":\"%s\"}}\\n' "
-                f"\"$rc\" \"$finished_at\" > {shlex.quote(status_tmp)}\n"
-                f"mv {shlex.quote(status_tmp)} {shlex.quote(str(exit_status_path))}\n"
-                f"cat {shlex.quote(str(stdout_path))}\n"
-                f"cat {shlex.quote(str(stderr_path))} >&2\n"
-                "exit \"$rc\"\n"
+            approved_runner = (
+                runtime_bindings.get("BASH_BIN") or "bash"
+                if language == "Bash"
+                else runtime_bindings.get("PYTHON_BIN") or sys.executable
+                if language == "Python"
+                else runtime_bindings.get("RSCRIPT_BIN")
+                or runtime_bindings.get("R_BIN")
+                or str(shutil.which("Rscript") or "Rscript")
             )
+            status_tmp = f"{exit_status_path}.tmp.$$"
+            wrapper_parts = [
+                "#!/bin/bash\n",
+                "set +e\n",
+                f"export PATH=\"$PATH:{shim_path}\"\n",
+                f": > {shlex.quote(str(stdout_path))}\n",
+                f": > {shlex.quote(str(stderr_path))}\n",
+            ]
+            wrapper_parts.append(
+                f"printf 'runner=%s script=%s\\n' {shlex.quote(approved_runner)} "
+                f"{shlex.quote(approved_ref['path'])} > {shlex.quote(trace_file)}\n"
+            )
+            wrapper_parts.extend([
+                f"{shlex.quote(approved_runner)} {shlex.quote(approved_ref['path'])} "
+                f"> {shlex.quote(str(stdout_path))} 2> {shlex.quote(str(stderr_path))}\n",
+                "rc=$?\n",
+            ])
+            wrapper_parts.append(
+                f"printf 'returncode=%s\\n' \"$rc\" >> {shlex.quote(trace_file)}\n"
+            )
+            wrapper_parts.extend([
+                "finished_at=$(date -Iseconds 2>/dev/null || date)\n",
+                f"printf '{{\"attempt_id\":\"{attempt_id}\",\"returncode\":%s,\"finished_at\":\"%s\"}}\\n' "
+                f"\"$rc\" \"$finished_at\" > {shlex.quote(status_tmp)}\n",
+                f"mv {shlex.quote(status_tmp)} {shlex.quote(str(exit_status_path))}\n",
+                f"cat {shlex.quote(str(stdout_path))}\n",
+                f"cat {shlex.quote(str(stderr_path))} >&2\n",
+                "exit \"$rc\"\n",
+            ])
+            wrapper = "".join(wrapper_parts)
             executed_ref = self._persist_script_version(
                 task_id,
                 attempt_plan_state,
@@ -27667,6 +28370,80 @@ question. Never guess a scientific or database identity.
 
             duration = time.time() - start_time
             finished_at = datetime.now().isoformat(timespec="seconds")
+            expected_runtime_contract = dict(
+                pending_action.get("runtime_snapshot")
+                or build_resolved_runtime_snapshot(state)
+            )
+            actual_runtime_environment: Dict[str, Any] = {
+                **{
+                    key: value
+                    for key, value in runtime_bindings.items()
+                    if key in {
+                        "CONDA_DEFAULT_ENV", "CONDA_EXE", "CONDA_PREFIX",
+                        "ENV_PREFIX", "JAVA_HOME", "RESOLVED_ENV_PREFIX",
+                        "RESOLVED_JAVA_HOME", "VIRTUAL_ENV",
+                    }
+                },
+                "injected_bindings": dict(runtime_bindings),
+                "resolved_executables": _observed_runtime_executables(
+                    expected_runtime_contract,
+                    runtime_bindings,
+                    approved_source_code,
+                    language,
+                    str(approved_runner),
+                    shim_path=str(shim_path or ""),
+                ),
+            }
+            runtime_machine_comparison = compare_runtime_machine_evidence(
+                expected_runtime_contract,
+                actual_runtime_environment,
+            )
+            immediate_failure_evidence_path = ""
+
+            def persist_immediate_failure_snapshot(
+                diagnostic_code: str,
+                diagnostic_summary: str,
+            ) -> None:
+                nonlocal immediate_failure_evidence_path
+                if immediate_failure_evidence_path:
+                    return
+                snapshot = AttemptFailureEvidence.from_mapping({
+                    "session_id": str(state.get("session_id") or task_id),
+                    "task_id": task_id,
+                    "plan_id": str(attempt_plan_state.get("plan_id") or ""),
+                    "plan_version": str(
+                        attempt_plan_state.get("plan_version") or "plan_v1"
+                    ),
+                    "step_id": str(pending_action.get("step_id") or ""),
+                    "action_id": str(pending_action.get("action_id") or ""),
+                    "attempt_id": attempt_id,
+                    "failed_command": execution_command,
+                    "returncode": returncode,
+                    "stdout_log": str(stdout_path),
+                    "stderr_log": str(stderr_path),
+                    "trace_file": trace_file,
+                    "stdout_summary": self._clip_observation_text(stdout, 8000),
+                    "stderr_summary": self._clip_observation_text(stderr, 8000),
+                    "expected_runtime_contract": expected_runtime_contract,
+                    "actual_environment": actual_runtime_environment,
+                    "machine_audit_findings": list(
+                        runtime_machine_comparison.get("machine_audit_findings")
+                        or []
+                    ),
+                    "diagnostic_code": diagnostic_code,
+                    "diagnostic_summary": diagnostic_summary,
+                })
+                immediate_failure_evidence_path = str(
+                    RecoveryStateStore(
+                        self.data_path, task_id
+                    ).save_attempt_failure_evidence(snapshot)
+                )
+
+            if returncode != 0:
+                persist_immediate_failure_snapshot(
+                    "PROCESS_EXIT_NONZERO",
+                    f"The executed process exited with return code {returncode}.",
+                )
             self.profiler.record_skill_usage(
                 task_id,
                 runtime_skills_state,
@@ -27739,6 +28516,15 @@ question. Never guess a scientific or database identity.
             lightweight_mode = task_mode in {"readonly", "simple_execute"}
             if runtime_missing and lightweight_mode:
                 runtime_install_blocked = True
+            if (validation_failed or runtime_missing) and not immediate_failure_evidence_path:
+                persist_immediate_failure_snapshot(
+                    "RUNTIME_MISSING" if runtime_missing else "VALIDATION_FAILED",
+                    (
+                        "The process completed but the required runtime was unavailable."
+                        if runtime_missing
+                        else "The process completed but required validation failed."
+                    ),
+                )
             retry_plan = load_plan_state(self.data_path, task_id)
             retry_count = int(
                 ((retry_plan.get("task_state") or {}).get("budgets") or {}).get("execution_retry_count")
@@ -27977,7 +28763,7 @@ question. Never guess a scientific or database identity.
                 "success_checks": list(pending_action.get("success_checks") or []),
                 "command": execution_command,
                 "code": code_to_run,
-                "generated_code": code_to_run,
+                "generated_code": generated_model_code,
                 "code_path": approved_ref["path"],
                 "argv": execution_argv,
                 "script_file": script_file,
@@ -28031,66 +28817,82 @@ question. Never guess a scientific or database identity.
                 "exit_status_path": str(exit_status_path),
                 "stdout_summary": self._clip_observation_text(stdout, 2000),
                 "stderr_summary": self._clip_observation_text(stderr, 2000),
-                "expected_runtime_contract": {
-                    "audits": [
-                        {
-                            "skill_id": str(item.get("skill_id") or item.get("skill") or ""),
-                            "env": str(item.get("checked_env") or item.get("env") or item.get("declared_env") or ""),
-                            "status": str(item.get("status") or ""),
-                            "env_runner": str(item.get("env_runner") or ""),
-                            "healthcheck": str(item.get("healthcheck") or item.get("declared_healthcheck") or ""),
-                            "resolved_runtime_paths": dict(item.get("resolved_runtime_paths") or {}),
-                        }
-                        for item in state.get("runtime_audit", []) or [] if isinstance(item, dict)
-                    ],
-                    "bindings": self._runtime_bindings_from_state(dict(state)),
-                },
-                "actual_environment": {
-                    key: os.environ.get(key, "")
-                    for key in (
-                        "CONDA_DEFAULT_ENV", "CONDA_EXE", "CONDA_PREFIX", "ENV_PREFIX",
-                        "JAVA_HOME", "RESOLVED_ENV_PREFIX", "RESOLVED_JAVA_HOME",
-                        "RESOLVED_SNPEFF_JAR", "SNPEFF_JAR", "VIRTUAL_ENV",
-                    )
-                    if os.environ.get(key)
-                },
+                "expected_runtime_contract": deepcopy(expected_runtime_contract),
+                "actual_environment": deepcopy(actual_runtime_environment),
                 "action_contract": {
                     key: value for key, value in pending_action.items()
                     if key not in {"code", "command", "messages"}
                 },
             }
+            if immediate_failure_evidence_path:
+                execution_evidence["failure_evidence_path"] = (
+                    immediate_failure_evidence_path
+                )
             executor_metadata = dict(execution_evidence.get("executor_metadata") or {})
-            runtime_tool_names = {"bash", "java", "python"}
-            for audit in state.get("runtime_audit", []) or []:
-                if isinstance(audit, dict):
-                    runtime_tool_names.update(str(item) for item in audit.get("tools", []) or [] if str(item))
-            execution_evidence["actual_environment"]["resolved_executables"] = {
-                name: str(shutil.which(name) or "") for name in sorted(runtime_tool_names)
-            }
             if executor_metadata.get("stdout_log"):
                 execution_evidence["executor_stdout_log"] = str(executor_metadata["stdout_log"])
             if executor_metadata.get("stderr_log"):
                 execution_evidence["executor_stderr_log"] = str(executor_metadata["stderr_log"])
+            recovery_store = RecoveryStateStore(self.data_path, task_id)
             try:
-                prior_records = RecoveryStateStore(self.data_path, task_id).load_execution_records()
-                execution_evidence["recent_attempts"] = [
-                    {
-                        "execution_id": str(item.get("execution_id") or ""),
-                        "step_id": str(item.get("step_id") or ""),
-                        "action_id": str(item.get("action_id") or ""),
-                        "action_kind": str(item.get("action_kind") or ""),
-                        "command_role": str(item.get("command_role") or ""),
-                        "exit_code": item.get("exit_code"),
-                        "failure_fingerprint": str(item.get("failure_fingerprint") or ""),
-                    }
-                    for item in prior_records[-3:]
-                ]
-                execution_evidence = enrich_execution_evidence(
-                    {**dict(state), "pending_action": pending_action},
-                    execution_evidence,
+                prior_records = recovery_store.load_execution_records()
+            except Exception as exc:
+                logger.warning(
+                    "Could not load prior execution records for %s: %s",
+                    task_id,
+                    exc,
                 )
+                prior_records = []
+            execution_evidence["recent_attempts"] = [
+                {
+                    "execution_id": str(item.get("execution_id") or ""),
+                    "step_id": str(item.get("step_id") or ""),
+                    "action_id": str(item.get("action_id") or ""),
+                    "action_kind": str(item.get("action_kind") or ""),
+                    "command_role": str(item.get("command_role") or ""),
+                    "exit_code": item.get("exit_code"),
+                    "failure_fingerprint": str(item.get("failure_fingerprint") or ""),
+                }
+                for item in prior_records[-3:]
+            ]
+            execution_evidence = enrich_execution_evidence(
+                {**dict(state), "pending_action": pending_action},
+                execution_evidence,
+            )
+            if returncode != 0 or validation_failed or runtime_missing:
+                failure_snapshot = AttemptFailureEvidence.from_mapping({
+                    **execution_evidence,
+                    "session_id": str(state.get("session_id") or task_id),
+                    "task_id": task_id,
+                    "machine_audit_findings": list(
+                        (execution_evidence.get("runtime_drift") or {}).get(
+                            "machine_audit_findings"
+                        )
+                        or []
+                    ),
+                    "diagnostic_code": str(
+                        execution_evidence.get("failure_code")
+                        or (root_cause_analysis or {}).get("status")
+                        or "EXECUTION_FAILED"
+                    ),
+                    "diagnostic_summary": str(
+                        (root_cause_analysis or {}).get("root_cause_summary")
+                        or "Execution or validation failed; immutable evidence was captured."
+                    ),
+                })
+                # Failure evidence is a mandatory precondition for Recovery.
+                # Do not swallow an identity conflict or write failure and then
+                # ask a model to diagnose from a lossy graph-state projection.
+                failure_path = recovery_store.save_attempt_failure_evidence(
+                    failure_snapshot
+                )
+                execution_evidence["failure_evidence_path"] = str(failure_path)
+            try:
                 record = ExecutionRecord.from_mapping(execution_evidence)
-                RecoveryStateStore(self.data_path, task_id).save_execution_record(record)
+                execution_record_path = recovery_store.save_execution_record(record)
+                execution_evidence["execution_record_path"] = str(
+                    execution_record_path
+                )
                 provenance_plan = load_plan_state(self.data_path, task_id)
                 runtime_artifact_failure = record_runtime_output_failure(
                     provenance_plan,
@@ -28106,7 +28908,7 @@ question. Never guess a scientific or database identity.
                 record.produced_artifact_ids = list(provenance_result.get("produced_artifact_ids") or [])
                 if runtime_artifact_failure:
                     execution_evidence["typed_failure"] = runtime_artifact_failure
-                RecoveryStateStore(self.data_path, task_id).save_execution_record(record)
+                recovery_store.save_execution_record(record)
                 provenance_task_state = dict(provenance_plan.get("task_state") or {})
                 provenance_task_state["pending_action"] = {}
                 provenance_plan["task_state"] = provenance_task_state
@@ -28134,7 +28936,10 @@ question. Never guess a scientific or database identity.
                 "\n".join([stderr, stdout]),
                 log_path=str(execution_evidence.get("stderr_log") or execution_evidence.get("stdout_log") or ""),
             )
-            execution_evidence["generated_code"] = self._clip_observation_text(code_to_run, 4000)
+            execution_evidence["generated_code"] = self._clip_observation_text(
+                generated_model_code,
+                4000,
+            )
             # Raw streams are durable files. Keep only a bounded current-step
             # projection in graph state so one failed build cannot inflate all
             # downstream prompts and checkpoints.
@@ -28260,10 +29065,11 @@ question. Never guess a scientific or database identity.
             }
 
         execute_node = error_recovery_middleware(
-            self.llm,
+            self.recovery_llm,
             self.retriever,
             skill_manager=self.skill_manager,
             data_path=self.data_path,
+            recovery_llm_policy=self.recovery_llm_policy,
         )(execute_logic)
 
         # ════════════════════════════════════════════

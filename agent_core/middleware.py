@@ -24,6 +24,12 @@ from agent_core.node_context import (
     RECOVERY_PROVIDER_MAX_PAYLOAD_CHARS,
     build_node_context,
     evaluate_node_staleness,
+    provider_context_manifest,
+)
+from agent_core.recovery_evidence import (
+    RecoveryEvidenceAccessError,
+    RecoveryEvidenceReader,
+    parse_evidence_request,
 )
 from agent_core.state_contract_store import StateContractStore
 from agent_core.task_spec import task_semantic_hash
@@ -94,6 +100,7 @@ async def _invoke_recovery_v2(
     failure_fingerprint: str = "",
     runtime: Dict[str, Any] | None = None,
     evidence: List[Dict[str, Any]] | None = None,
+    provider_policy: Dict[str, Any] | None = None,
 ) -> Tuple[Any, Dict[str, Any]]:
     """Invoke Recovery through the same control/LLM-plane boundary as nodes."""
     task_spec = canonical_task_spec_for_state(plan_state)
@@ -150,17 +157,76 @@ async def _invoke_recovery_v2(
     _RECOVERY_INVOCATIONS.register(context.binding, stale_signature=stale_signature)
     invocation_consumed = False
     try:
-        prompt = PromptManager.get_recovery_v2_prompt(context.llm_payload.to_dict())
+        prompt = PromptManager.get_recovery_v2_prompt(
+            context.llm_payload.to_provider_dict()
+        )
+        trace_metadata = {
+            "node_name": "recovery_judge",
+            "call_kind": "recovery_judge_v2",
+            "provider_context_manifest": provider_context_manifest(context.llm_payload),
+            "recovery_llm_policy": dict(provider_policy or {}),
+        }
         message, snapshot = await ainvoke_with_snapshot(
             llm,
             [HumanMessage(content=prompt)],
             data_path=data_path,
             task_id=task_id,
-            metadata={
-                "node_name": "recovery_judge",
-                "call_kind": "recovery_judge_v2",
-            },
+            metadata=trace_metadata,
         )
+        evidence_request = parse_evidence_request(
+            str(getattr(message, "content", message) or "")
+        )
+        if evidence_request:
+            if not data_path:
+                raise RecoveryEvidenceAccessError(
+                    "RECOVERY_EVIDENCE_ACCESS_DENIED: current task root is unavailable"
+                )
+            task_component = Path(str(task_id or ""))
+            if (
+                task_component.is_absolute()
+                or len(task_component.parts) != 1
+                or task_component.name in {"", ".", ".."}
+            ):
+                raise RecoveryEvidenceAccessError(
+                    "RECOVERY_EVIDENCE_ACCESS_DENIED: invalid current task identity"
+                )
+            evidence_base = (Path(data_path) / "task_outputs").resolve()
+            evidence_root = (evidence_base / str(task_id)).resolve()
+            try:
+                evidence_root.relative_to(evidence_base)
+            except ValueError as exc:
+                raise RecoveryEvidenceAccessError(
+                    "RECOVERY_EVIDENCE_ACCESS_DENIED: task identity escapes the evidence root"
+                ) from exc
+            reader = RecoveryEvidenceReader(evidence_root)
+            try:
+                evidence_result = reader.execute_request(evidence_request)
+            except RecoveryEvidenceAccessError as exc:
+                evidence_result = {
+                    "tool": str(evidence_request.get("tool") or ""),
+                    "error": str(exc),
+                }
+            followup = (
+                prompt
+                + "\n\n<evidence_result>\n"
+                + json.dumps(evidence_result, ensure_ascii=False, indent=2)
+                + "\n</evidence_result>\n"
+                + "Return the final RecoveryDecision JSON now. Do not request more evidence."
+            )
+            message, followup_snapshot = await ainvoke_with_snapshot(
+                llm,
+                [HumanMessage(content=followup)],
+                data_path=data_path,
+                task_id=task_id,
+                metadata={
+                    **trace_metadata,
+                    "call_kind": "recovery_judge_v2_evidence_followup",
+                    "evidence_operation": str(evidence_request.get("tool") or ""),
+                },
+            )
+            snapshot = dict(followup_snapshot or {})
+            snapshot["evidence_request"] = dict(evidence_request)
+            snapshot["evidence_result"] = evidence_result
         snapshot = dict(snapshot or {})
         snapshot["prompt_projection_hash"] = hashlib.sha256(
             prompt.encode("utf-8", errors="replace")
@@ -1544,7 +1610,13 @@ def _legacy_error_recovery_middleware(llm, retriever, skill_manager=None, data_p
     return decorator
 
 
-def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path=None):
+def error_recovery_middleware(
+    llm,
+    retriever=None,
+    skill_manager=None,
+    data_path=None,
+    recovery_llm_policy=None,
+):
     """Attach structured, judge-only recovery to one Execute node.
 
     The graph controller owns repair generation, plan changes, user questions,
@@ -1648,6 +1720,7 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
             diagnosis = dict(diagnostic_context.diagnosis or {})
             decision: RecoveryDecision
             judge_needed = diagnosis_required(trigger, evidence, merged_state)
+            recovery_judge_invoked = False
 
             try:
                 evidence_returncode = int(
@@ -1662,7 +1735,12 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                 or str(evidence.get("execution_status") or "").lower() == "failed"
             )
 
-            if diagnosis.get("collection_complete") and not judge_needed and (
+            if not judge_needed and trigger.deterministic_action:
+                # Controller-owned triage outcomes (for example an optional
+                # probe whose approved fallback succeeded) must not be replaced
+                # by a generic diagnostic view of the non-zero helper command.
+                decision = deterministic_recovery_decision(trigger, evidence)
+            elif diagnosis.get("collection_complete") and not judge_needed and (
                 structured_execution_failed or diagnosis.get("evidence_sufficient")
             ):
                 # The builder has already read the persisted script, trace,
@@ -1706,6 +1784,63 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                         increment_plan_budget(plan_state, "recovery_judge_count")
                         save_plan_state(data_path, task_id, plan_state)
                     try:
+                        recovery_focus = {
+                            "current_step": dict(diagnostic_context.current_step or {}),
+                            "success_criteria": list(
+                                (diagnostic_context.current_step or {}).get("success_criteria")
+                                or []
+                            ),
+                            "previous_action": dict(diagnostic_context.action_contract or {}),
+                            "previous_generated_script_ref": dict(
+                                evidence.get("generated_script") or {}
+                            ),
+                            "previous_approved_script_ref": dict(
+                                evidence.get("approved_script") or {}
+                            ),
+                            "previous_script": str(
+                                (diagnostic_context.execution or {}).get("code")
+                                or (diagnostic_context.execution or {}).get("script_context")
+                                or ""
+                            ),
+                            "failed_command": str(
+                                (diagnostic_context.execution or {}).get("failed_command")
+                                or ""
+                            ),
+                            "exit_code": (diagnostic_context.execution or {}).get("returncode"),
+                            "bounded_stdout": str(
+                                (diagnostic_context.execution or {}).get("stdout_tail")
+                                or ""
+                            ),
+                            "bounded_stderr": str(
+                                (diagnostic_context.execution or {}).get("stderr_tail")
+                                or ""
+                            ),
+                            "expected_runtime": dict(
+                                (diagnostic_context.execution or {}).get(
+                                    "expected_runtime_contract"
+                                )
+                                or {}
+                            ),
+                            "actual_runtime": dict(
+                                (diagnostic_context.execution or {}).get("actual_environment")
+                                or {}
+                            ),
+                            "controller_machine_audit_findings": list(
+                                diagnostic_context.machine_audit_findings or []
+                            ),
+                            "current_diagnostic": diagnosis,
+                            "available_evidence": list(
+                                diagnostic_context.available_evidence or []
+                            ),
+                            "previous_recovery_decisions": list(
+                                diagnostic_context.recent_attempts or []
+                            ),
+                        }
+                        # From this point the decision is no longer local
+                        # RecoveryPolicy: the configured Recovery provider is
+                        # being invoked (and may itself fail or return invalid
+                        # schema).  Preserve that distinction in the trace.
+                        recovery_judge_invoked = True
                         judge_message, _ = await _invoke_recovery_v2(
                             llm,
                             data_path=data_path,
@@ -1715,16 +1850,42 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                             attempt_id=str(evidence.get("attempt_id") or evidence.get("execution_id") or ""),
                             failure_fingerprint=diagnostic_context.error_fingerprint,
                             runtime={
-                                "diagnosis": diagnosis,
+                                "recovery_focus": recovery_focus,
+                                "resolved_runtime": dict(
+                                    (diagnostic_context.execution or {}).get(
+                                        "expected_runtime_contract"
+                                    )
+                                    or {}
+                                ),
                                 "trigger": trigger.to_dict(),
                                 "progress": progress,
                                 "skill_policy": skill_policy,
                             },
-                            evidence=[{
-                                "evidence_id": str(evidence.get("execution_id") or "execution"),
-                                "kind": "execution_failure",
-                                "excerpt": json.dumps(evidence, ensure_ascii=False, default=str),
-                            }],
+                            evidence=[
+                                {
+                                    "evidence_id": "stderr-bounded",
+                                    "kind": "stderr",
+                                    "excerpt": str(
+                                        (diagnostic_context.execution or {}).get("stderr_tail")
+                                        or ""
+                                    ),
+                                    "truncated": not bool(
+                                        (diagnostic_context.execution or {}).get("stderr_complete")
+                                    ),
+                                },
+                                {
+                                    "evidence_id": "stdout-bounded",
+                                    "kind": "stdout",
+                                    "excerpt": str(
+                                        (diagnostic_context.execution or {}).get("stdout_tail")
+                                        or ""
+                                    ),
+                                    "truncated": not bool(
+                                        (diagnostic_context.execution or {}).get("stdout_complete")
+                                    ),
+                                },
+                            ],
+                            provider_policy=dict(recovery_llm_policy or {}),
                         )
                         judge_text = str(getattr(judge_message, "content", judge_message) or "")
                         decision = parse_recovery_judge_decision(judge_text)
@@ -1797,10 +1958,14 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                     "meaningful_progress": bool(progress.get("meaningful_progress")),
                     "progress_classification": progress.get("classification") or "",
                 })
-                store.append_trace("RECOVERY_JUDGE", {
+                store.append_trace(
+                    "RECOVERY_JUDGE" if recovery_judge_invoked else "RECOVERY_POLICY",
+                    {
                     "trigger": trigger.to_dict(),
                     "decision": decision.to_dict(),
-                })
+                    "judge_invoked": recovery_judge_invoked,
+                    },
+                )
 
             action = decision.recommended_action
             interaction_allowed = not bool(state_map.get("non_interactive") or state_map.get("disable_user_questions"))
@@ -1826,6 +1991,12 @@ def error_recovery_middleware(llm, retriever=None, skill_manager=None, data_path
                 "failure_type": decision.failure_type,
                 "missing_evidence": list(decision.missing_evidence),
                 "repair_strategy": decision.repair_strategy,
+                "root_cause": decision.root_cause,
+                "repair_target": decision.repair_target,
+                "repair_instruction": decision.repair_instruction,
+                "machine_audit_findings": list(
+                    diagnostic_context.machine_audit_findings or []
+                ),
                 "requires_user_input": decision.requires_user_input,
                 "diagnostic_context_path": str(store.root / "recovery_context.json") if store else "",
                 "do_not_repeat": [str(evidence.get("code_hash") or "")] if trigger.same_failure_count >= 2 else [],

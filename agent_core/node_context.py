@@ -407,6 +407,159 @@ class NodeContext:
     projection_trace: Optional[ProjectionTrace] = None
 
 
+def provider_context_manifest(
+    llm_payload: Mapping[str, Any] | LLMPayload,
+) -> Dict[str, Any]:
+    """Describe the exact provider-visible sections without duplicating them.
+
+    The manifest is trace metadata, never a second source of semantic truth.
+    It lets incident audits prove which current-session sections reached a
+    provider request and whether any section was already explicitly bounded.
+    """
+    if isinstance(llm_payload, LLMPayload):
+        payload = llm_payload.to_provider_dict()
+    else:
+        payload = dict(llm_payload or {})
+
+    def explicitly_truncated(value: Any) -> bool:
+        if isinstance(value, Mapping):
+            if value.get("truncated") is True or value.get("content_truncated") is True:
+                return True
+            return any(explicitly_truncated(item) for item in value.values())
+        if isinstance(value, (list, tuple)):
+            return any(explicitly_truncated(item) for item in value)
+        return isinstance(value, str) and "[truncated]" in value.lower()
+
+    semantic = dict(payload.get("semantic_history") or {})
+    focus = dict(payload.get("current_focus") or {})
+    runtime = dict(focus.get("runtime") or {})
+    recovery_focus = dict(runtime.get("recovery_focus") or {})
+    feedback = dict(focus.get("feedback") or {})
+    action_repair = dict(feedback.get("action_repair") or {})
+    recovery_decision = dict(feedback.get("recovery_decision") or {})
+    execution_projection = {
+        key: value
+        for key, value in {
+            "evidence": focus.get("evidence") or [],
+            "failed_command": recovery_focus.get("failed_command"),
+            "exit_code": recovery_focus.get("exit_code"),
+            "bounded_stdout": recovery_focus.get("bounded_stdout"),
+            "bounded_stderr": recovery_focus.get("bounded_stderr"),
+            "available_evidence": recovery_focus.get("available_evidence") or [],
+        }.items()
+        if value not in (None, "", [], {})
+    }
+
+    # These stable audit names intentionally mirror the provider-contract
+    # vocabulary.  A trace reader should not need to reverse engineer the
+    # internal NodeContext nesting to answer whether a required section was
+    # provider-visible.  Empty sections are retained with ``present=false`` so
+    # absence is itself explicit evidence.
+    section_values: List[Tuple[str, str, str, Any]] = [
+        (
+            "session_user_context",
+            "semantic_history.conversation",
+            "current_session_conversation_evidence",
+            semantic.get("conversation"),
+        ),
+        (
+            "consultant_handoff",
+            "semantic_history.consultant_handoff",
+            "accepted_current_session_consultant_handoff",
+            semantic.get("consultant_handoff"),
+        ),
+        (
+            "task_spec",
+            "semantic_history.task_spec",
+            "canonical_current_task_spec",
+            semantic.get("task_spec"),
+        ),
+        (
+            "approved_plan",
+            "semantic_history.approved_plan",
+            "approved_current_plan_snapshot",
+            semantic.get("approved_plan"),
+        ),
+        (
+            "current_step",
+            "current_focus.current_step",
+            "current_approved_plan_step",
+            focus.get("current_step"),
+        ),
+        (
+            "runtime_bindings",
+            "current_focus.runtime.resolved_runtime",
+            "controller_resolved_runtime_snapshot",
+            runtime.get("resolved_runtime") or runtime.get("runtime_bindings"),
+        ),
+        (
+            "previous_script",
+            "current_focus.runtime.recovery_focus.previous_script",
+            "current_attempt_script_evidence",
+            recovery_focus.get("previous_script")
+            or action_repair.get("previous_script"),
+        ),
+        (
+            "machine_audit",
+            "current_focus.runtime.recovery_focus.controller_machine_audit_findings",
+            "controller_machine_observations",
+            recovery_focus.get("controller_machine_audit_findings")
+            or action_repair.get("controller_machine_audit_findings")
+            or focus.get("violations"),
+        ),
+        (
+            "execution_evidence",
+            "current_focus.evidence",
+            "bounded_current_attempt_evidence",
+            execution_projection,
+        ),
+        (
+            "recovery_diagnosis",
+            "current_focus.feedback.recovery_decision",
+            "current_recovery_diagnosis",
+            recovery_decision
+            or recovery_focus.get("current_diagnostic")
+            or {
+                key: action_repair.get(key)
+                for key in (
+                    "recovery_root_cause", "repair_target", "repair_instruction",
+                )
+                if action_repair.get(key) not in (None, "", [], {})
+            },
+        ),
+    ]
+    sections: List[Dict[str, Any]] = []
+    for section, payload_path, source, value in section_values:
+        present = value not in (None, "", [], {})
+        encoded = (
+            json.dumps(
+                value,
+                ensure_ascii=False,
+                sort_keys=False,
+                separators=(",", ":"),
+                default=str,
+            )
+            if present
+            else ""
+        )
+        sections.append({
+            "section": section,
+            "payload_path": payload_path,
+            "source": source,
+            "chars": len(encoded),
+            "characters": len(encoded),
+            "estimated_tokens": (len(encoded) + 3) // 4 if encoded else 0,
+            "truncated": explicitly_truncated(value),
+            "present": present,
+        })
+    return {
+        "schema_version": 1,
+        "sections": sections,
+        "total_characters": sum(int(item["characters"]) for item in sections),
+        "estimated_tokens": sum(int(item["estimated_tokens"]) for item in sections),
+    }
+
+
 def _unique_handle(prefix: str, seed: Any, used: MutableMapping[str, int]) -> str:
     base = f"{prefix}.{_slug(seed, fallback='item')}"
     count = used.get(base, 0) + 1

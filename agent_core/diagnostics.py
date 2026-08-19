@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from agent_core.context_lineage import redact_text
+from agent_core.controller_audit import compare_runtime_machine_evidence
 from agent_core.plan_tracker import canonical_task_spec_for_state
 from agent_core.root_cause import extract_failed_trace_event
 from agent_core.task_spec import project_effective_user_facts, resolve_effective_user_facts
@@ -160,6 +161,8 @@ class RecoveryContext:
     completion: Dict[str, Any] = field(default_factory=dict)
     progress: Dict[str, Any] = field(default_factory=dict)
     runtime: Dict[str, Any] = field(default_factory=dict)
+    machine_audit_findings: List[Dict[str, Any]] = field(default_factory=list)
+    available_evidence: List[Dict[str, Any]] = field(default_factory=list)
     manifest: Dict[str, Any] = field(default_factory=dict)
     artifacts: List[Dict[str, Any]] = field(default_factory=list)
     recent_attempts: List[Dict[str, Any]] = field(default_factory=list)
@@ -224,6 +227,19 @@ class RecoveryContext:
         return context
 
     def stable_context_id(self) -> str:
+        evidence_identity = hashlib.sha256(
+            json.dumps(
+                {
+                    "execution": self.execution,
+                    "runtime": self.runtime,
+                    "machine_audit_findings": self.machine_audit_findings,
+                    "available_evidence": self.available_evidence,
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+                default=str,
+            ).encode("utf-8", errors="replace")
+        ).hexdigest()[:20]
         identity = {
             "task_id": self.task_id,
             "step_id": self.step_id,
@@ -235,6 +251,7 @@ class RecoveryContext:
             "candidate_fingerprint": self.candidate_fingerprint,
             "repair_ordinal": int(self.repair_ordinal or 0),
             "authoritative_state_hash": self.authoritative_state_hash,
+            "evidence_identity": evidence_identity,
         }
         digest = hashlib.sha256(
             json.dumps(identity, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
@@ -636,8 +653,18 @@ def enrich_execution_evidence(
         runtime_contract = _expected_runtime_contract(state)
     actual_environment = dict(evidence.get("actual_environment") or {})
     actual_environment = {
-        key: str(value) for key, value in actual_environment.items()
-        if key in _RUNTIME_ENV_KEYS or key == "resolved_executables"
+        key: (
+            {
+                str(child_key): str(child_value)
+                for child_key, child_value in value.items()
+            }
+            if key in {"resolved_executables", "versions", "injected_bindings"}
+            and isinstance(value, Mapping)
+            else str(value)
+        )
+        for key, value in actual_environment.items()
+        if key in _RUNTIME_ENV_KEYS
+        or key in {"resolved_executables", "versions", "injected_bindings"}
     }
     combined_output = "\n".join([
         str(stream_info.get("stdout_tail") or evidence.get("stdout_summary") or ""),
@@ -654,24 +681,26 @@ def enrich_execution_evidence(
 
     bindings = dict(runtime_contract.get("bindings") or {})
     expected_prefix = str(bindings.get("RESOLVED_ENV_PREFIX") or bindings.get("ENV_PREFIX") or "")
-    observed_prefix = str(observed_runtime.get("CONDA_PREFIX") or actual_environment.get("CONDA_PREFIX") or "")
+    observed_prefix = str(actual_environment.get("ENV_PREFIX") or actual_environment.get("CONDA_PREFIX") or "")
     uses_login_shell_dynamic_prefix = bool(
         expected_prefix
         and re.search(r"\bbash\s+(?:[^\n]*\s)?-l?c\b", script_body)
         and re.search(r"\$\{?CONDA_PREFIX\}?", script_body)
     )
-    drift_reasons: List[str] = []
-    if expected_prefix and observed_runtime.get("CONDA_PREFIX") and observed_runtime["CONDA_PREFIX"] != expected_prefix:
-        drift_reasons.append("observed_conda_prefix_differs_from_runtime_contract")
+    runtime_drift = compare_runtime_machine_evidence(
+        runtime_contract,
+        actual_environment,
+    )
+    drift_reasons: List[str] = list(runtime_drift.get("reasons") or [])
     if uses_login_shell_dynamic_prefix:
         drift_reasons.append("login_shell_re_resolves_dynamic_conda_prefix")
-    runtime_drift = {
+    runtime_drift.update({
         "detected": bool(drift_reasons),
-        "reasons": drift_reasons,
+        "reasons": list(dict.fromkeys(drift_reasons)),
         "expected_env_prefix": expected_prefix,
         "observed_env_prefix": observed_prefix,
         "observed_runtime": observed_runtime,
-    }
+    })
 
     manifest_path = str(evidence.get("manifest_path") or (state.get("pending_action") or {}).get("manifest_path") or "")
     manifest: Dict[str, Any] = {}
@@ -1219,7 +1248,10 @@ def build_recovery_context(
         "script_path": evidence.get("script_path") or evidence.get("script_file"),
         "code_path": evidence.get("code_path") or evidence.get("approved_code_path"),
         "code_hash": evidence.get("code_hash"),
-        "code": evidence.get("code_summary") or evidence.get("generated_code") or "",
+        # Corrective Generate repairs the immutable model-authored source.  The
+        # approved/materialized code remains separately addressable by code_path
+        # and script_context for execution forensics.
+        "code": evidence.get("generated_code") or evidence.get("code_summary") or "",
         "language": evidence.get("language"),
         "command_role": evidence.get("command_role") or "primary",
         "returncode": evidence.get("returncode", evidence.get("exit_code")),
@@ -1275,6 +1307,62 @@ def build_recovery_context(
         execution.get("trace_file"),
         execution.get("manifest_path"),
     ])
+    evidence_root = Path(task_root).resolve() if task_root else None
+    available_evidence: List[Dict[str, Any]] = []
+    evidence_kinds = (
+        ("generated_script", (evidence.get("generated_script") or {}).get("path")),
+        ("approved_script", (evidence.get("approved_script") or {}).get("path")),
+        ("executed_script", (evidence.get("executed_script") or {}).get("path")),
+        ("stdout", evidence.get("stdout_log")),
+        ("stderr", evidence.get("stderr_log")),
+        ("command_trace", evidence.get("trace_file")),
+        ("execution_record", evidence.get("execution_record_path")),
+        ("failure_evidence", evidence.get("failure_evidence_path")),
+    )
+    for kind, raw_path in evidence_kinds:
+        if not str(raw_path or "").strip():
+            continue
+        path = Path(str(raw_path)).expanduser()
+        try:
+            resolved = path.resolve()
+            relative = resolved.relative_to(evidence_root).as_posix() if evidence_root else ""
+            stat = resolved.stat()
+        except (OSError, ValueError):
+            continue
+        available_evidence.append({
+            "kind": kind,
+            "relative_path": relative,
+            "size": int(stat.st_size),
+            "readable": bool(relative),
+        })
+    machine_findings_by_identity: Dict[str, Dict[str, Any]] = {}
+    machine_finding_order: List[str] = []
+    for raw_finding in [
+        *(evidence.get("controller_machine_audit_findings") or []),
+        *((evidence.get("runtime_drift") or {}).get("machine_audit_findings") or []),
+    ]:
+        if not isinstance(raw_finding, Mapping):
+            continue
+        finding = _sanitize(raw_finding)
+        identity = json.dumps(
+            {
+                "code": finding.get("code"),
+                "expected": finding.get("expected"),
+                "observed": finding.get("observed"),
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+            default=str,
+        )
+        if identity not in machine_findings_by_identity:
+            machine_finding_order.append(identity)
+        previous = machine_findings_by_identity.get(identity) or {}
+        if len(finding) >= len(previous):
+            machine_findings_by_identity[identity] = finding
+    machine_audit_findings = [
+        machine_findings_by_identity[identity]
+        for identity in machine_finding_order
+    ]
     runtime_audit = [
         _sanitize(item) for item in state.get("runtime_audit", []) or [] if isinstance(item, dict)
     ][:8]
@@ -1309,7 +1397,14 @@ def build_recovery_context(
             **progress,
             "same_failure_count": same_failure_count,
         }),
-        runtime={"audits": runtime_audit},
+        runtime={
+            "audits": runtime_audit,
+            "expected": _sanitize(execution.get("expected_runtime_contract") or {}),
+            "actual": _sanitize(execution.get("actual_environment") or {}),
+            "drift": _sanitize(execution.get("runtime_drift") or {}),
+        },
+        machine_audit_findings=machine_audit_findings,
+        available_evidence=available_evidence,
         manifest=_sanitize(
             evidence.get("renderer_manifest_summary")
             or state.get("renderer_manifest")

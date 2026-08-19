@@ -1460,19 +1460,52 @@ Consultant owns skill discovery and SELECTED_SKILLS is the full allowed pool. Pl
     def get_recovery_v2_prompt(llm_payload: Mapping[str, Any]) -> str:
         """RecoveryJudge policy over an exact Controller-built semantic view."""
         semantic, focus = PromptManager._node_context_sections(llm_payload)
+        focus_for_prompt = deepcopy(dict(focus))
+        runtime = (
+            dict(focus_for_prompt.get("runtime") or {})
+            if isinstance(focus_for_prompt, Mapping)
+            else {}
+        )
+        recovery_focus = dict(runtime.get("recovery_focus") or {})
+        machine_findings = list(
+            recovery_focus.get("controller_machine_audit_findings") or []
+        )
+        if machine_findings:
+            recovery_focus.pop("controller_machine_audit_findings", None)
+            runtime["recovery_focus"] = recovery_focus
+            focus_for_prompt["runtime"] = runtime
         semantic_json = json.dumps(
             semantic, ensure_ascii=False, sort_keys=False, indent=2, default=str
         )
         focus_json = json.dumps(
-            focus, ensure_ascii=False, sort_keys=False, indent=2, default=str
+            focus_for_prompt,
+            ensure_ascii=False,
+            sort_keys=False,
+            indent=2,
+            default=str,
         )
         ordered_context = (
             "<semantic_history>\n" + semantic_json + "\n</semantic_history>\n\n"
             "<current_focus>\n" + focus_json + "\n</current_focus>"
         )
+        if machine_findings:
+            ordered_context += (
+                "\n\n<controller_machine_audit>\n"
+                "=== CONTROLLER MACHINE AUDIT ===\n"
+                "These are authoritative machine observations, not automatically "
+                "the complete root cause.\n"
+                + json.dumps(
+                    machine_findings,
+                    ensure_ascii=False,
+                    sort_keys=False,
+                    indent=2,
+                    default=str,
+                )
+                + "\n</controller_machine_audit>"
+            )
         return RECOVERY_JUDGE_PROMPT.format(diagnostic_context=ordered_context).replace(
             "DiagnosticContextBuilder has already read bounded local scripts, traces, logs, runtime contracts, and manifests",
-            "The Controller has projected the exact current-step contract, structured failure facts, and bounded evidence excerpts",
+            "Controller has projected the exact current-step contract, structured failure facts, and bounded evidence excerpts",
         ) + (
             "\n\nEvidence protocol: cite supporting evidence only by the handles shown "
             "in the payload (for example E1 or E2). Do not invent file refs, object "
@@ -1480,7 +1513,15 @@ Consultant owns skill discovery and SELECTED_SKILLS is the full allowed pool. Pl
             "The ordered task_spec.highlighted_constraints list is authoritative. "
             "A recovery proposal must preserve every applicable item and may not "
             "silently waive, weaken, or mutate it; a real requirement change routes "
-            "to Consultant/User through the existing path."
+            "to Consultant/User through the existing path. "
+            "If and only if the bounded initial evidence is insufficient, you may "
+            "instead return one JSON evidence request in exactly one of these forms: "
+            '{"evidence_request":{"tool":"glob","pattern":"*.log"}} or '
+            '{"evidence_request":{"tool":"read","path":"attempts/.../stderr.log",'
+            '"start_line":1,"end_line":80}}. Paths and patterns must be relative to '
+            "the current task evidence root. Use Glob for discovery and Read for a "
+            "targeted range. Never request writes, deletion, execution, absolute paths, "
+            "parent traversal, unrestricted cat/find behavior, or complete large-file dumps."
         )
 
     @staticmethod
@@ -1926,10 +1967,34 @@ Allowed step handles: {handles}
         )
         action_repair_section = ""
         if action_repair:
+            machine_findings = list(
+                action_repair.get("controller_machine_audit_findings") or []
+            )
+            action_repair_for_prompt = deepcopy(action_repair)
+            action_repair_for_prompt.pop(
+                "controller_machine_audit_findings", None
+            )
+            machine_audit_section = ""
+            if machine_findings:
+                machine_audit_section = (
+                    "\n<controller_machine_audit>\n"
+                    "=== CONTROLLER MACHINE AUDIT ===\n"
+                    "These are authoritative machine observations, not automatically "
+                    "the complete root cause.\n"
+                    + json.dumps(
+                        machine_findings,
+                        ensure_ascii=False,
+                        sort_keys=False,
+                        indent=2,
+                        default=str,
+                    )
+                    + "\n</controller_machine_audit>\n"
+                )
             action_repair_section = (
-                "\n<action_repair>\n"
+                machine_audit_section
+                + "\n<action_repair>\n"
                 + json.dumps(
-                    action_repair,
+                    action_repair_for_prompt,
                     ensure_ascii=False,
                     sort_keys=False,
                     indent=2,
@@ -1937,6 +2002,66 @@ Allowed step handles: {handles}
                 )
                 + "\n</action_repair>\n"
             )
+
+        runtime_contract = focus_for_prompt.get("runtime")
+        runtime_contract = (
+            dict(runtime_contract) if isinstance(runtime_contract, Mapping) else {}
+        )
+        if str(runtime_contract.get("generate_output_contract") or "") == "script_block_v1":
+            corrective_rules = ""
+            if action_repair:
+                corrective_rules = """
+This is Corrective Generate. Repair the supplied previous script; do not
+redesign the current step. Apply the Recovery diagnosis and machine findings,
+preserve unrelated valid logic, current-step obligations, success criteria,
+and every authoritative highlighted constraint. Do not re-diagnose the root
+cause and do not change the Plan.
+"""
+            return f"""You are BioMind Generate. Write the executable script for exactly the current approved step.
+
+Return exactly one non-empty executable block using one of these forms:
+<shell>
+...
+</shell>
+
+<python>
+...
+</python>
+
+<r>
+...
+</r>
+
+Do not return prose, Markdown fences, JSON, multiple blocks, or text outside
+the single block. The Controller parses and audits your script but never
+rewrites it.
+
+The semantic payload is the read-only canonical context for this current
+session and task. Do not modify the Task, Plan, approval, budgets, validation
+state, or routing. Preserve every item in task_spec.highlighted_constraints
+and all current-step success criteria.
+
+The resolved runtime bindings are authoritative machine facts. Invoke a
+resolved executable through its exact *_BIN variable when one is provided;
+do not guess an interpreter, environment, executable path, or version. The
+artifact_environment table is also authoritative: use its BIOMIND_* variable
+for each required current-step input/output and do not invent filesystem
+paths. Keep diagnostically relevant stdout and stderr visible; do not redirect
+them to /dev/null or otherwise suppress failure evidence.
+{corrective_rules}
+<semantic_history>
+{semantic_json}
+</semantic_history>
+
+<capability_instructions>
+{capability_instructions or "No capability-specific instructions."}
+</capability_instructions>
+
+<current_focus>
+{focus_json}
+</current_focus>
+{action_repair_section}
+"""
 
         invalid_embedded_example = json.dumps(
             {
