@@ -914,6 +914,68 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
             }, ensure_ascii=False, default=str),
         )
 
+    async def test_graph_f_script_literal_fallback_repairs_then_executes(self) -> None:
+        scripts: list[str] = []
+        task_id = "graph-f-script-artifact-repair"
+
+        def candidate(payload: Mapping[str, Any], ordinal: int) -> str:
+            runtime = dict((payload.get("current_focus") or {}).get("runtime") or {})
+            environment = [
+                dict(item)
+                for item in runtime.get("artifact_environment", []) or []
+                if isinstance(item, Mapping)
+            ]
+            task = dict(payload.get("task") or {})
+            artifacts = {
+                str(item.get("handle") or ""): dict(item)
+                for item in [
+                    *(task.get("inputs") or []),
+                    *(task.get("outputs") or []),
+                ]
+                if isinstance(item, Mapping)
+            }
+            lines: list[str] = []
+            for index, row in enumerate(environment):
+                env_name = str(row.get("env_var") or "")
+                handle = str(row.get("semantic_handle") or "")
+                target = f"ARTIFACT_{index}"
+                if ordinal == 1:
+                    durable = load_plan_state(self.root, task_id)
+                    ledger = dict(durable.get("plan_artifacts") or {})
+                    artifact_id = handle.partition(".")[2]
+                    literal_path = str(
+                        (ledger.get(artifact_id) or {}).get("canonical_path")
+                        or (artifacts.get(handle) or {}).get("required_basename")
+                        or "/invalid/literal-fallback"
+                    )
+                    lines.append(f'{target}="${{{env_name}:-{literal_path}}}"')
+                else:
+                    lines.append(f'{target}="${env_name}"')
+            lines.append("true")
+            script = "<shell>\n" + "\n".join(lines) + "\n</shell>"
+            scripts.append(script)
+            return script
+
+        events, captures, _ = await self._run_graph(
+            task_id,
+            candidate,
+        )
+        durable = load_plan_state(self.root, task_id)
+        visited = [next(iter(event)) for event in events]
+
+        self.assertGreaterEqual(len(captures), 3)
+        self.assertNotEqual(scripts[0], scripts[1])
+        self.assertEqual(visited.count("execute"), 2)
+        repair_request = str(captures[1].get("_provider_request") or "")
+        self.assertIn("<action_repair>", repair_request)
+        self.assertIn("ACTION_OUTPUT_BINDING_MISMATCH", repair_request)
+        self.assertIn("BIOMIND_OUTPUT_", repair_request)
+        self.assertIn("provider_reference", repair_request)
+        self.assertNotIn("{input:", repair_request)
+        self.assertNotIn("{output:", repair_request)
+        self.assertNotIn("{operation:", repair_request)
+        self.assertIs((durable.get("failure") or {}).get("execution_started"), True)
+
     async def test_graph_c_same_invalid_candidate_converges(self) -> None:
         def invalid(payload: Mapping[str, Any], _ordinal: int) -> dict[str, Any]:
             action = self._execute_action(payload)

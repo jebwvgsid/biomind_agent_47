@@ -1128,6 +1128,34 @@ class RunProfiler:
             parts.append(f"owner={owner}")
         if detail:
             parts.append(detail)
+        terminal_failure = diagnostic.get("terminal_failure")
+        if not isinstance(terminal_failure, Mapping):
+            terminal_failure = diagnostic.get("latest_failure")
+        if isinstance(terminal_failure, Mapping) and terminal_failure:
+            terminal_code = str(
+                terminal_failure.get("error_code")
+                or terminal_failure.get("code")
+                or ""
+            ).strip()
+            terminal_detail = str(
+                terminal_failure.get("message")
+                or terminal_failure.get("detail")
+                or ""
+            ).strip()
+            if terminal_code and (
+                terminal_code != code
+                or str(terminal_failure.get("fingerprint") or "")
+                != str(diagnostic.get("fingerprint") or "")
+            ):
+                terminal_text = f"corrective_terminal={terminal_code}"
+                if terminal_detail:
+                    terminal_text += f": {terminal_detail}"
+                parts.append(terminal_text)
+        termination_reason = str(diagnostic.get("termination_reason") or "").strip()
+        if termination_reason:
+            parts.append(f"termination_reason={termination_reason}")
+        if diagnostic.get("execution_started") is False:
+            parts.append("execution_started=false")
         refs = _collect_evidence_refs(diagnostic)
         if refs:
             parts.append("evidence_refs=" + ", ".join(refs))
@@ -1431,6 +1459,20 @@ class RunProfiler:
                 ),
                 "execution_started": terminal_diagnostic.get("execution_started"),
             }
+            for key in (
+                "fingerprint",
+                "candidate_fingerprint",
+                "last_error_fingerprint",
+                "last_candidate_fingerprint",
+                "repair_attempt_count",
+                "latest_failure",
+                "terminal_failure",
+            ):
+                value = terminal_diagnostic.get(key)
+                if value not in (None, "", [], {}):
+                    failure_projection[key] = (
+                        dict(value) if isinstance(value, Mapping) else value
+                    )
             failure_projection = {
                 key: value
                 for key, value in failure_projection.items()

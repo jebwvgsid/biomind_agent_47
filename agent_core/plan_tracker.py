@@ -2340,20 +2340,42 @@ def record_preaction_contract_failure(
     repair_attempt_count: int = 0,
     termination_reason: str = "",
 ) -> Dict[str, Any]:
-    """Persist the first Generate-owned pre-action failure without overwriting it."""
+    """Persist immutable primary and bounded latest/terminal pre-action failures."""
     now = _now()
     prior = dict(state.get("failure") or {}) if isinstance(state.get("failure"), Mapping) else {}
+    latest_code = str(violation.get("code") or "PRE_ACTION_CONTRACT_FAILURE")
+    latest_owner = str(violation.get("owner") or "GENERATED_ACTION").upper()
+    latest_message = str(
+        violation.get("message") or "Generated action failed its pre-action contract."
+    )
+    latest_failure = {
+        "error_code": latest_code,
+        "owner": latest_owner,
+        "subsystem": str(violation.get("subowner") or "managed_artifacts"),
+        "stage": "pre_action_contract",
+        "message": latest_message,
+        "fingerprint": str(error_fingerprint or ""),
+        "candidate_fingerprint": str(candidate_fingerprint or ""),
+        "repair_attempt_count": int(repair_attempt_count or 0),
+        "recorded_at": now,
+    }
+    for key in (
+        "field_path",
+        "artifact_handle",
+        "expected",
+        "proposed",
+        "constraint_origin",
+    ):
+        if violation.get(key) not in (None, "", []):
+            latest_failure[key] = deepcopy(violation.get(key))
     if not str(prior.get("error_code") or ""):
-        code = str(violation.get("code") or "PRE_ACTION_CONTRACT_FAILURE")
-        owner = str(violation.get("owner") or "GENERATED_ACTION").upper()
-        message = str(violation.get("message") or "Generated action failed its pre-action contract.")
         prior = {
-            "error_code": code,
-            "owner": owner,
+            "error_code": latest_code,
+            "owner": latest_owner,
             "subsystem": str(violation.get("subowner") or "managed_artifacts"),
             "stage": "pre_action_contract",
-            "message": message,
-            "reason": message,
+            "message": latest_message,
+            "reason": latest_message,
             "current_step": str(state.get("current_step_id") or ""),
             "fingerprint": str(error_fingerprint or ""),
             "candidate_fingerprint": str(candidate_fingerprint or ""),
@@ -2364,9 +2386,9 @@ def record_preaction_contract_failure(
             # resume projections, but they do not own the primary diagnosis.
             "failure_type": "generated_action_contract_error",
             "failure_stage": "pre_action_contract",
-            "error_owner": owner,
-            "detail": message,
-            "summary": message,
+            "error_owner": latest_owner,
+            "detail": latest_message,
+            "summary": latest_message,
             "recorded_at": now,
         }
         for target, source in (
@@ -2377,6 +2399,7 @@ def record_preaction_contract_failure(
         ):
             if violation.get(source) not in (None, "", []):
                 prior[target] = deepcopy(violation.get(source))
+    prior["latest_failure"] = latest_failure
     prior["last_seen_at"] = now
     prior["repair_attempt_count"] = max(
         int(prior.get("repair_attempt_count") or 0),
@@ -2384,10 +2407,16 @@ def record_preaction_contract_failure(
     )
     prior["repair_attempted"] = bool(prior["repair_attempt_count"])
     prior["last_candidate_fingerprint"] = str(candidate_fingerprint or "")
+    prior["last_error_fingerprint"] = str(error_fingerprint or "")
     if termination_reason:
         prior["termination_reason"] = str(termination_reason)
         prior["execution_started"] = False
         prior["repair_exhausted"] = True
+        prior["terminal_failure"] = {
+            **deepcopy(latest_failure),
+            "termination_reason": str(termination_reason),
+            "repair_attempt_count": int(prior["repair_attempt_count"]),
+        }
         task_state = dict(state.get("task_state") or {})
         task_state["status"] = TASK_STATUS_FAILED
         task_state["status_reason"] = str(

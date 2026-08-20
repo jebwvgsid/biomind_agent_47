@@ -1918,6 +1918,14 @@ Allowed step handles: {handles}
     ) -> str:
         semantic, focus = PromptManager._node_context_sections(llm_payload)
         focus_for_prompt = deepcopy(dict(focus))
+        runtime_contract = focus_for_prompt.get("runtime")
+        runtime_contract = (
+            dict(runtime_contract) if isinstance(runtime_contract, Mapping) else {}
+        )
+        script_output_protocol = (
+            str(runtime_contract.get("generate_output_contract") or "")
+            == "script_block_v1"
+        )
         action_repair: Dict[str, Any] = {}
         feedback = focus_for_prompt.get("feedback")
         if isinstance(feedback, Mapping):
@@ -1925,6 +1933,46 @@ Allowed step handles: {handles}
             candidate_repair = feedback_for_prompt.pop("action_repair", {})
             if isinstance(candidate_repair, Mapping):
                 action_repair = deepcopy(dict(candidate_repair))
+            if (
+                script_output_protocol
+                and str(action_repair.get("repair_stage") or "")
+                == "managed_artifact"
+                and isinstance(feedback_for_prompt.get("recovery_action"), Mapping)
+            ):
+                raw_recovery_action = dict(
+                    feedback_for_prompt.get("recovery_action") or {}
+                )
+                feedback_for_prompt["recovery_action"] = {
+                    key: raw_recovery_action[key]
+                    for key in (
+                        "type",
+                        "failure_owner",
+                        "failure_stage",
+                        "repair_ordinal",
+                        "termination_reason",
+                        "execution_started",
+                    )
+                    if raw_recovery_action.get(key) not in (None, "")
+                }
+                if isinstance(
+                    feedback_for_prompt.get("recovery_decision"), Mapping
+                ):
+                    raw_recovery_decision = dict(
+                        feedback_for_prompt.get("recovery_decision") or {}
+                    )
+                    feedback_for_prompt["recovery_decision"] = {
+                        key: raw_recovery_decision[key]
+                        for key in (
+                            "kind",
+                            "verdict",
+                            "action_type",
+                            "failure_owner",
+                            "recommended_action",
+                            "next_route",
+                            "reason_code",
+                        )
+                        if raw_recovery_decision.get(key) not in (None, "")
+                    }
             if feedback_for_prompt:
                 focus_for_prompt["feedback"] = feedback_for_prompt
             else:
@@ -1945,7 +1993,17 @@ Allowed step handles: {handles}
                     [str(item) for item in current_step.get("outputs", []) or []],
                 )
                 violations = action_repair.get("exact_violations") or []
-                if any(
+                if script_output_protocol:
+                    action_repair.setdefault(
+                        "script_artifact_rule",
+                        (
+                            "For each reported artifact, use the repair_hint BIOMIND env_var "
+                            "through the selected language's environment API. Remove literal "
+                            "or default fallbacks. Controller-owned managed bindings must not "
+                            "appear in the executable block."
+                        ),
+                    )
+                elif any(
                     str(item.get("code") or "")
                     == "MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED"
                     for item in violations
@@ -1959,8 +2017,30 @@ Allowed step handles: {handles}
                         ),
                     )
 
+        semantic_for_prompt = deepcopy(dict(semantic))
+        if script_output_protocol:
+            def strip_controller_placeholder_fields(value: Any) -> Any:
+                if isinstance(value, Mapping):
+                    return {
+                        key: strip_controller_placeholder_fields(item)
+                        for key, item in value.items()
+                        if str(key) != "placeholder"
+                    }
+                if isinstance(value, list):
+                    return [strip_controller_placeholder_fields(item) for item in value]
+                if isinstance(value, tuple):
+                    return [strip_controller_placeholder_fields(item) for item in value]
+                return value
+
+            semantic_for_prompt = strip_controller_placeholder_fields(
+                semantic_for_prompt
+            )
         semantic_json = json.dumps(
-            semantic, ensure_ascii=False, sort_keys=False, indent=2, default=str
+            semantic_for_prompt,
+            ensure_ascii=False,
+            sort_keys=False,
+            indent=2,
+            default=str,
         )
         focus_json = json.dumps(
             focus_for_prompt, ensure_ascii=False, sort_keys=False, indent=2, default=str
@@ -2003,11 +2083,7 @@ Allowed step handles: {handles}
                 + "\n</action_repair>\n"
             )
 
-        runtime_contract = focus_for_prompt.get("runtime")
-        runtime_contract = (
-            dict(runtime_contract) if isinstance(runtime_contract, Mapping) else {}
-        )
-        if str(runtime_contract.get("generate_output_contract") or "") == "script_block_v1":
+        if script_output_protocol:
             corrective_rules = ""
             if action_repair:
                 corrective_rules = """
@@ -2015,7 +2091,10 @@ This is Corrective Generate. Repair the supplied previous script; do not
 redesign the current step. Apply the Recovery diagnosis and machine findings,
 preserve unrelated valid logic, current-step obligations, success criteria,
 and every authoritative highlighted constraint. Do not re-diagnose the root
-cause and do not change the Plan.
+cause and do not change the Plan. For managed-artifact violations,
+repair_hint is the provider-facing authority: use its exact BIOMIND env_var
+through the selected language's environment API and remove only the reported
+literal/default fallback or Controller-owned binding.
 """
             return f"""You are BioMind Generate. Write the executable script for exactly the current approved step.
 
@@ -2045,9 +2124,13 @@ The resolved runtime bindings are authoritative machine facts. Invoke a
 resolved executable through its exact *_BIN variable when one is provided;
 do not guess an interpreter, environment, executable path, or version. The
 artifact_environment table is also authoritative: use its BIOMIND_* variable
-for each required current-step input/output and do not invent filesystem
-paths. Keep diagnostically relevant stdout and stderr visible; do not redirect
-them to /dev/null or otherwise suppress failure evidence.
+for each required current-step input/output through the selected language's
+environment API: shell uses $BIOMIND_*, Python uses os.environ["BIOMIND_*"],
+and R uses Sys.getenv("BIOMIND_*"). Do not invent filesystem paths, basenames,
+or literal/default fallbacks. Controller-owned managed bindings must never
+appear inside the executable block. Keep diagnostically relevant stdout and
+stderr visible; do not redirect them to /dev/null or otherwise suppress
+failure evidence.
 {corrective_rules}
 <semantic_history>
 {semantic_json}

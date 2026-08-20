@@ -919,6 +919,24 @@ def materialize_managed_action(
     """
     proposal = deepcopy(dict(action or {}))
     materialized = deepcopy(proposal)
+    script_protocol = str(proposal.get("script_adapter") or "") == "script_block_v1"
+    controller_artifact_environment = [
+        dict(item)
+        for item in proposal.get("controller_artifact_environment", []) or []
+        if isinstance(item, Mapping)
+    ]
+    script_env_by_handle = {
+        str(item.get("semantic_handle") or ""): str(item.get("env_var") or "")
+        for item in controller_artifact_environment
+        if str(item.get("semantic_handle") or "")
+        and _ENV_KEY_RE.fullmatch(str(item.get("env_var") or ""))
+    }
+    script_env_by_placeholder = {
+        str(item.get("placeholder") or ""): str(item.get("env_var") or "")
+        for item in controller_artifact_environment
+        if str(item.get("placeholder") or "")
+        and _ENV_KEY_RE.fullmatch(str(item.get("env_var") or ""))
+    }
     violations: List[ArtifactViolation] = []
     used_handles: List[str] = []
     compatibility_hits: List[Dict[str, str]] = []
@@ -1115,25 +1133,55 @@ def materialize_managed_action(
             return binding.canonical_path
         embedded_placeholders = _MANAGED_PLACEHOLDER_RE.findall(value)
         if embedded_placeholders:
+            script_env_names = sorted({
+                script_env_by_placeholder[item]
+                for item in embedded_placeholders
+                if item in script_env_by_placeholder
+            })
             violations.append(_violation(
                 code="MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED",
                 owner="GENERATED_ACTION",
                 route="generate",
                 message=(
-                    "Managed placeholders must occupy a complete argv/env value; "
-                    "embedded shell/text substitution is forbidden."
+                    (
+                        "Controller-owned managed bindings must not appear in an executable "
+                        "script; use the corresponding Controller environment variables "
+                        f"directly ({', '.join(script_env_names)})."
+                    )
+                    if script_protocol and script_env_names
+                    else (
+                        "Managed placeholders must occupy a complete argv/env value; "
+                        "embedded shell/text substitution is forbidden."
+                    )
                 ),
                 proposed=value,
                 field_path=field_path,
                 failure_stage="pre_action_contract",
                 repair_hint={
-                    "strategy": "move_embedded_managed_placeholders_to_env",
+                    "protocol": "script_block_v1" if script_protocol else "semantic_action_v2",
+                    "strategy": (
+                        "replace_controller_placeholder_with_env_reference"
+                        if script_protocol
+                        else "move_embedded_managed_placeholders_to_env"
+                    ),
                     "rule": (
-                        "Each managed placeholder must be the complete value of one env entry. "
-                        "Replace the embedded placeholder in the shell script with the corresponding $ENV_NAME."
+                        (
+                            "Use the listed Controller environment variables directly and "
+                            "remove managed bindings or default fallbacks from the script."
+                        )
+                        if script_protocol
+                        else (
+                            "Each managed placeholder must be the complete value of one env entry. "
+                            "Replace the embedded placeholder in the shell script with the corresponding $ENV_NAME."
+                        )
                     ),
                     "runtime_rule": (
                         "Do not use {runtime:*}; use Controller-provided runtime environment variables."
+                    ),
+                    **(
+                        {"env_vars": ",".join(script_env_names)}
+                        if script_protocol and script_env_names
+                        else {}
                     ),
                 },
                 offending_placeholders=embedded_placeholders,
@@ -1239,16 +1287,43 @@ def materialize_managed_action(
             if binding.path_policy != MANAGED_EXACT:
                 continue
             if binding.placeholder in code:
+                env_name = script_env_by_handle.get(binding.semantic_handle, "")
                 violations.append(_violation(
                     code="MANAGED_ARTIFACT_PLACEHOLDER_IN_FREE_SHELL",
                     owner="GENERATED_ACTION",
                     route="generate",
-                    message="Managed placeholders are supported only in structured argv/env fields.",
+                    message=(
+                        f"The executable script must read {binding.semantic_handle} directly "
+                        f"from Controller environment variable {env_name}; Controller-owned "
+                        "managed bindings are forbidden in script text."
+                        if script_protocol and env_name
+                        else "Managed placeholders are supported only in structured argv/env fields."
+                    ),
                     binding=binding,
                     proposed=binding.placeholder,
                     field_path="code",
+                    repair_hint=(
+                        {
+                            "protocol": "script_block_v1",
+                            "strategy": "replace_controller_placeholder_with_env_reference",
+                            "env_var": env_name,
+                            "rule": (
+                                "Use the Controller environment variable directly and remove "
+                                "the managed binding or default fallback from the script."
+                            ),
+                        }
+                        if script_protocol and env_name
+                        else None
+                    ),
                 ))
-            elif (literal and literal in code) or (basename and re.search(rf"(?<![\w.-]){re.escape(basename)}(?![\w.-])", code)):
+            elif (literal and literal in code) or (
+                basename
+                and re.search(
+                    rf"(?:(?<![\w.-])|(?<=:-)|(?<=:=)|(?<=:\+)|(?<=:\?))"
+                    rf"{re.escape(basename)}(?![\w.-])",
+                    code,
+                )
+            ):
                 if allow_legacy_exact_literals and literal and literal in code:
                     compatibility_hits.append({
                         "code": "LEGACY_MANAGED_LITERAL_EXACT",
@@ -1258,17 +1333,40 @@ def materialize_managed_action(
                     used_handles.append(binding.semantic_handle)
                 else:
                     proposed_path = literal if literal and literal in code else basename
+                    env_name = script_env_by_handle.get(binding.semantic_handle, "")
                     violations.append(_violation(
                         code="ACTION_OUTPUT_BINDING_MISMATCH" if binding.direction == "output" else "MANAGED_ARTIFACT_HANDLE_REQUIRED",
                         owner="GENERATED_ACTION",
                         route="generate",
                         message=(
-                            f"The action uses literal {proposed_path!r}; use {binding.placeholder} "
-                            f"for managed artifact {binding.semantic_handle}."
+                            (
+                                f"The script uses literal {proposed_path!r}; read "
+                                f"{binding.semantic_handle} directly from Controller environment "
+                                f"variable {env_name} and remove the literal/default fallback."
+                            )
+                            if script_protocol and env_name
+                            else (
+                                f"The action uses literal {proposed_path!r}; use {binding.placeholder} "
+                                f"for managed artifact {binding.semantic_handle}."
+                            )
                         ),
                         binding=binding,
                         proposed=proposed_path,
                         field_path="code",
+                        repair_hint=(
+                            {
+                                "protocol": "script_block_v1",
+                                "strategy": "replace_literal_fallback_with_controller_env_reference",
+                                "env_var": env_name,
+                                "rule": (
+                                    "Use the Controller environment variable directly; remove "
+                                    "the literal/default fallback and do not place a managed "
+                                    "binding in the executable script."
+                                ),
+                            }
+                            if script_protocol and env_name
+                            else None
+                        ),
                     ))
 
     referenced_output_handles = sorted({

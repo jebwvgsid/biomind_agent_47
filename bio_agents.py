@@ -444,6 +444,10 @@ from agent_core.controller_audit import (
     build_resolved_runtime_snapshot,
     compare_runtime_machine_evidence,
     parse_executable_script_block,
+    project_script_artifact_environment_for_provider,
+    project_script_artifact_repair_violations,
+    project_script_capabilities_for_provider,
+    project_script_repair_candidate,
     script_artifact_environment,
     script_references_env,
 )
@@ -5259,6 +5263,23 @@ class BioAnalystAgent:
                 )
                 if structured_candidate not in (None, "", [], {}):
                     previous_candidate = deepcopy(structured_candidate)
+
+        if (
+            isinstance(previous_candidate, Mapping)
+            and str(previous_candidate.get("script_adapter") or "")
+            == "script_block_v1"
+        ):
+            script_candidate = dict(previous_candidate)
+            script_language = str(script_candidate.get("language") or "bash")
+            artifact_environment = list(
+                script_candidate.get("controller_artifact_environment") or []
+            )
+            previous_candidate = project_script_repair_candidate(script_candidate)
+            exact_violations = project_script_artifact_repair_violations(
+                exact_violations,
+                artifact_environment,
+                language=script_language,
+            )
 
         if not repair_stage:
             repair_stage = "action_schema"
@@ -25644,6 +25665,7 @@ question. Never guess a scientific or database identity.
 
             # 技能加载
             loaded_skills = ""
+            generate_capability_view: List[Dict[str, Any]] = []
             generate_operation_bindings: Dict[str, str] = {}
             if self.skill_manager and current_plan:
                 selected = state.get("active_skills", []) or []
@@ -25651,6 +25673,7 @@ question. Never guess a scientific or database identity.
                     capability_view, generate_operation_bindings = (
                         self.skill_manager.get_semantic_execution_capabilities(selected)
                     )
+                    generate_capability_view = list(capability_view or [])
                     if capability_view:
                         loaded_skills = json.dumps(
                             {
@@ -25841,6 +25864,7 @@ question. Never guess a scientific or database identity.
             generate_approved_snapshot: Dict[str, Any] = {}
             generate_runtime_snapshot: Dict[str, Any] = {}
             generate_artifact_environment: List[Dict[str, Any]] = []
+            generate_provider_artifact_environment: List[Dict[str, Any]] = []
             generate_script_protocol = False
             recovery_evidence: List[Dict[str, Any]] = []
             if recovery_context_obj and recovery_context_obj.bounded_log_excerpt:
@@ -25880,6 +25904,32 @@ question. Never guess a scientific or database identity.
                     "ask_user", "install", "install_tool", "search", "finish",
                     "solution", "blocked", "plan_patch",
                 }
+                generate_provider_artifact_environment = (
+                    project_script_artifact_environment_for_provider(
+                        generate_artifact_environment
+                    )
+                    if generate_script_protocol
+                    else deepcopy(generate_artifact_environment)
+                )
+                if generate_script_protocol and generate_capability_view:
+                    loaded_skills = json.dumps(
+                        {
+                            "capabilities": project_script_capabilities_for_provider(
+                                generate_capability_view
+                            ),
+                            "script_protocol": (
+                                "Use Controller-resolved *_BIN runtime environment variables "
+                                "inside the executable block. Structured action operation "
+                                "bindings are Controller-owned and are not script syntax."
+                            ),
+                        },
+                        ensure_ascii=False,
+                        sort_keys=True,
+                    )
+                    if lightweight_policy:
+                        loaded_skills = (
+                            loaded_skills + "\n\n" + lightweight_policy
+                        ).strip()
                 generate_semantic_inputs = self._node_context_semantic_inputs(
                     task_id,
                     generate_plan_state,
@@ -25906,7 +25956,7 @@ question. Never guess a scientific or database identity.
                             state, task_id
                         ),
                         "resolved_runtime": generate_runtime_snapshot,
-                        "artifact_environment": generate_artifact_environment,
+                        "artifact_environment": generate_provider_artifact_environment,
                         "generate_output_contract": (
                             "script_block_v1"
                             if generate_script_protocol
@@ -26497,6 +26547,23 @@ question. Never guess a scientific or database identity.
                     if artifact_violations:
                         violation_payload = [item.to_dict() for item in artifact_violations]
                         first_violation = violation_payload[0]
+                        script_violation_payload = (
+                            project_script_artifact_repair_violations(
+                                violation_payload,
+                                list(
+                                    structured_action.get(
+                                        "controller_artifact_environment"
+                                    )
+                                    or []
+                                ),
+                                language=str(
+                                    structured_action.get("language") or "bash"
+                                ),
+                            )
+                            if str(structured_action.get("script_adapter") or "")
+                            == "script_block_v1"
+                            else violation_payload
+                        )
                         raw_first_owner = str(
                             first_violation.get("owner") or "GENERATED_ACTION"
                         ).upper()
@@ -26643,9 +26710,16 @@ question. Never guess a scientific or database identity.
                         return {
                             "messages": [response, SystemMessage(content=(
                                 "<managed_artifact_action_repair>\n"
-                                + json.dumps(violation_payload, ensure_ascii=False, sort_keys=True)
-                                + "\nUse the required semantic handle placeholder in structured argv/env. "
-                                "Do not modify the Task or Plan.\n"
+                                + json.dumps(script_violation_payload, ensure_ascii=False, sort_keys=True)
+                                + (
+                                    "\nUse the reported Controller environment variable directly "
+                                    "in the executable script. Remove literal/default fallbacks "
+                                    "and Controller-owned managed bindings. "
+                                    if str(structured_action.get("script_adapter") or "")
+                                    == "script_block_v1"
+                                    else "\nUse the required semantic handle placeholder in structured argv/env. "
+                                )
+                                + "Do not modify the Task or Plan.\n"
                                 "</managed_artifact_action_repair>"
                             ))],
                             "pending_action": {},

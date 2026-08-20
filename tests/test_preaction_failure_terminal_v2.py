@@ -59,8 +59,17 @@ class DurablePreactionFailureTests(unittest.TestCase):
         for field in ("error_code", "owner", "stage", "fingerprint", "candidate_fingerprint"):
             self.assertEqual(terminal[field], first[field])
         self.assertEqual(terminal["last_candidate_fingerprint"], "candidate-later")
+        self.assertEqual(terminal["last_error_fingerprint"], "error-later")
         self.assertEqual(terminal["repair_attempt_count"], 1)
         self.assertEqual(terminal["termination_reason"], "repair_no_progress")
+        self.assertEqual(
+            terminal["latest_failure"]["error_code"],
+            "MANAGED_RUNTIME_PLACEHOLDER_UNSUPPORTED",
+        )
+        self.assertEqual(
+            terminal["terminal_failure"]["candidate_fingerprint"],
+            "candidate-later",
+        )
         self.assertIs(terminal["execution_started"], False)
         self.assertEqual(state["task_state"]["status"], "failed")
         self.assertEqual(state["steps"][0]["status"], "failed")
@@ -118,8 +127,28 @@ class DurablePreactionFailureTests(unittest.TestCase):
                 "message": "Managed placeholders must occupy a complete argv/env value.",
                 "fingerprint": "error-first",
                 "candidate_fingerprint": "candidate-first",
+                "last_candidate_fingerprint": "candidate-later",
+                "last_error_fingerprint": "error-later",
                 "execution_started": False,
                 "termination_reason": "repair_no_progress",
+                "repair_attempt_count": 1,
+                "latest_failure": {
+                    "error_code": "MANAGED_ARTIFACT_PLACEHOLDER_IN_FREE_SHELL",
+                    "owner": "GENERATED_ACTION",
+                    "stage": "pre_action_contract",
+                    "message": "The repaired script still contains a managed binding.",
+                    "fingerprint": "error-later",
+                    "candidate_fingerprint": "candidate-later",
+                },
+                "terminal_failure": {
+                    "error_code": "MANAGED_ARTIFACT_PLACEHOLDER_IN_FREE_SHELL",
+                    "owner": "GENERATED_ACTION",
+                    "stage": "pre_action_contract",
+                    "message": "The repaired script still contains a managed binding.",
+                    "fingerprint": "error-later",
+                    "candidate_fingerprint": "candidate-later",
+                    "termination_reason": "repair_no_progress",
+                },
             }
             (task_dir / "plan_state.json").write_text(
                 json.dumps({
@@ -145,10 +174,22 @@ class DurablePreactionFailureTests(unittest.TestCase):
         self.assertEqual(snapshot["failure"]["stage"], "pre_action_contract")
         self.assertEqual(snapshot["failure"]["termination_reason"], "repair_no_progress")
         self.assertIs(snapshot["failure"]["execution_started"], False)
+        self.assertEqual(
+            snapshot["failure"]["terminal_failure"]["error_code"],
+            "MANAGED_ARTIFACT_PLACEHOLDER_IN_FREE_SHELL",
+        )
         self.assertEqual(snapshot["summary"]["commands"], 0)
         self.assertEqual(
             snapshot["final_result"]["terminal_diagnostic"]["error_code"],
             "MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED",
+        )
+        self.assertIn(
+            "corrective_terminal=MANAGED_ARTIFACT_PLACEHOLDER_IN_FREE_SHELL",
+            snapshot["final_result"]["output_result"],
+        )
+        self.assertIn(
+            "termination_reason=repair_no_progress",
+            snapshot["final_result"]["output_result"],
         )
 
 

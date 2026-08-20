@@ -252,7 +252,7 @@ def build_resolved_runtime_snapshot(state: Mapping[str, Any]) -> Dict[str, Any]:
 def script_artifact_environment(
     bindings: Mapping[str, ManagedArtifactBinding],
 ) -> List[Dict[str, Any]]:
-    """Return deterministic model-visible environment names for artifacts."""
+    """Return deterministic Controller-owned artifact environment bindings."""
     rows: List[Dict[str, Any]] = []
     used_names: Dict[str, str] = {}
     unique = {
@@ -278,6 +278,175 @@ def script_artifact_environment(
             "artifact_kind": str(binding.artifact_kind or ""),
         })
     return rows
+
+
+def project_script_artifact_environment_for_provider(
+    artifact_environment: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Expose script env names without leaking Controller placeholder bindings."""
+    provider_keys = (
+        "semantic_handle",
+        "direction",
+        "env_var",
+        "required",
+        "format",
+        "artifact_kind",
+    )
+    rows: List[Dict[str, Any]] = []
+    for raw in artifact_environment:
+        row = dict(raw)
+        env_name = str(row.get("env_var") or "")
+        if not env_name or not _ENV_NAME_RE.fullmatch(env_name):
+            continue
+        rows.append({key: row[key] for key in provider_keys if key in row})
+    return rows
+
+
+def project_script_capabilities_for_provider(
+    capabilities: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Remove structured-action placeholder fields from script capabilities."""
+    def project(value: Any) -> Any:
+        if isinstance(value, Mapping):
+            return {
+                key: project(item)
+                for key, item in value.items()
+                if str(key) != "placeholder"
+            }
+        if isinstance(value, list):
+            return [project(item) for item in value]
+        if isinstance(value, tuple):
+            return [project(item) for item in value]
+        return value
+
+    return [
+        project(dict(item))
+        for item in capabilities
+        if isinstance(item, Mapping)
+    ]
+
+
+def script_env_reference(env_var: str, language: str) -> str:
+    """Return the provider-language form for one Controller environment name."""
+    name = str(env_var or "").strip()
+    if not _ENV_NAME_RE.fullmatch(name):
+        raise ValueError(f"Invalid Controller script environment name: {name!r}")
+    normalized = str(language or "bash").strip().lower()
+    if normalized == "python":
+        return f'os.environ["{name}"]'
+    if normalized == "r":
+        return f'Sys.getenv("{name}")'
+    return f"${name}"
+
+
+def project_script_repair_candidate(candidate: Mapping[str, Any]) -> Dict[str, str]:
+    """Project an adapted internal action back to the provider-authored ABI."""
+    return {
+        "protocol": "script_block_v1",
+        "language": str(candidate.get("language") or "bash").strip().lower(),
+        "script": str(candidate.get("code") or ""),
+    }
+
+
+def project_script_artifact_repair_violations(
+    violations: Sequence[Mapping[str, Any]],
+    artifact_environment: Sequence[Mapping[str, Any]],
+    *,
+    language: str,
+) -> List[Dict[str, Any]]:
+    """Translate internal artifact violations into script-provider repairs."""
+    rows = [dict(raw) for raw in artifact_environment if isinstance(raw, Mapping)]
+    by_handle = {
+        str(row.get("semantic_handle") or ""): row
+        for row in rows
+        if str(row.get("semantic_handle") or "")
+    }
+    by_placeholder = {
+        str(row.get("placeholder") or ""): row
+        for row in rows
+        if str(row.get("placeholder") or "")
+    }
+    projected: List[Dict[str, Any]] = []
+    for raw in violations:
+        violation = dict(raw)
+        matches: List[Dict[str, Any]] = []
+        handle = str(violation.get("artifact_handle") or "")
+        if handle and handle in by_handle:
+            matches.append(by_handle[handle])
+        for placeholder in violation.get("offending_placeholders") or []:
+            row = by_placeholder.get(str(placeholder))
+            if row is not None and row not in matches:
+                matches.append(row)
+        proposed_row = by_placeholder.get(str(violation.get("proposed") or ""))
+        if proposed_row is not None and proposed_row not in matches:
+            matches.append(proposed_row)
+
+        base = {
+            key: violation[key]
+            for key in (
+                "code",
+                "owner",
+                "route",
+                "failure_stage",
+            )
+            if violation.get(key) not in (None, "")
+        }
+        if not matches:
+            projected.append({
+                **base,
+                "field_path": "script",
+                "artifact_handle": handle,
+                "message": (
+                    "The script violates a managed-artifact boundary. Use the matching "
+                    "Controller-provided BIOMIND environment variable directly; do not "
+                    "write a path fallback or Controller-owned binding in the script."
+                ),
+                "repair_hint": {
+                    "protocol": "script_block_v1",
+                    "strategy": "use_controller_artifact_environment",
+                    "rule": (
+                        "Preserve unrelated script logic and replace only the reported "
+                        "artifact reference."
+                    ),
+                },
+            })
+            continue
+
+        code = str(violation.get("code") or "")
+        for row in matches:
+            env_name = str(row.get("env_var") or "")
+            if not _ENV_NAME_RE.fullmatch(env_name):
+                continue
+            semantic_handle = str(row.get("semantic_handle") or handle)
+            provider_reference = script_env_reference(env_name, language)
+            strategy = (
+                "replace_literal_fallback_with_controller_env_reference"
+                if code in {
+                    "MANAGED_ARTIFACT_HANDLE_REQUIRED",
+                    "ACTION_OUTPUT_BINDING_MISMATCH",
+                }
+                else "replace_controller_placeholder_with_env_reference"
+            )
+            projected.append({
+                **base,
+                "field_path": "script",
+                "artifact_handle": semantic_handle,
+                "message": (
+                    f"Read {semantic_handle} directly from Controller environment variable "
+                    f"{env_name}; remove the invalid fallback or Controller-owned binding."
+                ),
+                "repair_hint": {
+                    "protocol": "script_block_v1",
+                    "strategy": strategy,
+                    "env_var": env_name,
+                    "provider_reference": provider_reference,
+                    "rule": (
+                        "Use the Controller environment variable directly. Remove any literal "
+                        "default and do not place a managed binding in the executable script."
+                    ),
+                },
+            })
+    return projected
 
 
 def _strip_language_comments(script: str, language: str) -> str:
