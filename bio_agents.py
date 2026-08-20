@@ -87,7 +87,8 @@ from config.config import (
     WIKI_EMBEDDING_API_KEY, WIKI_EMBEDDING_MODEL, WIKI_EMBEDDING_DIMENSIONS,
     ENABLE_ROOT_CAUSE_ANALYZER, ENABLE_COMMAND_TRACE, ENABLE_PIPESTATUS_CAPTURE,
     ROOT_CAUSE_TIMEOUT_SECONDS, RECOVERY_THINKING_ENABLED,
-    RECOVERY_REASONING_EFFORT,
+    RECOVERY_REASONING_EFFORT, GENERATE_THINKING_ENABLED,
+    GENERATE_REASONING_EFFORT, DEEPSEEK_TEMPERATURE,
 )
 
 try:
@@ -769,24 +770,74 @@ def _consultant_tokenizer_name() -> str:
     return "cl100k_base_reference" if _consultant_token_encoder() is not None else "mixed_script_fallback"
 
 
+def _is_deepseek_target(model: str, base_url: str) -> bool:
+    return "deepseek" in str(base_url or "").lower() or str(
+        model or ""
+    ).lower().startswith("deepseek-")
+
+
 def _llm_extra_body(model: str, base_url: str) -> dict[str, Any]:
     model_lower = (model or "").lower()
     base_url_lower = (base_url or "").lower()
 
-    if "deepseek" in base_url_lower or model_lower.startswith("deepseek-"):
-        thinking_enabled = os.getenv("DEEPSEEK_THINKING", "false").strip().lower() in {
-            "1",
-            "true",
-            "yes",
-            "on",
-            "enabled",
-        }
-        return {"thinking": {"type": "enabled" if thinking_enabled else "disabled"}}
+    if _is_deepseek_target(model, base_url):
+        # Thinking is node-scoped below.  Keep the shared client explicitly
+        # non-thinking so Planner/Consultant/Supervisor do not inherit it.
+        return {"thinking": {"type": "disabled"}}
 
     if "dashscope.aliyuncs.com" in base_url_lower or "qwen" in model_lower:
         return {"enable_thinking": False}
 
     return {}
+
+
+def _bind_deepseek_thinking_llm(
+    llm: Any,
+    *,
+    model: str,
+    base_url: str,
+    enabled: bool,
+    reasoning_effort: str,
+    scope: str,
+) -> Tuple[Any, Dict[str, Any]]:
+    """Bind DeepSeek thinking to one node without mutating the shared client."""
+    is_deepseek = _is_deepseek_target(model, base_url)
+    if not enabled or not is_deepseek or not hasattr(llm, "bind"):
+        return llm, {
+            "thinking_enabled": False,
+            "thinking": {"type": "disabled"},
+            "reasoning_effort": "",
+            "scope": scope,
+        }
+    bound = llm.bind(
+        extra_body={"thinking": {"type": "enabled"}},
+        reasoning_effort=str(reasoning_effort or "high"),
+        temperature=None,
+    )
+    return bound, {
+        "thinking_enabled": True,
+        "thinking": {"type": "enabled"},
+        "reasoning_effort": str(reasoning_effort or "high"),
+        "scope": scope,
+    }
+
+
+def bind_generate_llm(
+    llm: Any,
+    *,
+    model: str,
+    base_url: str,
+    enabled: bool = GENERATE_THINKING_ENABLED,
+    reasoning_effort: str = GENERATE_REASONING_EFFORT,
+) -> Tuple[Any, Dict[str, Any]]:
+    return _bind_deepseek_thinking_llm(
+        llm,
+        model=model,
+        base_url=base_url,
+        enabled=enabled,
+        reasoning_effort=reasoning_effort,
+        scope="generate_only",
+    )
 
 
 def bind_recovery_llm(
@@ -797,27 +848,30 @@ def bind_recovery_llm(
     enabled: bool = RECOVERY_THINKING_ENABLED,
     reasoning_effort: str = RECOVERY_REASONING_EFFORT,
 ) -> Tuple[Any, Dict[str, Any]]:
-    """Bind DeepSeek Thinking to Recovery only; leave the shared client intact."""
-    is_deepseek = "deepseek" in str(model or "").lower() or "deepseek" in str(
-        base_url or ""
-    ).lower()
-    if not enabled or not is_deepseek or not hasattr(llm, "bind"):
-        return llm, {
-            "thinking_enabled": False,
-            "thinking": {"type": "disabled"},
-            "reasoning_effort": "",
-            "scope": "recovery_only",
-        }
-    bound = llm.bind(
-        extra_body={"thinking": {"type": "enabled"}},
-        reasoning_effort=str(reasoning_effort or "high"),
+    return _bind_deepseek_thinking_llm(
+        llm,
+        model=model,
+        base_url=base_url,
+        enabled=enabled,
+        reasoning_effort=reasoning_effort,
+        scope="recovery_only",
     )
-    return bound, {
-        "thinking_enabled": True,
-        "thinking": {"type": "enabled"},
-        "reasoning_effort": str(reasoning_effort or "high"),
-        "scope": "recovery_only",
-    }
+
+
+def effective_llm_temperature(
+    *,
+    is_deepseek: bool,
+    thinking_enabled: bool,
+    requested_temperature: Optional[float],
+) -> Optional[float]:
+    """Return the effective wire temperature for one provider invocation."""
+    if not is_deepseek:
+        return requested_temperature
+    if thinking_enabled:
+        # DeepSeek ignores sampling parameters in thinking mode.  Omitting
+        # them keeps the wire contract and observability truthful.
+        return None
+    return float(DEEPSEEK_TEMPERATURE)
 
 
 def _consultant_validation_is_format_repair_error(text: str) -> bool:
@@ -1451,6 +1505,9 @@ class BioAnalystAgent:
             self.pm = None
 
         # ── LLM ──────────────────────────────────────────────
+        self.llm_provider_is_deepseek = _is_deepseek_target(
+            llm_model, LLM_BASE_URL
+        )
         llm_kwargs: dict[str, Any] = {
             "model": llm_model,
             "model_provider": model_provider,
@@ -1458,10 +1515,14 @@ class BioAnalystAgent:
             "streaming": True,
             "api_key": LLM_API_KEY,
             "callbacks": [VibeThinkingHandler(), ProfilingCallbackHandler(self.profiler)],
-            "temperature": 0.7,
             "timeout": self.llm_timeout_seconds,
             "max_retries": self.llm_max_retries,
         }
+        llm_kwargs["temperature"] = (
+            float(DEEPSEEK_TEMPERATURE)
+            if self.llm_provider_is_deepseek
+            else 0.7
+        )
         extra_body = _llm_extra_body(llm_model, LLM_BASE_URL)
         if extra_body:
             llm_kwargs["extra_body"] = extra_body
@@ -1473,6 +1534,11 @@ class BioAnalystAgent:
         self.llm_endpoint_id = str(LLM_BASE_URL)
         self.llm_response_extra_body = deepcopy(extra_body)
         self.llm = init_chat_model(**llm_kwargs)
+        self.generate_llm, self.generate_llm_policy = bind_generate_llm(
+            self.llm,
+            model=llm_model,
+            base_url=LLM_BASE_URL,
+        )
         self.recovery_llm, self.recovery_llm_policy = bind_recovery_llm(
             self.llm,
             model=llm_model,
@@ -4609,11 +4675,17 @@ class BioAnalystAgent:
                             "recovery_llm_policy": dict(self.recovery_llm_policy),
                         },
                         llm_override=self.recovery_llm,
+                        llm_policy=self.recovery_llm_policy,
                     )
                     raw_response = str(getattr(response, "content", response) or "")
                     current_plan_state = load_plan_state(self.data_path, task_id)
                     current_task_spec = canonical_task_spec_for_state(
                         current_plan_state
+                    )
+                    current_approved_snapshot = load_approved_plan_snapshot(
+                        self.data_path,
+                        task_id,
+                        state=current_plan_state,
                     )
                     current_binding = build_node_context(
                         node_type="recovery",
@@ -4623,6 +4695,7 @@ class BioAnalystAgent:
                         current_step_id=str(context.step_id or evidence.get("step_id") or ""),
                         attempt_id=str(context.attempt_id or evidence.get("attempt_id") or ""),
                         failure_fingerprint=str(context.error_fingerprint or ""),
+                        approved_plan_snapshot=current_approved_snapshot,
                     ).binding
                     staleness = evaluate_node_staleness(
                         recovery_node_context.binding,
@@ -8942,6 +9015,7 @@ class BioAnalystAgent:
         trace_metadata: Optional[Dict[str, Any]] = None,
         temperature: Optional[float] = None,
         llm_override: Any = None,
+        llm_policy: Optional[Mapping[str, Any]] = None,
     ) -> BaseMessage:
         """Dispatch one immutable ControllerBinding and consume it exactly once."""
         self._assert_v2_llm_messages_clean(messages)
@@ -8977,6 +9051,7 @@ class BioAnalystAgent:
                 trace_metadata=metadata,
                 temperature=temperature,
                 llm_override=llm_override,
+                llm_policy=llm_policy,
             )
         except BaseException:
             try:
@@ -8997,6 +9072,7 @@ class BioAnalystAgent:
         trace_metadata: Optional[Dict[str, Any]] = None,
         temperature: Optional[float] = None,
         llm_override: Any = None,
+        llm_policy: Optional[Mapping[str, Any]] = None,
     ) -> BaseMessage:
         """Invoke the shared model with a hard wall-clock bound.
 
@@ -9018,8 +9094,21 @@ class BioAnalystAgent:
             for message in messages
         )
         trace_metadata = dict(trace_metadata or {})
+        provider_policy = dict(llm_policy or {})
+        thinking_enabled = bool(provider_policy.get("thinking_enabled"))
+        effective_temperature = effective_llm_temperature(
+            is_deepseek=bool(
+                getattr(self, "llm_provider_is_deepseek", False)
+            ),
+            thinking_enabled=thinking_enabled,
+            requested_temperature=temperature,
+        )
         if temperature is not None:
-            trace_metadata.setdefault("temperature", float(temperature))
+            trace_metadata.setdefault("requested_temperature", float(temperature))
+        trace_metadata["effective_temperature"] = effective_temperature
+        trace_metadata["temperature"] = effective_temperature
+        if provider_policy:
+            trace_metadata["llm_provider_policy"] = provider_policy
         prompt_telemetry = build_prompt_budget_telemetry(
             messages,
             component_chars=trace_metadata.get("component_chars") or {},
@@ -9090,8 +9179,10 @@ class BioAnalystAgent:
                 )
             snapshot = trace_store.start_call(messages, metadata)
         invocation_llm = llm_override or self.llm
-        if temperature is not None and hasattr(invocation_llm, "bind"):
-            invocation_llm = invocation_llm.bind(temperature=float(temperature))
+        if effective_temperature is not None and hasattr(invocation_llm, "bind"):
+            invocation_llm = invocation_llm.bind(
+                temperature=float(effective_temperature)
+            )
         invoke_task = asyncio.create_task(invocation_llm.ainvoke(messages))
         try:
             done, _ = await asyncio.wait({invoke_task}, timeout=timeout)
@@ -13977,7 +14068,11 @@ class BioAnalystAgent:
             "endpoint_hostname": endpoint_hostname,
             "idempotency_supported": idempotency_supported,
             "model": model,
-            "temperature": 0.0,
+            "temperature": (
+                float(DEEPSEEK_TEMPERATURE)
+                if provider_id == "deepseek"
+                else 0.0
+            ),
             "top_p": 1.0,
             "max_output_tokens": int(CONSULTANT_FINALIZE_MAX_OUTPUT_TOKENS),
             "requested_output_tokens": int(CONSULTANT_FINALIZE_MAX_OUTPUT_TOKENS),
@@ -26148,7 +26243,10 @@ question. Never guess a scientific or database identity.
                             "provider_context_manifest": provider_context_manifest(
                                 generate_node_context.llm_payload
                             ),
+                            "generate_llm_policy": dict(self.generate_llm_policy),
                         },
+                        llm_override=self.generate_llm,
+                        llm_policy=self.generate_llm_policy,
                     )
                     if recovery_context_obj:
                         if generate_script_protocol:

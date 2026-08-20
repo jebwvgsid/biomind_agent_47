@@ -4,11 +4,16 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
 from langchain_core.messages import AIMessage, HumanMessage
 
+import bio_agents
+from bio_agents import BioAnalystAgent
 from agent_core.context_lineage import ContextLineageStore
+from agent_core.diagnostics import RecoveryContext
 from agent_core.middleware import error_recovery_middleware
+from agent_core.node_context import ControllerBinding, LLMPayload, NodeContext
 from agent_core.plan_tracker import (
     ATTEMPT_FAILED,
     ATTEMPT_VALIDATION_FAILED,
@@ -21,6 +26,7 @@ from agent_core.recovery import (
     AttemptFailureEvidence,
     ExecutionRecord,
     RecoveryAction,
+    RecoveryTrigger,
     RecoveryStateStore,
 )
 from agent_core.recovery_evidence import (
@@ -404,6 +410,168 @@ def _judge_payload() -> dict:
 
 
 class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
+    async def test_post_review_judge_revalidates_against_approved_snapshot(self):
+        """A budget write must not make an approved-plan recovery reply stale."""
+        plan_state = {
+            "task_id": "task-b",
+            "state_generation": 7,
+            "task_state": {"budgets": {}},
+            "steps": [{"step_id": "step-b", "status": "running"}],
+        }
+        approved_snapshot = {
+            "plan_snapshot_id": "approved-plan-b",
+            "steps": [{"step_id": "step-b", "status": "running"}],
+        }
+        recovery_context = RecoveryContext(
+            context_id="recovery-context-b",
+            task_id="task-b",
+            step_id="step-b",
+            action_id="action-b",
+            attempt_id="attempt-b",
+            error_fingerprint="missing-parent-directory",
+            current_step={"step_id": "step-b", "success_criteria": []},
+            execution={"returncode": 1, "code": "write_report"},
+            diagnosis={
+                "failure_owner": "GENERATED_ACTION",
+                "failure_type": "missing_output_parent_directory",
+                "evidence": ["No such file or directory: plan_artifacts/report.txt"],
+                "evidence_sufficient": True,
+                "collection_complete": False,
+            },
+        )
+        build_calls: list[dict] = []
+
+        def fake_build_node_context(**kwargs):
+            build_calls.append(dict(kwargs))
+            snapshot = kwargs.get("approved_plan_snapshot")
+            plan_hash = (
+                "approved-plan-semantic-hash"
+                if snapshot is approved_snapshot
+                else "mutable-plan-semantic-hash"
+            )
+            binding = ControllerBinding(
+                invocation_id=f"recovery-{len(build_calls)}",
+                node_type="recovery",
+                staleness_domain="recovery",
+                state_generation=7,
+                task_semantic_hash="task-semantic-hash",
+                task_record_hash="task-record-hash",
+                plan_semantic_hash=plan_hash,
+                plan_record_hash=plan_hash,
+                approval_ref="approved-plan-b",
+                approval_applicability="applicable",
+                step_id="step-b",
+                attempt_id="attempt-b",
+                failure_fingerprint="missing-parent-directory",
+            )
+            return NodeContext(
+                binding=binding,
+                llm_payload=LLMPayload({
+                    "semantic_history": {},
+                    "current_focus": {},
+                }),
+            )
+
+        judge_payload = _judge_payload()
+        judge_payload.update({
+            "failure_type": "missing_output_parent_directory",
+            "root_cause": "the generated script did not create the report parent directory",
+            "reason": "the generated script did not create the report parent directory",
+            "repair_target": "generated script output preparation",
+            "repair_instruction": "create the approved output parent before writing",
+        })
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.skill_manager = None
+        agent.recovery_llm = object()
+        agent.recovery_llm_policy = {
+            "thinking_enabled": True,
+            "reasoning_effort": "high",
+            "scope": "recovery_only",
+        }
+        agent._node_context_semantic_inputs = lambda *args, **kwargs: {}
+        agent._ainvoke_node_llm = AsyncMock(
+            return_value=AIMessage(content=json.dumps(judge_payload))
+        )
+
+        state = {
+            "task_id": "task-b",
+            "current_step_id": "step-b",
+            "execution_evidence": {
+                "execution_id": "exec-b",
+                "attempt_id": "attempt-b",
+                "action_id": "action-b",
+                "step_id": "step-b",
+                "returncode": 1,
+                "execution_status": "failed",
+            },
+        }
+        with tempfile.TemporaryDirectory() as data_path:
+            agent.data_path = data_path
+            with (
+                patch.object(
+                    bio_agents,
+                    "evaluate_recovery_trigger",
+                    return_value=RecoveryTrigger(
+                        required=True,
+                        reasons=["structured_execution_failure"],
+                        judge_required=True,
+                    ),
+                ),
+                patch.object(
+                    bio_agents,
+                    "build_recovery_context",
+                    return_value=recovery_context,
+                ),
+                patch.object(bio_agents, "diagnosis_required", return_value=True),
+                patch.object(
+                    bio_agents,
+                    "canonical_task_spec_for_state",
+                    return_value={"goal": "write the annotated report"},
+                ),
+                patch.object(
+                    bio_agents,
+                    "load_plan_state",
+                    return_value=plan_state,
+                ),
+                patch.object(bio_agents, "save_plan_state"),
+                patch.object(
+                    bio_agents,
+                    "load_approved_plan_snapshot",
+                    return_value=approved_snapshot,
+                ) as snapshot_loader,
+                patch.object(
+                    bio_agents,
+                    "build_node_context",
+                    side_effect=fake_build_node_context,
+                ),
+                patch.object(
+                    bio_agents.PromptManager,
+                    "get_recovery_v2_prompt",
+                    return_value="classify this execution failure",
+                ),
+            ):
+                result = await agent._adjudicate_post_review_recovery(
+                    state,
+                    {},
+                    "task-b",
+                )
+
+        self.assertEqual(snapshot_loader.call_count, 2)
+        self.assertEqual(len(build_calls), 2)
+        self.assertIs(
+            build_calls[0]["approved_plan_snapshot"],
+            approved_snapshot,
+        )
+        self.assertIs(
+            build_calls[1]["approved_plan_snapshot"],
+            approved_snapshot,
+        )
+        self.assertEqual(
+            result["recovery_decision"]["recommended_action"],
+            RecoveryAction.PATCH_SCRIPT.value,
+        )
+        self.assertEqual(result["required_next_action"], "SCRIPT_PATCH")
+
     async def test_execution_failure_calls_recovery_and_supports_one_bounded_read(self):
         calls: list[str] = []
 
@@ -724,6 +892,7 @@ class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(shared.calls, [{
             "extra_body": {"thinking": {"type": "enabled"}},
             "reasoning_effort": "high",
+            "temperature": None,
         }])
         self.assertTrue(policy["thinking_enabled"])
         self.assertEqual(policy["thinking"], {"type": "enabled"})
@@ -733,6 +902,60 @@ class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(non_deepseek.calls, [])
         self.assertFalse(disabled_policy["thinking_enabled"])
         self.assertEqual(disabled_policy["thinking"], {"type": "disabled"})
+
+    async def test_generate_thinking_is_node_scoped_and_temperature_is_effective(self):
+        class Bindable:
+            def __init__(self):
+                self.calls = []
+
+            def bind(self, **kwargs):
+                self.calls.append(kwargs)
+                return self
+
+            async def ainvoke(self, _messages):
+                return AIMessage(content="ok")
+
+        shared = Bindable()
+        generate, policy = bio_agents.bind_generate_llm(
+            shared,
+            model="deepseek-chat",
+            base_url="https://api.deepseek.com",
+            enabled=True,
+            reasoning_effort="high",
+        )
+        self.assertIs(generate, shared)
+        self.assertEqual(shared.calls, [{
+            "extra_body": {"thinking": {"type": "enabled"}},
+            "reasoning_effort": "high",
+            "temperature": None,
+        }])
+        self.assertEqual(policy["scope"], "generate_only")
+        self.assertTrue(policy["thinking_enabled"])
+
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.data_path = ""
+        agent.llm = Bindable()
+        agent.llm_provider_is_deepseek = True
+        agent.llm_timeout_seconds = 10
+        agent.llm_readonly_timeout_seconds = 10
+        agent.llm_context_limit_tokens = 200_000
+        with patch.object(bio_agents, "DEEPSEEK_TEMPERATURE", 0.6):
+            await agent._ainvoke_llm(
+                [HumanMessage(content="ordinary DeepSeek request")],
+                stage="planner",
+                temperature=0.1,
+            )
+        self.assertEqual(agent.llm.calls, [{"temperature": 0.6}])
+
+        thinking_llm = Bindable()
+        await agent._ainvoke_llm(
+            [HumanMessage(content="Generate thinking request")],
+            stage="generate",
+            temperature=0.1,
+            llm_override=thinking_llm,
+            llm_policy=policy,
+        )
+        self.assertEqual(thinking_llm.calls, [])
 
 
 if __name__ == "__main__":
