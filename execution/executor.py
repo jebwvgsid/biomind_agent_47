@@ -18,6 +18,10 @@ from pathlib import Path
 from typing import Tuple, Dict, Any, Optional, Callable
 
 from execution.profiling import get_current_node, get_current_profiler, get_current_task_id, timestamp_now
+from execution.runtime_contract import (
+    BASH_SCRIPT_PROLOGUE,
+    EXECUTION_RUNTIME_POLICY,
+)
 from execution.shell_safety import shell_safety_error
 
 logger = logging.getLogger(__name__)
@@ -35,13 +39,6 @@ _persistent_namespace: Dict[str, Any] = {
 }
 
 _FENCE_RE = re.compile(r"^\s*```(?P<lang>[A-Za-z0-9_-]+)?\s*\n(?P<body>.*?)\n```\s*$", re.DOTALL)
-BASH_SCRIPT_PROLOGUE = (
-    "#!/bin/bash\n"
-    "set -eo pipefail\n"
-    "set -E\n"
-    "trap 'rc=$?; printf \"[ERROR] script=%s line=%s command=%s exit_code=%s\\n\" "
-    "\"${BASH_SOURCE[0]}\" \"${LINENO}\" \"${BASH_COMMAND}\" \"${rc}\" >&2; exit \"${rc}\"' ERR\n\n"
-)
 
 
 def _env_float(name: str, default: float) -> float:
@@ -359,11 +356,30 @@ async def run_command(
     start_time = time.time()
     start_monotonic = time.monotonic()
     started_at = timestamp_now()
-    health_interval = max(0.2, _env_float("BIOMIND_EXEC_HEALTH_INTERVAL_SECONDS", 30.0))
-    early_health_seconds = _env_float("BIOMIND_EXEC_EARLY_HEALTH_SECONDS", 60.0)
-    suspect_stall_seconds = _env_float("BIOMIND_EXEC_SUSPECT_STALL_SECONDS", 180.0)
-    stall_timeout = _env_float("BIOMIND_EXEC_STALL_TIMEOUT_SECONDS", 600.0)
-    wall_timeout = float(timeout) if timeout else _env_float("BIOMIND_EXEC_WALL_TIMEOUT_SECONDS", 0.0)
+    policy = EXECUTION_RUNTIME_POLICY
+    health_interval = max(
+        0.2,
+        _env_float(
+            policy.health_interval_env,
+            policy.health_interval_default_seconds,
+        ),
+    )
+    early_health_seconds = _env_float(
+        policy.early_health_env,
+        policy.early_health_default_seconds,
+    )
+    suspect_stall_seconds = _env_float(
+        policy.suspect_stall_env,
+        policy.suspect_stall_default_seconds,
+    )
+    stall_timeout = _env_float(
+        policy.stall_timeout_env,
+        policy.stall_timeout_default_seconds,
+    )
+    wall_timeout = float(timeout) if timeout else _env_float(
+        policy.wall_timeout_env,
+        policy.wall_timeout_default_seconds,
+    )
     capture_limit = max(16_384, _env_int("BIOMIND_EXEC_MAX_CAPTURE_BYTES", 262_144))
     stream_output_limit = max(0, _env_int("BIOMIND_EXEC_MAX_STREAM_BYTES", 67_108_864))
     command_class = _watchdog_command_class(command)

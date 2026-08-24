@@ -24,6 +24,10 @@ from agent_core.task_spec import (
     task_semantic_hash,
 )
 from agent_core.plan_contract import new_candidate_scope_id
+from execution.runtime_contract import (
+    execution_runtime_contract,
+    validation_scope_contract,
+)
 
 NODE_CONTEXT_SCHEMA_VERSION = 2
 # Recovery's 256k policy is explicitly measured in serialised provider-payload
@@ -491,6 +495,18 @@ def provider_context_manifest(
             "current_focus.runtime.resolved_runtime",
             "controller_resolved_runtime_snapshot",
             runtime.get("resolved_runtime") or runtime.get("runtime_bindings"),
+        ),
+        (
+            "execution_runtime_contract",
+            "current_focus.runtime.execution_runtime_contract",
+            "canonical_executor_policy_projection",
+            runtime.get("execution_runtime_contract"),
+        ),
+        (
+            "validation_scope_contract",
+            "current_focus.runtime.validation_scope_contract",
+            "canonical_generate_validation_scope_projection",
+            runtime.get("validation_scope_contract"),
         ),
         (
             "previous_script",
@@ -1529,6 +1545,13 @@ def build_node_context(
     normalized_node = str(node_type or "").strip().lower()
     if normalized_node not in NODE_STALENESS_DOMAINS:
         raise NodeContextError(f"NODE_TYPE_UNSUPPORTED: {node_type!r}")
+    runtime = dict(runtime or {})
+    if normalized_node in {"generate", "recovery"}:
+        # Inject canonical facts here rather than copying prose into individual
+        # prompts. Initial Generate, Corrective Generate and Recovery therefore
+        # consume the same policy that renders the Executor prologue.
+        runtime["execution_runtime_contract"] = execution_runtime_contract()
+        runtime["validation_scope_contract"] = validation_scope_contract()
     plan = dict(plan_state or {})
     planning_plan = (
         dict(approved_plan_snapshot or {})

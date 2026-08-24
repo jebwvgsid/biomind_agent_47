@@ -514,6 +514,41 @@ def _strip_language_comments(script: str, language: str) -> str:
     return "".join(cleaned)
 
 
+def _mask_shell_quoted_text(script: str) -> str:
+    """Mask quoted Bash text while preserving line/column positions.
+
+    This is deliberately a bounded lexical filter, not a shell parser. A token
+    found only inside a logging/help string is ambiguous source text and cannot
+    prove an executable invocation. Unquoted command tokens remain unchanged.
+    """
+
+    source = str(script or "")
+    masked = list(source)
+    quote = ""
+    escaped = False
+    for index, char in enumerate(source):
+        if quote:
+            if char == "\n":
+                escaped = False
+                continue
+            if escaped:
+                masked[index] = " "
+                escaped = False
+                continue
+            if char == "\\" and quote == '"':
+                masked[index] = " "
+                escaped = True
+                continue
+            if char == quote:
+                quote = ""
+                continue
+            masked[index] = " "
+            continue
+        if char in {"'", '"'}:
+            quote = char
+    return "".join(masked)
+
+
 def _python_reads_env(script: str, env_name: str) -> bool:
     try:
         tree = ast.parse(str(script or ""))
@@ -660,19 +695,28 @@ def _absolute_executable_pattern(
     )
 
 
-def audit_generated_script(
-    block: ExecutableScriptBlock,
-    *,
-    runtime_snapshot: Optional[Mapping[str, Any]] = None,
-    artifact_environment: Sequence[Mapping[str, Any]] = (),
-    evidence_refs: Sequence[str] = (),
-) -> List[Dict[str, Any]]:
-    """Return deterministic findings while preserving script bytes exactly."""
-    script = block.body
-    analysis_script = _strip_language_comments(script, block.language)
+def _structured_executable_findings(
+    command_identity: Mapping[str, Any],
+    bindings: Mapping[str, Any],
+    evidence_refs: Sequence[str],
+) -> List[ControllerAuditFinding]:
+    """Audit a direct structured executable without re-deriving it from text."""
+
+    identity = dict(command_identity or {})
+    if (
+        not identity
+        or str(identity.get("script_adapter") or "") == "script_block_v1"
+        or str(identity.get("source_kind") or "") == "shell_source"
+    ):
+        return []
+    argv = list(identity.get("argv") or [])
+    executable = str(identity.get("executable") or (argv[0] if argv else "")).strip()
+    if not executable:
+        return []
+    explicit_binding = str(identity.get("runtime_binding") or "").strip()
+    normalized_executable = executable.strip("'\"")
+    observed_name = Path(normalized_executable).name
     findings: List[ControllerAuditFinding] = []
-    runtime = dict(runtime_snapshot or {})
-    bindings = dict(runtime.get("bindings") or {})
     for env_name, executable_path in sorted(bindings.items()):
         if not env_name.endswith("_BIN") or not executable_path:
             continue
@@ -681,33 +725,96 @@ def audit_generated_script(
             and env_name.removeprefix("RESOLVED_") in bindings
         ):
             continue
-        executable_name = Path(str(executable_path)).name
-        bare_pattern = _bare_executable_pattern(executable_name, block.language)
-        bare_match = bare_pattern.search(analysis_script)
-        absolute_pattern = _absolute_executable_pattern(
-            executable_name, block.language
-        )
-        absolute_match = absolute_pattern.search(analysis_script)
-        invocation_match = bare_match or absolute_match
-        invocation_pattern = bare_pattern if bare_match else absolute_pattern
-        if invocation_match:
-            observed = (
-                f"absolute executable: {absolute_match.group('path')}"
-                if absolute_match
-                else f"bare executable: {executable_name}"
+        expected_path = str(executable_path)
+        expected_name = Path(expected_path).name
+        if observed_name != expected_name and explicit_binding != env_name:
+            continue
+        uses_binding = explicit_binding == env_name or normalized_executable in {
+            expected_path,
+            f"${env_name}",
+            f"${{{env_name}}}",
+        }
+        if uses_binding:
+            continue
+        findings.append(ControllerAuditFinding(
+            code="RUNTIME_EXECUTABLE_BINDING_MISMATCH",
+            severity="HIGH",
+            source="controller_structured_action_audit",
+            location="structured_action.argv[0]",
+            expected={"binding": env_name, "executable": expected_path},
+            observed=f"structured executable: {executable}",
+            message=(
+                "Structured action does not use the resolved executable binding."
+            ),
+            evidence_refs=tuple(str(item) for item in evidence_refs if str(item)),
+        ))
+    return findings
+
+
+def audit_generated_script(
+    block: ExecutableScriptBlock,
+    *,
+    runtime_snapshot: Optional[Mapping[str, Any]] = None,
+    artifact_environment: Sequence[Mapping[str, Any]] = (),
+    evidence_refs: Sequence[str] = (),
+    structured_command_identity: Optional[Mapping[str, Any]] = None,
+) -> List[Dict[str, Any]]:
+    """Return deterministic findings while preserving script bytes exactly."""
+    script = block.body
+    analysis_script = _strip_language_comments(script, block.language)
+    if str(block.language or "").lower() == "bash":
+        analysis_script = _mask_shell_quoted_text(analysis_script)
+    findings: List[ControllerAuditFinding] = []
+    runtime = dict(runtime_snapshot or {})
+    bindings = dict(runtime.get("bindings") or {})
+    structured_identity = dict(structured_command_identity or {})
+    structured_is_authoritative = bool(structured_identity) and str(
+        structured_identity.get("script_adapter") or ""
+    ) != "script_block_v1" and str(
+        structured_identity.get("source_kind") or ""
+    ) != "shell_source"
+    if structured_is_authoritative:
+        findings.extend(_structured_executable_findings(
+            structured_identity,
+            bindings,
+            evidence_refs,
+        ))
+    else:
+        for env_name, executable_path in sorted(bindings.items()):
+            if not env_name.endswith("_BIN") or not executable_path:
+                continue
+            if (
+                env_name.startswith("RESOLVED_")
+                and env_name.removeprefix("RESOLVED_") in bindings
+            ):
+                continue
+            executable_name = Path(str(executable_path)).name
+            bare_pattern = _bare_executable_pattern(executable_name, block.language)
+            bare_match = bare_pattern.search(analysis_script)
+            absolute_pattern = _absolute_executable_pattern(
+                executable_name, block.language
             )
-            findings.append(ControllerAuditFinding(
-                code="RUNTIME_EXECUTABLE_BINDING_MISMATCH",
-                severity="HIGH",
-                source="controller_script_audit",
-                location=_line_for_pattern(analysis_script, invocation_pattern),
-                expected={"binding": env_name, "executable": str(executable_path)},
-                observed=observed,
-                message=(
-                    "Generated script does not explicitly use the resolved executable binding."
-                ),
-                evidence_refs=tuple(str(item) for item in evidence_refs if str(item)),
-            ))
+            absolute_match = absolute_pattern.search(analysis_script)
+            invocation_match = bare_match or absolute_match
+            invocation_pattern = bare_pattern if bare_match else absolute_pattern
+            if invocation_match:
+                observed = (
+                    f"absolute executable: {absolute_match.group('path')}"
+                    if absolute_match
+                    else f"bare executable: {executable_name}"
+                )
+                findings.append(ControllerAuditFinding(
+                    code="RUNTIME_EXECUTABLE_BINDING_MISMATCH",
+                    severity="HIGH",
+                    source="controller_script_audit",
+                    location=_line_for_pattern(analysis_script, invocation_pattern),
+                    expected={"binding": env_name, "executable": str(executable_path)},
+                    observed=observed,
+                    message=(
+                        "Generated script does not explicitly use the resolved executable binding."
+                    ),
+                    evidence_refs=tuple(str(item) for item in evidence_refs if str(item)),
+                ))
     suppression = re.compile(
         r"(?:(?:1|2|&)?>\s*/dev/null|>\s*/dev/null\s+2>&1)"
     )

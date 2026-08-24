@@ -23,6 +23,10 @@ from agent_core.controller_audit import (
 )
 from agent_core.diagnostics import enrich_execution_evidence
 from agent_core.node_context import build_node_context, provider_context_manifest
+from execution.runtime_contract import (
+    execution_runtime_contract,
+    validation_scope_contract,
+)
 from prompts.manager import PromptManager
 
 
@@ -142,6 +146,8 @@ class SessionSemanticContextContractTests(unittest.TestCase):
             "approved_plan",
             "current_step",
             "runtime_bindings",
+            "execution_runtime_contract",
+            "validation_scope_contract",
             "previous_script",
             "machine_audit",
             "execution_evidence",
@@ -156,8 +162,40 @@ class SessionSemanticContextContractTests(unittest.TestCase):
 
         self.assertTrue(sections["session_user_context"]["present"])
         self.assertTrue(sections["runtime_bindings"]["present"])
+        self.assertTrue(sections["execution_runtime_contract"]["present"])
+        self.assertTrue(sections["validation_scope_contract"]["present"])
         self.assertFalse(sections["previous_script"]["present"])
         self.assertFalse(sections["execution_evidence"]["present"])
+
+    def test_generate_and_recovery_receive_the_same_canonical_contracts(self):
+        expected_execution = execution_runtime_contract()
+        expected_validation = validation_scope_contract()
+
+        for node_type in ("generate", "recovery"):
+            with self.subTest(node_type=node_type):
+                context = self._context("B", node_type=node_type)
+                runtime = context.llm_payload.to_provider_dict()[
+                    "current_focus"
+                ]["runtime"]
+                self.assertEqual(
+                    runtime["execution_runtime_contract"],
+                    expected_execution,
+                )
+                self.assertEqual(
+                    runtime["validation_scope_contract"],
+                    expected_validation,
+                )
+
+    def test_recovery_prompt_sees_executor_and_validation_scope_facts(self):
+        context = self._context("B", node_type="recovery")
+        prompt = PromptManager.get_recovery_v2_prompt(
+            context.llm_payload.to_provider_dict()
+        )
+
+        self.assertIn('"errexit": true', prompt)
+        self.assertIn("rc=$? may never execute", prompt)
+        self.assertIn("must_not_gate_step_success", prompt)
+        self.assertIn("must not silently broaden", prompt)
 
     def test_generate_prompt_is_script_only_and_contains_runtime_and_plan(self):
         context = self._context("B")
@@ -176,6 +214,10 @@ class SessionSemanticContextContractTests(unittest.TestCase):
         self.assertIn("/verified/B/bin/java", prompt)
         self.assertIn("healthchecks", prompt)
         self.assertIn("BIOMIND_OUTPUT_ANNOTATED_VCF", prompt)
+        self.assertIn('"errexit": true', prompt)
+        self.assertIn("unguarded_nonzero", prompt)
+        self.assertIn("must_not_gate_step_success", prompt)
+        self.assertIn("unused alternative runtime or launcher", prompt)
 
     def test_corrective_generate_highlights_audit_and_preserves_previous_logic(self):
         previous = "check_input\njava -jar \"$TOOL_JAR\"\ncheck_output"
@@ -215,6 +257,9 @@ class SessionSemanticContextContractTests(unittest.TestCase):
         self.assertIn("runtime invocation", prompt)
         self.assertIn("preserve unrelated valid logic", prompt.lower())
         self.assertIn("do not re-diagnose", prompt.lower())
+        self.assertIn('"errexit": true', prompt)
+        self.assertIn("rc=$? may never execute", prompt)
+        self.assertIn("must_not_gate_step_success", prompt)
         self.assertTrue(sections["previous_script"]["present"])
         self.assertTrue(sections["machine_audit"]["present"])
         self.assertTrue(sections["recovery_diagnosis"]["present"])
@@ -405,6 +450,73 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
             ],
         )
         self.assertEqual(findings, [])
+
+    def test_quoted_shell_logging_text_is_not_an_executable_invocation(self):
+        source = (
+            'echo "WARNING: non-fatal; snpEff JAR remains authoritative"\n'
+            "# snpEff and /usr/bin/snpEff are mentioned only in a comment\n"
+        )
+        findings = audit_generated_script(
+            ExecutableScriptBlock(language="bash", body=source, tag="shell"),
+            runtime_snapshot={
+                "bindings": {"SNPEFF_BIN": "/verified/bin/snpEff"}
+            },
+        )
+
+        self.assertNotIn(
+            "RUNTIME_EXECUTABLE_BINDING_MISMATCH",
+            [row["code"] for row in findings],
+        )
+
+    def test_real_unbound_shell_executable_remains_fail_closed(self):
+        findings = audit_generated_script(
+            ExecutableScriptBlock(
+                language="bash",
+                body="java -version\n",
+                tag="shell",
+            ),
+            runtime_snapshot={"bindings": {"JAVA_BIN": "/verified/java"}},
+        )
+
+        self.assertEqual(
+            [row["code"] for row in findings],
+            ["RUNTIME_EXECUTABLE_BINDING_MISMATCH"],
+        )
+
+    def test_structured_command_identity_is_authoritative_over_raw_text(self):
+        block = ExecutableScriptBlock(
+            language="bash",
+            body="java -version\n",
+            tag="shell",
+        )
+        runtime = {"bindings": {"JAVA_BIN": "/verified/java"}}
+
+        accepted = audit_generated_script(
+            block,
+            runtime_snapshot=runtime,
+            structured_command_identity={
+                "executable": "/verified/java",
+                "argv": ["/verified/java", "-version"],
+            },
+        )
+        rejected = audit_generated_script(
+            block,
+            runtime_snapshot=runtime,
+            structured_command_identity={
+                "executable": "java",
+                "argv": ["java", "-version"],
+            },
+        )
+
+        self.assertEqual(accepted, [])
+        self.assertEqual(
+            [row["code"] for row in rejected],
+            ["RUNTIME_EXECUTABLE_BINDING_MISMATCH"],
+        )
+        self.assertEqual(
+            rejected[0]["source"],
+            "controller_structured_action_audit",
+        )
 
     def test_controller_audits_literal_runtime_invocations_in_python_and_r(self):
         cases = (
