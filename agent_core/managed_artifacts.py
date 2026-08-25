@@ -1,8 +1,9 @@
 """Deterministic managed-artifact contracts and action materialisation.
 
 The model selects semantic handles.  This module is the only boundary that
-turns those handles into authoritative paths, and it performs no shell text
-substitution: placeholders must occupy a complete argv/env value.
+turns those handles into authoritative paths.  Typed argv/env fields are the
+validation authority; raw source is preserved and may only produce diagnostic
+signals because this module deliberately does not parse shell semantics.
 """
 
 from __future__ import annotations
@@ -914,8 +915,9 @@ def materialize_managed_action(
 ) -> Tuple[Dict[str, Any], List[ArtifactViolation]]:
     """Resolve typed placeholders in argv/env and validate declared handles.
 
-    Embedded placeholders and free shell replacement are rejected.  A path
-    containing spaces or shell metacharacters remains one argv value.
+    Embedded placeholders are rejected in typed fields.  Raw script/source
+    text is not a machine-semantic field and is therefore diagnostic-only.  A
+    path containing spaces or shell metacharacters remains one argv value.
     """
     proposal = deepcopy(dict(action or {}))
     materialized = deepcopy(proposal)
@@ -925,12 +927,6 @@ def materialize_managed_action(
         for item in proposal.get("controller_artifact_environment", []) or []
         if isinstance(item, Mapping)
     ]
-    script_env_by_handle = {
-        str(item.get("semantic_handle") or ""): str(item.get("env_var") or "")
-        for item in controller_artifact_environment
-        if str(item.get("semantic_handle") or "")
-        and _ENV_KEY_RE.fullmatch(str(item.get("env_var") or ""))
-    }
     script_env_by_placeholder = {
         str(item.get("placeholder") or ""): str(item.get("env_var") or "")
         for item in controller_artifact_environment
@@ -940,6 +936,7 @@ def materialize_managed_action(
     violations: List[ArtifactViolation] = []
     used_handles: List[str] = []
     compatibility_hits: List[Dict[str, str]] = []
+    source_diagnostics: List[Dict[str, Any]] = []
     managed_operations = {
         str(key): str(value)
         for key, value in dict(operation_bindings or {}).items()
@@ -1212,6 +1209,34 @@ def materialize_managed_action(
             ))
         return value
 
+    def record_source_diagnostic(
+        *,
+        code: str,
+        field_path: str,
+        observed: str,
+        artifact_handle: str = "",
+    ) -> None:
+        """Record a high-signal lexical occurrence without granting authority."""
+        source_text = str(proposal.get(field_path) or "")
+        offset = source_text.find(observed)
+        line = source_text.count("\n", 0, max(offset, 0)) + 1 if offset >= 0 else 0
+        source_diagnostics.append({
+            "code": code,
+            "severity": "HIGH",
+            "source": "managed_artifact_free_source_scan",
+            "field_path": field_path,
+            "location": f"{field_path}:line:{line}" if line else field_path,
+            "artifact_handle": artifact_handle,
+            "observed": observed,
+            "message": (
+                "A managed-artifact token or literal occurs in raw source text; "
+                "the occurrence is non-authoritative because Controller has no "
+                "structured command semantics for this field."
+            ),
+            "authoritative": False,
+            "effect": "diagnostic_only",
+        })
+
     argv = proposal.get("argv")
     if argv is not None:
         if not isinstance(argv, list) or not argv:
@@ -1223,10 +1248,16 @@ def materialize_managed_action(
                 field_path="argv",
             ))
         else:
-            materialized["argv"] = normalize_bash_positional_argv([
-                materialize_value(value, f"argv[{index}]")
-                for index, value in enumerate(argv)
-            ])
+            materialized_argv: List[Any] = []
+            for index, value in enumerate(argv):
+                # In the script-block adapter argv[2] is a byte-for-byte copy
+                # of ``code``, not a typed command argument.  Treating it as a
+                # semantic scalar would merely run the raw-source regex twice.
+                if script_protocol and index == 2 and str(value) == str(proposal.get("code") or ""):
+                    materialized_argv.append(deepcopy(value))
+                else:
+                    materialized_argv.append(materialize_value(value, f"argv[{index}]"))
+            materialized["argv"] = normalize_bash_positional_argv(materialized_argv)
     env = proposal.get("env")
     if env is not None:
         if not isinstance(env, Mapping):
@@ -1268,106 +1299,43 @@ def materialize_managed_action(
                 materialized_env[key] = materialize_value(value, field_path)
             materialized["env"] = materialized_env
 
-    # New managed actions are structured.  Free shell code cannot be safely
-    # materialised because quoting semantics depend on the shell/parser.
-    code = str(proposal.get("code") or "")
-    if code:
-        if "{operation:" in code:
-            violations.append(_violation(
-                code="MANAGED_OPERATION_PLACEHOLDER_IN_FREE_SHELL",
-                owner="GENERATED_ACTION",
-                route="generate",
-                message="Managed operation placeholders are supported only as complete structured argv values.",
-                proposed=code,
-                field_path="code",
-            ))
+    # Raw source/prose has no deterministic argv semantics.  Keep lexical
+    # matches visible for audit, but never turn them into ArtifactViolation.
+    for source_field in ("code", "description"):
+        source_text = str(proposal.get(source_field) or "")
+        if not source_text:
+            continue
+        for placeholder in sorted(set(_MANAGED_PLACEHOLDER_RE.findall(source_text))):
+            record_source_diagnostic(
+                code="MANAGED_PLACEHOLDER_IN_FREE_SOURCE",
+                field_path=source_field,
+                observed=placeholder,
+            )
+        for runtime_placeholder in sorted(set(_RUNTIME_PLACEHOLDER_RE.findall(source_text))):
+            record_source_diagnostic(
+                code="RUNTIME_PLACEHOLDER_IN_FREE_SOURCE",
+                field_path=source_field,
+                observed=runtime_placeholder,
+            )
         for binding in bindings.values():
-            literal = binding.canonical_path
-            basename = binding.required_basename
             if binding.path_policy != MANAGED_EXACT:
                 continue
-            if binding.placeholder in code:
-                env_name = script_env_by_handle.get(binding.semantic_handle, "")
-                violations.append(_violation(
-                    code="MANAGED_ARTIFACT_PLACEHOLDER_IN_FREE_SHELL",
-                    owner="GENERATED_ACTION",
-                    route="generate",
-                    message=(
-                        f"The executable script must read {binding.semantic_handle} directly "
-                        f"from Controller environment variable {env_name}; Controller-owned "
-                        "managed bindings are forbidden in script text."
-                        if script_protocol and env_name
-                        else "Managed placeholders are supported only in structured argv/env fields."
-                    ),
-                    binding=binding,
-                    proposed=binding.placeholder,
-                    field_path="code",
-                    repair_hint=(
-                        {
-                            "protocol": "script_block_v1",
-                            "strategy": "replace_controller_placeholder_with_env_reference",
-                            "env_var": env_name,
-                            "rule": (
-                                "Use the Controller environment variable directly and remove "
-                                "the managed binding or default fallback from the script."
-                            ),
-                        }
-                        if script_protocol and env_name
-                        else None
-                    ),
-                ))
-            elif (literal and literal in code) or (
-                basename
-                and re.search(
-                    rf"(?:(?<![\w.-])|(?<=:-)|(?<=:=)|(?<=:\+)|(?<=:\?))"
-                    rf"{re.escape(basename)}(?![\w.-])",
-                    code,
-                )
+            observed = ""
+            if binding.canonical_path and binding.canonical_path in source_text:
+                observed = binding.canonical_path
+            elif binding.required_basename and re.search(
+                rf"(?:(?<![\w.-])|(?<=:-)|(?<=:=)|(?<=:\+)|(?<=:\?))"
+                rf"{re.escape(binding.required_basename)}(?![\w.-])",
+                source_text,
             ):
-                if allow_legacy_exact_literals and literal and literal in code:
-                    compatibility_hits.append({
-                        "code": "LEGACY_MANAGED_LITERAL_EXACT",
-                        "artifact_handle": binding.semantic_handle,
-                        "field_path": "code",
-                    })
-                    used_handles.append(binding.semantic_handle)
-                else:
-                    proposed_path = literal if literal and literal in code else basename
-                    env_name = script_env_by_handle.get(binding.semantic_handle, "")
-                    violations.append(_violation(
-                        code="ACTION_OUTPUT_BINDING_MISMATCH" if binding.direction == "output" else "MANAGED_ARTIFACT_HANDLE_REQUIRED",
-                        owner="GENERATED_ACTION",
-                        route="generate",
-                        message=(
-                            (
-                                f"The script uses literal {proposed_path!r}; read "
-                                f"{binding.semantic_handle} directly from Controller environment "
-                                f"variable {env_name} and remove the literal/default fallback."
-                            )
-                            if script_protocol and env_name
-                            else (
-                                f"The action uses literal {proposed_path!r}; use {binding.placeholder} "
-                                f"for managed artifact {binding.semantic_handle}."
-                            )
-                        ),
-                        binding=binding,
-                        proposed=proposed_path,
-                        field_path="code",
-                        repair_hint=(
-                            {
-                                "protocol": "script_block_v1",
-                                "strategy": "replace_literal_fallback_with_controller_env_reference",
-                                "env_var": env_name,
-                                "rule": (
-                                    "Use the Controller environment variable directly; remove "
-                                    "the literal/default fallback and do not place a managed "
-                                    "binding in the executable script."
-                                ),
-                            }
-                            if script_protocol and env_name
-                            else None
-                        ),
-                    ))
+                observed = binding.required_basename
+            if observed:
+                record_source_diagnostic(
+                    code="MANAGED_LITERAL_IN_FREE_SOURCE",
+                    field_path=source_field,
+                    observed=observed,
+                    artifact_handle=binding.semantic_handle,
+                )
 
     referenced_output_handles = sorted({
         handle
@@ -1402,6 +1370,8 @@ def materialize_managed_action(
     }
     if compatibility_hits:
         materialized["compatibility_hits"] = compatibility_hits
+    if source_diagnostics:
+        materialized["source_diagnostics"] = source_diagnostics
     return materialized, violations
 
 

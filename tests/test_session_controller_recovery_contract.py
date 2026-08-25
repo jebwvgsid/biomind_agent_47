@@ -433,7 +433,7 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
                 "ARTIFACT_BINDING_NOT_REFERENCED",
             },
         )
-        self.assertTrue(all(row["authoritative"] for row in findings))
+        self.assertTrue(all(not row["authoritative"] for row in findings))
         self.assertTrue(script_bytes_unchanged(source, block.body))
 
     def test_controller_accepts_exact_runtime_binding_and_does_not_flag_stderr_capture(self):
@@ -468,7 +468,7 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
             [row["code"] for row in findings],
         )
 
-    def test_real_unbound_shell_executable_remains_fail_closed(self):
+    def test_real_unbound_shell_executable_is_high_signal_but_non_authoritative(self):
         findings = audit_generated_script(
             ExecutableScriptBlock(
                 language="bash",
@@ -482,6 +482,7 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
             [row["code"] for row in findings],
             ["RUNTIME_EXECUTABLE_BINDING_MISMATCH"],
         )
+        self.assertFalse(findings[0]["authoritative"])
 
     def test_structured_command_identity_is_authoritative_over_raw_text(self):
         block = ExecutableScriptBlock(
@@ -517,6 +518,7 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
             rejected[0]["source"],
             "controller_structured_action_audit",
         )
+        self.assertTrue(rejected[0]["authoritative"])
 
     def test_controller_audits_literal_runtime_invocations_in_python_and_r(self):
         cases = (
@@ -558,6 +560,7 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
                     [row["code"] for row in findings],
                     ["RUNTIME_EXECUTABLE_BINDING_MISMATCH"],
                 )
+                self.assertFalse(findings[0]["authoritative"])
 
     def test_python_comments_and_env_assignment_are_not_binding_reads(self):
         source = (
@@ -579,6 +582,7 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
             [row["code"] for row in findings],
             ["ARTIFACT_BINDING_NOT_REFERENCED"],
         )
+        self.assertFalse(findings[0]["authoritative"])
 
     def test_runtime_drift_uses_machine_snapshot_without_stdout_marker(self):
         expected = {

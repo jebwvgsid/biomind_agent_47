@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from agent_core.recovery import (
+    PreActionRepairDomain,
     RecoveryAction,
     RecoveryDecision,
     RecoveryDecisionKind,
@@ -220,6 +221,7 @@ class CorrectiveRecoverySemanticsTests(unittest.TestCase):
             pre_action_evidence={
                 "valid": False,
                 "repairable": True,
+                "repair_domain": PreActionRepairDomain.REPRESENTATION.value,
                 "violations": ["JSON_DECODE_ERROR"],
             },
             action_id="action-1",

@@ -129,17 +129,22 @@ class ManagedArtifactMaterializationTests(unittest.TestCase):
         )
         self.assertIn("MANAGED_ARTIFACT_DIRECTION_MISMATCH", {item.code for item in wrong})
 
-    def test_embedded_or_free_shell_placeholder_is_rejected(self) -> None:
+    def test_embedded_typed_placeholder_blocks_but_free_source_is_diagnostic(self) -> None:
         _, embedded = materialize_managed_action(
             {"argv": ["tool", "--out={output:final_fasta}"]},
             self.bindings,
         )
         self.assertEqual(embedded[0].code, "MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED")
-        _, shell = materialize_managed_action(
+        materialized, shell = materialize_managed_action(
             {"code": "tool -o {output:final_fasta}"},
             self.bindings,
         )
-        self.assertIn("MANAGED_ARTIFACT_PLACEHOLDER_IN_FREE_SHELL", {item.code for item in shell})
+        self.assertEqual(shell, [])
+        self.assertEqual(
+            materialized["source_diagnostics"][0]["code"],
+            "MANAGED_PLACEHOLDER_IN_FREE_SOURCE",
+        )
+        self.assertFalse(materialized["source_diagnostics"][0]["authoritative"])
 
     def test_new_literal_is_rejected_and_legacy_exact_is_audited(self) -> None:
         proposal = {
@@ -158,6 +163,19 @@ class ManagedArtifactMaterializationTests(unittest.TestCase):
             materialized["compatibility_hits"][0]["code"],
             "LEGACY_MANAGED_LITERAL_EXACT",
         )
+
+    def test_typed_basename_and_env_literals_remain_rejected(self) -> None:
+        for proposal in (
+            {"argv": ["tool", "aa.fa"]},
+            {"env": {"OUTPUT": "/output/aa.fa"}, "argv": ["tool"]},
+            {"env": {"OUTPUT": "aa.fa"}, "argv": ["tool"]},
+        ):
+            with self.subTest(proposal=proposal):
+                _, violations = materialize_managed_action(proposal, self.bindings)
+                self.assertIn(
+                    "MANAGED_ARTIFACT_HANDLE_REQUIRED",
+                    {item.code for item in violations},
+                )
 
     def test_semantic_output_declaration_supports_implicit_tool_outputs(self) -> None:
         materialized, violations = materialize_managed_action(

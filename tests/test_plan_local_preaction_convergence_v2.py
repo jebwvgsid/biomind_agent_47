@@ -28,7 +28,11 @@ from agent_core.plan_tracker import (
     refresh_state_contract_v2,
     save_plan_state,
 )
-from agent_core.recovery import RecoveryDecisionKind, RecoveryStateStore
+from agent_core.recovery import (
+    PreActionRepairDomain,
+    RecoveryDecisionKind,
+    RecoveryStateStore,
+)
 from agent_core.task_spec import create_task_spec
 from bio_agents import BioAnalystAgent
 
@@ -311,7 +315,7 @@ class PreActionConvergenceTests(unittest.TestCase):
             "message": "placeholder must be atomic",
         }]
 
-    def test_n1_first_rejection_commits_existing_repair_budget(self) -> None:
+    def test_n1_first_semantic_rejection_commits_corrective_generate_budget(self) -> None:
         with tempfile.TemporaryDirectory() as root:
             agent = self._durable_agent(root)
             plan = load_plan_state(root, "preaction")
@@ -324,6 +328,8 @@ class PreActionConvergenceTests(unittest.TestCase):
                 step_id="step-1",
                 candidate=candidate,
                 candidate_fingerprint=fingerprint,
+                previous_candidate_fingerprint="",
+                repair_domain=PreActionRepairDomain.GENERATED_SEMANTIC.value,
                 violations=self._violation(),
                 visible_artifacts={},
             )
@@ -332,7 +338,7 @@ class PreActionConvergenceTests(unittest.TestCase):
                 {},
                 {
                     "next_step": "generate",
-                    "pending_recovery_action": {"type": "ACTION_FORMAT_REPAIR"},
+                    "pending_recovery_action": {"type": "same_step_repair"},
                     "recovery_context": context.to_dict(),
                     "recovery_decision": decision.to_dict(),
                 },
@@ -340,10 +346,10 @@ class PreActionConvergenceTests(unittest.TestCase):
             )
             budgets = load_plan_state(root, "preaction")["task_state"]["budgets"]
 
-        self.assertEqual(decision.kind, RecoveryDecisionKind.FORMAT_REPAIR.value)
+        self.assertEqual(decision.kind, RecoveryDecisionKind.RETRY_CURRENT_ACTION.value)
         self.assertEqual(guarded["next_step"], "generate")
-        self.assertEqual(budgets["action_format_repair_count"], 1)
-        self.assertEqual(budgets["action_format_repair_by_step"]["step-1"], 1)
+        self.assertEqual(int(budgets.get("action_format_repair_count") or 0), 0)
+        self.assertEqual(budgets["generate_attempts_by_step"]["step-1"], 1)
         self.assertEqual(budgets["invalid_action_hashes_by_step"]["step-1"][fingerprint], 1)
 
     def test_n2_equivalent_second_rejection_converges_without_increment(self) -> None:
@@ -358,6 +364,8 @@ class PreActionConvergenceTests(unittest.TestCase):
                 step_id="step-1",
                 candidate=candidate,
                 candidate_fingerprint=fingerprint,
+                previous_candidate_fingerprint="",
+                repair_domain=PreActionRepairDomain.GENERATED_SEMANTIC.value,
                 violations=self._violation(),
                 visible_artifacts={},
             )
@@ -366,7 +374,7 @@ class PreActionConvergenceTests(unittest.TestCase):
                 {},
                 {
                     "next_step": "generate",
-                    "pending_recovery_action": {"type": "ACTION_FORMAT_REPAIR"},
+                    "pending_recovery_action": {"type": "same_step_repair"},
                     "recovery_context": first_context.to_dict(),
                     "recovery_decision": first_decision.to_dict(),
                 },
@@ -379,6 +387,8 @@ class PreActionConvergenceTests(unittest.TestCase):
                 step_id="step-1",
                 candidate=candidate,
                 candidate_fingerprint=fingerprint,
+                previous_candidate_fingerprint=fingerprint,
+                repair_domain=PreActionRepairDomain.GENERATED_SEMANTIC.value,
                 violations=self._violation(),
                 visible_artifacts={},
             )
@@ -397,7 +407,8 @@ class PreActionConvergenceTests(unittest.TestCase):
 
         self.assertEqual(second_decision.kind, RecoveryDecisionKind.ESCALATE.value)
         self.assertEqual(guarded["next_step"], "finish")
-        self.assertEqual(budgets["action_format_repair_count"], 1)
+        self.assertEqual(int(budgets.get("action_format_repair_count") or 0), 0)
+        self.assertEqual(budgets["generate_attempts_by_step"]["step-1"], 1)
 
     def test_n4_cached_source_still_commits_and_n5_invalid_cache_is_not_replayed(self) -> None:
         with tempfile.TemporaryDirectory() as root:
@@ -441,6 +452,8 @@ class PreActionConvergenceTests(unittest.TestCase):
                 step_id="step-1",
                 candidate=candidate,
                 candidate_fingerprint=fingerprint,
+                previous_candidate_fingerprint="",
+                repair_domain=PreActionRepairDomain.GENERATED_SEMANTIC.value,
                 violations=self._violation(),
                 visible_artifacts={},
             )
@@ -449,16 +462,15 @@ class PreActionConvergenceTests(unittest.TestCase):
                 {"generate_response_cached": True},
                 {
                     "next_step": "generate",
-                    "pending_recovery_action": {"type": "ACTION_FORMAT_REPAIR"},
+                    "pending_recovery_action": {"type": "same_step_repair"},
                     "recovery_context": context.to_dict(),
                     "recovery_decision": decision.to_dict(),
                 },
                 "preaction",
             )
-            count = load_plan_state(root, "preaction")["task_state"]["budgets"][
-                "action_format_repair_count"
-            ]
-        self.assertEqual(count, 1)
+            budgets = load_plan_state(root, "preaction")["task_state"]["budgets"]
+        self.assertEqual(int(budgets.get("action_format_repair_count") or 0), 0)
+        self.assertEqual(budgets["generate_attempts_by_step"]["step-1"], 1)
 
 
 class _GraphRouterLLM:
@@ -693,6 +705,39 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
             ],
         }
 
+    @staticmethod
+    def _script_action(
+        payload: Mapping[str, Any],
+        *,
+        extra_lines: list[str] | None = None,
+    ) -> str:
+        """Produce the current script_block_v1 ABI while using every binding."""
+        runtime = dict((payload.get("current_focus") or {}).get("runtime") or {})
+        environment = [
+            dict(item)
+            for item in runtime.get("artifact_environment", []) or []
+            if isinstance(item, Mapping)
+        ]
+        lines = list(extra_lines or [])
+        for row in environment:
+            env_name = str(row.get("env_var") or "")
+            handle = str(row.get("semantic_handle") or "")
+            reference = f'"${env_name}"'
+            if handle.startswith("input."):
+                lines.append(f"test -e {reference}")
+            elif str(row.get("artifact_kind") or "") == "directory":
+                lines.extend([
+                    f"mkdir -p {reference}",
+                    f': > "${env_name}/.prepared"',
+                ])
+            else:
+                lines.extend([
+                    f'mkdir -p "$(dirname "${env_name}")"',
+                    f'printf "prepared\\n" > "${env_name}"',
+                ])
+        lines.append("true")
+        return "<shell>\n" + "\n".join(lines) + "\n</shell>"
+
     async def _run_graph(
         self,
         task_id: str,
@@ -787,7 +832,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
     async def test_graph_a_plan_local_directory_happy_path(self) -> None:
         events, captures, report = await self._run_graph(
             "graph-a-plan-local",
-            lambda payload, _ordinal: self._execute_action(payload),
+            lambda payload, _ordinal: self._script_action(payload),
         )
         visited = [next(iter(event)) for event in events]
         producer = self._artifact_row(captures[0], "output")
@@ -813,46 +858,35 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(report.is_file())
         self.assertNotIn("GENERATE_OUTPUT_ID_UNKNOWN", json.dumps(events, default=str))
 
-    async def test_graph_b_atomic_placeholder_repair_then_execute(self) -> None:
-        candidate_fingerprints: list[str] = []
-
-        def candidate(payload: Mapping[str, Any], ordinal: int) -> dict[str, Any]:
-            action = self._execute_action(payload)
-            if ordinal == 1:
-                placeholder = self._artifact_row(payload, "output")["placeholder"]
-                action["argv"] = [f"{placeholder}/child"]
-                action["env"] = {"ROOT": "{input:unknown_root}"}
-            elif ordinal == 2:
-                placeholder = self._artifact_row(payload, "output")["placeholder"]
-                action["env"] = {"WORK_DIR": placeholder}
-                action["argv"] = ["/bin/true", "$WORK_DIR/child"]
-            candidate_fingerprints.append(managed_action_fingerprint(action))
-            return action
+    async def test_graph_b_raw_placeholder_and_audit_findings_are_diagnostic(self) -> None:
+        def candidate(payload: Mapping[str, Any], _ordinal: int) -> str:
+            placeholder = str(
+                (((payload.get("task") or {}).get("outputs") or [{}])[0]).get("placeholder")
+                or "{output:example}"
+            )
+            return self._script_action(
+                payload,
+                extra_lines=[f'echo "example {placeholder}/child" >/dev/null'],
+            )
 
         events, captures, _ = await self._run_graph("graph-b-repair", candidate)
         durable = load_plan_state(self.root, "graph-b-repair")
         budgets = (durable.get("task_state") or {}).get("budgets") or {}
         visited = [next(iter(event)) for event in events]
 
-        self.assertGreaterEqual(len(captures), 3)
-        self.assertNotEqual(candidate_fingerprints[0], candidate_fingerprints[1])
-        self.assertEqual(budgets["action_format_repair_by_step"]["step-1"], 1)
+        self.assertEqual(len(captures), 2)
+        self.assertEqual(int(budgets.get("action_format_repair_count") or 0), 0)
+        self.assertEqual(dict(budgets.get("generate_attempts_by_step") or {}), {})
         self.assertEqual(visited.count("execute"), 2)
         self.assertNotIn("renderer", visited)
-        self.assertIs((durable.get("failure") or {}).get("execution_started"), True)
-        repair_request = str(captures[1].get("_provider_request") or "")
-        self.assertIn("<action_repair>", repair_request)
-        self.assertIn('"repair_stage": "managed_artifact"', repair_request)
-        self.assertIn("MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED", repair_request)
-        self.assertIn("MANAGED_ARTIFACT_HANDLE_UNKNOWN", repair_request)
-        self.assertIn("env.ROOT", repair_request)
-        self.assertIn("{input:unknown_root}", repair_request)
-        self.assertIn('"allowed_inputs": []', repair_request)
-        self.assertIn("complete argv/env scalar value", repair_request)
-        self.assertIn('"previous_candidate"', repair_request)
+        serialized = json.dumps(events, default=str)
+        self.assertIn("MANAGED_PLACEHOLDER_IN_FREE_SOURCE", serialized)
+        self.assertIn("OUTPUT_EVIDENCE_SUPPRESSION", serialized)
+        self.assertNotIn("<action_repair>", str(captures[1].get("_provider_request") or ""))
+        self.assertEqual(str((durable.get("task_state") or {}).get("status") or ""), "completed")
 
-    async def test_graph_e_malformed_json_repair_is_visible_to_real_provider_request(self) -> None:
-        def candidate(payload: Mapping[str, Any], ordinal: int) -> dict[str, Any] | str:
+    async def test_graph_e_malformed_script_block_repair_is_visible_to_provider(self) -> None:
+        def candidate(payload: Mapping[str, Any], ordinal: int) -> str:
             if ordinal == 1:
                 placeholder = self._artifact_row(payload, "output")["placeholder"]
                 return "\n".join([
@@ -873,12 +907,8 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
                     "```",
                 ])
             if ordinal == 2:
-                placeholder = self._artifact_row(payload, "output")["placeholder"]
-                action = self._execute_action(payload)
-                action["env"] = {"OUT": placeholder}
-                action["argv"] = ["/bin/true", "$OUT/child"]
-                return action
-            return self._execute_action(payload)
+                return self._script_action(payload)
+            return self._script_action(payload)
 
         events, captures, _ = await self._run_graph("graph-e-json-repair", candidate)
         durable = load_plan_state(self.root, "graph-e-json-repair")
@@ -892,17 +922,17 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Create the plan-local directory", repair_request)
         self.assertIn(self._artifact_row(captures[1], "output")["placeholder"], repair_request)
         self.assertIn("<action_repair>", repair_request)
-        self.assertIn('"repair_stage": "json_decode"', repair_request)
-        self.assertIn('"code": "JSON_DECODE_ERROR"', repair_request)
-        self.assertIn("Expecting ',' delimiter", repair_request)
-        self.assertIn('"line": 9', repair_request)
-        self.assertIn('"column": 10', repair_request)
+        self.assertIn('"repair_stage": "script_block"', repair_request)
+        self.assertIn('"code": "GENERATE_SCRIPT_BLOCK_INVALID"', repair_request)
+        self.assertIn("one <shell>, <python>, or <r> block is required", repair_request)
         self.assertIn('"previous_candidate"', repair_request)
-        self.assertIn('"env": {', repair_request)
         self.assertIn("Repair the previous generated action instead of regenerating", repair_request)
         self.assertIn("repair_previous_action", repair_request)
         self.assertNotIn("regenerate_script", repair_request)
         self.assertEqual(visited.count("execute"), 2)
+        budgets = (durable.get("task_state") or {}).get("budgets") or {}
+        self.assertEqual(budgets["action_format_repair_by_step"]["step-1"], 1)
+        self.assertEqual(dict(budgets.get("generate_attempts_by_step") or {}), {})
         self.assertNotEqual(
             str((durable.get("task_state") or {}).get("status") or ""),
             "failed",
@@ -914,9 +944,9 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
             }, ensure_ascii=False, default=str),
         )
 
-    async def test_graph_f_script_literal_fallback_repairs_then_executes(self) -> None:
+    async def test_graph_f_session_1787622048_raw_literals_reach_execute(self) -> None:
         scripts: list[str] = []
-        task_id = "graph-f-script-artifact-repair"
+        task_id = "session-1787622048-prepare-snpeff-config"
 
         def candidate(payload: Mapping[str, Any], ordinal: int) -> str:
             runtime = dict((payload.get("current_focus") or {}).get("runtime") or {})
@@ -939,18 +969,28 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
                 env_name = str(row.get("env_var") or "")
                 handle = str(row.get("semantic_handle") or "")
                 target = f"ARTIFACT_{index}"
-                if ordinal == 1:
-                    durable = load_plan_state(self.root, task_id)
-                    ledger = dict(durable.get("plan_artifacts") or {})
-                    artifact_id = handle.partition(".")[2]
-                    literal_path = str(
-                        (ledger.get(artifact_id) or {}).get("canonical_path")
-                        or (artifacts.get(handle) or {}).get("required_basename")
-                        or "/invalid/literal-fallback"
-                    )
-                    lines.append(f'{target}="${{{env_name}:-{literal_path}}}"')
+                durable = load_plan_state(self.root, task_id)
+                ledger = dict(durable.get("plan_artifacts") or {})
+                artifact_id = handle.partition(".")[2]
+                literal_path = str(
+                    (ledger.get(artifact_id) or {}).get("canonical_path")
+                    or (artifacts.get(handle) or {}).get("required_basename")
+                    or "/invalid/literal-fallback"
+                )
+                lines.append(f'{target}="${{{env_name}:-{literal_path}}}"')
+                if handle.startswith("input."):
+                    lines.append(f'test -e "${target}"')
+                elif str(row.get("artifact_kind") or "") == "directory":
+                    lines.append(f'mkdir -p "${target}"')
+                    lines.append(f': > "${target}/.prepared"')
                 else:
-                    lines.append(f'{target}="${env_name}"')
+                    lines.append(f'mkdir -p "$(dirname "${target}")"')
+                    lines.append(f'printf "prepared\\n" > "${target}"')
+            lines.extend([
+                "cat <<EOF",
+                "Custom genome from provided genome.fasta and genome.gtf",
+                "EOF",
+            ])
             lines.append("true")
             script = "<shell>\n" + "\n".join(lines) + "\n</shell>"
             scripts.append(script)
@@ -963,25 +1003,25 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         durable = load_plan_state(self.root, task_id)
         visited = [next(iter(event)) for event in events]
 
-        self.assertGreaterEqual(len(captures), 3)
-        self.assertNotEqual(scripts[0], scripts[1])
+        self.assertEqual(len(captures), 2)
         self.assertEqual(visited.count("execute"), 2)
+        self.assertIn("Custom genome from provided genome.fasta and genome.gtf", scripts[0])
+        self.assertIn(":-", scripts[0])
         repair_request = str(captures[1].get("_provider_request") or "")
-        self.assertIn("<action_repair>", repair_request)
-        self.assertIn("ACTION_OUTPUT_BINDING_MISMATCH", repair_request)
-        self.assertIn("BIOMIND_OUTPUT_", repair_request)
-        self.assertIn("provider_reference", repair_request)
-        self.assertNotIn("{input:", repair_request)
-        self.assertNotIn("{output:", repair_request)
-        self.assertNotIn("{operation:", repair_request)
-        self.assertIs((durable.get("failure") or {}).get("execution_started"), True)
+        self.assertNotIn("<action_repair>", repair_request)
+        budgets = (durable.get("task_state") or {}).get("budgets") or {}
+        self.assertEqual(int(budgets.get("action_format_repair_count") or 0), 0)
+        self.assertEqual(dict(budgets.get("generate_attempts_by_step") or {}), {})
+        self.assertIn("MANAGED_LITERAL_IN_FREE_SOURCE", json.dumps(events, default=str))
+        self.assertEqual(
+            str((durable.get("task_state") or {}).get("status") or ""),
+            "completed",
+        )
+        self.assertFalse(durable.get("failure"))
 
-    async def test_graph_c_same_invalid_candidate_converges(self) -> None:
-        def invalid(payload: Mapping[str, Any], _ordinal: int) -> dict[str, Any]:
-            action = self._execute_action(payload)
-            placeholder = self._artifact_row(payload, "output")["placeholder"]
-            action["argv"] = [f"{placeholder}/child"]
-            return action
+    async def test_graph_c_same_malformed_representation_converges(self) -> None:
+        def invalid(_payload: Mapping[str, Any], _ordinal: int) -> str:
+            return "not-an-executable-script-block"
 
         events, captures, _ = await self._run_graph("graph-c-no-progress", invalid)
         durable = load_plan_state(self.root, "graph-c-no-progress")
@@ -990,38 +1030,30 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(captures), 2)
         self.assertEqual(budgets["action_format_repair_by_step"]["step-1"], 1)
+        self.assertEqual(dict(budgets.get("generate_attempts_by_step") or {}), {})
         self.assertNotIn("execute", visited)
-        self.assertIn("repair_no_progress", json.dumps(events, default=str))
+        self.assertIn("GENERATE_SCRIPT_BLOCK_INVALID", json.dumps(events, default=str))
         self.assertIn(str((durable.get("task_state") or {}).get("status") or ""), {"blocked", "failed"})
-        failure = dict(durable.get("failure") or {})
-        self.assertEqual(failure.get("error_code"), "MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED")
-        self.assertEqual(failure.get("owner"), "GENERATED_ACTION")
-        self.assertEqual(failure.get("stage"), "pre_action_contract")
-        self.assertEqual(failure.get("termination_reason"), "repair_no_progress")
-        self.assertIs(failure.get("execution_started"), False)
-        self.assertNotIn("internal_protocol_error", json.dumps(events, default=str))
-        self.assertNotIn("INCOMPLETE_EVIDENCE", json.dumps(events, default=str))
-        self.assertNotIn("RUN_ALLOWED_PROBE", json.dumps(events, default=str))
-        self.assertNotEqual(
-            str(next((step.get("status") for step in durable.get("steps", []) if step.get("step_id") == "step-1"), "")),
-            "diagnosing",
+        self.assertNotIn("CORRECTIVE_GENERATE", json.dumps(events, default=str))
+
+    def test_graph_d_projection_failure_is_internal_and_budget_neutral(self) -> None:
+        visible = {
+            "lost-output": {
+                "direction": "output",
+                "aliases": ["output.lost"],
+                "row": {"artifact_id": "lost-output"},
+                "runtime_available": True,
+            }
+        }
+        _, violations = materialize_managed_action(
+            {"argv": ["tool", "{output:lost}"]},
+            {},
+            approved_visible_artifacts=visible,
         )
 
-    async def test_graph_d_projection_failure_is_internal_and_budget_neutral(self) -> None:
-        events, captures, _ = await self._run_graph(
-            "graph-d-projection",
-            lambda payload, _ordinal: self._execute_action(payload),
-            binding_patch=lambda *_args, **_kwargs: {},
-        )
-        durable = load_plan_state(self.root, "graph-d-projection")
-        budgets = (durable.get("task_state") or {}).get("budgets") or {}
-        serialized = json.dumps(events, ensure_ascii=False, default=str)
-
-        self.assertEqual(len(captures), 1)
-        self.assertEqual(int(budgets.get("action_format_repair_count") or 0), 0)
-        self.assertIn("INTERNAL_CONTRACT_CONFLICT", serialized)
-        self.assertIn("controller_projection", serialized)
-        self.assertNotIn("renderer", [next(iter(event)) for event in events])
+        self.assertEqual(violations[0].code, "PLAN_ARTIFACT_BINDING_PROJECTION_MISSING")
+        self.assertEqual(violations[0].owner, "INTERNAL_PROTOCOL")
+        self.assertEqual(violations[0].route, "internal_reproject")
 
 
 if __name__ == "__main__":

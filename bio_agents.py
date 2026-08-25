@@ -155,6 +155,7 @@ from agent_core.recovery import (
     RecoveryDecisionKind,
     RecoveryPolicy,
     RecoveryFailureOwner,
+    PreActionRepairDomain,
     RecoveryStateStore,
     ValidationEvidence,
     ValidationStatus,
@@ -4896,6 +4897,7 @@ class BioAnalystAgent:
                 pre_action_evidence={
                     "valid": False,
                     "repairable": True,
+                    "repair_domain": PreActionRepairDomain.REPRESENTATION.value,
                     "violations": [str(pending.get("reason") or update.get("retry_reason") or required)],
                 },
                 action_id=action_id,
@@ -7972,6 +7974,7 @@ class BioAnalystAgent:
             pre_action_evidence={
                 "valid": False,
                 "repairable": True,
+                "repair_domain": PreActionRepairDomain.REPRESENTATION.value,
                 "violations": [
                     str(
                         protocol_error.get("code")
@@ -8058,6 +8061,7 @@ class BioAnalystAgent:
             pre_action_evidence={
                 "valid": False,
                 "repairable": True,
+                "repair_domain": PreActionRepairDomain.REPRESENTATION.value,
                 "violations": [str(violation)],
             },
             action_id=f"{source_node}:{step_id or 'task'}",
@@ -8077,6 +8081,8 @@ class BioAnalystAgent:
         step_id: str,
         candidate: Mapping[str, Any],
         candidate_fingerprint: str,
+        previous_candidate_fingerprint: str,
+        repair_domain: str,
         violations: Sequence[Mapping[str, Any]],
         visible_artifacts: Mapping[str, Mapping[str, Any]],
     ) -> Tuple[RecoveryContext, RecoveryDecision]:
@@ -8084,9 +8090,16 @@ class BioAnalystAgent:
         task_state = dict(plan_state.get("task_state") or {})
         budgets = dict(task_state.get("budgets") or {})
         step_key = str(step_id or "task")
-        current_count = int(
-            (budgets.get("action_format_repair_by_step") or {}).get(step_key) or 0
-        )
+        if repair_domain == PreActionRepairDomain.REPRESENTATION.value:
+            current_count = int(
+                (budgets.get("action_format_repair_by_step") or {}).get(step_key) or 0
+            )
+        elif repair_domain == PreActionRepairDomain.GENERATED_SEMANTIC.value:
+            current_count = int(
+                (budgets.get("generate_attempts_by_step") or {}).get(step_key) or 0
+            )
+        else:
+            current_count = 0
         repair_ordinal = current_count + 1
         snapshot_identity = str(
             approved_plan_snapshot.get("plan_snapshot_id")
@@ -8129,6 +8142,7 @@ class BioAnalystAgent:
             ],
             current_step=current_step,
         )
+        context.validation["repair_domain"] = repair_domain
         first_owner = str(
             (violations[0] if violations else {}).get("owner")
             or RecoveryFailureOwner.GENERATED_ACTION.value
@@ -8137,13 +8151,30 @@ class BioAnalystAgent:
             first_owner = RecoveryFailureOwner.INTERNAL_PROTOCOL.value
         scoped_budgets = {
             **budgets,
-            "action_format_repair_count": current_count,
+            "action_format_repair_count": (
+                current_count
+                if repair_domain == PreActionRepairDomain.REPRESENTATION.value
+                else int(budgets.get("action_format_repair_count") or 0)
+            ),
+            "generated_semantic_repair_count": (
+                current_count
+                if repair_domain == PreActionRepairDomain.GENERATED_SEMANTIC.value
+                else 0
+            ),
         }
-        decision = RecoveryPolicy(max_format_repairs=1).decide(
+        decision = RecoveryPolicy(
+            max_format_repairs=1,
+            max_candidate_repairs=int(
+                budgets.get("max_candidate_repairs_per_epoch") or 2
+            ),
+        ).decide(
             pre_action_evidence={
                 "valid": False,
                 "repairable": True,
+                "repair_domain": repair_domain,
                 "failure_owner": first_owner,
+                "candidate_fingerprint": candidate_fingerprint,
+                "previous_candidate_fingerprint": previous_candidate_fingerprint,
                 "violations": [
                     str(item.get("code") or item.get("message") or "")
                     for item in violations
@@ -26407,8 +26438,15 @@ question. Never guess a scientific or database identity.
                             )
                         ],
                     )
+                    source_audit_findings = [
+                        dict(item) for item in script_findings
+                        if not bool(item.get("authoritative", True))
+                    ]
+                    if source_audit_findings:
+                        structured_action["controller_source_diagnostics"] = source_audit_findings
                     if any(
                         str(item.get("severity") or "").upper() == "HIGH"
+                        and bool(item.get("authoritative", True))
                         for item in script_findings
                     ):
                         candidate_hash = hashlib.sha256(
@@ -26715,21 +26753,19 @@ question. Never guess a scientific or database identity.
                                 "generate_exit_reason": "managed_artifact_dependency_unavailable",
                                 "next_step": "supervisor",
                             }
-                        recovery_context, policy_decision = self._managed_preaction_recovery(
-                            task_id=task_id,
-                            plan_state=current_action_plan,
-                            approved_plan_snapshot=approved_action_snapshot,
-                            step_id=current_action_step_id,
-                            candidate=structured_action,
-                            candidate_fingerprint=candidate_fingerprint,
-                            violations=violation_payload,
-                            visible_artifacts=visible_artifacts,
-                        )
-                        RecoveryStateStore(self.data_path, task_id).save_diagnostic_context(
-                            recovery_context
-                        )
-                        repair_allowed = (
-                            policy_decision.kind == RecoveryDecisionKind.FORMAT_REPAIR.value
+                        violation_codes = {
+                            str(item.get("code") or "") for item in violation_payload
+                        }
+                        representation_codes = {
+                            "ACTION_ARGV_INVALID",
+                            "ACTION_ENV_INVALID",
+                            "ACTION_ENV_KEY_INVALID",
+                            "ACTION_ENV_VALUE_INVALID",
+                        }
+                        repair_domain = (
+                            PreActionRepairDomain.REPRESENTATION.value
+                            if violation_codes and violation_codes <= representation_codes
+                            else PreActionRepairDomain.GENERATED_SEMANTIC.value
                         )
                         previous_candidate_fingerprint = str(
                             recovery_context_obj.candidate_fingerprint
@@ -26737,10 +26773,33 @@ question. Never guess a scientific or database identity.
                             and recovery_context_obj.failure_stage == "pre_action_contract"
                             else ""
                         )
+                        recovery_context, policy_decision = self._managed_preaction_recovery(
+                            task_id=task_id,
+                            plan_state=current_action_plan,
+                            approved_plan_snapshot=approved_action_snapshot,
+                            step_id=current_action_step_id,
+                            candidate=structured_action,
+                            candidate_fingerprint=candidate_fingerprint,
+                            previous_candidate_fingerprint=previous_candidate_fingerprint,
+                            repair_domain=repair_domain,
+                            violations=violation_payload,
+                            visible_artifacts=visible_artifacts,
+                        )
+                        RecoveryStateStore(self.data_path, task_id).save_diagnostic_context(
+                            recovery_context
+                        )
+                        format_repair_allowed = (
+                            policy_decision.kind == RecoveryDecisionKind.FORMAT_REPAIR.value
+                        )
+                        corrective_generate_allowed = bool(
+                            policy_decision.kind
+                            == RecoveryDecisionKind.RETRY_CURRENT_ACTION.value
+                            and policy_decision.repair_domain
+                            == PreActionRepairDomain.GENERATED_SEMANTIC.value
+                        )
+                        repair_allowed = format_repair_allowed or corrective_generate_allowed
                         repair_no_progress = bool(
-                            not repair_allowed
-                            and previous_candidate_fingerprint
-                            and previous_candidate_fingerprint == candidate_fingerprint
+                            policy_decision.reason_code == "corrective_generate_no_progress"
                         )
                         termination_reason = (
                             "repair_no_progress"
@@ -26748,15 +26807,12 @@ question. Never guess a scientific or database identity.
                             else (
                                 "action_format_repair_budget_exhausted"
                                 if not repair_allowed
+                                and repair_domain == PreActionRepairDomain.REPRESENTATION.value
+                                else "corrective_generate_budget_exhausted"
+                                if not repair_allowed
                                 else ""
                             )
                         )
-                        if repair_no_progress:
-                            policy_decision.reason_code = "repair_no_progress"
-                            policy_decision.reason = (
-                                "The repaired action retained the same executable contract."
-                            )
-                            recovery_context.recovery_decision = policy_decision.to_dict()
                         durable_failure = record_preaction_contract_failure(
                             current_action_plan,
                             first_violation,
@@ -26776,7 +26832,9 @@ question. Never guess a scientific or database identity.
                         )
                         pending_type = (
                             "ACTION_FORMAT_REPAIR"
-                            if repair_allowed
+                            if format_repair_allowed
+                            else "same_step_repair"
+                            if corrective_generate_allowed
                             else "generated_action_contract_error"
                         )
                         logger.info(
@@ -26810,9 +26868,8 @@ question. Never guess a scientific or database identity.
                                 "<managed_artifact_action_repair>\n"
                                 + json.dumps(script_violation_payload, ensure_ascii=False, sort_keys=True)
                                 + (
-                                    "\nUse the reported Controller environment variable directly "
-                                    "in the executable script. Remove literal/default fallbacks "
-                                    "and Controller-owned managed bindings. "
+                                    "\nRepair only the reported deterministic structured violation. "
+                                    "Preserve unrelated executable source text. "
                                     if str(structured_action.get("script_adapter") or "")
                                     == "script_block_v1"
                                     else "\nUse the required semantic handle placeholder in structured argv/env. "
@@ -26829,6 +26886,7 @@ question. Never guess a scientific or database identity.
                                 "candidate_fingerprint": candidate_fingerprint,
                                 "error_fingerprint": recovery_context.error_fingerprint,
                                 "failure_stage": "pre_action_contract",
+                                "repair_domain": repair_domain,
                                 "repair_ordinal": recovery_context.repair_ordinal,
                                 "termination_reason": termination_reason,
                                 "execution_started": False,
@@ -26842,7 +26900,9 @@ question. Never guess a scientific or database identity.
                             "execution_started": False,
                             "required_next_action": (
                                 "ACTION_FORMAT_REPAIR"
-                                if repair_allowed
+                                if format_repair_allowed
+                                else "CORRECTIVE_GENERATE"
+                                if corrective_generate_allowed
                                 else "GENERATED_ACTION_CONTRACT_ERROR"
                             ),
                             "failure_owner": first_owner,
@@ -27987,17 +28047,18 @@ question. Never guess a scientific or database identity.
                         ))],
                         "pending_action": {},
                         "pending_recovery_action": {
-                            "type": "ACTION_FORMAT_REPAIR",
+                            "type": "internal_protocol_error",
                             "reason": str(managed_env_error.get("message") or "managed env contract violation"),
-                            "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
                             "violation": managed_env_error,
                             "failure_stage": "pre_action_contract",
                             "execution_started": False,
                         },
-                        "required_next_action": "ACTION_FORMAT_REPAIR",
-                        "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
-                        "generate_result": "NEEDS_RECOVERY",
-                        "next_step": "generate",
+                        "required_next_action": "INTERNAL_PROTOCOL_ERROR",
+                        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                        "recovery_status": "INTERNAL_PROTOCOL_ERROR",
+                        "generate_result": "BLOCKED",
+                        "next_step": "finish",
                     }
             elif runtime_bindings:
                 # Legacy/non-managed execution still consumes the same exact
@@ -28228,6 +28289,7 @@ question. Never guess a scientific or database identity.
                 )
                 if any(
                     str(item.get("severity") or "").upper() == "HIGH"
+                    and bool(item.get("authoritative", True))
                     for item in execution_audit_findings
                 ):
                     return {

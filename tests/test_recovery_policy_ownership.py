@@ -2,6 +2,8 @@ import unittest
 
 from agent_core.plan_tracker import apply_recovery_decision, build_plan_state
 from agent_core.recovery import (
+    PreActionRepairDomain,
+    RecoveryAction,
     RecoveryDecision,
     RecoveryDecisionKind,
     RecoveryPolicy,
@@ -31,6 +33,7 @@ class RecoveryPolicyOwnershipTests(unittest.TestCase):
             pre_action_evidence={
                 "valid": False,
                 "repairable": True,
+                "repair_domain": PreActionRepairDomain.REPRESENTATION.value,
                 "violations": ["renderer_invocation_required"],
             },
             action_id="action-1",
@@ -48,6 +51,7 @@ class RecoveryPolicyOwnershipTests(unittest.TestCase):
             pre_action_evidence={
                 "valid": False,
                 "repairable": True,
+                "repair_domain": PreActionRepairDomain.REPRESENTATION.value,
                 "violations": ["renderer_invocation_required"],
             },
             action_id="action-1",
@@ -57,6 +61,87 @@ class RecoveryPolicyOwnershipTests(unittest.TestCase):
 
         self.assertEqual(decision.kind, RecoveryDecisionKind.ESCALATE.value)
         self.assertIsNone(decision.consume_budget)
+
+    def test_generated_semantic_error_uses_corrective_generate_budget(self):
+        decision = self.policy.decide(
+            pre_action_evidence={
+                "valid": False,
+                "repairable": True,
+                "repair_domain": PreActionRepairDomain.GENERATED_SEMANTIC.value,
+                "violations": ["MANAGED_ARTIFACT_HANDLE_UNKNOWN"],
+                "candidate_fingerprint": "candidate-a",
+            },
+            action_id="action-1",
+            step_id="step-1",
+            attempt_id="attempt-1",
+            budgets={
+                "action_format_repair_count": 0,
+                "generated_semantic_repair_count": 0,
+            },
+        )
+
+        self.assertEqual(decision.kind, RecoveryDecisionKind.RETRY_CURRENT_ACTION.value)
+        self.assertEqual(decision.recommended_action, RecoveryAction.PATCH_SCRIPT.value)
+        self.assertEqual(decision.consume_budget, "generate_attempts_by_step")
+        self.assertEqual(
+            decision.repair_domain,
+            PreActionRepairDomain.GENERATED_SEMANTIC.value,
+        )
+
+        plan = self._plan()
+        apply_recovery_decision(plan, decision)
+        budgets = plan["task_state"]["budgets"]
+        self.assertEqual(budgets["generate_attempts_by_step"]["step-1"], 1)
+        self.assertEqual(budgets["action_format_repair_count"], 0)
+
+    def test_identical_corrective_candidate_terminates_without_budget(self):
+        decision = self.policy.decide(
+            pre_action_evidence={
+                "valid": False,
+                "repairable": True,
+                "repair_domain": PreActionRepairDomain.GENERATED_SEMANTIC.value,
+                "violations": ["MANAGED_ARTIFACT_HANDLE_UNKNOWN"],
+                "candidate_fingerprint": "candidate-a",
+                "previous_candidate_fingerprint": "candidate-a",
+            },
+            budgets={"generated_semantic_repair_count": 1},
+        )
+
+        self.assertEqual(decision.kind, RecoveryDecisionKind.ESCALATE.value)
+        self.assertEqual(decision.reason_code, "corrective_generate_no_progress")
+        self.assertIsNone(decision.consume_budget)
+
+    def test_source_diagnostic_continues_without_repair_budget(self):
+        decision = self.policy.decide(
+            pre_action_evidence={
+                "valid": False,
+                "repairable": False,
+                "repair_domain": PreActionRepairDomain.SOURCE_DIAGNOSTIC.value,
+                "violations": ["MANAGED_LITERAL_IN_FREE_SOURCE"],
+            },
+        )
+
+        self.assertEqual(decision.kind, RecoveryDecisionKind.CONTINUE.value)
+        self.assertIsNone(decision.consume_budget)
+
+    def test_internal_dependency_and_missing_domain_never_use_format_budget(self):
+        for repair_domain in (
+            PreActionRepairDomain.INTERNAL_PROTOCOL.value,
+            PreActionRepairDomain.DEPENDENCY.value,
+            "",
+        ):
+            with self.subTest(repair_domain=repair_domain or "missing"):
+                decision = self.policy.decide(
+                    pre_action_evidence={
+                        "valid": False,
+                        "repairable": True,
+                        "repair_domain": repair_domain,
+                        "violations": ["preaction_failure"],
+                    },
+                    budgets={"action_format_repair_count": 0},
+                )
+                self.assertEqual(decision.kind, RecoveryDecisionKind.ESCALATE.value)
+                self.assertIsNone(decision.consume_budget)
 
     def test_nonzero_execution_retries_once_and_uses_execution_budget(self):
         decision = self.policy.decide(

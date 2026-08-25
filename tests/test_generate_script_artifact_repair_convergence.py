@@ -7,7 +7,6 @@ from agent_core.controller_audit import (
     adapt_script_block_to_action,
     parse_executable_script_block,
     project_script_artifact_environment_for_provider,
-    project_script_artifact_repair_violations,
     project_script_capabilities_for_provider,
     script_env_reference,
 )
@@ -15,8 +14,6 @@ from agent_core.managed_artifacts import (
     ManagedArtifactBinding,
     materialize_managed_action,
 )
-from bio_agents import BioAnalystAgent
-from prompts.manager import PromptManager
 
 
 class GenerateScriptArtifactRepairConvergenceTests(unittest.TestCase):
@@ -87,145 +84,150 @@ class GenerateScriptArtifactRepairConvergenceTests(unittest.TestCase):
             'Sys.getenv("BIOMIND_INPUT_VARIANT_VCF")',
         )
 
-    def test_literal_fallback_projects_one_coherent_corrective_request(self) -> None:
-        invalid_action = self._adapt(
+    def test_literal_fallback_is_diagnostic_only_when_binding_materializes(self) -> None:
+        action = self._adapt(
             'VCF="${BIOMIND_INPUT_VARIANT_VCF:-all.filtered.snp.vcf}"\n'
             'tool "$VCF"'
         )
-        _, violations = materialize_managed_action(
-            invalid_action,
+        materialized, violations = materialize_managed_action(
+            action,
             self.bindings,
         )
-        violation_payload = [item.to_dict() for item in violations]
-
-        self.assertIn(
-            "MANAGED_ARTIFACT_HANDLE_REQUIRED",
-            {item["code"] for item in violation_payload},
-        )
-        literal_violation = next(
-            item
-            for item in violation_payload
-            if item["code"] == "MANAGED_ARTIFACT_HANDLE_REQUIRED"
-        )
-        self.assertIn("BIOMIND_INPUT_VARIANT_VCF", literal_violation["message"])
-        self.assertNotIn("use {input:variant_vcf}", literal_violation["message"])
-
-        projection = BioAnalystAgent._action_repair_projection(
-            {
-                "recovery_context": {
-                    "validation": {"violations": violation_payload},
-                    "action_contract": {
-                        "structured_candidate": invalid_action,
-                    },
-                },
-            },
-            {"type": "action_format_repair"},
-            {"kind": "FORMAT_REPAIR"},
-        )
-        projection_json = json.dumps(projection, ensure_ascii=False)
-
-        self.assertEqual(
-            projection["previous_candidate"],
-            {
-                "protocol": "script_block_v1",
-                "language": "bash",
-                "script": invalid_action["code"],
-            },
-        )
-        self.assertNotIn("{input:variant_vcf}", projection_json)
-        repair_hint = projection["exact_violations"][0]["repair_hint"]
-        self.assertEqual(
-            repair_hint["provider_reference"],
-            "$BIOMIND_INPUT_VARIANT_VCF",
-        )
-        self.assertIn("remove", repair_hint["rule"].lower())
-
-        prompt = PromptManager.get_generate_v2_prompt({
-            "semantic_history": {
-                "task_spec": {
-                    "goal": "annotate variants",
-                    "output_contracts": [{
-                        "handle": "output.annotated_vcf",
-                        "placeholder": "{output:annotated_vcf}",
-                    }],
-                },
-            },
-            "current_focus": {
-                "current_step": {
-                    "inputs": ["input.variant_vcf"],
-                    "outputs": [],
-                },
-                "runtime": {
-                    "generate_output_contract": "script_block_v1",
-                    "artifact_environment": (
-                        project_script_artifact_environment_for_provider(
-                            self.internal_environment
-                        )
-                    ),
-                },
-                "feedback": {
-                    "recovery_action": {
-                        "type": "ACTION_FORMAT_REPAIR",
-                        "failure_owner": "GENERATED_ACTION",
-                        "reason": "use {input:variant_vcf}",
-                        "violation": {
-                            "proposed": "{input:variant_vcf}",
-                            "expected": "/data/all.filtered.snp.vcf",
-                        },
-                    },
-                    "action_repair": projection,
-                },
-            },
-        })
-
-        self.assertIn("$BIOMIND_INPUT_VARIANT_VCF", prompt)
-        self.assertIn("Remove literal", prompt)
-        self.assertNotIn("{input:variant_vcf}", prompt)
-        self.assertNotIn("{output:annotated_vcf}", prompt)
-        self.assertNotIn("Use the required semantic handle placeholder", prompt)
-
-        corrected_action = self._adapt(
-            'VCF="$BIOMIND_INPUT_VARIANT_VCF"\ntool "$VCF"'
-        )
-        materialized, corrected_violations = materialize_managed_action(
-            corrected_action,
-            self.bindings,
-        )
-        self.assertEqual(corrected_violations, [])
+        self.assertEqual(violations, [])
         self.assertEqual(
             materialized["env"]["BIOMIND_INPUT_VARIANT_VCF"],
             "/data/all.filtered.snp.vcf",
         )
-        self.assertEqual(materialized["code"], corrected_action["code"])
+        diagnostics = materialized.get("source_diagnostics") or []
+        self.assertTrue(diagnostics)
+        self.assertTrue(all(item["authoritative"] is False for item in diagnostics))
+        self.assertTrue(all(item["effect"] == "diagnostic_only" for item in diagnostics))
 
-    def test_embedded_binding_remains_rejected_but_repairs_to_env_reference(self) -> None:
-        invalid_action = self._adapt(
+    def test_raw_placeholder_is_diagnostic_only_when_typed_env_is_valid(self) -> None:
+        action = self._adapt(
             'VCF="${BIOMIND_INPUT_VARIANT_VCF:-{input:variant_vcf}}"\n'
             'tool "$VCF"'
         )
-        _, violations = materialize_managed_action(
-            invalid_action,
+        materialized, violations = materialize_managed_action(
+            action,
             self.bindings,
         )
-        payload = [item.to_dict() for item in violations]
-        codes = {item["code"] for item in payload}
-
-        self.assertIn("MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED", codes)
-        self.assertIn("MANAGED_ARTIFACT_PLACEHOLDER_IN_FREE_SHELL", codes)
-
-        projected = project_script_artifact_repair_violations(
-            payload,
-            self.internal_environment,
-            language="bash",
+        self.assertEqual(violations, [])
+        self.assertEqual(
+            materialized["env"]["BIOMIND_INPUT_VARIANT_VCF"],
+            "/data/all.filtered.snp.vcf",
         )
-        projected_json = json.dumps(projected, ensure_ascii=False)
-        self.assertNotIn("{input:variant_vcf}", projected_json)
-        self.assertTrue(projected)
-        self.assertTrue(all(
-            item["repair_hint"].get("provider_reference")
-            == "$BIOMIND_INPUT_VARIANT_VCF"
-            for item in projected
-        ))
+        self.assertIn(
+            "MANAGED_PLACEHOLDER_IN_FREE_SOURCE",
+            {item["code"] for item in materialized["source_diagnostics"]},
+        )
+
+    def test_raw_source_occurrences_never_become_hard_violations(self) -> None:
+        cases = (
+            '# source was all.filtered.snp.vcf\ntool "$BIOMIND_INPUT_VARIANT_VCF"',
+            'echo "Using provided all.filtered.snp.vcf"\ntool "$BIOMIND_INPUT_VARIANT_VCF"',
+            "printf 'Reference all.filtered.snp.vcf validated\\n'\ntool \"$BIOMIND_INPUT_VARIANT_VCF\"",
+            'cat <<EOF\nCustom input from all.filtered.snp.vcf\nEOF\ntool "$BIOMIND_INPUT_VARIANT_VCF"',
+            'DESCRIPTION="all.filtered.snp.vcf"\ntool "$BIOMIND_INPUT_VARIANT_VCF"',
+            'tool all.filtered.snp.vcf\ntool "$BIOMIND_INPUT_VARIANT_VCF"',
+        )
+        for source in cases:
+            with self.subTest(source=source.splitlines()[0]):
+                materialized, violations = materialize_managed_action(
+                    self._adapt(source),
+                    self.bindings,
+                )
+                self.assertEqual(violations, [])
+                self.assertTrue(materialized.get("source_diagnostics"))
+                self.assertTrue(all(
+                    not item["authoritative"]
+                    for item in materialized["source_diagnostics"]
+                ))
+
+    def test_session_1787622048_prepare_snpeff_config_candidates_are_execute_eligible(self) -> None:
+        bindings = {
+            "input.reference_fasta": ManagedArtifactBinding(
+                artifact_id="reference_fasta",
+                semantic_handle="input.reference_fasta",
+                direction="input",
+                format="fasta",
+                path_policy="managed_exact",
+                canonical_path="/data/reference/genome.fasta",
+                required_basename="genome.fasta",
+            ),
+            "input.annotation_gtf": ManagedArtifactBinding(
+                artifact_id="annotation_gtf",
+                semantic_handle="input.annotation_gtf",
+                direction="input",
+                format="gtf",
+                path_policy="managed_exact",
+                canonical_path="/data/reference/genome.gtf",
+                required_basename="genome.gtf",
+            ),
+            "output.snpeff_config": ManagedArtifactBinding(
+                artifact_id="plan_artifact.snpeff_config",
+                semantic_handle="output.snpeff_config",
+                direction="output",
+                format="config",
+                path_policy="managed_exact",
+                canonical_path="/work/prepare_snpeff_config/snpeff.config",
+                required_basename="snpeff.config",
+            ),
+        }
+        environment = [
+            {
+                "semantic_handle": handle,
+                "direction": binding.direction,
+                "env_var": env_name,
+                "placeholder": binding.placeholder,
+                "required": True,
+            }
+            for handle, binding, env_name in (
+                (
+                    "input.reference_fasta",
+                    bindings["input.reference_fasta"],
+                    "BIOMIND_INPUT_REFERENCE_FASTA",
+                ),
+                (
+                    "input.annotation_gtf",
+                    bindings["input.annotation_gtf"],
+                    "BIOMIND_INPUT_ANNOTATION_GTF",
+                ),
+                (
+                    "output.snpeff_config",
+                    bindings["output.snpeff_config"],
+                    "BIOMIND_OUTPUT_PLAN_ARTIFACT_SNPEFF_CONFIG",
+                ),
+            )
+        ]
+        candidates = (
+            (
+                'FASTA="$BIOMIND_INPUT_REFERENCE_FASTA"\n'
+                'GTF="$BIOMIND_INPUT_ANNOTATION_GTF"\n'
+                'OUT="$BIOMIND_OUTPUT_PLAN_ARTIFACT_SNPEFF_CONFIG"\n'
+                'cat > "$OUT" <<EOF\n'
+                'Custom genome from provided genome.fasta and genome.gtf\nEOF'
+            ),
+            (
+                'test -s "$BIOMIND_INPUT_REFERENCE_FASTA"\n'
+                'test -s "$BIOMIND_INPUT_ANNOTATION_GTF"\n'
+                'ln -sfn "$BIOMIND_INPUT_REFERENCE_FASTA" reference/genome.fasta\n'
+                'ln -sfn "$BIOMIND_INPUT_ANNOTATION_GTF" reference/genome.gtf\n'
+                'cat > "$BIOMIND_OUTPUT_PLAN_ARTIFACT_SNPEFF_CONFIG" <<EOF\n'
+                'Custom genome from provided genome.fasta and genome.gtf\nEOF'
+            ),
+        )
+        for index, source in enumerate(candidates, start=1):
+            with self.subTest(candidate=index):
+                action = adapt_script_block_to_action(
+                    parse_executable_script_block(f"<shell>{source}</shell>"),
+                    environment,
+                )
+                action["controller_artifact_environment"] = list(environment)
+                materialized, violations = materialize_managed_action(action, bindings)
+                self.assertEqual(violations, [])
+                self.assertEqual(set(materialized["managed_artifact_handles"]), set(bindings))
+                self.assertTrue(materialized.get("source_diagnostics"))
 
 
 if __name__ == "__main__":

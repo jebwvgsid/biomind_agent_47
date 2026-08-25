@@ -873,6 +873,21 @@ class RecoveryFailureOwner(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
+class PreActionRepairDomain(str, Enum):
+    """Authority domain for one pre-execution finding.
+
+    The field is intentionally small: it prevents ``valid=false`` from being
+    interpreted as a representation failure without explicit evidence.
+    """
+
+    REPRESENTATION = "representation"
+    GENERATED_SEMANTIC = "generated_semantic"
+    DEPENDENCY = "dependency"
+    INTERNAL_PROTOCOL = "internal_protocol"
+    SOURCE_DIAGNOSTIC = "source_diagnostic"
+    RUNTIME = "runtime"
+
+
 class RecoveryAction(str, Enum):
     CONTINUE = "CONTINUE"
     FORMAT_REPAIR = "FORMAT_REPAIR"
@@ -1293,6 +1308,7 @@ class RecoveryDecision:
     step_id: Optional[str] = None
     attempt_id: Optional[str] = None
     consume_budget: Optional[str] = None
+    repair_domain: str = ""
     plan_patch_reason: Optional[str] = None
     blocked_evidence: List[str] = field(default_factory=list)
     decision_id: str = ""
@@ -1346,6 +1362,7 @@ class RecoveryDecision:
         identity = {
             "kind": value.get("kind"),
             "reason_code": value.get("reason_code"),
+            "repair_domain": value.get("repair_domain"),
             "action_id": value.get("action_id"),
             "step_id": value.get("step_id"),
             "attempt_id": value.get("attempt_id"),
@@ -1494,6 +1511,7 @@ class RecoveryDecision:
         recommended = str(value.get("recommended_action") or "").strip().upper()
         value.setdefault("kind", _ACTION_TO_DECISION_KIND.get(recommended, RecoveryDecisionKind.ESCALATE.value))
         value.setdefault("reason_code", str(value.get("failure_type") or "recovery_decision").strip().lower())
+        value.setdefault("repair_domain", "")
         value.setdefault("consume_budget", (
             "execution_retry_count"
             if value.get("kind") == RecoveryDecisionKind.RETRY_CURRENT_ACTION.value
@@ -1592,6 +1610,7 @@ class RecoveryDecision:
         allowed_budgets = {
             None,
             "action_format_repair_count",
+            "generate_attempts_by_step",
             "diagnostic_probe_count",
             "execution_retry_count",
             "no_progress_count",
@@ -1601,6 +1620,10 @@ class RecoveryDecision:
         }
         if decision.consume_budget not in allowed_budgets:
             raise ValueError(f"Unsupported recovery budget: {decision.consume_budget}")
+        if decision.repair_domain and decision.repair_domain not in {
+            item.value for item in PreActionRepairDomain
+        }:
+            raise ValueError(f"Unsupported pre-action repair domain: {decision.repair_domain}")
         if decision.recommended_action == RecoveryAction.PATCH_PLAN.value and (
             decision.failure_owner != RecoveryFailureOwner.PLAN.value
             or decision.failure_class != RecoveryFailureClass.PLAN_ERROR.value
@@ -2274,6 +2297,7 @@ class RecoveryPolicy:
         max_probe_attempts: int = 6,
         max_same_probe: int = 1,
         max_format_repairs: int = 1,
+        max_candidate_repairs: int = 2,
     ):
         self.max_attempts = max_attempts
         self.max_same_fingerprint = max_same_fingerprint
@@ -2284,6 +2308,7 @@ class RecoveryPolicy:
         self.max_probe_attempts = max_probe_attempts
         self.max_same_probe = max_same_probe
         self.max_format_repairs = max_format_repairs
+        self.max_candidate_repairs = max_candidate_repairs
 
     @staticmethod
     def _budget(budgets: Dict[str, Any], name: str) -> int:
@@ -2500,6 +2525,7 @@ class RecoveryPolicy:
             )
 
         if pre and not bool(pre.get("valid", True)):
+            repair_domain = str(pre.get("repair_domain") or "").strip().lower()
             pre_owner = str(
                 pre.get("failure_owner")
                 or RecoveryFailureOwner.INTERNAL_PROTOCOL.value
@@ -2522,10 +2548,24 @@ class RecoveryPolicy:
                     blocked_evidence=blocked,
                     failure_owner=RecoveryFailureOwner.INPUT_DATA.value,
                     failure_class=RecoveryFailureClass.MISSING_REQUIRED_INPUT.value,
+                    repair_domain=repair_domain,
                     **base,
                 )
             violations = [str(item) for item in pre.get("violations") or [] if str(item)]
-            if self._budget(budget, "action_format_repair_count") < self.max_format_repairs:
+            if repair_domain == PreActionRepairDomain.SOURCE_DIAGNOSTIC.value:
+                return self._decision(
+                    RecoveryDecisionKind.CONTINUE.value,
+                    reason_code="source_diagnostic_non_authoritative",
+                    reason="The raw-source finding is diagnostic-only and does not invalidate the action.",
+                    evidence=violations,
+                    failure_owner=RecoveryFailureOwner.DIAGNOSTIC.value,
+                    failure_class=RecoveryFailureClass.AMBIGUOUS.value,
+                    repair_domain=repair_domain,
+                    **base,
+                )
+            if repair_domain == PreActionRepairDomain.REPRESENTATION.value and (
+                self._budget(budget, "action_format_repair_count") < self.max_format_repairs
+            ):
                 return self._decision(
                     RecoveryDecisionKind.FORMAT_REPAIR.value,
                     reason_code=reason_code,
@@ -2534,14 +2574,83 @@ class RecoveryPolicy:
                     evidence=violations or missing,
                     failure_owner=pre_owner,
                     failure_class=RecoveryFailureClass.SCRIPT_BUG.value,
+                    repair_domain=repair_domain,
                     **base,
                 )
+            if repair_domain == PreActionRepairDomain.REPRESENTATION.value:
+                return self._decision(
+                    RecoveryDecisionKind.ESCALATE.value,
+                    reason_code=reason_code,
+                    reason="The action-format repair budget is exhausted.",
+                    evidence=violations or missing,
+                    failure_owner=pre_owner,
+                    repair_domain=repair_domain,
+                    **base,
+                )
+            if repair_domain == PreActionRepairDomain.GENERATED_SEMANTIC.value:
+                candidate_fingerprint = str(pre.get("candidate_fingerprint") or "")
+                previous_candidate_fingerprint = str(
+                    pre.get("previous_candidate_fingerprint") or ""
+                )
+                if candidate_fingerprint and candidate_fingerprint == previous_candidate_fingerprint:
+                    return self._decision(
+                        RecoveryDecisionKind.ESCALATE.value,
+                        reason_code="corrective_generate_no_progress",
+                        reason="Corrective Generate reproduced the same invalid candidate.",
+                        evidence=violations or missing,
+                        failure_owner=pre_owner,
+                        failure_class=RecoveryFailureClass.SCRIPT_BUG.value,
+                        repair_domain=repair_domain,
+                        **base,
+                    )
+                if self._budget(budget, "generated_semantic_repair_count") < self.max_candidate_repairs:
+                    return self._decision(
+                        RecoveryDecisionKind.RETRY_CURRENT_ACTION.value,
+                        reason_code="generated_action_contract_error",
+                        reason="The structured action is well-formed but violates the managed-artifact contract.",
+                        consume_budget="generate_attempts_by_step",
+                        evidence=violations or missing,
+                        failure_owner=pre_owner,
+                        failure_class=RecoveryFailureClass.SCRIPT_BUG.value,
+                        recommended_action=RecoveryAction.PATCH_SCRIPT.value,
+                        next_action=RecoveryAction.PATCH_SCRIPT.value,
+                        action_type="regenerate_script",
+                        verdict="repair",
+                        rerun_required=False,
+                        repair_domain=repair_domain,
+                        **base,
+                    )
+                return self._decision(
+                    RecoveryDecisionKind.ESCALATE.value,
+                    reason_code="corrective_generate_budget_exhausted",
+                    reason="The corrective Generate budget is exhausted.",
+                    evidence=violations or missing,
+                    failure_owner=pre_owner,
+                    failure_class=RecoveryFailureClass.SCRIPT_BUG.value,
+                    repair_domain=repair_domain,
+                    **base,
+                )
+            domain_owner = {
+                PreActionRepairDomain.DEPENDENCY.value: RecoveryFailureOwner.DEPENDENCY.value,
+                PreActionRepairDomain.INTERNAL_PROTOCOL.value: RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                PreActionRepairDomain.RUNTIME.value: RecoveryFailureOwner.RUNTIME.value,
+            }.get(repair_domain, RecoveryFailureOwner.INTERNAL_PROTOCOL.value)
+            domain_reason = {
+                PreActionRepairDomain.DEPENDENCY.value: "dependency_preaction_failure",
+                PreActionRepairDomain.INTERNAL_PROTOCOL.value: "internal_action_protocol_error",
+                PreActionRepairDomain.RUNTIME.value: "runtime_preaction_failure",
+            }.get(repair_domain, "preaction_repair_domain_missing")
             return self._decision(
                 RecoveryDecisionKind.ESCALATE.value,
-                reason_code=reason_code,
-                reason="The action-format repair budget is exhausted.",
+                reason_code=domain_reason,
+                reason=(
+                    "The pre-action failure belongs to recovery, not model format repair."
+                    if repair_domain
+                    else "Pre-action evidence did not declare an explicit repair domain."
+                ),
                 evidence=violations or missing,
-                failure_owner=pre_owner,
+                failure_owner=domain_owner,
+                repair_domain=repair_domain,
                 **base,
             )
 

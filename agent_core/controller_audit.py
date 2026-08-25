@@ -814,6 +814,7 @@ def audit_generated_script(
                         "Generated script does not explicitly use the resolved executable binding."
                     ),
                     evidence_refs=tuple(str(item) for item in evidence_refs if str(item)),
+                    authoritative=False,
                 ))
     suppression = re.compile(
         r"(?:(?:1|2|&)?>\s*/dev/null|>\s*/dev/null\s+2>&1)"
@@ -828,6 +829,7 @@ def audit_generated_script(
             observed="output redirected to /dev/null",
             message="Generated script intentionally discards potentially relevant execution evidence.",
             evidence_refs=tuple(str(item) for item in evidence_refs if str(item)),
+            authoritative=False,
         ))
     for raw in artifact_environment:
         row = dict(raw)
@@ -849,6 +851,7 @@ def audit_generated_script(
                 observed="binding is absent from the generated script",
                 message="Generated script does not reference a required current-step artifact binding.",
                 evidence_refs=tuple(str(item) for item in evidence_refs if str(item)),
+                authoritative=False,
             ))
     return [finding.to_dict() for finding in findings]
 

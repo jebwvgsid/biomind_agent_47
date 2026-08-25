@@ -2108,6 +2108,7 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
     budget_name = str(value.get("consume_budget") or "").strip()
     allowed_budgets = {
         "action_format_repair_count",
+        "generate_attempts_by_step",
         "diagnostic_probe_count",
         "execution_retry_count",
         "no_progress_count",
@@ -2118,14 +2119,26 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
     if budget_name:
         if budget_name not in allowed_budgets:
             raise ValueError(f"Unsupported recovery budget: {budget_name}")
-        increment_plan_budget(state, budget_name)
         task_state = dict(state.get("task_state") or {})
         budgets = dict(task_state.get("budgets") or {})
         step_key = str(value.get("step_id") or "task")
+        if budget_name == "generate_attempts_by_step":
+            by_step = dict(budgets.get("generate_attempts_by_step") or {})
+            by_step[step_key] = _int(by_step.get(step_key), 0) + 1
+            budgets["generate_attempts_by_step"] = by_step
+        else:
+            increment_plan_budget(state, budget_name)
+            task_state = dict(state.get("task_state") or {})
+            budgets = dict(task_state.get("budgets") or {})
         if budget_name == "action_format_repair_count":
             by_step = dict(budgets.get("action_format_repair_by_step") or {})
             by_step[step_key] = _int(by_step.get(step_key), 0) + 1
             budgets["action_format_repair_by_step"] = by_step
+        elif budget_name == "diagnostic_probe_count":
+            by_step = dict(budgets.get("diagnostic_probes_by_step") or {})
+            by_step[step_key] = _int(by_step.get(step_key), 0) + 1
+            budgets["diagnostic_probes_by_step"] = by_step
+        if budget_name in {"action_format_repair_count", "generate_attempts_by_step"}:
             invalid_hash = next(
                 (
                     str(item).split("=", 1)[1]
@@ -2140,10 +2153,6 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
                 hashes[invalid_hash] = _int(hashes.get(invalid_hash), 0) + 1
                 hashes_by_step[step_key] = hashes
                 budgets["invalid_action_hashes_by_step"] = hashes_by_step
-        elif budget_name == "diagnostic_probe_count":
-            by_step = dict(budgets.get("diagnostic_probes_by_step") or {})
-            by_step[step_key] = _int(by_step.get(step_key), 0) + 1
-            budgets["diagnostic_probes_by_step"] = by_step
         task_state["budgets"] = budgets
         state["task_state"] = task_state
 
