@@ -821,6 +821,59 @@ class RunProfiler:
             },
         )
 
+    def record_consultant_preprocess(
+        self,
+        task_id: str,
+        payload: Mapping[str, Any],
+    ) -> None:
+        """Persist one secret-free Consultant preprocessing timing row."""
+
+        row = dict(payload or {})
+        self._append_event(task_id, {
+            "id": self._new_event_id("consultant_preprocess"),
+            "type": "consultant_preprocess_phase",
+            "node": "consultant",
+            "started_at": str(row.get("started_at") or _now_iso()),
+            **{
+                key: value
+                for key, value in row.items()
+                if key not in {"query_text", "prompt", "content", "secret"}
+                and not any(
+                    marker in str(key).lower()
+                    for marker in ("api_key", "password", "authorization", "credential")
+                )
+            },
+        })
+
+    def record_consultant_progress(
+        self,
+        task_id: str,
+        *,
+        code: str,
+        message: str,
+        detail: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        """Record observation-only discovery progress for UI/CLI consumers."""
+
+        self._append_event(task_id, {
+            "id": self._new_event_id("consultant_progress"),
+            "type": "consultant_progress",
+            "node": "consultant",
+            "started_at": _now_iso(),
+            "code": str(code or "consultant_progress"),
+            "message": _shorten(str(message or ""), 500),
+            "detail": {
+                str(key): value
+                for key, value in dict(detail or {}).items()
+                if isinstance(value, (str, int, float, bool)) or value is None
+                if not any(
+                    marker in str(key).lower()
+                    for marker in ("api_key", "password", "authorization", "credential", "secret")
+                )
+            },
+            "semantic_effect": "none",
+        })
+
     def record_command(
         self,
         task_id: str,

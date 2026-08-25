@@ -5917,26 +5917,57 @@ class ContextLineageStore:
         *,
         event_id: str = "",
     ) -> Dict[str, Any]:
-        safe_payload, redactions = redact_payload(dict(payload or {}))
-        stable_id = event_id or f"event-{_digest({'kind': event_kind, 'payload': safe_payload})[:24]}"
-        row = {
-            "schema_version": SNAPSHOT_SCHEMA_VERSION,
-            "event_id": _safe_id(stable_id),
-            "event_kind": str(event_kind or "event"),
-            "task_id": self.task_id,
-            "timestamp": str(safe_payload.get("timestamp") or _now()),
-            "payload": safe_payload,
-            "redaction_manifest": redactions,
-        }
+        return self.record_events([{
+            "event_kind": event_kind,
+            "payload": dict(payload or {}),
+            "event_id": event_id,
+        }])[0]
+
+    def record_events(
+        self,
+        events: Sequence[Mapping[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """Persist a bounded event batch with one atomic rewrite and fsync."""
+
+        pending: List[Dict[str, Any]] = []
+        for event in events or []:
+            event_kind = str(event.get("event_kind") or "event")
+            safe_payload, redactions = redact_payload(dict(event.get("payload") or {}))
+            stable_id = str(event.get("event_id") or "") or (
+                f"event-{_digest({'kind': event_kind, 'payload': safe_payload})[:24]}"
+            )
+            pending.append({
+                "schema_version": SNAPSHOT_SCHEMA_VERSION,
+                "event_id": _safe_id(stable_id),
+                "event_kind": event_kind,
+                "task_id": self.task_id,
+                "timestamp": str(safe_payload.get("timestamp") or _now()),
+                "payload": safe_payload,
+                "redaction_manifest": redactions,
+            })
+        if not pending:
+            return []
         path = self.root / "events.jsonl"
         rows = _read_jsonl(path)
-        for existing in rows:
-            if str(existing.get("event_id") or "") != row["event_id"]:
+        by_id = {
+            str(existing.get("event_id") or ""): existing
+            for existing in rows
+        }
+        resolved: List[Dict[str, Any]] = []
+        changed = False
+        for row in pending:
+            existing = by_id.get(row["event_id"])
+            if existing is not None:
+                if _digest(existing.get("payload")) != _digest(row["payload"]):
+                    raise SnapshotConflictError(f"Context event conflict: {row['event_id']}")
+                resolved.append(existing)
                 continue
-            if _digest(existing.get("payload")) != _digest(row["payload"]):
-                raise SnapshotConflictError(f"Context event conflict: {row['event_id']}")
-            return existing
-        rows.append(row)
+            rows.append(row)
+            by_id[row["event_id"]] = row
+            resolved.append(row)
+            changed = True
+        if not changed:
+            return resolved
         path.parent.mkdir(parents=True, exist_ok=True)
         text = "".join(json.dumps(item, ensure_ascii=False, sort_keys=True, default=str) + "\n" for item in rows)
         fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
@@ -5949,7 +5980,7 @@ class ContextLineageStore:
         finally:
             if os.path.exists(tmp_name):
                 os.unlink(tmp_name)
-        return row
+        return resolved
 
 
 def begin_finalize_attempt(

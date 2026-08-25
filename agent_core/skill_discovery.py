@@ -364,7 +364,10 @@ def discovery_next_actions(state: Mapping[str, Any] | None) -> list[str]:
     }
     viable = [item for item in candidates if item not in rejected]
     if current.get("routing_status") == SELECTED:
-        return ["FINISH"]
+        # Selection is substantive progress, not a request for a ceremonial
+        # acknowledgement round.  The Controller evaluates completion now;
+        # only unresolved task semantics require another Consultant response.
+        return ["COMPLETE_TASK_SEMANTICS"]
     if viable:
         unloaded = [item for item in viable if item not in loaded]
         loaded_viable = [item for item in viable if item in loaded]

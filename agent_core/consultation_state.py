@@ -20,6 +20,7 @@ from agent_core.task_spec import (
     apply_task_spec_mutation_proposal,
     project_task_spec_to_renderer,
     task_semantic_hash,
+    task_spec_is_initialized,
     task_spec_revision,
     validate_task_spec_output_contracts,
 )
@@ -1909,6 +1910,63 @@ def build_consultant_candidate(
                 consultation.get("unresolved_requirement_ids") or []
             ),
         },
+    }
+
+
+def evaluate_consultant_candidate_route(
+    candidate: Mapping[str, Any] | None,
+) -> Dict[str, Any]:
+    """Apply the one completion route gate shared by FINISH and SELECT_SKILL.
+
+    This function does not mutate the candidate.  In particular, a selected
+    skill is insufficient by itself: a canonical TaskSpec, output contract,
+    runtime/controller evidence, and absence of a pending user question are all
+    still required before Planner routing is legal.
+    """
+
+    current = dict(candidate or {})
+    violations = [
+        dict(item) for item in current.get("output_contract_violations") or []
+        if isinstance(item, Mapping)
+    ]
+    if violations:
+        first = violations[0]
+        return {
+            "route": "consultant",
+            "code": str(first.get("code") or "TASK_OUTPUT_BINDING_INCOMPLETE"),
+            "reason": str(first.get("message") or "Repair the typed TaskSpec output contract."),
+        }
+    if not task_spec_is_initialized(current.get("task_spec")):
+        return {
+            "route": "consultant",
+            "code": "CANONICAL_TASKSPEC_REQUIRED",
+            "reason": "Skill selection is valid, but the canonical TaskSpec is not complete.",
+        }
+    pending = current.get("pending_question")
+    consultation = dict(current.get("consultation_state") or {})
+    pending = pending or consultation.get("pending_question") or consultation.get("pending_human_question")
+    if isinstance(pending, Mapping) and pending:
+        return {
+            "route": "consultant",
+            "code": "PENDING_USER_QUESTION",
+            "reason": "A validated user-owned question remains pending.",
+        }
+    completion = dict(current.get("completion") or {})
+    if str(completion.get("decision") or "") != "ready_to_finalize":
+        unresolved = list(completion.get("unresolved_requirement_ids") or [])
+        return {
+            "route": "consultant",
+            "code": "FINISH_CANDIDATE_INCOMPLETE",
+            "reason": (
+                "Candidate completion still has unresolved Controller/runtime evidence: "
+                + (", ".join(str(item) for item in unresolved) or "unknown")
+            ),
+            "unresolved_requirement_ids": unresolved,
+        }
+    return {
+        "route": "planner",
+        "code": "CONSULTANT_CANDIDATE_COMPLETE",
+        "reason": "The shared deterministic Consultant completion contract passed.",
     }
 
 

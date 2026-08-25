@@ -87,7 +87,9 @@ from config.config import (
     WIKI_EMBEDDING_API_KEY, WIKI_EMBEDDING_MODEL, WIKI_EMBEDDING_DIMENSIONS,
     ENABLE_ROOT_CAUSE_ANALYZER, ENABLE_COMMAND_TRACE, ENABLE_PIPESTATUS_CAPTURE,
     ROOT_CAUSE_TIMEOUT_SECONDS, RECOVERY_THINKING_ENABLED,
-    RECOVERY_REASONING_EFFORT, GENERATE_THINKING_ENABLED,
+    RECOVERY_REASONING_EFFORT, CONSULTANT_DISCOVERY_THINKING_ENABLED,
+    CONSULTANT_DISCOVERY_REASONING_EFFORT,
+    CONSULTANT_OPTIONAL_ARCHIVE_TIMEOUT_SECONDS, GENERATE_THINKING_ENABLED,
     GENERATE_REASONING_EFFORT, DEEPSEEK_TEMPERATURE,
 )
 
@@ -106,6 +108,7 @@ from agent_core.consultation_state import (
     consultation_prompt_context,
     emit_finalize_repair_projection,
     evaluate_consultation_completion,
+    evaluate_consultant_candidate_route,
     evaluate_consultant_ask,
     consultant_no_progress_decision,
     finalize_repair_projection,
@@ -119,6 +122,15 @@ from agent_core.consultation_state import (
     record_execution_observation,
     seed_structured_evidence,
     validate_finalize_protocol_v4,
+)
+from agent_core.consultant_continuation import (
+    ConsultantPreprocessRecorder,
+    build_continuation_cache,
+    build_continuation_identity,
+    compact_archive_query,
+    consultant_discovery_delta,
+    evaluate_continuation_cache,
+    run_optional_enrichment,
 )
 from agent_core.human_io import (
     HumanInputUnavailable,
@@ -883,8 +895,8 @@ def bind_consultant_reasoning_llm(
     *,
     model: str,
     base_url: str,
-    enabled: bool = RECOVERY_THINKING_ENABLED,
-    reasoning_effort: str = RECOVERY_REASONING_EFFORT,
+    enabled: bool = CONSULTANT_DISCOVERY_THINKING_ENABLED,
+    reasoning_effort: str = CONSULTANT_DISCOVERY_REASONING_EFFORT,
 ) -> Tuple[Any, Dict[str, Any]]:
     """Reuse node-scoped thinking only for exhausted Consultant discovery."""
     return _bind_deepseek_thinking_llm(
@@ -3674,6 +3686,8 @@ class BioAnalystAgent:
         project_id: str,
         query: str,
         wiki_context: str,
+        *,
+        archive_context: Optional[str] = None,
     ) -> str:
         """Build the full retrieval bundle shown only to Consultant."""
         sections: List[str] = [
@@ -3689,12 +3703,13 @@ class BioAnalystAgent:
 
         # TaskSummary and generic archive renderers contain old prompts, commands,
         # and transcripts. Consultant receives only typed durable projections.
-        archive_context = self._consultant_archive_facts_context(
-            query=query,
-            project_id=project_id,
-            exclude_task_id=task_id,
-            limit=4,
-        )
+        if archive_context is None:
+            archive_context = self._consultant_archive_facts_context(
+                query=query,
+                project_id=project_id,
+                exclude_task_id=task_id,
+                limit=4,
+            )
         if archive_context.strip():
             archive_context = self._dedupe_current_query_from_retrieval(archive_context, query)
             sections.append(
@@ -3712,6 +3727,7 @@ class BioAnalystAgent:
         project_id: str,
         exclude_task_id: str,
         limit: int = 4,
+        raise_errors: bool = False,
     ) -> str:
         """Project archive hits to durable facts; never forward raw transcripts."""
         if not str(query or "").strip():
@@ -3732,6 +3748,8 @@ class BioAnalystAgent:
             )
         except Exception as exc:
             logger.warning("Consultant structured archive retrieval failed for %s: %s", exclude_task_id, exc)
+            if raise_errors:
+                raise
             return ""
         rows: List[Dict[str, Any]] = []
         durable_keys = {
@@ -3763,6 +3781,105 @@ class BioAnalystAgent:
         if not rows:
             return ""
         return json.dumps({"schema_version": 1, "durable_archive_facts": rows}, ensure_ascii=False, sort_keys=True, indent=2, default=str)
+
+    def _record_consultant_progress(
+        self,
+        task_id: str,
+        *,
+        code: str,
+        message: str,
+        detail: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        """Emit observation-only progress without changing semantic authority."""
+
+        safe_message = redact_lineage_text(message)[:500]
+        safe_detail = {
+            str(key): value
+            for key, value in dict(detail or {}).items()
+            if isinstance(value, (str, int, float, bool)) or value is None
+        }
+        try:
+            self.profiler.record_consultant_progress(
+                task_id,
+                code=code,
+                message=safe_message,
+                detail=safe_detail,
+            )
+            ContextLineageStore(self.data_path, task_id).record_event(
+                "consultant_progress",
+                {
+                    "code": str(code or "consultant_progress"),
+                    "message": safe_message,
+                    "detail": safe_detail,
+                    "semantic_effect": "none",
+                },
+            )
+        except Exception as exc:
+            logger.warning(
+                "Consultant progress telemetry failed open for %s: %s",
+                task_id,
+                type(exc).__name__,
+            )
+
+    def _flush_consultant_preprocess_trace(
+        self,
+        task_id: str,
+        recorder: ConsultantPreprocessRecorder,
+    ) -> Dict[str, Any]:
+        """Persist one secret-free measured preprocessing breakdown."""
+
+        store = ContextLineageStore(self.data_path, task_id)
+        initial_events = recorder.event_rows(
+            include_phases=[
+                row["phase"]
+                for row in recorder.phase_rows()
+                if row["phase"] != "context_trace_write"
+            ]
+        )
+        started = time.perf_counter()
+        try:
+            store.record_events(initial_events)
+            for row in recorder.phase_rows():
+                if row["phase"] != "context_trace_write":
+                    self.profiler.record_consultant_preprocess(task_id, {
+                        "episode_id": recorder.episode_id,
+                        "invocation": recorder.invocation,
+                        **row,
+                    })
+            self.profiler.flush(task_id)
+            elapsed_ms = (time.perf_counter() - started) * 1000
+            recorder.mark(
+                "context_trace_write",
+                elapsed_ms=elapsed_ms,
+                call_count=1,
+                event_count=len(initial_events),
+            )
+            total = recorder.total_payload()
+            store.record_events([
+                *recorder.event_rows(include_phases=["context_trace_write"]),
+                {"event_kind": "consultant_preprocess_total", "payload": total},
+            ])
+            self.profiler.record_consultant_preprocess(
+                task_id,
+                {
+                    "episode_id": recorder.episode_id,
+                    "invocation": recorder.invocation,
+                    **next(
+                        row for row in recorder.phase_rows()
+                        if row["phase"] == "context_trace_write"
+                    ),
+                },
+            )
+            self.profiler.record_consultant_preprocess(task_id, total)
+            self.profiler.flush(task_id)
+            return total
+        except Exception as exc:
+            logger.warning(
+                "Consultant preprocessing trace failed open for %s: %s",
+                task_id,
+                type(exc).__name__,
+            )
+            return recorder.total_payload()
 
     def _consultant_handoff_memory_packet(
         self,
@@ -20496,23 +20613,300 @@ question. Never guess a scientific or database identity.
                         "failure_owner": "internal",
                         "next_step": "finish",
                     }
-            conversation_turns, semantic_conversation_evidence = (
-                self._consultant_semantic_conversation(task_id, messages)
+            # One discovery episode owns a stable preprocessing base.  LLM
+            # decisions, feedback, skill documents and routing remain dynamic.
+            preprocess_task_started = time.perf_counter()
+            preprocess_started_at = datetime.now(timezone.utc).isoformat()
+            task_id = state.get("task_id", "default")
+            project_id = state.get("project_id") or self.default_project_id
+            work_dir = self.pm.work_dir if self.pm else os.getcwd()
+            durable_preprocess_state = load_plan_state(self.data_path, task_id)
+            durable_preprocess_task_state = dict(
+                durable_preprocess_state.get("task_state") or {}
             )
-            consultant_context = "\n".join(
-                dict.fromkeys(
-                    part
-                    for part in [
-                        str(task_spec.get("goal") or "").strip(),
-                        *[
-                            str(turn.get("content") or "").strip()
-                            for turn in conversation_turns
-                            if str(turn.get("role") or "") == "user"
-                        ],
-                    ]
-                    if part
+            consultation_state = dict(
+                state.get("consultation_state")
+                or durable_preprocess_task_state.get("consultation_state")
+                or {}
+            )
+            if not consultation_state:
+                consultation_state = new_consultation_state(
+                    f"{task_id}:consultant:{task_spec_revision(task_spec)}",
+                    task_id,
+                    max_total_execute=4,
+                    max_no_progress=2,
                 )
-            ).strip()
+            discovery_state = normalize_skill_discovery_state(
+                consultation_state.get("skill_discovery")
+            )
+            intent_admission = dict(
+                durable_preprocess_task_state.get("intent_admission")
+                or state.get("intent_admission")
+                or {}
+            )
+            continuation_identity = build_continuation_identity(
+                task_id=task_id,
+                consultation_id=str(consultation_state.get("consultation_id") or ""),
+                conversation_evidence=dict(
+                    durable_preprocess_state.get("conversation_evidence")
+                    or state.get("conversation_evidence")
+                    or {}
+                ),
+                task_spec=task_spec,
+                project_id=project_id,
+                task_mode=str(state.get("task_mode") or "managed"),
+                task_ownership={
+                    key: intent_admission.get(key)
+                    for key in (
+                        "admission_id", "admission_status", "request_kind",
+                        "execution_scope", "managed_intent_explicit",
+                        "decision_source",
+                    )
+                    if intent_admission.get(key) not in (None, "", [], {})
+                },
+                resolved_bindings=dict(
+                    state.get("resolved_bindings")
+                    or durable_preprocess_task_state.get("resolved_bindings")
+                    or {}
+                ),
+                work_dir=str(work_dir),
+            )
+            prior_continuation = dict(
+                consultation_state.get("discovery_continuation") or {}
+            )
+            cache_decision = evaluate_continuation_cache(
+                prior_continuation,
+                identity=continuation_identity,
+            )
+            continuation_invocation = (
+                int(prior_continuation.get("invocation_count") or 0) + 1
+            )
+            preprocess_recorder = ConsultantPreprocessRecorder(
+                task_id=task_id,
+                episode_id=str(continuation_identity.get("episode_id") or ""),
+                invocation=continuation_invocation,
+                started_perf=preprocess_task_started,
+                started_at=preprocess_started_at,
+            )
+            preprocess_recorder.mark(
+                "task_state",
+                elapsed_ms=(time.perf_counter() - preprocess_task_started) * 1000,
+                call_count=1,
+                cache_hit=bool(cache_decision.get("cache_hit")),
+                cache_miss=not bool(cache_decision.get("cache_hit")),
+                cache_reason=str(cache_decision.get("reason") or ""),
+            )
+            self._record_consultant_progress(
+                task_id,
+                code="CONSULTANT_CONTEXT_PREPARING",
+                message="Consultant is preparing the bounded discovery context.",
+                detail={
+                    "episode_id": str(continuation_identity.get("episode_id") or ""),
+                    "invocation": continuation_invocation,
+                    "cache_hit": bool(cache_decision.get("cache_hit")),
+                },
+            )
+
+            continuation_base: Dict[str, Any]
+            archive_telemetry: Dict[str, Any]
+            if cache_decision.get("cache_hit"):
+                continuation_base = deepcopy(dict(cache_decision.get("base") or {}))
+                conversation_turns = deepcopy(
+                    list(continuation_base.get("conversation_turns") or [])
+                )
+                semantic_conversation_evidence = deepcopy(
+                    list(continuation_base.get("semantic_conversation_evidence") or [])
+                )
+                consultant_context = str(
+                    continuation_base.get("consultant_context") or ""
+                )
+                consultant_wiki_context = str(
+                    continuation_base.get("consultant_wiki_context") or ""
+                )
+                consultant_memory_retrieval_context = str(
+                    continuation_base.get("consultant_memory_retrieval_context") or ""
+                )
+                user_preferences_context = str(
+                    continuation_base.get("user_preferences_context") or ""
+                )
+                input_resolution_result = deepcopy(dict(
+                    continuation_base.get("input_resolution_result") or {}
+                ))
+                input_resolution_context = str(
+                    continuation_base.get("input_resolution_context") or ""
+                )
+                workflow_candidate_ids = list(
+                    continuation_base.get("workflow_candidate_ids") or []
+                )
+                workflow_catalog = str(
+                    continuation_base.get("workflow_catalog") or ""
+                )
+                base_archive_telemetry = deepcopy(dict(
+                    continuation_base.get("archive_telemetry") or {}
+                ))
+                archive_telemetry = {
+                    **base_archive_telemetry,
+                    "origin_query_count": int(
+                        base_archive_telemetry.get("query_count") or 0
+                    ),
+                    "query_count": 0,
+                    "cache_hit": True,
+                }
+                for phase in (
+                    "memory", "session_archive", "input_inventory",
+                    "input_resolution", "skill_catalog",
+                ):
+                    preprocess_recorder.mark(
+                        phase,
+                        cache_hit=True,
+                        call_count=0,
+                    )
+            else:
+                with preprocess_recorder.phase("task_state", cache_miss=True):
+                    conversation_turns, semantic_conversation_evidence = (
+                        self._consultant_semantic_conversation(task_id, messages)
+                    )
+                    consultant_context = "\n".join(
+                        dict.fromkeys(
+                            part
+                            for part in [
+                                str(task_spec.get("goal") or "").strip(),
+                                *[
+                                    str(turn.get("content") or "").strip()
+                                    for turn in conversation_turns
+                                    if str(turn.get("role") or "") == "user"
+                                ],
+                            ]
+                            if part
+                        )
+                    ).strip()
+                with preprocess_recorder.phase("input_inventory", cache_miss=True) as phase_stats:
+                    input_resolution_result = resolve_formal_upstream_artifacts(
+                        consultant_context,
+                        work_dir=work_dir,
+                        task_id=task_id,
+                        project_root=project_root,
+                    )
+                    phase_stats["candidate_count"] = len(
+                        input_resolution_result.get("formal_candidates") or []
+                    )
+                with preprocess_recorder.phase("input_resolution", cache_miss=True) as phase_stats:
+                    input_resolution_context = format_formal_upstream_context(
+                        input_resolution_result
+                    )
+                    phase_stats["resolved_role_count"] = len(
+                        discovery_input_roles(
+                            input_audit=input_resolution_result,
+                            task_spec=task_spec,
+                        )
+                    )
+                    phase_stats["output_chars"] = len(input_resolution_context)
+                with preprocess_recorder.phase("memory", cache_miss=True) as phase_stats:
+                    consultant_wiki_context = self._wiki_memory_stage_context(
+                        task_id=task_id,
+                        project_id=project_id,
+                        query=consultant_context,
+                    )
+                    phase_stats["wiki_chars"] = len(consultant_wiki_context)
+                archive_query = compact_archive_query(
+                    consultant_context=consultant_context,
+                    task_hypothesis=str(discovery_state.get("task_hypothesis") or ""),
+                    task_goal=str(task_spec.get("goal") or ""),
+                    input_roles=discovery_input_roles(
+                        input_audit=input_resolution_result,
+                        task_spec=task_spec,
+                    ),
+                )
+                with preprocess_recorder.phase("session_archive", cache_miss=True) as phase_stats:
+                    archive_enrichment = await run_optional_enrichment(
+                        lambda: self._consultant_archive_facts_context(
+                            query=archive_query,
+                            project_id=project_id,
+                            exclude_task_id=task_id,
+                            limit=4,
+                            raise_errors=True,
+                        ),
+                        timeout_seconds=CONSULTANT_OPTIONAL_ARCHIVE_TIMEOUT_SECONDS,
+                    )
+                    archive_context = str(archive_enrichment.get("value") or "")
+                    try:
+                        archive_rows_returned = len(
+                            dict(json.loads(archive_context or "{}"))
+                            .get("durable_archive_facts", [])
+                        )
+                    except (TypeError, ValueError, json.JSONDecodeError):
+                        archive_rows_returned = 0
+                    archive_telemetry = {
+                        "query_count": 1,
+                        "query_chars": len(archive_query),
+                        "result_chars": len(archive_context),
+                        "rows_returned": archive_rows_returned,
+                        "timed_out": bool(archive_enrichment.get("timed_out")),
+                        "failed_open": bool(archive_enrichment.get("failed_open")),
+                        "busy_or_locked": bool(archive_enrichment.get("busy_or_locked")),
+                        "error_type": str(archive_enrichment.get("error_type") or ""),
+                        "elapsed_ms": float(archive_enrichment.get("elapsed_ms") or 0.0),
+                    }
+                    phase_stats.update({
+                        "query_chars": len(archive_query),
+                        "output_chars": len(archive_context),
+                        "returned_item_count": archive_rows_returned,
+                        "timed_out": archive_telemetry["timed_out"],
+                        "failed_open": archive_telemetry["failed_open"],
+                        "busy_or_locked": archive_telemetry["busy_or_locked"],
+                    })
+                with preprocess_recorder.phase("memory", cache_miss=True) as phase_stats:
+                    consultant_memory_retrieval_context = await self._consultant_memory_retrieval_context(
+                        task_id=task_id,
+                        project_id=project_id,
+                        query=consultant_context,
+                        wiki_context=consultant_wiki_context,
+                        archive_context=archive_context,
+                    )
+                    phase_stats["output_chars"] = len(
+                        consultant_memory_retrieval_context
+                    )
+                    user_preferences_context = self._load_user_preferences()
+                    phase_stats["preference_chars"] = len(user_preferences_context)
+                with preprocess_recorder.phase("skill_catalog", cache_miss=True) as phase_stats:
+                    workflow_candidate_ids = []
+                    if self.workflow_manager:
+                        workflow_candidate_ids = self.workflow_manager.candidate_workflow_ids_for_prompt(
+                            consultant_context,
+                            max_results=2,
+                        )
+                        if workflow_candidate_ids:
+                            workflow_catalog = self.workflow_manager.get_workflow_catalog_prompt(
+                                workflow_ids=workflow_candidate_ids,
+                                max_entries=2,
+                                description_chars=180,
+                            )
+                        else:
+                            workflow_catalog = (
+                                "<workflow_catalog>\n"
+                                "No metadata workflow match was found. Do not invent a workflow ID; use canonical skills directly unless a loaded template proves a match.\n"
+                                "</workflow_catalog>"
+                            )
+                    else:
+                        workflow_catalog = "<workflow_catalog>\nNo workflow templates available.\n</workflow_catalog>"
+                    phase_stats["candidate_count"] = len(workflow_candidate_ids)
+                    phase_stats["output_chars"] = len(workflow_catalog)
+                continuation_base = {
+                    "conversation_turns": deepcopy(conversation_turns),
+                    "semantic_conversation_evidence": deepcopy(
+                        semantic_conversation_evidence
+                    ),
+                    "consultant_context": consultant_context,
+                    "consultant_wiki_context": consultant_wiki_context,
+                    "consultant_memory_retrieval_context": consultant_memory_retrieval_context,
+                    "user_preferences_context": user_preferences_context,
+                    "input_resolution_result": deepcopy(input_resolution_result),
+                    "input_resolution_context": input_resolution_context,
+                    "workflow_candidate_ids": list(workflow_candidate_ids),
+                    "workflow_catalog": workflow_catalog,
+                    "archive_telemetry": archive_telemetry,
+                }
+
             consultant_max_skills = self._selection_max_skills(consultant_context)
             last_human_index = -1
             for idx, msg in enumerate(messages):
@@ -20585,28 +20979,6 @@ question. Never guess a scientific or database identity.
             verified_loaded_skill_ids = self._consultant_verified_loaded_skill_ids(
                 recent_consultant_messages
             )
-            task_id = state.get("task_id", "default")
-            project_id = state.get("project_id") or self.default_project_id
-            work_dir = self.pm.work_dir if self.pm else os.getcwd()
-
-            consultant_wiki_context = self._wiki_memory_stage_context(
-                task_id=task_id,
-                project_id=project_id,
-                query=consultant_context,
-            )
-            consultant_memory_retrieval_context = await self._consultant_memory_retrieval_context(
-                task_id=task_id,
-                project_id=project_id,
-                query=consultant_context,
-                wiki_context=consultant_wiki_context,
-            )
-            input_resolution_result = resolve_formal_upstream_artifacts(
-                consultant_context,
-                work_dir=work_dir,
-                task_id=task_id,
-                project_root=project_root,
-            )
-            input_resolution_context = format_formal_upstream_context(input_resolution_result)
             if input_resolution_context.strip():
                 output.print_once(
                     f"formal_upstream_audit:{task_id}",
@@ -20708,40 +21080,9 @@ question. Never guess a scientific or database identity.
                 }
 
             kb_list_desc = ", ".join(KB_MAP.keys())
-            workflow_candidate_ids: List[str] = []
-            if self.workflow_manager:
-                workflow_candidate_ids = self.workflow_manager.candidate_workflow_ids_for_prompt(
-                    consultant_context,
-                    max_results=2,
-                )
-                if workflow_candidate_ids:
-                    workflow_catalog = self.workflow_manager.get_workflow_catalog_prompt(
-                        workflow_ids=workflow_candidate_ids,
-                        max_entries=2,
-                        description_chars=180,
-                    )
-                else:
-                    workflow_catalog = (
-                        "<workflow_catalog>\n"
-                        "No metadata workflow match was found. Do not invent a workflow ID; use canonical skills directly unless a loaded template proves a match.\n"
-                        "</workflow_catalog>"
-                    )
-            else:
-                workflow_catalog = "<workflow_catalog>\nNo workflow templates available.\n</workflow_catalog>"
-            consultation_state = dict(state.get("consultation_state") or {})
-            if not consultation_state:
-                consultation_state = new_consultation_state(
-                    f"{task_id}:consultant:{task_spec_revision(task_spec)}",
-                    task_id,
-                    max_total_execute=4,
-                    max_no_progress=2,
-                )
             input_roles = discovery_input_roles(
                 input_audit=input_resolution_result,
                 task_spec=task_spec,
-            )
-            discovery_state = normalize_skill_discovery_state(
-                consultation_state.get("skill_discovery")
             )
             candidate_skill_ids: List[str] = []
             candidate_skill_cards: List[Dict[str, Any]] = []
@@ -20752,11 +21093,15 @@ question. Never guess a scientific or database identity.
             explicit_candidate_ids: List[str] = []
             if self.skill_manager:
                 if not discovery_state.get("search_history"):
-                    candidate_skill_cards = self.skill_manager.rank_skill_candidates(
-                        consultant_context,
-                        input_roles=input_roles,
-                        max_results=CONSULTANT_CANDIDATE_SKILL_LIMIT,
-                    )
+                    with preprocess_recorder.phase(
+                        "skill_ranking", cache_miss=True
+                    ) as phase_stats:
+                        candidate_skill_cards = self.skill_manager.rank_skill_candidates(
+                            consultant_context,
+                            input_roles=input_roles,
+                            max_results=CONSULTANT_CANDIDATE_SKILL_LIMIT,
+                        )
+                        phase_stats["candidate_count"] = len(candidate_skill_cards)
                     discovery_state = record_skill_search(
                         discovery_state,
                         query=consultant_context,
@@ -20765,34 +21110,42 @@ question. Never guess a scientific or database identity.
                         source="initial_request_retrieval",
                     )
                 else:
-                    for skill_id in discovery_state.get("candidate_skill_ids") or []:
-                        evidence = dict(
-                            (discovery_state.get("candidate_evidence") or {}).get(skill_id)
-                            or {}
-                        )
-                        card = self.skill_manager.skill_discovery_card(
-                            skill_id,
-                            score=int(evidence.get("score") or 0),
-                            reasons=list(evidence.get("reasons") or []),
-                        )
-                        if card:
-                            candidate_skill_cards.append(card)
+                    with preprocess_recorder.phase(
+                        "skill_ranking", cache_hit=True
+                    ) as phase_stats:
+                        phase_stats["call_count"] = 0
+                        for skill_id in discovery_state.get("candidate_skill_ids") or []:
+                            evidence = dict(
+                                (discovery_state.get("candidate_evidence") or {}).get(skill_id)
+                                or {}
+                            )
+                            card = self.skill_manager.skill_discovery_card(
+                                skill_id,
+                                score=int(evidence.get("score") or 0),
+                                reasons=list(evidence.get("reasons") or []),
+                            )
+                            if card:
+                                candidate_skill_cards.append(card)
+                        phase_stats["candidate_count"] = len(candidate_skill_cards)
                 candidate_skill_ids = [
                     str(card.get("skill_id") or "")
                     for card in candidate_skill_cards
                     if str(card.get("skill_id") or "")
                 ]
-                if candidate_skill_cards:
-                    skill_catalog = self.skill_manager.format_skill_discovery_cards(
-                        candidate_skill_cards
-                    )
-                else:
-                    skill_catalog = (
-                        "<skill_catalog>\n"
-                        "No ranked candidate is visible in this discovery round. Reformulate the "
-                        "semantic task query; browse the catalog only after the normal search budget.\n"
-                        "</skill_catalog>"
-                    )
+                with preprocess_recorder.phase("skill_catalog") as phase_stats:
+                    if candidate_skill_cards:
+                        skill_catalog = self.skill_manager.format_skill_discovery_cards(
+                            candidate_skill_cards
+                        )
+                    else:
+                        skill_catalog = (
+                            "<skill_catalog>\n"
+                            "No ranked candidate is visible in this discovery round. Reformulate the "
+                            "semantic task query; browse the catalog only after the normal search budget.\n"
+                            "</skill_catalog>"
+                        )
+                    phase_stats["candidate_count"] = len(candidate_skill_cards)
+                    phase_stats["output_chars"] = len(skill_catalog)
                 if str(discovery_state.get("routing_status") or "") == "EXPANDING_DISCOVERY":
                     skill_tree = self.skill_manager.get_skill_tree_prompt()
                 explicit_candidate_ids = [
@@ -20813,7 +21166,9 @@ question. Never guess a scientific or database identity.
                     )
             else:
                 skill_catalog = "None"
+                preprocess_recorder.mark("skill_ranking", call_count=0)
             consultation_state["skill_discovery"] = discovery_state
+            runtime_phase_started = time.perf_counter()
             runtime_discovery_hints: Dict[str, Any] = {}
             controlled_discovery_hints = ""
             needs_controlled_discovery = not candidate_skill_ids or any(
@@ -20873,6 +21228,14 @@ question. Never guess a scientific or database identity.
                 if runtime_seed_skill_ids
                 else ([], {}, "")
             )
+            preprocess_recorder.mark(
+                "runtime_evidence",
+                elapsed_ms=(time.perf_counter() - runtime_phase_started) * 1000,
+                call_count=1,
+                candidate_count=len(runtime_seed_skill_ids),
+                audit_count=len(runtime_seed_audits),
+            )
+            discovery_projection_started = time.perf_counter()
             consultation_state = seed_structured_evidence(
                 consultation_state,
                 input_audit=input_resolution_result,
@@ -20882,6 +21245,26 @@ question. Never guess a scientific or database identity.
                 routing_candidate_ids=[*explicit_candidate_ids, *current_selected_skill_ids],
                 runtime_evidence=runtime_seed_evidence,
             )
+            preprocess_recorder.mark(
+                "discovery_projection",
+                elapsed_ms=(time.perf_counter() - discovery_projection_started) * 1000,
+                call_count=1,
+                discovery_round=int(discovery_state.get("normal_search_count") or 0),
+                loaded_skill_count=len(discovery_state.get("loaded_skill_ids") or []),
+            )
+            continuation_cache = build_continuation_cache(
+                identity=continuation_identity,
+                base=continuation_base,
+                prior=prior_continuation,
+                cache_hit=bool(cache_decision.get("cache_hit")),
+            )
+            continuation_cache.update({
+                "invocation_count": continuation_invocation,
+                "last_cache_reason": str(cache_decision.get("reason") or ""),
+                "discovery_delta": consultant_discovery_delta(discovery_state),
+                "archive_telemetry": archive_telemetry,
+            })
+            consultation_state["discovery_continuation"] = continuation_cache
             # Do not enter FINALIZE from the pre-response state.  Candidate
             # mutations, selected skills and Controller bindings must be
             # applied before completion is evaluated.
@@ -20995,6 +21378,7 @@ question. Never guess a scientific or database identity.
                     consultant_wiki_context=consultant_wiki_context,
                     consultant_memory_retrieval_context=consultant_memory_retrieval_context,
                 )
+            prompt_build_started = time.perf_counter()
             deterministic_base_constraints = semantic_constraints_from_task_spec(task_spec)
             provenance_catalog = semantic_provenance_catalog(
                 task_spec,
@@ -21031,7 +21415,6 @@ question. Never guess a scientific or database identity.
             )
             consultation_state_context = consultation_prompt_context(consultation_state)
             rag_history_text = "\n".join(str(item) for item in rag_history)
-            user_preferences_context = self._load_user_preferences()
             task_spec_context = format_effective_user_facts_context(
                 task_spec,
                 audience="consultant",
@@ -21169,28 +21552,29 @@ question. Never guess a scientific or database identity.
                     "next_step": "finish",
                 }
 
-            task_spec_context = packed_history.get("task_spec") or "None"
-            input_resolution_context = packed_history.get("input_resolution") or "None"
-            selected_skill_context = packed_history.get("selected_skill_context") or selected_skill_context
-            deterministic_base_constraints_context = (
-                packed_history.get("deterministic_base_constraints")
-                or deterministic_base_constraints_context
-            )
-            semantic_provenance_catalog_context = (
-                packed_history.get("semantic_provenance_catalog")
-                or semantic_provenance_catalog_context
-            )
-            contract_repair_context = packed_history.get("contract_repair") or contract_repair_context
-            user_preferences_context = packed_history.get("user_preferences") or "None"
-            consultant_memory_retrieval_context = packed_history.get("memory_context") or "None"
-            rag_history_text = packed_history.get("rag_history") or "None"
-            rag_history_for_prompt = [rag_history_text]
-            workflow_catalog = packed_skills.get("workflow_catalog") or "None"
-            skill_catalog = packed_skills.get("skill_catalog") or ""
-            skill_tree = packed_skills.get("skill_tree") or ""
-            controlled_discovery_hints = packed_skills.get("controlled_discovery_hints") or ""
-            preloaded_skill_docs_context = packed_skills.get("preloaded_skill_docs") or ""
-            runtime_evidence_context = packed_skills.get("runtime_evidence") or "None"
+            if finalize_mode:
+                task_spec_context = packed_history.get("task_spec") or "None"
+                input_resolution_context = packed_history.get("input_resolution") or "None"
+                selected_skill_context = packed_history.get("selected_skill_context") or selected_skill_context
+                deterministic_base_constraints_context = (
+                    packed_history.get("deterministic_base_constraints")
+                    or deterministic_base_constraints_context
+                )
+                semantic_provenance_catalog_context = (
+                    packed_history.get("semantic_provenance_catalog")
+                    or semantic_provenance_catalog_context
+                )
+                contract_repair_context = packed_history.get("contract_repair") or contract_repair_context
+                user_preferences_context = packed_history.get("user_preferences") or "None"
+                consultant_memory_retrieval_context = packed_history.get("memory_context") or "None"
+                rag_history_text = packed_history.get("rag_history") or "None"
+                workflow_catalog = packed_skills.get("workflow_catalog") or "None"
+                skill_catalog = packed_skills.get("skill_catalog") or ""
+                skill_tree = packed_skills.get("skill_tree") or ""
+                controlled_discovery_hints = packed_skills.get("controlled_discovery_hints") or ""
+                preloaded_skill_docs_context = packed_skills.get("preloaded_skill_docs") or ""
+                runtime_evidence_context = packed_skills.get("runtime_evidence") or "None"
+            rag_history_for_prompt = [rag_history_text or "None"]
             skills_summary = "\n".join(
                 value
                 for value in (
@@ -21219,6 +21603,7 @@ question. Never guess a scientific or database identity.
                     contract_repair_context=contract_repair_context,
                 )
             else:
+                discovery_projection_render_started = time.perf_counter()
                 durable_consultant_state = load_plan_state(self.data_path, task_id)
                 durable_consultant_task_state = dict(
                     durable_consultant_state.get("task_state") or {}
@@ -21394,11 +21779,36 @@ question. Never guess a scientific or database identity.
                             if meta
                         ],
                         "workflow_candidates": list(workflow_candidate_ids),
+                        "continuation_context": {
+                            "policy": (
+                                "Stable episode facts are reused only while conversation, "
+                                "TaskSpec semantics, formal bindings, ownership and input inventory match. "
+                                "Discovery decisions below are always current-round facts."
+                            ),
+                            "episode_id": str(continuation_identity.get("episode_id") or ""),
+                            "invocation": continuation_invocation,
+                            "cache_hit": bool(cache_decision.get("cache_hit")),
+                            "cache_reason": str(cache_decision.get("reason") or ""),
+                            "memory_context": consultant_memory_retrieval_context,
+                            "input_resolution_context": input_resolution_context,
+                            "workflow_catalog": workflow_catalog,
+                            "user_preferences": user_preferences_context,
+                            "rag_history": rag_history_text,
+                            "archive_telemetry": archive_telemetry,
+                            "discovery_delta": consultant_discovery_delta(discovery_state),
+                        },
                     },
                     ensure_ascii=False,
                     sort_keys=True,
                     indent=2,
                     default=str,
+                )
+                preprocess_recorder.mark(
+                    "discovery_projection",
+                    elapsed_ms=(time.perf_counter() - discovery_projection_render_started) * 1000,
+                    call_count=1,
+                    visible_candidate_count=len(visible_candidate_cards),
+                    loaded_document_count=len(loaded_skill_documents),
                 )
                 discovery_escalated = bool(
                     discovery_state.get("reasoning_level") == "escalated"
@@ -21429,6 +21839,13 @@ question. Never guess a scientific or database identity.
                 # payload evidence section.  Graph history is intentionally
                 # omitted so it cannot duplicate or replace that durable view.
                 consultant_visible_messages = []
+            preprocess_recorder.mark(
+                "prompt_build",
+                elapsed_ms=(time.perf_counter() - prompt_build_started) * 1000,
+                call_count=1,
+                prompt_chars=len(consultant_prompt),
+            )
+            prompt_serialize_started = time.perf_counter()
             visible_message_chars = sum(
                 len(str(getattr(message, "content", message) or ""))
                 for message in consultant_visible_messages
@@ -21547,6 +21964,17 @@ question. Never guess a scientific or database identity.
                 "hard_block": accurate_hard_block,
                 "decision": "block_context_safety" if accurate_hard_block else "no_compression",
             })
+            preprocess_recorder.mark(
+                "prompt_serialize",
+                elapsed_ms=(time.perf_counter() - prompt_serialize_started) * 1000,
+                call_count=1,
+                prompt_chars=prompt_chars,
+                estimated_input_tokens=consultant_token_estimate,
+            )
+            consultant_preprocess_total = self._flush_consultant_preprocess_trace(
+                task_id,
+                preprocess_recorder,
+            )
             if consultant_budget["hard_block"]:
                 reason = (
                     "CONSULTANT_CONTEXT_BUDGET_UNSATISFIED: estimated input is "
@@ -21561,6 +21989,7 @@ question. Never guess a scientific or database identity.
                 return {
                     "messages": [SystemMessage(content=reason)],
                     "plan_progress": plan_progress,
+                    "consultation_state": consultation_state,
                     "next_step": "finish",
                 }
 
@@ -21597,6 +22026,27 @@ question. Never guess a scientific or database identity.
             else:
                 current_invocation_guard = {}
 
+            self._record_consultant_progress(
+                task_id,
+                code="CONSULTANT_CONTEXT_READY",
+                message="Consultant context is ready; requesting the next discovery decision.",
+                detail={
+                    "episode_id": str(continuation_identity.get("episode_id") or ""),
+                    "invocation": continuation_invocation,
+                    "cache_hit": bool(cache_decision.get("cache_hit")),
+                    "preprocess_ms": float(
+                        consultant_preprocess_total.get("elapsed_ms") or 0.0
+                    ),
+                    "input_status": str(input_resolution_result.get("status") or "not_applicable"),
+                    "candidate_count": len(candidate_skill_ids),
+                    "loaded_skill_count": len(discovery_state.get("loaded_skill_ids") or []),
+                },
+            )
+            output.print_once(
+                f"consultant_context_ready:{task_id}:{continuation_invocation}",
+                "🧭 Consultant context ready; evaluating the next skill-discovery step.",
+                Fore.CYAN,
+            )
             try:
                 response = await self._ainvoke_node_llm(
                     consultant_llm_messages,
@@ -21613,6 +22063,15 @@ question. Never guess a scientific or database identity.
                             else "consultant"
                         ),
                         "task_spec_revision": task_spec_revision(task_spec),
+                        "consultant_continuation": {
+                            "episode_id": str(continuation_identity.get("episode_id") or ""),
+                            "invocation": continuation_invocation,
+                            "cache_hit": bool(cache_decision.get("cache_hit")),
+                            "cache_reason": str(cache_decision.get("reason") or ""),
+                            "preprocess_total": consultant_preprocess_total,
+                            "preprocess_phases": preprocess_recorder.phase_rows(),
+                            "archive_telemetry": archive_telemetry,
+                        },
                         "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
                         "candidate_skill_ids": visible_capability_ids,
                         "retrieved_candidate_skill_ids": candidate_skill_ids,
@@ -21681,6 +22140,7 @@ question. Never guess a scientific or database identity.
                             )
                         ],
                         "llm_retry_counts": retry_counts,
+                        "consultation_state": consultation_state,
                         "next_step": "consultant",
                     }
                 if is_transient_llm_failure(exc) and not is_llm_input_rejected(exc):
@@ -21703,6 +22163,7 @@ question. Never guess a scientific or database identity.
                             "resume_step": "consultant",
                         },
                         "llm_retry_counts": retry_counts,
+                        "consultation_state": consultation_state,
                         "next_step": "ask_user",
                     }
                 response = self._llm_failure_response("consultant", exc, task_id)
@@ -21817,6 +22278,35 @@ question. Never guess a scientific or database identity.
                     Fore.GREEN,
                 )
                 content = consultant_json_command
+            payload_action_type = self._normalize_action_type(
+                consultant_json_payload.get("action_type")
+                or consultant_json_payload.get("type")
+                or consultant_json_payload.get("action")
+                or ""
+            )
+            if content.startswith("SELECT_SKILL") and payload_action_type != "select_skill":
+                payload_action_type = "select_skill"
+                consultant_json_payload = dict(consultant_json_payload)
+                consultant_json_payload.setdefault(
+                    "selected_skills",
+                    [
+                        item.strip()
+                        for item in re.split(
+                            r"[,，;\n]+",
+                            content.removeprefix("SELECT_SKILL").strip(),
+                        )
+                        if item.strip()
+                    ],
+                )
+
+            def sync_discovery_continuation(
+                current_consultation: MutableMapping[str, Any],
+                current_discovery: Mapping[str, Any],
+            ) -> None:
+                cached = dict(current_consultation.get("discovery_continuation") or {})
+                cached["discovery_delta"] = consultant_discovery_delta(current_discovery)
+                cached["updated_at"] = datetime.now(timezone.utc).isoformat()
+                current_consultation["discovery_continuation"] = cached
 
             # EXECUTE 动作
             if content.startswith("EXECUTE"):
@@ -22085,6 +22575,16 @@ question. Never guess a scientific or database identity.
                     ),
                 )
                 consultation_state["skill_discovery"] = discovery_state
+                sync_discovery_continuation(consultation_state, discovery_state)
+                self._record_consultant_progress(
+                    task_id,
+                    code="CONSULTANT_SKILL_SEARCHED",
+                    message="Consultant completed a bounded semantic skill search.",
+                    detail={
+                        "discovery_round": int(discovery_state.get("normal_search_count") or 0),
+                        "candidate_count": len(cards),
+                    },
+                )
                 logger.info(
                     "Consultant skill search: task=%s round=%s level=%s query=%s candidates=%s",
                     task_id,
@@ -22130,6 +22630,7 @@ question. Never guess a scientific or database identity.
                     {"source": "category_index", "categories": categories},
                 ][-12:]
                 consultation_state["skill_discovery"] = discovery_state
+                sync_discovery_continuation(consultation_state, discovery_state)
                 obs = (
                     '<skill_category_index owner="consultant_internal">\n'
                     + json.dumps(categories, ensure_ascii=False)
@@ -22185,6 +22686,7 @@ question. Never guess a scientific or database identity.
                     candidate_cards=cards,
                 )
                 consultation_state["skill_discovery"] = discovery_state
+                sync_discovery_continuation(consultation_state, discovery_state)
                 logger.info(
                     "Consultant catalog expansion: task=%s category=%s candidates=%s",
                     task_id,
@@ -22227,81 +22729,13 @@ question. Never guess a scientific or database identity.
                     reason=reason,
                 )
                 consultation_state["skill_discovery"] = discovery_state
+                sync_discovery_continuation(consultation_state, discovery_state)
                 return {
                     "messages": [AIMessage(content=content), SystemMessage(content=(
                         '<skill_candidate_rejected owner="consultant">'
                         + json.dumps({"skill_id": skill_id, "reason": reason}, ensure_ascii=False)
                         + "</skill_candidate_rejected>"
                     ))],
-                    "consultation_state": consultation_state,
-                    "pending_human_question": {},
-                    "next_step": "consultant",
-                }
-
-            if content.startswith("SELECT_SKILL"):
-                raw_selected = consultant_json_payload.get("selected_skills") or []
-                if isinstance(raw_selected, str):
-                    raw_selected = [
-                        item.strip() for item in re.split(r"[,，;\n]+", raw_selected)
-                        if item.strip()
-                    ]
-                selected = self.skill_manager.normalize_selected_skills(
-                    raw_selected,
-                    max_results=consultant_max_skills,
-                ) if self.skill_manager else []
-                issues = self.skill_manager.validate_selected_skills(
-                    raw_selected,
-                    max_results=consultant_max_skills,
-                ) if self.skill_manager else []
-                loaded_or_explicit = set(loaded_skill_ids).union(explicit_candidate_ids)
-                unloaded = [skill_id for skill_id in selected if skill_id not in loaded_or_explicit]
-                if issues or not selected or unloaded:
-                    code = "SKILL_DOC_REQUIRED" if unloaded else "CONSULTANT_SKILL_SELECTION_INVALID"
-                    detail = (
-                        "Load each selected candidate document before committing selection: "
-                        + ", ".join(unloaded)
-                        if unloaded
-                        else json.dumps(issues, ensure_ascii=False, default=str)
-                    )
-                    obs = f'<consultant_validation_error code="{code}">{detail}</consultant_validation_error>'
-                    return {
-                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
-                        "consultation_state": consultation_state,
-                        "next_step": "consultant",
-                    }
-                discovery_state = record_selected_skills(discovery_state, selected)
-                candidate_runtime_audits, candidate_runtime_evidence, _ = (
-                    self._consultant_runtime_seed_evidence(selected, task_id)
-                    if selected else ([], {}, "")
-                )
-                consultation_state["skill_discovery"] = discovery_state
-                consultation_state = seed_structured_evidence(
-                    consultation_state,
-                    input_audit=input_resolution_result,
-                    candidate_skill_ids=selected,
-                    routing_candidate_ids=selected,
-                    runtime_evidence=candidate_runtime_evidence,
-                )
-                consultation_state["resolved_selected_skill_ids"] = list(selected)
-                logger.info(
-                    "Consultant selected documented skills: task=%s selected=%s reason=%s",
-                    task_id,
-                    selected,
-                    str(consultant_json_payload.get("selection_reason") or "")[:600],
-                )
-                obs = (
-                    '<skill_selection_committed owner="consultant">'
-                    + json.dumps({
-                        "selected_skill_ids": selected,
-                        "selection_reason": str(consultant_json_payload.get("selection_reason") or ""),
-                    }, ensure_ascii=False, sort_keys=True)
-                    + "</skill_selection_committed>"
-                )
-                return {
-                    "messages": [AIMessage(content=content), SystemMessage(content=obs)],
-                    "selected_skills": selected,
-                    "selected_skills_raw": list(raw_selected),
-                    "runtime_audit": candidate_runtime_audits,
                     "consultation_state": consultation_state,
                     "pending_human_question": {},
                     "next_step": "consultant",
@@ -22328,6 +22762,13 @@ question. Never guess a scientific or database identity.
                         "next_step": "consultant",
                     }
                 consultation_state["skill_discovery"] = discovery_state
+                sync_discovery_continuation(consultation_state, discovery_state)
+                self._record_consultant_progress(
+                    task_id,
+                    code="CONSULTANT_REASONING_ESCALATED",
+                    message="Normal discovery was exhausted; Consultant is entering one narrow reasoning pass.",
+                    detail={"reasoning_level": "escalated"},
+                )
                 logger.info(
                     "Consultant discovery reasoning escalation: task=%s trigger=%s",
                     task_id,
@@ -22369,6 +22810,7 @@ question. Never guess a scientific or database identity.
                     "completion_decision": "blocked",
                     "completion_reason": CAPABILITY_GAP,
                 })
+                sync_discovery_continuation(blocked, discovery_state)
                 return {
                     "messages": [AIMessage(content=content), SystemMessage(content=(
                         '<consultant_capability_gap owner="consultant_internal">'
@@ -22478,6 +22920,13 @@ question. Never guess a scientific or database identity.
                             consultant_json_payload.get("task_hypothesis")
                         ).strip()
                     consultation_state["skill_discovery"] = discovery_state
+                    sync_discovery_continuation(consultation_state, discovery_state)
+                    self._record_consultant_progress(
+                        task_id,
+                        code="CONSULTANT_SKILL_DOC_LOADED",
+                        message="Consultant loaded a candidate skill document for compatibility evaluation.",
+                        detail={"skill_id": skill_id},
+                    )
                     obs = f'<loaded_skill_doc skill_id="{skill_id}">\n{loaded}\n</loaded_skill_doc>'
                 else:
                     obs = (
@@ -22556,15 +23005,12 @@ question. Never guess a scientific or database identity.
             # Consultant-first typed ASK / FINISH.  Legacy semantic_constraints
             # responses remain readable below, but all new V2 prompts use this
             # candidate-state path.
-            payload_action_type = self._normalize_action_type(
-                consultant_json_payload.get("action_type")
-                or consultant_json_payload.get("type")
-                or consultant_json_payload.get("action")
-                or ""
-            )
             if (
-                payload_action_type in {"ask_user", "solution"}
-                and "task_spec_operations" in consultant_json_payload
+                payload_action_type in {"ask_user", "solution", "select_skill"}
+                and (
+                    "task_spec_operations" in consultant_json_payload
+                    or payload_action_type == "select_skill"
+                )
             ):
                 durable_before = load_plan_state(self.data_path, task_id)
                 raw_submission_ref = str(
@@ -22664,9 +23110,42 @@ question. Never guess a scientific or database identity.
                         "Use only canonical skill IDs from the visible capability catalog: "
                         + json.dumps(selection_issues, ensure_ascii=False, default=str),
                     )
+                if payload_action_type == "select_skill":
+                    loaded_or_explicit = set(
+                        discovery_state.get("loaded_skill_ids") or []
+                    ).union(loaded_skill_ids, explicit_candidate_ids)
+                    unloaded = [
+                        skill_id for skill_id in selected
+                        if skill_id not in loaded_or_explicit
+                    ]
+                    if not selected:
+                        return candidate_rejection(
+                            "CONSULTANT_SKILL_SELECTION_INVALID",
+                            "select_skill requires at least one canonical selected skill.",
+                        )
+                    if unloaded:
+                        return candidate_rejection(
+                            "SKILL_DOC_REQUIRED",
+                            "Load each selected candidate document before committing selection: "
+                            + ", ".join(unloaded),
+                        )
                 if selected:
                     discovery_state = record_selected_skills(discovery_state, selected)
                     consultation_state["skill_discovery"] = discovery_state
+                    sync_discovery_continuation(consultation_state, discovery_state)
+                    if payload_action_type == "select_skill":
+                        logger.info(
+                            "Consultant selected documented skills: task=%s selected=%s reason=%s",
+                            task_id,
+                            selected,
+                            str(consultant_json_payload.get("selection_reason") or "")[:600],
+                        )
+                        self._record_consultant_progress(
+                            task_id,
+                            code="CONSULTANT_SKILL_SELECTED",
+                            message="Consultant selected documented compatible skill capability.",
+                            detail={"selected_skill_count": len(selected)},
+                        )
                 try:
                     mutation_proposal = self._consultant_task_spec_mutation_proposal(
                         consultant_json_payload,
@@ -22865,20 +23344,13 @@ question. Never guess a scientific or database identity.
                     **current_invocation_guard,
                     "retry_pending": False,
                 }
-                output_contract_violations = list(
-                    candidate.get("output_contract_violations") or []
-                )
-                if output_contract_violations:
-                    first_output_violation = dict(output_contract_violations[0])
-                    return candidate_rejection(
-                        str(first_output_violation.get("code") or "TASK_OUTPUT_BINDING_INCOMPLETE"),
-                        str(first_output_violation.get("message") or "Repair the typed TaskSpec output contract."),
-                        candidate=candidate,
-                    )
-                if candidate.get("completion", {}).get("decision") != "ready_to_finalize":
-                    candidate["consultation_state"] = candidate_consultation
+                candidate["consultation_state"] = candidate_consultation
+                route_decision = evaluate_consultant_candidate_route(candidate)
+                if route_decision.get("route") != "planner":
                     unresolved_ids = list(
-                        candidate.get("completion", {}).get("unresolved_requirement_ids") or []
+                        route_decision.get("unresolved_requirement_ids")
+                        or candidate.get("completion", {}).get("unresolved_requirement_ids")
+                        or []
                     )
                     if "skill-routing" in unresolved_ids and not selected:
                         next_discovery, guidance = reject_premature_finish(
@@ -22892,9 +23364,12 @@ question. Never guess a scientific or database identity.
                             candidate=candidate,
                         )
                     return candidate_rejection(
-                        "FINISH_CANDIDATE_INCOMPLETE",
-                        "Valid TaskSpec and skill progress was committed, but candidate completion still has unresolved Controller/runtime evidence: "
-                        + ", ".join(unresolved_ids)[:1200],
+                        str(route_decision.get("code") or "FINISH_CANDIDATE_INCOMPLETE"),
+                        str(route_decision.get("reason") or (
+                            "Valid TaskSpec and skill progress was committed, but candidate completion "
+                            "still has unresolved Controller/runtime evidence: "
+                            + ", ".join(unresolved_ids)[:1200]
+                        )),
                         candidate=candidate,
                     )
                 candidate_consultation.update({
@@ -22905,7 +23380,18 @@ question. Never guess a scientific or database identity.
                     "pending_question": None,
                     "pending_human_question": None,
                 })
-                summary = str(consultant_json_payload.get("summary") or "").strip()
+                sync_discovery_continuation(candidate_consultation, discovery_state)
+                summary = str(
+                    consultant_json_payload.get("summary")
+                    or consultant_json_payload.get("selection_reason")
+                    or "Consultant semantic contract complete."
+                ).strip()
+                self._record_consultant_progress(
+                    task_id,
+                    code="CONSULTANT_PLANNER_HANDOFF",
+                    message="Consultant completion gate passed; handing the task to Planner.",
+                    detail={"source": payload_action_type},
+                )
                 return commit_candidate_update({
                     "messages": [AIMessage(content=raw_content)],
                     "input_audit": input_resolution_result,
@@ -22913,7 +23399,11 @@ question. Never guess a scientific or database identity.
                     "selected_skills_raw": list(raw_selected),
                     "resolved_bindings": candidate.get("resolved_bindings") or {},
                     "runtime_audit": candidate_runtime_audits,
-                    "skill_selection_source": "consultant_candidate_finish",
+                    "skill_selection_source": (
+                        "consultant_select_completion"
+                        if payload_action_type == "select_skill"
+                        else "consultant_candidate_finish"
+                    ),
                     "requirements_summary": summary,
                     "task_spec": candidate["task_spec"],
                     "task_revision": task_spec_revision(candidate["task_spec"]),

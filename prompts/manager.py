@@ -1790,7 +1790,7 @@ Return exactly one JSON object and no prose. Supported actions are:
 {{"action_type":"list_skills","category":"canonical catalog category"}}
 {{"action_type":"load_skill_doc","skill_id":"canonical/skill-id","task_hypothesis":"concise scientific task hypothesis"}}
 {{"action_type":"reject_skill","skill_id":"canonical/skill-id","reason":"documented incompatibility"}}
-{{"action_type":"select_skill","selected_skills":["canonical/skill-id"],"selection_reason":"documented compatibility evidence"}}
+{{"action_type":"select_skill","summary":"semantic handoff ready for Planner","selected_skills":["canonical/skill-id"],"selection_reason":"documented compatibility evidence","task_spec_operations":[],"planner_feedback":null}}
 {{"action_type":"reasoning_escalation","reason":"why normal discovery is exhausted"}}
 {{"action_type":"capability_gap","reason":"why no documented capability is compatible"}}
 {{"action_type":"ask","question":"one precise question","requested_slots":["semantic.slot"],"expected_type":"string","selected_skills":[],"task_spec_operations":[],"planner_feedback":null}}
@@ -1805,6 +1805,12 @@ list_skill_categories/list_skills. Load a candidate's SKILL.md when its card is
 insufficient or before committing a tool-specific selection. Compare its
 documented purpose, inputs, outputs, when_to_use and not_for evidence before
 selecting it.
+
+When loaded documentation proves compatibility, prefer one complete select_skill
+response: include any still-required TaskSpec operations, the selected skills,
+and the Planner summary/feedback. The Controller applies that candidate and runs
+the same deterministic completion gate used by finish. Do not emit a later
+finish action solely to acknowledge an already-complete selection.
 
 A failed internal skill search is INTERNAL_SKILL_DISCOVERY_UNCERTAINTY, never a
 user-owned ambiguity. Do not ask the user for a skill ID, tool name, or help

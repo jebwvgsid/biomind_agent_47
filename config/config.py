@@ -72,6 +72,16 @@ RECOVERY_REASONING_EFFORT = os.getenv(
 ).strip().lower()
 if RECOVERY_REASONING_EFFORT not in {"high", "max"}:
     RECOVERY_REASONING_EFFORT = "high"
+# Consultant discovery owns an independent policy surface.  Recovery settings
+# must not silently change whether skill-discovery escalation can think.
+CONSULTANT_DISCOVERY_THINKING_ENABLED = _env_bool(
+    "BIOMIND_CONSULTANT_DISCOVERY_THINKING_ENABLED", True
+)
+CONSULTANT_DISCOVERY_REASONING_EFFORT = os.getenv(
+    "BIOMIND_CONSULTANT_DISCOVERY_REASONING_EFFORT", "high"
+).strip().lower()
+if CONSULTANT_DISCOVERY_REASONING_EFFORT not in {"high", "max"}:
+    CONSULTANT_DISCOVERY_REASONING_EFFORT = "high"
 GENERATE_THINKING_ENABLED = _env_bool("BIOMIND_GENERATE_THINKING_ENABLED", True)
 GENERATE_REASONING_EFFORT = os.getenv(
     "BIOMIND_GENERATE_REASONING_EFFORT", "high"
@@ -124,6 +134,11 @@ def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
 ROOT_CAUSE_TIMEOUT_SECONDS = _env_float(
     "BIOMIND_ROOT_CAUSE_TIMEOUT_SECONDS",
     3.0,
+    minimum=0.1,
+)
+CONSULTANT_OPTIONAL_ARCHIVE_TIMEOUT_SECONDS = _env_float(
+    "BIOMIND_CONSULTANT_OPTIONAL_ARCHIVE_TIMEOUT_SECONDS",
+    5.0,
     minimum=0.1,
 )
 
