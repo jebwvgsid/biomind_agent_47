@@ -1785,8 +1785,41 @@ exceptions are already-explicit machine policies in `failure_policy.*` and
 
 Return exactly one JSON object and no prose. Supported actions are:
 
+{{"action_type":"search_skills","query":"semantic task query","task_hypothesis":"concise scientific task hypothesis"}}
+{{"action_type":"list_skill_categories"}}
+{{"action_type":"list_skills","category":"canonical catalog category"}}
+{{"action_type":"load_skill_doc","skill_id":"canonical/skill-id","task_hypothesis":"concise scientific task hypothesis"}}
+{{"action_type":"reject_skill","skill_id":"canonical/skill-id","reason":"documented incompatibility"}}
+{{"action_type":"select_skill","selected_skills":["canonical/skill-id"],"selection_reason":"documented compatibility evidence"}}
+{{"action_type":"reasoning_escalation","reason":"why normal discovery is exhausted"}}
+{{"action_type":"capability_gap","reason":"why no documented capability is compatible"}}
 {{"action_type":"ask","question":"one precise question","requested_slots":["semantic.slot"],"expected_type":"string","selected_skills":[],"task_spec_operations":[],"planner_feedback":null}}
 {{"action_type":"finish","summary":"...","selected_skills":[],"task_spec_operations":[],"planner_feedback":null}}
+
+Skill discovery is an explicit bounded process. First form a semantic task
+hypothesis from the UserTurn and verified input roles. Candidate retrieval is
+evidence, not a final decision. If the current catalog does not contain a
+reliable match, use search_skills with a reformulated scientific query. If a
+second distinct search remains weak or empty, browse the relevant catalog with
+list_skill_categories/list_skills. Load a candidate's SKILL.md when its card is
+insufficient or before committing a tool-specific selection. Compare its
+documented purpose, inputs, outputs, when_to_use and not_for evidence before
+selecting it.
+
+A failed internal skill search is INTERNAL_SKILL_DISCOVERY_UNCERTAINTY, never a
+user-owned ambiguity. Do not ask the user for a skill ID, tool name, or help
+searching the local catalog. ASK only when the user owns a missing scientific
+decision and different answers materially change the task. If normal search,
+query reformulation and catalog expansion are exhausted but an existing
+capability may still fit, request reasoning_escalation. Do not request it after
+the first weak search. capability_gap is legal only after the escalated narrow
+discovery pass exhausts the documented catalog.
+
+Do not FINISH with unresolved skill-routing and an empty selected_skills list.
+In SEARCHING, CANDIDATES_FOUND, READING_CANDIDATES, EXPANDING_DISCOVERY or
+REASONING_ESCALATION, take the next discovery action instead. Generic fields
+such as contrast, resolution or differential-expression thresholds are not
+required unless the current scientific task or loaded capability requires them.
 
 When a visible UserTurn is Plan Review feedback, classify its effects. Encode
 task-semantic changes as TaskSpec operations. Encode plan-only instructions as
@@ -1908,6 +1941,63 @@ materialization-only repair may return an empty `replace_steps` list.
 <repair_scope>
 Allowed step handles: {handles}
 </repair_scope>
+"""
+
+    @staticmethod
+    def get_consultant_discovery_escalation_prompt(
+        discovery_context: Mapping[str, Any],
+        *,
+        loaded_skill_documents: Optional[Mapping[str, str]] = None,
+        max_skills: int = 8,
+    ) -> str:
+        """Build a narrow thinking prompt for exhausted normal discovery only."""
+        context_json = json.dumps(
+            dict(discovery_context or {}),
+            ensure_ascii=False,
+            sort_keys=True,
+            indent=2,
+            default=str,
+        )
+        docs_json = json.dumps(
+            dict(loaded_skill_documents or {}),
+            ensure_ascii=False,
+            sort_keys=True,
+            indent=2,
+            default=str,
+        )
+        return f"""You are BioMind's escalated Skill Discovery Consultant.
+
+This is a narrow reasoning invocation. Solve only canonical skill routing from
+the supplied discovery evidence. Do not reconstruct the full session, rewrite
+the entire TaskSpec, plan execution, generate commands, or inspect unrelated
+Planner/Generate/Execute history. Retrieval supplies candidates; you decide
+semantic compatibility. The Controller owns budgets, state transitions and
+action legality.
+
+Return exactly one JSON object and no prose. Allowed actions are:
+
+{{"action_type":"search_skills","query":"new semantic query","task_hypothesis":"refined hypothesis"}}
+{{"action_type":"list_skills","category":"canonical category"}}
+{{"action_type":"load_skill_doc","skill_id":"canonical/skill-id","task_hypothesis":"refined scientific task hypothesis"}}
+{{"action_type":"reject_skill","skill_id":"canonical/skill-id","reason":"documented incompatibility"}}
+{{"action_type":"select_skill","selected_skills":["canonical/skill-id"],"selection_reason":"compatibility evidence"}}
+{{"action_type":"ask","question":"one scientific decision question","requested_slots":["user_owned.slot"],"expected_type":"string"}}
+{{"action_type":"capability_gap","reason":"exhausted-search evidence"}}
+
+Select no more than {int(max_skills)} skills. Never ASK for a skill ID, tool
+name, catalog category, runtime-owned fact, or Controller-owned binding. ASK is
+legal only when the user owns a missing scientific decision and different
+answers change the task. CAPABILITY_GAP is legal only when the supplied state
+says normal discovery is exhausted and no compatible documented candidate
+remains. If a candidate card is promising but insufficient, load its document.
+
+<consultant_discovery_escalation_context>
+{context_json}
+</consultant_discovery_escalation_context>
+
+<loaded_skill_documents>
+{docs_json}
+</loaded_skill_documents>
 """
 
     @staticmethod

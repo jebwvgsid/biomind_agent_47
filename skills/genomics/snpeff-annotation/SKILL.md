@@ -2,6 +2,31 @@
 name: snpeff-annotation
 description: Build or use snpEff databases and annotate VCF variants with ANN effects. Use when the user asks for SNP/indel functional annotation with snpEff, including existing pre-built databases, custom GFF3/GTF/GenBank database builds, ANN interpretation, summary HTML, and safe database/version selection. Do not guess species databases, genome-version names, chromosome names, codon tables, or unchecked-build options from taxonomy labels alone.
 metadata:
+  domain: genomics
+  summary: >-
+    Annotate variants from an existing VCF against a reference genome and gene
+    annotation to predict affected genes and variant effects.
+  aliases:
+    - variant annotation
+    - variant functional annotation
+    - variant effect annotation
+    - SNP annotation
+    - 突变功能注释
+    - 变异功能注释
+  task_types:
+    - variant_annotation
+    - variant_effect_annotation
+  inputs:
+    - variant_vcf
+    - reference_fasta
+    - annotation_gtf
+    - annotation_gff3
+    - annotation_genbank
+  when_to_use:
+    - An existing VCF needs gene and functional effect annotation.
+    - A VCF must be annotated against a matching custom FASTA and GTF or GFF3.
+  when_not_to_use:
+    - Raw reads still require variant calling before an annotation-ready VCF exists.
   renderer:
     legacy_only: true
     execution_contract: legacy_renderer_v1

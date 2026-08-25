@@ -23,6 +23,7 @@ from agent_core.task_spec import (
     task_spec_revision,
     validate_task_spec_output_contracts,
 )
+from agent_core.skill_discovery import skill_discovery_progress_projection
 
 
 CONSULTATION_PHASES = {
@@ -1998,14 +1999,16 @@ def consultant_no_progress_decision(
     conversation_turn_count: int,
     feedback: Sequence[Mapping[str, Any]],
     route: str,
+    discovery_state: Mapping[str, Any] | None = None,
 ) -> Dict[str, Any]:
-    """Bound an equivalent Consultant retry without inventing new semantics."""
+    """Bound a retry only when semantic and discovery evidence are unchanged."""
     prior = dict(previous or {})
     current = {
         "task_revision": int(task_revision or 0),
         "conversation_turn_count": int(conversation_turn_count or 0),
         "feedback": deepcopy(list(feedback or [])),
         "route": str(route or "consultant"),
+        "skill_discovery": skill_discovery_progress_projection(discovery_state),
     }
     equivalent = all(prior.get(key) == value for key, value in current.items())
     if equivalent and bool(prior.get("retry_pending")):

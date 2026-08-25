@@ -800,11 +800,16 @@ The current Human message is the natural-language authority. Omitted projections
 
 <capabilities>
 One JSON action inside one <action_json> block:
-{{"action_type":"execute|search|load_workflow_template|load_skill_doc|load_reference|load_script|ask|finish", ...}}
+{{"action_type":"execute|search|search_skills|list_skill_categories|list_skills|load_workflow_template|load_skill_doc|reject_skill|select_skill|load_reference|load_script|reasoning_escalation|capability_gap|ask|finish", ...}}
 
 - execute: exactly `{{"action_type":"execute","requirement_ids":["unresolved-id"],"purpose":"one bounded, safe, read-only verification","expected_evidence":{{"field":"expected value"}},"language":"bash","code":"single shell script"}}` in CONSULTING/NEEDS_EVIDENCE. `code` is required. Emit one bounded script only; `command_groups`, `commands`, `runner`, and `env` are unsupported. It must never create, modify, index, normalize, balance, convert, install, download, preprocess, or repair.
 - search: KB only if local metadata/docs are insufficient.
+- search_skills: reformulate a scientific task hypothesis and query the local skill catalog.
+- list_skill_categories/list_skills: bounded catalog expansion after normal semantic searches are exhausted.
 - load_workflow_template: one match; load_skill_doc/reference/script: only the next named artifact.
+- reject_skill/select_skill: record document-backed incompatibility or compatibility evidence.
+- reasoning_escalation: request the narrow thinking path only after normal discovery is exhausted.
+- capability_gap: legal only after the escalated discovery path is exhausted.
 - ask: one unresolved question; finish: selected skills, verified requirements, typed constraints.
 </capabilities>
 
@@ -812,6 +817,19 @@ One JSON action inside one <action_json> block:
 Output exactly one `<action_json>...</action_json>` block using a supported action above. No prose, copied stdout/stderr, traceback, or echoed evidence. FINISH is JSON with `selected_skills,summary,semantic_constraints`. No raw-prompt fallback.
 Controller state is authoritative; in `finalize`, only `finish` or `ask` is valid.
 </consultant_response_contract>
+
+<skill_discovery_protocol>
+A weak or empty first local skill retrieval is recoverable internal uncertainty,
+not proof that the capability is absent and not a user-owned ambiguity. Form a
+semantic task hypothesis from the Human request and verified input roles, use
+SEARCH_SKILLS, reformulate once when needed, then browse the relevant category.
+Read candidate SKILL.md documents before a tool-specific selection when cards
+are insufficient. Never ask the user for an internal skill ID, tool name, or
+catalog choice. ASK only for a genuinely missing user-owned scientific decision
+whose answer changes the task. Do not FINISH while skill-routing is unresolved;
+request reasoning escalation after normal discovery is exhausted, and declare a
+capability gap only after the narrow escalated pass is exhausted.
+</skill_discovery_protocol>
 
 <workflow_first_protocol>
 Use `LOAD_WORKFLOW_TEMPLATE workflow_id` only when task type, triggers, inputs, outputs, and stages match. Otherwise use [SELECTED_SKILLS: ...]. A match provides coarse WORKFLOW_STAGES only; never invent stages or emit activation fields.

@@ -72,6 +72,7 @@ class SkillManager:
                             "generate",
                             "task_types", "stage_tags", "inputs", "outputs",
                             "when_to_use", "when_not_to_use", "skill_type",
+                            "aliases", "summary", "domain",
                         ):
                             if key not in meta and key in meta["metadata"]:
                                 meta[key] = meta["metadata"][key]
@@ -185,6 +186,7 @@ class SkillManager:
         return "yes" if value else "no"
 
     def _catalog_entry_lines(self, skill: Dict[str, Any]) -> List[str]:
+        aliases = ", ".join(self.metadata_list(skill, "aliases")) or "none"
         tags = ", ".join(map(str, skill.get("tags", []) or [])) or "none"
         task_types = ", ".join(self.metadata_list(skill, "task_types")) or "none"
         stage_tags = ", ".join(self.metadata_list(skill, "stage_tags")) or "none"
@@ -198,6 +200,7 @@ class SkillManager:
             f"  skill_id: {skill_id}",
             f"  name: {skill.get('name', 'Unknown')}",
             f"  category: {skill.get('_skill_category', 'root')}",
+            f"  aliases: {aliases}",
             f"  tags: {tags}",
             f"  task_types: {task_types}",
             f"  stage_tags: {stage_tags}",
@@ -874,6 +877,172 @@ class SkillManager:
             if len(ordered) >= limit:
                 break
         return ordered
+
+    def list_skill_categories(self) -> List[str]:
+        """Return canonical catalog namespaces without loading skill bodies."""
+        return sorted({
+            str(skill.get("_skill_category") or "root")
+            for skill in self.discovered_skills
+        })
+
+    def list_skill_cards(
+        self,
+        category: str = "",
+        *,
+        max_results: int = 24,
+    ) -> List[Dict[str, Any]]:
+        """Return bounded lightweight cards for one catalog namespace."""
+        prefix = self._normalize_skill_key(category).lower()
+        selected: List[Dict[str, Any]] = []
+        for skill in self.discovered_skills:
+            skill_id = str(skill.get("_skill_id") or "")
+            skill_category = str(skill.get("_skill_category") or "root")
+            if prefix and prefix not in {"all", "root"}:
+                if not (
+                    skill_category.lower() == prefix
+                    or skill_category.lower().startswith(prefix + "/")
+                    or skill_id.lower().startswith(prefix + "/")
+                ):
+                    continue
+            selected.append(self.skill_discovery_card(skill_id))
+            if len(selected) >= max(1, int(max_results)):
+                break
+        return [card for card in selected if card.get("skill_id")]
+
+    def skill_discovery_card(
+        self,
+        skill_id: str,
+        *,
+        score: int = 0,
+        reasons: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Project shallow metadata used for Consultant reasoning."""
+        skill = self.get_skill_meta(skill_id)
+        if not skill:
+            return {}
+        outputs: List[str] = []
+        for item in list(skill.get("outputs") or []):
+            if isinstance(item, Mapping):
+                value = item.get("output_id") or item.get("role") or item.get("name")
+            else:
+                value = item
+            if str(value or "").strip():
+                outputs.append(str(value).strip())
+        summary = str(
+            skill.get("summary")
+            or skill.get("description")
+            or ""
+        ).strip()
+        return {
+            "skill_id": str(skill.get("_skill_id") or skill_id),
+            "title": str(skill.get("name") or skill.get("_skill_leaf") or skill_id),
+            "domain": str(skill.get("domain") or skill.get("_skill_category") or "root"),
+            "category": str(skill.get("_skill_category") or "root"),
+            "summary": summary[:800],
+            "aliases": self.metadata_list(skill, "aliases"),
+            "task_types": self.metadata_list(skill, "task_types"),
+            "input_roles": self._declared_skill_input_roles(skill),
+            "outputs": list(dict.fromkeys(outputs or self.metadata_list(skill, "outputs"))),
+            "when_to_use": self.metadata_list(skill, "when_to_use"),
+            "not_for": self.metadata_list(skill, "when_not_to_use"),
+            "score": int(score or 0),
+            "reasons": list(dict.fromkeys(str(item) for item in (reasons or []) if str(item))),
+        }
+
+    def rank_skill_candidates(
+        self,
+        text: str,
+        *,
+        input_roles: Optional[List[str]] = None,
+        category: str = "",
+        max_results: int = 12,
+    ) -> List[Dict[str, Any]]:
+        """Rank cards from lexical metadata plus structured input-role evidence.
+
+        Scores are discovery evidence only.  This method never selects a skill.
+        """
+        text_l = str(text or "").lower()
+        requested_roles = {
+            str(item).strip().lower() for item in (input_roles or []) if str(item).strip()
+        }
+        category_l = self._normalize_skill_key(category).lower()
+        ranked: List[tuple[int, str, List[str]]] = []
+        for skill in self.discovered_skills:
+            skill_id = str(skill.get("_skill_id") or "")
+            skill_category = str(skill.get("_skill_category") or "root")
+            if category_l and category_l not in {"all", "root"} and not (
+                skill_category.lower() == category_l
+                or skill_category.lower().startswith(category_l + "/")
+                or skill_id.lower().startswith(category_l + "/")
+            ):
+                continue
+            score = 0
+            reasons: List[str] = []
+            seen_hits = set()
+            if self._matches_known_alias(skill, text_l):
+                score += 8
+                reasons.append("known alias matched")
+            if self._matches_declared_runtime_tool(skill, text_l):
+                score += 8
+                reasons.append("declared runtime tool matched")
+            for alias in self.metadata_list(skill, "aliases"):
+                alias_l = alias.lower().strip()
+                if len(alias_l) >= 2 and alias_l in text_l and alias_l not in seen_hits:
+                    score += 12
+                    seen_hits.add(alias_l)
+                    reasons.append(f"semantic alias matched: {alias}")
+            for term, allow_token_match in self._skill_match_term_entries(skill):
+                term_l = str(term).lower().strip()
+                if not term_l:
+                    continue
+                if len(term_l) >= 3 and term_l in text_l and term_l not in seen_hits:
+                    score += 4 if "/" in term_l else 2
+                    seen_hits.add(term_l)
+                    reasons.append(f"metadata phrase matched: {term_l[:80]}")
+                if allow_token_match:
+                    for token in re.split(r"[\s,;:/|()\[\]{}<>，。；、_-]+", term_l):
+                        if len(token) >= 2 and token in text_l and token not in seen_hits:
+                            score += 1
+                            seen_hits.add(token)
+            declared_roles = set(self._declared_skill_input_roles(skill))
+            role_overlap = sorted(requested_roles.intersection(declared_roles))
+            if role_overlap:
+                score += 5 * len(role_overlap)
+                reasons.extend(f"input role matched: {role}" for role in role_overlap)
+                if requested_roles.issubset(declared_roles):
+                    score += 4
+                    reasons.append("all observed input roles are compatible")
+            if score > 0:
+                ranked.append((score, skill_id, reasons))
+        ranked.sort(key=lambda item: (-item[0], item[1]))
+        return [
+            self.skill_discovery_card(skill_id, score=score, reasons=reasons)
+            for score, skill_id, reasons in ranked[: max(1, int(max_results))]
+        ]
+
+    def format_skill_discovery_cards(
+        self,
+        cards: List[Mapping[str, Any]],
+    ) -> str:
+        """Serialize bounded cards without expanding SKILL.md bodies."""
+        return json.dumps(
+            {"skill_discovery_cards": [dict(card) for card in cards or []]},
+            ensure_ascii=False,
+            sort_keys=True,
+            indent=2,
+            default=str,
+        )
+
+    def _declared_skill_input_roles(self, skill: Mapping[str, Any]) -> List[str]:
+        roles = list(self.metadata_list(dict(skill), "inputs"))
+        generate = skill.get("generate") if isinstance(skill.get("generate"), Mapping) else {}
+        for item in list((generate or {}).get("required_bindings") or []):
+            if not isinstance(item, Mapping):
+                continue
+            name = str(item.get("name") or "").strip()
+            if name and str(item.get("owner") or "user") == "user":
+                roles.append(name)
+        return list(dict.fromkeys(str(item).strip().lower() for item in roles if str(item).strip()))
 
     def get_skill_reference_index(self, skill_id: str) -> List[str]:
         """Return only reference filenames; caller can load individual files later."""
@@ -1972,6 +2141,7 @@ class SkillManager:
             " ".join(map(str, skill.get("_skill_path_tokens", []) or [])),
             " ".join(self._ensure_list(skill.get("_legacy_skill_ids"))),
             skill.get("name", ""),
+            " ".join(self.metadata_list(skill, "aliases")),
             " ".join(map(str, skill.get("tags", []) or [])),
             " ".join(self.metadata_list(skill, "task_types")),
             " ".join(self.metadata_list(skill, "stage_tags")),

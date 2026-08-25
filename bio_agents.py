@@ -135,6 +135,25 @@ from agent_core.installer import InstallerAgent
 from agent_core.retriever import RAGFlowRetriever
 from agent_core.router import classify_task_mode, managed_execution_admitted
 from agent_core.skill_manager import SkillManager
+from agent_core.skill_discovery import (
+    CAPABILITY_GAP,
+    REASONING_ESCALATION,
+    SELECTED,
+    build_discovery_escalation_context,
+    capability_gap_allowed,
+    discovery_input_roles,
+    discovery_next_actions,
+    normal_discovery_exhausted,
+    normalize_skill_discovery_state,
+    record_capability_gap,
+    record_catalog_expansion,
+    record_loaded_skill_doc,
+    record_reasoning_escalation,
+    record_rejected_candidate,
+    record_selected_skills,
+    record_skill_search,
+    reject_premature_finish,
+)
 from agent_core.workflow_manager import (
     WorkflowManager,
     parse_workflow_handoff,
@@ -859,6 +878,25 @@ def bind_recovery_llm(
     )
 
 
+def bind_consultant_reasoning_llm(
+    llm: Any,
+    *,
+    model: str,
+    base_url: str,
+    enabled: bool = RECOVERY_THINKING_ENABLED,
+    reasoning_effort: str = RECOVERY_REASONING_EFFORT,
+) -> Tuple[Any, Dict[str, Any]]:
+    """Reuse node-scoped thinking only for exhausted Consultant discovery."""
+    return _bind_deepseek_thinking_llm(
+        llm,
+        model=model,
+        base_url=base_url,
+        enabled=enabled,
+        reasoning_effort=reasoning_effort,
+        scope="consultant_skill_discovery_escalation_only",
+    )
+
+
 def effective_llm_temperature(
     *,
     is_deepseek: bool,
@@ -1541,6 +1579,14 @@ class BioAnalystAgent:
             base_url=LLM_BASE_URL,
         )
         self.recovery_llm, self.recovery_llm_policy = bind_recovery_llm(
+            self.llm,
+            model=llm_model,
+            base_url=LLM_BASE_URL,
+        )
+        (
+            self.consultant_reasoning_llm,
+            self.consultant_reasoning_llm_policy,
+        ) = bind_consultant_reasoning_llm(
             self.llm,
             model=llm_model,
             base_url=LLM_BASE_URL,
@@ -12265,6 +12311,34 @@ class BioAnalystAgent:
                 kb = str(obj.get("kb") or obj.get("kb_name") or obj.get("category") or "SOP").strip().upper()
                 if query:
                     return f"SEARCH {kb} {query}"
+            if action_type == "search_skills":
+                query = str(obj.get("query") or obj.get("body") or "").strip()
+                if query:
+                    return f"SEARCH_SKILLS {query}"
+            if action_type == "list_skill_categories":
+                return "LIST_SKILL_CATEGORIES"
+            if action_type == "list_skills":
+                category = str(obj.get("category") or obj.get("domain") or "all").strip()
+                return f"LIST_SKILLS {category or 'all'}"
+            if action_type == "select_skill":
+                selected = obj.get("selected_skills") or obj.get("skills") or []
+                if isinstance(selected, str):
+                    selected = [
+                        item.strip() for item in re.split(r"[,，;\n]+", selected)
+                        if item.strip()
+                    ]
+                if isinstance(selected, list) and selected:
+                    return "SELECT_SKILL " + ",".join(
+                        str(item).strip() for item in selected if str(item).strip()
+                    )
+            if action_type == "reject_skill":
+                skill_id = str(obj.get("skill_id") or obj.get("id") or "").strip()
+                if skill_id:
+                    return f"REJECT_SKILL {skill_id}"
+            if action_type == "reasoning_escalation":
+                return "REASONING_ESCALATION"
+            if action_type == "capability_gap":
+                return "CAPABILITY_GAP"
             if action_type == "load_workflow_template":
                 workflow_id = str(obj.get("workflow_id") or obj.get("id") or obj.get("body") or "").strip()
                 if workflow_id:
@@ -20654,27 +20728,73 @@ question. Never guess a scientific or database identity.
                     )
             else:
                 workflow_catalog = "<workflow_catalog>\nNo workflow templates available.\n</workflow_catalog>"
+            consultation_state = dict(state.get("consultation_state") or {})
+            if not consultation_state:
+                consultation_state = new_consultation_state(
+                    f"{task_id}:consultant:{task_spec_revision(task_spec)}",
+                    task_id,
+                    max_total_execute=4,
+                    max_no_progress=2,
+                )
+            input_roles = discovery_input_roles(
+                input_audit=input_resolution_result,
+                task_spec=task_spec,
+            )
+            discovery_state = normalize_skill_discovery_state(
+                consultation_state.get("skill_discovery")
+            )
             candidate_skill_ids: List[str] = []
+            candidate_skill_cards: List[Dict[str, Any]] = []
             skill_tree = ""
             skill_catalog = ""
             preloaded_skill_docs = ""
             preloaded_skill_docs_context = ""
             explicit_candidate_ids: List[str] = []
             if self.skill_manager:
-                candidate_skill_ids = self.skill_manager.candidate_skill_ids_for_prompt(
-                    consultant_context,
-                    max_results=CONSULTANT_CANDIDATE_SKILL_LIMIT,
-                )
-                if candidate_skill_ids:
-                    skill_catalog = self.skill_manager.get_skill_catalog_prompt(candidate_skill_ids)
-                    skill_tree = ""
+                if not discovery_state.get("search_history"):
+                    candidate_skill_cards = self.skill_manager.rank_skill_candidates(
+                        consultant_context,
+                        input_roles=input_roles,
+                        max_results=CONSULTANT_CANDIDATE_SKILL_LIMIT,
+                    )
+                    discovery_state = record_skill_search(
+                        discovery_state,
+                        query=consultant_context,
+                        candidate_cards=candidate_skill_cards,
+                        input_roles=input_roles,
+                        source="initial_request_retrieval",
+                    )
                 else:
-                    skill_tree = self.skill_manager.get_skill_tree_prompt()
+                    for skill_id in discovery_state.get("candidate_skill_ids") or []:
+                        evidence = dict(
+                            (discovery_state.get("candidate_evidence") or {}).get(skill_id)
+                            or {}
+                        )
+                        card = self.skill_manager.skill_discovery_card(
+                            skill_id,
+                            score=int(evidence.get("score") or 0),
+                            reasons=list(evidence.get("reasons") or []),
+                        )
+                        if card:
+                            candidate_skill_cards.append(card)
+                candidate_skill_ids = [
+                    str(card.get("skill_id") or "")
+                    for card in candidate_skill_cards
+                    if str(card.get("skill_id") or "")
+                ]
+                if candidate_skill_cards:
+                    skill_catalog = self.skill_manager.format_skill_discovery_cards(
+                        candidate_skill_cards
+                    )
+                else:
                     skill_catalog = (
                         "<skill_catalog>\n"
-                        "No metadata candidate matched this request. Do not invent an ID; use the visible canonical tree only to choose a documented candidate, or ask for clarification.\n"
+                        "No ranked candidate is visible in this discovery round. Reformulate the "
+                        "semantic task query; browse the catalog only after the normal search budget.\n"
                         "</skill_catalog>"
                     )
+                if str(discovery_state.get("routing_status") or "") == "EXPANDING_DISCOVERY":
+                    skill_tree = self.skill_manager.get_skill_tree_prompt()
                 explicit_candidate_ids = [
                     skill_id
                     for skill_id in candidate_skill_ids
@@ -20693,6 +20813,7 @@ question. Never guess a scientific or database identity.
                     )
             else:
                 skill_catalog = "None"
+            consultation_state["skill_discovery"] = discovery_state
             runtime_discovery_hints: Dict[str, Any] = {}
             controlled_discovery_hints = ""
             needs_controlled_discovery = not candidate_skill_ids or any(
@@ -20714,19 +20835,38 @@ question. Never guess a scientific or database identity.
                         "</controlled_discovery_hints>"
                     )
             runtime_evidence_context = self._consultant_runtime_context(candidate_skill_ids)
-            consultation_state = dict(state.get("consultation_state") or {})
-            if not consultation_state:
-                consultation_state = new_consultation_state(
-                    f"{task_id}:consultant:{task_spec_revision(task_spec)}",
-                    task_id,
-                    max_total_execute=4,
-                    max_no_progress=2,
-                )
             consultation_state["iteration"] = int(consultation_state.get("iteration") or 0) + 1
             loaded_skill_ids = list(verified_loaded_skill_ids)
+            for skill_id in loaded_skill_ids:
+                if skill_id in set(discovery_state.get("loaded_skill_ids") or []):
+                    continue
+                document = self.skill_manager.load_skill(skill_id) if self.skill_manager else ""
+                meta = self.skill_manager.get_skill_meta(skill_id) if self.skill_manager else {}
+                discovery_state = record_loaded_skill_doc(
+                    discovery_state,
+                    skill_id=skill_id,
+                    path=str((meta or {}).get("_skill_md") or ""),
+                    document=document,
+                    summary=str((meta or {}).get("summary") or (meta or {}).get("description") or ""),
+                )
+            current_selected_skill_ids = list(dict.fromkeys([
+                *list(state.get("selected_skills") or []),
+                *list(discovery_state.get("selected_skill_ids") or []),
+            ]))
+            if explicit_candidate_ids:
+                current_selected_skill_ids = list(dict.fromkeys([
+                    *current_selected_skill_ids,
+                    *explicit_candidate_ids,
+                ]))
+                discovery_state = record_selected_skills(
+                    discovery_state,
+                    current_selected_skill_ids,
+                )
+            consultation_state["skill_discovery"] = discovery_state
             runtime_seed_skill_ids = list(dict.fromkeys([
                 *explicit_candidate_ids,
                 *loaded_skill_ids,
+                *current_selected_skill_ids,
             ]))
             runtime_seed_audits, runtime_seed_evidence, _runtime_seed_summary = (
                 self._consultant_runtime_seed_evidence(runtime_seed_skill_ids, task_id)
@@ -20738,8 +20878,8 @@ question. Never guess a scientific or database identity.
                 input_audit=input_resolution_result,
                 # A user-named canonical skill is an actual selection. Broad metadata
                 # candidates remain discovery hints and must not all become mandatory.
-                candidate_skill_ids=[*explicit_candidate_ids, *loaded_skill_ids],
-                routing_candidate_ids=[*explicit_candidate_ids, *loaded_skill_ids],
+                candidate_skill_ids=runtime_seed_skill_ids,
+                routing_candidate_ids=[*explicit_candidate_ids, *current_selected_skill_ids],
                 runtime_evidence=runtime_seed_evidence,
             )
             # Do not enter FINALIZE from the pre-response state.  Candidate
@@ -20832,6 +20972,7 @@ question. Never guess a scientific or database identity.
                     "contract_status": "blocked_internal_contract_error",
                     "next_step": "finish",
                 }
+            discovery_escalated = False
             if finalize_mode:
                 resolved_selected_skill_ids = self._resolve_consultant_finalize_skills(
                     state=state,
@@ -21103,6 +21244,41 @@ question. Never guess a scientific or database identity.
                         "pending_review_classification"
                     ) or {}
                 )
+                visible_capability_ids = self.skill_manager.normalize_selected_skills(
+                    [
+                        *explicit_candidate_ids,
+                        *loaded_skill_ids,
+                        *list(state.get("selected_skills") or []),
+                        *candidate_skill_ids[:5],
+                    ],
+                    max_results=consultant_max_skills,
+                ) if self.skill_manager else []
+                discovery_prompt_state = {
+                    "routing_status": discovery_state.get("routing_status"),
+                    "reasoning_level": discovery_state.get("reasoning_level"),
+                    "task_hypothesis": discovery_state.get("task_hypothesis"),
+                    "input_roles": list(discovery_state.get("input_roles") or []),
+                    "search_queries_attempted": list(
+                        discovery_state.get("search_queries_attempted") or []
+                    ),
+                    "search_history": [
+                        {
+                            key: deepcopy(item.get(key))
+                            for key in ("source", "query", "category", "candidate_ids")
+                            if item.get(key) not in (None, "", [], {})
+                        }
+                        for item in list(discovery_state.get("search_history") or [])[-8:]
+                        if isinstance(item, Mapping)
+                    ],
+                    "candidate_skill_ids": list(visible_capability_ids),
+                    "loaded_skill_ids": list(discovery_state.get("loaded_skill_ids") or []),
+                    "rejected_candidates": list(discovery_state.get("rejected_candidates") or []),
+                    "normal_search_count": int(discovery_state.get("normal_search_count") or 0),
+                    "catalog_expansion_count": int(discovery_state.get("catalog_expansion_count") or 0),
+                    "reasoning_escalation_count": int(discovery_state.get("reasoning_escalation_count") or 0),
+                    "budgets": dict(discovery_state.get("budgets") or {}),
+                    "next_actions": discovery_next_actions(discovery_state),
+                }
                 consultant_node_context = build_node_context(
                     node_type="consultant",
                     task_spec=task_spec,
@@ -21120,7 +21296,7 @@ question. Never guess a scientific or database identity.
                                 "resolved_bindings", "pending_question",
                             )
                             if consultation_state.get(key) not in (None, "", [], {})
-                        },
+                        } | {"skill_discovery": discovery_prompt_state},
                         "last_actionable_feedback": actionable_feedback,
                         # The Consultant sees only semantic work to classify.
                         # Controller fingerprints, revisions, refs, scopes and
@@ -21155,6 +21331,7 @@ question. Never guess a scientific or database identity.
                             "unresolved_reasons": list(input_resolution_result.get("unresolved_reasons") or []),
                             "missing_roles": list(input_resolution_result.get("missing_roles") or []),
                             "ambiguous_roles": list(input_resolution_result.get("ambiguous_roles") or []),
+                            "resolved_input_roles": list(input_roles),
                             "candidate_basenames": sorted({
                                 Path(str(item.get("path") or "")).name
                                 for item in input_resolution_result.get("formal_candidates", []) or []
@@ -21168,7 +21345,9 @@ question. Never guess a scientific or database identity.
                         "upsert_constraint", "remove_constraint",
                         "upsert_output_contract", "remove_output_contract",
                         "confirm_decision", "remove_decision", "mark_ambiguity",
-                        "ask_user", "finish",
+                        "search_skills", "list_skill_categories", "list_skills",
+                        "load_skill_doc", "reject_skill", "select_skill", "reasoning_escalation",
+                        "capability_gap", "ask_user", "finish",
                     ],
                     touched_entity_versions=dict(
                         state.get("task_entity_versions") or {}
@@ -21176,15 +21355,6 @@ question. Never guess a scientific or database identity.
                     trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
                     max_payload_chars=max(1, int(self.llm_context_limit_tokens) * 4),
                 )
-                visible_capability_ids = self.skill_manager.normalize_selected_skills(
-                    [
-                        *candidate_skill_ids,
-                        *explicit_candidate_ids,
-                        *loaded_skill_ids,
-                        *list(state.get("selected_skills") or []),
-                    ],
-                    max_results=consultant_max_skills,
-                ) if self.skill_manager else []
                 semantic_capabilities, _consultant_operation_bindings = (
                     self.skill_manager.get_semantic_execution_capabilities(
                         visible_capability_ids
@@ -21192,9 +21362,21 @@ question. Never guess a scientific or database identity.
                     if self.skill_manager
                     else ([], {})
                 )
+                visible_candidate_cards = [
+                    dict(card) for card in candidate_skill_cards
+                    if str(card.get("skill_id") or "") in set(visible_capability_ids)
+                ]
+                loaded_skill_documents: Dict[str, str] = {}
+                for skill_id in loaded_skill_ids[:5]:
+                    document = self.skill_manager.load_skill(skill_id) if self.skill_manager else ""
+                    if document:
+                        loaded_skill_documents[skill_id] = document
                 consultant_capability_context = json.dumps(
                     {
                         "capabilities": semantic_capabilities,
+                        "discovery_state": discovery_prompt_state,
+                        "discovery_cards": visible_candidate_cards,
+                        "loaded_skill_documents": loaded_skill_documents,
                         "catalog": [
                             {
                                 "skill_id": str(meta.get("_skill_id") or ""),
@@ -21218,12 +21400,31 @@ question. Never guess a scientific or database identity.
                     indent=2,
                     default=str,
                 )
-                consultant_prompt = PromptManager.get_consultant_v2_prompt(
-                    consultant_node_context.llm_payload.to_dict(),
-                    capability_context=consultant_capability_context,
-                    consultation_context="Current semantic consultation state is included in LLMPayload.feedback.",
-                    max_skills=consultant_max_skills,
+                discovery_escalated = bool(
+                    discovery_state.get("reasoning_level") == "escalated"
+                    and discovery_state.get("routing_status")
+                    not in {SELECTED, CAPABILITY_GAP, "NEED_USER_CLARIFICATION"}
                 )
+                if discovery_escalated:
+                    escalation_context = build_discovery_escalation_context(
+                        raw_user_request=consultant_context,
+                        task_spec=task_spec,
+                        input_inventory=input_resolution_result,
+                        discovery_state=discovery_state,
+                        candidate_cards=visible_candidate_cards,
+                    )
+                    consultant_prompt = PromptManager.get_consultant_discovery_escalation_prompt(
+                        escalation_context,
+                        loaded_skill_documents=loaded_skill_documents,
+                        max_skills=consultant_max_skills,
+                    )
+                else:
+                    consultant_prompt = PromptManager.get_consultant_v2_prompt(
+                        consultant_node_context.llm_payload.to_dict(),
+                        capability_context=consultant_capability_context,
+                        consultation_context="Current semantic consultation state is included in LLMPayload.feedback.",
+                        max_skills=consultant_max_skills,
+                    )
                 # Full semantic conversation is carried once, inside the
                 # payload evidence section.  Graph history is intentionally
                 # omitted so it cannot duplicate or replace that durable view.
@@ -21259,7 +21460,8 @@ question. Never guess a scientific or database identity.
                 "rag_history": len(rag_history_text),
                 "user_preferences": len(user_preferences_context),
                 },
-                "candidate_skill_count": len(candidate_skill_ids),
+                "candidate_skill_count": len(visible_capability_ids),
+                "retrieved_candidate_skill_count": len(candidate_skill_ids),
                 "preloaded_skill_doc_chars": len(preloaded_skill_docs_context),
                 "history_message_chars": history_message_chars,
                 "skill_message_chars": skill_message_chars,
@@ -21369,6 +21571,7 @@ question. Never guess a scientific or database identity.
                     conversation_turn_count=len(conversation_turns),
                     feedback=actionable_feedback,
                     route="consultant",
+                    discovery_state=discovery_state,
                 )
                 if not no_progress.get("allow"):
                     reason = (
@@ -21405,12 +21608,26 @@ question. Never guess a scientific or database identity.
                         "call_kind": (
                             "consultant_contract_repair"
                             if contract_repair_state
-                            else "consultant_finalize" if finalize_mode else "consultant"
+                            else "consultant_finalize" if finalize_mode
+                            else "consultant_skill_discovery_escalation" if discovery_escalated
+                            else "consultant"
                         ),
                         "task_spec_revision": task_spec_revision(task_spec),
                         "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
-                        "candidate_skill_ids": candidate_skill_ids,
+                        "candidate_skill_ids": visible_capability_ids,
+                        "retrieved_candidate_skill_ids": candidate_skill_ids,
                         "selected_skill_ids": list(state.get("selected_skills") or []),
+                        "skill_discovery": {
+                            "discovery_round": int(discovery_state.get("normal_search_count") or 0),
+                            "reasoning_level": str(discovery_state.get("reasoning_level") or "normal"),
+                            "routing_status": str(discovery_state.get("routing_status") or "UNRESOLVED"),
+                            "search_queries_attempted": list(discovery_state.get("search_queries_attempted") or []),
+                            "input_roles": list(discovery_state.get("input_roles") or []),
+                            "candidate_ids": list(discovery_state.get("candidate_skill_ids") or []),
+                            "loaded_skill_ids": list(discovery_state.get("loaded_skill_ids") or []),
+                            "rejected_candidates": list(discovery_state.get("rejected_candidates") or []),
+                            "reasoning_escalation_trigger": str(discovery_state.get("reasoning_escalation_trigger") or ""),
+                        },
                         "retrieval_refs": [
                             {
                                 "sha256": hashlib.sha256(str(item).encode("utf-8")).hexdigest(),
@@ -21434,6 +21651,12 @@ question. Never guess a scientific or database identity.
                         "user_source_refs": list(state.get("user_source_refs") or []),
                     },
                     temperature=0.0 if finalize_mode else None,
+                    llm_override=(
+                        self.consultant_reasoning_llm if discovery_escalated else None
+                    ),
+                    llm_policy=(
+                        self.consultant_reasoning_llm_policy if discovery_escalated else None
+                    ),
                 )
             except Exception as exc:
                 failure_summary = llm_failure_summary(exc, "consultant", task_id)
@@ -21794,7 +22017,372 @@ question. Never guess a scientific or database identity.
                     "next_step": "consultant",
                 }
 
-            # SEARCH 动作
+            if content.startswith("SEARCH_SKILLS"):
+                query = str(
+                    consultant_json_payload.get("query")
+                    or content.removeprefix("SEARCH_SKILLS").strip()
+                ).strip()
+                task_hypothesis = str(
+                    consultant_json_payload.get("task_hypothesis")
+                    or discovery_state.get("task_hypothesis")
+                    or ""
+                ).strip()
+                if not query:
+                    obs = (
+                        '<consultant_validation_error code="SKILL_SEARCH_QUERY_REQUIRED">'
+                        "SEARCH_SKILLS requires a semantic scientific-task query."
+                        "</consultant_validation_error>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                search_limits = dict(discovery_state.get("budgets") or {})
+                prior_queries = list(discovery_state.get("search_queries_attempted") or [])
+                if query in prior_queries:
+                    obs = (
+                        '<consultant_validation_error code="DUPLICATE_SKILL_SEARCH">'
+                        "Reformulate the query; repeating an identical skill search is not progress."
+                        "</consultant_validation_error>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                if (
+                    discovery_state.get("reasoning_level") != "escalated"
+                    and int(discovery_state.get("normal_search_count") or 0)
+                    >= int(search_limits.get("normal_searches") or 2)
+                ):
+                    obs = (
+                        '<consultant_validation_error code="NORMAL_SKILL_SEARCH_BUDGET_EXHAUSTED">'
+                        "Normal semantic search is exhausted. Browse the catalog, then request "
+                        "reasoning escalation if routing remains unresolved."
+                        "</consultant_validation_error>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                cards = self.skill_manager.rank_skill_candidates(
+                    query,
+                    input_roles=input_roles,
+                    max_results=consultant_max_skills,
+                ) if self.skill_manager else []
+                discovery_state = record_skill_search(
+                    discovery_state,
+                    query=query,
+                    candidate_cards=cards,
+                    input_roles=input_roles,
+                    task_hypothesis=task_hypothesis,
+                    source=(
+                        "reasoning_escalation_search"
+                        if discovery_state.get("reasoning_level") == "escalated"
+                        else "consultant_query_reformulation"
+                    ),
+                )
+                consultation_state["skill_discovery"] = discovery_state
+                logger.info(
+                    "Consultant skill search: task=%s round=%s level=%s query=%s candidates=%s",
+                    task_id,
+                    discovery_state.get("normal_search_count"),
+                    discovery_state.get("reasoning_level"),
+                    query,
+                    [card.get("skill_id") for card in cards],
+                )
+                obs = (
+                    '<skill_search_result owner="consultant_internal">\n'
+                    + (self.skill_manager.format_skill_discovery_cards(cards) if self.skill_manager else "{}")
+                    + "\nnext_actions="
+                    + json.dumps(discovery_next_actions(discovery_state), ensure_ascii=False)
+                    + "\n</skill_search_result>"
+                )
+                return {
+                    "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                    "consultation_state": consultation_state,
+                    "pending_human_question": {},
+                    "next_step": "consultant",
+                }
+
+            if content.startswith("LIST_SKILL_CATEGORIES"):
+                if int(discovery_state.get("normal_search_count") or 0) < int(
+                    (discovery_state.get("budgets") or {}).get("normal_searches") or 2
+                ):
+                    obs = (
+                        '<consultant_validation_error code="QUERY_REFORMULATION_REQUIRED">'
+                        "Perform the bounded normal semantic searches before catalog expansion."
+                        "</consultant_validation_error>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                categories = self.skill_manager.list_skill_categories() if self.skill_manager else []
+                discovery_state = normalize_skill_discovery_state(discovery_state)
+                discovery_state["routing_status"] = "EXPANDING_DISCOVERY"
+                discovery_state["category_index_listed"] = True
+                discovery_state["search_history"] = [
+                    *list(discovery_state.get("search_history") or []),
+                    {"source": "category_index", "categories": categories},
+                ][-12:]
+                consultation_state["skill_discovery"] = discovery_state
+                obs = (
+                    '<skill_category_index owner="consultant_internal">\n'
+                    + json.dumps(categories, ensure_ascii=False)
+                    + "\nChoose one relevant canonical category with LIST_SKILLS."
+                    + "\n</skill_category_index>"
+                )
+                return {
+                    "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                    "consultation_state": consultation_state,
+                    "pending_human_question": {},
+                    "next_step": "consultant",
+                }
+
+            if content.startswith("LIST_SKILLS"):
+                category = str(
+                    consultant_json_payload.get("category")
+                    or content.removeprefix("LIST_SKILLS").strip()
+                    or "all"
+                ).strip()
+                if not normal_discovery_exhausted(discovery_state):
+                    obs = (
+                        '<consultant_validation_error code="QUERY_REFORMULATION_REQUIRED">'
+                        "Catalog expansion is available only after normal semantic search is exhausted."
+                        "</consultant_validation_error>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                if (
+                    discovery_state.get("reasoning_level") != "escalated"
+                    and int(discovery_state.get("catalog_expansion_count") or 0)
+                    >= int((discovery_state.get("budgets") or {}).get("catalog_expansions") or 1)
+                ):
+                    obs = (
+                        '<consultant_validation_error code="CATALOG_EXPANSION_BUDGET_EXHAUSTED">'
+                        "Catalog expansion is exhausted; request reasoning escalation."
+                        "</consultant_validation_error>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                cards = self.skill_manager.list_skill_cards(
+                    category,
+                    max_results=CONSULTANT_CANDIDATE_SKILL_LIMIT,
+                ) if self.skill_manager else []
+                discovery_state = record_catalog_expansion(
+                    discovery_state,
+                    category=category,
+                    candidate_cards=cards,
+                )
+                consultation_state["skill_discovery"] = discovery_state
+                logger.info(
+                    "Consultant catalog expansion: task=%s category=%s candidates=%s",
+                    task_id,
+                    category,
+                    [card.get("skill_id") for card in cards],
+                )
+                obs = (
+                    f'<skill_catalog_result category="{category}" owner="consultant_internal">\n'
+                    + (self.skill_manager.format_skill_discovery_cards(cards) if self.skill_manager else "{}")
+                    + "\n</skill_catalog_result>"
+                )
+                return {
+                    "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                    "consultation_state": consultation_state,
+                    "pending_human_question": {},
+                    "next_step": "consultant",
+                }
+
+            if content.startswith("REJECT_SKILL"):
+                skill_id = str(
+                    consultant_json_payload.get("skill_id")
+                    or content.removeprefix("REJECT_SKILL").strip()
+                ).strip()
+                reason = str(consultant_json_payload.get("reason") or "").strip()
+                known_candidates = set(discovery_state.get("candidate_skill_ids") or [])
+                if not skill_id or skill_id not in known_candidates or not reason:
+                    obs = (
+                        '<consultant_validation_error code="SKILL_REJECTION_EVIDENCE_REQUIRED">'
+                        "Reject only a current candidate and provide its documented incompatibility reason."
+                        "</consultant_validation_error>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                discovery_state = record_rejected_candidate(
+                    discovery_state,
+                    skill_id=skill_id,
+                    reason=reason,
+                )
+                consultation_state["skill_discovery"] = discovery_state
+                return {
+                    "messages": [AIMessage(content=content), SystemMessage(content=(
+                        '<skill_candidate_rejected owner="consultant">'
+                        + json.dumps({"skill_id": skill_id, "reason": reason}, ensure_ascii=False)
+                        + "</skill_candidate_rejected>"
+                    ))],
+                    "consultation_state": consultation_state,
+                    "pending_human_question": {},
+                    "next_step": "consultant",
+                }
+
+            if content.startswith("SELECT_SKILL"):
+                raw_selected = consultant_json_payload.get("selected_skills") or []
+                if isinstance(raw_selected, str):
+                    raw_selected = [
+                        item.strip() for item in re.split(r"[,，;\n]+", raw_selected)
+                        if item.strip()
+                    ]
+                selected = self.skill_manager.normalize_selected_skills(
+                    raw_selected,
+                    max_results=consultant_max_skills,
+                ) if self.skill_manager else []
+                issues = self.skill_manager.validate_selected_skills(
+                    raw_selected,
+                    max_results=consultant_max_skills,
+                ) if self.skill_manager else []
+                loaded_or_explicit = set(loaded_skill_ids).union(explicit_candidate_ids)
+                unloaded = [skill_id for skill_id in selected if skill_id not in loaded_or_explicit]
+                if issues or not selected or unloaded:
+                    code = "SKILL_DOC_REQUIRED" if unloaded else "CONSULTANT_SKILL_SELECTION_INVALID"
+                    detail = (
+                        "Load each selected candidate document before committing selection: "
+                        + ", ".join(unloaded)
+                        if unloaded
+                        else json.dumps(issues, ensure_ascii=False, default=str)
+                    )
+                    obs = f'<consultant_validation_error code="{code}">{detail}</consultant_validation_error>'
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                discovery_state = record_selected_skills(discovery_state, selected)
+                candidate_runtime_audits, candidate_runtime_evidence, _ = (
+                    self._consultant_runtime_seed_evidence(selected, task_id)
+                    if selected else ([], {}, "")
+                )
+                consultation_state["skill_discovery"] = discovery_state
+                consultation_state = seed_structured_evidence(
+                    consultation_state,
+                    input_audit=input_resolution_result,
+                    candidate_skill_ids=selected,
+                    routing_candidate_ids=selected,
+                    runtime_evidence=candidate_runtime_evidence,
+                )
+                consultation_state["resolved_selected_skill_ids"] = list(selected)
+                logger.info(
+                    "Consultant selected documented skills: task=%s selected=%s reason=%s",
+                    task_id,
+                    selected,
+                    str(consultant_json_payload.get("selection_reason") or "")[:600],
+                )
+                obs = (
+                    '<skill_selection_committed owner="consultant">'
+                    + json.dumps({
+                        "selected_skill_ids": selected,
+                        "selection_reason": str(consultant_json_payload.get("selection_reason") or ""),
+                    }, ensure_ascii=False, sort_keys=True)
+                    + "</skill_selection_committed>"
+                )
+                return {
+                    "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                    "selected_skills": selected,
+                    "selected_skills_raw": list(raw_selected),
+                    "runtime_audit": candidate_runtime_audits,
+                    "consultation_state": consultation_state,
+                    "pending_human_question": {},
+                    "next_step": "consultant",
+                }
+
+            if content.startswith("REASONING_ESCALATION"):
+                try:
+                    discovery_state = record_reasoning_escalation(
+                        discovery_state,
+                        trigger=str(
+                            consultant_json_payload.get("reason")
+                            or "normal discovery exhausted without reliable selection"
+                        ),
+                    )
+                except ValueError as exc:
+                    obs = (
+                        '<consultant_validation_error code="REASONING_ESCALATION_NOT_ALLOWED">'
+                        + str(exc)
+                        + "</consultant_validation_error>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                consultation_state["skill_discovery"] = discovery_state
+                logger.info(
+                    "Consultant discovery reasoning escalation: task=%s trigger=%s",
+                    task_id,
+                    discovery_state.get("reasoning_escalation_trigger"),
+                )
+                return {
+                    "messages": [AIMessage(content=content), SystemMessage(content=(
+                        '<skill_discovery_reasoning_escalated>'
+                        "The next Consultant invocation uses the narrow discovery context and node-scoped thinking policy."
+                        "</skill_discovery_reasoning_escalated>"
+                    ))],
+                    "consultation_state": consultation_state,
+                    "pending_human_question": {},
+                    "next_step": "consultant",
+                }
+
+            if content.startswith("CAPABILITY_GAP"):
+                reason = str(
+                    consultant_json_payload.get("reason")
+                    or "No compatible documented capability was found."
+                ).strip()
+                if not capability_gap_allowed(discovery_state):
+                    obs = (
+                        '<consultant_validation_error code="CAPABILITY_GAP_PREMATURE">'
+                        "Capability gap is unavailable until normal discovery and one narrow reasoning escalation are exhausted."
+                        "</consultant_validation_error>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
+                discovery_state = record_capability_gap(discovery_state, reason=reason)
+                blocked = deepcopy(consultation_state)
+                blocked.update({
+                    "skill_discovery": discovery_state,
+                    "phase": "blocked",
+                    "consultation_status": "blocked",
+                    "completion_decision": "blocked",
+                    "completion_reason": CAPABILITY_GAP,
+                })
+                return {
+                    "messages": [AIMessage(content=content), SystemMessage(content=(
+                        '<consultant_capability_gap owner="consultant_internal">'
+                        + reason
+                        + "</consultant_capability_gap>"
+                    ))],
+                    "consultation_state": blocked,
+                    "pending_human_question": {},
+                    "task_status": TASK_STATUS_BLOCKED,
+                    "failure_owner": "consultant_internal",
+                    "next_step": "finish",
+                }
+
+            # SEARCH 动作（知识库，不是本地 Skill discovery）
             if content.startswith("SEARCH"):
                 parts = content.split(" ", 2)
                 if len(parts) >= 3:
@@ -21854,13 +22442,42 @@ question. Never guess a scientific or database identity.
                 if content in load_actions:
                     obs = (
                         "<consultant_validation_error>\n"
-                        f"The artifact requested by `{content}` is already loaded. Do not request it again; FINISH or ASK.\n"
+                        f"The artifact requested by `{content}` is already loaded. Do not request it again; compare, SELECT_SKILL, SEARCH_SKILLS, or FINISH.\n"
                         "</consultant_validation_error>"
                     )
                     return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "consultation_state": consultation_state, "next_step": "consultant"}
+                if (
+                    skill_id not in set(discovery_state.get("loaded_skill_ids") or [])
+                    and len(discovery_state.get("loaded_skill_ids") or [])
+                    >= int((discovery_state.get("budgets") or {}).get("loaded_skill_docs") or 5)
+                ):
+                    obs = (
+                        '<consultant_validation_error code="SKILL_DOC_BUDGET_EXHAUSTED">'
+                        "The bounded skill-document reading budget is exhausted. Compare loaded evidence, "
+                        "reject incompatible candidates, or request reasoning escalation when allowed."
+                        "</consultant_validation_error>"
+                    )
+                    return {
+                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
+                        "consultation_state": consultation_state,
+                        "next_step": "consultant",
+                    }
                 output.print_once(f"consultant_load:{content}", f"📖 Consultant loading skill doc: {skill_id}", Fore.CYAN)
                 loaded = self.skill_manager.load_skill(skill_id) if self.skill_manager and skill_id else ""
                 if loaded:
+                    meta = self.skill_manager.get_skill_meta(skill_id) if self.skill_manager else {}
+                    discovery_state = record_loaded_skill_doc(
+                        discovery_state,
+                        skill_id=skill_id,
+                        path=str((meta or {}).get("_skill_md") or ""),
+                        document=loaded,
+                        summary=str((meta or {}).get("summary") or (meta or {}).get("description") or ""),
+                    )
+                    if str(consultant_json_payload.get("task_hypothesis") or "").strip():
+                        discovery_state["task_hypothesis"] = str(
+                            consultant_json_payload.get("task_hypothesis")
+                        ).strip()
+                    consultation_state["skill_discovery"] = discovery_state
                     obs = f'<loaded_skill_doc skill_id="{skill_id}">\n{loaded}\n</loaded_skill_doc>'
                 else:
                     obs = (
@@ -22047,6 +22664,9 @@ question. Never guess a scientific or database identity.
                         "Use only canonical skill IDs from the visible capability catalog: "
                         + json.dumps(selection_issues, ensure_ascii=False, default=str),
                     )
+                if selected:
+                    discovery_state = record_selected_skills(discovery_state, selected)
+                    consultation_state["skill_discovery"] = discovery_state
                 try:
                     mutation_proposal = self._consultant_task_spec_mutation_proposal(
                         consultant_json_payload,
@@ -22183,6 +22803,17 @@ question. Never guess a scientific or database identity.
                         "resume_step": "consultant",
                     }
                     candidate_consultation = deepcopy(dict(candidate.get("consultation_state") or {}))
+                    ask_discovery = normalize_skill_discovery_state(
+                        candidate_consultation.get("skill_discovery") or discovery_state
+                    )
+                    ask_discovery.update({
+                        "routing_status": "NEED_USER_CLARIFICATION",
+                        "ask_user_ownership_reason": (
+                            "validated missing required user-owned scientific decision"
+                        ),
+                        "asked_user_slots": list(requested_slots),
+                    })
+                    candidate_consultation["skill_discovery"] = ask_discovery
                     candidate_consultation["asked_slots"] = list(dict.fromkeys([
                         *list(candidate_consultation.get("asked_slots") or []),
                         *requested_slots,
@@ -22246,10 +22877,24 @@ question. Never guess a scientific or database identity.
                     )
                 if candidate.get("completion", {}).get("decision") != "ready_to_finalize":
                     candidate["consultation_state"] = candidate_consultation
+                    unresolved_ids = list(
+                        candidate.get("completion", {}).get("unresolved_requirement_ids") or []
+                    )
+                    if "skill-routing" in unresolved_ids and not selected:
+                        next_discovery, guidance = reject_premature_finish(
+                            candidate_consultation.get("skill_discovery") or discovery_state
+                        )
+                        candidate_consultation["skill_discovery"] = next_discovery
+                        candidate["consultation_state"] = candidate_consultation
+                        return candidate_rejection(
+                            "DISCOVERY_REQUIRED",
+                            json.dumps(guidance, ensure_ascii=False, sort_keys=True),
+                            candidate=candidate,
+                        )
                     return candidate_rejection(
                         "FINISH_CANDIDATE_INCOMPLETE",
                         "Valid TaskSpec and skill progress was committed, but candidate completion still has unresolved Controller/runtime evidence: "
-                        + ", ".join(candidate.get("completion", {}).get("unresolved_requirement_ids") or [])[:1200],
+                        + ", ".join(unresolved_ids)[:1200],
                         candidate=candidate,
                     )
                 candidate_consultation.update({
