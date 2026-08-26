@@ -15,6 +15,7 @@ from copy import deepcopy
 import atexit
 from dataclasses import dataclass, field
 import hashlib
+import inspect
 import json
 import logging
 import os
@@ -91,6 +92,18 @@ from config.config import (
     CONSULTANT_DISCOVERY_REASONING_EFFORT,
     CONSULTANT_OPTIONAL_ARCHIVE_TIMEOUT_SECONDS, GENERATE_THINKING_ENABLED,
     GENERATE_REASONING_EFFORT, DEEPSEEK_TEMPERATURE,
+)
+from config.reliability import (
+    GENERATE_PROVIDER_MAX_ATTEMPTS,
+    LLM_CANCEL_CLEANUP_TIMEOUT_SECONDS,
+    LLM_FIRST_CHUNK_TIMEOUT_SECONDS,
+    LLM_STREAM_IDLE_TIMEOUT_SECONDS,
+    LLM_TOTAL_TIMEOUT_SECONDS,
+    SESSION_ARCHIVE_OBSERVATION_QUEUE_SIZE,
+    SESSION_ARCHIVE_SHUTDOWN_DRAIN_SECONDS,
+    SESSION_ARCHIVE_WRITER_BACKOFF_SECONDS,
+    SESSION_ARCHIVE_WRITER_BUSY_TIMEOUT_SECONDS,
+    SESSION_ARCHIVE_WRITER_MAX_ATTEMPTS,
 )
 
 try:
@@ -277,6 +290,16 @@ from agent_core.llm_safety import (
     is_llm_input_rejected,
     is_transient_llm_failure,
     llm_failure_summary,
+)
+from agent_core.provider_attempt import (
+    PROVIDER_CANONICAL_CONTEXT_CHANGED,
+    ProviderAttemptEnvelope,
+    ProviderAttemptFailure,
+    ProviderAttemptRecord,
+    ProviderStreamObserver,
+    ProviderTimeoutPolicy,
+    persist_partial_response_diagnostic,
+    run_provider_attempt,
 )
 from agent_core.context_budget import (
     ContextBlock,
@@ -716,6 +739,11 @@ from agent_core.root_cause import RootCauseAnalyzer
 from memory.persistence import PersistentStateManager
 from memory.core_store import CoreMemoryStore
 from memory.session_archive import SessionArchive
+from memory.session_archive_writer import (
+    acquire_observation_writer,
+    release_observation_writer,
+    shutdown_observation_writers,
+)
 from memory.task_semantics import infer_task_semantics, merge_task_semantics
 from memory.task_summary import TaskSummaryRenderer
 from memory.wiki_memory import NullWikiMemoryManager, WikiMemoryManager
@@ -1453,6 +1481,7 @@ class OutputRouter:
 
 
 output = OutputRouter()
+atexit.register(shutdown_observation_writers)
 
 
 # ════════════════════════════════════════════════════════════════
@@ -1546,7 +1575,13 @@ class BioAnalystAgent:
             self.llm_timeout_seconds,
         )
         self.llm_max_retries = LLM_MAX_RETRIES
+        self.llm_total_timeout_seconds = LLM_TOTAL_TIMEOUT_SECONDS
+        self.llm_first_chunk_timeout_seconds = LLM_FIRST_CHUNK_TIMEOUT_SECONDS
+        self.llm_stream_idle_timeout_seconds = LLM_STREAM_IDLE_TIMEOUT_SECONDS
+        self.llm_cancel_cleanup_timeout_seconds = LLM_CANCEL_CLEANUP_TIMEOUT_SECONDS
+        self.generate_provider_max_attempts = GENERATE_PROVIDER_MAX_ATTEMPTS
         self.llm_context_limit_tokens = max(1, int(max_memory_tokens))
+        self._provider_attempt_history: Dict[str, List[Dict[str, Any]]] = {}
 
         # ── PackageManager ────────────────────────────────────
         try:
@@ -1694,6 +1729,15 @@ class BioAnalystAgent:
         self.session_archive = SessionArchive(
             db_path=self.runtime_memory_dir / "session_archive.sqlite3",
         )
+        self.session_archive_writer = acquire_observation_writer(
+            self.session_archive.db_path,
+            capacity=SESSION_ARCHIVE_OBSERVATION_QUEUE_SIZE,
+            busy_timeout_seconds=SESSION_ARCHIVE_WRITER_BUSY_TIMEOUT_SECONDS,
+            max_write_attempts=SESSION_ARCHIVE_WRITER_MAX_ATTEMPTS,
+            backoff_seconds=SESSION_ARCHIVE_WRITER_BACKOFF_SECONDS,
+            shutdown_drain_seconds=SESSION_ARCHIVE_SHUTDOWN_DRAIN_SECONDS,
+        )
+        self._session_archive_writer_released = False
         self._stable_prompt_cache: Dict[str, Dict[str, str]] = {}
         self._stable_prompt_dir = self.runtime_memory_dir / "session_prompts"
         self._latest_llm_call_refs: Dict[str, List[Dict[str, Any]]] = {}
@@ -1861,7 +1905,9 @@ class BioAnalystAgent:
             content = "\n\n".join(content_parts) or stage
             summary = str(payload.get("summary") or content[:1200])
             returncode = payload.get("returncode")
-            self.session_archive.append_event(
+            # The writer owns the former self.session_archive.append_event
+            # operation; this node only performs a bounded enqueue_nowait.
+            enqueue_result = self.session_archive_writer.enqueue_nowait(
                 task_id=task_id,
                 session_id=task_id,
                 project_id=project_id,
@@ -1876,8 +1922,35 @@ class BioAnalystAgent:
                 task_semantics=task_semantics,
                 source_refs=[f"task:{task_id}"],
             )
+            if enqueue_result != "enqueued":
+                logger.warning(
+                    "Optional SessionArchive observation %s: task=%s stage=%s",
+                    enqueue_result,
+                    task_id,
+                    stage,
+                )
         except Exception as e:
             logger.warning(f"SessionArchive observe failed at {stage}: {e}")
+
+    async def aclose(self, timeout_seconds: Optional[float] = None) -> Dict[str, Any]:
+        """Bounded explicit shutdown for optional process-local archive writes."""
+
+        if getattr(self, "_session_archive_writer_released", False):
+            writer = getattr(self, "session_archive_writer", None)
+            return writer.snapshot() if writer is not None else {}
+        archive = getattr(self, "session_archive", None)
+        if archive is None:
+            return {}
+        self._session_archive_writer_released = True
+        return await asyncio.to_thread(
+            release_observation_writer,
+            archive.db_path,
+            timeout_seconds=(
+                SESSION_ARCHIVE_SHUTDOWN_DRAIN_SECONDS
+                if timeout_seconds is None
+                else timeout_seconds
+            ),
+        )
 
     async def _finalize_task_memory(
         self,
@@ -8080,6 +8153,67 @@ class BioAnalystAgent:
     def _mark_plan_current_blocked(self, task_id: str, evidence: str) -> str:
         return self._finalize_blocked_state(task_id, evidence)
 
+    def _mark_generate_provider_blocked(
+        self,
+        task_id: str,
+        failure: ProviderAttemptFailure,
+    ) -> str:
+        """Persist a typed provider terminal without entering Recovery."""
+
+        plan_state = load_plan_state(self.data_path, task_id)
+        attempt_rows = list(
+            getattr(self, "_provider_attempt_history", {}).get(task_id, [])
+        )[-2:]
+        durable_failure = {
+            "schema_version": 1,
+            "error_code": failure.error_code,
+            "owner": "PROVIDER",
+            "stage": "GENERATE_PROVIDER",
+            "status": "terminal",
+            "retryable": False,
+            "attempt_count": len(attempt_rows),
+            "semantic_invocation_id": str(
+                failure.record.envelope.semantic_invocation_id
+            ),
+            "last_attempt_id": str(failure.record.envelope.attempt_id),
+            "attempts": [
+                {
+                    key: row.get(key)
+                    for key in (
+                        "attempt_id", "attempt_ordinal", "parent_attempt_id",
+                        "call_id", "request_hash", "node_context_hash", "state",
+                        "failure_type", "cleanup_result", "retryable",
+                        "total_chunk_count", "reasoning_chunk_count",
+                        "content_chunk_count", "attempt_completed_at",
+                    )
+                }
+                for row in attempt_rows
+            ],
+            "last_seen_at": timestamp_now(),
+            "termination_reason": "generate_provider_attempts_exhausted",
+        }
+        plan_state["failure"] = durable_failure
+        save_plan_state(self.data_path, task_id, plan_state)
+        reason = (
+            f"{failure.error_code}: Generate provider attempts ended without "
+            "a complete response; no partial response was executed."
+        )
+        return self._finalize_blocked_state(task_id, reason)
+
+    @staticmethod
+    def _generate_provider_failure_response(
+        failure: ProviderAttemptFailure,
+        task_id: str,
+    ) -> AIMessage:
+        return AIMessage(content=(
+            f'<provider_failure error_code="{failure.error_code}" '
+            'error_owner="PROVIDER" failure_stage="GENERATE_PROVIDER">\n'
+            f"Generate could not obtain a complete provider response for task "
+            f"{task_id or '-'}. The provider attempt lifecycle was closed or "
+            "marked outcome-unknown; no partial output was parsed or executed.\n"
+            "</provider_failure>"
+        ))
+
     def _plan_has_pending_after_block(self, task_id: str) -> bool:
         state = load_plan_state(self.data_path, task_id)
         for step in state.get("steps", []) or []:
@@ -9226,16 +9360,56 @@ class BioAnalystAgent:
             json.dumps(report, ensure_ascii=False, sort_keys=True),
         )
         metadata = dict(trace_metadata or {})
+        projection_trace = (
+            node_context.projection_trace.to_dict()
+            if node_context.projection_trace is not None
+            else {}
+        )
+        node_context_hash = str(projection_trace.get("node_context_hash") or "")
+        if not node_context_hash:
+            node_context_hash = "sha256:" + hashlib.sha256(
+                json.dumps(
+                    {
+                        "binding": binding.to_dict(),
+                        "payload": node_context.llm_payload.to_provider_dict(),
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    default=str,
+                ).encode("utf-8")
+            ).hexdigest()
+        semantic_invocation_id = "semantic-invocation-" + hashlib.sha256(
+            json.dumps(
+                {
+                    "task_id": task_id,
+                    "node": binding.node_type,
+                    "step_id": binding.step_id,
+                    "node_context_hash": node_context_hash,
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest()[:24]
         metadata.update({
             "node_context_schema_version": 2,
             "controller_binding": binding.to_dict(),
-            "projection_trace": (
-                node_context.projection_trace.to_dict()
-                if node_context.projection_trace is not None
-                else {}
-            ),
+            "projection_trace": projection_trace,
+            "node_context_hash": node_context_hash,
+            "semantic_invocation_id": semantic_invocation_id,
             "llm_payload_observability": report,
         })
+
+        def retry_context_is_current() -> bool:
+            if stage != "generate" or not task_id or not getattr(self, "data_path", ""):
+                return True
+            current_plan = load_plan_state(self.data_path, task_id)
+            _, current_step = current_plan_step_with_index(current_plan)
+            return (
+                int(current_plan.get("state_generation") or 0)
+                == int(binding.state_generation or 0)
+                and str((current_step or {}).get("step_id") or "")
+                == str(binding.step_id or "")
+            )
         try:
             response = await self._ainvoke_llm(
                 messages,
@@ -9246,6 +9420,7 @@ class BioAnalystAgent:
                 temperature=temperature,
                 llm_override=llm_override,
                 llm_policy=llm_policy,
+                retry_guard=retry_context_is_current,
             )
         except BaseException:
             try:
@@ -9267,18 +9442,11 @@ class BioAnalystAgent:
         temperature: Optional[float] = None,
         llm_override: Any = None,
         llm_policy: Optional[Mapping[str, Any]] = None,
+        retry_guard: Optional[Callable[[], bool]] = None,
     ) -> BaseMessage:
-        """Invoke the shared model with a hard wall-clock bound.
-
-        The provider/client timeout covers network operations, while this
-        wrapper also bounds model-side waits and callback stalls.  The model
-        call runs in its own task so a provider-side cancellation cannot escape
-        as ``CancelledError`` and silently bypass node ``except Exception``
-        handlers.  Cancellation of this outer task still propagates normally,
-        preserving Ctrl+C and application shutdown behavior.
-        """
+        """Dispatch one semantic invocation through bounded provider attempts."""
         mode = str(task_mode or "").strip().lower()
-        timeout = (
+        legacy_timeout = (
             self.llm_readonly_timeout_seconds
             if mode in {"readonly", "simple_execute"}
             else self.llm_timeout_seconds
@@ -9315,7 +9483,7 @@ class BioAnalystAgent:
             task_id or "-",
             len(messages),
             prompt_chars,
-            timeout,
+            legacy_timeout,
         )
         logger.info(
             "LLM prompt budget: stage=%s task=%s %s",
@@ -9334,88 +9502,329 @@ class BioAnalystAgent:
             )
         trace_data_path = str(getattr(self, "data_path", "") or "")
         trace_store = ContextLineageStore(trace_data_path, task_id) if task_id and trace_data_path else None
-        snapshot: Dict[str, Any] = {}
-        if trace_store:
-            metadata = dict(trace_metadata or {})
-            metadata["prompt_budget_telemetry"] = prompt_telemetry
-            call_kind = str(metadata.get("call_kind") or {
-                "planner": "planner_initial",
-                "planner_repair": "planner_repair",
-            }.get(stage, stage))
-            plan_state = load_plan_state(self.data_path, task_id)
-            _, current_step = current_plan_step_with_index(plan_state)
-            current_step = current_step or {}
-            metadata.setdefault("node_name", stage)
-            metadata.setdefault("call_kind", call_kind)
-            metadata.setdefault("task_revision", plan_state.get("generated_from_task_revision"))
-            metadata.setdefault("task_spec_revision", metadata.get("task_revision"))
-            metadata.setdefault("plan_revision", plan_state.get("plan_revision"))
-            metadata.setdefault("step_id", current_step.get("step_id"))
-            metadata.setdefault("stage_id", (current_step.get("renderer_execution") or {}).get("current_stage_id"))
-            metadata.setdefault("action_id", (current_step.get("renderer_execution") or {}).get("current_action_id"))
-            metadata.setdefault("selected_skill_ids", current_step.get("skill_ids") or [])
-            metadata.setdefault(
-                "skill_versions",
-                self._trace_skill_versions(list(metadata.get("selected_skill_ids") or [])),
-            )
-            if not metadata.get("call_id"):
-                ordinal = len(trace_store.list_snapshots()) + 1
-                identity = json.dumps({
-                    "task": task_id,
-                    "kind": call_kind,
-                    "ordinal": ordinal,
-                    "step": metadata.get("step_id"),
-                    "attempt": metadata.get("attempt_id"),
-                }, ensure_ascii=False, sort_keys=True)
-                metadata["call_id"] = (
-                    f"{call_kind}-{ordinal:04d}-"
-                    f"{hashlib.sha256(identity.encode('utf-8')).hexdigest()[:12]}"
-                )
-            snapshot = trace_store.start_call(messages, metadata)
         invocation_llm = llm_override or self.llm
         if effective_temperature is not None and hasattr(invocation_llm, "bind"):
             invocation_llm = invocation_llm.bind(
                 temperature=float(effective_temperature)
             )
-        invoke_task = asyncio.create_task(invocation_llm.ainvoke(messages))
-        try:
-            done, _ = await asyncio.wait({invoke_task}, timeout=timeout)
-            if not done:
-                invoke_task.cancel()
-                raise TimeoutError(
-                    f"{stage} LLM request timed out after {timeout:.0f}s"
-                )
-            try:
-                response = invoke_task.result()
-                if trace_store and snapshot:
-                    snapshot = trace_store.finish_call(snapshot["call_id"], response)
-                    refs = getattr(self, "_latest_llm_call_refs", None)
-                    if refs is None:
-                        self._latest_llm_call_refs = {}
-                        refs = self._latest_llm_call_refs
-                    refs.setdefault(task_id, []).append({
-                        key: snapshot.get(key)
-                        for key in (
-                            "call_id", "snapshot_ref", "request_hash", "response_hash",
-                            "task_revision", "plan_revision", "step_id", "attempt_id", "call_kind",
+
+        total_timeout = min(
+            float(legacy_timeout),
+            float(getattr(self, "llm_total_timeout_seconds", legacy_timeout)),
+        )
+        if stage == "generate":
+            timeout_policy = ProviderTimeoutPolicy(
+                first_chunk_seconds=float(
+                    getattr(self, "llm_first_chunk_timeout_seconds", total_timeout)
+                ),
+                idle_seconds=float(
+                    getattr(self, "llm_stream_idle_timeout_seconds", total_timeout)
+                ),
+                total_seconds=total_timeout,
+                cleanup_seconds=float(
+                    getattr(self, "llm_cancel_cleanup_timeout_seconds", min(5.0, total_timeout))
+                ),
+            ).normalized()
+            max_attempts = min(
+                2,
+                max(1, int(getattr(self, "generate_provider_max_attempts", 2))),
+            )
+        else:
+            # Phase splitting and the controller retry budget are intentionally
+            # scoped to Generate. Other nodes retain one hard total deadline.
+            timeout_policy = ProviderTimeoutPolicy(
+                first_chunk_seconds=total_timeout,
+                idle_seconds=total_timeout,
+                total_seconds=total_timeout,
+                cleanup_seconds=float(
+                    getattr(self, "llm_cancel_cleanup_timeout_seconds", min(5.0, total_timeout))
+                ),
+            ).normalized()
+            max_attempts = 1
+
+        semantic_payload = {
+            "stage": stage,
+            "task_id": task_id,
+            "step_id": str(trace_metadata.get("step_id") or ""),
+            "messages": [
+                {
+                    "role": type(message).__name__,
+                    "content_sha256": hashlib.sha256(
+                        str(getattr(message, "content", message) or "").encode(
+                            "utf-8", errors="replace"
                         )
-                    })
-                    refs[task_id] = refs[task_id][-50:]
-                return response
-            except asyncio.CancelledError as exc:
-                raise TimeoutError(
-                    f"{stage} LLM request was cancelled by the provider/client"
-                ) from exc
-        except BaseException as exc:
-            if trace_store and snapshot:
+                    ).hexdigest(),
+                }
+                for message in messages
+            ],
+        }
+        semantic_invocation_id = str(
+            trace_metadata.get("semantic_invocation_id")
+            or "semantic-invocation-"
+            + hashlib.sha256(
+                json.dumps(
+                    semantic_payload,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ).encode("utf-8")
+            ).hexdigest()[:24]
+        )
+        parent_attempt_id = ""
+        latest_error: Optional[ProviderAttemptFailure] = None
+        history = getattr(self, "_provider_attempt_history", None)
+        if history is None:
+            self._provider_attempt_history = {}
+            history = self._provider_attempt_history
+
+        def supports_config(llm: Any) -> bool:
+            try:
+                signature = inspect.signature(llm.ainvoke)
+            except (TypeError, ValueError):
+                return True
+            return "config" in signature.parameters or any(
+                parameter.kind is inspect.Parameter.VAR_KEYWORD
+                for parameter in signature.parameters.values()
+            )
+
+        def record_ref(snapshot: Mapping[str, Any]) -> None:
+            if not snapshot or not task_id:
+                return
+            refs = getattr(self, "_latest_llm_call_refs", None)
+            if refs is None:
+                self._latest_llm_call_refs = {}
+                refs = self._latest_llm_call_refs
+            refs.setdefault(task_id, []).append({
+                key: snapshot.get(key)
+                for key in (
+                    "call_id", "snapshot_ref", "request_hash", "response_hash",
+                    "task_revision", "plan_revision", "step_id", "attempt_id", "call_kind",
+                )
+            })
+            refs[task_id] = refs[task_id][-50:]
+
+        def progress(event: str, payload: Mapping[str, Any]) -> None:
+            if stage != "generate":
+                return
+            attempt_id = str(payload.get("attempt_id") or "")
+            attempt_ordinal = int(payload.get("attempt_ordinal") or 0)
+            messages_by_event = {
+                "attempt_started": f"⏳ Generate provider attempt {attempt_ordinal}/{max_attempts} started.",
+                "stream_active": f"📡 Generate provider stream active (attempt {attempt_ordinal}).",
+                "timeout_cleanup_started": f"⏱️ Generate provider timeout; cleaning attempt {attempt_ordinal}.",
+            }
+            if event in messages_by_event:
+                output.print_once(
+                    f"provider:{event}:{attempt_id}",
+                    messages_by_event[event],
+                    Fore.CYAN,
+                )
+
+        try:
+            for attempt_ordinal in range(1, max_attempts + 1):
+                attempt_id = (
+                    f"provider-attempt-{semantic_invocation_id[-12:]}-"
+                    f"{attempt_ordinal}-{uuid.uuid4().hex[:8]}"
+                )
+                metadata = dict(trace_metadata or {})
+                metadata["prompt_budget_telemetry"] = prompt_telemetry
+                call_kind = str(metadata.get("call_kind") or {
+                    "planner": "planner_initial",
+                    "planner_repair": "planner_repair",
+                }.get(stage, stage))
+                plan_state = load_plan_state(self.data_path, task_id) if trace_store else {}
+                _, current_step = current_plan_step_with_index(plan_state)
+                current_step = current_step or {}
+                metadata.setdefault("node_name", stage)
+                metadata.setdefault("call_kind", call_kind)
+                metadata.setdefault("task_revision", plan_state.get("generated_from_task_revision"))
+                metadata.setdefault("task_spec_revision", metadata.get("task_revision"))
+                metadata.setdefault("plan_revision", plan_state.get("plan_revision"))
+                metadata.setdefault("step_id", current_step.get("step_id"))
+                metadata.setdefault("stage_id", (current_step.get("renderer_execution") or {}).get("current_stage_id"))
+                metadata.setdefault("action_id", (current_step.get("renderer_execution") or {}).get("current_action_id"))
+                metadata.setdefault("selected_skill_ids", current_step.get("skill_ids") or [])
+                metadata.setdefault(
+                    "skill_versions",
+                    self._trace_skill_versions(list(metadata.get("selected_skill_ids") or [])),
+                )
+                metadata["semantic_invocation_id"] = semantic_invocation_id
+                metadata["attempt_id"] = attempt_id
+                metadata["attempt_ordinal"] = attempt_ordinal
+                metadata["parent_attempt_id"] = parent_attempt_id
+                metadata["node_context_hash"] = str(metadata.get("node_context_hash") or "")
+                metadata["provider_timeout_policy"] = timeout_policy.to_dict()
+                metadata["retry_budget_before"] = max_attempts - attempt_ordinal
+                metadata["retry_budget_after"] = max(
+                    0,
+                    max_attempts - attempt_ordinal - 1,
+                )
+                metadata["sdk_max_retries"] = int(getattr(self, "llm_max_retries", 0))
+                base_call_id = str(metadata.pop("call_id", "") or "")
+                if base_call_id:
+                    metadata["call_id"] = f"{base_call_id}-attempt-{attempt_ordinal}"
+                elif trace_store:
+                    ordinal = len(trace_store.list_snapshots()) + 1
+                    identity = json.dumps({
+                        "task": task_id,
+                        "kind": call_kind,
+                        "ordinal": ordinal,
+                        "step": metadata.get("step_id"),
+                        "attempt": attempt_id,
+                    }, ensure_ascii=False, sort_keys=True)
+                    metadata["call_id"] = (
+                        f"{call_kind}-{ordinal:04d}-"
+                        f"{hashlib.sha256(identity.encode('utf-8')).hexdigest()[:12]}"
+                    )
+                snapshot: Dict[str, Any] = (
+                    trace_store.start_call(messages, metadata) if trace_store else {}
+                )
+                call_id = str(snapshot.get("call_id") or metadata.get("call_id") or attempt_id)
+                request_hash = str(
+                    snapshot.get("request_hash")
+                    or hashlib.sha256(
+                        json.dumps(
+                            semantic_payload,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        ).encode("utf-8")
+                    ).hexdigest()
+                )
+                envelope = ProviderAttemptEnvelope(
+                    node_name=stage,
+                    step_id=str(metadata.get("step_id") or ""),
+                    semantic_invocation_id=semantic_invocation_id,
+                    attempt_id=attempt_id,
+                    attempt_ordinal=attempt_ordinal,
+                    parent_attempt_id=parent_attempt_id,
+                    call_id=call_id,
+                    node_context_hash=str(metadata.get("node_context_hash") or ""),
+                    request_hash=request_hash,
+                    provider=str(getattr(self, "llm_provider_id", "") or "unknown"),
+                    model=str(getattr(self, "llm_model_id", "") or "unknown"),
+                    thinking_policy=provider_policy,
+                    timeout_policy=timeout_policy,
+                    retry_budget_before=max_attempts - attempt_ordinal,
+                    retry_budget_after=max(0, max_attempts - attempt_ordinal - 1),
+                    sdk_max_retries=int(getattr(self, "llm_max_retries", 0)),
+                )
+
+                async def invoke(observer: ProviderStreamObserver) -> Any:
+                    config = {
+                        "callbacks": [observer],
+                        "tags": ["provider-attempt", stage],
+                        "metadata": {
+                            "provider_attempt_id": attempt_id,
+                            "semantic_invocation_id": semantic_invocation_id,
+                        },
+                    }
+                    if supports_config(invocation_llm):
+                        return await invocation_llm.ainvoke(messages, config=config)
+                    return await invocation_llm.ainvoke(messages)
+
                 try:
-                    trace_store.fail_call(snapshot["call_id"], exc)
-                except Exception as trace_exc:  # noqa: BLE001 - preserve original provider failure.
-                    logger.warning("Failed to persist LLM failure snapshot %s: %s", snapshot.get("call_id"), trace_exc)
-            raise
+                    response, attempt_record = await run_provider_attempt(
+                        invoke,
+                        envelope,
+                        progress_callback=progress,
+                    )
+                except ProviderAttemptFailure as exc:
+                    latest_error = exc
+                    attempt_record = exc.record
+                    history.setdefault(task_id or "-", []).append(attempt_record.to_dict())
+                    history[task_id or "-"] = history[task_id or "-"][-20:]
+                    if trace_store and snapshot:
+                        try:
+                            if attempt_record.total_chunk_count:
+                                diagnostic_ref = persist_partial_response_diagnostic(
+                                    Path(str(snapshot["snapshot_ref"])).parent
+                                    / "partial_response_diagnostic.json",
+                                    attempt_record,
+                                )
+                            else:
+                                diagnostic_ref = None
+                            snapshot = trace_store.fail_call(snapshot["call_id"], exc)
+                            snapshot = trace_store.annotate_call(snapshot["call_id"], {
+                                "provider_attempt": attempt_record.to_dict(),
+                                "partial_response_diagnostic_ref": str(diagnostic_ref or ""),
+                            })
+                            record_ref(snapshot)
+                        except Exception as trace_exc:  # noqa: BLE001 - preserve provider failure.
+                            logger.warning(
+                                "Failed to persist LLM failure snapshot %s: %s",
+                                snapshot.get("call_id"),
+                                trace_exc,
+                            )
+                    can_retry = (
+                        stage == "generate"
+                        and exc.retryable
+                        and attempt_ordinal < max_attempts
+                    )
+                    context_current = True
+                    if can_retry and retry_guard is not None:
+                        try:
+                            context_current = bool(retry_guard())
+                        except Exception:
+                            logger.warning(
+                                "Generate retry staleness guard failed closed: task=%s",
+                                task_id or "-",
+                                exc_info=True,
+                            )
+                            context_current = False
+                    if can_retry and not context_current:
+                        attempt_record.caused_by = attempt_record.failure_type
+                        attempt_record.failure_type = PROVIDER_CANONICAL_CONTEXT_CHANGED
+                        attempt_record.retryable = False
+                        history[task_id or "-"][-1] = attempt_record.to_dict()
+                        raise ProviderAttemptFailure(
+                            PROVIDER_CANONICAL_CONTEXT_CHANGED,
+                            "Generate canonical plan context changed before retry dispatch",
+                            record=attempt_record,
+                            retryable=False,
+                        ) from exc
+                    if can_retry:
+                        output.print_once(
+                            f"provider:retry:{attempt_id}",
+                            f"🔁 Retrying the same Generate request once after {exc.error_code}.",
+                            Fore.YELLOW,
+                        )
+                        parent_attempt_id = attempt_id
+                        continue
+                    if (
+                        stage != "generate"
+                        and exc.__cause__ is not None
+                        and not isinstance(exc.__cause__, asyncio.CancelledError)
+                    ):
+                        # Other nodes keep their established outward SDK/HTTP
+                        # exception contract. They gain attempt telemetry and
+                        # cleanup, but no new controller business retry policy.
+                        raise exc.__cause__
+                    raise
+                else:
+                    history.setdefault(task_id or "-", []).append(attempt_record.to_dict())
+                    history[task_id or "-"] = history[task_id or "-"][-20:]
+                    if trace_store and snapshot:
+                        try:
+                            snapshot = trace_store.finish_call(snapshot["call_id"], response)
+                            snapshot = trace_store.annotate_call(snapshot["call_id"], {
+                                "provider_attempt": attempt_record.to_dict(),
+                            })
+                            record_ref(snapshot)
+                        except Exception as trace_exc:
+                            logger.warning(
+                                "Failed to persist LLM success snapshot %s: %s",
+                                snapshot.get("call_id"),
+                                trace_exc,
+                            )
+                    return response
+            if latest_error is not None:
+                raise latest_error
+            raise ProviderAttemptFailure(
+                "PROVIDER_SDK_ERROR",
+                "provider attempt loop exited without a result",
+                record=ProviderAttemptRecord(envelope=envelope),
+                retryable=False,
+            )
         finally:
-            if not invoke_task.done():
-                invoke_task.cancel()
             logger.info(
                 "LLM request finished: stage=%s task=%s elapsed=%.1fs",
                 stage,
@@ -27444,17 +27853,60 @@ question. Never guess a scientific or database identity.
                             ),
                         )
             except Exception as exc:
-                response = self._llm_failure_response("generate", exc, task_id)
+                if isinstance(exc, ProviderAttemptFailure):
+                    response = self._generate_provider_failure_response(exc, task_id)
+                    plan_progress = self._mark_generate_provider_blocked(task_id, exc)
+                    failure_reason = (
+                        f"{exc.error_code}: Generate provider attempt lifecycle terminated"
+                    )
+                else:
+                    response = self._llm_failure_response("generate", exc, task_id)
+                    failure_reason = llm_failure_summary(exc, "generate", task_id)
+                    plan_progress = self._mark_plan_current_blocked(
+                        task_id,
+                        failure_reason,
+                    )
                 content = response.content
                 output.print_ai(content)
-                plan_progress = self._mark_plan_current_blocked(task_id, llm_failure_summary(exc, "generate", task_id))
                 await self._finalize_task_memory(
                     task_id,
                     "failed",
                     messages + [response],
-                    {"reason": llm_failure_summary(exc, "generate", task_id), "plan_progress": plan_progress},
+                    {
+                        "reason": failure_reason,
+                        "plan_progress": plan_progress,
+                        "failure_owner": (
+                            "PROVIDER"
+                            if isinstance(exc, ProviderAttemptFailure)
+                            else ""
+                        ),
+                        "failure_stage": (
+                            "GENERATE_PROVIDER"
+                            if isinstance(exc, ProviderAttemptFailure)
+                            else ""
+                        ),
+                    },
                 )
-                return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
+                return {
+                    "messages": [response],
+                    "plan_progress": plan_progress,
+                    "failure_owner": (
+                        "PROVIDER" if isinstance(exc, ProviderAttemptFailure) else ""
+                    ),
+                    "required_next_action": (
+                        "STOP_PROVIDER_FAILURE"
+                        if isinstance(exc, ProviderAttemptFailure)
+                        else ""
+                    ),
+                    "generate_result": "BLOCKED",
+                    "generate_exit_reason": (
+                        "provider_attempt_terminal"
+                        if isinstance(exc, ProviderAttemptFailure)
+                        else "llm_failure"
+                    ),
+                    "task_status": TASK_STATUS_BLOCKED,
+                    "next_step": "finish",
+                }
             if not generate_response_cached:
                 current_generate_plan = load_plan_state(self.data_path, task_id)
                 _, current_generate_step = current_plan_step_with_index(current_generate_plan)
@@ -33234,13 +33686,16 @@ async def main():
         use_llm_supervisor=True,
     )
 
-    if command == "interactive":
-        if hasattr(agent, "interactive_mode"):
-            await agent.interactive_mode()
-    elif command == "demo":
-        await agent.go("Explore the data in ./sample_data")
-    else:
-        print(f"Unknown command: {command}")
+    try:
+        if command == "interactive":
+            if hasattr(agent, "interactive_mode"):
+                await agent.interactive_mode()
+        elif command == "demo":
+            await agent.go("Explore the data in ./sample_data")
+        else:
+            print(f"Unknown command: {command}")
+    finally:
+        await agent.aclose()
 
 
 if __name__ == "__main__":
