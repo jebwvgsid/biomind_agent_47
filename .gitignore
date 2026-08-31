@@ -28,3 +28,4 @@ memory/session_prompts/
 software_registry.json
 skills/.skill_runtime_registry.json
 temp_script.sh
+/user_preferences.md
