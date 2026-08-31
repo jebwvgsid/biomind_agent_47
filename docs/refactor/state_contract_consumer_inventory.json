@@ -1,0 +1,70 @@
+{
+  "schema_version": 2,
+  "generated_for": "state-contract-v2.2",
+  "enforcement": {
+    "audit_script_schema_version": 2,
+    "canonical_first_durable_consumers": 16,
+    "authoritative_legacy_readers": 0,
+    "forbidden_new_writes": 0,
+    "failure_mode": "non-zero exit"
+  },
+  "authoritative_sources": {
+    "current_task": "plan_state.current_task.task_spec",
+    "current_plan": "plan_state.current_plan.plan_spec",
+    "runtime": "plan_state.runtime_state",
+    "approval": "plan_state.approval_snapshot",
+    "audit": "plan_state.audit_index + immutable state_contract/audit_events"
+  },
+  "legacy_fields": [
+    {
+      "field": "plan_state.task_spec",
+      "target": "current_task.task_spec",
+      "new_writes": "forbidden",
+      "compatibility_read": "refresh_state_contract_v2 commit-boundary only",
+      "authoritative_consumers_migrated": true
+    },
+    {
+      "field": "task_state.task_spec",
+      "target": "current_task.task_spec",
+      "new_writes": "forbidden",
+      "compatibility_read": "resume migration only",
+      "authoritative_consumers_migrated": true
+    },
+    {
+      "field": "TaskSpec.expected_outputs",
+      "target": "TaskSpec.output_contracts",
+      "new_writes": "forbidden",
+      "compatibility_read": "effective_output_contracts for schema <= 4",
+      "authoritative_consumers_migrated": true
+    },
+    {
+      "field": "TaskSpec.facts and typed fact aliases",
+      "target": "inputs + requirements + parameters + confirmed_decisions",
+      "new_writes": "forbidden",
+      "compatibility_read": "schema <= 4 compiler only",
+      "authoritative_consumers_migrated": true
+    },
+    {
+      "field": "TaskSpec.user_directives/request_envelope/change_log",
+      "target": "raw_submission_ref/source_refs + audit_index",
+      "new_writes": "forbidden",
+      "compatibility_read": "schema <= 4 compiler only",
+      "authoritative_consumers_migrated": true
+    },
+    {
+      "field": "effective_user_facts",
+      "target": "deterministic derived projection",
+      "new_writes": "forbidden in authoritative state",
+      "compatibility_read": "diagnostic/export projection only",
+      "authoritative_consumers_migrated": true
+    },
+    {
+      "field": "consultation_state.final_contract",
+      "target": "compiled_contract_ref + compiled_contract_hash",
+      "new_writes": "forbidden for FINALIZE v4",
+      "compatibility_read": "legacy FINALIZE v2 only",
+      "authoritative_consumers_migrated": true
+    }
+  ],
+  "verification_command": "python scripts/audit_state_contract_consumers.py"
+}
