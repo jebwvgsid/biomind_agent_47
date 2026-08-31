@@ -8,6 +8,42 @@ from memory.wiki_memory import WikiMemoryManager
 
 
 class TaskSummaryRendererTests(unittest.IsolatedAsyncioTestCase):
+    async def test_initialize_resumed_task_reuses_one_archive_snapshot(self):
+        class CountingArchive:
+            def __init__(self):
+                self.calls = 0
+
+            def events_for_task(self, task_id, limit=300, ascending=True):
+                self.calls += 1
+                return []
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            archive = CountingArchive()
+            renderer = TaskSummaryRenderer(Path(tmpdir) / "memory", archive)
+            renderer.initialize_task("resumed-task", goal="Resume it")
+
+            self.assertEqual(archive.calls, 1)
+
+    async def test_initialize_authoritative_new_task_does_not_read_history(self):
+        class CountingArchive:
+            def __init__(self):
+                self.calls = 0
+
+            def events_for_task(self, task_id, limit=300, ascending=True):
+                self.calls += 1
+                return []
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            archive = CountingArchive()
+            renderer = TaskSummaryRenderer(Path(tmpdir) / "memory", archive)
+            renderer.initialize_task(
+                "new-task",
+                goal="Start it",
+                authoritative_new_task=True,
+            )
+
+            self.assertEqual(archive.calls, 0)
+
     async def test_task_summary_renders_from_archive_without_pending_or_dream(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir) / "memory"

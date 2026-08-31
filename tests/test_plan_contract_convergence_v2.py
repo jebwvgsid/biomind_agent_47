@@ -2,10 +2,9 @@ import copy
 import json
 import unittest
 
+from agent_core import plan_tracker as plan_tracker_module
 from agent_core.plan_tracker import (
-    PLAN_PATCH_OPERATION,
     PlanStructureError,
-    apply_plan_patch,
     approve_plan_state,
     bind_renderer_invocation_contracts,
     bind_plan_to_task_revision,
@@ -15,7 +14,6 @@ from agent_core.plan_tracker import (
     normalize_artifact_contract,
     normalize_plan_contracts,
     normalize_validation_issue,
-    parse_plan_patch,
     parse_plan_steps,
     plan_contract_violations,
     resolve_plan_semantic_claims,
@@ -549,37 +547,14 @@ class RepairAndConvergenceTests(unittest.TestCase):
             [validation_issue("PLAN_X", owner="planner", repair_target="plan.step-1", field_path="plan.step-1", message="bad")],
         )
 
-    def patch(self, state, new_step):
-        return {
-            "operation": PLAN_PATCH_OPERATION,
-            "base_plan_version": state["plan_revision"],
-            "base_plan_hash": state["semantic_plan_hash"],
-            "replace_steps": [{"step_id": "step-1", "new_step": new_step}],
-        }
-
-    def test_40_plan_patch_rejects_surrounding_prose(self):
-        with self.assertRaises(ValueError):
-            parse_plan_patch('text {"operation":"replace_steps"}')
-
-    def test_41_plan_patch_accepts_single_fence(self):
-        parsed = parse_plan_patch('```json\n{"operation":"replace_steps"}\n```')
-        self.assertEqual(parsed["operation"], PLAN_PATCH_OPERATION)
-
-    def test_42_controller_field_mutation_is_rejected(self):
-        state = self.state()
-        patch = self.patch(state, {"step_id": "step-1", "renderer_invocation_contract": {"x": 1}})
-        with self.assertRaises(ValueError):
-            apply_plan_patch(state, patch, allowed_step_ids=["step-1"])
-
-    def test_43_no_op_does_not_clear_issues(self):
-        state = self.state()
-        patched, audit = apply_plan_patch(
-            state,
-            self.patch(state, copy.deepcopy(state["steps"][0])),
-            allowed_step_ids=["step-1"],
-        )
-        self.assertTrue(audit["no_op"])
-        self.assertEqual(patched["validation_issues"], state["validation_issues"])
+    def test_40_to_43_semantic_plan_patch_surface_is_retired(self):
+        for name in (
+            "PLAN_PATCH_OPERATION",
+            "parse_plan_patch",
+            "apply_plan_patch",
+            "build_plan_repair_request",
+        ):
+            self.assertFalse(hasattr(plan_tracker_module, name), name)
 
     def test_44_a_to_a_is_non_convergent(self):
         state = self.state()

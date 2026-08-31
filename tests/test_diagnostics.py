@@ -18,7 +18,7 @@ from agent_core.recovery import RecoveryStateStore
 
 
 class DiagnosticStateTests(unittest.TestCase):
-    def test_diagnostic_prompt_view_enforces_hard_character_budget(self):
+    def test_diagnostic_prompt_view_fails_typed_when_semantics_exceed_capacity(self):
         huge = "X" * 50_000
         context = DiagnosticContext(
             task_spec_summary={"original_user_request": huge},
@@ -35,10 +35,32 @@ class DiagnosticStateTests(unittest.TestCase):
         encoded = json.dumps(view, ensure_ascii=False, sort_keys=True, default=str)
 
         self.assertLessEqual(len(encoded), 10_000)
+        self.assertEqual(view["error"]["code"], "CONTEXT_CAPACITY_EXCEEDED")
+        self.assertFalse(view["limits"]["semantic_projection_complete"])
+        self.assertNotIn("current_step", view)
+
+    def test_diagnostic_prompt_view_compacts_only_evidence(self):
+        constraints = [
+            {"constraint_id": f"c-{index}", "text": f"required-{index}"}
+            for index in range(20)
+        ]
+        context = DiagnosticContext(
+            effective_user_facts={"semantic_constraints": constraints},
+            current_step={"step_id": "step-1", "constraints": constraints},
+            execution={"stdout_tail": "log line\n" * 10_000},
+            recent_attempts=[{"detail": "attempt\n" * 5_000}] * 8,
+            limits={"max_context_chars": 20_000},
+        )
+
+        view = context.prompt_view()
+
+        self.assertNotIn("error", view)
         self.assertTrue(view["limits"]["context_truncated"])
-        self.assertIn("current_step", view)
-        self.assertIn("validation", view)
-        self.assertIn("progress", view)
+        self.assertEqual(
+            view["effective_user_facts"]["semantic_constraints"],
+            constraints,
+        )
+        self.assertEqual(view["current_step"]["constraints"], constraints)
 
     def test_runtime_drift_is_diagnosed_from_contract_script_and_trace(self):
         with tempfile.TemporaryDirectory() as tmp:

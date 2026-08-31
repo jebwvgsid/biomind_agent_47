@@ -40,6 +40,8 @@ Do not use this skill when the user wants a quick public one-off BLAST with no p
 
 Use `megablast`-like settings only for very similar nucleotide sequences. Use more sensitive `blastn` settings for divergent nucleotide homologs.
 
+Never run `blastn` against a protein BLAST database or `blastp` against a nucleotide BLAST database. If the query/database molecule types are incompatible, choose the appropriate translated BLAST program (`blastx`, `tblastn`, or `tblastx`) only when that biological comparison is meaningful; otherwise record the stage as unresolved/blocked with the verified molecule types. Do not append `|| echo ...` or similar shell fallbacks that hide a BLAST failure exit status.
+
 ## Core Workflow
 
 1. Verify query FASTA and target FASTA are non-empty and have stable headers.
@@ -107,6 +109,7 @@ Report the program, query file, database file/prefix, database type, command par
 
 - Run `blastdbcmd -db <db_prefix> -info` to verify database metadata.
 - If no hits appear, confirm query/database molecule types and whether `blastx` or `tblastn` is needed.
+- If BLAST reports "No alias or index file found" or a molecule-type mismatch, treat it as a failed command, not a no-hit result.
 - If headers cannot be retrieved, rebuild with `-parse_seqids` when FASTA IDs are compatible.
 - If output is unexpectedly small, check `-max_target_seqs`, e-value, low-complexity filtering, and sequence orientation.
 - Keep BLAST database files together; missing `.pin/.psq/.phr` or `.nin/.nsq/.nhr` components mean the database is incomplete.

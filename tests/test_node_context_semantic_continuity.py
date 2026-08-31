@@ -240,13 +240,28 @@ class NodeContextSemanticContinuityTests(unittest.TestCase):
         )
 
     def test_planner_receives_raw_user_and_only_accepted_handoff(self) -> None:
-        payload = _context("planner", approved_plan_snapshot=None).llm_payload.to_provider_dict()
+        payload = _context(
+            "planner",
+            approved_plan_snapshot=None,
+            runtime={
+                "runtime_ready": True,
+                "available_capabilities": ["genomics/snpeff-annotation"],
+            },
+        ).llm_payload.to_provider_dict()
         rendered = json.dumps(payload, ensure_ascii=False)
         self.assertIn("请使用 custom 数据库并保留原始 VCF。", rendered)
         self.assertIn("genomics/snpeff-annotation", rendered)
         self.assertIn("variant_vcf", rendered)
         self.assertIn("build from the supplied GTF", rendered)
         self.assertNotIn("REJECTED CONSULTANT OUTPUT", rendered)
+        self.assertNotIn(
+            "selected_skills",
+            payload["semantic_history"]["consultant_handoff"],
+        )
+        self.assertNotIn(
+            "input_files",
+            payload["semantic_history"]["consultant_handoff"],
+        )
 
     def test_generate_receives_history_and_one_complete_approved_plan(self) -> None:
         context = _context("generate")
@@ -284,22 +299,20 @@ class NodeContextSemanticContinuityTests(unittest.TestCase):
         self.assertEqual(prefix_one.encode(), prefix_two.encode())
         self.assertNotEqual(prompt_one, prompt_two)
 
-    def test_planner_repair_has_byte_identical_stable_prefix(self) -> None:
-        first = _context("planner_repair", feedback={"repair": "first"})
-        second = _context("planner_repair", feedback={"repair": "second"})
-        prompt_one = PromptManager.get_plan_repair_v2_prompt(
-            first.llm_payload.to_dict(),
-            allowed_step_handles=["step.step-2"],
-            capability_context="same capability",
-        )
-        prompt_two = PromptManager.get_plan_repair_v2_prompt(
-            second.llm_payload.to_dict(),
-            allowed_step_handles=["step.step-2"],
-            capability_context="same capability",
-        )
+    def test_planner_keeps_stable_history_and_changes_only_current_focus(self) -> None:
+        first = _context("planner", feedback={"correction": "first"})
+        second = _context("planner", feedback={"correction": "second"})
+        payload_one = json.loads(PromptManager.get_planner_v2_human_prompt(
+            first.llm_payload.to_provider_dict()
+        ))
+        payload_two = json.loads(PromptManager.get_planner_v2_human_prompt(
+            second.llm_payload.to_provider_dict()
+        ))
         self.assertEqual(
-            prompt_one.split("<current_focus>", 1)[0].encode(),
-            prompt_two.split("<current_focus>", 1)[0].encode(),
+            payload_one["semantic_history"], payload_two["semantic_history"]
+        )
+        self.assertNotEqual(
+            payload_one["current_focus"], payload_two["current_focus"]
         )
 
     def test_recovery_separates_stable_history_from_current_failure(self) -> None:
@@ -353,7 +366,12 @@ class NodeContextSemanticContinuityTests(unittest.TestCase):
 
     def test_raw_and_compiled_semantic_conflict_remain_visible(self) -> None:
         context = _context("planner", approved_plan_snapshot=None)
-        prompt = PromptManager.get_planner_v2_prompt(context.llm_payload.to_dict())
+        prompt = (
+            PromptManager.get_planner_v2_system_prompt()
+            + PromptManager.get_planner_v2_human_prompt(
+                context.llm_payload.to_provider_dict()
+            )
+        )
         self.assertIn("custom 数据库", prompt)
         self.assertIn("public annotation database", prompt)
         self.assertIn("TASKSPEC_RECONCILIATION_REQUIRED", prompt)

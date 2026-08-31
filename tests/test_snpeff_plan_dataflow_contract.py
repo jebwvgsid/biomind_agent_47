@@ -70,7 +70,7 @@ def _candidate(
 
 
 def _plan_local_directory(
-    local_ref: str = "snpeff_database_dir",
+    local_ref: str = "plan.snpeff_database_dir",
     *,
     policy_id: str = "managed_intermediate_v1",
 ) -> dict:
@@ -120,8 +120,8 @@ class SnpEffPlanDataflowContractTests(unittest.TestCase):
     def test_split_plan_reuses_one_allocated_directory_identity(self) -> None:
         candidate = _candidate(
             [
-                _step("build-db", inputs=[], outputs=["snpeff_database_dir"], dependencies=[]),
-                _step("annotate", inputs=["snpeff_database_dir"], outputs=[], dependencies=["build-db"]),
+                _step("build-db", inputs=[], outputs=["plan.snpeff_database_dir"], dependencies=[]),
+                _step("annotate", inputs=["plan.snpeff_database_dir"], outputs=[], dependencies=["build-db"]),
             ],
             proposed_artifacts=[_plan_local_directory()],
         )
@@ -156,7 +156,7 @@ class SnpEffPlanDataflowContractTests(unittest.TestCase):
         consumer_id = rewritten["steps"][1]["inputs"][0]
 
         self.assertEqual(producer_id, consumer_id)
-        self.assertEqual(producer_id, mapping["snpeff_database_dir"])
+        self.assertEqual(producer_id, mapping["plan.snpeff_database_dir"])
         self.assertEqual(bindings[producer_id]["object_kind"], "directory")
         self.assertEqual(bindings[producer_id]["lifecycle"], "plan_local")
 
@@ -183,7 +183,7 @@ class SnpEffPlanDataflowContractTests(unittest.TestCase):
         candidate = _candidate(
             [_step(
                 "annotate",
-                inputs=["snpeff_database_dir"],
+                inputs=["plan.snpeff_database_dir"],
                 outputs=[],
                 dependencies=[],
             )],
@@ -213,18 +213,18 @@ class SnpEffPlanDataflowContractTests(unittest.TestCase):
                 _step(
                     "build-db-a",
                     inputs=[],
-                    outputs=["snpeff_database_dir"],
+                    outputs=["plan.snpeff_database_dir"],
                     dependencies=[],
                 ),
                 _step(
                     "build-db-b",
                     inputs=[],
-                    outputs=["snpeff_database_dir"],
+                    outputs=["plan.snpeff_database_dir"],
                     dependencies=[],
                 ),
                 _step(
                     "annotate",
-                    inputs=["snpeff_database_dir"],
+                    inputs=["plan.snpeff_database_dir"],
                     outputs=[],
                     dependencies=["build-db-a", "build-db-b"],
                 ),
@@ -305,7 +305,7 @@ class SnpEffPlanDataflowContractTests(unittest.TestCase):
             [_step(
                 "build-db",
                 inputs=[],
-                outputs=["snpeff_database_dir"],
+                outputs=["plan.snpeff_database_dir"],
                 dependencies=[],
             )],
             proposed_artifacts=[_plan_local_directory(
@@ -323,10 +323,10 @@ class SnpEffPlanDataflowContractTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "ARTIFACT_POLICY_UNREGISTERED")
 
     def test_planner_prompt_and_plan_review_show_explicit_dataflow_rules(self) -> None:
-        prompt = PromptManager.get_planner_v2_prompt({"task": {}, "current_step": {}})
-        self.assertIn("Dependencies only express ordering", prompt)
-        self.assertIn("producer's `outputs` and the consumer's `inputs`", prompt)
-        self.assertIn("`database_dir`", prompt)
+        prompt = PromptManager.get_planner_v2_system_prompt()
+        self.assertIn("dependencies only order steps", prompt)
+        self.assertIn("produced by one\nreachable dependency", prompt)
+        self.assertIn("plan.<task-specific-local-handle>", prompt)
 
         review = render_plan_review_content({
             "task_id": "review",

@@ -6,7 +6,9 @@ from agent_core.recovery import (
     RecoveryAction,
     RecoveryDecision,
     RecoveryDecisionKind,
+    RecoveryDisposition,
     RecoveryPolicy,
+    recovery_action_route,
     recovery_route_from_state,
 )
 
@@ -121,7 +123,9 @@ class RecoveryPolicyOwnershipTests(unittest.TestCase):
             },
         )
 
-        self.assertEqual(decision.kind, RecoveryDecisionKind.CONTINUE.value)
+        self.assertEqual(decision.kind, RecoveryDecisionKind.REVALIDATE.value)
+        self.assertEqual(decision.disposition, RecoveryDisposition.REVALIDATE.value)
+        self.assertEqual(decision.next_route, "supervisor")
         self.assertIsNone(decision.consume_budget)
 
     def test_internal_dependency_and_missing_domain_never_use_format_budget(self):
@@ -194,8 +198,66 @@ class RecoveryPolicyOwnershipTests(unittest.TestCase):
             attempt_id="attempt-1",
         )
 
-        self.assertEqual(decision.kind, RecoveryDecisionKind.CONTINUE.value)
+        self.assertEqual(decision.kind, RecoveryDecisionKind.REVALIDATE.value)
+        self.assertEqual(decision.disposition, RecoveryDisposition.REVALIDATE.value)
+        self.assertEqual(decision.next_route, "supervisor")
         self.assertIsNone(decision.consume_budget)
+
+    def test_successful_primary_execution_requires_supervisor_verification(self):
+        decision = self.policy.decide(
+            execution_evidence={"returncode": 0, "command_role": "primary"},
+            validation_evidence={"status": "valid"},
+            action_id="action-1",
+            step_id="step-1",
+            attempt_id="attempt-1",
+        )
+
+        self.assertEqual(
+            decision.kind,
+            RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value,
+        )
+        self.assertEqual(
+            decision.disposition,
+            RecoveryDisposition.ACCEPT_EXECUTION_FOR_VERIFICATION.value,
+        )
+        self.assertEqual(decision.next_route, "supervisor")
+        self.assertNotEqual(decision.kind, RecoveryDecisionKind.COMPLETE_STEP.value)
+
+    def test_generic_continue_is_legacy_only_and_fails_closed(self):
+        legacy = RecoveryDecision.from_mapping({
+            "schema_version": 3,
+            "kind": RecoveryDecisionKind.CONTINUE.value,
+            "recommended_action": RecoveryAction.CONTINUE.value,
+            "verdict": "continue",
+            "action_type": "pass_with_warning",
+            "reason": "No typed transition was persisted.",
+            "root_cause": "No typed transition was persisted.",
+            "evidence": [],
+            "source_node": "supervisor",
+        })
+
+        self.assertEqual(legacy.kind, RecoveryDecisionKind.ESCALATE.value)
+        self.assertEqual(
+            legacy.disposition,
+            RecoveryDisposition.INTERNAL_PROTOCOL_ERROR.value,
+        )
+        self.assertEqual(legacy.next_route, "supervisor")
+        self.assertIn("legacy_generic_continue_ambiguous", legacy.migration_conflicts)
+        self.assertEqual(
+            recovery_action_route(RecoveryDecisionKind.CONTINUE.value)["next_step"],
+            "supervisor",
+        )
+        with self.assertRaisesRegex(ValueError, "may not use generic CONTINUE"):
+            RecoveryDecision.from_mapping({
+                "schema_version": 5,
+                "kind": RecoveryDecisionKind.CONTINUE.value,
+                "recommended_action": RecoveryAction.CONTINUE.value,
+                "verdict": "continue",
+                "action_type": "pass_with_warning",
+                "reason": "invalid new transition",
+                "root_cause": "invalid new transition",
+                "evidence": [],
+            })
 
     def test_completion_evidence_closes_step_or_task(self):
         step = self.policy.decide(

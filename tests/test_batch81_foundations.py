@@ -206,21 +206,16 @@ class RecoverySingleWriterTests(unittest.TestCase):
         self.assertEqual(statuses, ["created", "validated", "applied"])
         with self.assertRaisesRegex(ValueError, "incident already has a committed decision"):
             apply_recovery_decision(state, self._decision("decision-2", "incident-1"))
-        self.assertEqual(
-            state["task_state"]["recovery_state"]["decision_audit"][-1]["apply_status"],
-            "rejected",
-        )
+        self.assertEqual(statuses, ["created", "validated", "applied"])
 
     def test_stale_plan_decision_is_rejected_without_budget_use(self):
         state = self._state()
+        before = json.dumps(state, sort_keys=True)
         decision = self._decision()
         decision["plan_version"] = "plan_v0"
         with self.assertRaisesRegex(ValueError, "plan_version is stale"):
             apply_recovery_decision(state, decision)
-        self.assertEqual(
-            state["task_state"]["recovery_state"]["decision_audit"][-1]["apply_status"],
-            "rejected",
-        )
+        self.assertEqual(json.dumps(state, sort_keys=True), before)
         self.assertEqual(state["task_state"]["budgets"]["execution_retry_count"], 0)
 
     def test_active_middleware_does_not_apply_plan_decisions(self):

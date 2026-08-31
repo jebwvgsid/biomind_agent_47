@@ -1,6 +1,6 @@
 ---
 name: reseq-variant-workflow
-description: Route resequencing variant analysis across short-read WGS SNP/InDel, short-read SV, read-depth CNV, RNA-seq variant calling, long-read SV, and assembly-vs-assembly SyRI workflows. Use when the user asks for 重测序变异检测, SNP, InDel, SV, CNV, RNA-seq variants, long-read structural variants, or assembly-based variants and BioMind must choose the right downstream skill instead of running every method.
+description: Route resequencing variant analysis across short-read WGS SNP/InDel, short-read SV, read-depth CNV, RNA-seq variant calling, long-read SV, and assembly-vs-assembly SyRI workflows. Use when the user asks for 重测序变异检测, SNP, InDel, SV, CNV, RNA-seq variants, long-read structural variants, or assembly-based variants and BioMind must choose the right primary downstream skill instead of running every method.
 version: "1.0.0"
 tags: [reseq, resequencing, variant-calling, SNP, InDel, SV, CNV, RNA-seq, long-read, SyRI, workflow-router]
 legacy_ids: [reseq_variant_calling, resequencing-variant-workflow, 重测序变异检测]
@@ -14,6 +14,8 @@ outputs: [stage_plan, selected_skills, output_contract, blocked_reason]
 
 Use this skill as the top-level controller. Its main job is to classify the user's data and biological goal, then select only the necessary downstream skills. Do not run SNP/InDel, SV, CNV, RNA-seq, long-read, and assembly comparison together unless the user explicitly requests a multi-modal project.
 
+For SV analysis, default to one scientifically appropriate primary workflow. Extra callers are optional validation, not default work.
+
 ## 确认任务边界
 
 First classify both **data type** and **variant class**:
@@ -23,18 +25,27 @@ First classify both **data type** and **variant class**:
 | Paired-end short-read WGS FASTQ needing mapping | `genomics/wgs-short-read-mapping` |
 | Short-read WGS SNP/InDel, high-confidence cohort | `genomics/wgs-gatk-snp-indel` or existing `genomics/wgs-variant-calling` |
 | Short-read WGS SNP/InDel, lightweight/small cohort | `genomics/wgs-bcftools-snp-indel` |
-| Short-read WGS deletion/duplication/inversion/translocation SV | `genomics/wgs-lumpy-sv` |
+| Short-read WGS deletion/duplication/inversion/translocation SV | `genomics/wgs-manta-sv` |
 | Short-read WGS read-depth CNV | `genomics/wgs-cnvnator-cnv` |
 | RNA-seq SNP/InDel from transcriptome reads | `genomics/rnaseq-variant-calling` |
-| ONT/PacBio SV from long-read FASTQ/BAM | `genomics/long-read-sv-sniffles-survivor` |
+| ONT/PacBio SV from long-read FASTQ/BAM | `genomics/long-read-sv-sniffles2` |
 | Two chromosome-level assemblies | `genomics/assembly-variant-syri` |
 | Functional annotation of final VCF | `genomics/snpeff-annotation` |
+
+SV caller selection defaults:
+
+- Long-read ONT/PacBio/unknown platform: select `genomics/long-read-sv-sniffles2` first.
+- PacBio projects: select `genomics/pacbio-sv-pbsv` only when the user asks for pbsv/PacBio official workflow or the project specifically requires it.
+- Extra long-read caller validation: select `genomics/long-read-sv-cutesv` only when the user requests multiple callers, benchmarking/cross-caller validation, or Sniffles2 fails.
+- Short-read paired-end SV: select `genomics/wgs-manta-sv` first. Use `genomics/wgs-lumpy-sv` only when the user explicitly requests LUMPY, a legacy project requires it, or Manta is unavailable and the user accepts fallback.
+- Assembly-level SV/synteny: select `genomics/assembly-variant-syri` first. Use Assemblytics or SVIM-asm only when the user explicitly asks for supplemental assembly callers or the SyRI input contract is not suitable.
 
 Default behavior when the request is vague:
 
 - If the user says only "重测序变异检测" and provides short-read WGS FASTQ/BAM, plan WGS SNP/InDel first.
 - Mention that SV and CNV are separate analyses with different evidence models.
 - Ask for variant class only when choosing wrongly would waste substantial compute or change biological interpretation.
+- If the user says only "SV calling" and data type is known, choose the single default primary caller for that data type. Do not expand to Sniffles2 + cuteSV + pbsv + Manta + SyRI unless the user requests a multi-caller or multi-modal comparison.
 
 Do not use this workflow for de novo assembly, GWAS, population genetics after VCF generation, or methylation analysis.
 
@@ -114,9 +125,14 @@ Never report success from logs alone. Check non-empty outputs and indexes.
 - `genomics/wgs-gatk-snp-indel` - GATK GVCF SNP/InDel calling.
 - `genomics/wgs-variant-calling` - existing BioMind robust GATK script renderer for large crop/non-model genomes.
 - `genomics/wgs-bcftools-snp-indel` - fast lightweight SNP/InDel calling.
-- `genomics/wgs-lumpy-sv` - short-read split-read/discordant-pair SV.
+- `genomics/wgs-manta-sv` - default short-read paired-end SV/indel calling.
+- `genomics/wgs-lumpy-sv` - legacy short-read split-read/discordant-pair SV fallback.
 - `genomics/wgs-cnvnator-cnv` - read-depth CNV.
 - `genomics/rnaseq-variant-calling` - RNA-seq variant calling.
-- `genomics/long-read-sv-sniffles-survivor` - ONT/PacBio SV.
+- `genomics/long-read-sv-sniffles2` - default ONT/PacBio long-read SV.
+- `genomics/long-read-sv-cutesv` - optional long-read SV cross-caller.
+- `genomics/pacbio-sv-pbsv` - optional PacBio pbsv workflow.
 - `genomics/assembly-variant-syri` - assembly-vs-assembly variants.
+- `genomics/assembly-variant-assemblytics` - optional assembly-vs-reference delta SV summary.
+- `genomics/assembly-variant-svim-asm` - optional assembly-alignment SV caller.
 - `genomics/snpeff-annotation` - annotate final VCF.

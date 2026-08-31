@@ -64,11 +64,44 @@ class TaskSummaryRenderer:
             return True
         return bool(self.session_archive.events_for_task(task_id, limit=1))
 
-    def initialize_task(self, task_id: str, goal: str = "", status: str = "running") -> None:
+    def initialize_task(
+        self,
+        task_id: str,
+        goal: str = "",
+        status: str = "running",
+        *,
+        authoritative_new_task: bool = False,
+    ) -> None:
+        """Initialize one task from a single request-scoped archive snapshot.
+
+        A newly accepted task is authoritative evidence that no historical
+        lookup is needed.  Resume paths take one snapshot and reuse it for the
+        report and index instead of issuing duplicate queries.
+        """
+        task_id = safe_id(task_id)
+        events = (
+            []
+            if authoritative_new_task
+            else self.session_archive.events_for_task(
+                task_id,
+                limit=300,
+                ascending=True,
+            )
+        )
         if not self.task_path(task_id).exists():
-            self.write_task_summary(task_id, fallback_goal=goal, fallback_status=status)
+            self.write_task_summary(
+                task_id,
+                fallback_goal=goal,
+                fallback_status=status,
+                events_snapshot=events,
+            )
         else:
-            self._upsert_task_index(task_id, status=status, goal=goal)
+            self._upsert_task_index(
+                task_id,
+                status=self._task_status(events, status),
+                goal=self._task_goal(events, goal),
+                summary=self._summary(events),
+            )
 
     def read_task_summary(self, task_id: str, max_chars: Optional[int] = None) -> str:
         path = self.task_path(task_id)
@@ -84,9 +117,17 @@ class TaskSummaryRenderer:
         task_id: str,
         fallback_goal: str = "",
         fallback_status: str = "running",
+        *,
+        events_snapshot: Optional[Sequence[ArchiveHit]] = None,
     ) -> str:
         task_id = safe_id(task_id)
-        events = self.session_archive.events_for_task(task_id, limit=300, ascending=True)
+        events = list(events_snapshot) if events_snapshot is not None else list(
+            self.session_archive.events_for_task(
+                task_id,
+                limit=300,
+                ascending=True,
+            )
+        )
         status = self._task_status(events, fallback_status)
         goal = self._task_goal(events, fallback_goal)
         updated = events[-1].timestamp if events else now_iso()
@@ -135,13 +176,26 @@ class TaskSummaryRenderer:
         task_id: str,
         fallback_goal: str = "",
         fallback_status: str = "running",
+        *,
+        events_snapshot: Optional[Sequence[ArchiveHit]] = None,
     ) -> Path:
         task_id = safe_id(task_id)
-        text = self.render_task_summary(task_id, fallback_goal=fallback_goal, fallback_status=fallback_status)
+        events = list(events_snapshot) if events_snapshot is not None else list(
+            self.session_archive.events_for_task(
+                task_id,
+                limit=300,
+                ascending=True,
+            )
+        )
+        text = self.render_task_summary(
+            task_id,
+            fallback_goal=fallback_goal,
+            fallback_status=fallback_status,
+            events_snapshot=events,
+        )
         path = self.task_path(task_id)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
-        events = self.session_archive.events_for_task(task_id, limit=300, ascending=True)
         self._upsert_task_index(
             task_id,
             status=self._task_status(events, fallback_status),

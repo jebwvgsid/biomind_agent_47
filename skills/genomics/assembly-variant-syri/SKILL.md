@@ -15,11 +15,13 @@ runtime:
   packages: [mummer4, syri, plotsr, samtools]
   capabilities: [assembly-comparison, synteny-aware-sv, variant-vcf]
   healthcheck: bash -lc "nucmer --version >/dev/null && delta-filter -h >/dev/null 2>&1 && syri --help >/dev/null 2>&1"
+  install_policy: prefer-declared
+  install_command: mamba create -n bio_syri -c conda-forge -c bioconda -y syri mummer4 plotsr samtools
 ---
 
 # Assembly Variant Calling with SyRI
 
-Use this skill for pairwise comparison of chromosome-level assemblies. SyRI interpretation depends strongly on assembly contiguity and chromosome correspondence.
+Use this as the default assembly-level SV/synteny skill for pairwise comparison of chromosome-level assemblies. SyRI interpretation depends strongly on assembly contiguity and chromosome correspondence. Assemblytics and SVIM-asm are optional supplemental callers, not default stages.
 
 ## 确认任务边界
 
@@ -158,7 +160,9 @@ Report assembly names, N50/contig level if known, alignment filtering thresholds
 
 ## 相似的 skills
 
-- `genomics/long-read-sv-sniffles-survivor` - read-based long-read SV.
-- `genomics/wgs-lumpy-sv` - short-read SV.
+- `genomics/assembly-variant-assemblytics` - optional delta-based assembly SV summary.
+- `genomics/assembly-variant-svim-asm` - optional assembly-alignment SV caller.
+- `genomics/long-read-sv-sniffles2` - read-based long-read SV.
+- `genomics/wgs-manta-sv` - short-read SV.
 - `genomics/wgs-cnvnator-cnv` - read-depth CNV.
 - `genomics/assembly` - genome assembly before comparison.

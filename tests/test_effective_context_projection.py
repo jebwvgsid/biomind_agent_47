@@ -87,20 +87,30 @@ class EffectiveContextProjectionTests(unittest.TestCase):
             rag_history=[],
             task_spec_context=context,
         )
-        planner = PromptManager.get_detailed_planner_prompt(
-            user_msg="run",
-            task_spec_context=context,
-            consultant_summary="selected skill/a",
-            runtime_audit_context="ready",
-            skills_summary="skill/a",
-            workflow_handoff="none",
-        )
-        repair = PromptManager.get_plan_repair_prompt(
-            {"allowed_step_ids": ["step-1"], "violations": ["missing field"]},
-            effective_facts_context=context,
-            selected_skill_context="skill/a",
-            renderer_route="renderer/a",
-        )
+        planner_system = PromptManager.get_planner_v2_system_prompt()
+        planner = planner_system + PromptManager.get_planner_v2_human_prompt({
+            "semantic_history": {
+                "task_spec": {"effective_context": context},
+                "selected_capabilities": ["skill/a"],
+            },
+            "current_focus": {
+                "planning": {"mode": "create_complete_plan"},
+                "runtime": {"runtime_ready": True},
+            },
+        })
+        repair = planner_system + PromptManager.get_planner_v2_human_prompt({
+            "semantic_history": {
+                "task_spec": {"effective_context": context},
+                "selected_capabilities": ["skill/a"],
+            },
+            "current_focus": {
+                "planning": {
+                    "mode": "correct_previous_plan",
+                    "violations": [{"code": "PLAN_FIELD_MISSING"}],
+                    "instruction": {"return_complete_plan": True},
+                }
+            },
+        })
         fake = _CaptureLLM()
 
         async def capture():
@@ -113,11 +123,9 @@ class EffectiveContextProjectionTests(unittest.TestCase):
             prompt = call[0].content
             self.assertIn("/data/a.vcf", prompt)
             self.assertIn("不得猜测物种数据库", prompt)
-        self.assertIn("[CONSULT HANDOFF]", planner)
-        self.assertIn("[SELECTED SKILL CONTRACT]", planner)
-        self.assertIn("[RUNTIME AUDIT]", planner)
-        self.assertIn("[WORKFLOW STATE]", planner)
-        self.assertIn("Repair scope: schema/format/missing fields/references only", repair)
+        self.assertIn("Artifact namespace is closed", planner)
+        self.assertIn("correct_previous_plan", repair)
+        self.assertNotIn("PlanPatch", repair)
 
     def test_generate_projection_uses_current_step_and_effective_values(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -184,7 +192,11 @@ class EffectiveContextProjectionTests(unittest.TestCase):
             source_task_id="task-a",
         )
         contract = effective_task_contract(spec)
-        output_dirs = [item["path"] for item in contract["outputs"] if item["role"] == "output_dir"]
+        output_dirs = [
+            item["canonical_path"]
+            for item in contract["outputs"]
+            if item["role"] == "output_dir"
+        ]
         self.assertEqual(output_dirs, ["/out/new"])
         self.assertNotIn("/out/old", json.dumps(contract, ensure_ascii=False))
         gate_context = _text_for_output_root_discovery({"task_spec": spec}, "")

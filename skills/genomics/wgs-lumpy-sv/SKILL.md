@@ -1,6 +1,6 @@
 ---
 name: wgs-lumpy-sv
-description: Detect short-read WGS structural variants with LUMPY, svtyper, and svtools from paired-end BAM evidence including discordant pairs and split reads. Use for deletion, duplication, inversion, and translocation SV discovery from Illumina-style resequencing BAMs. Do not use for ONT/PacBio long reads or read-depth CNV-only analysis.
+description: Legacy/fallback short-read WGS structural variant calling with LUMPY, svtyper, and svtools from paired-end BAM evidence including discordant pairs and split reads. Prefer genomics/wgs-manta-sv as the default short-read SV skill unless the user explicitly requests LUMPY or a legacy project requires it.
 version: "1.0.0"
 tags: [WGS, SV, LUMPY, svtyper, svtools, split-read, discordant-pair, deletion, duplication, inversion, translocation]
 legacy_ids: [lumpy-sv, short-read-sv, wgs-structural-variant]
@@ -15,11 +15,13 @@ runtime:
   packages: [lumpy-sv, svtyper, svtools, samtools]
   capabilities: [short-read-sv, split-read-extraction, sv-genotyping]
   healthcheck: bash -lc "lumpyexpress -h >/dev/null 2>&1 && svtyper --help >/dev/null 2>&1 && svtools --help >/dev/null 2>&1"
+  install_policy: prefer-declared
+  install_command: mamba create -n bio_lumpy -c conda-forge -c bioconda -y lumpy-sv svtyper svtools samtools
 ---
 
-# WGS LUMPY Structural Variant Calling
+# Legacy WGS LUMPY Structural Variant Calling
 
-Use this skill for short-read SV calling from discordant read pairs and split reads. LUMPY environments are often fragile; verify tools before any long run.
+Use this skill only as a legacy/fallback short-read SV caller. For ordinary paired-end WGS SV requests, prefer `genomics/wgs-manta-sv`. LUMPY environments are often fragile; verify tools before any long run.
 
 ## 确认任务边界
 
@@ -27,11 +29,12 @@ Use this skill when:
 
 - Input BAMs are paired-end short-read WGS.
 - BAMs are coordinate sorted and indexed.
-- The goal is DEL, DUP, INV, BND/TRA, or general SV from short-read evidence.
+- The user explicitly requests LUMPY, split-read/discordant-pair LUMPY evidence, or a legacy workflow that already depends on LUMPY.
 
 Do not use this skill when:
 
-- Data are ONT/PacBio; use `genomics/long-read-sv-sniffles-survivor`.
+- The user asks vaguely for short-read SV; use `genomics/wgs-manta-sv`.
+- Data are ONT/PacBio; use `genomics/long-read-sv-sniffles2`.
 - The goal is read-depth CNV only; use `genomics/wgs-cnvnator-cnv`.
 - BAMs are RNA-seq or single-end reads.
 
@@ -138,7 +141,8 @@ Report SVTYPE counts, sample count, genotyping completeness, and any filtered/fa
 
 ## 相似的 skills
 
-- `genomics/long-read-sv-sniffles-survivor` - long-read SV.
+- `genomics/wgs-manta-sv` - default short-read SV.
+- `genomics/long-read-sv-sniffles2` - long-read SV.
 - `genomics/wgs-cnvnator-cnv` - read-depth CNV.
 - `genomics/wgs-short-read-mapping` - prepare paired-end BAMs.
 - `genomics/assembly-variant-syri` - assembly-based SV and synteny.

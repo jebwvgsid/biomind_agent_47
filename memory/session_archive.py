@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 import sqlite3
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,8 +15,12 @@ from .patch_validator import redact_secrets, sanitize_value
 from .utils import DEFAULT_PROJECT_ID, now_iso, query_terms, safe_id
 
 
-ARCHIVE_SCHEMA_VERSION = 2
+ARCHIVE_SCHEMA_VERSION = 3
 ARCHIVE_BUSY_TIMEOUT_SECONDS = 15.0
+TASK_EVENT_LOOKUP_INDEX = "idx_session_events_task_id_id"
+
+
+logger = logging.getLogger(__name__)
 
 
 def _now() -> str:
@@ -580,6 +586,29 @@ class SessionArchive:
             )
             conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_session_events_content_hash ON session_events(content_hash)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_session_events_project_id ON session_events(project_id)")
+            task_index_exists = any(
+                str(row[1]) == TASK_EVENT_LOOKUP_INDEX
+                for row in conn.execute(
+                    "PRAGMA index_list('session_events')"
+                ).fetchall()
+            )
+            migration_started = time.perf_counter()
+            if not task_index_exists:
+                logger.info(
+                    "SessionArchive migration: creating task lookup index %s "
+                    "before the interactive prompt.",
+                    TASK_EVENT_LOOKUP_INDEX,
+                )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS "
+                f"{TASK_EVENT_LOOKUP_INDEX} ON session_events(task_id, id)"
+            )
+            if not task_index_exists:
+                logger.info(
+                    "SessionArchive migration complete: %s (%.3fs).",
+                    TASK_EVENT_LOOKUP_INDEX,
+                    time.perf_counter() - migration_started,
+                )
             conn.execute("CREATE INDEX IF NOT EXISTS idx_wiki_ingest_events_project_status ON wiki_ingest_events(project_id, status)")
             self._ensure_fts(conn)
             current_schema = conn.execute(

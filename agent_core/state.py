@@ -6,6 +6,17 @@ from langgraph.graph.message import add_messages
 class AgentState(TypedDict, total=False):
     messages: Annotated[List[BaseMessage], add_messages]
     next_step: Optional[str]
+    proposed_route: Optional[str]
+    pre_guard_effective_route: Optional[str]
+    effective_route: Optional[str]
+    dispatch_route: Optional[str]
+    override_source: Optional[str]
+    override_decision_id: Optional[str]
+    route_event_id: Optional[str]
+    current_attempt: Optional[str]
+    route_resolution: dict
+    progress_guard_result: dict
+    reconciliation_evidence: dict
     task_id: Optional[str]
     session_id: Optional[str]
     project_id: Optional[str]
@@ -15,6 +26,21 @@ class AgentState(TypedDict, total=False):
     plan_progress: Optional[str]
     selected_skills: List[str]
     selected_skills_raw: List[str]
+    # Canonical progressive Skill state. ``selected_skills`` remains a
+    # read-compatible ID projection only.
+    selected_skill_refs: List[dict]
+    selected_skill_ids: List[str]
+    skill_access_state: dict
+    skill_continuation_id: Optional[str]
+    skill_decision_result: dict
+    pending_skill_binding_proposal: dict
+    pending_plan_impact_review: dict
+    plan_impact_review: dict
+    plan_impact_review_error: dict
+    stale_node_result: dict
+    stale_execution_result: dict
+    execution_result: dict
+    authoritative_user_turn_revision: int
     skill_selection_source: Optional[str]
     workflow_id: Optional[str]
     workflow_stages: List[dict]
@@ -53,6 +79,10 @@ class AgentState(TypedDict, total=False):
     resolved_bindings: dict
     planner_feedback: dict
     canonical_commit: dict
+    binding_phase: dict
+    consultant_commit_rejection: dict
+    consultant_pending_transition: dict
+    consultant_no_progress_ledger: dict
     # Deprecated read-compatible projection of
     # consultation_state["finalize_protocol"]["repair"].  New code must never
     # treat this top-level field as an independent state owner.
@@ -126,7 +156,8 @@ class AgentState(TypedDict, total=False):
     knowledge_conflict_summary: dict
     knowledge_progress_events: List[dict]
     conflict_resolution: dict
-    plan_revision: dict
+    plan_revision: int
+    plan_revision_result: dict
     plan_version: Optional[str]
     revision_status: Optional[str]
     approval_status: Optional[str]

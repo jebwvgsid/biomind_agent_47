@@ -1,3 +1,4 @@
+import asyncio
 import tempfile
 import unittest
 import sys
@@ -99,24 +100,39 @@ except (ImportError, ModuleNotFoundError):
     sys.modules["langchain.chat_models"] = chat_models_module
 
 try:
-    from bio_agents import BioAnalystAgent
+    from bio_agents import BioAnalystAgent, _consultant_validation_is_format_repair_error
 except Exception as exc:  # pragma: no cover - optional integration deps may be absent.
     BioAnalystAgent = None
     IMPORT_ERROR = exc
 else:
     IMPORT_ERROR = None
 
-from agent_core.plan_tracker import build_plan_state, save_plan_state
+from agent_core.plan_tracker import (
+    build_plan_state,
+    load_plan_state,
+    mark_first_pending_running,
+    save_plan_state,
+    task_status,
+)
 from agent_core.skill_manager import SkillManager
+from agent_core.completion_gate import GateResult
 from agent_core.workflow_manager import WorkflowManager
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from config.config import (
+    LLM_MAX_HISTORY_CHARS,
+    LLM_MAX_HISTORY_MESSAGES,
+    LLM_STEP_CONTEXT_CHARS,
+    LLM_STEP_CONTEXT_MESSAGES,
+)
+from agent_core.llm_safety import is_transient_llm_failure
 from agent_core.task_spec import create_task_spec
-from langchain_core.messages import AIMessage
 
 
 class _FakeSkillManager:
     def __init__(self):
         self.records = []
         self.skills_root = Path(".")
+        self.runtime_records = {}
 
     def get_runtime_requirements(self, skill_id):
         if skill_id.startswith("scrna/"):
@@ -205,6 +221,15 @@ class _FakeSkillManager:
 
     def record_environment(self, *args, **kwargs):
         self.records.append((args, kwargs))
+        if args:
+            skill_id = args[0]
+        else:
+            skill_id = kwargs.get("skill_id", "")
+        if skill_id:
+            self.runtime_records[skill_id] = dict(kwargs)
+
+    def get_runtime_record(self, skill_id):
+        return dict(self.runtime_records.get(skill_id, {}))
 
     def get_skill_meta(self, skill_id):
         return {
@@ -219,12 +244,40 @@ class _FakePackageManager:
     def __init__(self):
         self.commands = []
         self.environments = {}
+        self.registry = {"tools": {}, "environments": self.environments}
 
     def get_environment(self, env_name):
         return self.environments.get(env_name, {})
 
     def register_environment(self, env_name, **kwargs):
         self.environments[env_name] = {"env": env_name, **kwargs}
+        self.registry["environments"] = self.environments
+
+    def find_matching_environment(self, requirements):
+        req_packages = set(requirements.get("packages") or [])
+        req_caps = set(requirements.get("capabilities") or [])
+        best = None
+        best_score = -1
+        for env, record in self.environments.items():
+            env_packages = set(record.get("packages") or [])
+            env_caps = set(record.get("capabilities") or [])
+            missing_packages = sorted(req_packages - env_packages)
+            missing_caps = sorted(req_caps - env_caps)
+            score = len(req_packages & env_packages) * 10 + len(req_caps & env_caps) * 5
+            if not missing_packages and not missing_caps:
+                score += 100
+            if score > best_score:
+                best_score = score
+                best = {
+                    "env": env,
+                    "match_type": "exact" if not missing_packages and not missing_caps else "partial",
+                    "matched_packages": sorted(req_packages & env_packages),
+                    "matched_capabilities": sorted(req_caps & env_caps),
+                    "missing_packages": missing_packages,
+                    "missing_capabilities": missing_caps,
+                    "record": dict(record),
+                }
+        return best
 
     def verify_environment(self, env_name, language="", healthcheck=""):
         self.commands.append(healthcheck)
@@ -233,8 +286,135 @@ class _FakePackageManager:
         return True, "OK"
 
 
+class _NeverReturningLLM:
+    async def ainvoke(self, messages):
+        await asyncio.sleep(1)
+
+
+class _ProviderCancelledLLM:
+    async def ainvoke(self, messages):
+        raise asyncio.CancelledError()
+
+
 @unittest.skipIf(BioAnalystAgent is None, f"bio_agents import unavailable: {IMPORT_ERROR}")
 class RuntimePreflightTests(unittest.TestCase):
+    def test_transient_llm_failures_are_classified_for_one_bounded_retry(self):
+        self.assertTrue(is_transient_llm_failure(RuntimeError("APIConnectionError: Connection error")))
+        self.assertTrue(is_transient_llm_failure(TimeoutError("consultant timed out")))
+        self.assertFalse(is_transient_llm_failure(ValueError("invalid workflow JSON")))
+
+    def test_llm_request_has_hard_timeout(self):
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.llm = _NeverReturningLLM()
+        agent.llm_timeout_seconds = 0.02
+        agent.llm_readonly_timeout_seconds = 0.01
+
+        with self.assertRaises(TimeoutError):
+            asyncio.run(
+                agent._ainvoke_llm(
+                    [HumanMessage(content="readonly probe")],
+                    stage="generate",
+                    task_id="timeout_test",
+                    task_mode="readonly",
+                )
+            )
+
+    def test_provider_cancelled_llm_request_becomes_retryable_timeout(self):
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.llm = _ProviderCancelledLLM()
+        agent.llm_timeout_seconds = 1
+        agent.llm_readonly_timeout_seconds = 1
+
+        with self.assertRaisesRegex(TimeoutError, "cancelled by the provider/client"):
+            asyncio.run(
+                agent._ainvoke_llm(
+                    [HumanMessage(content="plan")],
+                    stage="planner",
+                    task_id="provider_cancel_test",
+                    task_mode="managed",
+                )
+            )
+
+    def test_external_llm_request_cancellation_still_propagates(self):
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.llm = _NeverReturningLLM()
+        agent.llm_timeout_seconds = 5
+        agent.llm_readonly_timeout_seconds = 5
+
+        async def cancel_outer_request():
+            request = asyncio.create_task(
+                agent._ainvoke_llm(
+                    [HumanMessage(content="plan")],
+                    stage="planner",
+                    task_id="user_cancel_test",
+                    task_mode="managed",
+                )
+            )
+            await asyncio.sleep(0)
+            request.cancel()
+            await request
+
+        with self.assertRaises(asyncio.CancelledError):
+            asyncio.run(cancel_outer_request())
+
+    def test_generate_history_is_bounded_and_keeps_original_request(self):
+        messages = [HumanMessage(content="original request")]
+        messages.extend(
+            AIMessage(content="x" * (LLM_MAX_HISTORY_CHARS // 2))
+            for _ in range(LLM_MAX_HISTORY_MESSAGES + 3)
+        )
+
+        visible = BioAnalystAgent._generate_visible_messages(messages)
+        total_chars = sum(len(str(message.content)) for message in visible)
+
+        self.assertLessEqual(len(visible), LLM_MAX_HISTORY_MESSAGES)
+        self.assertLessEqual(total_chars, LLM_MAX_HISTORY_CHARS)
+        self.assertEqual(str(visible[0].content), "original request")
+
+    def test_step_context_keeps_current_evidence_and_drops_old_plan_history(self):
+        messages = [
+            HumanMessage(content="original user goal"),
+            AIMessage(content="old full planner output that should not be forwarded"),
+            AIMessage(content="EXECUTE old-command"),
+            SystemMessage(content="<observation>old execution output</observation>"),
+            SystemMessage(content="<supervisor_feedback>old retry feedback</supervisor_feedback>"),
+            HumanMessage(content="<human_answer stage=generate>use the verified input</human_answer>"),
+            AIMessage(content="<execute>current-command</execute>"),
+            SystemMessage(content="<observation>current execution output</observation>"),
+        ]
+
+        visible = BioAnalystAgent._generate_visible_messages(messages)
+        text = "\n".join(str(message.content) for message in visible)
+
+        self.assertIn("original user goal", text)
+        self.assertIn("use the verified input", text)
+        self.assertIn("current execution output", text)
+        self.assertIn("current-command", text)
+        self.assertNotIn("old full planner output", text)
+        self.assertLessEqual(len(visible), LLM_STEP_CONTEXT_MESSAGES)
+        self.assertLessEqual(sum(len(str(message.content)) for message in visible), LLM_STEP_CONTEXT_CHARS)
+
+    def test_current_step_prompt_context_does_not_forward_future_plan_steps(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
+            task_id = "step_context_task"
+            plan = (
+                "- [ ] Step 1: Action: EXECUTE preflight\n"
+                "  Output contract: preflight.tsv\n"
+                "  Success criteria: preflight is non-empty\n"
+                "- [ ] Step 2: Action: EXECUTE downstream analysis\n"
+                "  Output contract: downstream.tsv\n"
+            )
+            state = build_plan_state(task_id, plan)
+            mark_first_pending_running(state)
+            save_plan_state(tmpdir, task_id, state)
+
+            agent = BioAnalystAgent.__new__(BioAnalystAgent)
+            agent.data_path = tmpdir
+            context = agent._current_step_prompt_context(task_id, current_plan=plan)
+
+        self.assertIn("preflight", context)
+        self.assertNotIn("downstream analysis", context)
+
     def test_terminal_status_blocks_incomplete_plan_before_wiki_offer(self):
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             task_id = "blocked_install_task"
@@ -277,6 +457,151 @@ class RuntimePreflightTests(unittest.TestCase):
 
         self.assertEqual(status, "blocked")
 
+    def test_terminal_status_blocks_finalize_internal_error_before_wiki_offer(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
+            task_id = "finalize_internal_error"
+            agent = BioAnalystAgent.__new__(BioAnalystAgent)
+            agent.data_path = tmpdir
+
+            status = agent._terminal_status_from_snapshot(
+                task_id,
+                SimpleNamespace(
+                    values={
+                        "consultation_state": {
+                            "phase": "blocked",
+                            "consultation_status": "blocked",
+                            "completion_decision": "blocked",
+                            "completion_reason": "FINALIZE_REPAIR_EXHAUSTED",
+                            "finalize_protocol": None,
+                        },
+                        "messages": [
+                            SystemMessage(
+                                content=(
+                                    "<consultant_finalize_internal_error>"
+                                    '{"error_code":"FINALIZE_REPAIR_EXHAUSTED"}'
+                                    "</consultant_finalize_internal_error>"
+                                )
+                            )
+                        ],
+                    }
+                ),
+            )
+
+        self.assertEqual(status, "blocked")
+
+    def test_empty_terminal_snapshot_never_defaults_to_completed(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
+            task_id = "terminal_evidence_missing"
+            agent = BioAnalystAgent.__new__(BioAnalystAgent)
+            agent.data_path = tmpdir
+
+            status = agent._terminal_status_from_snapshot(
+                task_id,
+                SimpleNamespace(values={"messages": []}),
+            )
+
+        self.assertEqual(status, "blocked")
+
+    def test_active_durable_finalize_overrides_stale_completed_terminal(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
+            task_id = "stale_completed_active_finalize"
+            state = load_plan_state(tmpdir, task_id)
+            state.setdefault("task_state", {})["status"] = "completed"
+            state["task_state"]["consultation_state"] = {
+                "phase": "finalize",
+                "finalize_protocol": {
+                    "schema_version": 4,
+                    "wire_schema_version": 3,
+                    "finalize_status": "resolving",
+                    "attempts": [{
+                        "attempt_id": "attempt-held",
+                        "provider_status": "in_flight",
+                    }],
+                },
+            }
+            save_plan_state(tmpdir, task_id, state)
+            agent = BioAnalystAgent.__new__(BioAnalystAgent)
+            agent.data_path = tmpdir
+
+            status = agent._terminal_status_from_snapshot(
+                task_id,
+                SimpleNamespace(values={"task_status": "completed"}),
+            )
+
+        self.assertEqual(status, "blocked")
+
+    def test_terminal_status_text_does_not_block_quoted_finalize_tag(self):
+        self.assertEqual(
+            BioAnalystAgent._terminal_status_from_text(
+                "<consultant_finalize_internal_error>"
+                '{"error_code":"FINALIZE_PROVIDER_FATAL"}'
+                "</consultant_finalize_internal_error>"
+            ),
+            "",
+        )
+
+    def test_wiki_offer_wait_is_not_business_task_input(self):
+        self.assertFalse(
+            BioAnalystAgent._business_waiting_state(
+                {"stage": "wiki_ingest_offer", "status": "waiting_user"}
+            )
+        )
+
+    def test_consultant_explicit_blocked_status_is_durable(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
+            task_id = "durable_finalize_internal_error"
+            save_plan_state(tmpdir, task_id, build_plan_state(task_id, ""))
+            agent = BioAnalystAgent.__new__(BioAnalystAgent)
+            agent.data_path = tmpdir
+
+            agent._record_profiler_state_update(
+                task_id,
+                "consultant",
+                {"task_id": task_id},
+                {
+                    "task_status": "blocked",
+                    "next_step": "finish",
+                    "consultation_state": {
+                        "phase": "blocked",
+                        "completion_decision": "blocked",
+                    },
+                },
+            )
+
+            durable = load_plan_state(tmpdir, task_id)
+
+        self.assertEqual(task_status(durable), "blocked")
+        self.assertEqual(
+            durable["task_state"]["last_transition"]["task_status"],
+            "blocked",
+        )
+
+    def test_install_result_continues_when_plan_has_pending_steps(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
+            task_id = "install_continue_task"
+            agent = BioAnalystAgent.__new__(BioAnalystAgent)
+            agent.data_path = tmpdir
+            state = build_plan_state(
+                task_id,
+                "- [x] Step 1: Install bio_lumpy\n- [ ] Step 2: Run mapping\n- [ ] Step 3: Write report",
+            )
+            save_plan_state(tmpdir, task_id, state)
+
+            self.assertEqual(agent._next_step_after_install_result(task_id), "generate")
+
+    def test_install_result_finishes_when_plan_is_terminal(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
+            task_id = "install_finish_task"
+            agent = BioAnalystAgent.__new__(BioAnalystAgent)
+            agent.data_path = tmpdir
+            state = build_plan_state(
+                task_id,
+                "- [x] Step 1: Install bio_lumpy\n- [x] Step 2: Run mapping",
+            )
+            save_plan_state(tmpdir, task_id, state)
+
+            self.assertEqual(agent._next_step_after_install_result(task_id), "finish")
+
     def test_terminal_status_text_does_not_treat_reported_failed_counts_as_failure(self):
         self.assertEqual(BioAnalystAgent._terminal_status_from_text("QC report: 0 failed samples"), "")
         self.assertEqual(BioAnalystAgent._terminal_status_from_text("Error: command failed"), "failed")
@@ -315,9 +640,103 @@ class RuntimePreflightTests(unittest.TestCase):
         )
 
         self.assertIn("[RUNTIME_PREFLIGHT]", summary)
+        self.assertIn("[RUNTIME_AUDIT]", summary)
         self.assertIn("3d-dna/calder2-subcompartment: failed", summary)
         self.assertIn("which: no Rscript", summary)
+        self.assertIn("decision:", summary)
         self.assertTrue(any("which Rscript" in command for command in agent.pm.commands))
+
+    def test_skill_only_fallback_runs_runtime_preflight_before_planner(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.skill_manager = SkillManager(str(repo_root / "skills"))
+        agent.pm = _FakePackageManager()
+        agent.runtime_status = {}
+        agent.data_path = tempfile.gettempdir()
+        agent._verify_skill_runtime = lambda *_args, **_kwargs: (True, "healthcheck passed", "bio_gatk")
+        agent._consultant_handoff_memory_packet = lambda *_args, **_kwargs: ""
+
+        result = agent._consultant_skill_only_fallback_handoff(
+            consultant_context="use genomics/snpeff-annotation",
+            fallback_raw=["genomics/snpeff-annotation"],
+            task_id="task_snpeff_fallback",
+            consultant_memory_retrieval_context="",
+            consultant_wiki_context="",
+        )
+
+        self.assertEqual(result["next_step"], "planner")
+        self.assertEqual(result["runtime_audit"][0]["status"], "ready")
+        self.assertFalse(result["runtime_audit"][0]["install_required"])
+        self.assertIn("status: ready", result["requirements_summary"])
+        self.assertIn("env_runner: bash", result["requirements_summary"])
+        self.assertIn("Never synthesize a Conda prefix", result["requirements_summary"])
+
+    def test_planner_does_not_load_global_installed_tool_inventory(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+        planner_source = source[source.index("async def planner("):source.index("async def plan_review(")]
+
+        self.assertNotIn("list_installed_tools", planner_source)
+        self.assertIn("runtime_audit_context", planner_source)
+
+    def test_generate_context_does_not_load_global_installed_tool_inventory(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+        context_source = source[
+            source.index("def _ephemeral_prompt_context_result("):
+            source.index("def _bounded_message_history(")
+        ]
+
+        self.assertNotIn("_build_tool_context", context_source)
+        self.assertIn("build_scoped_runtime_context", context_source)
+
+    def test_runtime_audit_reports_verified_alternate_environment_candidate(self):
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.skill_manager = _FakeSkillManager()
+        agent.pm = _FakePackageManager()
+        agent.runtime_status = {}
+        agent.pm.register_environment(
+            "shared_scrna",
+            packages=["Seurat", "yaml"],
+            capabilities=["scrna-preprocess"],
+            language="r",
+            status="verified",
+        )
+        agent._verify_conda_env_presence = lambda env: (
+            (False, "EnvironmentLocationNotFound: bio_scrna_core")
+            if env == "bio_scrna_core" else
+            (True, f"Conda environment `{env}` exists.")
+        )
+
+        summary = agent._consultant_runtime_preflight_summary(
+            ["scrna/preprocess/basic"],
+            task_id="task_alt_runtime",
+        )
+
+        self.assertIn("[RUNTIME_AUDIT]", summary)
+        self.assertIn("declared_env: bio_scrna_core", summary)
+        self.assertIn("matching_env_candidate: env=shared_scrna", summary)
+        self.assertIn("candidate_healthcheck: passed; env=shared_scrna", summary)
+        self.assertIn("alternate_runtime_candidate_verified_needs_user_or_planner_decision", summary)
+
+    def test_runtime_audit_extracts_only_existing_healthcheck_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            env_prefix = root / "envs" / "runtime"
+            jar_path = env_prefix / "share" / "tool.jar"
+            jar_path.parent.mkdir(parents=True)
+            jar_path.write_text("jar", encoding="utf-8")
+
+            resolved = BioAnalystAgent._verified_runtime_paths(
+                "\n".join([
+                    f"RESOLVED_ENV_PREFIX={env_prefix}",
+                    f"RESOLVED_TOOL_JAR={jar_path}",
+                    f"MISSING_TOOL={root / 'missing.jar'}",
+                    "ordinary healthcheck prose",
+                ])
+            )
+
+        self.assertEqual(resolved["RESOLVED_ENV_PREFIX"], str(env_prefix.resolve()))
+        self.assertEqual(resolved["RESOLVED_TOOL_JAR"], str(jar_path.resolve()))
+        self.assertNotIn("MISSING_TOOL", resolved)
 
     def test_runtime_preflight_fails_when_declared_conda_env_is_absent_even_if_help_passes(self):
         agent = BioAnalystAgent.__new__(BioAnalystAgent)
@@ -349,7 +768,7 @@ class RuntimePreflightTests(unittest.TestCase):
         )
 
         self.assertIn("cd ", resolved)
-        self.assertIn(str(Path(__file__).resolve().parents[1]), resolved)
+        self.assertIn("Biomind_v1", resolved)
         self.assertIn("skills/scrna/env/bootstrap/scripts/check_scrna_env.R", resolved)
 
     def test_runtime_block_continues_when_reporting_steps_remain(self):
@@ -480,6 +899,48 @@ class RuntimePreflightTests(unittest.TestCase):
         self.assertIn("not for running analysis code", violation)
         self.assertIn("conda run -n bio_scrna_core Rscript", violation)
 
+    def test_skill_script_guard_rejects_unknown_flags_and_undeclared_conda_python(self):
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.skill_manager = SkillManager(str(Path(__file__).resolve().parents[1] / "skills"))
+        script = (
+            Path(__file__).resolve().parents[1]
+            / "skills/genomics/snpeff-annotation/scripts/render_snpeff_annotation_scripts.py"
+        )
+
+        unknown_flag = agent._selected_skill_env_runner_violation(
+            f"{sys.executable} {script} --fasta ref.fa --gtf genes.gtf --gtf22",
+            ["genomics/snpeff-annotation"],
+        )
+        wrong_python = agent._selected_skill_env_runner_violation(
+            (
+                f"conda run -n bio_gatk python {script} --vcf input.vcf "
+                "--reference-fasta ref.fa --annotation-gtf genes.gtf "
+                "--genome-version custom --outdir output"
+            ),
+            ["genomics/snpeff-annotation"],
+        )
+        valid = agent._selected_skill_env_runner_violation(
+            (
+                f"{sys.executable} {script} --vcf input.vcf "
+                "--reference-fasta ref.fa --annotation-gtf genes.gtf "
+                "--genome-version custom --outdir output"
+            ),
+            ["genomics/snpeff-annotation"],
+        )
+
+        self.assertIn("undeclared flag(s)", unknown_flag)
+        self.assertIn("--fasta", unknown_flag)
+        self.assertIn("undeclared Conda Python", wrong_python)
+        self.assertEqual(valid, "")
+
+        card = agent.skill_manager.get_execution_cards(
+            ["genomics/snpeff-annotation"],
+            legacy_renderer_mode=True,
+        )
+        self.assertIn("script_runner: controller_python", card)
+        self.assertIn("--annotation-gtf", card)
+        self.assertIn("--reference-fasta", card)
+
     def test_structured_action_json_extracts_execute_code(self):
         content = (
             '<action_json>{"action_type":"execute","language":"bash",'
@@ -491,6 +952,101 @@ class RuntimePreflightTests(unittest.TestCase):
         self.assertEqual(action["type"], "execute")
         self.assertEqual(action["code"], "echo ready")
         self.assertEqual(action["language"], "bash")
+
+    def test_consultant_json_action_normalizes_to_legacy_command(self):
+        execute = BioAnalystAgent._consultant_command_from_json(
+            '<action_json>{"action_type":"execute","language":"bash","code":"ls -lh data.tsv"}</action_json>'
+        )
+        load_skill = BioAnalystAgent._consultant_command_from_json(
+            '<action_json>{"action_type":"load_skill_doc","skill_id":"genomics/wgs-short-read-mapping"}</action_json>'
+        )
+        canonical_load_skill = BioAnalystAgent._consultant_command_from_json(
+            '```json\n{"action_type":"load_skill_doc",'
+            '"canonical_skill_id":"genomics/snpeff-annotation"}\n```'
+        )
+        finish = BioAnalystAgent._consultant_command_from_json(
+            '<action_json>{"action_type":"finish","selected_skills":["genomics/wgs-short-read-mapping"],"summary":"verified inputs"}</action_json>'
+        )
+
+        self.assertTrue(execute.startswith("EXECUTE"))
+        self.assertIn("ls -lh data.tsv", execute)
+        self.assertEqual(load_skill, "LOAD_SKILL_DOC genomics/wgs-short-read-mapping")
+        self.assertEqual(canonical_load_skill, "LOAD_SKILL_DOC genomics/snpeff-annotation")
+        self.assertTrue(finish.startswith("FINISH "))
+        self.assertIn("[SELECTED_SKILLS: genomics/wgs-short-read-mapping]", finish)
+        self.assertIn("verified inputs", finish)
+
+    def test_consultant_command_groups_are_rejected_with_field_specific_repair(self):
+        content = (
+            '<action_json>{"action_type":"execute","requirement_ids":["runtime:x"],'
+            '"purpose":"verify","expected_evidence":{"ok":true},'
+            '"command_groups":[{"commands":[{"command":"echo ready"}]}]}</action_json>'
+        )
+
+        self.assertEqual(BioAnalystAgent._consultant_command_from_json(content), "")
+        payload = BioAnalystAgent._consultant_json_payload(content)
+        code, detail = BioAnalystAgent._consultant_action_contract_error(content, payload)
+
+        self.assertEqual(code, "ACTION_FORMAT_INVALID")
+        self.assertIn("execute.command_groups is unsupported", detail)
+        self.assertIn("execute.code is required", detail)
+        self.assertTrue(_consultant_validation_is_format_repair_error(
+            f'<consultant_validation_error code="{code}">{detail}</consultant_validation_error>'
+        ))
+
+    def test_consultant_tool_result_echo_is_a_format_repair_not_execution_evidence(self):
+        content = (
+            '<tool_result>{"success":false,"errors":['
+            '"execute failed: no execute_call_count configured for this phase"]}</tool_result>'
+        )
+
+        code, detail = BioAnalystAgent._consultant_action_contract_error(content)
+
+        self.assertEqual(code, "CONTROLLER_EVIDENCE_ECHO")
+        self.assertIn("controller-owned evidence", detail)
+        self.assertTrue(_consultant_validation_is_format_repair_error(
+            f'<consultant_validation_error code="{code}">{detail}</consultant_validation_error>'
+        ))
+
+    def test_verified_loaded_skill_ids_require_successful_controller_evidence(self):
+        messages = [
+            AIMessage(content="LOAD_SKILL_DOC genomics/snpeff-annotation"),
+            SystemMessage(content=(
+                '<load_error action="LOAD_SKILL_DOC" skill_id="genomics/wgs-manta-sv">failed</load_error>'
+            )),
+            SystemMessage(content=(
+                '<loaded_skill_doc skill_id="genomics/snpeff-annotation">doc</loaded_skill_doc>'
+            )),
+            SystemMessage(content=(
+                '<loaded_skill_reference skill_id="genomics/snpeff-annotation" path="notes.md">ref</loaded_skill_reference>'
+            )),
+        ]
+
+        self.assertEqual(
+            BioAnalystAgent._consultant_verified_loaded_skill_ids(messages),
+            ["genomics/snpeff-annotation"],
+        )
+
+    def test_controller_runtime_seed_evidence_is_keyed_by_canonical_skill(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.skill_manager = SkillManager(str(repo_root / "skills"))
+        agent.pm = _FakePackageManager()
+        agent.runtime_status = {}
+        agent.data_path = tempfile.gettempdir()
+        agent._verify_skill_runtime = lambda *_args, **_kwargs: (
+            True,
+            "RESOLVED_SNPEFF_JAR=/tmp/snpEff.jar",
+            "bio_gatk",
+        )
+
+        audits, evidence, _summary = agent._consultant_runtime_seed_evidence(
+            ["genomics/snpeff-annotation"],
+            "task_runtime_seed",
+        )
+
+        self.assertEqual(len(audits), 1)
+        self.assertEqual(evidence["genomics/snpeff-annotation"]["status"], "ready")
 
     def test_structured_action_parser_falls_back_to_xml_install_tool(self):
         content = '<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>'
@@ -628,6 +1184,29 @@ class RuntimePreflightTests(unittest.TestCase):
         ]
         self.assertFalse(cache["ok"])
         self.assertIn("makeblastdb: command not found", cache["detail"])
+
+    def test_runtime_redirect_does_not_install_outside_current_step_skills(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.skill_manager = SkillManager(str(repo_root / "skills"))
+        agent.runtime_status = {}
+
+        redirect, runtime_skills = agent._runtime_install_redirect_from_execution(
+            "lumpyexpress -B 02.mapping/sample.sorted.bam -o 03.sv_calling/sample.lumpy.vcf",
+            (
+                "Sourcing executables from /envs/bio_lumpy/bin/lumpyexpress.config\n"
+                "/envs/bio_lumpy/bin/lumpyexpress: line 15: -n: command not found\n"
+                "File \"/envs/bio_lumpy/bin/scripts/bamkit/bamlibs.py\", line 1\n"
+                "404: Not Found\n"
+                "SyntaxError: invalid syntax"
+            ),
+            "",
+            ["genomics/reseq-variant-workflow"],
+            "task_lumpy_router_runtime",
+        )
+
+        self.assertEqual(runtime_skills, [])
+        self.assertEqual(redirect, "")
 
     def test_runtime_install_policy_context_blocks_install_when_requested(self):
         blocked_spec = create_task_spec("runtime policy")
@@ -787,6 +1366,129 @@ class RuntimePreflightTests(unittest.TestCase):
 
         self.assertIn("self.input_timeout_seconds = resolve_input_timeout()", source)
         self.assertIn("timeout_seconds=self.input_timeout_seconds", source)
+
+    def test_root_cause_post_processing_is_bounded_and_fail_open(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertIn("analysis = await asyncio.wait_for(", source)
+        self.assertIn("asyncio.to_thread(\n                            RootCauseAnalyzer().analyze", source)
+        self.assertIn("timeout=ROOT_CAUSE_TIMEOUT_SECONDS", source)
+        self.assertIn('"status": "diagnostic_timeout"', source)
+
+    def test_command_trace_does_not_leak_xtrace_state_to_child_processes(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertNotIn('export BASH_XTRACEFD=9', source)
+        self.assertNotIn('trace_prefix += "set -x\\n"', source)
+        self.assertIn("+BIO_ERR|", source)
+
+    def test_execute_appends_global_shims_after_environment_tools(self):
+        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+
+        self.assertIn("export PATH=\"$PATH:{shim_path}\"", source)
+        self.assertNotIn("export PATH=\"{shim_path}:$PATH\"", source)
+
+    @unittest.skipIf(BioAnalystAgent is None, f"bio_agents import unavailable: {IMPORT_ERROR}")
+    def test_advisory_warn_on_final_artifacts_does_not_force_retry_loop(self):
+        plan_state = {
+            "steps": [
+                {
+                    "status": "running",
+                    "title": (
+                        "Step 5: Generate final report and reproducibility script | "
+                        "Action: EXECUTE | Done: report.md, reproduce.sh, stage_status.tsv exist"
+                    ),
+                }
+            ]
+        }
+        messages = [
+            AIMessage(
+                content=(
+                    "Verdict: WARN\n"
+                    "Reason: report preview looked truncated and the summary TSV is small.\n"
+                    "Action: inspect the contents before accepting the results."
+                )
+            )
+        ]
+
+        self.assertTrue(BioAnalystAgent._supervisor_warn_requires_followup(messages))
+        self.assertTrue(
+            BioAnalystAgent._supervisor_warn_is_acceptably_artifact_bounded(
+                messages,
+                plan_state,
+                GateResult(True),
+            )
+        )
+
+    @unittest.skipIf(BioAnalystAgent is None, f"bio_agents import unavailable: {IMPORT_ERROR}")
+    def test_plan_step_runtime_env_reselects_sniffles_over_unrelated_3d_dna(self):
+        import tempfile
+
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            task_id = "task_longread_sv"
+            plan_file = Path(tmpdir) / "task_outputs" / task_id / "plan.md"
+            plan = """
+- [ ] Step 1: Verify bio_longread_sv runtime and Sniffles2 healthcheck | Goal: confirm minimap2, samtools, sniffles are available | Action: EXECUTE | Skills: [genomics/long-read-sv-sniffles2] | Stage: longread_sv | Batch: 1 | Done: healthcheck passes
+- [ ] Step 2: Run ONT minimap2 mapping | Action: EXECUTE | Skills: [genomics/long-read-sv-sniffles2] | Stage: longread_sv | Batch: 1 | Done: ont1.sort.bam exists
+"""
+            state = build_plan_state(task_id, plan, plan_file=str(plan_file))
+            mark_first_pending_running(state, "started")
+            save_plan_state(tmpdir, task_id, state)
+
+            agent = BioAnalystAgent.__new__(BioAnalystAgent)
+            agent.data_path = tmpdir
+            agent.skill_manager = SkillManager(str(repo_root / "skills"))
+
+            update = agent._active_skill_update_for_current_plan_step(
+                {
+                    "selected_skills": [
+                        "3d-dna/loop-calling",
+                        "genomics/long-read-sv-cutesv",
+                        "genomics/long-read-sv-sniffles2",
+                    ],
+                    "active_skills": [
+                        "3d-dna/loop-calling",
+                        "genomics/long-read-sv-cutesv",
+                        "genomics/long-read-sv-sniffles2",
+                    ],
+                },
+                task_id,
+            )
+
+        self.assertIn("genomics/long-read-sv-sniffles2", update.get("active_skills", []), update)
+        self.assertNotIn("3d-dna/loop-calling", update.get("active_skills", []), update)
+
+    @unittest.skipIf(BioAnalystAgent is None, f"bio_agents import unavailable: {IMPORT_ERROR}")
+    def test_install_target_is_narrowed_to_current_plan_step(self):
+        import tempfile
+
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            task_id = "task_install_narrow"
+            plan_file = Path(tmpdir) / "task_outputs" / task_id / "plan.md"
+            plan = """
+- [ ] Step 1: Verify bio_longread_sv runtime, minimap2, samtools, and Sniffles2 | Action: EXECUTE | Skills: [genomics/long-read-sv-sniffles2] | Stage: longread_sv | Batch: 1 | Done: healthcheck passes
+"""
+            state = build_plan_state(task_id, plan, plan_file=str(plan_file))
+            mark_first_pending_running(state, "started")
+            save_plan_state(tmpdir, task_id, state)
+
+            agent = BioAnalystAgent.__new__(BioAnalystAgent)
+            agent.data_path = tmpdir
+            agent.skill_manager = SkillManager(str(repo_root / "skills"))
+
+            narrowed = agent._narrow_skills_to_current_plan_step(
+                [
+                    "3d-dna/loop-calling",
+                    "genomics/long-read-sv-cutesv",
+                    "genomics/long-read-sv-sniffles2",
+                ],
+                task_id,
+            )
+
+        self.assertIn("genomics/long-read-sv-sniffles2", narrowed)
+        self.assertNotIn("3d-dna/loop-calling", narrowed)
 
 
 if __name__ == "__main__":

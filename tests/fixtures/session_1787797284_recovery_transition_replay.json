@@ -1,0 +1,75 @@
+{
+  "fixture_schema_version": 1,
+  "source_session": "session_1787797284",
+  "task_id": "session-1787797284-transition-replay",
+  "plan_markdown": "- [>] Step 1: Annotate the VCF | Action: EXECUTE | Outputs: {RESULT} | Done: annotated VCF is independently validated\n- [ ] Step 2: Summarize annotated variants | Action: EXECUTE | Done: summary is independently validated\n",
+  "legacy_accepted_decision": {
+    "schema_version": 4,
+    "kind": "CONTINUE",
+    "recommended_action": "RECONCILE_AND_CONTINUE",
+    "verdict": "continue",
+    "action_type": "reconcile_artifacts",
+    "failure_class": "VALIDATOR_FALSE_POSITIVE",
+    "failure_owner": "VERIFICATION",
+    "error_is_real": false,
+    "primary_execution_succeeded": true,
+    "evidence_sufficient": true,
+    "rerun_required": false,
+    "consume_retry_budget": false,
+    "user_notification_required": false,
+    "reason": "The launcher anomaly is non-fatal because the canonical annotated VCF is valid.",
+    "root_cause": "The launcher reported a JVM/GraalVM anomaly after the canonical result was written.",
+    "confidence": 0.93,
+    "evidence": [
+      "canonical annotated VCF exists and is non-empty",
+      "launcher anomaly occurred after result materialization"
+    ],
+    "evidence_refs": [
+      "attempt-accepted:stderr",
+      "attempt-accepted:annotated-vcf"
+    ],
+    "machine_findings_considered": [
+      "returncode=0",
+      "canonical_result_valid=true"
+    ],
+    "repair_target": "",
+    "repair_instruction": "",
+    "next_action": "RECONCILE_AND_CONTINUE",
+    "requires_user_input": false,
+    "next_route": "generate",
+    "source_node": "execute",
+    "action_id": "action-accepted",
+    "attempt_id": "attempt-accepted",
+    "step_id": "step-1",
+    "decision_id": "decision-legacy-accepted",
+    "idempotency_key": "decision-legacy-accepted",
+    "incident_id": "incident-session-1787797284",
+    "decision_owner": "RecoveryPolicy"
+  },
+  "incident_evidence": {
+    "attempt_id": "attempt-accepted",
+    "action_id": "action-accepted",
+    "step_id": "step-1",
+    "returncode": 0,
+    "execution_status": "succeeded",
+    "command_role": "primary",
+    "stderr_summary": "GraalVM launcher anomaly after canonical result materialization",
+    "canonical_result_valid": true
+  },
+  "expected_route_trace": [
+    "Generate",
+    "Execute",
+    "Recovery",
+    "Supervisor",
+    "CompletionGate",
+    "step-2"
+  ],
+  "forbidden_route_trace": [
+    "Generate",
+    "Execute",
+    "Recovery",
+    "Generate",
+    "Execute",
+    "Generate"
+  ]
+}

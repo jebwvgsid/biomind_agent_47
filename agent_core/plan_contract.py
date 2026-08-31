@@ -14,7 +14,7 @@ import uuid
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 
 PLAN_CONTRACT_VERSION = "1.2.1"
@@ -30,7 +30,7 @@ RECOGNIZED_PLANNER_OUTCOMES = {
     TASKSPEC_RECONCILIATION_REQUIRED,
 }
 
-_LOCAL_REF_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]{0,127}$")
+_PLAN_LOCAL_REF_RE = re.compile(r"^plan\.[A-Za-z][A-Za-z0-9_.-]{0,122}$")
 _CONTROLLER_OWNED_CANDIDATE_FIELDS = {
     "candidate_scope_id",
     "logical_artifact_id",
@@ -94,14 +94,46 @@ class PlanContractError(ValueError):
 
 
 class PlannerEnvelopeError(PlanContractError):
-    pass
+    """Typed Planner transport/envelope failure with provider-safe diagnostics."""
+
+    def __init__(
+        self,
+        code: str,
+        detail: str = "",
+        *,
+        diagnostic: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        self.code = str(code or "PLANNER_ENVELOPE_INVALID")
+        self.detail = str(detail or "")
+        self.diagnostic = deepcopy(dict(diagnostic or {}))
+        rendered = self.code + (f": {self.detail}" if self.detail else "")
+        super().__init__(rendered)
+
+    @property
+    def field_path(self) -> str:
+        return str(self.diagnostic.get("field_path") or "$")
+
+    def to_diagnostic(self) -> Dict[str, Any]:
+        return {
+            "code": self.code,
+            "field_path": self.field_path,
+            **deepcopy(self.diagnostic),
+        }
 
 
 class PlannerCandidateError(PlanContractError):
-    def __init__(self, code: str, field_path: str, detail: str):
+    def __init__(
+        self,
+        code: str,
+        field_path: str,
+        detail: str,
+        *,
+        diagnostic: Optional[Mapping[str, Any]] = None,
+    ):
         self.code = str(code)
         self.field_path = str(field_path)
         self.detail = str(detail)
+        self.diagnostic = deepcopy(dict(diagnostic or {}))
         super().__init__(f"{self.code}: {self.field_path}: {self.detail}")
 
     def to_diagnostic(self) -> Dict[str, Any]:
@@ -110,7 +142,8 @@ class PlannerCandidateError(PlanContractError):
             "field_path": self.field_path,
             "message": self.detail,
             "owner": "planner",
-            "route": "planner_candidate_repair",
+            "route": "planner_full_replan",
+            **deepcopy(self.diagnostic),
         }
 
 
@@ -218,20 +251,15 @@ class PlannerOutcomeEnvelope:
 
 
 def planner_candidate_wire_example() -> Dict[str, Any]:
-    """Return a fresh, validator-compatible Planner candidate envelope.
-
-    The example deliberately uses only a candidate-local artifact so it never
-    teaches the model a fake TaskSpec handle.  Real Task-owned input/output and
-    artifact handles must come from the invocation's ``llm_payload``.
-    """
+    """Return an internal validator fixture; never inject it into a prompt."""
     return {
         "outcome_type": PLAN_CANDIDATE,
         "proposed_artifacts": [{
-            "local_ref": "intermediate_summary",
+            "local_ref": "plan.fixture_artifact",
             "semantic_view": {
-                "role": "intermediate_summary",
-                "format": "tsv",
-                "description": "plan-local intermediate summary table",
+                "role": "fixture_artifact",
+                "format": "txt",
+                "description": "internal contract fixture",
             },
             "artifact_contract": {
                 "object_kind": "file",
@@ -241,14 +269,14 @@ def planner_candidate_wire_example() -> Dict[str, Any]:
         }],
         "steps": [{
             "step_id": "step-1",
-            "title": "Create the intermediate summary",
+            "title": "Internal contract fixture step",
             "action": "execute",
             "purpose": "analysis",
             "tool": "declared_capability",
             "inputs": [],
-            "outputs": ["intermediate_summary"],
+            "outputs": ["plan.fixture_artifact"],
             "dependencies": [],
-            "success_criteria": ["The declared intermediate is materialized"],
+            "success_criteria": ["The declared fixture is materialized"],
             "skill_ids": [],
             "workflow_stage_ids": [],
             "batch_id": "",
@@ -265,11 +293,44 @@ def planner_candidate_wire_example() -> Dict[str, Any]:
     }
 
 
+def _wire_type(value: Any, *, missing: bool = False) -> str:
+    if missing:
+        return "missing"
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, str):
+        return "string"
+    if isinstance(value, list):
+        return "array"
+    if isinstance(value, Mapping):
+        return "object"
+    if isinstance(value, (int, float)):
+        return "number"
+    return type(value).__name__
+
+
+def _wire_value_at_path(payload: Mapping[str, Any], field_path: str) -> Tuple[bool, Any]:
+    current: Any = payload
+    for name, index_text in re.findall(r"(?:^\$\.)?([A-Za-z_][A-Za-z0-9_]*)|\[(\d+)\]", field_path):
+        if name:
+            if not isinstance(current, Mapping) or name not in current:
+                return False, None
+            current = current[name]
+        else:
+            index = int(index_text)
+            if not isinstance(current, list) or index >= len(current):
+                return False, None
+            current = current[index]
+    return True, current
+
+
 def structured_plan_candidate_diagnostics(
     payload: Mapping[str, Any],
-) -> List[Dict[str, str]]:
+) -> List[Dict[str, Any]]:
     """Validate the shared structured Plan body without semantic inference."""
-    diagnostics: List[Dict[str, str]] = []
+    diagnostics: List[Dict[str, Any]] = []
     metadata_value = payload.get("metadata")
     schema_version = (
         metadata_value.get("schema_version")
@@ -464,6 +525,26 @@ def structured_plan_candidate_diagnostics(
                             "field_path": f"$.task_output_materializations[{index}].{field}",
                             "message": "must be a non-empty string",
                         })
+    for diagnostic in diagnostics:
+        field_path = str(diagnostic.get("field_path") or "$")
+        present, received = _wire_value_at_path(payload, field_path)
+        message = str(diagnostic.get("message") or "")
+        expected_type = "value"
+        if "array" in message:
+            expected_type = "array"
+        elif "object" in message:
+            expected_type = "object"
+        elif "string" in message:
+            expected_type = "string"
+        elif "required field" in message:
+            expected_type = "present"
+        elif "must equal" in message:
+            expected_type = message.removeprefix("must equal ")
+        diagnostic.setdefault("code", "PLAN_STRUCTURE_INVALID")
+        diagnostic.setdefault("expected_type", expected_type)
+        diagnostic.setdefault("received_type", _wire_type(received, missing=not present))
+        if present:
+            diagnostic.setdefault("received_excerpt", _canonical_json(received)[:500])
     return diagnostics
 
 
@@ -503,19 +584,37 @@ def normalize_planner_json_transport(raw: str) -> str:
     """
     text = str(raw or "").strip()
     if not text:
-        raise PlannerEnvelopeError("PLANNER_ENVELOPE_EMPTY")
+        raise PlannerEnvelopeError(
+            "PLANNER_ENVELOPE_EMPTY",
+            diagnostic={
+                "expected_type": "object",
+                "received_type": "empty_string",
+                "response_excerpt": "",
+            },
+        )
     fenced = _SINGLE_JSON_FENCE_RE.fullmatch(text)
     if fenced:
         body = fenced.group("body").strip()
         if _JSON_FENCE_LINE_RE.search(body):
             raise PlannerEnvelopeError(
-                "PLANNER_ENVELOPE_TRANSPORT_INVALID: multiple JSON fences"
+                "PLANNER_ENVELOPE_TRANSPORT_INVALID",
+                "multiple JSON fences",
+                diagnostic={
+                    "expected_type": "single_json_object",
+                    "received_type": "multiple_json_fences",
+                    "response_excerpt": text[:500],
+                },
             )
         return body
     if _JSON_FENCE_LINE_RE.search(text):
         raise PlannerEnvelopeError(
-            "PLANNER_ENVELOPE_TRANSPORT_INVALID: expected raw JSON or one "
-            "complete JSON fence with no surrounding text"
+            "PLANNER_ENVELOPE_TRANSPORT_INVALID",
+            "expected raw JSON or one complete JSON fence with no surrounding text",
+            diagnostic={
+                "expected_type": "single_json_object",
+                "received_type": "mixed_text_or_incomplete_fence",
+                "response_excerpt": text[:500],
+            },
         )
     return text
 
@@ -537,11 +636,27 @@ def parse_planner_outcome_envelope(
         value = json.loads(text)
     except json.JSONDecodeError as exc:
         raise PlannerEnvelopeError(
-            "PLANNER_ENVELOPE_JSON_INVALID: "
-            f"{exc.msg} at line {exc.lineno} column {exc.colno}"
+            "PLANNER_ENVELOPE_JSON_INVALID",
+            f"{exc.msg} at line {exc.lineno} column {exc.colno}",
+            diagnostic={
+                "parser_message": str(exc.msg),
+                "line": int(exc.lineno),
+                "column": int(exc.colno),
+                "offset": int(exc.pos),
+                "expected_type": "object",
+                "received_type": "invalid_json",
+                "response_excerpt": text[max(0, exc.pos - 160):exc.pos + 340],
+            },
         ) from exc
     if not isinstance(value, Mapping):
-        raise PlannerEnvelopeError("PLANNER_ENVELOPE_NOT_OBJECT")
+        raise PlannerEnvelopeError(
+            "PLANNER_ENVELOPE_NOT_OBJECT",
+            diagnostic={
+                "expected_type": "object",
+                "received_type": type(value).__name__,
+                "received_excerpt": _canonical_json(value)[:500],
+            },
+        )
     outcome_type = str(value.get("outcome_type") or "").strip()
     legacy = False
     if not outcome_type and allow_legacy_plan and isinstance(value.get("steps"), list):
@@ -549,7 +664,14 @@ def parse_planner_outcome_envelope(
         legacy = True
     if outcome_type not in RECOGNIZED_PLANNER_OUTCOMES:
         raise PlannerEnvelopeError(
-            f"PLANNER_OUTCOME_UNRECOGNIZED: {outcome_type or '<missing>'}"
+            "PLANNER_OUTCOME_UNRECOGNIZED",
+            outcome_type or "<missing>",
+            diagnostic={
+                "field_path": "$.outcome_type",
+                "expected_type": "PLAN_CANDIDATE|TASKSPEC_RECONCILIATION_REQUIRED",
+                "received_type": "string" if outcome_type else "missing",
+                "received_excerpt": outcome_type[:200],
+            },
         )
     return PlannerOutcomeEnvelope(outcome_type, deepcopy(dict(value)), legacy)
 
@@ -626,6 +748,7 @@ def candidate_artifact_ref_keys(
     *,
     candidate_scope_id: str,
     authoritative_handles: Mapping[str, str],
+    authoritative_bindings: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> Tuple[Dict[str, ArtifactRefKey], List[Dict[str, Any]]]:
     """Resolve explicit Plan usage into typed keys without allocating IDs."""
     validate_plan_candidate_control_fields(candidate)
@@ -633,16 +756,111 @@ def candidate_artifact_ref_keys(
     for index, raw in enumerate(candidate.get("proposed_artifacts", []) or []):
         if not isinstance(raw, Mapping):
             raise PlannerCandidateError(
-                "PROPOSED_ARTIFACT_INVALID", f"$.proposed_artifacts[{index}]", "must be an object"
+                "PROPOSED_ARTIFACT_INVALID",
+                f"$.proposed_artifacts[{index}]",
+                "must be an object",
+                diagnostic={
+                    "expected_type": "object",
+                    "received_type": _wire_type(raw),
+                    "received_excerpt": _canonical_json(raw)[:500],
+                },
             )
         local_ref = str(raw.get("local_ref") or "").strip()
-        if not _LOCAL_REF_RE.fullmatch(local_ref):
+        if not _PLAN_LOCAL_REF_RE.fullmatch(local_ref):
             raise PlannerCandidateError(
-                "LOCAL_REF_INVALID", f"$.proposed_artifacts[{index}].local_ref", local_ref or "missing"
+                "LOCAL_REF_INVALID",
+                f"$.proposed_artifacts[{index}].local_ref",
+                local_ref or "missing",
+                diagnostic={
+                    "expected_type": "plan.* handle",
+                    "received_type": _wire_type(raw.get("local_ref"), missing="local_ref" not in raw),
+                    "received_excerpt": _canonical_json(raw.get("local_ref"))[:500],
+                    "machine_evidence": {"required_namespace": "plan.*"},
+                },
             )
         if local_ref in declarations:
             raise PlannerCandidateError(
-                "LOCAL_REF_DUPLICATE", f"$.proposed_artifacts[{index}].local_ref", local_ref
+                "LOCAL_REF_DUPLICATE",
+                f"$.proposed_artifacts[{index}].local_ref",
+                local_ref,
+                diagnostic={
+                    "observed_identity": {"handle": local_ref},
+                    "machine_evidence": {"duplicate_local_ref": local_ref},
+                },
+            )
+        local_name = local_ref.removeprefix("plan.")
+        semantic_view = (
+            dict(raw.get("semantic_view") or {})
+            if isinstance(raw.get("semantic_view"), Mapping)
+            else {}
+        )
+        candidate_aliases = {
+            local_ref,
+            local_name,
+            str(semantic_view.get("role") or ""),
+            str(semantic_view.get("input_id") or ""),
+            str(semantic_view.get("output_id") or ""),
+            str(semantic_view.get("artifact_id") or ""),
+        }
+        candidate_aliases.discard("")
+        for handle, stable_identity in authoritative_handles.items():
+            binding = dict((authoritative_bindings or {}).get(str(handle)) or {})
+            metadata = dict(binding.get("metadata") or {})
+            aliases = {
+                str(handle),
+                str(handle).split(".", 1)[-1],
+                str(stable_identity),
+                str(binding.get("stable_identity") or ""),
+                str(metadata.get("role") or ""),
+                str(metadata.get("input_id") or ""),
+                str(metadata.get("output_id") or ""),
+                str(metadata.get("artifact_id") or ""),
+            }
+            aliases.discard("")
+            collision_keys = sorted(candidate_aliases.intersection(aliases))
+            if not collision_keys:
+                continue
+            direction = str(binding.get("direction") or "")
+            code = (
+                "TASK_OUTPUT_SHADOWED_BY_PLAN_LOCAL"
+                if direction == "output"
+                else "TASK_INPUT_SHADOWED_BY_PLAN_LOCAL"
+                if direction == "input"
+                else "AUTHORITATIVE_ARTIFACT_SHADOWED_BY_PLAN_LOCAL"
+            )
+            expected = {
+                "kind": "authoritative",
+                "identity": str(stable_identity),
+                "handle": str(handle),
+            }
+            observed = {
+                "kind": "candidate_local",
+                "identity": local_ref,
+                "candidate_scope_id": str(candidate_scope_id),
+            }
+            affected_output = (
+                {
+                    "handle": str(handle),
+                    "output_id": str(metadata.get("output_id") or ""),
+                    "role": str(metadata.get("role") or ""),
+                }
+                if direction == "output"
+                else {}
+            )
+            raise PlannerCandidateError(
+                code,
+                f"$.proposed_artifacts[{index}].local_ref",
+                local_ref,
+                diagnostic={
+                    "affected_artifact": expected,
+                    "affected_output": affected_output,
+                    "expected_identity": expected,
+                    "observed_identity": observed,
+                    "machine_evidence": {
+                        "collision_keys": collision_keys,
+                        "authoritative_direction": direction,
+                    },
+                },
             )
         contract = raw.get("artifact_contract")
         if not isinstance(contract, Mapping):
@@ -650,6 +868,11 @@ def candidate_artifact_ref_keys(
                 "ARTIFACT_CONTRACT_INVALID",
                 f"$.proposed_artifacts[{index}].artifact_contract",
                 "must be an object",
+                diagnostic={
+                    "expected_type": "object",
+                    "received_type": _wire_type(contract, missing="artifact_contract" not in raw),
+                    "received_excerpt": _canonical_json(contract)[:500],
+                },
             )
         declarations[local_ref] = deepcopy(dict(raw))
 
@@ -675,6 +898,19 @@ def candidate_artifact_ref_keys(
                         "ARTIFACT_REFERENCE_UNKNOWN",
                         f"$.steps[{step_index}].{field}[{ref_index}]",
                         ref,
+                        diagnostic={
+                            "affected_step_ids": [step_id],
+                            "affected_artifact": {"handle": ref},
+                            "expected_identity": {
+                                "kind": "registered_artifact_handle",
+                                "allowed_namespaces": ["input.*", "output.*", "plan.*"],
+                            },
+                            "observed_identity": {"handle": ref},
+                            "machine_evidence": {
+                                "relation": relation,
+                                "known_handles": sorted(keys),
+                            },
+                        },
                     )
                 usage.append({
                     "step_id": step_id,
@@ -692,6 +928,21 @@ def candidate_artifact_ref_keys(
                 "TASK_OUTPUT_REFERENCE_UNKNOWN",
                 f"$.task_output_materializations[{index}].output_ref",
                 ref,
+                diagnostic={
+                    "affected_output": {"handle": ref},
+                    "expected_identity": {
+                        "kind": "authoritative_task_output_handle",
+                    },
+                    "observed_identity": {"handle": ref},
+                    "machine_evidence": {
+                        "known_output_handles": sorted(
+                            handle
+                            for handle, candidate_key in keys.items()
+                            if candidate_key.kind == "authoritative"
+                            and str(handle).startswith("output.")
+                        ),
+                    },
+                },
             )
     return keys, usage
 
@@ -834,10 +1085,9 @@ def validate_candidate_graph_and_flow(
 def planner_candidate_body_from_state(state: Mapping[str, Any]) -> Dict[str, Any]:
     """Project one canonical PlanState back to the shared Planner wire shape.
 
-    PlanPatch application operates on the canonical state, while initial
-    admission operates on the Planner wire object.  Revalidation must not be a
-    weaker, state-specific path, so this projection deliberately retains only
-    the fields owned by the shared structured candidate contract.
+    Persisted-state revalidation must not be a weaker, state-specific path, so
+    this projection deliberately retains only fields owned by the shared
+    structured candidate contract.
     """
     plan_document = (
         dict(state.get("plan_document") or {})
@@ -946,13 +1196,22 @@ def _candidate_flow_diagnostic(
     field_path = "$.steps"
     validator_id = "plan_artifact_flow"
     message = code
+    affected_fields: List[str] = []
+    violated_invariant = "candidate_satisfies_deterministic_plan_contract"
+    required_postcondition = "The returned candidate passes this deterministic validator."
     if code.startswith("PLAN_STEP_"):
         validator_id = "plan_dag"
+        affected_fields = ["step_id"]
+        violated_invariant = "plan_step_ids_are_present_and_unique"
+        required_postcondition = "Every plan step has one unique non-empty step_id."
         field_path = _candidate_step_field_path(
             candidate, step_id=step_id, field="step_id"
         )
     elif code == "PLAN_DEPENDENCY_UNKNOWN":
         validator_id = "plan_dag"
+        affected_fields = ["dependencies"]
+        violated_invariant = "every_dependency_identifies_an_existing_plan_step"
+        required_postcondition = "Every dependency names an existing step in the returned plan."
         dependency = str(row.get("dependency_step_id") or "")
         field_path = _candidate_step_field_path(
             candidate,
@@ -963,6 +1222,9 @@ def _candidate_flow_diagnostic(
         message = f"Dependency {dependency!r} does not identify an existing plan step."
     elif code == "PLAN_DEPENDENCY_SELF":
         validator_id = "plan_dag"
+        affected_fields = ["dependencies"]
+        violated_invariant = "no_plan_step_depends_on_itself"
+        required_postcondition = "No step depends on itself."
         field_path = _candidate_step_field_path(
             candidate,
             step_id=step_id,
@@ -972,11 +1234,23 @@ def _candidate_flow_diagnostic(
         message = "A plan step may not depend on itself."
     elif code == "PLAN_DEPENDENCY_CYCLE":
         validator_id = "plan_dag"
+        affected_fields = ["dependencies"]
+        violated_invariant = "dependency_graph_is_acyclic"
+        required_postcondition = "The returned dependency graph contains no cycle."
         field_path = "$.steps"
         message = "Plan dependencies contain a cycle."
     elif code == "PLAN_ARTIFACT_PRODUCER_CARDINALITY":
+        affected_fields = ["outputs"]
+        violated_invariant = "each_planned_artifact_has_exactly_one_producer"
+        required_postcondition = "Each planned artifact has exactly one producing step."
         message = "A planned artifact must have exactly one producer."
     elif code == "PLAN_ARTIFACT_UNAVAILABLE":
+        affected_fields = ["inputs", "outputs", "dependencies"]
+        violated_invariant = "consumed_artifacts_are_available_from_verified_or_reachable_producers"
+        required_postcondition = (
+            "Every consumed artifact is a verified input or is produced by exactly "
+            "one reachable dependency."
+        )
         if step_id:
             field_path = _candidate_step_field_path(
                 candidate, step_id=step_id, field="inputs"
@@ -986,6 +1260,9 @@ def _candidate_flow_diagnostic(
             "by exactly one reachable dependency."
         )
     elif code == "PLAN_ARTIFACT_ORIGIN_CONFLICT":
+        affected_fields = ["inputs", "outputs"]
+        violated_invariant = "artifact_origin_is_unambiguous_per_step"
+        required_postcondition = "No step declares conflicting origins for the same artifact."
         if step_id:
             field_path = _candidate_step_field_path(
                 candidate, step_id=step_id, field="inputs"
@@ -1005,10 +1282,68 @@ def _candidate_flow_diagnostic(
         "field_path": field_path,
         "repair_target": field_path,
         "message": message,
-        "route": "planner_candidate_repair",
+        "affected_fields": affected_fields,
+        "violated_invariant": violated_invariant,
+        "required_postcondition": required_postcondition,
+        "route": "planner_full_replan",
     }
     if step_id:
         result.setdefault("step_id", step_id)
+    affected_step_ids = [
+        str(value)
+        for value in (
+            row.get("producer_step_ids")
+            or ([step_id] if step_id else [])
+        )
+        if str(value)
+    ]
+    if row.get("consumer_step_id") and str(row.get("consumer_step_id")) not in affected_step_ids:
+        affected_step_ids.append(str(row.get("consumer_step_id")))
+    artifact_ref = deepcopy(dict(row.get("artifact_ref") or {}))
+    if not artifact_ref and row.get("artifact_id"):
+        artifact_ref = {
+            "kind": "authoritative",
+            "identity": str(row.get("artifact_id") or ""),
+        }
+    result.setdefault("affected_step_ids", affected_step_ids)
+    result.setdefault("affected_artifact", artifact_ref)
+    if code == "PLAN_ARTIFACT_PRODUCER_CARDINALITY":
+        result.setdefault("expected_identity", {
+            **artifact_ref,
+            "producer_cardinality": 1,
+        })
+        result.setdefault("observed_identity", {
+            **artifact_ref,
+            "producer_step_ids": list(row.get("producer_step_ids") or []),
+        })
+    elif code == "PLAN_ARTIFACT_UNAVAILABLE":
+        result.setdefault("expected_identity", {
+            **artifact_ref,
+            "availability": "verified_input_or_one_reachable_dependency_producer",
+        })
+        result.setdefault("observed_identity", {
+            **artifact_ref,
+            "consumer_step_id": str(row.get("consumer_step_id") or ""),
+            "producer_step_ids": list(row.get("producer_step_ids") or []),
+        })
+    elif code == "PLAN_ARTIFACT_ORIGIN_CONFLICT":
+        result.setdefault("expected_identity", {
+            **artifact_ref,
+            "origin_count_per_step": 1,
+        })
+        result.setdefault("observed_identity", {
+            **artifact_ref,
+            "step_id": step_id,
+            "origin_conflict": str(row.get("reason") or ""),
+        })
+    else:
+        result.setdefault("expected_identity", artifact_ref)
+        result.setdefault("observed_identity", artifact_ref)
+    result.setdefault("machine_evidence", {
+        key: deepcopy(value)
+        for key, value in row.items()
+        if key not in {"message", "reason"}
+    })
     return result
 
 
@@ -1018,6 +1353,7 @@ def validate_planner_candidate_deterministically(
     candidate_scope_id: str,
     authoritative_handles: Mapping[str, str],
     availability_origins: Mapping[str, str],
+    authoritative_bindings: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> Tuple[Dict[str, ArtifactRefKey], List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Run the shared schema, identity, DAG, and artifact-flow admission path."""
     structure = structured_plan_candidate_diagnostics(candidate)
@@ -1030,7 +1366,17 @@ def validate_planner_candidate_deterministically(
                 "field_path": str(item.get("field_path") or "$"),
                 "repair_target": str(item.get("field_path") or "$"),
                 "message": str(item.get("message") or "Structured Plan is invalid."),
-                "route": "planner_candidate_repair",
+                "route": "planner_full_replan",
+                "expected_type": str(item.get("expected_type") or "value"),
+                "received_type": str(item.get("received_type") or "unknown"),
+                "received_excerpt": str(item.get("received_excerpt") or ""),
+                "affected_step_ids": [],
+                "affected_artifact": {},
+                "machine_evidence": {
+                    key: deepcopy(value)
+                    for key, value in item.items()
+                    if key not in {"message"}
+                },
             }
             for item in structure
         ]
@@ -1039,6 +1385,7 @@ def validate_planner_candidate_deterministically(
             candidate,
             candidate_scope_id=candidate_scope_id,
             authoritative_handles=authoritative_handles,
+            authoritative_bindings=authoritative_bindings,
         )
     except PlannerCandidateError as exc:
         diagnostic = exc.to_diagnostic()
@@ -1075,7 +1422,14 @@ def prepare_allocation_intent(
     for index, raw in enumerate(candidate.get("proposed_artifacts", []) or []):
         if not isinstance(raw, Mapping):
             raise PlannerCandidateError(
-                "PROPOSED_ARTIFACT_INVALID", f"$.proposed_artifacts[{index}]", "must be an object"
+                "PROPOSED_ARTIFACT_INVALID",
+                f"$.proposed_artifacts[{index}]",
+                "must be an object",
+                diagnostic={
+                    "expected_type": "object",
+                    "received_type": _wire_type(raw),
+                    "received_excerpt": _canonical_json(raw)[:500],
+                },
             )
         local_ref = str(raw.get("local_ref") or "")
         semantic_view = raw.get("semantic_view")
@@ -1085,12 +1439,28 @@ def prepare_allocation_intent(
                 "ARTIFACT_SEMANTIC_VIEW_INVALID",
                 f"$.proposed_artifacts[{index}].semantic_view",
                 "must be an object",
+                diagnostic={
+                    "expected_type": "object",
+                    "received_type": _wire_type(
+                        semantic_view,
+                        missing="semantic_view" not in raw,
+                    ),
+                    "received_excerpt": _canonical_json(semantic_view)[:500],
+                },
             )
         if not isinstance(contract, Mapping):
             raise PlannerCandidateError(
                 "ARTIFACT_CONTRACT_INVALID",
                 f"$.proposed_artifacts[{index}].artifact_contract",
                 "must be an object",
+                diagnostic={
+                    "expected_type": "object",
+                    "received_type": _wire_type(
+                        contract,
+                        missing="artifact_contract" not in raw,
+                    ),
+                    "received_excerpt": _canonical_json(contract)[:500],
+                },
             )
         object_kind = str(contract.get("object_kind") or "")
         lifecycle = str(contract.get("lifecycle") or "")
@@ -1100,18 +1470,42 @@ def prepare_allocation_intent(
                 "ARTIFACT_OBJECT_KIND_UNREGISTERED",
                 f"$.proposed_artifacts[{index}].artifact_contract.object_kind",
                 object_kind,
+                diagnostic={
+                    "expected_type": "registered object kind",
+                    "received_type": "string",
+                    "received_excerpt": _canonical_json(object_kind),
+                    "machine_evidence": {
+                        "allowed_values": sorted(REGISTERED_OBJECT_KINDS),
+                    },
+                },
             )
         if lifecycle not in REGISTERED_ARTIFACT_LIFECYCLES:
             raise PlannerCandidateError(
                 "ARTIFACT_LIFECYCLE_UNREGISTERED",
                 f"$.proposed_artifacts[{index}].artifact_contract.lifecycle",
                 lifecycle,
+                diagnostic={
+                    "expected_type": "registered artifact lifecycle",
+                    "received_type": "string",
+                    "received_excerpt": _canonical_json(lifecycle),
+                    "machine_evidence": {
+                        "allowed_values": sorted(REGISTERED_ARTIFACT_LIFECYCLES),
+                    },
+                },
             )
         if policy_id not in REGISTERED_MATERIALIZATION_POLICIES:
             raise PlannerCandidateError(
                 "ARTIFACT_POLICY_UNREGISTERED",
                 f"$.proposed_artifacts[{index}].artifact_contract.materialization_policy_id",
                 policy_id,
+                diagnostic={
+                    "expected_type": "registered materialization policy",
+                    "received_type": "string",
+                    "received_excerpt": _canonical_json(policy_id),
+                    "machine_evidence": {
+                        "allowed_values": sorted(REGISTERED_MATERIALIZATION_POLICIES),
+                    },
+                },
             )
         declarations.append({
             "local_ref": local_ref,

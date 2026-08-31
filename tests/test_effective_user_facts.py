@@ -5,7 +5,6 @@ from agent_core.task_spec import (
     apply_user_feedback,
     create_task_spec,
     merge_compiled_constraints,
-    merge_task_spec,
     project_effective_user_facts,
     resolve_effective_user_facts,
     validate_compiled_constraints,
@@ -40,7 +39,8 @@ class EffectiveUserFactsTests(unittest.TestCase):
 
         output_dirs = [item for item in resolved["active_artifacts"] if item["role"] == "output_dir"]
         self.assertEqual([item["locator"] for item in output_dirs], ["/out/new"])
-        self.assertTrue(any(item["locator"] == "/out/old" for item in resolved["inactive_facts"]))
+        self.assertFalse(any(item["locator"] == "/out/old" for item in resolved["active_artifacts"]))
+        self.assertEqual(resolved["inactive_facts"], [])
 
         spec = apply_user_feedback(
             spec,
@@ -74,21 +74,20 @@ class EffectiveUserFactsTests(unittest.TestCase):
             [item["locator"] for item in resolved["active_artifacts"]],
             ["/data/a.mcool"],
         )
-        self.assertTrue(any(item.get("effective_status") == "duplicate" for item in resolved["inactive_facts"]))
+        self.assertEqual(resolved["inactive_facts"], [])
 
     def test_current_explicit_overrides_inherited_and_defaults(self):
-        spec = create_task_spec("run", task_id="current")
-        spec = merge_task_spec(
-            spec,
-            {"parameter_bindings": [
+        spec = {
+            "schema_version": 4,
+            "task_id": "current",
+            "revision": 2,
+            "goal": "run",
+            "parameter_bindings": [
                 {"fact_kind": "parameter", "namespace": "analysis", "key": "model", "value": "old", "cardinality": "one", "status": "active", "source": "inherited_explicit", "source_task_id": "old", "revision_id": 9, "fact_id": "old"},
                 {"fact_kind": "parameter", "namespace": "analysis", "key": "model", "value": "default", "cardinality": "one", "status": "active", "source": "skill_default", "source_task_id": "current", "revision_id": 10, "fact_id": "default"},
                 {"fact_kind": "parameter", "namespace": "analysis", "key": "model", "value": "new", "cardinality": "one", "status": "active", "source": "current_task_user_explicit", "source_task_id": "current", "revision_id": 2, "fact_id": "new"},
-            ]},
-            source="current_task_user_explicit",
-            reason="priority_test",
-            increment_revision=False,
-        )
+            ],
+        }
 
         resolved = resolve_effective_user_facts(spec)
         self.assertEqual(resolved["active_parameters"][0]["value"], "new")

@@ -35,6 +35,7 @@ from agent_core.plan_tracker import (
     approve_plan_state,
     build_plan_state,
     canonical_task_spec_for_state,
+    load_current_plan_snapshot,
     load_plan_state,
     save_plan_state,
 )
@@ -145,7 +146,7 @@ def _baseline_and_candidate(root: str, task_id: str, *, plan_local: bool = False
     )
     baseline = load_plan_state(root, task_id)
     proposed = [{
-        "local_ref": "scratch",
+        "local_ref": "plan.scratch",
         "semantic_view": {"role": "intermediate_table", "format": "tsv"},
         "artifact_contract": {
             "object_kind": "file",
@@ -154,7 +155,7 @@ def _baseline_and_candidate(root: str, task_id: str, *, plan_local: bool = False
         },
     }] if plan_local else None
     plan = _candidate(
-        [_step("step-1", outputs=["scratch"] if plan_local else [])],
+        [_step("step-1", outputs=["plan.scratch"] if plan_local else [])],
         proposed_artifacts=proposed,
     )
     parsed = build_plan_state(task_id, json.dumps(plan), strict=True)
@@ -250,7 +251,7 @@ class PlannerWireContractRegressionTests(unittest.TestCase):
         self.assertEqual(intent["status"], "prepared")
 
     def test_prompt_and_reader_share_metadata_and_artifact_contract(self):
-        prompt = PromptManager.get_planner_v2_prompt({"artifact_catalog": []})
+        prompt = PromptManager.get_planner_v2_system_prompt()
 
         self.assertIn('"planner_contract": "structured_plan_v2"', prompt)
         self.assertIn('"metadata": {', prompt)
@@ -410,9 +411,9 @@ class PlanContractV121FlowTests(unittest.TestCase):
         task = _task_with_artifacts("scope")
         context = build_node_context(node_type="planner", task_spec=task)
         candidate = _candidate(
-            [_step("step-1", outputs=["scratch"])],
+            [_step("step-1", outputs=["plan.scratch"])],
             proposed_artifacts=[{
-                "local_ref": "scratch",
+                "local_ref": "plan.scratch",
                 "semantic_view": {"role": "intermediate"},
                 "artifact_contract": {
                     "object_kind": "file",
@@ -438,7 +439,7 @@ class PlanContractV121FlowTests(unittest.TestCase):
             context.llm_payload.to_json(),
         )
         self.assertEqual(
-            keys["scratch"].candidate_scope_id,
+            keys["plan.scratch"].candidate_scope_id,
             context.binding.candidate_scope_id,
         )
         self.assertEqual(intent["status"], "prepared")
@@ -620,12 +621,27 @@ class PlanContractV121PersistenceTests(unittest.TestCase):
             mapping = committed["artifact_allocation_mapping"][
                 "local_to_authoritative"
             ]
-            self.assertEqual(committed["steps"][0]["outputs"], [mapping["scratch"]])
+            self.assertEqual(
+                committed["steps"][0]["outputs"],
+                [mapping["plan.scratch"]],
+            )
             self.assertFalse(
-                (path.parent / "plan_artifacts" / mapping["scratch"]).exists()
+                (
+                    path.parent
+                    / "plan_artifacts"
+                    / mapping["plan.scratch"]
+                ).exists()
             )
             snapshot = StateContractStore(root, "atomic-success").read_object(
                 snapshot_ref, expected_type="plan_snapshot_v121"
+            )
+            self.assertEqual(
+                load_current_plan_snapshot(
+                    root,
+                    "atomic-success",
+                    state=committed,
+                )["plan_snapshot_id"],
+                snapshot["plan_snapshot_id"],
             )
             self.assertIn("task_plan_traceability", snapshot)
             self.assertIn("artifact_allocation_mapping", snapshot)

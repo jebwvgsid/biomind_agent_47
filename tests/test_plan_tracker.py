@@ -3,14 +3,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from agent_core import plan_tracker as plan_tracker_module
 from agent_core.plan_tracker import (
-    PLAN_PATCH_OPERATION,
     apply_artifact_reconciliation,
-    apply_plan_patch,
     approve_plan_state,
     bind_plan_to_task_revision,
     build_plan_state,
-    build_plan_repair_request,
     carry_forward_plan_lifecycle,
     collapse_renderer_composite_steps,
     ensure_plan_state,
@@ -23,7 +21,6 @@ from agent_core.plan_tracker import (
     render_plan_progress,
     reset_plan_state,
     save_plan_state,
-    semantic_plan_hash,
     sync_plan_state_from_stage_status,
     update_plan_markdown_status,
     update_task_state_projection,
@@ -87,41 +84,14 @@ class PlanTrackerTests(unittest.TestCase):
         self.assertIn("annotated.vcf", step["outputs"])
         self.assertEqual(audit[0]["removed_step_ids"], ["step-2", "step-3"])
 
-    def test_plan_patch_preserves_controller_owned_renderer_progress(self):
-        state = build_plan_state(
-            "task_a",
-            "- [>] Step 1: Run renderer | Action: EXECUTE | Skills: [genomics/snpeff-annotation] "
-            "| Outputs: [annotated.vcf] | Done: annotated.vcf exists\n",
-        )
-        state["steps"][0]["renderer_execution"] = {
-            "manifest_path": "/tmp/rendered/manifest.json",
-            "manifest_fingerprint": "manifest-sha256",
-            "completed_action_ids": ["00_preflight", "01_prepare_custom_database"],
-            "action_evidence": [{"manifest_action_id": "00_preflight", "execution_id": "exec-1"}],
-        }
-        patch = {
-            "operation": PLAN_PATCH_OPERATION,
-            "base_plan_version": state["plan_revision"],
-            "base_plan_hash": semantic_plan_hash(state),
-            "replace_steps": [{
-                "step_id": "step-1",
-                "new_step": {
-                    "title": "Run renderer with corrected logical output contract",
-                    "action": "EXECUTE",
-                    "skill_ids": ["genomics/snpeff-annotation"],
-                    "outputs": ["annotated.vcf", "report.md"],
-                    "success_criteria": ["annotated.vcf and report.md exist"],
-                },
-            }],
-        }
-
-        repaired, audit = apply_plan_patch(state, patch, allowed_step_ids=["step-1"])
-
-        self.assertTrue(audit["semantic_change"])
-        self.assertEqual(
-            repaired["steps"][0]["renderer_execution"],
-            state["steps"][0]["renderer_execution"],
-        )
+    def test_semantic_plan_patch_surface_is_retired(self):
+        for name in (
+            "PLAN_PATCH_OPERATION",
+            "build_plan_repair_request",
+            "parse_plan_patch",
+            "apply_plan_patch",
+        ):
+            self.assertFalse(hasattr(plan_tracker_module, name), name)
 
     def test_load_migrates_old_artifact_path_from_referenced_manifest(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -176,121 +146,6 @@ class PlanTrackerTests(unittest.TestCase):
             ],
         )
 
-    def test_plan_patch_repairs_only_allowed_step_and_preserves_progress(self):
-        state = build_plan_state(
-            "task_a",
-            "- [>] Step 1: Inspect | Action: SEARCH | Skills: [] | Done: N/A\n"
-            "- [ ] Step 2: Execute | Action: EXECUTE | Skills: [] | Done: output exists\n",
-        )
-        bind_plan_to_task_revision(state, 1)
-        approve_plan_state(state, 1)
-        state["steps"][0]["evidence"] = [{"event": "started"}]
-        request = build_plan_repair_request(
-            state,
-            [{"step_id": "step-1", "field": "success_criteria", "reason": "missing"}],
-        )
-        replacement = dict(state["steps"][0])
-        replacement["success_criteria"] = ["input inventory recorded"]
-        patch = {
-            "operation": PLAN_PATCH_OPERATION,
-            "base_plan_version": request["base_plan_version"],
-            "base_plan_hash": request["base_plan_hash"],
-            "replace_steps": [{"step_id": "step-1", "new_step": replacement}],
-        }
-
-        repaired, audit = apply_plan_patch(state, patch, allowed_step_ids=["step-1"])
-
-        self.assertEqual(repaired["steps"][0]["status"], "running")
-        self.assertEqual(repaired["steps"][0]["evidence"], [{"event": "started"}])
-        self.assertEqual(repaired["steps"][1], state["steps"][1])
-        self.assertTrue(audit["review_required"])
-        self.assertEqual(repaired["plan_status"], "pending_review")
-        self.assertNotEqual(semantic_plan_hash(repaired), semantic_plan_hash(state))
-        self.assertEqual(repaired["task_state"]["budgets"]["plan_patch_count"], 1)
-        self.assertEqual(repaired["task_state"]["budgets"]["execution_retry_count"], 0)
-
-    def test_plan_patch_preserves_completed_upstream_steps(self):
-        state = build_plan_state(
-            "task_a",
-            "- [x] Step 1: Validate inputs | Action: EXECUTE | Skills: [] | Done: inputs verified\n"
-            "- [>] Step 2: Render outputs | Action: EXECUTE | Skills: [] | Done: scripts exist\n",
-        )
-        state["steps"][0]["status"] = "passed"
-        state["steps"][0]["evidence"] = [{"event": "passed", "detail": "Supervisor PASS"}]
-        state["steps"][1]["status"] = "running"
-        request = build_plan_repair_request(
-            state,
-            [{"step_id": "step-2", "field": "outputs", "reason": "renderer contract changed"}],
-        )
-        replacement = dict(state["steps"][1])
-        replacement["outputs"] = ["02.build_database.sh"]
-        patch = {
-            "operation": PLAN_PATCH_OPERATION,
-            "base_plan_version": request["base_plan_version"],
-            "base_plan_hash": request["base_plan_hash"],
-            "replace_steps": [{"step_id": "step-2", "new_step": replacement}],
-        }
-
-        repaired, _ = apply_plan_patch(state, patch, allowed_step_ids=["step-2"])
-
-        self.assertEqual(repaired["steps"][0]["status"], "passed")
-        self.assertEqual(
-            repaired["steps"][0]["evidence"],
-            [{"event": "passed", "detail": "Supervisor PASS"}],
-        )
-        self.assertEqual(repaired["steps"][1]["status"], "running")
-
-    def test_no_op_plan_patch_does_not_consume_revision_or_budget(self):
-        state = build_plan_state(
-            "task_a",
-            "- [>] Step 1: Render scripts | Action: EXECUTE | Skills: [] | Done: scripts exist\n",
-        )
-        state["steps"][0]["artifacts"] = [{
-            "artifact_id": "build_script",
-            "path": "02.build_database.sh",
-            "source": "renderer_manifest",
-        }]
-        before_revision = state["plan_revision"]
-        before_history = list(state["revision_history"])
-        before_budget = state["task_state"]["budgets"]["plan_patch_count"]
-        patch = {
-            "operation": PLAN_PATCH_OPERATION,
-            "base_plan_version": state["plan_revision"],
-            "base_plan_hash": semantic_plan_hash(state),
-            "replace_steps": [{"step_id": "step-1", "new_step": dict(state["steps"][0])}],
-        }
-
-        repaired, audit = apply_plan_patch(state, patch, allowed_step_ids=["step-1"])
-
-        self.assertTrue(audit["no_op"])
-        self.assertFalse(audit["semantic_change"])
-        self.assertEqual(repaired["plan_revision"], before_revision)
-        self.assertEqual(repaired["revision_history"], before_history)
-        self.assertEqual(repaired["task_state"]["budgets"]["plan_patch_count"], before_budget)
-        self.assertEqual(repaired["steps"][0]["artifacts"][0]["path"], "02.build_database.sh")
-
-    def test_plan_patch_cannot_drop_explicit_skill_declaration_marker(self):
-        state = build_plan_state(
-            "task_a",
-            "- [>] Step 1: Run renderer | Action: EXECUTE | Skills: [genomics/snpeff-annotation] "
-            "| Outputs: [annotated.vcf] | Done: annotated.vcf exists\n",
-        )
-        replacement = dict(state["steps"][0])
-        replacement.pop("skills_declared")
-        replacement["outputs"] = ["annotated.vcf", "report.md"]
-        patch = {
-            "operation": PLAN_PATCH_OPERATION,
-            "base_plan_version": state["plan_revision"],
-            "base_plan_hash": semantic_plan_hash(state),
-            "replace_steps": [{"step_id": "step-1", "new_step": replacement}],
-        }
-
-        repaired, audit = apply_plan_patch(state, patch, allowed_step_ids=["step-1"])
-
-        self.assertTrue(audit["semantic_change"])
-        self.assertEqual(repaired["steps"][0]["skill_ids"], ["genomics/snpeff-annotation"])
-        self.assertTrue(repaired["steps"][0]["skills_declared"])
-
     def test_persisted_nonempty_skill_ids_heal_stale_declared_marker(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             state = build_plan_state(
@@ -306,55 +161,6 @@ class PlanTrackerTests(unittest.TestCase):
 
         self.assertEqual(loaded["steps"][0]["skill_ids"], ["genomics/snpeff-annotation"])
         self.assertTrue(loaded["steps"][0]["skills_declared"])
-
-    def test_plan_patch_cannot_erase_renderer_contract_metadata(self):
-        state = build_plan_state(
-            "task_a",
-            "- [>] Step 1: Render scripts | Action: EXECUTE | Skills: [] | Done: scripts exist\n",
-        )
-        state["steps"][0]["artifacts"] = [{
-            "artifact_id": "build_script",
-            "path": "02.build_database.sh",
-            "source": "renderer_manifest",
-        }]
-        state["steps"][0]["artifact_contract_revision"] = 2
-        replacement = dict(state["steps"][0])
-        replacement.pop("artifacts")
-        replacement.pop("artifact_contract_revision")
-        replacement["tool"] = "authoritative-renderer"
-        patch = {
-            "operation": PLAN_PATCH_OPERATION,
-            "base_plan_version": state["plan_revision"],
-            "base_plan_hash": semantic_plan_hash(state),
-            "replace_steps": [{"step_id": "step-1", "new_step": replacement}],
-        }
-
-        repaired, audit = apply_plan_patch(state, patch, allowed_step_ids=["step-1"])
-
-        self.assertFalse(audit["no_op"])
-        self.assertEqual(repaired["steps"][0]["artifacts"][0]["path"], "02.build_database.sh")
-        self.assertEqual(repaired["steps"][0]["artifact_contract_revision"], 2)
-
-    def test_plan_patch_rejects_stale_or_out_of_scope_changes(self):
-        state = build_plan_state(
-            "task_a",
-            "- [ ] Step 1: Inspect | Action: SEARCH | Skills: [] | Done: checked\n"
-            "- [ ] Step 2: Execute | Action: EXECUTE | Skills: [] | Done: output exists\n",
-        )
-        replacement = dict(state["steps"][1])
-        replacement["tool"] = "different-tool"
-        base = {
-            "operation": PLAN_PATCH_OPERATION,
-            "base_plan_version": state["plan_revision"],
-            "base_plan_hash": semantic_plan_hash(state),
-            "replace_steps": [{"step_id": "step-2", "new_step": replacement}],
-        }
-
-        with self.assertRaisesRegex(ValueError, "out-of-scope"):
-            apply_plan_patch(state, base, allowed_step_ids=["step-1"])
-        stale = {**base, "base_plan_hash": "stale"}
-        with self.assertRaisesRegex(ValueError, "base hash"):
-            apply_plan_patch(state, stale, allowed_step_ids=["step-2"])
 
     def test_task_state_projection_is_atomic_and_versioned(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -548,7 +354,10 @@ Step 2: Validate outputs
         self.assertEqual(first["unknown_extension"], {"keep": True})
         self.assertEqual(second["generated_from_task_revision"], 3)
         self.assertEqual(second["steps"][0]["status"], "running")
-        self.assertEqual(second["plan_status"], "approved")
+        self.assertEqual(second["plan_status"], "pending_review")
+        self.assertFalse(second["can_generate"])
+        self.assertTrue(second["validation_recompute_required"])
+        self.assertIn("recompute_plan_contract_validation_v7", second["migrations_applied"])
         self.assertIn("normalize_plan_step_schema", second["migrations_applied"])
 
     def test_semantic_noop_preserves_approval_but_real_change_invalidates_it(self):

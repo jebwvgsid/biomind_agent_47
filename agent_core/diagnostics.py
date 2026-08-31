@@ -1761,6 +1761,8 @@ class ProgressDecision:
     meaningful_progress: bool = False
     manifest_delta: Dict[str, Any] = field(default_factory=dict)
     artifact_delta: Dict[str, Any] = field(default_factory=dict)
+    should_block: bool = False
+    step_id: str = ""
 
 
 class ConfidenceEngine:
@@ -2202,8 +2204,12 @@ class ProgressTracker:
         signature = ActionSignature.create(action_type, command, target_paths, hypothesis_ids, environment_name=environment_name, cwd=cwd)
         sig = signature.fingerprint()
         normalized = signature.normalized_command or ""
-        prior = self.snapshots[-1] if self.snapshots else None
-        prior_actions = {item.action_signature for item in self.snapshots}
+        scoped_snapshots = [
+            item for item in self.snapshots
+            if not str(stage_id or "") or str(item.stage_id or "") == str(stage_id or "")
+        ]
+        prior = scoped_snapshots[-1] if scoped_snapshots else None
+        prior_actions = {item.action_signature for item in scoped_snapshots}
         prior_evidence = {item.evidence_id for item in evidence}
         # The collector marks independent records explicitly.  Do not infer
         # novelty from a command's exit code or from the current row count.
@@ -2379,6 +2385,8 @@ class ProgressTracker:
             required_strategy_change=mode != "continue",
             recommended_next_mode=next_mode,
             meaningful_progress=meaningful_progress,
+            should_block=classification == "exhausted",
+            step_id=str(stage_id or ""),
             manifest_delta={
                 "before": prior_manifest,
                 "after": str(manifest_status or ""),
@@ -2430,7 +2438,12 @@ def build_progress_evidence(
         or manifest.get("completed_actions")
         or []
     )
-    prior_fingerprint = str(tracker.snapshots[-1].failure_fingerprint or "") if tracker.snapshots else ""
+    progress_step_id = str(evidence.get("step_id") or state.get("current_step_id") or "")
+    scoped_snapshots = [
+        item for item in tracker.snapshots
+        if not progress_step_id or str(item.stage_id or "") == progress_step_id
+    ]
+    prior_fingerprint = str(scoped_snapshots[-1].failure_fingerprint or "") if scoped_snapshots else ""
     fingerprint = str(
         evidence.get("failure_fingerprint")
         or state.get("failure_fingerprint")
@@ -2451,7 +2464,7 @@ def build_progress_evidence(
         )
     decision = tracker.evaluate(
         attempt_id=str(evidence.get("attempt_id") or evidence.get("execution_id") or "attempt"),
-        stage_id=str(evidence.get("step_id") or state.get("current_step_id") or ""),
+        stage_id=progress_step_id,
         action_type=action_type,
         command=str(evidence.get("command") or evidence.get("code_summary") or ""),
         failure_fingerprint=fingerprint,

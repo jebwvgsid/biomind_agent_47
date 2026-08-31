@@ -122,6 +122,59 @@ class GenerateContractSimplificationTests(unittest.TestCase):
 
 
 class RuntimeOutputReconciliationTests(unittest.TestCase):
+    def test_exact_semantic_text_format_is_not_missing_when_detector_is_coarse(self) -> None:
+        contract = _contract("/managed/settings.conf", origin=PHYSICAL_HARD)
+        contract["format"] = "config"
+        result = reconcile_runtime_outputs(
+            [contract],
+            [{**_candidate("/managed/settings.conf"), "format": "text"}],
+            attempt_id=ATTEMPT,
+            exit_code=0,
+        )
+        self.assertEqual(result["status"], "accepted")
+        self.assertEqual(result["bindings"][0]["format_compatibility"], "unproven")
+        self.assertNotIn(
+            "OUTPUT_MISSING",
+            {item["code"] for item in result["violations"]},
+        )
+
+    def test_absent_current_attempt_artifact_remains_output_missing(self) -> None:
+        result = reconcile_runtime_outputs(
+            [_contract("/managed/reference.fa")],
+            [],
+            attempt_id=ATTEMPT,
+            exit_code=0,
+        )
+        self.assertEqual(result["violations"][0]["code"], "OUTPUT_MISSING")
+
+    def test_exact_provably_wrong_format_is_mismatch_not_missing(self) -> None:
+        contract = _contract("/managed/result.json", origin=PHYSICAL_HARD)
+        contract["format"] = "json"
+        result = reconcile_runtime_outputs(
+            [contract],
+            [{**_candidate("/managed/result.json"), "format": "vcf"}],
+            attempt_id=ATTEMPT,
+            exit_code=0,
+        )
+        self.assertEqual(result["status"], "recovery")
+        self.assertEqual(
+            result["violations"][0]["code"],
+            "OUTPUT_REALIZATION_MISMATCH",
+        )
+        self.assertNotEqual(result["violations"][0]["code"], "OUTPUT_MISSING")
+
+    def test_exact_invalid_content_is_invalid_not_missing(self) -> None:
+        result = reconcile_runtime_outputs(
+            [_contract("/managed/reference.fa")],
+            [{**_candidate("/managed/reference.fa"), "content_valid": False}],
+            attempt_id=ATTEMPT,
+            exit_code=0,
+        )
+        self.assertEqual(
+            result["violations"][0]["code"],
+            "OBSERVED_ARTIFACT_CONTENT_INVALID",
+        )
+
     def test_exact_markdown_path_accepts_plain_text_representation(self) -> None:
         contract = _contract("/managed/report.md", origin=PHYSICAL_HARD)
         contract["format"] = "markdown"

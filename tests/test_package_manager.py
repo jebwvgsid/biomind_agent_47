@@ -1,7 +1,9 @@
 import json
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 
 import package_manager
 from package_manager import PackageManager
@@ -261,6 +263,143 @@ class PackageManagerRegistrationTests(unittest.TestCase):
 
             self.assertTrue(pm.conda_exe.replace("\\", "/").endswith("anaconda3/bin/conda"))
             self.assertIn("anaconda3/bin/conda run -n mustache", command.replace("\\", "/"))
+
+    def test_mamba_does_not_wrap_readonly_conda_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bin_dir = root / "anaconda3" / "bin"
+            bin_dir.mkdir(parents=True)
+            for name in ("conda", "mamba"):
+                (bin_dir / name).write_text("#!/bin/sh\n", encoding="utf-8")
+            pm = self.make_manager(str(root / "work"))
+            pm.conda_exe = str(bin_dir / "mamba")
+
+            command = pm._command_with_configured_manager("conda run -n bio_gatk snpEff -version")
+
+            self.assertIn("anaconda3/bin/conda run -n bio_gatk", command.replace("\\", "/"))
+            self.assertNotIn("anaconda3/bin/mamba run", command.replace("\\", "/"))
+
+    def test_broken_or_missing_environment_is_not_advertised_or_reused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pm = self.make_manager(tmp)
+            pm.conda_root = root / "anaconda3"
+            pm.registry = {
+                "tools": {
+                    "stale_tool": {"env": "missing_env", "status": "registered"},
+                },
+                "environments": {
+                    "missing_env": {
+                        "env": "missing_env",
+                        "status": "broken",
+                        "packages": ["stale_tool"],
+                        "capabilities": ["tool:stale_tool"],
+                    }
+                },
+            }
+
+            self.assertEqual(pm.list_installed_tools(), "None")
+            self.assertIsNone(
+                pm.find_matching_environment(
+                    {"packages": ["stale_tool"], "capabilities": ["tool:stale_tool"]}
+                )
+            )
+
+    def test_existing_registered_environment_remains_available(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            env_dir = root / "anaconda3" / "envs" / "bio_valid"
+            env_dir.mkdir(parents=True)
+            pm = self.make_manager(tmp)
+            pm.conda_root = root / "anaconda3"
+            pm.registry = {
+                "tools": {"valid_tool": {"env": "bio_valid", "status": "registered"}},
+                "environments": {
+                    "bio_valid": {
+                        "env": "bio_valid",
+                        "status": "registered",
+                        "packages": ["valid_tool"],
+                        "capabilities": ["tool:valid_tool"],
+                    }
+                },
+            }
+
+            self.assertIn("valid_tool", pm.list_installed_tools())
+            self.assertEqual(
+                pm.find_matching_environment({"packages": ["valid_tool"]})["env"],
+                "bio_valid",
+            )
+
+    def test_healthcheck_uses_existing_environment_prefix_without_conda_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bin_dir = root / "anaconda3" / "envs" / "bio_fast" / "bin"
+            bin_dir.mkdir(parents=True)
+            tool = bin_dir / "fast_tool"
+            tool.write_text("#!/bin/sh\nprintf 'FAST_OK\\n'\n", encoding="utf-8")
+            tool.chmod(0o755)
+            pm = self.make_manager(tmp)
+            pm.conda_root = root / "anaconda3"
+            pm.registry = {
+                "tools": {},
+                "environments": {"bio_fast": {"env": "bio_fast", "status": "verified"}},
+            }
+
+            ok, detail = pm.verify_environment(
+                "bio_fast",
+                healthcheck="conda run -n bio_fast fast_tool",
+            )
+
+            self.assertTrue(ok, detail)
+            self.assertIn("FAST_OK", detail)
+            self.assertEqual(pm.registry["environments"]["bio_fast"]["last_healthcheck"], "fast_tool")
+
+            cached = pm.recent_environment_healthcheck(
+                "bio_fast",
+                "conda run -n bio_fast fast_tool",
+            )
+            self.assertIn("FAST_OK", cached)
+
+    def test_recent_healthcheck_requires_same_command(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "anaconda3" / "envs" / "bio_fast" / "bin").mkdir(parents=True)
+            pm = self.make_manager(tmp)
+            pm.conda_root = root / "anaconda3"
+            pm.registry = {
+                "tools": {},
+                "environments": {
+                    "bio_fast": {
+                        "env": "bio_fast",
+                        "status": "verified",
+                        "last_verified_at": datetime.now().isoformat(),
+                        "last_healthcheck": "fast_tool --version",
+                    }
+                },
+            }
+
+            self.assertIsNone(
+                pm.recent_environment_healthcheck(
+                    "bio_fast",
+                    "conda run -n bio_fast other_tool --version",
+                )
+            )
+
+    def test_conda_root_prefers_local_prefix_without_conda_info(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "conda"
+            (root / "bin").mkdir(parents=True)
+            (root / "conda-meta").mkdir()
+            conda = root / "bin" / "conda"
+            conda.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
+            conda.chmod(0o755)
+
+            pm = PackageManager.__new__(PackageManager)
+            pm.conda_exe = str(conda)
+
+            with patch("package_manager.subprocess.run") as run:
+                self.assertEqual(pm._get_conda_root(), str(root))
+                run.assert_not_called()
 
 
 if __name__ == "__main__":

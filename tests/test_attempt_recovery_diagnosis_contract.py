@@ -3,17 +3,24 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from copy import deepcopy
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 from langchain_core.messages import AIMessage, HumanMessage
 
 import bio_agents
+import agent_core.middleware as middleware_module
 from bio_agents import BioAnalystAgent
 from agent_core.context_lineage import ContextLineageStore
 from agent_core.diagnostics import RecoveryContext
 from agent_core.middleware import error_recovery_middleware
-from agent_core.node_context import ControllerBinding, LLMPayload, NodeContext
+from agent_core.node_context import (
+    ControllerBinding,
+    LLMPayload,
+    NodeContext,
+    StalenessDecision,
+)
 from agent_core.plan_tracker import (
     ATTEMPT_FAILED,
     ATTEMPT_VALIDATION_FAILED,
@@ -409,7 +416,210 @@ def _judge_payload() -> dict:
     }
 
 
+def _recovery_identity_state() -> dict:
+    task_spec = {
+        "task_id": "task-b",
+        "goal": "recover the failed action",
+        "inputs": [],
+        "output_contracts": [],
+        "semantic_constraints": [],
+    }
+    return {
+        "task_id": "task-b",
+        "state_generation": 7,
+        "current_step_id": "step-b",
+        "current_task": {"task_spec": task_spec},
+        "task_spec": task_spec,
+        "task_state": {"budgets": {}},
+        "steps": [{"step_id": "step-b", "status": "running"}],
+        "approval_snapshot_ref": "approval-ref-a",
+        "provenance_state": {
+            "actions": {
+                "action-a": {
+                    "action_id": "action-a",
+                    "step_id": "step-b",
+                    "created_at": "2026-08-21T00:00:00",
+                },
+            },
+            "attempts": {
+                "attempt-a": {
+                    "attempt_id": "attempt-a",
+                    "action_id": "action-a",
+                    "step_id": "step-b",
+                    "status": "VALIDATION_FAILED",
+                    "execution_record_id": "execution-a",
+                    "validation_evidence_ref": "validation-a",
+                    "returncode": 0,
+                    "created_at": "2026-08-21T00:00:01",
+                },
+            },
+        },
+        "failure": {
+            "error_code": "OUTPUT_REALIZATION_MISMATCH",
+            "owner": "ARTIFACT_CONTRACT",
+            "stage": "post_execution_reconciliation",
+            "attempt_id": "attempt-a",
+            "fingerprint": "failure-a",
+        },
+    }
+
+
+def _recovery_plan_snapshot(snapshot_id: str = "snapshot-a") -> dict:
+    return {
+        "plan_snapshot_id": snapshot_id,
+        "plan_revision": 1,
+        "steps": [{
+            "step_id": "step-b",
+            "status": "running",
+            "inputs": [],
+            "outputs": [],
+            "dependencies": [],
+        }],
+    }
+
+
 class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
+    async def test_recovery_reply_survives_unrelated_mutable_state_changes(self):
+        class LegalRecoveryJudge:
+            async def ainvoke(self, _messages, *args, **kwargs):
+                return AIMessage(content=json.dumps(_judge_payload()))
+
+        initial = _recovery_identity_state()
+        latest = deepcopy(initial)
+        latest["state_generation"] = 99
+        latest["task_state"]["budgets"] = {"recovery_judge_count": 1}
+        latest["telemetry"] = {"last_provider_latency_ms": 42}
+        latest["diagnostics"] = [{"at": "2026-08-21T00:01:00"}]
+        snapshot = _recovery_plan_snapshot()
+
+        with tempfile.TemporaryDirectory() as data_path:
+            with (
+                patch.object(
+                    middleware_module,
+                    "load_plan_state",
+                    return_value=latest,
+                ),
+                patch.object(
+                    middleware_module,
+                    "load_approved_plan_snapshot",
+                    side_effect=[snapshot, deepcopy(snapshot)],
+                ),
+            ):
+                message, _ = await middleware_module._invoke_recovery_v2(
+                    LegalRecoveryJudge(),
+                    data_path=data_path,
+                    task_id="task-b",
+                    plan_state=initial,
+                    step_id="step-b",
+                    action_id="action-a",
+                    attempt_id="attempt-a",
+                    failure_fingerprint="diagnostic-a",
+                )
+
+        self.assertEqual(
+            json.loads(message.content)["failure_type"],
+            "runtime_invocation",
+        )
+
+    async def test_recovery_reply_stales_on_authoritative_identity_changes(self):
+        class LegalRecoveryJudge:
+            async def ainvoke(self, _messages, *args, **kwargs):
+                return AIMessage(content=json.dumps(_judge_payload()))
+
+        cases = []
+
+        action_changed = _recovery_identity_state()
+        action_changed["provenance_state"]["actions"]["action-b"] = {
+            "action_id": "action-b",
+            "step_id": "step-b",
+            "created_at": "2026-08-21T00:00:02",
+        }
+        cases.append((
+            "action",
+            action_changed,
+            _recovery_plan_snapshot(),
+            "action_identity",
+        ))
+
+        attempt_changed = _recovery_identity_state()
+        attempt_changed["provenance_state"]["attempts"]["attempt-b"] = {
+            "attempt_id": "attempt-b",
+            "action_id": "action-a",
+            "step_id": "step-b",
+            "status": "VALIDATION_FAILED",
+            "execution_record_id": "execution-b",
+            "validation_evidence_ref": "validation-b",
+            "returncode": 0,
+            "created_at": "2026-08-21T00:00:03",
+        }
+        cases.append((
+            "attempt",
+            attempt_changed,
+            _recovery_plan_snapshot(),
+            "attempt_id",
+        ))
+
+        approval_changed = _recovery_identity_state()
+        approval_changed["approval_snapshot_ref"] = "approval-ref-b"
+        changed_snapshot = _recovery_plan_snapshot("snapshot-b")
+        changed_snapshot["plan_revision"] = 2
+        cases.append((
+            "approved-plan",
+            approval_changed,
+            changed_snapshot,
+            "approval_ref",
+        ))
+
+        evidence_changed = _recovery_identity_state()
+        evidence_changed["failure"]["fingerprint"] = "failure-b"
+        cases.append((
+            "failure-evidence",
+            evidence_changed,
+            _recovery_plan_snapshot(),
+            "evidence_identity",
+        ))
+
+        for name, latest, latest_snapshot, expected_change in cases:
+            with self.subTest(change=name), tempfile.TemporaryDirectory() as data_path:
+                with (
+                    patch.object(
+                        middleware_module,
+                        "load_plan_state",
+                        return_value=latest,
+                    ),
+                    patch.object(
+                        middleware_module,
+                        "load_approved_plan_snapshot",
+                        side_effect=[
+                            _recovery_plan_snapshot(),
+                            latest_snapshot,
+                        ],
+                    ),
+                ):
+                    _message, response_snapshot = (
+                        await middleware_module._invoke_recovery_v2(
+                            LegalRecoveryJudge(),
+                            data_path=data_path,
+                            task_id="task-b",
+                            plan_state=_recovery_identity_state(),
+                            step_id="step-b",
+                            action_id="action-a",
+                            attempt_id="attempt-a",
+                            failure_fingerprint="diagnostic-a",
+                        )
+                    )
+                stale_result = response_snapshot["stale_node_result"]
+                self.assertEqual(
+                    stale_result["decision_result"],
+                    "STALE_NODE_RESULT",
+                )
+                self.assertFalse(stale_result["counts_as_failure"])
+                self.assertFalse(stale_result["consumes_execution_retry"])
+                self.assertIn(
+                    expected_change,
+                    stale_result["changed_preconditions"],
+                )
+
     async def test_post_review_judge_revalidates_against_approved_snapshot(self):
         """A budget write must not make an approved-plan recovery reply stale."""
         plan_state = {
@@ -855,9 +1065,98 @@ class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
             result["recovery_decision"]["recommended_action"],
             RecoveryAction.ESCALATE.value,
         )
+        self.assertEqual(
+            result["recovery_decision"]["failure_type"],
+            "recovery_judge_provider_error",
+        )
         self.assertIn(" RECOVERY_JUDGE", trace)
         self.assertIn('"judge_invoked": true', trace)
         self.assertNotIn(" RECOVERY_POLICY\n", trace)
+
+    async def test_valid_judge_response_rejected_as_stale_is_not_schema_error(self):
+        class LegalRecoveryJudge:
+            async def ainvoke(self, _messages, *args, **kwargs):
+                return AIMessage(content=json.dumps(_judge_payload()))
+
+        async def execute(_state):
+            return {
+                "messages": [HumanMessage(content="<observation>failed</observation>")],
+                "execution_evidence": {
+                    "execution_id": "exec-stale",
+                    "attempt_id": "attempt-stale",
+                    "action_id": "action-stale",
+                    "step_id": "step-stale",
+                    "returncode": 1,
+                    "execution_status": "failed",
+                    "command_role": "primary",
+                    "stderr_summary": "primary command failed",
+                },
+            }
+
+        stale = StalenessDecision(
+            usable=False,
+            code="STALE_RECOVERY_CONTEXT",
+            changed_preconditions=("action_identity",),
+            stale_signature="stale-action-identity",
+        )
+        with tempfile.TemporaryDirectory() as data_path:
+            with patch.object(
+                middleware_module,
+                "evaluate_node_staleness",
+                return_value=stale,
+            ):
+                wrapped = error_recovery_middleware(
+                    LegalRecoveryJudge(), data_path=data_path
+                )(execute)
+                result = await wrapped({
+                    "task_id": "task-stale",
+                    "current_step_id": "step-stale",
+                })
+
+        self.assertEqual(result["decision_result"], "STALE_NODE_RESULT")
+        self.assertFalse(result["counts_as_failure"])
+        self.assertFalse(result["consumes_execution_retry"])
+        self.assertNotIn("pending_recovery_action", result)
+        self.assertEqual(result["next_step"], "supervisor")
+        self.assertNotIn("recovery_decision", result)
+        self.assertEqual(
+            result["execution_evidence"]["attempt_id"],
+            "attempt-stale",
+        )
+
+    async def test_malformed_judge_response_remains_schema_error(self):
+        class MalformedRecoveryJudge:
+            async def ainvoke(self, _messages, *args, **kwargs):
+                return AIMessage(content="not-json")
+
+        async def execute(_state):
+            return {
+                "messages": [HumanMessage(content="<observation>failed</observation>")],
+                "execution_evidence": {
+                    "execution_id": "exec-schema",
+                    "attempt_id": "attempt-schema",
+                    "action_id": "action-schema",
+                    "step_id": "step-schema",
+                    "returncode": 1,
+                    "execution_status": "failed",
+                    "command_role": "primary",
+                    "stderr_summary": "primary command failed",
+                },
+            }
+
+        with tempfile.TemporaryDirectory() as data_path:
+            wrapped = error_recovery_middleware(
+                MalformedRecoveryJudge(), data_path=data_path
+            )(execute)
+            result = await wrapped({
+                "task_id": "task-schema",
+                "current_step_id": "step-schema",
+            })
+
+        self.assertEqual(
+            result["recovery_decision"]["failure_type"],
+            "recovery_judge_schema_error",
+        )
 
     async def test_recovery_thinking_is_bound_only_to_deepseek_recovery_client(self):
         from bio_agents import bind_recovery_llm
@@ -932,6 +1231,33 @@ class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(policy["scope"], "generate_only")
         self.assertTrue(policy["thinking_enabled"])
 
+        planner_correction_llm = Bindable()
+        planner_correction, planner_policy = (
+            bio_agents.bind_planner_correction_llm(
+                planner_correction_llm,
+                model="deepseek-chat",
+                base_url="https://api.deepseek.com",
+                enabled=True,
+                reasoning_effort="high",
+            )
+        )
+        self.assertIs(planner_correction, planner_correction_llm)
+        self.assertEqual(planner_policy["scope"], "planner_correction_only")
+        self.assertTrue(planner_policy["thinking_enabled"])
+        self.assertEqual(planner_correction_llm.calls, [{
+            "extra_body": {"thinking": {"type": "enabled"}},
+            "reasoning_effort": "high",
+            "temperature": None,
+        }])
+        self.assertFalse(bio_agents.planner_correction_requires_thinking({
+            "repeat_count": 0,
+            "correction_progress": "new_failure_objective",
+        }))
+        self.assertTrue(bio_agents.planner_correction_requires_thinking({
+            "repeat_count": 1,
+            "correction_progress": "no_structural_progress",
+        }))
+
         agent = BioAnalystAgent.__new__(BioAnalystAgent)
         agent.data_path = ""
         agent.llm = Bindable()
@@ -942,10 +1268,19 @@ class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(bio_agents, "DEEPSEEK_TEMPERATURE", 0.6):
             await agent._ainvoke_llm(
                 [HumanMessage(content="ordinary DeepSeek request")],
-                stage="planner",
+                stage="consultant",
                 temperature=0.1,
             )
         self.assertEqual(agent.llm.calls, [{"temperature": 0.6}])
+
+        planner_llm = Bindable()
+        await agent._ainvoke_llm(
+            [HumanMessage(content="Planner request")],
+            stage="planner",
+            temperature=0.1,
+            llm_override=planner_llm,
+        )
+        self.assertEqual(planner_llm.calls, [{"temperature": 0.1}])
 
         thinking_llm = Bindable()
         await agent._ainvoke_llm(

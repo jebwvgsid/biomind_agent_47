@@ -108,6 +108,53 @@ class FormalArtifactResolverTests(unittest.TestCase):
         self.assertTrue(record["non_empty"])
         self.assertTrue(record["readable"])
         self.assertTrue(record["verified_at"])
+        self.assertTrue(record["evidence_fingerprint"])
+
+    def test_evidence_fingerprint_is_stable_but_changes_for_same_size_rewrite(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
+            root = Path(tmpdir)
+            work = root / "runs"
+            work.mkdir()
+            vcf = self._write_file(root, "benchmarks/data/input.vcf", "AAAA\n")
+            query = "Use benchmarks/data/input.vcf"
+
+            first = resolve_formal_upstream_artifacts(
+                query,
+                work_dir=work,
+                project_root=root,
+            )
+            second = resolve_formal_upstream_artifacts(
+                query,
+                work_dir=work,
+                project_root=root,
+            )
+            first_record = next(
+                item for item in first["resolved_inputs"]
+                if item["path"] == str(vcf.resolve())
+            )
+            second_record = next(
+                item for item in second["resolved_inputs"]
+                if item["path"] == str(vcf.resolve())
+            )
+            self.assertEqual(
+                first_record["evidence_fingerprint"],
+                second_record["evidence_fingerprint"],
+            )
+
+            vcf.write_text("BBBB\n", encoding="utf-8")
+            changed = resolve_formal_upstream_artifacts(
+                query,
+                work_dir=work,
+                project_root=root,
+            )
+            changed_record = next(
+                item for item in changed["resolved_inputs"]
+                if item["path"] == str(vcf.resolve())
+            )
+            self.assertNotEqual(
+                first_record["evidence_fingerprint"],
+                changed_record["evidence_fingerprint"],
+            )
 
     def test_short_input_alias_merges_with_unique_verified_formal_path(self):
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:

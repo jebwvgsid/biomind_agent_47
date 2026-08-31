@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from agent_core import plan_tracker as plan_tracker_module
 from agent_core.completion_gate import CompletionGate
 from agent_core.managed_artifacts import (
     build_managed_artifact_bindings,
@@ -16,13 +17,11 @@ from agent_core.plan_contract import (
     start_planning_epoch,
 )
 from agent_core.plan_tracker import (
-    apply_plan_patch,
     build_plan_state,
     derive_plan_validation_state,
     ensure_provenance_state,
     normalize_plan_contracts,
     normalize_task_output_materializations,
-    semantic_plan_hash,
     validation_issue,
 )
 from agent_core.skill_manager import SkillManager
@@ -263,26 +262,8 @@ class GenerateOnlyOutputContractV2Tests(unittest.TestCase):
             ["annotated_vcf", "ann_summary", "report", "reproduce_script"],
         )
 
-    def test_materialization_only_plan_patch_is_a_real_semantic_revision(self):
-        state = _strict_plan()
-        state["task_output_materializations"] = []
-        base_hash = semantic_plan_hash(state)
-
-        repaired, audit = apply_plan_patch(state, {
-            "operation": "replace_steps",
-            "base_plan_version": state["plan_revision"],
-            "base_plan_hash": base_hash,
-            "replace_steps": [],
-            "task_output_materializations": [
-                {"output_ref": "report", "path": "report.md"},
-            ],
-            "reason": "materialize the required report",
-        })
-
-        self.assertTrue(audit["semantic_change"])
-        self.assertTrue(audit["review_required"])
-        self.assertEqual(audit["changed_fields"]["$plan"], ["task_output_materializations"])
-        self.assertEqual(repaired["task_output_materializations"][0]["output_ref"], "report")
+    def test_materialization_only_plan_patch_protocol_is_retired(self):
+        self.assertFalse(hasattr(plan_tracker_module, "apply_plan_patch"))
 
     def test_planner_cannot_rename_an_exact_user_output(self):
         task_spec = ensure_task_spec({
@@ -312,6 +293,21 @@ class GenerateOnlyOutputContractV2Tests(unittest.TestCase):
         _normalized, issues = normalize_task_output_materializations(state, task_spec)
 
         self.assertEqual([row["code"] for row in issues], ["USER_OUTPUT_PATH_NOT_PRESERVED"])
+        issue = issues[0]
+        self.assertEqual(
+            issue["field_path"],
+            "$.task_output_materializations[0].path",
+        )
+        self.assertEqual(issue["affected_output"]["output_id"], "report")
+        self.assertEqual(
+            issue["expected_identity"]["required_basename"],
+            "report.md",
+        )
+        self.assertEqual(
+            issue["observed_identity"]["candidate_path"],
+            "renamed-report.md",
+        )
+        self.assertIn("machine_evidence", issue)
 
     def test_provenance_keeps_output_id_separate_from_version_identity(self):
         task_spec = _task_spec()

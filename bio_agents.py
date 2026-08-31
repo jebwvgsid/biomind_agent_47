@@ -26,11 +26,12 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Literal, Mapping, MutableMapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Tuple
 from urllib.parse import urlsplit
 
 from colorama import Fore, Style
@@ -90,8 +91,12 @@ from config.config import (
     ROOT_CAUSE_TIMEOUT_SECONDS, RECOVERY_THINKING_ENABLED,
     RECOVERY_REASONING_EFFORT, CONSULTANT_DISCOVERY_THINKING_ENABLED,
     CONSULTANT_DISCOVERY_REASONING_EFFORT,
-    CONSULTANT_OPTIONAL_ARCHIVE_TIMEOUT_SECONDS, GENERATE_THINKING_ENABLED,
-    GENERATE_REASONING_EFFORT, DEEPSEEK_TEMPERATURE,
+    GENERATE_THINKING_ENABLED,
+    GENERATE_REASONING_EFFORT, PLANNER_CORRECTION_THINKING_ENABLED,
+    PLANNER_CORRECTION_REASONING_EFFORT, DEEPSEEK_TEMPERATURE,
+    MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION,
+    MAX_SKILL_SEARCH_ROUNDS_PER_STEP,
+    MAX_CONSULTANT_IDENTICAL_NO_PROGRESS_TRANSITIONS,
 )
 from config.reliability import (
     GENERATE_PROVIDER_MAX_ATTEMPTS,
@@ -113,6 +118,10 @@ except ImportError:
     from package_manager import PackageManager
 
 from agent_core.state import AgentState
+from agent_core.deepseek_stream import (
+    deepseek_reasoning_stream_enabled,
+    enable_deepseek_reasoning_stream,
+)
 from agent_core.consultation_state import (
     begin_finalize,
     build_consultant_candidate,
@@ -136,6 +145,17 @@ from agent_core.consultation_state import (
     seed_structured_evidence,
     validate_finalize_protocol_v4,
 )
+from agent_core.consultant_binding import (
+    ConsultantBindingPhase,
+    ConsultantEntryDisposition,
+    advance_consultant_commit_no_progress,
+    classify_consultant_binding_phase,
+    consultant_commit_no_progress_fingerprint,
+    consultant_entry_disposition,
+    consultant_uninitialized_entry_diagnostic,
+    consultant_validation_no_progress_fingerprint,
+    legacy_uninitialized_task_reset_decision,
+)
 from agent_core.consultant_continuation import (
     ConsultantPreprocessRecorder,
     build_continuation_cache,
@@ -143,7 +163,6 @@ from agent_core.consultant_continuation import (
     compact_archive_query,
     consultant_discovery_delta,
     evaluate_continuation_cache,
-    run_optional_enrichment,
 )
 from agent_core.human_io import (
     HumanInputUnavailable,
@@ -160,6 +179,29 @@ from agent_core.installer import InstallerAgent
 from agent_core.retriever import RAGFlowRetriever
 from agent_core.router import classify_task_mode, managed_execution_admitted
 from agent_core.skill_manager import SkillManager
+from agent_core.skill_access import (
+    PROPOSE_SKILL_BINDING,
+    REQUEST_SKILL_CONTEXT,
+    SEARCH_SKILLS,
+    SkillAccessError,
+    SkillAccessService,
+    activate_reviewed_binding,
+    apply_plan_impact_review,
+    build_skill_resolution_payload,
+    close_stale_continuations,
+    complete_skill_continuation,
+    invalidate_skill_continuations,
+    mark_continuation_resumed,
+    normalize_skill_access_state,
+    parse_strict_json_object,
+    parse_typed_skill_decision,
+    project_skill_context,
+    record_skill_access_event,
+    review_binding_proposal,
+    validate_plan_impact_decision,
+    validate_plan_impact_proposal_compatibility,
+    validate_skill_resolution_decision,
+)
 from agent_core.skill_discovery import (
     CAPABILITY_GAP,
     REASONING_ESCALATION,
@@ -212,8 +254,6 @@ from agent_core.recovery import (
     constrain_recovery_decision,
     recovery_decision_from_diagnosis,
     contextualize_recovery_decision,
-    recovery_decision_from_state,
-    recovery_route_from_state,
     structured_user_decision_required,
     validate_diagnostic_probe_code,
 )
@@ -328,8 +368,6 @@ from agent_core.plan_tracker import (
     ATTEMPT_VALIDATED,
     ATTEMPT_VALIDATION_FAILED,
     ATTEMPT_VALIDATION_PASSED,
-    PLAN_OPERATION_LOCAL_REPLAN,
-    PLAN_OPERATION_REPAIR,
     PLAN_SCHEMA_VERSION,
     PlanStructureError,
     TASK_STATUS_BLOCKED,
@@ -349,31 +387,35 @@ from agent_core.plan_tracker import (
     apply_recovery_decision,
     attach_execution_evidence_relation,
     apply_artifact_reconciliation,
-    apply_plan_patch,
     approve_plan_state,
     approval_semantic_delta,
     bind_plan_to_task_revision,
     block_plan_and_downstream,
     build_approval_projection,
     build_approval_scope,
-    build_plan_repair_request,
     build_plan_state,
     canonical_task_spec_for_state,
     commit_consultant_candidate_state,
+    carry_forward_completed_execution_history,
     increment_plan_budget,
     initialize_consultant_bootstrap_state,
     carry_forward_plan_lifecycle,
     changed_plan_step_ids,
     current_plan_step_with_index,
+    current_planning_failure,
     classify_attempt_resume,
     default_plan_file,
     derive_plan_validation_state,
     ensure_plan_state,
+    full_replan_transition_issues,
+    has_materialized_plan,
     load_approved_plan_snapshot,
+    load_current_plan_snapshot,
     load_plan_state,
     mark_first_pending_running,
     mark_plan_step_blocked,
     mark_plan_step_done,
+    mark_step_verification_pending,
     mark_renderer_action_completed,
     next_action_title,
     next_renderer_manifest_action,
@@ -386,8 +428,10 @@ from agent_core.plan_tracker import (
     plan_state_path,
     provenance_debug_dump,
     record_current_step_evidence,
+    record_planning_failure,
     record_preaction_contract_failure,
     record_runtime_output_failure,
+    recovery_transition_eligibility,
     record_provenance_event,
     render_structured_plan,
     render_plan_review_content,
@@ -399,18 +443,19 @@ from agent_core.plan_tracker import (
     restore_step_status_authority,
     reset_plan_for_replanning,
     save_plan_state,
-    semantic_plan_hash,
     set_task_status,
     step_requires_execution_evidence,
     step_artifact_contracts,
     validate_renderer_action_artifacts,
     validate_action_approval_lineage,
-    parse_plan_patch,
-    stamp_plan_patch_control_binding,
     sync_plan_state_from_stage_status,
     task_status,
+    consume_recovery_transition,
+    terminalize_planning_failure,
     update_plan_markdown_status,
     update_task_state_projection,
+    resolve_planning_failure,
+    supersede_planning_failure,
     validate_plan_for_generate,
     validation_issue,
 )
@@ -418,6 +463,7 @@ from agent_core.task_spec import (
     apply_task_spec_mutation_proposal,
     apply_authorized_task_spec_constraint_repair,
     apply_declarative_task_spec_rules,
+    canonical_current_task_spec,
     canonical_constraint_hash,
     canonical_input_role,
     constraint_mutation_proposal,
@@ -428,7 +474,6 @@ from agent_core.task_spec import (
     ensure_task_spec,
     evaluate_failure_policies,
     format_effective_user_facts_context,
-    format_planner_task_contract_context,
     finalize_task_spec_binding_hash,
     merge_compiled_constraints,
     merge_task_spec_input_audit,
@@ -462,14 +507,12 @@ from agent_core.node_context import (
     resolve_response_handles,
 )
 from agent_core.plan_contract import (
-    PLAN_CANDIDATE,
     TASKSPEC_RECONCILIATION_REQUIRED,
     PlannerCandidateError,
     PlannerEnvelopeError,
     StateCASConflict,
     classify_io_exception,
     parse_planner_outcome_envelope,
-    planner_candidate_body_from_state,
     planning_epoch_matches,
     prepare_allocation_intent,
     relevant_reconciliation_evidence_revision,
@@ -478,7 +521,6 @@ from agent_core.plan_contract import (
     reconciliation_guard_status,
     start_planning_epoch,
     validate_planner_candidate_deterministically,
-    validated_planner_candidate_wire_example,
 )
 from agent_core.managed_artifacts import (
     ArtifactViolation,
@@ -937,11 +979,43 @@ def bind_consultant_reasoning_llm(
     )
 
 
+def bind_planner_correction_llm(
+    llm: Any,
+    *,
+    model: str,
+    base_url: str,
+    enabled: bool = PLANNER_CORRECTION_THINKING_ENABLED,
+    reasoning_effort: str = PLANNER_CORRECTION_REASONING_EFFORT,
+) -> Tuple[Any, Dict[str, Any]]:
+    """Bind thinking only for a Planner retry proven structurally stagnant."""
+    return _bind_deepseek_thinking_llm(
+        llm,
+        model=model,
+        base_url=base_url,
+        enabled=enabled,
+        reasoning_effort=reasoning_effort,
+        scope="planner_correction_only",
+    )
+
+
+def planner_correction_requires_thinking(
+    planning_failure: Optional[Mapping[str, Any]],
+) -> bool:
+    """Escalate only after the validator-relevant structure repeats unchanged."""
+    failure = dict(planning_failure or {})
+    return bool(
+        int(failure.get("repeat_count") or 0) > 0
+        and str(failure.get("correction_progress") or "")
+        == "no_structural_progress"
+    )
+
+
 def effective_llm_temperature(
     *,
     is_deepseek: bool,
     thinking_enabled: bool,
     requested_temperature: Optional[float],
+    stage: str = "",
 ) -> Optional[float]:
     """Return the effective wire temperature for one provider invocation."""
     if not is_deepseek:
@@ -950,6 +1024,10 @@ def effective_llm_temperature(
         # DeepSeek ignores sampling parameters in thinking mode.  Omitting
         # them keeps the wire contract and observability truthful.
         return None
+    if str(stage or "").strip().lower() in {"planner", "planner_repair"}:
+        # Planner already requests 0.1 at its call site. Preserve that
+        # deterministic node policy instead of applying the provider default.
+        return requested_temperature
     return float(DEEPSEEK_TEMPERATURE)
 
 
@@ -1267,6 +1345,19 @@ def missing_supervisor_retry_fields(state: Dict[str, Any]) -> List[str]:
     return [key for key in SUPERVISOR_RETRY_FIELDS if not str((state or {}).get(key) or "").strip()]
 
 
+@dataclass(frozen=True)
+class InteractiveRunResult:
+    """Structured terminal projection rendered before the next prompt."""
+
+    task_id: str
+    status: str
+    stage: str = ""
+    failure_code: str = ""
+    reason: str = ""
+    result_path: str = ""
+    trace_path: str = ""
+
+
 # ════════════════════════════════════════════════════════════════
 #  1.  统一输出路由器（消除重复打印）
 # ════════════════════════════════════════════════════════════════
@@ -1279,6 +1370,7 @@ class OutputRouter:
     def __init__(self):
         self._seen: set = set()
         self._last_node: str = ""
+        self._console_lock = threading.RLock()
         self.pager_line_threshold = int(os.getenv("BIOMIND_PAGER_LINES", "35"))
         self.preview_lines = int(os.getenv("BIOMIND_PREVIEW_LINES", "20"))
         self.viewer_height = int(os.getenv("BIOMIND_VIEWER_HEIGHT", "15"))
@@ -1417,25 +1509,55 @@ class OutputRouter:
                 pass
 
     def print_node_header(self, node: str):
-        if node != self._last_node:
-            self._last_node = node
-            icons = {
-                "triage": "🔀", "direct_chat": "💬",
-                "consultant": "🧠", "planner": "📋", "plan_review": "👁️",
-                "generate": "⚙️ ", "execute": "▶️ ", "supervisor": "🔬",
-                "install_subagent": "🔧", "finish": "🏁",
-            }
-            icon = icons.get(node, "•")
-            print(f"\n{Fore.CYAN}{'─'*55}")
-            print(f"  {icon}  NODE: {node.upper()}")
-            print(f"{'─'*55}{Style.RESET_ALL}")
+        with self._console_lock:
+            if node != self._last_node:
+                self._last_node = node
+                icons = {
+                    "triage": "🔀", "direct_chat": "💬",
+                    "consultant": "🧠", "planner": "📋", "plan_review": "👁️",
+                    "generate": "⚙️ ", "execute": "▶️ ", "supervisor": "🔬",
+                    "install_subagent": "🔧", "finish": "🏁",
+                }
+                icon = icons.get(node, "•")
+                print(f"\n{Fore.CYAN}{'─'*55}")
+                print(f"  {icon}  NODE: {node.upper()}")
+                print(f"{'─'*55}{Style.RESET_ALL}")
 
     def print_once(self, key: str, text: str, color: str = ""):
         """相同 key 只打印一次"""
-        if key in self._seen:
-            return
-        self._seen.add(key)
-        print(f"{color}{text}{Style.RESET_ALL}" if color else text)
+        with self._console_lock:
+            if key in self._seen:
+                return
+            self._seen.add(key)
+            print(f"{color}{text}{Style.RESET_ALL}" if color else text)
+
+    def render_terminal_result(self, result: InteractiveRunResult) -> bool:
+        """Render one atomic terminal block; return whether it was emitted."""
+        if str(result.status or "") == "waiting_user":
+            return False
+        key = f"terminal_result:{result.task_id}:{result.status}:{result.failure_code}"
+        with self._console_lock:
+            if key in self._seen:
+                return False
+            self._seen.add(key)
+            color = (
+                Fore.GREEN
+                if result.status == "completed"
+                else Fore.YELLOW
+                if result.status in {"cancelled", "interrupted"}
+                else Fore.RED
+            )
+            lines = [
+                "Terminal result",
+                f"  Status: {result.status or 'unknown'}",
+                f"  Stage: {result.stage or '-'}",
+                f"  Failure code: {result.failure_code or '-'}",
+                f"  Reason: {result.reason or '-'}",
+                f"  Result path: {result.result_path or '-'}",
+                f"  Trace path: {result.trace_path or '-'}",
+            ]
+            print(f"\n{color}" + "\n".join(lines) + Style.RESET_ALL, flush=True)
+            return True
 
     def print_ai(self, content: str):
         """打印 AI 消息（过滤代码块和标签）"""
@@ -1476,8 +1598,9 @@ class OutputRouter:
             print(f"{'─'*50}{Style.RESET_ALL}")
 
     def reset_for_task(self):
-        self._seen.clear()
-        self._last_node = ""
+        with self._console_lock:
+            self._seen.clear()
+            self._last_node = ""
 
 
 output = OutputRouter()
@@ -1620,6 +1743,11 @@ class BioAnalystAgent:
         self.llm_endpoint_id = str(LLM_BASE_URL)
         self.llm_response_extra_body = deepcopy(extra_body)
         self.llm = init_chat_model(**llm_kwargs)
+        if self.llm_provider_is_deepseek:
+            self.llm = enable_deepseek_reasoning_stream(self.llm)
+        self.llm_reasoning_stream_adapter_active = (
+            deepseek_reasoning_stream_enabled(self.llm)
+        )
         self.generate_llm, self.generate_llm_policy = bind_generate_llm(
             self.llm,
             model=llm_model,
@@ -1638,12 +1766,25 @@ class BioAnalystAgent:
             model=llm_model,
             base_url=LLM_BASE_URL,
         )
+        (
+            self.planner_correction_llm,
+            self.planner_correction_llm_policy,
+        ) = bind_planner_correction_llm(
+            self.llm,
+            model=llm_model,
+            base_url=LLM_BASE_URL,
+        )
         logger.info(
             "LLM request policy: timeout=%ss readonly_timeout=%ss max_retries=%s",
             self.llm_timeout_seconds,
             self.llm_readonly_timeout_seconds,
             self.llm_max_retries,
         )
+        if self.llm_provider_is_deepseek:
+            logger.info(
+                "DeepSeek reasoning stream adapter: enabled=%s",
+                self.llm_reasoning_stream_adapter_active,
+            )
 
         # ── 验证 & 确认 ───────────────────────────────────────
         self.validator = ResultValidator()
@@ -1793,6 +1934,11 @@ class BioAnalystAgent:
             self.skill_manager = SkillManager(SKILLS_DIR)
         except Exception:
             self.skill_manager = None
+        self.skill_access_service = (
+            SkillAccessService(self.skill_manager)
+            if self.skill_manager is not None
+            else None
+        )
         self._sync_runtime_registries_at_startup()
         self.workflow_manager = WorkflowManager(str(Path(__file__).resolve().parent / "workflows"))
 
@@ -1866,9 +2012,16 @@ class BioAnalystAgent:
         except Exception as exc:
             logger.debug("Profiler initial metadata recording failed: %s", exc)
 
-    def _should_auto_rename_session(self, task_id: str) -> bool:
+    def _should_auto_rename_session(
+        self,
+        task_id: str,
+        *,
+        authoritative_new_task: bool = False,
+    ) -> bool:
         if not re.fullmatch(r"session_\d+", str(task_id or "")):
             return False
+        if authoritative_new_task:
+            return True
         try:
             return not self.task_summary_renderer.task_exists(task_id)
         except Exception:
@@ -3077,20 +3230,131 @@ class BioAnalystAgent:
         """Return whether durable recovery state supersedes stale checkpoint retry data."""
         phase = str((recovery_state or {}).get("phase") or "").strip().lower()
         status = str((recovery_state or {}).get("status") or "").strip().lower()
-        return phase in {"resolved", "success", "completed", "cleared"} or status in {
+        return phase in {
             "resolved", "success", "completed", "cleared",
+            "consumed", "superseded", "expired",
+        } or status in {
+            "resolved", "success", "completed", "cleared",
+            "consumed", "superseded", "expired",
         }
 
-    def _resolve_resume_node(self, task_id: str, values: Optional[Dict[str, Any]] = None) -> Tuple[str, Dict[str, Any]]:
+    @staticmethod
+    def _merge_recovery_phase_evidence(
+        durable_recovery: Mapping[str, Any],
+        external_phase: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Keep schema-v4 lifecycle authoritative over the legacy side store."""
+        durable = dict(durable_recovery or {})
+        external = dict(external_phase or {})
+        try:
+            schema_version = int(durable.get("schema_version") or 0)
+        except (TypeError, ValueError):
+            schema_version = 0
+        if schema_version >= 4:
+            if external:
+                durable["external_phase_evidence"] = external
+            return durable
+        return {**durable, **external}
+
+    def _consume_pending_recovery_on_resume(
+        self,
+        task_id: str,
+        plan_state: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Crash-resume one durable pending transition through the sole resolver."""
+        task_state = dict(plan_state.get("task_state") or {})
+        recovery_state = dict(task_state.get("recovery_state") or {})
+        active = dict(recovery_state.get("active_transition") or {})
+        if str(active.get("status") or "").strip().lower() != "pending":
+            return {}
+        decision_id = str(
+            active.get("decision_id") or active.get("idempotency_key") or ""
+        )
+        trigger_node = str(
+            active.get("trigger_node") or active.get("source_node") or ""
+        ).strip().lower()
+        trigger_event_id = str(
+            active.get("trigger_event_id") or active.get("attempt_id") or ""
+        )
+        step_id = str(active.get("step_id") or plan_state.get("current_step_id") or "")
+        if not decision_id or not trigger_node:
+            return {}
+
+        provenance = dict(plan_state.get("provenance_state") or {})
+        attempt = dict((provenance.get("attempts") or {}).get(trigger_event_id) or {})
+        execution_evidence: Dict[str, Any] = {}
+        if trigger_node == "execute" and attempt:
+            execution_evidence = {
+                "attempt_id": trigger_event_id,
+                "execution_id": str(
+                    attempt.get("execution_id")
+                    or attempt.get("execution_record_id")
+                    or trigger_event_id
+                ),
+                "action_id": str(attempt.get("action_id") or active.get("action_id") or ""),
+                "step_id": str(attempt.get("step_id") or step_id),
+                "returncode": attempt.get("returncode"),
+                "execution_status": str(attempt.get("status") or ""),
+                "command_role": str(attempt.get("command_role") or "primary"),
+                "validation": dict(attempt.get("validation") or {}),
+            }
+
+        final_step_completion = bool(
+            str(active.get("kind") or "") == RecoveryDecisionKind.COMPLETE_STEP.value
+            and plan_state.get("steps")
+            and all(
+                str(step.get("status") or "") in {"done", "passed", "skipped"}
+                for step in plan_state.get("steps", []) or []
+                if isinstance(step, Mapping)
+            )
+        )
+        safe_proposal = (
+            "supervisor_final_audit" if final_step_completion else "supervisor"
+        )
+        update: Dict[str, Any] = {
+            "proposed_route": safe_proposal,
+            "next_step": safe_proposal,
+            "current_step_id": step_id,
+            "recovery_decision": active,
+            "recovery_application": {
+                "applied": True,
+                "decision_id": decision_id,
+                "transition_status": "pending",
+            },
+            "transition_guard": "resume_pending_recovery_transition",
+        }
+        if execution_evidence:
+            update["execution_evidence"] = execution_evidence
+        if final_step_completion:
+            update.update({
+                "final_audit_requested": True,
+                "transition_guard": "complete_step_requires_final_audit",
+            })
+        return self._resolve_and_commit_effective_transition(
+            trigger_node,
+            {"task_id": task_id, "current_step_id": step_id},
+            update,
+            task_id,
+        )
+
+    def _resolve_resume_node(
+        self,
+        task_id: str,
+        values: Optional[Dict[str, Any]] = None,
+        *,
+        consume_pending_recovery: bool = True,
+        preview_pending_recovery: bool = False,
+    ) -> Tuple[str, Dict[str, Any]]:
         """Resolve recovery from durable business state, never from failure_stage alone."""
         values = dict(values or {})
         plan_state = load_plan_state(self.data_path, task_id)
         task_state = dict(plan_state.get("task_state") or {})
         recovery_store = RecoveryStateStore(self.data_path, task_id)
         persisted_recovery = recovery_store.load_phase()
-        recovery_state = dict(task_state.get("recovery_state") or {})
-        if persisted_recovery:
-            recovery_state.update(persisted_recovery)
+        recovery_state = self._merge_recovery_phase_evidence(
+            task_state.get("recovery_state") or {},
+            persisted_recovery,
+        )
         durable_task_spec = canonical_task_spec_for_state(plan_state)
         # Resume must not promote a parser/fallback projection to canonical
         # truth.  An uninitialized or legacy semantic-empty task returns to
@@ -3129,7 +3393,8 @@ class BioAnalystAgent:
         recovery_phase = str(recovery_state.get("phase") or "").lower()
         recovery_action_type = str(pending_recovery_action.get("type") or "").lower() if isinstance(pending_recovery_action, dict) else ""
         active_or_pending = bool(statuses & {
-            "pending", "ready", "running", "diagnosing", "repairing", "retry_pending"
+            "pending", "ready", "running", "diagnosing", "repairing",
+            "retry_pending", "verification_pending",
         })
         pending_action_id = str((pending_action or {}).get("action_id") or "")
         attempt_resume = (
@@ -3211,6 +3476,96 @@ class BioAnalystAgent:
             and str((plan_state.get("audit_index") or {}).get("raw_submission_ref") or "")
         )
 
+        active_transition = dict(recovery_state.get("active_transition") or {})
+        active_transition_pending = bool(
+            str(active_transition.get("status") or "").strip().lower() == "pending"
+        )
+        if preview_pending_recovery and active_transition_pending:
+            preview_route = str(
+                active_transition.get("target_route")
+                or active_transition.get("next_route")
+                or "supervisor"
+            ).strip().lower()
+            # Plain-continue classification must resume even when the pending
+            # transition will ultimately block.  Only the real resume path may
+            # consume and dispatch the one-shot transition.
+            node = preview_route if preview_route in {
+                "consultant", "planner", "ask_user", "execute", "install_subagent",
+                "supervisor", "supervisor_final_audit", "generate",
+            } else "supervisor"
+            return node, {
+                "task_id": task_id,
+                "resume_mode": "pending_recovery_transition_preview",
+                "resolved_resume_node": node,
+                "resume_reason": "pending_recovery_transition_preview",
+                "override_decision_id": str(
+                    active_transition.get("decision_id")
+                    or active_transition.get("idempotency_key")
+                    or ""
+                ),
+                "plan_validation": validation,
+                "attempt_resume": attempt_resume,
+            }
+
+        resumed_transition = (
+            self._consume_pending_recovery_on_resume(task_id, plan_state)
+            if consume_pending_recovery and active_transition_pending
+            else {}
+        )
+        if resumed_transition.get("recovery_transition_consumed") is True:
+            resumed_plan = load_plan_state(self.data_path, task_id)
+            resumed_index, resumed_step = current_plan_step_with_index(resumed_plan)
+            dispatch_route = str(
+                resumed_transition.get("dispatch_route")
+                or resumed_transition.get("next_step")
+                or "finish"
+            )
+            node = dispatch_route if dispatch_route in {
+                "consultant", "planner", "ask_user", "execute", "install_subagent",
+                "supervisor", "supervisor_final_audit", "generate",
+            } else "finish"
+            resumed_recovery = dict(
+                (resumed_plan.get("task_state") or {}).get("recovery_state") or {}
+            )
+            return node, {
+                "task_id": task_id,
+                "resume_mode": "pending_recovery_transition",
+                "task_status": task_status(resumed_plan),
+                "task_revision": task_revision,
+                "plan_revision": int(resumed_plan.get("plan_revision") or 0),
+                "plan_status": str(resumed_plan.get("plan_status") or ""),
+                "approved_plan_hash": str(resumed_plan.get("approved_plan_hash") or ""),
+                "current_step_id": str(resumed_step.get("step_id") or ""),
+                "current_step_index": resumed_index,
+                "selected_skill_ids": selected_skills,
+                "resolved_resume_node": node,
+                "resume_reason": "consumed_pending_recovery_transition",
+                "recovery_phase": str(resumed_recovery.get("phase") or ""),
+                "recovery_status": str(resumed_recovery.get("status") or ""),
+                "route_event_id": str(resumed_transition.get("route_event_id") or ""),
+                "override_decision_id": str(
+                    resumed_transition.get("override_decision_id") or ""
+                ),
+                "resume_execution_evidence": deepcopy(dict(
+                    resumed_transition.get("execution_evidence") or {}
+                )),
+                "resume_reconciliation_evidence": deepcopy(dict(
+                    resumed_transition.get("reconciliation_evidence") or {}
+                )),
+                "plan_validation": validation,
+                "attempt_resume": attempt_resume,
+            }
+        if consume_pending_recovery and active_transition_pending:
+            # The attempted transition was stale, malformed, or otherwise not
+            # consumed.  Re-resolve from the now-current durable Plan without
+            # previewing (and therefore without dispatching) its old target.
+            return self._resolve_resume_node(
+                task_id,
+                values,
+                consume_pending_recovery=False,
+                preview_pending_recovery=False,
+            )
+
         if durable_task_status == TASK_STATUS_CANCELLED:
             node = "finish"
             reason = "task_cancelled"
@@ -3232,6 +3587,9 @@ class BioAnalystAgent:
         elif durable_task_status == TASK_STATUS_COMPLETED:
             node = "finish"
             reason = "task_already_terminal"
+        elif "verification_pending" in statuses or str(task_state.get("resume_route_hint") or "") == "supervisor":
+            node = "supervisor"
+            reason = "successful_execution_requires_supervisor_verification"
         elif attempt_resume.get("route") in {
             "monitor_running_attempt", "reconcile_attempt", "supervisor", "transition_guard",
         }:
@@ -3541,9 +3899,10 @@ class BioAnalystAgent:
         task_state = dict(plan_state.get("task_state") or {})
         recovery_store = RecoveryStateStore(self.data_path, task_id)
         persisted_recovery = recovery_store.load_phase()
-        recovery_state = dict(task_state.get("recovery_state") or {})
-        if persisted_recovery:
-            recovery_state.update(persisted_recovery)
+        recovery_state = self._merge_recovery_phase_evidence(
+            task_state.get("recovery_state") or {},
+            persisted_recovery,
+        )
         recovery_resolved = self._recovery_state_is_resolved(recovery_state)
         task_record = self._persistent_task_record(task_id)
         original_query = str(task_record.get("user_query") or "")
@@ -3582,6 +3941,41 @@ class BioAnalystAgent:
                 "selected_skills": selected_skills,
                 "consultation_state": consultation_state,
             },
+        )
+        # The resume resolver may atomically consume a one-shot transition.
+        # Re-read its durable lifecycle before projecting runner state; using
+        # the pre-consume snapshot would resurrect pending route authority.
+        plan_state = load_plan_state(self.data_path, task_id)
+        task_state = dict(plan_state.get("task_state") or {})
+        persisted_recovery = recovery_store.load_phase()
+        recovery_state = self._merge_recovery_phase_evidence(
+            task_state.get("recovery_state") or {},
+            persisted_recovery,
+        )
+        recovery_resolved = self._recovery_state_is_resolved(recovery_state)
+        consumed_transition = dict(
+            recovery_state.get("last_consumed_transition") or {}
+        )
+        reconciliation_evidence = (
+            {
+                "decision_id": str(
+                    consumed_transition.get("decision_id")
+                    or consumed_transition.get("idempotency_key")
+                    or ""
+                ),
+                "attempt_id": str(
+                    consumed_transition.get("attempt_id")
+                    or consumed_transition.get("trigger_event_id")
+                    or ""
+                ),
+                "step_id": str(consumed_transition.get("step_id") or ""),
+                "status": str(consumed_transition.get("status") or "consumed"),
+                "evidence": list(consumed_transition.get("evidence") or []),
+                "reason": str(consumed_transition.get("reason") or ""),
+            }
+            if str(consumed_transition.get("kind") or "")
+            == RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value
+            else {}
         )
         project_id = str(values.get("project_id") or self.default_project_id)
         stable_record = self._get_or_create_stable_prompt(task_id, project_id)
@@ -3635,6 +4029,11 @@ class BioAnalystAgent:
             "input_audit": values.get("input_audit") or task_state.get("input_audit") or {},
             "pending_action": values.get("pending_action") or task_state.get("pending_action") or {},
             "pending_human_question": values.get("pending_human_question") or task_state.get("pending_question") or {},
+            "execution_evidence": (
+                audit.get("resume_execution_evidence")
+                or values.get("execution_evidence")
+                or {}
+            ),
             "pending_recovery_action": (
                 {}
                 if recovery_resolved
@@ -3656,10 +4055,20 @@ class BioAnalystAgent:
             "diagnostic_summary": (
                 {} if recovery_resolved else values.get("diagnostic_summary") or recovery_store.load_diagnostic_summary()
             ),
+            "reconciliation_evidence": (
+                audit.get("resume_reconciliation_evidence")
+                or values.get("reconciliation_evidence")
+                or reconciliation_evidence
+            ),
             "resume_mode": "business_state",
             "resolved_resume_node": node,
             "resume_audit": audit,
-            "recovery_status": "resuming" if recovery_resolved else recovery_state.get("status") or "resuming",
+            "recovery_status": recovery_state.get("status") or "resuming",
+            "recovery_decision": (
+                {}
+                if recovery_resolved
+                else values.get("recovery_decision") or {}
+            ),
             "next_step": node,
         }
         if recovery_resolved and audit.get("resume_reason") == "approved_valid_plan":
@@ -3688,7 +4097,11 @@ class BioAnalystAgent:
         waiting = load_waiting_state(self.data_path, task_id)
         if self._business_waiting_state(waiting):
             return {"action": "waiting_user", "waiting": waiting}
-        resume_node, audit = self._resolve_resume_node(task_id)
+        resume_node, audit = self._resolve_resume_node(
+            task_id,
+            consume_pending_recovery=False,
+            preview_pending_recovery=True,
+        )
         if resume_node == "finish":
             return {"action": "completed", "resume_audit": audit}
         return {"action": "resume", "resume_audit": audit}
@@ -3893,6 +4306,64 @@ class BioAnalystAgent:
                 task_id,
                 type(exc).__name__,
             )
+
+    def _finalize_consultant_commit_events(
+        self,
+        task_id: str,
+        update: Mapping[str, Any],
+        *,
+        source: str,
+        selected_skill_ids: Sequence[str] = (),
+    ) -> Dict[str, Any]:
+        """Resolve Consultant dispatch before emitting commit-success events."""
+        resolved = dict(update or {})
+        effective_route = str(
+            resolved.get("effective_route")
+            or resolved.get("next_step")
+            or ""
+        )
+        dispatch_route = str(
+            resolved.get("dispatch_route")
+            or effective_route
+        )
+        resolved.setdefault(
+            "proposed_route", str(resolved.get("next_step") or effective_route)
+        )
+        resolved["effective_route"] = effective_route
+        resolved["dispatch_route"] = dispatch_route
+        committed = dict(resolved.get("canonical_commit") or {})
+        if committed.get("succeeded") is not True:
+            return resolved
+
+        selected = list(dict.fromkeys(
+            str(value) for value in selected_skill_ids or [] if str(value)
+        ))
+        if selected:
+            self._record_consultant_progress(
+                task_id,
+                code="CONSULTANT_SKILL_SELECTED",
+                message=(
+                    "Consultant committed documented compatible Skill capability."
+                ),
+                detail={
+                    "selected_skill_count": len(selected),
+                    "source": str(source or ""),
+                },
+            )
+        if effective_route == "planner" and dispatch_route == "planner":
+            self._record_consultant_progress(
+                task_id,
+                code="CONSULTANT_PLANNER_HANDOFF",
+                message=(
+                    "Canonical Consultant commit succeeded; handing the task "
+                    "to Planner."
+                ),
+                detail={
+                    "source": str(source or ""),
+                    "task_revision": int(committed.get("task_revision") or 0),
+                },
+            )
+        return resolved
 
     def _flush_consultant_preprocess_trace(
         self,
@@ -4402,6 +4873,2057 @@ class BioAnalystAgent:
         mapping = state if isinstance(state, dict) else {}
         return task_spec_revision(self._task_spec_for_state(mapping))
 
+    @staticmethod
+    def _authoritative_user_turn_revision(
+        plan_state: Mapping[str, Any],
+    ) -> int:
+        conversation = dict(plan_state.get("conversation_evidence") or {})
+        return max(0, int(
+            conversation.get("user_turn_count")
+            if conversation.get("user_turn_count") is not None
+            else conversation.get("turn_count")
+            or 0
+        ))
+
+    @staticmethod
+    def _active_skill_ids_from_refs(
+        refs: Sequence[Mapping[str, Any]],
+    ) -> List[str]:
+        return list(dict.fromkeys(
+            str(item.get("skill_id") or "")
+            for item in refs or []
+            if isinstance(item, Mapping)
+            and str(item.get("status") or "") == "active"
+            and str(item.get("scope") or "task") == "task"
+            and str(item.get("skill_id") or "")
+        ))
+
+    @staticmethod
+    def _authorised_task_skill_selection(
+        access_state: Mapping[str, Any],
+        proposal: Mapping[str, Any],
+    ) -> List[str]:
+        """Return the only task Skill set authorised by one reviewed proposal."""
+        access = normalize_skill_access_state(access_state)
+        candidate_id = str(proposal.get("candidate_skill_id") or "")
+        candidate_snapshot_id = str(
+            proposal.get("candidate_snapshot_id") or ""
+        )
+        candidate_ref_scope = str(
+            proposal.get("candidate_ref_scope") or "task"
+        ).lower()
+        candidate_ref_target = str(
+            proposal.get("candidate_ref_target_step_id") or ""
+        )
+        scope = str(proposal.get("requested_scope") or "").lower()
+        relation = str(proposal.get("relation") or "").lower()
+        if scope != "task" or relation not in {"supplement", "replace"}:
+            raise SkillAccessError(
+                "SKILL_BINDING_TASK_SELECTION_INVALID",
+                f"scope={scope or '<missing>'}; relation={relation or '<missing>'}",
+            )
+        candidate_refs = [
+            item for item in access.get("selected_skill_refs") or []
+            if isinstance(item, Mapping)
+            and str(item.get("skill_id") or "") == candidate_id
+            and str(item.get("snapshot_id") or "") == candidate_snapshot_id
+            and str(item.get("status") or "") == "candidate"
+            and str(item.get("scope") or "task") == candidate_ref_scope
+            and (
+                candidate_ref_scope == "task"
+                or str(item.get("target_step_id") or "")
+                == candidate_ref_target
+            )
+            and not str(item.get("candidate_disposition") or "")
+        ]
+        if len(candidate_refs) != 1:
+            raise SkillAccessError(
+                "SKILL_BINDING_CANDIDATE_UNAVAILABLE",
+                f"candidate_refs={len(candidate_refs)}",
+            )
+        active_refs = [
+            item for item in access.get("selected_skill_refs") or []
+            if isinstance(item, Mapping)
+            and str(item.get("status") or "") == "active"
+            and str(item.get("scope") or "task") == "task"
+        ]
+        active_ids = list(dict.fromkeys(
+            str(item.get("skill_id") or "")
+            for item in active_refs
+            if str(item.get("skill_id") or "")
+        ))
+        if relation == "replace":
+            if len(active_refs) != 1:
+                raise SkillAccessError(
+                    "SKILL_REPLACEMENT_TARGET_AMBIGUOUS",
+                    f"active_targets={len(active_refs)}",
+                )
+            replaced_id = str(active_refs[0].get("skill_id") or "")
+            active_ids = [item for item in active_ids if item != replaced_id]
+        if candidate_id not in active_ids:
+            active_ids.append(candidate_id)
+        return active_ids
+
+    def _prepare_durable_skill_access(
+        self,
+        plan_state: Mapping[str, Any],
+        *,
+        selected_skill_ids: Sequence[Any] = (),
+        task_revision: int = 0,
+    ) -> Dict[str, Any]:
+        """Migrate legacy IDs to immutable refs and close stale continuations."""
+        task_state = dict(plan_state.get("task_state") or {})
+        access = normalize_skill_access_state(
+            task_state.get("skill_access_state")
+            or plan_state.get("skill_access_state")
+            or {"selected_skill_refs": plan_state.get("selected_skill_refs") or []}
+        )
+        service = getattr(self, "skill_access_service", None)
+        selected = list(dict.fromkeys(
+            str(item) for item in (
+                selected_skill_ids
+                or task_state.get("selected_skills")
+                or plan_state.get("selected_skill_ids")
+                or []
+            ) if str(item)
+        ))
+        if service is not None and selected:
+            access = service.ensure_selected_skill_refs(
+                access,
+                selected,
+                task_revision=max(0, int(task_revision or 0)),
+                scope="task",
+            )
+        _, current_step = current_plan_step_with_index(dict(plan_state or {}))
+        access = close_stale_continuations(
+            access,
+            task_revision=max(0, int(task_revision or 0)),
+            plan_revision=max(0, int(plan_state.get("plan_revision") or 0)),
+            current_step_id=str((current_step or {}).get("step_id") or ""),
+            authoritative_user_turn_revision=(
+                self._authoritative_user_turn_revision(plan_state)
+            ),
+        )
+        return access
+
+    def _persist_durable_skill_access(
+        self,
+        task_id: str,
+        access_state: Mapping[str, Any],
+        *,
+        continuation_id: str = "",
+        pending_proposal: Optional[Mapping[str, Any]] = None,
+        pending_plan_impact: Optional[Mapping[str, Any]] = None,
+        expected_state_generation: Optional[int] = None,
+        expected_proposal_id: str = "",
+        expected_proposal_status: str = "",
+        expected_proposal_snapshot_id: str = "",
+    ) -> Dict[str, Any]:
+        """Persist canonical Skill state; ID lists are compatibility projections."""
+        durable = load_plan_state(self.data_path, task_id)
+        if (
+            expected_state_generation is not None
+            and int(durable.get("state_generation") or 0)
+            != int(expected_state_generation)
+        ):
+            raise StateCASConflict(
+                "SKILL_ACCESS_TRANSACTION_STALE: state_generation="
+                f"{expected_state_generation}/{durable.get('state_generation')}"
+            )
+        if expected_proposal_id:
+            current_task_state = dict(durable.get("task_state") or {})
+            current_pointer = dict(
+                current_task_state.get("pending_skill_binding_proposal") or {}
+            )
+            current_access = normalize_skill_access_state(
+                current_task_state.get("skill_access_state")
+                or durable.get("skill_access_state")
+            )
+            current_proposal = dict(
+                (current_access.get("binding_proposals") or {}).get(
+                    expected_proposal_id
+                )
+                or {}
+            )
+            observed = {
+                "pointer_proposal_id": str(
+                    current_pointer.get("proposal_id") or ""
+                ),
+                "record_proposal_id": str(
+                    current_proposal.get("proposal_id") or ""
+                ),
+                "status": str(
+                    current_proposal.get("status")
+                    or current_pointer.get("status")
+                    or ""
+                ),
+                "candidate_snapshot_id": str(
+                    current_proposal.get("candidate_snapshot_id")
+                    or current_pointer.get("candidate_snapshot_id")
+                    or ""
+                ),
+            }
+            expected = {
+                "pointer_proposal_id": str(expected_proposal_id),
+                "record_proposal_id": str(expected_proposal_id),
+                "status": str(expected_proposal_status or ""),
+                "candidate_snapshot_id": str(
+                    expected_proposal_snapshot_id or ""
+                ),
+            }
+            mismatches = {
+                key: {"expected": value, "observed": observed[key]}
+                for key, value in expected.items()
+                if value and value != observed[key]
+            }
+            if mismatches:
+                raise StateCASConflict(
+                    "SKILL_ACCESS_TRANSACTION_STALE: "
+                    + json.dumps(mismatches, sort_keys=True)
+                )
+        access = normalize_skill_access_state(access_state)
+        refs = deepcopy(list(access.get("selected_skill_refs") or []))
+        selected = self._active_skill_ids_from_refs(refs)
+        task_state = dict(durable.get("task_state") or {})
+        task_state["skill_access_state"] = deepcopy(access)
+        task_state["selected_skill_refs"] = deepcopy(refs)
+        task_state["selected_skills"] = list(selected)
+        if continuation_id:
+            task_state["skill_continuation_id"] = str(continuation_id)
+        else:
+            task_state.pop("skill_continuation_id", None)
+        if pending_proposal is not None:
+            if pending_proposal:
+                task_state["pending_skill_binding_proposal"] = deepcopy(
+                    dict(pending_proposal)
+                )
+            else:
+                task_state.pop("pending_skill_binding_proposal", None)
+        if pending_plan_impact is not None:
+            if pending_plan_impact:
+                task_state["pending_plan_impact_review"] = deepcopy(
+                    dict(pending_plan_impact)
+                )
+            else:
+                task_state.pop("pending_plan_impact_review", None)
+        durable["task_state"] = task_state
+        durable["skill_access_state"] = deepcopy(access)
+        durable["selected_skill_refs"] = deepcopy(refs)
+        durable["selected_skill_ids"] = list(selected)
+        save_plan_state(self.data_path, task_id, durable)
+        return {
+            "skill_access_state": deepcopy(access),
+            "selected_skill_refs": deepcopy(refs),
+            "selected_skills": list(selected),
+            "selected_skill_ids": list(selected),
+            "skill_continuation_id": str(continuation_id or ""),
+            "pending_skill_binding_proposal": deepcopy(
+                dict(pending_proposal or {})
+            ) if pending_proposal is not None else deepcopy(dict(
+                task_state.get("pending_skill_binding_proposal") or {}
+            )),
+            "pending_plan_impact_review": deepcopy(
+                dict(pending_plan_impact or {})
+            ) if pending_plan_impact is not None else deepcopy(dict(
+                task_state.get("pending_plan_impact_review") or {}
+            )),
+        }
+
+    def _skill_context_projection(
+        self,
+        plan_state: Mapping[str, Any],
+        *,
+        caller_node: str,
+        current_step_id: str,
+        continuation_id: str = "",
+    ) -> Dict[str, Any]:
+        task_state = dict(plan_state.get("task_state") or {})
+        return project_skill_context(
+            task_state.get("skill_access_state")
+            or plan_state.get("skill_access_state"),
+            caller_node=caller_node,
+            current_step_id=current_step_id,
+            continuation_id=(
+                continuation_id
+                or str(task_state.get("skill_continuation_id") or "")
+            ),
+        )
+
+    def _complete_durable_skill_continuation(
+        self,
+        task_id: str,
+        *,
+        caller_node: str,
+    ) -> Dict[str, Any]:
+        target_continuation_id = ""
+        last_conflict: Optional[StateCASConflict] = None
+        for _ in range(3):
+            durable = load_plan_state(self.data_path, task_id)
+            task_state = dict(durable.get("task_state") or {})
+            continuation_id = str(
+                task_state.get("skill_continuation_id") or ""
+            )
+            if not target_continuation_id:
+                target_continuation_id = continuation_id
+            if not continuation_id:
+                return {}
+            if continuation_id != target_continuation_id:
+                raise StateCASConflict(
+                    "SKILL_CONTINUATION_TRANSACTION_STALE: continuation="
+                    f"{target_continuation_id}/{continuation_id}"
+                )
+            access = complete_skill_continuation(
+                task_state.get("skill_access_state")
+                or durable.get("skill_access_state"),
+                continuation_id,
+                caller_node=caller_node,
+            )
+            try:
+                return self._persist_durable_skill_access(
+                    task_id,
+                    access,
+                    continuation_id="",
+                    expected_state_generation=int(
+                        durable.get("state_generation") or 0
+                    ),
+                )
+            except StateCASConflict as exc:
+                last_conflict = exc
+        raise last_conflict or StateCASConflict(
+            "SKILL_CONTINUATION_TRANSACTION_STALE"
+        )
+
+    @staticmethod
+    def _skill_access_cas_stale_update(
+        *,
+        caller_node: str,
+        next_step: str,
+        detail: str,
+    ) -> Dict[str, Any]:
+        stale = {
+            "decision_result": "STALE_NODE_RESULT",
+            "caller_node": str(caller_node),
+            "changed_preconditions": ["skill_access_transaction"],
+            "detail": str(detail),
+            "counts_as_failure": False,
+            "consumes_execution_retry": False,
+            "consumes_recovery_retry": False,
+        }
+        return {
+            "messages": [SystemMessage(content=json.dumps(
+                stale, ensure_ascii=False, sort_keys=True,
+            ))],
+            "stale_node_result": deepcopy(stale),
+            "skill_decision_result": deepcopy(stale),
+            "pending_action": {},
+            "next_step": str(next_step),
+        }
+
+    def _record_durable_skill_event(
+        self,
+        task_id: str,
+        event: str,
+        payload: Mapping[str, Any],
+    ) -> None:
+        for _ in range(3):
+            durable = load_plan_state(self.data_path, task_id)
+            task_state = dict(durable.get("task_state") or {})
+            access = record_skill_access_event(
+                task_state.get("skill_access_state")
+                or durable.get("skill_access_state"),
+                event,
+                payload,
+            )
+            task_state["skill_access_state"] = access
+            durable["task_state"] = task_state
+            durable["skill_access_state"] = deepcopy(access)
+            try:
+                save_plan_state(self.data_path, task_id, durable)
+                return
+            except StateCASConflict:
+                continue
+            except OSError:
+                logger.exception(
+                    "Skill event persistence failed: task=%s event=%s",
+                    task_id,
+                    event,
+                )
+                return
+
+    def _refund_planner_call_for_skill_continuation(
+        self,
+        task_id: str,
+        planning_epoch_id: str,
+    ) -> None:
+        """Keep Skill acquisition outside the normal plan-candidate budget."""
+        for _ in range(3):
+            durable = load_plan_state(self.data_path, task_id)
+            task_state = dict(durable.get("task_state") or {})
+            epoch = dict(task_state.get("planning_epoch") or {})
+            if (
+                not epoch
+                or str(epoch.get("planning_epoch_id") or "")
+                != str(planning_epoch_id or "")
+            ):
+                return
+            epoch["planner_calls_total"] = max(
+                0, int(epoch.get("planner_calls_total") or 0) - 1
+            )
+            task_state["planning_epoch"] = epoch
+            durable["task_state"] = task_state
+            try:
+                save_plan_state(self.data_path, task_id, durable)
+                return
+            except StateCASConflict:
+                continue
+
+    async def _handle_skill_node_decision(
+        self,
+        *,
+        task_id: str,
+        caller_node: str,
+        graph_node: str,
+        decision: Mapping[str, Any],
+        node_context: NodeContext,
+        response: BaseMessage,
+        selected_skill_ids: Sequence[Any] = (),
+    ) -> Dict[str, Any]:
+        """Serve a typed Skill decision before any action/plan parser runs."""
+        service = getattr(self, "skill_access_service", None)
+        if service is None:
+            raise SkillAccessError(
+                "SKILL_CONTEXT_UNAVAILABLE", "SkillManager is not configured"
+            )
+        durable = load_plan_state(self.data_path, task_id)
+        task_spec = canonical_task_spec_for_state(durable)
+        task_revision = task_spec_revision(task_spec)
+        _, durable_step = current_plan_step_with_index(dict(durable))
+        fresh_authority = {
+            "task_revision": task_revision,
+            "plan_revision": int(durable.get("plan_revision") or 0),
+            "authoritative_user_turn_revision": (
+                self._authoritative_user_turn_revision(durable)
+            ),
+            "step_id": str((durable_step or {}).get("step_id") or ""),
+        }
+        bound_authority = {
+            "task_revision": int(node_context.binding.task_revision or 0),
+            "plan_revision": int(node_context.binding.plan_revision or 0),
+            "authoritative_user_turn_revision": int(
+                node_context.binding.authoritative_user_turn_revision or 0
+            ),
+            "step_id": str(node_context.binding.step_id or ""),
+        }
+        authority_changes = sorted(
+            key for key, value in fresh_authority.items()
+            if value != bound_authority[key]
+        )
+        if authority_changes:
+            return {
+                "messages": [response, SystemMessage(content=json.dumps({
+                    "decision_result": "STALE_NODE_RESULT",
+                    "caller_node": caller_node,
+                    "caller_invocation_id": (
+                        node_context.binding.invocation_id
+                    ),
+                    "changed_preconditions": authority_changes,
+                    "counts_as_failure": False,
+                }, ensure_ascii=False, sort_keys=True))],
+                "stale_node_result": {
+                    "decision_result": "STALE_NODE_RESULT",
+                    "caller_node": caller_node,
+                    "changed_preconditions": authority_changes,
+                },
+                "pending_action": {},
+                "next_step": graph_node,
+            }
+        expected_state_generation = int(
+            durable.get("state_generation") or 0
+        )
+        access = self._prepare_durable_skill_access(
+            durable,
+            selected_skill_ids=selected_skill_ids,
+            task_revision=task_revision,
+        )
+        prior_continuation_id = str(
+            (durable.get("task_state") or {}).get("skill_continuation_id") or ""
+        )
+        prior_continuation = dict(
+            (access.get("continuations") or {}).get(prior_continuation_id) or {}
+        )
+        logical_invocation_id = str(node_context.binding.invocation_id)
+        if (
+            prior_continuation
+            and str(prior_continuation.get("caller_node") or "") == caller_node
+            and int(prior_continuation.get("task_revision") or 0) == task_revision
+            and int(prior_continuation.get("plan_revision") or 0)
+            == int(durable.get("plan_revision") or 0)
+            and int(
+                prior_continuation.get(
+                    "authoritative_user_turn_revision"
+                )
+                or 0
+            ) == self._authoritative_user_turn_revision(durable)
+            and str(prior_continuation.get("current_step_id") or "")
+            == str(node_context.binding.step_id or "")
+        ):
+            logical_invocation_id = str(
+                prior_continuation.get("caller_invocation_id")
+                or logical_invocation_id
+            )
+            access = complete_skill_continuation(
+                access,
+                prior_continuation_id,
+                caller_node=caller_node,
+            )
+        envelope = {
+            "caller_node": caller_node,
+            "caller_invocation_id": logical_invocation_id,
+            "task_revision": task_revision,
+            "plan_revision": int(durable.get("plan_revision") or 0),
+            "authoritative_user_turn_revision": (
+                self._authoritative_user_turn_revision(durable)
+            ),
+            "current_step_id": str(node_context.binding.step_id or ""),
+            "attempt_id": str(node_context.binding.attempt_id or ""),
+        }
+        kind = str(decision.get("decision") or "").upper()
+        if kind == REQUEST_SKILL_CONTEXT:
+            access, result = service.serve_context_request(
+                access, decision, runtime_envelope=envelope,
+            )
+            proposal = None
+        elif kind == SEARCH_SKILLS:
+            input_roles = [
+                str(item.get("role") or item.get("name") or "")
+                for item in task_spec.get("inputs") or []
+                if isinstance(item, Mapping)
+            ]
+            access, result = service.search_skills(
+                access,
+                decision,
+                runtime_envelope=envelope,
+                input_roles=input_roles,
+            )
+            proposal = None
+        elif kind == PROPOSE_SKILL_BINDING:
+            access, proposal = service.propose_binding(
+                access, decision, runtime_envelope=envelope,
+            )
+            direct_plan_impact = (
+                str(proposal.get("review_route") or "")
+                == "planner_plan_impact_review"
+            )
+            result = {
+                "decision_result": "SKILL_BINDING_PROPOSAL_RECORDED",
+                "proposal_id": proposal["proposal_id"],
+                "status": (
+                    "pending_plan_impact_review"
+                    if direct_plan_impact
+                    else "pending_consultant_review"
+                ),
+                "review_route": str(proposal.get("review_route") or ""),
+            }
+        else:  # validate_skill_decision owns this boundary.
+            raise SkillAccessError("SKILL_DECISION_SCHEMA_INVALID", kind)
+
+        continuation_id = str(result.get("continuation_id") or "")
+        no_progress = str(result.get("status") or "") in {
+            "SKILL_CONTEXT_NO_PROGRESS", "SKILL_SEARCH_NO_PROGRESS",
+        }
+        if no_progress and continuation_id:
+            access = complete_skill_continuation(
+                access,
+                continuation_id,
+                caller_node=caller_node,
+            )
+            continuation_id = ""
+        pending_plan_impact = None
+        if proposal is not None and direct_plan_impact:
+            pending_plan_impact = {
+                "mode": "plan_impact_review",
+                "proposal_id": str(proposal.get("proposal_id") or ""),
+                "base_task_revision": task_revision,
+                "new_task_revision": task_revision,
+                "base_plan_revision": int(durable.get("plan_revision") or 0),
+                "base_user_turn_revision": (
+                    self._authoritative_user_turn_revision(durable)
+                ),
+                "skill_change": {
+                    "proposal": deepcopy(dict(proposal)),
+                    "candidate_skill_refs": [
+                        deepcopy(dict(item))
+                        for item in access.get("selected_skill_refs") or []
+                        if str(item.get("snapshot_id") or "")
+                        == str(proposal.get("candidate_snapshot_id") or "")
+                    ],
+                },
+                "status": "pending",
+            }
+        try:
+            projection = self._persist_durable_skill_access(
+                task_id,
+                access,
+                continuation_id=continuation_id,
+                pending_proposal=(proposal if proposal is not None else None),
+                pending_plan_impact=pending_plan_impact,
+                expected_state_generation=expected_state_generation,
+            )
+        except StateCASConflict as exc:
+            return {
+                "messages": [response, SystemMessage(content=json.dumps({
+                    "decision_result": "STALE_NODE_RESULT",
+                    "caller_node": caller_node,
+                    "caller_invocation_id": (
+                        node_context.binding.invocation_id
+                    ),
+                    "changed_preconditions": ["skill_access_transaction"],
+                    "detail": str(exc),
+                    "counts_as_failure": False,
+                }, ensure_ascii=False, sort_keys=True))],
+                "stale_node_result": {
+                    "decision_result": "STALE_NODE_RESULT",
+                    "caller_node": caller_node,
+                    "changed_preconditions": ["skill_access_transaction"],
+                },
+                "pending_action": {},
+                "next_step": graph_node,
+            }
+        next_step = (
+            "planner"
+            if proposal is not None and direct_plan_impact
+            else "consultant"
+            if proposal is not None or no_progress
+            else graph_node
+        )
+        update: Dict[str, Any] = {
+            "messages": [
+                response,
+                SystemMessage(content=json.dumps(
+                    result, ensure_ascii=False, sort_keys=True, default=str,
+                )),
+            ],
+            "pending_action": {},
+            "next_step": next_step,
+            "skill_decision_result": deepcopy(result),
+            "transition_guard": (
+                "skill_binding_requires_plan_impact_review"
+                if proposal is not None and direct_plan_impact
+                else "skill_binding_requires_consultant_review"
+                if proposal is not None
+                else "skill_no_progress_requires_consultant"
+                if no_progress
+                else "skill_same_node_continuation"
+            ),
+            **projection,
+        }
+        if graph_node == "generate":
+            update.update({
+                "generate_result": (
+                    "SKILL_BINDING_PROPOSED"
+                    if proposal is not None
+                    else "SKILL_NO_PROGRESS"
+                    if no_progress
+                    else "SKILL_CONTINUATION"
+                ),
+                "generate_exit_reason": (
+                    "skill_binding_proposed"
+                    if proposal is not None
+                    else "skill_no_progress"
+                    if no_progress
+                    else "skill_context_served"
+                ),
+            })
+        return update
+
+    async def _run_consultant_skill_resolution(
+        self,
+        state: AgentState,
+        *,
+        task_id: str,
+        durable: Mapping[str, Any],
+        proposal: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Run the bounded Consultant-owned applicability review."""
+        task_spec = canonical_task_spec_for_state(durable)
+        task_revision = task_spec_revision(task_spec)
+        task_state = dict(durable.get("task_state") or {})
+        access = self._prepare_durable_skill_access(
+            durable,
+            selected_skill_ids=task_state.get("selected_skills") or [],
+            task_revision=task_revision,
+        )
+        proposal_id = str(proposal.get("proposal_id") or "")
+        durable_proposal = deepcopy(dict(
+            (access.get("binding_proposals") or {}).get(proposal_id) or {}
+        ))
+        pending_pointer = deepcopy(dict(
+            task_state.get("pending_skill_binding_proposal") or {}
+        ))
+        if (
+            not proposal_id
+            or str(durable_proposal.get("proposal_id") or "") != proposal_id
+            or str(pending_pointer.get("proposal_id") or "") != proposal_id
+            or str(durable_proposal.get("candidate_snapshot_id") or "")
+            != str(proposal.get("candidate_snapshot_id") or "")
+        ):
+            raise SkillAccessError(
+                "SKILL_BINDING_PROPOSAL_MISMATCH", proposal_id
+            )
+        snapshot_id = str(durable_proposal.get("candidate_snapshot_id") or "")
+        try:
+            snapshot = deepcopy(dict(
+                SkillAccessService._verified_snapshot(access, snapshot_id)
+            ))
+        except SkillAccessError:
+            raise SkillAccessError(
+                "SKILL_BINDING_CANDIDATE_UNAVAILABLE", snapshot_id
+            )
+        verified_excerpt_refs = [
+            str(item)
+            for item in durable_proposal.get("verified_excerpt_refs") or []
+            if str(item)
+        ]
+        if not verified_excerpt_refs:
+            raise SkillAccessError(
+                "SKILL_BINDING_EVIDENCE_REQUIRED", proposal_id
+            )
+        relevant_excerpts: List[Dict[str, Any]] = []
+        for excerpt_id in verified_excerpt_refs:
+            excerpt = deepcopy(dict(
+                SkillAccessService._verified_excerpt(access, excerpt_id)
+            ))
+            if str(excerpt.get("snapshot_id") or "") != snapshot_id:
+                raise SkillAccessError(
+                    "SKILL_EXCERPT_LINKAGE_INVALID", excerpt_id
+                )
+            relevant_excerpts.append(excerpt)
+        latest_skill_tool_result = {}
+        for result_id in sorted(
+            (access.get("skill_tool_results") or {}).keys(), reverse=True
+        ):
+            candidate_result = dict(
+                (access.get("skill_tool_results") or {}).get(result_id) or {}
+            )
+            result_excerpt_ids = {
+                str(item.get("excerpt_id") or "")
+                for item in candidate_result.get("results") or []
+                if isinstance(item, Mapping)
+            }
+            if result_excerpt_ids.intersection(verified_excerpt_refs):
+                latest_skill_tool_result = deepcopy(candidate_result)
+                break
+        transaction_material = {
+            "pointer": pending_pointer,
+            "proposal": durable_proposal,
+            "candidate_ref": [
+                deepcopy(dict(item))
+                for item in access.get("selected_skill_refs") or []
+                if isinstance(item, Mapping)
+                and str(item.get("snapshot_id") or "") == snapshot_id
+            ],
+            "snapshot": snapshot,
+            "excerpts": relevant_excerpts,
+        }
+        proposal_transaction_hash = hashlib.sha256(json.dumps(
+            transaction_material,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")).hexdigest()
+        expected_state_generation = int(
+            durable.get("state_generation") or 0
+        )
+        expected_proposal_status = str(
+            durable_proposal.get("status") or ""
+        )
+        _, resolution_step = current_plan_step_with_index(dict(durable))
+        resolution_step_id = str(
+            (resolution_step or {}).get("step_id") or ""
+        )
+        conversation_index = dict(durable.get("conversation_evidence") or {})
+        bounded_user_evidence: List[Dict[str, Any]] = []
+        if conversation_index.get("head_ref"):
+            turns = StateContractStore(
+                self.data_path, task_id
+            ).read_conversation_evidence(conversation_index)
+            proposal_refs = {
+                str(item)
+                for item in (
+                    list(durable_proposal.get("evidence_refs") or [])
+                    + list(durable_proposal.get("user_answer_refs") or [])
+                )
+                if str(item)
+            }
+            matching_turns = [
+                deepcopy(dict(item))
+                for item in turns
+                if str(item.get("role") or "") == "user"
+                and {
+                    str(item.get("turn_id") or ""),
+                    str(item.get("turn_ref") or ""),
+                    str(item.get("content_ref") or ""),
+                }
+                & proposal_refs
+            ]
+            if not matching_turns:
+                matching_turns = [
+                    deepcopy(dict(item))
+                    for item in turns
+                    if str(item.get("role") or "") == "user"
+                ][-1:]
+            bounded_user_evidence = matching_turns[-3:]
+        resolution_payload = build_skill_resolution_payload(
+            task_snapshot=task_spec,
+            current_plan=durable,
+            active_skill_refs=access.get("selected_skill_refs") or [],
+            candidate={
+                **snapshot,
+                "relevant_excerpt_refs": verified_excerpt_refs,
+                "relevant_skill_excerpts": relevant_excerpts,
+                "latest_skill_tool_result": latest_skill_tool_result,
+            },
+            proposal=durable_proposal,
+            user_evidence=bounded_user_evidence,
+        )
+        consultant_context = build_node_context(
+            node_type="consultant",
+            task_spec=task_spec,
+            plan_state=durable,
+            state_generation=int(durable.get("state_generation") or 0),
+            current_step_id=resolution_step_id,
+            authoritative_user_turn_revision=(
+                self._authoritative_user_turn_revision(durable)
+            ),
+        )
+        prompt = PromptManager.get_consultant_skill_resolution_prompt(
+            resolution_payload
+        )
+        response = await self._ainvoke_node_llm(
+            [HumanMessage(content=prompt)],
+            node_context=consultant_context,
+            stage="consultant_skill_resolution",
+            task_id=task_id,
+            task_mode=str(state.get("task_mode") or "managed"),
+            temperature=0.0,
+            trace_metadata={
+                "call_kind": "consultant_skill_resolution",
+                "proposal_id": proposal_id,
+                "task_spec_revision": task_revision,
+            },
+        )
+        latest = load_plan_state(self.data_path, task_id)
+        _, latest_resolution_step = current_plan_step_with_index(latest)
+        latest_context = build_node_context(
+            node_type="consultant",
+            task_spec=canonical_task_spec_for_state(latest),
+            plan_state=latest,
+            state_generation=int(latest.get("state_generation") or 0),
+            current_step_id=str(
+                (latest_resolution_step or {}).get("step_id") or ""
+            ),
+            authoritative_user_turn_revision=(
+                self._authoritative_user_turn_revision(latest)
+            ),
+        )
+        staleness = evaluate_node_staleness(
+            consultant_context.binding,
+            latest_context.binding.to_dict(),
+        )
+        latest_task_state = dict(latest.get("task_state") or {})
+        latest_access = normalize_skill_access_state(
+            latest_task_state.get("skill_access_state")
+            or latest.get("skill_access_state")
+        )
+        latest_pointer = deepcopy(dict(
+            latest_task_state.get("pending_skill_binding_proposal") or {}
+        ))
+        latest_proposal = deepcopy(dict(
+            (latest_access.get("binding_proposals") or {}).get(proposal_id)
+            or {}
+        ))
+        try:
+            latest_snapshot = deepcopy(dict(
+                SkillAccessService._verified_snapshot(
+                    latest_access,
+                    str(latest_proposal.get("candidate_snapshot_id") or ""),
+                )
+            ))
+        except SkillAccessError:
+            latest_snapshot = {}
+        latest_verified_excerpt_refs = [
+            str(item)
+            for item in latest_proposal.get("verified_excerpt_refs") or []
+            if str(item)
+        ]
+        latest_excerpts: List[Dict[str, Any]] = []
+        try:
+            latest_excerpts = [
+                deepcopy(dict(SkillAccessService._verified_excerpt(
+                    latest_access, excerpt_id,
+                )))
+                for excerpt_id in latest_verified_excerpt_refs
+            ]
+        except SkillAccessError:
+            latest_excerpts = []
+        latest_transaction_material = {
+            "pointer": latest_pointer,
+            "proposal": latest_proposal,
+            "candidate_ref": [
+                deepcopy(dict(item))
+                for item in latest_access.get("selected_skill_refs") or []
+                if isinstance(item, Mapping)
+                and str(item.get("snapshot_id") or "")
+                == str(latest_snapshot.get("snapshot_id") or "")
+            ],
+            "snapshot": latest_snapshot,
+            "excerpts": latest_excerpts,
+        }
+        latest_transaction_hash = hashlib.sha256(json.dumps(
+            latest_transaction_material,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")).hexdigest()
+        transaction_changed = (
+            latest_transaction_hash != proposal_transaction_hash
+        )
+        changed_preconditions = list(staleness.changed_preconditions)
+        if transaction_changed:
+            changed_preconditions.append("skill_resolution_transaction")
+        if not staleness.usable or transaction_changed:
+            self._record_durable_skill_event(
+                task_id,
+                "stale_node_result_discarded",
+                {
+                    "caller_node": "consultant",
+                    "caller_invocation_id": consultant_context.binding.invocation_id,
+                    "changed_preconditions": changed_preconditions,
+                },
+            )
+            return {
+                "messages": [response, SystemMessage(content=json.dumps({
+                    "decision_result": "STALE_NODE_RESULT",
+                    "caller_node": "consultant",
+                    "caller_invocation_id": consultant_context.binding.invocation_id,
+                    "changed_preconditions": changed_preconditions,
+                    "counts_as_failure": False,
+                }, ensure_ascii=False, sort_keys=True))],
+                "stale_node_result": {
+                    "decision_result": "STALE_NODE_RESULT",
+                    "caller_node": "consultant",
+                    "changed_preconditions": changed_preconditions,
+                },
+                "next_step": "consultant",
+            }
+        # Review and persist the latest byte-identical transaction so unrelated
+        # record-only writes cannot be clobbered. A subsequent race is caught
+        # by the generation/proposal CAS in _persist_durable_skill_access.
+        access = latest_access
+        durable_proposal = latest_proposal
+        expected_state_generation = int(
+            latest.get("state_generation") or 0
+        )
+        expected_proposal_status = str(
+            latest_proposal.get("status") or ""
+        )
+        persistence_cas = {
+            "expected_state_generation": expected_state_generation,
+            "expected_proposal_id": proposal_id,
+            "expected_proposal_status": expected_proposal_status,
+            "expected_proposal_snapshot_id": snapshot_id,
+        }
+        review = validate_skill_resolution_decision(
+            parse_strict_json_object(
+                str(response.content or ""),
+                error_code="SKILL_RESOLUTION_SCHEMA_INVALID",
+            )
+        )
+        access, reviewed = review_binding_proposal(
+            access,
+            proposal_id,
+            review,
+        )
+        review_kind = str(review["decision"])
+        caller = str(durable_proposal.get("caller_node") or "")
+        resume_node = (
+            "planner"
+            if caller.startswith("planner")
+            else "supervisor"
+            if caller == "recovery"
+            else "consultant"
+            if caller == "consultant"
+            else "generate"
+        )
+
+        if review_kind == "SEARCH_MORE":
+            search_decision = {
+                "decision": SEARCH_SKILLS,
+                "query": str(review.get("query") or ""),
+                "capability_gap": str(review.get("reason") or "more evidence required"),
+                "desired_outcome": "resolve the pending Skill binding proposal",
+                "requested_scope": (
+                    "current_step"
+                    if str(durable_proposal.get("requested_scope") or "") == "step"
+                    else "task"
+                ),
+                "relation_hint": str(
+                    durable_proposal.get("relation") or "unknown"
+                ),
+            }
+            access, search_result = self.skill_access_service.search_skills(
+                access,
+                search_decision,
+                runtime_envelope={
+                    "caller_node": caller,
+                    "caller_invocation_id": str(
+                        durable_proposal.get("caller_invocation_id") or ""
+                    ),
+                    "task_revision": int(
+                        durable_proposal.get("base_task_revision") or 0
+                    ),
+                    "plan_revision": int(
+                        durable_proposal.get("base_plan_revision") or 0
+                    ),
+                    "authoritative_user_turn_revision": int(
+                        durable_proposal.get("base_user_turn_revision") or 0
+                    ),
+                    "current_step_id": str(
+                        durable_proposal.get("base_step_id") or ""
+                    ),
+                    "attempt_id": "",
+                },
+            )
+            continuation_id = str(
+                search_result.get("continuation_id") or ""
+            )
+            projection = self._persist_durable_skill_access(
+                task_id,
+                access,
+                continuation_id=continuation_id,
+                pending_proposal={},
+                **persistence_cas,
+            )
+            return {
+                "messages": [
+                    response,
+                    SystemMessage(content=json.dumps(
+                        search_result,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        default=str,
+                    )),
+                ],
+                "skill_resolution": deepcopy(review),
+                "skill_decision_result": deepcopy(search_result),
+                "pending_action": {},
+                "next_step": resume_node,
+                **projection,
+            }
+
+        if review_kind == "NEED_USER_INPUT":
+            projection = self._persist_durable_skill_access(
+                task_id,
+                access,
+                pending_proposal=reviewed,
+                **persistence_cas,
+            )
+            return {
+                "messages": [response],
+                "pending_human_question": {
+                    "type": "skill_resolution",
+                    "stage": "consultant",
+                    "question": str(review.get("question") or ""),
+                    "requested_slots": list(review.get("requested_slots") or []),
+                    "resume_step": "consultant",
+                    "proposal_id": proposal_id,
+                    "owner": "user",
+                },
+                "next_step": "ask_user",
+                **projection,
+            }
+
+        if review_kind == "REJECT_SKILL_PROPOSAL":
+            projection = self._persist_durable_skill_access(
+                task_id,
+                access,
+                pending_proposal={},
+                **persistence_cas,
+            )
+            return {
+                "messages": [response],
+                "skill_resolution": deepcopy(review),
+                "pending_action": {},
+                "next_step": resume_node,
+                **projection,
+            }
+
+        active_ids = self._active_skill_ids_from_refs(
+            access.get("selected_skill_refs") or []
+        )
+        if review_kind == "ROUTE_TASK_LEVEL_CHANGE":
+            # skill_resolution is advisory.  It may classify scope/relation,
+            # but it cannot mutate TaskSpec or activate a task binding.  The
+            # reviewed candidate now enters the ordinary main Consultant
+            # candidate/commit transaction with full user authority.
+            access = record_skill_access_event(
+                access,
+                "task_skill_change_routed_to_main_consultant",
+                {
+                    "proposal_id": proposal_id,
+                    "base_task_revision": task_revision,
+                    "base_plan_revision": int(durable.get("plan_revision") or 0),
+                    "candidate_skill_id": str(
+                        durable_proposal.get("candidate_skill_id") or ""
+                    ),
+                },
+            )
+            projection = self._persist_durable_skill_access(
+                task_id,
+                access,
+                pending_proposal=reviewed,
+                pending_plan_impact={},
+                **persistence_cas,
+            )
+            return {
+                "messages": [response, SystemMessage(content=json.dumps({
+                    "decision_result": "TASK_SKILL_CHANGE_REQUIRES_MAIN_CONSULTANT",
+                    "proposal_id": proposal_id,
+                    "status": "approved_for_task_commit",
+                    "counts_as_failure": False,
+                }, ensure_ascii=False, sort_keys=True))],
+                "skill_resolution": deepcopy(review),
+                "pending_action": {},
+                "next_step": "consultant",
+                **projection,
+            }
+        pending_impact = {
+            "mode": "plan_impact_review",
+            "proposal_id": proposal_id,
+            "base_task_revision": task_revision,
+            "new_task_revision": task_revision,
+            "base_plan_revision": int(durable.get("plan_revision") or 0),
+            "base_user_turn_revision": (
+                self._authoritative_user_turn_revision(durable)
+            ),
+            "skill_change": {
+                "proposal": deepcopy(dict(durable_proposal)),
+                "consultant_review": deepcopy(review),
+                "active_skill_refs": [
+                    deepcopy(dict(item))
+                    for item in access.get("selected_skill_refs") or []
+                    if str(item.get("status") or "") == "active"
+                ],
+                "candidate_skill_refs": [
+                    deepcopy(dict(item))
+                    for item in access.get("selected_skill_refs") or []
+                    if str(item.get("snapshot_id") or "")
+                    == snapshot_id
+                ],
+            },
+            "status": "pending",
+        }
+        projection = self._persist_durable_skill_access(
+            task_id,
+            access,
+            pending_proposal={},
+            pending_plan_impact=pending_impact,
+            **persistence_cas,
+        )
+        return {
+            "messages": [response],
+            "skill_resolution": deepcopy(review),
+            "pending_action": {},
+            "next_step": "planner",
+            **projection,
+        }
+
+    async def _run_planner_plan_impact_review(
+        self,
+        state: AgentState,
+        *,
+        task_id: str,
+        durable: Mapping[str, Any],
+        pending: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Run and transactionally apply the restricted Planner impact mode."""
+        task_spec = canonical_task_spec_for_state(durable)
+        task_revision = task_spec_revision(task_spec)
+        plan_revision = int(durable.get("plan_revision") or 0)
+        expected_task_revision = int(
+            pending.get("new_task_revision")
+            or pending.get("base_task_revision")
+            or 0
+        )
+        expected_plan_revision = int(pending.get("base_plan_revision") or 0)
+        current_user_turn_revision = (
+            self._authoritative_user_turn_revision(durable)
+        )
+        expected_user_turn_revision = int(
+            pending.get("base_user_turn_revision")
+            if pending.get("base_user_turn_revision") is not None
+            else current_user_turn_revision
+        )
+        pending_proposal_hint = dict(
+            (pending.get("skill_change") or {}).get("proposal") or {}
+        )
+        hinted_scope = str(
+            pending_proposal_hint.get("requested_scope") or ""
+        ).lower()
+        if hinted_scope == "current_step":
+            hinted_scope = "step"
+        hinted_step_id = str(
+            pending_proposal_hint.get("target_step_id")
+            or pending_proposal_hint.get("base_step_id")
+            or ""
+        )
+        durable_step_id = str(
+            (current_plan_step_with_index(dict(durable))[1] or {}).get(
+                "step_id"
+            )
+            or ""
+        )
+        step_target_changed = bool(
+            hinted_scope == "step"
+            and hinted_step_id
+            and hinted_step_id != durable_step_id
+        )
+        if (
+            expected_task_revision == task_revision
+            and expected_user_turn_revision == current_user_turn_revision
+            and expected_plan_revision != plan_revision
+            and not step_target_changed
+        ):
+            rebased_pending = {
+                **deepcopy(dict(pending)),
+                "base_plan_revision": plan_revision,
+                "status": "pending",
+                "rebased_from_plan_revision": expected_plan_revision,
+            }
+            rebased = deepcopy(dict(durable))
+            rebased_task_state = dict(rebased.get("task_state") or {})
+            rebased_task_state["pending_plan_impact_review"] = (
+                rebased_pending
+            )
+            rebased["task_state"] = rebased_task_state
+            save_plan_state(self.data_path, task_id, rebased)
+            return await self._run_planner_plan_impact_review(
+                state,
+                task_id=task_id,
+                durable=load_plan_state(self.data_path, task_id),
+                pending=rebased_pending,
+            )
+        if (
+            expected_task_revision != task_revision
+            or expected_user_turn_revision != current_user_turn_revision
+            or step_target_changed
+        ):
+            proposal_id = str(pending.get("proposal_id") or "")
+            stale_durable = deepcopy(dict(durable))
+            stale_task_state = dict(stale_durable.get("task_state") or {})
+            stale_access = normalize_skill_access_state(
+                stale_task_state.get("skill_access_state")
+                or stale_durable.get("skill_access_state")
+            )
+            stale_proposal = (
+                stale_access.get("binding_proposals") or {}
+            ).get(proposal_id)
+            if isinstance(stale_proposal, MutableMapping):
+                stale_proposal["status"] = "stale"
+                stale_proposal["stale_reason"] = (
+                    "authoritative_revision_changed"
+                )
+            stale_snapshot_id = str(
+                (stale_proposal or {}).get("candidate_snapshot_id") or ""
+            )
+            for ref in stale_access.get("selected_skill_refs") or []:
+                if (
+                    isinstance(ref, MutableMapping)
+                    and stale_snapshot_id
+                    and str(ref.get("snapshot_id") or "")
+                    == stale_snapshot_id
+                    and str(ref.get("status") or "") == "candidate"
+                ):
+                    ref["candidate_disposition"] = "stale"
+                    ref["stale_reason"] = (
+                        "authoritative_revision_changed"
+                    )
+            stale_access = record_skill_access_event(
+                stale_access,
+                "stale_plan_impact_review_discarded",
+                {
+                    "proposal_id": proposal_id,
+                    "expected_task_revision": expected_task_revision,
+                    "current_task_revision": task_revision,
+                    "expected_user_turn_revision": (
+                        expected_user_turn_revision
+                    ),
+                    "current_user_turn_revision": (
+                        current_user_turn_revision
+                    ),
+                    "expected_step_id": hinted_step_id,
+                    "current_step_id": durable_step_id,
+                },
+            )
+            stale_access = invalidate_skill_continuations(
+                stale_access,
+                reason="stale_plan_impact_review",
+            )
+            stale_task_state.pop("pending_plan_impact_review", None)
+            pointed_proposal = dict(
+                stale_task_state.get("pending_skill_binding_proposal") or {}
+            )
+            if str(pointed_proposal.get("proposal_id") or "") == proposal_id:
+                stale_task_state.pop(
+                    "pending_skill_binding_proposal", None
+                )
+            stale_task_state["skill_access_state"] = stale_access
+            stale_task_state["stale_plan_impact_review"] = deepcopy(
+                dict(pending)
+            )
+            stale_durable["task_state"] = stale_task_state
+            stale_durable["skill_access_state"] = deepcopy(stale_access)
+            stale_durable["selected_skill_refs"] = deepcopy(list(
+                stale_access.get("selected_skill_refs") or []
+            ))
+            stale_durable["selected_skill_ids"] = (
+                self._active_skill_ids_from_refs(
+                    stale_access.get("selected_skill_refs") or []
+                )
+            )
+            save_plan_state(self.data_path, task_id, stale_durable)
+            self._record_durable_skill_event(
+                task_id,
+                "stale_node_result_discarded",
+                {
+                    "caller_node": "planner",
+                    "expected_task_revision": expected_task_revision,
+                    "current_task_revision": task_revision,
+                    "expected_plan_revision": expected_plan_revision,
+                    "current_plan_revision": plan_revision,
+                    "expected_user_turn_revision": (
+                        expected_user_turn_revision
+                    ),
+                    "current_user_turn_revision": (
+                        current_user_turn_revision
+                    ),
+                },
+            )
+            return {
+                "messages": [SystemMessage(content=json.dumps({
+                    "decision_result": "STALE_NODE_RESULT",
+                    "caller_node": "planner",
+                    "changed_preconditions": [
+                        *(["task_revision"] if expected_task_revision != task_revision else []),
+                        *(["plan_revision"] if expected_plan_revision != plan_revision else []),
+                        *(
+                            ["authoritative_user_turn_revision"]
+                            if expected_user_turn_revision
+                            != current_user_turn_revision
+                            else []
+                        ),
+                        *(["step_id"] if step_target_changed else []),
+                    ],
+                    "counts_as_failure": False,
+                }, ensure_ascii=False, sort_keys=True))],
+                "stale_node_result": {
+                    "decision_result": "STALE_NODE_RESULT",
+                    "caller_node": "planner",
+                    "expected_task_revision": expected_task_revision,
+                    "current_task_revision": task_revision,
+                    "expected_plan_revision": expected_plan_revision,
+                    "current_plan_revision": plan_revision,
+                    "expected_user_turn_revision": (
+                        expected_user_turn_revision
+                    ),
+                    "current_user_turn_revision": (
+                        current_user_turn_revision
+                    ),
+                    "expected_step_id": hinted_step_id,
+                    "current_step_id": durable_step_id,
+                },
+                "next_step": (
+                    "planner" if step_target_changed else "consultant"
+                ),
+            }
+        task_state = dict(durable.get("task_state") or {})
+        access = normalize_skill_access_state(
+            task_state.get("skill_access_state")
+            or durable.get("skill_access_state")
+        )
+        impact_skill_change = deepcopy(dict(
+            pending.get("skill_change") or {}
+        ))
+        pending_proposal_id = str(pending.get("proposal_id") or "")
+        impact_proposal = deepcopy(dict(
+            (access.get("binding_proposals") or {}).get(
+                pending_proposal_id
+            )
+            or impact_skill_change.get("proposal")
+            or {}
+        ))
+        candidate_snapshot_ids = {
+            str(item.get("snapshot_id") or "")
+            for item in impact_skill_change.get("candidate_skill_refs") or []
+            if isinstance(item, Mapping)
+            and str(item.get("snapshot_id") or "")
+        }
+        proposal_snapshot_id = str(
+            impact_proposal.get("candidate_snapshot_id") or ""
+        )
+        if proposal_snapshot_id:
+            candidate_snapshot_ids.add(proposal_snapshot_id)
+        verified_candidate_excerpt_ids = {
+            str(item)
+            for item in impact_proposal.get("verified_excerpt_refs") or []
+            if str(item)
+        }
+        _, current_step = current_plan_step_with_index(dict(durable))
+        completed_steps = [
+            deepcopy(dict(item))
+            for item in durable.get("steps") or []
+            if isinstance(item, Mapping)
+            and str(item.get("status") or "").lower()
+            in {"done", "passed", "completed", "skipped"}
+        ]
+        skill_projection = project_skill_context(
+            access,
+            caller_node="planner",
+            current_step_id=str((current_step or {}).get("step_id") or ""),
+            continuation_id="",
+            include_candidate_snapshot_ids=candidate_snapshot_ids,
+            include_excerpt_ids=verified_candidate_excerpt_ids,
+        )
+        impact_user_evidence: List[Dict[str, Any]] = []
+        conversation_index = dict(
+            durable.get("conversation_evidence") or {}
+        )
+        if conversation_index.get("head_ref"):
+            turns = StateContractStore(
+                self.data_path, task_id
+            ).read_conversation_evidence(conversation_index)
+            answer_ref = str(pending.get("answer_turn_ref") or "")
+            if answer_ref:
+                impact_user_evidence = [
+                    deepcopy(dict(item))
+                    for item in turns
+                    if str(item.get("role") or "") == "user"
+                    and answer_ref in {
+                        str(item.get("turn_id") or ""),
+                        str(item.get("turn_ref") or ""),
+                        str(item.get("content_ref") or ""),
+                    }
+                ][-1:]
+            if not impact_user_evidence:
+                impact_user_evidence = [
+                    deepcopy(dict(item))
+                    for item in turns
+                    if str(item.get("role") or "") == "user"
+                ][-3:]
+        impact_payload = {
+            "impact_kind": str(
+                pending.get("impact_kind") or "skill_binding_change"
+            ),
+            "binding_decision_allowed": bool(impact_proposal),
+            "base_task_revision": int(
+                pending.get("base_task_revision") or task_revision
+            ),
+            "new_task_revision": task_revision,
+            "base_plan_revision": plan_revision,
+            "current_plan": {
+                "plan_id": str(durable.get("plan_id") or ""),
+                "plan_version": str(durable.get("plan_version") or ""),
+                "steps": deepcopy(list(durable.get("steps") or [])),
+            },
+            "skill_change": impact_skill_change,
+            "completed_steps": completed_steps,
+            "current_step": deepcopy(dict(current_step or {})),
+            "user_evidence": impact_user_evidence,
+            "relevant_skill_excerpts": deepcopy(list(
+                skill_projection.get("relevant_skill_excerpts") or []
+            )),
+        }
+        planner_context = build_node_context(
+            node_type="planner",
+            task_spec=task_spec,
+            plan_state=durable,
+            state_generation=int(durable.get("state_generation") or 0),
+            current_step_id=str((current_step or {}).get("step_id") or ""),
+            feedback={"planning": {
+                "mode": "plan_impact_review",
+                "proposal_id": str(pending.get("proposal_id") or ""),
+            }},
+            skill_context=skill_projection,
+            authoritative_user_turn_revision=(
+                self._authoritative_user_turn_revision(durable)
+            ),
+            continuation_id=str(task_state.get("skill_continuation_id") or ""),
+        )
+        impact_transaction_hash = hashlib.sha256(json.dumps(
+            dict(pending),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")).hexdigest()
+        response = await self._ainvoke_node_llm(
+            [HumanMessage(content=PromptManager.get_plan_impact_review_prompt(
+                impact_payload
+            ))],
+            node_context=planner_context,
+            stage="planner_plan_impact_review",
+            task_id=task_id,
+            task_mode=str(state.get("task_mode") or "managed"),
+            temperature=0.0,
+            trace_metadata={
+                "call_kind": "planner_plan_impact_review",
+                "proposal_id": str(pending.get("proposal_id") or ""),
+                "task_spec_revision": task_revision,
+                "plan_revision": plan_revision,
+            },
+        )
+        latest = load_plan_state(self.data_path, task_id)
+        latest_context = build_node_context(
+            node_type="planner",
+            task_spec=canonical_task_spec_for_state(latest),
+            plan_state=latest,
+            current_step_id=str((current_plan_step_with_index(latest)[1] or {}).get(
+                "step_id"
+            ) or ""),
+            authoritative_user_turn_revision=(
+                self._authoritative_user_turn_revision(latest)
+            ),
+            continuation_id=str(
+                (latest.get("task_state") or {}).get("skill_continuation_id")
+                or ""
+            ),
+        )
+        staleness = evaluate_node_staleness(
+            planner_context.binding,
+            latest_context.binding.to_dict(),
+        )
+        latest_pending = dict(
+            (latest.get("task_state") or {}).get(
+                "pending_plan_impact_review"
+            ) or {}
+        )
+        latest_transaction_hash = hashlib.sha256(json.dumps(
+            latest_pending,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")).hexdigest()
+        transaction_changed = (
+            latest_transaction_hash != impact_transaction_hash
+        )
+        changed_preconditions = list(staleness.changed_preconditions)
+        if transaction_changed:
+            changed_preconditions.append("plan_impact_transaction")
+        if not staleness.usable or transaction_changed:
+            self._record_durable_skill_event(
+                task_id,
+                "stale_node_result_discarded",
+                {
+                    "caller_node": "planner",
+                    "caller_invocation_id": planner_context.binding.invocation_id,
+                    "changed_preconditions": changed_preconditions,
+                },
+            )
+            return {
+                "messages": [response, SystemMessage(content=json.dumps({
+                    "decision_result": "STALE_NODE_RESULT",
+                    "caller_node": "planner",
+                    "caller_invocation_id": planner_context.binding.invocation_id,
+                    "changed_preconditions": changed_preconditions,
+                    "counts_as_failure": False,
+                }, ensure_ascii=False, sort_keys=True))],
+                "stale_node_result": {
+                    "decision_result": "STALE_NODE_RESULT",
+                    "caller_node": "planner",
+                    "changed_preconditions": changed_preconditions,
+                },
+                "next_step": (
+                    "consultant" if transaction_changed else "planner"
+                ),
+            }
+        decision = validate_plan_impact_decision(
+            parse_strict_json_object(
+                str(response.content or ""),
+                error_code="PLAN_IMPACT_SCHEMA_INVALID",
+            ),
+            base_task_revision=int(
+                pending.get("base_task_revision") or task_revision
+            ),
+            new_task_revision=task_revision,
+            base_plan_revision=plan_revision,
+        )
+        kind = str(decision["decision"])
+        latest_task_state = dict(latest.get("task_state") or {})
+        access = normalize_skill_access_state(
+            latest_task_state.get("skill_access_state")
+            or latest.get("skill_access_state")
+        )
+        proposal_for_impact = deepcopy(dict(
+            (access.get("binding_proposals") or {}).get(
+                str(pending.get("proposal_id") or "")
+            )
+            or (pending.get("skill_change") or {}).get("proposal")
+            or {}
+        ))
+        if proposal_for_impact:
+            validate_plan_impact_proposal_compatibility(
+                decision,
+                proposal_for_impact,
+                current_step_id=str(
+                    (current_plan_step_with_index(latest)[1] or {}).get(
+                        "step_id"
+                    )
+                    or ""
+                ),
+            )
+        elif kind == "BIND_AND_RESUME":
+            raise SkillAccessError(
+                "PLAN_IMPACT_BIND_SCOPE_INVALID",
+                "BIND_AND_RESUME requires a reviewed step Skill supplement",
+            )
+        access = record_skill_access_event(
+            access,
+            "plan_impact_reviewed",
+            {
+                "proposal_id": str(pending.get("proposal_id") or ""),
+                "decision": kind,
+                "base_task_revision": task_revision,
+                "base_plan_revision": plan_revision,
+            },
+        )
+        if kind == "NEED_USER_INPUT":
+            latest = deepcopy(dict(latest))
+            latest_task_state = dict(latest.get("task_state") or {})
+            latest_task_state["pending_plan_impact_review"] = {
+                **deepcopy(dict(pending)),
+                "status": "waiting_user",
+                "question": str(decision.get("question") or ""),
+                "requested_slots": list(decision.get("requested_slots") or []),
+            }
+            latest_task_state["skill_access_state"] = deepcopy(access)
+            latest["task_state"] = latest_task_state
+            latest["skill_access_state"] = deepcopy(access)
+            save_plan_state(self.data_path, task_id, latest)
+            return {
+                "messages": [response],
+                "pending_human_question": {
+                    "type": "plan_impact_review",
+                    "stage": "consultant",
+                    "question": str(decision.get("question") or ""),
+                    "requested_slots": list(decision.get("requested_slots") or []),
+                    "resume_step": "planner",
+                    "owner": "user",
+                },
+                "next_step": "consultant",
+            }
+        if kind == "REJECT_PROPOSAL":
+            proposal_id = str(pending.get("proposal_id") or "")
+            proposal = (
+                access.get("binding_proposals") or {}
+            ).get(proposal_id)
+            candidate_snapshot_id = str(
+                (proposal or {}).get("candidate_snapshot_id")
+                or ((pending.get("skill_change") or {}).get("proposal") or {}).get(
+                    "candidate_snapshot_id"
+                )
+                or ""
+            )
+            if isinstance(proposal, MutableMapping):
+                proposal["status"] = "rejected_by_plan_impact"
+                proposal["plan_impact_review"] = deepcopy(decision)
+            old_active_refs = [
+                deepcopy(dict(item))
+                for item in (
+                    (pending.get("skill_change") or {}).get(
+                        "old_active_skill_refs"
+                    )
+                    or []
+                )
+                if isinstance(item, Mapping)
+            ]
+            old_ref_keys = {
+                tuple(str(item.get(field) or "") for field in (
+                    "skill_id", "snapshot_id", "source_path", "content_hash",
+                    "scope", "target_step_id",
+                ))
+                for item in old_active_refs
+            }
+            for ref in access.get("selected_skill_refs") or []:
+                if not isinstance(ref, MutableMapping):
+                    continue
+                ref_key = tuple(str(ref.get(field) or "") for field in (
+                    "skill_id", "snapshot_id", "source_path", "content_hash",
+                    "scope", "target_step_id",
+                ))
+                if (
+                    candidate_snapshot_id
+                    and str(ref.get("snapshot_id") or "")
+                    == candidate_snapshot_id
+                ):
+                    ref["status"] = "candidate"
+                    ref["candidate_disposition"] = "rejected"
+                    ref["rejection_reason"] = str(
+                        decision.get("reason") or ""
+                    )
+                elif ref_key in old_ref_keys:
+                    ref["status"] = "active"
+                    ref.pop("superseded_by", None)
+                    ref.pop("superseded_at_task_revision", None)
+            access = invalidate_skill_continuations(
+                access,
+                reason="plan_impact_proposal_rejected",
+            )
+            access = record_skill_access_event(
+                access,
+                "skill_binding_rejected_by_plan_impact",
+                {
+                    "proposal_id": proposal_id,
+                    "candidate_snapshot_id": candidate_snapshot_id,
+                    "reason": str(decision.get("reason") or ""),
+                },
+            )
+            active_ids = self._active_skill_ids_from_refs(
+                access.get("selected_skill_refs") or []
+            )
+            base_task_revision = int(
+                pending.get("base_task_revision") or task_revision
+            )
+            old_task_spec = deepcopy(dict(
+                (pending.get("skill_change") or {}).get("old_task_spec")
+                or {}
+            ))
+            if (
+                base_task_revision != task_revision
+                and task_spec_is_initialized(old_task_spec)
+            ):
+                rollback_task = canonical_current_task_spec(old_task_spec)
+                rollback_task["revision"] = task_revision + 1
+                rollback_task.setdefault("change_log", []).append({
+                    "revision": task_revision + 1,
+                    "source": "planner_plan_impact_rejection",
+                    "reason": str(decision.get("reason") or ""),
+                    "proposal_id": proposal_id,
+                    "recorded_at": datetime.now().isoformat(),
+                })
+                try:
+                    rollback_update = self._commit_consultant_update(
+                        task_id,
+                        {
+                            "messages": [response],
+                            "task_spec": rollback_task,
+                            "selected_skills": list(active_ids),
+                            "selected_skill_ids": list(active_ids),
+                            "skill_access_state": deepcopy(access),
+                            "selected_skill_refs": deepcopy(list(
+                                access.get("selected_skill_refs") or []
+                            )),
+                            "pending_skill_binding_proposal": {},
+                            "pending_plan_impact_review": {},
+                            "_plan_impact_rejection_rollback": True,
+                            "expected_state_generation": int(
+                                latest.get("state_generation") or 0
+                            ),
+                            "expected_plan_revision": plan_revision,
+                            "expected_user_turn_revision": (
+                                self._authoritative_user_turn_revision(latest)
+                            ),
+                            "next_step": "planner",
+                        },
+                    )
+                except StateCASConflict as exc:
+                    return {
+                        "messages": [response, SystemMessage(content=json.dumps({
+                            "decision_result": "STALE_NODE_RESULT",
+                            "caller_node": "planner",
+                            "changed_preconditions": [
+                                "plan_impact_transaction"
+                            ],
+                            "detail": str(exc),
+                            "counts_as_failure": False,
+                        }, ensure_ascii=False, sort_keys=True))],
+                        "next_step": "consultant",
+                    }
+                rollback_update.update({
+                    "plan_impact_review": deepcopy(decision),
+                    "pending_plan_impact_review": {},
+                    "pending_skill_binding_proposal": {},
+                    "skill_continuation_id": "",
+                    "next_step": "planner",
+                })
+                return rollback_update
+
+            latest = deepcopy(dict(latest))
+            latest_task_state = dict(latest.get("task_state") or {})
+            latest_task_state.pop("pending_plan_impact_review", None)
+            latest_task_state.pop("pending_skill_binding_proposal", None)
+            latest_task_state.pop("skill_continuation_id", None)
+            latest_task_state["skill_access_state"] = deepcopy(access)
+            latest_task_state["selected_skill_refs"] = deepcopy(list(
+                access.get("selected_skill_refs") or []
+            ))
+            latest_task_state["selected_skills"] = list(active_ids)
+            latest["task_state"] = latest_task_state
+            latest["skill_access_state"] = deepcopy(access)
+            latest["selected_skill_refs"] = deepcopy(list(
+                access.get("selected_skill_refs") or []
+            ))
+            latest["selected_skill_ids"] = list(active_ids)
+            save_plan_state(self.data_path, task_id, latest)
+            caller = str((proposal or {}).get("caller_node") or "")
+            resume_node = (
+                "planner" if caller.startswith("planner")
+                else "supervisor" if caller == "recovery"
+                else "consultant" if caller == "consultant"
+                else "generate"
+            )
+            return {
+                "messages": [response],
+                "plan_impact_review": deepcopy(decision),
+                "pending_plan_impact_review": {},
+                "pending_skill_binding_proposal": {},
+                "skill_access_state": deepcopy(access),
+                "selected_skill_refs": deepcopy(list(
+                    access.get("selected_skill_refs") or []
+                )),
+                "selected_skills": list(active_ids),
+                "selected_skill_ids": list(active_ids),
+                "skill_continuation_id": "",
+                "next_step": resume_node,
+            }
+
+        pending_proposal_id = str(pending.get("proposal_id") or "")
+        pending_proposal = dict(
+            (access.get("binding_proposals") or {}).get(pending_proposal_id)
+            or {}
+        )
+        if (
+            str(pending_proposal.get("status") or "")
+            == "approved_for_plan_impact"
+        ):
+            access, activated_ids = activate_reviewed_binding(
+                access,
+                pending_proposal_id,
+                task_revision=task_revision,
+            )
+            access = record_skill_access_event(
+                access,
+                "task_skill_binding_changed",
+                {
+                    "proposal_id": pending_proposal_id,
+                    "old_task_revision": int(
+                        pending.get("base_task_revision") or task_revision
+                    ),
+                    "new_task_revision": task_revision,
+                    "active_skill_ids": list(activated_ids),
+                    "plan_impact_decision": kind,
+                },
+            )
+        candidate_snapshot_id = str(
+            pending_proposal.get("candidate_snapshot_id")
+            or ((pending.get("skill_change") or {}).get("proposal") or {}).get(
+                "candidate_snapshot_id"
+            )
+            or ""
+        )
+        candidate_active_refs = [
+            deepcopy(dict(item))
+            for item in access.get("selected_skill_refs") or []
+            if isinstance(item, Mapping)
+            and str(item.get("snapshot_id") or "") == candidate_snapshot_id
+            and str(item.get("status") or "") == "active"
+        ]
+        if candidate_snapshot_id and len(candidate_active_refs) != 1:
+            raise SkillAccessError(
+                "PLAN_IMPACT_PROPOSED_SKILL_NOT_BOUND",
+                f"candidate_active_refs={len(candidate_active_refs)}",
+            )
+        candidate_ref = candidate_active_refs[0] if candidate_active_refs else {}
+        current_step_id = str(
+            (current_plan_step_with_index(latest)[1] or {}).get("step_id")
+            or ""
+        )
+        canonical_active_refs = [
+            deepcopy(dict(item))
+            for item in access.get("selected_skill_refs") or []
+            if isinstance(item, Mapping)
+            and str(item.get("status") or "") == "active"
+        ]
+        canonical_by_identity = {
+            tuple(str(item.get(field) or "") for field in (
+                "skill_id", "snapshot_id", "source_path", "content_hash",
+            )): item
+            for item in canonical_active_refs
+        }
+
+        def canonicalize_step_skill_refs(
+            value: Mapping[str, Any],
+        ) -> Dict[str, Any]:
+            step_row = deepcopy(dict(value or {}))
+            raw_refs = step_row.get("skill_refs")
+            if raw_refs is None:
+                return step_row
+            if not isinstance(raw_refs, list):
+                raise SkillAccessError(
+                    "PLAN_IMPACT_SKILL_REFERENCE_INVALID",
+                    str(step_row.get("step_id") or current_step_id),
+                )
+            projected_refs: List[Dict[str, Any]] = []
+            for raw_ref in raw_refs:
+                if not isinstance(raw_ref, Mapping):
+                    raise SkillAccessError(
+                        "PLAN_IMPACT_SKILL_REFERENCE_INVALID",
+                        str(step_row.get("step_id") or current_step_id),
+                    )
+                raw = deepcopy(dict(raw_ref))
+                identity = tuple(str(raw.get(field) or "") for field in (
+                    "skill_id", "snapshot_id", "source_path", "content_hash",
+                ))
+                projected_refs.append(deepcopy(dict(
+                    canonical_by_identity.get(identity) or raw
+                )))
+            step_row["skill_refs"] = projected_refs
+            step_row["skill_ids"] = list(dict.fromkeys(
+                str(item.get("skill_id") or "")
+                for item in projected_refs
+                if str(item.get("skill_id") or "")
+            ))
+            return step_row
+
+        decision_steps: List[Mapping[str, Any]] = []
+        if kind == "BIND_AND_RESUME":
+            bind_step = canonicalize_step_skill_refs({
+                "step_id": current_step_id,
+                "skill_refs": decision.get("skill_refs") or [],
+            })
+            decision["skill_refs"] = deepcopy(list(
+                bind_step.get("skill_refs") or []
+            ))
+            decision_steps = [bind_step]
+        elif kind == "PATCH_CURRENT_STEP":
+            patched = canonicalize_step_skill_refs(
+                dict(decision.get("replacement_step") or {})
+            )
+            decision["replacement_step"] = deepcopy(patched)
+            decision_steps = [patched]
+        elif kind == "REPLAN_SUFFIX":
+            decision_steps = [
+                canonicalize_step_skill_refs(item)
+                for item in decision.get("replacement_suffix") or []
+                if isinstance(item, Mapping)
+            ]
+            decision["replacement_suffix"] = deepcopy(decision_steps)
+        elif kind == "FULL_REPLAN":
+            decision_steps = [
+                canonicalize_step_skill_refs(item)
+                for item in decision.get("replacement_steps") or []
+                if isinstance(item, Mapping)
+            ]
+            decision["replacement_steps"] = deepcopy(decision_steps)
+        identity_fields = (
+            "skill_id", "snapshot_id", "source_path", "content_hash",
+        )
+        candidate_bound = False
+        for step_row in decision_steps:
+            step_id = str(step_row.get("step_id") or current_step_id)
+            for raw_ref in step_row.get("skill_refs") or []:
+                if not isinstance(raw_ref, Mapping):
+                    continue
+                if (
+                    all(
+                        str(raw_ref.get(field) or "")
+                        == str(candidate_ref.get(field) or "")
+                        for field in identity_fields
+                    )
+                    and (
+                        str(candidate_ref.get("scope") or "task") == "task"
+                        or str(candidate_ref.get("target_step_id") or "")
+                        == step_id
+                    )
+                ):
+                    candidate_bound = True
+                    break
+            if candidate_bound:
+                break
+        if candidate_snapshot_id and not candidate_bound:
+            raise SkillAccessError(
+                "PLAN_IMPACT_PROPOSED_SKILL_NOT_BOUND",
+                candidate_snapshot_id,
+            )
+        valid_snapshot_ids = list((access.get("snapshots") or {}).keys())
+        updated = apply_plan_impact_review(
+            latest,
+            decision,
+            base_task_revision=int(
+                pending.get("base_task_revision") or task_revision
+            ),
+            new_task_revision=task_revision,
+            valid_skill_snapshot_ids=valid_snapshot_ids,
+            valid_skill_refs=[
+                deepcopy(dict(item))
+                for item in access.get("selected_skill_refs") or []
+                if isinstance(item, Mapping)
+                and str(item.get("status") or "") == "active"
+            ],
+        )
+        updated_task_state = dict(updated.get("task_state") or {})
+        updated_task_state.pop("pending_plan_impact_review", None)
+        updated_task_state.pop("pending_skill_binding_proposal", None)
+        updated_task_state.pop("skill_continuation_id", None)
+        updated_access = close_stale_continuations(
+            access,
+            task_revision=task_revision,
+            plan_revision=int(updated.get("plan_revision") or 0),
+            current_step_id=str(updated.get("current_step_id") or ""),
+            reason="plan_impact_applied",
+        )
+        updated_task_state["skill_access_state"] = updated_access
+        updated_refs = deepcopy(list(
+            updated_access.get("selected_skill_refs") or []
+        ))
+        updated_ids = self._active_skill_ids_from_refs(updated_refs)
+        updated_task_state["selected_skill_refs"] = deepcopy(updated_refs)
+        updated_task_state["selected_skills"] = list(updated_ids)
+        updated["task_state"] = updated_task_state
+        updated["skill_access_state"] = deepcopy(updated_access)
+        updated["selected_skill_refs"] = deepcopy(updated_refs)
+        updated["selected_skill_ids"] = list(updated_ids)
+        save_plan_state(self.data_path, task_id, updated)
+        plan_text = render_structured_plan(updated)
+        plan_file = str(
+            updated.get("plan_file")
+            or Path(self.data_path) / "task_outputs" / task_id / "plan.md"
+        )
+        try:
+            Path(plan_file).write_text(plan_text, encoding="utf-8")
+            update_plan_markdown_status(plan_file, updated)
+        except OSError:
+            logger.exception(
+                "Plan impact Markdown projection failed: task=%s", task_id
+            )
+        return {
+            "messages": [response],
+            "current_plan": plan_text,
+            "plan_progress": render_plan_progress(updated),
+            "plan_revision": int(updated.get("plan_revision") or 0),
+            "plan_impact_review": deepcopy(decision),
+            "pending_plan_impact_review": {},
+            "skill_access_state": deepcopy(updated_access),
+            "selected_skill_refs": deepcopy(updated_refs),
+            "selected_skills": list(updated_ids),
+            "selected_skill_ids": list(updated_ids),
+            "skill_continuation_id": "",
+            "pending_action": {},
+            "next_step": "plan_review",
+        }
+
     def _commit_consultant_update(
         self,
         task_id: str,
@@ -4415,29 +6937,6 @@ class BioAnalystAgent:
         durable_before = load_plan_state(self.data_path, task_id)
         task_state_before = dict(durable_before.get("task_state") or {})
         prior_task = canonical_task_spec_for_state(durable_before)
-        if (
-            not task_spec_is_initialized(canonical_task_spec_for_state(durable_before))
-            and not managed_execution_admitted(task_state_before.get("intent_admission"))
-        ):
-            blocked = dict(projected)
-            blocked.pop("task_spec", None)
-            blocked.update({
-                "task_status": TASK_STATUS_BLOCKED,
-                "next_step": "finish",
-                "canonical_commit": {
-                    "succeeded": False,
-                    "error_code": "MANAGED_INTENT_ADMISSION_REQUIRED",
-                    "reason": (
-                        "A new executable TaskSpec requires a current typed managed-execution "
-                        "admission from the LLM router."
-                    ),
-                },
-                "messages": [SystemMessage(content=(
-                    "MANAGED_INTENT_ADMISSION_REQUIRED: the request was not admitted as an "
-                    "explicit managed execution request; no executable TaskSpec was committed."
-                ))],
-            })
-            return blocked
         if "pending_human_question" in projected:
             pending_question = projected.get("pending_human_question") or {}
         else:
@@ -4462,6 +6961,349 @@ class BioAnalystAgent:
             ),
             "pending_question": dict(pending_question),
         }
+        skill_selection_changed = False
+        for skill_transaction_field in (
+            "pending_skill_binding_proposal",
+            "pending_plan_impact_review",
+        ):
+            if skill_transaction_field in projected:
+                value = projected.get(skill_transaction_field)
+                if value not in (None, {}) and not isinstance(value, Mapping):
+                    raise ValueError(
+                        f"{skill_transaction_field.upper()}_INVALID"
+                    )
+                candidate[skill_transaction_field] = deepcopy(
+                    dict(value or {})
+                )
+        for precondition_field in (
+            "expected_state_generation",
+            "expected_plan_revision",
+            "expected_user_turn_revision",
+            "expected_pending_skill_proposal_id",
+            "expected_pending_skill_proposal_status",
+            "expected_pending_skill_snapshot_id",
+        ):
+            if precondition_field in projected:
+                candidate[precondition_field] = deepcopy(
+                    projected.get(precondition_field)
+                )
+        prior_selected_ids = list(
+            task_state_before.get("selected_skills")
+            or durable_before.get("selected_skill_ids")
+            or []
+        )
+        prior_access = normalize_skill_access_state(
+            task_state_before.get("skill_access_state")
+            or durable_before.get("skill_access_state")
+            or {"selected_skill_refs": durable_before.get("selected_skill_refs") or []}
+        )
+        if getattr(self, "skill_access_service", None) is not None:
+            prior_access = self._prepare_durable_skill_access(
+                durable_before,
+                selected_skill_ids=prior_selected_ids,
+                task_revision=task_spec_revision(prior_task),
+            )
+        binding_phase = classify_consultant_binding_phase(
+            durable_before,
+            access_state=prior_access,
+        )
+        candidate["binding_phase"] = deepcopy(binding_phase)
+        projected["binding_phase"] = deepcopy(binding_phase)
+        if binding_phase["phase"] == (
+            ConsultantBindingPhase.INCONSISTENT_CANONICAL_STATE.value
+        ):
+            failure = {
+                "classification": "INTERNAL_PROTOCOL",
+                "code": "CONSULTANT_CANONICAL_STATE_INCONSISTENT",
+                "detail": (
+                    "Canonical TaskSpec, active Skill binding, and materialized "
+                    "Plan partitions do not form a coherent binding phase."
+                ),
+                "binding_phase": deepcopy(binding_phase),
+            }
+            failed = dict(projected)
+            failed.pop("task_spec", None)
+            failed.update({
+                "messages": [
+                    *list(projected.get("messages") or []),
+                    SystemMessage(content=json.dumps(
+                        failure, ensure_ascii=False, sort_keys=True,
+                    )),
+                ],
+                "skill_decision_result": failure,
+                "consultant_commit_rejection": deepcopy(failure),
+                "canonical_commit": {
+                    "succeeded": False,
+                    "error_code": "CONSULTANT_CANONICAL_STATE_INCONSISTENT",
+                },
+                "task_status": TASK_STATUS_FAILED,
+                "failure_owner": "controller",
+                "contract_status": "internal_protocol",
+                "pending_action": {},
+                "next_step": "finish",
+            })
+            return failed
+
+        if (
+            not task_spec_is_initialized(prior_task)
+            and not managed_execution_admitted(
+                task_state_before.get("intent_admission")
+            )
+        ):
+            blocked = dict(projected)
+            blocked.pop("task_spec", None)
+            blocked.update({
+                "task_status": TASK_STATUS_BLOCKED,
+                "next_step": "finish",
+                "canonical_commit": {
+                    "succeeded": False,
+                    "error_code": "MANAGED_INTENT_ADMISSION_REQUIRED",
+                    "reason": (
+                        "A new executable TaskSpec requires a current typed "
+                        "managed-execution admission from the LLM router."
+                    ),
+                },
+                "messages": [SystemMessage(content=(
+                    "MANAGED_INTENT_ADMISSION_REQUIRED: the request was not "
+                    "admitted as an explicit managed execution request; no "
+                    "executable TaskSpec was committed."
+                ))],
+            })
+            return blocked
+
+        prior_active_ids = self._active_skill_ids_from_refs(
+            prior_access.get("selected_skill_refs") or []
+        )
+        if getattr(self, "skill_access_service", None) is not None:
+            requested_selected_ids = list(dict.fromkeys(
+                str(item)
+                for item in candidate.get("selected_skills") or []
+                if str(item)
+            ))
+            prior_task_skill_ids = list(dict.fromkeys(
+                str(item)
+                for item in (
+                    (prior_task.get("capability_intent") or {}).get(
+                        "selected_skill_ids"
+                    )
+                    if isinstance(prior_task, Mapping)
+                    else []
+                )
+                or []
+                if str(item)
+            ))
+            proposed_task_skill_ids = list(dict.fromkeys(
+                str(item)
+                for item in (
+                    (proposed_task.get("capability_intent") or {}).get(
+                        "selected_skill_ids"
+                    )
+                    if isinstance(proposed_task, Mapping)
+                    else []
+                )
+                or []
+                if str(item)
+            ))
+            skill_selection_changed = (
+                requested_selected_ids != prior_active_ids
+                or proposed_task_skill_ids != prior_task_skill_ids
+            )
+            initial_binding = binding_phase["phase"] in {
+                ConsultantBindingPhase.INITIAL_TASK_AND_SKILL_BOOTSTRAP.value,
+                ConsultantBindingPhase.PREPLAN_INITIAL_SKILL_BIND.value,
+            }
+            existing_binding_change = bool(
+                skill_selection_changed
+                and binding_phase["phase"]
+                == ConsultantBindingPhase.EXISTING_BINDING_CHANGE.value
+            )
+            projected_pending_impact = dict(
+                projected.get("pending_plan_impact_review") or {}
+            )
+            projected_proposal_id = str(
+                projected_pending_impact.get("proposal_id") or ""
+            )
+            durable_proposal = (
+                prior_access.get("binding_proposals") or {}
+            ).get(projected_proposal_id)
+            projected_skill_change = dict(
+                projected_pending_impact.get("skill_change") or {}
+            )
+            projected_candidate_refs = [
+                dict(item)
+                for item in projected_skill_change.get(
+                    "candidate_skill_refs"
+                )
+                or []
+                if isinstance(item, Mapping)
+            ]
+            projected_candidate_snapshot_id = str(
+                (projected_skill_change.get("proposal") or {}).get(
+                    "candidate_snapshot_id"
+                )
+                or (
+                    projected_candidate_refs[0].get("snapshot_id")
+                    if projected_candidate_refs
+                    else ""
+                )
+                or ""
+            )
+            authorised_selected_ids: List[str] = []
+            if isinstance(durable_proposal, Mapping):
+                try:
+                    authorised_selected_ids = (
+                        self._authorised_task_skill_selection(
+                            prior_access,
+                            durable_proposal,
+                        )
+                    )
+                except SkillAccessError:
+                    authorised_selected_ids = []
+            projected_candidate_matches = bool(
+                isinstance(durable_proposal, Mapping)
+                and len(projected_candidate_refs) == 1
+                and str(projected_candidate_refs[0].get("skill_id") or "")
+                == str(durable_proposal.get("candidate_skill_id") or "")
+                and str(projected_candidate_refs[0].get("snapshot_id") or "")
+                == str(durable_proposal.get("candidate_snapshot_id") or "")
+                and str(projected_candidate_refs[0].get("status") or "")
+                == "candidate"
+            )
+            authorised_transaction = bool(
+                isinstance(projected.get("skill_access_state"), Mapping)
+                and projected_proposal_id
+                and isinstance(durable_proposal, Mapping)
+                and str(durable_proposal.get("status") or "")
+                == "approved_for_task_commit"
+                and str(durable_proposal.get("candidate_snapshot_id") or "")
+                == projected_candidate_snapshot_id
+                and projected_candidate_matches
+                and set(proposed_task_skill_ids)
+                == set(authorised_selected_ids)
+                and len(proposed_task_skill_ids)
+                == len(authorised_selected_ids)
+                # The reviewed candidate stays inactive until Planner accepts
+                # PlanImpact; the compatibility projection must therefore
+                # still expose exactly the prior active set at this commit.
+                and set(requested_selected_ids) == set(prior_active_ids)
+                and len(requested_selected_ids) == len(prior_active_ids)
+            )
+            if (
+                existing_binding_change
+                and not initial_binding
+                and not authorised_transaction
+            ):
+                rejected = {
+                    "decision_result": "SKILL_BINDING_PROPOSAL_REQUIRED",
+                    "classification": "INTERNAL_PROTOCOL",
+                    "detail": (
+                        "A canonical Skill selection may change only through "
+                        "PROPOSE_SKILL_BINDING, Consultant review, and the "
+                        "pending Planner plan-impact transaction."
+                    ),
+                    "counts_as_failure": False,
+                    "required_next_action": "PROPOSE_SKILL_BINDING",
+                    "binding_phase": deepcopy(binding_phase),
+                }
+                rejected_consultation = deepcopy(dict(
+                    candidate.get("consultation_state") or {}
+                ))
+                feedback_item = {
+                    "code": "SKILL_BINDING_PROPOSAL_REQUIRED",
+                    "instruction": rejected["detail"],
+                    "required_next_action": "PROPOSE_SKILL_BINDING",
+                }
+                rejected_consultation.update({
+                    "phase": "consulting",
+                    "consultation_status": "active",
+                    "completion_decision": "needs_evidence",
+                    "completion_reason": "SKILL_BINDING_PROPOSAL_REQUIRED",
+                    "last_feedback": [
+                        *list(rejected_consultation.get("last_feedback") or [])[-7:],
+                        feedback_item,
+                    ],
+                })
+                prior_guard = dict(
+                    rejected_consultation.get("last_invocation_guard") or {}
+                )
+                prior_guard["retry_pending"] = False
+                rejected_consultation["last_invocation_guard"] = prior_guard
+                candidate["consultation_state"] = rejected_consultation
+                transition = consultant_commit_no_progress_fingerprint(
+                    durable_before,
+                    candidate=candidate,
+                    active_skill_refs=binding_phase["active_skill_refs"],
+                    effective_route="consultant",
+                    rejection_reason=rejected,
+                )
+                ledger = advance_consultant_commit_no_progress(
+                    task_state_before.get("consultant_no_progress_ledger"),
+                    transition,
+                    limit=MAX_CONSULTANT_IDENTICAL_NO_PROGRESS_TRANSITIONS,
+                )
+                rejection_record = {
+                    **deepcopy(rejected),
+                    "candidate_hash": transition["candidate_hash"],
+                    "fingerprint": transition["fingerprint"],
+                    "requested_selected_skill_ids": requested_selected_ids,
+                    "prior_active_skill_ids": prior_active_ids,
+                }
+                blocked = dict(projected)
+                blocked.pop("task_spec", None)
+                blocked.update({
+                    "messages": [
+                        *list(projected.get("messages") or []),
+                        SystemMessage(content=json.dumps(
+                            rejected,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        )),
+                    ],
+                    "selected_skills": list(prior_active_ids),
+                    "selected_skill_ids": list(prior_active_ids),
+                    "selected_skill_refs": deepcopy(list(
+                        prior_access.get("selected_skill_refs") or []
+                    )),
+                    "skill_access_state": deepcopy(prior_access),
+                    "skill_decision_result": rejected,
+                    "consultation_state": rejected_consultation,
+                    "consultant_commit_rejection": rejection_record,
+                    "consultant_no_progress_ledger": ledger,
+                    "pending_action": {},
+                    "canonical_commit": {
+                        "succeeded": False,
+                        "error_code": "SKILL_BINDING_PROPOSAL_REQUIRED",
+                    },
+                    "next_step": "consultant",
+                })
+                if ledger.get("terminal"):
+                    terminal = {
+                        "classification": "INTERNAL_PROTOCOL",
+                        "code": "CONSULTANT_COMMIT_NO_PROGRESS",
+                        "detail": (
+                            "The same Consultant candidate, commit rejection, "
+                            "and self-route repeated without durable progress."
+                        ),
+                        "rejection": rejection_record,
+                    }
+                    blocked.update({
+                        "messages": [
+                            *list(blocked.get("messages") or []),
+                            SystemMessage(content=json.dumps(
+                                terminal, ensure_ascii=False, sort_keys=True,
+                            )),
+                        ],
+                        "skill_decision_result": terminal,
+                        "canonical_commit": {
+                            "succeeded": False,
+                            "error_code": "CONSULTANT_COMMIT_NO_PROGRESS",
+                        },
+                        "task_status": TASK_STATUS_FAILED,
+                        "failure_owner": "controller",
+                        "contract_status": "internal_protocol",
+                        "next_step": "finish",
+                    })
+                return blocked
         accepted_statuses = {
             "semantic_contract_compiled",
             "canonical_task_ready",
@@ -4502,6 +7344,130 @@ class BioAnalystAgent:
             not task_spec_is_initialized(prior_task)
             or task_semantic_hash(prior_task) != task_semantic_hash(proposed_task)
         )
+        candidate_rejection = dict(
+            projected.get("consultant_commit_rejection") or {}
+        )
+        rejected_self_route = bool(
+            candidate_rejection
+            and str(projected.get("next_step") or "") == "consultant"
+        )
+        semantic_commit_progress = bool(
+            semantic_changed or skill_selection_changed
+        )
+        if rejected_self_route and not semantic_commit_progress:
+            transition = consultant_commit_no_progress_fingerprint(
+                durable_before,
+                candidate=candidate,
+                active_skill_refs=binding_phase["active_skill_refs"],
+                effective_route="consultant",
+                rejection_reason=candidate_rejection,
+            )
+            ledger = advance_consultant_commit_no_progress(
+                task_state_before.get("consultant_no_progress_ledger"),
+                transition,
+                limit=MAX_CONSULTANT_IDENTICAL_NO_PROGRESS_TRANSITIONS,
+            )
+            rejection_record = {
+                **deepcopy(candidate_rejection),
+                "candidate_hash": transition["candidate_hash"],
+                "fingerprint": transition["fingerprint"],
+            }
+            if ledger.get("terminal"):
+                terminal = {
+                    "classification": "INTERNAL_PROTOCOL",
+                    "code": "CONSULTANT_COMMIT_NO_PROGRESS",
+                    "detail": (
+                        "The same Consultant candidate, commit rejection, "
+                        "and self-route repeated without durable progress."
+                    ),
+                    "rejection": rejection_record,
+                }
+                failed = dict(projected)
+                failed.pop("task_spec", None)
+                failed.update({
+                    "messages": [
+                        *list(projected.get("messages") or []),
+                        SystemMessage(content=json.dumps(
+                            terminal, ensure_ascii=False, sort_keys=True,
+                        )),
+                    ],
+                    "skill_decision_result": terminal,
+                    "consultant_commit_rejection": rejection_record,
+                    "consultant_no_progress_ledger": ledger,
+                    "canonical_commit": {
+                        "succeeded": False,
+                        "error_code": "CONSULTANT_COMMIT_NO_PROGRESS",
+                    },
+                    "task_status": TASK_STATUS_FAILED,
+                    "failure_owner": "controller",
+                    "contract_status": "internal_protocol",
+                    "pending_action": {},
+                    "next_step": "finish",
+                })
+                return failed
+            candidate["consultant_no_progress_ledger"] = ledger
+            candidate["consultant_commit_rejection"] = rejection_record
+            projected["consultant_no_progress_ledger"] = deepcopy(ledger)
+            projected["consultant_commit_rejection"] = deepcopy(
+                rejection_record
+            )
+        post_bootstrap_plan_impact_required = bool(
+            semantic_changed
+            and task_spec_is_initialized(prior_task)
+            and has_materialized_plan(durable_before)
+            and str(projected.get("next_step") or "") == "planner"
+            and not dict(candidate.get("pending_plan_impact_review") or {})
+            and not bool(projected.get("_plan_impact_rejection_rollback"))
+        )
+        if post_bootstrap_plan_impact_required:
+            old_task_revision = task_spec_revision(prior_task)
+            new_task_revision = task_spec_revision(proposed_task)
+            impact_id = "taskspec-impact-" + hashlib.sha256(json.dumps({
+                "old_task_hash": task_semantic_hash(prior_task),
+                "new_task_hash": task_semantic_hash(proposed_task),
+                "old_task_revision": old_task_revision,
+                "new_task_revision": new_task_revision,
+                "base_plan_revision": int(
+                    durable_before.get("plan_revision") or 0
+                ),
+            }, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:20]
+            durable_access = normalize_skill_access_state(
+                task_state_before.get("skill_access_state")
+                or durable_before.get("skill_access_state")
+            )
+            old_active_refs = [
+                deepcopy(dict(item))
+                for item in durable_access.get("selected_skill_refs") or []
+                if isinstance(item, Mapping)
+                and str(item.get("status") or "") == "active"
+            ]
+            generic_impact = {
+                "mode": "plan_impact_review",
+                "impact_kind": "taskspec_semantic_change",
+                "proposal_id": impact_id,
+                "base_task_revision": old_task_revision,
+                "new_task_revision": new_task_revision,
+                "base_plan_revision": int(
+                    durable_before.get("plan_revision") or 0
+                ),
+                "base_user_turn_revision": (
+                    self._authoritative_user_turn_revision(durable_before)
+                ),
+                "skill_change": {
+                    "change_kind": "taskspec_semantic_change",
+                    "old_task_spec": deepcopy(prior_task),
+                    "new_task_spec": deepcopy(proposed_task),
+                    "old_active_skill_refs": old_active_refs,
+                    "candidate_skill_refs": [],
+                },
+                "status": "pending",
+            }
+            candidate["pending_plan_impact_review"] = deepcopy(
+                generic_impact
+            )
+            projected["pending_plan_impact_review"] = deepcopy(
+                generic_impact
+            )
         pending_review_classification = dict(
             task_state_before.get("pending_review_classification") or {}
         )
@@ -4579,6 +7545,28 @@ class BioAnalystAgent:
                         pending_review_classification.get("review_event_id") or ""
                     ),
                 }
+        if getattr(self, "skill_access_service", None) is not None:
+            projected_skill_access = projected.get("skill_access_state")
+            prepared_skill_access = (
+                normalize_skill_access_state(projected_skill_access)
+                if isinstance(projected_skill_access, Mapping)
+                else self._prepare_durable_skill_access(
+                    durable_before,
+                    selected_skill_ids=candidate["selected_skills"],
+                    task_revision=task_spec_revision(proposed_task),
+                )
+            )
+            candidate["skill_access_state"] = prepared_skill_access
+            candidate["selected_skill_refs"] = deepcopy(list(
+                prepared_skill_access.get("selected_skill_refs") or []
+            ))
+        # A semantic Task/Skill commit or a non-rejected handoff is durable
+        # progress. Clear the rejection ledger in that same CAS boundary.
+        # An identical rejected self-route instead carries the ledger written
+        # above, even though its compatibility projection is also refreshed.
+        if semantic_commit_progress or not rejected_self_route:
+            candidate["consultant_no_progress_ledger"] = {}
+            candidate["consultant_commit_rejection"] = {}
         committed = commit_consultant_candidate_state(
             self.data_path,
             task_id,
@@ -4590,6 +7578,16 @@ class BioAnalystAgent:
             "task_spec": deepcopy(committed_task),
             "task_revision": task_spec_revision(committed_task),
             "selected_skills": list(committed_state.get("selected_skills") or []),
+            "selected_skill_refs": deepcopy(list(
+                committed_state.get("selected_skill_refs")
+                or committed.get("selected_skill_refs")
+                or []
+            )),
+            "skill_access_state": deepcopy(dict(
+                committed_state.get("skill_access_state")
+                or committed.get("skill_access_state")
+                or {}
+            )),
             "resolved_bindings": deepcopy(dict(
                 committed_state.get("resolved_bindings") or {}
             )),
@@ -4609,8 +7607,24 @@ class BioAnalystAgent:
                 "succeeded": True,
                 "task_revision": task_spec_revision(committed_task),
                 "state_generation": int(committed.get("state_generation") or 0),
+                "binding_phase": str(binding_phase.get("phase") or ""),
             },
+            "binding_phase": deepcopy(binding_phase),
+            "consultant_no_progress_ledger": deepcopy(dict(
+                committed_state.get("consultant_no_progress_ledger") or {}
+            )),
+            "consultant_commit_rejection": deepcopy(dict(
+                committed_state.get("consultant_commit_rejection") or {}
+            )),
         })
+        for skill_transaction_field in (
+            "pending_skill_binding_proposal",
+            "pending_plan_impact_review",
+        ):
+            if skill_transaction_field in projected:
+                projected[skill_transaction_field] = deepcopy(dict(
+                    committed_state.get(skill_transaction_field) or {}
+                ))
         planner_feedback = committed_state.get("planner_feedback")
         if isinstance(planner_feedback, Mapping):
             projected["planner_feedback"] = deepcopy(dict(planner_feedback))
@@ -4640,6 +7654,7 @@ class BioAnalystAgent:
             # Controller does not inspect the user's free text.
             projected["next_step"] = "plan_review"
             projected["review_classification"] = "explanation_only"
+        projected.pop("_plan_impact_rejection_rollback", None)
         return projected
 
     def _stale_plan_task_revision_reason(self, state: AgentState, task_id: str) -> str:
@@ -4741,6 +7756,44 @@ class BioAnalystAgent:
 
         plan_state = load_plan_state(self.data_path, task_id)
         active_skills = [str(item) for item in merged.get("active_skills") or [] if str(item).strip()]
+        skill_continuation_id = str(
+            (plan_state.get("task_state") or {}).get("skill_continuation_id")
+            or ""
+        )
+        if getattr(self, "skill_access_service", None) is not None:
+            prior_skill_access = normalize_skill_access_state(
+                (plan_state.get("task_state") or {}).get("skill_access_state")
+                or plan_state.get("skill_access_state")
+            )
+            prepared_skill_access = self._prepare_durable_skill_access(
+                plan_state,
+                selected_skill_ids=active_skills,
+                task_revision=task_spec_revision(
+                    canonical_task_spec_for_state(plan_state)
+                ),
+            )
+            if prepared_skill_access != prior_skill_access:
+                try:
+                    self._persist_durable_skill_access(
+                        task_id,
+                        prepared_skill_access,
+                        continuation_id=skill_continuation_id,
+                        expected_state_generation=int(
+                            plan_state.get("state_generation") or 0
+                        ),
+                    )
+                except StateCASConflict as exc:
+                    stale_update = self._skill_access_cas_stale_update(
+                        caller_node="recovery",
+                        next_step="supervisor",
+                        detail=str(exc),
+                    )
+                    stale_update["messages"] = [
+                        *list(update.get("messages") or []),
+                        *list(stale_update.get("messages") or []),
+                    ]
+                    return {**update, **stale_update}
+                plan_state = load_plan_state(self.data_path, task_id)
         skill_context = ""
         if active_skills:
             try:
@@ -4841,6 +7894,18 @@ class BioAnalystAgent:
             "evidence_identity": str(context.context_id or ""),
             "trace_enabled": bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
             "max_payload_chars": RECOVERY_PROVIDER_MAX_PAYLOAD_CHARS,
+            "authoritative_user_turn_revision": (
+                self._authoritative_user_turn_revision(plan_state)
+            ),
+            "skill_context": self._skill_context_projection(
+                plan_state,
+                caller_node="recovery",
+                current_step_id=str(
+                    context.step_id or evidence.get("step_id") or ""
+                ),
+                continuation_id=skill_continuation_id,
+            ),
+            "continuation_id": skill_continuation_id,
         }
         try:
             evidence_returncode = int(
@@ -4863,7 +7928,26 @@ class BioAnalystAgent:
         ):
             decision = recovery_decision_from_diagnosis(diagnosis)
         elif judge_needed:
-            cached_judge = store.load_llm_result(context.context_id, "recovery_judge")
+            recovery_cache_identity = {
+                "task_revision": task_spec_revision(
+                    canonical_task_spec_for_state(plan_state)
+                ),
+                "plan_revision": int(plan_state.get("plan_revision") or 0),
+                "authoritative_user_turn_revision": (
+                    self._authoritative_user_turn_revision(plan_state)
+                ),
+                "step_id": str(context.step_id or evidence.get("step_id") or ""),
+                "attempt_id": str(
+                    context.attempt_id or evidence.get("attempt_id") or ""
+                ),
+                "evidence_identity": str(context.context_id or ""),
+                "continuation_id": skill_continuation_id,
+            }
+            cached_judge = store.load_llm_result(
+                context.context_id,
+                "recovery_judge",
+                cache_identity=recovery_cache_identity,
+            )
             cached_judge_valid = False
             if cached_judge.get("parsed_result"):
                 try:
@@ -4873,89 +7957,524 @@ class BioAnalystAgent:
                     cached_judge_valid = False
             if not cached_judge:
                 try:
-                    recovery_approved_snapshot = load_approved_plan_snapshot(
-                        self.data_path,
-                        task_id,
-                        state=plan_state,
-                    )
-                    recovery_semantic_inputs = self._node_context_semantic_inputs(
-                        task_id,
-                        plan_state,
-                        messages=list(state.get("messages") or []),
-                    )
-                    recovery_node_context = build_node_context(
-                        **recovery_context_kwargs,
-                        approved_plan_snapshot=recovery_approved_snapshot,
-                        **recovery_semantic_inputs,
-                    )
-                    prompt = PromptManager.get_recovery_v2_prompt(
-                        recovery_node_context.llm_payload.to_provider_dict()
-                    )
-                    increment_plan_budget(plan_state, "recovery_judge_count")
-                    save_plan_state(self.data_path, task_id, plan_state)
                     post_review_judge_invoked = True
-                    response = await self._ainvoke_node_llm(
-                        [HumanMessage(content=prompt)],
-                        node_context=recovery_node_context,
-                        stage="recovery_judge",
-                        task_id=task_id,
-                        task_mode=str(state.get("task_mode") or "managed"),
-                        trace_metadata={
-                            "call_kind": "recovery_judge",
-                            "attempt_id": str(evidence.get("attempt_id") or ""),
-                            "action_id": str(evidence.get("action_id") or ""),
-                            "step_id": str(evidence.get("step_id") or ""),
-                            "recovery_context_ref": str(store.root / "recovery_context.json"),
-                            "provider_context_manifest": provider_context_manifest(
-                                recovery_node_context.llm_payload
-                            ),
-                            "recovery_llm_policy": dict(self.recovery_llm_policy),
-                        },
-                        llm_override=self.recovery_llm,
-                        llm_policy=self.recovery_llm_policy,
+                    recovery_judge_budget_charged = False
+                    recovery_round_plan = plan_state
+                    skill_context_rounds = 0
+                    skill_search_rounds = 0
+                    recovery_skill_round_limit = max(
+                        1,
+                        int(MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION)
+                        + int(MAX_SKILL_SEARCH_ROUNDS_PER_STEP),
                     )
-                    raw_response = str(getattr(response, "content", response) or "")
-                    current_plan_state = load_plan_state(self.data_path, task_id)
-                    current_task_spec = canonical_task_spec_for_state(
-                        current_plan_state
-                    )
-                    current_approved_snapshot = load_approved_plan_snapshot(
-                        self.data_path,
-                        task_id,
-                        state=current_plan_state,
-                    )
-                    current_binding = build_node_context(
-                        node_type="recovery",
-                        task_spec=current_task_spec,
-                        plan_state=current_plan_state,
-                        state_generation=int(current_plan_state.get("state_generation") or 0),
-                        current_step_id=str(context.step_id or evidence.get("step_id") or ""),
-                        attempt_id=str(context.attempt_id or evidence.get("attempt_id") or ""),
-                        failure_fingerprint=str(context.error_fingerprint or ""),
-                        approved_plan_snapshot=current_approved_snapshot,
-                    ).binding
-                    staleness = evaluate_node_staleness(
-                        recovery_node_context.binding,
-                        current_binding.to_dict(),
-                    )
-                    if not staleness.usable:
-                        self._node_invocations.mark_stale_signature_handled(
-                            staleness.stale_signature
+                    for skill_round in range(recovery_skill_round_limit + 1):
+                        recovery_approved_snapshot = load_approved_plan_snapshot(
+                            self.data_path,
+                            task_id,
+                            state=recovery_round_plan,
                         )
-                        raise RuntimeError(staleness.code)
-                    decision = parse_recovery_judge_decision(raw_response)
-                    store.save_llm_result(
-                        context.context_id,
-                        "recovery_judge",
-                        raw_response=raw_response,
-                        parsed_result=decision.to_dict(),
-                    )
+                        recovery_semantic_inputs = self._node_context_semantic_inputs(
+                            task_id,
+                            recovery_round_plan,
+                            messages=list(state.get("messages") or []),
+                        )
+                        round_task_spec = canonical_task_spec_for_state(
+                            recovery_round_plan
+                        )
+                        round_step_id = str(
+                            context.step_id or evidence.get("step_id") or ""
+                        )
+                        round_skill_context = self._skill_context_projection(
+                            recovery_round_plan,
+                            caller_node="recovery",
+                            current_step_id=round_step_id,
+                            continuation_id=skill_continuation_id,
+                        )
+                        recovery_node_context = build_node_context(
+                            **{
+                                **recovery_context_kwargs,
+                                "task_spec": round_task_spec,
+                                "plan_state": recovery_round_plan,
+                                "state_generation": int(
+                                    recovery_round_plan.get("state_generation") or 0
+                                ),
+                                "skill_context": round_skill_context,
+                                "continuation_id": skill_continuation_id,
+                            },
+                            approved_plan_snapshot=recovery_approved_snapshot,
+                            **recovery_semantic_inputs,
+                        )
+                        if (
+                            getattr(self, "skill_access_service", None) is not None
+                            and skill_continuation_id
+                        ):
+                            round_access = normalize_skill_access_state(
+                                (recovery_round_plan.get("task_state") or {}).get(
+                                    "skill_access_state"
+                                )
+                                or recovery_round_plan.get("skill_access_state")
+                            )
+                            round_continuation = dict(
+                                (round_access.get("continuations") or {}).get(
+                                    skill_continuation_id
+                                )
+                                or {}
+                            )
+                            if str(round_continuation.get("status") or "") in {
+                                "served", "rejected",
+                            }:
+                                round_access = mark_continuation_resumed(
+                                    round_access,
+                                    skill_continuation_id,
+                                    resumed_invocation_id=(
+                                        recovery_node_context.binding.invocation_id
+                                    ),
+                                )
+                                try:
+                                    self._persist_durable_skill_access(
+                                        task_id,
+                                        round_access,
+                                        continuation_id=skill_continuation_id,
+                                        expected_state_generation=int(
+                                            recovery_round_plan.get(
+                                                "state_generation"
+                                            )
+                                            or 0
+                                        ),
+                                    )
+                                except StateCASConflict as exc:
+                                    stale_update = (
+                                        self._skill_access_cas_stale_update(
+                                            caller_node="recovery",
+                                            next_step="supervisor",
+                                            detail=str(exc),
+                                        )
+                                    )
+                                    stale_update["messages"] = [
+                                        *list(update.get("messages") or []),
+                                        *list(stale_update.get("messages") or []),
+                                    ]
+                                    return {**update, **stale_update}
+                                recovery_round_plan = load_plan_state(
+                                    self.data_path, task_id
+                                )
+                        prompt = PromptManager.get_recovery_v2_prompt(
+                            recovery_node_context.llm_payload.to_provider_dict()
+                        )
+                        response = await self._ainvoke_node_llm(
+                            [HumanMessage(content=prompt)],
+                            node_context=recovery_node_context,
+                            stage="recovery_judge",
+                            task_id=task_id,
+                            task_mode=str(state.get("task_mode") or "managed"),
+                            trace_metadata={
+                                "call_kind": "recovery_judge",
+                                "attempt_id": str(evidence.get("attempt_id") or ""),
+                                "action_id": str(evidence.get("action_id") or ""),
+                                "step_id": str(evidence.get("step_id") or ""),
+                                "recovery_context_ref": str(
+                                    store.root / "recovery_context.json"
+                                ),
+                                "provider_context_manifest": provider_context_manifest(
+                                    recovery_node_context.llm_payload
+                                ),
+                                "recovery_llm_policy": dict(self.recovery_llm_policy),
+                            },
+                            llm_override=self.recovery_llm,
+                            llm_policy=self.recovery_llm_policy,
+                        )
+                        raw_response = str(
+                            getattr(response, "content", response) or ""
+                        )
+                        current_plan_state = load_plan_state(self.data_path, task_id)
+                        current_task_spec = canonical_task_spec_for_state(
+                            current_plan_state
+                        )
+                        current_approved_snapshot = load_approved_plan_snapshot(
+                            self.data_path,
+                            task_id,
+                            state=current_plan_state,
+                        )
+                        current_task_state = dict(
+                            current_plan_state.get("task_state") or {}
+                        )
+                        current_continuation_id = str(
+                            current_task_state.get("skill_continuation_id")
+                            or ""
+                        )
+                        current_binding = build_node_context(
+                            node_type="recovery",
+                            task_spec=current_task_spec,
+                            plan_state=current_plan_state,
+                            state_generation=int(
+                                current_plan_state.get("state_generation") or 0
+                            ),
+                            current_step_id=round_step_id,
+                            attempt_id=str(
+                                context.attempt_id or evidence.get("attempt_id") or ""
+                            ),
+                            failure_fingerprint=str(context.error_fingerprint or ""),
+                            evidence_identity=str(context.context_id or ""),
+                            authoritative_user_turn_revision=(
+                                self._authoritative_user_turn_revision(
+                                    current_plan_state
+                                )
+                            ),
+                            approved_plan_snapshot=current_approved_snapshot,
+                            skill_context=self._skill_context_projection(
+                                current_plan_state,
+                                caller_node="recovery",
+                                current_step_id=round_step_id,
+                                continuation_id=current_continuation_id,
+                            ),
+                            continuation_id=current_continuation_id,
+                        ).binding
+                        staleness = evaluate_node_staleness(
+                            recovery_node_context.binding,
+                            current_binding.to_dict(),
+                        )
+                        if not staleness.usable:
+                            self._node_invocations.mark_stale_signature_handled(
+                                staleness.stale_signature
+                            )
+                            changed = list(staleness.changed_preconditions)
+                            resume_route = (
+                                "consultant"
+                                if any(
+                                    item in {
+                                        "authoritative_user_turn_revision",
+                                        "task_revision",
+                                        "task_semantic_hash",
+                                    }
+                                    for item in changed
+                                )
+                                else "planner"
+                                if any(
+                                    item in {
+                                        "plan_revision", "plan_version",
+                                        "step_id", "step_revision",
+                                    }
+                                    for item in changed
+                                )
+                                else "supervisor"
+                            )
+                            stale_result = {
+                                "decision_result": "STALE_NODE_RESULT",
+                                "status": "discarded",
+                                "code": str(
+                                    staleness.code
+                                    or "STALE_RECOVERY_CONTEXT"
+                                ),
+                                "caller_node": "recovery",
+                                "caller_invocation_id": str(
+                                    recovery_node_context.binding.invocation_id
+                                    or ""
+                                ),
+                                "changed_preconditions": changed,
+                                "request_task_revision": int(
+                                    recovery_node_context.binding.task_revision
+                                    or 0
+                                ),
+                                "request_plan_revision": int(
+                                    recovery_node_context.binding.plan_revision
+                                    or 0
+                                ),
+                                "request_user_turn_revision": int(
+                                    recovery_node_context.binding
+                                    .authoritative_user_turn_revision
+                                    or 0
+                                ),
+                                "current_task_revision": int(
+                                    current_binding.task_revision or 0
+                                ),
+                                "current_plan_revision": int(
+                                    current_binding.plan_revision or 0
+                                ),
+                                "current_user_turn_revision": int(
+                                    current_binding
+                                    .authoritative_user_turn_revision
+                                    or 0
+                                ),
+                                "resume_route": resume_route,
+                                "counts_as_failure": False,
+                                "consumes_execution_retry": False,
+                                "consumes_recovery_retry": False,
+                                "execute": False,
+                            }
+                            self._record_durable_skill_event(
+                                task_id,
+                                "stale_node_result_discarded",
+                                stale_result,
+                            )
+                            update.update({
+                                "messages": [
+                                    *list(update.get("messages") or []),
+                                    response,
+                                    SystemMessage(content=json.dumps(
+                                        stale_result,
+                                        ensure_ascii=False,
+                                        sort_keys=True,
+                                    )),
+                                ],
+                                "stale_node_result": deepcopy(stale_result),
+                                "decision_result": "STALE_NODE_RESULT",
+                                "counts_as_failure": False,
+                                "consumes_execution_retry": False,
+                                "consumes_recovery_retry": False,
+                                "next_step": resume_route,
+                                "proposed_route": resume_route,
+                            })
+                            return update
+
+                        if not recovery_judge_budget_charged:
+                            accepted_plan = load_plan_state(
+                                self.data_path, task_id
+                            )
+                            increment_plan_budget(
+                                accepted_plan, "recovery_judge_count"
+                            )
+                            save_plan_state(
+                                self.data_path, task_id, accepted_plan
+                            )
+                            recovery_judge_budget_charged = True
+
+                        try:
+                            typed_skill_decision = parse_typed_skill_decision(
+                                raw_response
+                            )
+                        except SkillAccessError as skill_exc:
+                            rejected_projection: Dict[str, Any] = {}
+                            if skill_continuation_id:
+                                rejected_projection = (
+                                    self._complete_durable_skill_continuation(
+                                        task_id,
+                                        caller_node="recovery",
+                                    )
+                                )
+                                skill_continuation_id = ""
+                            rejected = {
+                                "decision_result": "SKILL_DECISION_REJECTED",
+                                **skill_exc.to_dict(),
+                                "review_route": "consultant_skill_resolution",
+                            }
+                            update.update({
+                                **rejected_projection,
+                                "messages": [
+                                    *list(update.get("messages") or []),
+                                    response,
+                                    SystemMessage(content=json.dumps(
+                                        rejected,
+                                        ensure_ascii=False,
+                                        sort_keys=True,
+                                    )),
+                                ],
+                                "skill_decision_result": rejected,
+                                "pending_action": {},
+                                "pending_recovery_action": {},
+                                "required_next_action": "",
+                                "recovery_scope": "",
+                                "recovery_phase": "skill_review",
+                                "transition_guard": (
+                                    "recovery_skill_review_required"
+                                ),
+                                "next_step": "consultant",
+                                "proposed_route": "consultant",
+                            })
+                            return update
+                        if typed_skill_decision is None:
+                            decision = parse_recovery_judge_decision(raw_response)
+                            if skill_continuation_id:
+                                update.update(
+                                    self._complete_durable_skill_continuation(
+                                        task_id,
+                                        caller_node="recovery",
+                                    )
+                                )
+                                skill_continuation_id = ""
+                            store.save_llm_result(
+                                context.context_id,
+                                "recovery_judge",
+                                raw_response=raw_response,
+                                parsed_result=decision.to_dict(),
+                                cache_identity=recovery_cache_identity,
+                            )
+                            break
+
+                        typed_skill_kind = str(
+                            typed_skill_decision.get("decision") or ""
+                        ).upper()
+                        request_budget_exhausted = (
+                            typed_skill_kind == REQUEST_SKILL_CONTEXT
+                            and skill_context_rounds
+                            >= int(MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION)
+                        ) or (
+                            typed_skill_kind == SEARCH_SKILLS
+                            and skill_search_rounds
+                            >= int(MAX_SKILL_SEARCH_ROUNDS_PER_STEP)
+                        )
+                        if request_budget_exhausted:
+                            completed_projection: Dict[str, Any] = {}
+                            if skill_continuation_id:
+                                completed_projection = (
+                                    self._complete_durable_skill_continuation(
+                                        task_id,
+                                        caller_node="recovery",
+                                    )
+                                )
+                                skill_continuation_id = ""
+                            limit_status = (
+                                "SKILL_CONTEXT_NO_PROGRESS"
+                                if typed_skill_kind == REQUEST_SKILL_CONTEXT
+                                else "SKILL_SEARCH_NO_PROGRESS"
+                            )
+                            limit_result = {
+                                "decision_result": (
+                                    "SKILL_CONTINUATION_LIMIT_REACHED"
+                                ),
+                                "status": limit_status,
+                                "detail": (
+                                    "Recovery exhausted the configured Skill "
+                                    "request rounds."
+                                ),
+                                "review_route": (
+                                    "consultant_skill_resolution"
+                                ),
+                            }
+                            update.update({
+                                **completed_projection,
+                                "messages": [
+                                    *list(update.get("messages") or []),
+                                    response,
+                                    SystemMessage(content=json.dumps(
+                                        limit_result,
+                                        ensure_ascii=False,
+                                        sort_keys=True,
+                                    )),
+                                ],
+                                "skill_decision_result": limit_result,
+                                "pending_action": {},
+                                "pending_recovery_action": {},
+                                "required_next_action": "",
+                                "recovery_scope": "",
+                                "recovery_phase": "skill_review",
+                                "transition_guard": (
+                                    "recovery_skill_review_required"
+                                ),
+                                "next_step": "consultant",
+                                "proposed_route": "consultant",
+                            })
+                            return update
+
+                        completed_projection: Dict[str, Any] = {}
+                        if skill_continuation_id:
+                            completed_projection = self._complete_durable_skill_continuation(
+                                task_id,
+                                caller_node="recovery",
+                            )
+                            skill_continuation_id = ""
+                        try:
+                            skill_update = await self._handle_skill_node_decision(
+                                task_id=task_id,
+                                caller_node="recovery",
+                                graph_node="supervisor",
+                                decision=typed_skill_decision,
+                                node_context=recovery_node_context,
+                                response=response,
+                                selected_skill_ids=active_skills,
+                            )
+                        except SkillAccessError as skill_exc:
+                            rejected = {
+                                "decision_result": "SKILL_DECISION_REJECTED",
+                                **skill_exc.to_dict(),
+                                "review_route": "consultant_skill_resolution",
+                            }
+                            update.update({
+                                **completed_projection,
+                                "messages": [
+                                    *list(update.get("messages") or []),
+                                    response,
+                                    SystemMessage(content=json.dumps(
+                                        rejected,
+                                        ensure_ascii=False,
+                                        sort_keys=True,
+                                    )),
+                                ],
+                                "skill_decision_result": rejected,
+                                "pending_action": {},
+                                "pending_recovery_action": {},
+                                "required_next_action": "",
+                                "recovery_scope": "",
+                                "recovery_phase": "skill_review",
+                                "transition_guard": (
+                                    "recovery_skill_review_required"
+                                ),
+                                "next_step": "consultant",
+                                "proposed_route": "consultant",
+                            })
+                            return update
+                        skill_result = dict(
+                            skill_update.get("skill_decision_result") or {}
+                        )
+                        pending_proposal = dict(
+                            skill_update.get("pending_skill_binding_proposal") or {}
+                        )
+                        no_progress = str(skill_result.get("status") or "") in {
+                            "SKILL_CONTEXT_NO_PROGRESS",
+                            "SKILL_SEARCH_NO_PROGRESS",
+                        }
+                        proposal_pending = (
+                            typed_skill_kind == PROPOSE_SKILL_BINDING
+                        )
+                        if proposal_pending or no_progress:
+                            review_route = str(
+                                pending_proposal.get("review_route")
+                                or skill_result.get("review_route")
+                                or "consultant_skill_resolution"
+                            )
+                            typed_next_step = (
+                                "planner"
+                                if review_route == "planner_plan_impact_review"
+                                else "consultant"
+                            )
+                            skill_update["next_step"] = typed_next_step
+                            skill_update["proposed_route"] = typed_next_step
+                            skill_update["recovery_trigger"] = trigger.to_dict()
+                            skill_update["recovery_phase"] = "skill_review"
+                            skill_update["pending_recovery_action"] = {}
+                            skill_update["required_next_action"] = ""
+                            skill_update["recovery_scope"] = ""
+                            skill_update["transition_guard"] = (
+                                "recovery_skill_review_required"
+                            )
+                            skill_update["messages"] = [
+                                *list(update.get("messages") or []),
+                                *list(skill_update.get("messages") or []),
+                            ]
+                            update.update(skill_update)
+                            return update
+
+                        if typed_skill_kind == REQUEST_SKILL_CONTEXT:
+                            skill_context_rounds += 1
+                        elif typed_skill_kind == SEARCH_SKILLS:
+                            skill_search_rounds += 1
+                        skill_continuation_id = str(
+                            skill_update.get("skill_continuation_id") or ""
+                        )
+                        recovery_round_plan = load_plan_state(
+                            self.data_path, task_id
+                        )
+                    else:  # pragma: no cover - guarded by the explicit limit.
+                        raise SkillAccessError(
+                            "SKILL_CONTINUATION_LIMIT_REACHED",
+                            "Recovery exceeded its same-node Skill continuation limit",
+                        )
                 except Exception as exc:
                     store.save_llm_result(
                         context.context_id,
                         "recovery_judge",
                         raw_response=str(getattr(locals().get("response"), "content", "") or ""),
                         parsed_result={},
+                        cache_identity=recovery_cache_identity,
                     )
                     logger.warning(
                         "RecoveryJudge unavailable after review; preserving an internal protocol error: %s",
@@ -5737,17 +9256,19 @@ class BioAnalystAgent:
         # make the caller's otherwise valid snapshot stale.
         plan_state = plan_state if plan_state is not None else load_plan_state(self.data_path, task_id)
         step = self._running_plan_step(plan_state) or {}
-        task_revision = self._task_revision_for_state({
-            **dict(state),
-            "task_id": task_id,
-        })
+        task_revision = task_spec_revision(
+            canonical_task_spec_for_state(plan_state)
+        )
         plan_version = str(plan_state.get("plan_version") or "plan_v1")
+        plan_revision = max(0, int(plan_state.get("plan_revision") or 0))
+        authoritative_user_turn_revision = (
+            self._authoritative_user_turn_revision(plan_state)
+        )
         plan_id = str(plan_state.get("plan_id") or "")
         step_id = str(step.get("step_id") or "")
         execution_epoch = str(
             step.get("execution_epoch")
             or (plan_state.get("runtime_state") or {}).get("execution_epoch")
-            or state.get("execution_epoch")
             or "0"
         )
         runtime_snapshot = dict(
@@ -5798,6 +9319,10 @@ class BioAnalystAgent:
                 "step_id": step_id,
                 "task_revision": task_revision,
                 "plan_version": plan_version,
+                "plan_revision": plan_revision,
+                "authoritative_user_turn_revision": (
+                    authoritative_user_turn_revision
+                ),
                 "plan_id": plan_id,
                 "execution_epoch": execution_epoch,
                 "runtime_snapshot_digest": str(
@@ -5826,6 +9351,10 @@ class BioAnalystAgent:
                 "task_revision": task_revision,
                 "plan_id": plan_id,
                 "plan_version": plan_version,
+                "plan_revision": plan_revision,
+                "authoritative_user_turn_revision": (
+                    authoritative_user_turn_revision
+                ),
                 "execution_epoch": execution_epoch,
                 "purpose": purpose,
                 "command_role": command_role,
@@ -6388,8 +9917,6 @@ class BioAnalystAgent:
             return "user_input"
         code = str(action.get("code") or "")
         lower = code.lower()
-        if re.search(r"(?:blocked|stage_blocked|skipped).{0,80}(?:stage_status|report|\.txt)|(?:stage_status|report|\.txt).{0,80}(?:blocked|stage_blocked|skipped)", lower, re.DOTALL):
-            return "record_failure"
         read_only = bool(
             BioAnalystAgent._is_readonly_capability_probe(code)
             or re.search(
@@ -6551,26 +10078,95 @@ class BioAnalystAgent:
         save_plan_state(self.data_path, task_id, plan_state)
         return count, max(0, int(limit) - count)
 
+    def _pending_action_revision_mismatches(
+        self,
+        action: Mapping[str, Any],
+        plan_state: Mapping[str, Any],
+    ) -> Dict[str, Dict[str, str]]:
+        """Compare an action with current durable execution authority.
+
+        Revision equality is necessary but not sufficient: a successor action
+        can be installed (or the pending pointer can be cleared) without
+        changing those revisions.  Once an action has an identity, Execute may
+        use or commit its result only while the durable pending pointer still
+        names that exact action.
+        """
+        step = self._running_plan_step(dict(plan_state)) or {}
+        expected = {
+            "step_id": str(step.get("step_id") or ""),
+            "task_revision": str(task_spec_revision(
+                canonical_task_spec_for_state(plan_state)
+            )),
+            "plan_version": str(plan_state.get("plan_version") or "plan_v1"),
+            "plan_revision": str(int(plan_state.get("plan_revision") or 0)),
+            "authoritative_user_turn_revision": str(
+                self._authoritative_user_turn_revision(plan_state)
+            ),
+            "plan_id": str(plan_state.get("plan_id") or ""),
+            "execution_epoch": str(
+                step.get("execution_epoch")
+                or (plan_state.get("runtime_state") or {}).get(
+                    "execution_epoch"
+                )
+                or "0"
+            ),
+        }
+        mismatches = {
+            key: {
+                "bound": (
+                    "" if key not in action or action.get(key) is None
+                    else str(action.get(key))
+                ),
+                "current": value,
+            }
+            for key, value in expected.items()
+            if (
+                "" if key not in action or action.get(key) is None
+                else str(action.get(key))
+            ) != value
+        }
+        bound_action_id = str(action.get("action_id") or "")
+        if bound_action_id:
+            durable_pending = dict(
+                (plan_state.get("task_state") or {}).get("pending_action")
+                or {}
+            )
+            durable_action_id = str(durable_pending.get("action_id") or "")
+            if durable_action_id != bound_action_id:
+                mismatches["pending_action_identity"] = {
+                    "bound": bound_action_id,
+                    "current": durable_action_id,
+                }
+        return mismatches
+
     def _pending_action_stale_reason(self, action: Dict[str, Any], state: AgentState, task_id: str) -> str:
         if not isinstance(action, dict) or not action:
             return "No structured pending action is available."
         plan_state = load_plan_state(self.data_path, task_id)
-        step = self._running_plan_step(plan_state) or {}
-        expected = {
-            "step_id": str(step.get("step_id") or ""),
-            "task_revision": str(self._task_revision_for_state({
-                **dict(state),
-                "task_id": task_id,
-            })),
-            "plan_version": str(plan_state.get("plan_version") or "plan_v1"),
-        }
-        missing = [key for key in expected if str(action.get(key) or "") == ""]
+        compared_fields = (
+            "step_id",
+            "task_revision",
+            "plan_version",
+            "plan_revision",
+            "authoritative_user_turn_revision",
+            "plan_id",
+            "execution_epoch",
+        )
+        required_fields = tuple(
+            key for key in compared_fields
+            if key != "plan_id" or str(plan_state.get("plan_id") or "")
+        )
+        missing = [
+            key for key in required_fields
+            if key not in action or action.get(key) is None
+            or str(action.get(key)) == ""
+        ]
         if missing:
             return "Pending action is missing revision metadata: " + ", ".join(missing)
+        mismatch_map = self._pending_action_revision_mismatches(action, plan_state)
         mismatches = [
-            f"{key}={action.get(key)!r} (expected {value!r})"
-            for key, value in expected.items()
-            if str(action.get(key)) != value
+            f"{key}={item['bound']!r} (expected {item['current']!r})"
+            for key, item in mismatch_map.items()
         ]
         if mismatches:
             return "Pending action is stale: " + "; ".join(mismatches)
@@ -6579,10 +10175,7 @@ class BioAnalystAgent:
             return validate_action_approval_lineage(
                 plan_state,
                 action,
-                self._task_revision_for_state({
-                    **dict(state),
-                    "task_id": task_id,
-                }),
+                task_spec_revision(canonical_task_spec_for_state(plan_state)),
             )
         return ""
 
@@ -7413,6 +11006,22 @@ class BioAnalystAgent:
                 conversation_evidence=conversation_evidence,
             )
         durable = load_plan_state(self.data_path, task_id)
+        durable_task_state = dict(durable.get("task_state") or {})
+        if (
+            durable_task_state.get("skill_access_state")
+            or durable.get("skill_access_state")
+        ):
+            invalidated_access = invalidate_skill_continuations(
+                durable_task_state.get("skill_access_state")
+                or durable.get("skill_access_state"),
+                reason="authoritative_user_turn_changed",
+            )
+            durable_task_state["skill_access_state"] = invalidated_access
+            durable_task_state.pop("skill_continuation_id", None)
+            durable["task_state"] = durable_task_state
+            durable["skill_access_state"] = deepcopy(invalidated_access)
+            save_plan_state(self.data_path, task_id, durable)
+            durable = load_plan_state(self.data_path, task_id)
         return durable, is_continuation, raw_submission_ref
 
     def _consultant_semantic_conversation(
@@ -9003,9 +12612,11 @@ class BioAnalystAgent:
     def _execution_purpose_completes_step(step: Dict[str, Any], execution_purpose: str) -> bool:
         """Return whether helper evidence is the declared business result."""
         purpose = str(execution_purpose or "analysis").strip().lower()
+        declared = str(step.get("purpose") or "").strip().lower()
+        if purpose == "record_failure":
+            return declared == "record_failure"
         if purpose not in {"probe", "validation"}:
             return True
-        declared = str(step.get("purpose") or "").strip().lower()
         return declared in {"probe", "validation"}
 
     def _record_activate_batch_progress(self, task_id: str, batch_id: str, update_text: str) -> str:
@@ -9464,6 +13075,7 @@ class BioAnalystAgent:
             ),
             thinking_enabled=thinking_enabled,
             requested_temperature=temperature,
+            stage=stage,
         )
         if temperature is not None:
             trace_metadata.setdefault("requested_temperature", float(temperature))
@@ -11988,7 +15600,7 @@ class BioAnalystAgent:
                 "recovery_phase", "recovery_status", "recovery_decision",
                 "pending_recovery_action", "recovery_context",
             )):
-                recovery_projection = {
+                node_recovery_projection = {
                     "phase": merged.get("recovery_phase"),
                     "status": merged.get("recovery_status"),
                     "decision": merged.get("recovery_decision") or {},
@@ -11999,10 +15611,52 @@ class BioAnalystAgent:
                     "step_id": str(current_step.get("step_id") or ""),
                     "plan_version": str(durable_plan.get("plan_version") or ""),
                 }
+                # A node-local compatibility projection must never replace the
+                # durable one-shot lifecycle that the transition resolver just
+                # consumed or superseded.  Keep the old flat fields only for
+                # sessions that do not yet have lifecycle state.
+                recovery_projection["node_projection"] = node_recovery_projection
+                if not any(
+                    key in recovery_projection
+                    for key in (
+                        "active_transition", "transition_history",
+                        "last_recovery_decision", "last_consumed_transition",
+                    )
+                ):
+                    recovery_projection.update(node_recovery_projection)
             projected_task_status = task_status(durable_plan)
             explicit_task_status = str(update.get("task_status") or "").strip().lower()
-            projected_next = str(update.get("next_step") or "")
-            projected_phase = str(recovery_projection.get("phase") or "").lower()
+            proposed_route = str(
+                update.get("proposed_route")
+                or update.get("node_recommended_next_step")
+                or update.get("next_step")
+                or ""
+            )
+            effective_route = str(
+                update.get("effective_route") or update.get("next_step") or ""
+            )
+            dispatch_route = str(
+                update.get("dispatch_route") or update.get("next_step") or ""
+            )
+            projected_next = dispatch_route
+            projected_phase = str(merged.get("recovery_phase") or "").lower()
+            route_projection = {
+                "proposed_route": proposed_route,
+                "pre_guard_effective_route": str(
+                    update.get("pre_guard_effective_route") or effective_route
+                ),
+                "effective_route": effective_route,
+                "dispatch_route": dispatch_route,
+                "override_source": str(update.get("override_source") or ""),
+                "override_decision_id": str(update.get("override_decision_id") or ""),
+                "route_event_id": str(update.get("route_event_id") or ""),
+                "current_attempt": str(update.get("current_attempt") or ""),
+                "progress_guard_result": (
+                    dict(update.get("progress_guard_result") or {})
+                    if isinstance(update.get("progress_guard_result"), Mapping)
+                    else {}
+                ),
+            }
             if explicit_task_status in TASK_TERMINAL_STATUSES:
                 projected_task_status = explicit_task_status
             elif projected_task_status in TASK_TERMINAL_STATUSES:
@@ -12010,6 +15664,12 @@ class BioAnalystAgent:
             elif projected_next in {"ask_user", "human_input", "waiting_user"}:
                 projected_task_status = TASK_STATUS_WAITING_USER
             elif node_name == "ask_user" and projected_next in {"planner", "generate", "consultant"}:
+                projected_task_status = TASK_STATUS_RUNNING
+            elif effective_route == "supervisor" and any(
+                str(step.get("status") or "") == "verification_pending"
+                for step in durable_plan.get("steps", []) or []
+                if isinstance(step, Mapping)
+            ):
                 projected_task_status = TASK_STATUS_RUNNING
             elif projected_phase in {"capture", "unwrap", "diagnose", "probe", "verify"}:
                 projected_task_status = TASK_STATUS_DIAGNOSING
@@ -12026,6 +15686,16 @@ class BioAnalystAgent:
                     "resolved_bindings": dict(merged.get("resolved_bindings") or {}),
                     "runtime_audit": list(merged.get("runtime_audit") or []),
                     "consultation_state": dict(merged.get("consultation_state") or {}),
+                    "binding_phase": dict(merged.get("binding_phase") or {}),
+                    "consultant_commit_rejection": dict(
+                        merged.get("consultant_commit_rejection") or {}
+                    ),
+                    "consultant_pending_transition": dict(
+                        merged.get("consultant_pending_transition") or {}
+                    ),
+                    "consultant_no_progress_ledger": dict(
+                        merged.get("consultant_no_progress_ledger") or {}
+                    ),
                     "step_states": step_states,
                     "current_step_id": str(current_step.get("step_id") or ""),
                     "latest_execution": latest_execution,
@@ -12039,31 +15709,34 @@ class BioAnalystAgent:
                     "budgets": durable_budgets,
                     "last_transition": {
                         "from_node": node_name,
-                        "to_node": str(update.get("next_step") or ""),
+                        "to_node": effective_route,
+                        **route_projection,
                         "task_status": projected_task_status,
                         "step_id": str(current_step.get("step_id") or ""),
-                        "trigger": str(update.get("node_recommended_next_step") or update.get("next_step") or ""),
+                        "trigger": proposed_route,
                         "guard": str(update.get("transition_guard") or "allowed"),
                     },
                 },
                 node=node_name,
-                next_step=str(update.get("next_step") or ""),
+                next_step=dispatch_route,
             )
             transition_payload = {
                 "from_node": node_name,
-                "to_node": str(update.get("next_step") or ""),
+                "to_node": effective_route,
+                **route_projection,
                 "task_status": projected_task_status,
                 "step_id": str(current_step.get("step_id") or ""),
                 "plan_id": str(durable_plan.get("plan_id") or ""),
                 "plan_revision": durable_plan.get("plan_revision"),
-                "trigger": str(update.get("node_recommended_next_step") or update.get("next_step") or ""),
+                "trigger": proposed_route,
                 "guard": str(update.get("transition_guard") or "allowed"),
             }
             ContextLineageStore(self.data_path, task_id).record_event(
                 "controller_route",
                 transition_payload,
                 event_id=(
-                    f"route-{node_name}-{durable_task_state.get('state_version', 0)}-"
+                    str(update.get("route_event_id") or "")
+                    or f"route-{node_name}-{durable_task_state.get('state_version', 0)}-"
                     f"{hashlib.sha256(json.dumps(transition_payload, sort_keys=True, default=str).encode('utf-8')).hexdigest()[:12]}"
                 ),
             )
@@ -13532,6 +17205,14 @@ class BioAnalystAgent:
             if isinstance(plan_state.get("failure"), Mapping)
             else {}
         )
+        planning_failure = dict(
+            (plan_state.get("task_state") or {}).get("planning_failure") or {}
+        )
+        planning_terminal = (
+            dict(planning_failure.get("terminal_diagnostic") or {})
+            if str(planning_failure.get("status") or "") == "terminal"
+            else {}
+        )
         if durable_failure and not durable_failure.get("resolved_at"):
             durable_failure["repair_exhausted"] = True
             durable_failure.setdefault("termination_reason", "bounded_recovery_exhausted")
@@ -13545,9 +17226,21 @@ class BioAnalystAgent:
             "task_id": str(task_id),
             "status": TASK_STATUS_BLOCKED,
             "reason": str(reason)[:8000],
-            "error_code": str(durable_failure.get("error_code") or "TASK_BLOCKED"),
-            "error_owner": str(durable_failure.get("owner") or ""),
-            "failure_stage": str(durable_failure.get("stage") or ""),
+            "error_code": str(
+                durable_failure.get("error_code")
+                or planning_terminal.get("error_code")
+                or "TASK_BLOCKED"
+            ),
+            "error_owner": str(
+                durable_failure.get("owner")
+                or planning_terminal.get("error_owner")
+                or ""
+            ),
+            "failure_stage": str(
+                durable_failure.get("stage")
+                or planning_terminal.get("stage")
+                or ("planner" if planning_terminal else "")
+            ),
             "current_step_id": str((plan_state.get("task_state") or {}).get("current_step_id") or ""),
             "updated_at": datetime.now().isoformat(timespec="seconds"),
         }
@@ -13624,6 +17317,10 @@ class BioAnalystAgent:
                 decision_value.pop("idempotency_key", None)
             policy_value = RecoveryDecision.from_mapping(decision_value)
             application_value = apply_recovery_decision(plan_state, policy_value)
+            # Every controller-created decision must carry its commit receipt
+            # into the single route resolver.  Dropping it makes a transition
+            # created in this node look stale before its first dispatch.
+            guarded["recovery_application"] = application_value
             save_plan_state(self.data_path, task_id, plan_state)
             return policy_value, application_value
 
@@ -13680,15 +17377,9 @@ class BioAnalystAgent:
                     "transition_guard": "recovery_decision_commit_rejected",
                 })
                 return guarded
-        durable_recovery = dict((plan_state.get("task_state") or {}).get("recovery_state") or {})
-        durable_decision = durable_recovery.get("last_recovery_decision")
-        if (
-            isinstance(durable_decision, dict)
-            and durable_decision
-            and not isinstance(guarded.get("recovery_decision"), dict)
-        ):
-            guarded["recovery_decision"] = durable_decision
-            merged["recovery_decision"] = durable_decision
+        # Recovery history is evidence only.  Route authority lives in the
+        # scoped, pending active_transition and is resolved exactly once after
+        # all node-local contract guards have run.
         durable_status = task_status(plan_state)
         pending_recovery = guarded.get("pending_recovery_action") or merged.get("pending_recovery_action") or {}
         recovery_type = str(pending_recovery.get("type") or "").strip().lower() if isinstance(pending_recovery, dict) else ""
@@ -13874,13 +17565,6 @@ class BioAnalystAgent:
                         "transition_guard": "step_completion_candidate_final_audit",
                     })
                 else:
-                    repair_feedback = self._action_format_repair_feedback(
-                        merged,
-                        task_id,
-                        invalid_hash=hashlib.sha256(contract_error.encode("utf-8")).hexdigest()[:20],
-                        invalid_excerpt=str((guarded.get("pending_action") or {}).get("code") or ""),
-                        contract_error={"error_type": "PRE_ACTION_CONTRACT_ERROR", "reason": contract_error},
-                    )
                     guarded.update({
                         "next_step": "generate",
                         "transition_guard": "step_completion_candidate_accepted",
@@ -14073,10 +17757,25 @@ class BioAnalystAgent:
                         "Planner routing was fused; repair the execution action using the existing plan."
                     ))],
                 })
+        skill_plan_impact_route = bool(
+            str(
+                (
+                    guarded.get("pending_skill_binding_proposal")
+                    or merged.get("pending_skill_binding_proposal")
+                    or {}
+                ).get("review_route")
+                or ""
+            ) == "planner_plan_impact_review"
+            and (
+                guarded.get("pending_plan_impact_review")
+                or merged.get("pending_plan_impact_review")
+            )
+        )
         if (
             node_name in {"generate", "execute", "supervisor", "supervisor_final_audit"}
             and str(guarded.get("next_step") or "") == "planner"
             and not self._plan_patch_requested({**merged, **guarded})
+            and not skill_plan_impact_route
         ):
             guarded.update({
                 "next_step": "generate",
@@ -14090,65 +17789,503 @@ class BioAnalystAgent:
                     "Keep the approved plan and repair or regenerate the current action instead."
                 ))],
             })
-        guarded_next = str(guarded.get("next_step") or "")
-        guarded_self_transition = (
-            (node_name == "generate" and guarded_next == "generate")
-            or (node_name == "execute" and guarded_next == "generate")
+        # The loop guard runs later against effective_route, after the one-shot
+        # recovery override has been resolved.  Checking the proposal here was
+        # the incident bug: Execute proposed Supervisor while the router later
+        # dispatched Generate.
+        return guarded
+
+    def _resolve_and_commit_effective_transition(
+        self,
+        node_name: str,
+        state: AgentState,
+        update: Dict[str, Any],
+        task_id: str,
+    ) -> Dict[str, Any]:
+        """Resolve one final route, enforce progress, and consume recovery once."""
+        resolved = dict(update or {})
+        proposed_route = str(
+            resolved.get("proposed_route")
+            or resolved.get("node_recommended_next_step")
+            or resolved.get("next_step")
+            or ""
+        ).strip()
+        pre_recovery_route = str(resolved.get("next_step") or proposed_route).strip()
+        plan_state = load_plan_state(self.data_path, task_id)
+        _, current_step = current_plan_step_with_index(plan_state)
+        # Only evidence emitted by this node invocation is current.  Falling
+        # back to AgentState replays the prior Execute attempt on legal early
+        # returns and can revive an old exhausted guard or RecoveryDecision.
+        current_evidence = (
+            dict(resolved.get("execution_evidence") or {})
+            if isinstance(resolved.get("execution_evidence"), Mapping)
+            else {}
         )
-        transition_recovery = guarded.get("pending_recovery_action") or merged.get("pending_recovery_action") or {}
-        transition_recovery_type = str(
-            transition_recovery.get("type") if isinstance(transition_recovery, dict) else ""
-        ).strip().lower()
-        if guarded_self_transition and transition_recovery_type != "action_format_repair":
-            _, transition_step = current_plan_step_with_index(load_plan_state(self.data_path, task_id))
-            transition_step_id = str(transition_step.get("step_id") or "task")
-            transition_reason = str(
-                guarded.get("generate_exit_reason")
-                or guarded.get("transition_guard")
-                or guarded.get("required_next_action")
-                or "continue"
-            ).strip().lower()
-            transition_fingerprint = str(
-                transition_recovery.get("invalid_response_hash")
-                if isinstance(transition_recovery, dict)
-                else ""
+        current_step_id = str(
+            resolved.get("current_step_id")
+            or current_evidence.get("step_id")
+            or (current_step or {}).get("step_id")
+            or ""
+        )
+        current_attempt = str(
+            current_evidence.get("attempt_id")
+            or current_evidence.get("execution_id")
+            or ""
+        )
+        try:
+            current_returncode = int(
+                current_evidence.get("returncode")
+                if current_evidence.get("returncode") is not None
+                else current_evidence.get("exit_code")
             )
+        except (TypeError, ValueError):
+            current_returncode = None
+        execution_validation = current_evidence.get("validation")
+        command_role = str(current_evidence.get("command_role") or "primary").lower()
+        current_execution_succeeded = bool(
+            node_name == "execute"
+            and current_evidence
+            and command_role not in {
+                "probe", "diagnostic", "optional_probe", "capability_probe",
+            }
+            and current_returncode == 0
+            and str(current_evidence.get("execution_status") or "").lower() != "failed"
+            and not (
+                isinstance(execution_validation, dict)
+                and execution_validation.get("passed") is False
+            )
+        )
+        application = (
+            dict(resolved.get("recovery_application") or {})
+            if isinstance(resolved.get("recovery_application"), dict)
+            else {}
+        )
+        newly_committed_decision_id = str(
+            application.get("decision_id")
+            if application.get("applied")
+            else ""
+        )
+        if newly_committed_decision_id and not current_attempt:
+            committed_decision = (
+                dict(resolved.get("recovery_decision") or {})
+                if isinstance(resolved.get("recovery_decision"), Mapping)
+                else {}
+            )
+            current_attempt = str(
+                committed_decision.get("trigger_event_id")
+                or committed_decision.get("attempt_id")
+                or ""
+            )
+        eligibility = recovery_transition_eligibility(
+            plan_state,
+            source_node=node_name,
+            current_step_id=current_step_id,
+            current_attempt_id=current_attempt,
+            current_execution_succeeded=current_execution_succeeded,
+            newly_committed_decision_id=newly_committed_decision_id,
+        )
+
+        effective_route = pre_recovery_route
+        override_source = ""
+        override_decision_id = ""
+        if eligibility.get("eligible"):
+            effective_route = str(eligibility.get("target_route") or "")
+            override_source = "recovery_transition"
+            override_decision_id = str(eligibility.get("decision_id") or "")
+            transition = dict(eligibility.get("transition") or {})
+            transition_kind = str(transition.get("kind") or "")
+            controller_guard = str(resolved.get("transition_guard") or "")
+            if (
+                transition_kind == RecoveryDecisionKind.COMPLETE_STEP.value
+                and pre_recovery_route == "supervisor_final_audit"
+                and bool(resolved.get("final_audit_requested"))
+            ):
+                effective_route = "supervisor_final_audit"
+                override_source = "controller_completion_route"
+            elif (
+                controller_guard in {
+                    "repeated_no_op_plan_patch_fused",
+                    "planner_requires_explicit_plan_patch",
+                }
+                and pre_recovery_route == "generate"
+            ):
+                effective_route = "generate"
+                override_source = "controller_plan_patch_guard"
+        elif str(eligibility.get("status") or "") in {"superseded", "expired"}:
+            override_source = "stale_recovery_transition_ignored"
+            override_decision_id = str(eligibility.get("decision_id") or "")
+            logger.warning(
+                "RECOVERY_TRANSITION_INELIGIBLE task=%s node=%s decision=%s status=%s reason=%s",
+                task_id,
+                node_name,
+                str(eligibility.get("decision_id") or ""),
+                str(eligibility.get("status") or ""),
+                str(eligibility.get("reason") or ""),
+            )
+        elif eligibility.get("ignored_current_event"):
+            override_source = "out_of_order_current_event_ignored"
+            override_decision_id = str(eligibility.get("decision_id") or "")
+            logger.warning(
+                "RECOVERY_CURRENT_EVENT_INELIGIBLE task=%s node=%s decision=%s reason=%s",
+                task_id,
+                node_name,
+                override_decision_id,
+                str(eligibility.get("reason") or ""),
+            )
+
+        allowed_routes = {
+            "generate", "execute", "planner", "consultant", "supervisor",
+            "supervisor_final_audit", "install_subagent", "ask_user", "finish", "blocked",
+        }
+        if effective_route not in allowed_routes:
+            effective_route = "supervisor"
+            override_source = "route_protocol_guard"
+            resolved["state_transition_error"] = (
+                "RECOVERY_EFFECTIVE_ROUTE_INVALID: controller routed to Supervisor"
+            )
+
+        progress_guard = (
+            dict(resolved.get("progress_guard_result") or {})
+            if isinstance(resolved.get("progress_guard_result"), dict)
+            else {}
+        )
+        progress_scope_matches = bool(
+            progress_guard
+            and not eligibility.get("ignored_current_event")
+            and str(progress_guard.get("source_node") or "") == node_name
+            and bool(str(progress_guard.get("step_id") or ""))
+            and str(progress_guard.get("step_id") or "") == current_step_id
+            and bool(str(progress_guard.get("attempt_id") or ""))
+            and str(progress_guard.get("attempt_id") or "") == current_attempt
+            and bool(str(progress_guard.get("trigger_event_id") or ""))
+            and str(progress_guard.get("trigger_event_id") or "") == current_attempt
+        )
+        progress_guard["observed_route"] = effective_route
+        progress_guard["scope_matches"] = progress_scope_matches
+        should_block = bool(
+            progress_scope_matches
+            and (
+                progress_guard.get("should_block") is True
+                or str(progress_guard.get("classification") or "").lower() == "exhausted"
+            )
+        )
+        block_reason_code = ""
+        block_reason = ""
+        if should_block:
+            block_reason_code = "RECOVERY_NO_PROGRESS_EXHAUSTED"
+            block_reason = str(
+                progress_guard.get("reason")
+                or "Recovery made no meaningful progress within the configured limit."
+            )
+            block_plan_and_downstream(
+                plan_state,
+                f"{block_reason_code}: {block_reason}",
+            )
+            effective_route = "blocked"
+            override_source = "progress_guard"
+        elif effective_route == "blocked":
+            transition = dict(eligibility.get("transition") or {})
+            block_reason_code = str(
+                transition.get("reason_code") or "RECOVERY_POLICY_BLOCKED"
+            )
+            block_reason = str(
+                transition.get("reason") or "RecoveryPolicy blocked the current step."
+            )
+            block_plan_and_downstream(
+                plan_state,
+                f"{block_reason_code}: {block_reason}",
+            )
+
+        pending_recovery = (
+            dict(resolved.get("pending_recovery_action") or {})
+            if isinstance(resolved.get("pending_recovery_action"), dict)
+            else {}
+        )
+        if (
+            not should_block
+            and str(resolved.get("generate_result") or "").upper()
+            not in {
+                "SKILL_CONTINUATION", "SKILL_BINDING_PROPOSED",
+                "SKILL_NO_PROGRESS", "STALE_NODE_RESULT",
+            }
+            and (
+                effective_route == node_name
+                or (
+                    effective_route == "generate"
+                    and node_name in {"generate", "execute"}
+                )
+            )
+            and node_name in {
+                "generate", "execute", "supervisor", "supervisor_final_audit",
+            }
+            and str(pending_recovery.get("type") or "").strip().lower() != "action_format_repair"
+        ):
+            task_state = dict(plan_state.get("task_state") or {})
+            budgets = dict(task_state.get("budgets") or {})
+            counts = dict(budgets.get("same_transition_by_signature") or {})
             signature = ":".join(
                 part for part in (
-                    f"{node_name}->{guarded_next}",
-                    transition_step_id,
-                    transition_reason,
-                    transition_fingerprint,
+                    f"{node_name}->{effective_route}",
+                    current_step_id or "task",
+                    str(
+                        resolved.get("generate_exit_reason")
+                        or resolved.get("transition_guard")
+                        or resolved.get("required_next_action")
+                        or "continue"
+                    ).strip().lower(),
                 )
                 if part
             )
-            count, _ = self._increment_durable_budget(
-                task_id,
-                "same_transition_by_signature",
-                signature,
-                limit=2,
-            )
+            count = int(counts.get(signature) or 0) + 1
+            counts[signature] = count
+            budgets["same_transition_by_signature"] = counts
+            budgets["same_transition_count"] = count
+            task_state["budgets"] = budgets
+            plan_state["task_state"] = task_state
+            progress_guard["same_transition_signature"] = signature
+            progress_guard["same_transition_count"] = count
             if count > 2:
-                reason = f"STATE_MACHINE_STALLED:{node_name}->{guarded_next}"
-                progress = self._finalize_blocked_state(task_id, reason)
-                output.print_once(
-                    f"state_machine_stalled:{task_id}:{node_name}:{guarded_next}",
-                    (
-                        "Task stopped by the state-machine loop guard: "
-                        f"{node_name} -> {guarded_next}. "
-                        f"Details were written to {self.data_path}/task_outputs/{task_id}/report.md."
-                    ),
-                    Fore.RED,
+                block_reason_code = "STATE_MACHINE_STALLED"
+                block_reason = f"{node_name}->{effective_route}"
+                block_plan_and_downstream(
+                    plan_state,
+                    f"{block_reason_code}: {block_reason}",
                 )
-                guarded.update({
-                    "next_step": "finish",
-                    "pending_action": {},
-                    "plan_progress": progress,
-                    "task_status": TASK_STATUS_BLOCKED,
-                    "transition_guard": "same_transition_budget_exhausted",
-                    "state_transition_error": reason,
+                effective_route = "blocked"
+                override_source = "loop_guard"
+
+        if (
+            current_execution_succeeded
+            and not eligibility.get("ignored_current_event")
+            and effective_route == "supervisor"
+        ):
+            mark_step_verification_pending(
+                plan_state,
+                step_id=current_step_id,
+                attempt_id=current_attempt,
+                evidence="successful Execute awaiting Supervisor validation",
+            )
+
+        dispatch_route = "finish" if effective_route == "blocked" else effective_route
+        route_state_before = dict(plan_state.get("task_state") or {})
+        route_sequence = int(route_state_before.get("route_sequence") or 0) + 1
+        route_identity = {
+            "task_id": task_id,
+            "route_sequence": route_sequence,
+            "source_node": node_name,
+            "proposed_route": proposed_route,
+            "pre_guard_effective_route": (
+                str(eligibility.get("target_route") or pre_recovery_route)
+                if eligibility.get("eligible")
+                else pre_recovery_route
+            ),
+            "effective_route": effective_route,
+            "override_decision_id": override_decision_id,
+            "current_step_id": current_step_id,
+            "current_attempt": current_attempt,
+        }
+        route_event_id = "route-" + hashlib.sha256(
+            json.dumps(route_identity, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        ).hexdigest()[:20]
+        route_record = {
+            **route_identity,
+            "route_event_id": route_event_id,
+            "dispatch_route": dispatch_route,
+            "override_source": override_source,
+            "progress_guard_result": progress_guard,
+            "block_reason_code": block_reason_code,
+            "block_reason": block_reason,
+            "resolved_at": datetime.now().isoformat(timespec="seconds"),
+        }
+        recovery_transition_consumed = False
+        if eligibility.get("eligible"):
+            consumed = consume_recovery_transition(
+                plan_state,
+                decision_id=override_decision_id,
+                route_record=route_record,
+            )
+            recovery_transition_consumed = bool(consumed)
+            if not consumed:
+                block_reason_code = "RECOVERY_TRANSITION_CONSUME_FAILED"
+                block_reason = f"decision_id={override_decision_id or '<missing>'}"
+                block_plan_and_downstream(
+                    plan_state,
+                    f"{block_reason_code}: {block_reason}",
+                )
+                effective_route = "blocked"
+                dispatch_route = "finish"
+                override_source = "recovery_transition_consume_guard"
+                route_record.update({
+                    "effective_route": effective_route,
+                    "dispatch_route": dispatch_route,
+                    "override_source": override_source,
+                    "block_reason_code": block_reason_code,
+                    "block_reason": block_reason,
                 })
-        return guarded
+            transition = dict(eligibility.get("transition") or {})
+            if consumed and str(transition.get("kind") or "") == RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value:
+                resolved["reconciliation_evidence"] = {
+                    "decision_id": override_decision_id,
+                    "attempt_id": str(transition.get("attempt_id") or transition.get("trigger_event_id") or ""),
+                    "status": "consumed",
+                    "evidence": list(transition.get("evidence") or []),
+                    "reason": str(transition.get("reason") or ""),
+                }
+
+        # consume_recovery_transition replaces task_state with the consumed
+        # lifecycle.  Re-read it here; writing the pre-consume snapshot back
+        # would resurrect active_transition=pending and recreate the incident.
+        route_task_state = dict(plan_state.get("task_state") or {})
+        route_task_state["route_sequence"] = route_sequence
+        route_task_state["last_route_resolution"] = route_record
+        route_task_state["route_resolution_history"] = [
+            *list(route_task_state.get("route_resolution_history") or []),
+            route_record,
+        ]
+        if block_reason_code:
+            recovery_state = dict(route_task_state.get("recovery_state") or {})
+            recovery_state.update({
+                "phase": "blocked",
+                "status": "BLOCKED",
+                "reason_code": block_reason_code,
+                "reason": block_reason,
+            })
+            route_task_state["recovery_state"] = recovery_state
+        plan_state["task_state"] = route_task_state
+        plan_progress = self._persist_plan_tracker(task_id, plan_state)
+
+        resolved.update({
+            "proposed_route": proposed_route,
+            "pre_guard_effective_route": route_record["pre_guard_effective_route"],
+            "effective_route": effective_route,
+            "dispatch_route": dispatch_route,
+            "override_source": override_source,
+            "override_decision_id": override_decision_id,
+            "route_event_id": route_event_id,
+            "current_step_id": current_step_id,
+            "current_attempt": current_attempt,
+            "progress_guard_result": progress_guard,
+            "route_resolution": route_record,
+            "recovery_transition_consumed": recovery_transition_consumed,
+            "next_step": dispatch_route,
+            "plan_progress": plan_progress,
+        })
+        if effective_route == "blocked":
+            resolved.update({
+                "task_status": TASK_STATUS_BLOCKED,
+                "pending_action": {},
+                "pending_recovery_action": {},
+                "required_next_action": "BLOCKED",
+                "recovery_phase": "blocked",
+                "recovery_status": block_reason_code,
+                "transition_guard": (
+                    "recovery_no_progress_exhausted"
+                    if block_reason_code == "RECOVERY_NO_PROGRESS_EXHAUSTED"
+                    else "same_transition_budget_exhausted"
+                    if block_reason_code == "STATE_MACHINE_STALLED"
+                    else "recovery_transition_consume_failed"
+                    if block_reason_code == "RECOVERY_TRANSITION_CONSUME_FAILED"
+                    else "recovery_policy_blocked"
+                ),
+                "state_transition_error": f"{block_reason_code}:{block_reason}",
+            })
+        return resolved
+
+    @staticmethod
+    def _dispatch_effective_route(state: Mapping[str, Any], source_node: str) -> str:
+        """Return the current node's committed dispatch route, never Recovery history.
+
+        ``route_resolution`` is replaced by every profiled runtime-node update,
+        so matching both source node and event id prevents a prior node's route
+        from becoming another sticky override.  The narrow Execute fallback is
+        for checkpoints written before route records existed: a newer successful
+        Execute may resume only toward Supervisor, never toward a legacy
+        ``CONTINUE -> generate`` projection.
+        """
+        state_map = dict(state or {})
+        record = (
+            dict(state_map.get("route_resolution") or {})
+            if isinstance(state_map.get("route_resolution"), Mapping)
+            else {}
+        )
+        state_event_id = str(state_map.get("route_event_id") or "")
+        record_event_id = str(record.get("route_event_id") or "")
+        record_source = str(record.get("source_node") or "")
+        if record:
+            if (
+                record_source != str(source_node or "")
+                or not state_event_id
+                or record_event_id != state_event_id
+            ):
+                logger.error(
+                    "ROUTE_RESOLUTION_SCOPE_MISMATCH source=%s record_source=%s "
+                    "state_event=%s record_event=%s",
+                    source_node,
+                    record_source,
+                    state_event_id,
+                    record_event_id,
+                )
+                return "finish"
+            route = str(
+                record.get("dispatch_route")
+                or state_map.get("dispatch_route")
+                or record.get("effective_route")
+                or ""
+            ).strip().lower()
+            if route == "blocked":
+                return "finish"
+            if route in {
+                "generate", "execute", "planner", "consultant", "supervisor",
+                "supervisor_final_audit", "install_subagent", "ask_user", "finish",
+            }:
+                return route
+            logger.error(
+                "ROUTE_RESOLUTION_TARGET_INVALID source=%s event=%s route=%s",
+                source_node,
+                record_event_id,
+                route,
+            )
+            return "finish"
+
+        if str(source_node or "") == "execute":
+            execution = (
+                dict(state_map.get("execution_evidence") or {})
+                if isinstance(state_map.get("execution_evidence"), Mapping)
+                else {}
+            )
+            try:
+                returncode = int(
+                    execution.get("returncode")
+                    if execution.get("returncode") is not None
+                    else execution.get("exit_code")
+                )
+            except (TypeError, ValueError):
+                returncode = None
+            validation = execution.get("validation")
+            execution_succeeded = bool(
+                execution
+                and returncode == 0
+                and str(execution.get("execution_status") or "").lower() != "failed"
+                and not (
+                    isinstance(validation, Mapping)
+                    and validation.get("passed") is False
+                )
+            )
+            if execution_succeeded:
+                logger.warning(
+                    "LEGACY_EXECUTE_ROUTE_RECOVERED: successful Execute without a "
+                    "route record resumes at Supervisor"
+                )
+                return "supervisor"
+
+        # Read-compatible fallback for old checkpoints.  It deliberately reads
+        # only the node-local proposal, never recovery_decision/history.
+        return str(
+            state_map.get("dispatch_route")
+            or state_map.get("effective_route")
+            or state_map.get("next_step")
+            or "finish"
+        ).strip().lower()
 
     def _profile_node(self, node_name: str, func):
         async def wrapped(state: AgentState):
@@ -14224,6 +18361,10 @@ class BioAnalystAgent:
             if isinstance(result, dict):
                 if node_name == "generate" and not result.get("next_step"):
                     result["next_step"] = str(result.get("node_recommended_next_step") or "")
+                result.setdefault(
+                    "proposed_route",
+                    str(result.get("node_recommended_next_step") or result.get("next_step") or ""),
+                )
                 result = self._apply_transition_guard(
                     node_name,
                     state,
@@ -14231,6 +18372,15 @@ class BioAnalystAgent:
                     task_id,
                     generate_mutations=generate_mutations,
                 )
+                if node_name in {
+                    "generate", "execute", "supervisor", "supervisor_final_audit",
+                }:
+                    result = self._resolve_and_commit_effective_transition(
+                        node_name,
+                        state,
+                        result,
+                        task_id,
+                    )
             self._record_profiler_state_update(task_id, node_name, state, result)
             return result
         return wrapped
@@ -20622,21 +24772,644 @@ If the user is actually asking you to run analysis or inspect local files, say t
             rag_history = state.get("rag_history", [])
             task_id = state.get("task_id", "default")
 
+            durable_consultant_state = load_plan_state(self.data_path, task_id)
+            pending_impact_question = dict(
+                (durable_consultant_state.get("task_state") or {}).get(
+                    "pending_plan_impact_review"
+                ) or {}
+            )
+            if (
+                str(pending_impact_question.get("status") or "")
+                == "waiting_user"
+            ):
+                return {
+                    "messages": [SystemMessage(content=(
+                        "Consultant is routing the Planner-owned semantic gap "
+                        "to the user without answering it on Planner's behalf."
+                    ))],
+                    "pending_human_question": {
+                        "type": "plan_impact_review",
+                        "stage": "consultant",
+                        "question": str(
+                            pending_impact_question.get("question") or ""
+                        ),
+                        "requested_slots": list(
+                            pending_impact_question.get("requested_slots") or []
+                        ),
+                        "resume_step": "planner",
+                        "owner": "user",
+                    },
+                    "next_step": "ask_user",
+                }
+            pending_skill_proposal = dict(
+                (durable_consultant_state.get("task_state") or {}).get(
+                    "pending_skill_binding_proposal"
+                )
+                or {}
+            )
+            pending_proposal_status = str(
+                pending_skill_proposal.get("status") or ""
+            )
+            if pending_proposal_status == "approved_for_plan_impact":
+                return {
+                    "messages": [SystemMessage(content=(
+                        "The reviewed step-scoped Skill proposal belongs to "
+                        "Planner plan-impact review."
+                    ))],
+                    "pending_action": {},
+                    "next_step": "planner",
+                }
+            if (
+                pending_skill_proposal
+                and pending_proposal_status != "approved_for_task_commit"
+            ):
+                try:
+                    return await self._run_consultant_skill_resolution(
+                        state,
+                        task_id=task_id,
+                        durable=durable_consultant_state,
+                        proposal=pending_skill_proposal,
+                    )
+                except StateCASConflict as exc:
+                    return self._skill_access_cas_stale_update(
+                        caller_node="consultant",
+                        next_step="consultant",
+                        detail=str(exc),
+                    )
+                except SkillAccessError as exc:
+                    return {
+                        "messages": [SystemMessage(content=json.dumps(
+                            exc.to_dict(), ensure_ascii=False, sort_keys=True,
+                        ))],
+                        "skill_decision_result": exc.to_dict(),
+                        "pending_action": {},
+                        "next_step": "consultant",
+                    }
+            pending_task_skill_change = (
+                deepcopy(pending_skill_proposal)
+                if pending_proposal_status == "approved_for_task_commit"
+                else {}
+            )
+            pending_task_skill_context: Dict[str, Any] = {}
+            if pending_task_skill_change:
+                try:
+                    pending_access = normalize_skill_access_state(
+                        (durable_consultant_state.get("task_state") or {}).get(
+                            "skill_access_state"
+                        )
+                        or durable_consultant_state.get("skill_access_state")
+                    )
+                    pending_snapshot = SkillAccessService._verified_snapshot(
+                        pending_access,
+                        str(
+                            pending_task_skill_change.get(
+                                "candidate_snapshot_id"
+                            )
+                            or ""
+                        ),
+                    )
+                    pending_excerpt_ids = {
+                        str(item)
+                        for item in (
+                            pending_task_skill_change.get(
+                                "verified_excerpt_refs"
+                            )
+                            or pending_task_skill_change.get("evidence_refs")
+                            or []
+                        )
+                        if str(item) in (pending_access.get("excerpts") or {})
+                    }
+                    pending_excerpts = [
+                        SkillAccessService._verified_excerpt(
+                            pending_access, excerpt_id
+                        )
+                        for excerpt_id in sorted(pending_excerpt_ids)
+                    ]
+                    pending_task_skill_context = {
+                        "candidate_skill_id": str(
+                            pending_snapshot.get("skill_id") or ""
+                        ),
+                        "candidate_snapshot_id": str(
+                            pending_snapshot.get("snapshot_id") or ""
+                        ),
+                        "content_hash": str(
+                            pending_snapshot.get("content_hash") or ""
+                        ),
+                        "requested_scope": str(
+                            pending_task_skill_change.get("requested_scope")
+                            or ""
+                        ),
+                        "relation": str(
+                            pending_task_skill_change.get("relation") or ""
+                        ),
+                        "justification": str(
+                            pending_task_skill_change.get("justification") or ""
+                        ),
+                        "consultant_review": deepcopy(dict(
+                            pending_task_skill_change.get("review") or {}
+                        )),
+                        "available_headings": deepcopy(list(
+                            pending_snapshot.get("heading_index") or []
+                        )),
+                        "relevant_skill_excerpts": pending_excerpts,
+                        "required_transaction": (
+                            "Interpret the authoritative user evidence in the "
+                            "normal TaskSpec candidate flow. If it truly changes "
+                            "task method/capability semantics, commit the typed "
+                            "TaskSpec operations and select this reviewed "
+                            "candidate together. Do not merely echo a Skill ID."
+                        ),
+                    }
+                except SkillAccessError as exc:
+                    return {
+                        "messages": [SystemMessage(content=json.dumps(
+                            exc.to_dict(), ensure_ascii=False, sort_keys=True,
+                        ))],
+                        "skill_decision_result": exc.to_dict(),
+                        "pending_action": {},
+                        "next_step": "consultant",
+                    }
+
             def commit_candidate_update(
                 update: Mapping[str, Any],
             ) -> Dict[str, Any]:
-                return self._commit_consultant_update(task_id, update)
+                if not pending_task_skill_change:
+                    return self._commit_consultant_update(task_id, update)
 
-            task_spec = self._task_spec_for_state(dict(state), messages)
-            if not task_spec_is_initialized(task_spec):
-                stale_consultation = dict(state.get("consultation_state") or {})
-                if (
-                    state.get("consultant_contract_repair")
-                    or isinstance(stale_consultation.get("finalize_protocol"), Mapping)
-                    or str(stale_consultation.get("phase") or "") in {
-                        "finalize", "ready_to_finalize", "ready_to_plan",
+                before = load_plan_state(self.data_path, task_id)
+                before_task_state = dict(before.get("task_state") or {})
+                before_access = normalize_skill_access_state(
+                    before_task_state.get("skill_access_state")
+                    or before.get("skill_access_state")
+                )
+                prepared_update = dict(update or {})
+                candidate_skill_id = str(
+                    pending_task_skill_change.get("candidate_skill_id") or ""
+                )
+                selected_ids = {
+                    str(item)
+                    for item in (
+                        prepared_update.get("selected_skills")
+                        or prepared_update.get("selected_skill_ids")
+                        or []
+                    )
+                    if str(item)
+                }
+                proposed_task = prepared_update.get("task_spec")
+                proposed_revision = task_spec_revision(proposed_task)
+                base_task_revision = int(
+                    pending_task_skill_change.get("base_task_revision") or 0
+                )
+                current_pointer = dict(
+                    before_task_state.get(
+                        "pending_skill_binding_proposal"
+                    ) or {}
+                )
+                pointer_matches = bool(
+                    str(current_pointer.get("proposal_id") or "")
+                    == str(
+                        pending_task_skill_change.get("proposal_id") or ""
+                    )
+                    and str(current_pointer.get("status") or "")
+                    == "approved_for_task_commit"
+                    and str(
+                        current_pointer.get("candidate_snapshot_id") or ""
+                    ) == str(
+                        pending_task_skill_change.get(
+                            "candidate_snapshot_id"
+                        )
+                        or ""
+                    )
+                )
+                proposal_authority_current = bool(
+                    pointer_matches
+                    and base_task_revision
+                    == task_spec_revision(
+                        canonical_task_spec_for_state(before)
+                    )
+                    and int(
+                        pending_task_skill_change.get(
+                            "base_plan_revision"
+                        )
+                        or 0
+                    ) == int(before.get("plan_revision") or 0)
+                    and int(
+                        pending_task_skill_change.get(
+                            "base_user_turn_revision"
+                        )
+                        if pending_task_skill_change.get(
+                            "base_user_turn_revision"
+                        ) is not None
+                        else self._authoritative_user_turn_revision(before)
+                    ) == self._authoritative_user_turn_revision(before)
+                )
+                if not proposal_authority_current:
+                    if pointer_matches:
+                        stale_access = normalize_skill_access_state(
+                            before_access
+                        )
+                        stale_proposal = (
+                            stale_access.get("binding_proposals") or {}
+                        ).get(str(
+                            pending_task_skill_change.get("proposal_id") or ""
+                        ))
+                        if isinstance(stale_proposal, MutableMapping):
+                            stale_proposal["status"] = "stale"
+                            stale_proposal["stale_reason"] = (
+                                "authoritative_revision_changed"
+                            )
+                        snapshot_id = str(
+                            pending_task_skill_change.get(
+                                "candidate_snapshot_id"
+                            )
+                            or ""
+                        )
+                        for ref in stale_access.get(
+                            "selected_skill_refs"
+                        ) or []:
+                            if (
+                                isinstance(ref, MutableMapping)
+                                and str(ref.get("snapshot_id") or "")
+                                == snapshot_id
+                                and str(ref.get("status") or "")
+                                == "candidate"
+                            ):
+                                ref["candidate_disposition"] = "stale"
+                                ref["stale_reason"] = (
+                                    "authoritative_revision_changed"
+                                )
+                        stale_access = record_skill_access_event(
+                            stale_access,
+                            "stale_skill_binding_proposal_discarded",
+                            {
+                                "proposal_id": str(
+                                    pending_task_skill_change.get(
+                                        "proposal_id"
+                                    )
+                                    or ""
+                                ),
+                                "reason": (
+                                    "authoritative_revision_changed"
+                                ),
+                            },
+                        )
+                        before_task_state.pop(
+                            "pending_skill_binding_proposal", None
+                        )
+                        before_task_state["skill_access_state"] = stale_access
+                        before["task_state"] = before_task_state
+                        before["skill_access_state"] = deepcopy(stale_access)
+                        try:
+                            save_plan_state(self.data_path, task_id, before)
+                        except StateCASConflict:
+                            pass
+                    return {
+                        "messages": [SystemMessage(content=json.dumps({
+                            "decision_result": "STALE_NODE_RESULT",
+                            "caller_node": "consultant",
+                            "changed_preconditions": [
+                                "skill_binding_transaction"
+                            ],
+                            "counts_as_failure": False,
+                        }, ensure_ascii=False, sort_keys=True))],
+                        "stale_node_result": {
+                            "decision_result": "STALE_NODE_RESULT",
+                            "caller_node": "consultant",
+                            "changed_preconditions": [
+                                "skill_binding_transaction"
+                            ],
+                        },
+                        "next_step": "consultant",
                     }
+                semantic_commit_succeeded = bool(
+                    str(prepared_update.get("next_step") or "") == "planner"
+                    and task_spec_is_initialized(proposed_task)
+                    and proposed_revision == base_task_revision + 1
+                    and task_semantic_hash(proposed_task)
+                    != task_semantic_hash(
+                        canonical_task_spec_for_state(before)
+                    )
+                )
+                proposed_task_selected_ids = list(dict.fromkeys(
+                    str(item)
+                    for item in (
+                        (proposed_task.get("capability_intent") or {}).get(
+                            "selected_skill_ids"
+                        )
+                        if isinstance(proposed_task, Mapping)
+                        else []
+                    )
+                    or []
+                    if str(item)
+                ))
+                selection_error = ""
+                try:
+                    authorised_selected_ids = (
+                        self._authorised_task_skill_selection(
+                            before_access,
+                            pending_task_skill_change,
+                        )
+                    )
+                except SkillAccessError as exc:
+                    authorised_selected_ids = []
+                    selection_error = exc.code
+                selected_set_exact = bool(
+                    not selection_error
+                    and selected_ids == set(authorised_selected_ids)
+                    and set(proposed_task_selected_ids)
+                    == set(authorised_selected_ids)
+                    and len(proposed_task_selected_ids)
+                    == len(authorised_selected_ids)
+                )
+                candidate_selected = candidate_skill_id in selected_ids
+                if not (
+                    semantic_commit_succeeded
+                    and candidate_selected
+                    and selected_set_exact
                 ):
+                    prepared_update.update({
+                        "skill_access_state": deepcopy(before_access),
+                        "selected_skill_refs": deepcopy(list(
+                            before_access.get("selected_skill_refs") or []
+                        )),
+                        "pending_skill_binding_proposal": deepcopy(
+                            pending_task_skill_change
+                        ),
+                    })
+                    if str(prepared_update.get("next_step") or "") != "ask_user":
+                        prepared_update["messages"] = [
+                            *list(prepared_update.get("messages") or []),
+                            SystemMessage(content=json.dumps({
+                                "decision_result": (
+                                    "TASK_SKILL_CHANGE_COMMIT_INCOMPLETE"
+                                ),
+                                "proposal_id": str(
+                                    pending_task_skill_change.get("proposal_id")
+                                    or ""
+                                ),
+                                "semantic_commit_succeeded": (
+                                    semantic_commit_succeeded
+                                ),
+                                "candidate_selected": candidate_selected,
+                                "selected_set_exact": selected_set_exact,
+                                "selection_error": selection_error,
+                                "expected_selected_skill_ids": list(
+                                    authorised_selected_ids
+                                ),
+                                "observed_selected_skill_ids": sorted(
+                                    selected_ids
+                                ),
+                                "observed_task_skill_ids": list(
+                                    proposed_task_selected_ids
+                                ),
+                                "required_next_action": (
+                                    "Main Consultant must commit the explicit "
+                                    "user-intent method/capability change and "
+                                    "the exact reviewed supplement/replace "
+                                    "Skill set in one candidate transaction."
+                                ),
+                            }, ensure_ascii=False, sort_keys=True)),
+                        ]
+                        prepared_update["next_step"] = "consultant"
+                    return prepared_update
+
+                access = normalize_skill_access_state(before_access)
+                old_active_refs = [
+                    deepcopy(dict(item))
+                    for item in access.get("selected_skill_refs") or []
+                    if isinstance(item, Mapping)
+                    and str(item.get("status") or "") == "active"
+                ]
+                proposal_id = str(
+                    pending_task_skill_change.get("proposal_id") or ""
+                )
+                durable_proposal = (
+                    access.get("binding_proposals") or {}
+                ).get(proposal_id)
+                if not isinstance(durable_proposal, MutableMapping):
+                    raise SkillAccessError(
+                        "SKILL_BINDING_PROPOSAL_UNAVAILABLE", proposal_id
+                    )
+                if str(durable_proposal.get("status") or "") != (
+                    "approved_for_task_commit"
+                ):
+                    raise SkillAccessError(
+                        "SKILL_BINDING_REVIEW_REQUIRED", proposal_id
+                    )
+                # The TaskSpec method/capability change is now canonical, but
+                # the binding remains a candidate until Planner accepts its
+                # effect on the current Plan.  This keeps formal activation
+                # strictly behind plan_impact_review.
+                durable_proposal["status"] = "approved_for_plan_impact"
+                durable_proposal["task_committed_at_revision"] = (
+                    proposed_revision
+                )
+                candidate_refs = [
+                    deepcopy(dict(item))
+                    for item in access.get("selected_skill_refs") or []
+                    if isinstance(item, Mapping)
+                    and str(item.get("snapshot_id") or "")
+                    == str(
+                        pending_task_skill_change.get(
+                            "candidate_snapshot_id"
+                        )
+                        or ""
+                    )
+                    and str(item.get("status") or "") == "candidate"
+                ]
+                if len(candidate_refs) != 1:
+                    raise SkillAccessError(
+                        "SKILL_BINDING_CANDIDATE_UNAVAILABLE",
+                        f"candidate_refs={len(candidate_refs)}",
+                    )
+                active_ids = self._active_skill_ids_from_refs(
+                    access.get("selected_skill_refs") or []
+                )
+                access = record_skill_access_event(
+                    access,
+                    "task_skill_change_committed_pending_plan_impact",
+                    {
+                        "proposal_id": proposal_id,
+                        "old_task_revision": int(
+                            pending_task_skill_change.get("base_task_revision") or 0
+                        ),
+                        "new_task_revision": proposed_revision,
+                        "candidate_snapshot_id": str(
+                            pending_task_skill_change.get(
+                                "candidate_snapshot_id"
+                            )
+                            or ""
+                        ),
+                    },
+                )
+                pending_impact = {
+                    "mode": "plan_impact_review",
+                    "proposal_id": str(
+                        pending_task_skill_change.get("proposal_id") or ""
+                    ),
+                    "base_task_revision": int(
+                        pending_task_skill_change.get("base_task_revision") or 0
+                    ),
+                    "new_task_revision": proposed_revision,
+                    "base_plan_revision": int(
+                        pending_task_skill_change.get("base_plan_revision")
+                        if pending_task_skill_change.get("base_plan_revision")
+                        is not None
+                        else before.get("plan_revision") or 0
+                    ),
+                    "base_user_turn_revision": (
+                        self._authoritative_user_turn_revision(before)
+                    ),
+                    "skill_change": {
+                        "proposal": deepcopy(pending_task_skill_change),
+                        "consultant_review": deepcopy(dict(
+                            pending_task_skill_change.get("review") or {}
+                        )),
+                        "old_task_spec": deepcopy(
+                            canonical_task_spec_for_state(before)
+                        ),
+                        "old_active_skill_refs": old_active_refs,
+                        "candidate_skill_refs": candidate_refs,
+                        "relation": str(
+                            pending_task_skill_change.get("relation") or ""
+                        ),
+                    },
+                    "status": "pending",
+                }
+                # One CAS commit owns TaskSpec, the inactive canonical
+                # candidate ref, and the pending Planner review.  No partial
+                # TaskSpec mutation is observable if validation or the write
+                # fails.
+                prepared_update.update({
+                    "skill_access_state": deepcopy(access),
+                    "selected_skill_refs": deepcopy(list(
+                        access.get("selected_skill_refs") or []
+                    )),
+                    "selected_skills": list(active_ids),
+                    "selected_skill_ids": list(active_ids),
+                    "pending_skill_binding_proposal": {},
+                    "pending_plan_impact_review": deepcopy(pending_impact),
+                    "expected_state_generation": int(
+                        before.get("state_generation") or 0
+                    ),
+                    "expected_plan_revision": int(
+                        before.get("plan_revision") or 0
+                    ),
+                    "expected_user_turn_revision": (
+                        self._authoritative_user_turn_revision(before)
+                    ),
+                    "expected_pending_skill_proposal_id": proposal_id,
+                    "expected_pending_skill_proposal_status": (
+                        "approved_for_task_commit"
+                    ),
+                    "expected_pending_skill_snapshot_id": str(
+                        pending_task_skill_change.get(
+                            "candidate_snapshot_id"
+                        )
+                        or ""
+                    ),
+                })
+                try:
+                    committed = self._commit_consultant_update(
+                        task_id, prepared_update
+                    )
+                except StateCASConflict as exc:
+                    return {
+                        "messages": [
+                            *list(prepared_update.get("messages") or []),
+                            SystemMessage(content=json.dumps({
+                                "decision_result": "STALE_NODE_RESULT",
+                                "caller_node": "consultant",
+                                "changed_preconditions": [
+                                    "skill_binding_transaction"
+                                ],
+                                "detail": str(exc),
+                                "counts_as_failure": False,
+                            }, ensure_ascii=False, sort_keys=True)),
+                        ],
+                        "stale_node_result": {
+                            "decision_result": "STALE_NODE_RESULT",
+                            "caller_node": "consultant",
+                            "changed_preconditions": [
+                                "skill_binding_transaction"
+                            ],
+                        },
+                        "next_step": "consultant",
+                    }
+                committed["selected_skills"] = list(active_ids)
+                committed["selected_skill_ids"] = list(active_ids)
+                committed["pending_skill_binding_proposal"] = {}
+                committed["pending_plan_impact_review"] = deepcopy(
+                    pending_impact
+                )
+                committed["next_step"] = "planner"
+                return committed
+
+            durable_consultant_entry = load_plan_state(self.data_path, task_id)
+            durable_consultant_task_state = dict(
+                durable_consultant_entry.get("task_state") or {}
+            )
+            task_spec = self._task_spec_for_state(dict(state), messages)
+            stale_consultation = dict(
+                state.get("consultation_state")
+                or durable_consultant_task_state.get("consultation_state")
+                or {}
+            )
+            entry_state = consultant_entry_disposition(
+                durable_consultant_entry,
+                consultation_state=stale_consultation,
+            )
+            if entry_state.get("disposition") == (
+                ConsultantEntryDisposition.FAIL_CANONICAL_INCONSISTENCY.value
+            ):
+                failure = deepcopy(entry_state)
+                return {
+                    "messages": [SystemMessage(content=json.dumps(
+                        failure, ensure_ascii=False, sort_keys=True,
+                    ))],
+                    "consultation_state": stale_consultation,
+                    "binding_phase": deepcopy(dict(
+                        failure.get("binding_phase") or {}
+                    )),
+                    "consultant_commit_rejection": deepcopy(dict(
+                        durable_consultant_task_state.get(
+                            "consultant_commit_rejection"
+                        ) or failure
+                    )),
+                    "consultant_pending_transition": deepcopy(dict(
+                        durable_consultant_task_state.get(
+                            "consultant_pending_transition"
+                        ) or {}
+                    )),
+                    "consultant_no_progress_ledger": deepcopy(dict(
+                        durable_consultant_task_state.get(
+                            "consultant_no_progress_ledger"
+                        ) or {}
+                    )),
+                    "skill_decision_result": failure,
+                    "canonical_commit": {
+                        "succeeded": False,
+                        "error_code": (
+                            "CONSULTANT_CANONICAL_STATE_INCONSISTENT"
+                        ),
+                    },
+                    "task_status": TASK_STATUS_FAILED,
+                    "failure_owner": "controller",
+                    "contract_status": "internal_protocol",
+                    "pending_human_question": {},
+                    "next_step": str(
+                        failure.get("terminal_route") or "finish"
+                    ),
+                }
+            if not task_spec_is_initialized(task_spec):
+                legacy_reset = legacy_uninitialized_task_reset_decision(
+                    durable_consultant_entry,
+                    consultation_state=stale_consultation,
+                    contract_repair_present=bool(
+                        state.get("consultant_contract_repair")
+                    ),
+                )
+                if legacy_reset["allowed"]:
                     # A legacy semantic-empty TaskSpec cannot own a valid
                     # finalized contract.  Preserve raw conversation and any
                     # skill hint, but reset only the stale consultation phase
@@ -20658,6 +25431,11 @@ If the user is actually asking you to run analysis or inspect local files, say t
                         **dict(state),
                         "consultation_state": recovered_consultation,
                         "consultant_contract_repair": {},
+                        "consultant_no_progress_ledger": deepcopy(dict(
+                            legacy_reset.get(
+                                "preserved_consultant_no_progress_ledger"
+                            ) or {}
+                        )),
                         "pending_human_question": {},
                     }
             task_spec_repair_issues = [
@@ -21227,26 +26005,23 @@ question. Never guess a scientific or database identity.
                     ),
                 )
                 with preprocess_recorder.phase("session_archive", cache_miss=True) as phase_stats:
-                    archive_enrichment = await run_optional_enrichment(
-                        lambda: self._consultant_archive_facts_context(
-                            query=archive_query,
-                            project_id=project_id,
-                            exclude_task_id=task_id,
-                            limit=4,
-                            raise_errors=True,
-                        ),
-                        timeout_seconds=CONSULTANT_OPTIONAL_ARCHIVE_TIMEOUT_SECONDS,
-                    )
-                    archive_context = str(archive_enrichment.get("value") or "")
-                    try:
-                        archive_rows_returned = len(
-                            dict(json.loads(archive_context or "{}"))
-                            .get("durable_archive_facts", [])
-                        )
-                    except (TypeError, ValueError, json.JSONDecodeError):
-                        archive_rows_returned = 0
+                    # Cross-task archive facts are advisory only.  Running the
+                    # SQLite lookup here used to add a fixed timeout to the
+                    # canonical Consultant path.  Defer it and fail open; the
+                    # current task's durable state remains the sole authority.
+                    archive_context = ""
+                    archive_rows_returned = 0
+                    archive_enrichment = {
+                        "value": "",
+                        "timed_out": False,
+                        "failed_open": True,
+                        "busy_or_locked": False,
+                        "error_type": "OptionalArchiveObservationDeferred",
+                        "elapsed_ms": 0.0,
+                        "deferred": True,
+                    }
                     archive_telemetry = {
-                        "query_count": 1,
+                        "query_count": 0,
                         "query_chars": len(archive_query),
                         "result_chars": len(archive_context),
                         "rows_returned": archive_rows_returned,
@@ -21255,14 +26030,17 @@ question. Never guess a scientific or database identity.
                         "busy_or_locked": bool(archive_enrichment.get("busy_or_locked")),
                         "error_type": str(archive_enrichment.get("error_type") or ""),
                         "elapsed_ms": float(archive_enrichment.get("elapsed_ms") or 0.0),
+                        "deferred": True,
                     }
                     phase_stats.update({
+                        "call_count": 0,
                         "query_chars": len(archive_query),
                         "output_chars": len(archive_context),
                         "returned_item_count": archive_rows_returned,
                         "timed_out": archive_telemetry["timed_out"],
                         "failed_open": archive_telemetry["failed_open"],
                         "busy_or_locked": archive_telemetry["busy_or_locked"],
+                        "deferred": True,
                     })
                 with preprocess_recorder.phase("memory", cache_miss=True) as phase_stats:
                     consultant_memory_retrieval_context = await self._consultant_memory_retrieval_context(
@@ -21541,6 +26319,18 @@ question. Never guess a scientific or database identity.
                     for card in candidate_skill_cards
                     if str(card.get("skill_id") or "")
                 ]
+                pending_candidate_id = str(
+                    pending_task_skill_context.get("candidate_skill_id") or ""
+                )
+                if pending_candidate_id and pending_candidate_id not in candidate_skill_ids:
+                    pending_card = self.skill_manager.skill_discovery_card(
+                        pending_candidate_id,
+                        score=0,
+                        reasons=["consultant_reviewed_binding_candidate"],
+                    )
+                    if pending_card:
+                        candidate_skill_cards.append(pending_card)
+                    candidate_skill_ids.append(pending_candidate_id)
                 with preprocess_recorder.phase("skill_catalog") as phase_stats:
                     if candidate_skill_cards:
                         skill_catalog = self.skill_manager.format_skill_discovery_cards(
@@ -22073,6 +26863,81 @@ question. Never guess a scientific or database identity.
                     "budgets": dict(discovery_state.get("budgets") or {}),
                     "next_actions": discovery_next_actions(discovery_state),
                 }
+                _, consultant_current_step = current_plan_step_with_index(
+                    durable_consultant_state
+                )
+                consultant_step_id = str(
+                    (consultant_current_step or {}).get("step_id") or ""
+                )
+                consultant_continuation_id = str(
+                    durable_consultant_task_state.get("skill_continuation_id")
+                    or ""
+                )
+                consultant_access = normalize_skill_access_state(
+                    durable_consultant_task_state.get("skill_access_state")
+                    or durable_consultant_state.get("skill_access_state")
+                )
+                consultant_continuation: Dict[str, Any] = {}
+                if consultant_continuation_id:
+                    consultant_continuation = dict(
+                        (consultant_access.get("continuations") or {}).get(
+                            consultant_continuation_id
+                        )
+                        or {}
+                    )
+                consultant_skill_projection = self._skill_context_projection(
+                    durable_consultant_state,
+                    caller_node="consultant",
+                    current_step_id=consultant_step_id,
+                    continuation_id=consultant_continuation_id,
+                )
+                if pending_task_skill_context:
+                    candidate_headings = {
+                        "skill_id": pending_task_skill_context.get(
+                            "candidate_skill_id"
+                        ),
+                        "snapshot_id": pending_task_skill_context.get(
+                            "candidate_snapshot_id"
+                        ),
+                        "heading_index": deepcopy(list(
+                            pending_task_skill_context.get(
+                                "available_headings"
+                            )
+                            or []
+                        )),
+                        "status": "candidate",
+                    }
+                    consultant_skill_projection[
+                        "available_skill_headings"
+                    ] = [
+                        *list(consultant_skill_projection.get(
+                            "available_skill_headings"
+                        ) or []),
+                        candidate_headings,
+                    ]
+                    known_excerpt_ids = {
+                        str(item.get("excerpt_id") or "")
+                        for item in consultant_skill_projection.get(
+                            "relevant_skill_excerpts", []
+                        ) or []
+                        if isinstance(item, Mapping)
+                    }
+                    consultant_skill_projection[
+                        "relevant_skill_excerpts"
+                    ] = [
+                        *list(consultant_skill_projection.get(
+                            "relevant_skill_excerpts"
+                        ) or []),
+                        *[
+                            deepcopy(dict(item))
+                            for item in pending_task_skill_context.get(
+                                "relevant_skill_excerpts", []
+                            ) or []
+                            if isinstance(item, Mapping)
+                            and str(item.get("excerpt_id") or "")
+                            not in known_excerpt_ids
+                        ],
+                    ]
                 consultant_node_context = build_node_context(
                     node_type="consultant",
                     task_spec=task_spec,
@@ -22117,6 +26982,9 @@ question. Never guess a scientific or database identity.
                                 or "pending_consultant_classification"
                             ),
                         } if durable_review_classification else {},
+                        "pending_task_skill_change": deepcopy(
+                            pending_task_skill_context
+                        ),
                         "conversation_turn_count": len(conversation_turns),
                         "formal_input_audit": {
                             "status": str(input_resolution_result.get("status") or "not_applicable"),
@@ -22142,13 +27010,55 @@ question. Never guess a scientific or database identity.
                         "search_skills", "list_skill_categories", "list_skills",
                         "load_skill_doc", "reject_skill", "select_skill", "reasoning_escalation",
                         "capability_gap", "ask_user", "finish",
+                        REQUEST_SKILL_CONTEXT, SEARCH_SKILLS,
+                        PROPOSE_SKILL_BINDING,
                     ],
+                    current_step_id=consultant_step_id,
+                    authoritative_user_turn_revision=(
+                        self._authoritative_user_turn_revision(
+                            durable_consultant_state
+                        )
+                    ),
+                    skill_context=consultant_skill_projection,
+                    continuation_id=consultant_continuation_id,
                     touched_entity_versions=dict(
                         state.get("task_entity_versions") or {}
                     ),
                     trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
                     max_payload_chars=max(1, int(self.llm_context_limit_tokens) * 4),
                 )
+                if (
+                    consultant_continuation_id
+                    and str(consultant_continuation.get("caller_node") or "")
+                    == "consultant"
+                    and str(consultant_continuation.get("status") or "")
+                    in {"served", "rejected"}
+                ):
+                    consultant_access = mark_continuation_resumed(
+                        consultant_access,
+                        consultant_continuation_id,
+                        resumed_invocation_id=(
+                            consultant_node_context.binding.invocation_id
+                        ),
+                    )
+                    try:
+                        self._persist_durable_skill_access(
+                            task_id,
+                            consultant_access,
+                            continuation_id=consultant_continuation_id,
+                            expected_state_generation=int(
+                                durable_consultant_state.get(
+                                    "state_generation"
+                                )
+                                or 0
+                            ),
+                        )
+                    except StateCASConflict as exc:
+                        return self._skill_access_cas_stale_update(
+                            caller_node="consultant",
+                            next_step="consultant",
+                            detail=str(exc),
+                        )
                 semantic_capabilities, _consultant_operation_bindings = (
                     self.skill_manager.get_semantic_execution_capabilities(
                         visible_capability_ids
@@ -22407,7 +27317,22 @@ question. Never guess a scientific or database identity.
                     consultation_state.get("last_invocation_guard"),
                     task_revision=task_spec_revision(task_spec),
                     conversation_turn_count=len(conversation_turns),
-                    feedback=actionable_feedback,
+                    feedback=[
+                        *actionable_feedback,
+                        *([{
+                            "code": "SKILL_CONTINUATION_READY",
+                            "continuation_id": consultant_continuation_id,
+                        }] if consultant_continuation_id else []),
+                        *([{
+                            "code": "TASK_SKILL_CHANGE_PENDING_MAIN_COMMIT",
+                            "candidate_skill_id": str(
+                                pending_task_skill_context.get(
+                                    "candidate_skill_id"
+                                )
+                                or ""
+                            ),
+                        }] if pending_task_skill_context else []),
+                    ],
                     route="consultant",
                     discovery_state=discovery_state,
                 )
@@ -22586,6 +27511,136 @@ question. Never guess a scientific or database identity.
                 )
                 return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
             raw_content = str(response.content or "").strip()
+            current_consultant_state = load_plan_state(self.data_path, task_id)
+            _, current_consultant_step = current_plan_step_with_index(
+                current_consultant_state
+            )
+            current_consultant_task_state = dict(
+                current_consultant_state.get("task_state") or {}
+            )
+            current_consultant_continuation_id = str(
+                current_consultant_task_state.get("skill_continuation_id")
+                or ""
+            )
+            current_consultant_context = build_node_context(
+                node_type="consultant",
+                task_spec=canonical_task_spec_for_state(
+                    current_consultant_state
+                ),
+                plan_state=current_consultant_state,
+                state_generation=int(
+                    current_consultant_state.get("state_generation") or 0
+                ),
+                current_step_id=str(
+                    (current_consultant_step or {}).get("step_id") or ""
+                ),
+                authoritative_user_turn_revision=(
+                    self._authoritative_user_turn_revision(
+                        current_consultant_state
+                    )
+                ),
+                continuation_id=current_consultant_continuation_id,
+            )
+            consultant_staleness = evaluate_node_staleness(
+                consultant_node_context.binding,
+                current_consultant_context.binding.to_dict(),
+            )
+            if not consultant_staleness.usable:
+                self._node_invocations.mark_stale_signature_handled(
+                    consultant_staleness.stale_signature
+                )
+                self._record_durable_skill_event(
+                    task_id,
+                    "stale_node_result_discarded",
+                    {
+                        "caller_node": "consultant",
+                        "caller_invocation_id": (
+                            consultant_node_context.binding.invocation_id
+                        ),
+                        "changed_preconditions": list(
+                            consultant_staleness.changed_preconditions
+                        ),
+                    },
+                )
+                return {
+                    "messages": [response, SystemMessage(content=json.dumps({
+                        "decision_result": "STALE_NODE_RESULT",
+                        "caller_node": "consultant",
+                        "changed_preconditions": list(
+                            consultant_staleness.changed_preconditions
+                        ),
+                        "counts_as_failure": False,
+                    }, ensure_ascii=False, sort_keys=True))],
+                    "stale_node_result": {
+                        "decision_result": "STALE_NODE_RESULT",
+                        "caller_node": "consultant",
+                        "changed_preconditions": list(
+                            consultant_staleness.changed_preconditions
+                        ),
+                    },
+                    "next_step": "consultant",
+                }
+            try:
+                consultant_skill_decision = parse_typed_skill_decision(
+                    raw_content
+                )
+            except SkillAccessError as exc:
+                completed_projection = (
+                    self._complete_durable_skill_continuation(
+                        task_id, caller_node="consultant"
+                    )
+                    if current_consultant_continuation_id
+                    else {}
+                )
+                rejected = {
+                    "decision_result": "SKILL_DECISION_REJECTED",
+                    **exc.to_dict(),
+                    "counts_as_failure": False,
+                }
+                return {
+                    **completed_projection,
+                    "messages": [response, SystemMessage(content=json.dumps(
+                        rejected, ensure_ascii=False, sort_keys=True,
+                    ))],
+                    "skill_decision_result": rejected,
+                    "pending_action": {},
+                    "next_step": "consultant",
+                }
+            if consultant_skill_decision is not None:
+                try:
+                    return await self._handle_skill_node_decision(
+                        task_id=task_id,
+                        caller_node="consultant",
+                        graph_node="consultant",
+                        decision=consultant_skill_decision,
+                        node_context=consultant_node_context,
+                        response=response,
+                        selected_skill_ids=(
+                            state.get("selected_skills")
+                            or current_consultant_task_state.get(
+                                "selected_skills"
+                            )
+                            or []
+                        ),
+                    )
+                except SkillAccessError as exc:
+                    rejected = {
+                        "decision_result": "SKILL_DECISION_REJECTED",
+                        **exc.to_dict(),
+                        "counts_as_failure": False,
+                    }
+                    return {
+                        "messages": [response, SystemMessage(content=json.dumps(
+                            rejected, ensure_ascii=False, sort_keys=True,
+                        ))],
+                        "skill_decision_result": rejected,
+                        "pending_action": {},
+                        "next_step": "consultant",
+                    }
+            if current_consultant_continuation_id:
+                self._complete_durable_skill_continuation(
+                    task_id, caller_node="consultant"
+                )
             await self._observe_session_memory(
                 task_id,
                 "consultant",
@@ -22683,8 +27738,8 @@ question. Never guess a scientific or database identity.
             if consultant_json_command:
                 output.print_once(
                     f"consultant_json_action:{task_id}:{consultant_json_command.splitlines()[0][:80]}",
-                    "✓ Consultant JSON action parsed and normalized.",
-                    Fore.GREEN,
+                    "• Consultant action parsed; validating...",
+                    Fore.CYAN,
                 )
                 content = consultant_json_command
             payload_action_type = self._normalize_action_type(
@@ -23315,6 +28370,7 @@ question. Never guess a scientific or database identity.
                     }
                 output.print_once(f"consultant_load:{content}", f"📖 Consultant loading skill doc: {skill_id}", Fore.CYAN)
                 loaded = self.skill_manager.load_skill(skill_id) if self.skill_manager and skill_id else ""
+                transition_resolution: Dict[str, Any] = {}
                 if loaded:
                     meta = self.skill_manager.get_skill_meta(skill_id) if self.skill_manager else {}
                     discovery_state = record_loaded_skill_doc(
@@ -23337,6 +28393,10 @@ question. Never guess a scientific or database identity.
                         detail={"skill_id": skill_id},
                     )
                     obs = f'<loaded_skill_doc skill_id="{skill_id}">\n{loaded}\n</loaded_skill_doc>'
+                    transition_resolution = {
+                        "consultant_pending_transition": {},
+                        "consultant_no_progress_ledger": {},
+                    }
                 else:
                     obs = (
                         f'<load_error action="LOAD_SKILL_DOC" skill_id="{skill_id or "unknown"}">\n'
@@ -23347,6 +28407,7 @@ question. Never guess a scientific or database identity.
                     "messages": [AIMessage(content=content), SystemMessage(content=obs)],
                     "consultation_state": consultation_state,
                     "next_step": "consultant",
+                    **transition_resolution,
                 }
 
             if content.startswith("LOAD_REFERENCE"):
@@ -23462,6 +28523,9 @@ question. Never guess a scientific or database identity.
                     instruction: str,
                     *,
                     candidate: Optional[Mapping[str, Any]] = None,
+                    recoverable: bool = False,
+                    required_action: str = "",
+                    skill_id: str = "",
                 ) -> Dict[str, Any]:
                     candidate_state = dict(candidate or {})
                     next_consultation = deepcopy(dict(
@@ -23481,7 +28545,9 @@ question. Never guess a scientific or database identity.
                     ]
                     next_consultation["last_invocation_guard"] = {
                         **current_invocation_guard,
-                        "retry_pending": True,
+                        # The semantic commit ledger, not the legacy coarse
+                        # invocation guard, owns identical rejection retries.
+                        "retry_pending": False,
                     }
                     next_consultation.update({
                         "phase": "consulting",
@@ -23494,13 +28560,109 @@ question. Never guess a scientific or database identity.
                         f"{instruction}\n"
                         "</consultant_validation_error>"
                     )
+                    rejection_record = {
+                        "classification": "CANDIDATE_VALIDATION",
+                        "code": str(code),
+                        "detail": str(instruction),
+                    }
+                    pending_transition: Dict[str, Any] = {}
+                    ledger: Dict[str, Any] = {}
+                    if recoverable:
+                        pending_transition = {
+                            "schema_version": 1,
+                            "code": str(code),
+                            "recoverable": True,
+                            "terminal": False,
+                            "owner": "consultant",
+                            "next_route": "consultant",
+                            "required_action": str(required_action),
+                            "skill_id": str(skill_id),
+                            "candidate_action_type": str(payload_action_type),
+                        }
+                        transition = consultant_validation_no_progress_fingerprint(
+                            durable_before,
+                            rejection_code=str(code),
+                            skill_id=str(skill_id),
+                            candidate_action_type=str(payload_action_type),
+                            consultation_state=next_consultation,
+                        )
+                        ledger = advance_consultant_commit_no_progress(
+                            durable_consultant_task_state.get(
+                                "consultant_no_progress_ledger"
+                            ),
+                            transition,
+                            limit=MAX_CONSULTANT_IDENTICAL_NO_PROGRESS_TRANSITIONS,
+                        )
+                        rejection_record.update({
+                            "recoverable": True,
+                            "terminal": False,
+                            "owner": "consultant",
+                            "next_route": "consultant",
+                            "required_action": str(required_action),
+                            "skill_id": str(skill_id),
+                            "fingerprint": str(
+                                transition.get("fingerprint") or ""
+                            ),
+                        })
+                        pending_transition["fingerprint"] = str(
+                            transition.get("fingerprint") or ""
+                        )
                     update: Dict[str, Any] = {
                         "messages": [AIMessage(content=raw_content), SystemMessage(content=obs)],
                         "consultation_state": next_consultation,
                         "pending_human_question": {},
                         "contract_status": "consultant_candidate_retry",
+                        "skill_decision_result": deepcopy(rejection_record),
+                        "consultant_commit_rejection": deepcopy(
+                            rejection_record
+                        ),
+                        "consultant_pending_transition": deepcopy(
+                            pending_transition
+                        ),
                         "next_step": "consultant",
                     }
+                    if ledger:
+                        update["consultant_no_progress_ledger"] = deepcopy(
+                            ledger
+                        )
+                    if ledger.get("terminal"):
+                        terminal = {
+                            "classification": "CANDIDATE_VALIDATION",
+                            "code": "CONSULTANT_VALIDATION_NO_PROGRESS",
+                            "detail": (
+                                "The same Consultant validation rejection "
+                                "repeated without a loaded document, action, "
+                                "or canonical-state progress."
+                            ),
+                            "rejection": deepcopy(rejection_record),
+                        }
+                        update.update({
+                            "messages": [
+                                *list(update.get("messages") or []),
+                                SystemMessage(content=json.dumps(
+                                    terminal,
+                                    ensure_ascii=False,
+                                    sort_keys=True,
+                                )),
+                            ],
+                            "skill_decision_result": terminal,
+                            "consultant_pending_transition": {
+                                **deepcopy(pending_transition),
+                                "recoverable": False,
+                                "terminal": True,
+                                "next_route": "finish",
+                            },
+                            "canonical_commit": {
+                                "succeeded": False,
+                                "error_code": (
+                                    "CONSULTANT_VALIDATION_NO_PROGRESS"
+                                ),
+                            },
+                            "task_status": TASK_STATUS_FAILED,
+                            "failure_owner": "controller",
+                            "contract_status": "internal_protocol",
+                            "next_step": "finish",
+                        })
                     candidate_task = candidate_state.get("task_spec")
                     if task_spec_is_initialized(candidate_task):
                         update.update({
@@ -23522,7 +28684,16 @@ question. Never guess a scientific or database identity.
                 if payload_action_type == "select_skill":
                     loaded_or_explicit = set(
                         discovery_state.get("loaded_skill_ids") or []
-                    ).union(loaded_skill_ids, explicit_candidate_ids)
+                    ).union(
+                        loaded_skill_ids,
+                        explicit_candidate_ids,
+                        [str(
+                            pending_task_skill_context.get(
+                                "candidate_skill_id"
+                            )
+                            or ""
+                        )] if pending_task_skill_context else [],
+                    )
                     unloaded = [
                         skill_id for skill_id in selected
                         if skill_id not in loaded_or_explicit
@@ -23537,6 +28708,9 @@ question. Never guess a scientific or database identity.
                             "SKILL_DOC_REQUIRED",
                             "Load each selected candidate document before committing selection: "
                             + ", ".join(unloaded),
+                            recoverable=True,
+                            required_action="LOAD_SKILL_DOC",
+                            skill_id=unloaded[0],
                         )
                 if selected:
                     discovery_state = record_selected_skills(discovery_state, selected)
@@ -23548,12 +28722,6 @@ question. Never guess a scientific or database identity.
                             task_id,
                             selected,
                             str(consultant_json_payload.get("selection_reason") or "")[:600],
-                        )
-                        self._record_consultant_progress(
-                            task_id,
-                            code="CONSULTANT_SKILL_SELECTED",
-                            message="Consultant selected documented compatible skill capability.",
-                            detail={"selected_skill_count": len(selected)},
                         )
                 try:
                     mutation_proposal = self._consultant_task_spec_mutation_proposal(
@@ -23795,13 +28963,7 @@ question. Never guess a scientific or database identity.
                     or consultant_json_payload.get("selection_reason")
                     or "Consultant semantic contract complete."
                 ).strip()
-                self._record_consultant_progress(
-                    task_id,
-                    code="CONSULTANT_PLANNER_HANDOFF",
-                    message="Consultant completion gate passed; handing the task to Planner.",
-                    detail={"source": payload_action_type},
-                )
-                return commit_candidate_update({
+                committed_update = commit_candidate_update({
                     "messages": [AIMessage(content=raw_content)],
                     "input_audit": input_resolution_result,
                     "selected_skills": selected,
@@ -23826,6 +28988,12 @@ question. Never guess a scientific or database identity.
                     "wiki_memory_context": consultant_wiki_context,
                     "next_step": "planner",
                 })
+                return self._finalize_consultant_commit_events(
+                    task_id,
+                    committed_update,
+                    source=payload_action_type,
+                    selected_skill_ids=selected,
+                )
 
             # ASK 动作
             if content.startswith("ASK"):
@@ -24482,8 +29650,19 @@ question. Never guess a scientific or database identity.
                 "last_invocation_guard": {},
             })
             plan_state = load_plan_state(self.data_path, task_id)
+            plan_impact_answer = (
+                str(pending.get("type") or "") == "plan_impact_review"
+            )
             running_step = self._running_plan_step(plan_state)
-            if self._plan_step_action_is(running_step, "ask_user"):
+            pending_step_id = str(
+                pending.get("plan_step_id") or pending.get("step_id") or ""
+            )
+            if (
+                not plan_impact_answer
+                and self._plan_step_action_is(running_step, "ask_user")
+                and pending_step_id
+                and pending_step_id == str(running_step.get("step_id") or "")
+            ):
                 plan_progress = self._mark_plan_current_done(
                     task_id,
                     f"user_answered: {str(user_answer or '')[:500]}",
@@ -24494,6 +29673,86 @@ question. Never guess a scientific or database identity.
                     "user_answered",
                     str(user_answer or "")[:500],
                 )
+            # Every new authoritative user turn invalidates all same-node
+            # continuations.  A Planner-owned impact question resumes the
+            # existing impact transaction; it does not create a new
+            # Consultant interpretation loop or leave ``waiting_user`` set.
+            plan_state = load_plan_state(self.data_path, task_id)
+            plan_task_state = dict(plan_state.get("task_state") or {})
+            if (
+                plan_task_state.get("skill_access_state")
+                or plan_state.get("skill_access_state")
+            ):
+                invalidated_access = invalidate_skill_continuations(
+                    plan_task_state.get("skill_access_state")
+                    or plan_state.get("skill_access_state"),
+                    reason="authoritative_user_turn_changed",
+                )
+                plan_task_state["skill_access_state"] = invalidated_access
+                plan_task_state.pop("skill_continuation_id", None)
+                plan_state["skill_access_state"] = deepcopy(invalidated_access)
+            if plan_impact_answer:
+                durable_impact = dict(
+                    plan_task_state.get("pending_plan_impact_review") or {}
+                )
+                if durable_impact:
+                    durable_impact.update({
+                        "status": "pending",
+                        "answer_turn_ref": str(answer_turn_ref or ""),
+                        "answer_question_id": question_id,
+                        "base_user_turn_revision": (
+                            self._authoritative_user_turn_revision(plan_state)
+                        ),
+                    })
+                    plan_task_state["pending_plan_impact_review"] = (
+                        durable_impact
+                    )
+            if str(pending.get("type") or "") == "skill_resolution":
+                proposal_id = str(pending.get("proposal_id") or "")
+                access = normalize_skill_access_state(
+                    plan_task_state.get("skill_access_state")
+                    or plan_state.get("skill_access_state")
+                )
+                access_proposal = (
+                    access.get("binding_proposals") or {}
+                ).get(proposal_id)
+                if isinstance(access_proposal, MutableMapping):
+                    answer_refs = list(dict.fromkeys(
+                        str(item)
+                        for item in (
+                            list(access_proposal.get("user_answer_refs") or [])
+                            + [answer_turn_ref]
+                        )
+                        if str(item)
+                    ))
+                    access_proposal["user_answer_refs"] = answer_refs
+                    access_proposal["last_answer_question_id"] = question_id
+                    access_proposal["base_user_turn_revision"] = (
+                        self._authoritative_user_turn_revision(plan_state)
+                    )
+                    plan_task_state["skill_access_state"] = access
+                    plan_state["skill_access_state"] = deepcopy(access)
+                    pending_proposal = dict(
+                        plan_task_state.get(
+                            "pending_skill_binding_proposal"
+                        ) or {}
+                    )
+                    if str(pending_proposal.get("proposal_id") or "") == (
+                        proposal_id
+                    ):
+                        pending_proposal["user_answer_refs"] = answer_refs
+                        pending_proposal["last_answer_question_id"] = (
+                            question_id
+                        )
+                        pending_proposal["base_user_turn_revision"] = (
+                            self._authoritative_user_turn_revision(plan_state)
+                        )
+                        plan_task_state[
+                            "pending_skill_binding_proposal"
+                        ] = pending_proposal
+            plan_state["task_state"] = plan_task_state
+            save_plan_state(self.data_path, task_id, plan_state)
+            plan_state = load_plan_state(self.data_path, task_id)
             base_update = {
                 "messages": [HumanMessage(
                     content=f"<human_answer stage=\"{stage}\">\nQuestion: {question}\nAnswer: {user_answer}\n</human_answer>",
@@ -24504,8 +29763,22 @@ question. Never guess a scientific or database identity.
                 "plan_progress": plan_progress,
                 "conversation_evidence": dict(plan_state.get("conversation_evidence") or {}),
                 "consultation_state": updated_consultation_state,
-                "next_step": "consultant",
+                "next_step": "planner" if plan_impact_answer else "consultant",
+                "skill_access_state": deepcopy(dict(
+                    plan_state.get("skill_access_state") or {}
+                )),
+                "skill_continuation_id": "",
             }
+            if plan_impact_answer:
+                updated_consultation_state.update({
+                    "completion_decision": "needs_evidence",
+                    "completion_reason": (
+                        "plan_impact_user_answer_requires_planner_review"
+                    ),
+                })
+                base_update["consultation_state"] = (
+                    updated_consultation_state
+                )
             if str(pending.get("type") or "") == "task_spec_contract_repair":
                 # The old issues describe the superseded TaskSpec revision.
                 # Planner will deterministically reproject and derive a fresh
@@ -24535,6 +29808,53 @@ question. Never guess a scientific or database identity.
             task_spec = self._task_spec_for_state(dict(state), messages)
             task_revision = task_spec_revision(task_spec)
             task_id = state.get("task_id", "default")
+            planner_entry_state = load_plan_state(self.data_path, task_id)
+            pending_plan_impact = dict(
+                (planner_entry_state.get("task_state") or {}).get(
+                    "pending_plan_impact_review"
+                )
+                or {}
+            )
+            if pending_plan_impact:
+                try:
+                    return await self._run_planner_plan_impact_review(
+                        state,
+                        task_id=task_id,
+                        durable=planner_entry_state,
+                        pending=pending_plan_impact,
+                    )
+                except StateCASConflict as exc:
+                    stale = {
+                        "decision_result": "STALE_NODE_RESULT",
+                        "caller_node": "planner",
+                        "changed_preconditions": [
+                            "plan_impact_transaction"
+                        ],
+                        "detail": str(exc),
+                        "counts_as_failure": False,
+                        "consumes_execution_retry": False,
+                        "consumes_recovery_retry": False,
+                    }
+                    return {
+                        "messages": [SystemMessage(content=json.dumps(
+                            stale,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        ))],
+                        "stale_node_result": deepcopy(stale),
+                        "plan_impact_review_error": deepcopy(stale),
+                        "pending_action": {},
+                        "next_step": "planner",
+                    }
+                except SkillAccessError as exc:
+                    return {
+                        "messages": [SystemMessage(content=json.dumps(
+                            exc.to_dict(), ensure_ascii=False, sort_keys=True,
+                        ))],
+                        "plan_impact_review_error": exc.to_dict(),
+                        "pending_action": {},
+                        "next_step": "planner",
+                    }
             consultation_owner = dict(state.get("consultation_state") or {})
             planner_protocol = dict(
                 consultation_owner.get("finalize_protocol") or {}
@@ -24838,7 +30158,6 @@ question. Never guess a scientific or database identity.
                     "failure_owner": "controller",
                     "next_step": "finish",
                 }
-            task_spec_context = format_planner_task_contract_context(task_spec)
             task_requirement_text = "\n".join(
                 [
                     str(task_spec.get("goal") or ""),
@@ -24854,31 +30173,7 @@ question. Never guess a scientific or database identity.
                 immutable_consultant_contract
                 or dict(consultation_owner.get("final_contract") or {})
             )
-            summary = (
-                "<consultant_result>\n"
-                + json.dumps(
-                    self._planner_consultant_contract_projection(consultant_result),
-                    ensure_ascii=False,
-                    sort_keys=True,
-                    indent=2,
-                    default=str,
-                )
-                + "\n</consultant_result>"
-                if consultant_result
-                else str(state.get("requirements_summary", "") or "")
-            )
-            rag_history = state.get("rag_history", [])
-            rag_knowledge = str(rag_history[-1]) if rag_history else ""
-
             runtime_audits = list(state.get("runtime_audit", []) or [])
-            runtime_audit_context = self._format_runtime_audit(runtime_audits) if runtime_audits else ""
-            if not runtime_audit_context:
-                legacy_runtime_audit = re.search(
-                    r"\[RUNTIME_AUDIT\].*?\[/RUNTIME_AUDIT\]",
-                    summary,
-                    re.DOTALL,
-                )
-                runtime_audit_context = legacy_runtime_audit.group(0) if legacy_runtime_audit else ""
             selected_skills = state.get("selected_skills", []) or []
             # Planner schedules the Consultant-selected pool. No skill is
             # active until an approved plan step starts.
@@ -24923,158 +30218,35 @@ question. Never guess a scientific or database identity.
             # Planner may inspect only Consultant-selected skills. It never
             # receives the global catalog and activates skills per plan step.
             planner_context_skills = list(planner_skill_pool)
-            if self.skill_manager and planner_skill_pool:
-                skill_tree = (
-                    "<skill_tree>\n"
-                    "Use only the Consultant-selected canonical IDs below; map them explicitly to individual plan steps.\n"
-                    "</skill_tree>"
-                )
-                skill_catalog = self.skill_manager.get_skill_catalog_prompt(planner_skill_pool)
-            elif self.skill_manager:
-                skill_tree = (
-                    "<skill_tree>\n"
-                    "No Consultant-selected skill pool was provided. Return to Consultant; do not search the full catalog or invent a skill ID.\n"
-                    "</skill_tree>"
-                )
-                skill_catalog = "<skill_catalog>\nNo Consultant-selected skills available.\n</skill_catalog>"
-            else:
-                skill_tree = "<skill_tree>\nNo external skills available.\n</skill_tree>"
-                skill_catalog = "<skill_catalog>\nNo external skills available.\n</skill_catalog>"
-            skills_summary = f"{skill_tree}\n{skill_catalog}" if self.skill_manager else "None"
-            skill_reference_index = self.skill_manager.get_skill_reference_index_prompt(planner_context_skills) if self.skill_manager else ""
-            skill_execution_context = self._skill_execution_context(planner_context_skills)
-            # Consultant selects the skill pool, while Generate loads the full
-            # documentation for the running step.  Planner needs only the
-            # compact catalog and execution cards; repeating full SKILL.md
-            # content here bloats the request without adding scheduling facts.
-            active_skill_docs = ""
-            selected_skills_text = ", ".join(selected_skills) if selected_skills else "None"
             renderer_records = [
                 self.skill_manager.get_renderer_record(skill_id)
                 for skill_id in selected_skills
                 if self.skill_manager and self.skill_manager.has_renderer(skill_id)
             ]
-            task_spec_context = format_planner_task_contract_context(task_spec)
-            task_requirement_text = "\n".join(
-                [
-                    str(task_spec.get("goal") or ""),
-                    *[
-                        str(item.get("text") or "")
-                        for item in task_spec.get("user_directives", [])
-                        if isinstance(item, dict) and str(item.get("kind") or "") != "initial_request"
-                    ],
-                ]
-            ).strip()
             canonical_output_contracts = effective_output_contracts(
                 task_spec,
                 project_root=project_root,
             )
-            active_skills_text = ", ".join(active_skills_state) if active_skills_state else "None - Planner must choose the first executable step's ACTIVE_SKILLS"
-            workflow_handoff_text = self._format_workflow_handoff_for_prompt(workflow_handoff)
-            project_id = state.get("project_id") or self.default_project_id
-            planner_wiki_query = "\n".join(
-                part for part in [str(user_msg)[:1200], str(summary)[:1200]]
-                if part
-            )
-            planner_wiki_context = state.get("memory_packet_context") or state.get("wiki_memory_context") or ""
-            if not planner_wiki_context:
-                planner_memory_parts = [
-                    self._wiki_memory_stage_context(
-                        task_id=task_id,
-                        project_id=project_id,
-                        query=planner_wiki_query,
-                    ),
-                    self._pending_archive_buffer_context(
-                        task_id=task_id,
-                        project_id=project_id,
-                        query=planner_wiki_query,
-                    ),
-                ]
-                planner_wiki_context = "\n\n".join(part for part in planner_memory_parts if part)
-
-            planner_prompt_args = {
-                "user_msg": str(user_msg),
-                "task_spec_context": task_spec_context,
-                "consultant_summary": summary,
-                "planner_wiki_context": planner_wiki_context,
-                "runtime_audit_context": runtime_audit_context,
-                "rag_knowledge": rag_knowledge,
-                "skills_summary": skills_summary,
-                "selected_skills_text": selected_skills_text,
-                "active_skill_docs": active_skill_docs,
-                "skill_reference_index": skill_reference_index,
-                "skill_execution_context": skill_execution_context,
-                "workflow_handoff": workflow_handoff_text,
-                "active_batch_id": str(active_batch_id or ""),
-                "active_skills_text": active_skills_text,
-                "future_skills_text": ", ".join(future_skills) if future_skills else "None",
-                "required_skills_all_text": ", ".join(required_skills_all) if required_skills_all else "None",
-                "candidate_skills_text": ", ".join(candidate_skills) if candidate_skills else "None",
-                "user_preferences_context": self._load_user_preferences(),
-            }
             planner_source_state = load_plan_state(self.data_path, task_id)
-            try:
-                # Validate the Controller-owned prompt example before opening
-                # or charging a PlanningEpoch. Contract drift is an internal
-                # invariant failure, never a Planner candidate repair.
-                validated_planner_candidate_wire_example()
-            except Exception as exc:
-                classification = classify_io_exception(exc)
-                logger.exception(
-                    "Planner wire-contract self-check failed: task=%s class=%s code=%s",
-                    task_id,
-                    classification["error_class"],
-                    classification["code"],
-                )
-                return {
-                    "messages": [SystemMessage(content=(
-                        f"{classification['error_class']}: {classification['code']}"
-                    ))],
-                    "failure_type": classification["error_class"],
-                    "failure_stage": "planner_wire_contract",
-                    "recovery_status": "blocked_internal",
-                    "task_status": TASK_STATUS_BLOCKED,
-                    "next_step": "finish",
-                }
-
-            def reserve_planner_candidate_repair() -> Dict[str, Any]:
-                """Persist one bounded repair call in the active PlanningEpoch."""
-                repair_state = load_plan_state(self.data_path, task_id)
-                repair_task_state = dict(repair_state.get("task_state") or {})
-                repair_epoch = dict(repair_task_state.get("planning_epoch") or {})
-                if str(repair_epoch.get("planning_epoch_id") or "") != str(
-                    planning_epoch.get("planning_epoch_id") or ""
-                ):
-                    return {
-                        "allowed": False,
-                        "code": "STALE_PLANNING_EPOCH",
-                        "terminal": False,
-                    }
-                repair_epoch["candidate_repairs"] = int(
-                    repair_epoch.get("candidate_repairs") or 0
-                ) + 1
-                repair_epoch["planner_calls_total"] = int(
-                    repair_epoch.get("planner_calls_total") or 0
-                ) + 1
-                budgets = dict(repair_task_state.get("budgets") or {})
-                max_repairs = int(budgets.get("max_candidate_repairs_per_epoch", 2))
-                max_calls = int(budgets.get("max_planner_calls_per_epoch", 4))
-                terminal = bool(
-                    repair_epoch["candidate_repairs"] > max_repairs
-                    or repair_epoch["planner_calls_total"] > max_calls
-                )
-                if terminal:
-                    repair_epoch["status"] = "exhausted"
-                repair_task_state["planning_epoch"] = repair_epoch
-                repair_state["task_state"] = repair_task_state
-                save_plan_state(self.data_path, task_id, repair_state)
-                return {
-                    "allowed": not terminal,
-                    "code": "PLANNING_EPOCH_REPAIR_EXHAUSTED" if terminal else "CURRENT",
-                    "terminal": terminal,
-                    "planning_epoch": repair_epoch,
-                }
             planner_task_state = dict(planner_source_state.get("task_state") or {})
+            planner_skill_access = self._prepare_durable_skill_access(
+                planner_source_state,
+                selected_skill_ids=planner_skill_pool,
+                task_revision=task_revision,
+            )
+            planner_selected_refs = deepcopy(list(
+                planner_skill_access.get("selected_skill_refs") or []
+            ))
+            planner_task_state["skill_access_state"] = deepcopy(
+                planner_skill_access
+            )
+            planner_task_state["selected_skill_refs"] = planner_selected_refs
+            planner_source_state["skill_access_state"] = deepcopy(
+                planner_skill_access
+            )
+            planner_source_state["selected_skill_refs"] = deepcopy(
+                planner_selected_refs
+            )
             if not planner_task_state.get("accepted_consultant_handoff"):
                 legacy_handoff = self._accepted_consultant_handoff_projection(
                     consultant_result
@@ -25138,32 +30310,203 @@ question. Never guess a scientific or database identity.
                     ),
                     planner_feedback_revision=planner_feedback_revision,
                 )
-            planning_epoch["planner_calls_total"] = int(
+            planner_calls_total = int(
                 planning_epoch.get("planner_calls_total") or 0
-            ) + 1
+            )
             max_planner_calls = int(
                 (planner_task_state.get("budgets") or {}).get(
                     "max_planner_calls_per_epoch", 4
                 )
             )
-            if planning_epoch["planner_calls_total"] > max_planner_calls:
+            if planner_calls_total >= max_planner_calls:
                 planning_epoch["status"] = "exhausted"
                 planner_task_state["planning_epoch"] = planning_epoch
                 planner_source_state["task_state"] = planner_task_state
+                prior_failure = dict(
+                    planner_task_state.get("planning_failure") or {}
+                )
+                exhaustion_issues = list(
+                    prior_failure.get("validation_issues") or []
+                ) or [{
+                    "code": "PLANNING_EPOCH_EXHAUSTED",
+                    "field_path": "$.current_focus.planning",
+                    "affected_step_ids": [],
+                    "machine_evidence": {
+                        "planner_calls_total": int(
+                            planner_calls_total
+                        ),
+                        "max_planner_calls_per_epoch": max_planner_calls,
+                    },
+                }]
+                terminal_diagnostic = {
+                    "error_code": "PLANNING_EPOCH_EXHAUSTED",
+                    "error_owner": "planner",
+                    "machine_evidence": {
+                        "planner_calls_total": planner_calls_total,
+                        "max_planner_calls_per_epoch": max_planner_calls,
+                        "last_validation_codes": [
+                            str(issue.get("code") or "PLAN_CANDIDATE_INVALID")
+                            for issue in exhaustion_issues
+                            if isinstance(issue, Mapping)
+                        ],
+                    },
+                }
+                planner_source_state = terminalize_planning_failure(
+                    planner_source_state,
+                    planning_epoch_id=str(
+                        planning_epoch.get("planning_epoch_id") or ""
+                    ),
+                    task_spec_revision_value=task_revision,
+                    terminal_diagnostic=terminal_diagnostic,
+                    fallback_validation_issues=exhaustion_issues,
+                )
                 save_plan_state(self.data_path, task_id, planner_source_state)
+                last_issue = (
+                    dict(exhaustion_issues[0])
+                    if exhaustion_issues
+                    and isinstance(exhaustion_issues[0], Mapping)
+                    else {}
+                )
+                last_code = str(
+                    last_issue.get("code") or "PLAN_CANDIDATE_INVALID"
+                )
+                last_field = str(last_issue.get("field_path") or "$")
+                last_message = str(last_issue.get("message") or "").strip()
+                terminal_summary = (
+                    "PLANNING_EPOCH_EXHAUSTED: Planner call budget was exhausted "
+                    "without a committed PlanSnapshot. Last blocking validation: "
+                    f"{last_code} at {last_field}"
+                    + (f" — {last_message.rstrip('.')}" if last_message else "")
+                    + "."
+                )
                 return {
-                    "messages": [SystemMessage(content=(
-                        "PLANNING_EPOCH_EXHAUSTED: Planner call budget was exhausted "
-                        "without a committed PlanSnapshot."
-                    ))],
+                    "messages": [SystemMessage(content=terminal_summary)],
                     "task_status": TASK_STATUS_BLOCKED,
                     "planning_epoch": planning_epoch,
                     "next_step": "finish",
                 }
+            planning_epoch["planner_calls_total"] = planner_calls_total + 1
             planner_task_state["planning_epoch"] = planning_epoch
             planner_source_state["task_state"] = planner_task_state
             save_plan_state(self.data_path, task_id, planner_source_state)
             planner_source_state = load_plan_state(self.data_path, task_id)
+            planner_source_state = supersede_planning_failure(
+                planner_source_state,
+                task_spec_revision_value=task_revision,
+            )
+            active_planning_failure = current_planning_failure(
+                planner_source_state,
+                task_spec_revision_value=task_revision,
+            )
+            if (
+                active_planning_failure
+                and str(active_planning_failure.get("planning_epoch_id") or "")
+                != str(planning_epoch.get("planning_epoch_id") or "")
+            ):
+                # A Plan Review failure can be created after the prior epoch
+                # committed a pending snapshot.  Rebind that correction
+                # capsule to the successor epoch instead of carrying counters
+                # or fingerprints across semantic bases.
+                planner_source_state = record_planning_failure(
+                    planner_source_state,
+                    validation_issues=list(
+                        active_planning_failure.get("validation_issues") or []
+                    ),
+                    planning_epoch_id=str(
+                        planning_epoch.get("planning_epoch_id") or ""
+                    ),
+                    task_spec_revision_value=task_revision,
+                    validation_source=str(
+                        active_planning_failure.get("validation_source")
+                        or "planner_candidate_admission"
+                    ),
+                    candidate=(
+                        active_planning_failure.get("previous_candidate")
+                        if isinstance(
+                            active_planning_failure.get("previous_candidate"),
+                            Mapping,
+                        )
+                        else None
+                    ),
+                    previous_correction=dict(
+                        active_planning_failure.get("previous_correction") or {}
+                    ),
+                )
+                active_planning_failure = current_planning_failure(
+                    planner_source_state,
+                    task_spec_revision_value=task_revision,
+                )
+            legacy_failure_issues: List[Dict[str, Any]] = []
+            if not active_planning_failure:
+                resume_audit = state.get("resume_audit") or {}
+                for missing_field in resume_audit.get("missing_fields", []) or []:
+                    legacy_failure_issues.append({
+                        "code": "PLAN_FIELD_MISSING",
+                        "field_path": str(missing_field),
+                        "expected_type": "present",
+                        "received_type": "missing",
+                        "affected_step_ids": [],
+                        "machine_evidence": {"missing_field": str(missing_field)},
+                    })
+                stale_step_ids_for_failure = [
+                    str(value)
+                    for value in planner_source_state.get(
+                        "revalidation_required_step_ids", []
+                    ) or []
+                    if str(value)
+                ]
+                if stale_step_ids_for_failure:
+                    legacy_failure_issues.append({
+                        "code": "PLAN_REVALIDATION_REQUIRED",
+                        "field_path": "$.steps",
+                        "affected_step_ids": stale_step_ids_for_failure,
+                        "machine_evidence": {
+                            "revalidation_required_step_ids": stale_step_ids_for_failure,
+                        },
+                    })
+                if self._plan_patch_requested(dict(state)):
+                    recovery_decision = (
+                        dict(state.get("recovery_decision") or {})
+                        if isinstance(state.get("recovery_decision"), Mapping)
+                        else {}
+                    )
+                    _, failed_step = current_plan_step_with_index(planner_source_state)
+                    affected_step = str(
+                        state.get("failed_step_id")
+                        or recovery_decision.get("failed_step_id")
+                        or (failed_step or {}).get("step_id")
+                        or ""
+                    )
+                    legacy_failure_issues.append({
+                        "code": "LEGACY_PLAN_PATCH_REQUEST",
+                        "field_path": "$.steps",
+                        "affected_step_ids": [affected_step] if affected_step else [],
+                        "machine_evidence": {
+                            "legacy_route": "PLAN_PATCH_REQUEST",
+                            "recovery_action": str(
+                                recovery_decision.get("action")
+                                or recovery_decision.get("decision")
+                                or state.get("required_next_action")
+                                or ""
+                            ),
+                        },
+                    })
+            if legacy_failure_issues:
+                planner_source_state = record_planning_failure(
+                    planner_source_state,
+                    validation_issues=legacy_failure_issues,
+                    planning_epoch_id=str(
+                        planning_epoch.get("planning_epoch_id") or ""
+                    ),
+                    task_spec_revision_value=task_revision,
+                    validation_source="legacy_recovery_route",
+                )
+            save_plan_state(self.data_path, task_id, planner_source_state)
+            planner_source_state = load_plan_state(self.data_path, task_id)
+            active_planning_failure = current_planning_failure(
+                planner_source_state,
+                task_spec_revision_value=task_revision,
+            )
             planner_feedback = dict(
                 (planner_source_state.get("task_state") or {}).get("planner_feedback")
                 or state.get("planner_feedback")
@@ -25172,17 +30515,26 @@ question. Never guess a scientific or database identity.
             if str(planner_feedback.get("status") or "pending") != "pending":
                 planner_feedback = {}
             planner_approved_snapshot: Dict[str, Any] = {}
+            planner_pending_snapshot: Dict[str, Any] = {}
+            planner_snapshot_status = str(
+                (planner_source_state.get("current_approval") or {}).get("status")
+                or ""
+            )
             if (
                 base_snapshot_id
-                and str(
-                    (planner_source_state.get("current_approval") or {}).get(
-                        "status"
-                    )
-                    or ""
-                )
-                == "approved"
+                and planner_snapshot_status == "approved"
             ):
                 planner_approved_snapshot = load_approved_plan_snapshot(
+                    self.data_path,
+                    task_id,
+                    state=planner_source_state,
+                )
+            elif (
+                base_snapshot_id
+                and planner_snapshot_status == "pending"
+                and active_planning_failure
+            ):
+                planner_pending_snapshot = load_current_plan_snapshot(
                     self.data_path,
                     task_id,
                     state=planner_source_state,
@@ -25193,85 +30545,95 @@ question. Never guess a scientific or database identity.
                 messages=messages,
                 accepted_contract=consultant_result,
             )
-            planner_node_context = build_node_context(
-                node_type="planner",
-                task_spec=task_spec,
-                plan_state=planner_source_state,
-                state_generation=int(planner_source_state.get("state_generation") or 0),
-                runtime={
-                    "input_audit": runtime_audits,
-                    "available_capabilities": list(selected_skills),
-                },
-                feedback={"planner_feedback": planner_feedback} if planner_feedback else {},
-                allowed_operations=["create_plan", "report_task_semantics_incomplete"],
-                trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
-                max_payload_chars=max(1, int(self.llm_context_limit_tokens) * 4),
-                approved_plan_snapshot=planner_approved_snapshot or None,
-                **planner_semantic_inputs,
-            )
             planner_semantic_capabilities, _planner_operation_bindings = (
                 self.skill_manager.get_semantic_execution_capabilities(planner_context_skills)
                 if self.skill_manager
                 else ([], {})
             )
-            planner_capability_context = json.dumps(
-                {
-                    "capabilities": planner_semantic_capabilities,
-                    "workflow": {
-                        "stages": [
-                            {
-                                "stage": str(stage.get("stage") or ""),
-                                "status": str(stage.get("status") or ""),
-                                "skill_id": str(stage.get("skill") or ""),
-                                "reason": str(stage.get("reason") or ""),
-                            }
-                            for stage in workflow_handoff.get("workflow_stages", []) or []
-                            if isinstance(stage, Mapping)
-                        ]
-                    },
+            planner_node_context = build_node_context(
+                node_type="planner",
+                task_spec=task_spec,
+                plan_state=planner_source_state,
+                state_generation=int(planner_source_state.get("state_generation") or 0),
+                current_step_id=str(
+                    planner_source_state.get("current_step_id")
+                    or (current_plan_step_with_index(planner_source_state)[1] or {}).get(
+                        "step_id"
+                    )
+                    or ""
+                ),
+                authoritative_user_turn_revision=(
+                    self._authoritative_user_turn_revision(planner_source_state)
+                ),
+                runtime={
+                    "input_audit": runtime_audits,
+                    "available_capabilities": list(selected_skills),
+                    "capability_contract": planner_semantic_capabilities,
                 },
-                ensure_ascii=False,
-                sort_keys=True,
-                indent=2,
-                default=str,
+                feedback={"planner_feedback": planner_feedback} if planner_feedback else {},
+                skill_context=self._skill_context_projection(
+                    planner_source_state,
+                    caller_node="planner",
+                    current_step_id=str(
+                        planner_source_state.get("current_step_id") or ""
+                    ),
+                ),
+                continuation_id=str(
+                    (planner_source_state.get("task_state") or {}).get(
+                        "skill_continuation_id"
+                    ) or ""
+                ),
+                allowed_operations=["create_plan", "report_task_semantics_incomplete"],
+                trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
+                max_payload_chars=max(1, int(self.llm_context_limit_tokens) * 4),
+                approved_plan_snapshot=planner_approved_snapshot or None,
+                plan_snapshot=planner_pending_snapshot or None,
+                plan_snapshot_status=(
+                    planner_snapshot_status if planner_pending_snapshot else ""
+                ),
+                **planner_semantic_inputs,
             )
-            detailed_plan_prompt = PromptManager.get_planner_v2_prompt(
-                planner_node_context.llm_payload.to_dict(),
-                capability_context=planner_capability_context,
-                user_preferences=self._load_user_preferences(),
+            planner_system_prompt = PromptManager.get_planner_v2_system_prompt()
+            planner_human_prompt = PromptManager.get_planner_v2_human_prompt(
+                planner_node_context.llm_payload.to_provider_dict()
+            )
+            planner_no_structural_progress = planner_correction_requires_thinking(
+                active_planning_failure
+            )
+            planner_correction_policy = (
+                dict(getattr(self, "planner_correction_llm_policy", {}) or {})
+                if planner_no_structural_progress
+                else {}
+            )
+            planner_correction_llm = (
+                getattr(self, "planner_correction_llm", None)
+                if planner_no_structural_progress
+                else None
             )
 
-            def planner_prompt_accounting(prompt: str) -> Dict[str, Any]:
+            def planner_prompt_accounting() -> Dict[str, Any]:
                 component_map = {
-                    "llm_payload": len(json.dumps(
-                        planner_node_context.llm_payload.to_dict(),
-                        ensure_ascii=False,
-                        sort_keys=True,
-                        indent=2,
-                        default=str,
-                    )),
-                    "semantic_capabilities": len(planner_capability_context),
-                    "user_preferences": len(self._load_user_preferences()),
+                    "system_policy": len(planner_system_prompt),
+                    "llm_payload": len(planner_human_prompt),
                 }
-                component_map["base_template_and_protocol"] = max(
-                    0,
-                    len(prompt) - sum(component_map.values()),
-                )
                 return {
-                    "assembled_prompt_chars": len(prompt),
+                    "assembled_prompt_chars": sum(component_map.values()),
                     "component_chars": component_map,
                     "component_accounting": "non_overlapping",
                 }
 
-            planner_accounting = planner_prompt_accounting(detailed_plan_prompt)
+            planner_accounting = planner_prompt_accounting()
             compressible_chars = 0
             planner_budget = assess_prompt_budget(
-                [detailed_plan_prompt],
+                [planner_system_prompt, planner_human_prompt],
                 component_chars=planner_accounting["component_chars"],
                 context_limit_tokens=self.llm_context_limit_tokens,
                 nominal_char_budget=PLANNER_NOMINAL_CHAR_BUDGET,
                 compressible_chars=compressible_chars,
-                noncompressible_chars=max(0, len(detailed_plan_prompt) - compressible_chars),
+                noncompressible_chars=max(
+                    0,
+                    planner_accounting["assembled_prompt_chars"] - compressible_chars,
+                ),
                 soft_warning_ratio=PLANNER_SOFT_TOKEN_RATIO,
                 compression_ratio=PLANNER_COMPRESSION_TOKEN_RATIO,
                 hard_safety_ratio=PLANNER_HARD_TOKEN_RATIO,
@@ -25293,7 +30655,7 @@ question. Never guess a scientific or database identity.
                 logger.error(
                     "Planner prompt exceeds token safety boundary after optional compression: task=%s chars=%s estimated_tokens=%s headroom=%s",
                     task_id,
-                    len(detailed_plan_prompt),
+                    planner_accounting["assembled_prompt_chars"],
                     planner_budget["estimated_input_tokens"],
                     planner_budget["remaining_headroom_tokens"],
                 )
@@ -25320,121 +30682,79 @@ question. Never guess a scientific or database identity.
 
             plan_content = ""
             violations: List[Any] = []
-            plan_patch_audits: List[Dict[str, Any]] = []
-            resume_audit = state.get("resume_audit") or {}
-            stale_step_ids = list(durable_preplan.get("revalidation_required_step_ids") or [])
-            missing_fields = list(resume_audit.get("missing_fields") or [])
-            local_violations: List[Dict[str, str]] = []
-            for missing_field in missing_fields:
-                match = re.fullmatch(r"steps\[(\d+)\]\.([A-Za-z_][A-Za-z0-9_]*)", str(missing_field))
-                index = int(match.group(1)) if match else -1
-                steps = durable_preplan.get("steps") or []
-                step_id = str(steps[index].get("step_id") or "") if 0 <= index < len(steps) else ""
-                local_violations.append({
-                    "step_id": step_id,
-                    "field": str(match.group(2) if match else missing_field),
-                    "reason": f"Canonical plan validation reported missing field: {missing_field}",
-                })
-            for step_id in stale_step_ids:
-                local_violations.append({
-                    "step_id": str(step_id),
-                    "field": "",
-                    "reason": "This step requires local revalidation after a knowledge or input-state change.",
-                })
-            plan_patch_requested = self._plan_patch_requested(dict(state))
-            if plan_patch_requested and durable_preplan.get("steps"):
-                recovery_decision = (
-                    state.get("recovery_decision")
-                    if isinstance(state.get("recovery_decision"), dict)
-                    else {}
-                )
-                _, repair_step = current_plan_step_with_index(durable_preplan)
-                repair_step = repair_step or {}
-                requested_step_id = str(
-                    state.get("failed_step_id")
-                    or recovery_decision.get("failed_step_id")
-                    or repair_step.get("step_id")
-                    or ""
-                )
-                known_step_ids = {
-                    str(item.get("step_id") or "")
-                    for item in durable_preplan.get("steps", []) or []
-                    if isinstance(item, dict)
-                }
-                if requested_step_id not in known_step_ids:
-                    requested_step_id = str(repair_step.get("step_id") or "")
-                if requested_step_id and not any(
-                    str(item.get("step_id") or "") == requested_step_id
-                    for item in local_violations
-                ):
-                    local_violations.append({
-                        "step_id": requested_step_id,
-                        "field": "",
-                        "reason": str(
-                            state.get("retry_reason")
-                            or recovery_decision.get("reason")
-                            or "Controller requested a local PLAN_PATCH for the current step contract."
-                        )[:2000],
-                    })
-            use_local_plan = bool(durable_preplan.get("steps") and local_violations)
-            repair_operation = PLAN_OPERATION_LOCAL_REPLAN if stale_step_ids else PLAN_OPERATION_REPAIR
-
-            if use_local_plan:
-                candidate_for_repair = durable_preplan
-                candidate_for_repair, renderer_normalization, canonical_violations = normalize_plan_contracts(
-                    candidate_for_repair,
-                    renderer_records=renderer_records,
-                    output_contracts=canonical_output_contracts,
-                    task_spec=task_spec,
-                )
-                plan_content = render_structured_plan(candidate_for_repair)
-                violations = [*local_violations, *canonical_violations]
-                logger.info(
-                    "Planner using %s for task=%s affected=%s instead of CREATE_PLAN",
-                    repair_operation,
-                    task_id,
-                    [item.get("step_id") for item in local_violations],
-                )
-            else:
-                try:
-                    response = await self._ainvoke_node_llm(
-                        [HumanMessage(content=detailed_plan_prompt)],
-                        node_context=planner_node_context,
-                        stage="planner",
-                        task_id=task_id,
-                        task_mode=str(state.get("task_mode") or "managed"),
-                        trace_metadata={
-                            "call_kind": "planner_initial",
-                            "task_spec_revision": task_spec_revision(task_spec),
-                            "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
-                            "selected_skill_ids": selected_skills,
-                            "runtime_audit_ref": str(
-                                Path(self.data_path) / "task_outputs" / task_id / "runtime_audit.json"
+            try:
+                response = await self._ainvoke_node_llm(
+                    [
+                        SystemMessage(content=planner_system_prompt),
+                        HumanMessage(content=planner_human_prompt),
+                    ],
+                    node_context=planner_node_context,
+                    stage="planner",
+                    task_id=task_id,
+                    task_mode=str(state.get("task_mode") or "managed"),
+                    temperature=0.1,
+                    trace_metadata={
+                        "call_kind": "planner_initial",
+                        "task_spec_revision": task_spec_revision(task_spec),
+                        "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
+                        "selected_skill_ids": selected_skills,
+                        "runtime_audit_ref": str(
+                            Path(self.data_path) / "task_outputs" / task_id / "runtime_audit.json"
+                        ),
+                        "component_chars": planner_prompt_components,
+                        "prompt_component_accounting": planner_accounting,
+                        "planner_budget_decision": planner_budget,
+                        "planner_correction_escalation": {
+                            "triggered": planner_no_structural_progress,
+                            "reason": (
+                                "no_structural_progress"
+                                if planner_no_structural_progress
+                                else ""
                             ),
-                            "component_chars": planner_prompt_components,
-                            "prompt_component_accounting": planner_accounting,
-                            "planner_budget_decision": planner_budget,
+                            "repeat_count": int(
+                                active_planning_failure.get("repeat_count") or 0
+                            ) if active_planning_failure else 0,
+                            "thinking_enabled": bool(
+                                planner_correction_policy.get("thinking_enabled")
+                            ),
                         },
-                    )
-                except Exception as exc:
-                    if is_transient_llm_failure(exc) and not is_llm_input_rejected(exc):
-                        update = self._pause_retryable_llm_failure(state, task_id, "planner", exc)
-                        output.print_ai(str(update["messages"][0].content))
-                        return update
-                    response = self._llm_failure_response("planner", exc, task_id)
-                    output.print_ai(response.content)
-                    plan_progress = self._mark_plan_current_blocked(task_id, llm_failure_summary(exc, "planner", task_id))
-                    await self._finalize_task_memory(
-                        task_id,
-                        "failed",
-                        messages + [response],
-                        {"reason": llm_failure_summary(exc, "planner", task_id), "plan_progress": plan_progress},
-                    )
-                    return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
+                    },
+                    llm_override=planner_correction_llm,
+                    llm_policy=planner_correction_policy,
+                )
+            except Exception as exc:
+                if is_transient_llm_failure(exc) and not is_llm_input_rejected(exc):
+                    update = self._pause_retryable_llm_failure(state, task_id, "planner", exc)
+                    output.print_ai(str(update["messages"][0].content))
+                    return update
+                response = self._llm_failure_response("planner", exc, task_id)
+                output.print_ai(response.content)
+                plan_progress = self._mark_plan_current_blocked(task_id, llm_failure_summary(exc, "planner", task_id))
+                await self._finalize_task_memory(
+                    task_id,
+                    "failed",
+                    messages + [response],
+                    {"reason": llm_failure_summary(exc, "planner", task_id), "plan_progress": plan_progress},
+                )
+                return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
 
-                raw_plan_content = str(response.content or "").strip()
-                planner_envelope = None
-                planner_envelope_error = ""
+            raw_plan_content = str(response.content or "").strip()
+            try:
+                typed_planner_skill_decision = parse_typed_skill_decision(
+                    raw_plan_content
+                )
+            except SkillAccessError as exc:
+                return {
+                    "messages": [response, SystemMessage(content=json.dumps(
+                        exc.to_dict(), ensure_ascii=False, sort_keys=True,
+                    ))],
+                    "pending_action": {},
+                    "skill_decision_result": exc.to_dict(),
+                    "next_step": "planner",
+                }
+            planner_envelope = None
+            planner_envelope_error: Dict[str, Any] = {}
+            if typed_planner_skill_decision is None:
                 try:
                     planner_envelope = parse_planner_outcome_envelope(
                         raw_plan_content,
@@ -25445,509 +30765,415 @@ question. Never guess a scientific or database identity.
                         allow_legacy_plan=False,
                     )
                 except PlannerEnvelopeError as exc:
-                    planner_envelope_error = str(exc)
+                    planner_envelope_error = exc.to_diagnostic()
 
-                current_planner_state = load_plan_state(self.data_path, task_id)
-                current_planner_task = canonical_task_spec_for_state(
-                    current_planner_state
-                ) or task_spec
-                current_planner_context = build_node_context(
-                    node_type="planner",
-                    task_spec=current_planner_task,
-                    plan_state=current_planner_state,
+            current_planner_state = load_plan_state(self.data_path, task_id)
+            current_planner_task = canonical_task_spec_for_state(
+                current_planner_state
+            ) or task_spec
+            current_planner_context = build_node_context(
+                node_type="planner",
+                task_spec=current_planner_task,
+                plan_state=current_planner_state,
+                authoritative_user_turn_revision=(
+                    self._authoritative_user_turn_revision(current_planner_state)
+                ),
+                continuation_id=str(
+                    (current_planner_state.get("task_state") or {}).get(
+                        "skill_continuation_id"
+                    ) or ""
+                ),
+            )
+            planner_staleness = evaluate_node_staleness(
+                planner_node_context.binding,
+                current_planner_context.binding.to_dict(),
+            )
+            if not planner_staleness.usable:
+                stale_task_state = dict(current_planner_state.get("task_state") or {})
+                stale_epoch = dict(stale_task_state.get("planning_epoch") or {})
+                if stale_epoch:
+                    stale_epoch["status"] = "stale_semantic_base"
+                    stale_task_state["planning_epoch"] = stale_epoch
+                    current_planner_state["task_state"] = stale_task_state
+                    save_plan_state(self.data_path, task_id, current_planner_state)
+                self._node_invocations.mark_stale_signature_handled(
+                    planner_staleness.stale_signature
                 )
-                planner_staleness = evaluate_node_staleness(
-                    planner_node_context.binding,
+                self._record_durable_skill_event(
+                    task_id,
+                    "stale_node_result_discarded",
                     {
-                        "task_semantic_hash": current_planner_context.binding.task_semantic_hash,
-                        "task_record_hash": current_planner_context.binding.task_record_hash,
-                        "plan_semantic_hash": current_planner_context.binding.plan_semantic_hash,
-                        "plan_record_hash": current_planner_context.binding.plan_record_hash,
-                        "state_generation": int(current_planner_state.get("state_generation") or 0),
+                        "caller_node": "planner",
+                        "caller_invocation_id": planner_node_context.binding.invocation_id,
+                        "changed_preconditions": list(
+                            planner_staleness.changed_preconditions
+                        ),
                     },
                 )
-                if not planner_staleness.usable:
-                    stale_task_state = dict(current_planner_state.get("task_state") or {})
-                    stale_epoch = dict(stale_task_state.get("planning_epoch") or {})
-                    if stale_epoch:
-                        stale_epoch["status"] = "stale_semantic_base"
-                        stale_task_state["planning_epoch"] = stale_epoch
-                        current_planner_state["task_state"] = stale_task_state
-                        save_plan_state(self.data_path, task_id, current_planner_state)
-                    if self._node_invocations.mark_stale_signature_handled(planner_staleness.stale_signature):
-                        return {
-                            "messages": [SystemMessage(content=planner_staleness.code)],
-                            "pending_action": {},
-                            "next_step": "planner",
-                        }
+                return {
+                    "messages": [SystemMessage(content=json.dumps({
+                        "decision_result": "STALE_NODE_RESULT",
+                        "caller_node": "planner",
+                        "caller_invocation_id": planner_node_context.binding.invocation_id,
+                        "changed_preconditions": list(
+                            planner_staleness.changed_preconditions
+                        ),
+                        "counts_as_failure": False,
+                        "consumes_execution_retry": False,
+                    }, ensure_ascii=False, sort_keys=True))],
+                    "stale_node_result": {
+                        "decision_result": "STALE_NODE_RESULT",
+                        "caller_node": "planner",
+                        "caller_invocation_id": planner_node_context.binding.invocation_id,
+                        "changed_preconditions": list(
+                            planner_staleness.changed_preconditions
+                        ),
+                    },
+                    "next_step": "planner",
+                }
+            if typed_planner_skill_decision is not None:
+                self._refund_planner_call_for_skill_continuation(
+                    task_id,
+                    str(planning_epoch.get("planning_epoch_id") or ""),
+                )
+                try:
+                    return await self._handle_skill_node_decision(
+                        task_id=task_id,
+                        caller_node="planner",
+                        graph_node="planner",
+                        decision=typed_planner_skill_decision,
+                        node_context=planner_node_context,
+                        response=response,
+                        selected_skill_ids=planner_skill_pool,
+                    )
+                except SkillAccessError as exc:
                     return {
-                        "messages": [SystemMessage(content=(
-                            "STALE_INVOCATION_NON_CONVERGENT: equivalent Planner stale result already handled."
+                        "messages": [response, SystemMessage(content=json.dumps(
+                            exc.to_dict(), ensure_ascii=False, sort_keys=True,
                         ))],
-                        "task_status": TASK_STATUS_BLOCKED,
-                        "next_step": "finish",
+                        "pending_action": {},
+                        "skill_decision_result": exc.to_dict(),
+                        "next_step": "planner",
                     }
-                if (
-                    planner_envelope is not None
-                    and planner_envelope.outcome_type == TASKSPEC_RECONCILIATION_REQUIRED
-                ):
-                    try:
-                        fingerprint, fingerprint_payload = reconciliation_fingerprint(
-                            planner_envelope.payload,
-                            task_semantic_identity=current_planner_context.binding.task_semantic_hash,
-                        )
-                    except PlannerCandidateError as exc:
-                        return {
-                            "messages": [SystemMessage(content=(
-                                "PLANNER_CANDIDATE_INVALID: " + str(exc)
-                            ))],
-                            "validation_issues": [exc.to_diagnostic()],
-                            "next_step": "planner",
-                        }
-                    current_task_state = dict(current_planner_state.get("task_state") or {})
-                    current_ledger = dict(
-                        current_task_state.get("reconciliation_ledger") or {}
-                    )
-                    relevant_evidence_revision = (
-                        relevant_reconciliation_evidence_revision(
-                            planner_envelope.payload,
-                            current_planner_task,
-                        )
-                    )
-                    guard = reconciliation_guard_status(
-                        current_ledger,
-                        fingerprint=fingerprint,
+            self._complete_durable_skill_continuation(
+                task_id,
+                caller_node="planner",
+            )
+            if (
+                planner_envelope is not None
+                and planner_envelope.outcome_type == TASKSPEC_RECONCILIATION_REQUIRED
+            ):
+                try:
+                    fingerprint, fingerprint_payload = reconciliation_fingerprint(
+                        planner_envelope.payload,
                         task_semantic_identity=current_planner_context.binding.task_semantic_hash,
-                        relevant_evidence_revision=relevant_evidence_revision,
                     )
-                    if guard["terminal"]:
-                        current_task_state["terminal_status"] = (
-                            "TASKSPEC_RECONCILIATION_NONPROGRESS"
-                        )
-                        current_planner_state["task_state"] = current_task_state
-                        save_plan_state(self.data_path, task_id, current_planner_state)
-                        return {
-                            "messages": [SystemMessage(content=(
-                                "TASKSPEC_RECONCILIATION_NONPROGRESS: the same typed "
-                                "reconciliation repeated without TaskSpec or relevant-evidence progress."
-                            ))],
-                            "task_status": TASK_STATUS_BLOCKED,
-                            "next_step": "finish",
-                        }
-                    reconciliation_record = {
-                        "outcome_type": TASKSPEC_RECONCILIATION_REQUIRED,
-                        "fingerprint": fingerprint,
-                        "fingerprint_payload": fingerprint_payload,
-                        "missing_semantic_facts": deepcopy(list(
-                            planner_envelope.payload.get("missing_semantic_facts") or []
-                        )),
-                        "task_semantic_revision": task_spec_revision(current_planner_task),
-                        "task_semantic_identity": current_planner_context.binding.task_semantic_hash,
-                        "relevant_evidence_revision": relevant_evidence_revision,
-                        "candidate_scope_id": planner_node_context.binding.candidate_scope_id,
-                        "status": "pending_consultant",
+                except PlannerCandidateError as exc:
+                    reconciliation_issues = [exc.to_diagnostic()]
+                    current_planner_state = record_planning_failure(
+                        current_planner_state,
+                        validation_issues=reconciliation_issues,
+                        planning_epoch_id=str(
+                            planning_epoch.get("planning_epoch_id") or ""
+                        ),
+                        task_spec_revision_value=task_revision,
+                        validation_source="planner_reconciliation_admission",
+                        candidate=planner_envelope.payload,
+                        previous_correction={
+                            "status": "rejected",
+                            "outcome_code": exc.code,
+                        },
+                    )
+                    reconciliation_issues = list(
+                        ((current_planner_state.get("task_state") or {}).get(
+                            "planning_failure"
+                        ) or {}).get("validation_issues")
+                        or []
+                    )
+                    save_plan_state(self.data_path, task_id, current_planner_state)
+                    return {
+                        "messages": [SystemMessage(content=json.dumps(
+                            {
+                                "code": "PLANNER_CANDIDATE_INVALID",
+                                "validation_issues": reconciliation_issues,
+                            },
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        ))],
+                        "validation_issues": reconciliation_issues,
+                        "next_step": "planner",
                     }
-                    current_task_state["planner_reconciliation"] = reconciliation_record
-                    ended_epoch = dict(current_task_state.get("planning_epoch") or {})
-                    ended_epoch["status"] = "reconciliation_required"
-                    current_task_state["planning_epoch"] = ended_epoch
+                current_task_state = dict(current_planner_state.get("task_state") or {})
+                current_ledger = dict(
+                    current_task_state.get("reconciliation_ledger") or {}
+                )
+                relevant_evidence_revision = (
+                    relevant_reconciliation_evidence_revision(
+                        planner_envelope.payload,
+                        current_planner_task,
+                    )
+                )
+                guard = reconciliation_guard_status(
+                    current_ledger,
+                    fingerprint=fingerprint,
+                    task_semantic_identity=current_planner_context.binding.task_semantic_hash,
+                    relevant_evidence_revision=relevant_evidence_revision,
+                )
+                if guard["terminal"]:
+                    current_task_state["terminal_status"] = (
+                        "TASKSPEC_RECONCILIATION_NONPROGRESS"
+                    )
                     current_planner_state["task_state"] = current_task_state
                     save_plan_state(self.data_path, task_id, current_planner_state)
                     return {
                         "messages": [SystemMessage(content=(
-                            "<taskspec_reconciliation_required>"
-                            + json.dumps(fingerprint_payload, ensure_ascii=False, sort_keys=True)
-                            + "</taskspec_reconciliation_required>"
+                            "TASKSPEC_RECONCILIATION_NONPROGRESS: the same typed "
+                            "reconciliation repeated without TaskSpec or relevant-evidence progress."
                         ))],
-                        "planner_reconciliation": reconciliation_record,
-                        "planning_epoch": ended_epoch,
-                        "next_step": "consultant",
+                        "task_status": TASK_STATUS_BLOCKED,
+                        "next_step": "finish",
                     }
+                reconciliation_record = {
+                    "outcome_type": TASKSPEC_RECONCILIATION_REQUIRED,
+                    "fingerprint": fingerprint,
+                    "fingerprint_payload": fingerprint_payload,
+                    "missing_semantic_facts": deepcopy(list(
+                        planner_envelope.payload.get("missing_semantic_facts") or []
+                    )),
+                    "task_semantic_revision": task_spec_revision(current_planner_task),
+                    "task_semantic_identity": current_planner_context.binding.task_semantic_hash,
+                    "relevant_evidence_revision": relevant_evidence_revision,
+                    "candidate_scope_id": planner_node_context.binding.candidate_scope_id,
+                    "status": "pending_consultant",
+                }
+                current_task_state["planner_reconciliation"] = reconciliation_record
+                ended_epoch = dict(current_task_state.get("planning_epoch") or {})
+                ended_epoch["status"] = "reconciliation_required"
+                current_task_state["planning_epoch"] = ended_epoch
+                current_planner_state["task_state"] = current_task_state
+                current_planner_state = resolve_planning_failure(
+                    current_planner_state,
+                    outcome_code=TASKSPEC_RECONCILIATION_REQUIRED,
+                )
+                save_plan_state(self.data_path, task_id, current_planner_state)
+                return {
+                    "messages": [SystemMessage(content=(
+                        "<taskspec_reconciliation_required>"
+                        + json.dumps(fingerprint_payload, ensure_ascii=False, sort_keys=True)
+                        + "</taskspec_reconciliation_required>"
+                    ))],
+                    "planner_reconciliation": reconciliation_record,
+                    "planning_epoch": ended_epoch,
+                    "next_step": "consultant",
+                }
 
-                plan_content = (
-                    json.dumps(
-                        planner_envelope.plan_candidate_body(),
-                        ensure_ascii=False,
-                        sort_keys=True,
-                    )
-                    if planner_envelope is not None
-                    else raw_plan_content
+            plan_content = (
+                json.dumps(
+                    planner_envelope.plan_candidate_body(),
+                    ensure_ascii=False,
+                    sort_keys=True,
                 )
-                structure_errors: List[Dict[str, Any]] = (
-                    [validation_issue(
-                        "PLANNER_CANDIDATE_INVALID",
-                        owner="planner",
-                        repair_target="$",
-                        field_path="$",
-                        message=planner_envelope_error,
-                        validator_id="planner_envelope",
-                    )]
-                    if planner_envelope_error
-                    else []
-                )
-                candidate_ref_keys: Dict[str, Any] = {}
-                candidate_usage: List[Dict[str, Any]] = []
-                allocation_intent: Dict[str, Any] = {}
-                try:
-                    plan_proposal = json.loads(plan_content)
-                    if isinstance(plan_proposal, Mapping):
-                        if planner_envelope is not None and not planner_envelope.legacy_envelope:
-                            artifact_handles = {
-                                str(handle): str(item.get("stable_identity") or "")
+                if planner_envelope is not None
+                else raw_plan_content
+            )
+            structure_errors: List[Dict[str, Any]] = (
+                [validation_issue(
+                    str(planner_envelope_error.get("code") or "PLANNER_CANDIDATE_INVALID"),
+                    owner="planner",
+                    repair_target="$",
+                    field_path="$",
+                    message=str(
+                        planner_envelope_error.get("parser_message")
+                        or planner_envelope_error.get("message")
+                        or planner_envelope_error.get("code")
+                        or "Planner envelope is invalid."
+                    ),
+                    validator_id="planner_envelope",
+                    **{
+                        key: deepcopy(value)
+                        for key, value in planner_envelope_error.items()
+                        if key not in {"code", "field_path", "message"}
+                    },
+                )]
+                if planner_envelope_error
+                else []
+            )
+            candidate_ref_keys: Dict[str, Any] = {}
+            candidate_usage: List[Dict[str, Any]] = []
+            allocation_intent: Dict[str, Any] = {}
+            plan_proposal: Any = {}
+            try:
+                plan_proposal = json.loads(plan_content)
+                if isinstance(plan_proposal, Mapping):
+                    if planner_envelope is not None and not planner_envelope.legacy_envelope:
+                        artifact_handles = {
+                            str(handle): str(item.get("stable_identity") or "")
+                            for handle, item in planner_node_context.binding.semantic_handle_map.items()
+                            if isinstance(item, Mapping)
+                            and item.get("object_type") == "artifact"
+                        }
+                        availability_origins = {
+                            str(item.get("stable_identity") or ""): (
+                                "verified_task_input"
+                                if str(item.get("direction") or "") == "input"
+                                else "not_yet_available"
+                            )
+                            for item in planner_node_context.binding.semantic_handle_map.values()
+                            if isinstance(item, Mapping)
+                            and item.get("object_type") == "artifact"
+                            and str(item.get("stable_identity") or "")
+                        }
+                        (
+                            candidate_ref_keys,
+                            candidate_usage,
+                            deterministic_issues,
+                        ) = validate_planner_candidate_deterministically(
+                            plan_proposal,
+                            candidate_scope_id=(
+                                planner_node_context.binding.candidate_scope_id
+                            ),
+                            authoritative_handles=artifact_handles,
+                            availability_origins=availability_origins,
+                            authoritative_bindings={
+                                str(handle): dict(item)
                                 for handle, item in planner_node_context.binding.semantic_handle_map.items()
                                 if isinstance(item, Mapping)
                                 and item.get("object_type") == "artifact"
-                            }
-                            availability_origins = {
-                                str(item.get("stable_identity") or ""): (
-                                    "verified_task_input"
-                                    if str(item.get("direction") or "") == "input"
-                                    else "not_yet_available"
-                                )
-                                for item in planner_node_context.binding.semantic_handle_map.values()
-                                if isinstance(item, Mapping)
-                                and item.get("object_type") == "artifact"
-                                and str(item.get("stable_identity") or "")
-                            }
-                            (
-                                candidate_ref_keys,
-                                candidate_usage,
-                                deterministic_issues,
-                            ) = validate_planner_candidate_deterministically(
+                            },
+                        )
+                        if deterministic_issues:
+                            structure_errors = [
+                                normalize_validation_issue(issue)
+                                for issue in deterministic_issues
+                            ]
+                        else:
+                            allocation_intent = prepare_allocation_intent(
                                 plan_proposal,
                                 candidate_scope_id=(
                                     planner_node_context.binding.candidate_scope_id
                                 ),
-                                authoritative_handles=artifact_handles,
-                                availability_origins=availability_origins,
-                            )
-                            if deterministic_issues:
-                                structure_errors = [
-                                    normalize_validation_issue(issue)
-                                    for issue in deterministic_issues
-                                ]
-                            else:
-                                allocation_intent = prepare_allocation_intent(
-                                    plan_proposal,
-                                    candidate_scope_id=(
-                                        planner_node_context.binding.candidate_scope_id
-                                    ),
-                                    planning_epoch_id=str(
-                                        planning_epoch.get("planning_epoch_id") or ""
-                                    ),
-                                )
-                        plan_proposal = resolve_plan_proposal_handles(
-                            plan_proposal,
-                            planner_node_context.binding,
-                        )
-                        plan_content = json.dumps(
-                            plan_proposal,
-                            ensure_ascii=False,
-                            sort_keys=True,
-                        )
-                except json.JSONDecodeError:
-                    pass
-                except SemanticHandleError as exc:
-                    structure_errors = [validation_issue(
-                        "PLANNER_CANDIDATE_INVALID",
-                        owner="planner",
-                        repair_target="$",
-                        field_path="$",
-                        message=str(exc),
-                        validator_id="semantic_handle_resolver",
-                    )]
-                except PlannerCandidateError as exc:
-                    structure_errors = [normalize_validation_issue({
-                        **exc.to_diagnostic(),
-                        "validator_id": "plan_artifact_refs",
-                        "repair_target": exc.field_path,
-                    })]
-                if not structure_errors:
-                    try:
-                        candidate_for_repair = build_plan_state(
-                            task_id,
-                            plan_content,
-                            strict=True,
-                        )
-                        candidate_for_repair["artifact_usage"] = deepcopy(candidate_usage)
-                        candidate_for_repair["allocation_intent"] = deepcopy(allocation_intent)
-                        candidate_for_repair["candidate_scope_id"] = str(
-                            planner_node_context.binding.candidate_scope_id
-                        )
-                        candidate_for_repair["planning_epoch_id"] = str(
-                            planning_epoch.get("planning_epoch_id") or ""
-                        )
-                    except PlanStructureError as first_error:
-                        structure_errors = [
-                            validation_issue(
-                                "PLAN_STRUCTURE_INVALID",
-                                owner="planner",
-                                repair_target=str(item.get("field_path") or "$"),
-                                field_path=str(item.get("field_path") or "$"),
-                                message=str(item.get("message") or item),
-                                validator_id="structured_plan_schema",
-                            )
-                            for item in first_error.diagnostics
-                        ]
-                if structure_errors:
-                    try:
-                        structure_repair_context = build_node_context(
-                            node_type="planner_repair",
-                            task_spec=task_spec,
-                            plan_state=planner_source_state,
-                            violations=structure_errors,
-                            allowed_operations=["replace_plan_document"],
-                            candidate_scope_id=planner_node_context.binding.candidate_scope_id,
-                            approved_plan_snapshot=planner_approved_snapshot or None,
-                            **planner_semantic_inputs,
-                        )
-                        structure_repair_prompt = (
-                            PromptManager.get_planner_v2_prompt(
-                                structure_repair_context.llm_payload.to_dict(),
-                                capability_context=planner_capability_context,
-                                user_preferences=self._load_user_preferences(),
-                            )
-                            + "\n\nYour prior response failed the structured plan schema. "
-                            "Return a corrected complete JSON object; do not return a PlanPatch.\n"
-                            + json.dumps(
-                                structure_errors,
-                                ensure_ascii=False,
-                                sort_keys=True,
-                            )
-                        )
-                        repair_reservation = reserve_planner_candidate_repair()
-                        if not repair_reservation.get("allowed"):
-                            if repair_reservation.get("terminal"):
-                                return {
-                                    "messages": [SystemMessage(content=str(
-                                        repair_reservation.get("code")
-                                    ))],
-                                    "task_status": TASK_STATUS_BLOCKED,
-                                    "next_step": "finish",
-                                }
-                            return {
-                                "messages": [SystemMessage(content=str(
-                                    repair_reservation.get("code")
-                                ))],
-                                "next_step": "planner",
-                            }
-                        structure_response = await self._ainvoke_node_llm(
-                            [HumanMessage(content=structure_repair_prompt)],
-                            node_context=structure_repair_context,
-                            stage="planner_structure_repair",
-                            task_id=task_id,
-                            task_mode=str(state.get("task_mode") or "managed"),
-                            trace_metadata={
-                                "call_kind": "planner_structure_repair",
-                                "task_spec_revision": task_spec_revision(task_spec),
-                                "selected_skill_ids": selected_skills,
-                                "validation_errors": structure_errors,
-                            },
-                        )
-                        repaired_raw = str(structure_response.content or "").strip()
-                        repaired_envelope = parse_planner_outcome_envelope(
-                            repaired_raw,
-                            allow_legacy_plan=False,
-                        )
-                        current_repair_base = load_plan_state(self.data_path, task_id)
-                        current_repair_task = canonical_task_spec_for_state(
-                            current_repair_base
-                        ) or task_spec
-                        current_repair_context = build_node_context(
-                            node_type="planner_repair",
-                            task_spec=current_repair_task,
-                            plan_state=current_repair_base,
-                            violations=structure_errors,
-                            allowed_operations=["replace_plan_document"],
-                            candidate_scope_id=(
-                                planner_node_context.binding.candidate_scope_id
-                            ),
-                        )
-                        structure_staleness = evaluate_node_staleness(
-                            structure_repair_context.binding,
-                            {
-                                "task_semantic_hash": current_repair_context.binding.task_semantic_hash,
-                                "plan_semantic_hash": current_repair_context.binding.plan_semantic_hash,
-                                "violation_set_identity": structure_repair_context.binding.violation_set_identity,
-                                "state_generation": int(
-                                    current_repair_base.get("state_generation") or 0
+                                planning_epoch_id=str(
+                                    planning_epoch.get("planning_epoch_id") or ""
                                 ),
-                            },
-                        )
-                        if not structure_staleness.usable:
-                            raise InvocationProtocolError(structure_staleness.code)
-                        if repaired_envelope.outcome_type != PLAN_CANDIDATE:
-                            raise PlannerCandidateError(
-                                "PLANNER_REPAIR_OUTCOME_INVALID",
-                                "$.outcome_type",
-                                repaired_envelope.outcome_type,
                             )
-                        parsed_structure = repaired_envelope.plan_candidate_body()
-                        structure_errors = []
-                        if not repaired_envelope.legacy_envelope:
-                            repaired_handles = {
-                                str(handle): str(item.get("stable_identity") or "")
-                                for handle, item in structure_repair_context.binding.semantic_handle_map.items()
-                                if isinstance(item, Mapping)
-                                and item.get("object_type") == "artifact"
-                            }
-                            repaired_origins = {
-                                str(item.get("stable_identity") or ""): (
-                                    "verified_task_input"
-                                    if str(item.get("direction") or "") == "input"
-                                    else "not_yet_available"
-                                )
-                                for item in structure_repair_context.binding.semantic_handle_map.values()
-                                if isinstance(item, Mapping)
-                                and item.get("object_type") == "artifact"
-                                and str(item.get("stable_identity") or "")
-                            }
-                            (
-                                candidate_ref_keys,
-                                candidate_usage,
-                                repaired_deterministic_issues,
-                            ) = validate_planner_candidate_deterministically(
-                                parsed_structure,
-                                candidate_scope_id=(
-                                    structure_repair_context.binding.candidate_scope_id
-                                ),
-                                authoritative_handles=repaired_handles,
-                                availability_origins=repaired_origins,
-                            )
-                            if repaired_deterministic_issues:
-                                structure_errors = [
-                                    normalize_validation_issue(issue)
-                                    for issue in repaired_deterministic_issues
-                                ]
-                            else:
-                                allocation_intent = prepare_allocation_intent(
-                                    parsed_structure,
-                                    candidate_scope_id=(
-                                        structure_repair_context.binding.candidate_scope_id
-                                    ),
-                                    planning_epoch_id=str(
-                                        planning_epoch.get("planning_epoch_id") or ""
-                                    ),
-                                )
-                        if not structure_errors:
-                            parsed_structure = resolve_plan_proposal_handles(
-                                parsed_structure,
-                                structure_repair_context.binding,
-                            )
-                            plan_content = json.dumps(parsed_structure, ensure_ascii=False, sort_keys=True)
-                            candidate_for_repair = build_plan_state(
-                                task_id,
-                                plan_content,
-                                strict=True,
-                            )
-                            candidate_for_repair["artifact_usage"] = deepcopy(candidate_usage)
-                            candidate_for_repair["allocation_intent"] = deepcopy(allocation_intent)
-                            candidate_for_repair["candidate_scope_id"] = str(
-                                planner_node_context.binding.candidate_scope_id
-                            )
-                            candidate_for_repair["planning_epoch_id"] = str(
-                                planning_epoch.get("planning_epoch_id") or ""
-                            )
-                    except PlanStructureError as second_error:
-                        structure_errors = [
-                            validation_issue(
-                                "PLAN_STRUCTURE_INVALID",
-                                owner="planner",
-                                repair_target=str(item.get("field_path") or "$"),
-                                field_path=str(item.get("field_path") or "$"),
-                                message=str(item.get("message") or item),
-                                validator_id="structured_plan_schema",
-                            )
-                            for item in second_error.diagnostics
-                        ]
-                    except SemanticHandleError as second_error:
-                        structure_errors = [validation_issue(
-                            "PLANNER_CANDIDATE_INVALID",
-                            owner="planner",
-                            repair_target="$",
-                            field_path="$",
-                            message=str(second_error),
-                            validator_id="semantic_handle_resolver",
-                        )]
-                    except (PlannerEnvelopeError, PlannerCandidateError) as second_error:
-                        structure_errors = [
-                            normalize_validation_issue({
-                                **second_error.to_diagnostic(),
-                                "validator_id": "planner_candidate_contract",
-                                "repair_target": second_error.field_path,
-                            })
-                            if isinstance(second_error, PlannerCandidateError)
-                            else validation_issue(
-                                "PLANNER_CANDIDATE_INVALID",
-                                owner="planner",
-                                repair_target="$",
-                                field_path="$",
-                                message=str(second_error),
-                                validator_id="planner_envelope",
-                            )
-                        ]
-                    except InvocationProtocolError as stale_error:
-                        return {
-                            "messages": [SystemMessage(content=str(stale_error))],
-                            "pending_action": {},
-                            "next_step": "planner",
-                        }
-                    except Exception as exc:
-                        structure_errors = [validation_issue(
-                            "PLANNER_STRUCTURE_REPAIR_FAILED",
-                            owner="planner",
-                            repair_target="$",
-                            field_path="$",
-                            message=f"structure repair call failed: {type(exc).__name__}: {exc}",
-                            validator_id="planner_structure_repair",
-                        )]
-
-                if structure_errors:
-                    invalid_dir = Path(self.data_path) / "task_outputs" / task_id / "planner_protocol"
-                    invalid_dir.mkdir(parents=True, exist_ok=True)
-                    invalid_hash = hashlib.sha256(plan_content.encode("utf-8")).hexdigest()
-                    invalid_path = invalid_dir / f"invalid_plan_{invalid_hash[:16]}.txt"
-                    invalid_path.write_text(plan_content, encoding="utf-8")
-                    candidate_for_repair = deepcopy(durable_preplan)
-                    candidate_for_repair.update({
-                        "selected_skill_ids": list(selected_skills),
-                        "generated_from_task_revision": task_revision,
-                        "plan_structure_status": "invalid",
-                        "plan_structure_diagnostics": deepcopy(structure_errors),
-                        "planner_raw_response_ref": str(invalid_path),
-                        "planner_raw_response_hash": invalid_hash,
-                    })
-                    _bind_current_task_spec_record(candidate_for_repair, task_spec)
-                    issue = validation_issue(
-                        "PLAN_STRUCTURE_INVALID",
-                        owner="planner",
-                        repair_target="plan_document",
-                        field_path="plan_document",
-                        message="Planner output failed the canonical structured-plan schema.",
-                        evidence=deepcopy(structure_errors),
+                    plan_proposal = resolve_plan_proposal_handles(
+                        plan_proposal,
+                        planner_node_context.binding,
                     )
-                    candidate_for_repair = derive_plan_validation_state(
-                        candidate_for_repair,
-                        [issue],
-                        record_convergence=False,
+                    plan_content = json.dumps(
+                        plan_proposal,
+                        ensure_ascii=False,
+                        sort_keys=True,
                     )
-                    renderer_normalization = []
-                    violations = list(candidate_for_repair.get("validation_issues") or [])
-                else:
-                    candidate_for_repair, renderer_normalization, violations = normalize_plan_contracts(
-                        candidate_for_repair,
-                        renderer_records=renderer_records,
-                        output_contracts=canonical_output_contracts,
-                        task_spec=task_spec,
-                    )
-                    plan_content = render_structured_plan(candidate_for_repair)
-                    violations.extend(self._skill_plan_violations(
+            except json.JSONDecodeError:
+                pass
+            except SemanticHandleError as exc:
+                structure_errors = [validation_issue(
+                    "PLANNER_CANDIDATE_INVALID",
+                    owner="planner",
+                    repair_target="$",
+                    field_path="$",
+                    message=str(exc),
+                    validator_id="semantic_handle_resolver",
+                )]
+            except PlannerCandidateError as exc:
+                structure_errors = [normalize_validation_issue({
+                    **exc.to_diagnostic(),
+                    "validator_id": "plan_artifact_refs",
+                    "repair_target": exc.field_path,
+                })]
+            if not structure_errors:
+                try:
+                    candidate_for_repair = build_plan_state(
+                        task_id,
                         plan_content,
-                        selected_skills,
-                        user_msg=task_requirement_text,
-                        workflow_handoff=workflow_handoff,
-                    ))
-                    violations.extend(self._plan_step_skill_violations(candidate_for_repair, selected_skills))
+                        strict=True,
+                    )
+                    candidate_for_repair["artifact_usage"] = deepcopy(candidate_usage)
+                    candidate_for_repair["allocation_intent"] = deepcopy(allocation_intent)
+                    candidate_for_repair["candidate_scope_id"] = str(
+                        planner_node_context.binding.candidate_scope_id
+                    )
+                    candidate_for_repair["planning_epoch_id"] = str(
+                        planning_epoch.get("planning_epoch_id") or ""
+                    )
+                except PlanStructureError as first_error:
+                    structure_errors = [
+                        validation_issue(
+                            "PLAN_STRUCTURE_INVALID",
+                            owner="planner",
+                            repair_target=str(item.get("field_path") or "$"),
+                            field_path=str(item.get("field_path") or "$"),
+                            message=str(item.get("message") or item),
+                            validator_id="structured_plan_schema",
+                        )
+                        for item in first_error.diagnostics
+                    ]
+            if structure_errors:
+                rejected_state = load_plan_state(self.data_path, task_id)
+                rejected_state = record_planning_failure(
+                    rejected_state,
+                    validation_issues=structure_errors,
+                    planning_epoch_id=str(
+                        planning_epoch.get("planning_epoch_id") or ""
+                    ),
+                    task_spec_revision_value=task_revision,
+                    validation_source="planner_candidate_admission",
+                    candidate=(
+                        plan_proposal
+                        if isinstance(plan_proposal, Mapping)
+                        else None
+                    ),
+                    previous_correction={
+                        "status": "rejected",
+                        "outcome_code": str(
+                            structure_errors[0].get("code")
+                            if structure_errors
+                            else "PLANNER_CANDIDATE_INVALID"
+                        ),
+                    },
+                )
+                structure_errors = list(
+                    ((rejected_state.get("task_state") or {}).get(
+                        "planning_failure"
+                    ) or {}).get("validation_issues")
+                    or []
+                )
+                save_plan_state(self.data_path, task_id, rejected_state)
+                rejected_epoch = dict(
+                    (rejected_state.get("task_state") or {}).get("planning_epoch")
+                    or {}
+                )
+                return {
+                    "messages": [SystemMessage(content=json.dumps(
+                        {
+                            "code": "PLANNER_CANDIDATE_REJECTED",
+                            "validation_issues": structure_errors,
+                        },
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        default=str,
+                    ))],
+                    "validation_issues": structure_errors,
+                    "pending_action": {},
+                    "failure_owner": "planner",
+                    "planning_epoch": rejected_epoch,
+                    "next_step": "planner",
+                }
+            candidate_for_repair, renderer_normalization, violations = normalize_plan_contracts(
+                candidate_for_repair,
+                renderer_records=renderer_records,
+                output_contracts=canonical_output_contracts,
+                task_spec=task_spec,
+            )
+            plan_content = render_structured_plan(candidate_for_repair)
+            violations.extend(self._skill_plan_violations(
+                plan_content,
+                selected_skills,
+                user_msg=task_requirement_text,
+                workflow_handoff=workflow_handoff,
+            ))
+            violations.extend(self._plan_step_skill_violations(candidate_for_repair, selected_skills))
 
             candidate_for_repair = derive_plan_validation_state(
                 candidate_for_repair,
@@ -25955,409 +31181,16 @@ question. Never guess a scientific or database identity.
             )
             violations = list(candidate_for_repair.get("validation_issues") or [])
             initial_contract_violations = deepcopy(violations)
-            repair_reason_codes = sorted({
+            validation_reason_codes = sorted({
                 str(item.get("code") or item.get("violation_code") or item.get("field") or "semantic_plan_violation")
                 if isinstance(item, dict) else "semantic_plan_violation"
                 for item in violations
             })
-            repair_trigger_categories = sorted({
-                {
-                    "REQUIRED_OUTPUT_UNCOVERED": "output_contract_uncovered",
-                    "RENDERER_OUTPUT_BINDING_UNRESOLVED": "output_binding_unresolved",
-                    "OUTPUT_PRODUCER_AMBIGUOUS": "output_contract_uncovered",
-                    "INVALID_ACTION_FOR_STEP_PURPOSE": "semantic_plan_violation",
-                    "steps": "parser_failure",
-                }.get(code, "dependency_violation" if "DEPEND" in code.upper() else "semantic_plan_violation")
-                for code in repair_reason_codes
-            })
-            deterministic_blocking_codes = {
-                "PLAN_STRUCTURE_INVALID",
-                "RENDERER_OUTPUT_BINDING_UNRESOLVED",
-                "RENDERER_MISSING_REQUIRED_BINDING",
-                "RENDERER_BINDING_CONFLICT",
-                "RENDERER_CONTRACT_MISSING",
-            }
-            deterministic_binding_blocked = bool(
-                deterministic_blocking_codes.intersection(repair_reason_codes)
-            )
             if violations:
                 logger.info(
-                    "Planner repair decision: task=%s reason_codes=%s trigger_categories=%s llm_repair_allowed=%s",
+                    "Planner candidate rejected: task=%s reason_codes=%s",
                     task_id,
-                    repair_reason_codes,
-                    repair_trigger_categories,
-                    not deterministic_binding_blocked,
-                )
-            # A failed validation repairs the candidate plan in place.  It does
-            # not replay the full Planner prompt or ask the model to regenerate
-            # unrelated steps.  The local store validates base version/hash and
-            # allowed step scope before applying each patch.
-            # One PLAN-owned recovery context may generate at most one local
-            # patch. A rejected patch is preserved for explicit escalation;
-            # replaying the same Planner prompt cannot create new evidence.
-            for _repair_attempt in range(0 if deterministic_binding_blocked else 1):
-                if not violations:
-                    break
-                repair_request = build_plan_repair_request(
-                    candidate_for_repair,
-                    violations,
-                    immutable_constraints=[
-                        *[str(item) for item in state.get("user_constraints", []) or []],
-                        *[str(item) for item in task_spec.get("constraints", []) or []],
-                    ],
-                    operation=repair_operation,
-                )
-                effective_revision = resolve_effective_user_facts(task_spec)["effective_facts_revision"]
-                repair_request["effective_facts_revision"] = effective_revision
-                renderer_routes = [
-                    str(item.get("renderer_id") or "")
-                    for item in candidate_for_repair.get("steps", []) or []
-                    if isinstance(item, dict) and str(item.get("renderer_id") or "").strip()
-                ]
-                violation_identity = hashlib.sha256(
-                    json.dumps(
-                        violations,
-                        ensure_ascii=False,
-                        sort_keys=True,
-                        default=str,
-                    ).encode("utf-8")
-                ).hexdigest()
-                repair_node_context = build_node_context(
-                    node_type="planner_repair",
-                    task_spec=task_spec,
-                    plan_state=candidate_for_repair,
-                    state_generation=int(candidate_for_repair.get("state_generation") or 0),
-                    violations=[item for item in violations if isinstance(item, Mapping)],
-                    allowed_operations=["replace_steps"],
-                    violation_set_identity=violation_identity,
-                    trace_enabled=bool(os.getenv("NODE_CONTEXT_V2_TRACE", "")),
-                    candidate_scope_id=planner_node_context.binding.candidate_scope_id,
-                    approved_plan_snapshot=planner_approved_snapshot or None,
-                    **planner_semantic_inputs,
-                )
-                step_handle_by_identity = {
-                    str(item.get("stable_identity") or ""): str(handle)
-                    for handle, item in repair_node_context.binding.semantic_handle_map.items()
-                    if isinstance(item, Mapping) and item.get("object_type") == "plan_step"
-                }
-                allowed_step_handles = [
-                    step_handle_by_identity[step_id]
-                    for step_id in repair_request.get("allowed_step_ids", []) or []
-                    if str(step_id) in step_handle_by_identity
-                ]
-                repair_prompt = PromptManager.get_plan_repair_v2_prompt(
-                    repair_node_context.llm_payload.to_dict(),
-                    allowed_step_handles=allowed_step_handles,
-                    capability_context=(
-                        f"selected capabilities={json.dumps(selected_skills, ensure_ascii=False)}\n"
-                        + skill_execution_context
-                        + "\nrenderer routes="
-                        + json.dumps(renderer_routes, ensure_ascii=False)
-                    ),
-                )
-                pre_patch_candidate = deepcopy(candidate_for_repair)
-                pre_patch_issues = deepcopy(violations)
-                try:
-                    recovery_store = RecoveryStateStore(self.data_path, task_id)
-                    repair_context_id = str(
-                        state.get("recovery_context_digest")
-                        or hashlib.sha256(
-                            json.dumps(
-                                {
-                                    "task_id": task_id,
-                                    "step_ids": repair_request.get("allowed_step_ids") or [],
-                                    "base_plan_hash": repair_request.get("base_plan_hash") or "",
-                                },
-                                ensure_ascii=False,
-                                sort_keys=True,
-                            ).encode("utf-8")
-                        ).hexdigest()[:24]
-                    )
-                    repair_stage = "planner_patch:" + ",".join(
-                        str(item) for item in repair_request.get("allowed_step_ids") or ["task"]
-                    )
-                    cached_repair = recovery_store.load_llm_result(
-                        repair_context_id,
-                        repair_stage,
-                    )
-                    if cached_repair.get("raw_response"):
-                        repair_response = AIMessage(content=str(cached_repair["raw_response"]))
-                    else:
-                        repair_reservation = reserve_planner_candidate_repair()
-                        if not repair_reservation.get("allowed"):
-                            if repair_reservation.get("terminal"):
-                                return {
-                                    "messages": [SystemMessage(content=str(
-                                        repair_reservation.get("code")
-                                    ))],
-                                    "task_status": TASK_STATUS_BLOCKED,
-                                    "next_step": "finish",
-                                }
-                            return {
-                                "messages": [SystemMessage(content=str(
-                                    repair_reservation.get("code")
-                                ))],
-                                "next_step": "planner",
-                            }
-                        repair_response = await self._ainvoke_node_llm(
-                            [HumanMessage(content=repair_prompt)],
-                            node_context=repair_node_context,
-                            stage="planner_repair",
-                            task_id=task_id,
-                            task_mode=str(state.get("task_mode") or "managed"),
-                            trace_metadata={
-                                "call_kind": "planner_repair",
-                                "parent_call_id": str(
-                                    (getattr(self, "_latest_llm_call_refs", {}).get(task_id, [{}])[-1]).get("call_id")
-                                    if getattr(self, "_latest_llm_call_refs", {}).get(task_id)
-                                    else ""
-                                ),
-                                "task_spec_revision": task_spec_revision(task_spec),
-                                "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
-                                "selected_skill_ids": selected_skills,
-                                "repair_scope": repair_request,
-                            },
-                        )
-                        recovery_store.save_llm_result(
-                            repair_context_id,
-                            repair_stage,
-                            raw_response=str(repair_response.content or ""),
-                            parsed_result={},
-                        )
-                    patch = parse_plan_patch(str(repair_response.content or ""))
-                    patch = resolve_plan_proposal_handles(
-                        patch,
-                        repair_node_context.binding,
-                    )
-                    patch = stamp_plan_patch_control_binding(
-                        patch,
-                        candidate_for_repair,
-                    )
-                    repair_staleness = evaluate_node_staleness(
-                        repair_node_context.binding,
-                        {
-                            "task_semantic_hash": repair_node_context.binding.task_semantic_hash,
-                            "plan_semantic_hash": (
-                                "sha256:" + semantic_plan_hash(candidate_for_repair)
-                                if not str(semantic_plan_hash(candidate_for_repair)).startswith("sha256:")
-                                else semantic_plan_hash(candidate_for_repair)
-                            ),
-                            "violation_set_identity": violation_identity,
-                        },
-                    )
-                    if not repair_staleness.usable:
-                        raise ValueError(repair_staleness.code)
-                    candidate_for_repair, patch_audit = apply_plan_patch(
-                        candidate_for_repair,
-                        patch,
-                        allowed_step_ids=repair_request.get("allowed_step_ids", []),
-                    )
-                    patch_audit["effective_facts_revision"] = effective_revision
-                    plan_patch_audits.append({**patch_audit, "request": repair_request})
-                    if patch_audit.get("no_op"):
-                        # A no-op is evidence of non-progress.  It never clears
-                        # the unresolved issues and never authorizes Generate.
-                        candidate_for_repair = derive_plan_validation_state(
-                            candidate_for_repair,
-                            violations,
-                        )
-                        violations = list(candidate_for_repair.get("validation_issues") or [])
-                        plan_patch_audits[-1].update({
-                            "transaction_status": "rejected_no_op",
-                            "proposed_candidate_semantic_hash": semantic_plan_hash(
-                                candidate_for_repair
-                            ),
-                            "proposed_validation_issues": deepcopy(violations),
-                            "proposed_issue_fingerprints": [
-                                str(item.get("fingerprint") or "")
-                                for item in violations
-                                if isinstance(item, Mapping)
-                            ],
-                            "proposed_repair_convergence": deepcopy(
-                                candidate_for_repair.get("repair_convergence") or {}
-                            ),
-                        })
-                        break
-                    repaired_wire = planner_candidate_body_from_state(
-                        candidate_for_repair
-                    )
-                    repair_artifact_bindings = [
-                        dict(item)
-                        for item in repair_node_context.binding.semantic_handle_map.values()
-                        if isinstance(item, Mapping)
-                        and item.get("object_type") == "artifact"
-                        and str(item.get("stable_identity") or "")
-                    ]
-                    repair_authoritative_handles = {
-                        str(item.get("stable_identity")): str(item.get("stable_identity"))
-                        for item in repair_artifact_bindings
-                    }
-                    repair_availability_origins = {
-                        str(item.get("stable_identity")): (
-                            "verified_task_input"
-                            if str(item.get("direction") or "") == "input"
-                            else "not_yet_available"
-                        )
-                        for item in repair_artifact_bindings
-                    }
-                    (
-                        _repair_ref_keys,
-                        repaired_artifact_usage,
-                        repaired_deterministic_issues,
-                    ) = validate_planner_candidate_deterministically(
-                        repaired_wire,
-                        candidate_scope_id=(
-                            repair_node_context.binding.candidate_scope_id
-                        ),
-                        authoritative_handles=repair_authoritative_handles,
-                        availability_origins=repair_availability_origins,
-                    )
-                    candidate_for_repair["artifact_usage"] = deepcopy(
-                        repaired_artifact_usage
-                    )
-                    candidate_for_repair, renderer_normalization, canonical_violations = normalize_plan_contracts(
-                        candidate_for_repair,
-                        renderer_records=renderer_records,
-                        output_contracts=canonical_output_contracts,
-                        task_spec=task_spec,
-                    )
-                    canonical_violations = [
-                        *[
-                            normalize_validation_issue(issue)
-                            for issue in repaired_deterministic_issues
-                        ],
-                        *canonical_violations,
-                    ]
-                    plan_patch_audits[-1]["renderer_normalization"] = renderer_normalization
-                except Exception as exc:
-                    candidate_for_repair = deepcopy(pre_patch_candidate)
-                    rejected_issue = validation_issue(
-                        "PLAN_PATCH_REJECTED",
-                        owner="planner",
-                        repair_target="plan_document",
-                        field_path="plan_patch",
-                        message=f"PlanPatch transaction was rejected: {type(exc).__name__}: {exc}",
-                    )
-                    violations = [*pre_patch_issues, rejected_issue]
-                    candidate_for_repair = derive_plan_validation_state(
-                        candidate_for_repair,
-                        violations,
-                    )
-                    violations = list(candidate_for_repair.get("validation_issues") or [])
-                    plan_patch_audits.append({
-                        "operation": repair_operation,
-                        "request": deepcopy(repair_request),
-                        "transaction_status": "rejected_exception",
-                        "error_type": type(exc).__name__,
-                        "issue_code": "PLAN_PATCH_REJECTED",
-                    })
-                    break
-                plan_content = render_structured_plan(candidate_for_repair)
-                violations = list(canonical_violations)
-                violations.extend(self._skill_plan_violations(
-                    plan_content,
-                    selected_skills,
-                    user_msg=task_requirement_text,
-                    workflow_handoff=workflow_handoff,
-                ))
-                violations.extend(
-                    self._plan_step_skill_violations(candidate_for_repair, selected_skills)
-                )
-                candidate_for_repair = derive_plan_validation_state(
-                    candidate_for_repair,
-                    violations,
-                )
-                violations = list(candidate_for_repair.get("validation_issues") or [])
-                if violations:
-                    # Commit only a fully reprojected, revalidated candidate.
-                    # Rejected proposals remain in the audit log without
-                    # replacing the canonical plan revision.
-                    plan_patch_audits[-1].update({
-                        "transaction_status": "rejected_validation",
-                        "proposed_validation_issues": deepcopy(violations),
-                        "proposed_issue_fingerprints": [
-                            str(item.get("fingerprint") or "")
-                            for item in violations
-                            if isinstance(item, Mapping)
-                        ],
-                        "proposed_repair_convergence": deepcopy(
-                            candidate_for_repair.get("repair_convergence") or {}
-                        ),
-                        "proposed_candidate_semantic_hash": semantic_plan_hash(
-                            candidate_for_repair
-                        ),
-                    })
-                    candidate_for_repair = derive_plan_validation_state(
-                        pre_patch_candidate,
-                        pre_patch_issues,
-                        record_convergence=False,
-                    )
-                    violations = list(candidate_for_repair.get("validation_issues") or [])
-                else:
-                    plan_patch_audits[-1]["transaction_status"] = "committed"
-
-            no_op_plan_patch = bool(plan_patch_audits) and all(
-                audit.get("no_op") for audit in plan_patch_audits
-            )
-            # Legacy same-step Generate fallback is reachable only when the
-            # candidate is already valid.  A no-op with unresolved issues is
-            # preserved and handled by the convergence/ownership gate below.
-            if no_op_plan_patch and not violations:
-                plan_dir = os.path.join(self.data_path, "task_outputs", task_id)
-                os.makedirs(plan_dir, exist_ok=True)
-                patch_log = Path(plan_dir) / "plan_patches.jsonl"
-                with patch_log.open("a", encoding="utf-8") as handle:
-                    for audit in plan_patch_audits:
-                        handle.write(json.dumps(audit, ensure_ascii=False, default=str) + "\n")
-                _, current_step = current_plan_step_with_index(durable_preplan)
-                current_step_id = str((current_step or {}).get("step_id") or "task")
-                plan_hash = str(
-                    durable_preplan.get("semantic_plan_hash")
-                    or plan_patch_audits[-1].get("base_plan_hash")
-                    or "unknown"
-                )
-                signature = f"{current_step_id}:{plan_hash}"
-                no_op_count, _ = self._increment_durable_budget(
-                    task_id,
-                    "no_op_plan_patch_by_signature",
-                    signature,
-                    limit=1,
-                )
-                plan_content = str(state.get("current_plan") or "").strip() or render_structured_plan(durable_preplan)
-                plan_progress = render_plan_progress(durable_preplan)
-                return {
-                    "current_plan": plan_content,
-                    "plan_progress": plan_progress,
-                    "selected_skills": selected_skills,
-                    "runtime_audit": runtime_audits,
-                    "messages": [SystemMessage(content=(
-                        "Planner produced no semantic change for the current approved plan. "
-                        "The plan-patch request has been cleared. Keep the plan and repair the "
-                        f"execution action for {current_step_id}; do not request the same plan patch again."
-                    ))],
-                    "pending_action": {},
-                    "pending_recovery_action": {
-                        "type": "same_step_generate",
-                        "reason": "no_op_plan_patch",
-                        "step_id": current_step_id,
-                        "signature": signature,
-                        "count": no_op_count,
-                    },
-                    "recovery_decision": {},
-                    "required_next_action": "SAME_STEP_GENERATE",
-                    "recovery_scope": "CURRENT_STEP",
-                    "recovery_phase": "apply_repair",
-                    "recovery_status": "",
-                    "supervisor_verdict": "",
-                    "completion_gate_result": {},
-                    "next_step": "generate",
-                }
-
-            if violations:
-                plan_content += (
-                    "\n\n## Planner Validation Warnings\n"
-                    + "\n".join(f"- {v}" for v in violations)
-                    + "\n"
+                    validation_reason_codes,
                 )
 
             workflow_handoff = strip_workflow_activation(workflow_handoff)
@@ -26371,124 +31204,50 @@ question. Never guess a scientific or database identity.
             plan_file = os.path.join(plan_dir, "plan.md")
             previous_plan_state = load_plan_state(self.data_path, task_id)
             if violations:
-                # Rejected candidates are audit evidence, never a replacement
-                # for the last committed/working PlanSpec or PlanningEpoch base.
-                latest_patch_audit = (
-                    dict(plan_patch_audits[-1]) if plan_patch_audits else {}
-                )
-                proposed_audit = next(
-                    (
-                        dict(audit) for audit in reversed(plan_patch_audits)
-                        if audit.get("proposed_validation_issues")
-                        or audit.get("proposed_repair_convergence")
+                rejected_state = record_planning_failure(
+                    previous_plan_state,
+                    validation_issues=violations,
+                    planning_epoch_id=str(
+                        planning_epoch.get("planning_epoch_id") or ""
                     ),
-                    {},
+                    task_spec_revision_value=task_revision,
+                    validation_source="plan_contract_validation",
+                    candidate=candidate_for_repair,
+                    previous_correction={
+                        "status": "rejected",
+                        "outcome_code": str(
+                            (violations[0] or {}).get("code")
+                            if isinstance(violations[0], Mapping)
+                            else "PLAN_CONTRACT_INVALID"
+                        ),
+                    },
                 )
-                proposed_convergence = dict(
-                    proposed_audit.get("proposed_repair_convergence") or {}
+                violations = list(
+                    ((rejected_state.get("task_state") or {}).get(
+                        "planning_failure"
+                    ) or {}).get("validation_issues")
+                    or []
                 )
-                rejection_fingerprint = str(
-                    proposed_convergence.get("fingerprint")
-                    or candidate_for_repair.get("validation_convergence_fingerprint")
-                    or hashlib.sha256(
-                        json.dumps(violations, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
-                    ).hexdigest()
+                save_plan_state(self.data_path, task_id, rejected_state)
+                rejected_epoch = dict(
+                    (rejected_state.get("task_state") or {}).get("planning_epoch")
+                    or {}
                 )
-                preserved = deepcopy(previous_plan_state)
-                preserved_task_state = dict(preserved.get("task_state") or {})
-                prior_rejection = dict(
-                    preserved_task_state.get("planner_candidate_rejection") or {}
-                )
-                repeated_exact_rejection = bool(
-                    rejection_fingerprint
-                    and str(prior_rejection.get("fingerprint") or "")
-                    == rejection_fingerprint
-                )
-                no_progress = bool(
-                    proposed_convergence.get("status") == "blocked_non_convergent"
-                    or proposed_audit.get("no_op")
-                    or repeated_exact_rejection
-                )
-                proposed_issues = [
-                    dict(item)
-                    for item in proposed_audit.get("proposed_validation_issues", []) or []
-                    if isinstance(item, Mapping)
-                ]
-                diagnostic_issue = dict(
-                    (proposed_issues or [
-                        item for item in violations if isinstance(item, Mapping)
-                    ] or [{}])[0]
-                )
-                code = (
-                    "PLANNER_VALIDATION_NO_PROGRESS"
-                    if no_progress
-                    else "PLANNER_CANDIDATE_REJECTED"
-                )
-                durable_diagnostic = {
-                    "error_code": code,
-                    "owner": "planner",
-                    "validator_id": str(diagnostic_issue.get("validator_id") or ""),
-                    "step_id": str(
-                        diagnostic_issue.get("step_id")
-                        or diagnostic_issue.get("plan_step_id")
-                        or ""
-                    ),
-                    "field_path": str(diagnostic_issue.get("field_path") or ""),
-                    "message": str(diagnostic_issue.get("message") or ""),
-                    "issue_fingerprint": str(diagnostic_issue.get("fingerprint") or ""),
-                    "repair_attempted": bool(plan_patch_audits),
-                    "repair_outcome": str(
-                        proposed_audit.get("transaction_status")
-                        or latest_patch_audit.get("transaction_status")
-                        or "not_attempted"
-                    ),
-                    "execution_started": False,
-                }
-                preserved_task_state["planning_epoch"] = deepcopy(planning_epoch)
-                preserved_task_state["planner_candidate_rejection"] = {
-                    "fingerprint": rejection_fingerprint,
-                    "issue_codes": sorted({
-                        str(row.get("code") or row.get("violation_code") or "")
-                        for row in (proposed_issues or violations)
-                        if isinstance(row, Mapping)
-                    }),
-                    "issue_fingerprints": sorted({
-                        str(row.get("fingerprint") or "")
-                        for row in (proposed_issues or violations)
-                        if isinstance(row, Mapping) and str(row.get("fingerprint") or "")
-                    }),
-                    "candidate_semantic_hash": str(
-                        proposed_audit.get("proposed_candidate_semantic_hash")
-                        or semantic_plan_hash(candidate_for_repair)
-                    ),
-                    "repair_convergence": deepcopy(proposed_convergence),
-                    "status": "blocked_non_convergent" if no_progress else "rejected",
-                    "owner": "planner",
-                    "terminal_diagnostic": durable_diagnostic,
-                }
-                preserved["task_state"] = preserved_task_state
-                if no_progress:
-                    set_task_status(
-                        preserved,
-                        TASK_STATUS_BLOCKED,
-                        reason=code,
-                    )
-                save_plan_state(self.data_path, task_id, preserved)
                 return {
-                    "messages": [SystemMessage(content=(
-                        code + ": "
-                        + json.dumps(
-                            durable_diagnostic if no_progress else violations,
-                            ensure_ascii=False,
-                            sort_keys=True,
-                            default=str,
-                        )
+                    "messages": [SystemMessage(content=json.dumps(
+                        {
+                            "code": "PLANNER_CANDIDATE_REJECTED",
+                            "validation_issues": violations,
+                        },
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        default=str,
                     ))],
+                    "validation_issues": violations,
                     "pending_action": {},
                     "failure_owner": "planner",
-                    "planning_epoch": planning_epoch,
-                    "task_status": TASK_STATUS_BLOCKED if no_progress else state.get("task_status", ""),
-                    "next_step": "finish" if no_progress else "planner",
+                    "planning_epoch": rejected_epoch,
+                    "next_step": "planner",
                 }
             # The normalized object contains controller-owned renderer args and
             # bound outputs that are intentionally absent from rendered
@@ -26505,49 +31264,70 @@ question. Never guess a scientific or database identity.
             # runtime-only saves never create a new PlanSnapshot implicitly.
             candidate_plan_state["plan_commit_requested"] = not bool(violations)
             candidate_plan_state["planner_quality_telemetry"] = {
-                "schema_version": 1,
+                "schema_version": 2,
                 "first_pass_schema_valid": bool(candidate_for_repair.get("steps")),
                 "first_pass_contract_valid": not bool(initial_contract_violations),
-                "repair_required": bool(initial_contract_violations),
-                "repair_reason_codes": sorted({
+                "repair_required": bool(active_planning_failure),
+                "validation_reason_codes": sorted({
                     str(item.get("code") or item.get("violation_code") or item.get("field") or "contract_violation")
                     if isinstance(item, dict) else str(item)[:120]
                     for item in initial_contract_violations
                 }),
-                "repair_trigger_categories": repair_trigger_categories,
-                "deterministic_binding_blocked": deterministic_binding_blocked,
-                "repair_semantic_change": any(
-                    bool(item.get("semantic_change")) for item in plan_patch_audits
-                ),
+                "correction_context_present": bool(active_planning_failure),
                 "final_contract_valid": not bool(violations),
-                "planner_llm_calls": 0 if use_local_plan else 1,
-                "planner_repair_llm_calls": 1 if plan_patch_audits else 0,
+                "planner_llm_calls": 1,
             }
-            candidate_plan_state = carry_forward_plan_lifecycle(previous_plan_state, candidate_plan_state)
-            if (
-                plan_patch_audits
-                and all(not audit.get("review_required") for audit in plan_patch_audits)
-                and str(previous_plan_state.get("plan_status") or "") == "approved"
-                and not violations
-                and bool(candidate_plan_state.get("can_request_approval"))
-            ):
-                approve_plan_state(candidate_plan_state, task_revision)
-            review_diffs = [
-                {
-                    "operation": audit.get("operation"),
-                    "changed_step_ids": audit.get("changed_step_ids", []),
-                    "field_changes": audit.get("field_changes", {}),
-                    "reason": (audit.get("request") or {}).get("violations", []),
+            transition_issues = full_replan_transition_issues(
+                previous_plan_state,
+                candidate_plan_state,
+            )
+            if transition_issues:
+                rejected_state = record_planning_failure(
+                    previous_plan_state,
+                    validation_issues=transition_issues,
+                    planning_epoch_id=str(
+                        planning_epoch.get("planning_epoch_id") or ""
+                    ),
+                    task_spec_revision_value=task_revision,
+                    validation_source="full_replan_transition_gate",
+                    candidate=candidate_plan_state,
+                    previous_correction={
+                        "status": "rejected",
+                        "outcome_code": str(
+                            transition_issues[0].get("code")
+                            or "FULL_REPLAN_TRANSITION_INVALID"
+                        ),
+                    },
+                )
+                transition_issues = list(
+                    ((rejected_state.get("task_state") or {}).get(
+                        "planning_failure"
+                    ) or {}).get("validation_issues")
+                    or []
+                )
+                save_plan_state(self.data_path, task_id, rejected_state)
+                return {
+                    "messages": [SystemMessage(content=json.dumps(
+                        {
+                            "code": "FULL_REPLAN_TRANSITION_INVALID",
+                            "validation_issues": transition_issues,
+                        },
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        default=str,
+                    ))],
+                    "validation_issues": transition_issues,
+                    "failure_owner": "planner",
+                    "pending_action": {},
+                    "next_step": "planner",
                 }
-                for audit in plan_patch_audits
-                if audit.get("review_required")
-            ]
-            candidate_plan_state["pending_review_diff"] = review_diffs
-            if plan_patch_audits:
-                patch_log = Path(plan_dir) / "plan_patches.jsonl"
-                with patch_log.open("a", encoding="utf-8") as handle:
-                    for audit in plan_patch_audits:
-                        handle.write(json.dumps(audit, ensure_ascii=False, default=str) + "\n")
+            candidate_plan_state = carry_forward_plan_lifecycle(previous_plan_state, candidate_plan_state)
+            candidate_plan_state = carry_forward_completed_execution_history(
+                previous_plan_state,
+                candidate_plan_state,
+            )
+            candidate_plan_state = resolve_planning_failure(candidate_plan_state)
+            candidate_plan_state["pending_review_diff"] = []
             revision_result: Dict[str, Any] = {}
             replan_requested = bool(
                 previous_plan_state.get("steps")
@@ -26782,7 +31562,10 @@ question. Never guess a scientific or database identity.
                 plan_state=plan_state,
             )
             if revision_result:
-                conflict_update["plan_revision"] = revision_result
+                conflict_update["plan_revision_result"] = revision_result
+            conflict_update["plan_revision"] = int(
+                plan_state.get("plan_revision") or 0
+            )
 
             # 写入思维链日志
             log_plan_to_cot(self.supervisor_node, task_id, plan_content)
@@ -26895,11 +31678,49 @@ question. Never guess a scientific or database identity.
                     route = "consultant"
                 else:
                     route = "finish"
-                return {
-                    "messages": [SystemMessage(content=(
+                if route == "planner":
+                    persisted_plan = record_planning_failure(
+                        persisted_plan,
+                        validation_issues=blocking_review_issues,
+                        planning_epoch_id=str(
+                            ((persisted_plan.get("task_state") or {}).get(
+                                "planning_epoch"
+                            ) or {}).get("planning_epoch_id")
+                            or ""
+                        ),
+                        task_spec_revision_value=task_revision,
+                        validation_source="plan_review",
+                    )
+                    blocking_review_issues = list(
+                        ((persisted_plan.get("task_state") or {}).get(
+                            "planning_failure"
+                        ) or {}).get("validation_issues")
+                        or []
+                    )
+                    save_plan_state(self.data_path, task_id, persisted_plan)
+                review_message = (
+                    json.dumps(
+                        {
+                            "code": "PLAN_REVIEW_REJECTED",
+                            "validation_issues": blocking_review_issues,
+                        },
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        default=str,
+                    )
+                    if route == "planner"
+                    else (
                         "Plan Review refused an invalid plan before human approval: "
-                        + json.dumps(blocking_review_issues, ensure_ascii=False, sort_keys=True, default=str)
-                    ))],
+                        + json.dumps(
+                            blocking_review_issues,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                            default=str,
+                        )
+                    )
+                )
+                return {
+                    "messages": [SystemMessage(content=review_message)],
                     "validation_issues": blocking_review_issues,
                     "required_next_action": "PLAN_CONTRACT_REPAIR",
                     "next_step": route,
@@ -27483,6 +32304,47 @@ question. Never guess a scientific or database identity.
             }
             generate_plan_state = load_plan_state(self.data_path, task_id)
             generate_task_spec = self._task_spec_for_state(dict(state), messages)
+            generate_task_state = dict(generate_plan_state.get("task_state") or {})
+            generate_skill_access = self._prepare_durable_skill_access(
+                generate_plan_state,
+                selected_skill_ids=(
+                    generate_task_state.get("selected_skills")
+                    or state.get("selected_skills")
+                    or generate_plan_state.get("selected_skill_ids")
+                    or []
+                ),
+                task_revision=task_spec_revision(generate_task_spec),
+            )
+            generate_continuation_id = str(
+                generate_task_state.get("skill_continuation_id")
+                or ""
+            )
+            try:
+                generate_skill_projection = self._persist_durable_skill_access(
+                    task_id,
+                    generate_skill_access,
+                    continuation_id=generate_continuation_id,
+                    expected_state_generation=int(
+                        generate_plan_state.get("state_generation") or 0
+                    ),
+                )
+            except StateCASConflict as exc:
+                stale_update = self._skill_access_cas_stale_update(
+                    caller_node=(
+                        "corrective_generate"
+                        if recovery_context_obj is not None
+                        else "generate"
+                    ),
+                    next_step="generate",
+                    detail=str(exc),
+                )
+                stale_update.update({
+                    "generate_result": "STALE_NODE_RESULT",
+                    "generate_exit_reason": "skill_access_transaction_stale",
+                })
+                return stale_update
+            generate_plan_state = load_plan_state(self.data_path, task_id)
+            state = {**dict(state), **generate_skill_projection}
             _, generate_step = current_plan_step_with_index(generate_plan_state)
             generate_step = generate_step or {}
             current_step_id = str(generate_step.get("step_id") or "")
@@ -27610,6 +32472,9 @@ question. Never guess a scientific or database identity.
                     task_spec=generate_task_spec,
                     plan_state=generate_plan_state,
                     state_generation=int(generate_plan_state.get("state_generation") or 0),
+                    authoritative_user_turn_revision=(
+                        self._authoritative_user_turn_revision(generate_plan_state)
+                    ),
                     current_step_id=current_step_id,
                     runtime={
                         "progress": {
@@ -27635,6 +32500,17 @@ question. Never guess a scientific or database identity.
                     },
                     feedback=generate_feedback,
                     evidence=recovery_evidence,
+                    skill_context=self._skill_context_projection(
+                        generate_plan_state,
+                        caller_node=(
+                            "corrective_generate"
+                            if recovery_context_obj is not None
+                            else "generate"
+                        ),
+                        current_step_id=current_step_id,
+                        continuation_id=generate_continuation_id,
+                    ),
+                    continuation_id=generate_continuation_id,
                     allowed_operations=list(generate_protocol.get("allowed_actions") or []),
                     approval_ref=str(
                         generate_plan_state.get("approval_snapshot_ref")
@@ -27719,7 +32595,33 @@ question. Never guess a scientific or database identity.
                     "task_semantic_hash": str(
                         generate_node_context.binding.task_semantic_hash or ""
                     ),
+                    "task_revision": int(
+                        generate_node_context.binding.task_revision or 0
+                    ),
+                    "plan_semantic_hash": str(
+                        generate_node_context.binding.plan_semantic_hash or ""
+                    ),
+                    "plan_revision": int(
+                        generate_node_context.binding.plan_revision or 0
+                    ),
+                    "authoritative_user_turn_revision": int(
+                        generate_node_context.binding.authoritative_user_turn_revision
+                        or 0
+                    ),
                     "step_id": str(current_step_id or ""),
+                    "approval_ref": str(
+                        generate_node_context.binding.approval_ref or ""
+                    ),
+                    "approval_applicability": str(
+                        generate_node_context.binding.approval_applicability
+                        or ""
+                    ),
+                    "execution_epoch": str(
+                        generate_node_context.binding.execution_epoch or ""
+                    ),
+                    "continuation_id": str(
+                        generate_node_context.binding.continuation_id or ""
+                    ),
                     "failure_stage": str(
                         recovery_context_obj.failure_stage
                         if recovery_context_obj
@@ -27824,34 +32726,41 @@ question. Never guess a scientific or database identity.
                         llm_policy=self.generate_llm_policy,
                     )
                     if recovery_context_obj:
-                        if generate_script_protocol:
-                            try:
-                                cached_structured_action = adapt_script_block_to_action(
-                                    parse_executable_script_block(str(response.content or "")),
-                                    generate_artifact_environment,
-                                )
-                            except ScriptBlockError:
-                                cached_structured_action = {}
-                        else:
-                            cached_structured_action = self._extract_structured_action(
+                        try:
+                            cache_skill_decision = parse_typed_skill_decision(
                                 str(response.content or "")
                             )
-                        recovery_store.save_llm_result(
-                            recovery_context_obj.context_id,
-                            f"generate:{recovery_stage or 'RECOVERY'}",
-                            raw_response=str(response.content or ""),
-                            parsed_result={
-                                "action_type": str(
-                                    cached_structured_action.get("type") or ""
+                        except SkillAccessError:
+                            cache_skill_decision = {"decision": "INVALID_SKILL_DECISION"}
+                        if cache_skill_decision is None:
+                            if generate_script_protocol:
+                                try:
+                                    cached_structured_action = adapt_script_block_to_action(
+                                        parse_executable_script_block(str(response.content or "")),
+                                        generate_artifact_environment,
+                                    )
+                                except ScriptBlockError:
+                                    cached_structured_action = {}
+                            else:
+                                cached_structured_action = self._extract_structured_action(
+                                    str(response.content or "")
                                 )
-                            },
-                            cache_identity=recovery_cache_identity,
-                            candidate_fingerprint=(
-                                managed_action_fingerprint(cached_structured_action)
-                                if cached_structured_action
-                                else ""
-                            ),
-                        )
+                            recovery_store.save_llm_result(
+                                recovery_context_obj.context_id,
+                                f"generate:{recovery_stage or 'RECOVERY'}",
+                                raw_response=str(response.content or ""),
+                                parsed_result={
+                                    "action_type": str(
+                                        cached_structured_action.get("type") or ""
+                                    )
+                                },
+                                cache_identity=recovery_cache_identity,
+                                candidate_fingerprint=(
+                                    managed_action_fingerprint(cached_structured_action)
+                                    if cached_structured_action
+                                    else ""
+                                ),
+                            )
             except Exception as exc:
                 if isinstance(exc, ProviderAttemptFailure):
                     response = self._generate_provider_failure_response(exc, task_id)
@@ -27907,7 +32816,9 @@ question. Never guess a scientific or database identity.
                     "task_status": TASK_STATUS_BLOCKED,
                     "next_step": "finish",
                 }
-            if not generate_response_cached:
+            # Cached and newly generated responses cross the same current
+            # authority gate before parsing or action binding.
+            if response is not None:
                 current_generate_plan = load_plan_state(self.data_path, task_id)
                 _, current_generate_step = current_plan_step_with_index(current_generate_plan)
                 current_generate_step = current_generate_step or {}
@@ -27923,6 +32834,9 @@ question. Never guess a scientific or database identity.
                     node_type="generate",
                     task_spec=current_generate_task,
                     plan_state=current_generate_plan,
+                    authoritative_user_turn_revision=(
+                        self._authoritative_user_turn_revision(current_generate_plan)
+                    ),
                     current_step_id=str(current_generate_step.get("step_id") or ""),
                     approval_ref=str(
                         current_generate_plan.get("approval_snapshot_ref")
@@ -27945,39 +32859,112 @@ question. Never guess a scientific or database identity.
                         or 0
                     ),
                     approved_plan_snapshot=current_generate_snapshot,
+                    continuation_id=str(
+                        (current_generate_plan.get("task_state") or {}).get(
+                            "skill_continuation_id"
+                        ) or ""
+                    ),
                 )
                 generate_staleness = evaluate_node_staleness(
                     generate_node_context.binding,
-                    {
-                        "task_semantic_hash": current_generate_context.binding.task_semantic_hash,
-                        "plan_semantic_hash": current_generate_context.binding.plan_semantic_hash,
-                        "approval_ref": current_generate_context.binding.approval_ref,
-                        "approval_applicability": current_generate_context.binding.approval_applicability,
-                        "step_id": current_generate_context.binding.step_id,
-                        "execution_epoch": current_generate_context.binding.execution_epoch,
-                        "state_generation": int(current_generate_plan.get("state_generation") or 0),
-                        "task_record_hash": current_generate_context.binding.task_record_hash,
-                        "plan_record_hash": current_generate_context.binding.plan_record_hash,
-                    },
+                    current_generate_context.binding.to_dict(),
                 )
                 if not generate_staleness.usable:
-                    if self._node_invocations.mark_stale_signature_handled(generate_staleness.stale_signature):
-                        return {
-                            "messages": [SystemMessage(content=generate_staleness.code)],
-                            "pending_action": {},
-                            "next_step": "generate",
-                            "generate_result": "NEEDS_RECOVERY",
-                            "generate_exit_reason": "node_context_stale",
-                        }
+                    self._node_invocations.mark_stale_signature_handled(
+                        generate_staleness.stale_signature
+                    )
+                    self._record_durable_skill_event(
+                        task_id,
+                        "stale_node_result_discarded",
+                        {
+                            "caller_node": "generate",
+                            "caller_invocation_id": generate_node_context.binding.invocation_id,
+                            "changed_preconditions": list(
+                                generate_staleness.changed_preconditions
+                            ),
+                        },
+                    )
                     return {
-                        "messages": [SystemMessage(content="STALE_INVOCATION_NON_CONVERGENT")],
-                        "pending_action": {},
-                        "task_status": TASK_STATUS_BLOCKED,
-                        "next_step": "finish",
-                        "generate_result": "BLOCKED",
-                        "generate_exit_reason": "stale_signature_repeated",
+                        "messages": [SystemMessage(content=json.dumps({
+                            "decision_result": "STALE_NODE_RESULT",
+                            "caller_node": "generate",
+                            "caller_invocation_id": generate_node_context.binding.invocation_id,
+                            "changed_preconditions": list(
+                                generate_staleness.changed_preconditions
+                            ),
+                            "counts_as_failure": False,
+                            "consumes_execution_retry": False,
+                            "execute": False,
+                        }, ensure_ascii=False, sort_keys=True))],
+                        "stale_node_result": {
+                            "decision_result": "STALE_NODE_RESULT",
+                            "caller_node": "generate",
+                            "caller_invocation_id": generate_node_context.binding.invocation_id,
+                            "changed_preconditions": list(
+                                generate_staleness.changed_preconditions
+                            ),
+                        },
+                        "next_step": "generate",
+                        "generate_result": "STALE_NODE_RESULT",
+                        "generate_exit_reason": "node_result_stale_discarded",
                     }
             content   = response.content
+
+            try:
+                typed_generate_skill_decision = parse_typed_skill_decision(
+                    str(content or "")
+                )
+            except SkillAccessError as exc:
+                return {
+                    "messages": [response, SystemMessage(content=json.dumps(
+                        exc.to_dict(), ensure_ascii=False, sort_keys=True,
+                    ))],
+                    "pending_action": {},
+                    "skill_decision_result": exc.to_dict(),
+                    "next_step": "generate",
+                    "generate_result": "SKILL_CONTINUATION",
+                    "generate_exit_reason": "skill_decision_rejected",
+                }
+            if typed_generate_skill_decision is not None:
+                try:
+                    return await self._handle_skill_node_decision(
+                        task_id=task_id,
+                        caller_node=(
+                            "corrective_generate"
+                            if recovery_context_obj is not None
+                            else "generate"
+                        ),
+                        graph_node="generate",
+                        decision=typed_generate_skill_decision,
+                        node_context=generate_node_context,
+                        response=response,
+                        selected_skill_ids=(
+                            (generate_plan_state.get("task_state") or {}).get(
+                                "selected_skills"
+                            )
+                            or state.get("selected_skills")
+                            or []
+                        ),
+                    )
+                except SkillAccessError as exc:
+                    return {
+                        "messages": [response, SystemMessage(content=json.dumps(
+                            exc.to_dict(), ensure_ascii=False, sort_keys=True,
+                        ))],
+                        "pending_action": {},
+                        "skill_decision_result": exc.to_dict(),
+                        "next_step": "generate",
+                        "generate_result": "SKILL_CONTINUATION",
+                        "generate_exit_reason": "skill_decision_rejected",
+                    }
+            self._complete_durable_skill_continuation(
+                task_id,
+                caller_node=(
+                    "corrective_generate"
+                    if recovery_context_obj is not None
+                    else "generate"
+                ),
+            )
 
             # 打印（去重）
             output.print_ai(content)
@@ -29180,7 +34167,11 @@ question. Never guess a scientific or database identity.
 
             next_node = str(result.get("next_step") or "")
             outcome = str(result.get("generate_result") or "").upper()
-            if outcome not in {"GENERATED_ACTION", "NEEDS_RECOVERY", "NEEDS_CONTEXT_COMPACTION", "BLOCKED", "FINISHED"}:
+            if outcome not in {
+                "GENERATED_ACTION", "NEEDS_RECOVERY", "NEEDS_CONTEXT_COMPACTION",
+                "SKILL_CONTINUATION", "SKILL_BINDING_PROPOSED",
+                "SKILL_NO_PROGRESS", "STALE_NODE_RESULT", "BLOCKED", "FINISHED",
+            }:
                 if str(result.get("recovery_status") or "") == "PROMPT_ASSEMBLY_FAILURE":
                     outcome = "BLOCKED"
                 elif next_node == "finish":
@@ -29214,25 +34205,112 @@ question. Never guess a scientific or database identity.
         async def execute_logic(state: AgentState) -> AgentState:
             output.print_node_header("execute")
             task_id      = state.get("task_id", "default")
+
+            def stale_pending_action_update(
+                action: Mapping[str, Any],
+                mismatches: Mapping[str, Any],
+                *,
+                phase: str,
+            ) -> Dict[str, Any]:
+                stale = {
+                    "decision_result": "STALE_NODE_RESULT",
+                    "status": "discarded",
+                    "caller_node": "execute",
+                    "action_id": str(action.get("action_id") or ""),
+                    "step_id": str(action.get("step_id") or ""),
+                    "changed_preconditions": sorted(mismatches),
+                    "revision_comparison": deepcopy(dict(mismatches)),
+                    "phase": str(phase),
+                    "counts_as_failure": False,
+                    "consumes_execution_retry": False,
+                    "consumes_recovery_retry": False,
+                    "execute": False,
+                }
+                action_id = str(action.get("action_id") or "")
+                audit_persisted = False
+                for _ in range(3):
+                    current = load_plan_state(self.data_path, task_id)
+                    current_task_state = dict(
+                        current.get("task_state") or {}
+                    )
+                    durable_pending = dict(
+                        current_task_state.get("pending_action") or {}
+                    )
+                    if (
+                        action_id
+                        and str(durable_pending.get("action_id") or "")
+                        == action_id
+                    ):
+                        current_task_state["pending_action"] = {}
+                    access = record_skill_access_event(
+                        current_task_state.get("skill_access_state")
+                        or current.get("skill_access_state"),
+                        "stale_execution_result_discarded",
+                        stale,
+                    )
+                    current_task_state["skill_access_state"] = access
+                    current["task_state"] = current_task_state
+                    current["skill_access_state"] = deepcopy(access)
+                    try:
+                        save_plan_state(self.data_path, task_id, current)
+                        audit_persisted = True
+                        break
+                    except StateCASConflict:
+                        continue
+                stale["audit_persisted"] = audit_persisted
+                changed = set(stale["changed_preconditions"])
+                route = (
+                    "consultant"
+                    if changed
+                    & {"task_revision", "authoritative_user_turn_revision"}
+                    else "planner"
+                )
+                return {
+                    "messages": [SystemMessage(content=json.dumps(
+                        stale, ensure_ascii=False, sort_keys=True,
+                    ))],
+                    "stale_node_result": deepcopy(stale),
+                    "execution_result": deepcopy(stale),
+                    "next_step": route,
+                }
+
             resumed_attempt = await self._resume_durable_attempt_update(task_id, state)
             if resumed_attempt is not None:
                 return resumed_attempt
 
+            captured_pending_action = dict(state.get("pending_action") or {})
+            prestart_plan_state = load_plan_state(self.data_path, task_id)
+            prestart_mismatches = self._pending_action_revision_mismatches(
+                captured_pending_action,
+                prestart_plan_state,
+            ) if captured_pending_action else {}
+            if prestart_mismatches:
+                return stale_pending_action_update(
+                    captured_pending_action,
+                    prestart_mismatches,
+                    phase="before_execute_preflight",
+                )
+
             stale_reason = self._stale_plan_task_revision_reason(state, task_id)
             if stale_reason:
-                plan_progress = self._record_plan_current_evidence(
-                    task_id,
-                    "stale_task_revision_before_execute",
-                    stale_reason,
-                )
                 return {
-                    "messages": [HumanMessage(content=f"<observation>⚠️ {stale_reason}</observation>")],
-                    "plan_progress": plan_progress,
-                    "pending_action": {},
-                    "required_next_action": "PLAN_PATCH",
-                    "failure_owner": RecoveryFailureOwner.PLAN.value,
-                    "recovery_scope": "CURRENT_STEP",
-                    "recovery_phase": "plan_repair",
+                    "messages": [SystemMessage(content=json.dumps({
+                        "decision_result": "STALE_NODE_RESULT",
+                        "caller_node": "execute",
+                        "changed_preconditions": [
+                            "generated_from_task_revision"
+                        ],
+                        "detail": stale_reason,
+                        "counts_as_failure": False,
+                        "consumes_execution_retry": False,
+                    }, ensure_ascii=False, sort_keys=True))],
+                    "stale_node_result": {
+                        "decision_result": "STALE_NODE_RESULT",
+                        "caller_node": "execute",
+                        "changed_preconditions": [
+                            "generated_from_task_revision"
+                        ],
+                    },
                     "next_step": "planner",
                 }
 
@@ -29337,9 +34415,25 @@ question. Never guess a scientific or database identity.
                     "recovery_scope": "CURRENT_STEP",
                     "next_step": "planner",
                 }
-            pending_action = state.get("pending_action") or {}
+            pending_action = captured_pending_action
             managed_mode = str(state.get("task_mode") or "managed").lower() == "managed"
             if managed_mode:
+                current_action_state = load_plan_state(
+                    self.data_path, task_id
+                )
+                current_action_mismatches = (
+                    self._pending_action_revision_mismatches(
+                        pending_action,
+                        current_action_state,
+                    )
+                    if pending_action else {}
+                )
+                if current_action_mismatches:
+                    return stale_pending_action_update(
+                        pending_action,
+                        current_action_mismatches,
+                        phase="before_action_contract_validation",
+                    )
                 contract_error = self._validate_pending_action_contract(
                     pending_action,
                     state,
@@ -29392,17 +34486,20 @@ question. Never guess a scientific or database identity.
             if self._pending_action_is(pending_action, "execute"):
                 pending_action_reason = self._pending_action_stale_reason(pending_action, state, task_id)
                 if pending_action_reason:
-                    plan_progress = self._record_plan_current_evidence(
-                        task_id,
-                        "stale_or_unbound_pending_action",
-                        pending_action_reason,
+                    current_action_state = load_plan_state(
+                        self.data_path, task_id
                     )
-                    return {
-                        "messages": [HumanMessage(content=f"<observation>⚠️ {pending_action_reason}</observation>")],
-                        "plan_progress": plan_progress,
-                        "pending_action": {},
-                        "next_step": "generate",
-                    }
+                    return stale_pending_action_update(
+                        pending_action,
+                        self._pending_action_revision_mismatches(
+                            pending_action,
+                            current_action_state,
+                        ) or {"pending_action_binding": {
+                            "expected": "current",
+                            "observed": pending_action_reason,
+                        }},
+                        phase="before_script_materialization",
+                    )
                 generated_ref = dict(pending_action.get("generated_script") or {})
                 generated_path = str(
                     generated_ref.get("path") or pending_action.get("generated_script_path") or ""
@@ -30191,6 +35288,116 @@ question. Never guess a scientific or database identity.
 
             duration = time.time() - start_time
             finished_at = datetime.now().isoformat(timespec="seconds")
+            # A process may finish after the user, Consultant, or Planner has
+            # replaced the authority under which its action was generated.
+            # Keep the immutable runner/log evidence, but do not validate,
+            # reconcile outputs, advance the plan, or charge a failure budget
+            # for a result that no longer belongs to the current revisions.
+            post_run_state = load_plan_state(self.data_path, task_id)
+            stale_execution_fields = self._pending_action_revision_mismatches(
+                pending_action,
+                post_run_state,
+            )
+            post_run_pending = dict(
+                (post_run_state.get("task_state") or {}).get(
+                    "pending_action"
+                ) or {}
+            )
+            if (
+                post_run_pending
+                and str(post_run_pending.get("action_id") or "")
+                != str(pending_action.get("action_id") or "")
+            ):
+                stale_execution_fields["pending_action_identity"] = {
+                    "bound": str(pending_action.get("action_id") or ""),
+                    "current": str(post_run_pending.get("action_id") or ""),
+                }
+            if stale_execution_fields:
+                stale_record = {
+                    "decision_result": "STALE_EXECUTION_RESULT",
+                    "counts_as_failure": False,
+                    "consumes_execution_retry": False,
+                    "action_id": str(pending_action.get("action_id") or ""),
+                    "attempt_id": str(attempt_id or ""),
+                    "step_id": str(pending_action.get("step_id") or ""),
+                    "changed_preconditions": sorted(stale_execution_fields),
+                    "revision_comparison": deepcopy(stale_execution_fields),
+                    "returncode": int(returncode),
+                    "started_at": str(started_at),
+                    "finished_at": str(finished_at),
+                    "duration_seconds": round(duration, 3),
+                    "script_ref": deepcopy(dict(executed_ref or {})),
+                    "stdout_log": str(stdout_path),
+                    "stderr_log": str(stderr_path),
+                    "exit_status_path": str(exit_status_path),
+                    "trace_file": str(trace_file or ""),
+                }
+                stale_audit_persisted = False
+                for _ in range(3):
+                    latest = load_plan_state(self.data_path, task_id)
+                    latest_mismatches = self._pending_action_revision_mismatches(
+                        pending_action,
+                        latest,
+                    )
+                    if latest_mismatches:
+                        stale_record["changed_preconditions"] = sorted(
+                            latest_mismatches
+                        )
+                        stale_record["revision_comparison"] = deepcopy(
+                            latest_mismatches
+                        )
+                    latest_task_state = dict(latest.get("task_state") or {})
+                    stale_history = [
+                        deepcopy(dict(item))
+                        for item in latest_task_state.get(
+                            "stale_execution_results", []
+                        ) or []
+                        if isinstance(item, Mapping)
+                    ]
+                    stale_history.append(deepcopy(stale_record))
+                    latest_task_state["stale_execution_results"] = stale_history[-20:]
+                    durable_pending = dict(
+                        latest_task_state.get("pending_action") or {}
+                    )
+                    if str(durable_pending.get("action_id") or "") == str(
+                        pending_action.get("action_id") or ""
+                    ):
+                        latest_task_state["pending_action"] = {}
+                    access = record_skill_access_event(
+                        latest_task_state.get("skill_access_state")
+                        or latest.get("skill_access_state"),
+                        "stale_execution_result_discarded",
+                        stale_record,
+                    )
+                    latest_task_state["skill_access_state"] = access
+                    latest["task_state"] = latest_task_state
+                    latest["skill_access_state"] = deepcopy(access)
+                    try:
+                        save_plan_state(self.data_path, task_id, latest)
+                        post_run_state = latest
+                        stale_audit_persisted = True
+                        break
+                    except StateCASConflict:
+                        continue
+                stale_record["audit_persisted"] = stale_audit_persisted
+                changed = set(stale_record["changed_preconditions"])
+                resume_node = (
+                    "consultant"
+                    if changed
+                    & {"task_revision", "authoritative_user_turn_revision"}
+                    else "planner"
+                )
+                return {
+                    "messages": [SystemMessage(content=json.dumps(
+                        stale_record,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                    ))],
+                    "execution_result": deepcopy(stale_record),
+                    "stale_execution_result": deepcopy(stale_record),
+                    "plan_progress": render_plan_progress(post_run_state),
+                    "next_step": resume_node,
+                }
             expected_runtime_contract = dict(
                 pending_action.get("runtime_snapshot")
                 or build_resolved_runtime_snapshot(state)
@@ -30680,6 +35887,48 @@ question. Never guess a scientific or database identity.
                 {**dict(state), "pending_action": pending_action},
                 execution_evidence,
             )
+            pre_evidence_commit_state = load_plan_state(
+                self.data_path, task_id
+            )
+            pre_evidence_mismatches = (
+                self._pending_action_revision_mismatches(
+                    pending_action,
+                    pre_evidence_commit_state,
+                )
+            )
+            durable_successor = dict(
+                (pre_evidence_commit_state.get("task_state") or {}).get(
+                    "pending_action"
+                ) or {}
+            )
+            if (
+                durable_successor
+                and str(durable_successor.get("action_id") or "")
+                != str(pending_action.get("action_id") or "")
+            ):
+                pre_evidence_mismatches["pending_action_identity"] = {
+                    "bound": str(pending_action.get("action_id") or ""),
+                    "current": str(
+                        durable_successor.get("action_id") or ""
+                    ),
+                }
+            if pre_evidence_mismatches:
+                stale_update = stale_pending_action_update(
+                    pending_action,
+                    pre_evidence_mismatches,
+                    phase="before_execution_evidence_commit",
+                )
+                stale_update["stale_execution_result"] = {
+                    **deepcopy(dict(
+                        stale_update.get("execution_result") or {}
+                    )),
+                    "returncode": int(returncode),
+                    "stdout_log": str(stdout_path),
+                    "stderr_log": str(stderr_path),
+                    "exit_status_path": str(exit_status_path),
+                    "finished_at": str(finished_at),
+                }
+                return stale_update
             if returncode != 0 or validation_failed or runtime_missing:
                 failure_snapshot = AttemptFailureEvidence.from_mapping({
                     **execution_evidence,
@@ -30715,6 +35964,50 @@ question. Never guess a scientific or database identity.
                     execution_record_path
                 )
                 provenance_plan = load_plan_state(self.data_path, task_id)
+                provenance_mismatches = (
+                    self._pending_action_revision_mismatches(
+                        pending_action,
+                        provenance_plan,
+                    )
+                )
+                provenance_successor = dict(
+                    (provenance_plan.get("task_state") or {}).get(
+                        "pending_action"
+                    ) or {}
+                )
+                if (
+                    provenance_successor
+                    and str(provenance_successor.get("action_id") or "")
+                    != str(pending_action.get("action_id") or "")
+                ):
+                    provenance_mismatches["pending_action_identity"] = {
+                        "bound": str(
+                            pending_action.get("action_id") or ""
+                        ),
+                        "current": str(
+                            provenance_successor.get("action_id") or ""
+                        ),
+                    }
+                if provenance_mismatches:
+                    stale_update = stale_pending_action_update(
+                        pending_action,
+                        provenance_mismatches,
+                        phase="before_execution_provenance_commit",
+                    )
+                    stale_update["stale_execution_result"] = {
+                        **deepcopy(dict(
+                            stale_update.get("execution_result") or {}
+                        )),
+                        "returncode": int(returncode),
+                        "stdout_log": str(stdout_path),
+                        "stderr_log": str(stderr_path),
+                        "exit_status_path": str(exit_status_path),
+                        "execution_record_path": str(
+                            execution_record_path
+                        ),
+                        "finished_at": str(finished_at),
+                    }
+                    return stale_update
                 runtime_artifact_failure = record_runtime_output_failure(
                     provenance_plan,
                     runtime_output_reconciliation,
@@ -30731,7 +36024,13 @@ question. Never guess a scientific or database identity.
                     execution_evidence["typed_failure"] = runtime_artifact_failure
                 recovery_store.save_execution_record(record)
                 provenance_task_state = dict(provenance_plan.get("task_state") or {})
-                provenance_task_state["pending_action"] = {}
+                durable_pending = dict(
+                    provenance_task_state.get("pending_action") or {}
+                )
+                if str(durable_pending.get("action_id") or "") == str(
+                    pending_action.get("action_id") or ""
+                ):
+                    provenance_task_state["pending_action"] = {}
                 provenance_plan["task_state"] = provenance_task_state
                 save_plan_state(self.data_path, task_id, provenance_plan)
                 logger.info(
@@ -31080,13 +36379,6 @@ question. Never guess a scientific or database identity.
                     f"RecoveryPolicy interpreted ValidationEvidence {validation.validation_id} as "
                     f"{decision.kind}; Supervisor supplied facts only."
                 )))
-            elif execution_purpose == "record_failure":
-                reason = "The helper action recorded a blocked business stage; it did not complete the analysis."
-                self._finalize_blocked_state(task_id, reason)
-                blocked_state = load_plan_state(self.data_path, task_id)
-                committed = dict(((blocked_state.get("task_state") or {}).get("recovery_state") or {}).get("last_recovery_decision") or {})
-                update["recovery_decision"] = committed
-                update["plan_progress"] = render_plan_progress(blocked_state)
             elif command_role in {"probe", "diagnostic", "optional_probe", "capability_probe"}:
                 decision = commit_policy()
                 update["completion_gate_result"] = {
@@ -31307,18 +36599,6 @@ question. Never guess a scientific or database identity.
                         "failure_owner": update["failure_owner"],
                     }
                     update.setdefault("messages", []).append(SystemMessage(content=execution_contract_error))
-                elif execution_purpose == "record_failure":
-                    reason = "The helper command successfully recorded that the business step is blocked; it did not complete the analysis."
-                    progress = self._finalize_blocked_state(task_id, reason)
-                    update.update({
-                        "supervisor_verdict": "ESCALATE",
-                        "next_step": "finish",
-                        "plan_progress": progress,
-                        "pending_action": {},
-                        "pending_recovery_action": {},
-                        "task_status": TASK_STATUS_BLOCKED,
-                    })
-                    update.setdefault("messages", []).append(SystemMessage(content=reason))
                 elif renderer_probe:
                     update.update({
                         "next_step": "generate",
@@ -31878,7 +37158,7 @@ question. Never guess a scientific or database identity.
                 state,
                 task_id,
             )
-            final_validation = dict(update.get("validation_evidence") or validation.to_dict())
+            final_validation = dict(update.get("validation_evidence") or {})
             attempt_id = str(execution.get("attempt_id") or "")
             if attempt_id:
                 try:
@@ -32597,36 +37877,6 @@ question. Never guess a scientific or database identity.
 
         workflow.add_edge(START, "triage")
 
-        def committed_recovery_route(state, source_node):
-            """Consume only the structured RecoveryPolicy decision for recovery routing."""
-            try:
-                decision = recovery_decision_from_state(dict(state or {}))
-            except ValueError as exc:
-                logger.warning("Ignoring invalid recovery decision during routing: %s", exc)
-                return ""
-            if decision is None:
-                return ""
-            route = recovery_route_from_state(dict(state or {}), source_node)
-            if not route and decision.source_node:
-                return ""
-            if route == "generate" and (
-                decision.kind == RecoveryDecisionKind.PLAN_PATCH_REQUEST.value
-                and decision.failure_owner != RecoveryFailureOwner.PLAN.value
-            ):
-                logger.warning(
-                    "RecoveryPolicy rejected non-PLAN route to Planner: decision_id=%s owner=%s",
-                    decision.decision_id,
-                    decision.failure_owner,
-                )
-            if decision.migration_source:
-                logger.warning(
-                    "Routing migrated recovery state: source=%s conflicts=%s decision_id=%s",
-                    decision.migration_source,
-                    decision.migration_conflicts,
-                    decision.decision_id,
-                )
-            return route
-
         def triage_router(state):
             step = state.get("next_step")
             if step == "direct_chat": return "direct_chat"
@@ -32647,13 +37897,14 @@ question. Never guess a scientific or database identity.
         def consultant_router(state):
             step = state.get("next_step")
             if step == "planner":     return "planner"
+            if step == "generate":    return "generate"
             if step == "ask_user":    return "ask_user"
             if step == "human_input": return END
             if step == "finish":      return END
             return "consultant"
 
         workflow.add_conditional_edges("consultant", consultant_router,
-                                       ["planner", "ask_user", "consultant", END])
+                                       ["planner", "generate", "ask_user", "consultant", END])
 
         def ask_user_router(state):
             step = state.get("next_step")
@@ -32668,11 +37919,12 @@ question. Never guess a scientific or database identity.
             step = state.get("next_step")
             if step == "consultant": return "consultant"
             if step == "planner": return "planner"
+            if step == "generate": return "generate"
             if step == "finish": return END
             return "plan_review"
 
         workflow.add_conditional_edges("planner", planner_router,
-                                       ["consultant", "planner", "plan_review", END])
+                                       ["consultant", "planner", "generate", "plan_review", END])
 
         def install_subagent_router(state):
             step = state.get("next_step", "generate")
@@ -32695,57 +37947,39 @@ question. Never guess a scientific or database identity.
         workflow.add_conditional_edges("plan_review", plan_review_router,
                                        ["generate", "consultant", "planner", "ask_user", END])
 
+        runtime_destinations = [
+            "consultant", "planner", "ask_user", "execute", "install_subagent",
+            "supervisor", "supervisor_final_audit", "generate", END,
+        ]
+
+        def dispatch_runtime_route(state, source_node):
+            route = self._dispatch_effective_route(state, source_node)
+            if route == "finish":
+                return END
+            if route in {
+                "consultant", "planner", "ask_user", "execute", "install_subagent",
+                "supervisor", "supervisor_final_audit", "generate",
+            }:
+                return route
+            logger.error(
+                "RUNTIME_DISPATCH_TARGET_INVALID source=%s route=%s",
+                source_node,
+                route,
+            )
+            return END
+
         def generate_router(state):
-            recovery_route = committed_recovery_route(state, "generate")
-            if recovery_route:
-                if recovery_route == "finish": return END
-                if recovery_route == "planner": return "planner"
-                if recovery_route in {"generate", "execute", "supervisor", "ask_user"}:
-                    return recovery_route
-            step = state.get("next_step")
-            if step == "finish":         return END
-            if step == "consultant":     return "consultant"
-            if step == "planner":        return "planner" if self._plan_patch_requested(state) else "generate"
-            if step == "generate":       return "generate"
-            if step == "ask_user":       return "ask_user"
-            if step == "execute":        return "execute"
-            if step == "supervisor":     return "supervisor"
-            if step == "install_subagent": return "install_subagent"
-            if step == "supervisor_final_audit": return "supervisor_final_audit"
-            return "generate"
+            return dispatch_runtime_route(state, "generate")
 
         workflow.add_conditional_edges("generate", generate_router,
-                                       ["consultant", "planner", "ask_user", "execute", "install_subagent", "supervisor", "supervisor_final_audit", "generate", END])
+                                       runtime_destinations)
 
         # execute → supervisor → generate（managed 核心链路）；轻量任务直接结束。
         def execute_router(state):
-            recovery_route = committed_recovery_route(state, "execute")
-            if recovery_route:
-                if recovery_route == "finish": return END
-                if recovery_route == "planner": return "planner"
-                if recovery_route in {"generate", "supervisor", "ask_user"}:
-                    return recovery_route
-            if state.get("next_step") == "ask_user":
-                return "ask_user"
-            if state.get("next_step") == "finish":
-                return END
-            if state.get("next_step") == "install_subagent":
-                return "install_subagent"
-            if state.get("next_step") == "generate":
-                return "generate"
-            if state.get("next_step") == "planner":
-                return "planner" if self._plan_patch_requested(state) else "generate"
-            if state.get("next_step") == "supervisor_final_audit":
-                return "supervisor_final_audit"
-            if str(state.get("task_mode") or "").strip().lower() in {"readonly", "simple_execute"}:
-                return END
-            return "supervisor"
+            return dispatch_runtime_route(state, "execute")
 
-        # Keep the stable legacy execute chain explicit; knowledge-conflict
-        # user decisions add one guarded edge before it.
-        legacy_execute_routes = ["generate", "planner", "install_subagent", "supervisor", "supervisor_final_audit", END]
         workflow.add_conditional_edges("execute", execute_router,
-                                       ["ask_user"] + legacy_execute_routes)
+                                       runtime_destinations)
 
         def supervisor_router(state):
             durable_failure = (
@@ -32762,42 +37996,16 @@ question. Never guess a scientific or database identity.
                 and durable_failure.get("execution_started") is False
             ):
                 return END
-            recovery_route = committed_recovery_route(state, "supervisor")
-            if recovery_route:
-                decision = recovery_decision_from_state(dict(state or {}))
-                if (
-                    recovery_route == "generate"
-                    and decision is not None
-                    and decision.kind == RecoveryDecisionKind.COMPLETE_STEP.value
-                    and state.get("final_audit_requested") is True
-                ):
-                    # COMPLETE_STEP remains the policy-owned mutation.  The
-                    # Controller only recognizes that no next step exists and
-                    # closes through the deterministic final audit.
-                    return "supervisor_final_audit"
-                if recovery_route == "finish": return END
-                if recovery_route == "planner": return "planner"
-                if recovery_route in {"generate", "supervisor", "ask_user"}:
-                    return recovery_route
-            # Supervisor is an evidence producer. Without a committed
-            # RecoveryPolicy decision it has no authority to route elsewhere.
-            return "generate"
+            return dispatch_runtime_route(state, "supervisor")
 
         workflow.add_conditional_edges("supervisor", supervisor_router,
-                                       ["ask_user", "planner", "generate", "supervisor_final_audit", END])
+                                       runtime_destinations)
 
         def final_audit_router(state):
-            recovery_route = committed_recovery_route(state, "supervisor")
-            if recovery_route:
-                if recovery_route == "finish": return END
-                if recovery_route == "planner": return "planner"
-                if recovery_route == "generate": return "generate"
-            # Final audit follows the same ownership rule: only the committed
-            # policy decision may complete, repair, or patch the task.
-            return "generate"
+            return dispatch_runtime_route(state, "supervisor_final_audit")
 
         workflow.add_conditional_edges("supervisor_final_audit", final_audit_router,
-                                       ["planner", "generate", END])
+                                       runtime_destinations)
 
         return workflow.compile(checkpointer=self.checkpointer)
 
@@ -32970,6 +38178,133 @@ question. Never guess a scientific or database identity.
         # state-manager projection.
         return "blocked"
 
+    @staticmethod
+    def _first_structured_text(
+        records: Sequence[Mapping[str, Any]],
+        keys: Sequence[str],
+    ) -> str:
+        for record in records:
+            for key in keys:
+                value = record.get(key)
+                if isinstance(value, (str, int, float)) and str(value).strip():
+                    return str(value).strip()
+        return ""
+
+    def _interactive_run_result(
+        self,
+        task_id: str,
+        status: str,
+        snapshot: Any = None,
+        *,
+        exception: Optional[BaseException] = None,
+    ) -> InteractiveRunResult:
+        """Project terminal details only from structured state and artifacts."""
+        values = self._snapshot_values(snapshot)
+        try:
+            durable_plan = load_plan_state(self.data_path, task_id)
+        except Exception:
+            durable_plan = {}
+        task_state = dict(durable_plan.get("task_state") or {})
+        task_root = Path(self.data_path) / "task_outputs" / str(task_id)
+        metrics_path = task_root / "run_metrics.json"
+        trace_path = task_root / "context_trace" / "events.jsonl"
+        try:
+            metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+            if not isinstance(metrics, dict):
+                metrics = {}
+        except (OSError, TypeError, json.JSONDecodeError):
+            metrics = {}
+
+        records: List[Mapping[str, Any]] = []
+
+        def add_record(value: Any) -> None:
+            if isinstance(value, Mapping) and value:
+                records.append(value)
+
+        for key in ("terminal_diagnostic", "completion_gate_result"):
+            add_record(values.get(key))
+        final_result = dict(metrics.get("final_result") or {})
+        add_record(final_result.get("terminal_diagnostic"))
+        add_record(final_result)
+        add_record(metrics.get("terminal_diagnostic"))
+        if status in {"failed", "blocked"} or exception is not None:
+            for key in (
+                "failure",
+                "skill_decision_result",
+                "canonical_commit",
+            ):
+                add_record(values.get(key))
+            add_record(task_state.get("failure"))
+            planning_failure = dict(task_state.get("planning_failure") or {})
+            add_record(planning_failure.get("terminal_diagnostic"))
+            add_record(planning_failure)
+            add_record(task_state.get("consultant_commit_rejection"))
+            pending_transition = dict(
+                task_state.get("consultant_pending_transition") or {}
+            )
+            if pending_transition.get("terminal") is True:
+                add_record(pending_transition)
+            add_record(final_result.get("failure"))
+            add_record(metrics.get("failure"))
+
+        transition = dict(task_state.get("last_transition") or {})
+        add_record(transition)
+        stage = self._first_structured_text(
+            records,
+            ("stage", "failure_stage", "source_node", "from_node", "owner"),
+        )
+        failure_code = (
+            self._first_structured_text(
+                records,
+                ("failure_code", "error_code", "code", "reason_code"),
+            )
+            if status in {"failed", "blocked"} or exception is not None
+            else ""
+        )
+        reason = self._first_structured_text(
+            records,
+            ("reason", "message", "error", "summary", "detail"),
+        )
+        result_path = self._first_structured_text(
+            records,
+            (
+                "result_path",
+                "output_path",
+                "artifact_path",
+                "report_path",
+                "plan_path",
+            ),
+        )
+        if exception is not None:
+            failure_code = failure_code or type(exception).__name__
+            reason = reason or str(exception)
+            stage = stage or "runtime"
+        if status in {"failed", "blocked"} and not failure_code:
+            failure_code = "TERMINAL_EVIDENCE_MISSING"
+        if status == "completed":
+            stage = stage or "finalize"
+            reason = reason or "Task completed."
+        elif status == "waiting_user":
+            waiting = load_waiting_state(self.data_path, task_id) or {}
+            stage = stage or str(waiting.get("stage") or "human_input")
+            reason = reason or str(waiting.get("prompt") or "Waiting for user input.")
+        elif status == "cancelled":
+            reason = reason or "Task cancelled by user."
+        elif status == "interrupted":
+            reason = reason or "Interactive execution interrupted."
+
+        if not result_path and metrics_path.exists():
+            result_path = str(metrics_path)
+        return InteractiveRunResult(
+            task_id=str(task_id),
+            status=str(status or "blocked"),
+            stage=stage,
+            failure_code=failure_code,
+            reason=reason,
+            result_path=result_path,
+            trace_path=str(trace_path) if trace_path.exists() else "",
+        )
+
     async def go(
         self,
         input_data: Any,
@@ -32979,12 +38314,17 @@ question. Never guess a scientific or database identity.
     ):
         if not task_id:
             task_id = self._auto_task_id_for_prompt(input_data) or f"task_{int(time.time())}"
+        output.reset_for_task()
+        if not isinstance(input_data, Command) and not resume:
+            output.print_once(
+                f"task_accepted:{task_id}",
+                f"● Task accepted: {task_id}",
+                Fore.GREEN,
+            )
         config = {"configurable": {"thread_id": task_id}}
         self.profiler.start_task(task_id)
         self._record_initial_profiler_metadata(task_id, input_data)
         self._sync_runtime_registries_at_startup()
-
-        output.reset_for_task()
 
         if isinstance(input_data, Command):
             runner_input = input_data
@@ -33012,6 +38352,7 @@ question. Never guess a scientific or database identity.
                         task_id,
                         str(prompt),
                         status="running",
+                        authoritative_new_task=True,
                     )
                     if self.state_manager:
                         self.state_manager.create_task(task_id, prompt)
@@ -33050,9 +38391,8 @@ question. Never guess a scientific or database identity.
                         durable_task_state.get("planner_feedback") or {}
                     )),
                 }
-                print(
-                    f"\n{'↪ Continuing' if is_continuation else '🚀 Task'}: {task_id}"
-                )
+                if is_continuation:
+                    print(f"\n↪ Continuing: {task_id}")
 
         # 内存状态展示
         self.memory_manager.print_status(
@@ -33078,15 +38418,38 @@ question. Never guess a scientific or database identity.
             finally:
                 self.profiler.flush(task_id)
 
-    async def _run_agent_interrupt_loop(self, initial_input: Any, task_id: str, *, resume_initial: bool = False) -> str:
+    async def _run_agent_interrupt_loop(
+        self,
+        initial_input: Any,
+        task_id: str,
+        *,
+        resume_initial: bool = False,
+    ) -> InteractiveRunResult:
         """Run a fresh or resumed task until terminal state or saved user wait."""
         next_input = initial_input
         while True:
-            await self.go(
-                next_input,
-                task_id=task_id,
-                resume=resume_initial or isinstance(next_input, Command),
-            )
+            try:
+                await self.go(
+                    next_input,
+                    task_id=task_id,
+                    resume=resume_initial or isinstance(next_input, Command),
+                )
+            except (KeyboardInterrupt, asyncio.CancelledError):
+                raise
+            except BaseException as exc:
+                try:
+                    failed_snapshot = self.app.get_state(
+                        {"configurable": {"thread_id": task_id}}
+                    )
+                except Exception:
+                    failed_snapshot = None
+                self.profiler.finish_task(task_id, "failed")
+                return self._interactive_run_result(
+                    task_id,
+                    "failed",
+                    failed_snapshot,
+                    exception=exc,
+                )
             resume_initial = False
             config = {"configurable": {"thread_id": task_id}}
             snapshot = self.app.get_state(config)
@@ -33097,7 +38460,11 @@ question. Never guess a scientific or database identity.
                     if self.state_manager:
                         self.state_manager.update_task_status(task_id, "waiting_user")
                     self.profiler.finish_task(task_id, "waiting_user")
-                    return terminal_status
+                    return self._interactive_run_result(
+                        task_id,
+                        terminal_status,
+                        snapshot,
+                    )
                 if self.state_manager:
                     try:
                         self.state_manager.update_task_status(task_id, terminal_status)
@@ -33110,7 +38477,11 @@ question. Never guess a scientific or database identity.
                         terminal_status,
                     )
                     await self._maybe_offer_wiki_ingest(task_id, self.default_project_id)
-                return terminal_status
+                return self._interactive_run_result(
+                    task_id,
+                    terminal_status,
+                    snapshot,
+                )
 
             payload = snapshot.tasks[0].interrupts[0].value
             user_response = ""
@@ -33139,7 +38510,11 @@ question. Never guess a scientific or database identity.
                         payload,
                         started_at=wait_started_at,
                     )
-                    return "waiting_user"
+                    return self._interactive_run_result(
+                        task_id,
+                        "waiting_user",
+                        snapshot,
+                    )
                 self._record_human_wait(
                     task_id,
                     "code_review",
@@ -33175,7 +38550,11 @@ question. Never guess a scientific or database identity.
                         payload,
                         started_at=wait_started_at,
                     )
-                    return "waiting_user"
+                    return self._interactive_run_result(
+                        task_id,
+                        "waiting_user",
+                        snapshot,
+                    )
                 raw_response = user_response
                 if not user_response.strip():
                     user_response = dflt
@@ -33209,7 +38588,11 @@ question. Never guess a scientific or database identity.
                         payload,
                         started_at=wait_started_at,
                     )
-                    return "waiting_user"
+                    return self._interactive_run_result(
+                        task_id,
+                        "waiting_user",
+                        snapshot,
+                    )
                 self._record_human_wait(
                     task_id,
                     prompt_type,
@@ -33240,7 +38623,11 @@ question. Never guess a scientific or database identity.
                         generic_payload,
                         started_at=wait_started_at,
                     )
-                    return "waiting_user"
+                    return self._interactive_run_result(
+                        task_id,
+                        "waiting_user",
+                        snapshot,
+                    )
                 self._record_human_wait(
                     task_id,
                     "interrupt",
@@ -33252,7 +38639,11 @@ question. Never guess a scientific or database identity.
 
             if user_response.strip().lower() in ["q", "quit", "exit"]:
                 self.profiler.finish_task(task_id, "cancelled")
-                return "cancelled"
+                return self._interactive_run_result(
+                    task_id,
+                    "cancelled",
+                    snapshot,
+                )
             next_input = Command(resume=user_response)
 
     # ────────────────────────────────────────────────────────────
@@ -33289,6 +38680,7 @@ Commands:
   ![cmd]              Run shell command directly
 """)
         current_session_id = f"session_{int(time.time())}"
+        current_session_is_new = True
         print(f"{Fore.GREEN}● Session: {current_session_id}{Style.RESET_ALL}")
 
         DIRECT_CMDS = ['ls', 'll', 'la', 'pwd', 'whoami', 'date', 'head', 'tail',
@@ -33333,7 +38725,13 @@ Commands:
                             "Plain continue resolved as control event: %s",
                             json.dumps(control.get("resume_audit") or {}, ensure_ascii=False, sort_keys=True),
                         )
-                        await self._run_agent_interrupt_loop("", current_session_id, resume_initial=True)
+                        run_result = await self._run_agent_interrupt_loop(
+                            "",
+                            current_session_id,
+                            resume_initial=True,
+                        )
+                        output.render_terminal_result(run_result)
+                        current_session_is_new = False
                         continue
 
                 # ── 系统命令 ─────────────────────────────────
@@ -33514,6 +38912,7 @@ Commands:
                     parts = user_input.split(" ", 1)
                     name  = re.sub(r"[^a-zA-Z0-9_-]", "", parts[1]) if len(parts) > 1 else ""
                     current_session_id = f"{name}_{int(time.time())}" if name else f"session_{int(time.time())}"
+                    current_session_is_new = True
                     output.reset_for_task()
                     print(f"{Fore.GREEN}● New session: {current_session_id}{Style.RESET_ALL}")
                     continue
@@ -33527,7 +38926,21 @@ Commands:
                         "cancelled",
                         payload={"reason": "User stopped the current task."},
                     )
+                    try:
+                        stop_snapshot = self.app.get_state(
+                            {"configurable": {"thread_id": current_session_id}}
+                        )
+                    except Exception:
+                        stop_snapshot = None
+                    output.render_terminal_result(
+                        self._interactive_run_result(
+                            current_session_id,
+                            "cancelled",
+                            stop_snapshot,
+                        )
+                    )
                     current_session_id = f"session_{int(time.time())}"
+                    current_session_is_new = True
                     output.reset_for_task()
                     print(f"{Fore.GREEN}● New session: {current_session_id}{Style.RESET_ALL}")
                     continue
@@ -33544,6 +38957,7 @@ Commands:
                 if user_input.startswith("/resume "):
                     tid = user_input.split(" ", 1)[1].strip()
                     current_session_id = tid
+                    current_session_is_new = False
                     waiting = load_waiting_state(self.data_path, tid)
                     if waiting:
                         output.page_text(
@@ -33585,9 +38999,17 @@ Commands:
                         if user_response.strip().lower() in ["q", "quit", "exit"]:
                             self.profiler.finish_task(tid, "cancelled")
                             continue
-                        await self._run_agent_interrupt_loop(Command(resume=user_response), tid)
+                        run_result = await self._run_agent_interrupt_loop(
+                            Command(resume=user_response),
+                            tid,
+                        )
                     else:
-                        await self._run_agent_interrupt_loop("", tid, resume_initial=True)
+                        run_result = await self._run_agent_interrupt_loop(
+                            "",
+                            tid,
+                            resume_initial=True,
+                        )
+                    output.render_terminal_result(run_result)
                     continue
 
                 if user_input == "/debug":
@@ -33623,19 +39045,39 @@ Commands:
 
                 # ── Agent 处理（含中断循环）────────────────────
                 next_input = user_input
-                if self._should_auto_rename_session(current_session_id):
+                if self._should_auto_rename_session(
+                    current_session_id,
+                    authoritative_new_task=current_session_is_new,
+                ):
                     suggested_session_id = self._auto_task_id_for_prompt(next_input, fallback_prefix="session")
                     if suggested_session_id:
                         current_session_id = suggested_session_id
                         print(f"{Fore.GREEN}● Task title: {current_session_id}{Style.RESET_ALL}")
-                await self._run_agent_interrupt_loop(next_input, current_session_id)
+                run_result = await self._run_agent_interrupt_loop(
+                    next_input,
+                    current_session_id,
+                )
+                output.render_terminal_result(run_result)
+                current_session_is_new = False
 
             except KeyboardInterrupt:
                 restore_terminal_state()
-                print(f"\n{Fore.YELLOW}⚡ Interrupted. Exiting interactive mode.{Style.RESET_ALL}")
                 if self.state_manager:
                     self.state_manager.update_task_status(current_session_id, "interrupted")
                 self.profiler.finish_task(current_session_id, "interrupted")
+                try:
+                    interrupted_snapshot = self.app.get_state(
+                        {"configurable": {"thread_id": current_session_id}}
+                    )
+                except Exception:
+                    interrupted_snapshot = None
+                output.render_terminal_result(
+                    self._interactive_run_result(
+                        current_session_id,
+                        "interrupted",
+                        interrupted_snapshot,
+                    )
+                )
                 break
             except Exception:
                 import traceback

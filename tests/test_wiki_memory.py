@@ -2,6 +2,8 @@ import hashlib
 import json
 import sqlite3
 import tempfile
+import threading
+import time
 import unittest
 from unittest import mock
 from pathlib import Path
@@ -25,6 +27,50 @@ class _FakeLLM:
         if self.responses:
             return _Response(self.responses.pop(0))
         return _Response("{}")
+
+
+class SessionArchiveLockingTests(unittest.TestCase):
+    def test_current_schema_startup_does_not_require_a_write_lock(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "session_archive.sqlite3"
+            SessionArchive(db_path)
+            blocker = sqlite3.connect(db_path)
+            try:
+                blocker.execute("BEGIN IMMEDIATE")
+
+                reopened = SessionArchive(db_path, busy_timeout_seconds=0.1)
+
+                self.assertEqual(reopened.db_path, db_path)
+            finally:
+                blocker.rollback()
+                blocker.close()
+
+    def test_short_concurrent_write_is_waited_out(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "session_archive.sqlite3"
+            archive = SessionArchive(db_path, busy_timeout_seconds=1.0)
+            blocker = sqlite3.connect(db_path, check_same_thread=False)
+            blocker.execute("BEGIN IMMEDIATE")
+
+            def release() -> None:
+                time.sleep(0.1)
+                blocker.rollback()
+                blocker.close()
+
+            release_thread = threading.Thread(target=release)
+            release_thread.start()
+            try:
+                event_id = archive.append_event(
+                    task_id="lock-test",
+                    session_id="lock-test",
+                    stage="startup",
+                    event_type="lock_released",
+                    content="short lock was released",
+                )
+            finally:
+                release_thread.join(timeout=2.0)
+
+            self.assertGreater(event_id, 0)
 
 
 def _minimal_analysis(**overrides):

@@ -196,7 +196,7 @@ class ArtifactMismatchOwnershipTests(unittest.TestCase):
 
     def test_aa_bb_is_owned_by_first_divergent_layer(self) -> None:
         cases = (
-            ({"plan_path": "/output/bb.fa"}, "plan_binding", "planner_repair"),
+            ({"plan_path": "/output/bb.fa"}, "planner", "planner"),
             ({"proposed_path": "/output/bb.fa"}, "GENERATED_ACTION", "generate"),
             ({"materialized_path": "/output/bb.fa"}, "controller_projection", "internal_block"),
             ({"observed_path": "/output/bb.fa"}, "observed_artifact_mismatch", "recovery"),
@@ -225,7 +225,8 @@ class ArtifactMismatchOwnershipTests(unittest.TestCase):
         }
         violations = validate_plan_managed_artifacts(plan, self.bindings)
         self.assertEqual(violations[0].code, "PLAN_OUTPUT_BINDING_MISMATCH")
-        self.assertEqual(violations[0].owner, "plan_binding")
+        self.assertEqual(violations[0].owner, "planner")
+        self.assertEqual(violations[0].route, "planner")
 
     def test_controller_wrong_materialization_is_internal(self) -> None:
         violations = validate_materialized_artifacts(

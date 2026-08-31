@@ -1294,6 +1294,17 @@ class RunProfiler:
             if isinstance(data.get("failure"), Mapping)
             else {}
         )
+        planning_failure = (
+            dict(task_state.get("planning_failure") or {})
+            if isinstance(task_state.get("planning_failure"), Mapping)
+            else {}
+        )
+        planning_terminal = (
+            dict(planning_failure.get("terminal_diagnostic") or {})
+            if str(planning_failure.get("status") or "") == "terminal"
+            and isinstance(planning_failure.get("terminal_diagnostic"), Mapping)
+            else {}
+        )
         if (
             durable_failure.get("execution_started") is True
             and not str(durable_failure.get("termination_reason") or "")
@@ -1304,6 +1315,7 @@ class RunProfiler:
             durable_failure = {}
         diagnostic_candidates = (
             durable_failure,
+            planning_terminal,
             task_state.get("terminal_diagnostic"),
             consultation.get("terminal_diagnostic"),
             data.get("terminal_diagnostic"),

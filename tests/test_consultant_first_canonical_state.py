@@ -14,6 +14,8 @@ from agent_core.plan_tracker import (
     initialize_consultant_bootstrap_state,
     load_plan_state,
 )
+from agent_core.plan_contract import StateCASConflict
+from agent_core.skill_access import new_skill_access_state
 from agent_core.skill_manager import SkillManager
 from agent_core.state_contract_store import StateContractStore
 from agent_core.task_spec import (
@@ -318,6 +320,93 @@ class ConsultantFirstCanonicalStateTests(unittest.TestCase):
             ]
             self.assertEqual(semantic[0], semantic[1])
             self.assertEqual(semantic[1], semantic[2])
+
+    def test_13_skill_transaction_fields_commit_with_task_candidate(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            store, evidence = self._conversation(root, "task-skill-atomic")
+            raw_ref = store.read_conversation_evidence(evidence)[0]["content_ref"]
+            initial = initialize_consultant_bootstrap_state(
+                root,
+                "task-skill-atomic",
+                raw_submission_ref=raw_ref,
+                conversation_evidence=evidence,
+            )
+            candidate = build_consultant_candidate(
+                None,
+                new_consultation_state("consult-13", "task-skill-atomic"),
+                mutation(op("set_goal", value="Create the declared result")),
+                selected_skills=[],
+                task_id="task-skill-atomic",
+            )
+            access = new_skill_access_state()
+            candidate_ref = {
+                "skill_id": "capability/alpha",
+                "snapshot_id": "snapshot-alpha",
+                "source_path": "/skills/capability/alpha/SKILL.md",
+                "content_hash": "a" * 64,
+                "scope": "task",
+                "status": "candidate",
+            }
+            access["selected_skill_refs"] = [candidate_ref]
+            candidate.update({
+                "skill_access_state": access,
+                "selected_skill_refs": [candidate_ref],
+                "pending_skill_binding_proposal": {},
+                "pending_plan_impact_review": {
+                    "proposal_id": "proposal-alpha",
+                    "base_task_revision": 0,
+                    "new_task_revision": 1,
+                    "base_plan_revision": 0,
+                    "status": "pending",
+                },
+                "expected_state_generation": int(
+                    initial.get("state_generation") or 0
+                ),
+            })
+            committed = commit_consultant_candidate_state(
+                root, "task-skill-atomic", candidate
+            )
+            self.assertEqual(committed["current_task"]["task_revision"], 1)
+            self.assertEqual(
+                committed["task_state"]["pending_plan_impact_review"][
+                    "proposal_id"
+                ],
+                "proposal-alpha",
+            )
+            self.assertEqual(
+                committed["task_state"]["selected_skill_refs"],
+                [candidate_ref],
+            )
+
+    def test_14_stale_skill_transaction_has_zero_task_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            store, evidence = self._conversation(root, "task-skill-stale")
+            raw_ref = store.read_conversation_evidence(evidence)[0]["content_ref"]
+            initial = initialize_consultant_bootstrap_state(
+                root,
+                "task-skill-stale",
+                raw_submission_ref=raw_ref,
+                conversation_evidence=evidence,
+            )
+            candidate = build_consultant_candidate(
+                None,
+                new_consultation_state("consult-14", "task-skill-stale"),
+                mutation(op("set_goal", value="Create the declared result")),
+                selected_skills=[],
+                task_id="task-skill-stale",
+            )
+            candidate["expected_state_generation"] = (
+                int(initial.get("state_generation") or 0) + 1
+            )
+            with self.assertRaises(StateCASConflict):
+                commit_consultant_candidate_state(
+                    root, "task-skill-stale", candidate
+                )
+            current = load_plan_state(root, "task-skill-stale")
+            self.assertIsNone(current["current_task"]["task_spec"])
+            self.assertNotIn(
+                "pending_plan_impact_review", current.get("task_state") or {}
+            )
 
 
 if __name__ == "__main__":

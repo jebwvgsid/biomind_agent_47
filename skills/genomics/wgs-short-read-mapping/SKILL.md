@@ -14,7 +14,9 @@ runtime:
   language: bash
   packages: [bwa, bwa-mem2, samtools, picard, sambamba]
   capabilities: [short-read-alignment, duplicate-marking, bam-qc]
-  healthcheck: bash -lc "samtools --version >/dev/null && (bwa 2>&1 | head -1 >/dev/null || bwa-mem2 version >/dev/null)"
+  healthcheck: bash -lc "samtools --version >/dev/null && (bwa 2>&1 | head -1 >/dev/null || bwa-mem2 version >/dev/null) && (command -v picard >/dev/null || command -v sambamba >/dev/null)"
+  install_policy: prefer-declared
+  install_command: mamba create -n bio_wgs -c conda-forge -c bioconda -y bwa bwa-mem2 samtools picard sambamba
 ---
 
 # WGS Short-Read Mapping
@@ -26,13 +28,13 @@ Use this skill to convert paired-end WGS FASTQ into duplicate-marked coordinate-
 Use this skill when:
 
 - Input is Illumina/MGI/DNBSEQ-style paired-end WGS or resequencing FASTQ.
-- The next stage is WGS SNP/InDel, LUMPY short-read SV, or CNVnator CNV.
+- The next stage is WGS SNP/InDel, Manta short-read SV, or CNVnator CNV.
 - The user needs reference indexes and BAM QC.
 
 Do not use this skill when:
 
 - Reads are RNA-seq; use `genomics/rnaseq-variant-calling`.
-- Reads are ONT/PacBio long reads; use `genomics/long-read-sv-sniffles-survivor`.
+- Reads are ONT/PacBio long reads; use `genomics/long-read-sv-sniffles2`.
 - BAMs are already aligned, coordinate-sorted, indexed, and have read groups; go directly to the caller.
 
 Before running, verify that FASTQ files are real project inputs, not tutorial/demo files.
@@ -129,7 +131,8 @@ Do not remove duplicates by default for WGS variant calling.
 
 - `genomics/wgs-gatk-snp-indel` - high-confidence SNP/InDel calling from these BAMs.
 - `genomics/wgs-bcftools-snp-indel` - fast SNP/InDel calling from these BAMs.
-- `genomics/wgs-lumpy-sv` - short-read SV from these BAMs.
+- `genomics/wgs-manta-sv` - default short-read SV from these BAMs.
+- `genomics/wgs-lumpy-sv` - legacy LUMPY fallback from these BAMs.
 - `genomics/wgs-cnvnator-cnv` - CNVnator read-depth CNV from these BAMs.
 - `genomics/rnaseq-variant-calling` - use for RNA-seq reads, not this skill.
-- `genomics/long-read-sv-sniffles-survivor` - use for ONT/PacBio reads.
+- `genomics/long-read-sv-sniffles2` - use for ONT/PacBio reads.

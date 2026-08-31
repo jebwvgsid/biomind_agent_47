@@ -5,6 +5,7 @@ from pathlib import Path
 
 from agent_core.plan_tracker import (
     build_plan_state,
+    load_plan_state,
     mark_renderer_action_completed,
     register_renderer_manifest,
     save_plan_state,
@@ -399,8 +400,9 @@ class RendererControllerTests(unittest.TestCase):
             self.assertIn("00.preflight.sh", first["pending_action"]["code"])
             self.assertNotIn("02.build_database.sh", first["pending_action"]["code"])
 
-            mark_renderer_action_completed(plan, "step-1", "preflight", {"execution_id": "exec-1"})
-            save_plan_state(tmpdir, "task-a", plan)
+            current = load_plan_state(tmpdir, "task-a")
+            mark_renderer_action_completed(current, "step-1", "preflight", {"execution_id": "exec-1"})
+            save_plan_state(tmpdir, "task-a", current)
             second = agent._registered_renderer_action_update(self._state(), "task-a")
 
         self.assertIn("02.build_database.sh", second["pending_action"]["code"])

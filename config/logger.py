@@ -23,6 +23,18 @@ def setup_utf8_io():
 # 应用编码设置
 setup_utf8_io()
 
+
+class InteractiveConsoleFilter(logging.Filter):
+    """Keep background archive-writer telemetry out of the live prompt."""
+
+    BACKGROUND_PREFIXES = ("memory.session_archive_writer",)
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return not any(
+            str(record.name).startswith(prefix)
+            for prefix in self.BACKGROUND_PREFIXES
+        )
+
 class LoggingConfig:
     """日志配置管理"""
     
@@ -42,7 +54,9 @@ class LoggingConfig:
         date_format = '%Y-%m-%d %H:%M:%S'
         
         # 处理器列表
-        handlers = [logging.StreamHandler()]
+        console_handler = logging.StreamHandler()
+        console_handler.addFilter(InteractiveConsoleFilter())
+        handlers = [console_handler]
         
         # 添加文件处理器
         if log_to_file:

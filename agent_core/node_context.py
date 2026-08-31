@@ -21,6 +21,7 @@ from agent_core.plan_tracker import plan_record_hash, semantic_plan_hash
 from agent_core.task_spec import (
     semantic_constraints_from_task_spec,
     task_record_hash,
+    task_spec_revision,
     task_semantic_hash,
 )
 from agent_core.plan_contract import new_candidate_scope_id
@@ -87,6 +88,13 @@ _CONTROL_KEY_SUFFIXES = (
     "_object_ref",
     "_content_ref",
 )
+# Content digests for immutable Skill source/excerpts are model-visible
+# provenance, not task/plan concurrency tokens.  Keep this allowlist exact;
+# all other ``*_hash`` fields remain control-plane only.
+_SEMANTIC_CONTENT_HASH_KEYS = {
+    "content_hash",
+    "resource_content_hash",
+}
 _CONTROL_VALUE_PATTERNS = (
     re.compile(r"^sha256:[0-9a-f]{32,}$", re.IGNORECASE),
     re.compile(r"^(?:object|audit|evidence):sha256:[0-9a-f]{16,}$", re.IGNORECASE),
@@ -144,7 +152,13 @@ def _without_control_metadata(value: Any) -> Any:
         for raw_key, item in value.items():
             key = str(raw_key)
             lowered = key.lower()
-            if lowered in _CONTROL_KEY_EXACT or lowered.endswith(_CONTROL_KEY_SUFFIXES):
+            if (
+                lowered in _CONTROL_KEY_EXACT
+                or (
+                    lowered.endswith(_CONTROL_KEY_SUFFIXES)
+                    and lowered not in _SEMANTIC_CONTENT_HASH_KEYS
+                )
+            ):
                 continue
             if lowered in {
                 "source", "source_id", "source_ref", "source_refs", "source_type",
@@ -171,7 +185,13 @@ def control_metadata_leaks(value: Any, path: str = "$LLMPayload") -> List[str]:
             key = str(raw_key)
             lowered = key.lower()
             child = f"{path}.{key}"
-            if lowered in _CONTROL_KEY_EXACT or lowered.endswith(_CONTROL_KEY_SUFFIXES):
+            if (
+                lowered in _CONTROL_KEY_EXACT
+                or (
+                    lowered.endswith(_CONTROL_KEY_SUFFIXES)
+                    and lowered not in _SEMANTIC_CONTENT_HASH_KEYS
+                )
+            ):
                 leaks.append(child)
             leaks.extend(control_metadata_leaks(item, child))
     elif isinstance(value, (list, tuple)):
@@ -288,6 +308,10 @@ class ControllerBinding:
     task_record_hash: str
     plan_semantic_hash: str = ""
     plan_record_hash: str = ""
+    task_revision: int = 0
+    plan_revision: int = 0
+    authoritative_user_turn_revision: int = 0
+    continuation_id: str = ""
     approval_ref: str = ""
     approval_applicability: str = ""
     step_id: str = ""
@@ -312,6 +336,10 @@ class ControllerBinding:
             "task_record_hash": self.task_record_hash,
             "plan_semantic_hash": self.plan_semantic_hash,
             "plan_record_hash": self.plan_record_hash,
+            "task_revision": int(self.task_revision),
+            "plan_revision": int(self.plan_revision),
+            "authoritative_user_turn_revision": int(self.authoritative_user_turn_revision),
+            "continuation_id": self.continuation_id,
             "approval_ref": self.approval_ref,
             "approval_applicability": self.approval_applicability,
             "step_id": self.step_id,
@@ -479,6 +507,30 @@ def provider_context_manifest(
             semantic.get("task_spec"),
         ),
         (
+            "selected_skill_refs",
+            "semantic_history.selected_skill_refs",
+            "canonical_session_skill_snapshots",
+            semantic.get("selected_skill_refs"),
+        ),
+        (
+            "available_skill_headings",
+            "semantic_history.available_skill_headings",
+            "immutable_skill_heading_indexes",
+            semantic.get("available_skill_headings"),
+        ),
+        (
+            "relevant_skill_excerpts",
+            "current_focus.relevant_skill_excerpts",
+            "current_step_exact_skill_source",
+            focus.get("relevant_skill_excerpts"),
+        ),
+        (
+            "skill_tool_results",
+            "current_focus.skill_tool_results",
+            "current_skill_continuation_result",
+            focus.get("skill_tool_results"),
+        ),
+        (
             "approved_plan",
             "semantic_history.approved_plan",
             "approved_current_plan_snapshot",
@@ -621,6 +673,10 @@ def _semantic_artifact_rows(
             metadata={
                 "index": index,
                 "role": str(role),
+                "input_id": str(raw.get("input_id") or stable_id),
+                "artifact_id": str(raw.get("artifact_id") or ""),
+                "artifact_kind": str(raw.get("artifact_kind") or raw.get("object_kind") or ""),
+                "producer_owner": str(raw.get("producer_owner") or "external_input"),
                 "canonical_path": str(
                     raw.get("canonical_path")
                     or raw.get("resolved_path")
@@ -667,6 +723,10 @@ def _semantic_artifact_rows(
             metadata={
                 "index": index,
                 "role": str(role),
+                "output_id": str(raw.get("output_id") or stable_id),
+                "artifact_id": str(raw.get("artifact_id") or ""),
+                "artifact_kind": str(raw.get("artifact_kind") or raw.get("object_kind") or "file"),
+                "producer_owner": str(raw.get("producer_owner") or "planner"),
                 "canonical_path": str(
                     raw.get("canonical_path")
                     or raw.get("path")
@@ -677,18 +737,90 @@ def _semantic_artifact_rows(
         ))
         row = {
             "handle": handle,
+            "output_id": str(raw.get("output_id") or stable_id),
             "role": str(role),
+            "artifact_kind": str(raw.get("artifact_kind") or raw.get("object_kind") or "file"),
             "format": raw.get("format") or raw.get("type") or "",
             "required": bool(raw.get("required", True)),
+            "path_policy": str(raw.get("path_policy") or ""),
+            "root_ref": str(raw.get("root_ref") or ""),
+            "producer_owner": str(raw.get("producer_owner") or "planner"),
+            "required_basename": str(raw.get("required_basename") or ""),
+            "alternative_group": str(raw.get("alternative_group") or ""),
+            "description": str(raw.get("description") or ""),
             "placeholder": "{output:" + handle.removeprefix("output.") + "}",
         }
-        if raw.get("description"):
-            row["description"] = str(raw.get("description"))
         path = str(raw.get("canonical_path") or raw.get("path") or raw.get("filename") or "")
-        if path:
+        if path and not row.get("required_basename"):
             row["required_basename"] = path.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
         outputs.append(row)
+    output_handle_aliases: Dict[str, str] = {}
+    for output_handle, binding in handle_map.to_dict().items():
+        if (
+            binding.get("object_type") != "artifact"
+            or binding.get("direction") != "output"
+        ):
+            continue
+        metadata = dict(binding.get("metadata") or {})
+        for alias in (
+            binding.get("stable_identity"), metadata.get("output_id"),
+            metadata.get("artifact_id"), metadata.get("role"),
+        ):
+            if str(alias or ""):
+                output_handle_aliases[str(alias)] = str(output_handle)
+    for row in outputs:
+        root_ref = str(row.get("root_ref") or "")
+        if root_ref in output_handle_aliases:
+            row["root_ref"] = output_handle_aliases[root_ref]
     return inputs, outputs
+
+
+def _register_planner_plan_local_artifacts(
+    snapshot: Mapping[str, Any],
+    handle_map: SemanticHandleMap,
+    used: MutableMapping[str, int],
+) -> None:
+    """Expose approved plan-local identities through the ``plan.*`` namespace."""
+    ledger = dict(
+        snapshot.get("plan_local_artifacts")
+        or snapshot.get("plan_artifacts")
+        or {}
+    )
+    for artifact_id, raw in sorted(ledger.items(), key=lambda item: str(item[0])):
+        if not isinstance(raw, Mapping) or not str(artifact_id or ""):
+            continue
+        entry = dict(raw)
+        semantic_view = (
+            dict(entry.get("semantic_view") or {})
+            if isinstance(entry.get("semantic_view"), Mapping)
+            else {}
+        )
+        role = str(
+            semantic_view.get("role")
+            or entry.get("local_ref")
+            or artifact_id
+        )
+        handle = _declared_or_unique_handle(
+            "plan",
+            entry.get("local_ref"),
+            role,
+            used,
+        )
+        handle_map.add(SemanticHandleBinding(
+            handle,
+            "artifact",
+            str(artifact_id),
+            allowed_usage=("read", "write", "reference"),
+            metadata={
+                "role": role,
+                "local_ref": str(entry.get("local_ref") or ""),
+                "artifact_id": str(artifact_id),
+                "artifact_kind": str(entry.get("object_kind") or ""),
+                "producer_owner": "planner",
+                "canonical_path": str(entry.get("canonical_path") or ""),
+                "source_authority": "approved_plan_snapshot",
+            },
+        ))
 
 
 def _constraint_rows(
@@ -1294,6 +1426,8 @@ def _semantic_conversation_rows(
 
 def _accepted_consultant_handoff_view(
     handoff: Optional[Mapping[str, Any]],
+    *,
+    include_authoritative_lists: bool = True,
 ) -> Dict[str, Any]:
     """Whitelist the accepted semantic handoff; never project retry chatter."""
     raw = dict(handoff or {})
@@ -1305,10 +1439,185 @@ def _accepted_consultant_handoff_view(
     )
     result = OrderedDict()
     for key in allowed:
+        if (
+            not include_authoritative_lists
+            and key in {
+                "input_files", "required_outputs", "selected_skills",
+                "runtime_requirements",
+            }
+        ):
+            continue
         value = raw.get(key)
         if value not in (None, "", [], {}):
             result[key] = _without_control_metadata(value)
     return dict(result)
+
+
+def _compact_planner_runtime_projection(runtime: Mapping[str, Any]) -> Dict[str, Any]:
+    """Project only current runtime facts needed to construct a Plan."""
+    raw = dict(runtime or {})
+    rows = [
+        dict(item) for item in raw.get("input_audit", []) or []
+        if isinstance(item, Mapping)
+    ]
+    candidates = [raw, *reversed(rows)]
+
+    def first(*keys: str) -> Any:
+        for candidate in candidates:
+            for key in keys:
+                value = candidate.get(key)
+                if value not in (None, "", [], {}):
+                    return deepcopy(value)
+        return None
+
+    status = first("runtime_ready", "decision", "status")
+    projection: Dict[str, Any] = OrderedDict()
+    if isinstance(status, bool):
+        projection["runtime_ready"] = status
+    elif status is not None:
+        projection["runtime_ready"] = str(status).lower() in {
+            "runtime_ready", "ready", "resolved", "success", "passed",
+        }
+    selected_environment = first(
+        "selected_environment", "environment", "environment_name", "conda_env"
+    )
+    if selected_environment is not None:
+        projection["selected_environment"] = selected_environment
+    runner = first("runner", "execution_runner", "shell_runner")
+    if runner is not None:
+        projection["runner"] = runner
+    resolved = first("resolved_executable", "resolved_executables", "executable")
+    if resolved is not None:
+        projection["resolved_executable"] = resolved
+    constraints = first("critical_constraints", "runtime_constraints")
+    if constraints is not None:
+        projection["critical_constraints"] = constraints
+    return _without_control_metadata(projection)
+
+
+def _planning_failure_focus(
+    failure: Mapping[str, Any],
+    handle_map: SemanticHandleMap,
+) -> Dict[str, Any]:
+    """Return the provider-visible correction objective without control hashes."""
+    previous = deepcopy(dict(failure.get("previous_candidate") or {}))
+    previous_steps = [
+        step for step in previous.get("steps", []) or []
+        if isinstance(step, MutableMapping)
+    ]
+    _project_step_semantic_references(previous_steps, handle_map)
+    for index, step in enumerate(previous.get("steps", []) or [], start=1):
+        if not isinstance(step, dict):
+            continue
+        step_key = str(step.pop("step_id", "") or f"candidate-step-{index}")
+        step["step_key"] = step_key
+    materializations = [
+        row for row in previous.get("task_output_materializations", []) or []
+        if isinstance(row, MutableMapping)
+    ]
+    _project_step_semantic_references(materializations, handle_map)
+    stable_artifact_handles = {
+        str(binding.get("stable_identity") or ""): str(handle)
+        for handle, binding in handle_map.to_dict().items()
+        if binding.get("object_type") == "artifact"
+        and str(binding.get("stable_identity") or "")
+    }
+
+    def project_artifact_identities(value: Any) -> Any:
+        if isinstance(value, str):
+            return stable_artifact_handles.get(value, value)
+        if isinstance(value, Mapping):
+            return {
+                str(key): project_artifact_identities(item)
+                for key, item in value.items()
+            }
+        if isinstance(value, list):
+            return [project_artifact_identities(item) for item in value]
+        if isinstance(value, tuple):
+            return [project_artifact_identities(item) for item in value]
+        return deepcopy(value)
+
+    violations = []
+    for raw in failure.get("validation_issues", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        visible_fields = {
+            "code", "message", "field_path", "affected_step_ids", "affected_artifact",
+            "affected_output", "expected_identity", "observed_identity",
+            "violated_invariant", "required_postcondition", "affected_fields",
+            "machine_evidence", "expected_type", "received_type",
+            "received_excerpt", "parser_message", "line", "column", "offset",
+            "response_excerpt",
+        }
+        row = _without_control_metadata({
+            key: deepcopy(value)
+            for key, value in raw.items()
+            if str(key) in visible_fields
+        })
+        violations.append(project_artifact_identities(row))
+    affected_step_keys: set[str] = set()
+    affected_fields: set[str] = set()
+    for violation in violations:
+        for value in violation.get("affected_step_ids", []) or []:
+            if str(value or ""):
+                affected_step_keys.add(str(value))
+        for value in violation.get("affected_fields", []) or []:
+            if str(value or ""):
+                affected_fields.add(str(value))
+        evidence = dict(violation.get("machine_evidence") or {})
+        for key in ("consumer_step_id", "dependency_step_id"):
+            if str(evidence.get(key) or ""):
+                affected_step_keys.add(str(evidence[key]))
+        for key in ("producer_step_ids", "cycle"):
+            for value in evidence.get(key, []) or []:
+                if str(value or ""):
+                    affected_step_keys.add(str(value))
+    affected_steps = [
+        {
+            key: deepcopy(value)
+            for key, value in step.items()
+            if key in {
+                "step_key", "action", "purpose", "tool", "inputs", "outputs",
+                "dependencies", "skill_ids", "workflow_stage_ids", "batch_id",
+                "risk_level",
+            }
+        }
+        for step in previous.get("steps", []) or []
+        if isinstance(step, Mapping)
+        and (
+            not affected_step_keys
+            or str(step.get("step_key") or "") in affected_step_keys
+        )
+    ]
+    previous_correction_raw = dict(failure.get("previous_correction") or {})
+    previous_correction = {
+        key: deepcopy(previous_correction_raw.get(key))
+        for key in ("status", "outcome_code")
+        if previous_correction_raw.get(key) not in (None, "")
+    }
+    repeat_count = int(failure.get("repeat_count") or 0)
+    return {
+        "mode": "correct_previous_plan",
+        "attempt": int(failure.get("attempt") or 1) + 1,
+        "previous_candidate": previous,
+        "violations": violations,
+        "previous_correction": previous_correction,
+        "affected_subgraph": {
+            "step_keys": sorted(affected_step_keys),
+            "affected_fields": sorted(affected_fields),
+            "steps": affected_steps,
+        },
+        "convergence": {
+            "repeat_count": repeat_count,
+            "no_structural_progress": repeat_count > 0,
+        },
+        "instruction": {
+            "return_complete_plan": True,
+            "resolve_every_blocking_violation": True,
+            "self_check_required_postconditions": True,
+            "change_affected_structure_if_no_progress": repeat_count > 0,
+        },
+    }
 
 
 def _approved_plan_semantic_view(
@@ -1368,6 +1677,48 @@ def _approved_plan_semantic_view(
         approved_steps = [deepcopy(dict(item)) for item in steps]
     _project_step_semantic_references(approved_steps, handle_map)
     view["steps"] = approved_steps
+    artifact_handles = {
+        str(row.get("stable_identity") or ""): str(handle)
+        for handle, row in handle_map.to_dict().items()
+        if row.get("object_type") == "artifact"
+        and str(handle).startswith("plan.")
+    }
+    approved_artifacts: List[Dict[str, Any]] = []
+    plan_local_ledger = dict(
+        snapshot.get("plan_local_artifacts")
+        or snapshot.get("plan_artifacts")
+        or {}
+    )
+    for artifact_id, raw in sorted(
+        plan_local_ledger.items(), key=lambda item: str(item[0])
+    ):
+        if not isinstance(raw, Mapping):
+            continue
+        handle = artifact_handles.get(str(artifact_id or ""), "")
+        if not handle:
+            continue
+        semantic_view = (
+            dict(raw.get("semantic_view") or {})
+            if isinstance(raw.get("semantic_view"), Mapping)
+            else {}
+        )
+        approved_artifacts.append({
+            "handle": handle,
+            "semantic_view": {
+                key: deepcopy(semantic_view.get(key))
+                for key in ("role", "format", "description")
+                if semantic_view.get(key) not in (None, "", [], {})
+            },
+            "artifact_contract": {
+                "object_kind": str(raw.get("object_kind") or ""),
+                "lifecycle": str(raw.get("lifecycle") or "plan_local"),
+                "materialization_policy_id": str(
+                    raw.get("materialization_policy_id") or ""
+                ),
+            },
+        })
+    if approved_artifacts:
+        view["plan_artifacts"] = approved_artifacts
     proposed: List[Dict[str, Any]] = []
     for raw in snapshot.get("proposed_artifacts", []) or []:
         if not isinstance(raw, Mapping):
@@ -1532,10 +1883,15 @@ def build_node_context(
     invocation_id: str = "",
     candidate_scope_id: str = "",
     approved_plan_snapshot: Optional[Mapping[str, Any]] = None,
+    plan_snapshot: Optional[Mapping[str, Any]] = None,
+    plan_snapshot_status: str = "",
     conversation_turns: Sequence[Mapping[str, Any]] = (),
     consultant_handoff: Optional[Mapping[str, Any]] = None,
     execution_records: Sequence[Mapping[str, Any]] = (),
     recovery_decisions: Sequence[Mapping[str, Any]] = (),
+    skill_context: Optional[Mapping[str, Any]] = None,
+    authoritative_user_turn_revision: int = 0,
+    continuation_id: str = "",
 ) -> NodeContext:
     """Build the three-object invocation protocol from authoritative state.
 
@@ -1546,6 +1902,7 @@ def build_node_context(
     if normalized_node not in NODE_STALENESS_DOMAINS:
         raise NodeContextError(f"NODE_TYPE_UNSUPPORTED: {node_type!r}")
     runtime = dict(runtime or {})
+    skill_context = dict(skill_context or {})
     if normalized_node in {"generate", "recovery"}:
         # Inject canonical facts here rather than copying prose into individual
         # prompts. Initial Generate, Corrective Generate and Recovery therefore
@@ -1553,9 +1910,12 @@ def build_node_context(
         runtime["execution_runtime_contract"] = execution_runtime_contract()
         runtime["validation_scope_contract"] = validation_scope_contract()
     plan = dict(plan_state or {})
+    semantic_plan_snapshot = dict(
+        plan_snapshot or approved_plan_snapshot or {}
+    )
     planning_plan = (
-        dict(approved_plan_snapshot or {})
-        if approved_plan_snapshot
+        semantic_plan_snapshot
+        if semantic_plan_snapshot
         else plan
     )
     step_plan = (
@@ -1566,6 +1926,12 @@ def build_node_context(
     handles = SemanticHandleMap()
     used: Dict[str, int] = {}
     inputs, outputs = _semantic_artifact_rows(task_spec, handles, used)
+    if normalized_node == "planner" and semantic_plan_snapshot:
+        _register_planner_plan_local_artifacts(
+            semantic_plan_snapshot,
+            handles,
+            used,
+        )
     if approved_plan_snapshot and current_step_id:
         invocation_usage = approved_current_step_artifact_usage(
             approved_plan_snapshot,
@@ -1784,11 +2150,62 @@ def build_node_context(
         conversation = _semantic_conversation_rows(conversation_turns)
         if conversation:
             semantic_history["conversation"] = conversation
-        accepted_handoff = _accepted_consultant_handoff_view(consultant_handoff)
+        accepted_handoff = _accepted_consultant_handoff_view(
+            consultant_handoff,
+            include_authoritative_lists=normalized_node != "planner",
+        )
         if accepted_handoff:
             semantic_history["consultant_handoff"] = accepted_handoff
         semantic_history["task_spec"] = task_view
-        if approved_plan_snapshot:
+        selected_skill_refs = [
+            _without_control_metadata(item)
+            for item in skill_context.get("selected_skill_refs", []) or []
+            if isinstance(item, Mapping)
+        ]
+        if selected_skill_refs:
+            semantic_history["selected_skill_refs"] = selected_skill_refs
+        available_skill_headings = [
+            _without_control_metadata(item)
+            for item in skill_context.get("available_skill_headings", []) or []
+            if isinstance(item, Mapping)
+        ]
+        if available_skill_headings:
+            semantic_history["available_skill_headings"] = available_skill_headings
+        selected_capability_source = (
+            (runtime or {}).get("available_capabilities")
+            if normalized_node == "planner"
+            else (
+                plan.get("selected_skill_ids")
+                or (runtime or {}).get("available_capabilities")
+                or accepted_handoff.get("selected_skills")
+            )
+        )
+        selected_capabilities = [
+            str(value)
+            for value in (selected_capability_source or [])
+            if str(value)
+        ]
+        if selected_capabilities:
+            semantic_history["selected_capabilities"] = selected_capabilities
+        capability_contract = (runtime or {}).get("capability_contract")
+        if capability_contract:
+            semantic_history["capabilities"] = _without_control_metadata(
+                capability_contract
+            )
+        if normalized_node == "planner" and runtime:
+            planner_runtime = _compact_planner_runtime_projection(runtime)
+            if planner_runtime:
+                semantic_history["runtime"] = planner_runtime
+        if plan_snapshot:
+            snapshot_view = _approved_plan_semantic_view(
+                planning_plan,
+                steps,
+                handles,
+            )
+            if str(plan_snapshot_status or ""):
+                snapshot_view["snapshot_status"] = str(plan_snapshot_status)
+            semantic_history["plan_snapshot"] = snapshot_view
+        elif approved_plan_snapshot:
             semantic_history["approved_plan"] = _approved_plan_semantic_view(
                 planning_plan,
                 steps,
@@ -1810,13 +2227,51 @@ def build_node_context(
             semantic_history["accepted_recovery_decisions"] = accepted_decisions
 
         current_focus: Dict[str, Any] = OrderedDict()
+        planning_failure = dict(
+            (plan.get("task_state") or {}).get("planning_failure") or {}
+        )
+        if normalized_node == "planner":
+            planning_override = (
+                dict((feedback or {}).get("planning") or {})
+                if isinstance((feedback or {}).get("planning"), Mapping)
+                else {}
+            )
+            if str(planning_override.get("mode") or "") == "plan_impact_review":
+                current_focus["planning"] = _without_control_metadata(
+                    planning_override
+                )
+            elif str(planning_failure.get("status") or "") == "unresolved":
+                current_focus["planning"] = _planning_failure_focus(
+                    planning_failure,
+                    handles,
+                )
+            else:
+                current_focus["planning"] = {
+                    "mode": "create_complete_plan",
+                    "attempt": 1,
+                    "instruction": {"return_complete_plan": True},
+                }
         if normalized_node == "planner_repair":
             current_focus["candidate_plan"] = {"steps": steps}
         if normalized_node in {"generate", "recovery"}:
             current_focus["current_step"] = selected_step
             if dependency_contracts:
                 current_focus["dependency_contracts"] = dependency_contracts
-        if runtime:
+        relevant_skill_excerpts = [
+            _without_control_metadata(item)
+            for item in skill_context.get("relevant_skill_excerpts", []) or []
+            if isinstance(item, Mapping)
+        ]
+        if relevant_skill_excerpts:
+            current_focus["relevant_skill_excerpts"] = relevant_skill_excerpts
+        skill_tool_results = [
+            _without_control_metadata(item)
+            for item in skill_context.get("skill_tool_results", []) or []
+            if isinstance(item, Mapping)
+        ]
+        if skill_tool_results:
+            current_focus["skill_tool_results"] = skill_tool_results
+        if runtime and normalized_node != "planner":
             current_focus["runtime"] = _without_control_metadata(runtime)
         if feedback:
             current_focus["feedback"] = _without_control_metadata(feedback)
@@ -1828,6 +2283,14 @@ def build_node_context(
             current_focus["allowed_operations"] = [
                 str(value) for value in allowed_operations
             ]
+        if (
+            normalized_node == "planner"
+            and str(planning_failure.get("status") or "") == "unresolved"
+            and not isinstance(current_focus.get("planning"), Mapping)
+        ):
+            raise InvocationProtocolError(
+                "PLANNING_FAILURE_PROJECTION_MISSING"
+            )
         payload: Dict[str, Any] = OrderedDict((
             ("semantic_history", semantic_history),
             ("current_focus", current_focus),
@@ -1844,8 +2307,9 @@ def build_node_context(
         compatibility_payload.update(deepcopy(current_focus))
         selection_policy = "full-task-with-current-step-focus-v1"
     else:
-        # Consultant, Supervisor and PlanReview stay on their existing
-        # contracts; this repair does not expand those node boundaries.
+        # Consultant, Supervisor and PlanReview keep their existing flat
+        # contracts. Consultant nevertheless receives the same bounded,
+        # immutable Skill projection as the other semantic callers.
         payload = {"task": task_view}
         if normalized_node in {"planner_repair", "plan_review"}:
             payload["plan"] = {"steps": steps}
@@ -1861,6 +2325,20 @@ def build_node_context(
             payload["violations"] = visible_violations
         if evidence_rows:
             payload["evidence"] = evidence_rows
+        if normalized_node == "consultant":
+            for key in (
+                "selected_skill_refs",
+                "available_skill_headings",
+                "relevant_skill_excerpts",
+                "skill_tool_results",
+            ):
+                rows = [
+                    _without_control_metadata(item)
+                    for item in skill_context.get(key, []) or []
+                    if isinstance(item, Mapping)
+                ]
+                if rows:
+                    payload[key] = rows
         if allowed_operations:
             payload["allowed_operations"] = [str(value) for value in allowed_operations]
 
@@ -1887,6 +2365,12 @@ def build_node_context(
         task_record_hash=task_rec_hash,
         plan_semantic_hash=plan_sem_hash,
         plan_record_hash=plan_rec_hash,
+        task_revision=max(0, int(task_spec_revision(task_spec))),
+        plan_revision=max(0, int(plan.get("plan_revision") or 0)),
+        authoritative_user_turn_revision=max(
+            0, int(authoritative_user_turn_revision or 0)
+        ),
+        continuation_id=str(continuation_id or ""),
         approval_ref=str(approval_ref or ""),
         approval_applicability=str(approval_applicability or ""),
         step_id=str(current_step_id or ""),
@@ -1948,22 +2432,40 @@ class StalenessDecision:
 
 
 _NODE_RELEVANT_PRECONDITIONS = {
-    "consultant": ("task_semantic_hash", "touched_entity_versions"),
-    "planner": ("task_semantic_hash", "plan_semantic_hash"),
+    "consultant": (
+        "task_semantic_hash", "task_revision", "plan_semantic_hash",
+        "plan_revision", "authoritative_user_turn_revision", "step_id",
+        "continuation_id", "touched_entity_versions",
+    ),
+    "planner": (
+        "task_semantic_hash", "task_revision", "plan_semantic_hash",
+        "plan_revision", "authoritative_user_turn_revision", "step_id",
+        "continuation_id",
+    ),
     "planner_repair": (
-        "task_semantic_hash", "plan_semantic_hash", "violation_set_identity",
+        "task_semantic_hash", "task_revision", "plan_semantic_hash",
+        "plan_revision", "authoritative_user_turn_revision",
+        "step_id", "violation_set_identity", "continuation_id",
     ),
     "generate": (
-        "task_semantic_hash", "plan_semantic_hash", "approval_applicability",
-        "approval_ref", "step_id", "execution_epoch",
+        "task_semantic_hash", "task_revision", "plan_semantic_hash",
+        "plan_revision", "authoritative_user_turn_revision", "approval_applicability",
+        "approval_ref", "step_id", "execution_epoch", "continuation_id",
     ),
     "recovery": (
-        "task_semantic_hash", "plan_semantic_hash", "failure_fingerprint", "attempt_id",
+        "task_semantic_hash", "task_revision", "plan_semantic_hash",
+        "plan_revision", "authoritative_user_turn_revision", "approval_ref", "step_id",
+        "action_identity", "attempt_id", "failure_fingerprint", "evidence_identity",
+        "continuation_id",
     ),
     "supervisor": (
         "step_id", "action_identity", "attempt_id", "evidence_identity", "task_semantic_hash",
     ),
-    "plan_review": ("task_semantic_hash", "plan_semantic_hash"),
+    "plan_review": (
+        "task_semantic_hash", "task_revision", "plan_semantic_hash",
+        "plan_revision", "authoritative_user_turn_revision", "step_id",
+        "continuation_id",
+    ),
 }
 
 

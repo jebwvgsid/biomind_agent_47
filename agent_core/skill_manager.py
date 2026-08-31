@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -32,67 +33,165 @@ class SkillManager:
         "verified": 2,
         "success": 3,
     }
+    CATALOG_RANKING_METADATA_KEYS = (
+        "name", "description", "summary", "domain", "aliases", "legacy_ids",
+        "tags", "task_types", "stage_tags", "inputs", "outputs",
+        "when_to_use", "when_not_to_use", "skill_type", "runtime", "generate",
+    )
     
     def __init__(self, skills_root: str):
-        self.skills_root = Path(skills_root)
+        self.skills_root = Path(skills_root).resolve()
         self.runtime_registry_path = self.skills_root / ".skill_runtime_registry.json"
         self.discovered_skills: List[Dict[str, str]] =[]
         self._skill_lookup: Dict[str, Dict[str, str]] = {}
         self._skill_lookup_lower: Dict[str, str] = {}
         self._ambiguous_skill_keys = set()
+        self.catalog_complete = True
+        self.catalog_errors: List[Dict[str, str]] = []
         self._discover_skills()
         self.runtime_registry = self._load_runtime_registry()
 
     def _discover_skills(self):
         """1. 发现 (Discover)：仅扫描目录，轻量级加载所有技能的 YAML Frontmatter"""
+        self.discovered_skills = []
+        self.catalog_complete = True
+        self.catalog_errors = []
         if not self.skills_root.is_dir():
+            self.catalog_complete = False
+            self.catalog_errors.append({
+                "code": "SKILL_CATALOG_ROOT_UNAVAILABLE",
+                "path": str(self.skills_root),
+            })
             return
 
-        for skill_md in sorted(self.skills_root.rglob("SKILL.md")):
-            skill_dir = skill_md.parent
+        try:
+            skill_paths = sorted(self.skills_root.rglob("SKILL.md"))
+        except OSError as exc:
+            self.catalog_complete = False
+            self.catalog_errors.append({
+                "code": "SKILL_CATALOG_ENUMERATION_FAILED",
+                "path": str(self.skills_root),
+                "error": type(exc).__name__,
+            })
+            return
+
+        for skill_md in skill_paths:
             try:
+                resolved_md = skill_md.resolve(strict=True)
+                resolved_md.relative_to(self.skills_root)
+                skill_dir = resolved_md.parent
                 rel_dir = skill_dir.relative_to(self.skills_root)
-            except ValueError:
+            except (OSError, ValueError) as exc:
+                self.catalog_complete = False
+                self.catalog_errors.append({
+                    "code": "SKILL_CATALOG_PATH_OUT_OF_SCOPE",
+                    "path": str(skill_md),
+                    "error": type(exc).__name__,
+                })
                 continue
 
             if any(part.startswith(".") for part in rel_dir.parts):
                 continue
 
             try:
-                raw_content = skill_md.read_text(encoding="utf-8")
-                # 使用正则提取 YAML 头部
-                match = re.match(r'^---\s*\n(.*?)\n---\s*\n', raw_content, re.DOTALL)
-                if match:
-                    yaml_content = match.group(1)
-                    meta = yaml.safe_load(yaml_content) or {}
-                    if isinstance(meta.get("metadata"), dict):
-                        for key in (
-                            "version", "tags", "legacy_ids", "runtime",
-                            "renderer",
-                            "generate",
-                            "task_types", "stage_tags", "inputs", "outputs",
-                            "when_to_use", "when_not_to_use", "skill_type",
-                            "aliases", "summary", "domain",
-                        ):
-                            if key not in meta and key in meta["metadata"]:
-                                meta[key] = meta["metadata"][key]
-                    if "name" in meta:
-                        skill_id = self._normalize_skill_key(rel_dir)
-                        legacy_ids = self._build_legacy_skill_ids(meta, rel_dir)
-                        # 记录技能所在的相对目录（用作唯一标识）
-                        meta["_skill_id"] = skill_id
-                        meta["_skill_dir"] = str(skill_dir.resolve())
-                        meta["_skill_md"] = str(skill_md.resolve())
-                        meta["_skill_leaf"] = rel_dir.parts[-1]
-                        meta["_skill_category"] = "/".join(rel_dir.parts[:-1]) or "root"
-                        meta["_skill_path_tokens"] = list(rel_dir.parts)
-                        meta["_legacy_skill_ids"] = legacy_ids
-                        meta["_scripts"] = self._list_relative_files(skill_dir / "scripts")
-                        meta["_references"] = self._list_relative_files(skill_dir / "references")
-                        self.discovered_skills.append(meta)
+                raw_content = resolved_md.read_bytes().decode("utf-8")
+                # A registered SKILL.md without valid frontmatter is a catalog
+                # failure, not an absent Skill.  Search must never turn this
+                # condition into a trustworthy NO_MATCH.
+                match = re.match(
+                    r"^---[ \t]*\r?\n(.*?)\r?\n---[ \t]*\r?\n",
+                    raw_content,
+                    re.DOTALL,
+                )
+                if not match:
+                    self.catalog_complete = False
+                    self.catalog_errors.append({
+                        "code": "SKILL_CATALOG_FRONTMATTER_MISSING",
+                        "path": str(resolved_md),
+                    })
+                    continue
+                yaml_content = match.group(1)
+                meta = yaml.safe_load(yaml_content) or {}
+                if not isinstance(meta, dict):
+                    raise ValueError("Skill frontmatter must be a mapping")
+                if isinstance(meta.get("metadata"), dict):
+                    for key in (
+                        "version", "tags", "legacy_ids", "runtime",
+                        "renderer",
+                        "generate",
+                        "task_types", "stage_tags", "inputs", "outputs",
+                        "when_to_use", "when_not_to_use", "skill_type",
+                        "aliases", "summary", "domain",
+                    ):
+                        if key not in meta and key in meta["metadata"]:
+                            meta[key] = meta["metadata"][key]
+                if (
+                    not isinstance(meta.get("name"), str)
+                    or not str(meta.get("name") or "").strip()
+                ):
+                    self.catalog_complete = False
+                    self.catalog_errors.append({
+                        "code": "SKILL_CATALOG_NAME_MISSING",
+                        "path": str(resolved_md),
+                    })
+                    continue
+                skill_id = self._normalize_skill_key(rel_dir)
+                legacy_ids = self._build_legacy_skill_ids(meta, rel_dir)
+                # 记录技能所在的相对目录（用作唯一标识）
+                meta["_skill_id"] = skill_id
+                meta["_skill_dir"] = str(skill_dir.resolve())
+                meta["_skill_md"] = str(resolved_md)
+                meta["_skill_leaf"] = rel_dir.parts[-1]
+                meta["_skill_category"] = "/".join(rel_dir.parts[:-1]) or "root"
+                meta["_skill_path_tokens"] = list(rel_dir.parts)
+                meta["_legacy_skill_ids"] = legacy_ids
+                meta["_skill_content_hash"] = hashlib.sha256(
+                    raw_content.encode("utf-8")
+                ).hexdigest()
+                meta["_scripts"] = self._list_relative_files(skill_dir / "scripts")
+                meta["_references"] = self._list_relative_files(skill_dir / "references")
+                self.discovered_skills.append(meta)
             except Exception as e:
+                self.catalog_complete = False
+                self.catalog_errors.append({
+                    "code": "SKILL_CATALOG_ENTRY_INVALID",
+                    "path": str(skill_md),
+                    "error": type(e).__name__,
+                })
                 print(f"Failed to discover skill in {skill_dir}: {e}")
         self._rebuild_skill_lookup()
+
+    def catalog_status(self) -> Dict[str, Any]:
+        """Return typed local-catalog completeness without changing ranking."""
+        projection = []
+        for skill in self.discovered_skills:
+            projection.append({
+                "skill_id": str(skill.get("_skill_id") or ""),
+                "source_path": str(skill.get("_skill_md") or ""),
+                "content_hash": str(skill.get("_skill_content_hash") or ""),
+                "ranking_metadata": {
+                    key: deepcopy(skill.get(key))
+                    for key in self.CATALOG_RANKING_METADATA_KEYS
+                    if key in skill
+                },
+            })
+        encoded = json.dumps(
+            {
+                "skills": projection,
+                "complete": bool(self.catalog_complete),
+                "errors": self.catalog_errors,
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")
+        return {
+            "catalog_revision": "skill-catalog-" + hashlib.sha256(encoded).hexdigest()[:16],
+            "catalog_complete": bool(self.catalog_complete),
+            "catalog_errors": deepcopy(self.catalog_errors),
+            "skill_count": len(self.discovered_skills),
+        }
 
     def _normalize_skill_key(self, value: Any) -> str:
         return str(value or "").replace("\\", "/").strip().strip("/")
@@ -153,15 +252,29 @@ class SkillManager:
         """List files below a skill subfolder, relative to the skill directory."""
         if not folder.is_dir():
             return []
-        skill_dir = folder.parent
-        return [
-            str(path.relative_to(skill_dir)).replace("\\", "/")
-            for path in sorted(folder.rglob("*"))
-            if path.is_file()
-            and "__pycache__" not in path.parts
-            and not any(part.startswith(".") for part in path.relative_to(skill_dir).parts)
-            and path.suffix.lower() not in {".pyc", ".pyo"}
-        ]
+        try:
+            skill_dir = folder.parent.resolve(strict=True)
+            skill_dir.relative_to(self.skills_root)
+        except (OSError, ValueError):
+            return []
+        listed: List[str] = []
+        for path in sorted(folder.rglob("*")):
+            try:
+                relative = path.relative_to(skill_dir)
+                resolved = path.resolve(strict=True)
+                resolved.relative_to(skill_dir)
+                resolved.relative_to(self.skills_root)
+            except (OSError, ValueError):
+                continue
+            if (
+                not resolved.is_file()
+                or "__pycache__" in relative.parts
+                or any(part.startswith(".") for part in relative.parts)
+                or resolved.suffix.lower() in {".pyc", ".pyo"}
+            ):
+                continue
+            listed.append(relative.as_posix())
+        return listed
 
     def _skill_tree_structure(self) -> Dict[str, Any]:
         tree: Dict[str, Any] = {}
@@ -302,7 +415,10 @@ class SkillManager:
         resolved = ""
         if entrypoint:
             try:
-                resolved = str(self._resolve_listed_skill_file(meta, entrypoint, "_scripts"))
+                resolved_path = self._resolve_listed_skill_file(
+                    meta, entrypoint, "_scripts"
+                )
+                resolved = str(resolved_path) if resolved_path else ""
             except (FileNotFoundError, ValueError):
                 resolved = ""
         status = "declared" if resolved else "invalid"
@@ -1061,32 +1177,34 @@ class SkillManager:
         return "\n".join(lines)
 
     def _resolve_listed_skill_file(self, meta: Dict[str, Any], requested_path: str, meta_key: str) -> Optional[Path]:
-        """Resolve one listed script/reference by relative or absolute path."""
+        """Resolve one listed, relative, in-Skill script/reference path."""
         if not meta:
             return None
         raw_path = str(requested_path or "").strip()
         if not raw_path:
             return None
-        skill_dir = Path(meta.get("_skill_dir", ""))
+        requested = Path(raw_path)
+        if requested.is_absolute() or ".." in requested.parts:
+            return None
+        try:
+            skill_dir = Path(meta.get("_skill_dir", "")).resolve(strict=True)
+            skill_dir.relative_to(self.skills_root)
+        except (OSError, ValueError):
+            return None
         valid_rel_paths = set(meta.get(meta_key, []) or [])
         if not valid_rel_paths:
             return None
 
         normalized = raw_path.replace("\\", "/").strip().strip("/")
-        if normalized in valid_rel_paths:
-            candidate = skill_dir / normalized
-            return candidate if candidate.is_file() else None
-
-        try:
-            requested_abs = Path(raw_path).resolve()
-        except Exception:
+        if normalized not in valid_rel_paths:
             return None
-
-        for rel_path in valid_rel_paths:
-            candidate = (skill_dir / rel_path).resolve()
-            if candidate == requested_abs and candidate.is_file():
-                return candidate
-        return None
+        try:
+            candidate = (skill_dir / normalized).resolve(strict=True)
+            candidate.relative_to(skill_dir)
+            candidate.relative_to(self.skills_root)
+        except (OSError, ValueError):
+            return None
+        return candidate if candidate.is_file() else None
 
     def load_reference(self, skill_id: str, relative_ref_path: str) -> str:
         """Load a single selected reference file on demand."""
@@ -1614,14 +1732,15 @@ class SkillManager:
             capability_handle = f"capability.C{capability_index}"
             renderer = self.get_renderer_record(sid)
             requirements = self.get_runtime_requirements(sid)
-            skill_dir = Path(meta.get("_skill_dir") or (self.skills_root / sid)).resolve()
             operations: List[Dict[str, Any]] = []
             legacy_renderer_entrypoint = str(renderer.get("entrypoint") or "")
             for operation_index, relative in enumerate(meta.get("_scripts", []) or [], start=1):
                 if str(relative) == legacy_renderer_entrypoint:
                     continue
-                path = (skill_dir / str(relative)).resolve()
-                if not path.is_file():
+                path = self._resolve_listed_skill_file(
+                    meta, str(relative), "_scripts"
+                )
+                if path is None:
                     continue
                 handle = f"operation.C{capability_index}.O{operation_index}"
                 try:

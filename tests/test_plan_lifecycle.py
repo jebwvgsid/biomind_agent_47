@@ -12,6 +12,7 @@ from agent_core.plan_tracker import (
     block_plan_and_downstream,
     bind_plan_to_task_revision,
     build_plan_state,
+    commit_consultant_candidate_state,
     load_plan_state,
     save_plan_state,
     sync_plan_state_from_stage_status,
@@ -49,7 +50,7 @@ class PlanLifecycleTests(unittest.TestCase):
             "- [>] Step 1: Run | Action: EXECUTE | Skills: [] | Done: output exists",
         )
         bind_plan_to_task_revision(state, 1)
-        state["task_spec"] = create_task_spec("run analysis")
+        state["current_task"] = {"task_spec": create_task_spec("run analysis")}
         approve_plan_state(state, 1)
         return state
 
@@ -167,11 +168,54 @@ class PlanLifecycleTests(unittest.TestCase):
 
         self.assertEqual(node, "plan_review")
 
-    def test_durable_preplan_state_resumes_at_planner(self):
+    def test_durable_preplan_state_requires_versioned_finalize_before_planner(self):
         with tempfile.TemporaryDirectory() as root:
+            commit_consultant_candidate_state(
+                root,
+                "task-a",
+                {
+                    "task_spec": create_task_spec("run analysis", task_id="task-a"),
+                    "selected_skills": ["genomics/snpeff-annotation"],
+                    "consultation_state": {},
+                    "resolved_bindings": {},
+                    "pending_question": {},
+                },
+            )
             state = load_plan_state(root, "task-a")
-            state["task_spec"] = create_task_spec("run analysis")
-            state["selected_skill_ids"] = ["genomics/snpeff-annotation"]
+            state["generated_from_task_revision"] = 1
+            save_plan_state(root, "task-a", state)
+            agent = self._agent(root)
+
+            node, audit = agent._resolve_resume_node("task-a")
+
+        self.assertEqual(node, "consultant")
+        self.assertEqual(
+            audit["resume_reason"],
+            "versioned_finalize_required_before_planner",
+        )
+        self.assertFalse(audit["finalize_compiled_for_planner"])
+
+    def test_durable_compiled_v4_preplan_state_resumes_at_planner(self):
+        with tempfile.TemporaryDirectory() as root:
+            commit_consultant_candidate_state(
+                root,
+                "task-a",
+                {
+                    "task_spec": create_task_spec("run analysis", task_id="task-a"),
+                    "selected_skills": ["genomics/snpeff-annotation"],
+                    "consultation_state": {
+                        "finalize_protocol": {
+                            "schema_version": 4,
+                            "wire_schema_version": 3,
+                            "finalize_status": "compiled",
+                            "compile_outcome": {"status": "compiled"},
+                        }
+                    },
+                    "resolved_bindings": {},
+                    "pending_question": {},
+                },
+            )
+            state = load_plan_state(root, "task-a")
             state["generated_from_task_revision"] = 1
             save_plan_state(root, "task-a", state)
             agent = self._agent(root)
@@ -179,7 +223,109 @@ class PlanLifecycleTests(unittest.TestCase):
             node, audit = agent._resolve_resume_node("task-a")
 
         self.assertEqual(node, "planner")
-        self.assertEqual(audit["resume_reason"], "task_spec_and_skills_without_valid_plan")
+        self.assertEqual(
+            audit["resume_reason"],
+            "compiled_task_spec_and_skills_without_valid_plan",
+        )
+        self.assertTrue(audit["finalize_compiled_for_planner"])
+
+    def test_resume_runner_restores_durable_finalize_owner_without_checkpoint(self):
+        with tempfile.TemporaryDirectory() as root:
+            state = load_plan_state(root, "task-a")
+            state["task_spec"] = create_task_spec("run analysis")
+            state["selected_skill_ids"] = ["genomics/snpeff-annotation"]
+            state["generated_from_task_revision"] = 1
+            durable_owner = {
+                "phase": "finalize",
+                "completion_decision": "ready_to_finalize",
+                "finalize_protocol": {
+                    "schema_version": 4,
+                    "wire_schema_version": 3,
+                    "finalize_status": "resolving",
+                    "attempts": [{
+                        "attempt_id": "attempt-held",
+                        "provider_status": "in_flight",
+                    }],
+                },
+            }
+            state.setdefault("task_state", {})[
+                "consultation_state"
+            ] = durable_owner
+            save_plan_state(root, "task-a", state)
+            agent = self._agent(root)
+            agent.default_project_id = "default"
+            agent._get_or_create_stable_prompt = lambda *_args, **_kwargs: {
+                "prompt": "stable",
+                "core_memory_loaded_at": "fixture",
+            }
+            agent._runtime_status_for_task = lambda *_args, **_kwargs: {}
+
+            runner = agent._build_resume_runner_state(
+                "task-a", "continue", checkpoint_values={}
+            )
+
+        self.assertEqual(runner["next_step"], "consultant")
+        self.assertEqual(runner["consultation_state"], durable_owner)
+        self.assertEqual(
+            runner["consultation_state"]["finalize_protocol"]["attempts"][0][
+                "attempt_id"
+            ],
+            "attempt-held",
+        )
+
+    def test_stale_durable_completed_cannot_override_active_v4_finalize(self):
+        with tempfile.TemporaryDirectory() as root:
+            state = load_plan_state(root, "task-a")
+            state["task_spec"] = create_task_spec("run analysis")
+            state["selected_skill_ids"] = ["genomics/snpeff-annotation"]
+            state["generated_from_task_revision"] = 1
+            state.setdefault("task_state", {})["status"] = "completed"
+            state["task_state"]["consultation_state"] = {
+                "phase": "finalize",
+                "finalize_protocol": {
+                    "schema_version": 4,
+                    "wire_schema_version": 3,
+                    "finalize_status": "resolving",
+                    "attempts": [{
+                        "attempt_id": "attempt-held",
+                        "provider_status": "in_flight",
+                    }],
+                },
+            }
+            save_plan_state(root, "task-a", state)
+            agent = self._agent(root)
+
+            node, audit = agent._resolve_resume_node("task-a")
+
+        self.assertEqual(node, "consultant")
+        self.assertEqual(
+            audit["resume_reason"],
+            "versioned_finalize_required_before_planner",
+        )
+        self.assertTrue(audit["finalize_owner_requires_consultant"])
+
+    def test_stale_durable_completed_cannot_override_legacy_finalize_repair(self):
+        with tempfile.TemporaryDirectory() as root:
+            state = load_plan_state(root, "task-a")
+            state["task_spec"] = create_task_spec("run analysis")
+            state["selected_skill_ids"] = ["genomics/snpeff-annotation"]
+            state["generated_from_task_revision"] = 1
+            state.setdefault("task_state", {})["status"] = "completed"
+            state["task_state"]["consultation_state"] = {
+                "phase": "finalize",
+                "finalize_protocol": {
+                    "schema_version": 2,
+                    "wire_schema_version": 2,
+                    "status": "repairing",
+                    "attempts": [],
+                },
+            }
+            save_plan_state(root, "task-a", state)
+            agent = self._agent(root)
+
+            node, _ = agent._resolve_resume_node("task-a")
+
+        self.assertEqual(node, "consultant")
 
     def test_planner_timeout_preserves_approved_plan_and_resume_node(self):
         with tempfile.TemporaryDirectory() as root:
@@ -208,25 +354,43 @@ class PlanLifecycleTests(unittest.TestCase):
             state = self._approved_plan()
             save_plan_state(root, "task-a", state)
             agent = self._agent(root)
-            before = state["task_spec"]["revision"]
+            before = state["current_task"]["task_spec"]["revision"]
 
             decision = agent._continue_control_state("task-a")
-            after = load_plan_state(root, "task-a")["task_spec"]["revision"]
+            after = load_plan_state(root, "task-a")["current_task"]["task_spec"]["revision"]
 
         self.assertEqual(decision["action"], "resume")
         self.assertEqual(before, after)
+
+    def test_stale_state_manager_completed_cannot_override_durable_preplan_state(self):
+        with tempfile.TemporaryDirectory() as root:
+            state = load_plan_state(root, "task-a")
+            state["current_task"] = {"task_spec": create_task_spec("run analysis")}
+            state["selected_skill_ids"] = ["genomics/snpeff-annotation"]
+            state["generated_from_task_revision"] = 1
+            save_plan_state(root, "task-a", state)
+            agent = self._agent(root)
+            agent.state_manager.status = "completed"
+
+            decision = agent._continue_control_state("task-a")
+
+        self.assertEqual(decision["action"], "resume")
+        self.assertEqual(
+            decision["resume_audit"]["resume_reason"],
+            "versioned_finalize_required_before_planner",
+        )
 
     def test_plan_approval_does_not_modify_task_spec_revision(self):
         state = build_plan_state(
             "task-a",
             "- [ ] Step 1: Run | Action: EXECUTE | Skills: [] | Done: output exists",
         )
-        state["task_spec"] = create_task_spec("run analysis")
-        before = state["task_spec"]["revision"]
+        state["current_task"] = {"task_spec": create_task_spec("run analysis")}
+        before = state["current_task"]["task_spec"]["revision"]
 
         approve_plan_state(state, before)
 
-        self.assertEqual(state["task_spec"]["revision"], before)
+        self.assertEqual(state["current_task"]["task_spec"]["revision"], before)
         self.assertEqual(state["approved_task_revision"], before)
 
     def test_generate_redirect_audit_reports_exact_missing_field(self):
@@ -236,17 +400,18 @@ class PlanLifecycleTests(unittest.TestCase):
                 "- [>] Step 1: Run | Action: EXECUTE | Skills: [] | Done: N/A",
             )
             bind_plan_to_task_revision(state, 1)
-            state["task_spec"] = create_task_spec("run analysis")
+            state["current_task"] = {"task_spec": create_task_spec("run analysis")}
             approve_plan_state(state, 1)
             save_plan_state(root, "task-a", state)
             agent = self._agent(root)
+            task_spec = state["current_task"]["task_spec"]
 
             validation = agent._validate_generate_context(
-                {"task_mode": "managed", "task_spec": state["task_spec"], "task_revision": 1},
+                {"task_mode": "managed", "task_spec": task_spec, "task_revision": 1},
                 "task-a",
             )
             update = agent._generate_plan_redirect(
-                {"task_mode": "managed", "task_spec": state["task_spec"], "task_revision": 1},
+                {"task_mode": "managed", "task_spec": task_spec, "task_revision": 1},
                 "task-a",
                 validation,
             )
@@ -563,13 +728,76 @@ class PlanLifecycleTests(unittest.TestCase):
         self.assertEqual(second["required_next_action"], "INTERNAL_PROTOCOL_ERROR")
         self.assertEqual(task_status(persisted), "failed")
 
-    def test_failure_recording_command_is_not_analysis(self):
+    def test_generated_blocked_status_text_is_not_record_failure_intent(self):
         purpose = BioAnalystAgent._pending_action_purpose(
             {"type": "execute", "code": "printf 'analysis\\tblocked\\n' > stage_status.tsv"},
             {"action": "execute"},
         )
 
+        self.assertEqual(purpose, "analysis")
+
+    def test_generated_failure_text_does_not_override_validation_plan_purpose(self):
+        sources = {
+            "pass_and_blocked_branches": """
+write_report() { printf 'status: %s\\n' "$1" > compatibility_report.txt; }
+if test -s missing_in_reference.txt; then
+  write_report "BLOCKED"
+  exit 1
+fi
+write_report "PASS"
+""",
+            "comment_only": "# BLOCKED result would be written to compatibility_report.txt\nprintf 'PASS\\n'",
+            "string_or_help_template": "printf 'help: report status may be BLOCKED\\n' > help.txt",
+        }
+        with tempfile.TemporaryDirectory() as root:
+            state = build_plan_state(
+                "task-a",
+                "- [>] Step 1: Validate inputs | Action: EXECUTE | Skills: [] | Done: validation passes",
+            )
+            state["steps"][0]["purpose"] = "validation"
+            bind_plan_to_task_revision(state, 1)
+            state["current_task"] = {"task_spec": create_task_spec("validate inputs")}
+            approve_plan_state(state, 1)
+            save_plan_state(root, "task-a", state)
+            agent = self._agent(root)
+            graph_state = {
+                "task_spec": state["current_task"]["task_spec"],
+                "task_revision": 1,
+            }
+
+            for label, code in sources.items():
+                with self.subTest(label=label):
+                    action = agent._bind_pending_action(
+                        {"type": "execute", "code": code},
+                        graph_state,
+                        "task-a",
+                    )
+                    self.assertEqual(action["purpose"], "validation")
+                    self.assertEqual(action["command_role"], "required_validation")
+
+    def test_record_failure_requires_typed_intent_and_matching_plan_purpose(self):
+        purpose = BioAnalystAgent._pending_action_purpose(
+            {
+                "type": "execute",
+                "purpose": "record_failure",
+                "code": "printf 'status recorded\\n' > stage_status.tsv",
+            },
+            {"action": "execute", "purpose": "analysis"},
+        )
+
         self.assertEqual(purpose, "record_failure")
+        self.assertFalse(
+            BioAnalystAgent._execution_purpose_completes_step(
+                {"action": "execute", "purpose": "analysis"},
+                purpose,
+            )
+        )
+        self.assertTrue(
+            BioAnalystAgent._execution_purpose_completes_step(
+                {"action": "execute", "purpose": "record_failure"},
+                purpose,
+            )
+        )
 
     def test_validation_step_binds_readonly_execute_as_validation(self):
         purpose = BioAnalystAgent._pending_action_purpose(
@@ -607,6 +835,32 @@ class PlanLifecycleTests(unittest.TestCase):
         self.assertEqual(guarded["next_step"], "finish")
         self.assertEqual(guarded["transition_guard"], "terminal_blocked")
 
+    def test_authoritative_controller_block_still_finalizes_and_skips_downstream(self):
+        with tempfile.TemporaryDirectory() as root:
+            state = build_plan_state(
+                "task-a",
+                "- [>] Step 1: Validate | Action: EXECUTE | Skills: [] | Done: validation complete\n"
+                "- [ ] Step 2: Analyze | Action: EXECUTE | Skills: [] | Done: result exists",
+            )
+            save_plan_state(root, "task-a", state)
+            agent = self._agent(root)
+
+            agent._finalize_blocked_state("task-a", "authoritative controller blocker")
+            persisted = load_plan_state(root, "task-a")
+            output_root = Path(root) / "task_outputs" / "task-a"
+            blocked_status_exists = (output_root / "blocked_status.json").is_file()
+            stage_status_text = (output_root / "stage_status.tsv").read_text(encoding="utf-8")
+            report_text = (output_root / "report.md").read_text(encoding="utf-8")
+
+        self.assertEqual(task_status(persisted), TASK_STATUS_BLOCKED)
+        self.assertEqual(
+            [step["status"] for step in persisted["steps"]],
+            ["blocked", "skipped_upstream_blocked"],
+        )
+        self.assertTrue(blocked_status_exists)
+        self.assertIn("\tblocked\t", stage_status_text)
+        self.assertIn("Status: blocked", report_text)
+
     def test_recovery_question_is_not_overridden_by_exhausted_phase(self):
         with tempfile.TemporaryDirectory() as root:
             state = self._approved_plan()
@@ -642,9 +896,17 @@ class PlanLifecycleTests(unittest.TestCase):
             save_plan_state(root, "task-a", state)
             agent = self._agent(root)
 
-            first = agent._apply_transition_guard("generate", {}, {"next_step": "generate"}, "task-a")
-            second = agent._apply_transition_guard("generate", {}, {"next_step": "generate"}, "task-a")
-            third = agent._apply_transition_guard("generate", {}, {"next_step": "generate"}, "task-a")
+            def resolve_generate_transition():
+                guarded = agent._apply_transition_guard(
+                    "generate", {}, {"next_step": "generate"}, "task-a"
+                )
+                return agent._resolve_and_commit_effective_transition(
+                    "generate", {}, guarded, "task-a"
+                )
+
+            first = resolve_generate_transition()
+            second = resolve_generate_transition()
+            third = resolve_generate_transition()
             persisted = load_plan_state(root, "task-a")
 
         self.assertEqual(first["next_step"], "generate")

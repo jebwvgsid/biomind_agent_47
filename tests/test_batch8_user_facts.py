@@ -3,20 +3,15 @@ import unittest
 
 from agent_core.task_spec import (
     apply_user_feedback,
+    artifact_locator,
     create_task_spec,
     ensure_task_spec,
     merge_compiled_constraints,
     normalize_fact_candidates_with_skill,
+    resolve_effective_user_facts,
     semantic_constraints_from_task_spec,
     validate_compiled_constraints,
 )
-
-
-def active(spec, field):
-    return [
-        item for item in spec.get(field, [])
-        if isinstance(item, dict) and item.get("status", "active") == "active"
-    ]
 
 
 class Batch8AUserFactTests(unittest.TestCase):
@@ -62,22 +57,27 @@ class Batch8AUserFactTests(unittest.TestCase):
         self.assertTrue(compiled["valid"], compiled["errors"])
         spec = merge_compiled_constraints(spec, compiled["constraints"], metrics=compiled["metrics"])
 
-        artifact_roles = {item["role"] for item in active(spec, "artifact_bindings")}
-        entities = {(item["entity_type"], item["value"]) for item in active(spec, "entity_bindings")}
-        parameters = {(item["namespace"], item["key"]): item["value"] for item in active(spec, "parameter_bindings")}
+        artifact_roles = {item["role"] for item in spec["inputs"]}
+        entities = {
+            (item["entity_type"], item["value"])
+            for item in resolve_effective_user_facts(spec)["active_entities"]
+        }
+        parameters = spec["parameters"]
         constraints = {
             item["semantic_key"]: item["value"]
             for item in semantic_constraints_from_task_spec(spec)
         }
-        outputs = [item for item in active(spec, "artifact_bindings") if item["direction"] == "output"]
+        outputs = spec["output_contracts"]
 
         self.assertTrue({"variant_vcf", "reference_fasta", "annotation_gtf"} <= artifact_roles)
         self.assertIn(("species", "花生 Arachis hypogaea"), entities)
-        self.assertTrue(parameters[("cli", "gtf22")])
+        self.assertTrue(parameters["cli.gtf22"])
         self.assertEqual(constraints["required_behavior.annotation_format"], "gtf22")
         self.assertTrue(constraints["forbidden_behavior.species_database_guess"])
-        self.assertEqual(outputs[-1]["locator"], "/tmp/test/output/strict")
-        self.assertTrue(all(item.get("source_message_id") for item in active(spec, "facts")))
+        self.assertEqual(artifact_locator(outputs[-1]), "/tmp/test/output/strict")
+        self.assertGreaterEqual(len(spec["source_refs"]), len(turns))
+        self.assertNotIn("facts", spec)
+        self.assertNotIn("artifact_bindings", spec)
 
     def test_single_cell_facts_are_generic_bindings(self):
         spec = create_task_spec("做单细胞下游分析", task_id="scrna")
@@ -101,8 +101,8 @@ class Batch8AUserFactTests(unittest.TestCase):
         self.assertTrue(compiled["valid"], compiled["errors"])
         spec = merge_compiled_constraints(spec, compiled["constraints"], metrics=compiled["metrics"])
 
-        roles = {item["role"] for item in active(spec, "artifact_bindings")}
-        params = {item["key"]: item["value"] for item in active(spec, "parameter_bindings")}
+        roles = {item["role"] for item in spec["inputs"]}
+        params = spec["parameters"]
         self.assertIn("seurat_qc_object", roles)
         self.assertIn("marker_reference", roles)
         self.assertEqual(params["clustering_resolution"], 0.6)
@@ -115,10 +115,9 @@ class Batch8AUserFactTests(unittest.TestCase):
     def test_hic_many_artifacts_and_relation_are_preserved(self):
         spec = create_task_spec("比较 /data/leaf.mcool 和 /data/bud.mcool，resolution=40000，leaf compared_with bud", task_id="hic")
 
-        contacts = [item for item in active(spec, "artifact_bindings") if item["role"] == "contact_matrix"]
-        relations = active(spec, "relation_bindings")
+        contacts = [item for item in spec["inputs"] if item["role"] == "contact_matrix"]
+        relations = resolve_effective_user_facts(spec)["active_relations"]
         self.assertEqual(len(contacts), 2)
-        self.assertEqual(contacts[0]["cardinality"], "many")
         self.assertTrue(any(item["predicate"] == "compared_with" for item in relations))
 
     def test_gwas_and_enrichment_open_parameters(self):
@@ -131,12 +130,16 @@ class Batch8AUserFactTests(unittest.TestCase):
             task_id="enrichment",
         )
 
-        gwas_roles = {item["role"] for item in active(gwas, "artifact_bindings")}
-        gwas_params = {item["key"]: item["value"] for item in active(gwas, "parameter_bindings")}
-        enrichment_roles = {item["role"] for item in active(enrichment, "artifact_bindings")}
-        enrichment_params = {item["key"]: item["value"] for item in active(enrichment, "parameter_bindings")}
+        gwas_roles = {item["role"] for item in gwas["inputs"]}
+        gwas_params = gwas["parameters"]
+        gwas_entities = {
+            item["entity_type"]: item["value"]
+            for item in resolve_effective_user_facts(gwas)["active_entities"]
+        }
+        enrichment_roles = {item["role"] for item in enrichment["inputs"]}
+        enrichment_params = enrichment["parameters"]
         self.assertTrue({"genotype", "phenotype", "covariates"} <= gwas_roles)
-        self.assertEqual(gwas_params["trait"], "trait_yield")
+        self.assertEqual(gwas_entities["trait"], "trait_yield")
         self.assertEqual(gwas_params["model"], "MLM")
         self.assertTrue({"gene_list", "background_gene_list"} <= enrichment_roles)
         self.assertEqual(enrichment_params["ontology"], "GO_BP")
@@ -144,7 +147,8 @@ class Batch8AUserFactTests(unittest.TestCase):
 
     def test_no_file_task_does_not_invent_artifacts(self):
         spec = create_task_spec("请审查当前计划为什么循环，并解释错误。", task_id="review")
-        self.assertEqual(active(spec, "artifact_bindings"), [])
+        self.assertEqual(spec["inputs"], [])
+        self.assertEqual(spec["output_contracts"], [])
 
     def test_internal_human_messages_do_not_become_user_facts(self):
         spec = create_task_spec("解释任务", task_id="pollution")
@@ -171,9 +175,11 @@ class Batch8AUserFactTests(unittest.TestCase):
         twice = ensure_task_spec(json.loads(json.dumps(once)), task_id="legacy")
 
         self.assertEqual(once, twice)
-        binding = active(once, "artifact_bindings")[0]
-        self.assertEqual(binding["locator"], "/data/new.vcf")
-        self.assertEqual(binding["migration_source"], "legacy_user_directive")
+        binding = once["inputs"][0]
+        self.assertEqual(artifact_locator(binding), "/data/new.vcf")
+        self.assertEqual(binding["source_ref"], "m2")
+        self.assertNotIn("artifact_bindings", once)
+        self.assertNotIn("user_directives", once)
 
     def test_skill_aware_normalization_uses_contract_not_skill_id(self):
         candidates = [{
@@ -203,10 +209,11 @@ class Batch8AUserFactTests(unittest.TestCase):
             kind="consultant_answer",
             source_task_id="replace",
         )
-        artifacts = spec["artifact_bindings"]
-        statuses = {item["locator"]: item["status"] for item in artifacts}
-        self.assertEqual(statuses["/data/a.vcf"], "withdrawn")
-        self.assertEqual(statuses["/data/c.vcf"], "active")
+        self.assertEqual(
+            [artifact_locator(item) for item in spec["inputs"]],
+            ["/data/c.vcf"],
+        )
+        self.assertNotIn("artifact_bindings", spec)
 
         spec = apply_user_feedback(
             spec,
@@ -214,10 +221,7 @@ class Batch8AUserFactTests(unittest.TestCase):
             kind="consultant_answer",
             source_task_id="replace",
         )
-        self.assertFalse(any(
-            item["locator"] == "/data/c.vcf" and item["status"] == "active"
-            for item in spec["artifact_bindings"]
-        ))
+        self.assertEqual(spec["inputs"], [])
 
     def test_retain_only_withdraws_unlisted_many_values(self):
         spec = create_task_spec(
@@ -231,7 +235,7 @@ class Batch8AUserFactTests(unittest.TestCase):
             source_task_id="retain",
         )
         active_paths = {
-            item["locator"] for item in active(spec, "artifact_bindings")
+            artifact_locator(item) for item in spec["inputs"]
             if item["role"] == "contact_matrix"
         }
         self.assertEqual(active_paths, {"/data/a.mcool", "/data/b.mcool"})

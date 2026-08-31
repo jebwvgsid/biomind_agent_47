@@ -613,7 +613,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         return {
             "outcome_type": "PLAN_CANDIDATE",
             "proposed_artifacts": [{
-                "local_ref": "work_dir",
+                "local_ref": "plan.work_dir",
                 "semantic_view": {
                     "role": "work_dir",
                     "format": "directory",
@@ -633,14 +633,13 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
                     "purpose": "analysis",
                     "tool": "mkdir",
                     "inputs": [],
-                    "outputs": ["work_dir"],
+                    "outputs": ["plan.work_dir"],
                     "dependencies": [],
                     "success_criteria": ["the declared directory exists"],
                     "skill_ids": [self.SKILL_ID],
                     "workflow_stage_ids": [],
                     "batch_id": "",
                     "risk_level": "low",
-                    "semantic_constraint_ids": [],
                 },
                 {
                     "step_id": "step-2",
@@ -648,7 +647,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
                     "action": "execute",
                     "purpose": "analysis",
                     "tool": "test",
-                    "inputs": ["work_dir"],
+                    "inputs": ["plan.work_dir"],
                     "outputs": ["output.report"],
                     "dependencies": ["step-1"],
                     "success_criteria": ["the report exists and is non-empty"],
@@ -656,15 +655,13 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
                     "workflow_stage_ids": [],
                     "batch_id": "",
                     "risk_level": "low",
-                    "semantic_constraint_ids": [],
                 },
             ],
-            "semantic_claims": [],
             "validation_checklist": [{
                 "check_id": "check-plan-local-flow",
                 "description": "verify the directory and final report",
             }],
-            "metadata": {"schema_version": 1, "planner_contract": "structured_plan_v1"},
+            "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2"},
         }
 
     @staticmethod

@@ -16,7 +16,7 @@ import fcntl
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from agent_core.task_spec import (
     TASK_CANONICALIZATION_VERSION,
@@ -30,11 +30,11 @@ from agent_core.task_spec import (
     task_record_hash,
     task_semantic_hash,
     task_spec_is_initialized,
-    task_spec_is_semantic_empty,
     task_spec_revision,
     validate_compiled_constraints,
 )
 from agent_core.state_contract_store import StateContractStore
+from agent_core.recovery_contract import recovery_route_for_disposition
 from agent_core.plan_contract import (
     MINIMUM_PLAN_READER_VERSION,
     PLAN_CONTRACT_VERSION,
@@ -204,6 +204,7 @@ PLAN_SCHEMA_VERSION = 10
 PLAN_MIGRATION_VERSION = 10
 PLAN_CANONICALIZATION_VERSION = "plan-c14n-v3"
 VALIDATION_ISSUE_SCHEMA_VERSION = 1
+PLANNING_FAILURE_SCHEMA_VERSION = 1
 PROJECTION_COMPLETE = "COMPLETE"
 PROJECTION_INCOMPLETE = "INCOMPLETE"
 PROJECTION_NOT_APPLICABLE = "NOT_APPLICABLE"
@@ -331,11 +332,6 @@ def canonical_task_spec_for_state(
             "CANONICAL_TASK_STATE_CORRUPT: TaskSpec record hash mismatch"
         )
     return canonical
-PLANNER_MUTABLE_STEP_FIELDS = {
-    "step_id", "title", "action", "purpose", "tool", "inputs", "outputs",
-    "dependencies", "depends_on", "success_criteria",
-    "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
-}
 PROVENANCE_SCHEMA_VERSION = 1
 RENDERER_MANIFEST_SCHEMA_VERSION = 3
 MANIFEST_ACTION_KINDS = {
@@ -386,12 +382,6 @@ PLAN_STEP_FIELDS = (
 PLAN_STATUS_PENDING_REVIEW = "pending_review"
 PLAN_STATUS_APPROVED = "approved"
 
-PLAN_OPERATION_CREATE = "CREATE_PLAN"
-PLAN_OPERATION_REPAIR = "REPAIR_PLAN"
-PLAN_OPERATION_LOCAL_REPLAN = "LOCAL_REPLAN"
-PLAN_OPERATION_GLOBAL_REPLAN = "GLOBAL_REPLAN"
-PLAN_PATCH_OPERATION = "replace_steps"
-
 STATUS_PENDING = "pending"
 STATUS_READY = "ready"
 STATUS_RUNNING = "running"
@@ -399,6 +389,7 @@ STATUS_DIAGNOSING = "diagnosing"
 STATUS_REPAIRING = "repairing"
 STATUS_RETRY_PENDING = "retry_pending"
 STATUS_PENDING_RETRY = STATUS_RETRY_PENDING
+STATUS_VERIFICATION_PENDING = "verification_pending"
 STATUS_WAITING_UPSTREAM = "waiting_upstream"
 STATUS_INVALIDATED = "invalidated"
 STATUS_DONE = "done"
@@ -429,6 +420,7 @@ STEP_ACTIVE_STATUSES = {
     STATUS_DIAGNOSING,
     STATUS_REPAIRING,
     STATUS_RETRY_PENDING,
+    STATUS_VERIFICATION_PENDING,
 }
 STEP_SUCCESS_STATUSES = {STATUS_DONE, STATUS_PASSED, STATUS_SKIPPED}
 STEP_TERMINAL_STATUSES = {
@@ -440,6 +432,7 @@ STEP_TERMINAL_STATUSES = {
 }
 STEP_RECOVERABLE_STATUSES = {
     STATUS_RETRY_PENDING,
+    STATUS_VERIFICATION_PENDING,
     STATUS_WAITING_UPSTREAM,
     STATUS_INVALIDATED,
     STATUS_RUNNING,
@@ -549,6 +542,7 @@ def _mark_from_status(status: str) -> str:
         STATUS_DIAGNOSING: ">",
         STATUS_REPAIRING: ">",
         STATUS_RETRY_PENDING: ">",
+        STATUS_VERIFICATION_PENDING: ">",
         STATUS_BLOCKED: "!",
         STATUS_FAILED: "!",
         STATUS_SKIPPED: "-",
@@ -739,6 +733,438 @@ def normalize_validation_issue(value: Any) -> Dict[str, Any]:
             and value not in (None, "", [], {})
         },
     )
+
+
+def _bounded_candidate_semantic_view(
+    candidate: Optional[Mapping[str, Any]],
+    *,
+    max_steps: int = 16,
+) -> Dict[str, Any]:
+    """Keep enough rejected semantics for correction without copying a Plan."""
+    if not isinstance(candidate, Mapping):
+        return {}
+    steps: List[Dict[str, Any]] = []
+    allowed_step_fields = (
+        "step_id", "title", "action", "purpose", "tool", "inputs", "outputs",
+        "dependencies", "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
+    )
+    for raw in list(candidate.get("steps") or [])[:max_steps]:
+        if not isinstance(raw, Mapping):
+            continue
+        steps.append({
+            key: deepcopy(raw.get(key))
+            for key in allowed_step_fields
+            if key in raw
+        })
+    result: Dict[str, Any] = {"steps": steps}
+    proposed = []
+    for raw in list(candidate.get("proposed_artifacts") or [])[:max_steps]:
+        if not isinstance(raw, Mapping):
+            continue
+        proposed.append({
+            key: deepcopy(raw.get(key))
+            for key in ("local_ref", "semantic_view", "artifact_contract")
+            if key in raw
+        })
+    if proposed:
+        result["proposed_artifacts"] = proposed
+    materializations = []
+    for raw in list(candidate.get("task_output_materializations") or [])[:max_steps]:
+        if isinstance(raw, Mapping):
+            materializations.append({
+                "output_ref": str(raw.get("output_ref") or ""),
+                "path": str(raw.get("path") or ""),
+            })
+    if materializations:
+        result["task_output_materializations"] = materializations
+    return result
+
+
+def current_planning_failure(
+    state: Mapping[str, Any],
+    *,
+    task_spec_revision_value: Optional[int] = None,
+) -> Dict[str, Any]:
+    failure = dict((state.get("task_state") or {}).get("planning_failure") or {})
+    if str(failure.get("status") or "") != "unresolved":
+        return {}
+    if (
+        task_spec_revision_value is not None
+        and int(failure.get("task_spec_revision") or 0)
+        != int(task_spec_revision_value)
+    ):
+        return {}
+    return failure
+
+
+def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
+    """Reduce one validator result to the durable machine-diagnostic ABI."""
+    explicit_message = (
+        str(value.get("message") or value.get("reason") or "").strip()
+        if isinstance(value, Mapping)
+        else str(value or "").strip()
+    )
+    normalized = normalize_validation_issue(value)
+    visible_fields = (
+        "code", "message", "field_path", "affected_step_ids", "affected_artifact",
+        "affected_output", "expected_identity", "observed_identity",
+        "violated_invariant", "required_postcondition", "affected_fields",
+        "machine_evidence", "expected_type", "received_type",
+        "received_excerpt", "parser_message", "line", "column", "offset",
+        "response_excerpt",
+    )
+    issue = {
+        key: deepcopy(normalized.get(key))
+        for key in visible_fields
+        if normalized.get(key) not in (None, "", [], {})
+    }
+    if explicit_message:
+        issue["message"] = explicit_message[:800]
+    else:
+        issue.pop("message", None)
+    issue["code"] = str(normalized.get("code") or "PLAN_CANDIDATE_INVALID")
+    issue["field_path"] = str(normalized.get("field_path") or "$")
+    affected_steps = [
+        str(item)
+        for item in (
+            normalized.get("affected_step_ids")
+            or [normalized.get("plan_step_id") or normalized.get("step_id")]
+        )
+        if str(item or "")
+    ]
+    issue["affected_step_ids"] = affected_steps
+    issue.setdefault("affected_artifact", {})
+    issue.setdefault("affected_output", {})
+    machine_evidence = dict(issue.get("machine_evidence") or {})
+    for key in (
+        "dependency_step_id", "consumer_step_id", "producer_step_ids",
+        "affected_output_ids", "cycle", "artifact_ref", "reason_code",
+        "actual_value", "expected_contract", "selected_skill_id",
+        "validator_id",
+    ):
+        if normalized.get(key) not in (None, "", [], {}):
+            machine_evidence.setdefault(key, deepcopy(normalized.get(key)))
+    issue["machine_evidence"] = machine_evidence
+    return issue
+
+
+_PLANNER_CORRECTION_STRUCTURE_FIELDS = (
+    "action", "purpose", "tool", "inputs", "outputs", "dependencies",
+    "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
+)
+
+
+def _planning_issue_affected_step_ids(
+    issues: Iterable[Mapping[str, Any]],
+) -> List[str]:
+    """Collect the validator-owned affected subgraph without task semantics."""
+    values: set[str] = set()
+    for issue in issues:
+        if not isinstance(issue, Mapping):
+            continue
+        for value in issue.get("affected_step_ids", []) or []:
+            if str(value or ""):
+                values.add(str(value))
+        evidence = dict(issue.get("machine_evidence") or {})
+        for key in ("consumer_step_id", "dependency_step_id"):
+            if str(evidence.get(key) or ""):
+                values.add(str(evidence[key]))
+        for key in ("producer_step_ids", "cycle"):
+            for value in evidence.get(key, []) or []:
+                if str(value or ""):
+                    values.add(str(value))
+    return sorted(values)
+
+
+def _candidate_correction_signature(
+    candidate: Optional[Mapping[str, Any]],
+    issues: Sequence[Mapping[str, Any]],
+) -> str:
+    """Hash only validator-relevant candidate structure for no-progress checks."""
+    bounded = _bounded_candidate_semantic_view(candidate)
+    if not bounded:
+        return ""
+    affected_step_ids = set(_planning_issue_affected_step_ids(issues))
+    affected_fields = {
+        str(field)
+        for issue in issues
+        if isinstance(issue, Mapping)
+        for field in (issue.get("affected_fields") or [])
+        if str(field) in _PLANNER_CORRECTION_STRUCTURE_FIELDS
+    }
+    if not affected_fields:
+        affected_fields = set(_PLANNER_CORRECTION_STRUCTURE_FIELDS)
+    projected_steps: List[Dict[str, Any]] = []
+    for raw in bounded.get("steps", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        step_id = str(raw.get("step_id") or "")
+        if affected_step_ids and step_id not in affected_step_ids:
+            continue
+        projected_steps.append({
+            "step_id": step_id,
+            **{
+                field: deepcopy(raw.get(field))
+                for field in sorted(affected_fields)
+                if field in raw
+            },
+        })
+    signature_payload: Dict[str, Any] = {
+        "affected_step_ids": sorted(affected_step_ids),
+        "affected_fields": sorted(affected_fields),
+        "steps": sorted(
+            projected_steps,
+            key=lambda row: str(row.get("step_id") or ""),
+        ),
+    }
+    if not affected_step_ids:
+        signature_payload["proposed_artifacts"] = deepcopy(
+            bounded.get("proposed_artifacts") or []
+        )
+        signature_payload["task_output_materializations"] = deepcopy(
+            bounded.get("task_output_materializations") or []
+        )
+    return hashlib.sha256(
+        json.dumps(
+            signature_payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def record_planning_failure(
+    state: PlanState,
+    *,
+    validation_issues: Iterable[Any],
+    planning_epoch_id: str,
+    task_spec_revision_value: int,
+    validation_source: str,
+    candidate: Optional[Mapping[str, Any]] = None,
+    previous_correction: Optional[Mapping[str, Any]] = None,
+    terminal: bool = False,
+    terminal_diagnostic: Optional[Mapping[str, Any]] = None,
+) -> PlanState:
+    """Persist the unique Planner correction capsule in task_state."""
+    result = deepcopy(state)
+    task_state = dict(result.get("task_state") or {})
+    task_state.pop("planner_candidate_rejection", None)
+    issues = [_planning_failure_machine_issue(item) for item in validation_issues]
+    if not issues:
+        issues = [_planning_failure_machine_issue({
+            "code": "PLAN_CANDIDATE_INVALID",
+            "field_path": "$",
+            "machine_evidence": {
+                "validation_source": str(
+                    validation_source or "planner_candidate_admission"
+                ),
+            },
+        })]
+    bounded_candidate = _bounded_candidate_semantic_view(candidate)
+    issue_fingerprint_payload = {
+        "task_spec_revision": int(task_spec_revision_value),
+        "planning_epoch_id": str(planning_epoch_id or ""),
+        "validation_source": str(validation_source or "planner_candidate_admission"),
+        "issues": [
+            {
+                key: deepcopy(issue.get(key))
+                for key in (
+                    "code", "field_path", "affected_step_ids", "affected_artifact",
+                    "affected_output", "expected_identity", "observed_identity",
+                    "violated_invariant", "required_postcondition", "affected_fields",
+                    "machine_evidence", "expected_type", "received_type",
+                    "received_excerpt", "parser_message", "line", "column",
+                    "offset", "response_excerpt",
+                )
+                if issue.get(key) not in (None, "", [], {})
+            }
+            for issue in issues
+        ],
+    }
+    issue_fingerprint = hashlib.sha256(
+        json.dumps(
+            issue_fingerprint_payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")
+    ).hexdigest()
+    candidate_correction_signature = _candidate_correction_signature(
+        bounded_candidate,
+        issues,
+    )
+    fingerprint_payload = {
+        **issue_fingerprint_payload,
+        "candidate_correction_signature": candidate_correction_signature,
+    }
+    fingerprint = hashlib.sha256(
+        json.dumps(
+            fingerprint_payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")
+    ).hexdigest()
+    prior = dict(task_state.get("planning_failure") or {})
+    same_lifecycle = bool(
+        str(prior.get("status") or "") == "unresolved"
+        and str(prior.get("planning_epoch_id") or "")
+        == str(planning_epoch_id or "")
+        and int(prior.get("task_spec_revision") or 0)
+        == int(task_spec_revision_value)
+    )
+    same_issue = bool(
+        same_lifecycle
+        and str(prior.get("issue_fingerprint") or "") == issue_fingerprint
+    )
+    repeated = bool(
+        same_issue
+        and str(prior.get("candidate_correction_signature") or "")
+        == candidate_correction_signature
+    )
+    attempt = int(prior.get("attempt") or 0) + 1 if same_lifecycle else 1
+    capsule: Dict[str, Any] = {
+        "schema_version": PLANNING_FAILURE_SCHEMA_VERSION,
+        "status": "terminal" if terminal else "unresolved",
+        "attempt": max(1, attempt),
+        "repeat_count": (
+            int(prior.get("repeat_count") or 0) + 1
+            if repeated
+            else 0
+        ),
+        "planning_epoch_id": str(planning_epoch_id or ""),
+        "task_spec_revision": int(task_spec_revision_value),
+        "validation_source": str(validation_source or "planner_candidate_admission"),
+        "validation_issues": issues,
+        "failure_fingerprint": fingerprint,
+        "issue_fingerprint": issue_fingerprint,
+        "candidate_correction_signature": candidate_correction_signature,
+        "correction_progress": (
+            "no_structural_progress"
+            if repeated
+            else "affected_structure_changed"
+            if same_issue
+            else "new_failure_objective"
+        ),
+        "previous_correction": deepcopy(dict(previous_correction or {})),
+        "terminal_diagnostic": deepcopy(dict(terminal_diagnostic or {})),
+        "updated_at": _now(),
+    }
+    if bounded_candidate:
+        capsule["previous_candidate"] = bounded_candidate
+    current_plan = dict(result.get("current_plan") or {})
+    snapshot_id = str(current_plan.get("plan_snapshot_id") or "")
+    if snapshot_id:
+        capsule["plan_snapshot_id"] = snapshot_id
+        capsule["plan_revision"] = int(
+            current_plan.get("plan_revision")
+            or result.get("plan_revision")
+            or 0
+        )
+    task_state["planning_failure"] = capsule
+    epoch = dict(task_state.get("planning_epoch") or {})
+    if (
+        not terminal
+        and epoch
+        and str(epoch.get("status") or "") in {"active", "candidate_rejected"}
+        and str(epoch.get("planning_epoch_id") or "")
+        == str(planning_epoch_id or "")
+    ):
+        # A rejected candidate is a correction turn inside the same semantic
+        # PlanningEpoch.  Ending the epoch here would reset its call budget and
+        # discard failure continuity on the next Planner dispatch.
+        epoch["status"] = "active"
+        task_state["planning_epoch"] = epoch
+    result["task_state"] = task_state
+    return result
+
+
+def terminalize_planning_failure(
+    state: PlanState,
+    *,
+    planning_epoch_id: str,
+    task_spec_revision_value: int,
+    terminal_diagnostic: Mapping[str, Any],
+    fallback_validation_issues: Iterable[Any] = (),
+) -> PlanState:
+    """Close the current failure without erasing its diagnostic continuity."""
+    result = deepcopy(state)
+    task_state = dict(result.get("task_state") or {})
+    failure = dict(task_state.get("planning_failure") or {})
+    same_lifecycle = bool(
+        str(failure.get("status") or "") == "unresolved"
+        and str(failure.get("planning_epoch_id") or "")
+        == str(planning_epoch_id or "")
+        and int(failure.get("task_spec_revision") or 0)
+        == int(task_spec_revision_value)
+    )
+    if not same_lifecycle:
+        return record_planning_failure(
+            result,
+            validation_issues=list(fallback_validation_issues),
+            planning_epoch_id=planning_epoch_id,
+            task_spec_revision_value=task_spec_revision_value,
+            validation_source="planning_epoch_budget",
+            terminal=True,
+            terminal_diagnostic=terminal_diagnostic,
+        )
+    failure["status"] = "terminal"
+    failure["terminal_diagnostic"] = deepcopy(dict(terminal_diagnostic or {}))
+    failure["updated_at"] = _now()
+    task_state["planning_failure"] = failure
+    result["task_state"] = task_state
+    return result
+
+
+def resolve_planning_failure(
+    state: PlanState,
+    *,
+    outcome_code: str = "PLAN_CANDIDATE_ACCEPTED",
+) -> PlanState:
+    result = deepcopy(state)
+    task_state = dict(result.get("task_state") or {})
+    task_state.pop("planner_candidate_rejection", None)
+    failure = dict(task_state.get("planning_failure") or {})
+    if failure:
+        failure["status"] = "resolved"
+        failure["previous_correction"] = {
+            "status": "accepted",
+            "outcome_code": str(outcome_code),
+        }
+        failure["updated_at"] = _now()
+        task_state["planning_failure"] = failure
+    result["task_state"] = task_state
+    return result
+
+
+def supersede_planning_failure(
+    state: PlanState,
+    *,
+    task_spec_revision_value: int,
+) -> PlanState:
+    result = deepcopy(state)
+    task_state = dict(result.get("task_state") or {})
+    task_state.pop("planner_candidate_rejection", None)
+    failure = dict(task_state.get("planning_failure") or {})
+    if (
+        failure
+        and str(failure.get("status") or "") == "unresolved"
+        and int(failure.get("task_spec_revision") or 0)
+        != int(task_spec_revision_value)
+    ):
+        failure["status"] = "superseded"
+        failure["previous_correction"] = {
+            "status": "superseded",
+            "outcome_code": "TASKSPEC_REVISION_CHANGED",
+        }
+        failure["updated_at"] = _now()
+        task_state["planning_failure"] = failure
+    result["task_state"] = task_state
+    return result
 
 
 def _semantic_claims_validation(value: Any) -> Dict[str, Any]:
@@ -1601,10 +2027,23 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
         if str(state.get("execution_cursor_step_id") or "") == str(attempt.get("step_id") or ""):
             state["execution_cursor_step_id"] = ""
         state["execution_status"] = "in_progress" if attempt.get("returncode") == 0 else "failed"
+        if attempt.get("returncode") == 0 and not is_probe:
+            mark_step_verification_pending(
+                state,
+                step_id=str(attempt.get("step_id") or ""),
+                attempt_id=attempt_id,
+                evidence="execution evidence committed; Supervisor validation pending",
+            )
         if str(attempt.get("stage_id") or "") in provenance.get("stages", {}):
             stage = provenance["stages"][str(attempt.get("stage_id"))]
             stage["current_attempt_id"] = attempt_id
-            stage["status"] = "passed" if attempt.get("returncode") == 0 and attempt.get("status") == "succeeded" else "failed"
+            stage["status"] = (
+                STATUS_VERIFICATION_PENDING
+                if attempt.get("returncode") == 0 and not is_probe
+                else "recorded"
+                if attempt.get("returncode") == 0
+                else "failed"
+            )
         produced_paths = {str(Path(item).expanduser().resolve()) for item in execution.get("produced_artifacts", []) or [] if str(item)}
         reconciled_by_logical = {
             str(item.get("artifact_id") or item.get("logical_artifact_id") or ""): dict(item)
@@ -2019,6 +2458,59 @@ def _apply_manifest_stage_rewind(state: PlanState, value: Dict[str, Any]) -> Dic
     }
 
 
+_NON_PRIMARY_RECOVERY_COMMAND_ROLES = {
+    "probe", "diagnostic", "optional_probe", "capability_probe",
+}
+
+
+def _ordered_primary_step_attempts(
+    state: Mapping[str, Any],
+    step_id: str,
+) -> List[Dict[str, Any]]:
+    """Return the single canonical attempt order used by recovery scope checks."""
+    provenance = ensure_provenance_state(state)
+    indexed = [
+        (index, dict(item))
+        for index, item in enumerate((provenance.get("attempts") or {}).values())
+        if isinstance(item, Mapping)
+        and str(item.get("step_id") or "") == str(step_id or "")
+        and str(item.get("command_role") or "primary").strip().lower()
+        not in _NON_PRIMARY_RECOVERY_COMMAND_ROLES
+    ]
+    # Timestamps are only second-granular in old checkpoints.  The insertion
+    # index is therefore the deterministic tie-breaker; opaque IDs are not time.
+    indexed.sort(key=lambda pair: (
+        str(
+            pair[1].get("created_at")
+            or pair[1].get("started_at")
+            or pair[1].get("finished_at")
+            or pair[1].get("updated_at")
+            or ""
+        ),
+        pair[0],
+    ))
+    return [item for _, item in indexed]
+
+
+def _primary_step_attempt_ordinal(
+    state: Mapping[str, Any],
+    step_id: str,
+    attempt_id: str,
+) -> int:
+    return next(
+        (
+            index
+            for index, item in enumerate(
+                _ordered_primary_step_attempts(state, step_id),
+                start=1,
+            )
+            if str(item.get("attempt_id") or item.get("execution_id") or "")
+            == str(attempt_id or "")
+        ),
+        0,
+    )
+
+
 def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
     """Persist one RecoveryPolicy decision exactly once.
 
@@ -2032,10 +2524,50 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
         raise ValueError("RecoveryDecision requires a stable decision_id")
     if str(value.get("decision_owner") or "") != "RecoveryPolicy":
         raise ValueError("Only RecoveryPolicy decisions may be applied")
+    value.setdefault("status", "pending")
+    if str(value.get("status") or "").strip().lower() != "pending":
+        raise ValueError("Only pending RecoveryPolicy transitions may be applied")
+    value.setdefault("trigger_event_id", str(value.get("attempt_id") or ""))
+    value.setdefault("trigger_node", str(value.get("source_node") or ""))
+    value.setdefault("target_route", str(value.get("next_route") or ""))
+    value.setdefault("step_attempt", 0)
+    decision_kind = str(value.get("kind") or "").strip().upper()
+    if decision_kind in {"COMPLETE_STEP", "COMPLETE_TASK"}:
+        completion_source = str(value.get("trigger_node") or value.get("source_node") or "").strip().lower()
+        if (
+            completion_source != "supervisor"
+            or str(value.get("reason_code") or "") != "completion_contract_satisfied"
+            or not list(value.get("evidence") or [])
+        ):
+            raise ValueError(
+                "COMPLETE_STEP/COMPLETE_TASK requires Supervisor-owned CompletionGate evidence"
+            )
 
     task_state = dict(state.get("task_state") or {})
     recovery_state = dict(task_state.get("recovery_state") or {})
-    applied_ids = [str(item) for item in recovery_state.get("applied_decision_ids") or [] if str(item)]
+    applied_ids = [
+        str(item)
+        for item in recovery_state.get("applied_decision_ids") or []
+        if str(item)
+    ]
+    # Old checkpoints may have complete terminal audit evidence but predate the
+    # applied_decision_ids index.  Treat every durable historical occurrence as
+    # already applied so replay can never recreate route authority.
+    historical_decisions = [
+        *list(recovery_state.get("decision_history") or []),
+        *list(recovery_state.get("transition_history") or []),
+        recovery_state.get("last_recovery_decision") or {},
+        recovery_state.get("last_consumed_transition") or {},
+    ]
+    applied_ids = list(dict.fromkeys([
+        *applied_ids,
+        *[
+            str(item.get("decision_id") or item.get("idempotency_key") or "")
+            for item in historical_decisions
+            if isinstance(item, Mapping)
+            and str(item.get("decision_id") or item.get("idempotency_key") or "")
+        ],
+    ]))
     incident_id = str(value.get("incident_id") or "").strip()
     if not incident_id:
         incident_identity = {
@@ -2074,13 +2606,40 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
         raise ValueError(reason)
     budgets_before = dict(task_state.get("budgets") or {})
     if decision_id in applied_ids:
+        active_transition = dict(recovery_state.get("active_transition") or {})
+        active_pending = bool(
+            str(active_transition.get("decision_id") or active_transition.get("idempotency_key") or "")
+            == decision_id
+            and str(active_transition.get("status") or "").strip().lower() == "pending"
+        )
+        terminal_candidates = [
+            dict(item)
+            for item in (
+                recovery_state.get("last_recovery_decision") or {},
+                recovery_state.get("last_consumed_transition") or {},
+                *reversed(list(recovery_state.get("transition_history") or [])),
+            )
+            if isinstance(item, Mapping)
+            and str(item.get("decision_id") or item.get("idempotency_key") or "")
+            == decision_id
+        ]
+        terminal_status = next(
+            (
+                str(item.get("status") or "").strip().lower()
+                for item in terminal_candidates
+                if str(item.get("status") or "").strip().lower()
+                in {"consumed", "superseded", "expired"}
+            ),
+            "consumed",
+        )
         return {
             "applied": False,
             "duplicate": True,
             "decision_id": decision_id,
             "budget_before": budgets_before,
             "budget_after": dict(budgets_before),
-            "next_route": str(value.get("next_route") or ""),
+            "next_route": str(active_transition.get("target_route") or active_transition.get("next_route") or "") if active_pending else "",
+            "transition_status": "pending" if active_pending else terminal_status,
             "current_step_id": str(state.get("current_step_id") or ""),
             "current_stage_id": str(state.get("current_stage_id") or ""),
         }
@@ -2100,6 +2659,31 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
         reason = "RecoveryDecision plan_version is stale"
         record_rejected(reason)
         raise ValueError(reason)
+    expected_step_id = str(value.get("step_id") or "")
+    current_step_id = str(state.get("current_step_id") or "")
+    if expected_step_id and current_step_id and expected_step_id != current_step_id:
+        reason = "RecoveryDecision step_id is stale"
+        record_rejected(reason)
+        raise ValueError(reason)
+
+    trigger_attempt_id = str(value.get("attempt_id") or value.get("trigger_event_id") or "")
+    provenance = ensure_provenance_state(state)
+    trigger_attempt = dict((provenance.get("attempts") or {}).get(trigger_attempt_id) or {})
+    if not int(value.get("step_attempt") or 0):
+        derived_ordinal = _primary_step_attempt_ordinal(
+            state,
+            str(value.get("step_id") or current_step_id),
+            trigger_attempt_id,
+        )
+        value["step_attempt"] = max(
+            0,
+            _int(
+                derived_ordinal
+                or trigger_attempt.get("attempt_ordinal")
+                or trigger_attempt.get("sequence"),
+                0,
+            ),
+        )
 
     original_state = state
     state = deepcopy(state)
@@ -2185,6 +2769,11 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
             current_step["status"] = STATUS_REPAIRING
         elif kind == "RETRY_CURRENT_ACTION":
             current_step["status"] = STATUS_RETRY_PENDING
+        elif kind == "ACCEPT_EXECUTION_FOR_VERIFICATION":
+            current_step["status"] = STATUS_VERIFICATION_PENDING
+            current_step["verification_attempt_id"] = str(
+                value.get("attempt_id") or value.get("trigger_event_id") or ""
+            )
         elif kind == "RUN_ALLOWED_PROBE":
             current_step["status"] = STATUS_DIAGNOSING
         elif kind == "PLAN_PATCH_REQUEST":
@@ -2224,17 +2813,66 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
             state["provenance_state"] = provenance
 
     task_state = dict(state.get("task_state") or {})
+    if kind == "ACCEPT_EXECUTION_FOR_VERIFICATION":
+        task_state["verification_pending"] = {
+            "step_id": str((current_step or {}).get("step_id") or step_id),
+            "attempt_id": str(value.get("attempt_id") or value.get("trigger_event_id") or ""),
+            "recorded_at": _now(),
+        }
+        task_state["resume_route_hint"] = "supervisor"
+    elif kind in {
+        "FORMAT_REPAIR", "RETRY_CURRENT_ACTION", "RUN_ALLOWED_PROBE",
+        "PLAN_PATCH_REQUEST", "BLOCKED", "ESCALATE", "COMPLETE_STEP",
+        "COMPLETE_TASK", "REWIND_MANIFEST_STAGE", "ROLLBACK_UPSTREAM_STEP",
+    }:
+        task_state.pop("verification_pending", None)
+        task_state.pop("resume_route_hint", None)
     recovery_state = dict(task_state.get("recovery_state") or {})
+    transition_history = list(recovery_state.get("transition_history") or [])
+    prior_active = dict(recovery_state.get("active_transition") or {})
+    if (
+        prior_active
+        and str(prior_active.get("status") or "").strip().lower() == "pending"
+        and str(prior_active.get("decision_id") or prior_active.get("idempotency_key") or "") != decision_id
+    ):
+        prior_active.update({
+            "status": "superseded",
+            "superseded_reason": "SUPERSEDED_BY_NEWER_RECOVERY_DECISION",
+            "superseded_at": _now(),
+        })
+        transition_history.append(prior_active)
+    active_transition = deepcopy(value)
+    active_transition.update({
+        "decision_id": decision_id,
+        "idempotency_key": decision_id,
+        "status": "pending",
+        "trigger_node": str(value.get("trigger_node") or value.get("source_node") or ""),
+        "trigger_event_id": str(value.get("trigger_event_id") or value.get("attempt_id") or ""),
+        "target_route": str(value.get("target_route") or value.get("next_route") or ""),
+        "created_at": str(value.get("created_at") or _now()),
+    })
+    value.update({
+        "status": "pending",
+        "trigger_node": active_transition["trigger_node"],
+        "trigger_event_id": active_transition["trigger_event_id"],
+        "target_route": active_transition["target_route"],
+    })
     recovery_state.update({
-        "schema_version": 3,
-        "phase": "committed",
+        "schema_version": 4,
+        "phase": "pending_dispatch",
         "status": kind,
         "decision_owner": "RecoveryPolicy",
         "last_recovery_decision": value,
         "last_decision_reason": str(value.get("reason") or ""),
         "current_action_id": str(value.get("action_id") or ""),
         "step_id": step_id,
-        "applied_decision_ids": [*applied_ids, decision_id][-100:],
+        "active_transition": active_transition,
+        "transition_history": transition_history,
+        "decision_history": [
+            *list(recovery_state.get("decision_history") or []),
+            deepcopy(value),
+        ],
+        "applied_decision_ids": list(dict.fromkeys([*applied_ids, decision_id])),
         "committed_decision_by_incident": {
             **committed_by_incident,
             incident_id: decision_id,
@@ -2281,7 +2919,7 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
     recovery_state["decision_audit"] = [
         *list(recovery_state.get("decision_audit") or []),
         *lifecycle_events,
-    ][-100:]
+    ]
     task_state["recovery_state"] = recovery_state
     task_state["last_recovery_decision"] = value
     state["task_state"] = task_state
@@ -2305,6 +2943,485 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
         "audit": audit_event,
         **transition,
     }
+
+
+def mark_step_verification_pending(
+    state: PlanState,
+    *,
+    step_id: str = "",
+    attempt_id: str = "",
+    evidence: str = "execute_success",
+) -> bool:
+    """Record Execute success without granting step-completion authority."""
+    if task_status(state) in TASK_TERMINAL_STATUSES:
+        return False
+    target = next(
+        (
+            item for item in state.get("steps", []) or []
+            if isinstance(item, dict)
+            and step_id
+            and str(item.get("step_id") or "") == str(step_id)
+        ),
+        None,
+    )
+    if target is None:
+        target = _first_step_by_status(state, tuple(STEP_ACTIVE_STATUSES))
+    if target is None or str(target.get("status") or "") in STEP_SUCCESS_STATUSES | STEP_TERMINAL_STATUSES:
+        return False
+    changed = str(target.get("status") or "") != STATUS_VERIFICATION_PENDING
+    target["status"] = STATUS_VERIFICATION_PENDING
+    target["verification_attempt_id"] = str(attempt_id or "")
+    _append_evidence(target, "verification_pending", evidence)
+    state["current_step_id"] = str(target.get("step_id") or "")
+    task_state = dict(state.get("task_state") or {})
+    task_state["verification_pending"] = {
+        "step_id": str(target.get("step_id") or ""),
+        "attempt_id": str(attempt_id or ""),
+        "recorded_at": _now(),
+    }
+    task_state["resume_route_hint"] = "supervisor"
+    task_state["status"] = TASK_STATUS_RUNNING
+    state["task_state"] = task_state
+    state["updated_at"] = _now()
+    return changed
+
+
+def recovery_transition_eligibility(
+    state: PlanState,
+    *,
+    source_node: str,
+    current_step_id: str = "",
+    current_attempt_id: str = "",
+    current_execution_succeeded: bool = False,
+    newly_committed_decision_id: str = "",
+) -> Dict[str, Any]:
+    """Select the sole pending transition and invalidate stale legacy state."""
+    task_state = dict(state.get("task_state") or {})
+    recovery_state = dict(task_state.get("recovery_state") or {})
+    active = dict(recovery_state.get("active_transition") or {})
+    migrated_legacy = False
+    # Schema-v4 has exactly one route-authority slot.  A missing active
+    # transition in that schema is intentional (consumed/retired), so never
+    # promote an audit projection back into authority.  Only pre-lifecycle
+    # checkpoints may be promoted here.
+    try:
+        recovery_schema = int(recovery_state.get("schema_version") or 0)
+    except (TypeError, ValueError):
+        recovery_schema = 0
+    if not active and recovery_schema < 4:
+        legacy = dict(
+            recovery_state.get("last_recovery_decision")
+            or recovery_state.get("decision")
+            or task_state.get("last_recovery_decision")
+            or {}
+        )
+        legacy_status = str(legacy.get("status") or "pending").strip().lower()
+        if legacy and legacy_status == "pending":
+            active = deepcopy(legacy)
+            legacy_decision_id = str(
+                legacy.get("decision_id") or legacy.get("idempotency_key") or ""
+            )
+            if not legacy_decision_id:
+                legacy_decision_id = "legacy-recovery-" + hashlib.sha256(
+                    json.dumps(
+                        {
+                            "kind": legacy.get("kind") or legacy.get("recommended_action"),
+                            "step_id": legacy.get("step_id"),
+                            "attempt_id": legacy.get("attempt_id"),
+                            "source_node": legacy.get("source_node"),
+                            "reason": legacy.get("reason"),
+                        },
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        default=str,
+                    ).encode("utf-8")
+                ).hexdigest()[:20]
+            active["decision_id"] = legacy_decision_id
+            active["idempotency_key"] = legacy_decision_id
+            active.setdefault("trigger_node", str(legacy.get("source_node") or ""))
+            active.setdefault("trigger_event_id", str(legacy.get("attempt_id") or ""))
+            active.setdefault("target_route", str(legacy.get("next_route") or ""))
+            active.setdefault("step_attempt", 0)
+            active["status"] = "pending"
+            migrated_legacy = True
+            accepted_legacy_execute = bool(
+                str(active.get("kind") or "").upper() == "CONTINUE"
+                and str(active.get("target_route") or active.get("next_route") or "").lower() == "generate"
+                and str(active.get("trigger_node") or active.get("source_node") or "").lower() == "execute"
+                and str(active.get("recommended_action") or "").upper()
+                in {"RECONCILE_AND_CONTINUE", "PASS_WITH_WARNING"}
+                and (
+                    bool(active.get("primary_execution_succeeded"))
+                    or active.get("error_is_real") is False
+                )
+            )
+            if accepted_legacy_execute:
+                active.update({
+                    "kind": "ACCEPT_EXECUTION_FOR_VERIFICATION",
+                    "disposition": "ACCEPT_EXECUTION_FOR_VERIFICATION",
+                    "target_route": "supervisor",
+                    "next_route": "supervisor",
+                    "migration_source": "legacy_continue_execute_acceptance",
+                })
+            elif str(active.get("kind") or "").upper() == "CONTINUE":
+                active.update({
+                    "kind": "ESCALATE",
+                    "disposition": "INTERNAL_PROTOCOL_ERROR",
+                    "target_route": "supervisor",
+                    "next_route": "supervisor",
+                    "reason_code": "AMBIGUOUS_LEGACY_CONTINUE",
+                    "migration_source": "legacy_continue_protocol_error",
+                })
+            recovery_state["schema_version"] = 4
+            recovery_state["active_transition"] = active
+            recovery_state["last_recovery_decision"] = deepcopy(active)
+
+    trigger_node_scope = str(
+        active.get("trigger_node") or active.get("source_node") or ""
+    ).strip().lower()
+    trigger_event_scope = str(
+        active.get("trigger_event_id") or active.get("attempt_id") or ""
+    )
+    if trigger_node_scope == "execute" and _int(active.get("step_attempt"), 0) <= 0:
+        active["step_attempt"] = _primary_step_attempt_ordinal(
+            state,
+            str(active.get("step_id") or current_step_id or state.get("current_step_id") or ""),
+            trigger_event_scope,
+        )
+        if migrated_legacy:
+            recovery_state["active_transition"] = active
+            recovery_state["last_recovery_decision"] = deepcopy(active)
+    result = {
+        "eligible": False,
+        "decision_id": str(active.get("decision_id") or active.get("idempotency_key") or ""),
+        "target_route": "",
+        "status": str(active.get("status") or ""),
+        "reason": "no_pending_recovery_transition",
+        "migrated_legacy": migrated_legacy,
+    }
+    if not active or str(active.get("status") or "").strip().lower() != "pending":
+        last_ineligible = dict(recovery_state.get("last_ineligible_transition") or {})
+        ineligible_scope_matches = bool(
+            not str(last_ineligible.get("trigger_node") or "")
+            or str(last_ineligible.get("trigger_node") or "") == str(source_node or "")
+        ) and bool(
+            not str(last_ineligible.get("step_id") or "")
+            or str(last_ineligible.get("step_id") or "") == str(current_step_id or "")
+        )
+        if (
+            not active
+            and ineligible_scope_matches
+            and str(last_ineligible.get("status") or "") in {"superseded", "expired"}
+        ):
+            result.update({
+                "decision_id": str(last_ineligible.get("decision_id") or ""),
+                "status": str(last_ineligible.get("status") or ""),
+                "reason": str(last_ineligible.get("reason") or ""),
+            })
+        task_state["recovery_state"] = recovery_state
+        state["task_state"] = task_state
+        return result
+
+    decision_id = result["decision_id"]
+    if newly_committed_decision_id and decision_id == str(newly_committed_decision_id):
+        active["trigger_node"] = str(source_node or "")
+        recovery_state["active_transition"] = active
+
+    def invalidate(status: str, reason: str) -> Dict[str, Any]:
+        active.update({
+            "status": status,
+            "superseded_reason": reason,
+            f"{status}_at": _now(),
+        })
+        recovery_state["transition_history"] = [
+            *list(recovery_state.get("transition_history") or []),
+            deepcopy(active),
+        ]
+        recovery_state["active_transition"] = {}
+        recovery_state["last_ineligible_transition"] = {
+            "decision_id": decision_id,
+            "status": status,
+            "reason": reason,
+            "step_id": str(active.get("step_id") or ""),
+            "trigger_node": str(active.get("trigger_node") or active.get("source_node") or ""),
+            "trigger_event_id": str(active.get("trigger_event_id") or active.get("attempt_id") or ""),
+            "encountered_at": _now(),
+        }
+        last = dict(recovery_state.get("last_recovery_decision") or {})
+        if str(last.get("decision_id") or last.get("idempotency_key") or "") == decision_id:
+            last.update({
+                "status": status,
+                "superseded_reason": reason,
+                f"{status}_at": active[f"{status}_at"],
+            })
+            recovery_state["last_recovery_decision"] = last
+            task_state["last_recovery_decision"] = deepcopy(last)
+        task_state["recovery_state"] = recovery_state
+        state["task_state"] = task_state
+        return {
+            **result,
+            "status": status,
+            "reason": reason,
+        }
+
+    def ignore_current_event(reason: str) -> Dict[str, Any]:
+        """Reject this event without destroying a newer pending transition."""
+        recovery_state["last_ignored_event"] = {
+            "decision_id": decision_id,
+            "status": "pending",
+            "reason": reason,
+            "step_id": str(active.get("step_id") or ""),
+            "trigger_node": str(active.get("trigger_node") or active.get("source_node") or ""),
+            "trigger_event_id": str(active.get("trigger_event_id") or active.get("attempt_id") or ""),
+            "observed_event_id": str(current_attempt_id or ""),
+            "encountered_at": _now(),
+        }
+        task_state["recovery_state"] = recovery_state
+        state["task_state"] = task_state
+        return {
+            **result,
+            "status": "pending",
+            "reason": reason,
+            "ignored_current_event": True,
+        }
+
+    missing_scope_fields = [
+        field for field, present in (
+            ("decision_id", bool(decision_id)),
+            ("step_id", bool(str(active.get("step_id") or ""))),
+            (
+                "step_attempt",
+                "step_attempt" in active
+                and (
+                    str(active.get("trigger_node") or active.get("source_node") or "").strip().lower()
+                    != "execute"
+                    or _int(active.get("step_attempt"), 0) > 0
+                ),
+            ),
+            ("trigger_node", bool(str(active.get("trigger_node") or active.get("source_node") or ""))),
+            ("trigger_event_id", bool(str(active.get("trigger_event_id") or active.get("attempt_id") or ""))),
+            ("disposition", bool(str(active.get("disposition") or ""))),
+            ("target_route", bool(str(active.get("target_route") or active.get("next_route") or ""))),
+        )
+        if not present
+    ]
+    if missing_scope_fields:
+        return invalidate(
+            "expired",
+            "RECOVERY_TRANSITION_SCOPE_MISSING:" + ",".join(missing_scope_fields),
+        )
+
+    expected_step_id = str(active.get("step_id") or "")
+    if (
+        expected_step_id
+        and not str(current_step_id or "")
+        and decision_id != str(newly_committed_decision_id or "")
+    ):
+        return invalidate("expired", "CURRENT_STEP_MISSING")
+    if (
+        expected_step_id
+        and current_step_id
+        and expected_step_id != str(current_step_id)
+        and decision_id != str(newly_committed_decision_id or "")
+    ):
+        return invalidate("superseded", "SUPERSEDED_BY_CURRENT_STEP")
+
+    trigger_node = str(active.get("trigger_node") or active.get("source_node") or "")
+    if trigger_node and trigger_node != str(source_node or ""):
+        return invalidate("expired", "TRIGGER_NODE_MISMATCH")
+
+    trigger_event_id = str(active.get("trigger_event_id") or active.get("attempt_id") or "")
+    if trigger_event_id and not str(current_attempt_id or ""):
+        return invalidate("expired", "CURRENT_EVENT_MISSING")
+    provenance = ensure_provenance_state(state)
+    current_attempt = dict((provenance.get("attempts") or {}).get(str(current_attempt_id or "")) or {})
+    completion_scope_after_advance = bool(
+        decision_id == str(newly_committed_decision_id or "")
+        and str(active.get("kind") or "").upper()
+        in {"COMPLETE_STEP", "COMPLETE_TASK"}
+    )
+    ordinal_step_id = (
+        expected_step_id
+        if completion_scope_after_advance and expected_step_id
+        else str(current_step_id or expected_step_id)
+    )
+    matching_attempts = _ordered_primary_step_attempts(
+        state,
+        ordinal_step_id,
+    )
+    derived_current_ordinal = next(
+        (
+            index for index, item in enumerate(matching_attempts, start=1)
+            if str(item.get("attempt_id") or "") == str(current_attempt_id or "")
+        ),
+        0,
+    )
+    trigger_ordinal = next(
+        (
+            index for index, item in enumerate(matching_attempts, start=1)
+            if str(item.get("attempt_id") or item.get("execution_id") or "")
+            == trigger_event_id
+        ),
+        0,
+    )
+    if trigger_event_id != str(current_attempt_id or ""):
+        if trigger_ordinal and derived_current_ordinal:
+            if derived_current_ordinal > trigger_ordinal:
+                return invalidate(
+                    "superseded",
+                    "SUPERSEDED_BY_NEWER_EXECUTION"
+                    if str(source_node or "") == "execute"
+                    else "SUPERSEDED_BY_NEWER_EVENT",
+                )
+            return ignore_current_event("CURRENT_EVENT_PRECEDES_RECOVERY_TRANSITION")
+        return ignore_current_event("CURRENT_EVENT_ORDER_UNPROVEN")
+    current_step_attempt = _int(
+        derived_current_ordinal
+        or current_attempt.get("attempt_ordinal")
+        or current_attempt.get("sequence")
+        or 0,
+        0,
+    )
+    expected_step_attempt = _int(active.get("step_attempt"), 0)
+    if expected_step_attempt and not current_step_attempt:
+        return invalidate("expired", "CURRENT_STEP_ATTEMPT_MISSING")
+    if (
+        expected_step_attempt
+        and current_step_attempt
+        and expected_step_attempt != current_step_attempt
+    ):
+        return invalidate("expired", "STEP_ATTEMPT_SCOPE_MISMATCH")
+
+    persisted_target_route = str(
+        active.get("target_route") or active.get("next_route") or ""
+    ).strip().lower()
+    try:
+        target_route = recovery_route_for_disposition(
+            str(active.get("disposition") or ""),
+            decision_kind=str(active.get("kind") or ""),
+            requires_user_input=bool(active.get("requires_user_input")),
+        )
+    except ValueError:
+        active.update({
+            "kind": "ESCALATE",
+            "disposition": "INTERNAL_PROTOCOL_ERROR",
+            "target_route": "supervisor",
+            "next_route": "supervisor",
+            "reason_code": "RECOVERY_DISPOSITION_INVALID",
+        })
+        target_route = "supervisor"
+        recovery_state["active_transition"] = active
+        result["protocol_error"] = "RECOVERY_DISPOSITION_INVALID"
+    else:
+        if persisted_target_route != target_route:
+            original = deepcopy(active)
+            active.update({
+                "target_route": target_route,
+                "next_route": target_route,
+                "route_normalization": "derived_from_typed_disposition",
+            })
+            active.setdefault("route_conflict_payload", original)
+            recovery_state["active_transition"] = active
+            last = dict(recovery_state.get("last_recovery_decision") or {})
+            if str(last.get("decision_id") or last.get("idempotency_key") or "") == decision_id:
+                last.update({
+                    "target_route": target_route,
+                    "next_route": target_route,
+                    "route_normalization": "derived_from_typed_disposition",
+                })
+                recovery_state["last_recovery_decision"] = last
+                task_state["last_recovery_decision"] = deepcopy(last)
+            recovery_state["decision_audit"] = [
+                *list(recovery_state.get("decision_audit") or []),
+                {
+                    "decision_id": decision_id,
+                    "apply_status": "protocol_normalized",
+                    "reason": "RECOVERY_ROUTE_DERIVED_FROM_TYPED_DISPOSITION",
+                    "persisted_target_route": persisted_target_route,
+                    "effective_target_route": target_route,
+                    "recorded_at": _now(),
+                },
+            ]
+            result["protocol_normalized"] = True
+
+    task_state["recovery_state"] = recovery_state
+    state["task_state"] = task_state
+    if (
+        str(active.get("kind") or "").upper()
+        == "ACCEPT_EXECUTION_FOR_VERIFICATION"
+        and target_route == "supervisor"
+    ):
+        mark_step_verification_pending(
+            state,
+            step_id=expected_step_id,
+            attempt_id=trigger_event_id,
+            evidence="accepted Execute awaiting Supervisor validation",
+        )
+        task_state = dict(state.get("task_state") or {})
+        recovery_state = dict(task_state.get("recovery_state") or recovery_state)
+    return {
+        **result,
+        "eligible": True,
+        "target_route": target_route,
+        "status": "pending",
+        "reason": "eligible",
+        "transition": deepcopy(active),
+    }
+
+
+def consume_recovery_transition(
+    state: PlanState,
+    *,
+    decision_id: str,
+    route_record: Mapping[str, Any],
+) -> bool:
+    """Consume one active transition while retaining immutable audit history."""
+    task_state = dict(state.get("task_state") or {})
+    recovery_state = dict(task_state.get("recovery_state") or {})
+    active = dict(recovery_state.get("active_transition") or {})
+    active_id = str(active.get("decision_id") or active.get("idempotency_key") or "")
+    if (
+        not active
+        or active_id != str(decision_id or "")
+        or str(active.get("status") or "").strip().lower() != "pending"
+    ):
+        return False
+    consumed = deepcopy(active)
+    consumed.update({
+        "status": "consumed",
+        "consumed_at": _now(),
+        "dispatched_route": str(route_record.get("effective_route") or ""),
+        "route_event_id": str(route_record.get("route_event_id") or ""),
+    })
+    recovery_state["transition_history"] = [
+        *list(recovery_state.get("transition_history") or []),
+        consumed,
+    ]
+    recovery_state["active_transition"] = {}
+    recovery_state["phase"] = "consumed"
+    recovery_state["last_consumed_transition"] = consumed
+    last = dict(recovery_state.get("last_recovery_decision") or {})
+    if str(last.get("decision_id") or last.get("idempotency_key") or "") == active_id:
+        last.update({
+            "status": "consumed",
+            "consumed_at": consumed["consumed_at"],
+        })
+        recovery_state["last_recovery_decision"] = last
+        task_state["last_recovery_decision"] = deepcopy(last)
+    recovery_state["decision_audit"] = [
+        *list(recovery_state.get("decision_audit") or []),
+        {
+            "decision_id": active_id,
+            "apply_status": "consumed",
+            "recorded_at": consumed["consumed_at"],
+            "route_event_id": consumed["route_event_id"],
+            "effective_route": consumed["dispatched_route"],
+        },
+    ]
+    task_state["recovery_state"] = recovery_state
+    state["task_state"] = task_state
+    state["updated_at"] = _now()
+    return True
 
 
 def step_artifact_contracts(
@@ -3970,6 +5087,33 @@ def plan_record_hash(state: PlanState) -> str:
     return "sha256:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
+def has_materialized_plan(state: Mapping[str, Any] | None) -> bool:
+    """Return whether canonical state contains a real Plan, not a default shell.
+
+    ``plan_revision`` and ``plan_version`` exist on a fresh Consultant-first
+    state, so neither is evidence that Planner has materialized anything. The
+    canonical ``current_plan`` partition is created from a non-empty PlanSpec
+    and carries both semantic and record identities. A snapshot ref is an even
+    stronger durable marker once the validated Plan is committed.
+    """
+    current_plan = (
+        dict((state or {}).get("current_plan") or {})
+        if isinstance(state, Mapping)
+        else {}
+    )
+    if not current_plan:
+        return False
+    if str(current_plan.get("plan_snapshot_ref") or "").strip():
+        return True
+    plan_spec = current_plan.get("plan_spec")
+    return bool(
+        isinstance(plan_spec, Mapping)
+        and list(plan_spec.get("steps") or [])
+        and str(current_plan.get("plan_semantic_hash") or "").strip()
+        and str(current_plan.get("plan_record_hash") or "").strip()
+    )
+
+
 def changed_plan_step_ids(previous: PlanState, candidate: PlanState) -> List[str]:
     """Return only steps whose executable semantics changed."""
     old = {
@@ -4351,281 +5495,6 @@ def migrate_execution_provenance(state: PlanState, execution_records: List[Dict[
     return {"migration_id": migration_id, "applied": True}
 
 
-def build_plan_repair_request(
-    state: PlanState,
-    violations: List[Any],
-    *,
-    immutable_constraints: Optional[List[str]] = None,
-    operation: str = PLAN_OPERATION_REPAIR,
-) -> Dict[str, Any]:
-    """Project the minimum durable state required for a local plan repair."""
-    normalized = [_violation_record(item) for item in violations if str(item).strip()]
-    steps = [normalize_plan_step(dict(step), index) for index, step in enumerate(state.get("steps", []), 1) if isinstance(step, dict)]
-    step_ids = [str(step.get("step_id") or "") for step in steps]
-    explicit_ids: List[str] = []
-    for issue in normalized:
-        issue_has_location = False
-        for item in issue.get("affected_step_ids", []) or []:
-            text = str(item or "")
-            issue_has_location = issue_has_location or bool(text)
-            if text and text not in explicit_ids:
-                explicit_ids.append(text)
-        if issue_has_location:
-            continue
-        field_path = str(issue.get("field_path") or "")
-        index_match = re.search(r"(?:^|[.$])steps\[(\d+)\]", field_path)
-        if index_match:
-            index = int(index_match.group(1))
-            if 0 <= index < len(step_ids) and step_ids[index] not in explicit_ids:
-                explicit_ids.append(step_ids[index])
-    # Exact issue ownership is the authorization boundary.  A missing location
-    # no longer expands to every step, and an issue on one step no longer opens
-    # its entire dependency component.
-    allowed = [step_id for step_id in step_ids if step_id in set(explicit_ids)]
-    affected = [step for step in steps if str(step.get("step_id") or "") in set(allowed)]
-    return {
-        "operation": operation,
-        "base_plan_version": int(state.get("plan_revision") or 1),
-        "base_plan_hash": semantic_plan_hash(state),
-        "immutable_constraints": [str(item) for item in (immutable_constraints or []) if str(item).strip()],
-        "violations": normalized,
-        "allowed_step_ids": allowed,
-        "affected_steps": affected,
-        "upstream_input_contracts": {
-            str(step.get("step_id") or ""): list(step.get("inputs") or []) for step in affected
-        },
-        "downstream_output_contracts": {
-            str(step.get("step_id") or ""): list(step.get("outputs") or []) for step in affected
-        },
-        "current_task_output_materializations": deepcopy(
-            list(state.get("task_output_materializations") or [])
-        ),
-    }
-
-
-def parse_plan_patch(text: str) -> Dict[str, Any]:
-    """Parse exactly one JSON PlanPatch from an LLM response."""
-    raw = str(text or "").strip()
-    if raw.startswith("```"):
-        raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.IGNORECASE | re.DOTALL).strip()
-    try:
-        value = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise ValueError(
-            "Plan repair response must be exactly one JSON object; "
-            f"fragment extraction is disabled: {exc}"
-        ) from exc
-    if not isinstance(value, dict):
-        raise ValueError("Plan patch must be an object")
-    return value
-
-
-def stamp_plan_patch_control_binding(
-    patch: Mapping[str, Any],
-    state: PlanState,
-) -> Dict[str, Any]:
-    """Attach Controller-owned base identity to an LLM semantic delta."""
-    value = deepcopy(dict(patch or {}))
-    forbidden = sorted(
-        key for key in ("base_plan_version", "base_plan_hash")
-        if key in value
-    )
-    if forbidden:
-        raise ValueError(
-            "PLAN_PATCH_CONTROL_FIELD_FORBIDDEN: " + ", ".join(forbidden)
-        )
-    value["base_plan_version"] = int(state.get("plan_revision") or 1)
-    value["base_plan_hash"] = semantic_plan_hash(state)
-    return value
-
-
-def apply_plan_patch(
-    state: PlanState,
-    patch: Dict[str, Any],
-    *,
-    allowed_step_ids: Optional[List[str]] = None,
-) -> Tuple[PlanState, Dict[str, Any]]:
-    """Validate and apply a local replace-steps patch to an in-memory plan.
-
-    The caller owns persistence.  A stale base hash/version or an out-of-scope
-    step is rejected before any mutation occurs.
-    """
-    if not isinstance(patch, dict) or str(patch.get("operation") or "") != PLAN_PATCH_OPERATION:
-        raise ValueError(f"Plan patch operation must be {PLAN_PATCH_OPERATION}")
-    base_revision = int(state.get("plan_revision") or 1)
-    if int(patch.get("base_plan_version") or 0) != base_revision:
-        raise ValueError("Plan patch base version does not match the current plan")
-    base_hash = semantic_plan_hash(state)
-    if str(patch.get("base_plan_hash") or "") != base_hash:
-        raise ValueError("Plan patch base hash does not match the current plan")
-    replacements = patch.get("replace_steps", [])
-    materializations_supplied = "task_output_materializations" in patch
-    if not isinstance(replacements, list):
-        raise ValueError("Plan patch replace_steps must be a list")
-    if not replacements and not materializations_supplied:
-        raise ValueError(
-            "Plan patch must replace at least one step or task output materialization"
-        )
-    replacement_materializations = patch.get("task_output_materializations")
-    if materializations_supplied and not isinstance(replacement_materializations, list):
-        raise ValueError("Plan patch task_output_materializations must be a list")
-
-    allowed = (
-        None
-        if allowed_step_ids is None
-        else {str(item) for item in allowed_step_ids if str(item)}
-    )
-    current_steps = [deepcopy(step) for step in state.get("steps", []) if isinstance(step, dict)]
-    positions = {str(step.get("step_id") or ""): index for index, step in enumerate(current_steps)}
-    changed_ids: List[str] = []
-    changed_fields: Dict[str, List[str]] = {}
-    field_changes: Dict[str, Dict[str, Dict[str, Any]]] = {}
-    for replacement in replacements:
-        if not isinstance(replacement, dict):
-            raise ValueError("Each replace_steps entry must be an object")
-        step_id = str(replacement.get("step_id") or "").strip()
-        new_step = replacement.get("new_step")
-        if not step_id or step_id not in positions:
-            raise ValueError(f"Plan patch references unknown step: {step_id or '<empty>'}")
-        if allowed is not None and step_id not in allowed:
-            raise ValueError(f"Plan patch modifies out-of-scope step: {step_id}")
-        if not isinstance(new_step, dict):
-            raise ValueError(f"Plan patch new_step for {step_id} must be an object")
-        old_step = current_steps[positions[step_id]]
-        unauthorized = []
-        for field_name, supplied_value in new_step.items():
-            if field_name in PLANNER_MUTABLE_STEP_FIELDS:
-                continue
-            if field_name not in old_step or old_step.get(field_name) != supplied_value:
-                unauthorized.append(field_name)
-        if unauthorized:
-            raise ValueError(
-                "Plan patch attempts to mutate controller-owned fields: "
-                + ", ".join(sorted(unauthorized))
-            )
-        planner_payload = deepcopy(old_step)
-        for field_name in PLANNER_MUTABLE_STEP_FIELDS:
-            if field_name in new_step:
-                planner_payload[field_name] = deepcopy(new_step[field_name])
-        planner_payload["step_id"] = step_id
-        candidate = normalize_plan_step(planner_payload, positions[step_id] + 1)
-        if "skill_ids" in new_step:
-            # The PlanPatch schema itself explicitly declared this field,
-            # including the valid no-skill value [].
-            candidate["skills_declared"] = True
-        elif "skills_declared" not in new_step:
-            candidate["skills_declared"] = bool(old_step.get("skills_declared"))
-        candidate["status"] = old_step.get("status", STATUS_PENDING)
-        candidate["evidence"] = list(old_step.get("evidence") or [])
-        # Renderer manifests and execution evidence are controller-owned state,
-        # not Planner prose. A local plan repair must not erase a contract that
-        # was already reconciled to physical artifacts.
-        for field_name in (
-            "artifacts",
-            "artifact_contract_revision",
-            "artifact_reconciliation_history",
-            "renderer_execution",
-        ):
-            if field_name not in new_step and field_name in old_step:
-                candidate[field_name] = deepcopy(old_step[field_name])
-        old_semantic = _semantic_step(old_step)
-        new_semantic = _semantic_step(candidate)
-        changed_fields[step_id] = sorted(
-            field for field in set(old_semantic) | set(new_semantic)
-            if old_semantic.get(field) != new_semantic.get(field)
-        )
-        field_changes[step_id] = {
-            field: {"before": old_semantic.get(field), "after": new_semantic.get(field)}
-            for field in changed_fields[step_id]
-        }
-        current_steps[positions[step_id]] = candidate
-        if changed_fields[step_id]:
-            changed_ids.append(step_id)
-
-    candidate_state = deepcopy(state)
-    candidate_state["steps"] = current_steps
-    materializations_changed = False
-    if materializations_supplied:
-        before_materializations = deepcopy(
-            list(state.get("task_output_materializations") or [])
-        )
-        after_materializations = deepcopy(list(replacement_materializations or []))
-        candidate_state["task_output_materializations"] = after_materializations
-        materializations_changed = before_materializations != after_materializations
-        changed_fields["$plan"] = (
-            ["task_output_materializations"] if materializations_changed else []
-        )
-        field_changes["$plan"] = ({
-            "task_output_materializations": {
-                "before": before_materializations,
-                "after": after_materializations,
-            }
-        } if materializations_changed else {})
-    candidate_state = carry_forward_plan_lifecycle(state, candidate_state)
-    revision_delta = stable_plan_revision_delta(state, candidate_state)
-    candidate_hash = semantic_plan_hash(candidate_state)
-    if candidate_hash == base_hash:
-        # A semantic no-op is not a plan revision and must not consume the plan
-        # repair budget. The caller uses this audit to clear PLAN_PATCH and
-        # return to same-step action repair.
-        return deepcopy(state), {
-            "operation": PLAN_OPERATION_REPAIR,
-            "changed_step_ids": [],
-            "changed_fields": changed_fields,
-            "field_changes": field_changes,
-            "review_required": False,
-            "base_plan_version": base_revision,
-            "base_plan_hash": base_hash,
-            "plan_version": base_revision,
-            "plan_hash": base_hash,
-            "semantic_change": False,
-            "no_op": True,
-            "revision_delta": revision_delta,
-        }
-    candidate_state["parent_plan_version"] = str(state.get("plan_version") or "")
-    candidate_state["plan_version"] = f"plan_v{int(candidate_state.get('plan_revision') or base_revision)}"
-    review_required = bool(changed_ids or materializations_changed)
-    candidate_state.setdefault("revision_history", []).append(
-        {
-            "operation": PLAN_OPERATION_REPAIR,
-            "base_plan_version": base_revision,
-            "base_plan_hash": base_hash,
-            "plan_version": int(candidate_state.get("plan_revision") or base_revision),
-            "plan_hash": candidate_hash,
-            "changed_step_ids": changed_ids,
-            "changed_fields": changed_fields,
-            "field_changes": field_changes,
-            "revision_delta": revision_delta,
-            "review_required": review_required,
-            "base_revision_status": "superseded",
-            "revision_status": "current",
-            "approval_status": "awaiting_review",
-            "reason": str(patch.get("reason") or "local validation repair"),
-            "updated_at": _now(),
-        }
-    )
-    # Compatibility callers may still invoke apply_plan_patch directly. In the
-    # managed graph RecoveryPolicy consumes this budget before Planner runs;
-    # do not charge the same plan repair twice.
-    recovery_state = dict((candidate_state.get("task_state") or {}).get("recovery_state") or {})
-    committed = dict(recovery_state.get("last_recovery_decision") or {})
-    if str(committed.get("kind") or "") != "PLAN_PATCH_REQUEST":
-        increment_plan_budget(candidate_state, "plan_patch_count")
-    return candidate_state, {
-        "operation": PLAN_OPERATION_REPAIR,
-        "changed_step_ids": changed_ids,
-        "changed_fields": changed_fields,
-        "field_changes": field_changes,
-        "review_required": review_required,
-        "base_plan_version": base_revision,
-        "base_plan_hash": base_hash,
-        "plan_version": int(candidate_state.get("plan_revision") or base_revision),
-        "plan_hash": candidate_hash,
-        "semantic_change": base_hash != candidate_hash,
-        "no_op": False,
-        "revision_delta": revision_delta,
-    }
-
 
 def render_structured_plan(state: PlanState) -> str:
     """Render the machine-owned plan without reintroducing planner prose."""
@@ -4982,6 +5851,7 @@ def _plan_defaults(task_id: str, data_path: str | Path | None = None) -> PlanSta
         "conversation_evidence": {"head_ref": "", "turn_count": 0},
         "task_state": {
             "status": TASK_STATUS_RUNNING,
+            "planning_failure": {},
             "budgets": {
                 "generate_attempts_by_step": {},
                 "generate_action_count": 0,
@@ -5051,6 +5921,534 @@ def _assert_plan_state_reader_compatible(state: Mapping[str, Any]) -> None:
         assert_reader_compatible(state)
 
 
+def _migrate_recovery_transition_lifecycle(state: PlanState) -> bool:
+    """Normalize legacy route projections into one scoped lifecycle owner.
+
+    This nested migration is intentionally independent from the Plan schema
+    version: incident checkpoints may already be current Plan records while
+    still carrying a pre-lifecycle ``CONTINUE -> generate`` recovery payload.
+    Immutable legacy payloads remain in decision history; only the explicitly
+    active transition is normalized or retired.
+    """
+    task_state = dict(state.get("task_state") or {})
+    recovery = dict(task_state.get("recovery_state") or {})
+    try:
+        recovery_schema = int(recovery.get("schema_version") or 0)
+    except (TypeError, ValueError):
+        recovery_schema = 0
+    active = dict(recovery.get("active_transition") or {})
+    legacy_active_original = (
+        deepcopy(active) if active and recovery_schema < 4 else {}
+    )
+    legacy_candidate: Dict[str, Any] = {}
+    if not active and recovery_schema < 4:
+        for candidate in (
+            recovery.get("last_recovery_decision"),
+            recovery.get("decision"),
+            task_state.get("last_recovery_decision"),
+            state.get("recovery_decision"),
+        ):
+            if isinstance(candidate, Mapping) and candidate:
+                legacy_candidate = deepcopy(dict(candidate))
+                break
+        if legacy_candidate:
+            active = deepcopy(legacy_candidate)
+
+    if not recovery and not active:
+        return False
+
+    def _lifecycle_snapshot() -> str:
+        # This migration can repair step/task lifecycle fields even when the
+        # normalized recovery payload itself is already schema-v4.  Include
+        # every field it owns so load_plan_state() persists those repairs.
+        return json.dumps(
+            {
+                "recovery_state": recovery,
+                "steps": state.get("steps") or [],
+                "task_status": task_state.get("status"),
+                "verification_pending": task_state.get("verification_pending"),
+                "resume_route_hint": task_state.get("resume_route_hint"),
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+            default=str,
+        )
+
+    before = _lifecycle_snapshot()
+    recovery["schema_version"] = 4
+    recovery.setdefault("decision_history", [])
+    recovery.setdefault("transition_history", [])
+    recovery.setdefault("decision_audit", [])
+    known_applied_ids = [
+        str(item)
+        for item in recovery.get("applied_decision_ids") or []
+        if str(item)
+    ]
+    for item in (
+        *list(recovery.get("decision_history") or []),
+        *list(recovery.get("transition_history") or []),
+        recovery.get("last_recovery_decision") or {},
+        recovery.get("last_consumed_transition") or {},
+    ):
+        if not isinstance(item, Mapping):
+            continue
+        known_id = str(item.get("decision_id") or item.get("idempotency_key") or "")
+        if known_id and known_id not in known_applied_ids:
+            known_applied_ids.append(known_id)
+    recovery["applied_decision_ids"] = known_applied_ids
+
+    if not active:
+        task_state["recovery_state"] = recovery
+        state["task_state"] = task_state
+        return before != _lifecycle_snapshot()
+
+    decision_id = str(
+        active.get("decision_id") or active.get("idempotency_key") or ""
+    ).strip()
+    if not decision_id:
+        identity = {
+            "kind": active.get("kind") or active.get("recommended_action"),
+            "step_id": active.get("step_id"),
+            "attempt_id": active.get("attempt_id"),
+            "source_node": active.get("source_node"),
+            "reason_code": active.get("reason_code"),
+            "reason": active.get("reason"),
+        }
+        decision_id = "legacy-recovery-" + hashlib.sha256(
+            json.dumps(identity, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()[:20]
+    active["decision_id"] = decision_id
+    active["idempotency_key"] = decision_id
+    active.setdefault("status", "pending")
+    active.setdefault("step_id", str(state.get("current_step_id") or ""))
+    active.setdefault("trigger_event_id", str(active.get("attempt_id") or ""))
+    active.setdefault("trigger_node", str(active.get("source_node") or ""))
+    active.setdefault("target_route", str(active.get("next_route") or ""))
+    active.setdefault("step_attempt", 0)
+
+    legacy_original = legacy_candidate or legacy_active_original
+    if legacy_original:
+        history_ids = {
+            str(item.get("decision_id") or item.get("idempotency_key") or "")
+            for item in recovery.get("decision_history", []) or []
+            if isinstance(item, Mapping)
+        }
+        if decision_id not in history_ids:
+            original = deepcopy(legacy_original)
+            original.setdefault("decision_id", decision_id)
+            original.setdefault("idempotency_key", decision_id)
+            original["migration_original_payload"] = True
+            recovery["decision_history"] = [
+                *list(recovery.get("decision_history") or []),
+                original,
+            ]
+        active.setdefault("legacy_payload", deepcopy(legacy_original))
+
+    disposition = str(active.get("disposition") or "").strip().upper()
+    if disposition:
+        persisted_target = str(
+            active.get("target_route") or active.get("next_route") or ""
+        ).strip().lower()
+        try:
+            canonical_target = recovery_route_for_disposition(
+                disposition,
+                decision_kind=str(active.get("kind") or ""),
+                requires_user_input=bool(active.get("requires_user_input")),
+            )
+        except ValueError:
+            route_conflict_original = deepcopy(active)
+            active.update({
+                "kind": "ESCALATE",
+                "disposition": "INTERNAL_PROTOCOL_ERROR",
+                "target_route": "supervisor",
+                "next_route": "supervisor",
+                "reason_code": "RECOVERY_DISPOSITION_INVALID",
+                "migration_source": "invalid_disposition_protocol_error",
+            })
+            canonical_target = "supervisor"
+        else:
+            route_conflict_original = deepcopy(active) if (
+                persisted_target and persisted_target != canonical_target
+            ) else {}
+            if route_conflict_original:
+                active.update({
+                    "target_route": canonical_target,
+                    "next_route": canonical_target,
+                    "route_normalization": "derived_from_typed_disposition",
+                    "migration_source": str(
+                        active.get("migration_source")
+                        or "typed_disposition_route_normalization"
+                    ),
+                })
+        if route_conflict_original:
+            active.setdefault("route_conflict_payload", route_conflict_original)
+            conflict_ids = {
+                str(item.get("decision_id") or item.get("idempotency_key") or "")
+                for item in recovery.get("decision_history", []) or []
+                if isinstance(item, Mapping)
+                and item.get("route_conflict_original_payload")
+            }
+            if decision_id not in conflict_ids:
+                original = deepcopy(route_conflict_original)
+                original["route_conflict_original_payload"] = True
+                recovery["decision_history"] = [
+                    *list(recovery.get("decision_history") or []),
+                    original,
+                ]
+            recovery["decision_audit"] = [
+                *list(recovery.get("decision_audit") or []),
+                {
+                    "decision_id": decision_id,
+                    "apply_status": "protocol_normalized",
+                    "reason": "RECOVERY_ROUTE_DERIVED_FROM_TYPED_DISPOSITION",
+                    "persisted_target_route": persisted_target,
+                    "effective_target_route": canonical_target,
+                    "recorded_at": _now(),
+                },
+            ]
+
+    current_step_id = str(state.get("current_step_id") or "")
+    current_step = next(
+        (
+            item for item in state.get("steps", []) or []
+            if isinstance(item, dict)
+            and str(item.get("step_id") or "") == current_step_id
+        ),
+        None,
+    )
+    terminal_task = task_status(state) in TASK_TERMINAL_STATUSES
+    expected_step_id = str(active.get("step_id") or "")
+
+    provenance = ensure_provenance_state(state)
+    attempts = _ordered_primary_step_attempts(state, current_step_id)
+    trigger_event_id = str(
+        active.get("trigger_event_id") or active.get("attempt_id") or ""
+    )
+    trigger_node = str(
+        active.get("trigger_node") or active.get("source_node") or ""
+    ).lower()
+    # Supersession is monotonic, not merely "different ID".  Locate the
+    # trigger inside the ordered provenance stream and consider only attempts
+    # after it.  If an old checkpoint cannot prove ordering, retaining the
+    # pending transition is safer than falsely superseding it with an older
+    # success record.
+    trigger_index = next(
+        (
+            index for index, attempt in enumerate(attempts)
+            if str(attempt.get("attempt_id") or attempt.get("execution_id") or "")
+            == trigger_event_id
+        ),
+        -1,
+    )
+    if (
+        trigger_node == "execute"
+        and trigger_index >= 0
+        and _int(active.get("step_attempt"), 0) <= 0
+    ):
+        active["step_attempt"] = trigger_index + 1
+    newer_attempts = attempts[trigger_index + 1:] if trigger_index >= 0 else []
+    newer_successful_attempts = []
+    for attempt in newer_attempts:
+        try:
+            returncode = int(attempt.get("returncode"))
+        except (TypeError, ValueError):
+            returncode = None
+        if returncode == 0 and str(attempt.get("status") or "").upper() not in {
+            ATTEMPT_FAILED, ATTEMPT_VALIDATION_FAILED,
+        }:
+            newer_successful_attempts.append(attempt)
+    latest_newer_success = (
+        newer_successful_attempts[-1] if newer_successful_attempts else {}
+    )
+    latest_success_id = str(
+        latest_newer_success.get("attempt_id")
+        or latest_newer_success.get("execution_id")
+        or ""
+    )
+    latest_newer_attempt = newer_attempts[-1] if newer_attempts else {}
+    latest_attempt_id = str(
+        latest_newer_attempt.get("attempt_id")
+        or latest_newer_attempt.get("execution_id")
+        or ""
+    )
+
+    terminal_status = ""
+    terminal_reason = ""
+    completion_transition = str(active.get("kind") or "").upper() in {
+        "COMPLETE_STEP", "COMPLETE_TASK",
+    }
+    ordered_steps = [
+        item for item in state.get("steps", []) or [] if isinstance(item, Mapping)
+    ]
+    expected_step_index = next(
+        (
+            index for index, item in enumerate(ordered_steps)
+            if str(item.get("step_id") or "") == expected_step_id
+        ),
+        -1,
+    )
+    current_step_index = next(
+        (
+            index for index, item in enumerate(ordered_steps)
+            if str(item.get("step_id") or "") == current_step_id
+        ),
+        -1,
+    )
+    expected_step = (
+        ordered_steps[expected_step_index] if expected_step_index >= 0 else None
+    )
+    completion_apply_audited = any(
+        isinstance(item, Mapping)
+        and str(item.get("decision_id") or "") == decision_id
+        and str(item.get("apply_status") or "").lower() == "applied"
+        for item in recovery.get("decision_audit", []) or []
+    )
+    completion_position_valid = bool(
+        completion_transition
+        and expected_step is not None
+        and str(expected_step.get("status") or "") in STEP_SUCCESS_STATUSES
+        and (
+            (
+                str(active.get("kind") or "").upper() == "COMPLETE_STEP"
+                and current_step_index in {
+                    expected_step_index,
+                    expected_step_index + 1,
+                }
+            )
+            or (
+                str(active.get("kind") or "").upper() == "COMPLETE_TASK"
+                and all(
+                    str(item.get("status") or "") in STEP_SUCCESS_STATUSES
+                    for item in ordered_steps
+                )
+            )
+        )
+    )
+    persisted_route_resolution = next(
+        (
+            dict(item)
+            for item in reversed(
+                [
+                    *list(task_state.get("route_resolution_history") or []),
+                    task_state.get("last_route_resolution") or {},
+                ]
+            )
+            if isinstance(item, Mapping)
+            and str(item.get("override_decision_id") or "") == decision_id
+        ),
+        {},
+    )
+    # Applying COMPLETE_STEP can atomically advance current_step_id before its
+    # route event is dispatched.  Preserve only that audited adjacent crash
+    # window; a matching persisted route proves dispatch was already committed
+    # and must retire the stale active copy instead of replaying it.
+    completion_dispatch_pending = bool(
+        completion_transition
+        and str(active.get("status") or "").lower() == "pending"
+        and completion_apply_audited
+        and completion_position_valid
+        and not persisted_route_resolution
+    )
+    if persisted_route_resolution:
+        terminal_status = "consumed"
+        terminal_reason = "ALREADY_DISPATCHED_ROUTE_PERSISTED"
+    elif str(active.get("status") or "").lower() in {
+        "consumed", "superseded", "expired",
+    }:
+        terminal_status = str(active.get("status") or "").lower()
+        terminal_reason = str(active.get("superseded_reason") or "ALREADY_TERMINAL")
+    elif terminal_task and not completion_dispatch_pending:
+        terminal_status = "expired"
+        terminal_reason = "EXPIRED_TASK_TERMINAL"
+    elif (
+        expected_step_id
+        and current_step_id
+        and expected_step_id != current_step_id
+        and not completion_dispatch_pending
+    ):
+        terminal_status = "expired"
+        terminal_reason = "EXPIRED_STEP_ADVANCED"
+    elif (
+        current_step is not None
+        and str(current_step.get("status") or "")
+        in (STEP_SUCCESS_STATUSES | STEP_TERMINAL_STATUSES)
+        and not completion_dispatch_pending
+    ):
+        terminal_status = "expired"
+        terminal_reason = "EXPIRED_STEP_TERMINAL"
+    elif (
+        trigger_node == "execute"
+        and latest_success_id
+        and trigger_event_id
+        and latest_success_id != trigger_event_id
+    ):
+        terminal_status = "superseded"
+        terminal_reason = "SUPERSEDED_BY_NEWER_EXECUTION"
+    elif (
+        trigger_node == "execute"
+        and latest_attempt_id
+        and trigger_event_id
+        and latest_attempt_id != trigger_event_id
+    ):
+        terminal_status = "superseded"
+        terminal_reason = "SUPERSEDED_BY_NEWER_STEP_ATTEMPT"
+
+    if terminal_status:
+        retired_at = _now()
+        retired = deepcopy(active)
+        retired.update({
+            "status": terminal_status,
+            "superseded_reason": terminal_reason,
+            f"{terminal_status}_at": retired_at,
+        })
+        if terminal_status == "consumed":
+            retired.update({
+                "dispatched_route": str(
+                    persisted_route_resolution.get("effective_route") or ""
+                ),
+                "route_event_id": str(
+                    persisted_route_resolution.get("route_event_id") or ""
+                ),
+            })
+        prior_transition_history = list(recovery.get("transition_history") or [])
+        if not any(
+            isinstance(item, Mapping)
+            and str(item.get("decision_id") or item.get("idempotency_key") or "")
+            == decision_id
+            and str(item.get("status") or "").lower() == terminal_status
+            for item in prior_transition_history
+        ):
+            prior_transition_history.append(retired)
+        recovery["transition_history"] = prior_transition_history
+        recovery["active_transition"] = {}
+        if terminal_status == "consumed":
+            recovery["last_consumed_transition"] = deepcopy(retired)
+            if not any(
+                isinstance(item, Mapping)
+                and str(item.get("decision_id") or "") == decision_id
+                and str(item.get("apply_status") or "").lower() == "consumed"
+                for item in recovery.get("decision_audit", []) or []
+            ):
+                recovery["decision_audit"] = [
+                    *list(recovery.get("decision_audit") or []),
+                    {
+                        "decision_id": decision_id,
+                        "apply_status": "consumed",
+                        "recorded_at": retired_at,
+                        "route_event_id": retired.get("route_event_id", ""),
+                        "effective_route": retired.get("dispatched_route", ""),
+                        "reason": terminal_reason,
+                    },
+                ]
+        else:
+            recovery["last_ineligible_transition"] = {
+                "decision_id": decision_id,
+                "status": terminal_status,
+                "reason": terminal_reason,
+                "step_id": str(active.get("step_id") or ""),
+                "trigger_node": str(active.get("trigger_node") or active.get("source_node") or ""),
+                "trigger_event_id": str(active.get("trigger_event_id") or active.get("attempt_id") or ""),
+                "encountered_at": retired_at,
+            }
+        last = dict(recovery.get("last_recovery_decision") or active)
+        if str(last.get("decision_id") or last.get("idempotency_key") or decision_id) == decision_id:
+            last.update({
+                "status": terminal_status,
+                "superseded_reason": terminal_reason,
+                f"{terminal_status}_at": retired[f"{terminal_status}_at"],
+            })
+            recovery["last_recovery_decision"] = last
+        recovery["phase"] = terminal_status
+        recovery["status"] = terminal_status.upper()
+        if terminal_reason == "SUPERSEDED_BY_NEWER_EXECUTION" and current_step is not None:
+            if str(current_step.get("status") or "") not in STEP_SUCCESS_STATUSES | STEP_TERMINAL_STATUSES:
+                current_step["status"] = STATUS_VERIFICATION_PENDING
+                current_step["verification_attempt_id"] = latest_success_id
+                _append_evidence(
+                    current_step,
+                    "verification_pending",
+                    "legacy recovery superseded by newer successful Execute",
+                )
+                task_state["verification_pending"] = {
+                    "step_id": current_step_id,
+                    "attempt_id": latest_success_id,
+                    "recorded_at": _now(),
+                }
+                task_state["resume_route_hint"] = "supervisor"
+    else:
+        legacy_continue = str(active.get("kind") or "").upper() == "CONTINUE"
+        accepted_legacy_execute = bool(
+            legacy_continue
+            and str(active.get("target_route") or active.get("next_route") or "").lower() == "generate"
+            and str(active.get("trigger_node") or active.get("source_node") or "").lower() == "execute"
+            and str(active.get("recommended_action") or "").upper()
+            in {"RECONCILE_AND_CONTINUE", "PASS_WITH_WARNING"}
+            and (
+                bool(active.get("primary_execution_succeeded"))
+                or active.get("error_is_real") is False
+            )
+        )
+        if accepted_legacy_execute:
+            active.update({
+                "kind": "ACCEPT_EXECUTION_FOR_VERIFICATION",
+                "disposition": "ACCEPT_EXECUTION_FOR_VERIFICATION",
+                "target_route": "supervisor",
+                "next_route": "supervisor",
+                "migration_source": "legacy_continue_execute_acceptance",
+            })
+        elif legacy_continue:
+            active.update({
+                "kind": "ESCALATE",
+                "disposition": "INTERNAL_PROTOCOL_ERROR",
+                "target_route": "supervisor",
+                "next_route": "supervisor",
+                "reason_code": "AMBIGUOUS_LEGACY_CONTINUE",
+                "migration_source": "legacy_continue_protocol_error",
+            })
+        valid_accept_scope = bool(
+            str(active.get("kind") or "").upper()
+            == "ACCEPT_EXECUTION_FOR_VERIFICATION"
+            and str(active.get("disposition") or "").upper()
+            == "ACCEPT_EXECUTION_FOR_VERIFICATION"
+            and str(active.get("trigger_node") or active.get("source_node") or "").lower()
+            == "execute"
+            and bool(trigger_event_id)
+            and _int(active.get("step_attempt"), 0) > 0
+            and str(active.get("target_route") or active.get("next_route") or "").lower()
+            == "supervisor"
+        )
+        if valid_accept_scope and current_step is not None:
+            current_step["status"] = STATUS_VERIFICATION_PENDING
+            current_step["verification_attempt_id"] = trigger_event_id
+            _append_evidence(
+                current_step,
+                "verification_pending",
+                "accepted Execute awaiting Supervisor validation",
+            )
+            task_state["verification_pending"] = {
+                "step_id": current_step_id,
+                "attempt_id": trigger_event_id,
+                "recorded_at": _now(),
+            }
+            task_state["resume_route_hint"] = "supervisor"
+            task_state["status"] = TASK_STATUS_RUNNING
+        active["status"] = "pending"
+        recovery["active_transition"] = active
+        recovery["last_recovery_decision"] = deepcopy(active)
+        recovery["phase"] = "pending_dispatch"
+        recovery["status"] = str(active.get("kind") or "PENDING")
+
+    recovery["lifecycle_migrated_at"] = str(
+        recovery.get("lifecycle_migrated_at") or _now()
+    )
+    task_state["recovery_state"] = recovery
+    task_state["last_recovery_decision"] = deepcopy(
+        recovery.get("last_recovery_decision") or task_state.get("last_recovery_decision") or {}
+    )
+    state["task_state"] = task_state
+    return before != _lifecycle_snapshot()
+
+
 def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | None = None) -> Tuple[PlanState, List[str]]:
     """Apply idempotent, non-destructive lifecycle/schema migrations."""
     data = state if isinstance(state, dict) else {}
@@ -5108,6 +6506,66 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
     data["compatibility"] = compatibility
     task_state = dict(data.get("task_state") or {})
     task_state.setdefault("status", TASK_STATUS_RUNNING)
+    legacy_rejection = dict(task_state.get("planner_candidate_rejection") or {})
+    if legacy_rejection and not task_state.get("planning_failure"):
+        legacy_status = str(legacy_rejection.get("status") or "rejected")
+        task_state["planning_failure"] = {
+            "schema_version": PLANNING_FAILURE_SCHEMA_VERSION,
+            "status": (
+                "terminal"
+                if legacy_status == "blocked_non_convergent"
+                else "unresolved"
+            ),
+            "attempt": 1,
+            "repeat_count": 0,
+            "planning_epoch_id": str(
+                (task_state.get("planning_epoch") or {}).get("planning_epoch_id")
+                or ""
+            ),
+            "task_spec_revision": int(
+                (data.get("current_task") or {}).get("task_revision")
+                or data.get("generated_from_task_revision")
+                or 0
+            ),
+            "validation_source": "legacy_planner_candidate_rejection",
+            "validation_issues": [
+                _planning_failure_machine_issue(item)
+                for item in data.get("validation_issues", []) or []
+            ],
+            "failure_fingerprint": str(legacy_rejection.get("fingerprint") or ""),
+            "previous_correction": {},
+            "terminal_diagnostic": deepcopy(dict(
+                legacy_rejection.get("terminal_diagnostic") or {}
+            )),
+            "updated_at": _now(),
+        }
+        newly_applied.append("planner_failure_owner_convergence")
+    task_state.pop("planner_candidate_rejection", None)
+    existing_planning_failure = task_state.get("planning_failure")
+    if isinstance(existing_planning_failure, Mapping) and existing_planning_failure:
+        sanitized_failure = deepcopy(dict(existing_planning_failure))
+        sanitized_issues = [
+            _planning_failure_machine_issue(item)
+            for item in sanitized_failure.get("validation_issues", []) or []
+        ]
+        if (
+            str(sanitized_failure.get("status") or "")
+            in {"unresolved", "terminal"}
+            and not sanitized_issues
+        ):
+            sanitized_issues = [_planning_failure_machine_issue({
+                "code": "PLAN_CANDIDATE_INVALID",
+                "field_path": "$",
+                "machine_evidence": {
+                    "validation_source": str(
+                        sanitized_failure.get("validation_source")
+                        or "planner_candidate_admission"
+                    ),
+                },
+            })]
+        sanitized_failure["validation_issues"] = sanitized_issues
+        task_state["planning_failure"] = sanitized_failure
+    task_state.setdefault("planning_failure", {})
     budgets = dict(task_state.get("budgets") or {})
     for key, value in defaults["task_state"]["budgets"].items():
         budgets.setdefault(key, deepcopy(value))
@@ -5140,6 +6598,8 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
     ensure_provenance_state(data)
     if json.dumps(data.get("provenance_state", {}), ensure_ascii=False, sort_keys=True, default=str) != previous_provenance:
         newly_applied.append("initialize_execution_provenance_v1")
+    if _migrate_recovery_transition_lifecycle(data):
+        newly_applied.append("recovery_transition_lifecycle_v4")
 
     prior_semantic_hash = str(data.get("semantic_plan_hash") or "")
     prior_approved_hash = str(data.get("approved_plan_hash") or "")
@@ -5259,6 +6719,7 @@ def carry_forward_plan_lifecycle(previous: PlanState, candidate: PlanState) -> P
     for key in (
         "current_task", "conversation_evidence", "task_state", "audit_index",
         "state_generation", "created_at", "provenance_state",
+        "plan_artifacts", "artifact_allocation_mapping",
     ):
         if key in previous:
             candidate[key] = deepcopy(previous[key])
@@ -5345,6 +6806,140 @@ def carry_forward_plan_lifecycle(previous: PlanState, candidate: PlanState) -> P
         candidate["current_effective_plan_version"] = str(candidate.get("plan_version") or "")
     candidate["semantic_plan_hash"] = candidate_hash
     return candidate
+
+
+def _completed_execution_step(step: Mapping[str, Any]) -> bool:
+    status = str(step.get("status") or "").strip().lower()
+    if status in {"done", "completed", "passed", "skipped"}:
+        return True
+    return any(
+        isinstance(row, Mapping)
+        and str(row.get("event") or "") in {
+            "execute_success", "validation_passed", "evidence_committed",
+        }
+        for row in step.get("evidence", []) or []
+    )
+
+
+def _step_machine_transition_signature(
+    state: Mapping[str, Any],
+    step: Mapping[str, Any],
+) -> Dict[str, Any]:
+    step_id = str(step.get("step_id") or "")
+    usage = [
+        {
+            "relation": str(row.get("relation") or ""),
+            "artifact_ref": deepcopy(dict(row.get("artifact_ref") or {})),
+        }
+        for row in state.get("artifact_usage", []) or []
+        if isinstance(row, Mapping)
+        and str(row.get("step_id") or "") == step_id
+    ]
+    usage.sort(key=lambda row: json.dumps(row, sort_keys=True, default=str))
+    return {
+        "step_id": step_id,
+        "typed_artifact_usage": usage,
+        "inputs": [] if usage else sorted(str(value) for value in step.get("inputs", []) or []),
+        "outputs": [] if usage else sorted(str(value) for value in step.get("outputs", []) or []),
+        "dependencies": sorted(
+            str(value)
+            for value in (step.get("dependencies") or step.get("depends_on") or [])
+        ),
+    }
+
+
+def full_replan_transition_issues(
+    previous: Mapping[str, Any],
+    candidate: Mapping[str, Any],
+) -> List[Dict[str, Any]]:
+    """Protect executed machine history without comparing natural language."""
+    previous_steps = {
+        str(step.get("step_id") or ""): dict(step)
+        for step in previous.get("steps", []) or []
+        if isinstance(step, Mapping) and _completed_execution_step(step)
+    }
+    candidate_steps = {
+        str(step.get("step_id") or ""): dict(step)
+        for step in candidate.get("steps", []) or []
+        if isinstance(step, Mapping)
+    }
+    issues: List[Dict[str, Any]] = []
+    for step_id, old_step in previous_steps.items():
+        new_step = candidate_steps.get(step_id)
+        old_signature = _step_machine_transition_signature(previous, old_step)
+        if new_step is None:
+            issues.append(validation_issue(
+                "COMPLETED_PLAN_STEP_REMOVED",
+                owner="planner",
+                repair_target=f"steps[{step_id}]",
+                field_path=f"$.steps[{step_id}]",
+                message="Completed execution step is absent from the replacement candidate.",
+                affected_step_ids=[step_id],
+                machine_evidence={
+                    "expected": old_signature,
+                    "observed": {"step_id": step_id, "present": False},
+                },
+            ))
+            continue
+        new_signature = _step_machine_transition_signature(candidate, new_step)
+        if old_signature != new_signature:
+            issues.append(validation_issue(
+                "COMPLETED_PLAN_STEP_IDENTITY_CHANGED",
+                owner="planner",
+                repair_target=f"steps[{step_id}]",
+                field_path=f"$.steps[{step_id}]",
+                message="Completed execution step changed a protected machine identity field.",
+                affected_step_ids=[step_id],
+                expected_identity=old_signature,
+                observed_identity=new_signature,
+                machine_evidence={
+                    "compared_fields": [
+                        "step_id", "typed inputs", "typed outputs", "artifact identity",
+                        "dependency identity",
+                    ],
+                },
+            ))
+        candidate_evidence = list(new_step.get("evidence") or [])
+        if candidate_evidence and candidate_evidence != list(old_step.get("evidence") or []):
+            issues.append(validation_issue(
+                "COMPLETED_PLAN_EXECUTION_EVIDENCE_CHANGED",
+                owner="planner",
+                repair_target=f"steps[{step_id}].evidence",
+                field_path=f"$.steps[{step_id}].evidence",
+                message="Planner candidate attempted to replace completed execution evidence.",
+                affected_step_ids=[step_id],
+                machine_evidence={
+                    "expected_evidence_count": len(old_step.get("evidence") or []),
+                    "observed_evidence_count": len(candidate_evidence),
+                },
+            ))
+    return issues
+
+
+def carry_forward_completed_execution_history(
+    previous: PlanState,
+    candidate: PlanState,
+) -> PlanState:
+    """Carry Controller-owned status/evidence after the transition gate passes."""
+    issues = full_replan_transition_issues(previous, candidate)
+    if issues:
+        return derive_plan_validation_state(candidate, issues, record_convergence=False)
+    result = deepcopy(candidate)
+    old_steps = {
+        str(step.get("step_id") or ""): step
+        for step in previous.get("steps", []) or []
+        if isinstance(step, Mapping) and _completed_execution_step(step)
+    }
+    for step in result.get("steps", []) or []:
+        if not isinstance(step, dict):
+            continue
+        old = old_steps.get(str(step.get("step_id") or ""))
+        if not old:
+            continue
+        for field in ("status", "evidence", "updated_at"):
+            if field in old:
+                step[field] = deepcopy(old[field])
+    return result
 
 
 def stable_plan_revision_delta(previous: PlanState, candidate: PlanState) -> Dict[str, List[str]]:
@@ -6145,21 +7740,39 @@ def validate_output_contracts(
         and str(item.get("artifact_id") or item.get("output_id") or "")
     }
     producers: Dict[str, List[str]] = {}
-    for index, raw_step in enumerate(state.get("steps", []) or [], start=1):
-        if not isinstance(raw_step, dict):
-            continue
-        step = normalize_plan_step(dict(raw_step), index)
-        step_id = str(step.get("step_id") or "")
-        outputs = list(step.get("outputs", []) or [])
-        for output in outputs:
-            output_text = str(output.get("artifact_id") or output.get("output_id") or "") if isinstance(output, Mapping) else str(output or "")
-            identity = (
-                _output_identity(output, output_dir)
-                if legacy_renderer_mode
-                else output_text if output_text in artifact_bindings else _output_identity(output, output_dir)
-            )
-            if identity and step_id not in producers.setdefault(identity, []):
+    typed_usage = [
+        dict(row) for row in state.get("artifact_usage", []) or []
+        if isinstance(row, Mapping)
+    ]
+    if typed_usage and not legacy_renderer_mode:
+        for row in typed_usage:
+            artifact_ref = dict(row.get("artifact_ref") or {})
+            if (
+                str(row.get("relation") or "") != "produce"
+                or str(artifact_ref.get("kind") or "") != "authoritative"
+            ):
+                continue
+            identity = str(artifact_ref.get("identity") or "")
+            step_id = str(row.get("step_id") or "")
+            if identity and step_id and step_id not in producers.setdefault(identity, []):
                 producers[identity].append(step_id)
+    else:
+        # Reader compatibility for plans admitted before typed artifact_usage.
+        for index, raw_step in enumerate(state.get("steps", []) or [], start=1):
+            if not isinstance(raw_step, dict):
+                continue
+            step = normalize_plan_step(dict(raw_step), index)
+            step_id = str(step.get("step_id") or "")
+            outputs = list(step.get("outputs", []) or [])
+            for output in outputs:
+                output_text = str(output.get("artifact_id") or output.get("output_id") or "") if isinstance(output, Mapping) else str(output or "")
+                identity = (
+                    _output_identity(output, output_dir)
+                    if legacy_renderer_mode
+                    else output_text if output_text in artifact_bindings else _output_identity(output, output_dir)
+                )
+                if identity and step_id not in producers.setdefault(identity, []):
+                    producers[identity].append(step_id)
 
     violations: List[Dict[str, Any]] = []
     for contract in output_contracts or []:
@@ -6176,14 +7789,41 @@ def validate_output_contracts(
         if not identity:
             continue
         owner_ids = producers.get(identity, [])
+        output_id = str(
+            contract.get("output_id")
+            or contract.get("artifact_id")
+            or identity
+        )
         common = {
-            "output_id": str(contract.get("artifact_id") or contract.get("output_id") or identity),
+            "output_id": output_id,
             "path_or_name": _output_path_or_name(contract),
             "source_type": str(contract.get("source_type") or contract.get("source") or "unknown"),
             "source_ref": str(contract.get("source_ref") or ""),
             "affected_output_ids": [str(contract.get("artifact_id") or contract.get("output_id") or identity)],
             "affected_step_ids": list(owner_ids),
             "allowed_changed_step_ids": list(owner_ids),
+            "affected_artifact": {
+                "kind": "authoritative",
+                "identity": identity,
+            },
+            "affected_output": {
+                "output_id": output_id,
+                "handle": str(contract.get("semantic_handle") or ""),
+                "role": str(contract.get("role") or ""),
+            },
+            "expected_identity": {
+                "kind": "authoritative",
+                "identity": identity,
+            },
+            "observed_identity": {
+                "kind": "authoritative",
+                "identity": identity,
+                "producer_step_ids": list(owner_ids),
+            },
+            "machine_evidence": {
+                "typed_usage_available": bool(typed_usage),
+                "producer_step_ids": list(owner_ids),
+            },
         }
         if not owner_ids:
             violations.append({
@@ -6223,6 +7863,37 @@ def normalize_task_output_materializations(
         ):
             if str(key or ""):
                 by_ref[str(key)] = row
+
+    def materialization_diagnostic(
+        contract: Optional[Mapping[str, Any]],
+        *,
+        output_ref: str,
+        expected_identity: Mapping[str, Any],
+        observed_identity: Mapping[str, Any],
+        machine_evidence: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        contract_row = dict(contract or {})
+        logical_id = str(
+            contract_row.get("artifact_id")
+            or contract_row.get("output_id")
+            or output_ref
+        )
+        return {
+            "affected_step_ids": [],
+            "affected_artifact": {
+                "kind": "authoritative" if contract_row else "unresolved",
+                "identity": logical_id,
+            },
+            "affected_output": {
+                "handle": str(contract_row.get("semantic_handle") or output_ref),
+                "output_id": str(contract_row.get("output_id") or output_ref),
+                "role": str(contract_row.get("role") or ""),
+            },
+            "expected_identity": deepcopy(dict(expected_identity)),
+            "observed_identity": deepcopy(dict(observed_identity)),
+            "machine_evidence": deepcopy(dict(machine_evidence)),
+        }
+
     normalized: List[Dict[str, Any]] = []
     issues: List[Dict[str, Any]] = []
     seen: set[str] = set()
@@ -6236,9 +7907,24 @@ def normalize_task_output_materializations(
             issues.append(validation_issue(
                 "TASK_OUTPUT_REFERENCE_UNKNOWN",
                 owner="planner",
-                repair_target="plan.task_output_materializations",
-                field_path=f"plan.task_output_materializations[{index}].output_ref",
+                repair_target="$.task_output_materializations",
+                field_path=f"$.task_output_materializations[{index}].output_ref",
                 message=f"Unknown TaskSpec output reference `{output_ref}`.",
+                **materialization_diagnostic(
+                    None,
+                    output_ref=output_ref,
+                    expected_identity={
+                        "kind": "authoritative_task_output",
+                        "membership": "declared_in_canonical_task_spec",
+                    },
+                    observed_identity={
+                        "kind": "unresolved_output_reference",
+                        "identity": output_ref,
+                    },
+                    machine_evidence={
+                        "known_output_refs": sorted(by_ref),
+                    },
+                ),
             ))
             continue
         output_id = str(contract.get("output_id") or contract.get("artifact_id") or output_ref)
@@ -6246,9 +7932,24 @@ def normalize_task_output_materializations(
             issues.append(validation_issue(
                 "TASK_OUTPUT_MATERIALIZATION_DUPLICATE",
                 owner="planner",
-                repair_target="plan.task_output_materializations",
-                field_path=f"plan.task_output_materializations[{index}]",
+                repair_target="$.task_output_materializations",
+                field_path=f"$.task_output_materializations[{index}]",
                 message=f"Task output `{output_id}` is materialized more than once.",
+                **materialization_diagnostic(
+                    contract,
+                    output_ref=output_ref,
+                    expected_identity={
+                        "kind": "authoritative_task_output",
+                        "identity": str(contract.get("artifact_id") or output_id),
+                        "materialization_cardinality": 1,
+                    },
+                    observed_identity={
+                        "kind": "authoritative_task_output",
+                        "identity": str(contract.get("artifact_id") or output_id),
+                        "materialization_cardinality": 2,
+                    },
+                    machine_evidence={"duplicate_index": index},
+                ),
             ))
             continue
         seen.add(output_id)
@@ -6258,9 +7959,23 @@ def normalize_task_output_materializations(
             issues.append(validation_issue(
                 "TASK_OUTPUT_MATERIALIZATION_KIND_INVALID",
                 owner="planner",
-                repair_target="plan.task_output_materializations",
-                field_path=f"plan.task_output_materializations[{index}]",
+                repair_target="$.task_output_materializations",
+                field_path=f"$.task_output_materializations[{index}]",
                 message=f"Directory output `{output_id}` cannot receive a Planner filename.",
+                **materialization_diagnostic(
+                    contract,
+                    output_ref=output_ref,
+                    expected_identity={
+                        "kind": "materializable_task_output",
+                        "artifact_kind": "file",
+                    },
+                    observed_identity={
+                        "kind": "authoritative_task_output",
+                        "identity": str(contract.get("artifact_id") or output_id),
+                        "artifact_kind": artifact_kind,
+                    },
+                    machine_evidence={"output_role": str(contract.get("role") or "")},
+                ),
             ))
             continue
         path = Path(path_text)
@@ -6268,9 +7983,21 @@ def normalize_task_output_materializations(
             issues.append(validation_issue(
                 "TASK_OUTPUT_MATERIALIZATION_PATH_INVALID",
                 owner="planner",
-                repair_target="plan.task_output_materializations",
-                field_path=f"plan.task_output_materializations[{index}].path",
+                repair_target="$.task_output_materializations",
+                field_path=f"$.task_output_materializations[{index}].path",
                 message="Planner-owned output paths must be safe relative paths under output_dir.",
+                **materialization_diagnostic(
+                    contract,
+                    output_ref=output_ref,
+                    expected_identity={
+                        "path_policy": "safe_relative_under_output_root",
+                    },
+                    observed_identity={"path": path_text},
+                    machine_evidence={
+                        "is_absolute": path.is_absolute(),
+                        "contains_parent_traversal": ".." in path.parts,
+                    },
+                ),
             ))
             continue
         canonical_path = canonical_output_identity(path_text, output_root)
@@ -6278,9 +8005,18 @@ def normalize_task_output_materializations(
             issues.append(validation_issue(
                 "USER_OUTPUT_PATH_NOT_PRESERVED",
                 owner="planner",
-                repair_target="plan.task_output_materializations",
-                field_path=f"plan.task_output_materializations[{index}].path",
+                repair_target="$.task_output_materializations",
+                field_path=f"$.task_output_materializations[{index}].path",
                 message=f"Planner changed the exact TaskSpec path for `{output_id}`.",
+                **materialization_diagnostic(
+                    contract,
+                    output_ref=output_ref,
+                    expected_identity={
+                        "required_basename": Path(exact_path).name,
+                    },
+                    observed_identity={"candidate_path": path_text},
+                    machine_evidence={"path_policy": str(contract.get("path_policy") or "")},
+                ),
             ))
             continue
         normalized.append({
@@ -6303,9 +8039,23 @@ def normalize_task_output_materializations(
             issues.append(validation_issue(
                 "TASK_OUTPUT_MATERIALIZATION_MISSING",
                 owner="planner",
-                repair_target="plan.task_output_materializations",
-                field_path="plan.task_output_materializations",
+                repair_target="$.task_output_materializations",
+                field_path="$.task_output_materializations",
                 message=f"Required task output `{output_id}` needs a Planner-owned relative path.",
+                **materialization_diagnostic(
+                    contract,
+                    output_ref=str(contract.get("semantic_handle") or output_id),
+                    expected_identity={
+                        "kind": "authoritative_task_output",
+                        "identity": str(contract.get("artifact_id") or output_id),
+                        "materialization": "one_safe_relative_path",
+                    },
+                    observed_identity={"materialization": "missing"},
+                    machine_evidence={
+                        "path_policy": "planner_materialized",
+                        "required": True,
+                    },
+                ),
             ))
     candidate["task_output_materializations"] = normalized
     return candidate, issues
@@ -7102,6 +8852,7 @@ def current_plan_step_with_index(state: PlanState) -> Tuple[int, PlanStep]:
                 return index, step
     for status in (
         STATUS_RUNNING,
+        STATUS_VERIFICATION_PENDING,
         STATUS_RETRY_PENDING,
         STATUS_REPAIRING,
         STATUS_DIAGNOSING,
@@ -7176,6 +8927,44 @@ def _plan_spec_v2_record(state: PlanState) -> Dict[str, Any]:
     }
 
 
+def load_current_plan_snapshot(
+    data_path: str | Path,
+    task_id: str,
+    *,
+    state: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Load the immutable current PlanSnapshot without changing approval state."""
+    current = dict(state or load_plan_state(data_path, task_id))
+    current_plan = dict(current.get("current_plan") or {})
+    current_approval = dict(current.get("current_approval") or {})
+    refs = {
+        str(value)
+        for value in (
+            current_approval.get("plan_snapshot_ref"),
+            current_plan.get("plan_snapshot_ref"),
+            current.get("plan_snapshot_ref"),
+        )
+        if str(value or "")
+    }
+    if not refs:
+        return {}
+    if len(refs) != 1:
+        raise ValueError("CURRENT_PLAN_SNAPSHOT_REF_MISMATCH")
+    snapshot_ref = next(iter(refs))
+    snapshot = StateContractStore(data_path, task_id).read_object(
+        snapshot_ref,
+        expected_type="plan_snapshot_v121",
+    )
+    if not isinstance(snapshot, Mapping):
+        raise ValueError("CURRENT_PLAN_SNAPSHOT_INVALID")
+    assert_reader_compatible(snapshot)
+    expected_id = str(current_plan.get("plan_snapshot_id") or "")
+    observed_id = str(snapshot.get("plan_snapshot_id") or "")
+    if expected_id and observed_id != expected_id:
+        raise ValueError("CURRENT_PLAN_SNAPSHOT_ID_MISMATCH")
+    return deepcopy(dict(snapshot))
+
+
 def load_approved_plan_snapshot(
     data_path: str | Path,
     task_id: str,
@@ -7190,32 +8979,19 @@ def load_approved_plan_snapshot(
     is an internal contract conflict and must fail closed.
     """
     current = dict(state or load_plan_state(data_path, task_id))
-    current_plan = dict(current.get("current_plan") or {})
     current_approval = dict(current.get("current_approval") or {})
-    snapshot_ref = str(
-        current_approval.get("plan_snapshot_ref")
-        or current_plan.get("plan_snapshot_ref")
-        or current.get("plan_snapshot_ref")
-        or ""
-    )
-    if not snapshot_ref:
+    try:
+        snapshot = load_current_plan_snapshot(data_path, task_id, state=current)
+    except ValueError as exc:
+        code = str(exc)
+        if code.startswith("CURRENT_PLAN_SNAPSHOT_"):
+            raise ValueError(code.replace("CURRENT_PLAN_", "APPROVED_PLAN_", 1)) from exc
+        raise
+    if not snapshot:
         return {}
     if str(current_approval.get("status") or "") != "approved":
         raise ValueError("APPROVED_PLAN_SNAPSHOT_NOT_APPROVED")
-    if str(current_approval.get("plan_snapshot_ref") or "") != snapshot_ref:
-        raise ValueError("APPROVED_PLAN_SNAPSHOT_REF_MISMATCH")
-    snapshot = StateContractStore(data_path, task_id).read_object(
-        snapshot_ref,
-        expected_type="plan_snapshot_v121",
-    )
-    if not isinstance(snapshot, Mapping):
-        raise ValueError("APPROVED_PLAN_SNAPSHOT_INVALID")
-    assert_reader_compatible(snapshot)
-    expected_id = str(current_plan.get("plan_snapshot_id") or "")
-    observed_id = str(snapshot.get("plan_snapshot_id") or "")
-    if expected_id and observed_id != expected_id:
-        raise ValueError("APPROVED_PLAN_SNAPSHOT_ID_MISMATCH")
-    return deepcopy(dict(snapshot))
+    return snapshot
 
 
 def approval_applicability_v2(state: PlanState) -> Dict[str, Any]:
@@ -7685,6 +9461,40 @@ def commit_consultant_candidate_state(
     state = load_plan_state(data_path, task_id)
     if state.get("canonical_state_error"):
         raise CanonicalTaskStateError(str(state["canonical_state_error"]))
+    task_state = dict(state.get("task_state") or {})
+    pending_skill_proposal = dict(
+        task_state.get("pending_skill_binding_proposal") or {}
+    )
+    conversation = dict(state.get("conversation_evidence") or {})
+    actual_preconditions = {
+        "expected_state_generation": int(
+            state.get("state_generation") or 0
+        ),
+        "expected_plan_revision": int(state.get("plan_revision") or 0),
+        "expected_user_turn_revision": int(
+            conversation.get("user_turn_count")
+            if conversation.get("user_turn_count") is not None
+            else conversation.get("turn_count") or 0
+        ),
+        "expected_pending_skill_proposal_id": str(
+            pending_skill_proposal.get("proposal_id") or ""
+        ),
+        "expected_pending_skill_proposal_status": str(
+            pending_skill_proposal.get("status") or ""
+        ),
+        "expected_pending_skill_snapshot_id": str(
+            pending_skill_proposal.get("candidate_snapshot_id") or ""
+        ),
+    }
+    for field_name, actual_value in actual_preconditions.items():
+        if field_name not in proposed:
+            continue
+        expected_value = proposed.get(field_name)
+        if str(expected_value) != str(actual_value):
+            raise StateCASConflict(
+                "CONSULTANT_SKILL_TRANSACTION_STALE: "
+                f"{field_name}={expected_value!r}/{actual_value!r}"
+            )
     current = canonical_task_spec_for_state(state)
     canonical = canonical_current_task_spec(task_spec)
     current_revision = task_spec_revision(current) if current else 0
@@ -7703,11 +9513,36 @@ def commit_consultant_candidate_state(
         previous=dict(state.get("current_task") or {}),
         generation=int(state.get("state_generation") or 0),
     )
-    task_state = dict(state.get("task_state") or {})
     task_state["consultation_state"] = deepcopy(dict(proposed.get("consultation_state") or {}))
     task_state["selected_skills"] = [
         str(value) for value in proposed.get("selected_skills", []) or [] if str(value)
     ]
+    if "skill_access_state" in proposed:
+        skill_access_state = proposed.get("skill_access_state")
+        if not isinstance(skill_access_state, Mapping):
+            raise ValueError("SKILL_ACCESS_STATE_INVALID")
+        task_state["skill_access_state"] = deepcopy(dict(skill_access_state))
+        selected_skill_refs = proposed.get("selected_skill_refs") or []
+        if not isinstance(selected_skill_refs, list) or any(
+            not isinstance(item, Mapping) for item in selected_skill_refs
+        ):
+            raise ValueError("SELECTED_SKILL_REFS_INVALID")
+        task_state["selected_skill_refs"] = deepcopy(selected_skill_refs)
+    for skill_transaction_field in (
+        "pending_skill_binding_proposal",
+        "pending_plan_impact_review",
+    ):
+        if skill_transaction_field not in proposed:
+            continue
+        value = proposed.get(skill_transaction_field)
+        if value in (None, {}):
+            task_state.pop(skill_transaction_field, None)
+        elif isinstance(value, Mapping):
+            task_state[skill_transaction_field] = deepcopy(dict(value))
+        else:
+            raise ValueError(
+                f"{skill_transaction_field.upper()}_INVALID"
+            )
     task_state["resolved_bindings"] = deepcopy(dict(proposed.get("resolved_bindings") or {}))
     pending = proposed.get("pending_question")
     task_state["pending_question"] = deepcopy(dict(pending or {}))
@@ -7728,6 +9563,10 @@ def commit_consultant_candidate_state(
         "planner_reconciliation",
         "planning_epoch",
         "pending_review_classification",
+        "binding_phase",
+        "consultant_commit_rejection",
+        "consultant_pending_transition",
+        "consultant_no_progress_ledger",
     ):
         if controller_field in proposed:
             value = proposed.get(controller_field)
@@ -7741,6 +9580,13 @@ def commit_consultant_candidate_state(
                 )
     state["task_state"] = task_state
     state["selected_skill_ids"] = list(task_state["selected_skills"])
+    if "skill_access_state" in proposed:
+        state["skill_access_state"] = deepcopy(
+            dict(task_state.get("skill_access_state") or {})
+        )
+        state["selected_skill_refs"] = deepcopy(
+            list(task_state.get("selected_skill_refs") or [])
+        )
     approval_transition = proposed.get("approval_transition")
     if approval_transition:
         if not isinstance(approval_transition, Mapping):
@@ -8414,14 +10260,59 @@ def set_task_status(state: PlanState, status: str, reason: str = "") -> bool:
 
 
 def clear_step_scoped_recovery(state: PlanState, completed_step_id: str) -> None:
-    """Drop only recovery data owned by a step that has just completed."""
+    """Retire active route authority while retaining immutable recovery history."""
     task_state = dict(state.get("task_state") or {})
     recovery = dict(task_state.get("recovery_state") or {})
     recovery_step = str(recovery.get("step_id") or recovery.get("failed_step_id") or "")
     if not recovery or (recovery_step and recovery_step != str(completed_step_id or "")):
+        verification = dict(task_state.get("verification_pending") or {})
+        if (
+            not str(verification.get("step_id") or "")
+            or str(verification.get("step_id") or "") == str(completed_step_id or "")
+        ):
+            task_state.pop("verification_pending", None)
+            task_state.pop("resume_route_hint", None)
+            state["task_state"] = task_state
         return
-    task_state["recovery_state"] = {}
+    active = dict(recovery.get("active_transition") or {})
+    if active and str(active.get("status") or "").strip().lower() == "pending":
+        active.update({
+            "status": "expired",
+            "superseded_reason": "STEP_COMPLETED",
+            "expired_at": _now(),
+        })
+        recovery["transition_history"] = [
+            *list(recovery.get("transition_history") or []),
+            active,
+        ]
+        active_id = str(
+            active.get("decision_id") or active.get("idempotency_key") or ""
+        )
+        last = dict(
+            recovery.get("last_recovery_decision")
+            or task_state.get("last_recovery_decision")
+            or {}
+        )
+        last_id = str(last.get("decision_id") or last.get("idempotency_key") or "")
+        if active_id and active_id == last_id:
+            last.update({
+                "status": "expired",
+                "superseded_reason": "STEP_COMPLETED",
+                "expired_at": active["expired_at"],
+            })
+            recovery["last_recovery_decision"] = last
+            task_state["last_recovery_decision"] = deepcopy(last)
+    recovery.update({
+        "active_transition": {},
+        "phase": "resolved",
+        "step_id": "",
+        "resolved_step_id": str(completed_step_id or ""),
+        "resolved_at": _now(),
+    })
+    task_state["recovery_state"] = recovery
     task_state["diagnosis_state"] = {}
+    task_state.pop("verification_pending", None)
+    task_state.pop("resume_route_hint", None)
     state["task_state"] = task_state
 
 

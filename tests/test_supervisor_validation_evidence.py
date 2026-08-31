@@ -91,7 +91,22 @@ class SupervisorValidationEvidenceTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("_commit_legacy_recovery_projection", active)
         self.assertNotIn("supervisor_verdict", router)
         self.assertNotIn('state.get("next_step")', router)
-        self.assertIn("committed_recovery_route", router)
+        self.assertIn("dispatch_runtime_route", router)
+        self.assertNotIn("committed_recovery_route", router)
+        self.assertNotIn("recovery_decision", router)
+
+    def test_record_failure_is_not_a_terminal_condition_in_supervisor_adapters(self):
+        source = inspect.getsource(BioAnalystAgent._build_graph)
+        active = source.split("async def supervisor(state", 1)[1].split(
+            "async def _legacy_supervisor_controller", 1
+        )[0]
+        legacy = source.split("async def _legacy_supervisor_controller", 1)[1].split(
+            "async def supervisor_final_audit", 1
+        )[0]
+
+        for adapter in (active, legacy):
+            self.assertNotIn('execution_purpose == "record_failure"', adapter)
+            self.assertNotIn("self._finalize_blocked_state(task_id", adapter)
 
     async def test_supervisor_returns_evidence_without_routing_or_budget_mutation(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -115,6 +130,22 @@ class SupervisorValidationEvidenceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(evidence.status, {ValidationStatus.VALID.value, ValidationStatus.VALID_WITH_WARNINGS.value})
         self.assertEqual(evidence.evidence_source, "execution_evidence")
         self.assertTrue(evidence.evidence_complete)
+
+    async def test_record_failure_label_cannot_override_valid_runtime_evidence(self):
+        state = _structured_state(returncode=0, stdout="validation PASS")
+        state["execution_evidence"].update({
+            "purpose": "record_failure",
+            "output_reconciliation_status": "accepted",
+        })
+        with tempfile.TemporaryDirectory() as tmpdir:
+            node = SupervisorNode(_CountingLLM(), output_dir=tmpdir, use_llm_review=False)
+            result = await node.run(state)
+
+        evidence = ValidationEvidence.from_mapping(result["validation_evidence"])
+        self.assertEqual(evidence.status, ValidationStatus.VALID.value)
+        self.assertEqual(result["supervisor_verdict"], "PASS")
+        self.assertNotIn("recovery_decision", result)
+        self.assertNotIn("task_status", result)
 
     async def test_persisted_execution_record_exit_code_is_structured_evidence(self):
         state = _structured_state(returncode=0, stdout="renderer usage")

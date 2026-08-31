@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.graph.message import add_messages
 
 import bio_agents
@@ -19,6 +19,7 @@ from agent_core.plan_tracker import (
     approve_plan_state,
     canonical_task_spec_for_state,
     load_approved_plan_snapshot,
+    load_current_plan_snapshot,
     load_plan_state,
     save_plan_state,
 )
@@ -409,7 +410,7 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             **_kwargs: Any,
         ) -> AIMessage:
             del node_context
-            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+            if stage == "planner":
                 return AIMessage(content=planner_payload or _planner_v2_plan())
             raise AssertionError(f"unexpected stage: {stage}")
 
@@ -453,7 +454,7 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
                     input_path=input_path,
                     output_path=output_path,
                 ))
-            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+            if stage == "planner":
                 return AIMessage(content=_planner_plan(
                     input_path,
                     output_path,
@@ -510,6 +511,131 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertTrue(durable.get("steps"), "Planner did not persist a PlanSpec")
         self.assertNotIn("TypeError", json.dumps(events, ensure_ascii=False, default=str))
+
+    async def test_a2_select_requires_load_then_reenters_and_routes_to_planner(self) -> None:
+        task_id = "graph-select-load-select"
+        input_path = self.root / "load-first.fasta"
+        output_path = self.root / "out-load-first" / "report.md"
+        input_path.write_text(">chr1\nACGT\n", encoding="utf-8")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        runner = self._runner_state(
+            task_id,
+            f"Run local BLAST using {input_path} and write {output_path}.",
+        )
+        self.agent._consultant_runtime_seed_evidence = (
+            lambda selected, _task_id: (
+                [{"skill_id": skill_id, "status": "ready"} for skill_id in selected],
+                {
+                    skill_id: {"status": "ready", "source": "test_runtime_probe"}
+                    for skill_id in selected
+                },
+                "",
+            )
+        )
+        select_payload = json.loads(self._finish_payload(
+            input_path=str(input_path),
+            output_path=str(output_path),
+        ))
+        select_payload["action_type"] = "select_skill"
+        consultant_calls = 0
+
+        async def scripted(
+            _messages: Any,
+            *,
+            node_context: Any,
+            stage: str,
+            **_kwargs: Any,
+        ) -> AIMessage:
+            nonlocal consultant_calls
+            del node_context
+            if stage == "consultant":
+                consultant_calls += 1
+                if consultant_calls == 1:
+                    return AIMessage(content=json.dumps(select_payload))
+                if consultant_calls == 2:
+                    return AIMessage(content=json.dumps({
+                        "action_type": "load_skill_doc",
+                        "skill_id": SKILL_ID,
+                        "task_hypothesis": "Run documented local BLAST",
+                    }))
+                if consultant_calls == 3:
+                    return AIMessage(content=json.dumps(select_payload))
+                raise AssertionError(
+                    "Consultant made an extra provider call after the "
+                    "load/select recovery sequence"
+                )
+            if stage == "planner":
+                return AIMessage(content=_planner_plan(
+                    str(input_path),
+                    str(output_path),
+                ))
+            raise AssertionError(f"unexpected stage: {stage}")
+
+        self.agent._ainvoke_node_llm = scripted
+        events: list[dict[str, Any]] = []
+        stream = self.agent.app.astream(
+            runner,
+            config={"configurable": {"thread_id": task_id}},
+            stream_mode="updates",
+            interrupt_after=["planner"],
+        )
+        with patch.object(
+            bio_agents,
+            "resolve_formal_upstream_artifacts",
+            return_value={
+                "relevant": False,
+                "status": "not_applicable",
+                "formal_candidates": [],
+            },
+        ):
+            try:
+                async for event in stream:
+                    events.append(event)
+            finally:
+                await stream.aclose()
+
+        consultant_updates = [
+            event["consultant"]
+            for event in events
+            if "consultant" in event
+        ]
+        self.assertEqual(
+            consultant_calls,
+            3,
+            json.dumps(
+                [
+                    {
+                        "next_step": item.get("next_step"),
+                        "rejection": item.get("consultant_commit_rejection"),
+                        "decision": item.get("skill_decision_result"),
+                    }
+                    for item in consultant_updates
+                ],
+                ensure_ascii=False,
+                default=str,
+            ),
+        )
+        self.assertEqual(
+            consultant_updates[0]["skill_decision_result"]["code"],
+            "SKILL_DOC_REQUIRED",
+        )
+        self.assertEqual(
+            consultant_updates[0]["consultant_pending_transition"][
+                "required_action"
+            ],
+            "LOAD_SKILL_DOC",
+        )
+        self.assertEqual(
+            consultant_updates[0]["consultant_pending_transition"]["skill_id"],
+            SKILL_ID,
+        )
+        self.assertEqual(
+            consultant_updates[1]["consultant_pending_transition"],
+            {},
+        )
+        self.assertEqual(consultant_updates[2]["next_step"], "planner")
+        self.assertTrue(consultant_updates[2]["canonical_commit"]["succeeded"])
+        self.assertTrue(any("planner" in event for event in events))
 
     async def test_b_empty_graph_projection_cannot_shadow_committed_task(self) -> None:
         task_id = "graph-b-shadow"
@@ -656,7 +782,7 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             **_kwargs: Any,
         ) -> AIMessage:
             del node_context
-            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+            if stage == "planner":
                 return AIMessage(content=_planner_v2_plan())
             raise AssertionError(f"unexpected stage: {stage}")
 
@@ -696,7 +822,7 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             **_kwargs: Any,
         ) -> AIMessage:
             del node_context
-            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+            if stage == "planner":
                 return AIMessage(content=_planner_v2_plan())
             raise AssertionError(f"unexpected stage: {stage}")
 
@@ -765,6 +891,20 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             "TASK_OUTPUT_REFERENCE_UNKNOWN",
             {str(item.get("code") or "") for item in review_result["validation_issues"]},
         )
+        review_issue = next(
+            item
+            for item in review_result["validation_issues"]
+            if item.get("code") == "TASK_OUTPUT_REFERENCE_UNKNOWN"
+        )
+        for field in (
+            "field_path", "affected_step_ids", "affected_artifact",
+            "affected_output", "expected_identity", "observed_identity",
+            "machine_evidence",
+        ):
+            self.assertIn(field, review_issue)
+        self.assertNotIn("message", review_issue)
+        self.assertNotIn("owner", review_issue)
+        self.assertNotIn("route", review_issue)
 
         reentry_state = dict(graph_state)
         reentry_state.update({
@@ -775,6 +915,9 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             list(review_result.get("messages") or []),
         )
 
+        observed_planner_payload: dict[str, Any] = {}
+        observed_planner_call: dict[str, Any] = {}
+
         async def scripted(
             _messages: Any,
             *,
@@ -782,18 +925,60 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             stage: str,
             **_kwargs: Any,
         ) -> AIMessage:
-            del node_context
-            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+            if stage == "planner":
+                observed_planner_payload.update(
+                    node_context.llm_payload.to_provider_dict()
+                )
+                observed_planner_call.update({
+                    "messages": list(_messages),
+                    "temperature": _kwargs.get("temperature"),
+                })
                 return AIMessage(content=_planner_v2_plan())
             raise AssertionError(f"unexpected stage: {stage}")
 
         self.agent._ainvoke_node_llm = scripted
-        with patch.object(bio_agents, "load_approved_plan_snapshot") as loader:
-            planner_result = await self.agent._graph_node_handlers["planner"](
-                reentry_state
-            )
+        real_current_loader = load_current_plan_snapshot
+        with (
+            patch.object(bio_agents, "load_approved_plan_snapshot") as loader,
+            patch.object(
+                bio_agents,
+                "load_current_plan_snapshot",
+                wraps=real_current_loader,
+            ) as current_loader,
+        ):
+            planner_result = await self.agent._graph_node_handlers["planner"](reentry_state)
 
         loader.assert_not_called()
+        current_loader.assert_called_once()
+        self.assertEqual(len(observed_planner_call["messages"]), 2)
+        self.assertIsInstance(observed_planner_call["messages"][0], SystemMessage)
+        self.assertIsInstance(observed_planner_call["messages"][1], HumanMessage)
+        self.assertEqual(observed_planner_call["temperature"], 0.1)
+        self.assertEqual(
+            json.loads(observed_planner_call["messages"][1].content),
+            observed_planner_payload,
+        )
+        self.assertNotIn(
+            "Create the intermediate summary",
+            observed_planner_call["messages"][0].content,
+        )
+        self.assertEqual(
+            observed_planner_payload["semantic_history"]["plan_snapshot"]
+            ["snapshot_status"],
+            "pending",
+        )
+        self.assertEqual(
+            observed_planner_payload["current_focus"]["planning"]["mode"],
+            "correct_previous_plan",
+        )
+        self.assertIn(
+            "TASK_OUTPUT_REFERENCE_UNKNOWN",
+            {
+                str(item.get("code") or "")
+                for item in observed_planner_payload["current_focus"]["planning"]
+                ["violations"]
+            },
+        )
         self.assertEqual(planner_result["next_step"], "plan_review")
         final_state = load_plan_state(self.root, task_id)
         self.assertNotEqual((final_state.get("task_state") or {}).get("status"), "failed")
@@ -908,6 +1093,9 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
         await asyncio.wait_for(consume(), timeout=30)
         self.assertEqual(events[0]["triage"]["next_step"], "consultant")
         self.assertTrue(events[1]["consultant"]["canonical_commit"]["succeeded"])
+        self.assertEqual(events[1]["consultant"]["next_step"], "planner")
+        self.assertEqual(events[1]["consultant"]["effective_route"], "planner")
+        self.assertEqual(events[1]["consultant"]["dispatch_route"], "planner")
         consultant_payload = json.dumps(seen["consultant"], ensure_ascii=False)
         for value in (str(vcf), str(fasta), str(gtf), str(outdir), "U1"):
             self.assertIn(value, consultant_payload)
@@ -1041,7 +1229,7 @@ class ConsultantFirstGraphIntegrationV21Tests(unittest.IsolatedAsyncioTestCase):
             nonlocal generate_calls
             if stage == "consultant":
                 return AIMessage(content=json.dumps(consultant_payload))
-            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+            if stage == "planner":
                 return AIMessage(content=json.dumps(plan_payload))
             if stage == "generate":
                 generate_calls += 1

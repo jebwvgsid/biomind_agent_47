@@ -826,8 +826,10 @@ SEARCH_SKILLS, reformulate once when needed, then browse the relevant category.
 Read candidate SKILL.md documents before a tool-specific selection when cards
 are insufficient. Never ask the user for an internal skill ID, tool name, or
 catalog choice. ASK only for a genuinely missing user-owned scientific decision
-whose answer changes the task. Do not FINISH while skill-routing is unresolved;
-request reasoning escalation after normal discovery is exhausted, and declare a
+whose answer changes the task. A skill document must be loaded with
+LOAD_SKILL_DOC before SELECT_SKILL can be committed. Do not FINISH while
+skill-routing is unresolved; request reasoning escalation after normal
+discovery is exhausted, and declare a
 capability gap only after the narrow escalated pass is exhausted.
 </skill_discovery_protocol>
 

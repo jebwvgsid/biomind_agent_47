@@ -1,6 +1,6 @@
 ---
 name: long-read-sv-sniffles-survivor
-description: Detect and merge structural variants from ONT, PacBio CLR, or PacBio HiFi long-read sequencing using minimap2, Sniffles, and optionally SURVIVOR. Use when users provide long-read FASTQ/BAM and ask for SV discovery, genotyping, or cohort SV merging. Do not use for short-read LUMPY SV, CNVnator CNV, or SNP/InDel calling.
+description: Legacy compatibility workflow for long-read SV calling and optional SURVIVOR merge. Prefer genomics/long-read-sv-sniffles2 as the default primary long-read SV skill; use this skill mainly when legacy Sniffles/SURVIVOR merging is explicitly requested.
 version: "1.0.0"
 tags: [long-read, ONT, PacBio, HiFi, SV, minimap2, Sniffles, SURVIVOR, structural-variant]
 legacy_ids: [longread-sv, sniffles-sv, survivor-merge, nanopore-sv, pacbio-sv]
@@ -15,11 +15,13 @@ runtime:
   packages: [minimap2, samtools, sniffles, survivor, bcftools]
   capabilities: [long-read-alignment, sv-calling, sv-merging]
   healthcheck: bash -lc "minimap2 --version >/dev/null && samtools --version >/dev/null && sniffles --version >/dev/null"
+  install_policy: prefer-declared
+  install_command: mamba create -n bio_longread_sv -c conda-forge -c bioconda -y minimap2 samtools sniffles survivor bcftools
 ---
 
-# Long-Read SV with Sniffles and SURVIVOR
+# Legacy Long-Read SV with Sniffles and SURVIVOR
 
-Use this skill for long-read SV discovery and cohort merging. Always identify the platform first because minimap2 presets differ.
+This is a compatibility skill for older Sniffles/SURVIVOR workflows. For ordinary ONT/PacBio SV calling, prefer `genomics/long-read-sv-sniffles2` first. Use this skill when the user explicitly asks for SURVIVOR merge, an older project already depends on this layout, or the installed Sniffles version requires legacy syntax.
 
 ## 确认任务边界
 
@@ -31,9 +33,10 @@ Use this skill when:
 
 Do not use this skill when:
 
-- Input is paired-end short-read WGS; use LUMPY.
+- Input is paired-end short-read WGS; use `genomics/wgs-manta-sv`.
 - The goal is read-depth CNV; use CNVnator or another CNV caller.
 - The goal is SNP/InDel small variants.
+- The user only asks for one default long-read SV caller; use `genomics/long-read-sv-sniffles2`.
 
 Accept existing BAMs only after confirming they are aligned to the same reference and indexed.
 
@@ -147,7 +150,10 @@ Report platform, minimap2 preset, Sniffles version/syntax, merge distance, min s
 
 ## 相似的 skills
 
-- `genomics/wgs-lumpy-sv` - short-read SV.
+- `genomics/long-read-sv-sniffles2` - default long-read SV.
+- `genomics/long-read-sv-cutesv` - optional long-read cross-caller.
+- `genomics/pacbio-sv-pbsv` - optional PacBio-specific SV.
+- `genomics/wgs-manta-sv` - short-read SV.
 - `genomics/wgs-cnvnator-cnv` - read-depth CNV.
 - `genomics/assembly-variant-syri` - assembly-based structural variation.
 - `genomics/wgs-short-read-mapping` - short-read mapping, not long-read.

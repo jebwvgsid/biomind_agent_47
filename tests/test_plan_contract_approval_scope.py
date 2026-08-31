@@ -59,7 +59,10 @@ class PlanContractApprovalScopeTests(unittest.TestCase):
             reason="benchmark contract",
             increment_revision=False,
         )
-        output = next(item for item in effective_output_contracts(merged) if item["filename"] == "report.md")
+        output = next(
+            item for item in effective_output_contracts(merged)
+            if item["required_basename"] == "report.md"
+        )
         source_types = {item["source_type"] for item in output["provenance"]}
         self.assertIn("user_explicit", source_types)
         self.assertIn("benchmark_contract", source_types)
@@ -70,8 +73,8 @@ class PlanContractApprovalScopeTests(unittest.TestCase):
         approve_plan_state(state, 1, approval_projection=projection)
         self.assertTrue(plan_approval_is_current(state, 1))
 
-        state["task_spec"] = merge_task_spec(
-            state["task_spec"],
+        state["current_task"]["task_spec"] = merge_task_spec(
+            state["current_task"]["task_spec"],
             {"requirements": [{"requirement_id": "mode", "value": "strict"}]},
             source="user_feedback",
             reason="changed requirement",
@@ -94,11 +97,11 @@ class PlanContractApprovalScopeTests(unittest.TestCase):
         stale["generated_from_approval_scope_hash"] = "stale"
         self.assertIn("approval scope", validate_action_approval_lineage(state, stale, 1).lower())
 
-    def test_selected_skill_or_renderer_contract_change_stales_approval(self):
+    def test_step_skill_or_renderer_contract_change_stales_approval(self):
         state = self._state()
         state["steps"][0]["renderer_id"] = "renderer-a"
         approve_plan_state(state, 1, approval_projection=build_approval_projection(state))
-        state["selected_skill_ids"] = ["genomics/other"]
+        state["steps"][0]["skill_ids"] = ["genomics/other"]
         self.assertFalse(plan_approval_is_current(state, 1))
 
         state = self._state()

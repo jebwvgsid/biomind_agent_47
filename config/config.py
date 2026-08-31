@@ -88,6 +88,14 @@ GENERATE_REASONING_EFFORT = os.getenv(
 ).strip().lower()
 if GENERATE_REASONING_EFFORT not in {"high", "max"}:
     GENERATE_REASONING_EFFORT = "high"
+PLANNER_CORRECTION_THINKING_ENABLED = _env_bool(
+    "BIOMIND_PLANNER_CORRECTION_THINKING_ENABLED", True
+)
+PLANNER_CORRECTION_REASONING_EFFORT = os.getenv(
+    "BIOMIND_PLANNER_CORRECTION_REASONING_EFFORT", "high"
+).strip().lower()
+if PLANNER_CORRECTION_REASONING_EFFORT not in {"high", "max"}:
+    PLANNER_CORRECTION_REASONING_EFFORT = "high"
 try:
     DEEPSEEK_TEMPERATURE = float(os.getenv("BIOMIND_DEEPSEEK_TEMPERATURE", "0.6"))
 except (TypeError, ValueError):
@@ -146,7 +154,7 @@ CONSULTANT_OPTIONAL_ARCHIVE_TIMEOUT_SECONDS = _env_float(
 # Bound provider calls at the client layer. These are process settings rather
 # than task-specific values, so an API failure cannot wait indefinitely or
 # retry the same request forever.
-LLM_TIMEOUT_SECONDS = _env_float("BIOMIND_LLM_TIMEOUT_SECONDS", 90.0, minimum=10.0)
+LLM_TIMEOUT_SECONDS = _env_float("BIOMIND_LLM_TIMEOUT_SECONDS", 600.0, minimum=10.0)
 LLM_READONLY_TIMEOUT_SECONDS = _env_float(
     "BIOMIND_LLM_READONLY_TIMEOUT_SECONDS",
     45.0,
@@ -162,6 +170,43 @@ LLM_STEP_CONTEXT_MESSAGES = _env_int("BIOMIND_LLM_STEP_CONTEXT_MESSAGES", 6, min
 LLM_STEP_CONTEXT_CHARS = _env_int("BIOMIND_LLM_STEP_CONTEXT_CHARS", 12000, minimum=4000)
 LLM_STEP_PLAN_CHARS = _env_int("BIOMIND_LLM_STEP_PLAN_CHARS", 6000, minimum=2000)
 LLM_STEP_SKILL_DOC_CHARS = _env_int("BIOMIND_LLM_STEP_SKILL_DOC_CHARS", 18000, minimum=4000)
+# Progressive Skill access uses explicit named limits so context acquisition
+# cannot silently truncate canonical source text or loop indefinitely.
+SKILL_FULL_READ_MAX_CHARS = _env_int(
+    "BIOMIND_SKILL_FULL_READ_MAX_CHARS",
+    60_000,
+    minimum=1_000,
+)
+SKILL_EXCERPT_MAX_CHARS = _env_int(
+    "BIOMIND_SKILL_EXCERPT_MAX_CHARS",
+    24_000,
+    minimum=500,
+)
+SKILL_CONTEXT_MAX_REQUESTS_PER_ROUND = _env_int(
+    "BIOMIND_SKILL_CONTEXT_MAX_REQUESTS_PER_ROUND",
+    6,
+    minimum=1,
+)
+MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION = _env_int(
+    "BIOMIND_MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION",
+    8,
+    minimum=1,
+)
+MAX_SKILL_SEARCH_ROUNDS_PER_STEP = _env_int(
+    "BIOMIND_MAX_SKILL_SEARCH_ROUNDS_PER_STEP",
+    5,
+    minimum=1,
+)
+MAX_SKILL_BINDING_PROPOSALS_PER_STEP = _env_int(
+    "BIOMIND_MAX_SKILL_BINDING_PROPOSALS_PER_STEP",
+    3,
+    minimum=1,
+)
+MAX_CONSULTANT_IDENTICAL_NO_PROGRESS_TRANSITIONS = _env_int(
+    "BIOMIND_MAX_CONSULTANT_IDENTICAL_NO_PROGRESS_TRANSITIONS",
+    2,
+    minimum=2,
+)
 # Generate still applies the provider-level token/headroom gate before an LLM
 # call.  This larger character budget prevents the older 26k engineering cap
 # from rejecting valid current-step contracts far below a 200k-token window.

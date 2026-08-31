@@ -64,6 +64,29 @@ class RecoveryPrimitiveTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "may not emit executable code"):
             parse_recovery_judge_decision(json.dumps({**payload, "commands": ["cp old new"]}))
 
+    def test_unbound_legacy_acceptance_with_failed_result_fails_closed(self):
+        decision = RecoveryDecision.from_mapping({
+            "schema_version": 3,
+            "failure_class": RecoveryFailureClass.CONTRACT_DRIFT.value,
+            "failure_owner": RecoveryFailureOwner.ARTIFACT_CONTRACT.value,
+            "failure_type": "legacy_unbound_reconcile",
+            "recommended_action": RecoveryAction.RECONCILE_AND_CONTINUE.value,
+            "primary_execution_succeeded": False,
+            "error_is_real": True,
+            "evidence_sufficient": True,
+            "confidence": 1.0,
+            "rerun_required": False,
+            "consume_retry_budget": False,
+            "user_notification_required": False,
+            "reason": "legacy payload has no accepted Execute",
+            "root_cause": "legacy payload has no accepted Execute",
+            "evidence": ["returncode=1"],
+        })
+
+        self.assertEqual(decision.kind, "ESCALATE")
+        self.assertEqual(decision.disposition, "INTERNAL_PROTOCOL_ERROR")
+        self.assertEqual(decision.target_route, "supervisor")
+
     def test_recovery_decision_accepts_legacy_schema(self):
         decision = parse_recovery_decision(json.dumps({
             "verdict": "repair",

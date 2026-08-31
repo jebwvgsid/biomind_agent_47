@@ -46,7 +46,7 @@ class BioAgentMemoryTests(unittest.TestCase):
     def test_prompt_assembly_failure_is_internal_and_does_not_block_plan_step(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
         start = source.index('reason = f"PROMPT_ASSEMBLY_FAILURE: {compact_exc}"')
-        end = source.index("self.profiler.record_context_budget", start)
+        end = source.index("generate_response_cached = False", start)
         branch = source[start:end]
 
         self.assertIn('"type": "internal_protocol_error"', branch)
@@ -64,7 +64,7 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertIn("required_next_action", missing)
         self.assertEqual(missing_supervisor_retry_fields({"supervisor_verdict": "PASS"}), [])
 
-    def test_generate_task_projection_keeps_constraints_and_drops_old_history(self):
+    def test_generate_task_projection_keeps_semantics_without_history_or_exact_paths(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             agent = BioAnalystAgent.__new__(BioAnalystAgent)
             agent.data_path = tmpdir
@@ -76,7 +76,15 @@ class BioAgentMemoryTests(unittest.TestCase):
             save_plan_state(tmpdir, "task-a", plan)
             spec = merge_task_spec(
                 create_task_spec("Annotate the declared VCF"),
-                {"must_not_do": ["do not guess a species database"]},
+                {
+                    "requirements": [{
+                        "requirement_id": "required_behavior.database_source",
+                        "semantic_key": "required_behavior.database_source",
+                        "operator": "prohibit",
+                        "value": "do not guess a species database",
+                        "level": "required",
+                    }]
+                },
                 source="user",
                 reason="constraint",
             )
@@ -94,11 +102,17 @@ class BioAgentMemoryTests(unittest.TestCase):
                 state=state,
             )
 
-        self.assertIn("do not guess a species database", projection["user_constraints"])
-        self.assertNotIn("current_step", projection)
+        self.assertIn(
+            "do not guess a species database",
+            json.dumps(projection["task"]["constraints"], ensure_ascii=False),
+        )
+        self.assertIn("current_step", projection)
+        self.assertIn("annotated.vcf", json.dumps(projection["current_step"], ensure_ascii=False))
         self.assertIn("annotated.vcf", current_step)
-        self.assertEqual(projection["resolved_inputs"][0]["path"], "/data/input.vcf")
-        self.assertNotIn("change_log", projection)
+        rendered = json.dumps(projection, ensure_ascii=False, sort_keys=True)
+        self.assertIn("input.vcf", rendered)
+        self.assertNotIn("/data/input.vcf", rendered)
+        self.assertNotIn("change_log", rendered)
 
     def test_loop_calling_task_semantics_are_inferred(self):
         semantics = infer_task_semantics(
@@ -195,17 +209,22 @@ class BioAgentMemoryTests(unittest.TestCase):
 
         self.assertLess(wiki_index, guard_index)
 
-    def test_generate_prunes_internal_consultant_load_artifacts(self):
+    def test_generate_v2_bypasses_legacy_consultant_history_projection(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+        generate_start = source.index("async def _generate_impl(state: AgentState):")
+        execute_start = source.index("async def execute_logic", generate_start)
+        generate = source[generate_start:execute_start]
 
+        # The compatibility filter remains available for old callers, but V2
+        # Generate is built only from the deterministic semantic closure.
         self.assertIn("def _generate_visible_messages", source)
         self.assertIn("LOAD_WORKFLOW_TEMPLATE", source)
         self.assertIn("LOAD_SKILL_DOC", source)
         self.assertIn("<loaded_skill_doc", source)
-        self.assertIn("self._generate_visible_messages(", source)
-        self.assertIn("structured_recovery=bool(recovery_context_obj)", source)
-        self.assertIn("visible_messages = (", source)
-        self.assertIn("] + visible_messages", source)
+        self.assertNotIn("self._generate_visible_messages(", generate)
+        self.assertIn('node_type="generate"', generate)
+        self.assertIn("generate_node_context.llm_payload.to_dict()", generate)
+        self.assertNotIn("consultant_visible_messages", generate)
 
     def test_consultant_uses_bounded_skill_retrieval_and_message_history(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
@@ -258,14 +277,17 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertNotIn("consultant_execute_count_loop_guard_handoff", source)
         self.assertNotIn("<consultant_force_finish_from_observations>", source)
 
-    def test_consultant_internal_failures_use_skill_only_fallback_without_main_controller(self):
+    def test_consultant_internal_failures_never_become_user_ambiguity(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
-        self.assertIn("<consultant_loop_guard_blocked>", source)
-        self.assertIn("Candidate skill hints", source)
-        self.assertNotIn("consultant_loop_guard_skill_only", source)
-        self.assertNotIn("semantic_contract_ready", source)
-        self.assertIn('"next_step": "ask_user"', source)
+        guard_start = source.index("loop_guard_exhausted = bool(")
+        guard_end = source.index("if finalize_mode:", guard_start)
+        guard = source[guard_start:guard_end]
+        self.assertIn("CONSULTANT_ACTION_REPAIR_EXHAUSTED", guard)
+        self.assertIn("not a user ambiguity", guard)
+        self.assertIn('"pending_human_question": {}', guard)
+        self.assertIn('"next_step": "finish"', guard)
+        self.assertNotIn('"next_step": "ask_user"', guard)
         self.assertNotIn("from agent_core.main_controller import MainController", source)
         self.assertNotIn("self.main_controller = MainController()", source)
         self.assertNotIn("consultant_internal_failure_decision", source)
@@ -385,7 +407,7 @@ class BioAgentMemoryTests(unittest.TestCase):
 
         self.assertIn("Consultant owns skill discovery and coarse stage decomposition", consultant_prompt)
         self.assertIn("Consultant must never activate a batch or skill", consultant_prompt)
-        self.assertIn("Never emit ACTIVE_SKILLS, FUTURE_SKILLS", consultant_prompt)
+        self.assertIn("No activation fields", consultant_prompt)
         self.assertIn("Planner owns execution scheduling", planner_prompt)
         self.assertIn("Each checklist item's `Skills:` field", planner_prompt)
         self.assertIn("strip_workflow_activation", source)
@@ -408,7 +430,8 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertIn("def _planner_declares_completed_task", source)
         self.assertIn("def _finish_only_plan_from_completed_plan", source)
         self.assertIn("Action: FINISH", source)
-        self.assertIn("plan_content = self._sanitize_completed_planner_plan(response.content)", source)
+        self.assertIn("plan_content = str(response.content or \"\").strip()", source)
+        self.assertIn("strict=True", source)
         self.assertNotIn('"already complete",', source)
 
     def test_generate_rewrites_completed_resume_plan_before_execution(self):
@@ -494,8 +517,11 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertNotIn("formal_upstream_artifact_audit", source)
         self.assertNotIn("formal_upstream_question", source)
 
-    def test_planner_uses_packet_and_generate_uses_on_demand_retrieval(self):
+    def test_planner_uses_packet_and_generate_v2_uses_semantic_closure(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+        generate_start = source.index("async def _generate_impl(state: AgentState):")
+        execute_start = source.index("async def execute_logic", generate_start)
+        generate = source[generate_start:execute_start]
 
         self.assertIn("def _pending_archive_buffer_context", source)
         self.assertIn("def _artifact_index_context", source)
@@ -507,7 +533,9 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertIn("missing_input = self._looks_like_missing_input_context", source)
         self.assertIn("evidence_query = self._looks_like_evidence_query", source)
         self.assertIn("artifact_context = self._artifact_index_context", source)
-        self.assertIn("on_demand_memory = await self._generate_on_demand_memory_contexts", source)
+        self.assertNotIn("on_demand_memory = await self._generate_on_demand_memory_contexts", generate)
+        self.assertIn("Generate V2 consumes only the current-step semantic closure", generate)
+        self.assertIn('node_type="generate"', generate)
         self.assertNotIn("archive_context = self._archive_prompt_context(task_id, md_query", source)
 
     def test_wiki_ingest_modes_and_task_scoped_command_are_wired(self):
@@ -518,7 +546,10 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertIn("async def _maybe_offer_wiki_ingest", source)
         self.assertIn("async def _maybe_auto_wiki_ingest_after_finalize", source)
         self.assertIn('/wiki ingest task', source)
-        self.assertIn("task_id=ingest_task_id", source)
+        self.assertIn("async def _ingest_wiki_task_with_gate", source)
+        self.assertIn("WikiLifecycleStore", source)
+        self.assertIn("expected_snapshot_hash", source)
+        self.assertIn("Project-wide blind ingestion is disabled", source)
 
     def test_consultant_unrecognized_output_retries_instead_of_human_input_end(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
@@ -528,6 +559,17 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertIn('f"consultant_unrecognized:{len(validation_errors)}"', source)
         self.assertIn('"next_step": "consultant"', source)
         self.assertNotIn('return {"messages": [response], "next_step": "human_input"}', source)
+
+    def test_consultant_execute_contract_is_explicit_and_repair_is_typed(self):
+        root = Path(__file__).resolve().parents[1]
+        source = (root / "bio_agents.py").read_text(encoding="utf-8")
+        prompt = (root / "prompts" / "templates.py").read_text(encoding="utf-8")
+
+        self.assertIn("execute.command_groups is unsupported", source)
+        self.assertIn("CONTROLLER_EVIDENCE_ECHO", source)
+        self.assertIn('"ACTION_FORMAT_INVALID"', source)
+        self.assertIn("`code` is required", prompt)
+        self.assertIn("`command_groups`, `commands`, `runner`, and `env` are unsupported", prompt)
 
     def test_interactive_loop_does_not_complete_waiting_human_input(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
@@ -549,8 +591,9 @@ class BioAgentMemoryTests(unittest.TestCase):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
         self.assertIn("async def _run_agent_interrupt_loop", source)
-        self.assertIn("await self._run_agent_interrupt_loop(Command(resume=user_response), tid)", source)
-        self.assertIn('await self._run_agent_interrupt_loop("", tid, resume_initial=True)', source)
+        self.assertIn("Command(resume=user_response)", source)
+        self.assertIn('resume_initial=True', source)
+        self.assertIn("output.render_terminal_result(run_result)", source)
 
     def test_user_preferences_markdown_is_loaded_into_prompts(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
@@ -559,7 +602,8 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertIn('os.getenv("BIOMIND_USER_PREFERENCES"', source)
         self.assertIn('"user_preferences.md"', source)
         self.assertIn("user_preferences_context = self._load_user_preferences()", source)
-        self.assertIn('"user_preferences": user_preferences_context', source)
+        self.assertIn('"user_preferences_context": self._load_user_preferences()', source)
+        self.assertIn("planner_node_context.llm_payload.to_dict()", source)
 
     def test_skill_runtime_guard_blocks_bare_managed_cli(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
@@ -731,8 +775,10 @@ class BioAgentMemoryTests(unittest.TestCase):
     def test_ctrl_c_exits_interactive_loop(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
-        self.assertIn("Interrupted. Exiting interactive mode.", source)
-        self.assertIn('self.profiler.finish_task(current_session_id, "interrupted")\n                break', source)
+        self.assertIn('self.profiler.finish_task(current_session_id, "interrupted")', source)
+        self.assertIn('self._interactive_run_result(', source)
+        self.assertIn('"interrupted",', source)
+        self.assertIn('output.render_terminal_result(', source)
 
     def test_top_level_quit_aliases_do_not_start_a_new_task(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
@@ -799,11 +845,12 @@ class BioAgentMemoryTests(unittest.TestCase):
     def test_consultant_loop_guard_uses_skill_only_handoff_before_asking(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
-        self.assertIn("consultant_loop_guard_blocked", source)
-        self.assertNotIn("consultant_loop_guard_skill_only", source)
-        self.assertNotIn("semantic_contract_ready", source)
-        self.assertIn("FINISH", source)
-        self.assertIn("BioMind could not derive any valid canonical skills", source)
+        seed = source[source.index("runtime_seed_skill_ids ="):source.index("if finalize_mode:", source.index("runtime_seed_skill_ids ="))]
+        self.assertIn("_consultant_runtime_seed_evidence", seed)
+        self.assertIn("runtime_evidence=runtime_seed_evidence", seed)
+        self.assertIn("begin_finalize(consultation_state)", seed)
+        self.assertIn("CONSULTANT_ACTION_REPAIR_EXHAUSTED", seed)
+        self.assertNotIn('"next_step": "ask_user"', seed)
 
     def test_consultant_loop_guard_counts_since_latest_human_message(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")

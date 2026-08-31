@@ -15,7 +15,6 @@ from agent_core.context_budget import (
     compress_tagged_text,
 )
 from agent_core.diagnostics import DiagnosticContext
-from agent_core.plan_contract import validated_planner_candidate_wire_example
 
 logger = logging.getLogger("BioMind.PromptManager")
 
@@ -100,6 +99,84 @@ class PromptManager:
         if not payload:
             return value
         return DiagnosticContext(**payload).prompt_view(max_chars=max_chars)
+
+    @staticmethod
+    def _skill_decision_protocol(*, binding_boundary: str) -> str:
+        """Return the domain-neutral, typed Skill decision contract for one node."""
+        request_example = json.dumps(
+            {
+                "decision": "REQUEST_SKILL_CONTEXT",
+                "reason": "Need exact selected Skill text before deciding",
+                "requests": [
+                    {
+                        "skill_id": "<canonical-skill-id>",
+                        "operation": "section",
+                        "heading": "<exact-heading>",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        search_example = json.dumps(
+            {
+                "decision": "SEARCH_SKILLS",
+                "query": "<capability-oriented-local-catalog-query>",
+                "capability_gap": "<gap-not-covered-by-active-skills-or-read-references>",
+                "desired_outcome": "<capability-that-a-candidate-must-provide>",
+                "requested_scope": "unknown",
+                "relation_hint": "unknown",
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        proposal_example = json.dumps(
+            {
+                "decision": "PROPOSE_SKILL_BINDING",
+                "candidate_skill_id": "<canonical-skill-id>",
+                "candidate_snapshot_id": "<candidate-snapshot-id>",
+                "requested_scope": "current_step",
+                "relation": "supplement",
+                "target_step_id": "<current-step-id>",
+                "justification": "<evidence-grounded-reason>",
+                "evidence_refs": ["<provider-visible-evidence-ref>"],
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        return f"""Skill context acquisition uses first-class typed decisions, never an executable action or a free-text tag.
+
+As an exclusive alternative to the node's normal output, return exactly one raw
+JSON object in one of these forms and no Markdown, prose, or wrapper:
+{request_example}
+{search_example}
+{proposal_example}
+
+Keep decision as the top-level discriminator. Do not encode any of these as
+action_type; SEARCH_SKILLS is distinct from an ordinary semantic search action.
+
+REQUEST_SKILL_CONTEXT reads exact text without changing TaskSpec, Plan, step
+status, retry budgets, or routing. Allowed operations are headings, section,
+search, range, resource, and full. Use heading for section; query for search;
+start_line/end_line for range; and resource_path with optional line bounds for
+resource. Request only the smallest relevant text. Do not generate a command to
+read a Skill. Do not ask the user merely because an optional input is absent;
+read the complete relevant rule first. The Controller adds invocation,
+continuation, task, plan, step, and attempt identity; never invent or return that
+runtime envelope.
+
+SEARCH_SKILLS is allowed only after active Skill text and already-read references
+do not cover a concrete capability gap. It searches the registered local catalog
+only. Search does not activate, bind, replace, install, download, or authorize use
+of a candidate and does not change TaskSpec or Plan. A candidate's compact search
+metadata is not its exact content; request the relevant candidate text before
+proposing or using it. requested_scope must be current_step, task, or unknown;
+relation_hint must be supplement, replace, or unknown.
+
+PROPOSE_SKILL_BINDING is a proposal, not a commit. Never silently replace a
+user-specified method, change TaskSpec, rewrite Plan, or mark an active Skill
+superseded. requested_scope must be current_step or task, and relation must be
+supplement or replace. {binding_boundary}"""
 
     @staticmethod
     def _build_tool_context(package_manager, work_dir: str) -> str:
@@ -1503,11 +1580,14 @@ Consultant owns skill discovery and SELECTED_SKILLS is the full allowed pool. Pl
                 )
                 + "\n</controller_machine_audit>"
             )
-        return RECOVERY_JUDGE_PROMPT.format(diagnostic_context=ordered_context).replace(
+        base_prompt = RECOVERY_JUDGE_PROMPT.format(
+            diagnostic_context=ordered_context
+        ).replace(
             "DiagnosticContextBuilder has already read bounded local scripts, traces, logs, runtime contracts, and manifests",
             "Controller has projected the exact current-step contract, structured failure facts, and bounded evidence excerpts",
-        ) + (
-            "\n\nEvidence protocol: cite supporting evidence only by the handles shown "
+        )
+        evidence_protocol = (
+            "Evidence protocol: cite supporting evidence only by the handles shown "
             "in the payload (for example E1 or E2). Do not invent file refs, object "
             "refs, hashes, invocation IDs, generations, or persistent evidence IDs. "
             "The ordered task_spec.highlighted_constraints list is authoritative. "
@@ -1522,6 +1602,36 @@ Consultant owns skill discovery and SELECTED_SKILLS is the full allowed pool. Pl
             "the current task evidence root. Use Glob for discovery and Read for a "
             "targeted range. Never request writes, deletion, execution, absolute paths, "
             "parent traversal, unrestricted cat/find behavior, or complete large-file dumps."
+        )
+        skill_policy = """Skill policy for Recovery: first use the current active Skills and any exact excerpts already supplied. If an applicable active or candidate Skill is identified but its exact relevant rule is missing, use REQUEST_SKILL_CONTEXT rather than guessing, generating a read command, or treating missing context as execution failure.
+
+Use SEARCH_SKILLS only when the failure evidence establishes a real capability
+gap that the active Skill text and already-read references do not cover. An
+ordinary command, parameter, path, runtime, dependency, validation, or artifact
+failure is not by itself evidence that a new Skill is needed. Search results are
+candidates only and never authorize use.
+
+Never silently replace a user-specified method. If evidence supports a
+task-level binding or any replacement, return PROPOSE_SKILL_BINDING; Consultant
+reviews task meaning and Planner reviews Plan impact. Recovery may propose a
+current-step supplement, task supplement, or task replacement, but may not
+commit the binding, change TaskSpec or Plan, or continue with the candidate as if
+it were active."""
+        skill_protocol = PromptManager._skill_decision_protocol(
+            binding_boundary=(
+                "Recovery may propose current-step supplement, task supplement, "
+                "or task replacement, but Consultant and Planner own the required "
+                "semantic and Plan-impact review."
+            )
+        )
+        return (
+            base_prompt
+            + "\n\n"
+            + evidence_protocol
+            + "\n\n"
+            + skill_policy
+            + "\n\n"
+            + skill_protocol
         )
 
     @staticmethod
@@ -1559,72 +1669,298 @@ Consultant owns skill discovery and SELECTED_SKILLS is the full allowed pool. Pl
         return REPAIR_GENERATOR_PROMPT.format(recovery_context=payload)
 
     @staticmethod
-    def get_plan_repair_prompt(
-        repair_request: dict,
-        *,
-        effective_facts_context: str = "",
-        selected_skill_context: str = "",
-        renderer_route: str = "",
-    ) -> str:
-        """Build a compact, version-bound prompt for repairing existing steps."""
-        payload = json.dumps(repair_request, ensure_ascii=False, separators=(",", ":"), default=str)
-        return f"""You are repairing an existing BioMind plan, not creating a new plan.
+    def get_plan_impact_review_prompt(payload: Mapping[str, Any]) -> str:
+        """Build the restricted Planner prompt for one semantic impact review."""
+        allowed_input_keys = (
+            "impact_kind",
+            "binding_decision_allowed",
+            "base_task_revision",
+            "new_task_revision",
+            "base_plan_revision",
+            "current_plan",
+            "skill_change",
+            "completed_steps",
+            "current_step",
+            "user_evidence",
+            "relevant_skill_excerpts",
+        )
+        source = dict(payload or {})
+        prompt_input = {
+            key: deepcopy(source[key])
+            for key in allowed_input_keys
+            if key in source
+        }
+        input_json = json.dumps(
+            prompt_input,
+            ensure_ascii=False,
+            sort_keys=False,
+            indent=2,
+            default=str,
+        )
+        return f"""You are the Planner in restricted plan_impact_review mode. This is an impact review, not a default full replan.
 
-The local plan store is authoritative. Modify only step IDs in `allowed_step_ids`.
-Preserve immutable constraints, step IDs, completed/running status, and evidence.
-Correct only the supplied validation violations and required dependency contracts.
-Do not add or delete workflow stages. Do not return Markdown or a full plan.
-Repair scope: schema/format/missing fields/references only.
-Do not change effective user facts, selected skills, scientific intent, or the renderer route.
-Do not emit or modify TaskSpec, renderer projections, renderer invocation
-contracts, validation issues, approval state, execution evidence, status, or
-any other controller-owned field. Preserve the complete authoritative
-Highlighted Constraint List; semantic changes belong to Consultant/User, not
-Plan Repair.
+Return exactly one raw JSON object and no Markdown or prose. The only allowed
+decision values are BIND_AND_RESUME, PATCH_CURRENT_STEP, REPLAN_SUFFIX,
+FULL_REPLAN, NEED_USER_INPUT, and REJECT_PROPOSAL. Output keys are restricted to
+decision, base_task_revision, new_task_revision, base_plan_revision, reason, skill_refs,
+replacement_step, carry_forward, supersede, replacement_suffix,
+replacement_steps, question, and requested_slots. The input
+base_task_revision is the historical TaskSpec being compared, while
+new_task_revision is the current authoritative TaskSpec. Echo both input task
+revisions and input base_plan_revision exactly. Never invent a revision. Every
+decision requires a non-empty evidence-grounded reason.
 
-{effective_facts_context or "[EFFECTIVE USER FACTS]\nNo structured effective facts were available.\n[USER SOURCE REFERENCES]\n[]"}
+Choose the smallest justified impact:
+- BIND_AND_RESUME requires skill_refs and is valid only for a current-step
+  supplemental binding when objective, input/output identities, success
+  criteria, and step structure remain unchanged. It is forbidden when the
+  read-only input sets binding_decision_allowed to false; a TaskSpec-only
+  semantic change must be handled by another impact decision.
+- PATCH_CURRENT_STEP requires replacement_step. The current step must not be
+  passed, and its input/output identities and success criteria must remain
+  unchanged.
+- REPLAN_SUFFIX requires carry_forward, supersede, and replacement_suffix.
+  Every carry_forward item must name a passed step and contain concrete
+  evidence_refs. A step cannot be both carried forward and superseded. Preserve
+  old superseded steps for audit and use new unique IDs in the replacement
+  suffix.
+- FULL_REPLAN requires replacement_steps and is allowed only when the task goal,
+  required input set, final output identity, success criteria, or proven reuse
+  of completed work has materially changed. Adding a Skill alone is not enough.
+- NEED_USER_INPUT requires question and requested_slots and is allowed only for
+  a genuine user-owned semantic gap. Route the question through Consultant; do
+  not address the user directly.
+- REJECT_PROPOSAL has no decision-specific field and requires an
+  evidence-grounded reason.
 
-[SELECTED SKILL CONTRACT]
-{selected_skill_context or "No selected-skill context was provided."}
+You own semantic Plan-impact judgment. The Controller may validate revisions,
+step existence/status, identity preservation, unique IDs, and reference shape,
+but it cannot decide semantic applicability. Do not generate executable code or
+use a free-text tag as a decision protocol.
 
-[RENDERER ROUTE]
-{renderer_route or "No renderer route applies."}
+Read-only impact-review input JSON:
+{input_json}"""
 
-Return exactly one JSON object:
-{{
-  "operation": "replace_steps",
-  "base_plan_version": <same integer as request>,
-  "base_plan_hash": "<same hash as request>",
-  "replace_steps": [
-    {{"step_id": "step-N", "new_step": {{
-      "step_id": "step-N",
-      "title": "...",
-      "action": "search|execute|install|ask_user|finish",
-      "purpose": "analysis|validation|probe|record_failure|install|user_input",
-      "tool": "...",
-      "inputs": [],
-      "outputs": [],
-      "dependencies": [],
-      "success_criteria": [],
-      "skill_ids": [],
-      "risk_level": "low|medium|high"
-    }}}}
-  ],
-  "task_output_materializations": [
-    {{"output_ref": "output.semantic_handle", "path": "relative-name.ext"}}
-  ],
-  "reason": "brief repair reason"
-}}
+    @staticmethod
+    def get_consultant_skill_resolution_prompt(payload: Mapping[str, Any]) -> str:
+        """Build the restricted Consultant prompt for one candidate Skill review."""
+        allowed_input_keys = (
+            "task_snapshot",
+            "current_plan",
+            "active_skills",
+            "candidate",
+            "proposal",
+            "user_evidence",
+            "relevant_skill_excerpts",
+        )
+        source = dict(payload or {})
+        prompt_input = {
+            key: deepcopy(source[key])
+            for key in allowed_input_keys
+            if key in source
+        }
+        input_json = json.dumps(
+            prompt_input,
+            ensure_ascii=False,
+            sort_keys=False,
+            indent=2,
+            default=str,
+        )
+        return f"""You are the Consultant in restricted skill_resolution mode. This is a bounded candidate review, not the full Consultant workflow.
 
-Include `task_output_materializations` only when an actionable violation targets
-that table. It replaces the complete table, so preserve every valid existing
-row. Each path must be safe and relative to the typed TaskSpec output_dir. A
-materialization-only repair may return an empty `replace_steps` list.
+Judge only whether the candidate applies, whether it supplements or replaces an
+active Skill, whether its scope is the current step or the task, whether the
+proposal changes user intent, and whether a genuine user-owned fact is missing.
+Do not rebuild TaskSpec, inspect the full conversation, expose another node's
+reasoning, generate or modify a Plan, generate executable code, or commit any
+TaskSpec or Skill binding.
 
-<plan_repair_request>
-{payload}
-</plan_repair_request>
-"""
+Return exactly one raw JSON object and no Markdown or prose. The only allowed
+decision values are APPROVE_STEP_SUPPLEMENT, ROUTE_TASK_LEVEL_CHANGE,
+REJECT_SKILL_PROPOSAL, NEED_USER_INPUT, and SEARCH_MORE. Output keys are
+restricted to decision, proposal_id, candidate_skill_id, relation, reason,
+task_fields_affected, question, requested_slots, and query.
+
+- APPROVE_STEP_SUPPLEMENT is only for an applicable current-step supplement;
+  set relation to supplement.
+- ROUTE_TASK_LEVEL_CHANGE is required for task scope or replacement; set
+  relation to supplement or replace and list only affected TaskSpec semantic
+  fields in task_fields_affected. This routes a proposal and does not commit it.
+- REJECT_SKILL_PROPOSAL requires an evidence-grounded reason.
+- NEED_USER_INPUT requires question and requested_slots and is legal only when
+  the missing fact is user-owned and materially changes the task.
+- SEARCH_MORE requires query and is legal only when the supplied candidate
+  evidence is insufficient. Search does not activate or bind a candidate.
+
+Do not output FINISH, COMPLETE_TASK, GENERATED_ACTION, EXECUTE, FULL_PLAN, a
+shell command, or a free-text tag as the decision protocol.
+
+Read-only skill-resolution input JSON:
+{input_json}"""
+
+    @staticmethod
+    def get_planner_v2_system_prompt() -> str:
+        """Stable Planner policy. It contains no task-specific semantic example."""
+        base_prompt = """You are the BioMind Planner.
+
+Return exactly one complete raw JSON object and no Markdown or prose. Output is
+mode-dependent. In create_complete_plan or correct_previous_plan mode, return
+PLAN_CANDIDATE, TASKSPEC_RECONCILIATION_REQUIRED, REQUEST_SKILL_CONTEXT,
+SEARCH_SKILLS, or PROPOSE_SKILL_BINDING. Semantic delta and nested repair
+responses are unsupported. In correct_previous_plan mode, a PLAN_CANDIDATE
+must be the entire replacement candidate, not a patch. Treat
+current_focus.planning.violations,
+affected_subgraph, previous_correction, convergence, and instruction as the
+blocking correction objective. Satisfy every required_postcondition before
+returning. When convergence.no_structural_progress is true, changes outside the
+reported affected_fields do not count as a correction; revise the affected
+structure and self-check it against every blocking violation.
+
+Authority hierarchy: semantic_history.task_spec and the accepted user/Consultant
+facts are authoritative task meaning. The Controller owns state identity,
+validation, allocation, execution evidence, approval, and routing. The Planner
+owns plan structure and natural-language/scientific reasoning. Never return
+Controller IDs, hashes, storage references, CAS fields, approval data,
+validation state, status, or execution evidence. Outside plan_impact_review,
+never return revisions; that restricted mode may only echo its supplied
+historical task revision, current task revision, and base Plan revision as
+required by its decision schema.
+
+During a full replan, preserve every completed step's step identity, typed
+inputs, typed outputs, artifact identities, and dependency identities. You may
+rewrite prose and may restructure failed steps and the pending suffix.
+
+Artifact namespace is closed: input.* consumes TaskSpec inputs, output.* produces
+TaskSpec outputs, and plan.* names candidate-local intermediates. A TaskSpec output
+must be used directly in step.outputs and MUST NOT be redeclared in
+proposed_artifacts. Each required TaskSpec output has exactly one producer.
+proposed_artifacts is only for new plan-local intermediates and each declaration
+has local_ref=plan.<task-specific-local-handle>, an object semantic_view, and an
+artifact_contract with object_kind=file|directory, lifecycle=plan_local, and
+materialization_policy_id=managed_intermediate_v1. Inputs consume; outputs produce;
+dependencies only order steps. A consumed intermediate must be produced by one
+reachable dependency.
+
+PLAN_CANDIDATE schema placeholders:
+{
+  "outcome_type": "PLAN_CANDIDATE",
+  "proposed_artifacts": [{
+    "local_ref": "plan.<task-specific-local-handle>",
+    "semantic_view": {"role": "<task-specific-role>", "format": "<format>", "description": "<description>"},
+    "artifact_contract": {"object_kind": "file|directory", "lifecycle": "plan_local", "materialization_policy_id": "managed_intermediate_v1"}
+  }],
+  "steps": [{
+    "step_id": "<task-specific-step-id>",
+    "title": "<task-specific-title>",
+    "action": "search|execute|install|ask_user|finish",
+    "purpose": "analysis|validation|probe|record_failure|install|user_input",
+    "tool": "<selected-capability-or-runner>",
+    "inputs": ["<existing-input-or-plan-handle>"],
+    "outputs": ["<existing-output-or-plan-handle>"],
+    "dependencies": ["<task-specific-step-id>"],
+    "success_criteria": ["<task-specific-criterion>"],
+    "skill_ids": ["<selected-capability-id>"],
+    "workflow_stage_ids": [],
+    "batch_id": "",
+    "risk_level": "low|medium|high"
+  }],
+  "validation_checklist": [{"check_id": "<task-specific-check-id>", "description": "<semantic-self-check>"}],
+  "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2"},
+  "task_output_materializations": [{"output_ref": "<existing-output-handle>", "path": "<safe-relative-filename>"}]
+}
+
+Omit proposed_artifacts and task_output_materializations when they are not needed.
+For path_policy=planner_materialized, keep the TaskSpec output handle in
+step.outputs and provide one safe relative filename in task_output_materializations.
+Read every highlighted constraint and put task-specific semantic checks in
+validation_checklist. The Controller validates only machine contracts.
+
+If a required user-owned semantic fact is genuinely absent, return:
+{"outcome_type":"TASKSPEC_RECONCILIATION_REQUIRED","missing_semantic_facts":[{"fact_key":"<missing-fact>","reason":"<why-required>","affected_operation_id":"<operation>","relevant_confirmed_decision_ids":[],"durable_evidence_may_resolve":true}]}"""
+        skill_protocol = PromptManager._skill_decision_protocol(
+            binding_boundary=(
+                "Planner may propose only a current-step supplemental binding. "
+                "A task-level binding or primary replacement must route through "
+                "Consultant and cannot be committed by Planner."
+            )
+        )
+        plan_impact_protocol = """When current_focus.planning.mode is plan_impact_review, the mode overrides the normal Planner output union. Return exactly one of BIND_AND_RESUME, PATCH_CURRENT_STEP, REPLAN_SUFFIX, FULL_REPLAN, NEED_USER_INPUT, or REJECT_PROPOSAL; do not return a PLAN_CANDIDATE, TASKSPEC_RECONCILIATION_REQUIRED, or a Skill-context decision in that mode.
+
+The plan-impact object may use only decision, base_task_revision,
+new_task_revision, base_plan_revision, reason, skill_refs, replacement_step, carry_forward,
+supersede, replacement_suffix, replacement_steps, question, and
+requested_slots. Echo the historical and current task revisions plus the base
+Plan revision exactly from the request. Prefer the
+smallest valid impact in this order: BIND_AND_RESUME, PATCH_CURRENT_STEP,
+REPLAN_SUFFIX, then FULL_REPLAN. Do not default to FULL_REPLAN merely because a
+Skill changed.
+
+BIND_AND_RESUME is limited to a current-step supplement with unchanged
+objective, input/output identities, success criteria, and step structure, and
+requires skill_refs. PATCH_CURRENT_STEP requires replacement_step, cannot patch
+a passed step, and must preserve input/output identities and success criteria.
+REPLAN_SUFFIX requires carry_forward, supersede, and replacement_suffix; every
+carried-forward passed step must cite concrete evidence_refs, no step may be in
+both carry_forward and supersede, and replacement steps need new IDs.
+FULL_REPLAN requires replacement_steps and is limited to a material change in
+task goal, required inputs, final output identity, success criteria, or the
+provable reuse of completed work. NEED_USER_INPUT requires question and
+requested_slots for a genuine user-owned semantic gap and routes through
+Consultant. REJECT_PROPOSAL requires an evidence-grounded reason.
+
+Planner owns the semantic impact judgment. Do not delegate semantic
+applicability to the Controller; the Controller checks only deterministic
+revision, identity, status, reference, and shape invariants."""
+        return base_prompt + "\n\n" + skill_protocol + "\n\n" + plan_impact_protocol
+
+    @staticmethod
+    def get_planner_v2_human_prompt(llm_payload: Mapping[str, Any]) -> str:
+        """Serialize invocation facts and the restricted impact-mode output contract."""
+        semantic, focus = PromptManager._node_context_sections(llm_payload)
+        focus_for_prompt = deepcopy(dict(focus))
+        planning = focus_for_prompt.get("planning")
+        if (
+            isinstance(planning, Mapping)
+            and str(planning.get("mode") or "") == "plan_impact_review"
+        ):
+            planning_for_prompt = deepcopy(dict(planning))
+            planning_for_prompt["allowed_decisions"] = [
+                "BIND_AND_RESUME",
+                "PATCH_CURRENT_STEP",
+                "REPLAN_SUFFIX",
+                "FULL_REPLAN",
+                "NEED_USER_INPUT",
+                "REJECT_PROPOSAL",
+            ]
+            planning_for_prompt["output_fields"] = [
+                "decision",
+                "base_task_revision",
+                "new_task_revision",
+                "base_plan_revision",
+                "reason",
+                "skill_refs",
+                "replacement_step",
+                "carry_forward",
+                "supersede",
+                "replacement_suffix",
+                "replacement_steps",
+                "question",
+                "requested_slots",
+            ]
+            planning_for_prompt["impact_policy"] = {
+                "prefer_minimal_change": True,
+                "full_replan_is_last_resort": True,
+                "carry_forward_requires_concrete_evidence_refs": True,
+                "semantic_impact_owner": "planner",
+            }
+            focus_for_prompt["planning"] = planning_for_prompt
+        return json.dumps(
+            {"semantic_history": semantic, "current_focus": focus_for_prompt},
+            ensure_ascii=False,
+            sort_keys=False,
+            indent=2,
+            default=str,
+        )
 
     @staticmethod
     def get_planner_v2_prompt(
@@ -1633,90 +1969,9 @@ materialization-only repair may return an empty `replace_steps` list.
         capability_context: str = "",
         user_preferences: str = "",
     ) -> str:
-        """Planner policy over one non-authoritative semantic LLMPayload."""
-        semantic, focus = PromptManager._node_context_sections(llm_payload)
-        semantic_json = json.dumps(
-            semantic, ensure_ascii=False, sort_keys=False, indent=2, default=str
-        )
-        focus_json = json.dumps(
-            focus, ensure_ascii=False, sort_keys=False, indent=2, default=str
-        )
-        candidate_example = json.dumps(
-            validated_planner_candidate_wire_example(),
-            ensure_ascii=False,
-            indent=2,
-        )
-        return f"""You are the BioMind Planner.
-
-The JSON under <semantic_history> and <current_focus> is a non-authoritative
-semantic view produced by the Controller. Plan only from its facts and semantic handles. Do not invent,
-weaken, or rewrite Task semantics. Do not return controller identity,
-concurrency metadata, storage references, approval metadata, or fingerprints.
-If required task meaning is genuinely incomplete, return exactly
-{{
-  "outcome_type":"TASKSPEC_RECONCILIATION_REQUIRED",
-  "missing_semantic_facts":[{{
-    "fact_key":"missing structured input/output/parameter/decision fact",
-    "reason":"why reproducible planning requires it",
-    "affected_operation_id":"affected structured planning operation",
-    "relevant_confirmed_decision_ids":[],
-    "durable_evidence_may_resolve":true
-  }}]
-}}.
-
-Return exactly one JSON object and no Markdown or prose. The following object
-is generated from the same wire-contract definition used by the strict Plan
-reader; adapt its semantic content, steps, and references to this task:
-{candidate_example}
-
-Every item in `task_spec.highlighted_constraints` is authoritative open-world
-text. Read and obey the complete ordered list when choosing steps, tools, and
-artifacts, and include a Planner-authored semantic self-check in
-`validation_checklist`. The Controller validates checklist shape but does not
-claim to prove arbitrary natural-language compliance. Use artifact handles
-exactly as shown in the semantic context. Do not
-copy illustrative values from the example when they are not part of this task.
-Required managed outputs must be referenced by handle; never copy or redefine
-their TaskSpec paths. When a required file output has `path_policy` equal to
-`planner_materialized`, keep the same handle in `step.outputs` and add exactly
-one top-level `task_output_materializations` row such as
-{{"output_ref":"output.report","path":"report.md"}}. That path must be safe
-and relative to the typed output_dir. It chooses only the execution filename;
-it does not create a second output identity.
-`inputs` means consume and `outputs` means produce. Handle spelling never
-defines usage. Do not return semantic claim rows, constraint IDs, constraint
-handles, or compliance assertions.
-Dependencies only express ordering. If a later step consumes a file or directory
-created by an earlier step, that object must also be an explicit artifact in the
-producer's `outputs` and the consumer's `inputs`. For one directory intermediate,
-declare a plan-local `local_ref` such as `database_dir`, produce it in the build
-step, and consume that same `database_dir` in the dependent annotation step.
-Omit the example plan-local declaration when no intermediate is needed.
-Otherwise declare each plan-local artifact in `proposed_artifacts`
-with the complete object-shaped `semantic_view` and `artifact_contract`, then
-refer to that exact `local_ref` in step fields. Registered V1 contracts require
-`object_kind` to be `file` or `directory`, `lifecycle` to be `plan_local`, and
-`materialization_policy_id` to be `managed_intermediate_v1`. Never return candidate_scope_id,
-logical/canonical artifact IDs, authoritative paths, revisions, hashes, object
-refs, CAS, or reservation fields. The sole path exception is the safe relative
-`task_output_materializations[].path` defined above.
-
-<semantic_history>
-{semantic_json}
-</semantic_history>
-
-<capability_context>
-{capability_context or "No external capability is selected."}
-</capability_context>
-
-<user_preferences>
-{user_preferences or "No user preferences were supplied."}
-</user_preferences>
-
-<current_focus>
-{focus_json}
-</current_focus>
-"""
+        """Compatibility alias for the Human payload serializer."""
+        del capability_context, user_preferences
+        return PromptManager.get_planner_v2_human_prompt(llm_payload)
 
     @staticmethod
     def get_consultant_v2_prompt(
@@ -1727,6 +1982,16 @@ refs, CAS, or reservation fields. The sole path exception is the safe relative
         max_skills: int = 8,
     ) -> str:
         semantic_payload = dict(llm_payload or {})
+        skill_protocol = PromptManager._skill_decision_protocol(
+            binding_boundary=(
+                "Consultant may semantically confirm task-level capability and "
+                "method changes, but every candidate must first be read as exact "
+                "snapshot evidence. A binding proposal is still reviewed and "
+                "committed through the Controller-owned TaskSpec and Planner "
+                "impact transactions; do not claim that returning the proposal "
+                "has activated it."
+            )
+        )
         conversation = semantic_payload.pop("evidence", [])
         current_task = semantic_payload.pop("task", {})
         feedback = semantic_payload.pop("feedback", {})
@@ -1796,6 +2061,20 @@ Return exactly one JSON object and no prose. Supported actions are:
 {{"action_type":"ask","question":"one precise question","requested_slots":["semantic.slot"],"expected_type":"string","selected_skills":[],"task_spec_operations":[],"planner_feedback":null}}
 {{"action_type":"finish","summary":"...","selected_skills":[],"task_spec_operations":[],"planner_feedback":null}}
 
+Progressive Skill access is also available as an exclusive alternative to the
+normal Consultant action. Follow this protocol exactly when you need immutable
+Skill text, a local catalog candidate, or a binding proposal:
+
+{skill_protocol}
+
+The action_type discovery family above is compatibility-only for initial
+bootstrap before any canonical selected_skill_refs or Plan exists. Once a
+canonical Skill ref or Plan exists, do not use search_skills, load_skill_doc,
+or select_skill to add, replace, or reactivate a Skill. Use typed SEARCH_SKILLS,
+REQUEST_SKILL_CONTEXT, and PROPOSE_SKILL_BINDING so immutable evidence,
+Consultant review, and Planner plan-impact review cannot be bypassed. The
+Controller rejects a legacy select_skill change at that boundary.
+
 Skill discovery is an explicit bounded process. First form a semantic task
 hypothesis from the UserTurn and verified input roles. Candidate retrieval is
 evidence, not a final decision. If the current catalog does not contain a
@@ -1806,11 +2085,10 @@ insufficient or before committing a tool-specific selection. Compare its
 documented purpose, inputs, outputs, when_to_use and not_for evidence before
 selecting it.
 
-When loaded documentation proves compatibility, prefer one complete select_skill
-response: include any still-required TaskSpec operations, the selected skills,
-and the Planner summary/feedback. The Controller applies that candidate and runs
-the same deterministic completion gate used by finish. Do not emit a later
-finish action solely to acknowledge an already-complete selection.
+During bootstrap only, when loaded documentation proves compatibility, one
+complete select_skill response may establish the initial selection before the
+first Plan. For every later addition or method change, return a typed binding
+proposal instead; select_skill cannot supersede an existing canonical ref.
 
 A failed internal skill search is INTERNAL_SKILL_DISCOVERY_UNCERTAINTY, never a
 user-owned ambiguity. Do not ask the user for a skill ID, tool name, or help
@@ -1875,81 +2153,6 @@ for each deliverable and never mint Renderer-specific aliases.
 """
 
     @staticmethod
-    def get_plan_repair_v2_prompt(
-        llm_payload: Mapping[str, Any],
-        *,
-        allowed_step_handles: Sequence[str],
-        capability_context: str = "",
-    ) -> str:
-        semantic, focus = PromptManager._node_context_sections(llm_payload)
-        semantic_json = json.dumps(
-            semantic, ensure_ascii=False, sort_keys=False, indent=2, default=str
-        )
-        focus_json = json.dumps(
-            focus, ensure_ascii=False, sort_keys=False, indent=2, default=str
-        )
-        handles = json.dumps(list(allowed_step_handles), ensure_ascii=False)
-        return f"""You are repairing an existing BioMind Plan semantic proposal.
-
-The Controller owns all state identity and concurrency checks. Return only a
-semantic delta; do not return identity, version, approval, storage-reference,
-validation-state, status, evidence, or fingerprint fields. Modify only the
-allowed step handles and only fields needed by the actionable violations.
-Do not change Task semantics or controller/renderer bindings.
-The same ordered `task_spec.highlighted_constraints` list shown to Planner is
-authoritative here. Do not weaken, waive, rewrite, identify, or reclassify any
-item; repair only the candidate Plan and supplied structured violations or
-human feedback within the allowed step scope.
-
-Return exactly one JSON object:
-{{
-  "operation": "replace_steps",
-  "replace_steps": [
-    {{
-      "step_handle": "step.semantic_handle",
-      "new_step": {{
-        "title": "...",
-        "action": "search|execute|install|ask_user|finish",
-        "purpose": "analysis|validation|probe|record_failure|install|user_input",
-        "tool": "...",
-        "inputs": ["input.semantic_handle"],
-        "outputs": ["output.semantic_handle"],
-        "dependencies": [],
-        "success_criteria": [],
-        "skill_ids": [],
-        "risk_level": "low|medium|high"
-      }}
-    }}
-  ],
-  "task_output_materializations": [
-    {{"output_ref": "output.semantic_handle", "path": "relative-name.ext"}}
-  ],
-  "reason": "brief repair reason"
-}}
-
-Include `task_output_materializations` only when an actionable violation targets
-that table. It replaces the complete table, so preserve every valid existing
-row. Each path must be safe and relative to the typed TaskSpec output_dir. A
-materialization-only repair may return an empty `replace_steps` list.
-
-<semantic_history>
-{semantic_json}
-</semantic_history>
-
-<capability_context>
-{capability_context or "No additional capability context."}
-</capability_context>
-
-<current_focus>
-{focus_json}
-</current_focus>
-
-<repair_scope>
-Allowed step handles: {handles}
-</repair_scope>
-"""
-
-    @staticmethod
     def get_consultant_discovery_escalation_prompt(
         discovery_context: Mapping[str, Any],
         *,
@@ -1957,6 +2160,13 @@ Allowed step handles: {handles}
         max_skills: int = 8,
     ) -> str:
         """Build a narrow thinking prompt for exhausted normal discovery only."""
+        skill_protocol = PromptManager._skill_decision_protocol(
+            binding_boundary=(
+                "This restricted discovery caller may request exact candidate "
+                "evidence or propose a candidate, but it cannot activate a Skill, "
+                "commit TaskSpec, or plan execution."
+            )
+        )
         context_json = json.dumps(
             dict(discovery_context or {}),
             ensure_ascii=False,
@@ -1989,6 +2199,10 @@ Return exactly one JSON object and no prose. Allowed actions are:
 {{"action_type":"select_skill","selected_skills":["canonical/skill-id"],"selection_reason":"compatibility evidence"}}
 {{"action_type":"ask","question":"one scientific decision question","requested_slots":["user_owned.slot"],"expected_type":"string"}}
 {{"action_type":"capability_gap","reason":"exhausted-search evidence"}}
+
+As an exclusive alternative, the progressive Skill protocol is:
+
+{skill_protocol}
 
 Select no more than {int(max_skills)} skills. Never ASK for a skill ID, tool
 name, catalog category, runtime-owned fact, or Controller-owned binding. ASK is
@@ -2179,6 +2393,14 @@ remains. If a candidate card is promising but insufficient, load its document.
                 + "\n</action_repair>\n"
             )
 
+        skill_protocol = PromptManager._skill_decision_protocol(
+            binding_boundary=(
+                "Generate, including Corrective Generate, may propose a "
+                "current-step supplement, task supplement, or task replacement, "
+                "but cannot commit it. Task scope or replacement must route to "
+                "Consultant for semantic review and Planner for Plan impact."
+            )
+        )
         if script_output_protocol:
             corrective_rules = ""
             if action_repair:
@@ -2191,10 +2413,15 @@ cause and do not change the Plan. For managed-artifact violations,
 repair_hint is the provider-facing authority: use its exact BIOMIND env_var
 through the selected language's environment API and remove only the reported
 literal/default fallback or Controller-owned binding.
+If the repair genuinely requires missing exact Skill text or exposes a real
+capability gap, return one typed Skill decision instead of guessing. That
+context-acquisition decision is not an executable block and is not a failed
+repair attempt.
 """
             return f"""You are BioMind Generate. Write the executable script for exactly the current approved step.
 
-Return exactly one non-empty executable block using one of these forms:
+Return exactly one of these two alternatives:
+1. One non-empty executable block using one of these forms:
 <shell>
 ...
 </shell>
@@ -2207,9 +2434,12 @@ Return exactly one non-empty executable block using one of these forms:
 ...
 </r>
 
-Do not return prose, Markdown fences, JSON, multiple blocks, or text outside
-the single block. The Controller parses and audits your script but never
-rewrites it.
+2. One raw typed JSON decision under the Skill decision protocol below.
+
+For the executable alternative, do not return prose, Markdown fences, JSON,
+multiple blocks, or text outside the single block. For the decision alternative,
+do not return an executable block or any surrounding text. The Controller parses
+and audits an executable script but never rewrites it.
 
 The semantic payload is the read-only canonical context for this current
 session and task. Do not modify the Task, Plan, approval, budgets, validation
@@ -2228,6 +2458,8 @@ appear inside the executable block. Keep diagnostically relevant stdout and
 stderr visible; do not redirect them to /dev/null or otherwise suppress
 failure evidence.
 {corrective_rules}
+{skill_protocol}
+
 <semantic_history>
 {semantic_json}
 </semantic_history>
@@ -2275,7 +2507,10 @@ failure evidence.
             ensure_ascii=False,
             indent=2,
         )
-        return f"""You are BioMind Generate. Propose one action for the current step.
+        return f"""You are BioMind Generate. Propose one action or one typed Skill decision for the current step.
+
+Return exactly one raw JSON object and no Markdown or prose. It must be either a
+supported semantic action object or one typed Skill decision defined below.
 
 The semantic payload is non-authoritative. You may not modify the Task, Plan,
 approval, budgets, validation state, or routing. Do not return controller
@@ -2329,6 +2564,8 @@ protocol or manifest.
 If a command is not appropriate, return one supported semantic action object
 for ask_user, search, install_tool, step_completion_candidate, plan_patch,
 blocked, or solution. Do not wrap the JSON in Markdown.
+
+{skill_protocol}
 
 <semantic_history>
 {semantic_json}

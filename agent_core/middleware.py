@@ -3,8 +3,9 @@ import json
 import hashlib
 import functools
 import logging
+from copy import deepcopy
 from pathlib import Path
-from typing import Tuple, Dict, Any, List
+from typing import Tuple, Dict, Any, List, Mapping
 from dataclasses import asdict
 from langgraph.types import interrupt
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -15,6 +16,8 @@ from config.config import (
     KB_MAP,
     ENABLE_PROGRESS_DETECTOR,
     ENABLE_RECOVERY_PATCHING,
+    MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION,
+    MAX_SKILL_SEARCH_ROUNDS_PER_STEP,
 )
 from colorama import Fore, Style
 from agent_core.llm_safety import clip_text, llm_failure_summary
@@ -32,7 +35,20 @@ from agent_core.recovery_evidence import (
     parse_evidence_request,
 )
 from agent_core.state_contract_store import StateContractStore
-from agent_core.task_spec import task_semantic_hash
+from agent_core.skill_access import (
+    PROPOSE_SKILL_BINDING,
+    REQUEST_SKILL_CONTEXT,
+    SEARCH_SKILLS,
+    SkillAccessError,
+    SkillAccessService,
+    complete_skill_continuation,
+    mark_continuation_resumed,
+    normalize_skill_access_state,
+    parse_typed_skill_decision,
+    project_skill_context,
+    record_skill_access_event,
+)
+from agent_core.task_spec import task_spec_revision
 from agent_core.recovery import (
     ConstraintConflictDetector,
     ActionSignature,
@@ -89,6 +105,397 @@ logger = logging.getLogger("BioMind.Middleware")
 _RECOVERY_INVOCATIONS = InvocationRegistry(max_entries=256)
 
 
+class RecoveryJudgeProviderError(RuntimeError):
+    """The configured Recovery provider failed before returning a result."""
+
+
+class RecoveryContextStaleError(RuntimeError):
+    """A Recovery result no longer matches its authoritative request facts."""
+
+    def __init__(self, decision: Any):
+        self.decision = decision
+        super().__init__(str(getattr(decision, "code", decision) or "STALE_RECOVERY_CONTEXT"))
+
+
+def _recovery_approval_ref(plan_state: Mapping[str, Any]) -> str:
+    return str(
+        plan_state.get("approval_snapshot_ref")
+        or (plan_state.get("approval_snapshot") or {}).get("approval_id")
+        or (plan_state.get("approval_record") or {}).get("approval_id")
+        or (plan_state.get("current_approval") or {}).get("approval_id")
+        or ""
+    )
+
+
+def _recovery_provenance_record(
+    plan_state: Mapping[str, Any],
+    table_name: str,
+    identity_field: str,
+    *,
+    step_id: str,
+    fallback_identity: str,
+) -> Dict[str, Any]:
+    """Resolve a current action/attempt from the existing durable provenance."""
+    provenance = dict(plan_state.get("provenance_state") or {})
+    table = dict(provenance.get(table_name) or {})
+    rows = [
+        dict(item) for item in table.values()
+        if isinstance(item, Mapping)
+        and (not step_id or str(item.get("step_id") or "") == str(step_id))
+    ]
+    fallback = str(fallback_identity or "")
+    if fallback:
+        for index, row in enumerate(rows):
+            if str(row.get(identity_field) or "") != fallback:
+                continue
+            # Dict insertion order is the provenance append order.  A later
+            # identity for the same step supersedes the request-side identity.
+            return rows[-1] if index < len(rows) - 1 else row
+        return {identity_field: fallback, "step_id": str(step_id or "")}
+    return rows[-1] if rows else {}
+
+
+def _recovery_binding_inputs(
+    plan_state: Mapping[str, Any],
+    *,
+    step_id: str,
+    action_id: str,
+    attempt_id: str,
+    failure_fingerprint: str,
+) -> Dict[str, str]:
+    """Project only authoritative facts that can invalidate a Recovery reply."""
+    current_step_id = str(plan_state.get("current_step_id") or step_id or "")
+    action = _recovery_provenance_record(
+        plan_state,
+        "actions",
+        "action_id",
+        step_id=current_step_id,
+        fallback_identity=action_id,
+    )
+    current_action_id = str(action.get("action_id") or action_id or "")
+    attempt = _recovery_provenance_record(
+        plan_state,
+        "attempts",
+        "attempt_id",
+        step_id=current_step_id,
+        fallback_identity=attempt_id,
+    )
+    current_attempt_id = str(attempt.get("attempt_id") or attempt_id or "")
+    if str(attempt.get("action_id") or "") and (
+        not current_action_id or current_attempt_id != str(attempt_id or "")
+    ):
+        current_action_id = str(attempt.get("action_id"))
+
+    failure = dict(plan_state.get("failure") or {})
+    failure_attempt = str(
+        failure.get("attempt_id") or failure.get("last_attempt_id") or ""
+    )
+    if failure_attempt and current_attempt_id and failure_attempt != current_attempt_id:
+        failure = {}
+    evidence_projection = {
+        "diagnostic_fingerprint": str(failure_fingerprint or ""),
+        "failure": {
+            key: failure.get(key)
+            for key in (
+                "error_code", "owner", "subsystem", "stage", "logical_artifact",
+                "expected_realization", "fingerprint", "last_fingerprint",
+                "attempt_id", "last_attempt_id",
+            )
+            if failure.get(key) not in (None, "", [], {})
+        },
+        "attempt_evidence": {
+            key: attempt.get(key)
+            for key in (
+                "attempt_id", "action_id", "step_id", "execution_record_id",
+                "validation_evidence_ref", "incident_ref", "returncode", "status",
+            )
+            if attempt.get(key) not in (None, "", [], {})
+        },
+    }
+    evidence_identity = hashlib.sha256(json.dumps(
+        evidence_projection,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    ).encode("utf-8", errors="replace")).hexdigest()
+    return {
+        "step_id": current_step_id,
+        "action_identity": current_action_id,
+        "attempt_id": current_attempt_id,
+        "failure_fingerprint": str(failure_fingerprint or ""),
+        "evidence_identity": evidence_identity,
+        "approval_ref": _recovery_approval_ref(plan_state),
+    }
+
+
+def _recovery_judge_failure_decision(
+    *,
+    failure_type: str,
+    root_cause: str,
+    evidence: List[str],
+) -> RecoveryDecision:
+    """Fail closed while preserving the actual RecoveryJudge failure class."""
+    return recovery_decision_from_diagnosis({
+        "root_cause": root_cause,
+        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+        "failure_type": str(failure_type),
+        "evidence": list(evidence),
+        "confidence": 1.0,
+        "missing_evidence": [],
+        "repair_strategy": "Repair the internal Recovery decision boundary without involving the user.",
+        "next_action": RecoveryAction.ESCALATE.value,
+        "requires_user_input": False,
+        "evidence_sufficient": True,
+    })
+
+
+def _recovery_skill_access_state(
+    plan_state: Mapping[str, Any],
+) -> Dict[str, Any]:
+    task_state = dict(plan_state.get("task_state") or {})
+    return normalize_skill_access_state(
+        task_state.get("skill_access_state")
+        or plan_state.get("skill_access_state")
+        or {"selected_skill_refs": plan_state.get("selected_skill_refs") or []}
+    )
+
+
+def _authoritative_recovery_user_turn_revision(
+    plan_state: Mapping[str, Any],
+) -> int:
+    """Read the durable user-turn authority used to invalidate late replies."""
+    conversation = dict(plan_state.get("conversation_evidence") or {})
+    value = conversation.get("user_turn_count")
+    if value in (None, ""):
+        value = conversation.get("turn_count")
+    try:
+        return max(0, int(value or 0))
+    except (TypeError, ValueError):
+        fallback = conversation.get("turn_count")
+        try:
+            return max(0, int(fallback or 0))
+        except (TypeError, ValueError):
+            return 0
+
+
+def _pending_recovery_action_matches(
+    pending: Mapping[str, Any],
+    *,
+    step_id: str,
+    action_id: str,
+    attempt_id: str,
+) -> bool:
+    """Return true only when clearing cannot erase a newer pending action."""
+    if not pending:
+        return False
+    expected = {
+        "step_id": str(step_id or ""),
+        "action_id": str(action_id or ""),
+        "attempt_id": str(attempt_id or ""),
+    }
+    observed = {
+        "step_id": str(pending.get("step_id") or ""),
+        "action_id": str(
+            pending.get("action_id")
+            or pending.get("source_action_id")
+            or ""
+        ),
+        "attempt_id": str(
+            pending.get("attempt_id")
+            or pending.get("source_attempt_id")
+            or ""
+        ),
+    }
+    compared = False
+    for field_name, observed_value in observed.items():
+        expected_value = expected[field_name]
+        if not observed_value or not expected_value:
+            continue
+        compared = True
+        if observed_value != expected_value:
+            return False
+    return compared
+
+
+def _recovery_stale_result(
+    *,
+    decision: Any,
+    request_context: Any,
+    current_context: Any,
+) -> Dict[str, Any]:
+    """Build the non-failure audit record for a discarded Recovery reply."""
+    changed = list(getattr(decision, "changed_preconditions", ()) or ())
+    route = (
+        "consultant"
+        if any(
+            item in {
+                "authoritative_user_turn_revision",
+                "task_revision",
+                "task_semantic_hash",
+            }
+            for item in changed
+        )
+        else "planner"
+        if any(
+            item in {
+                "plan_revision", "plan_version", "step_id", "step_revision",
+            }
+            for item in changed
+        )
+        else "supervisor"
+    )
+    return {
+        "decision_result": "STALE_NODE_RESULT",
+        "status": "discarded",
+        "code": str(getattr(decision, "code", "") or "STALE_RECOVERY_CONTEXT"),
+        "caller_node": "recovery",
+        "caller_invocation_id": str(request_context.binding.invocation_id or ""),
+        "changed_preconditions": changed,
+        "request_task_revision": int(request_context.binding.task_revision or 0),
+        "request_plan_revision": int(request_context.binding.plan_revision or 0),
+        "request_user_turn_revision": int(
+            request_context.binding.authoritative_user_turn_revision or 0
+        ),
+        "current_task_revision": int(current_context.binding.task_revision or 0),
+        "current_plan_revision": int(current_context.binding.plan_revision or 0),
+        "current_user_turn_revision": int(
+            current_context.binding.authoritative_user_turn_revision or 0
+        ),
+        "resume_route": route,
+        "counts_as_failure": False,
+        "consumes_execution_retry": False,
+        "consumes_recovery_retry": False,
+        "execute": False,
+    }
+
+
+def _persist_recovery_stale_discard(
+    *,
+    data_path: str | Path | None,
+    task_id: str,
+    plan_state: Dict[str, Any],
+    stale_result: Mapping[str, Any],
+    step_id: str,
+    action_id: str,
+    attempt_id: str,
+) -> Dict[str, Any]:
+    """Persist the discard event without mutating attempt or retry evidence."""
+    durable = deepcopy(dict(plan_state or {}))
+    access = record_skill_access_event(
+        _recovery_skill_access_state(durable),
+        "stale_node_result_discarded",
+        dict(stale_result),
+    )
+    task_state = dict(durable.get("task_state") or {})
+    task_state["skill_access_state"] = deepcopy(access)
+    task_state["last_stale_node_result"] = deepcopy(dict(stale_result))
+    durable["task_state"] = task_state
+    durable["skill_access_state"] = deepcopy(access)
+    durable["last_stale_node_result"] = deepcopy(dict(stale_result))
+    for field_name in ("pending_recovery_action", "pending_action"):
+        pending = dict(durable.get(field_name) or {})
+        if _pending_recovery_action_matches(
+            pending,
+            step_id=step_id,
+            action_id=action_id,
+            attempt_id=attempt_id,
+        ):
+            durable[field_name] = {}
+    if data_path:
+        try:
+            save_plan_state(data_path, task_id, durable)
+        except Exception as exc:  # Audit persistence must not revive stale work.
+            logger.warning(
+                "Could not persist stale Recovery discard audit: task=%s detail=%s",
+                task_id,
+                clip_text(str(exc), 300),
+            )
+    else:
+        plan_state.clear()
+        plan_state.update(deepcopy(durable))
+    return durable
+
+
+def _apply_recovery_stale_discard_result(
+    result: Dict[str, Any],
+    stale_result: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Return preserved Execute evidence while suppressing stale Recovery work."""
+    stale = deepcopy(dict(stale_result or {}))
+    route = str(stale.get("resume_route") or "planner")
+    result.update({
+        "stale_node_result": stale,
+        "decision_result": "STALE_NODE_RESULT",
+        "counts_as_failure": False,
+        "consumes_execution_retry": False,
+        "consumes_recovery_retry": False,
+        "next_step": route,
+        "proposed_route": route,
+    })
+    existing_messages = result.get("messages")
+    messages = (
+        list(existing_messages)
+        if isinstance(existing_messages, (list, tuple))
+        else ([existing_messages] if existing_messages is not None else [])
+    )
+    messages.append(SystemMessage(content=(
+        "<stale_node_result>"
+        + json.dumps(stale, ensure_ascii=False, sort_keys=True, default=str)
+        + "</stale_node_result>"
+    )))
+    result["messages"] = messages
+    return result
+
+
+def _persist_recovery_skill_access(
+    *,
+    data_path: str | Path | None,
+    task_id: str,
+    plan_state: Dict[str, Any],
+    access_state: Mapping[str, Any],
+    continuation_id: str = "",
+    pending_proposal: Mapping[str, Any] | None = None,
+) -> Dict[str, Any]:
+    """Persist Recovery's Skill continuation without changing Task/Plan revisions."""
+    durable = dict(plan_state or {})
+    access = normalize_skill_access_state(access_state)
+    refs = deepcopy(list(access.get("selected_skill_refs") or []))
+    selected = list(dict.fromkeys(
+        str(item.get("skill_id") or "")
+        for item in refs
+        if isinstance(item, Mapping)
+        and str(item.get("status") or "") == "active"
+        and str(item.get("scope") or "task") == "task"
+        and str(item.get("skill_id") or "")
+    ))
+    task_state = dict(durable.get("task_state") or {})
+    task_state["skill_access_state"] = deepcopy(access)
+    task_state["selected_skill_refs"] = deepcopy(refs)
+    task_state["selected_skills"] = list(selected)
+    if continuation_id:
+        task_state["skill_continuation_id"] = str(continuation_id)
+    else:
+        task_state.pop("skill_continuation_id", None)
+    if pending_proposal is not None:
+        if pending_proposal:
+            task_state["pending_skill_binding_proposal"] = deepcopy(
+                dict(pending_proposal)
+            )
+        else:
+            task_state.pop("pending_skill_binding_proposal", None)
+    durable["task_state"] = task_state
+    durable["skill_access_state"] = deepcopy(access)
+    durable["selected_skill_refs"] = deepcopy(refs)
+    durable["selected_skill_ids"] = list(selected)
+    if data_path:
+        save_plan_state(data_path, task_id, durable)
+    else:
+        plan_state.clear()
+        plan_state.update(deepcopy(durable))
+    return durable
+
+
 async def _invoke_recovery_v2(
     llm: Any,
     *,
@@ -96,13 +503,64 @@ async def _invoke_recovery_v2(
     task_id: str,
     plan_state: Dict[str, Any],
     step_id: str,
+    action_id: str = "",
     attempt_id: str = "",
     failure_fingerprint: str = "",
     runtime: Dict[str, Any] | None = None,
     evidence: List[Dict[str, Any]] | None = None,
     provider_policy: Dict[str, Any] | None = None,
+    skill_manager: Any = None,
+    selected_skill_ids: List[str] | Tuple[str, ...] | None = None,
+    skill_continuation_id: str = "",
+    _skill_depth: int = 0,
+    _skill_context_rounds: int = 0,
+    _skill_search_rounds: int = 0,
 ) -> Tuple[Any, Dict[str, Any]]:
     """Invoke Recovery through the same control/LLM-plane boundary as nodes."""
+    skill_service: SkillAccessService | None = None
+    skill_access = _recovery_skill_access_state(plan_state)
+    task_state = dict(plan_state.get("task_state") or {})
+    continuation_id = str(
+        skill_continuation_id
+        or task_state.get("skill_continuation_id")
+        or ""
+    )
+    if skill_manager is not None:
+        skill_service = SkillAccessService(skill_manager)
+        legacy_selected = list(dict.fromkeys(
+            str(item)
+            for item in (
+                selected_skill_ids
+                or task_state.get("selected_skills")
+                or plan_state.get("selected_skill_ids")
+                or []
+            )
+            if str(item)
+        ))
+        if legacy_selected:
+            prepared = skill_service.ensure_selected_skill_refs(
+                skill_access,
+                legacy_selected,
+                task_revision=task_spec_revision(
+                    canonical_task_spec_for_state(plan_state)
+                ),
+                scope="task",
+            )
+            if prepared != skill_access:
+                plan_state = _persist_recovery_skill_access(
+                    data_path=data_path,
+                    task_id=task_id,
+                    plan_state=plan_state,
+                    access_state=prepared,
+                    continuation_id=continuation_id,
+                )
+                skill_access = prepared
+    skill_projection = project_skill_context(
+        skill_access,
+        caller_node="recovery",
+        current_step_id=str(step_id or plan_state.get("current_step_id") or ""),
+        continuation_id=continuation_id,
+    )
     task_spec = canonical_task_spec_for_state(plan_state)
     semantic_inputs: Dict[str, Any] = {
         "conversation_turns": [],
@@ -133,14 +591,24 @@ async def _invoke_recovery_v2(
             task_id,
             state=plan_state,
         )
+    request_identity = _recovery_binding_inputs(
+        plan_state,
+        step_id=str(step_id or ""),
+        action_id=str(action_id or ""),
+        attempt_id=str(attempt_id or ""),
+        failure_fingerprint=str(failure_fingerprint or ""),
+    )
     context = build_node_context(
         node_type="recovery",
         task_spec=task_spec,
         plan_state=plan_state,
         state_generation=int(plan_state.get("state_generation") or 0),
-        current_step_id=str(step_id or ""),
-        attempt_id=str(attempt_id or ""),
-        failure_fingerprint=str(failure_fingerprint or ""),
+        current_step_id=request_identity["step_id"],
+        action_identity=request_identity["action_identity"],
+        attempt_id=request_identity["attempt_id"],
+        failure_fingerprint=request_identity["failure_fingerprint"],
+        evidence_identity=request_identity["evidence_identity"],
+        approval_ref=request_identity["approval_ref"],
         runtime=dict(runtime or {}),
         evidence=list(evidence or []),
         allowed_operations=[
@@ -148,11 +616,45 @@ async def _invoke_recovery_v2(
         ],
         max_payload_chars=RECOVERY_PROVIDER_MAX_PAYLOAD_CHARS,
         approved_plan_snapshot=approved_snapshot or None,
+        skill_context=skill_projection,
+        authoritative_user_turn_revision=(
+            _authoritative_recovery_user_turn_revision(plan_state)
+        ),
+        continuation_id=continuation_id,
         **semantic_inputs,
     )
+    if skill_service is not None and continuation_id:
+        continuation = dict(
+            (skill_access.get("continuations") or {}).get(continuation_id) or {}
+        )
+        if str(continuation.get("status") or "") in {"served", "rejected"}:
+            skill_access = mark_continuation_resumed(
+                skill_access,
+                continuation_id,
+                resumed_invocation_id=context.binding.invocation_id,
+            )
+            plan_state = _persist_recovery_skill_access(
+                data_path=data_path,
+                task_id=task_id,
+                plan_state=plan_state,
+                access_state=skill_access,
+                continuation_id=continuation_id,
+            )
     stale_signature = "|".join(
-        [context.binding.task_semantic_hash, context.binding.plan_semantic_hash,
-         str(failure_fingerprint or ""), str(attempt_id or "")]
+        [
+            context.binding.task_semantic_hash,
+            str(context.binding.task_revision),
+            context.binding.plan_semantic_hash,
+            str(context.binding.plan_revision),
+            str(context.binding.authoritative_user_turn_revision),
+            context.binding.approval_ref,
+            context.binding.step_id,
+            context.binding.action_identity,
+            context.binding.attempt_id,
+            context.binding.failure_fingerprint,
+            context.binding.evidence_identity,
+            context.binding.continuation_id,
+        ]
     )
     _RECOVERY_INVOCATIONS.register(context.binding, stale_signature=stale_signature)
     invocation_consumed = False
@@ -166,13 +668,18 @@ async def _invoke_recovery_v2(
             "provider_context_manifest": provider_context_manifest(context.llm_payload),
             "recovery_llm_policy": dict(provider_policy or {}),
         }
-        message, snapshot = await ainvoke_with_snapshot(
-            llm,
-            [HumanMessage(content=prompt)],
-            data_path=data_path,
-            task_id=task_id,
-            metadata=trace_metadata,
-        )
+        try:
+            message, snapshot = await ainvoke_with_snapshot(
+                llm,
+                [HumanMessage(content=prompt)],
+                data_path=data_path,
+                task_id=task_id,
+                metadata=trace_metadata,
+            )
+        except Exception as exc:
+            raise RecoveryJudgeProviderError(
+                f"RecoveryJudge provider invocation failed: {exc}"
+            ) from exc
         evidence_request = parse_evidence_request(
             str(getattr(message, "content", message) or "")
         )
@@ -213,17 +720,22 @@ async def _invoke_recovery_v2(
                 + "\n</evidence_result>\n"
                 + "Return the final RecoveryDecision JSON now. Do not request more evidence."
             )
-            message, followup_snapshot = await ainvoke_with_snapshot(
-                llm,
-                [HumanMessage(content=followup)],
-                data_path=data_path,
-                task_id=task_id,
-                metadata={
-                    **trace_metadata,
-                    "call_kind": "recovery_judge_v2_evidence_followup",
-                    "evidence_operation": str(evidence_request.get("tool") or ""),
-                },
-            )
+            try:
+                message, followup_snapshot = await ainvoke_with_snapshot(
+                    llm,
+                    [HumanMessage(content=followup)],
+                    data_path=data_path,
+                    task_id=task_id,
+                    metadata={
+                        **trace_metadata,
+                        "call_kind": "recovery_judge_v2_evidence_followup",
+                        "evidence_operation": str(evidence_request.get("tool") or ""),
+                    },
+                )
+            except Exception as exc:
+                raise RecoveryJudgeProviderError(
+                    f"RecoveryJudge evidence follow-up failed: {exc}"
+                ) from exc
             snapshot = dict(followup_snapshot or {})
             snapshot["evidence_request"] = dict(evidence_request)
             snapshot["evidence_result"] = evidence_result
@@ -235,15 +747,244 @@ async def _invoke_recovery_v2(
         invocation_consumed = True
         latest = load_plan_state(data_path, task_id) if data_path else plan_state
         latest_task = canonical_task_spec_for_state(latest)
-        decision = evaluate_node_staleness(context.binding, {
-            "task_semantic_hash": task_semantic_hash(latest_task),
-            "plan_semantic_hash": "sha256:" + semantic_plan_hash(latest).removeprefix("sha256:"),
-            "failure_fingerprint": str(failure_fingerprint or ""),
-            "attempt_id": str(attempt_id or ""),
-        })
+        latest_snapshot = (
+            load_approved_plan_snapshot(data_path, task_id, state=latest)
+            if data_path
+            else approved_snapshot
+        )
+        current_identity = _recovery_binding_inputs(
+            latest,
+            step_id=str(step_id or ""),
+            action_id=str(action_id or ""),
+            attempt_id=str(attempt_id or ""),
+            failure_fingerprint=str(failure_fingerprint or ""),
+        )
+        latest_task_state = dict(latest.get("task_state") or {})
+        latest_continuation_id = str(
+            latest_task_state.get("skill_continuation_id")
+            or ""
+        )
+        latest_skill_projection = project_skill_context(
+            _recovery_skill_access_state(latest),
+            caller_node="recovery",
+            current_step_id=current_identity["step_id"],
+            continuation_id=latest_continuation_id,
+        )
+        current_context = build_node_context(
+            node_type="recovery",
+            task_spec=latest_task,
+            plan_state=latest,
+            state_generation=int(latest.get("state_generation") or 0),
+            current_step_id=current_identity["step_id"],
+            action_identity=current_identity["action_identity"],
+            attempt_id=current_identity["attempt_id"],
+            failure_fingerprint=current_identity["failure_fingerprint"],
+            evidence_identity=current_identity["evidence_identity"],
+            approval_ref=current_identity["approval_ref"],
+            runtime=dict(runtime or {}),
+            evidence=list(evidence or []),
+            allowed_operations=[
+                "probe", "repair", "rerun", "rollback", "blocked", "escalate",
+            ],
+            max_payload_chars=RECOVERY_PROVIDER_MAX_PAYLOAD_CHARS,
+            approved_plan_snapshot=latest_snapshot or None,
+            skill_context=latest_skill_projection,
+            authoritative_user_turn_revision=(
+                _authoritative_recovery_user_turn_revision(latest)
+            ),
+            continuation_id=latest_continuation_id,
+            **semantic_inputs,
+        )
+        decision = evaluate_node_staleness(
+            context.binding,
+            current_context.binding.to_dict(),
+        )
         if not decision.usable:
             _RECOVERY_INVOCATIONS.mark_stale_signature_handled(decision.stale_signature)
-            raise RuntimeError(decision.code)
+            stale_result = _recovery_stale_result(
+                decision=decision,
+                request_context=context,
+                current_context=current_context,
+            )
+            _persist_recovery_stale_discard(
+                data_path=data_path,
+                task_id=task_id,
+                plan_state=latest,
+                stale_result=stale_result,
+                step_id=context.binding.step_id,
+                action_id=context.binding.action_identity,
+                attempt_id=context.binding.attempt_id,
+            )
+            snapshot["decision_result"] = "STALE_NODE_RESULT"
+            snapshot["stale_node_result"] = deepcopy(stale_result)
+            return message, snapshot
+
+        raw_message = str(getattr(message, "content", message) or "")
+        try:
+            typed_skill_decision = parse_typed_skill_decision(raw_message)
+        except SkillAccessError as exc:
+            snapshot["skill_access_outcome"] = {
+                "decision_result": "SKILL_DECISION_REJECTED",
+                "status": exc.code,
+                "detail": exc.detail,
+                "review_route": "consultant_skill_resolution",
+            }
+            return message, snapshot
+        if typed_skill_decision is not None:
+            runtime_envelope = {
+                "caller_node": "recovery",
+                "caller_invocation_id": context.binding.invocation_id,
+                "task_revision": task_spec_revision(latest_task),
+                "plan_revision": int(latest.get("plan_revision") or 0),
+                "authoritative_user_turn_revision": (
+                    _authoritative_recovery_user_turn_revision(latest)
+                ),
+                "current_step_id": current_identity["step_id"],
+                "attempt_id": current_identity["attempt_id"],
+            }
+            snapshot["skill_runtime_envelope"] = deepcopy(runtime_envelope)
+            if skill_service is None:
+                snapshot["skill_access_outcome"] = {
+                    "decision_result": "SKILL_DECISION_REJECTED",
+                    "status": "SKILL_CONTEXT_UNAVAILABLE",
+                    "detail": "SkillManager is not configured",
+                    "review_route": "consultant_skill_resolution",
+                }
+                return message, snapshot
+            kind = str(typed_skill_decision.get("decision") or "").upper()
+            current_access = _recovery_skill_access_state(latest)
+            if latest_continuation_id:
+                current_access = complete_skill_continuation(
+                    current_access,
+                    latest_continuation_id,
+                    caller_node="recovery",
+                )
+                latest = _persist_recovery_skill_access(
+                    data_path=data_path,
+                    task_id=task_id,
+                    plan_state=latest,
+                    access_state=current_access,
+                    continuation_id="",
+                )
+            if (
+                kind == REQUEST_SKILL_CONTEXT
+                and _skill_context_rounds
+                >= int(MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION)
+            ) or (
+                kind == SEARCH_SKILLS
+                and _skill_search_rounds >= int(MAX_SKILL_SEARCH_ROUNDS_PER_STEP)
+            ):
+                status = (
+                    "SKILL_CONTEXT_NO_PROGRESS"
+                    if kind == REQUEST_SKILL_CONTEXT
+                    else "SKILL_SEARCH_NO_PROGRESS"
+                )
+                snapshot["skill_access_outcome"] = {
+                    "decision_result": "SKILL_CONTINUATION_LIMIT_REACHED",
+                    "status": status,
+                    "detail": "Recovery exhausted the configured Skill request rounds.",
+                    "review_route": "consultant_skill_resolution",
+                }
+                return message, snapshot
+            proposal: Dict[str, Any] | None = None
+            try:
+                if kind == REQUEST_SKILL_CONTEXT:
+                    current_access, skill_result = skill_service.serve_context_request(
+                        current_access,
+                        typed_skill_decision,
+                        runtime_envelope=runtime_envelope,
+                    )
+                elif kind == SEARCH_SKILLS:
+                    input_roles = [
+                        str(item.get("role") or item.get("name") or "")
+                        for item in latest_task.get("inputs") or []
+                        if isinstance(item, Mapping)
+                    ]
+                    current_access, skill_result = skill_service.search_skills(
+                        current_access,
+                        typed_skill_decision,
+                        runtime_envelope=runtime_envelope,
+                        input_roles=input_roles,
+                    )
+                elif kind == PROPOSE_SKILL_BINDING:
+                    current_access, proposal = skill_service.propose_binding(
+                        current_access,
+                        typed_skill_decision,
+                        runtime_envelope=runtime_envelope,
+                    )
+                    skill_result = {
+                        "decision_result": "SKILL_BINDING_PROPOSAL_RECORDED",
+                        "status": "PENDING_REVIEW",
+                        "proposal_id": str(proposal.get("proposal_id") or ""),
+                        "review_route": str(proposal.get("review_route") or ""),
+                        "proposal": deepcopy(proposal),
+                    }
+                else:  # pragma: no cover - typed parser owns this boundary.
+                    raise SkillAccessError("SKILL_DECISION_SCHEMA_INVALID", kind)
+            except SkillAccessError as exc:
+                snapshot["skill_access_outcome"] = {
+                    "decision_result": "SKILL_DECISION_REJECTED",
+                    "status": exc.code,
+                    "detail": exc.detail,
+                    "review_route": "consultant_skill_resolution",
+                }
+                return message, snapshot
+
+            served_continuation_id = str(
+                skill_result.get("continuation_id") or ""
+            )
+            latest = _persist_recovery_skill_access(
+                data_path=data_path,
+                task_id=task_id,
+                plan_state=latest,
+                access_state=current_access,
+                continuation_id=served_continuation_id,
+                pending_proposal=proposal,
+            )
+            no_progress = str(skill_result.get("status") or "") in {
+                "SKILL_CONTEXT_NO_PROGRESS",
+                "SKILL_SEARCH_NO_PROGRESS",
+            }
+            if proposal is not None or no_progress:
+                if no_progress:
+                    skill_result = {
+                        **dict(skill_result),
+                        "review_route": "consultant_skill_resolution",
+                    }
+                snapshot["skill_access_outcome"] = deepcopy(skill_result)
+                return message, snapshot
+
+            resumed_message, resumed_snapshot = await _invoke_recovery_v2(
+                llm,
+                data_path=data_path,
+                task_id=task_id,
+                plan_state=latest,
+                step_id=current_identity["step_id"],
+                action_id=current_identity["action_identity"],
+                attempt_id=current_identity["attempt_id"],
+                failure_fingerprint=current_identity["failure_fingerprint"],
+                runtime=dict(runtime or {}),
+                evidence=list(evidence or []),
+                provider_policy=dict(provider_policy or {}),
+                skill_manager=skill_manager,
+                selected_skill_ids=list(selected_skill_ids or []),
+                skill_continuation_id=served_continuation_id,
+                _skill_depth=_skill_depth + 1,
+                _skill_context_rounds=(
+                    _skill_context_rounds
+                    + (1 if kind == REQUEST_SKILL_CONTEXT else 0)
+                ),
+                _skill_search_rounds=(
+                    _skill_search_rounds
+                    + (1 if kind == SEARCH_SKILLS else 0)
+                ),
+            )
+            resumed_snapshot = dict(resumed_snapshot or {})
+            resumed_snapshot["skill_access_history"] = [
+                deepcopy(skill_result),
+                *list(resumed_snapshot.get("skill_access_history") or []),
+            ]
+            return resumed_message, resumed_snapshot
         return message, snapshot
     except Exception:
         if not invocation_consumed:
@@ -904,6 +1645,7 @@ def _legacy_error_recovery_middleware(llm, retriever, skill_manager=None, data_p
                         task_id=task_id,
                         plan_state=legacy_plan_state,
                         step_id=str((state or {}).get("current_step_id") or ""),
+                        action_id=str((state or {}).get("action_id") or ""),
                         attempt_id=str((state or {}).get("attempt_id") or ""),
                         failure_fingerprint=legacy_error_fingerprint,
                         runtime={
@@ -918,6 +1660,14 @@ def _legacy_error_recovery_middleware(llm, retriever, skill_manager=None, data_p
                             "excerpt": clip_text(error_text, 6000),
                         }],
                     )
+                    stale_result = dict(
+                        (diagnosis_snapshot or {}).get("stale_node_result") or {}
+                    )
+                    if stale_result.get("decision_result") == "STALE_NODE_RESULT":
+                        return _apply_recovery_stale_discard_result(
+                            result,
+                            stale_result,
+                        )
                     diagnosis_text = diagnosis_msg.content
                 except Exception as exc:
                     diagnosis_text = (
@@ -1631,11 +2381,22 @@ def error_recovery_middleware(
                 _result_holder["result"] = result
             if not isinstance(result, dict):
                 return result
+            result.setdefault("proposed_route", str(result.get("next_step") or ""))
 
             state_map = dict(state or {}) if isinstance(state, dict) else {}
             task_id = str(state_map.get("task_id") or result.get("task_id") or "default")
-            evidence = result.get("execution_evidence") or state_map.get("execution_evidence") or {}
-            evidence = dict(evidence) if isinstance(evidence, dict) else {}
+            # Recovery is scoped to the execution event produced by this node
+            # invocation.  ``AgentState.execution_evidence`` is a durable
+            # projection of the previous invocation; reusing it when Execute
+            # exits before starting a command would replay the old progress
+            # decision (including an exhausted/should_block result) against a
+            # new controller transition.
+            current_evidence = result.get("execution_evidence")
+            evidence = (
+                dict(current_evidence)
+                if isinstance(current_evidence, Mapping)
+                else {}
+            )
 
             # Legacy checkpoints may only contain the display observation.
             messages = list(result.get("messages") or [])
@@ -1659,6 +2420,33 @@ def error_recovery_middleware(
                     "step_id": str(state_map.get("current_step_id") or ""),
                 }
             if not evidence:
+                result["progress_guard_result"] = {
+                    "source_node": "execute",
+                    "step_id": str(
+                        result.get("current_step_id")
+                        or state_map.get("current_step_id")
+                        or ""
+                    ),
+                    "attempt_id": "",
+                    "trigger_event_id": "",
+                    "classification": "not_evaluated",
+                    "should_block": False,
+                    "reason_code": "CURRENT_EXECUTION_NOT_STARTED",
+                    "reason": (
+                        "Execute returned without current execution evidence; "
+                        "prior state evidence was not replayed."
+                    ),
+                }
+                result["recovery_trigger"] = {
+                    "required": False,
+                    "reasons": ["current_execution_not_started"],
+                    "source": "execute",
+                    "deterministic_action": "",
+                    "judge_required": False,
+                    "same_failure_count": 0,
+                    "progress_detected": False,
+                    "evidence_conflict": False,
+                }
                 return result
 
             store = RecoveryStateStore(data_path, task_id) if data_path else None
@@ -1686,6 +2474,21 @@ def error_recovery_middleware(
             result["recovery_progress"] = progress
             result["progress_snapshot"] = progress
             result["progress_evidence"] = progress
+            progress_guard_result = {
+                "source_node": "execute",
+                "step_id": str(evidence.get("step_id") or state_map.get("current_step_id") or ""),
+                "attempt_id": str(evidence.get("attempt_id") or evidence.get("execution_id") or ""),
+                "trigger_event_id": str(evidence.get("attempt_id") or evidence.get("execution_id") or ""),
+                "classification": str(progress.get("classification") or ""),
+                "should_block": bool(progress.get("should_block")),
+                "reason_code": (
+                    "RECOVERY_NO_PROGRESS_EXHAUSTED"
+                    if bool(progress.get("should_block"))
+                    else ""
+                ),
+                "reason": str(progress.get("reason") or ""),
+            }
+            result["progress_guard_result"] = progress_guard_result
             if store:
                 store.save_progress(progress_tracker)
             trigger = evaluate_recovery_trigger(
@@ -1783,6 +2586,7 @@ def error_recovery_middleware(
                     if data_path:
                         increment_plan_budget(plan_state, "recovery_judge_count")
                         save_plan_state(data_path, task_id, plan_state)
+                    judge_text = ""
                     try:
                         recovery_focus = {
                             "current_step": dict(diagnostic_context.current_step or {}),
@@ -1841,12 +2645,13 @@ def error_recovery_middleware(
                         # being invoked (and may itself fail or return invalid
                         # schema).  Preserve that distinction in the trace.
                         recovery_judge_invoked = True
-                        judge_message, _ = await _invoke_recovery_v2(
+                        judge_message, judge_snapshot = await _invoke_recovery_v2(
                             llm,
                             data_path=data_path,
                             task_id=task_id,
                             plan_state=plan_state,
                             step_id=str(evidence.get("step_id") or ""),
+                            action_id=str(evidence.get("action_id") or evidence.get("execution_id") or ""),
                             attempt_id=str(evidence.get("attempt_id") or evidence.get("execution_id") or ""),
                             failure_fingerprint=diagnostic_context.error_fingerprint,
                             runtime={
@@ -1886,36 +2691,221 @@ def error_recovery_middleware(
                                 },
                             ],
                             provider_policy=dict(recovery_llm_policy or {}),
+                            skill_manager=skill_manager,
+                            selected_skill_ids=active_skills,
                         )
+                        stale_result = dict(
+                            (judge_snapshot or {}).get("stale_node_result") or {}
+                        )
+                        if stale_result.get("decision_result") == "STALE_NODE_RESULT":
+                            return _apply_recovery_stale_discard_result(
+                                result,
+                                stale_result,
+                            )
+                        skill_outcome = dict(
+                            (judge_snapshot or {}).get("skill_access_outcome")
+                            or {}
+                        )
+                        if skill_outcome:
+                            durable_after_skill = (
+                                load_plan_state(data_path, task_id)
+                                if data_path else plan_state
+                            )
+                            durable_task_state = dict(
+                                durable_after_skill.get("task_state") or {}
+                            )
+                            access_after_skill = _recovery_skill_access_state(
+                                durable_after_skill
+                            )
+                            refs_after_skill = deepcopy(list(
+                                access_after_skill.get("selected_skill_refs") or []
+                            ))
+                            selected_after_skill = list(dict.fromkeys(
+                                str(item.get("skill_id") or "")
+                                for item in refs_after_skill
+                                if isinstance(item, Mapping)
+                                and str(item.get("status") or "") == "active"
+                                and str(item.get("skill_id") or "")
+                            ))
+                            review_route = str(
+                                skill_outcome.get("review_route") or ""
+                            )
+                            next_route = (
+                                "planner"
+                                if review_route == "planner_plan_impact_review"
+                                else "consultant"
+                            )
+                            result.update({
+                                "skill_access_state": deepcopy(access_after_skill),
+                                "selected_skill_refs": refs_after_skill,
+                                "selected_skills": selected_after_skill,
+                                "selected_skill_ids": selected_after_skill,
+                                "skill_continuation_id": str(
+                                    durable_task_state.get("skill_continuation_id")
+                                    or ""
+                                ),
+                                "pending_skill_binding_proposal": deepcopy(dict(
+                                    durable_task_state.get(
+                                        "pending_skill_binding_proposal"
+                                    ) or {}
+                                )),
+                                "skill_decision_result": deepcopy(skill_outcome),
+                                "pending_action": {},
+                                "pending_recovery_action": {},
+                                "required_next_action": "",
+                                "recovery_scope": "",
+                                "recovery_phase": "skill_review",
+                                "transition_guard": "recovery_skill_review_required",
+                                "next_step": next_route,
+                                "proposed_route": next_route,
+                            })
+                            result.setdefault("messages", []).append(
+                                SystemMessage(content=json.dumps(
+                                    skill_outcome,
+                                    ensure_ascii=False,
+                                    sort_keys=True,
+                                    default=str,
+                                ))
+                            )
+                            return result
                         judge_text = str(getattr(judge_message, "content", judge_message) or "")
-                        decision = parse_recovery_judge_decision(judge_text)
-                        if store:
-                            store.save_llm_result(
-                                diagnostic_context.context_id,
-                                "recovery_judge",
-                                raw_response=judge_text,
-                                parsed_result=decision.to_dict(),
-                            )
+                    except RecoveryContextStaleError as judge_exc:
+                        changed = list(
+                            getattr(judge_exc.decision, "changed_preconditions", ())
+                        )
+                        stale_result = {
+                            "decision_result": "STALE_NODE_RESULT",
+                            "status": "discarded",
+                            "code": str(
+                                getattr(judge_exc.decision, "code", "")
+                                or "STALE_RECOVERY_CONTEXT"
+                            ),
+                            "caller_node": "recovery",
+                            "caller_invocation_id": "",
+                            "changed_preconditions": changed,
+                            "resume_route": (
+                                "consultant"
+                                if any(
+                                    item in {
+                                        "authoritative_user_turn_revision",
+                                        "task_revision",
+                                        "task_semantic_hash",
+                                    }
+                                    for item in changed
+                                )
+                                else "planner"
+                                if any(
+                                    item in {
+                                        "plan_revision", "plan_version",
+                                        "step_id", "step_revision",
+                                    }
+                                    for item in changed
+                                )
+                                else "supervisor"
+                            ),
+                            "counts_as_failure": False,
+                            "consumes_execution_retry": False,
+                            "consumes_recovery_retry": False,
+                            "execute": False,
+                        }
+                        return _apply_recovery_stale_discard_result(
+                            result,
+                            stale_result,
+                        )
+                    except RecoveryJudgeProviderError as judge_exc:
+                        decision = _recovery_judge_failure_decision(
+                            failure_type="recovery_judge_provider_error",
+                            root_cause="The configured RecoveryJudge provider failed before a result was available.",
+                            evidence=[
+                                *trigger.reasons,
+                                clip_text(str(judge_exc), 300),
+                            ],
+                        )
                     except Exception as judge_exc:
-                        if store:
-                            store.save_llm_result(
-                                diagnostic_context.context_id,
-                                "recovery_judge",
-                                raw_response=str(getattr(locals().get("judge_message"), "content", "") or ""),
-                                parsed_result={},
+                        decision = _recovery_judge_failure_decision(
+                            failure_type="recovery_judge_internal_error",
+                            root_cause="The RecoveryJudge middleware failed outside the provider and schema boundaries.",
+                            evidence=[
+                                *trigger.reasons,
+                                clip_text(str(judge_exc), 300),
+                            ],
+                        )
+                    else:
+                        try:
+                            decision = parse_recovery_judge_decision(judge_text)
+                            durable_after_recovery = (
+                                load_plan_state(data_path, task_id)
+                                if data_path else plan_state
                             )
-                        decision = recovery_decision_from_diagnosis({
-                            "root_cause": "RecoveryJudge returned an invalid result; preserved evidence requires internal escalation.",
-                            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                            "failure_type": "recovery_judge_schema_error",
-                            "evidence": [*trigger.reasons, clip_text(str(judge_exc), 300)],
-                            "confidence": 1.0,
-                            "missing_evidence": [],
-                            "repair_strategy": "Repair the internal decision protocol without involving the user.",
-                            "next_action": RecoveryAction.ESCALATE.value,
-                            "requires_user_input": False,
-                            "evidence_sufficient": True,
-                        })
+                            durable_skill_state = dict(
+                                durable_after_recovery.get("task_state") or {}
+                            )
+                            completed_continuation_id = str(
+                                durable_skill_state.get("skill_continuation_id")
+                                or ""
+                            )
+                            if completed_continuation_id:
+                                completed_access = complete_skill_continuation(
+                                    _recovery_skill_access_state(
+                                        durable_after_recovery
+                                    ),
+                                    completed_continuation_id,
+                                    caller_node="recovery",
+                                )
+                                durable_after_recovery = (
+                                    _persist_recovery_skill_access(
+                                        data_path=data_path,
+                                        task_id=task_id,
+                                        plan_state=durable_after_recovery,
+                                        access_state=completed_access,
+                                        continuation_id="",
+                                    )
+                                )
+                                completed_refs = deepcopy(list(
+                                    completed_access.get("selected_skill_refs")
+                                    or []
+                                ))
+                                completed_skill_ids = list(dict.fromkeys(
+                                    str(item.get("skill_id") or "")
+                                    for item in completed_refs
+                                    if isinstance(item, Mapping)
+                                    and str(item.get("status") or "") == "active"
+                                    and str(item.get("skill_id") or "")
+                                ))
+                                result.update({
+                                    "skill_access_state": deepcopy(
+                                        completed_access
+                                    ),
+                                    "selected_skill_refs": completed_refs,
+                                    "selected_skills": completed_skill_ids,
+                                    "selected_skill_ids": completed_skill_ids,
+                                    "skill_continuation_id": "",
+                                })
+                        except (TypeError, ValueError) as judge_exc:
+                            decision = _recovery_judge_failure_decision(
+                                failure_type="recovery_judge_schema_error",
+                                root_cause="RecoveryJudge returned malformed JSON or a schema-invalid decision.",
+                                evidence=[
+                                    *trigger.reasons,
+                                    clip_text(str(judge_exc), 300),
+                                ],
+                            )
+                        except Exception as judge_exc:
+                            decision = _recovery_judge_failure_decision(
+                                failure_type="recovery_judge_internal_error",
+                                root_cause="RecoveryJudge response handling failed outside the schema validator.",
+                                evidence=[
+                                    *trigger.reasons,
+                                    clip_text(str(judge_exc), 300),
+                                ],
+                            )
+                    if store:
+                        store.save_llm_result(
+                            diagnostic_context.context_id,
+                            "recovery_judge",
+                            raw_response=judge_text,
+                            parsed_result=decision.to_dict(),
+                        )
             else:
                 decision = deterministic_recovery_decision(trigger, evidence)
 
@@ -2029,11 +3019,18 @@ def error_recovery_middleware(
                 "recovery_scope": recovery_scope,
                 "evidence_status": "sufficient" if decision.evidence_sufficient else "insufficient",
                 "retry_reason": decision.reason or decision.root_cause,
-                "recovery_phase": "diagnose",
+                "recovery_phase": (
+                    "exhausted"
+                    if decision.kind == RecoveryDecisionKind.BLOCKED.value
+                    and decision.reason_code == "RECOVERY_NO_PROGRESS_EXHAUSTED"
+                    else "diagnose"
+                ),
                 "recovery_status": action,
                 "recovery_application": {},
-                # Compatibility mirror only. Graph routers consume
-                # recovery_decision.kind/next_route as the authority.
+                # Compatibility mirror only.  The transition guard commits the
+                # typed decision; the effective-route resolver consumes the
+                # scoped active transition exactly once.  Routers never read
+                # this projection as route authority.
                 "next_step": decision.next_route,
             })
             if next_step == "ask_user":

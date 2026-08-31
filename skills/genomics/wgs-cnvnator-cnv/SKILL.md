@@ -15,6 +15,8 @@ runtime:
   packages: [cnvnator, root, samtools, seqkit]
   capabilities: [read-depth-cnv, cnv-filtering]
   healthcheck: bash -lc "cnvnator -h >/dev/null 2>&1 && samtools --version >/dev/null"
+  install_policy: prefer-declared
+  install_command: mamba create -n bio_cnvnator -c conda-forge -c bioconda --channel-priority flexible -y cnvnator samtools seqkit
 ---
 
 # WGS CNVnator CNV Calling
@@ -32,7 +34,7 @@ Use this skill when:
 Do not use this skill when:
 
 - Input is RNA-seq.
-- The goal is split-read/discordant-pair SV; use LUMPY.
+- The goal is short-read SV; use Manta by default, or LUMPY only if explicitly requested.
 - The data are ONT/PacBio long reads; use long-read SV tools.
 
 CNVnator calls are screening results; treat small CNVs, low-depth samples, and repetitive regions cautiously.
@@ -131,7 +133,8 @@ Report CNV counts by type and bin size, total called length, and any bin-size wa
 
 ## 相似的 skills
 
-- `genomics/wgs-lumpy-sv` - short-read split-read/discordant-pair SV.
-- `genomics/long-read-sv-sniffles-survivor` - long-read SV.
+- `genomics/wgs-manta-sv` - default short-read SV.
+- `genomics/wgs-lumpy-sv` - legacy split-read/discordant-pair SV fallback.
+- `genomics/long-read-sv-sniffles2` - long-read SV.
 - `genomics/wgs-short-read-mapping` - prepare BAMs.
 - `genomics/assembly-variant-syri` - assembly-level structural variation.

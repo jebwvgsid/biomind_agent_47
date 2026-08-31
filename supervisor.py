@@ -1210,6 +1210,12 @@ class SupervisorNode:
     def _structured_execution_context(state: Dict[str, Any]) -> Dict[str, Any]:
         evidence = state.get("execution_evidence") if isinstance(state, dict) else {}
         evidence = dict(evidence) if isinstance(evidence, dict) else {}
+        reconciliation = (
+            dict(state.get("reconciliation_evidence") or {})
+            if isinstance(state, dict)
+            and isinstance(state.get("reconciliation_evidence"), dict)
+            else {}
+        )
         structured = bool(
             evidence
             and (evidence.get("returncode") is not None or evidence.get("exit_code") is not None)
@@ -1253,6 +1259,7 @@ class SupervisorNode:
                 "returncode": int(record.exit_code),
                 "evidence_source": "execution_evidence",
                 "evidence_complete": True,
+                "reconciliation_evidence": reconciliation,
                 "migration_warnings": [],
             }
 
@@ -1274,6 +1281,7 @@ class SupervisorNode:
             "returncode": SupervisorNode._returncode_from_observation(last_observation),
             "evidence_source": "legacy_observation",
             "evidence_complete": False,
+            "reconciliation_evidence": reconciliation,
             "migration_warnings": [
                 "Legacy observation was parsed because no complete ExecutionEvidence was available."
             ],
@@ -1433,6 +1441,25 @@ class SupervisorNode:
             )
             rule_results.extend(self._root_cause_check_results(state))
             rule_results.extend(self._knowledge_conflict_check_results(state))
+            reconciliation = dict(context.get("reconciliation_evidence") or {})
+            reconciliation_attempt = str(reconciliation.get("attempt_id") or "")
+            reconciliation_step = str(reconciliation.get("step_id") or "")
+            if (
+                reconciliation
+                and (not reconciliation_attempt or reconciliation_attempt == attempt_id)
+                and (not reconciliation_step or reconciliation_step == step_id)
+            ):
+                rule_results.append(CheckResult(
+                    "RecoveryReconciliationEvidence",
+                    True,
+                    "info",
+                    (
+                        "Controller accepted this Execute anomaly for independent validation; "
+                        f"decision_id={reconciliation.get('decision_id') or '<missing>'}. "
+                        f"Reason: {str(reconciliation.get('reason') or '')[:500]}"
+                    ),
+                    "Treat reconciliation as evidence only; validation and CompletionGate remain authoritative.",
+                ))
             if str(execution.get("execution_status") or "").lower() == "failed" and returncode == 0:
                 rule_results.append(CheckResult(
                     "ExecutionStatusCheck",

@@ -846,8 +846,8 @@ def validate_plan_managed_artifacts(
             if binding is None:
                 violations.append(_violation(
                     code="PLAN_ARTIFACT_HANDLE_INVALID",
-                    owner="plan_binding",
-                    route="planner_repair",
+                    owner="planner",
+                    route="planner",
                     message=f"Plan output handle {handle!r} is unknown.",
                     proposed=str(handle),
                     field_path=f"steps[{step_index}].output_artifact_handles[{item_index}]",
@@ -868,8 +868,8 @@ def validate_plan_managed_artifacts(
                     if binding is None:
                         violations.append(_violation(
                             code="PLAN_ARTIFACT_HANDLE_INVALID",
-                            owner="plan_binding",
-                            route="planner_repair",
+                            owner="planner",
+                            route="planner",
                             message=f"Plan output handle {proposed_handle!r} is unknown.",
                             proposed=proposed_handle,
                             field_path=f"steps[{step_index}].{field_name}[{item_index}]",
@@ -877,8 +877,8 @@ def validate_plan_managed_artifacts(
                     elif proposed_path and proposed_path != binding.canonical_path:
                         violations.append(_violation(
                             code="PLAN_OUTPUT_BINDING_MISMATCH",
-                            owner="plan_binding",
-                            route="planner_repair",
+                            owner="planner",
+                            route="planner",
                             message=(
                                 f"Plan redefines {binding.semantic_handle} as {proposed_path}; "
                                 "it must reference the Task artifact handle without redefining its path."
@@ -1602,21 +1602,40 @@ def _path_within(path: str, root: Path) -> bool:
         return False
 
 
-def _format_compatible(expected: str, observed: str, artifact_kind: str) -> bool:
+def _format_compatibility(expected: str, observed: str, artifact_kind: str) -> str:
+    """Relate a semantic format contract to the bounded detector result.
+
+    ``text`` is a detector class, not proof of a more specific semantic format
+    such as GTF, TSV, or a configuration language.  Preserve that uncertainty
+    instead of collapsing it into incompatibility.
+    """
     expected_value = str(expected or "").strip().lower()
     observed_value = str(observed or "").strip().lower()
     if artifact_kind == "directory":
-        return expected_value in {"", "directory", "dir"}
+        return (
+            "compatible"
+            if expected_value in {"", "directory", "dir"}
+            else "incompatible"
+        )
     if expected_value in {"", "file", "text", "data", "output"}:
-        return True
+        return "compatible"
+    if expected_value == observed_value:
+        return "compatible"
     # Markdown is a textual representation; a bounded content sniff cannot
     # reliably distinguish prose-only Markdown from plain UTF-8 text.  This is
     # format compatibility, not filename/extension equivalence.
     if observed_value == "text" and expected_value in {
         "markdown", "md", "plaintext", "plain_text", "report",
     }:
-        return True
-    return expected_value == observed_value
+        return "compatible"
+    if observed_value == "text":
+        # A bounded UTF-8 sniff proves only the detector class.  It cannot by
+        # itself disprove a more specific semantic text contract; leave that to
+        # the declared content validator.
+        return "unproven"
+    if not observed_value:
+        return "unproven"
+    return "incompatible"
 
 
 def reconcile_runtime_outputs(
@@ -1669,20 +1688,65 @@ def reconcile_runtime_outputs(
             contract.get("constraint_origin") or PHYSICAL_IMPLEMENTATION_DETAIL
         ).strip().upper()
         root = Path(expected_path).parent.resolve(strict=False) if expected_path else None
-        eligible = [
+        in_scope = [
             item for item in candidates
             if str(item.get("path") or "") not in used_paths
             and (not root or _path_within(str(item.get("path") or ""), root))
-            and str(item.get("artifact_kind") or "") == expected_kind
-            and bool(item.get("content_valid", False))
-            and _format_compatible(expected_format, str(item.get("format") or ""), expected_kind)
         ]
         exact = next(
-            (item for item in eligible if _canonical_path({"path": item.get("path")}) == expected_path),
+            (item for item in in_scope if _canonical_path({"path": item.get("path")}) == expected_path),
             None,
         )
         if exact is not None:
             observed_path = _canonical_path({"path": exact.get("path")})
+            observed_kind = str(exact.get("artifact_kind") or "").strip().lower()
+            format_compatibility = _format_compatibility(
+                expected_format,
+                str(exact.get("format") or ""),
+                expected_kind,
+            )
+            if observed_kind != expected_kind:
+                result["violations"].append({
+                    "code": "OUTPUT_REALIZATION_MISMATCH",
+                    "owner": "ARTIFACT_CONTRACT",
+                    "route": "recovery",
+                    "message": f"The expected path for {handle or logical_id} has artifact kind {observed_kind!r}, not {expected_kind!r}.",
+                    "logical_artifact": logical_id,
+                    "expected_realization": expected_path,
+                    "observed_candidates": [observed_path],
+                    "constraint_origin": constraint_origin,
+                    "expected_artifact_kind": expected_kind,
+                    "observed_artifact_kind": observed_kind,
+                })
+                continue
+            if not bool(exact.get("content_valid", False)):
+                result["violations"].append({
+                    "code": "OBSERVED_ARTIFACT_CONTENT_INVALID",
+                    "owner": "ARTIFACT_CONTRACT",
+                    "route": "recovery",
+                    "message": f"The current-attempt artifact for {handle or logical_id} exists but did not pass its content validation contract.",
+                    "logical_artifact": logical_id,
+                    "expected_realization": expected_path,
+                    "observed_candidates": [observed_path],
+                    "constraint_origin": constraint_origin,
+                    "validation_contract_id": str(contract.get("validation_contract_id") or ""),
+                })
+                continue
+            if format_compatibility == "incompatible":
+                result["violations"].append({
+                    "code": "OUTPUT_REALIZATION_MISMATCH",
+                    "owner": "ARTIFACT_CONTRACT",
+                    "route": "recovery",
+                    "message": f"The current-attempt artifact for {handle or logical_id} has a provably incompatible detected format.",
+                    "logical_artifact": logical_id,
+                    "expected_realization": expected_path,
+                    "observed_candidates": [observed_path],
+                    "constraint_origin": constraint_origin,
+                    "expected_format": expected_format,
+                    "observed_format": str(exact.get("format") or ""),
+                    "format_compatibility": format_compatibility,
+                })
+                continue
             used_paths.add(str(exact.get("path") or ""))
             result["bindings"].append({
                 "artifact_id": logical_id,
@@ -1695,14 +1759,61 @@ def reconcile_runtime_outputs(
                 "format": str(exact.get("format") or expected_format),
                 "representation": str(exact.get("representation") or ""),
                 "content_valid": True,
+                "format_compatibility": format_compatibility,
             })
             continue
+        physical_candidates = [
+            item for item in in_scope
+            if str(item.get("artifact_kind") or "").strip().lower() == expected_kind
+        ]
+        eligible = []
+        for item in physical_candidates:
+            relation = _format_compatibility(
+                expected_format,
+                str(item.get("format") or ""),
+                expected_kind,
+            )
+            if bool(item.get("content_valid", False)) and relation != "incompatible":
+                candidate = dict(item)
+                candidate["format_compatibility"] = relation
+                eligible.append(candidate)
         if not eligible:
+            if physical_candidates:
+                content_invalid = all(
+                    not bool(item.get("content_valid", False))
+                    for item in physical_candidates
+                )
+                result["violations"].append({
+                    "code": (
+                        "OBSERVED_ARTIFACT_CONTENT_INVALID"
+                        if content_invalid
+                        else "OUTPUT_REALIZATION_MISMATCH"
+                    ),
+                    "owner": "ARTIFACT_CONTRACT",
+                    "route": "recovery",
+                    "message": (
+                        f"Current-attempt realizations for {handle or logical_id} exist but did not pass the content contract."
+                        if content_invalid
+                        else f"Current-attempt realizations for {handle or logical_id} exist but have a provably incompatible detected format."
+                    ),
+                    "logical_artifact": logical_id,
+                    "expected_realization": expected_path,
+                    "constraint_origin": constraint_origin,
+                    "observed_candidates": [
+                        str(item.get("path") or "") for item in physical_candidates
+                    ],
+                    "expected_format": expected_format,
+                    "observed_formats": [
+                        str(item.get("format") or "") for item in physical_candidates
+                    ],
+                    "validation_contract_id": str(contract.get("validation_contract_id") or ""),
+                })
+                continue
             result["violations"].append({
                 "code": "OUTPUT_MISSING",
                 "owner": "ARTIFACT_CONTRACT",
                 "route": "recovery",
-                "message": f"No compatible current-attempt realization was found for {handle or logical_id}.",
+                "message": f"No current-attempt physical realization was found for {handle or logical_id}.",
                 "logical_artifact": logical_id,
                 "expected_realization": expected_path,
                 "constraint_origin": constraint_origin,
@@ -1770,6 +1881,7 @@ def reconcile_runtime_outputs(
             "format": str(candidate.get("format") or expected_format),
             "representation": representation,
             "content_valid": True,
+            "format_compatibility": str(candidate.get("format_compatibility") or ""),
             "downstream_compatible": True,
         })
     if result["violations"]:
@@ -1915,8 +2027,8 @@ def classify_output_mismatch(
     if plan_path and _canonical_path({"path": plan_path}) != expected:
         return _violation(
             code="PLAN_OUTPUT_BINDING_MISMATCH",
-            owner="plan_binding",
-            route="planner_repair",
+            owner="planner",
+            route="planner",
             message="Plan redefined the task-owned output path.",
             binding=task_binding,
             proposed=_canonical_path({"path": plan_path}),

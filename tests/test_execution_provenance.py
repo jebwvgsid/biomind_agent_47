@@ -128,6 +128,24 @@ class ArtifactProvenanceTests(unittest.TestCase):
             self.assertEqual(validation["validation_id"], "validation-a")
             self.assertEqual(get_artifact_producer(state, artifact_id)["validation_status"], "valid")
 
+    def test_execution_cursor_only_tracks_an_active_attempt(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            state = _state(root)
+            self.assertEqual(state.get("execution_cursor_step_id", ""), "")
+            action = record_provenance_event(state, "action_bound", {
+                "action": {"action_id": "cursor-action", "step_id": "step-1", "type": "execute"},
+            })
+            attempt = record_provenance_event(state, "attempt_started", {"action_id": action["action_id"]})
+            self.assertEqual(state["execution_cursor_step_id"], "step-1")
+
+            record_provenance_event(state, "execution_finished", {
+                "attempt_id": attempt["attempt_id"],
+                "execution_record": {"execution_id": "cursor-exec", "returncode": 0},
+            })
+
+            self.assertEqual(state["execution_cursor_step_id"], "")
+
     def test_same_path_creates_new_version_without_changing_logical_id(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

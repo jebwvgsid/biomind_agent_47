@@ -31,7 +31,7 @@ def _persist_spec(root: str, task_id: str, spec):
         task_id,
         "- [>] Step 1: analyze | Action: EXECUTE | Done: validated output exists",
     )
-    plan["task_state"]["task_spec"] = spec
+    plan["current_task"] = {"task_spec": spec}
     save_plan_state(root, task_id, plan)
     return plan
 
@@ -103,7 +103,7 @@ class Batch8ReplayTests(unittest.TestCase):
 
             facts_b = dump_effective_user_facts(tmpdir, "task-b")
             facts_c = dump_effective_user_facts(tmpdir, "task-c")
-            self.assertTrue(any(row["source_task_id"] == "task-a" for row in facts_b["inherited_facts"]))
+            self.assertIn("/out/a/tads.bed", json.dumps(facts_b, ensure_ascii=False))
             self.assertNotIn("18l", json.dumps(facts_c, ensure_ascii=False))
             self.assertNotIn("tad_calling", json.dumps(facts_c, ensure_ascii=False).lower())
             bundle_b = build_decision_lineage_bundle(tmpdir, "task-b")

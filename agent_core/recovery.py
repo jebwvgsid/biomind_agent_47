@@ -21,6 +21,10 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 from agent_core.context_lineage import redact_payload, redact_text
+from agent_core.recovery_contract import (
+    RECOVERY_DISPOSITION_TO_ROUTE as _DISPOSITION_TO_ROUTE,
+    recovery_route_for_disposition,
+)
 from agent_core.root_cause import RootCauseAnalyzer
 
 
@@ -916,6 +920,7 @@ class RecoveryDecisionKind(str, Enum):
     """
 
     CONTINUE = "CONTINUE"
+    ACCEPT_EXECUTION_FOR_VERIFICATION = "ACCEPT_EXECUTION_FOR_VERIFICATION"
     FORMAT_REPAIR = "FORMAT_REPAIR"
     RETRY_CURRENT_ACTION = "RETRY_CURRENT_ACTION"
     REWIND_MANIFEST_STAGE = "REWIND_MANIFEST_STAGE"
@@ -930,14 +935,38 @@ class RecoveryDecisionKind(str, Enum):
     COMPLETE_TASK = "COMPLETE_TASK"
 
 
+class RecoveryDisposition(str, Enum):
+    """Typed controller intent carried by a one-shot recovery transition."""
+
+    ACCEPT_EXECUTION_FOR_VERIFICATION = "ACCEPT_EXECUTION_FOR_VERIFICATION"
+    RETRY_GENERATE = "RETRY_GENERATE"
+    RETRY_EXECUTE = "RETRY_EXECUTE"
+    BLOCK = "BLOCK"
+    INTERNAL_PROTOCOL_ERROR = "INTERNAL_PROTOCOL_ERROR"
+    PLAN_PATCH = "PLAN_PATCH"
+    RECONSULT = "RECONSULT"
+    REVALIDATE = "REVALIDATE"
+    REWIND_MANIFEST_STAGE = "REWIND_MANIFEST_STAGE"
+    ROLLBACK_UPSTREAM_STEP = "ROLLBACK_UPSTREAM_STEP"
+    COMPLETE_STEP = "COMPLETE_STEP"
+    COMPLETE_TASK = "COMPLETE_TASK"
+
+
+class RecoveryTransitionStatus(str, Enum):
+    PENDING = "pending"
+    CONSUMED = "consumed"
+    SUPERSEDED = "superseded"
+    EXPIRED = "expired"
+
+
 _ACTION_TO_DECISION_KIND = {
     RecoveryAction.CONTINUE.value: RecoveryDecisionKind.CONTINUE.value,
     RecoveryAction.FORMAT_REPAIR.value: RecoveryDecisionKind.FORMAT_REPAIR.value,
     RecoveryAction.RETRY_EXECUTION.value: RecoveryDecisionKind.RETRY_CURRENT_ACTION.value,
     RecoveryAction.PATCH_SCRIPT.value: RecoveryDecisionKind.RETRY_CURRENT_ACTION.value,
     RecoveryAction.PATCH_PLAN.value: RecoveryDecisionKind.PLAN_PATCH_REQUEST.value,
-    RecoveryAction.RECONCILE_AND_CONTINUE.value: RecoveryDecisionKind.CONTINUE.value,
-    RecoveryAction.PASS_WITH_WARNING.value: RecoveryDecisionKind.CONTINUE.value,
+    RecoveryAction.RECONCILE_AND_CONTINUE.value: RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value,
+    RecoveryAction.PASS_WITH_WARNING.value: RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value,
     RecoveryAction.RUN_DIAGNOSTIC_PROBE.value: RecoveryDecisionKind.RUN_ALLOWED_PROBE.value,
     RecoveryAction.BLOCK_MISSING_INPUT.value: RecoveryDecisionKind.BLOCKED.value,
     RecoveryAction.ASK_USER.value: RecoveryDecisionKind.ESCALATE.value,
@@ -952,6 +981,7 @@ _ACTION_TO_DECISION_KIND = {
 
 _DECISION_KIND_TO_ACTION = {
     RecoveryDecisionKind.CONTINUE.value: RecoveryAction.CONTINUE.value,
+    RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value: RecoveryAction.RECONCILE_AND_CONTINUE.value,
     RecoveryDecisionKind.FORMAT_REPAIR.value: RecoveryAction.FORMAT_REPAIR.value,
     RecoveryDecisionKind.RETRY_CURRENT_ACTION.value: RecoveryAction.RETRY_EXECUTION.value,
     RecoveryDecisionKind.RUN_ALLOWED_PROBE.value: RecoveryAction.RUN_DIAGNOSTIC_PROBE.value,
@@ -966,20 +996,31 @@ _DECISION_KIND_TO_ACTION = {
     RecoveryDecisionKind.REVALIDATE.value: RecoveryAction.REVALIDATE.value,
 }
 
+_DECISION_KIND_TO_DISPOSITION = {
+    RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value: RecoveryDisposition.ACCEPT_EXECUTION_FOR_VERIFICATION.value,
+    RecoveryDecisionKind.FORMAT_REPAIR.value: RecoveryDisposition.RETRY_GENERATE.value,
+    RecoveryDecisionKind.RETRY_CURRENT_ACTION.value: RecoveryDisposition.RETRY_GENERATE.value,
+    RecoveryDecisionKind.RUN_ALLOWED_PROBE.value: RecoveryDisposition.RETRY_GENERATE.value,
+    RecoveryDecisionKind.PLAN_PATCH_REQUEST.value: RecoveryDisposition.PLAN_PATCH.value,
+    RecoveryDecisionKind.REWIND_MANIFEST_STAGE.value: RecoveryDisposition.REWIND_MANIFEST_STAGE.value,
+    RecoveryDecisionKind.ROLLBACK_UPSTREAM_STEP.value: RecoveryDisposition.ROLLBACK_UPSTREAM_STEP.value,
+    RecoveryDecisionKind.RECONSULT.value: RecoveryDisposition.RECONSULT.value,
+    RecoveryDecisionKind.REVALIDATE.value: RecoveryDisposition.REVALIDATE.value,
+    RecoveryDecisionKind.BLOCKED.value: RecoveryDisposition.BLOCK.value,
+    RecoveryDecisionKind.ESCALATE.value: RecoveryDisposition.INTERNAL_PROTOCOL_ERROR.value,
+    # CONTINUE is a compatibility vocabulary only.  An un-normalized generic
+    # continuation is ambiguous and must fail closed at Supervisor; it must
+    # never inherit Generate route authority.
+    RecoveryDecisionKind.CONTINUE.value: RecoveryDisposition.INTERNAL_PROTOCOL_ERROR.value,
+    RecoveryDecisionKind.COMPLETE_STEP.value: RecoveryDisposition.COMPLETE_STEP.value,
+    RecoveryDecisionKind.COMPLETE_TASK.value: RecoveryDisposition.COMPLETE_TASK.value,
+}
+
+# Kind remains the compatibility/parser vocabulary.  Route authority is
+# derived exactly once from the typed disposition.
 _DECISION_KIND_TO_ROUTE = {
-    RecoveryDecisionKind.CONTINUE.value: "generate",
-    RecoveryDecisionKind.FORMAT_REPAIR.value: "generate",
-    RecoveryDecisionKind.RETRY_CURRENT_ACTION.value: "generate",
-    RecoveryDecisionKind.RUN_ALLOWED_PROBE.value: "generate",
-    RecoveryDecisionKind.PLAN_PATCH_REQUEST.value: "planner",
-    RecoveryDecisionKind.BLOCKED.value: "finish",
-    RecoveryDecisionKind.ESCALATE.value: "supervisor",
-    RecoveryDecisionKind.COMPLETE_STEP.value: "generate",
-    RecoveryDecisionKind.COMPLETE_TASK.value: "finish",
-    RecoveryDecisionKind.REWIND_MANIFEST_STAGE.value: "generate",
-    RecoveryDecisionKind.ROLLBACK_UPSTREAM_STEP.value: "generate",
-    RecoveryDecisionKind.RECONSULT.value: "consultant",
-    RecoveryDecisionKind.REVALIDATE.value: "supervisor",
+    kind: _DISPOSITION_TO_ROUTE[disposition]
+    for kind, disposition in _DECISION_KIND_TO_DISPOSITION.items()
 }
 
 
@@ -990,28 +1031,79 @@ def contextualize_recovery_decision(
     step_id: str = "",
     attempt_id: str = "",
     source_node: str = "",
+    step_attempt: int = 0,
+    trigger_event_id: str = "",
 ) -> "RecoveryDecision":
     """Bind a judge/policy decision to one concrete action attempt."""
     value = decision.to_dict()
+    original_source_node = str(
+        value.get("trigger_node") or value.get("source_node") or ""
+    ).strip().lower()
+    resolved_source_node = str(source_node or original_source_node).strip().lower()
+    if (
+        str(value.get("kind") or "")
+        == RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value
+        and resolved_source_node == "supervisor"
+        and not original_source_node
+        and (
+            bool(value.get("primary_execution_succeeded"))
+            or value.get("error_is_real") is False
+        )
+    ):
+        # A successful fact-validation performed *by* Supervisor is not an
+        # accepted Execute transition.  Without CompletionGate evidence it is
+        # a bounded current-step continuation back to Generate.
+        value.update({
+            "kind": RecoveryDecisionKind.RETRY_CURRENT_ACTION.value,
+            "recommended_action": RecoveryAction.PATCH_SCRIPT.value,
+            "next_action": RecoveryAction.PATCH_SCRIPT.value,
+            "verdict": "repair",
+            "action_type": "regenerate_script",
+            "disposition": RecoveryDisposition.RETRY_GENERATE.value,
+            "next_route": "generate",
+            "target_route": "generate",
+            "reason_code": "SUPERVISOR_VALIDATION_REQUIRES_CURRENT_STEP_CONTINUATION",
+        })
+        value.pop("decision_id", None)
+        value.pop("idempotency_key", None)
+        value.pop("incident_id", None)
+    resolved_step_attempt = int(step_attempt or value.get("step_attempt") or 0)
+    resolved_trigger_event_id = str(
+        trigger_event_id
+        or value.get("trigger_event_id")
+        or attempt_id
+        or value.get("attempt_id")
+        or ""
+    )
+    resolved_trigger_node = str(
+        source_node or value.get("trigger_node") or value.get("source_node") or ""
+    )
     identity_changed = any(
-        candidate and str(value.get(key) or "") != str(candidate)
+        candidate not in (None, "", 0) and str(value.get(key) or "") != str(candidate)
         for key, candidate in (
             ("action_id", action_id),
             ("step_id", step_id),
             ("attempt_id", attempt_id),
             ("source_node", source_node),
+            ("step_attempt", resolved_step_attempt),
+            ("trigger_event_id", resolved_trigger_event_id),
+            ("trigger_node", resolved_trigger_node),
         )
     )
     value.update({
-        "schema_version": 3,
+        "schema_version": 5,
         "action_id": action_id or value.get("action_id"),
         "step_id": step_id or value.get("step_id"),
         "attempt_id": attempt_id or value.get("attempt_id"),
         "source_node": source_node or value.get("source_node") or "",
+        "step_attempt": resolved_step_attempt,
+        "trigger_event_id": resolved_trigger_event_id,
+        "trigger_node": resolved_trigger_node,
+        "status": value.get("status") or RecoveryTransitionStatus.PENDING.value,
     })
-    value.pop("decision_id", None)
-    value.pop("idempotency_key", None)
     if identity_changed:
+        value.pop("decision_id", None)
+        value.pop("idempotency_key", None)
         value.pop("incident_id", None)
     return RecoveryDecision.from_mapping(value)
 
@@ -1070,11 +1162,13 @@ def recovery_decision_from_state(state: Dict[str, Any]) -> Optional["RecoveryDec
 
 
 def recovery_route_from_state(state: Dict[str, Any], source_node: str) -> str:
-    """Return the committed route without interpreting logs or review prose."""
+    """Compatibility reader for one still-pending, source-scoped transition."""
     decision = recovery_decision_from_state(state)
     if decision is None:
         return ""
-    decision_source = str(decision.source_node or "")
+    if decision.status != RecoveryTransitionStatus.PENDING.value:
+        return ""
+    decision_source = str(decision.trigger_node or decision.source_node or "")
     if decision_source and decision_source not in {str(source_node or ""), "legacy_migration"}:
         return ""
     if (
@@ -1264,7 +1358,7 @@ class ValidationEvidence:
 
 @dataclass
 class RecoveryDecision:
-    schema_version: int = 4
+    schema_version: int = 5
     failure_class: str = RecoveryFailureClass.AMBIGUOUS.value
     failure_owner: str = RecoveryFailureOwner.UNKNOWN.value
     error_is_real: bool = True
@@ -1317,6 +1411,14 @@ class RecoveryDecision:
     decision_owner: str = "RecoveryPolicy"
     next_route: str = ""
     source_node: str = ""
+    disposition: str = ""
+    target_route: str = ""
+    status: str = RecoveryTransitionStatus.PENDING.value
+    step_attempt: int = 0
+    trigger_event_id: str = ""
+    trigger_node: str = ""
+    consumed_at: str = ""
+    superseded_reason: str = ""
     migration_source: str = ""
     migration_conflicts: List[str] = field(default_factory=list)
     task_id: str = ""
@@ -1366,6 +1468,10 @@ class RecoveryDecision:
             "action_id": value.get("action_id"),
             "step_id": value.get("step_id"),
             "attempt_id": value.get("attempt_id"),
+            "step_attempt": value.get("step_attempt"),
+            "trigger_event_id": value.get("trigger_event_id"),
+            "trigger_node": value.get("trigger_node"),
+            "disposition": value.get("disposition"),
             "plan_id": value.get("plan_id"),
             "plan_version": value.get("plan_version"),
             "incident_id": value.get("incident_id"),
@@ -1402,7 +1508,12 @@ class RecoveryDecision:
             raise ValueError("Recovery decision must be an object")
         value = dict(value)
         original_schema = int(value.get("schema_version") or 0)
+        supplied_machine_route = str(
+            value.get("target_route") or value.get("next_route") or ""
+        ).strip().lower()
+        supplied_disposition = str(value.get("disposition") or "").strip().upper()
         migration_conflicts = list(value.get("migration_conflicts") or [])
+        acceptance_protocol_normalization = False
         legacy_supervisor = str(value.get("supervisor_verdict") or "").strip().upper()
         v2_judge_input = bool(
             "schema_version" in value
@@ -1478,6 +1589,83 @@ class RecoveryDecision:
             )
             value["recommended_action"] = reverse_action_map.get(legacy_pair, RecoveryAction.ESCALATE.value)
             recommended = str(value["recommended_action"]).strip().upper()
+        legacy_acceptance = recommended in {
+            RecoveryAction.RECONCILE_AND_CONTINUE.value,
+            RecoveryAction.PASS_WITH_WARNING.value,
+        }
+        legacy_source = str(
+            value.get("trigger_node") or value.get("source_node") or ""
+        ).strip().lower()
+        accepted_execution = bool(value.get("primary_execution_succeeded")) or (
+            value.get("error_is_real") is False
+        )
+        if (
+            explicit_kind == RecoveryDecisionKind.CONTINUE.value
+            and original_schema >= 5
+        ):
+            raise ValueError(
+                "RecoveryDecision schema_version=5 may not use generic CONTINUE"
+            )
+        # RECONCILE/PASS is acceptance only after a concrete accepted Execute.
+        # A proven accepted Judge/Policy result may be temporarily unbound (no
+        # source yet), but an invalid result or a non-Execute source must fail
+        # closed before it can acquire route authority.
+        if (
+            explicit_kind == RecoveryDecisionKind.CONTINUE.value
+            or (
+                legacy_acceptance
+                and (bool(legacy_source) or not accepted_execution)
+            )
+        ):
+            if legacy_acceptance and accepted_execution and legacy_source == "execute":
+                value["kind"] = RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value
+                explicit_kind = RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value
+                value["next_route"] = "supervisor"
+                value["target_route"] = "supervisor"
+                migration_conflicts.append("legacy_execute_acceptance_normalized_for_verification")
+                value["migration_source"] = str(
+                    value.get("migration_source") or "legacy_continue_execute_acceptance"
+                )
+            else:
+                acceptance_protocol_normalization = bool(legacy_acceptance)
+                ambiguity_reason = (
+                    "Recovery reconciliation cannot be accepted without a concrete accepted Execute result."
+                    if legacy_acceptance
+                    else "Legacy generic CONTINUE has no typed recovery disposition."
+                )
+                value.update({
+                    "kind": RecoveryDecisionKind.ESCALATE.value,
+                    "recommended_action": RecoveryAction.ESCALATE.value,
+                    "next_action": RecoveryAction.ESCALATE.value,
+                    "verdict": "escalate",
+                    "action_type": "block_task",
+                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    "failure_class": RecoveryFailureClass.AMBIGUOUS.value,
+                    "reason_code": "LEGACY_RECOVERY_TRANSITION_AMBIGUOUS",
+                    "reason": ambiguity_reason,
+                    "root_cause": ambiguity_reason,
+                    "next_route": "supervisor",
+                    "target_route": "supervisor",
+                    "disposition": RecoveryDisposition.INTERNAL_PROTOCOL_ERROR.value,
+                    "requires_user_input": False,
+                })
+                explicit_kind = RecoveryDecisionKind.ESCALATE.value
+                recommended = RecoveryAction.ESCALATE.value
+                migration_conflicts.append(
+                    "legacy_continue_reconciliation_ambiguous"
+                    if legacy_acceptance
+                    else "legacy_generic_continue_ambiguous"
+                )
+                value["migration_source"] = str(
+                    value.get("migration_source") or "legacy_continue_protocol_error"
+                )
+        if explicit_kind:
+            expected_kind_for_action = _ACTION_TO_DECISION_KIND.get(
+                recommended,
+                RecoveryDecisionKind.ESCALATE.value,
+            )
+            if str(value.get("kind") or explicit_kind) != expected_kind_for_action:
+                raise ValueError("Recovery decision kind conflicts with recommended_action")
         value.setdefault("schema_version", 2)
         if not failure_class_was_explicit and recommended == RecoveryAction.PATCH_PLAN.value:
             value["failure_class"] = RecoveryFailureClass.PLAN_ERROR.value
@@ -1510,6 +1698,32 @@ class RecoveryDecision:
         })
         recommended = str(value.get("recommended_action") or "").strip().upper()
         value.setdefault("kind", _ACTION_TO_DECISION_KIND.get(recommended, RecoveryDecisionKind.ESCALATE.value))
+        if str(value.get("kind") or "") == RecoveryDecisionKind.CONTINUE.value:
+            if original_schema >= 5:
+                raise ValueError(
+                    "RecoveryDecision schema_version=5 may not use generic CONTINUE"
+                )
+            value.update({
+                "kind": RecoveryDecisionKind.ESCALATE.value,
+                "recommended_action": RecoveryAction.ESCALATE.value,
+                "next_action": RecoveryAction.ESCALATE.value,
+                "verdict": "escalate",
+                "action_type": "block_task",
+                "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                "failure_class": RecoveryFailureClass.AMBIGUOUS.value,
+                "reason_code": "LEGACY_RECOVERY_TRANSITION_AMBIGUOUS",
+                "reason": "Legacy generic CONTINUE has no typed recovery disposition.",
+                "root_cause": "Legacy generic CONTINUE has no typed recovery disposition.",
+                "next_route": "supervisor",
+                "target_route": "supervisor",
+                "disposition": RecoveryDisposition.INTERNAL_PROTOCOL_ERROR.value,
+                "requires_user_input": False,
+            })
+            recommended = RecoveryAction.ESCALATE.value
+            migration_conflicts.append("legacy_generic_continue_ambiguous")
+            value["migration_source"] = str(
+                value.get("migration_source") or "legacy_continue_protocol_error"
+            )
         value.setdefault("reason_code", str(value.get("failure_type") or "recovery_decision").strip().lower())
         value.setdefault("repair_domain", "")
         value.setdefault("consume_budget", (
@@ -1532,10 +1746,52 @@ class RecoveryDecision:
             and bool(value.get("requires_user_input"))
             else _DECISION_KIND_TO_ROUTE.get(str(value.get("kind") or ""), "supervisor")
         )
-        value.setdefault("next_route", inferred_route)
+        inferred_disposition = _DECISION_KIND_TO_DISPOSITION.get(
+            str(value.get("kind") or ""),
+            RecoveryDisposition.INTERNAL_PROTOCOL_ERROR.value,
+        )
+        legacy_route_normalization = bool(
+            acceptance_protocol_normalization
+            or original_schema <= 4
+            and (
+                str(value.get("migration_source") or "").startswith("legacy_continue_")
+                or (
+                    str(value.get("kind") or "")
+                    == RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value
+                    and recommended in {
+                        RecoveryAction.RECONCILE_AND_CONTINUE.value,
+                        RecoveryAction.PASS_WITH_WARNING.value,
+                    }
+                )
+            )
+        )
+        if supplied_machine_route and supplied_machine_route != inferred_route and not legacy_route_normalization:
+            raise ValueError("Recovery decision route conflicts with Controller-derived kind mapping")
+        if supplied_disposition and supplied_disposition != inferred_disposition and not legacy_route_normalization:
+            raise ValueError("Recovery decision disposition conflicts with Controller-derived kind mapping")
+        value["next_route"] = inferred_route
+        value["target_route"] = inferred_route
+        value["disposition"] = inferred_disposition
+        value.setdefault("status", RecoveryTransitionStatus.PENDING.value)
+        value.setdefault("step_attempt", 0)
+        value.setdefault("trigger_event_id", value.get("attempt_id") or "")
+        value.setdefault("trigger_node", value.get("source_node") or "")
+        value.setdefault("consumed_at", "")
+        value.setdefault("superseded_reason", "")
         value.setdefault("migration_source", "recovery_decision_v2" if original_schema <= 2 else "")
         if legacy_supervisor and (
-            (legacy_supervisor == "RETRY" and value.get("kind") in {RecoveryDecisionKind.CONTINUE.value, RecoveryDecisionKind.COMPLETE_STEP.value, RecoveryDecisionKind.COMPLETE_TASK.value})
+            (
+                legacy_supervisor == "RETRY"
+                and (
+                    value.get("kind") in {
+                        RecoveryDecisionKind.CONTINUE.value,
+                        RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value,
+                        RecoveryDecisionKind.COMPLETE_STEP.value,
+                        RecoveryDecisionKind.COMPLETE_TASK.value,
+                    }
+                    or (acceptance_protocol_normalization and legacy_acceptance)
+                )
+            )
             or (legacy_supervisor in {"PASS", "WARN"} and value.get("kind") in {RecoveryDecisionKind.RETRY_CURRENT_ACTION.value, RecoveryDecisionKind.BLOCKED.value})
         ):
             migration_conflicts.append("legacy_supervisor_verdict_conflict")
@@ -1607,6 +1863,21 @@ class RecoveryDecision:
         if decision.next_route and decision.next_route != expected_route:
             raise ValueError("RecoveryDecision next_route conflicts with decision kind")
         decision.next_route = expected_route
+        expected_disposition = _DECISION_KIND_TO_DISPOSITION[decision.kind]
+        if decision.disposition and decision.disposition != expected_disposition:
+            raise ValueError("RecoveryDecision disposition conflicts with decision kind")
+        decision.disposition = expected_disposition
+        if decision.target_route and decision.target_route != expected_route:
+            raise ValueError("RecoveryDecision target_route conflicts with decision kind")
+        decision.target_route = expected_route
+        if decision.status not in {item.value for item in RecoveryTransitionStatus}:
+            raise ValueError(f"Unsupported recovery transition status: {decision.status}")
+        try:
+            decision.step_attempt = max(0, int(decision.step_attempt or 0))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("RecoveryDecision step_attempt must be a non-negative integer") from exc
+        decision.trigger_event_id = str(decision.trigger_event_id or decision.attempt_id or "")
+        decision.trigger_node = str(decision.trigger_node or decision.source_node or "")
         allowed_budgets = {
             None,
             "action_format_repair_count",
@@ -1701,7 +1972,7 @@ class RecoveryDecision:
 
     def to_dict(self) -> Dict[str, Any]:
         value = asdict(self)
-        value["schema_version"] = 4
+        value["schema_version"] = 5
         return value
 
 
@@ -1714,8 +1985,8 @@ def parse_recovery_judge_decision(text: str) -> RecoveryDecision:
         value = json.loads(raw)
     except json.JSONDecodeError as exc:
         raise ValueError("RecoveryJudge response is not one JSON object") from exc
-    if not isinstance(value, dict) or int(value.get("schema_version") or 0) not in {2, 3, 4}:
-        raise ValueError("RecoveryJudge must return RecoveryDecision schema_version=2, 3, or 4")
+    if not isinstance(value, dict) or int(value.get("schema_version") or 0) not in {2, 3, 4, 5}:
+        raise ValueError("RecoveryJudge must return RecoveryDecision schema_version=2, 3, 4, or 5")
     required = {
         "failure_class", "error_is_real", "primary_execution_succeeded",
         "evidence_sufficient", "confidence", "recommended_action",
@@ -1731,7 +2002,26 @@ def parse_recovery_judge_decision(text: str) -> RecoveryDecision:
     missing = sorted(required - set(value))
     if missing:
         raise ValueError("RecoveryJudge decision missing fields: " + ", ".join(missing))
+    controller_owned = {
+        "kind", "disposition", "next_route", "target_route", "status",
+        "step_attempt", "trigger_event_id", "trigger_node", "decision_id",
+        "idempotency_key", "source_node",
+    }
+    supplied_controller_fields = sorted(controller_owned & set(value))
+    if supplied_controller_fields:
+        raise ValueError(
+            "RecoveryJudge may not set Controller-owned transition fields: "
+            + ", ".join(supplied_controller_fields)
+        )
     decision = RecoveryDecision.from_mapping(value)
+    if decision.kind in {
+        RecoveryDecisionKind.COMPLETE_STEP.value,
+        RecoveryDecisionKind.COMPLETE_TASK.value,
+    } or decision.recommended_action in {
+        RecoveryAction.COMPLETE_STEP.value,
+        RecoveryAction.COMPLETE_TASK.value,
+    }:
+        raise ValueError("RecoveryJudge may not complete a step or task")
     if decision.commands or decision.patches or decision.rerun_command:
         raise ValueError("RecoveryJudge may classify and route, but may not emit executable code")
     return decision
@@ -2158,6 +2448,11 @@ def recovery_action_route(
     action = str(action or "").upper()
     if action in {item.value for item in RecoveryDecisionKind}:
         action = _DECISION_KIND_TO_ACTION[action]
+    decision_kind = _ACTION_TO_DECISION_KIND.get(
+        action,
+        RecoveryDecisionKind.ESCALATE.value,
+    )
+    disposition = _DECISION_KIND_TO_DISPOSITION[decision_kind]
     owner = str(failure_owner or "").strip().upper()
     patch_type = {
         RecoveryFailureOwner.RUNTIME.value: "runtime_recovery",
@@ -2166,18 +2461,18 @@ def recovery_action_route(
         RecoveryFailureOwner.GENERATED_ACTION.value: "same_step_repair",
     }.get(owner, "script_patch")
     routes = {
-        RecoveryAction.CONTINUE.value: ("supervisor", "continue", "VERIFY_GATE", "CURRENT_STEP"),
-        RecoveryAction.FORMAT_REPAIR.value: ("generate", "action_format_repair", "ACTION_FORMAT_REPAIR", "CURRENT_STEP"),
-        RecoveryAction.PATCH_SCRIPT.value: ("generate", patch_type, "SCRIPT_PATCH", "CURRENT_STEP"),
-        RecoveryAction.PATCH_PLAN.value: ("planner", "plan_patch", "PLAN_PATCH", "PLAN"),
-        RecoveryAction.RUN_DIAGNOSTIC_PROBE.value: ("generate", "diagnostic_probe", "PROBE", "CURRENT_STEP"),
-        RecoveryAction.RETRY_EXECUTION.value: ("generate", "retry_execution", "RETRY_EXECUTION", "CURRENT_STEP"),
-        RecoveryAction.RECONCILE_AND_CONTINUE.value: ("supervisor", "reconcile_artifacts", "RECONCILE", "CURRENT_STEP"),
-        RecoveryAction.PASS_WITH_WARNING.value: ("supervisor", "pass_with_warning", "VERIFY_GATE", "CURRENT_STEP"),
-        RecoveryAction.COMPLETE_STEP.value: ("generate", "complete_step", "COMPLETE_STEP", "CURRENT_STEP"),
-        RecoveryAction.COMPLETE_TASK.value: ("finish", "complete_task", "COMPLETE_TASK", "TASK"),
-        RecoveryAction.RECONSULT.value: ("consultant", "reconsult", "RECONSULT", "TASK"),
-        RecoveryAction.REVALIDATE.value: ("supervisor", "revalidate", "REVALIDATE", "CURRENT_STEP"),
+        RecoveryAction.CONTINUE.value: ("internal_protocol_error", "INTERNAL_PROTOCOL_ERROR", "CURRENT_STEP"),
+        RecoveryAction.FORMAT_REPAIR.value: ("action_format_repair", "ACTION_FORMAT_REPAIR", "CURRENT_STEP"),
+        RecoveryAction.PATCH_SCRIPT.value: (patch_type, "SCRIPT_PATCH", "CURRENT_STEP"),
+        RecoveryAction.PATCH_PLAN.value: ("plan_patch", "PLAN_PATCH", "PLAN"),
+        RecoveryAction.RUN_DIAGNOSTIC_PROBE.value: ("diagnostic_probe", "PROBE", "CURRENT_STEP"),
+        RecoveryAction.RETRY_EXECUTION.value: ("retry_execution", "RETRY_EXECUTION", "CURRENT_STEP"),
+        RecoveryAction.RECONCILE_AND_CONTINUE.value: ("reconcile_artifacts", "RECONCILE", "CURRENT_STEP"),
+        RecoveryAction.PASS_WITH_WARNING.value: ("pass_with_warning", "VERIFY_GATE", "CURRENT_STEP"),
+        RecoveryAction.COMPLETE_STEP.value: ("complete_step", "COMPLETE_STEP", "CURRENT_STEP"),
+        RecoveryAction.COMPLETE_TASK.value: ("complete_task", "COMPLETE_TASK", "TASK"),
+        RecoveryAction.RECONSULT.value: ("reconsult", "RECONSULT", "TASK"),
+        RecoveryAction.REVALIDATE.value: ("revalidate", "REVALIDATE", "CURRENT_STEP"),
     }
     user_owned_missing = owner == RecoveryFailureOwner.INPUT_DATA.value and requires_user_input
     if action == RecoveryAction.ASK_USER.value and requires_user_input:
@@ -2195,11 +2490,25 @@ def recovery_action_route(
             "CURRENT_STEP",
         )
     elif action == RecoveryAction.ESCALATE.value or action == RecoveryAction.ASK_USER.value:
-        route = ("supervisor", "internal_protocol_error", "INTERNAL_PROTOCOL_ERROR", "CURRENT_STEP")
+        route = (
+            _DISPOSITION_TO_ROUTE[RecoveryDisposition.INTERNAL_PROTOCOL_ERROR.value],
+            "internal_protocol_error",
+            "INTERNAL_PROTOCOL_ERROR",
+            "CURRENT_STEP",
+        )
     elif action == RecoveryAction.BLOCK_MISSING_INPUT.value:
-        route = ("supervisor", "blocked_missing_input", "BLOCKED", "CURRENT_STEP")
+        route = (
+            _DISPOSITION_TO_ROUTE[RecoveryDisposition.BLOCK.value],
+            "blocked_missing_input",
+            "BLOCKED",
+            "CURRENT_STEP",
+        )
     else:
-        route = routes.get(action, ("supervisor", "blocked", "BLOCKED", "CURRENT_STEP"))
+        metadata = routes.get(
+            action,
+            ("internal_protocol_error", "INTERNAL_PROTOCOL_ERROR", "CURRENT_STEP"),
+        )
+        route = (_DISPOSITION_TO_ROUTE[disposition], *metadata)
     return {
         "next_step": route[0],
         "pending_type": route[1],
@@ -2335,7 +2644,7 @@ class RecoveryPolicy:
     ) -> RecoveryDecision:
         action = _DECISION_KIND_TO_ACTION[kind]
         return RecoveryDecision.from_mapping({
-            "schema_version": 4,
+            "schema_version": 5,
             "kind": kind,
             "reason_code": reason_code,
             "reason": reason,
@@ -2352,11 +2661,13 @@ class RecoveryPolicy:
             "rerun_required": kind == RecoveryDecisionKind.RETRY_CURRENT_ACTION.value,
             "error_is_real": kind not in {
                 RecoveryDecisionKind.CONTINUE.value,
+                RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value,
                 RecoveryDecisionKind.COMPLETE_STEP.value,
                 RecoveryDecisionKind.COMPLETE_TASK.value,
             },
             "primary_execution_succeeded": kind in {
                 RecoveryDecisionKind.CONTINUE.value,
+                RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value,
                 RecoveryDecisionKind.COMPLETE_STEP.value,
                 RecoveryDecisionKind.COMPLETE_TASK.value,
             },
@@ -2405,6 +2716,25 @@ class RecoveryPolicy:
             "step_id": step_id,
             "attempt_id": attempt_id,
         }
+
+        progress_classification = str(progress.get("classification") or "").strip().lower()
+        if bool(progress.get("should_block")) or progress_classification == "exhausted":
+            terminal_evidence = [
+                "classification=exhausted",
+                f"no_progress_streak={int(progress.get('no_progress_streak') or progress.get('no_progress_count') or 0)}",
+            ]
+            return self._decision(
+                RecoveryDecisionKind.BLOCKED.value,
+                reason_code="RECOVERY_NO_PROGRESS_EXHAUSTED",
+                reason=str(
+                    progress.get("reason")
+                    or "Recovery made no meaningful progress within the configured limit."
+                ),
+                evidence=terminal_evidence,
+                blocked_evidence=terminal_evidence,
+                failure_owner=RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                **base,
+            )
 
         if user_cancelled:
             return self._decision(
@@ -2554,9 +2884,12 @@ class RecoveryPolicy:
             violations = [str(item) for item in pre.get("violations") or [] if str(item)]
             if repair_domain == PreActionRepairDomain.SOURCE_DIAGNOSTIC.value:
                 return self._decision(
-                    RecoveryDecisionKind.CONTINUE.value,
+                    RecoveryDecisionKind.REVALIDATE.value,
                     reason_code="source_diagnostic_non_authoritative",
-                    reason="The raw-source finding is diagnostic-only and does not invalidate the action.",
+                    reason=(
+                        "The raw-source finding is diagnostic-only; Supervisor must "
+                        "revalidate the current evidence before execution continues."
+                    ),
                     evidence=violations,
                     failure_owner=RecoveryFailureOwner.DIAGNOSTIC.value,
                     failure_class=RecoveryFailureClass.AMBIGUOUS.value,
@@ -2672,9 +3005,12 @@ class RecoveryPolicy:
                 probe_returncode = None
             if probe_returncode == 0 and not validation_invalid and not validation_incomplete:
                 return self._decision(
-                    RecoveryDecisionKind.CONTINUE.value,
+                    RecoveryDecisionKind.REVALIDATE.value,
                     reason_code="probe_evidence_collected",
-                    reason="The bounded probe completed and returned evidence to the current step.",
+                    reason=(
+                        "The bounded probe completed and returned evidence that requires "
+                        "Supervisor revalidation."
+                    ),
                     evidence=[f"returncode={probe_returncode}"],
                     failure_owner=RecoveryFailureOwner.DIAGNOSTIC.value,
                     **base,
@@ -2858,10 +3194,28 @@ class RecoveryPolicy:
                 **base,
             )
 
+        ready_for_verification = bool(
+            execution
+            and returncode == 0
+            and role not in {"diagnostic", "optional_probe", "capability_probe", "probe"}
+        )
         return self._decision(
-            RecoveryDecisionKind.CONTINUE.value,
-            reason_code="no_blocking_recovery_condition",
-            reason="No blocking recovery condition was found.",
+            (
+                RecoveryDecisionKind.ACCEPT_EXECUTION_FOR_VERIFICATION.value
+                if ready_for_verification
+                else RecoveryDecisionKind.REVALIDATE.value
+            ),
+            reason_code=(
+                "execution_ready_for_verification"
+                if ready_for_verification
+                else "no_blocking_recovery_condition_requires_revalidation"
+            ),
+            reason=(
+                "The current Execute result has no blocking recovery condition and requires "
+                "independent Supervisor verification."
+                if ready_for_verification
+                else "No blocking recovery condition was found; Supervisor must revalidate the current evidence."
+            ),
             evidence=(
                 list(validation.get("warnings") or [])
                 if validation_status in {"warning", ValidationStatus.VALID_WITH_WARNINGS.value.lower()}
@@ -2877,10 +3231,28 @@ class RecoveryPolicy:
         progress_snapshot: Optional[Dict[str, Any]],
         budgets: Optional[Dict[str, Any]],
     ) -> RecoveryDecision:
-        """Apply the existing probe policy to task-state progress evidence."""
+        """Enforce terminal progress results before applying probe-specific policy."""
+        progress = dict(progress_snapshot or {})
+        classification = str(progress.get("classification") or "").strip().lower()
+        if bool(progress.get("should_block")) or classification == "exhausted":
+            evidence = [
+                "classification=exhausted",
+                f"no_progress_streak={int(progress.get('no_progress_streak') or progress.get('no_progress_count') or 0)}",
+            ]
+            reason = str(progress.get("reason") or "Recovery made no meaningful progress within the configured limit.")
+            return self._decision(
+                RecoveryDecisionKind.BLOCKED.value,
+                reason_code="RECOVERY_NO_PROGRESS_EXHAUSTED",
+                reason=reason,
+                action_id=str(decision.action_id or ""),
+                step_id=str(decision.step_id or ""),
+                attempt_id=str(decision.attempt_id or ""),
+                evidence=evidence,
+                blocked_evidence=evidence,
+                failure_owner=RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+            )
         if decision.recommended_action != RecoveryAction.RUN_DIAGNOSTIC_PROBE.value:
             return decision
-        progress = dict(progress_snapshot or {})
         progress["repeated_probe_without_progress"] = bool(
             not progress.get("meaningful_progress")
             and int(progress.get("no_progress_count") or 0) >= self.max_no_progress
