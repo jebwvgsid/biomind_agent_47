@@ -55,6 +55,7 @@ class SkillManager:
         self._skill_lookup: Dict[str, Dict[str, str]] = {}
         self._skill_lookup_lower: Dict[str, str] = {}
         self._ambiguous_skill_keys = set()
+        self._skill_document_cache: Dict[str, Dict[str, Any]] = {}
         self.catalog_complete = True
         self.catalog_errors: List[Dict[str, str]] = []
         self._discover_skills()
@@ -2635,18 +2636,44 @@ class SkillManager:
 
     def load_skill(self, skill_id: str) -> str:
         """3. 加载 (Load)：根据选中的 skill_id，读取完整的正文内容供大模型使用"""
-        meta = self.get_skill_meta(skill_id)
+        resolved_id = self._resolve_skill_id(skill_id)
+        meta = self.get_skill_meta(resolved_id)
         skill_md = Path(meta.get("_skill_md", ""))
         if not skill_md.is_file():
             return ""
-            
+        try:
+            stat = skill_md.stat()
+        except OSError:
+            return ""
+        canonical_id = str(meta.get("_skill_id") or resolved_id or skill_id)
+        cached = dict(self._skill_document_cache.get(canonical_id) or {})
+        if (
+            cached
+            and int(cached.get("mtime_ns") or -1) == int(stat.st_mtime_ns)
+            and int(cached.get("size") or -1) == int(stat.st_size)
+            and str(cached.get("document") or "")
+        ):
+            return str(cached["document"])
         raw_content = skill_md.read_text(encoding="utf-8")
+        raw_digest = hashlib.sha256(raw_content.encode("utf-8")).hexdigest()
+        meta["_skill_content_hash"] = raw_digest
+        catalog_meta = self._skill_lookup.get(canonical_id)
+        if catalog_meta:
+            catalog_meta["_skill_content_hash"] = raw_digest
         # 剥离 YAML 头部，只保留正文部分 (Body)
         match = re.match(r'^---\s*\n.*?\n---\s*\n(.*)', raw_content, re.DOTALL)
         header = self._build_skill_header(meta.get("_skill_id", skill_id))
         if match:
-            return f"{header}\n\n{match.group(1).strip()}"
-        return f"{header}\n\n{raw_content.strip()}"
+            document = f"{header}\n\n{match.group(1).strip()}"
+        else:
+            document = f"{header}\n\n{raw_content.strip()}"
+        self._skill_document_cache[canonical_id] = {
+            "document": document,
+            "document_digest": raw_digest,
+            "mtime_ns": int(stat.st_mtime_ns),
+            "size": int(stat.st_size),
+        }
+        return document
 
     def _build_skill_header(self, skill_id: str) -> str:
         """Add concrete local paths above SKILL.md so agents do not invent commands."""

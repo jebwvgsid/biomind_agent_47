@@ -67,6 +67,8 @@ def new_skill_discovery_state(
         "loaded_skill_ids": [],
         "loaded_skill_docs": {},
         "loaded_skill_refs": [],
+        "pending_document_injection_ids": [],
+        "injected_document_digests": {},
         "selected_skill_refs": [],
         "excluded_skill_refs": [],
         "rejected_candidates": [],
@@ -97,6 +99,16 @@ def normalize_skill_discovery_state(
     normalized["loaded_skill_ids"] = _unique(
         normalized.get("loaded_skill_ids") or []
     )
+    normalized["pending_document_injection_ids"] = _unique(
+        normalized.get("pending_document_injection_ids") or []
+    )
+    normalized["injected_document_digests"] = {
+        str(key): str(value)
+        for key, value in dict(
+            normalized.get("injected_document_digests") or {}
+        ).items()
+        if str(key) and str(value)
+    }
     normalized["input_roles"] = _unique(normalized.get("input_roles") or [])
     normalized["observed_skill_mentions"] = _unique(
         normalized.get("observed_skill_mentions") or []
@@ -416,6 +428,7 @@ def record_loaded_skill_doc(
     document: str = "",
     summary: str = "",
     loaded_at_revision: int = 0,
+    document_digest: str = "",
 ) -> Dict[str, Any]:
     updated = normalize_skill_discovery_state(state)
     updated.pop("recovery_directive", None)
@@ -424,7 +437,12 @@ def record_loaded_skill_doc(
         return updated
     loaded = _unique([*updated.get("loaded_skill_ids", []), skill])
     docs = deepcopy(dict(updated.get("loaded_skill_docs") or {}))
-    document_digest = hashlib.sha256(
+    prior_digest = str(
+        (docs.get(skill) or {}).get("document_digest")
+        or (docs.get(skill) or {}).get("sha256")
+        or ""
+    )
+    document_digest = str(document_digest or "").strip() or hashlib.sha256(
         str(document or "").encode("utf-8")
     ).hexdigest()
     docs[skill] = {
@@ -465,6 +483,10 @@ def record_loaded_skill_doc(
         "candidate_skill_refs": candidate_refs,
         "routing_status": READING_CANDIDATES,
     })
+    if document_digest != prior_digest:
+        updated["pending_document_injection_ids"] = _unique([
+            *updated.get("pending_document_injection_ids", []), skill,
+        ])
     return updated
 
 
@@ -483,6 +505,7 @@ def record_loaded_skill_docs(
             document=str(item.get("document") or ""),
             summary=str(item.get("safe_summary") or item.get("summary") or ""),
             loaded_at_revision=loaded_at_revision,
+            document_digest=str(item.get("document_digest") or ""),
         )
     return updated
 

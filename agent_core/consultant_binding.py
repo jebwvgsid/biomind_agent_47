@@ -301,6 +301,20 @@ def consultant_validation_no_progress_fingerprint(
                 "excerpts",
             )
         }),
+        "active_evidence": _semantic_progress_projection({
+            str(key): value
+            for key, value in dict(
+                consultation.get("requirements") or {}
+            ).items()
+            if isinstance(value, Mapping)
+            and bool(value.get("active", True))
+        }),
+        "model_visible_repair_context": _semantic_progress_projection({
+            "last_feedback": list(
+                consultation.get("last_feedback") or []
+            )[-1:],
+            "recovery_directive": discovery.get("recovery_directive") or {},
+        }),
     }
     canonical_progress_version = _digest(canonical_progress)
     payload = {
@@ -426,6 +440,20 @@ def consultant_commit_no_progress_fingerprint(
                 "reasoning_escalation_count",
             )
         }),
+        "active_evidence": _semantic_progress_projection({
+            str(key): value
+            for key, value in dict(
+                consultation.get("requirements") or {}
+            ).items()
+            if isinstance(value, Mapping)
+            and bool(value.get("active", True))
+        }),
+        "model_visible_repair_context": _semantic_progress_projection({
+            "last_feedback": list(
+                consultation.get("last_feedback") or []
+            )[-1:],
+            "recovery_directive": discovery.get("recovery_directive") or {},
+        }),
     }
     payload = {
         "user_turn_revision": int(
@@ -462,6 +490,12 @@ def consultant_commit_no_progress_fingerprint(
         "effective_route": str(effective_route or ""),
         "rejection_reason": _semantic_progress_projection(rejection_reason),
         "skill_progress_hash": _digest(progress_projection),
+        "active_evidence_hash": _digest(
+            progress_projection.get("active_evidence") or {}
+        ),
+        "model_visible_repair_context_hash": _digest(
+            progress_projection.get("model_visible_repair_context") or {}
+        ),
     }
     return {"fingerprint": _digest(payload), **payload}
 

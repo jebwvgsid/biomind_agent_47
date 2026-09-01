@@ -19,6 +19,7 @@ from agent_core.task_spec import (
     apply_declarative_task_spec_rules,
     apply_task_spec_mutation_proposal,
     project_task_spec_to_renderer,
+    runtime_failure_policy,
     task_semantic_hash,
     task_spec_is_initialized,
     task_spec_revision,
@@ -1610,6 +1611,12 @@ def _requirement(
     satisfied_by: Optional[Sequence[str]] = None,
     provenance: Optional[Mapping[str, Any]] = None,
     freshness: str = "current_consultation",
+    owner: str = "consultant",
+    semantic: bool = True,
+    active: bool = True,
+    evidence_status: str = "pending",
+    availability_status: str = "not_applicable",
+    disposition: str = "active",
 ) -> Dict[str, Any]:
     if status not in EVIDENCE_STATUSES:
         raise ValueError(f"Unsupported evidence status: {status}")
@@ -1621,6 +1628,14 @@ def _requirement(
         "satisfied_by": list(satisfied_by or []),
         "evidence_provenance": dict(provenance or {}),
         "freshness": str(freshness or "current_consultation"),
+        "owner": str(owner or "consultant"),
+        "semantic": bool(semantic),
+        "active": bool(active),
+        "evidence_status": str(evidence_status or "pending"),
+        "availability_status": str(
+            availability_status or "not_applicable"
+        ),
+        "disposition": str(disposition or "active"),
         "updated_at": _now(),
     }
 
@@ -1668,6 +1683,12 @@ def add_requirement(state: Mapping[str, Any], requirement: Mapping[str, Any]) ->
     req.setdefault("satisfied_by", [])
     req.setdefault("evidence_provenance", {})
     req.setdefault("freshness", "current_consultation")
+    req.setdefault("owner", "consultant")
+    req.setdefault("semantic", True)
+    req.setdefault("active", True)
+    req.setdefault("evidence_status", "pending")
+    req.setdefault("availability_status", "not_applicable")
+    req.setdefault("disposition", "active")
     req["updated_at"] = _now()
     updated.setdefault("requirements", {})[requirement_id] = req
     updated["updated_at"] = _now()
@@ -1682,16 +1703,11 @@ def seed_structured_evidence(
     routing_candidate_ids: Optional[Sequence[str]] = None,
     runtime_evidence: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Seed controller requirements without interpreting tool names or commands.
-
-    A structured formal-input audit is evidence in its own right. Candidate skills
-    create one generic runtime-readiness requirement each unless current structured
-    runtime evidence already proves readiness.
-    """
+    """Reconcile active semantic requirements and machine evidence by set diff."""
     updated = deepcopy(dict(state))
     requirements = updated.setdefault("requirements", {})
     audit = dict(input_audit or {})
-    if audit and bool(audit.get("relevant")) and "formal-inputs" not in requirements:
+    if audit and bool(audit.get("relevant")):
         unresolved_value = audit.get("unresolved")
         unresolved_items = audit.get("missing") or audit.get("missing_required_inputs") or audit.get("unresolved_reasons") or []
         unresolved = list(unresolved_items) if isinstance(unresolved_items, (list, tuple, set)) else [str(unresolved_items)]
@@ -1713,58 +1729,213 @@ def seed_structured_evidence(
             satisfied_by=["structured_input_audit"] if status == "satisfied" else [],
             provenance={"kind": "structured_input_audit", "digest": _digest(audit)},
             freshness="task_revision",
+            owner="consultant",
+            semantic=True,
+            active=True,
+            evidence_status="checked",
+            availability_status="available" if status == "satisfied" else "unresolved",
         )
+    elif "formal-inputs" in requirements:
+        requirements["formal-inputs"].update({
+            "active": False,
+            "mandatory": False,
+            "semantic": True,
+            "disposition": "not_applicable",
+            "status": "waived",
+            "updated_at": _now(),
+        })
 
     runtime = dict(runtime_evidence or {})
     routing_ids = list(dict.fromkeys(
         str(item).strip() for item in (routing_candidate_ids or []) if str(item).strip()
     ))
-    if "skill-routing" not in requirements:
-        requirements["skill-routing"] = _requirement(
-            "skill-routing",
-            "Resolve a canonical skill or loaded workflow route for Planner.",
-            status="satisfied" if routing_ids else "unresolved",
-            satisfied_by=["canonical_metadata_candidate"] if routing_ids else [],
-            provenance={"kind": "canonical_metadata", "candidate_ids": routing_ids},
-            freshness="task_revision",
-        )
-    elif routing_ids and requirements["skill-routing"].get("status") != "satisfied":
-        requirements["skill-routing"].update({
-            "status": "satisfied",
-            "satisfied_by": ["canonical_metadata_candidate"],
-            "evidence_provenance": {"kind": "canonical_metadata", "candidate_ids": routing_ids},
-            "updated_at": _now(),
-        })
-    for skill_id in dict.fromkeys(str(item).strip() for item in (candidate_skill_ids or []) if str(item).strip()):
+    discovery = dict(updated.get("skill_discovery") or {})
+    excluded_ids = {
+        str(item.get("skill_id") or "")
+        for item in discovery.get("excluded_skill_refs") or []
+        if isinstance(item, Mapping) and str(item.get("skill_id") or "")
+    }
+    inconsistent_ids = sorted(set(routing_ids).intersection(excluded_ids))
+    if inconsistent_ids:
+        updated["controller_protocol_error"] = {
+            "code": "EXCLUDED_SKILL_STILL_ACTIVE",
+            "owner": "controller",
+            "skill_ids": inconsistent_ids,
+            "resolution": "removed_from_effective_active_set",
+        }
+        routing_ids = [item for item in routing_ids if item not in excluded_ids]
+    else:
+        updated.pop("controller_protocol_error", None)
+    requirements["skill-routing"] = _requirement(
+        "skill-routing",
+        "Consultant selects documented canonical Skill refs for Planner.",
+        status="satisfied" if routing_ids else "unresolved",
+        satisfied_by=["consultant_selected_skill_refs"] if routing_ids else [],
+        provenance={
+            "kind": "consultant_selection",
+            "selected_skill_ids": routing_ids,
+        },
+        freshness="task_revision",
+        owner="consultant",
+        semantic=True,
+        active=True,
+        evidence_status="checked" if routing_ids else "pending",
+        availability_status="not_applicable",
+    )
+    active_runtime_ids: set[str] = set()
+    for skill_id in dict.fromkeys(
+        str(item).strip()
+        for item in (candidate_skill_ids or [])
+        if str(item).strip() and str(item).strip() not in excluded_ids
+    ):
         requirement_id = f"runtime:{_safe_id(skill_id)}"
+        active_runtime_ids.add(requirement_id)
         item = runtime.get(skill_id) if isinstance(runtime.get(skill_id), Mapping) else {}
-        item_status = str((item or {}).get("status") or "").strip().lower()
-        ready = item_status in {"ready", "verified", "passed", "satisfied", "success"}
-        if requirement_id in requirements:
-            existing = requirements[requirement_id]
-            if ready and str(existing.get("status") or "") not in TERMINAL_REQUIREMENT_STATUSES:
-                existing.update({
-                    "status": "satisfied",
-                    "satisfied_by": ["structured_runtime_evidence"],
-                    "evidence_provenance": {
-                        "kind": "structured_runtime_evidence",
-                        "skill_id": skill_id,
-                        "digest": _digest(item),
-                    },
-                    "freshness": "current_runtime",
-                    "updated_at": _now(),
-                })
-            continue
+        raw_availability = str(
+            (item or {}).get("availability_status")
+            or (item or {}).get("status")
+            or "unknown"
+        ).strip().lower()
+        availability = {
+            "verified": "ready",
+            "passed": "ready",
+            "satisfied": "ready",
+            "success": "ready",
+            "missing": "unavailable",
+            "healthcheck_failed": "broken",
+        }.get(raw_availability, raw_availability or "unknown")
+        checked = bool(item) and str(
+            (item or {}).get("evidence_status") or "checked"
+        ).lower() == "checked"
         requirements[requirement_id] = _requirement(
             requirement_id,
-            f"Establish current runtime readiness for canonical skill {skill_id} using declared evidence.",
-            status="satisfied" if ready else "unresolved",
-            satisfied_by=["structured_runtime_evidence"] if ready else [],
-            provenance={"kind": "structured_runtime_evidence", "skill_id": skill_id, "digest": _digest(item)} if item else {"kind": "candidate_skill", "skill_id": skill_id},
+            f"Record current runtime availability evidence for selected executable Skill {skill_id}.",
+            mandatory=False,
+            status="satisfied" if checked else "unresolved",
+            satisfied_by=["structured_runtime_evidence"] if checked else [],
+            provenance={
+                "kind": "structured_runtime_evidence",
+                "skill_id": skill_id,
+                "digest": _digest(item),
+                "reason_code": str((item or {}).get("reason_code") or ""),
+            },
             freshness="current_runtime",
+            owner="runtime_preflight",
+            semantic=False,
+            active=True,
+            evidence_status="checked" if checked else "pending",
+            availability_status=availability,
         )
+    for requirement_id, requirement in list(requirements.items()):
+        if not str(requirement_id).startswith("runtime:"):
+            continue
+        if requirement_id in active_runtime_ids:
+            continue
+        requirement.update({
+            "active": False,
+            "mandatory": False,
+            "semantic": False,
+            "status": "waived",
+            "disposition": "superseded_or_excluded",
+            "updated_at": _now(),
+        })
+    active_rows = {
+        str(key): {
+            field: deepcopy(value.get(field))
+            for field in (
+                "owner", "semantic", "mandatory", "status",
+                "evidence_status", "availability_status", "disposition",
+            )
+        }
+        for key, value in requirements.items()
+        if isinstance(value, Mapping) and bool(value.get("active", True))
+    }
+    updated["active_requirement_ids"] = sorted(active_rows)
+    updated["active_semantic_requirement_ids"] = sorted(
+        key for key, value in active_rows.items() if value.get("semantic")
+    )
+    updated["active_machine_evidence_ids"] = sorted(
+        key for key, value in active_rows.items() if not value.get("semantic")
+    )
+    updated["active_evidence_digest"] = _digest(active_rows)
     updated["updated_at"] = _now()
     return evaluate_consultation_completion(updated)
+
+
+def route_runtime_preflight(
+    task_spec: Mapping[str, Any] | None,
+    runtime_evidence: Mapping[str, Mapping[str, Any]] | None,
+) -> Dict[str, Any]:
+    """Route checked runtime availability without reopening semantic closure."""
+    policy = runtime_failure_policy(task_spec)
+    audits = {
+        str(skill_id): dict(item)
+        for skill_id, item in dict(runtime_evidence or {}).items()
+        if str(skill_id) and isinstance(item, Mapping)
+    }
+    unchecked = [
+        skill_id for skill_id, item in audits.items()
+        if str(item.get("evidence_status") or "checked").lower() != "checked"
+    ]
+    if unchecked:
+        return {
+            "route": "finish",
+            "code": "RUNTIME_EVIDENCE_NOT_CHECKED",
+            "failure_owner": "runtime_preflight",
+            "execution_started": False,
+            "affected_skill_ids": sorted(unchecked),
+            "policy": policy,
+        }
+    unavailable: list[Dict[str, Any]] = []
+    for skill_id, item in audits.items():
+        status = str(
+            item.get("availability_status") or item.get("status") or "unknown"
+        ).lower()
+        if status not in {
+            "ready", "verified", "passed", "satisfied", "success",
+            "not_applicable",
+        }:
+            unavailable.append({
+                "skill_id": skill_id,
+                "availability_status": status,
+                "reason_code": str(item.get("reason_code") or "RUNTIME_UNAVAILABLE"),
+                "reason": str(item.get("reason") or item.get("declared_detail") or ""),
+            })
+    if not unavailable:
+        return {
+            "route": "planner",
+            "code": "RUNTIME_READY",
+            "failure_owner": "",
+            "execution_started": False,
+            "affected_skill_ids": [],
+            "policy": policy,
+        }
+    if policy.get("allow_substitution"):
+        route = "consultant"
+        code = "RUNTIME_SUBSTITUTION_REQUIRED"
+    elif policy.get("runtime_unavailable") == (
+        "block_stage_and_continue_closeout"
+    ):
+        route = "planner"
+        code = "RUNTIME_STAGE_BLOCKED"
+    else:
+        route = "finish"
+        code = "RUNTIME_UNAVAILABLE"
+    return {
+        "route": route,
+        "code": code,
+        "failure_owner": "runtime_preflight",
+        "execution_started": False,
+        "affected_skill_ids": sorted(
+            item["skill_id"] for item in unavailable
+        ),
+        "unavailable": unavailable,
+        "allowed_actions": (
+            ["search_skills", "load_skill_doc", "select_skill"]
+            if route == "consultant" else []
+        ),
+        "policy": policy,
+    }
 
 
 def canonical_action_fingerprint(
@@ -1790,13 +1961,23 @@ def evaluate_consultation_completion(state: Mapping[str, Any]) -> Dict[str, Any]
     """Single deterministic completion evaluator used after every state change."""
     updated = deepcopy(dict(state))
     requirements = list((updated.get("requirements") or {}).values())
-    mandatory = [item for item in requirements if bool(item.get("mandatory", True))]
+    active = [item for item in requirements if bool(item.get("active", True))]
+    mandatory = [
+        item for item in active
+        if bool(item.get("mandatory", True))
+        and bool(item.get("semantic", True))
+        and str(item.get("owner") or "consultant") in {"consultant", "user"}
+    ]
     blocked = [item for item in mandatory if str(item.get("status")) == "blocked"]
     failed = [item for item in mandatory if str(item.get("status")) == "failed"]
     unresolved = [item for item in mandatory if str(item.get("status")) not in TERMINAL_REQUIREMENT_STATUSES]
     phase = str(updated.get("phase") or "consulting")
 
-    if blocked:
+    if updated.get("controller_protocol_error"):
+        decision, reason, next_phase, status = (
+            "blocked", "INTERNAL_PROTOCOL", "blocked", "blocked"
+        )
+    elif blocked:
         decision, reason, next_phase, status = "blocked", "mandatory_evidence_blocked", "blocked", "blocked"
     elif int(updated.get("no_progress_count") or 0) >= int(updated.get("max_no_progress") or 2):
         decision, reason, next_phase, status = "needs_user", "no_progress_limit_reached", "needs_user", "needs_user"
@@ -1818,6 +1999,9 @@ def evaluate_consultation_completion(state: Mapping[str, Any]) -> Dict[str, Any]
         "completion_decision": decision,
         "completion_reason": reason,
         "unresolved_requirement_ids": [str(item.get("id")) for item in unresolved],
+        "active_requirement_ids": [
+            str(item.get("id")) for item in active
+        ],
         "updated_at": _now(),
     })
     return updated
@@ -1867,6 +2051,7 @@ def build_consultant_candidate(
     consultation = seed_structured_evidence(
         consultation_state,
         input_audit=input_audit,
+        candidate_skill_ids=selected,
         routing_candidate_ids=selected,
         runtime_evidence=runtime_evidence,
     )
@@ -1925,6 +2110,17 @@ def evaluate_consultant_candidate_route(
     """
 
     current = dict(candidate or {})
+    consultation = dict(current.get("consultation_state") or {})
+    if consultation.get("controller_protocol_error"):
+        return {
+            "route": "finish",
+            "code": "INTERNAL_PROTOCOL",
+            "reason": json.dumps(
+                consultation.get("controller_protocol_error"),
+                sort_keys=True,
+            ),
+            "failure_owner": "controller",
+        }
     violations = [
         dict(item) for item in current.get("output_contract_violations") or []
         if isinstance(item, Mapping)
@@ -1943,7 +2139,6 @@ def evaluate_consultant_candidate_route(
             "reason": "Skill selection is valid, but the canonical TaskSpec is not complete.",
         }
     pending = current.get("pending_question")
-    consultation = dict(current.get("consultation_state") or {})
     pending = pending or consultation.get("pending_question") or consultation.get("pending_human_question")
     if isinstance(pending, Mapping) and pending:
         return {
