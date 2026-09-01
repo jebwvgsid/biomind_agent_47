@@ -2050,12 +2050,12 @@ exceptions are already-explicit machine policies in `failure_policy.*` and
 
 Return exactly one JSON object and no prose. Supported actions are:
 
-{{"action_type":"search_skills","query":"semantic task query","task_hypothesis":"concise scientific task hypothesis"}}
+{{"action_type":"search_skills","queries":[{{"query_id":"q1","text":"semantic task query","purpose":"primary scientific method"}},{{"query_id":"q2","text":"alternative semantic hypothesis","purpose":"bounded alternative"}}],"top_k":5,"exclude_skill_ids":[],"task_hypothesis":"concise scientific task hypothesis"}}
 {{"action_type":"list_skill_categories"}}
 {{"action_type":"list_skills","category":"canonical catalog category"}}
-{{"action_type":"load_skill_doc","skill_id":"canonical/skill-id","task_hypothesis":"concise scientific task hypothesis"}}
-{{"action_type":"reject_skill","skill_id":"canonical/skill-id","reason":"documented incompatibility"}}
-{{"action_type":"select_skill","summary":"semantic handoff ready for Planner","selected_skills":["canonical/skill-id"],"selection_reason":"documented compatibility evidence","task_spec_operations":[],"planner_feedback":null}}
+{{"action_type":"load_skill_doc","skill_ids":["canonical/skill-id","canonical/supporting-id"],"task_hypothesis":"concise scientific task hypothesis"}}
+{{"action_type":"reject_skill","skill_id":"canonical/skill-id","reason_code":"input_contract_mismatch","reason":"documented incompatibility"}}
+{{"action_type":"select_skill","summary":"semantic handoff ready for Planner","selected_skills":["canonical/skill-id"],"skill_decisions":[{{"skill_id":"canonical/skill-id","disposition":"selected","role":"primary","reason":"loaded-document compatibility evidence"}},{{"skill_id":"canonical/other-id","disposition":"excluded","reason_code":"not_required","reason":"documented reason"}}],"selection_reason":"documented compatibility evidence","task_spec_operations":[],"planner_feedback":null}}
 {{"action_type":"reasoning_escalation","reason":"why normal discovery is exhausted"}}
 {{"action_type":"capability_gap","reason":"why no documented capability is compatible"}}
 {{"action_type":"ask","question":"one precise question","requested_slots":["semantic.slot"],"expected_type":"string","selected_skills":[],"task_spec_operations":[],"planner_feedback":null}}
@@ -2077,13 +2077,24 @@ Controller rejects a legacy select_skill change at that boundary.
 
 Skill discovery is an explicit bounded process. First form a semantic task
 hypothesis from the UserTurn and verified input roles. Candidate retrieval is
-evidence, not a final decision. If the current catalog does not contain a
-reliable match, use search_skills with a reformulated scientific query. If a
-second distinct search remains weak or empty, browse the relevant catalog with
-list_skill_categories/list_skills. Load a candidate's SKILL.md when its card is
-insufficient or before committing a tool-specific selection. Compare its
-documented purpose, inputs, outputs, when_to_use and not_for evidence before
-selecting it.
+evidence, not a final decision. SEARCH_SKILLS accepts one to three typed,
+semantically distinct queries and returns a deterministic, deduplicated bounded
+candidate set; it never selects or activates a Skill. If the current cards do
+not contain a reliable match, reformulate the scientific query. If a second
+distinct search remains weak or empty, browse the relevant catalog with
+list_skill_categories/list_skills. LOAD_SKILL_DOC accepts one to five exact
+canonical IDs. You may directly load an exact canonical ID you explicitly
+observed even when it is not in search results, but the observation itself is
+not selection. Cached documents are not reinjected. Load every selected
+Skill's current document before selection, then compare purpose, inputs,
+outputs, when_to_use and not_for evidence.
+
+SELECT_SKILL must keep selected and excluded sets disjoint. Use typed
+skill_decisions with primary/supporting role and a compatibility reason for
+selected refs, and reason_code plus reason for excluded refs. The Controller
+checks IDs, document digests and structure, persists the Consultant decision,
+and routes immediately to Planner when TaskSpec is complete; do not emit an
+empty FINISH acknowledgement after a complete selection.
 
 During bootstrap only, when loaded documentation proves compatibility, one
 complete select_skill response may establish the initial selection before the
@@ -2192,11 +2203,11 @@ action legality.
 
 Return exactly one JSON object and no prose. Allowed actions are:
 
-{{"action_type":"search_skills","query":"new semantic query","task_hypothesis":"refined hypothesis"}}
+{{"action_type":"search_skills","queries":[{{"query_id":"q1","text":"new semantic query","purpose":"refined hypothesis"}}],"top_k":5,"exclude_skill_ids":[],"task_hypothesis":"refined hypothesis"}}
 {{"action_type":"list_skills","category":"canonical category"}}
-{{"action_type":"load_skill_doc","skill_id":"canonical/skill-id","task_hypothesis":"refined scientific task hypothesis"}}
-{{"action_type":"reject_skill","skill_id":"canonical/skill-id","reason":"documented incompatibility"}}
-{{"action_type":"select_skill","selected_skills":["canonical/skill-id"],"selection_reason":"compatibility evidence"}}
+{{"action_type":"load_skill_doc","skill_ids":["canonical/skill-id"],"task_hypothesis":"refined scientific task hypothesis"}}
+{{"action_type":"reject_skill","skill_id":"canonical/skill-id","reason_code":"documented_incompatibility","reason":"documented incompatibility"}}
+{{"action_type":"select_skill","selected_skills":["canonical/skill-id"],"skill_decisions":[{{"skill_id":"canonical/skill-id","disposition":"selected","role":"primary","reason":"loaded-document compatibility evidence"}}],"selection_reason":"compatibility evidence"}}
 {{"action_type":"ask","question":"one scientific decision question","requested_slots":["user_owned.slot"],"expected_type":"string"}}
 {{"action_type":"capability_gap","reason":"exhausted-search evidence"}}
 
@@ -2210,6 +2221,9 @@ legal only when the user owns a missing scientific decision and different
 answers change the task. CAPABILITY_GAP is legal only when the supplied state
 says normal discovery is exhausted and no compatible documented candidate
 remains. If a candidate card is promising but insufficient, load its document.
+Use one to three typed queries per search and one to five exact canonical IDs per
+load. Retrieval and exact-ID observation are evidence only. Load every selected
+document and keep selected/excluded decision sets disjoint.
 
 <consultant_discovery_escalation_context>
 {context_json}

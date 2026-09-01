@@ -15,7 +15,7 @@ from typing import Any, Dict, Mapping, Sequence
 from agent_core.task_spec import canonical_input_role
 
 
-DISCOVERY_SCHEMA_VERSION = 1
+DISCOVERY_SCHEMA_VERSION = 2
 
 UNRESOLVED = "UNRESOLVED"
 SEARCHING = "SEARCHING"
@@ -30,7 +30,7 @@ CAPABILITY_GAP = "CAPABILITY_GAP"
 DEFAULT_DISCOVERY_BUDGETS = {
     "normal_searches": 2,
     "catalog_expansions": 1,
-    "loaded_skill_docs": 5,
+    "loaded_skill_docs": 8,
     "reasoning_escalations": 1,
 }
 
@@ -54,13 +54,21 @@ def new_skill_discovery_state(
         "routing_status": UNRESOLVED,
         "reasoning_level": "normal",
         "task_hypothesis": "",
+        "observed_skill_mentions": [],
         "input_roles": [],
         "search_queries_attempted": [],
         "search_history": [],
+        "catalog_digest": "",
+        "last_search_fingerprint": "",
+        "repeated_search_count": 0,
         "candidate_skill_ids": [],
         "candidate_evidence": {},
+        "candidate_skill_refs": [],
         "loaded_skill_ids": [],
         "loaded_skill_docs": {},
+        "loaded_skill_refs": [],
+        "selected_skill_refs": [],
+        "excluded_skill_refs": [],
         "rejected_candidates": [],
         "normal_search_count": 0,
         "catalog_expansion_count": 0,
@@ -90,6 +98,9 @@ def normalize_skill_discovery_state(
         normalized.get("loaded_skill_ids") or []
     )
     normalized["input_roles"] = _unique(normalized.get("input_roles") or [])
+    normalized["observed_skill_mentions"] = _unique(
+        normalized.get("observed_skill_mentions") or []
+    )
     normalized["search_history"] = [
         deepcopy(dict(item)) for item in normalized.get("search_history") or []
         if isinstance(item, Mapping)
@@ -98,7 +109,39 @@ def normalize_skill_discovery_state(
         deepcopy(dict(item)) for item in normalized.get("rejected_candidates") or []
         if isinstance(item, Mapping)
     ][-12:]
+    for field in (
+        "candidate_skill_refs", "loaded_skill_refs",
+        "selected_skill_refs", "excluded_skill_refs",
+    ):
+        normalized[field] = [
+            deepcopy(dict(item))
+            for item in normalized.get(field) or []
+            if isinstance(item, Mapping)
+        ][-12:]
+    # Read-old compatibility: the legacy selected ID projection remains
+    # derived from typed Consultant decisions.
+    if normalized.get("selected_skill_refs"):
+        normalized["selected_skill_ids"] = _unique(
+            item.get("skill_id") for item in normalized["selected_skill_refs"]
+        )
+    else:
+        normalized["selected_skill_ids"] = _unique(
+            normalized.get("selected_skill_ids") or []
+        )
     return normalized
+
+
+def record_observed_skill_mentions(
+    state: Mapping[str, Any] | None,
+    skill_ids: Sequence[str],
+) -> Dict[str, Any]:
+    """Persist literal prompt mentions as evidence, never as selection."""
+    updated = normalize_skill_discovery_state(state)
+    updated["observed_skill_mentions"] = _unique([
+        *updated.get("observed_skill_mentions", []),
+        *skill_ids,
+    ])
+    return updated
 
 
 def discovery_input_roles(
@@ -131,12 +174,181 @@ def _candidate_projection(cards: Sequence[Mapping[str, Any]]) -> tuple[list[str]
             continue
         ids.append(skill_id)
         evidence[skill_id] = {
-            "score": int(card.get("score") or 0),
+            "score": int(card.get("deterministic_score") or card.get("score") or 0),
             "reasons": _unique(card.get("reasons") or []),
             "category": str(card.get("category") or ""),
             "summary": str(card.get("summary") or "")[:600],
+            "matched_metadata_fields": _unique(
+                card.get("matched_metadata_fields") or []
+            ),
+            "document_digest": str(card.get("document_digest") or ""),
+            "declares_executable_runtime": bool(
+                card.get("declares_executable_runtime")
+            ),
+            "source_query_id": str(card.get("source_query_id") or ""),
         }
     return _unique(ids), evidence
+
+
+def _candidate_refs(cards: Sequence[Mapping[str, Any]]) -> list[Dict[str, Any]]:
+    refs: list[Dict[str, Any]] = []
+    for raw in cards or []:
+        card = dict(raw or {})
+        skill_id = str(card.get("skill_id") or "").strip()
+        if not skill_id:
+            continue
+        refs.append({
+            "skill_id": skill_id,
+            "name": str(card.get("name") or card.get("title") or ""),
+            "summary": str(card.get("summary") or card.get("description") or "")[:800],
+            "domain": str(card.get("domain") or card.get("category") or ""),
+            "tags": _unique(card.get("tags") or []),
+            "matched_metadata_fields": _unique(
+                card.get("matched_metadata_fields") or []
+            ),
+            "reasons": _unique(card.get("reasons") or []),
+            "deterministic_score": int(
+                card.get("deterministic_score") or card.get("score") or 0
+            ),
+            "document_digest": str(card.get("document_digest") or ""),
+            "document_loaded": bool(card.get("document_loaded")),
+            "declares_executable_runtime": bool(
+                card.get("declares_executable_runtime")
+            ),
+            "source_query_id": str(card.get("source_query_id") or ""),
+            "status": "candidate",
+        })
+    refs.sort(key=lambda item: (-item["deterministic_score"], item["skill_id"]))
+    return refs
+
+
+def _normalized_query_text(value: Any) -> str:
+    text = str(value or "").casefold()
+    text = " ".join(text.replace("-", " ").replace("_", " ").split())
+    return text
+
+
+def record_skill_search_batch(
+    state: Mapping[str, Any] | None,
+    *,
+    queries: Sequence[Mapping[str, Any] | str],
+    candidate_cards: Sequence[Mapping[str, Any]],
+    catalog_digest: str,
+    input_roles: Sequence[str] = (),
+    task_hypothesis: str = "",
+    source: str = "consultant_query",
+    total_limit: int = 12,
+) -> Dict[str, Any]:
+    """Record one Consultant-owned multi-hypothesis retrieval round."""
+    updated = normalize_skill_discovery_state(state)
+    updated.pop("recovery_directive", None)
+    normalized_queries: list[Dict[str, str]] = []
+    for index, raw in enumerate(queries or [], start=1):
+        item = dict(raw) if isinstance(raw, Mapping) else {"text": str(raw)}
+        text = str(item.get("text") or item.get("query") or "").strip()
+        if not text:
+            continue
+        normalized_queries.append({
+            "query_id": str(item.get("query_id") or f"q{index}"),
+            "text": text,
+            "normalized_text": _normalized_query_text(text),
+            "purpose": str(item.get("purpose") or "")[:300],
+        })
+    if not 1 <= len(normalized_queries) <= 3:
+        raise ValueError("SEARCH_SKILLS requires 1-3 non-empty queries")
+    identity = {
+        "queries": [
+            {"query_id": item["query_id"], "text": item["normalized_text"]}
+            for item in normalized_queries
+        ],
+        "catalog_digest": str(catalog_digest or ""),
+        "input_roles": sorted(_unique(input_roles)),
+    }
+    fingerprint = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    repeated = fingerprint == str(updated.get("last_search_fingerprint") or "")
+    if repeated:
+        updated["repeated_search_count"] = int(
+            updated.get("repeated_search_count") or 0
+        ) + 1
+    else:
+        updated["normal_search_count"] = int(
+            updated.get("normal_search_count") or 0
+        ) + 1
+        updated["repeated_search_count"] = 0
+    attempted = list(updated.get("search_queries_attempted") or [])
+    for item in normalized_queries:
+        if item["normalized_text"] not in attempted:
+            attempted.append(item["normalized_text"])
+
+    new_refs = _candidate_refs(candidate_cards)
+    refs_by_id = {
+        str(item.get("skill_id") or ""): deepcopy(dict(item))
+        for item in updated.get("candidate_skill_refs") or []
+        if str(item.get("skill_id") or "")
+    }
+    for ref in new_refs:
+        current = refs_by_id.get(ref["skill_id"])
+        if current is None or int(ref.get("deterministic_score") or 0) > int(
+            current.get("deterministic_score") or 0
+        ):
+            refs_by_id[ref["skill_id"]] = ref
+    merged_refs = sorted(
+        refs_by_id.values(),
+        key=lambda item: (
+            -int(item.get("deterministic_score") or 0),
+            str(item.get("skill_id") or ""),
+        ),
+    )[: max(1, min(int(total_limit or 12), 12))]
+    candidate_ids = [str(item["skill_id"]) for item in merged_refs]
+    evidence = {
+        str(item["skill_id"]): {
+            key: deepcopy(item.get(key))
+            for key in (
+                "deterministic_score", "matched_metadata_fields", "reasons", "summary",
+                "document_digest", "declares_executable_runtime", "source_query_id",
+            )
+        }
+        for item in merged_refs
+    }
+    updated.update({
+        "search_queries_attempted": attempted,
+        "last_search_fingerprint": fingerprint,
+        "catalog_digest": str(catalog_digest or ""),
+        "candidate_skill_ids": candidate_ids,
+        "candidate_evidence": evidence,
+        "candidate_skill_refs": merged_refs,
+        "input_roles": _unique(input_roles),
+        "task_hypothesis": str(
+            task_hypothesis or updated.get("task_hypothesis") or ""
+        ).strip(),
+        "capability_gap": False,
+        "capability_gap_reason": "",
+    })
+    if not repeated:
+        updated["search_history"] = [
+            *list(updated.get("search_history") or []),
+            {
+                "source": str(source or "consultant_query"),
+                "queries": normalized_queries,
+                "catalog_digest": str(catalog_digest or ""),
+                "candidate_ids": [
+                    str(item.get("skill_id") or "") for item in new_refs
+                ],
+                "repeated": False,
+                "fingerprint": fingerprint,
+            },
+        ][-12:]
+    if candidate_ids:
+        updated["routing_status"] = CANDIDATES_FOUND
+    elif int(updated.get("normal_search_count") or 0) < int(
+        updated["budgets"]["normal_searches"]
+    ):
+        updated["routing_status"] = SEARCHING
+    else:
+        updated["routing_status"] = EXPANDING_DISCOVERY
+    return updated
 
 
 def record_skill_search(
@@ -148,43 +360,15 @@ def record_skill_search(
     task_hypothesis: str = "",
     source: str = "semantic_query",
 ) -> Dict[str, Any]:
-    updated = normalize_skill_discovery_state(state)
-    updated.pop("recovery_directive", None)
-    query_text = str(query or "").strip()
-    prior_queries = list(updated.get("search_queries_attempted") or [])
-    is_new_query = bool(query_text and query_text not in prior_queries)
-    if is_new_query:
-        prior_queries.append(query_text)
-        updated["normal_search_count"] = int(updated.get("normal_search_count") or 0) + 1
-    candidate_ids, evidence = _candidate_projection(candidate_cards)
-    updated.update({
-        "search_queries_attempted": prior_queries,
-        "candidate_skill_ids": candidate_ids,
-        "candidate_evidence": evidence,
-        "input_roles": _unique(input_roles),
-        "task_hypothesis": str(task_hypothesis or updated.get("task_hypothesis") or "").strip(),
-        "capability_gap": False,
-        "capability_gap_reason": "",
-    })
-    updated["search_history"] = [
-        *list(updated.get("search_history") or []),
-        {
-            "source": str(source or "semantic_query"),
-            "query": query_text,
-            "input_roles": _unique(input_roles),
-            "candidate_ids": candidate_ids,
-            "candidate_evidence": evidence,
-        },
-    ][-12:]
-    if candidate_ids:
-        updated["routing_status"] = CANDIDATES_FOUND
-    elif int(updated.get("normal_search_count") or 0) < int(
-        updated["budgets"]["normal_searches"]
-    ):
-        updated["routing_status"] = SEARCHING
-    else:
-        updated["routing_status"] = EXPANDING_DISCOVERY
-    return updated
+    return record_skill_search_batch(
+        state,
+        queries=[{"query_id": "q1", "text": str(query or "")}],
+        candidate_cards=candidate_cards,
+        catalog_digest="",
+        input_roles=input_roles,
+        task_hypothesis=task_hypothesis,
+        source=source,
+    )
 
 
 def record_catalog_expansion(
@@ -203,6 +387,7 @@ def record_catalog_expansion(
             updated.get("catalog_expansion_count") or 0
         ) + 1
     candidate_ids, evidence = _candidate_projection(candidate_cards)
+    candidate_refs = _candidate_refs(candidate_cards)
     updated["expanded_categories"] = seen_categories
     updated["search_history"] = [
         *list(updated.get("search_history") or []),
@@ -216,6 +401,7 @@ def record_catalog_expansion(
     if candidate_ids:
         updated["candidate_skill_ids"] = candidate_ids
         updated["candidate_evidence"] = evidence
+        updated["candidate_skill_refs"] = candidate_refs
         updated["routing_status"] = CANDIDATES_FOUND
     else:
         updated["routing_status"] = EXPANDING_DISCOVERY
@@ -229,6 +415,7 @@ def record_loaded_skill_doc(
     path: str = "",
     document: str = "",
     summary: str = "",
+    loaded_at_revision: int = 0,
 ) -> Dict[str, Any]:
     updated = normalize_skill_discovery_state(state)
     updated.pop("recovery_directive", None)
@@ -237,16 +424,66 @@ def record_loaded_skill_doc(
         return updated
     loaded = _unique([*updated.get("loaded_skill_ids", []), skill])
     docs = deepcopy(dict(updated.get("loaded_skill_docs") or {}))
+    document_digest = hashlib.sha256(
+        str(document or "").encode("utf-8")
+    ).hexdigest()
     docs[skill] = {
         "path": str(path or ""),
-        "sha256": hashlib.sha256(str(document or "").encode("utf-8")).hexdigest(),
+        "source_path": str(path or ""),
+        "sha256": document_digest,
+        "document_digest": document_digest,
+        "loaded_at_revision": max(0, int(loaded_at_revision or 0)),
         "summary": str(summary or "")[:600],
+        "safe_summary": str(summary or "")[:600],
+        "full_doc_cache_reference": f"skill-doc:{skill}:{document_digest[:16]}",
     }
+    loaded_refs = [
+        deepcopy(dict(item))
+        for item in updated.get("loaded_skill_refs") or []
+        if str(item.get("skill_id") or "") != skill
+    ]
+    loaded_refs.append({
+        "skill_id": skill,
+        "document_digest": document_digest,
+        "loaded_at_revision": max(0, int(loaded_at_revision or 0)),
+        "source_path": str(path or ""),
+        "safe_summary": str(summary or "")[:600],
+        "full_doc_cache_reference": f"skill-doc:{skill}:{document_digest[:16]}",
+        "status": "loaded",
+    })
+    candidate_refs = []
+    for item in updated.get("candidate_skill_refs") or []:
+        ref = deepcopy(dict(item))
+        if str(ref.get("skill_id") or "") == skill:
+            ref["document_loaded"] = True
+            ref["document_digest"] = document_digest
+        candidate_refs.append(ref)
     updated.update({
         "loaded_skill_ids": loaded,
         "loaded_skill_docs": docs,
+        "loaded_skill_refs": loaded_refs[-12:],
+        "candidate_skill_refs": candidate_refs,
         "routing_status": READING_CANDIDATES,
     })
+    return updated
+
+
+def record_loaded_skill_docs(
+    state: Mapping[str, Any] | None,
+    documents: Sequence[Mapping[str, Any]],
+    *,
+    loaded_at_revision: int = 0,
+) -> Dict[str, Any]:
+    updated = normalize_skill_discovery_state(state)
+    for item in documents or []:
+        updated = record_loaded_skill_doc(
+            updated,
+            skill_id=str(item.get("skill_id") or ""),
+            path=str(item.get("source_path") or item.get("path") or ""),
+            document=str(item.get("document") or ""),
+            summary=str(item.get("safe_summary") or item.get("summary") or ""),
+            loaded_at_revision=loaded_at_revision,
+        )
     return updated
 
 
@@ -255,6 +492,9 @@ def record_rejected_candidate(
     *,
     skill_id: str,
     reason: str,
+    reason_code: str = "not_required",
+    decision_revision: int = 0,
+    source: str = "consultant",
 ) -> Dict[str, Any]:
     updated = normalize_skill_discovery_state(state)
     updated.pop("recovery_directive", None)
@@ -265,8 +505,23 @@ def record_rejected_candidate(
         item for item in updated.get("rejected_candidates") or []
         if str(item.get("skill_id") or "") != skill
     ]
-    rows.append({"skill_id": skill, "reason": str(reason or "")[:800]})
+    row = {
+        "skill_id": skill,
+        "reason_code": str(reason_code or "not_required"),
+        "reason": str(reason or "")[:800],
+        "decision_revision": max(0, int(decision_revision or 0)),
+        "source": str(source or "consultant"),
+        "status": "excluded",
+    }
+    rows.append(row)
     updated["rejected_candidates"] = rows[-12:]
+    excluded = [
+        deepcopy(dict(item))
+        for item in updated.get("excluded_skill_refs") or []
+        if str(item.get("skill_id") or "") != skill
+    ]
+    excluded.append(deepcopy(row))
+    updated["excluded_skill_refs"] = excluded[-12:]
     remaining = [
         item for item in updated.get("candidate_skill_ids") or []
         if item not in {row["skill_id"] for row in rows}
@@ -275,19 +530,127 @@ def record_rejected_candidate(
     return updated
 
 
+def record_excluded_skills(
+    state: Mapping[str, Any] | None,
+    decisions: Sequence[Mapping[str, Any]],
+    *,
+    decision_revision: int = 0,
+) -> Dict[str, Any]:
+    updated = normalize_skill_discovery_state(state)
+    for item in decisions or []:
+        updated = record_rejected_candidate(
+            updated,
+            skill_id=str(item.get("skill_id") or ""),
+            reason=str(item.get("reason") or ""),
+            reason_code=str(item.get("reason_code") or "not_required"),
+            decision_revision=int(
+                item.get("decision_revision") or decision_revision or 0
+            ),
+            source=str(item.get("source") or "consultant"),
+        )
+    return updated
+
+
 def record_selected_skills(
     state: Mapping[str, Any] | None,
     selected_skill_ids: Sequence[str],
+    *,
+    decisions: Sequence[Mapping[str, Any]] = (),
+    selection_revision: int = 0,
+    reason: str = "",
 ) -> Dict[str, Any]:
     updated = normalize_skill_discovery_state(state)
     updated.pop("recovery_directive", None)
     selected = _unique(selected_skill_ids)
+    excluded_ids = {
+        str(item.get("skill_id") or "")
+        for item in updated.get("excluded_skill_refs") or []
+    }
+    conflict = sorted(set(selected).intersection(excluded_ids))
+    if conflict:
+        raise ValueError(
+            "selected and excluded Skill sets overlap: " + ", ".join(conflict)
+        )
+    decision_by_id = {
+        str(item.get("skill_id") or ""): dict(item)
+        for item in decisions or []
+        if isinstance(item, Mapping) and str(item.get("skill_id") or "")
+    }
+    loaded_docs = dict(updated.get("loaded_skill_docs") or {})
+    selected_refs: list[Dict[str, Any]] = []
+    for index, skill_id in enumerate(selected):
+        decision = decision_by_id.get(skill_id, {})
+        doc = dict(loaded_docs.get(skill_id) or {})
+        selected_refs.append({
+            "skill_id": skill_id,
+            "role": str(decision.get("role") or ("primary" if index == 0 else "supporting")),
+            "reason": str(decision.get("reason") or reason or "")[:800],
+            "document_digest": str(
+                decision.get("document_digest")
+                or doc.get("document_digest")
+                or doc.get("sha256")
+                or ""
+            ),
+            "selection_revision": max(0, int(
+                decision.get("selection_revision") or selection_revision or 0
+            )),
+            "source": "consultant",
+            "status": "selected",
+        })
     updated["selected_skill_ids"] = selected
+    updated["selected_skill_refs"] = selected_refs
     if selected:
         updated["routing_status"] = SELECTED
         updated["capability_gap"] = False
         updated["capability_gap_reason"] = ""
     return updated
+
+
+def selection_document_errors(
+    state: Mapping[str, Any] | None,
+    selected_skill_ids: Sequence[str],
+    *,
+    current_document_digests: Mapping[str, str] | None = None,
+) -> list[Dict[str, Any]]:
+    """Return typed Consultant-owned load-before-select violations."""
+    current = normalize_skill_discovery_state(state)
+    docs = dict(current.get("loaded_skill_docs") or {})
+    expected_digests = dict(current_document_digests or {})
+    errors: list[Dict[str, Any]] = []
+    for skill_id in _unique(selected_skill_ids):
+        doc = dict(docs.get(skill_id) or {})
+        digest = str(doc.get("document_digest") or doc.get("sha256") or "")
+        if not digest:
+            errors.append({
+                "code": "SKILL_DOC_REQUIRED",
+                "owner": "consultant",
+                "field": f"selected_skill_refs[{skill_id}].document_digest",
+                "skill_id": skill_id,
+                "current_value": "",
+                "expected_structural_condition": (
+                    "the selected Skill document is loaded at the current digest"
+                ),
+                "evidence": {"loaded_skill_ids": list(current.get("loaded_skill_ids") or [])},
+                "allowed_action": "load_skill_doc",
+            })
+        elif expected_digests.get(skill_id) and digest != str(
+            expected_digests[skill_id]
+        ):
+            errors.append({
+                "code": "SKILL_DOC_STALE",
+                "owner": "consultant",
+                "field": f"selected_skill_refs[{skill_id}].document_digest",
+                "skill_id": skill_id,
+                "current_value": digest,
+                "expected_structural_condition": (
+                    "the loaded document digest equals the current catalog digest"
+                ),
+                "evidence": {
+                    "catalog_document_digest": str(expected_digests[skill_id]),
+                },
+                "allowed_action": "load_skill_doc",
+            })
+    return errors
 
 
 def normal_discovery_exhausted(state: Mapping[str, Any] | None) -> bool:
@@ -422,14 +785,27 @@ def skill_discovery_progress_projection(
         "routing_status": current.get("routing_status"),
         "reasoning_level": current.get("reasoning_level"),
         "task_hypothesis": current.get("task_hypothesis"),
+        "observed_skill_mentions": list(
+            current.get("observed_skill_mentions") or []
+        ),
         "input_roles": list(current.get("input_roles") or []),
         "search_queries_attempted": list(current.get("search_queries_attempted") or []),
         "search_history": deepcopy(list(current.get("search_history") or [])),
         "candidate_skill_ids": list(current.get("candidate_skill_ids") or []),
         "candidate_evidence": deepcopy(dict(current.get("candidate_evidence") or {})),
+        "candidate_skill_refs": deepcopy(list(
+            current.get("candidate_skill_refs") or []
+        )),
         "loaded_skill_ids": list(current.get("loaded_skill_ids") or []),
         "loaded_skill_docs": deepcopy(dict(current.get("loaded_skill_docs") or {})),
+        "loaded_skill_refs": deepcopy(list(current.get("loaded_skill_refs") or [])),
+        "selected_skill_refs": deepcopy(list(current.get("selected_skill_refs") or [])),
+        "excluded_skill_refs": deepcopy(list(current.get("excluded_skill_refs") or [])),
         "rejected_candidates": deepcopy(list(current.get("rejected_candidates") or [])),
+        "catalog_digest": str(current.get("catalog_digest") or ""),
+        "last_search_fingerprint": str(
+            current.get("last_search_fingerprint") or ""
+        ),
         "normal_search_count": int(current.get("normal_search_count") or 0),
         "catalog_expansion_count": int(current.get("catalog_expansion_count") or 0),
         "reasoning_escalation_count": int(current.get("reasoning_escalation_count") or 0),
@@ -487,6 +863,9 @@ def build_discovery_escalation_context(
         "current_task_spec": relevant_spec,
         "input_inventory": compact_inventory,
         "input_roles": list(current.get("input_roles") or []),
+        "observed_skill_mentions": list(
+            current.get("observed_skill_mentions") or []
+        ),
         "skill_routing_status": current.get("routing_status"),
         "search_queries_attempted": list(current.get("search_queries_attempted") or []),
         "search_history": [
@@ -502,6 +881,8 @@ def build_discovery_escalation_context(
             deepcopy(dict(item)) for item in candidate_cards or []
         ][:12],
         "loaded_skill_docs": deepcopy(dict(current.get("loaded_skill_docs") or {})),
+        "selected_skill_refs": deepcopy(list(current.get("selected_skill_refs") or [])),
+        "excluded_skill_refs": deepcopy(list(current.get("excluded_skill_refs") or [])),
         "rejected_candidates": deepcopy(list(current.get("rejected_candidates") or [])),
         "current_unresolved_items": ["skill-routing"],
         "allowed_next_actions": discovery_next_actions(current),

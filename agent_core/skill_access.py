@@ -531,19 +531,78 @@ def validate_skill_decision(value: Mapping[str, Any]) -> Dict[str, Any]:
     elif kind == SEARCH_SKILLS:
         allowed = {
             "decision", "query", "capability_gap", "desired_outcome",
-            "requested_scope", "relation_hint",
+            "requested_scope", "relation_hint", "queries", "top_k",
+            "exclude_skill_ids",
         }
         scope = str(decision.get("requested_scope") or "unknown").strip().lower()
         relation = str(decision.get("relation_hint") or "unknown").strip().lower()
-        if (
-            not str(decision.get("query") or "").strip()
-            or not str(decision.get("capability_gap") or "").strip()
-            or not str(decision.get("desired_outcome") or "").strip()
+        raw_queries = decision.get("queries")
+        legacy_query = str(decision.get("query") or "").strip()
+        normalized_queries: list[Dict[str, str]] = []
+        if raw_queries is not None:
+            if not isinstance(raw_queries, list) or not 1 <= len(raw_queries) <= 3:
+                raise SkillAccessError(
+                    "SKILL_DECISION_SCHEMA_INVALID",
+                    "SEARCH_SKILLS queries must contain 1-3 objects",
+                )
+            seen_query_ids = set()
+            for index, raw_query in enumerate(raw_queries, start=1):
+                item = (
+                    dict(raw_query)
+                    if isinstance(raw_query, Mapping)
+                    else {"text": str(raw_query)}
+                )
+                unexpected_query_fields = sorted(
+                    set(item) - {"query_id", "text", "purpose"}
+                )
+                text = str(item.get("text") or "").strip()
+                query_id = str(item.get("query_id") or f"q{index}").strip()
+                if unexpected_query_fields or not text or not query_id or query_id in seen_query_ids:
+                    raise SkillAccessError(
+                        "SKILL_DECISION_SCHEMA_INVALID",
+                        "SEARCH_SKILLS query requires unique query_id, text, and optional purpose",
+                    )
+                seen_query_ids.add(query_id)
+                normalized_queries.append({
+                    "query_id": query_id,
+                    "text": text,
+                    "purpose": str(item.get("purpose") or "")[:300],
+                })
+            decision["queries"] = normalized_queries
+        elif not (
+            legacy_query
+            and str(decision.get("capability_gap") or "").strip()
+            and str(decision.get("desired_outcome") or "").strip()
         ):
             raise SkillAccessError(
                 "SKILL_DECISION_SCHEMA_INVALID",
-                "SEARCH_SKILLS requires query, capability_gap, and desired_outcome",
+                "SEARCH_SKILLS requires queries or legacy query/capability_gap/desired_outcome",
             )
+        if raw_queries is not None and legacy_query:
+            raise SkillAccessError(
+                "SKILL_DECISION_SCHEMA_INVALID",
+                "SEARCH_SKILLS must use either queries or query, not both",
+            )
+        try:
+            top_k = int(decision.get("top_k") or 5)
+        except (TypeError, ValueError) as exc:
+            raise SkillAccessError(
+                "SKILL_DECISION_SCHEMA_INVALID", "SEARCH_SKILLS top_k must be an integer"
+            ) from exc
+        if not 1 <= top_k <= 8:
+            raise SkillAccessError(
+                "SKILL_DECISION_SCHEMA_INVALID", "SEARCH_SKILLS top_k must be between 1 and 8"
+            )
+        excluded = decision.get("exclude_skill_ids") or []
+        if not isinstance(excluded, list) or any(
+            not isinstance(item, str) or not item.strip() for item in excluded
+        ):
+            raise SkillAccessError(
+                "SKILL_DECISION_SCHEMA_INVALID",
+                "SEARCH_SKILLS exclude_skill_ids must be a string list",
+            )
+        decision["top_k"] = top_k
+        decision["exclude_skill_ids"] = _unique(excluded)
         if scope not in SEARCH_REQUEST_SCOPES or relation not in SEARCH_RELATION_HINTS:
             raise SkillAccessError(
                 "SKILL_DECISION_SCHEMA_INVALID",
@@ -1506,15 +1565,33 @@ class SkillAccessService:
                 "SKILL_DECISION_SCHEMA_INVALID", "expected SEARCH_SKILLS"
             )
         runtime = _runtime_envelope(runtime_envelope)
+        query_specs = list(request.get("queries") or []) or [{
+            "query_id": "q1",
+            "text": str(request.get("query") or ""),
+            "purpose": str(request.get("desired_outcome") or ""),
+        }]
+        query_text = " | ".join(
+            str(item.get("text") or "") for item in query_specs
+        )
         catalog_status = self._catalog_status()
         catalog_revision = str(catalog_status["catalog_revision"])
         cache_identity = {
             "caller_node": runtime["caller_node"],
             "capability_gap": _normalize_query(request.get("capability_gap")),
-            "query": _normalize_query(request.get("query")),
+            "queries": [
+                {
+                    "query_id": str(item.get("query_id") or ""),
+                    "text": _normalize_query(item.get("text")),
+                }
+                for item in query_specs
+            ],
             "requested_scope": str(request.get("requested_scope") or "unknown"),
             "input_roles": sorted(_unique(input_roles)),
-            "max_results": max(1, int(max_results)),
+            "max_results": max(1, min(int(max_results), 12)),
+            "top_k": int(request.get("top_k") or 5),
+            "exclude_skill_ids": sorted(_unique(
+                request.get("exclude_skill_ids") or []
+            )),
             "catalog_revision": catalog_revision,
             "task_revision": runtime["task_revision"],
             "plan_revision": runtime["plan_revision"],
@@ -1550,7 +1627,8 @@ class SkillAccessService:
             "search_id": search_id,
             "continuation_id": continuation["continuation_id"],
             "caller_node": runtime["caller_node"],
-            "query": str(request.get("query") or ""),
+            "query": query_text,
+            "queries": deepcopy(query_specs),
         })
         cached_search_id = str(state["search_cache"].get(cache_key) or "")
         cached = deepcopy(dict(state["searches"].get(cached_search_id) or {}))
@@ -1564,7 +1642,8 @@ class SkillAccessService:
                 "status": "CATALOG_INCOMPLETE",
                 "classification": "INTERNAL_PROTOCOL",
                 "code": "SKILL_CATALOG_INCOMPLETE",
-                "query": str(request.get("query") or ""),
+                "query": query_text,
+                "queries": deepcopy(query_specs),
                 "candidates": [],
                 "provider_errors": deepcopy(list(
                     catalog_status.get("catalog_errors") or []
@@ -1580,7 +1659,8 @@ class SkillAccessService:
                 "status": "SKILL_SEARCH_NO_PROGRESS",
                 "classification": "INTERNAL_NODE_PROTOCOL",
                 "code": "SKILL_SEARCH_NO_PROGRESS",
-                "query": str(request.get("query") or ""),
+                "query": query_text,
+                "queries": deepcopy(query_specs),
                 "candidates": deepcopy(list(cached.get("candidates") or [])),
                 "repeated_search_key": cache_key,
                 "rounds": rounds,
@@ -1594,11 +1674,22 @@ class SkillAccessService:
             }
         else:
             try:
-                cards = self.skill_manager.rank_skill_candidates(
-                    str(request.get("query") or ""),
-                    input_roles=[str(item) for item in input_roles or []],
-                    max_results=max(1, int(max_results)),
-                )
+                if request.get("queries"):
+                    search_batch = self.skill_manager.search_skill_queries(
+                        query_specs,
+                        input_roles=[str(item) for item in input_roles or []],
+                        top_k=int(request.get("top_k") or 5),
+                        total_limit=max(1, min(int(max_results), 12)),
+                        exclude_skill_ids=request.get("exclude_skill_ids") or [],
+                    )
+                    cards = list(search_batch.get("candidates") or [])
+                else:
+                    cards = self.skill_manager.rank_skill_candidates(
+                        str(request.get("query") or ""),
+                        input_roles=[str(item) for item in input_roles or []],
+                        max_results=max(1, int(max_results)),
+                        source_query_id="q1",
+                    )
                 candidates = []
                 scope = (
                     "step"
@@ -1627,10 +1718,25 @@ class SkillAccessService:
                     candidates.append({
                         "skill_id": str(snapshot["skill_id"]),
                         "name": str(card.get("title") or ""),
+                        "summary": str(card.get("summary") or "")[:800],
                         "description": str(card.get("summary") or "")[:800],
+                        "domain": str(card.get("domain") or card.get("category") or ""),
+                        "tags": _unique(card.get("tags") or []),
                         "source_path": str(snapshot["source_path"]),
                         "candidate_snapshot_id": str(snapshot["snapshot_id"]),
                         "content_hash": str(snapshot["content_hash"]),
+                        "document_digest": str(card.get("document_digest") or snapshot["content_hash"]),
+                        "document_loaded": False,
+                        "declares_executable_runtime": bool(
+                            card.get("declares_executable_runtime")
+                        ),
+                        "source_query_id": str(card.get("source_query_id") or "q1"),
+                        "matched_metadata_fields": _unique(
+                            card.get("matched_metadata_fields") or []
+                        ),
+                        "deterministic_score": int(
+                            card.get("deterministic_score") or card.get("score") or 0
+                        ),
                         "match_evidence": _unique(card.get("reasons") or []),
                     })
                 final_catalog_status = self._catalog_status()
@@ -1653,7 +1759,8 @@ class SkillAccessService:
                             if final_revision != catalog_revision
                             else "SKILL_CATALOG_INCOMPLETE"
                         ),
-                        "query": str(request.get("query") or ""),
+                        "query": query_text,
+                        "queries": deepcopy(query_specs),
                         "candidates": [],
                         "provider_errors": deepcopy(list(
                             final_catalog_status.get("catalog_errors") or []
@@ -1668,7 +1775,8 @@ class SkillAccessService:
                         "catalog_revision": catalog_revision,
                         "catalog_complete": True,
                         "status": "MATCHES_FOUND" if candidates else "NO_MATCH",
-                        "query": str(request.get("query") or ""),
+                        "query": query_text,
+                        "queries": deepcopy(query_specs),
                         "candidates": candidates,
                         "cache_hit": False,
                     }
@@ -1697,7 +1805,8 @@ class SkillAccessService:
                         if incomplete
                         else "SKILL_SEARCH_CANDIDATE_SNAPSHOT_ERROR"
                     ),
-                    "query": str(request.get("query") or ""),
+                    "query": query_text,
+                    "queries": deepcopy(query_specs),
                     "candidates": [],
                     "provider_errors": deepcopy(list(
                         latest.get("catalog_errors") or []

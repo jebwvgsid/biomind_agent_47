@@ -9,7 +9,7 @@ import yaml
 from copy import deepcopy
 from pathlib import Path
 from datetime import datetime
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 class SkillManager:
     """遵循 Agent Skills 标准的技能加载器"""
@@ -38,6 +38,15 @@ class SkillManager:
         "tags", "task_types", "stage_tags", "inputs", "outputs",
         "when_to_use", "when_not_to_use", "skill_type", "runtime", "generate",
     )
+    MAX_DISCOVERY_QUERIES = 3
+    MAX_DISCOVERY_RESULTS_PER_QUERY = 8
+    MAX_DISCOVERY_RESULTS_TOTAL = 12
+    _DISCOVERY_STOPWORDS = {
+        "analysis", "analyse", "analyze", "data", "file", "files",
+        "input", "inputs", "output", "outputs", "result", "results",
+        "task", "using", "with", "from", "into", "and", "the", "for",
+        "this", "that", "these", "those", "workflow", "method",
+    }
     
     def __init__(self, skills_root: str):
         self.skills_root = Path(skills_root).resolve()
@@ -192,6 +201,43 @@ class SkillManager:
             "catalog_errors": deepcopy(self.catalog_errors),
             "skill_count": len(self.discovered_skills),
         }
+
+    @staticmethod
+    def normalize_discovery_query(value: Any) -> str:
+        """Normalize lexical discovery input without adding semantic terms."""
+        text = str(value or "").casefold()
+        text = re.sub(r"[-_/]+", " ", text)
+        text = re.sub(r"[^\w\u3400-\u9fff]+", " ", text, flags=re.UNICODE)
+        return " ".join(dict.fromkeys(text.split()))
+
+    @classmethod
+    def _discovery_tokens(cls, value: Any) -> List[str]:
+        return [
+            token
+            for token in cls.normalize_discovery_query(value).split()
+            if len(token) >= 2 and token not in cls._DISCOVERY_STOPWORDS
+        ]
+
+    def observed_canonical_skill_mentions(self, text: str) -> List[str]:
+        """Return literal canonical IDs as non-authoritative prompt evidence.
+
+        This deliberately performs no ranking, loading, selection, or runtime
+        inspection.  The Consultant may use an observed ID to request a direct
+        document load, but only a later Consultant decision can activate it.
+        """
+        payload = str(text or "")
+        observed: List[str] = []
+        for skill in self.discovered_skills:
+            skill_id = str(skill.get("_skill_id") or "")
+            if not skill_id:
+                continue
+            if re.search(
+                rf"(?<![\w./-]){re.escape(skill_id)}(?![\w./-])",
+                payload,
+                flags=re.IGNORECASE,
+            ):
+                observed.append(skill_id)
+        return observed
 
     def _normalize_skill_key(self, value: Any) -> str:
         return str(value or "").replace("\\", "/").strip().strip("/")
@@ -1031,6 +1077,9 @@ class SkillManager:
         *,
         score: int = 0,
         reasons: Optional[List[str]] = None,
+        matched_metadata_fields: Optional[List[str]] = None,
+        source_query_id: str = "",
+        document_loaded: bool = False,
     ) -> Dict[str, Any]:
         """Project shallow metadata used for Consultant reasoning."""
         skill = self.get_skill_meta(skill_id)
@@ -1052,18 +1101,130 @@ class SkillManager:
         return {
             "skill_id": str(skill.get("_skill_id") or skill_id),
             "title": str(skill.get("name") or skill.get("_skill_leaf") or skill_id),
+            "name": str(skill.get("name") or skill.get("_skill_leaf") or skill_id),
             "domain": str(skill.get("domain") or skill.get("_skill_category") or "root"),
             "category": str(skill.get("_skill_category") or "root"),
             "summary": summary[:800],
             "aliases": self.metadata_list(skill, "aliases"),
+            "tags": self.metadata_list(skill, "tags"),
             "task_types": self.metadata_list(skill, "task_types"),
             "input_roles": self._declared_skill_input_roles(skill),
             "outputs": list(dict.fromkeys(outputs or self.metadata_list(skill, "outputs"))),
             "when_to_use": self.metadata_list(skill, "when_to_use"),
             "not_for": self.metadata_list(skill, "when_not_to_use"),
             "score": int(score or 0),
+            "deterministic_score": int(score or 0),
             "reasons": list(dict.fromkeys(str(item) for item in (reasons or []) if str(item))),
+            "matched_metadata_fields": list(dict.fromkeys(
+                str(item) for item in (matched_metadata_fields or []) if str(item)
+            )),
+            "document_digest": str(skill.get("_skill_content_hash") or ""),
+            "document_loaded": bool(document_loaded),
+            "declares_executable_runtime": self.is_executable_runtime_skill(
+                str(skill.get("_skill_id") or skill_id)
+            ),
+            "source_query_id": str(source_query_id or ""),
         }
+
+    def _weighted_discovery_score(
+        self,
+        skill: Mapping[str, Any],
+        query: str,
+        *,
+        input_roles: Sequence[str] = (),
+    ) -> tuple[int, List[str], List[str]]:
+        """Score declared metadata only; never interpret scientific intent."""
+        query_text = self.normalize_discovery_query(query)
+        query_tokens = set(self._discovery_tokens(query))
+        if not query_text:
+            return 0, [], []
+
+        skill_id = str(skill.get("_skill_id") or "")
+        fields: List[tuple[str, Any, int]] = [
+            ("skill_id", skill_id, 120),
+            ("name", skill.get("name"), 70),
+            ("aliases", [
+                *self.metadata_list(dict(skill), "aliases"),
+                *self._ensure_list(skill.get("_legacy_skill_ids")),
+            ], 65),
+            ("tags", [
+                *self.metadata_list(dict(skill), "tags"),
+                *self.metadata_list(dict(skill), "task_types"),
+                *self.metadata_list(dict(skill), "stage_tags"),
+            ], 45),
+            ("domain", [skill.get("domain"), skill.get("_skill_category")], 32),
+            ("summary", [skill.get("summary"), skill.get("description")], 20),
+            ("inputs", self._declared_skill_input_roles(skill), 12),
+            ("outputs", self.metadata_list(dict(skill), "outputs"), 10),
+        ]
+        score = 0
+        reasons: List[str] = []
+        matched_fields: List[str] = []
+        for field, raw_values, weight in fields:
+            values = raw_values if isinstance(raw_values, list) else [raw_values]
+            field_phrase_hit = False
+            field_token_hits: set[str] = set()
+            for raw_value in values:
+                normalized = self.normalize_discovery_query(raw_value)
+                if not normalized:
+                    continue
+                if field == "skill_id" and (
+                    normalized == query_text or normalized in query_text
+                ):
+                    field_phrase_hit = True
+                    score += weight
+                    continue
+                if len(normalized) >= 3 and (
+                    normalized == query_text
+                    or normalized in query_text
+                    or query_text in normalized
+                ):
+                    field_phrase_hit = True
+                field_token_hits.update(
+                    query_tokens.intersection(self._discovery_tokens(normalized))
+                )
+            if field_phrase_hit:
+                score += weight
+                matched_fields.append(field)
+                reasons.append(f"matched {field}")
+            if field_token_hits:
+                # Token evidence is bounded so verbose descriptions cannot
+                # overpower an exact ID/name/alias match.
+                score += min(weight // 2, max(1, weight // 6) * len(field_token_hits))
+                if field not in matched_fields:
+                    matched_fields.append(field)
+                reasons.append(
+                    f"matched {field} terms: {', '.join(sorted(field_token_hits)[:6])}"
+                )
+
+        text_l = str(query or "").casefold()
+        if self._matches_known_alias(dict(skill), text_l):
+            score += 55
+            matched_fields.append("aliases")
+            reasons.append("matched declared compatibility alias")
+        if self._matches_declared_runtime_tool(dict(skill), text_l):
+            score += 50
+            matched_fields.append("runtime")
+            reasons.append("matched declared runtime tool")
+
+        requested_roles = {
+            str(item).strip().lower() for item in input_roles or []
+            if str(item).strip()
+        }
+        declared_roles = set(self._declared_skill_input_roles(skill))
+        role_overlap = sorted(requested_roles.intersection(declared_roles))
+        if role_overlap:
+            score += 18 * len(role_overlap)
+            matched_fields.append("inputs")
+            reasons.extend(f"input role matched: {role}" for role in role_overlap)
+            if requested_roles.issubset(declared_roles):
+                score += 12
+                reasons.append("all observed input roles are compatible")
+        return (
+            int(score),
+            list(dict.fromkeys(reasons)),
+            list(dict.fromkeys(matched_fields)),
+        )
 
     def rank_skill_candidates(
         self,
@@ -1072,17 +1233,14 @@ class SkillManager:
         input_roles: Optional[List[str]] = None,
         category: str = "",
         max_results: int = 12,
+        source_query_id: str = "",
     ) -> List[Dict[str, Any]]:
         """Rank cards from lexical metadata plus structured input-role evidence.
 
         Scores are discovery evidence only.  This method never selects a skill.
         """
-        text_l = str(text or "").lower()
-        requested_roles = {
-            str(item).strip().lower() for item in (input_roles or []) if str(item).strip()
-        }
         category_l = self._normalize_skill_key(category).lower()
-        ranked: List[tuple[int, str, List[str]]] = []
+        ranked: List[tuple[int, str, List[str], List[str]]] = []
         for skill in self.discovered_skills:
             skill_id = str(skill.get("_skill_id") or "")
             skill_category = str(skill.get("_skill_category") or "root")
@@ -1092,49 +1250,108 @@ class SkillManager:
                 or skill_id.lower().startswith(category_l + "/")
             ):
                 continue
-            score = 0
-            reasons: List[str] = []
-            seen_hits = set()
-            if self._matches_known_alias(skill, text_l):
-                score += 8
-                reasons.append("known alias matched")
-            if self._matches_declared_runtime_tool(skill, text_l):
-                score += 8
-                reasons.append("declared runtime tool matched")
-            for alias in self.metadata_list(skill, "aliases"):
-                alias_l = alias.lower().strip()
-                if len(alias_l) >= 2 and alias_l in text_l and alias_l not in seen_hits:
-                    score += 12
-                    seen_hits.add(alias_l)
-                    reasons.append(f"semantic alias matched: {alias}")
-            for term, allow_token_match in self._skill_match_term_entries(skill):
-                term_l = str(term).lower().strip()
-                if not term_l:
-                    continue
-                if len(term_l) >= 3 and term_l in text_l and term_l not in seen_hits:
-                    score += 4 if "/" in term_l else 2
-                    seen_hits.add(term_l)
-                    reasons.append(f"metadata phrase matched: {term_l[:80]}")
-                if allow_token_match:
-                    for token in re.split(r"[\s,;:/|()\[\]{}<>，。；、_-]+", term_l):
-                        if len(token) >= 2 and token in text_l and token not in seen_hits:
-                            score += 1
-                            seen_hits.add(token)
-            declared_roles = set(self._declared_skill_input_roles(skill))
-            role_overlap = sorted(requested_roles.intersection(declared_roles))
-            if role_overlap:
-                score += 5 * len(role_overlap)
-                reasons.extend(f"input role matched: {role}" for role in role_overlap)
-                if requested_roles.issubset(declared_roles):
-                    score += 4
-                    reasons.append("all observed input roles are compatible")
+            score, reasons, matched_fields = self._weighted_discovery_score(
+                skill,
+                text,
+                input_roles=input_roles or [],
+            )
             if score > 0:
-                ranked.append((score, skill_id, reasons))
+                ranked.append((score, skill_id, reasons, matched_fields))
         ranked.sort(key=lambda item: (-item[0], item[1]))
         return [
-            self.skill_discovery_card(skill_id, score=score, reasons=reasons)
-            for score, skill_id, reasons in ranked[: max(1, int(max_results))]
+            self.skill_discovery_card(
+                skill_id,
+                score=score,
+                reasons=reasons,
+                matched_metadata_fields=matched_fields,
+                source_query_id=source_query_id,
+            )
+            for score, skill_id, reasons, matched_fields
+            in ranked[: max(1, min(int(max_results), self.MAX_DISCOVERY_RESULTS_TOTAL))]
         ]
+
+    def search_skill_queries(
+        self,
+        queries: Sequence[Mapping[str, Any] | str],
+        *,
+        input_roles: Sequence[str] = (),
+        top_k: int = 5,
+        total_limit: int = MAX_DISCOVERY_RESULTS_TOTAL,
+        exclude_skill_ids: Sequence[str] = (),
+    ) -> Dict[str, Any]:
+        """Execute Consultant-provided hypotheses and merge stable candidates."""
+        raw_queries = list(queries or [])
+        if not 1 <= len(raw_queries) <= self.MAX_DISCOVERY_QUERIES:
+            raise ValueError("SEARCH_SKILLS requires 1-3 queries")
+        per_query_limit = max(
+            1,
+            min(int(top_k or 5), self.MAX_DISCOVERY_RESULTS_PER_QUERY),
+        )
+        merged_limit = max(
+            1,
+            min(int(total_limit or self.MAX_DISCOVERY_RESULTS_TOTAL), self.MAX_DISCOVERY_RESULTS_TOTAL),
+        )
+        excluded = set(self.normalize_selected_skills(
+            list(exclude_skill_ids or []),
+            max_results=self.MAX_SELECTED_SKILLS,
+        ))
+        normalized_queries: List[Dict[str, str]] = []
+        merged: Dict[str, Dict[str, Any]] = {}
+        seen_query_ids: set[str] = set()
+        for index, raw in enumerate(raw_queries, start=1):
+            item = dict(raw) if isinstance(raw, Mapping) else {"text": str(raw)}
+            text = str(item.get("text") or item.get("query") or "").strip()
+            if not text:
+                raise ValueError("SEARCH_SKILLS query text is required")
+            query_id = str(item.get("query_id") or f"q{index}").strip()
+            if not query_id or query_id in seen_query_ids:
+                raise ValueError("SEARCH_SKILLS query_id values must be unique")
+            seen_query_ids.add(query_id)
+            purpose = str(item.get("purpose") or "").strip()
+            normalized_queries.append({
+                "query_id": query_id,
+                "text": text,
+                "purpose": purpose,
+                "normalized_text": self.normalize_discovery_query(text),
+            })
+            cards = self.rank_skill_candidates(
+                text,
+                input_roles=list(input_roles or []),
+                max_results=per_query_limit,
+                source_query_id=query_id,
+            )
+            for card in cards:
+                skill_id = str(card.get("skill_id") or "")
+                if not skill_id or skill_id in excluded:
+                    continue
+                prior = merged.get(skill_id)
+                if prior is None or int(card.get("deterministic_score") or 0) > int(
+                    prior.get("deterministic_score") or 0
+                ):
+                    merged[skill_id] = dict(card)
+                else:
+                    prior["matched_metadata_fields"] = list(dict.fromkeys([
+                        *list(prior.get("matched_metadata_fields") or []),
+                        *list(card.get("matched_metadata_fields") or []),
+                    ]))
+                    prior["reasons"] = list(dict.fromkeys([
+                        *list(prior.get("reasons") or []),
+                        *list(card.get("reasons") or []),
+                    ]))
+        candidates = sorted(
+            merged.values(),
+            key=lambda item: (
+                -int(item.get("deterministic_score") or 0),
+                str(item.get("skill_id") or ""),
+            ),
+        )[:merged_limit]
+        return {
+            "queries": normalized_queries,
+            "top_k": per_query_limit,
+            "total_limit": merged_limit,
+            "catalog_digest": str(self.catalog_status().get("catalog_revision") or ""),
+            "candidates": candidates,
+        }
 
     def format_skill_discovery_cards(
         self,
@@ -1269,6 +1486,27 @@ class SkillManager:
             or requirements.get("packages")
             or requirements.get("capabilities")
         )
+
+    def effective_runtime_skill_ids(
+        self,
+        selected_skill_ids: Sequence[str],
+        *,
+        excluded_skill_ids: Sequence[str] = (),
+    ) -> List[str]:
+        """Return selected, non-excluded Skills with concrete runtime contracts."""
+        selected = self.normalize_selected_skills(
+            list(selected_skill_ids or []),
+            max_results=self.MAX_SELECTED_SKILLS,
+        )
+        excluded = set(self.normalize_selected_skills(
+            list(excluded_skill_ids or []),
+            max_results=self.MAX_SELECTED_SKILLS,
+        ))
+        return [
+            skill_id for skill_id in selected
+            if skill_id not in excluded
+            and self.is_executable_runtime_skill(skill_id)
+        ]
 
     @staticmethod
     def _command_terms_from_text(text: str) -> List[str]:
