@@ -106,6 +106,8 @@ def resolve_formal_upstream_artifacts(
     task_id: str = "",
     project_root: str | Path | None = None,
     max_candidates: int = 24,
+    candidate_search_roles: Sequence[str] = (),
+    required_input_roles: Sequence[str] = (),
 ) -> Dict[str, Any]:
     """Search formal project outputs for reusable upstream files.
 
@@ -121,7 +123,14 @@ def resolve_formal_upstream_artifacts(
     extracted_benchmark_id = _extract_benchmark_id(query_text)
     current_task_id = task_id or extracted_benchmark_id or ""
     spec = _select_artifact_spec(query_text, current_task_id)
-    generic_discovery = _discover_local_inputs(query_text, work_path, project_path, max_candidates=max_candidates)
+    generic_discovery = _discover_local_inputs(
+        query_text,
+        work_path,
+        project_path,
+        max_candidates=max_candidates,
+        candidate_search_roles=candidate_search_roles,
+        required_input_roles=required_input_roles,
+    )
     relevant = spec is not None or bool(generic_discovery.get("relevant"))
     result: Dict[str, Any] = {
         "relevant": relevant,
@@ -143,6 +152,7 @@ def resolve_formal_upstream_artifacts(
         "ambiguous_samples": [],
         "ambiguous_resolutions": [],
         "resolved_inputs": generic_discovery.get("resolved_inputs", []),
+        "observed_artifacts": generic_discovery.get("observed_artifacts", []),
         "candidate_groups": generic_discovery.get("candidate_groups", {}),
         "missing_roles": generic_discovery.get("missing_roles", []),
         "ambiguous_roles": generic_discovery.get("ambiguous_roles", []),
@@ -329,12 +339,15 @@ def _discover_local_inputs(
     work_dir: Path,
     project_root: Optional[Path],
     max_candidates: int = 24,
+    candidate_search_roles: Sequence[str] = (),
+    required_input_roles: Sequence[str] = (),
 ) -> Dict[str, Any]:
     """Discover generic local input relationships without domain decisions."""
 
     result: Dict[str, Any] = {
         "relevant": False,
         "resolved_inputs": [],
+        "observed_artifacts": [],
         "candidate_groups": {},
         "missing_roles": [],
         "ambiguous_roles": [],
@@ -363,7 +376,15 @@ def _discover_local_inputs(
                 continue
             if _is_file_safe(path):
                 explicit_files.append(path.resolve())
-                result["resolved_inputs"].append(_input_record(_role_for_path(path), path, "explicit"))
+                explicit_record = _input_record(
+                    _role_for_path(path), path, "explicit"
+                )
+                result["resolved_inputs"].append(explicit_record)
+                result["observed_artifacts"].append({
+                    **explicit_record,
+                    "evidence_status": "checked",
+                    "binding_status": "explicit_user_path",
+                })
                 explicit_dirs.append(path.parent.resolve())
                 resolved_raw = True
             else:
@@ -396,8 +417,21 @@ def _discover_local_inputs(
 
     _discover_paired_fastqs(result, explicit_files, explicit_dirs, max_candidates=max_candidates)
     _discover_sidecars(result, explicit_files)
-    if _should_discover_reference_annotation(text, explicit_files):
-        _discover_reference_annotation_pairs(result, explicit_files, explicit_dirs, work_dir, project_root, max_candidates)
+    requested_roles = _dedupe_strings([
+        *candidate_search_roles,
+        *required_input_roles,
+    ])
+    if _should_discover_reference_annotation(requested_roles):
+        _discover_reference_annotation_pairs(
+            result,
+            explicit_files,
+            explicit_dirs,
+            work_dir,
+            project_root,
+            max_candidates,
+            candidate_search_roles=requested_roles,
+            required_input_roles=required_input_roles,
+        )
     result["resolved_inputs"] = _dedupe_resolved_inputs(result.get("resolved_inputs") or [])
     result["missing_roles"] = _dedupe_strings(result.get("missing_roles") or [])
     result["ambiguous_roles"] = _dedupe_strings(result.get("ambiguous_roles") or [])
@@ -741,19 +775,33 @@ def _discover_reference_annotation_pairs(
     work_dir: Path,
     project_root: Optional[Path],
     max_candidates: int,
+    *,
+    candidate_search_roles: Sequence[str],
+    required_input_roles: Sequence[str] = (),
 ) -> None:
+    requested = set(_dedupe_strings(candidate_search_roles))
+    required = set(_dedupe_strings(required_input_roles))
     roots = _local_input_search_roots(explicit_dirs, work_dir, project_root)
     references = _dedupe_paths([path for path in explicit_files if _role_for_path(path) == "reference_fasta"])
     annotations = _dedupe_paths([path for path in explicit_files if _role_for_path(path) == "annotation_file"])
-    if not references:
+    if "reference_fasta" in requested and not references:
         references = _find_files_by_suffixes(roots, (".fa", ".fasta", ".fna"), max_candidates=max_candidates)
-    if not annotations:
+    if "annotation_file" in requested and not annotations:
         annotations = _find_files_by_suffixes(roots, (".gtf", ".gff", ".gff3"), max_candidates=max_candidates)
 
-    reference_records = [_input_record("reference_fasta", path, "local_discovery") for path in references[:max_candidates]]
+    reference_records = [
+        _input_record("reference_fasta", path, "local_candidate_search")
+        for path in references[:max_candidates]
+        if "reference_fasta" in requested
+        and path not in explicit_files
+    ]
     annotation_records: List[Dict[str, Any]] = []
     for annotation in annotations[:max_candidates]:
-        record = _input_record(_role_for_path(annotation), annotation, "local_discovery")
+        if "annotation_file" not in requested or annotation in explicit_files:
+            continue
+        record = _input_record(
+            _role_for_path(annotation), annotation, "local_candidate_search"
+        )
         if references:
             compatibility = _annotation_compatibility(references[0], annotation)
             record["compatibility"] = compatibility["status"]
@@ -763,39 +811,29 @@ def _discover_reference_annotation_pairs(
 
     if reference_records:
         result["candidate_groups"]["reference_fasta"] = reference_records
-        if len(reference_records) == 1:
-            result["resolved_inputs"].append(reference_records[0])
-        else:
+        if len(reference_records) > 1 and "reference_fasta" in required:
             result["ambiguous_roles"].append("reference_fasta")
+    elif "reference_fasta" in required and not references:
+        result["missing_roles"].append("reference_fasta")
     if annotation_records:
         result["candidate_groups"]["annotation_file"] = annotation_records
         compatible = [item for item in annotation_records if item.get("compatibility") in ("compatible", "unchecked")]
-        if len(compatible) == 1:
-            result["resolved_inputs"].append(compatible[0])
-            result["discovery_log"].append(f"annotation candidate selected: {Path(compatible[0]['path']).name}")
-        elif len(compatible) > 1:
+        if len(compatible) > 1 and "annotation_file" in required:
             result["ambiguous_roles"].append("annotation_file")
-        elif annotation_records:
+        elif not compatible and "annotation_file" in required:
             result["ambiguous_roles"].append("annotation_file")
             result["discovery_log"].append("annotation candidates found but none passed lightweight compatibility")
+    elif "annotation_file" in required and not annotations:
+        result["missing_roles"].append("annotation_file")
 
 
-def _should_discover_reference_annotation(text: str, explicit_files: Sequence[Path]) -> bool:
-    if any(_role_for_path(path) in {"reference_fasta", "annotation_file"} for path in explicit_files):
-        return True
-    lower = str(text or "").lower()
-    return any(
-        token in lower
-        for token in (
-            "annotation",
-            "annotate",
-            "gtf",
-            "gff",
-            "gff3",
-            "reference",
-            "genome fasta",
-            "参考",
-            "注释",
+def _should_discover_reference_annotation(
+    requested_roles: Sequence[str],
+) -> bool:
+    """Only a typed Consultant/TaskSpec request may expand local companions."""
+    return bool(
+        {"reference_fasta", "annotation_file"}.intersection(
+            _dedupe_strings(requested_roles)
         )
     )
 

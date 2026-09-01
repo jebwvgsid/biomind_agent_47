@@ -80,13 +80,20 @@ class FormalArtifactResolverTests(unittest.TestCase):
             )
             query = f"Use reference {ref} and find annotation if available"
 
-            result = resolve_formal_upstream_artifacts(query, work_dir=root)
+            result = resolve_formal_upstream_artifacts(
+                query,
+                work_dir=root,
+                candidate_search_roles=["annotation_file"],
+            )
 
         annotations = result["candidate_groups"]["annotation_file"]
         self.assertEqual(result["status"], "resolved")
         self.assertEqual(annotations[0]["path"], str(gtf.resolve()))
         self.assertEqual(annotations[0]["compatibility"], "compatible")
-        self.assertIn("annotation_file", {item["role"] for item in result["resolved_inputs"]})
+        self.assertNotIn(
+            str(gtf.resolve()),
+            {item["path"] for item in result["resolved_inputs"]},
+        )
 
     def test_explicit_path_verified_from_project_root_has_no_false_missing_and_has_evidence(self):
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
@@ -186,7 +193,12 @@ class FormalArtifactResolverTests(unittest.TestCase):
             )
             query = "Use benchmarks/Part1.variant_calling/data/genome.fasta and find annotation"
 
-            result = resolve_formal_upstream_artifacts(query, work_dir=root)
+            result = resolve_formal_upstream_artifacts(
+                query,
+                work_dir=root,
+                candidate_search_roles=["annotation_file"],
+                required_input_roles=["annotation_file"],
+            )
 
         annotations = result["candidate_groups"]["annotation_file"]
         self.assertEqual(result["status"], "ambiguous_inputs")
@@ -218,7 +230,12 @@ class FormalArtifactResolverTests(unittest.TestCase):
             self._write_file(root, "project/annotations/b.gtf", 'chr1\tanno\tgene\t1\t4\t.\t+\t.\tgene_id "b";\n')
             query = "Use project/data/genome.fasta and find annotation"
 
-            result = resolve_formal_upstream_artifacts(query, work_dir=root)
+            result = resolve_formal_upstream_artifacts(
+                query,
+                work_dir=root,
+                candidate_search_roles=["annotation_file"],
+                required_input_roles=["annotation_file"],
+            )
 
         self.assertEqual(result["status"], "ambiguous_inputs")
         self.assertIn("annotation_file", result["ambiguous_roles"])

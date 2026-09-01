@@ -4094,6 +4094,46 @@ def evaluate_failure_policies(
     }
 
 
+def runtime_failure_policy(
+    spec: Mapping[str, Any] | None,
+) -> Dict[str, Any]:
+    """Resolve the closed runtime-unavailable route from typed TaskSpec rows."""
+    unavailable_action = "fail_task"
+    allow_substitution = False
+    sources: List[Dict[str, Any]] = []
+    for item in semantic_constraints_from_task_spec(spec):
+        semantic_key = str(item.get("semantic_key") or "")
+        value = _field_key(item.get("value"))
+        if semantic_key in {
+            "failure_policy.runtime_unavailable",
+            "failure_policy.runtime_missing",
+        }:
+            normalized = {
+                "fail": "fail_task",
+                "failed": "fail_task",
+                "stop": "fail_task",
+                "block": "block_stage_and_continue_closeout",
+                "blocked": "block_stage_and_continue_closeout",
+                "continue_closeout": "block_stage_and_continue_closeout",
+            }.get(value, value)
+            if normalized in {
+                "fail_task", "block_stage_and_continue_closeout"
+            }:
+                unavailable_action = normalized
+                sources.append(deepcopy(item))
+        elif semantic_key == "failure_policy.allow_substitution":
+            allow_substitution = item.get("value") in {
+                True, 1, "1", "true", "True", "yes", "allow", "allowed"
+            }
+            sources.append(deepcopy(item))
+    return {
+        "runtime_unavailable": unavailable_action,
+        "allow_substitution": bool(allow_substitution),
+        "source": "typed_task_spec" if sources else "controller_default",
+        "constraints": sources,
+    }
+
+
 def merge_task_spec_input_audit(
     spec: Mapping[str, Any] | None,
     input_audit: Mapping[str, Any] | None,
@@ -4117,6 +4157,15 @@ def merge_task_spec_input_audit(
     additions: List[Dict[str, Any]] = []
     for item in resolved:
         if not isinstance(item, Mapping):
+            continue
+        raw_source = _field_key(item.get("source"))
+        if raw_source not in {
+            "explicit", "user", "user_initial", "user_feedback",
+            "user_explicit", "consultant_confirmed", "consultant_selected",
+        }:
+            # Local, sibling, sidecar, and directory discovery are observable
+            # candidates. They become TaskSpec inputs only after an explicit
+            # Consultant confirmation, never merely because a path exists.
             continue
         path = _text(item.get("resolved_path") or item.get("path"))
         if not path or (canonical_input_role(_text(item.get("role")), path) == "input_directory" and path in known_output_dirs):
