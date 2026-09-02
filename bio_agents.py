@@ -572,8 +572,7 @@ from agent_core.action_runtime import (
     build_artifact_env_manifest,
     build_execution_policy_manifest,
     build_runtime_binding_registry,
-    project_action_runtime_for_provider,
-    project_artifacts_for_provider,
+    project_action_capability_context_for_provider,
     resolve_action_runtime_bindings,
     validate_action_approval_identity,
     validate_manifest_hash,
@@ -33095,7 +33094,6 @@ question. Never guess a scientific or database identity.
 
             # 技能加载
             loaded_skills = ""
-            generate_capability_view: List[Dict[str, Any]] = []
             generate_operation_bindings: Dict[str, str] = {}
             if self.skill_manager and current_plan:
                 selected = state.get("active_skills", []) or []
@@ -33103,26 +33101,16 @@ question. Never guess a scientific or database identity.
                     capability_view, generate_operation_bindings = (
                         self.skill_manager.get_semantic_execution_capabilities(selected)
                     )
-                    generate_capability_view = list(capability_view or [])
                     if capability_view:
-                        loaded_skills = json.dumps(
-                            {
-                                "capabilities": capability_view,
-                                "operation_protocol": (
-                                    "Use an operation placeholder as a complete argv value, "
-                                    "for example {operation:operation.C1.O1}. The Controller "
-                                    "resolves it to the pinned executable path."
-                                ),
-                            },
-                            ensure_ascii=False,
-                            sort_keys=True,
-                        )
                         self.profiler.record_skill_usage(
                             task_id,
                             selected,
-                            usage_type="semantic_capability_projection_for_generate",
+                            usage_type="semantic_capability_resolution_for_generate",
                             node="generate",
-                            detail="Controller projected semantic capability and operation handles.",
+                            detail=(
+                                "Controller resolved operation handles internally; Provider "
+                                "guidance is projected later from the current capability only."
+                            ),
                         )
 
             lightweight_policy = self._lightweight_task_policy(str(state.get("task_mode") or ""))
@@ -33337,7 +33325,7 @@ question. Never guess a scientific or database identity.
             generate_runtime_audit_view: Dict[str, Any] = {}
             generate_selected_skill_id = ""
             generate_artifact_environment: List[Dict[str, Any]] = []
-            generate_provider_artifact_environment: List[Dict[str, Any]] = []
+            generate_action_provider_context: Dict[str, Any] = {}
             generate_script_protocol = False
             recovery_evidence: List[Dict[str, Any]] = []
             if recovery_context_obj and recovery_context_obj.bounded_log_excerpt:
@@ -33414,30 +33402,19 @@ question. Never guess a scientific or database identity.
                     "ask_user", "install", "install_tool", "search", "finish",
                     "solution", "blocked", "plan_patch",
                 }
-                generate_provider_artifact_environment = (
-                    project_artifacts_for_provider(
-                        generate_artifact_environment
-                    )
-                    if generate_script_protocol
-                    else deepcopy(generate_artifact_environment)
-                )
-                if generate_script_protocol and generate_capability_view:
-                    current_capability = dict(
-                        generate_runtime_resolution.get("capability_contract") or {}
+                if generate_script_protocol:
+                    generate_action_provider_context = (
+                        project_action_capability_context_for_provider(
+                            generate_runtime_resolution,
+                            generate_artifact_environment,
+                        )
                     )
                     loaded_skills = json.dumps(
                         {
-                            "current_action_capability": {
-                                **current_capability,
-                                "contract_hash": str(
-                                    generate_runtime_resolution.get(
-                                        "capability_contract_hash"
-                                    ) or ""
-                                ),
-                            },
+                            **generate_action_provider_context,
                             "script_protocol": (
-                                "Use only current_action runtime shell references inside the "
-                                "executable block. Capability and binding scope are Controller-owned."
+                                "Use only current-action runtime and artifact shell references. "
+                                "Capability and binding scope are Controller-owned."
                             ),
                         },
                         ensure_ascii=False,
@@ -33475,12 +33452,7 @@ question. Never guess a scientific or database identity.
                         "current_action_contract": self._current_action_semantic_contract(
                             state, task_id
                         ),
-                        **project_action_runtime_for_provider(
-                            generate_runtime_resolution
-                        ),
-                        "current_action_artifact_bindings": (
-                            generate_provider_artifact_environment
-                        ),
+                        **generate_action_provider_context,
                         "generate_output_contract": (
                             "script_block_v1"
                             if generate_script_protocol

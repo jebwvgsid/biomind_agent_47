@@ -124,12 +124,17 @@ class ManagedActionEnvV2Tests(unittest.TestCase):
             managed_action_fingerprint(second),
         )
 
-    def test_generate_prompt_contains_one_env_repair_example_and_runtime_rule(self) -> None:
+    def test_generate_prompt_contains_env_repair_example_and_tool_agnostic_runtime_rule(self) -> None:
         prompt = PromptManager.get_generate_v2_prompt({"task": {}, "current_step": {}})
         self.assertIn('FASTA="{input:reference_fasta}"; tool "$FASTA"', prompt)
         self.assertIn('"env":{"FASTA":"{input:reference_fasta}"}', prompt)
         self.assertIn("Do not emit `{runtime:*}`", prompt)
-        self.assertIn("$SNPEFF_JAR", prompt)
+        self.assertIn(
+            "Use only the runtime bindings supplied for the current action.",
+            prompt,
+        )
+        self.assertNotIn("For snpEff", prompt)
+        self.assertNotIn("SNPEFF_JAR", prompt)
         self.assertNotIn('"produced_outputs": [', prompt)
         self.assertNotIn('"expected_evidence": [', prompt)
         self.assertIn("Controller derives input/output coverage", prompt)

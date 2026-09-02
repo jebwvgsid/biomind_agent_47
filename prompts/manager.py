@@ -2418,6 +2418,12 @@ document and keep selected/excluded decision sets disjoint.
                 "Consultant for semantic review and Planner for Plan impact."
             )
         )
+        action_binding_rules = """Use only the runtime bindings supplied for the current action.
+Reference runtime bindings using the provided shell references.
+Use only the managed artifact bindings supplied for the current action.
+Do not guess executable paths, tool installations, environment variable names,
+database locations, input paths, or output paths.
+Do not request or use bindings outside the current action capability."""
         if script_output_protocol:
             corrective_rules = ""
             if action_repair:
@@ -2463,17 +2469,12 @@ session and task. Do not modify the Task, Plan, approval, budgets, validation
 state, or routing. Preserve every item in task_spec.highlighted_constraints
 and all current-step success criteria.
 
-The resolved runtime bindings are authoritative machine facts. Invoke a
-resolved executable through its exact *_BIN variable when one is provided;
-do not guess an interpreter, environment, executable path, or version. The
-artifact_environment table is also authoritative: use its BIOMIND_* variable
-for each required current-step input/output through the selected language's
-environment API: shell uses $BIOMIND_*, Python uses os.environ["BIOMIND_*"],
-and R uses Sys.getenv("BIOMIND_*"). Do not invent filesystem paths, basenames,
-or literal/default fallbacks. Controller-owned managed bindings must never
-appear inside the executable block. Keep diagnostically relevant stdout and
-stderr visible; do not redirect them to /dev/null or otherwise suppress
-failure evidence.
+{action_binding_rules}
+For each required current-step artifact, use its supplied environment reference
+through the selected language's environment API. Controller-owned managed
+bindings must never appear as literal values inside the executable block. Keep
+diagnostically relevant stdout and stderr visible; do not redirect them to
+/dev/null or otherwise suppress failure evidence.
 {corrective_rules}
 {skill_protocol}
 
@@ -2541,6 +2542,8 @@ managed inputs/outputs must use their complete placeholders as individual argv
 or env values. Never emit an authoritative managed path as a literal and never
 embed a placeholder inside shell text.
 
+{action_binding_rules}
+
 For `bash -lc`, this is invalid:
 <action_json_example name="invalid_embedded_placeholder">
 {invalid_embedded_example}
@@ -2551,8 +2554,8 @@ Move the complete placeholder to env instead:
 <action_json_example name="valid_env_placeholder">
 {valid_env_example}
 </action_json_example>
-Do not emit `{{runtime:*}}`. Runtime tools are already supplied as
-Controller-managed environment variables. For snpEff, reference `$SNPEFF_JAR`.
+Do not emit `{{runtime:*}}`. Runtime resources are supplied through the current
+action's Controller-managed shell references.
 
 Managed input/output handles may only use handles explicitly provided by the
 current step contract. A managed placeholder must occupy the entire argv/env

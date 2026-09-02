@@ -426,6 +426,11 @@ def project_action_runtime_for_provider(resolution: Mapping[str, Any]) -> Dict[s
         "current_action_capability": {
             "capability_id": str(contract.get("capability_id") or ""),
             "contract_hash": str(resolution.get("capability_contract_hash") or ""),
+            "execution_guidance": [
+                str(item)
+                for item in contract.get("execution_guidance", []) or []
+                if str(item).strip()
+            ],
         },
         "current_action_runtime_bindings": rows,
     }
@@ -545,6 +550,19 @@ def project_artifacts_for_provider(
         for row in artifact_environment
         if isinstance(row, Mapping) and _ENV_NAME_RE.fullmatch(str(row.get("env_var") or ""))
     ]
+
+
+def project_action_capability_context_for_provider(
+    resolution: Mapping[str, Any],
+    artifact_environment: Sequence[Mapping[str, Any]] = (),
+) -> Dict[str, Any]:
+    """Project one resolved capability without runtime or artifact values."""
+    return {
+        **project_action_runtime_for_provider(resolution),
+        "current_action_artifact_bindings": project_artifacts_for_provider(
+            artifact_environment
+        ),
+    }
 
 
 def build_execution_policy_manifest(

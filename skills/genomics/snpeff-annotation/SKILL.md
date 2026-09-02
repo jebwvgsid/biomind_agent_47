@@ -120,19 +120,21 @@ metadata:
         required_artifact_binding_ids: [artifact.variant_vcf, artifact.reference_fasta, artifact.annotation_gtf]
         execution_guidance:
           - Compare VCF, FASTA, and annotation contig identifiers with read-only text processing.
-          - Do not use Java or snpEff for this compatibility check.
+          - Use only the supplied artifact bindings; this capability has no runtime bindings.
       - capability_id: genomics.snpeff_annotation.build_database
         required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
         optional_runtime_binding_ids: []
         required_artifact_binding_ids: [artifact.reference_fasta, artifact.annotation_gtf, artifact.snpeff_config, artifact.snpeff_data_dir]
         execution_guidance:
           - Build only the approved task-local custom database.
+          - Invoke snpEff using the supplied runtime binding shell references; do not discover or hard-code alternative runtime paths.
       - capability_id: genomics.snpeff_annotation.annotate_variants
         required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
         optional_runtime_binding_ids: []
         required_artifact_binding_ids: [artifact.variant_vcf, artifact.snpeff_config, artifact.snpeff_data_dir]
         execution_guidance:
           - Annotate the approved VCF with the approved database identity.
+          - Invoke snpEff using the supplied runtime binding shell references; do not discover or hard-code alternative runtime paths.
       - capability_id: genomics.snpeff_annotation.summarize_ann
         required_runtime_binding_ids: []
         optional_runtime_binding_ids: []
