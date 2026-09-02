@@ -130,6 +130,9 @@ class AgentState(TypedDict, total=False):
     recovery_trigger: dict
     recovery_history: List[dict]
     recovery_decision: dict
+    recovery_semantic_decision: dict
+    recovery_policy_outcome: dict
+    recovery_execution_envelope: dict
     recovery_application: dict
     pre_action_evidence: dict
     dependency_evidence: dict

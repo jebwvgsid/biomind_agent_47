@@ -79,6 +79,331 @@ def diagnostic_command_masks_failure(command: Any) -> bool:
     )
 
 
+class RecoveryExecutionContractError(ValueError):
+    """Fail-closed error for a malformed controller-owned recovery action."""
+
+    def __init__(self, code: str, message: str):
+        super().__init__(f"{code}: {message}")
+        self.code = str(code)
+        self.message = str(message)
+
+
+class RecoveryExecutionPurpose(str, Enum):
+    PRIMARY = "PRIMARY"
+    DIAGNOSTIC = "DIAGNOSTIC"
+    VALIDATION = "VALIDATION"
+
+
+class RecoveryExecutionMode(str, Enum):
+    INLINE = "INLINE"
+    EXTERNAL_HANDOFF = "EXTERNAL_HANDOFF"
+
+
+class RecoveryResultContract(str, Enum):
+    FORMAL_OUTPUTS = "FORMAL_OUTPUTS"
+    DIAGNOSTIC_EVIDENCE = "DIAGNOSTIC_EVIDENCE"
+    EXECUTION_BUNDLE = "EXECUTION_BUNDLE"
+
+
+class RecoveryDecisionSource(str, Enum):
+    LIVE_LLM = "live_llm"
+    CACHE = "cache"
+    FALLBACK = "fallback"
+    DETERMINISTIC = "deterministic"
+
+
+def recovery_completion_eligible(result_contract: Any) -> bool:
+    """Return only potential eligibility; CompletionGate remains authoritative."""
+    return str(result_contract or "").upper() == RecoveryResultContract.FORMAL_OUTPUTS.value
+
+
+@dataclass(frozen=True)
+class DiagnosticScratchCapability:
+    """Controller-issued, run-scoped write capability for one diagnostic probe."""
+
+    schema_version: int = 1
+    scratch_root: str = ""
+    allowed_input_roots: Tuple[str, ...] = ()
+    forbidden_formal_output_paths: Tuple[str, ...] = ()
+    max_wall_seconds: int = 300
+    max_threads: int = 2
+    max_input_bytes: int = 64 * 1024 * 1024
+    max_output_bytes: int = 256 * 1024 * 1024
+    max_files: int = 16
+    retention_policy: str = "retain_for_audit"
+
+    def to_dict(self) -> Dict[str, Any]:
+        value = asdict(self)
+        value["allowed_input_roots"] = list(self.allowed_input_roots)
+        value["forbidden_formal_output_paths"] = list(
+            self.forbidden_formal_output_paths
+        )
+        return value
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> "DiagnosticScratchCapability":
+        data = dict(value or {})
+        try:
+            capability = cls(
+                schema_version=int(data.get("schema_version") or 1),
+                scratch_root=str(data.get("scratch_root") or ""),
+                allowed_input_roots=tuple(
+                    str(item) for item in data.get("allowed_input_roots") or []
+                ),
+                forbidden_formal_output_paths=tuple(
+                    str(item)
+                    for item in data.get("forbidden_formal_output_paths") or []
+                ),
+                max_wall_seconds=int(data.get("max_wall_seconds") or 300),
+                max_threads=int(data.get("max_threads") or 2),
+                max_input_bytes=int(
+                    data.get("max_input_bytes") or 64 * 1024 * 1024
+                ),
+                max_output_bytes=int(
+                    data.get("max_output_bytes") or 256 * 1024 * 1024
+                ),
+                max_files=int(data.get("max_files") or 16),
+                retention_policy=str(
+                    data.get("retention_policy") or "retain_for_audit"
+                ),
+            )
+        except (TypeError, ValueError) as exc:
+            raise RecoveryExecutionContractError(
+                "DIAGNOSTIC_SCRATCH_CAPABILITY_INVALID",
+                "scratch resource limits must be integers",
+            ) from exc
+        if not capability.scratch_root:
+            raise RecoveryExecutionContractError(
+                "DIAGNOSTIC_SCRATCH_CAPABILITY_INVALID",
+                "scratch_root is required",
+            )
+        if min(
+            capability.max_wall_seconds,
+            capability.max_threads,
+            capability.max_input_bytes,
+            capability.max_output_bytes,
+            capability.max_files,
+        ) <= 0:
+            raise RecoveryExecutionContractError(
+                "DIAGNOSTIC_SCRATCH_CAPABILITY_INVALID",
+                "scratch resource limits must be positive",
+            )
+        return capability
+
+
+@dataclass(frozen=True)
+class RecoveryExecutionEnvelope:
+    """Immutable Controller authority carried beside a mutable shell payload."""
+
+    schema_version: int
+    recovery_decision_id: str
+    recovery_context_id: str
+    step_id: str
+    action_id: str
+    recovery_strategy: str
+    execution_purpose: str
+    execution_mode: str
+    result_contract: str
+    hypothesis_id: Optional[str] = None
+    probe_id: Optional[str] = None
+    scratch_capability: Optional[DiagnosticScratchCapability] = None
+    policy_version: str = "recovery-execution-policy-v1"
+    created_from: str = RecoveryDecisionSource.DETERMINISTIC.value
+    immutable_hash: str = ""
+
+    def immutable_payload(self) -> Dict[str, Any]:
+        return {
+            "schema_version": int(self.schema_version),
+            "recovery_decision_id": self.recovery_decision_id,
+            "recovery_context_id": self.recovery_context_id,
+            "step_id": self.step_id,
+            "action_id": self.action_id,
+            "recovery_strategy": self.recovery_strategy,
+            "execution_purpose": self.execution_purpose,
+            "execution_mode": self.execution_mode,
+            "result_contract": self.result_contract,
+            "hypothesis_id": self.hypothesis_id,
+            "probe_id": self.probe_id,
+            "scratch_capability": (
+                self.scratch_capability.to_dict()
+                if self.scratch_capability is not None
+                else None
+            ),
+            "policy_version": self.policy_version,
+            "created_from": self.created_from,
+        }
+
+    def computed_hash(self) -> str:
+        return hashlib.sha256(
+            json.dumps(
+                self.immutable_payload(),
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8", errors="replace")
+        ).hexdigest()
+
+    def to_dict(self) -> Dict[str, Any]:
+        value = self.immutable_payload()
+        value["immutable_hash"] = self.immutable_hash or self.computed_hash()
+        value["completion_eligible"] = recovery_completion_eligible(
+            self.result_contract
+        )
+        return value
+
+    @classmethod
+    def from_mapping(
+        cls,
+        value: Mapping[str, Any],
+        *,
+        verify_hash: bool = True,
+    ) -> "RecoveryExecutionEnvelope":
+        if not isinstance(value, Mapping):
+            raise RecoveryExecutionContractError(
+                "RECOVERY_EXECUTION_ENVELOPE_MISSING",
+                "Recovery-generated actions require a controller-owned envelope",
+            )
+        data = dict(value)
+        scratch_raw = data.get("scratch_capability")
+        scratch = (
+            DiagnosticScratchCapability.from_mapping(scratch_raw)
+            if isinstance(scratch_raw, Mapping)
+            else None
+        )
+        envelope = cls(
+            schema_version=int(data.get("schema_version") or 1),
+            recovery_decision_id=str(data.get("recovery_decision_id") or ""),
+            recovery_context_id=str(data.get("recovery_context_id") or ""),
+            step_id=str(data.get("step_id") or ""),
+            action_id=str(data.get("action_id") or ""),
+            recovery_strategy=str(data.get("recovery_strategy") or "").upper(),
+            execution_purpose=str(data.get("execution_purpose") or "").upper(),
+            execution_mode=str(data.get("execution_mode") or "").upper(),
+            result_contract=str(data.get("result_contract") or "").upper(),
+            hypothesis_id=(
+                str(data.get("hypothesis_id"))
+                if data.get("hypothesis_id") not in (None, "")
+                else None
+            ),
+            probe_id=(
+                str(data.get("probe_id"))
+                if data.get("probe_id") not in (None, "")
+                else None
+            ),
+            scratch_capability=scratch,
+            policy_version=str(
+                data.get("policy_version") or "recovery-execution-policy-v1"
+            ),
+            created_from=str(
+                data.get("created_from")
+                or RecoveryDecisionSource.DETERMINISTIC.value
+            ),
+            immutable_hash=str(data.get("immutable_hash") or ""),
+        )
+        required = {
+            "recovery_decision_id": envelope.recovery_decision_id,
+            "recovery_context_id": envelope.recovery_context_id,
+            "step_id": envelope.step_id,
+            "action_id": envelope.action_id,
+            "recovery_strategy": envelope.recovery_strategy,
+        }
+        missing = sorted(key for key, item in required.items() if not item)
+        if missing:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_EXECUTION_ENVELOPE_INVALID",
+                "missing required fields: " + ", ".join(missing),
+            )
+        if envelope.execution_purpose not in {
+            item.value for item in RecoveryExecutionPurpose
+        }:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_EXECUTION_ENVELOPE_INVALID",
+                "unsupported execution_purpose",
+            )
+        if envelope.execution_mode not in {
+            item.value for item in RecoveryExecutionMode
+        }:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_EXECUTION_ENVELOPE_INVALID",
+                "unsupported execution_mode",
+            )
+        if envelope.result_contract not in {
+            item.value for item in RecoveryResultContract
+        }:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_EXECUTION_ENVELOPE_INVALID",
+                "unsupported result_contract",
+            )
+        if envelope.created_from not in {
+            item.value for item in RecoveryDecisionSource
+        }:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_EXECUTION_ENVELOPE_INVALID",
+                "unsupported decision source",
+            )
+        compatible = (
+            envelope.result_contract == RecoveryResultContract.EXECUTION_BUNDLE.value
+            and envelope.execution_mode
+            == RecoveryExecutionMode.EXTERNAL_HANDOFF.value
+        ) or (
+            envelope.result_contract
+            == RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+            and envelope.execution_purpose
+            == RecoveryExecutionPurpose.DIAGNOSTIC.value
+            and envelope.execution_mode == RecoveryExecutionMode.INLINE.value
+        ) or (
+            envelope.result_contract == RecoveryResultContract.FORMAL_OUTPUTS.value
+            and envelope.execution_purpose
+            in {
+                RecoveryExecutionPurpose.PRIMARY.value,
+                RecoveryExecutionPurpose.VALIDATION.value,
+            }
+            and envelope.execution_mode == RecoveryExecutionMode.INLINE.value
+        )
+        if not compatible:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_EXECUTION_ENVELOPE_INCOMPATIBLE",
+                "purpose, mode, and result contract are incompatible",
+            )
+        if (
+            envelope.execution_purpose
+            == RecoveryExecutionPurpose.DIAGNOSTIC.value
+            and envelope.scratch_capability is None
+        ):
+            raise RecoveryExecutionContractError(
+                "RECOVERY_EXECUTION_ENVELOPE_INVALID",
+                "diagnostic execution requires a scratch capability",
+            )
+        expected_hash = envelope.computed_hash()
+        if verify_hash and envelope.immutable_hash != expected_hash:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_EXECUTION_ENVELOPE_HASH_MISMATCH",
+                "controller-owned recovery metadata was modified",
+            )
+        if not envelope.immutable_hash:
+            object.__setattr__(envelope, "immutable_hash", expected_hash)
+        return envelope
+
+
+@dataclass(frozen=True)
+class RecoveryPolicyOutcome:
+    schema_version: int = 1
+    policy_version: str = "recovery-execution-policy-v1"
+    allowed: bool = True
+    raw_decision_id: str = ""
+    final_decision_id: str = ""
+    effective_route: str = ""
+    effective_strategy: str = ""
+    budget_charges: Tuple[str, ...] = ()
+    reason: str = ""
+    rewrite_reason: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        value = asdict(self)
+        value["budget_charges"] = list(self.budget_charges)
+        return value
+
+
 def validate_diagnostic_probe_code(code: Any) -> Tuple[bool, str]:
     """Reject mutating or unbounded commands before a diagnostic probe runs.
 
@@ -1396,6 +1721,8 @@ class RecoveryDecision:
     new_hypothesis_proposals: List[Dict[str, Any]] = field(default_factory=list)
     recommended_probe_id: Optional[str] = None
     probe_reason: str = ""
+    preferred_execution_mode: str = RecoveryExecutionMode.INLINE.value
+    probe_objective: str = ""
     kind: str = ""
     reason_code: str = ""
     action_id: Optional[str] = None
@@ -1842,6 +2169,17 @@ class RecoveryDecision:
             raise ValueError(f"Unsupported recovery action_type: {decision.action_type}")
         if decision.risk_level not in cls.RISK_LEVELS:
             raise ValueError(f"Unsupported recovery risk_level: {decision.risk_level}")
+        decision.preferred_execution_mode = str(
+            decision.preferred_execution_mode
+            or RecoveryExecutionMode.INLINE.value
+        ).upper()
+        if decision.preferred_execution_mode not in {
+            item.value for item in RecoveryExecutionMode
+        }:
+            raise ValueError(
+                "Recovery preferred_execution_mode must be INLINE or EXTERNAL_HANDOFF"
+            )
+        decision.probe_objective = str(decision.probe_objective or "")
         if decision.failure_class not in {item.value for item in RecoveryFailureClass}:
             raise ValueError(f"Unsupported recovery failure_class: {decision.failure_class}")
         if decision.failure_owner not in {item.value for item in RecoveryFailureOwner}:
@@ -1974,6 +2312,126 @@ class RecoveryDecision:
         value = asdict(self)
         value["schema_version"] = 5
         return value
+
+
+def build_recovery_execution_envelope(
+    decision: RecoveryDecision,
+    *,
+    recovery_context_id: str,
+    step_id: str,
+    task_root: str | Path,
+    created_from: str = RecoveryDecisionSource.DETERMINISTIC.value,
+    allowed_input_roots: Iterable[str] = (),
+    forbidden_formal_output_paths: Iterable[str] = (),
+    policy_version: str = "recovery-execution-policy-v1",
+) -> RecoveryExecutionEnvelope:
+    """Derive one stable execution authority object from a semantic decision."""
+    strategy = str(decision.recommended_action or "").upper()
+    purpose = (
+        RecoveryExecutionPurpose.DIAGNOSTIC.value
+        if strategy == RecoveryAction.RUN_DIAGNOSTIC_PROBE.value
+        else RecoveryExecutionPurpose.VALIDATION.value
+        if strategy == RecoveryAction.REVALIDATE.value
+        else RecoveryExecutionPurpose.PRIMARY.value
+    )
+    proposed_mode = str(
+        decision.preferred_execution_mode or RecoveryExecutionMode.INLINE.value
+    ).upper()
+    mode = (
+        proposed_mode
+        if proposed_mode in {item.value for item in RecoveryExecutionMode}
+        else RecoveryExecutionMode.INLINE.value
+    )
+    result_contract = (
+        RecoveryResultContract.EXECUTION_BUNDLE.value
+        if mode == RecoveryExecutionMode.EXTERNAL_HANDOFF.value
+        else RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+        if purpose == RecoveryExecutionPurpose.DIAGNOSTIC.value
+        else RecoveryResultContract.FORMAL_OUTPUTS.value
+    )
+    decision_id = str(decision.decision_id or decision.idempotency_key or "")
+    context_id = str(recovery_context_id or "")
+    resolved_step_id = str(step_id or decision.step_id or "")
+    if not decision_id or not context_id or not resolved_step_id:
+        raise RecoveryExecutionContractError(
+            "RECOVERY_EXECUTION_ENVELOPE_INVALID",
+            "decision, context, and step identities are required",
+        )
+    probe_id: Optional[str] = None
+    if purpose == RecoveryExecutionPurpose.DIAGNOSTIC.value:
+        probe_identity = {
+            "decision_id": decision_id,
+            "objective": str(
+                decision.probe_objective
+                or decision.probe_reason
+                or decision.repair_strategy
+                or decision.reason
+            ),
+            "missing_evidence": list(decision.missing_evidence or []),
+        }
+        probe_id = str(decision.recommended_probe_id or "") or (
+            "probe_"
+            + hashlib.sha256(
+                json.dumps(
+                    probe_identity,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8", errors="replace")
+            ).hexdigest()[:16]
+        )
+    action_identity = {
+        "decision_id": decision_id,
+        "context_id": context_id,
+        "step_id": resolved_step_id,
+        "strategy": strategy,
+        "purpose": purpose,
+        "mode": mode,
+        "result_contract": result_contract,
+        "probe_id": probe_id,
+    }
+    action_id = "recovery_action_" + hashlib.sha256(
+        json.dumps(
+            action_identity,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8", errors="replace")
+    ).hexdigest()[:16]
+    scratch: Optional[DiagnosticScratchCapability] = None
+    if purpose == RecoveryExecutionPurpose.DIAGNOSTIC.value:
+        scratch = DiagnosticScratchCapability(
+            scratch_root=str(
+                Path(task_root) / "recovery" / "scratch" / action_id
+            ),
+            allowed_input_roots=tuple(
+                str(Path(item)) for item in allowed_input_roots if str(item or "")
+            ),
+            forbidden_formal_output_paths=tuple(
+                str(Path(item))
+                for item in forbidden_formal_output_paths
+                if str(item or "")
+            ),
+        )
+    draft = RecoveryExecutionEnvelope(
+        schema_version=1,
+        recovery_decision_id=decision_id,
+        recovery_context_id=context_id,
+        step_id=resolved_step_id,
+        action_id=action_id,
+        recovery_strategy=strategy,
+        execution_purpose=purpose,
+        execution_mode=mode,
+        result_contract=result_contract,
+        hypothesis_id=decision.selected_hypothesis_id,
+        probe_id=probe_id,
+        scratch_capability=scratch,
+        policy_version=str(policy_version),
+        created_from=str(created_from),
+    )
+    return RecoveryExecutionEnvelope.from_mapping(
+        {**draft.to_dict(), "immutable_hash": draft.computed_hash()}
+    )
 
 
 def parse_recovery_judge_decision(text: str) -> RecoveryDecision:
@@ -3231,16 +3689,32 @@ class RecoveryPolicy:
         progress_snapshot: Optional[Dict[str, Any]],
         budgets: Optional[Dict[str, Any]],
     ) -> RecoveryDecision:
-        """Enforce terminal progress results before applying probe-specific policy."""
+        """Compatibility projection of :meth:`apply_with_outcome`."""
+        final, _ = self.apply_with_outcome(
+            decision,
+            progress_snapshot,
+            budgets,
+        )
+        return final
+
+    def apply_with_outcome(
+        self,
+        decision: RecoveryDecision,
+        progress_snapshot: Optional[Dict[str, Any]],
+        budgets: Optional[Dict[str, Any]],
+    ) -> Tuple[RecoveryDecision, RecoveryPolicyOutcome]:
+        """Apply Controller policy without reconstructing an accepted semantic decision."""
         progress = dict(progress_snapshot or {})
         classification = str(progress.get("classification") or "").strip().lower()
+        final = decision
+        rewrite_reason = ""
         if bool(progress.get("should_block")) or classification == "exhausted":
             evidence = [
                 "classification=exhausted",
                 f"no_progress_streak={int(progress.get('no_progress_streak') or progress.get('no_progress_count') or 0)}",
             ]
             reason = str(progress.get("reason") or "Recovery made no meaningful progress within the configured limit.")
-            return self._decision(
+            final = self._decision(
                 RecoveryDecisionKind.BLOCKED.value,
                 reason_code="RECOVERY_NO_PROGRESS_EXHAUSTED",
                 reason=reason,
@@ -3251,23 +3725,42 @@ class RecoveryPolicy:
                 blocked_evidence=evidence,
                 failure_owner=RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
             )
-        if decision.recommended_action != RecoveryAction.RUN_DIAGNOSTIC_PROBE.value:
-            return decision
-        progress["repeated_probe_without_progress"] = bool(
-            not progress.get("meaningful_progress")
+            rewrite_reason = "progress_exhausted"
+        elif (
+            decision.recommended_action
+            == RecoveryAction.RUN_DIAGNOSTIC_PROBE.value
+            and not progress.get("meaningful_progress")
             and int(progress.get("no_progress_count") or 0) >= self.max_no_progress
+        ):
+            evidence = [
+                "repeated_probe_without_progress=true",
+                f"no_progress_count={int(progress.get('no_progress_count') or 0)}",
+            ]
+            final = self._decision(
+                RecoveryDecisionKind.BLOCKED.value,
+                reason_code="RECOVERY_PROBE_NO_PROGRESS_EXHAUSTED",
+                reason="The diagnostic probe budget cannot produce new evidence.",
+                action_id=str(decision.action_id or ""),
+                step_id=str(decision.step_id or ""),
+                attempt_id=str(decision.attempt_id or ""),
+                evidence=evidence,
+                blocked_evidence=evidence,
+                failure_owner=RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+            )
+            rewrite_reason = "repeated_probe_without_progress"
+        outcome = RecoveryPolicyOutcome(
+            allowed=(final.kind != RecoveryDecisionKind.BLOCKED.value),
+            raw_decision_id=str(decision.decision_id or ""),
+            final_decision_id=str(final.decision_id or ""),
+            effective_route=str(final.next_route or ""),
+            effective_strategy=str(final.recommended_action or ""),
+            budget_charges=tuple(
+                [str(final.consume_budget)] if final.consume_budget else []
+            ),
+            reason=str(final.reason or final.root_cause or ""),
+            rewrite_reason=rewrite_reason,
         )
-        return self.decide(
-            validation_evidence={
-                "status": "unknown",
-                "recoverability_hints": ["probe"],
-            },
-            progress_snapshot=progress,
-            budgets=dict(budgets or {}),
-            action_id=str(decision.action_id or ""),
-            step_id=str(decision.step_id or ""),
-            attempt_id=str(decision.attempt_id or ""),
-        )
+        return final, outcome
 
     def check(
         self,
@@ -3352,6 +3845,47 @@ class RecoveryStateStore:
         path = self.root / "recovery_decision.json"
         _json_write(path, decision.to_dict())
         return path
+
+    def save_recovery_execution_contract(
+        self,
+        *,
+        semantic_decision: RecoveryDecision | Mapping[str, Any],
+        final_decision: RecoveryDecision | Mapping[str, Any],
+        policy_outcome: RecoveryPolicyOutcome | Mapping[str, Any],
+        execution_envelope: RecoveryExecutionEnvelope | Mapping[str, Any],
+    ) -> Dict[str, str]:
+        """Persist semantic, policy, and execution authority as separate facts."""
+        semantic_value = (
+            semantic_decision.to_dict()
+            if isinstance(semantic_decision, RecoveryDecision)
+            else dict(semantic_decision or {})
+        )
+        final_value = (
+            final_decision.to_dict()
+            if isinstance(final_decision, RecoveryDecision)
+            else dict(final_decision or {})
+        )
+        policy_value = (
+            policy_outcome.to_dict()
+            if isinstance(policy_outcome, RecoveryPolicyOutcome)
+            else dict(policy_outcome or {})
+        )
+        envelope = (
+            execution_envelope
+            if isinstance(execution_envelope, RecoveryExecutionEnvelope)
+            else RecoveryExecutionEnvelope.from_mapping(execution_envelope)
+        )
+        paths = {
+            "semantic_decision": str(self.root / "recovery_semantic_decision.json"),
+            "final_decision": str(self.root / "recovery_decision.json"),
+            "policy_outcome": str(self.root / "recovery_policy_outcome.json"),
+            "execution_envelope": str(self.root / "recovery_execution_envelope.json"),
+        }
+        _json_write(Path(paths["semantic_decision"]), semantic_value)
+        _json_write(Path(paths["final_decision"]), final_value)
+        _json_write(Path(paths["policy_outcome"]), policy_value)
+        _json_write(Path(paths["execution_envelope"]), envelope.to_dict())
+        return paths
 
     @classmethod
     def _monotonic_merge(cls, older: Any, newer: Any) -> Any:
@@ -3561,6 +4095,12 @@ class RecoveryStateStore:
         parsed_result: Optional[Dict[str, Any]] = None,
         cache_identity: Optional[Dict[str, Any]] = None,
         candidate_fingerprint: str = "",
+        semantic_decision: Optional[Dict[str, Any]] = None,
+        policy_outcome: Optional[Dict[str, Any]] = None,
+        execution_envelope: Optional[Dict[str, Any]] = None,
+        decision_source: str = "",
+        budget_snapshot: Optional[Dict[str, Any]] = None,
+        external_bundle_identity: Optional[Dict[str, Any]] = None,
     ) -> Path:
         """Persist one attempt-scoped LLM result for checkpoint-safe reuse."""
         path = self.root / "llm_results.json"
@@ -3573,6 +4113,12 @@ class RecoveryStateStore:
             "parsed_result": dict(parsed_result or {}),
             "cache_identity": dict(cache_identity or {}),
             "candidate_fingerprint": str(candidate_fingerprint or ""),
+            "semantic_decision": dict(semantic_decision or {}),
+            "policy_outcome": dict(policy_outcome or {}),
+            "execution_envelope": dict(execution_envelope or {}),
+            "decision_source": str(decision_source or ""),
+            "budget_snapshot": dict(budget_snapshot or {}),
+            "external_bundle_identity": dict(external_bundle_identity or {}),
             "saved_at": _now(),
         }
         _json_write(path, cache)
@@ -3604,7 +4150,59 @@ class RecoveryStateStore:
         }
         if str(value.get("candidate_fingerprint") or "") in invalid:
             return {}
+        if value.get("execution_envelope"):
+            try:
+                RecoveryExecutionEnvelope.from_mapping(
+                    value["execution_envelope"]
+                )
+            except RecoveryExecutionContractError:
+                return {}
         return dict(value)
+
+    def update_llm_result_contract(
+        self,
+        context_id: str,
+        recovery_stage: str,
+        *,
+        semantic_decision: RecoveryDecision | Mapping[str, Any],
+        policy_outcome: RecoveryPolicyOutcome | Mapping[str, Any],
+        execution_envelope: RecoveryExecutionEnvelope | Mapping[str, Any],
+        decision_source: str,
+        budget_snapshot: Optional[Mapping[str, Any]] = None,
+        external_bundle_identity: Optional[Mapping[str, Any]] = None,
+    ) -> Path:
+        """Attach post-policy authority metadata to an existing cached LLM result."""
+        path = self.root / "llm_results.json"
+        cache = self._load_json_object("llm_results.json")
+        key = self._llm_result_key(context_id, recovery_stage)
+        value = dict(cache.get(key) or {})
+        envelope = (
+            execution_envelope
+            if isinstance(execution_envelope, RecoveryExecutionEnvelope)
+            else RecoveryExecutionEnvelope.from_mapping(execution_envelope)
+        )
+        value.update({
+            "context_id": str(context_id or ""),
+            "recovery_stage": str(recovery_stage or ""),
+            "semantic_decision": (
+                semantic_decision.to_dict()
+                if isinstance(semantic_decision, RecoveryDecision)
+                else dict(semantic_decision or {})
+            ),
+            "policy_outcome": (
+                policy_outcome.to_dict()
+                if isinstance(policy_outcome, RecoveryPolicyOutcome)
+                else dict(policy_outcome or {})
+            ),
+            "execution_envelope": envelope.to_dict(),
+            "decision_source": str(decision_source or ""),
+            "budget_snapshot": dict(budget_snapshot or {}),
+            "external_bundle_identity": dict(external_bundle_identity or {}),
+            "saved_at": _now(),
+        })
+        cache[key] = value
+        _json_write(path, cache)
+        return path
 
     def save_diagnostic_summary(self, manager: Any, tracker: Any, failure_fingerprint: str = "", recovery_budget: Optional[Dict[str, Any]] = None, forbidden_next_actions: Optional[Iterable[str]] = None) -> Path:
         hypotheses = list(getattr(manager, "hypotheses", []) or [])

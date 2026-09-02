@@ -608,8 +608,28 @@ def script_references_env(
 def adapt_script_block_to_action(
     block: ExecutableScriptBlock,
     artifact_environment: Sequence[Mapping[str, Any]] = (),
+    *,
+    execution_envelope: Optional[Mapping[str, Any]] = None,
+    recovery_generated: bool = False,
+    payload_revision: int = 0,
 ) -> Dict[str, Any]:
-    """Adapt the simple provider protocol to the existing internal action."""
+    """Combine model-owned script payload with Controller-owned execution intent."""
+    # Delayed import avoids the intentional recovery -> diagnostics -> audit
+    # module cycle during interpreter initialization.
+    from agent_core.recovery import (
+        RecoveryExecutionContractError,
+        RecoveryExecutionEnvelope,
+        RecoveryExecutionPurpose,
+    )
+
+    envelope: Optional[RecoveryExecutionEnvelope] = None
+    if execution_envelope is not None:
+        envelope = RecoveryExecutionEnvelope.from_mapping(execution_envelope)
+    elif recovery_generated:
+        raise RecoveryExecutionContractError(
+            "RECOVERY_EXECUTION_ENVELOPE_MISSING",
+            "Recovery-generated script blocks may not default to a primary action",
+        )
     env: Dict[str, str] = {}
     referenced: List[str] = []
     for raw in artifact_environment:
@@ -627,7 +647,7 @@ def adapt_script_block_to_action(
         argv = ["python", "-c", block.body]
     else:
         argv = ["Rscript", "-e", block.body]
-    return {
+    action = {
         "type": "execute",
         "action_type": "execute",
         "language": block.language,
@@ -637,6 +657,39 @@ def adapt_script_block_to_action(
         "script_adapter": "script_block_v1",
         "referenced_artifact_handles": referenced,
     }
+    if envelope is not None:
+        purpose = envelope.execution_purpose.lower()
+        command_role = (
+            "diagnostic"
+            if envelope.execution_purpose
+            == RecoveryExecutionPurpose.DIAGNOSTIC.value
+            else "required_validation"
+            if envelope.execution_purpose
+            == RecoveryExecutionPurpose.VALIDATION.value
+            else "primary"
+        )
+        action.update({
+            "recovery_generated": True,
+            "recovery_execution_envelope": envelope.to_dict(),
+            "recovery_decision_id": envelope.recovery_decision_id,
+            "recovery_context_id": envelope.recovery_context_id,
+            "recovery_strategy": envelope.recovery_strategy,
+            "action_id": envelope.action_id,
+            "step_id": envelope.step_id,
+            "probe_id": envelope.probe_id,
+            "purpose": purpose,
+            "command_role": command_role,
+            "execution_mode": envelope.execution_mode,
+            "result_contract": envelope.result_contract,
+            "scratch_capability": (
+                envelope.scratch_capability.to_dict()
+                if envelope.scratch_capability is not None
+                else None
+            ),
+            "completion_eligible": envelope.to_dict()["completion_eligible"],
+            "payload_revision": max(0, int(payload_revision or 0)),
+        })
+    return action
 
 
 def _line_for_pattern(script: str, pattern: re.Pattern[str]) -> str:

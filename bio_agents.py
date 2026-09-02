@@ -249,7 +249,11 @@ from agent_core.recovery import (
     RecoveryAction,
     RecoveryDecision,
     RecoveryDecisionKind,
+    RecoveryDecisionSource,
+    RecoveryExecutionEnvelope,
+    RecoveryExecutionContractError,
     RecoveryPolicy,
+    RecoveryResultContract,
     RecoveryFailureOwner,
     PreActionRepairDomain,
     RecoveryStateStore,
@@ -265,6 +269,7 @@ from agent_core.recovery import (
     recovery_decision_from_diagnosis,
     contextualize_recovery_decision,
     structured_user_decision_required,
+    build_recovery_execution_envelope,
     validate_diagnostic_probe_code,
 )
 from agent_core.diagnostics import (
@@ -7993,6 +7998,7 @@ class BioAnalystAgent:
         )
         judge_needed = diagnosis_required(trigger, evidence, merged)
         post_review_judge_invoked = False
+        cached_judge_valid = False
         if not judge_needed and trigger.deterministic_action:
             decision = deterministic_recovery_decision(trigger, evidence)
         elif diagnosis.get("collection_complete") and not judge_needed and (
@@ -8592,8 +8598,9 @@ class BioAnalystAgent:
             attempt_id=str(evidence.get("attempt_id") or evidence.get("execution_id") or ""),
             source_node="supervisor",
         )
-        decision = RecoveryPolicy().constrain_with_progress(
-            decision,
+        semantic_decision = decision
+        decision, policy_outcome = RecoveryPolicy().apply_with_outcome(
+            semantic_decision,
             dict(merged.get("recovery_progress") or {}),
             dict((plan_state.get("task_state") or {}).get("budgets") or {}),
         )
@@ -8615,6 +8622,60 @@ class BioAnalystAgent:
             failure_owner=decision.failure_owner,
             requires_user_input=decision.requires_user_input,
         )
+        execution_envelope: Dict[str, Any] = {}
+        if route.get("next_step") == "generate":
+            decision_source = (
+                RecoveryDecisionSource.FALLBACK.value
+                if str(decision.failure_type or "").startswith("recovery_judge_")
+                else RecoveryDecisionSource.LIVE_LLM.value
+                if post_review_judge_invoked
+                else RecoveryDecisionSource.CACHE.value
+                if cached_judge_valid
+                else RecoveryDecisionSource.DETERMINISTIC.value
+            )
+            active_step = self._running_plan_step(plan_state) or {}
+            formal_outputs = [
+                str(item)
+                for item in active_step.get("outputs") or []
+                if str(item or "")
+            ]
+            envelope = build_recovery_execution_envelope(
+                decision,
+                recovery_context_id=context.context_id,
+                step_id=str(
+                    evidence.get("step_id")
+                    or state.get("current_step_id")
+                    or active_step.get("step_id")
+                    or ""
+                ),
+                task_root=store.root.parent,
+                created_from=decision_source,
+                allowed_input_roots=[str(store.root.parent)],
+                forbidden_formal_output_paths=formal_outputs,
+                policy_version=policy_outcome.policy_version,
+            )
+            execution_envelope = envelope.to_dict()
+            store.save_recovery_execution_contract(
+                semantic_decision=semantic_decision,
+                final_decision=decision,
+                policy_outcome=policy_outcome,
+                execution_envelope=envelope,
+            )
+            store.update_llm_result_contract(
+                context.context_id,
+                "recovery_judge",
+                semantic_decision=semantic_decision,
+                policy_outcome=policy_outcome,
+                execution_envelope=envelope,
+                decision_source=decision_source,
+                budget_snapshot=dict(
+                    (plan_state.get("task_state") or {}).get("budgets") or {}
+                ),
+            )
+            store.append_trace(
+                "RECOVERY_EXECUTION_ENVELOPE_CREATED",
+                execution_envelope,
+            )
         pending = {
             "type": route["pending_type"],
             "reason": decision.reason or decision.root_cause,
@@ -8632,6 +8693,7 @@ class BioAnalystAgent:
             "machine_audit_findings": list(context.machine_audit_findings or []),
             "requires_user_input": decision.requires_user_input,
             "diagnostic_context_path": str(store.root / "recovery_context.json"),
+            "execution_envelope": execution_envelope,
         }
         recovery_context_ref = str(store.root / "recovery_context.json")
         compact_recovery_binding = {
@@ -8646,6 +8708,9 @@ class BioAnalystAgent:
             "recovery_context": compact_recovery_binding,
             "recovery_context_digest": context.context_id,
             "recovery_decision": decision.to_dict(),
+            "recovery_semantic_decision": semantic_decision.to_dict(),
+            "recovery_policy_outcome": policy_outcome.to_dict(),
+            "recovery_execution_envelope": execution_envelope,
             "diagnostic_summary": diagnosis,
             "structured_diagnosis": diagnosis,
             "failure_owner": decision.failure_owner,
@@ -9338,6 +9403,21 @@ class BioAnalystAgent:
         )
         plan_id = str(plan_state.get("plan_id") or "")
         step_id = str(step.get("step_id") or "")
+        recovery_envelope: Optional[RecoveryExecutionEnvelope] = None
+        if bound.get("recovery_execution_envelope") is not None:
+            recovery_envelope = RecoveryExecutionEnvelope.from_mapping(
+                bound.get("recovery_execution_envelope")
+            )
+        elif bool(bound.get("recovery_generated")):
+            raise RecoveryExecutionContractError(
+                "RECOVERY_EXECUTION_ENVELOPE_MISSING",
+                "Recovery-generated action reached binding without Controller authority",
+            )
+        if recovery_envelope and recovery_envelope.step_id != step_id:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_EXECUTION_ENVELOPE_STEP_MISMATCH",
+                "Recovery action is not bound to the current plan step",
+            )
         execution_epoch = str(
             step.get("execution_epoch")
             or (plan_state.get("runtime_state") or {}).get("execution_epoch")
@@ -9378,13 +9458,17 @@ class BioAnalystAgent:
             or bound.get("selected_skill_id")
             or ""
         )
-        purpose = self._pending_action_purpose(bound, step)
+        purpose = (
+            recovery_envelope.execution_purpose.lower()
+            if recovery_envelope is not None
+            else self._pending_action_purpose(bound, step)
+        )
         protocol = self._renderer_action_protocol(state, task_id)
         if (
             str(bound.get("type") or "").lower() == "execute"
             and skill_manager
             and protocol.get("renderer_composite")
-            and purpose not in {"probe", "validation"}
+            and purpose not in {"probe", "diagnostic", "validation"}
         ):
             renderer_records = [
                 skill_manager.get_renderer_record(skill_id)
@@ -9465,14 +9549,35 @@ class BioAnalystAgent:
             "renderer_invocation",
         }:
             explicit_role = ""
-        command_role = explicit_role or {
-            "probe": "diagnostic",
-            "validation": "required_validation",
-            "fallback": "fallback",
-        }.get(purpose, "primary")
-        action_id = "action_" + hashlib.sha256(
-            fingerprint_input.encode("utf-8")
-        ).hexdigest()[:16]
+        command_role = (
+            "diagnostic"
+            if recovery_envelope is not None
+            and recovery_envelope.execution_purpose == "DIAGNOSTIC"
+            else "required_validation"
+            if recovery_envelope is not None
+            and recovery_envelope.execution_purpose == "VALIDATION"
+            else "primary"
+            if recovery_envelope is not None
+            else explicit_role or {
+                "probe": "diagnostic",
+                "validation": "required_validation",
+                "fallback": "fallback",
+            }.get(purpose, "primary")
+        )
+        action_id = (
+            recovery_envelope.action_id
+            if recovery_envelope is not None
+            else "action_" + hashlib.sha256(
+                fingerprint_input.encode("utf-8")
+            ).hexdigest()[:16]
+        )
+        expected_outputs = (
+            list(bound.get("expected_outputs") or step.get("outputs") or [])
+            if recovery_envelope is None
+            or recovery_envelope.result_contract
+            == RecoveryResultContract.FORMAL_OUTPUTS.value
+            else []
+        )
         bound.update(
             {
                 "action_id": action_id,
@@ -9487,10 +9592,29 @@ class BioAnalystAgent:
                 "execution_epoch": execution_epoch,
                 "purpose": purpose,
                 "command_role": command_role,
-                "expected_outputs": list(bound.get("expected_outputs") or step.get("outputs") or []),
+                "expected_outputs": expected_outputs,
                 "expected_evidence": list(bound.get("success_checks") or step.get("success_criteria") or []),
             }
         )
+        if recovery_envelope is not None:
+            bound.update({
+                "recovery_generated": True,
+                "recovery_execution_envelope": recovery_envelope.to_dict(),
+                "recovery_decision_id": recovery_envelope.recovery_decision_id,
+                "recovery_context_id": recovery_envelope.recovery_context_id,
+                "recovery_strategy": recovery_envelope.recovery_strategy,
+                "execution_mode": recovery_envelope.execution_mode,
+                "result_contract": recovery_envelope.result_contract,
+                "probe_id": recovery_envelope.probe_id,
+                "scratch_capability": (
+                    recovery_envelope.scratch_capability.to_dict()
+                    if recovery_envelope.scratch_capability is not None
+                    else None
+                ),
+                "completion_eligible": recovery_envelope.to_dict()[
+                    "completion_eligible"
+                ],
+            })
         if action_type == "execute":
             runtime_resolution = resolve_action_runtime_bindings(
                 selected_skill_id=selected_skill_id,
@@ -33146,6 +33270,12 @@ question. Never guess a scientific or database identity.
             recovery_context_obj: Optional[RecoveryContext] = None
             recovery_action = state.get("pending_recovery_action") or {}
             recovery_decision = state.get("recovery_decision") or {}
+            recovery_execution_envelope = (
+                state.get("recovery_execution_envelope")
+                or recovery_action.get("execution_envelope")
+                or {}
+            )
+            recovery_generated = bool(recovery_action or recovery_decision)
             if recovery_action or recovery_decision:
                 recovery_store = RecoveryStateStore(self.data_path, task_id)
                 recovery_history = recovery_store.load_attempts()
@@ -33307,6 +33437,16 @@ question. Never guess a scientific or database identity.
                         "machine_findings_considered",
                     )
                     if recovery_decision.get(key) not in (None, "", [], {})
+                },
+                "recovery_execution_envelope": {
+                    key: deepcopy(recovery_execution_envelope.get(key))
+                    for key in (
+                        "recovery_decision_id", "recovery_context_id", "step_id",
+                        "action_id", "recovery_strategy", "execution_purpose",
+                        "execution_mode", "result_contract", "probe_id",
+                        "scratch_capability", "policy_version", "immutable_hash",
+                    )
+                    if recovery_execution_envelope.get(key) not in (None, "", [], {})
                 },
             }
             action_repair_projection = self._action_repair_projection(
@@ -33699,8 +33839,15 @@ question. Never guess a scientific or database identity.
                                     cached_structured_action = adapt_script_block_to_action(
                                         parse_executable_script_block(str(response.content or "")),
                                         generate_artifact_environment,
+                                        execution_envelope=(
+                                            recovery_execution_envelope or None
+                                        ),
+                                        recovery_generated=recovery_generated,
+                                        payload_revision=int(
+                                            recovery_action.get("payload_revision") or 0
+                                        ),
                                     )
-                                except ScriptBlockError:
+                                except (ScriptBlockError, RecoveryExecutionContractError):
                                     cached_structured_action = {}
                             else:
                                 cached_structured_action = self._extract_structured_action(
@@ -33946,6 +34093,13 @@ question. Never guess a scientific or database identity.
                     structured_action = adapt_script_block_to_action(
                         script_block,
                         generate_artifact_environment,
+                        execution_envelope=(
+                            recovery_execution_envelope or None
+                        ),
+                        recovery_generated=recovery_generated,
+                        payload_revision=int(
+                            recovery_action.get("payload_revision") or 0
+                        ),
                     )
                     # Carry only the current capability resolution. The full
                     # task runtime snapshot is neither provider-visible nor an
@@ -34085,6 +34239,27 @@ question. Never guess a scientific or database identity.
                             "generate_exit_reason": "controller_script_audit_failed",
                             "next_step": "generate",
                         }
+                except RecoveryExecutionContractError as exc:
+                    return {
+                        "messages": [response, SystemMessage(content=json.dumps({
+                            "code": exc.code,
+                            "message": exc.message,
+                            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                            "execution_started": False,
+                        }, ensure_ascii=False, sort_keys=True))],
+                        "pending_action": {},
+                        "pending_recovery_action": {
+                            "type": "internal_protocol_error",
+                            "reason": exc.code,
+                            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                            "execution_started": False,
+                        },
+                        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                        "required_next_action": "INTERNAL_PROTOCOL_ERROR",
+                        "generate_result": "NEEDS_RECOVERY",
+                        "generate_exit_reason": "recovery_execution_contract_invalid",
+                        "next_step": "supervisor",
+                    }
                 except ScriptBlockError as exc:
                     structured_action = {}
                     action_parse_error = {

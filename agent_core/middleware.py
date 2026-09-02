@@ -60,12 +60,14 @@ from agent_core.recovery import (
     RecoveryAttempt,
     RecoveryDecision,
     RecoveryDecisionKind,
+    RecoveryDecisionSource,
     RecoveryAction,
     RecoveryFailureClass,
     RecoveryFailureOwner,
     RecoveryPhase,
     RecoveryPolicy,
     RecoveryStateStore,
+    build_recovery_execution_envelope,
     RepairExecutor,
     error_fingerprint,
     deterministic_recovery_decision,
@@ -2672,6 +2674,7 @@ def error_recovery_middleware(
             decision: RecoveryDecision
             judge_needed = diagnosis_required(trigger, evidence, merged_state)
             recovery_judge_invoked = False
+            cached_judge_valid = False
 
             try:
                 evidence_returncode = int(
@@ -3069,8 +3072,9 @@ def error_recovery_middleware(
                 attempt_id=str(evidence.get("attempt_id") or evidence.get("execution_id") or ""),
                 source_node="execute",
             )
-            decision = RecoveryPolicy().constrain_with_progress(
-                decision,
+            semantic_decision = decision
+            decision, policy_outcome = RecoveryPolicy().apply_with_outcome(
+                semantic_decision,
                 progress,
                 dict((plan_state.get("task_state") or {}).get("budgets") or {}),
             )
@@ -3113,6 +3117,75 @@ def error_recovery_middleware(
                 failure_owner=decision.failure_owner,
                 requires_user_input=decision.requires_user_input,
             )
+            execution_envelope: Dict[str, Any] = {}
+            if route.get("next_step") == "generate":
+                decision_source = (
+                    RecoveryDecisionSource.FALLBACK.value
+                    if str(decision.failure_type or "").startswith("recovery_judge_")
+                    else RecoveryDecisionSource.LIVE_LLM.value
+                    if recovery_judge_invoked
+                    else RecoveryDecisionSource.CACHE.value
+                    if cached_judge_valid
+                    else RecoveryDecisionSource.DETERMINISTIC.value
+                )
+                current_step_id = str(
+                    evidence.get("step_id")
+                    or state_map.get("current_step_id")
+                    or diagnostic_context.step_id
+                    or ""
+                )
+                current_step = next(
+                    (
+                        dict(item)
+                        for item in plan_state.get("steps") or []
+                        if isinstance(item, Mapping)
+                        and str(item.get("step_id") or "") == current_step_id
+                    ),
+                    {},
+                )
+                envelope = build_recovery_execution_envelope(
+                    decision,
+                    recovery_context_id=diagnostic_context.context_id,
+                    step_id=current_step_id,
+                    task_root=(
+                        Path(data_path) / "task_outputs" / task_id
+                        if data_path
+                        else Path("task_outputs") / task_id
+                    ),
+                    created_from=decision_source,
+                    allowed_input_roots=[
+                        str(Path(data_path) / "task_outputs" / task_id)
+                    ] if data_path else [],
+                    forbidden_formal_output_paths=[
+                        str(item)
+                        for item in current_step.get("outputs") or []
+                        if str(item or "")
+                    ],
+                    policy_version=policy_outcome.policy_version,
+                )
+                execution_envelope = envelope.to_dict()
+                if store:
+                    store.save_recovery_execution_contract(
+                        semantic_decision=semantic_decision,
+                        final_decision=decision,
+                        policy_outcome=policy_outcome,
+                        execution_envelope=envelope,
+                    )
+                    store.update_llm_result_contract(
+                        diagnostic_context.context_id,
+                        "recovery_judge",
+                        semantic_decision=semantic_decision,
+                        policy_outcome=policy_outcome,
+                        execution_envelope=envelope,
+                        decision_source=decision_source,
+                        budget_snapshot=dict(
+                            (plan_state.get("task_state") or {}).get("budgets") or {}
+                        ),
+                    )
+                    store.append_trace(
+                        "RECOVERY_EXECUTION_ENVELOPE_CREATED",
+                        execution_envelope,
+                    )
             next_step = decision.next_route
             pending_type = route["pending_type"]
             required_next_action = route["required_next_action"]
@@ -3138,6 +3211,7 @@ def error_recovery_middleware(
                 "requires_user_input": decision.requires_user_input,
                 "diagnostic_context_path": str(store.root / "recovery_context.json") if store else "",
                 "do_not_repeat": [str(evidence.get("code_hash") or "")] if trigger.same_failure_count >= 2 else [],
+                "execution_envelope": execution_envelope,
             }
             context_ref = str(store.root / "recovery_context.json") if store else ""
             compact_recovery_binding = {
@@ -3153,6 +3227,9 @@ def error_recovery_middleware(
                 "recovery_context": compact_recovery_binding,
                 "recovery_context_digest": diagnostic_context.context_id,
                 "recovery_decision": decision.to_dict(),
+                "recovery_semantic_decision": semantic_decision.to_dict(),
+                "recovery_policy_outcome": policy_outcome.to_dict(),
+                "recovery_execution_envelope": execution_envelope,
                 "diagnostic_summary": diagnosis,
                 "structured_diagnosis": diagnosis,
                 "failure_owner": decision.failure_owner,
