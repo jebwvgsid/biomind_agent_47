@@ -496,6 +496,42 @@ def artifact_environment_values(
     return dict(sorted(values.items()))
 
 
+def build_action_execution_environment(
+    base_environment: Mapping[str, Any],
+    *,
+    runtime_bindings: Mapping[str, Any],
+    artifact_bindings: Mapping[str, Any],
+    controller_bindings: Optional[Mapping[str, Any]] = None,
+    managed_runtime_env_names: Iterable[str] = (),
+) -> Dict[str, str]:
+    """Build one subprocess environment without leaking another action's runtime.
+
+    The ambient process environment remains the base execution environment, but
+    every env name owned by the runtime registry is removed before the exact
+    current-action bindings are applied.  This prevents a launcher or an older
+    action from granting undeclared runtime capability through inheritance.
+    """
+    effective = {
+        str(key): str(value)
+        for key, value in base_environment.items()
+        if str(key)
+    }
+    for raw_name in managed_runtime_env_names:
+        name = str(raw_name or "").strip()
+        if _ENV_NAME_RE.fullmatch(name):
+            effective.pop(name, None)
+    for bindings in (
+        runtime_bindings,
+        artifact_bindings,
+        controller_bindings or {},
+    ):
+        for raw_name, raw_value in bindings.items():
+            name = str(raw_name or "").strip()
+            if _ENV_NAME_RE.fullmatch(name):
+                effective[name] = str(raw_value)
+    return effective
+
+
 def project_artifacts_for_provider(
     artifact_environment: Sequence[Mapping[str, Any]],
 ) -> list[Dict[str, Any]]:

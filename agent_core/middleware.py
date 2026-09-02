@@ -5,7 +5,7 @@ import functools
 import logging
 from copy import deepcopy
 from pathlib import Path
-from typing import Tuple, Dict, Any, List, Mapping
+from typing import Tuple, Dict, Any, List, Mapping, Optional
 from dataclasses import asdict
 from langgraph.types import interrupt
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -103,6 +103,135 @@ from prompts.manager import PromptManager
 
 logger = logging.getLogger("BioMind.Middleware")
 _RECOVERY_INVOCATIONS = InvocationRegistry(max_entries=256)
+
+_CODE_REVIEW_SECTION_SPECS = (
+    ("A. MODEL-GENERATED ACTION", "MODEL_SCRIPT", "generate", "model"),
+    ("B. MANAGED ARTIFACT BINDINGS", "ARTIFACT_ENV", "managed_artifact_controller", "controller"),
+    ("C. CONTROLLER-PROVIDED RUNTIME BINDINGS", "RUNTIME_ENV", "runtime_resolver", "controller"),
+    ("D. EXECUTION POLICY", "EXECUTION_POLICY", "execution_controller", "controller"),
+)
+
+
+def build_code_review_provenance(
+    model_script: str,
+    *,
+    generated_script_sha256: str,
+    artifact_env_manifest: Mapping[str, Any],
+    runtime_env_manifest: Mapping[str, Any],
+    execution_policy_manifest: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Build the four-source review ABI without materializing environment values."""
+    inputs = (
+        str(model_script or ""),
+        deepcopy(dict(artifact_env_manifest or {})),
+        deepcopy(dict(runtime_env_manifest or {})),
+        deepcopy(dict(execution_policy_manifest or {})),
+    )
+    hashes = (
+        str(generated_script_sha256 or ""),
+        str(artifact_env_manifest.get("manifest_hash") or ""),
+        str(runtime_env_manifest.get("manifest_hash") or ""),
+        str(execution_policy_manifest.get("manifest_hash") or ""),
+    )
+    sections: List[Dict[str, Any]] = []
+    for spec, content, content_hash in zip(_CODE_REVIEW_SECTION_SPECS, inputs, hashes):
+        title, risk_source, source, owner = spec
+        sections.append({
+            "title": title,
+            "risk_source": risk_source,
+            "source": source,
+            "hash": content_hash,
+            "scope": "current_action",
+            "owner": owner,
+            "content": content,
+        })
+    return {"schema_version": 1, "sections": sections}
+
+
+def render_code_review_provenance(value: Mapping[str, Any]) -> str:
+    rendered: List[str] = []
+    for raw in value.get("sections", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        rendered.extend([
+            str(raw.get("title") or "SECTION"),
+            (
+                "source={source} hash={hash} scope={scope} owner={owner}".format(
+                    source=str(raw.get("source") or ""),
+                    hash=str(raw.get("hash") or ""),
+                    scope=str(raw.get("scope") or ""),
+                    owner=str(raw.get("owner") or ""),
+                )
+            ),
+        ])
+        content = raw.get("content")
+        rendered.append(
+            json.dumps(content, ensure_ascii=False, indent=2, sort_keys=True)
+            if isinstance(content, Mapping)
+            else str(content or "")
+        )
+        rendered.append("")
+    return "\n".join(rendered).rstrip()
+
+
+def _review_risk_by_provenance(
+    code: str,
+    language: str,
+    provenance: Mapping[str, Any],
+) -> Dict[str, Any]:
+    analyses: List[tuple[str, Dict[str, Any]]] = []
+    for raw in provenance.get("sections", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        source = str(raw.get("risk_source") or "MODEL_SCRIPT")
+        content = raw.get("content")
+        text = (
+            str(code or "")
+            if source == "MODEL_SCRIPT"
+            else json.dumps(content, ensure_ascii=False, sort_keys=True)
+        )
+        analysis = RiskAnalyzer.analyze(
+            text,
+            language if source == "MODEL_SCRIPT" else "manifest",
+        )
+        # A valid Controller manifest containing no risky operation is data,
+        # not an unknown executable command. It is therefore safe while still
+        # participating in integrity/risk analysis.
+        if source != "MODEL_SCRIPT" and not analysis.get("risky_operations"):
+            analysis = {
+                **analysis,
+                "risk_level": RiskLevel.SAFE,
+                "risk_score": 0,
+                "safe_operations": ["manifest metadata only"],
+            }
+        analyses.append((source, analysis))
+    if not analyses:
+        analyses.append(("MODEL_SCRIPT", RiskAnalyzer.analyze(code, language)))
+    order = list(RiskLevel)
+    highest = max(
+        (item[1]["risk_level"] for item in analyses),
+        key=lambda level: order.index(level),
+    )
+    return {
+        "risk_level": highest,
+        "risk_score": max(float(item[1].get("risk_score") or 0) for item in analyses),
+        "risky_operations": [
+            f"{source}: {reason}"
+            for source, item in analyses
+            for reason in item.get("risky_operations", []) or []
+        ],
+        "safe_operations": [
+            f"{source}: {reason}"
+            for source, item in analyses
+            for reason in item.get("safe_operations", []) or []
+        ],
+        "recommendations": [
+            f"{source}: {reason}"
+            for source, item in analyses
+            for reason in item.get("recommendations", []) or []
+        ],
+        "risk_sources": [source for source, _item in analyses],
+    }
 
 
 class RecoveryJudgeProviderError(RuntimeError):
@@ -1044,7 +1173,13 @@ class HITLMiddleware:
         # 这个开关控制是否自动放行安全操作
         self.auto_approve_safe = auto_approve_safe
 
-    def review_code(self, code: str, language: str) -> Tuple[str, str]:
+    def review_code(
+        self,
+        code: str,
+        language: str,
+        *,
+        provenance: Optional[Mapping[str, Any]] = None,
+    ) -> Tuple[str, str]:
         """
         代码审查核心逻辑：
         1. 先进行风险分析（使用您提供的稳健逻辑）
@@ -1054,7 +1189,11 @@ class HITLMiddleware:
         
         # --- A. 移植您的动态风险分析逻辑 (包含异常处理) ---
         try:
-            risk_analysis = RiskAnalyzer.analyze(code, language)
+            risk_analysis = (
+                _review_risk_by_provenance(code, language, provenance)
+                if provenance
+                else RiskAnalyzer.analyze(code, language)
+            )
         except Exception as e:
             logger.warning(f"RiskAnalyzer failed: {e}")
             # Fallback default (保底机制)
@@ -1080,7 +1219,11 @@ class HITLMiddleware:
                     duration_seconds=0.0,
                     node=get_current_node(),
                     payload={
-                        "content": code,
+                        "content": (
+                            render_code_review_provenance(provenance)
+                            if provenance else code
+                        ),
+                        "provenance": deepcopy(dict(provenance or {})),
                         "risk": {
                             "risk_level": risk_analysis["risk_level"].value,
                             "risk_score": risk_analysis["risk_score"],
@@ -1103,7 +1246,12 @@ class HITLMiddleware:
         payload = {
             "type": "code_review",
             "msg": f"⚠️ Code Execution Request ({language}) | y/Enter=run, n=reject, q=quit, e:/edit:/code:=replacement; text=feedback, not code",
-            "content": code,   # 原始代码
+            "content": (
+                render_code_review_provenance(provenance)
+                if provenance else code
+            ),
+            "editable_content": code,
+            "provenance": deepcopy(dict(provenance or {})),
             "language": language,
             "risk": risk_info, # 传入风险详情
             "options": ["(y)es", "(n)o", "(e)dit"],

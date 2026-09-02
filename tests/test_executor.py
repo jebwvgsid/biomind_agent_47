@@ -27,12 +27,51 @@ from execution.executor import (
     get_last_execution_metadata,
     run_bash_script,
     run_command,
+    run_script_path,
     terminate_active_processes,
 )
 from execution.profiling import RunProfiler
 
 
 class ExecutorWatchdogTests(unittest.IsolatedAsyncioTestCase):
+    async def test_explicit_env_is_action_scoped_and_does_not_inherit_unlisted_binding(self):
+        with patch.dict(
+            os.environ,
+            {"OTHER_ACTION_BINDING": "must-not-leak"},
+        ):
+            stdout, stderr, rc = await run_command(
+                "printf '%s|%s' \"$CURRENT_ACTION_BINDING\" \"${OTHER_ACTION_BINDING-unset}\"",
+                profile=False,
+                env={
+                    "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+                    "CURRENT_ACTION_BINDING": "approved-value",
+                },
+            )
+
+        self.assertEqual((stdout, stderr, rc), ("approved-value|unset", "", 0))
+
+    async def test_run_script_path_injects_env_without_rewriting_script(self):
+        with tempfile.TemporaryDirectory() as root:
+            script = Path(root) / "generated.sh"
+            source = b'printf "%s" "$ACTION_VALUE"\n'
+            script.write_bytes(source)
+            digest = __import__("hashlib").sha256(source).hexdigest()
+
+            stdout, stderr, rc = await run_script_path(
+                script,
+                expected_sha256=digest,
+                interpreter="bash",
+                profile=False,
+                env={
+                    "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+                    "ACTION_VALUE": "from-subprocess-env",
+                },
+            )
+
+            self.assertEqual((stdout, stderr, rc), ("from-subprocess-env", "", 0))
+            self.assertEqual(script.read_bytes(), source)
+            self.assertNotIn(b"export ACTION_VALUE", script.read_bytes())
+
     @unittest.skipIf(os.name == "nt", "POSIX shell watchdog behavior is tested on Linux/macOS only")
     async def test_run_command_terminates_idle_stalled_process(self):
         with patch.dict(

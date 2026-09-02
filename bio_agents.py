@@ -241,7 +241,7 @@ from agent_core.workflow_manager import (
     validate_workflow_handoff,
     validate_workflow_state,
 )
-from agent_core.middleware import HITLMiddleware
+from agent_core.middleware import HITLMiddleware, build_code_review_provenance
 from agent_core.recovery import (
     ActionSignature,
     AttemptFailureEvidence,
@@ -568,6 +568,7 @@ from agent_core.action_runtime import (
     artifact_environment_values,
     assert_current_action_runtime_scope,
     build_action_approval_identity,
+    build_action_execution_environment,
     build_artifact_env_manifest,
     build_execution_policy_manifest,
     build_runtime_binding_registry,
@@ -599,7 +600,6 @@ def _bind_current_task_spec_record(
     plan_state["task_state"] = task_state
     return plan_state
 from execution.executor import (
-    BASH_SCRIPT_PROLOGUE,
     detect_script_language,
     normalize_script_code,
     run_bash_script,
@@ -9365,9 +9365,10 @@ class BioAnalystAgent:
         step_skill_ids = self._selected_skill_ids(
             step.get("skill_ids") or state.get("active_skills") or []
         )
+        skill_manager = getattr(self, "skill_manager", None)
         capability_registry = (
-            self.skill_manager.get_execution_capability_registry(step_skill_ids)
-            if self.skill_manager and action_type == "execute"
+            skill_manager.get_execution_capability_registry(step_skill_ids)
+            if skill_manager and action_type == "execute"
             else {}
         )
         capability_contract = dict(
@@ -9379,7 +9380,6 @@ class BioAnalystAgent:
             or ""
         )
         purpose = self._pending_action_purpose(bound, step)
-        skill_manager = getattr(self, "skill_manager", None)
         protocol = self._renderer_action_protocol(state, task_id)
         if (
             str(bound.get("type") or "").lower() == "execute"
@@ -10172,6 +10172,13 @@ class BioAnalystAgent:
             return f"Pending action type is not {expected_type}."
         if not str(action.get("action_id") or "").strip():
             return "Pending action has no action_id."
+        if expected_type == "execute":
+            try:
+                assert_current_action_runtime_scope(action)
+            except ActionRuntimeContractError as exc:
+                return json.dumps(
+                    exc.to_diagnostic(), ensure_ascii=False, sort_keys=True,
+                )
         stale = self._pending_action_stale_reason(action, state, task_id)
         if stale:
             return stale
@@ -35422,6 +35429,30 @@ question. Never guess a scientific or database identity.
             pending_action = captured_pending_action
             managed_mode = str(state.get("task_mode") or "managed").lower() == "managed"
             if managed_mode:
+                if self._pending_action_is(pending_action, "execute"):
+                    try:
+                        assert_current_action_runtime_scope(pending_action)
+                    except ActionRuntimeContractError as exc:
+                        diagnostic = exc.to_diagnostic()
+                        return {
+                            "messages": [SystemMessage(content=json.dumps(
+                                diagnostic, ensure_ascii=False, sort_keys=True,
+                            ))],
+                            "pending_action": {},
+                            "pending_recovery_action": {
+                                "type": "legacy_runtime_scope_regeneration",
+                                "reason": exc.code,
+                                "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                                "violation": diagnostic,
+                                "execution_started": False,
+                            },
+                            "required_next_action": (
+                                "LEGACY_RUNTIME_SCOPE_REQUIRES_REGENERATION"
+                            ),
+                            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                            "generate_result": "NEEDS_RECOVERY",
+                            "next_step": "generate",
+                        }
                 current_action_state = load_plan_state(
                     self.data_path, task_id
                 )
@@ -35706,69 +35737,191 @@ question. Never guess a scientific or database identity.
                 "python": "Python", "py": "Python",
                 "r": "R", "rscript": "R",
             }.get(declared_language, detect_script_language(original_code))
-            # Preserve the exact model-authored body separately from allowed
-            # Controller runtime materialization. Recovery repairs this source,
-            # while runtime comparison inspects the approved source that ran.
+            # Preserve the exact model-authored body. Controller environment
+            # materialization stays out of this string and is passed directly
+            # to the subprocess boundary below.
             generated_model_code = original_code
-            runtime_bindings = {
-                str(key): str(value)
-                for key, value in (pending_action.get("runtime_bindings") or {}).items()
-                if re.fullmatch(r"[A-Z][A-Z0-9_]{1,63}", str(key or "")) and str(value or "")
-            }
-            runtime_bindings.update({
+            runtime_bindings: Dict[str, str] = {}
+            artifact_bindings: Dict[str, str] = {}
+            effective_execution_env: Dict[str, str] = {}
+            managed_runtime_env_names: set[str] = set()
+            current_runtime_resolution: Dict[str, Any] = {}
+            current_runtime_manifest: Dict[str, Any] = {}
+            current_artifact_manifest: Dict[str, Any] = {}
+            current_policy_manifest: Dict[str, Any] = {}
+            current_approval_identity: Dict[str, Any] = {}
+            controller_identity_env = {
                 "BIOMIND_TASK_ID": task_id,
                 "BIOMIND_ACTION_ID": str(pending_action.get("action_id") or ""),
                 "BIOMIND_STEP_ID": str(pending_action.get("step_id") or ""),
-            })
+            }
             if managed_mode:
-                original_code, managed_env_error = _inject_managed_action_environment(
-                    original_code,
-                    language,
-                    runtime_bindings,
-                    pending_action.get("env") or {},
-                )
-                if managed_env_error:
+                try:
+                    for manifest_key in (
+                        "runtime_binding_manifest",
+                        "artifact_env_manifest",
+                        "execution_policy_manifest",
+                    ):
+                        validate_manifest_hash(
+                            dict(pending_action.get(manifest_key) or {})
+                        )
+                    capability_registry = (
+                        self.skill_manager.get_execution_capability_registry(
+                            list((action_step or {}).get("skill_ids") or [])
+                        )
+                        if self.skill_manager
+                        else {}
+                    )
+                    runtime_binding_registry = build_runtime_binding_registry(state)
+                    managed_runtime_env_names.update(
+                        str(row.get("env_name") or "")
+                        for row in runtime_binding_registry.values()
+                        if isinstance(row, Mapping)
+                    )
+                    for runtime_audit in state.get("runtime_audit", []) or []:
+                        if not isinstance(runtime_audit, Mapping):
+                            continue
+                        managed_runtime_env_names.update(
+                            str(name or "").strip().upper()
+                            for name in dict(
+                                runtime_audit.get("resolved_runtime_paths") or {}
+                            )
+                        )
+                    current_runtime_resolution = resolve_action_runtime_bindings(
+                        selected_skill_id=str(
+                            pending_action.get("selected_skill_id") or ""
+                        ),
+                        execution_capability_id=str(
+                            pending_action.get("execution_capability_id") or ""
+                        ),
+                        approved_capability_contract_hash=str(
+                            pending_action.get("capability_contract_hash") or ""
+                        ),
+                        capability_registry=capability_registry,
+                        ready_runtime_binding_registry=runtime_binding_registry,
+                        current_action_identity={
+                            "action_id": str(pending_action.get("action_id") or ""),
+                            "plan_id": str(pending_action.get("plan_id") or ""),
+                            "step_id": str(pending_action.get("step_id") or ""),
+                        },
+                    )
+                    current_runtime_manifest = dict(
+                        current_runtime_resolution.get(
+                            "runtime_binding_manifest"
+                        ) or {}
+                    )
+                    if str(current_runtime_manifest.get("manifest_hash") or "") != str(
+                        pending_action.get("runtime_binding_manifest_hash") or ""
+                    ):
+                        raise ActionRuntimeContractError(
+                            "RUNTIME_BINDING_SNAPSHOT_DRIFT",
+                            action_id=str(pending_action.get("action_id") or ""),
+                            approved_manifest_hash=str(
+                                pending_action.get("runtime_binding_manifest_hash") or ""
+                            ),
+                            observed_manifest_hash=str(
+                                current_runtime_manifest.get("manifest_hash") or ""
+                            ),
+                        )
+                    current_artifact_manifest = build_artifact_env_manifest(
+                        list(
+                            pending_action.get("controller_artifact_environment")
+                            or []
+                        ),
+                        action_identity={
+                            "action_id": str(pending_action.get("action_id") or ""),
+                            "plan_id": str(pending_action.get("plan_id") or ""),
+                            "step_id": str(pending_action.get("step_id") or ""),
+                        },
+                        selected_skill_id=str(
+                            pending_action.get("selected_skill_id") or ""
+                        ),
+                        execution_capability_id=str(
+                            pending_action.get("execution_capability_id") or ""
+                        ),
+                        capability_contract_hash_value=str(
+                            pending_action.get("capability_contract_hash") or ""
+                        ),
+                    )
+                    current_policy_manifest = build_execution_policy_manifest(
+                        action_identity={
+                            "action_id": str(pending_action.get("action_id") or ""),
+                            "plan_id": str(pending_action.get("plan_id") or ""),
+                            "step_id": str(pending_action.get("step_id") or ""),
+                        },
+                        working_directory=os.getcwd(),
+                        language=language,
+                    )
+                    current_approval_identity = build_action_approval_identity(
+                        generated_script_sha256=str(
+                            pending_action.get("generated_script_hash")
+                            or pending_action.get("generated_script_sha256")
+                            or ""
+                        ),
+                        capability_contract_hash_value=str(
+                            pending_action.get("capability_contract_hash") or ""
+                        ),
+                        runtime_env_manifest_hash=str(
+                            current_runtime_manifest.get("manifest_hash") or ""
+                        ),
+                        artifact_env_manifest_hash=str(
+                            current_artifact_manifest.get("manifest_hash") or ""
+                        ),
+                        execution_policy_manifest_hash=str(
+                            current_policy_manifest.get("manifest_hash") or ""
+                        ),
+                        working_directory=os.getcwd(),
+                    )
+                    validate_action_approval_identity(
+                        dict(pending_action.get("action_approval_identity") or {}),
+                        current_approval_identity,
+                    )
+                    runtime_bindings = dict(
+                        current_runtime_resolution.get(
+                            "effective_runtime_bindings"
+                        ) or {}
+                    )
+                    artifact_bindings = artifact_environment_values(
+                        list(
+                            pending_action.get("controller_artifact_environment")
+                            or []
+                        )
+                    )
+                    conflicts = sorted(set(runtime_bindings) & set(artifact_bindings))
+                    if conflicts:
+                        raise ActionRuntimeContractError(
+                            "RUNTIME_BINDING_MANIFEST_INVALID",
+                            action_id=str(pending_action.get("action_id") or ""),
+                            conflicting_env_names=conflicts,
+                        )
+                except ActionRuntimeContractError as exc:
+                    diagnostic = exc.to_diagnostic()
                     return {
-                        "messages": [SystemMessage(content=(
-                            "Execute rejected the managed action before process start: "
-                            + str(managed_env_error.get("message") or "managed env contract violation")
+                        "messages": [SystemMessage(content=json.dumps(
+                            diagnostic, ensure_ascii=False, sort_keys=True,
                         ))],
                         "pending_action": {},
                         "pending_recovery_action": {
-                            "type": "internal_protocol_error",
-                            "reason": str(managed_env_error.get("message") or "managed env contract violation"),
+                            "type": "runtime_binding_provenance_error",
+                            "reason": exc.code,
                             "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                            "violation": managed_env_error,
+                            "violation": diagnostic,
                             "failure_stage": "pre_action_contract",
                             "execution_started": False,
                         },
-                        "required_next_action": "INTERNAL_PROTOCOL_ERROR",
+                        "required_next_action": exc.code,
                         "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
                         "recovery_status": "INTERNAL_PROTOCOL_ERROR",
                         "generate_result": "BLOCKED",
-                        "next_step": "finish",
+                        "next_step": "generate",
                     }
-            elif runtime_bindings:
-                # Legacy/non-managed execution still consumes the same exact
-                # Controller snapshot.  The helper supports Bash, Python and R
-                # and deliberately overrides ambient values with verified ones.
-                original_code, runtime_env_error = _inject_managed_action_environment(
-                    original_code,
-                    language,
-                    runtime_bindings,
-                    {},
-                )
-                if runtime_env_error:
-                    return {
-                        "messages": [SystemMessage(content=(
-                            "Execute rejected the runtime snapshot before process start: "
-                            + str(runtime_env_error.get("message") or "runtime env contract violation")
-                        ))],
-                        "pending_action": {},
-                        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                        "required_next_action": "INTERNAL_PROTOCOL_ERROR",
-                        "next_step": "finish",
-                    }
+            effective_execution_env = build_action_execution_environment(
+                os.environ,
+                runtime_bindings=runtime_bindings,
+                artifact_bindings=artifact_bindings,
+                controller_bindings=controller_identity_env,
+                managed_runtime_env_names=managed_runtime_env_names,
+            )
             code = normalize_script_code(original_code)
             forbidden_actions = [str(item).strip() for item in (state.get("forbidden_recovery_actions") or []) if str(item).strip()]
             if forbidden_actions:
@@ -35816,7 +35969,11 @@ question. Never guess a scientific or database identity.
                 }
             selected_skills_state = state.get("active_skills", []) or []
             future_skills_state = state.get("future_skills", []) or []
-            runtime_skills_state = self._infer_runtime_skills_from_code(code, selected_skills_state)
+            runtime_skills_state = (
+                [str(pending_action.get("selected_skill_id"))]
+                if managed_mode and str(pending_action.get("selected_skill_id") or "")
+                else self._infer_runtime_skills_from_code(code, selected_skills_state)
+            )
             selected_skill_pool_state = state.get("selected_skills", []) or runtime_skills_state
             install_redirect = self._redirect_install_command(code, runtime_skills_state)
             if install_redirect:
@@ -35868,7 +36025,13 @@ question. Never guess a scientific or database identity.
                     "next_step": "generate",
                 }
 
-            runtime_ready, runtime_redirect = self._ensure_skill_runtime_ready(runtime_skills_state, task_id=task_id, code=code)
+            runtime_ready, runtime_redirect = (
+                (True, "")
+                if managed_mode
+                else self._ensure_skill_runtime_ready(
+                    runtime_skills_state, task_id=task_id, code=code
+                )
+            )
             if not runtime_ready and runtime_redirect:
                 if install_disallowed:
                     final_res = self._runtime_block_message(runtime_redirect, runtime_skills_state, runtime_redirect)
@@ -35891,8 +36054,24 @@ question. Never guess a scientific or database identity.
                     "next_step": "install_subagent",
                 }
 
-            # 中间件审查
-            action, final_code = self.middleware.review_code(code, language)
+            # Review the four provenance owners without concatenating their
+            # content into one executable string.
+            code_review_provenance = build_code_review_provenance(
+                code,
+                generated_script_sha256=str(
+                    pending_action.get("generated_script_hash")
+                    or pending_action.get("generated_script_sha256")
+                    or ""
+                ),
+                artifact_env_manifest=current_artifact_manifest,
+                runtime_env_manifest=current_runtime_manifest,
+                execution_policy_manifest=current_policy_manifest,
+            )
+            action, final_code = self.middleware.review_code(
+                code,
+                language,
+                provenance=code_review_provenance,
+            )
             if action == "reject":
                 rejection_reason = str(final_code or "User rejected generated code.")
                 plan_progress = self._record_plan_current_evidence(
@@ -35964,10 +36143,12 @@ question. Never guess a scientific or database identity.
                 )
                 execution_audit_findings = audit_generated_script(
                     audit_block,
-                    runtime_snapshot=(
-                        pending_action.get("runtime_snapshot")
-                        or build_resolved_runtime_snapshot(state)
-                    ),
+                    runtime_snapshot={
+                        "bindings": dict(runtime_bindings),
+                        "runtime_snapshot_digest": str(
+                            current_runtime_manifest.get("manifest_hash") or ""
+                        ),
+                    },
                     artifact_environment=list(
                         pending_action.get("controller_artifact_environment") or []
                     ),
@@ -36007,7 +36188,13 @@ question. Never guess a scientific or database identity.
                         "next_step": "generate",
                     }
 
-            runtime_skills_state = self._infer_runtime_skills_from_code(code_to_run, selected_skills_state)
+            runtime_skills_state = (
+                [str(pending_action.get("selected_skill_id"))]
+                if managed_mode and str(pending_action.get("selected_skill_id") or "")
+                else self._infer_runtime_skills_from_code(
+                    code_to_run, selected_skills_state
+                )
+            )
             selected_skill_pool_state = state.get("selected_skills", []) or runtime_skills_state
             install_redirect = self._redirect_install_command(code_to_run, runtime_skills_state)
             if install_redirect:
@@ -36054,7 +36241,13 @@ question. Never guess a scientific or database identity.
                     "next_step": "generate",
                 }
 
-            runtime_ready, runtime_redirect = self._ensure_skill_runtime_ready(runtime_skills_state, task_id=task_id, code=code_to_run)
+            runtime_ready, runtime_redirect = (
+                (True, "")
+                if managed_mode
+                else self._ensure_skill_runtime_ready(
+                    runtime_skills_state, task_id=task_id, code=code_to_run
+                )
+            )
             if not runtime_ready and runtime_redirect:
                 if install_disallowed:
                     final_res = self._runtime_block_message(runtime_redirect, runtime_skills_state, runtime_redirect)
@@ -36076,6 +36269,37 @@ question. Never guess a scientific or database identity.
                     "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                     "next_step": "install_subagent",
                 }
+
+            if managed_mode:
+                current_policy_manifest = build_execution_policy_manifest(
+                    action_identity={
+                        "action_id": str(pending_action.get("action_id") or ""),
+                        "plan_id": str(pending_action.get("plan_id") or ""),
+                        "step_id": str(pending_action.get("step_id") or ""),
+                    },
+                    working_directory=os.getcwd(),
+                    language=language,
+                )
+                current_approval_identity = build_action_approval_identity(
+                    generated_script_sha256=str(
+                        pending_action.get("generated_script_hash")
+                        or pending_action.get("generated_script_sha256")
+                        or ""
+                    ),
+                    capability_contract_hash_value=str(
+                        pending_action.get("capability_contract_hash") or ""
+                    ),
+                    runtime_env_manifest_hash=str(
+                        current_runtime_manifest.get("manifest_hash") or ""
+                    ),
+                    artifact_env_manifest_hash=str(
+                        current_artifact_manifest.get("manifest_hash") or ""
+                    ),
+                    execution_policy_manifest_hash=str(
+                        current_policy_manifest.get("manifest_hash") or ""
+                    ),
+                    working_directory=os.getcwd(),
+                )
 
             # Allocate the attempt before materializing the approved/executed
             # versions. Every durable path is therefore namespaced by one attempt.
@@ -36110,33 +36334,41 @@ question. Never guess a scientific or database identity.
                 Path(self.data_path) / "task_outputs" / task_id / "attempts" / attempt_id
             )
             attempt_dir.mkdir(parents=True, exist_ok=True)
+            manifest_refs: Dict[str, Dict[str, str]] = {}
+            manifest_items = (
+                (
+                    ("runtime_env_manifest.json", current_runtime_manifest),
+                    ("artifact_env_manifest.json", current_artifact_manifest),
+                    ("execution_policy_manifest.json", current_policy_manifest),
+                )
+                if managed_mode else ()
+            )
+            for filename, manifest in manifest_items:
+                manifest_path = attempt_dir / filename
+                manifest_path.write_text(
+                    json.dumps(
+                        manifest,
+                        ensure_ascii=False,
+                        indent=2,
+                        sort_keys=True,
+                    ) + "\n",
+                    encoding="utf-8",
+                )
+                manifest_refs[filename] = {
+                    "path": str(manifest_path.resolve()),
+                    "manifest_hash": str(manifest.get("manifest_hash") or ""),
+                }
             stdout_path = attempt_dir / "stdout.log"
             stderr_path = attempt_dir / "stderr.log"
             exit_status_path = attempt_dir / "exit_status.json"
             # Every attempt has a minimal durable runner/return-code trace.
-            # ENABLE_COMMAND_TRACE controls only the richer Bash ERR/PIPESTATUS
-            # instrumentation, not whether the evidence file exists.
+            # Shell policy is invocation metadata and never prepended to the
+            # model or approved script bytes.
             trace_file = str(attempt_dir / "command_trace.log")
             stdout_path.touch(exist_ok=True)
             stderr_path.touch(exist_ok=True)
             Path(trace_file).touch(exist_ok=True)
-            trace_prefix = ""
-            if ENABLE_COMMAND_TRACE and language == "Bash":
-                # The durable wrapper records runner/script identity first;
-                # append Bash ERR/PIPESTATUS events without truncating it.
-                trace_prefix = f"exec 9>>{shlex.quote(trace_file)}\n"
-                if ENABLE_PIPESTATUS_CAPTURE:
-                    trace_prefix += (
-                        "set -o pipefail\n"
-                        "set -E\n"
-                        "trap 'ps=(\"${PIPESTATUS[@]}\"); rc=\"${ps[-1]}\"; "
-                        "printf \"+BIO_ERR|${BASH_SOURCE}:${LINENO}|${rc}| ${BASH_COMMAND}\\n\" >&9; "
-                        "printf \"PIPESTATUS=(%s)\\n\" \"${ps[*]}\" >&9' ERR\n"
-                    )
             approved_content = code_to_run
-            if language == "Bash":
-                approved_body = code_to_run.split("\n", 1)[1] if code_to_run.startswith("#!") and "\n" in code_to_run else code_to_run
-                approved_content = BASH_SCRIPT_PROLOGUE + trace_prefix + approved_body
             approved_ref = self._persist_script_version(
                 task_id,
                 attempt_plan_state,
@@ -36158,6 +36390,16 @@ question. Never guess a scientific or database identity.
                 "stdout_path": str(stdout_path),
                 "stderr_path": str(stderr_path),
                 "exit_status_path": str(exit_status_path),
+                "runtime_env_manifest": manifest_refs.get(
+                    "runtime_env_manifest.json", {}
+                ),
+                "artifact_env_manifest": manifest_refs.get(
+                    "artifact_env_manifest.json", {}
+                ),
+                "execution_policy_manifest": manifest_refs.get(
+                    "execution_policy_manifest.json", {}
+                ),
+                "action_approval_identity": deepcopy(current_approval_identity),
             })
             record_provenance_event(attempt_plan_state, "attempt_state_changed", {
                 "attempt_id": attempt_id,
@@ -36172,20 +36414,32 @@ question. Never guess a scientific or database identity.
                 or runtime_bindings.get("R_BIN")
                 or str(shutil.which("Rscript") or "Rscript")
             )
+            approved_runner_argv = [str(approved_runner)]
+            if language == "Bash" and bool(
+                (current_policy_manifest.get("policy") or {}).get(
+                    "shell_pipefail", True
+                )
+            ):
+                approved_runner_argv.extend(["-o", "pipefail"])
+            approved_runner_argv.append(str(approved_ref["path"]))
+            if shim_path:
+                base_path = str(effective_execution_env.get("PATH") or "")
+                effective_execution_env["PATH"] = (
+                    base_path + (os.pathsep if base_path else "") + str(shim_path)
+                )
             status_tmp = f"{exit_status_path}.tmp.$$"
             wrapper_parts = [
                 "#!/bin/bash\n",
                 "set +e\n",
-                f"export PATH=\"$PATH:{shim_path}\"\n",
                 f": > {shlex.quote(str(stdout_path))}\n",
                 f": > {shlex.quote(str(stderr_path))}\n",
             ]
             wrapper_parts.append(
-                f"printf 'runner=%s script=%s\\n' {shlex.quote(approved_runner)} "
+                f"printf 'runner=%s script=%s\\n' {shlex.quote(shlex.join(approved_runner_argv[:-1]))} "
                 f"{shlex.quote(approved_ref['path'])} > {shlex.quote(trace_file)}\n"
             )
             wrapper_parts.extend([
-                f"{shlex.quote(approved_runner)} {shlex.quote(approved_ref['path'])} "
+                f"{shlex.join(approved_runner_argv)} "
                 f"> {shlex.quote(str(stdout_path))} 2> {shlex.quote(str(stderr_path))}\n",
                 "rc=$?\n",
             ])
@@ -36279,6 +36533,43 @@ question. Never guess a scientific or database identity.
                 record_provenance_event(lifecycle_state, "attempt_state_changed", lifecycle_payload)
                 save_plan_state(self.data_path, task_id, lifecycle_state)
 
+            try:
+                preexec_approval_identity = build_action_approval_identity(
+                    generated_script_sha256=str(
+                        pending_action.get("generated_script_hash")
+                        or pending_action.get("generated_script_sha256")
+                        or ""
+                    ),
+                    capability_contract_hash_value=str(
+                        pending_action.get("capability_contract_hash") or ""
+                    ),
+                    runtime_env_manifest_hash=str(
+                        current_runtime_manifest.get("manifest_hash") or ""
+                    ),
+                    artifact_env_manifest_hash=str(
+                        current_artifact_manifest.get("manifest_hash") or ""
+                    ),
+                    execution_policy_manifest_hash=str(
+                        current_policy_manifest.get("manifest_hash") or ""
+                    ),
+                    working_directory=os.getcwd(),
+                )
+                validate_action_approval_identity(
+                    current_approval_identity,
+                    preexec_approval_identity,
+                )
+            except ActionRuntimeContractError as exc:
+                return {
+                    "messages": [SystemMessage(content=json.dumps(
+                        exc.to_diagnostic(), ensure_ascii=False, sort_keys=True,
+                    ))],
+                    "pending_action": {},
+                    "required_next_action": exc.code,
+                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    "execution_started": False,
+                    "next_step": "generate",
+                }
+
             start_time = time.time()
             try:
                 stdout, stderr, returncode = await run_script_path(
@@ -36286,6 +36577,7 @@ question. Never guess a scientific or database identity.
                     expected_sha256=executed_ref["sha256"],
                     interpreter="bash",
                     lifecycle_callback=persist_attempt_lifecycle,
+                    env=effective_execution_env,
                 )
             except Exception as e:
                 stdout, stderr, returncode = "", str(e), 1
@@ -36402,18 +36694,22 @@ question. Never guess a scientific or database identity.
                     "plan_progress": render_plan_progress(post_run_state),
                     "next_step": resume_node,
                 }
-            expected_runtime_contract = dict(
-                pending_action.get("runtime_snapshot")
-                or build_resolved_runtime_snapshot(state)
-            )
+            expected_runtime_contract = {
+                "status": "passed",
+                "bindings": dict(runtime_bindings),
+                "executables": {},
+                "versions": {},
+                "runtime_snapshot_digest": str(
+                    current_runtime_manifest.get("manifest_hash") or ""
+                ),
+            }
             actual_runtime_environment: Dict[str, Any] = {
                 **{
                     key: value
                     for key, value in runtime_bindings.items()
                     if key in {
                         "CONDA_DEFAULT_ENV", "CONDA_EXE", "CONDA_PREFIX",
-                        "ENV_PREFIX", "JAVA_HOME", "RESOLVED_ENV_PREFIX",
-                        "RESOLVED_JAVA_HOME", "VIRTUAL_ENV",
+                        "ENV_PREFIX", "JAVA_HOME", "VIRTUAL_ENV",
                     }
                 },
                 "injected_bindings": dict(runtime_bindings),

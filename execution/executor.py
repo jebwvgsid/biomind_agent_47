@@ -15,7 +15,7 @@ import tempfile
 import time
 from io import StringIO
 from pathlib import Path
-from typing import Tuple, Dict, Any, Optional, Callable
+from typing import Tuple, Dict, Any, Optional, Callable, Mapping
 
 from execution.profiling import get_current_node, get_current_profiler, get_current_task_id, timestamp_now
 from execution.runtime_contract import (
@@ -351,6 +351,7 @@ async def run_command(
     timeout=None,
     profile: bool = True,
     lifecycle_callback: Optional[Callable[..., Any]] = None,
+    env: Mapping[str, str] | None = None,
 ) -> Tuple[str, str, int]:
     """通用 Shell 命令执行器"""
     start_time = time.time()
@@ -397,6 +398,11 @@ async def run_command(
             stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            env=(
+                {str(key): str(value) for key, value in env.items()}
+                if env is not None
+                else None
+            ),
             **popen_kwargs,
         )
         _ACTIVE_PROCESS_GROUPS.add(process.pid)
@@ -666,6 +672,7 @@ async def run_script_path(
     profile: bool = True,
     lifecycle_callback: Optional[Callable[..., Any]] = None,
     exit_status_path: str | Path | None = None,
+    env: Mapping[str, str] | None = None,
 ) -> Tuple[str, str, int]:
     """Execute one immutable saved script; never materialize a second script."""
     global _LAST_EXECUTION_METADATA
@@ -687,6 +694,7 @@ async def run_script_path(
         timeout=timeout,
         profile=profile,
         lifecycle_callback=lifecycle_callback,
+        env=env,
     )
     metadata = dict(get_last_execution_metadata())
     metadata.update({
@@ -711,7 +719,11 @@ async def run_script_path(
         os.replace(tmp, status_path)
     return stdout, stderr, returncode
 
-async def run_bash_script(code: str, timeout: int = None) -> Tuple[str, str, int]:
+async def run_bash_script(
+    code: str,
+    timeout: int = None,
+    env: Mapping[str, str] | None = None,
+) -> Tuple[str, str, int]:
     """Compatibility API using a unique temporary script, never a fixed filename."""
     start_time = time.time()
     started_at = timestamp_now()
@@ -737,6 +749,7 @@ async def run_bash_script(code: str, timeout: int = None) -> Tuple[str, str, int
             interpreter="bash",
             timeout=timeout,
             profile=False,
+            env=env,
         )
         return stdout, stderr, returncode
     except Exception as e:
