@@ -110,6 +110,51 @@ class NodeContextError(ValueError):
 
 class ControlMetadataLeakError(NodeContextError):
     code = "LLM_CONTROL_METADATA_LEAK"
+    error_code = code
+    retryable = False
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        stage: str = "llm.payload_projection",
+        offending_paths: Sequence[str] = (),
+        matched_rule_ids: Sequence[str] = (),
+    ) -> None:
+        marker = "prohibited control metadata at "
+        legacy_paths: List[str] = []
+        if not offending_paths and marker in str(message or ""):
+            legacy_paths = [
+                item.strip()
+                for item in str(message).split(marker, 1)[1].split(",")
+                if item.strip()
+            ]
+        self.stage = str(stage or "llm.payload_projection")
+        self.offending_paths = sorted({
+            str(item).strip()
+            for item in [*offending_paths, *legacy_paths]
+            if str(item).strip()
+        })
+        self.matched_rule_ids = sorted({
+            str(item).strip()
+            for item in matched_rule_ids
+            if str(item).strip()
+        }) or ["CONTROL_METADATA_PRESENT"]
+        path_summary = ", ".join(self.offending_paths[:20]) or "provider payload"
+        rule_summary = ", ".join(self.matched_rule_ids[:20])
+        super().__init__(
+            f"{self.code}: prohibited control metadata at {path_summary}; "
+            f"matched rules: {rule_summary}"
+        )
+
+    def to_diagnostic(self) -> Dict[str, Any]:
+        return {
+            "error_code": self.error_code,
+            "stage": self.stage,
+            "offending_paths": list(self.offending_paths),
+            "matched_rule_ids": list(self.matched_rule_ids),
+            "retryable": self.retryable,
+        }
 
 
 class ContextCapacityExceeded(NodeContextError):
@@ -214,7 +259,9 @@ def assert_llm_payload_clean(value: Any) -> None:
     leaks = control_metadata_leaks(value)
     if leaks:
         raise ControlMetadataLeakError(
-            f"LLM_CONTROL_METADATA_LEAK: prohibited control metadata at {', '.join(leaks[:20])}"
+            stage="llm.payload_projection",
+            offending_paths=leaks,
+            matched_rule_ids=["CONTROL_METADATA_KEY_OR_VALUE"],
         )
 
 

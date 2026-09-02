@@ -1128,6 +1128,103 @@ def _consultant_validation_is_format_repair_error(text: str) -> bool:
 logger = logging.getLogger("BioMind.Agent")
 
 
+_V2_MESSAGE_CONTROL_RULES = (
+    (
+        "CONTROL_OBJECT_DIGEST",
+        re.compile(r"\b(?:object|audit|evidence):sha256:[0-9a-f]{16,}\b", re.IGNORECASE),
+    ),
+    (
+        "RAW_SHA256_DIGEST",
+        re.compile(r"\bsha256:[0-9a-f]{32,}\b", re.IGNORECASE),
+    ),
+    (
+        "TASK_PLAN_SEMANTIC_HASH_KEY",
+        re.compile(r'["\'](?:task|plan)_(?:semantic|record)_hash["\']\s*:', re.IGNORECASE),
+    ),
+    (
+        "STATE_GENERATION_KEY",
+        re.compile(r'["\']state_generation["\']\s*:', re.IGNORECASE),
+    ),
+    (
+        "CONTROLLER_IDENTITY_KEY",
+        re.compile(
+            r'["\'](?:approval_ref|cas_token|node_context_hash|projection_semantic_hash)["\']\s*:',
+            re.IGNORECASE,
+        ),
+    ),
+)
+
+
+def assert_v2_llm_messages_clean(
+    messages: Sequence[BaseMessage],
+    *,
+    stage: str = "llm.provider_dispatch",
+) -> None:
+    """Reject complete provider messages with typed, value-free evidence."""
+    offending_paths: List[str] = []
+    matched_rule_ids: List[str] = []
+    for index, message in enumerate(messages):
+        content = str(getattr(message, "content", message) or "")
+        for rule_id, pattern in _V2_MESSAGE_CONTROL_RULES:
+            if pattern.search(content):
+                offending_paths.append(f"$messages[{index}].content")
+                matched_rule_ids.append(rule_id)
+    if matched_rule_ids:
+        raise ControlMetadataLeakError(
+            stage=stage,
+            offending_paths=offending_paths,
+            matched_rule_ids=matched_rule_ids,
+        )
+
+
+@dataclass
+class GenerateInvocationAudit:
+    """Controller-owned metrics for one Generate invocation boundary."""
+
+    prompt_assembly_started: bool = False
+    prompt_assembly_succeeded: bool = False
+    provider_call_attempted: bool = False
+    llm_invoked: bool = False
+
+    def mark_provider_call_attempted(self) -> None:
+        if not self.prompt_assembly_succeeded:
+            raise RuntimeError("GENERATE_PROVIDER_CALL_BEFORE_PROMPT_SAFETY")
+        self.provider_call_attempted = True
+        self.llm_invoked = True
+
+    def to_dict(self) -> Dict[str, bool]:
+        return {
+            "prompt_assembly_started": bool(self.prompt_assembly_started),
+            "prompt_assembly_succeeded": bool(self.prompt_assembly_succeeded),
+            "provider_call_attempted": bool(self.provider_call_attempted),
+            "llm_invoked": bool(self.llm_invoked),
+        }
+
+
+def assemble_generate_v2_messages(
+    llm_payload: Mapping[str, Any],
+    *,
+    capability_instructions: str = "",
+    task_policy_instructions: str = "",
+    invocation_audit: Optional[GenerateInvocationAudit] = None,
+) -> List[BaseMessage]:
+    """Use the production Generate prompt builder and complete-message guard."""
+    if invocation_audit is not None:
+        invocation_audit.prompt_assembly_started = True
+    messages: List[BaseMessage] = [HumanMessage(content=PromptManager.get_generate_v2_prompt(
+        llm_payload,
+        capability_instructions=capability_instructions,
+        task_policy_instructions=task_policy_instructions,
+    ))]
+    assert_v2_llm_messages_clean(
+        messages,
+        stage="generate.prompt_assembly",
+    )
+    if invocation_audit is not None:
+        invocation_audit.prompt_assembly_succeeded = True
+    return messages
+
+
 class GeneratePromptAssemblyFailure(RuntimeError):
     """One terminal pre-provider prompt assembly lifecycle."""
 
@@ -1178,16 +1275,22 @@ def _prompt_assembly_exception_record(
 ) -> Dict[str, Any]:
     """Return durable, non-provider evidence for one assembly exception."""
     error_code = str(
-        getattr(exc, "code", "")
+        getattr(exc, "error_code", "")
+        or getattr(exc, "code", "")
         or "GENERATE_PROMPT_ASSEMBLY_FAILURE"
     )
     message = str(exc)
-    control_metadata_paths: List[str] = []
+    control_metadata_paths = list(
+        getattr(exc, "offending_paths", ()) or ()
+    )
+    matched_rule_ids = list(
+        getattr(exc, "matched_rule_ids", ()) or ()
+    )
     marker = "prohibited control metadata at "
-    if marker in message:
+    if not control_metadata_paths and marker in message:
         control_metadata_paths = [
             item.strip()
-            for item in message.split(marker, 1)[1].split(",")
+            for item in message.split(marker, 1)[1].split(";", 1)[0].split(",")
             if item.strip()
         ]
     identity = {
@@ -1206,6 +1309,7 @@ def _prompt_assembly_exception_record(
                 sort_keys=True,
             ).encode("utf-8", errors="replace")
         ).hexdigest()[:20],
+        "code": error_code,
         "error_code": error_code,
         "failure_class": "internal_protocol",
         "owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
@@ -1221,13 +1325,27 @@ def _prompt_assembly_exception_record(
             "message": message,
             "repr": repr(exc),
             "control_metadata_paths": control_metadata_paths,
+            "matched_rule_ids": matched_rule_ids,
         },
         "assembly_attempt": int(assembly_attempt),
         "deterministic_rebuild_attempted": bool(
             deterministic_rebuild_attempted
         ),
         "llm_invoked": False,
+        "provider_call_attempted": False,
+        "llm_request_sent": False,
         "execution_started": False,
+        "execute_started": False,
+        "machine_recovery_decision": {
+            "decision": "TERMINATE",
+            "reason_code": (
+                "UNSAFE_PROVIDER_PAYLOAD"
+                if error_code == "LLM_CONTROL_METADATA_LEAK"
+                else "GENERATE_PROMPT_ASSEMBLY_FAILURE"
+            ),
+            "source": "controller",
+            "retryable": False,
+        },
         "created_at": datetime.now().isoformat(timespec="seconds"),
     }
 
@@ -13728,21 +13846,13 @@ class BioAnalystAgent:
         return versions
 
     @staticmethod
-    def _assert_v2_llm_messages_clean(messages: List[BaseMessage]) -> None:
+    def _assert_v2_llm_messages_clean(
+        messages: List[BaseMessage],
+        *,
+        stage: str = "llm.provider_dispatch",
+    ) -> None:
         """Fail before dispatch when a V2 prompt leaks control-plane identity."""
-        text = "\n".join(str(getattr(message, "content", message) or "") for message in messages)
-        forbidden_patterns = (
-            r"\b(?:object|audit|evidence):sha256:[0-9a-f]{16,}\b",
-            r"\bsha256:[0-9a-f]{32,}\b",
-            r'(?i)["\'](?:task|plan)_(?:semantic|record)_hash["\']\s*:',
-            r'(?i)["\']state_generation["\']\s*:',
-            r'(?i)["\'](?:approval_ref|cas_token|node_context_hash|projection_semantic_hash)["\']\s*:',
-        )
-        matched = [pattern for pattern in forbidden_patterns if re.search(pattern, text)]
-        if matched:
-            raise ValueError(
-                "LLM_CONTROL_METADATA_LEAK: V2 message contains prohibited control-plane metadata"
-            )
+        assert_v2_llm_messages_clean(messages, stage=stage)
 
     async def _ainvoke_node_llm(
         self,
@@ -13758,7 +13868,10 @@ class BioAnalystAgent:
         llm_policy: Optional[Mapping[str, Any]] = None,
     ) -> BaseMessage:
         """Dispatch one immutable ControllerBinding and consume it exactly once."""
-        self._assert_v2_llm_messages_clean(messages)
+        self._assert_v2_llm_messages_clean(
+            messages,
+            stage=f"{stage}.provider_dispatch",
+        )
         binding = node_context.binding
         self._node_invocations.register(binding)
         report = payload_observability_report(
@@ -18350,6 +18463,14 @@ class BioAnalystAgent:
             or committed_primary.get("error_code")
             or "Generate prompt assembly failed before provider invocation."
         )
+        machine_recovery_decision = dict(
+            committed_primary.get("machine_recovery_decision") or {
+                "decision": "TERMINATE",
+                "reason_code": "GENERATE_PROMPT_ASSEMBLY_FAILURE",
+                "source": "controller",
+                "retryable": False,
+            }
+        )
         block_plan_and_downstream(
             plan_state,
             f"internal_protocol:generate.prompt_assembly: {reason}",
@@ -18388,6 +18509,7 @@ class BioAnalystAgent:
             "pending_action": {},
             "phase": "blocked",
             "status": "BLOCKED_INTERNAL_PROTOCOL",
+            "machine_recovery_decision": machine_recovery_decision,
             "reason_code": str(
                 committed_primary.get("error_code")
                 or "GENERATE_PROMPT_ASSEMBLY_FAILURE"
@@ -18399,6 +18521,7 @@ class BioAnalystAgent:
             "status_reason": reason[:4000],
             "pending_action": {},
             "recovery_state": recovery_state,
+            "machine_recovery_decision": machine_recovery_decision,
             "primary_failure": committed_primary,
             "secondary_failures": committed_secondary,
         })
@@ -18407,6 +18530,7 @@ class BioAnalystAgent:
             "failure": committed_primary,
             "primary_failure": committed_primary,
             "secondary_failures": committed_secondary,
+            "machine_recovery_decision": machine_recovery_decision,
             "task_state": task_state,
         })
         progress = self._persist_plan_tracker(task_id, plan_state)
@@ -33785,7 +33909,7 @@ question. Never guess a scientific or database identity.
         # ════════════════════════════════════════════
         # Node 2: Generate
         # ════════════════════════════════════════════
-        generate_call_audit: Dict[str, bool] = {}
+        generate_call_audit: Dict[str, GenerateInvocationAudit] = {}
 
         async def _generate_impl(state: AgentState):
             output.print_node_header("generate")
@@ -34148,6 +34272,9 @@ question. Never guess a scientific or database identity.
                     "truncated": True,
                 })
             try:
+                invocation_audit = generate_call_audit.setdefault(
+                    str(task_id), GenerateInvocationAudit()
+                )
                 generate_approved_snapshot = load_approved_plan_snapshot(
                     self.data_path,
                     task_id,
@@ -34310,11 +34437,12 @@ question. Never guess a scientific or database identity.
                     approved_plan_snapshot=generate_approved_snapshot,
                     **generate_semantic_inputs,
                 )
-                call_msgs = [HumanMessage(content=PromptManager.get_generate_v2_prompt(
+                call_msgs = assemble_generate_v2_messages(
                     generate_node_context.llm_payload.to_provider_dict(),
                     capability_instructions=capability_instructions,
                     task_policy_instructions=lightweight_policy,
-                ))]
+                    invocation_audit=invocation_audit,
+                )
             except Exception as exc:
                 rebuild_lifecycle = (
                     dict(state.get("generate_prompt_assembly_rebuild") or {})
@@ -34533,7 +34661,10 @@ question. Never guess a scientific or database identity.
                             recovery_cache_identity["error_fingerprint"],
                             recovery_cache_identity["repair_ordinal"],
                         )
-                    generate_call_audit[str(task_id)] = True
+                    invocation_audit = generate_call_audit.setdefault(
+                        str(task_id), GenerateInvocationAudit()
+                    )
+                    invocation_audit.mark_provider_call_attempted()
                     response = await self._ainvoke_node_llm(
                         call_msgs,
                         node_context=generate_node_context,
@@ -36374,14 +36505,28 @@ question. Never guess a scientific or database identity.
         async def generate(state: AgentState):
             """Lifecycle-logged boundary around every Generate return path."""
             task_id = str(state.get("task_id") or "unknown")
-            generate_call_audit[task_id] = False
+            generate_call_audit[task_id] = GenerateInvocationAudit()
 
             def logged_early_exit(result: Dict[str, Any], entry_record: Dict[str, Any]) -> Dict[str, Any]:
+                invocation_audit = generate_call_audit.pop(
+                    task_id, GenerateInvocationAudit()
+                ).to_dict()
                 exit_record = {
                     "event": "generate_exit",
                     "exit_reason": str(result.get("generate_exit_reason") or result.get("next_step") or "guarded_exit"),
                     "next_node": str(result.get("next_step") or ""),
-                    "llm_invoked": False,
+                    "prompt_assembly_started": bool(
+                        invocation_audit.get("prompt_assembly_started", False)
+                    ),
+                    "prompt_assembly_succeeded": bool(
+                        invocation_audit.get("prompt_assembly_succeeded", False)
+                    ),
+                    "provider_call_attempted": bool(
+                        invocation_audit.get("provider_call_attempted", False)
+                    ),
+                    "llm_invoked": bool(
+                        invocation_audit.get("llm_invoked", False)
+                    ),
                     "state_changes": sorted(str(key) for key in result.keys()),
                     "result": str(result.get("generate_result") or "NEEDS_RECOVERY"),
                 }
@@ -36532,11 +36677,25 @@ question. Never guess a scientific or database identity.
                 else:
                     outcome = "GENERATED_ACTION"
             exit_reason = str(result.get("generate_exit_reason") or result.get("recovery_status") or next_node or outcome)
+            invocation_audit = generate_call_audit.pop(
+                task_id, GenerateInvocationAudit()
+            ).to_dict()
             exit_record = {
                 "event": "generate_exit",
                 "exit_reason": exit_reason,
                 "next_node": next_node,
-                "llm_invoked": bool(generate_call_audit.pop(task_id, False)),
+                "prompt_assembly_started": bool(
+                    invocation_audit.get("prompt_assembly_started", False)
+                ),
+                "prompt_assembly_succeeded": bool(
+                    invocation_audit.get("prompt_assembly_succeeded", False)
+                ),
+                "provider_call_attempted": bool(
+                    invocation_audit.get("provider_call_attempted", False)
+                ),
+                "llm_invoked": bool(
+                    invocation_audit.get("llm_invoked", False)
+                ),
                 "state_changes": sorted(str(key) for key in result.keys()),
                 "result": outcome,
             }

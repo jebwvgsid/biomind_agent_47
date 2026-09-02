@@ -70,10 +70,18 @@ def test_control_metadata_leak_is_terminal_before_provider_or_execute() -> None:
         "execute": 0,
         "final_audit": 0,
     }
+    assert primary["code"] == "LLM_CONTROL_METADATA_LEAK"
     assert primary["error_code"] == "LLM_CONTROL_METADATA_LEAK"
     assert primary["failure_class"] == "internal_protocol"
     assert primary["failure_stage"] == "generate.prompt_assembly"
     assert primary["retryable"] is False
+    assert primary["provider_call_attempted"] is False
+    assert primary["llm_invoked"] is False
+    assert primary["execute_started"] is False
+    assert primary["machine_recovery_decision"]["decision"] == "TERMINATE"
+    assert primary["machine_recovery_decision"]["reason_code"] == (
+        "UNSAFE_PROVIDER_PAYLOAD"
+    )
     assert primary["exception_evidence"]["control_metadata_paths"] == [
         "$LLMPayload.current_focus.current_step.capability_contract_hash"
     ]
@@ -175,6 +183,10 @@ def test_terminal_commit_preserves_primary_and_blocks_current_step(
     assert persisted["primary_failure"]["error_code"] == "LLM_CONTROL_METADATA_LEAK"
     assert persisted["failure"]["error_code"] == "LLM_CONTROL_METADATA_LEAK"
     assert persisted["task_state"]["recovery_state"]["active_transition"] == {}
+    assert persisted["machine_recovery_decision"]["decision"] == "TERMINATE"
+    assert persisted["machine_recovery_decision"]["reason_code"] == (
+        "UNSAFE_PROVIDER_PAYLOAD"
+    )
     current = next(
         step
         for step in persisted["steps"]
