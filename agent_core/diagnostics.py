@@ -2252,9 +2252,17 @@ class ProgressTracker:
                 json.dumps(snapshot_rows, ensure_ascii=False, sort_keys=True, default=str)
             ) if snapshot_rows else ""
         if new_artifacts:
-            add("artifact_created", 5, "new artifacts: " + ",".join(new_artifacts[:8]))
+            add(
+                "raw_filesystem_activity_observed",
+                0,
+                "new observed paths: " + ",".join(new_artifacts[:8]),
+            )
         if changed_artifacts:
-            add("artifact_changed", 4, "changed artifacts: " + ",".join(changed_artifacts[:8]))
+            add(
+                "raw_filesystem_activity_observed",
+                0,
+                "changed observed paths: " + ",".join(changed_artifacts[:8]),
+            )
         prior_manifest = str(prior.manifest_status or "") if prior else ""
         if manifest_status and (
             (prior is not None and manifest_status != prior_manifest)
@@ -2284,12 +2292,18 @@ class ProgressTracker:
         current_entropy = self._entropy(hypotheses)
         if prior and current_entropy is not None and prior.hypothesis_entropy is not None and current_entropy < prior.hypothesis_entropy:
             add("new_independent_evidence", 2, "hypothesis entropy decreased")
-        existing_artifacts = max(int(existing_artifacts or 0), len(current_paths))
-        valid_artifacts = max(int(valid_artifacts or 0), len(current_paths))
+        existing_artifacts = max(0, int(existing_artifacts or 0))
+        valid_artifacts = max(0, int(valid_artifacts or 0))
         previous_count = prior.existing_artifact_count if prior else 0
-        repair_without_artifact_change = action_type in {"patch_file", "replace_command", "rerun_stage", "regenerate_script"} and existing_artifacts == previous_count and bool(prior)
-        if existing_artifacts > previous_count and not new_artifacts:
-            add("artifact_created", 5, "new valid artifact count")
+        previous_valid_count = prior.valid_artifact_count if prior else 0
+        repair_without_artifact_change = action_type in {"patch_file", "replace_command", "rerun_stage", "regenerate_script"} and valid_artifacts == previous_valid_count and bool(prior)
+        if valid_artifacts > previous_valid_count:
+            add(
+                "validated_artifact_adopted",
+                6,
+                "validated formal artifacts increased from "
+                f"{previous_valid_count} to {valid_artifacts}",
+            )
         elif repair_without_artifact_change: add("regression", -4, "repair action did not increase valid artifacts")
         score = sum(event.value for event in events)
         same_hypotheses = bool(prior and prior.active_hypothesis_count == sum(item.status not in {"rejected", "superseded", "unresolvable"} for item in hypotheses) and prior.top_hypothesis_confidence == (max((item.confidence for item in hypotheses), default=0.0)))
@@ -2311,9 +2325,8 @@ class ProgressTracker:
             classification = "no_progress"
         meaningful_progress = any(
             event.event_type in {
-                "artifact_created", "artifact_changed", "manifest_registered", "manifest_changed",
-                "completed_stage_advanced", "repair_verified", "root_command_identified",
-                "root_error_identified", "new_independent_evidence",
+                "validated_artifact_adopted", "completed_stage_advanced",
+                "repair_verified",
             }
             and event.value > 0
             for event in events
@@ -2346,7 +2359,17 @@ class ProgressTracker:
         else:
             mode = "continue"
             next_mode = "continue_probe"
-        new_information = [event.details for event in events if event.event_type in {"new_independent_evidence", "root_command_identified", "root_error_identified", "fingerprint_changed", "artifact_created", "repair_verified"}]
+        new_information = [
+            event.details
+            for event in events
+            if event.event_type in {
+                "validated_artifact_adopted",
+                "completed_stage_advanced",
+                "repair_verified",
+            }
+            and event.details
+        ]
+        meaningful_progress = bool(meaningful_progress and new_information)
         repeated_actions = [event.details for event in events if event.event_type == "duplicate_action"]
         repeated_evidence = [event.details for event in events if event.event_type == "duplicate_evidence"]
         snapshot = ProgressSnapshot(
@@ -2417,13 +2440,56 @@ def build_progress_evidence(
     """Evaluate task-state progress for one attempt through the existing tracker."""
     state = dict(state or {})
     evidence = dict(execution_evidence or {})
-    artifact_rows: List[Dict[str, Any]] = []
-    for raw_path in evidence.get("produced_artifacts") or evidence.get("observed_outputs") or []:
+    observed_paths = _unique([
+        *list(evidence.get("observed_artifacts") or []),
+        *list(evidence.get("observed_outputs") or []),
+    ])
+    raw_artifact_rows: List[Dict[str, Any]] = []
+    for raw_path in observed_paths:
         path = Path(str(raw_path))
-        row: Dict[str, Any] = {"path": str(path)}
+        row: Dict[str, Any] = {
+            "path": str(path),
+            "progress_scope": "raw_filesystem_observation",
+        }
         try:
             stat = path.stat()
-            row.update({"exists": True, "size": stat.st_size, "mtime_ns": stat.st_mtime_ns})
+            row.update({
+                "exists": True,
+                "size": stat.st_size,
+                "mtime_ns": stat.st_mtime_ns,
+                "is_directory": path.is_dir(),
+            })
+        except OSError:
+            row.update({"exists": False, "size": 0})
+        raw_artifact_rows.append(row)
+    reconciled_paths = [
+        str(item.get("observed_path") or item.get("path") or "")
+        for item in evidence.get("reconciled_outputs") or []
+        if isinstance(item, Mapping)
+        and str(item.get("observed_path") or item.get("path") or "")
+    ]
+    formal_paths = _unique([
+        *list(evidence.get("validated_artifacts") or []),
+        *list(evidence.get("adopted_artifacts") or []),
+        *reconciled_paths,
+        *list(evidence.get("produced_artifacts") or []),
+    ])
+    artifact_rows: List[Dict[str, Any]] = []
+    for raw_path in formal_paths:
+        path = Path(str(raw_path))
+        row = {
+            "path": str(path),
+            "progress_scope": "validated_formal_artifact",
+            "validated": True,
+        }
+        try:
+            stat = path.stat()
+            row.update({
+                "exists": True,
+                "size": stat.st_size,
+                "mtime_ns": stat.st_mtime_ns,
+                "is_directory": path.is_dir(),
+            })
         except OSError:
             row.update({"exists": False, "size": 0})
         artifact_rows.append(row)
@@ -2462,6 +2528,31 @@ def build_progress_evidence(
             or evidence.get("command_role")
             or "execution"
         )
+    diagnostic_record = dict(evidence.get("diagnostic_evidence") or {})
+    diagnostic_fingerprint = str(
+        diagnostic_record.get("evidence_fingerprint") or ""
+    )
+    diagnostic_executed = str(
+        diagnostic_record.get("status") or ""
+    ).upper() in {"SUCCEEDED", "FAILED", "TIMED_OUT"}
+    diagnostic_progress = bool(
+        diagnostic_executed
+        and diagnostic_fingerprint
+        and not bool(diagnostic_record.get("deduplicated"))
+    )
+    handoff_record = dict(
+        evidence.get("external_handoff")
+        or state.get("external_handoff")
+        or {}
+    )
+    handoff_progress = str(handoff_record.get("status") or "").upper() in {
+        "BUNDLE_VALIDATED", "AWAITING_USER_SUBMISSION", "JOB_ID_BOUND",
+        "RESULT_INGESTED",
+    }
+    protocol_progress = bool(
+        evidence.get("protocol_progress")
+        or state.get("protocol_progress")
+    )
     decision = tracker.evaluate(
         attempt_id=str(evidence.get("attempt_id") or evidence.get("execution_id") or "attempt"),
         stage_id=progress_step_id,
@@ -2472,7 +2563,13 @@ def build_progress_evidence(
         expected_artifacts=len(evidence.get("declared_outputs") or []),
         existing_artifacts=sum(1 for item in artifact_rows if item.get("exists")),
         valid_artifacts=sum(
-            1 for item in artifact_rows if item.get("exists") and int(item.get("size") or 0) > 0
+            1 for item in artifact_rows
+            if item.get("exists") and item.get("validated")
+        ),
+        new_evidence_ids=(
+            [f"diagnostic:{diagnostic_fingerprint}"]
+            if diagnostic_progress
+            else []
         ),
         known_failed_command=bool(evidence.get("failed_command")),
         known_primary_error=bool(
@@ -2491,6 +2588,11 @@ def build_progress_evidence(
         "completed_stage_count_before": decision.manifest_delta.get("completed_stage_count_before") or 0,
         "completed_stage_count_after": decision.manifest_delta.get("completed_stage_count_after") or 0,
         "artifact_snapshot_after": artifact_rows,
+        "raw_filesystem_observation": {
+            "observed": bool(raw_artifact_rows),
+            "artifacts": raw_artifact_rows,
+            "affects_task_progress": False,
+        },
         "new_artifacts": decision.artifact_delta.get("new_artifacts") or [],
         "changed_artifacts": decision.artifact_delta.get("changed_artifacts") or [],
         "error_fingerprint_history": [
@@ -2499,6 +2601,28 @@ def build_progress_evidence(
         ],
         "same_strategy_repetition": bool(decision.repeated_actions),
         "same_command_family_repetition": bool(decision.repeated_actions),
+        "task_progress": {
+            "meaningful": bool(decision.meaningful_progress),
+            "new_information": list(decision.new_information or []),
+            "validated_artifacts": formal_paths,
+        },
+        "diagnostic_progress": {
+            "meaningful": diagnostic_progress,
+            "evidence_fingerprint": diagnostic_fingerprint,
+            "status": str(diagnostic_record.get("status") or ""),
+        },
+        "handoff_progress": {
+            "meaningful": handoff_progress,
+            "status": str(handoff_record.get("status") or ""),
+        },
+        "protocol_progress": {
+            "meaningful": protocol_progress,
+            "affects_task_progress": False,
+        },
+        "primary_failure_streak_retained": bool(
+            not decision.meaningful_progress
+            and (diagnostic_progress or handoff_progress or protocol_progress)
+        ),
         "meaningful_progress": bool(decision.meaningful_progress),
         "no_progress_count": int(decision.no_progress_streak or 0),
     })

@@ -8,6 +8,7 @@ from agent_core.controller_audit import (
     adapt_script_block_to_action,
     parse_executable_script_block,
 )
+from agent_core.plan_tracker import record_recovery_counter_once
 from agent_core.recovery import (
     DiagnosticEvidenceRecord,
     DiagnosticEvidenceStatus,
@@ -339,6 +340,49 @@ class RecoveryExecutionEnvelopeTests(unittest.TestCase):
                     recovery_generated=True,
                     payload_revision=1,
                 )
+
+    def test_exactly_once_counters_and_repeated_preaction_exhaustion(self):
+        state = {"task_state": {"budgets": {}}}
+        self.assertTrue(record_recovery_counter_once(
+            state, "diagnostic_probes_dispatched", "attempt-1"
+        ))
+        self.assertFalse(record_recovery_counter_once(
+            state, "diagnostic_probes_dispatched", "attempt-1"
+        ))
+        self.assertTrue(record_recovery_counter_once(
+            state, "diagnostic_probes_completed", "attempt-1"
+        ))
+        budgets = state["task_state"]["budgets"]
+        self.assertEqual(budgets["diagnostic_probes_dispatched"], 1)
+        self.assertEqual(budgets["diagnostic_probes_completed"], 1)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, envelope = self._envelope(root)
+            store = RecoveryStateStore(root, "task-a")
+            first = store.record_preaction_rejection(
+                envelope_hash=envelope.immutable_hash,
+                validation_fingerprint="invalid-shell",
+                action_id=envelope.action_id,
+                payload_revision=0,
+            )
+            replay = store.record_preaction_rejection(
+                envelope_hash=envelope.immutable_hash,
+                validation_fingerprint="invalid-shell",
+                action_id=envelope.action_id,
+                payload_revision=0,
+            )
+            second = store.record_preaction_rejection(
+                envelope_hash=envelope.immutable_hash,
+                validation_fingerprint="invalid-shell",
+                action_id=envelope.action_id,
+                payload_revision=1,
+            )
+            self.assertEqual(first["count"], 1)
+            self.assertEqual(replay["count"], 1)
+            self.assertFalse(replay["terminal"])
+            self.assertEqual(second["count"], 2)
+            self.assertTrue(second["terminal"])
 
 
 if __name__ == "__main__":

@@ -2212,6 +2212,49 @@ def increment_plan_budget(state: PlanState, bucket: str, amount: int = 1) -> int
     return value
 
 
+RECOVERY_EXACTLY_ONCE_COUNTERS = {
+    "recovery_judge_calls",
+    "primary_execution_dispatches",
+    "primary_execution_failures",
+    "diagnostic_probes_proposed",
+    "diagnostic_probes_validated",
+    "diagnostic_probes_dispatched",
+    "diagnostic_probes_completed",
+    "diagnostic_probes_not_executed",
+    "preaction_rejections",
+    "payload_repairs",
+    "external_handoffs_created",
+    "external_jobs_submitted",
+}
+
+
+def record_recovery_counter_once(
+    state: PlanState,
+    counter: str,
+    identity: str,
+) -> bool:
+    """Charge one recovery lifecycle counter once per stable identity."""
+    name = str(counter or "")
+    event_id = str(identity or "")
+    if name not in RECOVERY_EXACTLY_ONCE_COUNTERS:
+        raise ValueError(f"Unsupported recovery lifecycle counter: {name}")
+    if not event_id:
+        raise ValueError("Recovery lifecycle counter identity is required")
+    task_state = dict(state.get("task_state") or {})
+    budgets = dict(task_state.get("budgets") or {})
+    ledger = dict(budgets.get("recovery_counter_identities") or {})
+    identities = [str(item) for item in ledger.get(name) or []]
+    if event_id in identities:
+        return False
+    identities.append(event_id)
+    ledger[name] = identities[-10_000:]
+    budgets["recovery_counter_identities"] = ledger
+    budgets[name] = max(0, _int(budgets.get(name), 0) + 1)
+    task_state["budgets"] = budgets
+    state["task_state"] = task_state
+    return True
+
+
 def _recovery_state_snapshot(state: PlanState) -> Dict[str, Any]:
     provenance = ensure_provenance_state(state)
     return {
@@ -5882,6 +5925,19 @@ def _plan_defaults(task_id: str, data_path: str | Path | None = None) -> PlanSta
                 "diagnostic_probes_by_step": {},
                 "contract_reconciliation_count": 0,
                 "recovery_judge_count": 0,
+                "recovery_judge_calls": 0,
+                "primary_execution_dispatches": 0,
+                "primary_execution_failures": 0,
+                "diagnostic_probes_proposed": 0,
+                "diagnostic_probes_validated": 0,
+                "diagnostic_probes_dispatched": 0,
+                "diagnostic_probes_completed": 0,
+                "diagnostic_probes_not_executed": 0,
+                "preaction_rejections": 0,
+                "payload_repairs": 0,
+                "external_handoffs_created": 0,
+                "external_jobs_submitted": 0,
+                "recovery_counter_identities": {},
                 "empty_execute_count": 0,
                 "same_action_count": 0,
                 "same_transition_count": 0,

@@ -289,6 +289,91 @@ class RecoveryContextTests(unittest.TestCase):
         self.assertEqual(first["no_progress_count"], 1)
         self.assertEqual(second["no_progress_count"], 2)
 
+    def test_progress_dimensions_do_not_promote_partial_files_or_diagnostics(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            partial = root / "partial.bam"
+            partial.write_bytes(b"x" * 93)
+            failed_dir = root / "failed-attempt"
+            failed_dir.mkdir()
+            scratch = root / "recovery" / "scratch" / "probe" / "small.sam"
+            scratch.parent.mkdir(parents=True)
+            scratch.write_text("@HD\n", encoding="utf-8")
+            tracker = ProgressTracker()
+            state = {"task_id": "progress", "current_step_id": "step-1"}
+
+            partial_result = build_progress_evidence(state, {
+                "attempt_id": "attempt-1",
+                "step_id": "step-1",
+                "command_role": "primary",
+                "failure_fingerprint": "exit-137",
+                "observed_outputs": [str(partial), str(failed_dir)],
+                "produced_artifacts": [],
+            }, tracker)
+            self.assertFalse(partial_result["task_progress"]["meaningful"])
+            self.assertTrue(
+                partial_result["raw_filesystem_observation"]["observed"]
+            )
+            self.assertEqual(
+                partial_result["task_progress"]["validated_artifacts"], []
+            )
+
+            diagnostic_result = build_progress_evidence(state, {
+                "attempt_id": "attempt-2",
+                "step_id": "step-1",
+                "purpose": "diagnostic",
+                "command_role": "diagnostic",
+                "failure_fingerprint": "exit-137",
+                "observed_outputs": [str(scratch)],
+                "produced_artifacts": [],
+                "diagnostic_evidence": {
+                    "status": "SUCCEEDED",
+                    "evidence_fingerprint": "evidence-new",
+                    "deduplicated": False,
+                },
+            }, tracker)
+            self.assertFalse(diagnostic_result["task_progress"]["meaningful"])
+            self.assertTrue(
+                diagnostic_result["diagnostic_progress"]["meaningful"]
+            )
+            self.assertTrue(
+                diagnostic_result["primary_failure_streak_retained"]
+            )
+            self.assertGreaterEqual(diagnostic_result["no_progress_count"], 2)
+
+            duplicate_result = build_progress_evidence(state, {
+                "attempt_id": "attempt-3",
+                "step_id": "step-1",
+                "purpose": "diagnostic",
+                "command_role": "diagnostic",
+                "failure_fingerprint": "exit-137",
+                "diagnostic_evidence": {
+                    "status": "SUCCEEDED",
+                    "evidence_fingerprint": "evidence-new",
+                    "deduplicated": True,
+                },
+            }, tracker)
+            self.assertFalse(
+                duplicate_result["diagnostic_progress"]["meaningful"]
+            )
+            self.assertFalse(duplicate_result["task_progress"]["meaningful"])
+
+            validated = root / "validated.bam"
+            validated.write_bytes(b"BAM\x01" + b"x" * 200)
+            validated_result = build_progress_evidence(state, {
+                "attempt_id": "attempt-4",
+                "step_id": "step-1",
+                "command_role": "primary",
+                "validated_artifacts": [str(validated)],
+                "adopted_artifacts": [str(validated)],
+                "produced_artifacts": [str(validated)],
+            }, tracker)
+            self.assertTrue(validated_result["task_progress"]["meaningful"])
+            self.assertTrue(validated_result["meaningful_progress"])
+            self.assertTrue(
+                validated_result["task_progress"]["new_information"]
+            )
+
     def test_structured_recovery_disables_legacy_recovery_template(self):
         prompt, _ = PromptManager.build_ephemeral_context_result(
             task_spec_context='{"goal":"repair"}',

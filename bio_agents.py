@@ -423,6 +423,7 @@ from agent_core.plan_tracker import (
     commit_consultant_candidate_state,
     carry_forward_completed_execution_history,
     increment_plan_budget,
+    record_recovery_counter_once,
     initialize_consultant_bootstrap_state,
     carry_forward_plan_lifecycle,
     changed_plan_step_ids,
@@ -8317,6 +8318,11 @@ class BioAnalystAgent:
                             increment_plan_budget(
                                 accepted_plan, "recovery_judge_count"
                             )
+                            record_recovery_counter_once(
+                                accepted_plan,
+                                "recovery_judge_calls",
+                                context.context_id,
+                            )
                             save_plan_state(
                                 self.data_path, task_id, accepted_plan
                             )
@@ -8683,6 +8689,11 @@ class BioAnalystAgent:
                 execution_envelope,
             )
             if envelope.probe_id:
+                self._record_recovery_counter_once(
+                    task_id,
+                    "diagnostic_probes_proposed",
+                    envelope.probe_id,
+                )
                 store.save_probe_lifecycle(ProbeLifecycleRecord(
                     recovery_decision_id=envelope.recovery_decision_id,
                     diagnosis=str(
@@ -10451,6 +10462,23 @@ class BioAnalystAgent:
         plan_state["task_state"] = task_state
         save_plan_state(self.data_path, task_id, plan_state)
         return count, max(0, int(limit) - count)
+
+    def _record_recovery_counter_once(
+        self,
+        task_id: str,
+        counter: str,
+        identity: str,
+    ) -> bool:
+        """Persist a lifecycle charge without double-counting resume/review."""
+        plan_state = load_plan_state(self.data_path, task_id)
+        charged = record_recovery_counter_once(
+            plan_state,
+            counter,
+            identity,
+        )
+        if charged:
+            save_plan_state(self.data_path, task_id, plan_state)
+        return charged
 
     def _pending_action_revision_mismatches(
         self,
@@ -34416,6 +34444,29 @@ question. Never guess a scientific or database identity.
                         diagnostic_store = RecoveryStateStore(
                             self.data_path, task_id
                         )
+                        payload_revision = int(
+                            materialized_action.get("payload_revision") or 0
+                        )
+                        rejection = diagnostic_store.record_preaction_rejection(
+                            envelope_hash=diagnostic_envelope.immutable_hash,
+                            validation_fingerprint=validation_fingerprint,
+                            action_id=diagnostic_envelope.action_id,
+                            payload_revision=payload_revision,
+                        )
+                        rejection_identity = (
+                            f"{diagnostic_envelope.action_id}:"
+                            f"{validation_fingerprint}:{payload_revision}"
+                        )
+                        self._record_recovery_counter_once(
+                            task_id,
+                            "preaction_rejections",
+                            rejection_identity,
+                        )
+                        self._record_recovery_counter_once(
+                            task_id,
+                            "diagnostic_probes_not_executed",
+                            rejection_identity,
+                        )
                         diagnostic_store.save_probe_lifecycle(
                             ProbeLifecycleRecord(
                                 recovery_decision_id=(
@@ -34446,6 +34497,50 @@ question. Never guess a scientific or database identity.
                                 "violations": violation_payload,
                             },
                         )
+                        if bool(rejection.get("terminal")):
+                            diagnostic_store.append_trace(
+                                "RECOVERY_EXHAUSTED",
+                                {
+                                    "code": (
+                                        "RECOVERY_PREACTION_REJECTION_EXHAUSTED"
+                                    ),
+                                    **rejection,
+                                },
+                            )
+                            return {
+                                "messages": [response, SystemMessage(content=(
+                                    "RECOVERY_PREACTION_REJECTION_EXHAUSTED: "
+                                    "the same diagnostic envelope and validation "
+                                    "failure were rejected twice; Controller stopped "
+                                    "payload regeneration before execution."
+                                ))],
+                                "pending_action": {},
+                                "pending_recovery_action": {
+                                    "type": "internal_protocol_error",
+                                    "reason": (
+                                        "RECOVERY_PREACTION_REJECTION_EXHAUSTED"
+                                    ),
+                                    "failure_owner": (
+                                        RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+                                    ),
+                                    "execution_started": False,
+                                    "execution_envelope": (
+                                        diagnostic_envelope.to_dict()
+                                    ),
+                                },
+                                "required_next_action": (
+                                    "INTERNAL_PROTOCOL_ERROR"
+                                ),
+                                "failure_owner": (
+                                    RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+                                ),
+                                "execution_started": False,
+                                "generate_result": "BLOCKED",
+                                "generate_exit_reason": (
+                                    "diagnostic_preaction_rejection_exhausted"
+                                ),
+                                "next_step": "supervisor",
+                            }
                     first_violation = violation_payload[0]
                     raw_first_owner = str(
                         first_violation.get("owner") or "GENERATED_ACTION"
@@ -34628,6 +34723,20 @@ question. Never guess a scientific or database identity.
                             == PreActionRepairDomain.GENERATED_SEMANTIC.value
                         )
                         repair_allowed = format_repair_allowed or corrective_generate_allowed
+                        if (
+                            repair_allowed
+                            and action_result_contract
+                            == RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+                        ):
+                            self._record_recovery_counter_once(
+                                task_id,
+                                "payload_repairs",
+                                (
+                                    f"{structured_action.get('action_id')}:"
+                                    f"payload_revision:"
+                                    f"{int(structured_action.get('payload_revision') or 0) + 1}"
+                                ),
+                            )
                         repair_no_progress = bool(
                             policy_decision.reason_code == "corrective_generate_no_progress"
                         )
@@ -34776,6 +34885,14 @@ question. Never guess a scientific or database identity.
                             status=ProbeLifecycleStatus.VALIDATED.value,
                             action_id=diagnostic_envelope.action_id,
                         )
+                    )
+                    self._record_recovery_counter_once(
+                        task_id,
+                        "diagnostic_probes_validated",
+                        (
+                            f"{diagnostic_envelope.probe_id}:"
+                            f"{diagnostic_envelope.immutable_hash}"
+                        ),
                     )
                     diagnostic_store.append_trace(
                         "DIAGNOSTIC_ACTION_VALIDATED",
@@ -36969,6 +37086,17 @@ question. Never guess a scientific or database identity.
                         "execution_attempt_id": attempt_id,
                     },
                 )
+                self._record_recovery_counter_once(
+                    task_id,
+                    "diagnostic_probes_dispatched",
+                    attempt_id,
+                )
+            elif command_role == "primary":
+                self._record_recovery_counter_once(
+                    task_id,
+                    "primary_execution_dispatches",
+                    attempt_id,
+                )
             start_time = time.time()
             diagnostic_timed_out = False
             try:
@@ -37500,6 +37628,14 @@ question. Never guess a scientific or database identity.
                 for item in reconciled_outputs
                 if str(item.get("observed_path") or "")
             ]
+            validated_formal_artifacts = (
+                produced_artifacts
+                if returncode == 0
+                and not validation_failed
+                and str(runtime_output_reconciliation.get("status") or "")
+                not in {"recovery", "failed", "invalid"}
+                else []
+            )
             execution_failure_fingerprint = str(
                 (root_cause_analysis or {}).get("inner_fingerprint")
                 or (root_cause_analysis or {}).get("failure_fingerprint")
@@ -37587,7 +37723,11 @@ question. Never guess a scientific or database identity.
                 "attempt": len(state.get("recovery_attempts", []) or []) + 1,
                 "declared_outputs": declared_outputs,
                 "observed_outputs": observed_outputs,
-                "produced_artifacts": produced_artifacts,
+                "observed_artifacts": observed_outputs,
+                "candidate_artifacts": observed_outputs,
+                "validated_artifacts": validated_formal_artifacts,
+                "adopted_artifacts": validated_formal_artifacts,
+                "produced_artifacts": validated_formal_artifacts,
                 "observed_output_records": observed_candidate_records,
                 "runtime_output_reconciliation": runtime_output_reconciliation,
                 "reconciled_outputs": reconciled_outputs,
@@ -37617,6 +37757,14 @@ question. Never guess a scientific or database identity.
                     if key not in {"code", "command", "messages"}
                 },
             }
+            if command_role == "primary" and (
+                returncode != 0 or validation_failed or runtime_missing
+            ):
+                self._record_recovery_counter_once(
+                    task_id,
+                    "primary_execution_failures",
+                    str(attempt_record.get("attempt_id") or ""),
+                )
             if immediate_failure_evidence_path:
                 execution_evidence["failure_evidence_path"] = (
                     immediate_failure_evidence_path
@@ -37847,6 +37995,9 @@ question. Never guess a scientific or database identity.
                 diagnostic_evidence_record = dict(
                     persisted_diagnostic.get("record") or {}
                 )
+                diagnostic_evidence_record["deduplicated"] = not bool(
+                    persisted_diagnostic.get("created")
+                )
                 lifecycle_status = (
                     ProbeLifecycleStatus.SUCCEEDED.value
                     if typed_diagnostic.status
@@ -37879,6 +38030,11 @@ question. Never guess a scientific or database identity.
                             persisted_diagnostic.get("created")
                         ),
                     },
+                )
+                self._record_recovery_counter_once(
+                    task_id,
+                    "diagnostic_probes_completed",
+                    typed_diagnostic.execution_attempt_id,
                 )
                 execution_evidence["diagnostic_evidence"] = (
                     diagnostic_evidence_record

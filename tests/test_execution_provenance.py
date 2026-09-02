@@ -74,6 +74,36 @@ class StepDagTests(unittest.TestCase):
 
 
 class ArtifactProvenanceTests(unittest.TestCase):
+    def test_execution_record_preserves_explicit_empty_production(self):
+        explicit_empty = ExecutionRecord.from_mapping({
+            "execution_id": "exec-empty",
+            "attempt_id": "attempt-empty",
+            "observed_outputs": ["/work/out/partial.bam"],
+            "produced_artifacts": [],
+        })
+        explicit_null = ExecutionRecord.from_mapping({
+            "execution_id": "exec-null",
+            "attempt_id": "attempt-null",
+            "observed_outputs": ["/work/out/partial.bam"],
+            "produced_artifacts": None,
+        })
+        legacy_missing = ExecutionRecord.from_mapping({
+            "execution_id": "exec-legacy",
+            "attempt_id": "attempt-legacy",
+            "observed_outputs": ["/work/out/legacy.bam"],
+        })
+
+        self.assertEqual(explicit_empty.produced_artifacts, [])
+        self.assertEqual(explicit_null.produced_artifacts, [])
+        self.assertEqual(
+            explicit_empty.observed_artifacts,
+            ["/work/out/partial.bam"],
+        )
+        self.assertEqual(
+            legacy_missing.produced_artifacts,
+            ["/work/out/legacy.bam"],
+        )
+
     def _run_action(self, state, output: Path, content: str, *, role="primary"):
         action = record_provenance_event(state, "action_bound", {
             "task_id": "task-a",

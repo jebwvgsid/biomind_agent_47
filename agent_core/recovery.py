@@ -1067,6 +1067,10 @@ class ExecutionRecord:
     recent_attempts: List[Dict[str, Any]] = field(default_factory=list)
     declared_outputs: List[str] = field(default_factory=list)
     observed_outputs: List[str] = field(default_factory=list)
+    observed_artifacts: List[str] = field(default_factory=list)
+    candidate_artifacts: List[str] = field(default_factory=list)
+    validated_artifacts: List[str] = field(default_factory=list)
+    adopted_artifacts: List[str] = field(default_factory=list)
     produced_artifacts: List[str] = field(default_factory=list)
     produced_artifact_ids: List[str] = field(default_factory=list)
     observed_output_records: List[Dict[str, Any]] = field(default_factory=list)
@@ -1106,7 +1110,33 @@ class ExecutionRecord:
         if not code_hash and raw_code:
             code_hash = hashlib.sha256(raw_code.encode("utf-8", errors="replace")).hexdigest()
         observed = [str(item) for item in data.get("observed_outputs", []) or []]
-        produced = [str(item) for item in data.get("produced_artifacts", []) or observed]
+        observed_artifacts = [
+            str(item)
+            for item in data.get("observed_artifacts", observed) or []
+        ]
+        candidate_artifacts = [
+            str(item)
+            for item in data.get("candidate_artifacts", []) or []
+        ]
+        validated_artifacts = [
+            str(item)
+            for item in data.get("validated_artifacts", []) or []
+        ]
+        adopted_artifacts = [
+            str(item)
+            for item in data.get("adopted_artifacts", []) or []
+        ]
+        # Legacy records omitted produced_artifacts. Explicit [] and null are
+        # authoritative non-production facts and must never re-adopt observed
+        # partial files through truthiness fallback.
+        produced_source = (
+            data.get("produced_artifacts")
+            if "produced_artifacts" in data
+            else observed
+        )
+        produced = [
+            str(item) for item in produced_source or []
+        ]
         return cls(
             execution_id=str(data.get("execution_id") or (f"exec-{data.get('attempt_id')}" if data.get("attempt_id") else "execution")),
             schema_version=max(2, int(data.get("schema_version") or 1)),
@@ -1182,6 +1212,10 @@ class ExecutionRecord:
             ][-3:],
             declared_outputs=[str(item) for item in data.get("declared_outputs", []) or []],
             observed_outputs=observed,
+            observed_artifacts=observed_artifacts,
+            candidate_artifacts=candidate_artifacts,
+            validated_artifacts=validated_artifacts,
+            adopted_artifacts=adopted_artifacts,
             produced_artifacts=produced,
             produced_artifact_ids=[str(item) for item in data.get("produced_artifact_ids", []) or []],
             observed_output_records=[
@@ -4425,6 +4459,42 @@ class RecoveryStateStore:
 
     def load_probe_lifecycle(self) -> List[Dict[str, Any]]:
         return self._read_jsonl(self.root / "probe_lifecycle.jsonl")
+
+    def record_preaction_rejection(
+        self,
+        *,
+        envelope_hash: str,
+        validation_fingerprint: str,
+        action_id: str,
+        payload_revision: int,
+    ) -> Dict[str, Any]:
+        """Count one stable protocol rejection occurrence across payload revisions."""
+        path = self.root / "preaction_rejections.json"
+        ledger = self._load_json_object("preaction_rejections.json")
+        key = hashlib.sha256(
+            f"{envelope_hash}|{validation_fingerprint}".encode(
+                "utf-8", errors="replace"
+            )
+        ).hexdigest()[:24]
+        row = dict(ledger.get(key) or {})
+        occurrence = f"payload_revision:{max(0, int(payload_revision or 0))}"
+        occurrences = [str(item) for item in row.get("occurrences") or []]
+        if occurrence not in occurrences:
+            occurrences.append(occurrence)
+        count = len(occurrences)
+        row.update({
+            "key": key,
+            "action_id": str(action_id or ""),
+            "envelope_hash": str(envelope_hash or ""),
+            "validation_fingerprint": str(validation_fingerprint or ""),
+            "count": count,
+            "occurrences": occurrences,
+            "terminal": count >= 2,
+            "updated_at": _now(),
+        })
+        ledger[key] = row
+        _json_write(path, ledger)
+        return row
 
     def load_execution_records(self) -> List[Dict[str, Any]]:
         """Return durable executor records for duplicate/action-contract checks."""

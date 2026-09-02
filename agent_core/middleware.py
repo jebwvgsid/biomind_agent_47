@@ -98,6 +98,7 @@ from agent_core.plan_tracker import (
     apply_recovery_decision,
     canonical_task_spec_for_state,
     increment_plan_budget,
+    record_recovery_counter_once,
     load_plan_state,
     load_approved_plan_snapshot,
     save_plan_state,
@@ -2248,7 +2249,11 @@ def _legacy_error_recovery_middleware(llm, retriever, skill_manager=None, data_p
                     task_state["budgets"] = budgets
                     durable_plan["task_state"] = task_state
                     if decision.action_type in {"inspect_file", "inspect_log", "run_probe"}:
-                        increment_plan_budget(durable_plan, "diagnostic_probe_count")
+                        record_recovery_counter_once(
+                            durable_plan,
+                            "diagnostic_probes_proposed",
+                            str(decision.decision_id or attempt_id),
+                        )
                     elif decision.action_type in {"patch_file", "replace_command", "regenerate_script"}:
                         increment_plan_budget(durable_plan, "script_patch_count")
                     save_plan_state(data_path, task_id, durable_plan)
@@ -2738,6 +2743,11 @@ def error_recovery_middleware(
                 elif not cached_judge_valid:
                     if data_path:
                         increment_plan_budget(plan_state, "recovery_judge_count")
+                        record_recovery_counter_once(
+                            plan_state,
+                            "recovery_judge_calls",
+                            diagnostic_context.context_id,
+                        )
                         save_plan_state(data_path, task_id, plan_state)
                     judge_text = ""
                     try:
@@ -3189,6 +3199,17 @@ def error_recovery_middleware(
                         execution_envelope,
                     )
                     if envelope.probe_id:
+                        proposal_plan = load_plan_state(
+                            data_path, task_id
+                        )
+                        if record_recovery_counter_once(
+                            proposal_plan,
+                            "diagnostic_probes_proposed",
+                            envelope.probe_id,
+                        ):
+                            save_plan_state(
+                                data_path, task_id, proposal_plan
+                            )
                         store.save_probe_lifecycle(ProbeLifecycleRecord(
                             recovery_decision_id=envelope.recovery_decision_id,
                             diagnosis=str(
