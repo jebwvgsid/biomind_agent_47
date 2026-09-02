@@ -11,7 +11,8 @@ from agent_core.managed_artifacts import (
     managed_action_fingerprint,
     materialize_managed_action,
 )
-from bio_agents import BioAnalystAgent, _inject_managed_action_environment
+from agent_core.action_runtime import build_exact_action_environment
+from bio_agents import BioAnalystAgent
 from prompts.manager import PromptManager
 
 
@@ -82,35 +83,32 @@ class ManagedActionEnvV2Tests(unittest.TestCase):
                     "MANAGED_RUNTIME_PLACEHOLDER_UNSUPPORTED",
                 )
 
-    def test_materialized_env_reaches_real_subprocess(self) -> None:
-        code, violation = _inject_managed_action_environment(
-            'printf "%s\\n" "$FASTA"',
-            "Bash",
-            {"SNPEFF_JAR": "/verified/runtime/snpEff.jar"},
-            {"FASTA": self.fasta_path},
+    def test_validated_action_env_reaches_real_subprocess(self) -> None:
+        effective_env = build_exact_action_environment(
+            {"PATH": "/usr/bin:/bin"},
+            action_environment={"FASTA": self.fasta_path},
         )
-        self.assertEqual(violation, {})
 
         completed = subprocess.run(
-            ["bash", "-lc", code],
+            ["bash", "-lc", 'printf "%s\\n" "$FASTA"'],
             check=True,
             capture_output=True,
             text=True,
+            env=effective_env,
         )
         self.assertEqual(completed.stdout.splitlines()[-1], self.fasta_path)
 
-    def test_action_env_cannot_override_controller_runtime(self) -> None:
-        code, violation = _inject_managed_action_environment(
-            'printf "%s\\n" "$SNPEFF_JAR"',
-            "Bash",
-            {"SNPEFF_JAR": "/verified/runtime/snpEff.jar"},
-            {"SNPEFF_JAR": "/model/value.jar"},
+    def test_exact_environment_has_no_controller_runtime_injection(self) -> None:
+        effective_env = build_exact_action_environment(
+            {
+                "PATH": "/usr/bin:/bin",
+                "SNPEFF_JAR": "/ambient/value.jar",
+            },
+            action_environment={"SNPEFF_JAR": "/action/value.jar"},
         )
 
-        self.assertEqual(code, 'printf "%s\\n" "$SNPEFF_JAR"')
-        self.assertEqual(violation["code"], "MANAGED_ACTION_ENV_KEY_CONFLICT")
-        self.assertEqual(violation["env_keys"], ["SNPEFF_JAR"])
-        self.assertNotIn("/model/value.jar", str(violation))
+        self.assertEqual(effective_env["SNPEFF_JAR"], "/action/value.jar")
+        self.assertNotIn("/verified/runtime", str(effective_env))
 
     def test_env_change_changes_existing_candidate_fingerprint(self) -> None:
         first = {
@@ -124,21 +122,21 @@ class ManagedActionEnvV2Tests(unittest.TestCase):
             managed_action_fingerprint(second),
         )
 
-    def test_generate_prompt_contains_env_repair_example_and_tool_agnostic_runtime_rule(self) -> None:
+    def test_generate_prompt_requires_concrete_paths_and_no_artifact_env(self) -> None:
         prompt = PromptManager.get_generate_v2_prompt({"task": {}, "current_step": {}})
-        self.assertIn('FASTA="{input:reference_fasta}"; tool "$FASTA"', prompt)
-        self.assertIn('"env":{"FASTA":"{input:reference_fasta}"}', prompt)
+        self.assertIn('"/data/reference.fasta"', prompt)
+        self.assertIn("Never emit an artifact placeholder", prompt)
         self.assertIn("Do not emit `{runtime:*}`", prompt)
         self.assertIn(
-            "Use only the runtime bindings supplied for the current action.",
+            "Use only the concrete runtime resources supplied for the current action.",
             prompt,
         )
         self.assertNotIn("For snpEff", prompt)
         self.assertNotIn("SNPEFF_JAR", prompt)
         self.assertNotIn('"produced_outputs": [', prompt)
         self.assertNotIn('"expected_evidence": [', prompt)
-        self.assertIn("Controller derives input/output coverage", prompt)
-        self.assertIn('"outputs":["output.semantic_handle"]', prompt)
+        self.assertIn("Controller validates input/output coverage", prompt)
+        self.assertNotIn('"outputs":["output.semantic_handle"]', prompt)
 
     def test_execute_parser_discards_legacy_duplicate_output_identity(self) -> None:
         action = BioAnalystAgent._structured_action_from_object({

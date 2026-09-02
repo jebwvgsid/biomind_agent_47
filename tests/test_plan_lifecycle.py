@@ -726,7 +726,11 @@ class PlanLifecycleTests(unittest.TestCase):
         self.assertEqual(second["next_step"], "supervisor")
         self.assertEqual(second["recovery_decision"]["kind"], "ESCALATE")
         self.assertEqual(second["required_next_action"], "INTERNAL_PROTOCOL_ERROR")
-        self.assertEqual(task_status(persisted), "failed")
+        self.assertEqual(task_status(persisted), "diagnosing")
+        self.assertEqual(
+            (persisted.get("task_state") or {}).get("resume_route_hint"),
+            "supervisor",
+        )
 
     def test_generated_blocked_status_text_is_not_record_failure_intent(self):
         purpose = BioAnalystAgent._pending_action_purpose(

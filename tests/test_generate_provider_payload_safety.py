@@ -133,8 +133,10 @@ def test_nonempty_capability_uses_complete_production_message_safety() -> None:
         resolution,
         [{
             "semantic_handle": "input.reference_fasta",
-            "env_var": "BIOMIND_INPUT_REFERENCE_FASTA",
             "direction": "input",
+            "path": "/data/reference.fa",
+            "exists": True,
+            "readable": True,
         }],
     )
     current_action_capability_llm_view = capability_context[
@@ -168,9 +170,12 @@ def test_nonempty_capability_uses_complete_production_message_safety() -> None:
         "llm_invoked": True,
     }
     assert "Build only the approved task-local custom database." in rendered
-    assert "$JAVA_BIN" in rendered
-    assert "$SNPEFF_JAR" in rendered
-    assert "/controller/private" not in rendered
+    assert "/controller/private/java" in rendered
+    assert "/controller/private/snpEff.jar" in rendered
+    assert "/data/reference.fa" in rendered
+    assert "$JAVA_BIN" not in rendered
+    assert "$SNPEFF_JAR" not in rendered
+    assert "BIOMIND_INPUT_REFERENCE_FASTA" not in rendered
     assert "capability_contract_hash" not in rendered
     assert "contract_hash" not in rendered
     assert not __import__("re").search(r"sha256:[0-9a-f]{64}", rendered)
@@ -255,10 +260,13 @@ def test_session_1788340897_offline_mock_replay_crosses_prompt_guard() -> None:
         if item["step_id"] == plan["current_step_id"]
     )
     registry = _manager().get_execution_capability_registry(step["skill_ids"])
+    current_contract_hash = capability_contract_hash(
+        registry[step["execution_capability_id"]]
+    )
     resolution = resolve_action_runtime_bindings(
         selected_skill_id="genomics/snpeff-annotation",
         execution_capability_id=step["execution_capability_id"],
-        approved_capability_contract_hash=step["capability_contract_hash"],
+        approved_capability_contract_hash=current_contract_hash,
         capability_registry=registry,
         ready_runtime_binding_registry=build_runtime_binding_registry(plan),
         current_action_identity={
@@ -329,6 +337,12 @@ def test_controller_attaches_internal_binding_and_hash_mismatch_fails_closed(
         if key in source_step
     })
     copied["steps"][0]["status"] = "pending"
+    current_registry = _manager().get_execution_capability_registry(
+        copied["steps"][0]["skill_ids"]
+    )
+    copied["steps"][0]["capability_contract_hash"] = capability_contract_hash(
+        current_registry[copied["steps"][0]["execution_capability_id"]]
+    )
     copied["current_step_id"] = copied["steps"][0]["step_id"]
     copied["current_task"] = {
         "task_spec": create_task_spec("offline binding regression")

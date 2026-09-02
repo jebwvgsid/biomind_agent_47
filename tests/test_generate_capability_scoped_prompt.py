@@ -107,9 +107,9 @@ class GenerateCapabilityScopedPromptTests(unittest.TestCase):
 
     def test_global_generate_rules_are_tool_agnostic_for_both_protocols(self) -> None:
         required_rules = (
-            "Use only the runtime bindings supplied for the current action.",
-            "Reference runtime bindings using the provided shell references.",
-            "Use only the managed artifact bindings supplied for the current action.",
+            "Use only the concrete runtime resources supplied for the current action.",
+            "Emit required executable, environment, database and tool paths explicitly",
+            "Use only the concrete artifact paths supplied for the current action.",
             "Do not request or use bindings outside the current action capability.",
         )
         for protocol in ("semantic_action_v2", "script_block_v1"):
@@ -129,7 +129,7 @@ class GenerateCapabilityScopedPromptTests(unittest.TestCase):
 
         self.assertIn("This is Corrective Generate", prompt)
         self.assertIn(
-            "Use only the runtime bindings supplied for the current action.",
+            "Use only the concrete runtime resources supplied for the current action.",
             prompt,
         )
         self.assertNotIn("SNPEFF_JAR", prompt)
@@ -145,13 +145,11 @@ class GenerateCapabilityScopedPromptTests(unittest.TestCase):
         global_prompt = self._global_prompt("script_block_v1")
 
         self.assertIn(capability_id, prompt)
-        self.assertIn("$JAVA_BIN", prompt)
-        self.assertIn("$SNPEFF_JAR", prompt)
-        self.assertIn("Invoke snpEff using the supplied runtime binding", prompt)
+        self.assertIn(self.private_java, prompt)
+        self.assertIn(self.private_jar, prompt)
+        self.assertIn("Invoke snpEff using the supplied concrete Java and JAR paths", prompt)
         self.assertNotIn("$JAVA_BIN", global_prompt)
         self.assertNotIn("$SNPEFF_JAR", global_prompt)
-        self.assertNotIn(self.private_java, prompt)
-        self.assertNotIn(self.private_jar, prompt)
 
     def test_contig_check_has_no_annotation_runtime_reference(self) -> None:
         capability_id = (
@@ -163,7 +161,7 @@ class GenerateCapabilityScopedPromptTests(unittest.TestCase):
         )
 
         self.assertIn(capability_id, prompt)
-        self.assertIn("this capability has no runtime bindings", prompt)
+        self.assertIn("this capability has no runtime resources", prompt)
         self.assertNotIn("JAVA_BIN", prompt)
         self.assertNotIn("SNPEFF_JAR", prompt)
         self.assertNotIn("SNPEFF_BIN", prompt)
@@ -184,18 +182,18 @@ class GenerateCapabilityScopedPromptTests(unittest.TestCase):
         )
         self.assertEqual(
             {
-                (row["binding_id"], row["shell_reference"])
+                (row["binding_id"], row["value"])
                 for row in projection["current_action_runtime_bindings"]
             },
             {
-                ("runtime.java.bin", "$JAVA_BIN"),
-                ("runtime.snpeff.jar", "$SNPEFF_JAR"),
+                ("runtime.java.bin", self.private_java),
+                ("runtime.snpeff.jar", self.private_jar),
             },
         )
         self.assertNotIn("check_contig_compatibility", rendered)
         self.assertNotIn("annotate_variants", rendered)
-        self.assertNotIn(self.private_java, rendered)
-        self.assertNotIn(self.private_jar, rendered)
+        self.assertIn(self.private_java, rendered)
+        self.assertIn(self.private_jar, rendered)
         self.assertNotIn("capability_contract_hash", rendered)
         self.assertNotIn("contract_hash", rendered)
         self.assertNotRegex(rendered, r"sha256:[0-9a-f]{64}")

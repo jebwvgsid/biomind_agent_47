@@ -768,6 +768,12 @@ class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(snapshot_loader.call_count, 2)
         self.assertEqual(len(build_calls), 2)
+        recovery_focus = build_calls[0]["runtime"]["recovery_focus"]
+        rendered_focus = json.dumps(recovery_focus, sort_keys=True)
+        self.assertNotIn("expected_runtime", rendered_focus)
+        self.assertNotIn("actual_runtime", rendered_focus)
+        self.assertNotIn("manifest", rendered_focus)
+        self.assertNotIn("sha256:", rendered_focus)
         self.assertIs(
             build_calls[0]["approved_plan_snapshot"],
             approved_snapshot,
@@ -822,6 +828,9 @@ class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
                 "check_input\ntool input\ncheck_output\n",
                 encoding="utf-8",
             )
+            input_path = attempt_root / "input.vcf"
+            input_path.write_text("##fileformat=VCFv4.2\n", encoding="utf-8")
+            output_path = attempt_root / "output.vcf"
 
             async def execute(_state):
                 return {
@@ -841,6 +850,27 @@ class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
                         "generated_script": {"path": str(script_path)},
                         "approved_script": {"path": str(script_path)},
                         "generated_code": "check_input\ntool input\ncheck_output",
+                        "action_contract": {
+                            "type": "execute",
+                            "language": "bash",
+                            "code": (
+                                f"tool {input_path} -o {output_path}"
+                            ),
+                            "concrete_artifact_bindings": [
+                                {
+                                    "semantic_handle": "input.variant_vcf",
+                                    "direction": "input",
+                                    "path": str(input_path),
+                                    "exists": True,
+                                    "readable": True,
+                                },
+                                {
+                                    "semantic_handle": "output.annotated_vcf",
+                                    "direction": "output",
+                                    "expected_path": str(output_path),
+                                },
+                            ],
+                        },
                         "expected_runtime_contract": {
                             "bindings": {"TOOL_BIN": "/verified/tool"},
                             "executables": {"tool": "/verified/tool"},
@@ -890,15 +920,16 @@ class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
             for row in snapshots
         ))
         for row in snapshots:
-            section_names = {
-                item["section"]
+            sections = {
+                item["section"]: item
                 for item in row["provider_context_manifest"]["sections"]
             }
-            self.assertTrue({
-                "task_spec", "approved_plan", "current_step",
-                "runtime_bindings", "previous_script", "machine_audit",
-                "execution_evidence", "recovery_diagnosis",
-            }.issubset(section_names))
+            self.assertTrue(sections["previous_script"]["present"])
+            self.assertTrue(sections["execution_evidence"]["present"])
+            self.assertFalse(sections["runtime_bindings"]["present"])
+            self.assertFalse(sections["machine_audit"]["present"])
+            self.assertFalse(sections["execution_runtime_contract"]["present"])
+            self.assertFalse(sections["validation_scope_contract"]["present"])
         initial_prompt = calls[0]
         followup_prompt = calls[1]
         for marker in (
@@ -907,14 +938,23 @@ class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
             "exit_code",
             "bounded_stdout",
             "bounded_stderr",
-            "expected_runtime",
-            "actual_runtime",
-            "available_evidence",
-            "=== CONTROLLER MACHINE AUDIT ===",
+            "allowed_recovery_actions",
         ):
             self.assertIn(marker, initial_prompt)
+        for forbidden in (
+            "expected_runtime",
+            "actual_runtime",
+            "runtime_snapshot_digest",
+            "value_digest",
+            "manifest_hash",
+            "registry_digest",
+            "RUNTIME_EXECUTABLE_MISMATCH",
+            "=== CONTROLLER MACHINE AUDIT ===",
+        ):
+            self.assertNotIn(forbidden, initial_prompt)
         self.assertNotIn("The The Controller", initial_prompt)
-        self.assertEqual(initial_prompt.count("RUNTIME_EXECUTABLE_MISMATCH"), 1)
+        self.assertIn(str(input_path), initial_prompt)
+        self.assertIn(str(output_path), initial_prompt)
         self.assertIn("<evidence_result>", followup_prompt)
         self.assertIn("TARGET_RUNTIME_LINE", followup_prompt)
         self.assertEqual(

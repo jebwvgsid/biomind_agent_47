@@ -1382,11 +1382,11 @@ class RuntimePreflightTests(unittest.TestCase):
         self.assertNotIn('trace_prefix += "set -x\\n"', source)
         self.assertIn("+BIO_ERR|", source)
 
-    def test_execute_appends_global_shims_after_environment_tools(self):
+    def test_managed_execute_does_not_append_global_shims(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
 
-        self.assertIn("export PATH=\"$PATH:{shim_path}\"", source)
-        self.assertNotIn("export PATH=\"{shim_path}:$PATH\"", source)
+        self.assertIn("if shim_path and not managed_mode:", source)
+        self.assertIn('shim_path=(str(shim_path or "") if not managed_mode else "")', source)
 
     @unittest.skipIf(BioAnalystAgent is None, f"bio_agents import unavailable: {IMPORT_ERROR}")
     def test_advisory_warn_on_final_artifacts_does_not_force_retry_loop(self):

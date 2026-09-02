@@ -22,7 +22,7 @@ class PromptManagerTests(unittest.TestCase):
         })
 
         self.assertIn("Never include shell, Python, R, patches, commands", judge)
-        self.assertIn('"schema_version": 2', judge)
+        self.assertIn('"schema_version": 4', judge)
         self.assertIn("You cannot finish the task", judge)
         self.assertIn("smallest current-step repair", repair)
         self.assertIn("Do not change the plan", repair)

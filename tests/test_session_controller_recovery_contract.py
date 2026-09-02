@@ -7,10 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from bio_agents import (
-    _inject_managed_action_environment,
-    _observed_runtime_executables,
-)
+from bio_agents import _observed_runtime_executables
+from agent_core.action_runtime import build_exact_action_environment
 from agent_core.controller_audit import (
     ExecutableScriptBlock,
     ScriptBlockError,
@@ -81,13 +79,38 @@ class SessionSemanticContextContractTests(unittest.TestCase):
                 "bindings": {"JAVA_BIN": f"/verified/{marker}/bin/java"},
                 "healthchecks": [{"status": "passed", "skill_id": "annotation"}],
             },
-            "artifact_environment": [{
+            "current_action_artifact_bindings": [{
                 "semantic_handle": "output.annotated_vcf",
-                "env_var": "BIOMIND_OUTPUT_ANNOTATED_VCF",
+                "direction": "output",
+                "expected_path": f"/work/output-{marker}.vcf",
                 "required": True,
             }],
             "generate_output_contract": "script_block_v1",
         }
+        if node_type == "recovery":
+            runtime = {
+                "recovery_focus": {
+                    "current_step": {
+                        "title": f"Annotate {marker}",
+                        "success_criteria": [f"output-{marker}.vcf exists"],
+                    },
+                    "previous_action": {
+                        "type": "execute",
+                        "code": f"tool input-{marker}.vcf -o /work/output-{marker}.vcf",
+                    },
+                    "failed_command": "tool",
+                    "exit_code": 2,
+                    "bounded_stdout": "startup",
+                    "bounded_stderr": "invalid option",
+                    "artifact_paths": [{
+                        "semantic_handle": "output.annotated_vcf",
+                        "direction": "output",
+                        "expected_path": f"/work/output-{marker}.vcf",
+                    }],
+                    "previous_recovery_summary": [],
+                    "allowed_recovery_actions": ["PATCH_SCRIPT", "ESCALATE"],
+                }
+            }
         return build_node_context(
             node_type=node_type,
             task_spec=_task_spec(marker),
@@ -167,35 +190,35 @@ class SessionSemanticContextContractTests(unittest.TestCase):
         self.assertFalse(sections["previous_script"]["present"])
         self.assertFalse(sections["execution_evidence"]["present"])
 
-    def test_generate_and_recovery_receive_the_same_canonical_contracts(self):
+    def test_generate_receives_executor_contracts_but_recovery_does_not(self):
         expected_execution = execution_runtime_contract()
         expected_validation = validation_scope_contract()
 
-        for node_type in ("generate", "recovery"):
-            with self.subTest(node_type=node_type):
-                context = self._context("B", node_type=node_type)
-                runtime = context.llm_payload.to_provider_dict()[
-                    "current_focus"
-                ]["runtime"]
-                self.assertEqual(
-                    runtime["execution_runtime_contract"],
-                    expected_execution,
-                )
-                self.assertEqual(
-                    runtime["validation_scope_contract"],
-                    expected_validation,
-                )
+        generate_runtime = self._context(
+            "B", node_type="generate"
+        ).llm_payload.to_provider_dict()["current_focus"]["runtime"]
+        self.assertEqual(generate_runtime["execution_runtime_contract"], expected_execution)
+        self.assertEqual(generate_runtime["validation_scope_contract"], expected_validation)
 
-    def test_recovery_prompt_sees_executor_and_validation_scope_facts(self):
+        recovery_runtime = self._context(
+            "B", node_type="recovery"
+        ).llm_payload.to_provider_dict()["current_focus"]["runtime"]
+        self.assertEqual(set(recovery_runtime), {"recovery_focus"})
+        self.assertNotIn("execution_runtime_contract", recovery_runtime)
+        self.assertNotIn("validation_scope_contract", recovery_runtime)
+
+    def test_recovery_prompt_sees_only_semantic_failure_facts(self):
         context = self._context("B", node_type="recovery")
         prompt = PromptManager.get_recovery_v2_prompt(
             context.llm_payload.to_provider_dict()
         )
 
-        self.assertIn('"errexit": true', prompt)
-        self.assertIn("rc=$? may never execute", prompt)
-        self.assertIn("must_not_gate_step_success", prompt)
-        self.assertIn("must not silently broaden", prompt)
+        self.assertIn('"bounded_stderr": "invalid option"', prompt)
+        self.assertIn('"expected_path": "/work/output-B.vcf"', prompt)
+        self.assertIn('"allowed_recovery_actions"', prompt)
+        self.assertNotIn('"errexit": true', prompt)
+        self.assertNotIn("runtime_snapshot_digest", prompt)
+        self.assertNotIn("manifest_hash", prompt)
 
     def test_generate_prompt_is_script_only_and_contains_runtime_and_plan(self):
         context = self._context("B")
@@ -213,7 +236,8 @@ class SessionSemanticContextContractTests(unittest.TestCase):
         self.assertIn("Annotate B", prompt)
         self.assertIn("/verified/B/bin/java", prompt)
         self.assertIn("healthchecks", prompt)
-        self.assertIn("BIOMIND_OUTPUT_ANNOTATED_VCF", prompt)
+        self.assertIn("/work/output-B.vcf", prompt)
+        self.assertNotIn("BIOMIND_OUTPUT_ANNOTATED_VCF", prompt)
         self.assertIn('"errexit": true', prompt)
         self.assertIn("unguarded_nonzero", prompt)
         self.assertIn("must_not_gate_step_success", prompt)
@@ -266,36 +290,27 @@ class SessionSemanticContextContractTests(unittest.TestCase):
 
 
 class RuntimeAndScriptContractTests(unittest.TestCase):
-    def test_execute_materialization_overrides_ambient_runtime_and_path(self):
-        code, violation = _inject_managed_action_environment(
-            'printf "%s\\n%s\\n" "$JAVA_BIN" "$PATH"',
-            "Bash",
+    def test_execute_preserves_ambient_env_without_runtime_injection(self):
+        effective_env = build_exact_action_environment(
             {
-                "JAVA_BIN": "/verified/jdk/bin/java",
-                "ENV_PREFIX": "/verified/env",
-            },
-            {},
-        )
-        completed = subprocess.run(
-            ["bash", "-c", code],
-            check=True,
-            capture_output=True,
-            text=True,
-            env={
                 **os.environ,
                 "JAVA_BIN": "/ambient/java",
                 "PATH": "/usr/bin:/bin",
             },
+            action_environment={},
         )
-        java_bin, materialized_path = completed.stdout.splitlines()
+        completed = subprocess.run(
+            ["bash", "-c", 'printf "%s\\n%s\\n" "$JAVA_BIN" "$PATH"'],
+            check=True,
+            capture_output=True,
+            text=True,
+            env=effective_env,
+        )
+        java_bin, observed_path = completed.stdout.splitlines()
 
-        self.assertEqual(violation, {})
-        self.assertEqual(java_bin, "/verified/jdk/bin/java")
-        self.assertTrue(
-            materialized_path.startswith(
-                "/verified/jdk/bin:/verified/env/bin:/usr/bin:/bin"
-            )
-        )
+        self.assertEqual(java_bin, "/ambient/java")
+        self.assertEqual(observed_path, "/usr/bin:/bin")
+        self.assertNotIn("/verified/jdk", str(effective_env))
 
     def test_runtime_snapshot_projects_healthchecked_executable_and_environment(self):
         with tempfile.TemporaryDirectory() as root:
@@ -362,21 +377,19 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
                 with self.assertRaises(ScriptBlockError):
                     parse_executable_script_block(source)
 
-    def test_script_adapter_binds_only_referenced_artifact_handles(self):
+    def test_script_adapter_preserves_concrete_paths_without_artifact_env(self):
         block = parse_executable_script_block(
-            '<shell>tool "$BIOMIND_INPUT_VCF" > "$BIOMIND_OUTPUT_VCF"</shell>'
+            '<shell>tool "/data/input.vcf" > "/data/output.vcf"</shell>'
         )
         artifact_environment = [
             {
                 "semantic_handle": "input.variant_vcf",
-                "env_var": "BIOMIND_INPUT_VCF",
-                "placeholder": "{input:variant_vcf}",
+                "path": "/data/input.vcf",
                 "required": True,
             },
             {
                 "semantic_handle": "output.annotated_vcf",
-                "env_var": "BIOMIND_OUTPUT_VCF",
-                "placeholder": "{output:annotated_vcf}",
+                "expected_path": "/data/output.vcf",
                 "required": True,
             },
             {
@@ -390,14 +403,9 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
 
         self.assertEqual(action["script_adapter"], "script_block_v1")
         self.assertEqual(action["language"], "bash")
-        self.assertEqual(
-            action["env"],
-            {
-                "BIOMIND_INPUT_VCF": "{input:variant_vcf}",
-                "BIOMIND_OUTPUT_VCF": "{output:annotated_vcf}",
-            },
-        )
-        self.assertNotIn("BIOMIND_UNUSED", action["env"])
+        self.assertEqual(action["env"], {})
+        self.assertEqual(action["code"], block.body)
+        self.assertEqual(action["argv"][2], block.body)
 
     def test_controller_detects_bare_runtime_suppression_and_artifact_without_rewrite(self):
         source = (
@@ -418,7 +426,7 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
             },
             artifact_environment=[{
                 "semantic_handle": "output.annotated_vcf",
-                "env_var": "BIOMIND_OUTPUT_VCF",
+                "expected_path": "/data/output.vcf",
                 "required": True,
             }],
         )
@@ -572,8 +580,8 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
             ExecutableScriptBlock(language="python", body=source, tag="python"),
             runtime_snapshot={"bindings": {"JAVA_BIN": "/verified/java"}},
             artifact_environment=[{
-                "env_var": "BIOMIND_OUTPUT_VCF",
                 "semantic_handle": "output.annotated_vcf",
+                "expected_path": "/expected/output.vcf",
                 "required": True,
             }],
         )

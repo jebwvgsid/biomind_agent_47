@@ -6,13 +6,12 @@ import unittest
 from agent_core.controller_audit import (
     adapt_script_block_to_action,
     parse_executable_script_block,
-    project_script_artifact_environment_for_provider,
     project_script_capabilities_for_provider,
-    script_env_reference,
 )
 from agent_core.managed_artifacts import (
     ManagedArtifactBinding,
-    materialize_managed_action,
+    concrete_artifact_provider_view,
+    validate_concrete_action_artifacts,
 )
 
 
@@ -41,25 +40,20 @@ class GenerateScriptArtifactRepairConvergenceTests(unittest.TestCase):
     def _adapt(self, source: str) -> dict:
         action = adapt_script_block_to_action(
             parse_executable_script_block(f"<shell>{source}</shell>"),
-            self.internal_environment,
-        )
-        action["controller_artifact_environment"] = list(
-            self.internal_environment
+            concrete_artifact_provider_view(self.bindings),
         )
         return action
 
-    def test_provider_environment_hides_controller_binding(self) -> None:
-        provider_environment = project_script_artifact_environment_for_provider(
-            self.internal_environment
-        )
+    def test_provider_projection_exposes_concrete_path_without_controller_env(self) -> None:
+        provider_environment = concrete_artifact_provider_view(self.bindings)
 
         self.assertEqual(len(provider_environment), 1)
         self.assertEqual(
-            provider_environment[0]["env_var"],
-            "BIOMIND_INPUT_VARIANT_VCF",
+            provider_environment[0]["path"],
+            "/data/all.filtered.snp.vcf",
         )
+        self.assertNotIn("env_var", provider_environment[0])
         self.assertNotIn("placeholder", provider_environment[0])
-        self.assertNotIn("canonical_path", provider_environment[0])
         provider_capabilities = project_script_capabilities_for_provider([{
             "handle": "capability.C1",
             "operations": [{
@@ -71,56 +65,37 @@ class GenerateScriptArtifactRepairConvergenceTests(unittest.TestCase):
             "{operation:operation.C1.O1}",
             json.dumps(provider_capabilities),
         )
-        self.assertEqual(
-            script_env_reference("BIOMIND_INPUT_VARIANT_VCF", "bash"),
-            "$BIOMIND_INPUT_VARIANT_VCF",
-        )
-        self.assertEqual(
-            script_env_reference("BIOMIND_INPUT_VARIANT_VCF", "python"),
-            'os.environ["BIOMIND_INPUT_VARIANT_VCF"]',
-        )
-        self.assertEqual(
-            script_env_reference("BIOMIND_INPUT_VARIANT_VCF", "r"),
-            'Sys.getenv("BIOMIND_INPUT_VARIANT_VCF")',
-        )
 
-    def test_literal_fallback_is_diagnostic_only_when_binding_materializes(self) -> None:
+    def test_literal_fallback_is_rejected_without_binding_materialization(self) -> None:
         action = self._adapt(
             'VCF="${BIOMIND_INPUT_VARIANT_VCF:-all.filtered.snp.vcf}"\n'
             'tool "$VCF"'
         )
-        materialized, violations = materialize_managed_action(
+        validated, violations = validate_concrete_action_artifacts(
             action,
             self.bindings,
         )
-        self.assertEqual(violations, [])
-        self.assertEqual(
-            materialized["env"]["BIOMIND_INPUT_VARIANT_VCF"],
-            "/data/all.filtered.snp.vcf",
+        self.assertEqual(validated["env"], {})
+        self.assertEqual(validated["code"], action["code"])
+        self.assertIn(
+            "ACTION_INPUT_ARTIFACT_UNAVAILABLE",
+            {item.code for item in violations},
         )
-        diagnostics = materialized.get("source_diagnostics") or []
-        self.assertTrue(diagnostics)
-        self.assertTrue(all(item["authoritative"] is False for item in diagnostics))
-        self.assertTrue(all(item["effect"] == "diagnostic_only" for item in diagnostics))
 
-    def test_raw_placeholder_is_diagnostic_only_when_typed_env_is_valid(self) -> None:
+    def test_raw_placeholder_is_hard_rejected(self) -> None:
         action = self._adapt(
             'VCF="${BIOMIND_INPUT_VARIANT_VCF:-{input:variant_vcf}}"\n'
             'tool "$VCF"'
         )
-        materialized, violations = materialize_managed_action(
+        validated, violations = validate_concrete_action_artifacts(
             action,
             self.bindings,
         )
-        self.assertEqual(violations, [])
-        self.assertEqual(
-            materialized["env"]["BIOMIND_INPUT_VARIANT_VCF"],
-            "/data/all.filtered.snp.vcf",
-        )
         self.assertIn(
-            "MANAGED_PLACEHOLDER_IN_FREE_SOURCE",
-            {item["code"] for item in materialized["source_diagnostics"]},
+            "UNRESOLVED_ARTIFACT_REFERENCE",
+            {item.code for item in violations},
         )
+        self.assertIn("{input:variant_vcf}", validated["code"])
 
     def test_raw_source_occurrences_never_become_hard_violations(self) -> None:
         cases = (
@@ -133,16 +108,12 @@ class GenerateScriptArtifactRepairConvergenceTests(unittest.TestCase):
         )
         for source in cases:
             with self.subTest(source=source.splitlines()[0]):
-                materialized, violations = materialize_managed_action(
+                materialized, violations = validate_concrete_action_artifacts(
                     self._adapt(source),
                     self.bindings,
                 )
-                self.assertEqual(violations, [])
-                self.assertTrue(materialized.get("source_diagnostics"))
-                self.assertTrue(all(
-                    not item["authoritative"]
-                    for item in materialized["source_diagnostics"]
-                ))
+                self.assertTrue(violations)
+                self.assertEqual(materialized["code"], source)
 
     def test_session_1787622048_prepare_snpeff_config_candidates_are_execute_eligible(self) -> None:
         bindings = {
@@ -221,13 +192,12 @@ class GenerateScriptArtifactRepairConvergenceTests(unittest.TestCase):
             with self.subTest(candidate=index):
                 action = adapt_script_block_to_action(
                     parse_executable_script_block(f"<shell>{source}</shell>"),
-                    environment,
+                    [],
                 )
-                action["controller_artifact_environment"] = list(environment)
-                materialized, violations = materialize_managed_action(action, bindings)
-                self.assertEqual(violations, [])
-                self.assertEqual(set(materialized["managed_artifact_handles"]), set(bindings))
-                self.assertTrue(materialized.get("source_diagnostics"))
+                validated, violations = validate_concrete_action_artifacts(action, bindings)
+                self.assertEqual(action["env"], {})
+                self.assertTrue(violations)
+                self.assertEqual(validated["code"], source)
 
 
 if __name__ == "__main__":
