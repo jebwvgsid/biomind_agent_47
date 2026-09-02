@@ -926,6 +926,8 @@ def _step_rows(
             "constraints", "constraint_ids", "semantic_constraint_ids",
             "requirement_ids", "dependencies", "depends_on", "success_criteria",
             "risk_level", "step_type", "skill_ids", "skills_declared", "command_intent",
+            "execution_capability_id",
+            "capability_contract_hash",
             "artifacts",
         }
         row = {
@@ -1579,7 +1581,7 @@ def _planning_failure_focus(
             if key in {
                 "step_key", "action", "purpose", "tool", "inputs", "outputs",
                 "dependencies", "skill_ids", "workflow_stage_ids", "batch_id",
-                "risk_level",
+                "risk_level", "execution_capability_id", "capability_contract_hash",
             }
         }
         for step in previous.get("steps", []) or []
@@ -1639,6 +1641,8 @@ def _approved_plan_semantic_view(
         "constraints", "constraint_ids", "semantic_constraint_ids",
         "requirement_ids", "dependencies", "depends_on", "success_criteria",
         "risk_level", "step_type", "skill_ids", "skills_declared", "command_intent",
+        "execution_capability_id",
+        "capability_contract_hash",
         "artifacts",
     }
     approved_steps: List[Dict[str, Any]] = []

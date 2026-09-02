@@ -1855,6 +1855,7 @@ PLAN_CANDIDATE schema placeholders:
     "action": "search|execute|install|ask_user|finish",
     "purpose": "analysis|validation|probe|record_failure|install|user_input",
     "tool": "<selected-capability-or-runner>",
+    "execution_capability_id": "<enumerated-current-skill-capability-id-or-empty>",
     "inputs": ["<existing-input-or-plan-handle>"],
     "outputs": ["<existing-output-or-plan-handle>"],
     "dependencies": ["<task-specific-step-id>"],
@@ -1872,6 +1873,8 @@ PLAN_CANDIDATE schema placeholders:
 Omit proposed_artifacts and task_output_materializations when they are not needed.
 For path_policy=planner_materialized, keep the TaskSpec output handle in
 step.outputs and provide one safe relative filename in task_output_materializations.
+For every execute step, select exactly one execution_capability_id enumerated
+by that step's selected Skill. Never invent capability or runtime binding IDs.
 Read every highlighted constraint and put task-specific semantic checks in
 validation_checklist. The Controller validates only machine contracts.
 

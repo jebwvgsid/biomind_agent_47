@@ -113,6 +113,32 @@ metadata:
     - {output_id: report, default_filename: report.md, format: markdown}
     - {output_id: reproduce_script, default_filename: reproduce.sh, format: bash}
   generate:
+    execution_capabilities:
+      - capability_id: genomics.snpeff_annotation.check_contig_compatibility
+        required_runtime_binding_ids: []
+        optional_runtime_binding_ids: []
+        required_artifact_binding_ids: [artifact.variant_vcf, artifact.reference_fasta, artifact.annotation_gtf]
+        execution_guidance:
+          - Compare VCF, FASTA, and annotation contig identifiers with read-only text processing.
+          - Do not use Java or snpEff for this compatibility check.
+      - capability_id: genomics.snpeff_annotation.build_database
+        required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
+        optional_runtime_binding_ids: []
+        required_artifact_binding_ids: [artifact.reference_fasta, artifact.annotation_gtf, artifact.snpeff_config, artifact.snpeff_data_dir]
+        execution_guidance:
+          - Build only the approved task-local custom database.
+      - capability_id: genomics.snpeff_annotation.annotate_variants
+        required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
+        optional_runtime_binding_ids: []
+        required_artifact_binding_ids: [artifact.variant_vcf, artifact.snpeff_config, artifact.snpeff_data_dir]
+        execution_guidance:
+          - Annotate the approved VCF with the approved database identity.
+      - capability_id: genomics.snpeff_annotation.summarize_ann
+        required_runtime_binding_ids: []
+        optional_runtime_binding_ids: []
+        required_artifact_binding_ids: [artifact.annotated_vcf]
+        execution_guidance:
+          - Summarize ANN records without invoking the annotation runtime.
     required_bindings:
       - {name: variant_vcf, required: true, required_for_execution: true, owner: user, user_input_required: true, aliases: [vcf, variant_file]}
       - {name: database_source, required: true, required_for_execution: true, owner: user, user_input_required: true}

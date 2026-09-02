@@ -11,6 +11,12 @@ from pathlib import Path
 from datetime import datetime
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
+from agent_core.action_runtime import (
+    capability_contract_hash,
+    default_execution_capability_id,
+    normalize_capability_contract,
+)
+
 class SkillManager:
     """遵循 Agent Skills 标准的技能加载器"""
     MAX_ACTIVE_SKILLS = 3
@@ -2017,6 +2023,11 @@ class SkillManager:
                     and value not in (None, "", [], {})
                 },
             }
+            execution_registry = self.get_execution_capability_registry([sid])
+            row["execution_capabilities"] = [
+                deepcopy(contract)
+                for contract in execution_registry.values()
+            ]
             required_bindings = (
                 list((meta.get("generate") or {}).get("required_bindings") or [])
                 if isinstance(meta.get("generate"), Mapping)
@@ -2028,6 +2039,150 @@ class SkillManager:
             ]
             capabilities.append(row)
         return capabilities, operation_bindings
+
+    @staticmethod
+    def _declared_binding_id(name: Any, *, owner: str) -> str:
+        raw = str(name or "").strip().lower()
+        if raw.startswith(("runtime.", "artifact.")):
+            return raw
+        normalized = re.sub(r"[^a-z0-9_.-]+", "_", raw).strip("._-")
+        if owner == "runtime":
+            normalized = normalized.replace("_jar", ".jar").replace("_bin", ".bin")
+            normalized = normalized.replace("_home", ".home")
+            return "runtime." + normalized
+        return "artifact." + normalized
+
+    def get_execution_capability_registry(
+        self,
+        skill_ids: Sequence[str],
+    ) -> Dict[str, Dict[str, Any]]:
+        """Return stable Skill-owned execution contracts keyed by capability ID."""
+        registry: Dict[str, Dict[str, Any]] = {}
+        for sid in self.normalize_selected_skills(
+            list(skill_ids or []), max_results=self.MAX_SELECTED_SKILLS
+        ):
+            meta = self.get_skill_meta(sid)
+            if not meta:
+                continue
+            generate = dict(meta.get("generate") or {})
+            declared = generate.get("execution_capabilities") or []
+            declared_rows = (
+                [dict(item) for item in declared if isinstance(item, Mapping)]
+                if isinstance(declared, list)
+                else [
+                    {"capability_id": str(key), **dict(value or {})}
+                    for key, value in dict(declared or {}).items()
+                    if isinstance(value, Mapping)
+                ]
+            )
+            if not declared_rows:
+                required_runtime: List[str] = []
+                required_artifacts: List[str] = []
+                for item in generate.get("required_bindings", []) or []:
+                    if not isinstance(item, Mapping):
+                        continue
+                    owner = str(item.get("owner") or "artifact").strip().lower()
+                    binding_id = self._declared_binding_id(
+                        item.get("binding_id") or item.get("name"),
+                        owner=owner,
+                    )
+                    if owner == "runtime":
+                        required_runtime.append(binding_id)
+                    else:
+                        required_artifacts.append(binding_id)
+                declared_rows = [{
+                    "capability_id": default_execution_capability_id(sid),
+                    "required_runtime_binding_ids": required_runtime,
+                    "optional_runtime_binding_ids": [],
+                    "required_artifact_binding_ids": required_artifacts,
+                    "execution_guidance": list(generate.get("execution_guidance") or []),
+                }]
+            for raw_contract in declared_rows:
+                contract = normalize_capability_contract(
+                    {**raw_contract, "selected_skill_id": sid},
+                    selected_skill_id=sid,
+                )
+                capability_id = str(contract["capability_id"])
+                if capability_id in registry:
+                    raise ValueError(
+                        "DUPLICATE_EXECUTION_CAPABILITY: " + capability_id
+                    )
+                registry[capability_id] = contract
+        return {key: registry[key] for key in sorted(registry)}
+
+    def validate_plan_execution_capabilities(
+        self,
+        plan_state: Mapping[str, Any],
+        selected_skill_ids: Sequence[str],
+    ) -> List[Dict[str, Any]]:
+        """Reject missing, unknown, or cross-Skill capability scope pre-approval."""
+        registry = self.get_execution_capability_registry(selected_skill_ids)
+        issues: List[Dict[str, Any]] = []
+        for index, raw in enumerate(plan_state.get("steps", []) or []):
+            if not isinstance(raw, Mapping):
+                continue
+            action = str(raw.get("action") or "").strip().lower()
+            status = str(raw.get("status") or "pending").strip().lower()
+            if action != "execute" or status in {"done", "completed", "skipped"}:
+                continue
+            step_skills = [str(item) for item in raw.get("skill_ids", []) or [] if str(item)]
+            capability_id = str(raw.get("execution_capability_id") or "").strip()
+            available = [
+                key for key, contract in registry.items()
+                if str(contract.get("selected_skill_id") or "") in set(step_skills)
+            ]
+            if not capability_id:
+                issues.append({
+                    "code": "ACTION_CAPABILITY_SCOPE_MISSING",
+                    "owner": "planner",
+                    "severity": "error",
+                    "field_path": f"$.steps[{index}].execution_capability_id",
+                    "json_pointer": f"$.steps[{index}].execution_capability_id",
+                    "plan_step_id": str(raw.get("step_id") or ""),
+                    "selected_skill_id": step_skills[0] if len(step_skills) == 1 else "",
+                    "available_capability_ids": available,
+                    "message": "Executable step must select one enumerated Skill capability.",
+                })
+                continue
+            contract = registry.get(capability_id)
+            contract_skill = str((contract or {}).get("selected_skill_id") or "")
+            if contract is None or contract_skill not in set(step_skills):
+                issues.append({
+                    "code": "UNKNOWN_EXECUTION_CAPABILITY",
+                    "owner": "planner",
+                    "severity": "error",
+                    "field_path": f"$.steps[{index}].execution_capability_id",
+                    "json_pointer": f"$.steps[{index}].execution_capability_id",
+                    "plan_step_id": str(raw.get("step_id") or ""),
+                    "received_id": capability_id,
+                    "available_capability_ids": available,
+                    "selected_skill_id": step_skills[0] if len(step_skills) == 1 else "",
+                    "message": "Capability is not enumerated by this step's selected Skill.",
+                })
+        return issues
+
+    def bind_plan_execution_capability_contracts(
+        self,
+        plan_state: Mapping[str, Any],
+        selected_skill_ids: Sequence[str],
+    ) -> Dict[str, Any]:
+        """Bind Controller-computed contract hashes into Plan semantic identity."""
+        candidate = deepcopy(dict(plan_state or {}))
+        registry = self.get_execution_capability_registry(selected_skill_ids)
+        for raw in candidate.get("steps", []) or []:
+            if not isinstance(raw, dict):
+                continue
+            capability_id = str(raw.get("execution_capability_id") or "").strip()
+            contract = registry.get(capability_id)
+            step_skills = {str(item) for item in raw.get("skill_ids", []) or []}
+            if (
+                isinstance(contract, Mapping)
+                and str(contract.get("selected_skill_id") or "") in step_skills
+            ):
+                raw["capability_contract_hash"] = capability_contract_hash(contract)
+            else:
+                raw.pop("capability_contract_hash", None)
+        return candidate
 
     def validate_plan(
         self,

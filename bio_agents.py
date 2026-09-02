@@ -563,6 +563,20 @@ from agent_core.controller_audit import (
     script_artifact_environment,
     script_references_env,
 )
+from agent_core.action_runtime import (
+    ActionRuntimeContractError,
+    artifact_environment_values,
+    assert_current_action_runtime_scope,
+    build_action_approval_identity,
+    build_artifact_env_manifest,
+    build_execution_policy_manifest,
+    build_runtime_binding_registry,
+    project_action_runtime_for_provider,
+    project_artifacts_for_provider,
+    resolve_action_runtime_bindings,
+    validate_action_approval_identity,
+    validate_manifest_hash,
+)
 from agent_core.state_contract_store import StateContractStore
 from agent_core.completion_gate import CompletionGate
 
@@ -9330,14 +9344,40 @@ class BioAnalystAgent:
             or (plan_state.get("runtime_state") or {}).get("execution_epoch")
             or "0"
         )
-        runtime_snapshot = dict(
-            bound.get("runtime_snapshot") or build_resolved_runtime_snapshot(state)
+        action_type = str(bound.get("type") or "").lower()
+        execution_capability_id = str(
+            bound.get("execution_capability_id")
+            or step.get("execution_capability_id")
+            or ""
+        ).strip()
+        if (
+            action_type == "execute"
+            and str(bound.get("execution_capability_id") or "").strip()
+            not in {"", str(step.get("execution_capability_id") or "").strip()}
+        ):
+            raise ActionRuntimeContractError(
+                "UNKNOWN_EXECUTION_CAPABILITY",
+                json_pointer="$.execution_capability_id",
+                received_id=str(bound.get("execution_capability_id") or ""),
+                approved_id=str(step.get("execution_capability_id") or ""),
+                selected_skill_id=str(bound.get("selected_skill_id") or ""),
+            )
+        step_skill_ids = self._selected_skill_ids(
+            step.get("skill_ids") or state.get("active_skills") or []
         )
-        runtime_bindings = {
-            str(key): str(value)
-            for key, value in dict(runtime_snapshot.get("bindings") or {}).items()
-            if str(key) and str(value)
-        }
+        capability_registry = (
+            self.skill_manager.get_execution_capability_registry(step_skill_ids)
+            if self.skill_manager and action_type == "execute"
+            else {}
+        )
+        capability_contract = dict(
+            capability_registry.get(execution_capability_id) or {}
+        )
+        selected_skill_id = str(
+            capability_contract.get("selected_skill_id")
+            or bound.get("selected_skill_id")
+            or ""
+        )
         purpose = self._pending_action_purpose(bound, step)
         skill_manager = getattr(self, "skill_manager", None)
         protocol = self._renderer_action_protocol(state, task_id)
@@ -9369,6 +9409,26 @@ class BioAnalystAgent:
                         (Path(outdir).expanduser() / str(renderer.get("manifest_filename") or "manifest.json")).resolve()
                     ) if outdir else "",
                 })
+        generated_script_sha256 = (
+            hashlib.sha256(str(bound.get("code") or "").encode("utf-8")).hexdigest()
+            if action_type == "execute"
+            else ""
+        )
+        preliminary_resolution: Dict[str, Any] = {}
+        if action_type == "execute":
+            preliminary_resolution = resolve_action_runtime_bindings(
+                selected_skill_id=selected_skill_id,
+                execution_capability_id=execution_capability_id,
+                approved_capability_contract_hash=str(
+                    step.get("capability_contract_hash") or ""
+                ),
+                capability_registry=capability_registry,
+                ready_runtime_binding_registry=build_runtime_binding_registry(state),
+                current_action_identity={
+                    "plan_id": plan_id,
+                    "step_id": step_id,
+                },
+            )
         fingerprint_input = json.dumps(
             {
                 "type": bound.get("type"),
@@ -9384,9 +9444,17 @@ class BioAnalystAgent:
                 ),
                 "plan_id": plan_id,
                 "execution_epoch": execution_epoch,
-                "runtime_snapshot_digest": str(
-                    runtime_snapshot.get("runtime_snapshot_digest") or ""
+                "execution_capability_id": execution_capability_id,
+                "capability_contract_hash": str(
+                    preliminary_resolution.get("capability_contract_hash") or ""
                 ),
+                "runtime_binding_value_digests": [
+                    str(item.get("value_digest") or "")
+                    for item in preliminary_resolution.get(
+                        "runtime_binding_records", []
+                    ) or []
+                ],
+                "generated_script_sha256": generated_script_sha256,
             },
             ensure_ascii=False,
             sort_keys=True,
@@ -9403,9 +9471,12 @@ class BioAnalystAgent:
             "validation": "required_validation",
             "fallback": "fallback",
         }.get(purpose, "primary")
+        action_id = "action_" + hashlib.sha256(
+            fingerprint_input.encode("utf-8")
+        ).hexdigest()[:16]
         bound.update(
             {
-                "action_id": "action_" + hashlib.sha256(fingerprint_input.encode("utf-8")).hexdigest()[:16],
+                "action_id": action_id,
                 "step_id": step_id,
                 "task_revision": task_revision,
                 "plan_id": plan_id,
@@ -9417,12 +9488,94 @@ class BioAnalystAgent:
                 "execution_epoch": execution_epoch,
                 "purpose": purpose,
                 "command_role": command_role,
-                "runtime_bindings": runtime_bindings,
-                "runtime_snapshot": runtime_snapshot,
                 "expected_outputs": list(bound.get("expected_outputs") or step.get("outputs") or []),
                 "expected_evidence": list(bound.get("success_checks") or step.get("success_criteria") or []),
             }
         )
+        if action_type == "execute":
+            runtime_resolution = resolve_action_runtime_bindings(
+                selected_skill_id=selected_skill_id,
+                execution_capability_id=execution_capability_id,
+                approved_capability_contract_hash=str(
+                    step.get("capability_contract_hash") or ""
+                ),
+                capability_registry=capability_registry,
+                ready_runtime_binding_registry=build_runtime_binding_registry(state),
+                current_action_identity={
+                    "action_id": action_id,
+                    "plan_id": plan_id,
+                    "step_id": step_id,
+                },
+            )
+            declared_language = str(bound.get("language") or "").strip().lower()
+            action_language = {
+                "bash": "Bash", "shell": "Bash", "sh": "Bash",
+                "python": "Python", "py": "Python",
+                "r": "R", "rscript": "R",
+            }.get(
+                declared_language,
+                detect_script_language(str(bound.get("code") or "")),
+            )
+            action_identity = {
+                "action_id": action_id,
+                "plan_id": plan_id,
+                "step_id": step_id,
+            }
+            artifact_manifest = build_artifact_env_manifest(
+                list(bound.get("controller_artifact_environment") or []),
+                action_identity=action_identity,
+                selected_skill_id=selected_skill_id,
+                execution_capability_id=execution_capability_id,
+                capability_contract_hash_value=str(
+                    runtime_resolution.get("capability_contract_hash") or ""
+                ),
+            )
+            policy_manifest = build_execution_policy_manifest(
+                action_identity=action_identity,
+                working_directory=os.getcwd(),
+                language=action_language,
+            )
+            approval_identity = build_action_approval_identity(
+                generated_script_sha256=generated_script_sha256,
+                capability_contract_hash_value=str(
+                    runtime_resolution.get("capability_contract_hash") or ""
+                ),
+                runtime_env_manifest_hash=str(
+                    runtime_resolution.get("runtime_binding_manifest_hash") or ""
+                ),
+                artifact_env_manifest_hash=str(artifact_manifest["manifest_hash"]),
+                execution_policy_manifest_hash=str(policy_manifest["manifest_hash"]),
+                working_directory=os.getcwd(),
+            )
+            bound.update({
+                "selected_skill_id": selected_skill_id,
+                "execution_capability_id": execution_capability_id,
+                "capability_contract": deepcopy(
+                    runtime_resolution.get("capability_contract") or {}
+                ),
+                "capability_contract_hash": str(
+                    runtime_resolution.get("capability_contract_hash") or ""
+                ),
+                "runtime_bindings": dict(
+                    runtime_resolution.get("effective_runtime_bindings") or {}
+                ),
+                "runtime_binding_records": deepcopy(
+                    runtime_resolution.get("runtime_binding_records") or []
+                ),
+                "runtime_binding_manifest": deepcopy(
+                    runtime_resolution.get("runtime_binding_manifest") or {}
+                ),
+                "runtime_binding_manifest_hash": str(
+                    runtime_resolution.get("runtime_binding_manifest_hash") or ""
+                ),
+                "artifact_env_manifest": artifact_manifest,
+                "artifact_env_manifest_hash": str(artifact_manifest["manifest_hash"]),
+                "execution_policy_manifest": policy_manifest,
+                "execution_policy_manifest_hash": str(policy_manifest["manifest_hash"]),
+                "action_approval_identity": approval_identity,
+                "generated_script_sha256": generated_script_sha256,
+                "working_directory": str(Path(os.getcwd()).resolve()),
+            })
         approval_scope = build_approval_scope(plan_state)
         bound["generated_from_plan_hash"] = approval_scope["plan_hash"]
         bound["generated_from_approval_scope_hash"] = approval_scope["approval_scope_hash"]
@@ -9471,6 +9624,13 @@ class BioAnalystAgent:
             bound["generated_script"] = generated_ref
             bound["generated_script_path"] = generated_ref["path"]
             bound["generated_script_hash"] = generated_ref["sha256"]
+            if generated_ref["sha256"] != generated_script_sha256:
+                raise ActionRuntimeContractError(
+                    "ACTION_APPROVAL_IDENTITY_DRIFT",
+                    drift_field="generated_script_sha256",
+                    expected=generated_script_sha256,
+                    observed=generated_ref["sha256"],
+                )
         action_record = record_provenance_event(plan_state, "action_bound", {
             "task_id": task_id,
             "action": bound,
@@ -14802,6 +14962,33 @@ class BioAnalystAgent:
                     json.dumps(review_telemetry, ensure_ascii=False, sort_keys=True),
                 )
         return [normalize_validation_issue(issue) for issue in raw_issues]
+
+    def _plan_execution_capability_violations(
+        self,
+        plan_state: Mapping[str, Any],
+        selected_skills: Sequence[str],
+    ) -> List[Dict[str, Any]]:
+        if not self.skill_manager:
+            return []
+        return [
+            normalize_validation_issue(issue)
+            for issue in self.skill_manager.validate_plan_execution_capabilities(
+                plan_state,
+                selected_skills,
+            )
+        ]
+
+    def _bind_plan_execution_capability_contracts(
+        self,
+        plan_state: Mapping[str, Any],
+        selected_skills: Sequence[str],
+    ) -> Dict[str, Any]:
+        if not self.skill_manager:
+            return deepcopy(dict(plan_state or {}))
+        return self.skill_manager.bind_plan_execution_capability_contracts(
+            plan_state,
+            selected_skills,
+        )
 
     def _repair_consultant_skill_summary(
         self,
@@ -31890,6 +32077,10 @@ question. Never guess a scientific or database identity.
                 output_contracts=canonical_output_contracts,
                 task_spec=task_spec,
             )
+            candidate_for_repair = self._bind_plan_execution_capability_contracts(
+                candidate_for_repair,
+                selected_skills,
+            )
             plan_content = render_structured_plan(candidate_for_repair)
             violations.extend(self._skill_plan_violations(
                 plan_content,
@@ -31898,6 +32089,10 @@ question. Never guess a scientific or database identity.
                 workflow_handoff=workflow_handoff,
             ))
             violations.extend(self._plan_step_skill_violations(candidate_for_repair, selected_skills))
+            violations.extend(self._plan_execution_capability_violations(
+                candidate_for_repair,
+                selected_skills,
+            ))
 
             candidate_for_repair = derive_plan_validation_state(
                 candidate_for_repair,
@@ -32384,6 +32579,19 @@ question. Never guess a scientific or database identity.
                 output_contracts=effective_output_contracts(task_spec, project_root=project_root),
                 task_spec=task_spec,
             )
+            persisted_plan = self._bind_plan_execution_capability_contracts(
+                persisted_plan,
+                review_skill_ids,
+            )
+            review_issues.extend(self._plan_execution_capability_violations(
+                persisted_plan,
+                review_skill_ids,
+            ))
+            persisted_plan = derive_plan_validation_state(
+                persisted_plan,
+                review_issues,
+            )
+            review_issues = list(persisted_plan.get("validation_issues") or [])
             bind_plan_to_task_revision(persisted_plan, task_revision)
             save_plan_state(self.data_path, task_id, persisted_plan)
             blocking_review_issues = [
@@ -33118,7 +33326,9 @@ question. Never guess a scientific or database identity.
                 task_spec_revision(generate_task_spec),
             )
             generate_approved_snapshot: Dict[str, Any] = {}
-            generate_runtime_snapshot: Dict[str, Any] = {}
+            generate_runtime_resolution: Dict[str, Any] = {}
+            generate_runtime_audit_view: Dict[str, Any] = {}
+            generate_selected_skill_id = ""
             generate_artifact_environment: List[Dict[str, Any]] = []
             generate_provider_artifact_environment: List[Dict[str, Any]] = []
             generate_script_protocol = False
@@ -33136,7 +33346,44 @@ question. Never guess a scientific or database identity.
                     task_id,
                     state=generate_plan_state,
                 )
-                generate_runtime_snapshot = build_resolved_runtime_snapshot(state)
+                execution_capability_id = str(
+                    generate_step.get("execution_capability_id") or ""
+                ).strip()
+                capability_registry = (
+                    self.skill_manager.get_execution_capability_registry(active_skills)
+                    if self.skill_manager
+                    else {}
+                )
+                selected_contract = capability_registry.get(execution_capability_id) or {}
+                generate_selected_skill_id = str(
+                    selected_contract.get("selected_skill_id") or ""
+                )
+                generate_runtime_resolution = resolve_action_runtime_bindings(
+                    selected_skill_id=generate_selected_skill_id,
+                    execution_capability_id=execution_capability_id,
+                    approved_capability_contract_hash=str(
+                        generate_step.get("capability_contract_hash") or ""
+                    ),
+                    capability_registry=capability_registry,
+                    ready_runtime_binding_registry=build_runtime_binding_registry(state),
+                    current_action_identity={
+                        "plan_id": str(generate_plan_state.get("plan_id") or ""),
+                        "step_id": current_step_id,
+                    },
+                )
+                generate_runtime_audit_view = {
+                    "status": "passed",
+                    "bindings": dict(
+                        generate_runtime_resolution.get(
+                            "effective_runtime_bindings"
+                        ) or {}
+                    ),
+                    "runtime_snapshot_digest": str(
+                        generate_runtime_resolution.get(
+                            "runtime_binding_manifest_hash"
+                        ) or ""
+                    ),
+                }
                 generate_visible_artifacts = build_approved_visible_artifact_set(
                     generate_task_spec,
                     plan_state=generate_plan_state,
@@ -33161,22 +33408,29 @@ question. Never guess a scientific or database identity.
                     "solution", "blocked", "plan_patch",
                 }
                 generate_provider_artifact_environment = (
-                    project_script_artifact_environment_for_provider(
+                    project_artifacts_for_provider(
                         generate_artifact_environment
                     )
                     if generate_script_protocol
                     else deepcopy(generate_artifact_environment)
                 )
                 if generate_script_protocol and generate_capability_view:
+                    current_capability = dict(
+                        generate_runtime_resolution.get("capability_contract") or {}
+                    )
                     loaded_skills = json.dumps(
                         {
-                            "capabilities": project_script_capabilities_for_provider(
-                                generate_capability_view
-                            ),
+                            "current_action_capability": {
+                                **current_capability,
+                                "contract_hash": str(
+                                    generate_runtime_resolution.get(
+                                        "capability_contract_hash"
+                                    ) or ""
+                                ),
+                            },
                             "script_protocol": (
-                                "Use Controller-resolved *_BIN runtime environment variables "
-                                "inside the executable block. Structured action operation "
-                                "bindings are Controller-owned and are not script syntax."
+                                "Use only current_action runtime shell references inside the "
+                                "executable block. Capability and binding scope are Controller-owned."
                             ),
                         },
                         ensure_ascii=False,
@@ -33214,8 +33468,12 @@ question. Never guess a scientific or database identity.
                         "current_action_contract": self._current_action_semantic_contract(
                             state, task_id
                         ),
-                        "resolved_runtime": generate_runtime_snapshot,
-                        "artifact_environment": generate_provider_artifact_environment,
+                        **project_action_runtime_for_provider(
+                            generate_runtime_resolution
+                        ),
+                        "current_action_artifact_bindings": (
+                            generate_provider_artifact_environment
+                        ),
                         "generate_output_contract": (
                             "script_block_v1"
                             if generate_script_protocol
@@ -33710,22 +33968,40 @@ question. Never guess a scientific or database identity.
                         script_block,
                         generate_artifact_environment,
                     )
-                    # Carry the exact provider-visible snapshot into the bound
-                    # action.  Binding/Execute must not silently re-resolve a
-                    # different runtime after Generate has authored the script.
-                    structured_action["runtime_snapshot"] = deepcopy(
-                        generate_runtime_snapshot
-                    )
-                    structured_action["runtime_bindings"] = dict(
-                        generate_runtime_snapshot.get("bindings") or {}
-                    )
+                    # Carry only the current capability resolution. The full
+                    # task runtime snapshot is neither provider-visible nor an
+                    # action authorization fallback.
+                    structured_action.update({
+                        "selected_skill_id": generate_selected_skill_id,
+                        "execution_capability_id": str(
+                            generate_step.get("execution_capability_id") or ""
+                        ),
+                        "capability_contract": deepcopy(
+                            generate_runtime_resolution.get("capability_contract") or {}
+                        ),
+                        "capability_contract_hash": str(
+                            generate_runtime_resolution.get("capability_contract_hash") or ""
+                        ),
+                        "runtime_bindings": dict(
+                            generate_runtime_resolution.get("effective_runtime_bindings") or {}
+                        ),
+                        "runtime_binding_records": deepcopy(
+                            generate_runtime_resolution.get("runtime_binding_records") or []
+                        ),
+                        "runtime_binding_manifest": deepcopy(
+                            generate_runtime_resolution.get("runtime_binding_manifest") or {}
+                        ),
+                        "runtime_binding_manifest_hash": str(
+                            generate_runtime_resolution.get("runtime_binding_manifest_hash") or ""
+                        ),
+                    })
                     structured_action["controller_artifact_environment"] = deepcopy(
                         generate_artifact_environment
                     )
                     action_parse_error = {}
                     script_findings = audit_generated_script(
                         script_block,
-                        runtime_snapshot=generate_runtime_snapshot,
+                        runtime_snapshot=generate_runtime_audit_view,
                         artifact_environment=generate_artifact_environment,
                         evidence_refs=[
                             str(
@@ -33880,7 +34156,11 @@ question. Never guess a scientific or database identity.
                     approved_visible_artifacts=visible_artifacts,
                 )
                 controller_runtime_keys = {
-                    *self._runtime_bindings_from_state(dict(state)).keys(),
+                    *dict(
+                        generate_runtime_resolution.get(
+                            "effective_runtime_bindings"
+                        ) or {}
+                    ).keys(),
                     "BIOMIND_TASK_ID",
                     "BIOMIND_ACTION_ID",
                     "BIOMIND_STEP_ID",

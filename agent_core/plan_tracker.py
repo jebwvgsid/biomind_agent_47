@@ -364,6 +364,8 @@ PLAN_STEP_FIELDS = (
     "action",
     "purpose",
     "tool",
+    "execution_capability_id",
+    "capability_contract_hash",
     "inputs",
     "outputs",
     "dependencies",
@@ -747,6 +749,7 @@ def _bounded_candidate_semantic_view(
     allowed_step_fields = (
         "step_id", "title", "action", "purpose", "tool", "inputs", "outputs",
         "dependencies", "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
+        "execution_capability_id",
     )
     for raw in list(candidate.get("steps") or [])[:max_steps]:
         if not isinstance(raw, Mapping):
@@ -851,6 +854,7 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
 _PLANNER_CORRECTION_STRUCTURE_FIELDS = (
     "action", "purpose", "tool", "inputs", "outputs", "dependencies",
     "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
+    "execution_capability_id",
 )
 
 
@@ -4373,6 +4377,12 @@ def normalize_plan_step(
     step["title"] = title
     step["action"] = str(step.get("action") or parsed.get("action") or "").strip().lower()
     step["tool"] = str(step.get("tool") or parsed.get("tool") or "").strip()
+    step["execution_capability_id"] = str(
+        step.get("execution_capability_id") or ""
+    ).strip()
+    step["capability_contract_hash"] = str(
+        step.get("capability_contract_hash") or ""
+    ).strip()
     step["skill_ids"] = _string_list(step.get("skill_ids") or parsed.get("skill_ids"))
     # A non-empty machine field is already an explicit scheduling contract.
     # Older/local patches could preserve skill_ids while dropping the parser's
@@ -5511,6 +5521,7 @@ def render_structured_plan(state: PlanState) -> str:
             f"- [{mark}] [{step.get('step_id')}] {_display_step_title(str(step.get('title') or ''))}",
             f"  - Action: {str(step.get('action') or '').upper()}",
             f"  - Purpose: {str(step.get('purpose') or 'analysis').upper()}",
+            f"  - Execution capability: {str(step.get('execution_capability_id') or 'none')}",
             f"  - Skills: [{skills}]",
             "  - Inputs:",
             *([f"    - {item}" for item in step.get("inputs", []) or []] or ["    - []"]),
@@ -7071,6 +7082,12 @@ def build_approval_projection(state: PlanState) -> Dict[str, Any]:
             "title": _display_step_title(str(step.get("title") or "")),
             "action": str(step.get("action") or "").upper(),
             "purpose": str(step.get("purpose") or ""),
+            "execution_capability_id": str(
+                step.get("execution_capability_id") or ""
+            ),
+            "capability_contract_hash": str(
+                step.get("capability_contract_hash") or ""
+            ),
             "skill_ids": list(step.get("skill_ids") or []),
             "inputs": list(step.get("inputs") or []),
             "outputs": list(step.get("outputs") or []),

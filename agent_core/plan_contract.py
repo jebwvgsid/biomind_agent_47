@@ -73,6 +73,9 @@ STRUCTURED_PLAN_STEP_SCALAR_FIELDS = frozenset({
     "batch_id",
     "risk_level",
 })
+STRUCTURED_PLAN_STEP_OPTIONAL_SCALAR_FIELDS = frozenset({
+    "execution_capability_id",
+})
 STRUCTURED_PLAN_STEP_LIST_FIELDS = frozenset({
     "inputs",
     "outputs",
@@ -404,9 +407,16 @@ def structured_plan_candidate_diagnostics(
                 "field_path": f"$.steps[{index}].skill_ids",
                 "message": "must contain at most three selected skill IDs",
             })
+        for field in sorted(STRUCTURED_PLAN_STEP_OPTIONAL_SCALAR_FIELDS):
+            if field in step and not isinstance(step.get(field), str):
+                diagnostics.append({
+                    "field_path": f"$.steps[{index}].{field}",
+                    "message": "must be a string",
+                })
         unexpected_step_fields = sorted(
             set(step) - (
                 STRUCTURED_PLAN_STEP_SCALAR_FIELDS
+                | STRUCTURED_PLAN_STEP_OPTIONAL_SCALAR_FIELDS
                 | step_list_fields
                 | (frozenset({"semantic_claims"}) if legacy_schema else frozenset())
             )
@@ -1102,7 +1112,9 @@ def planner_candidate_body_from_state(state: Mapping[str, Any]) -> Dict[str, Any
         == LEGACY_STRUCTURED_PLAN_CONTRACT
     )
     step_fields = set(
-        STRUCTURED_PLAN_STEP_SCALAR_FIELDS | STRUCTURED_PLAN_STEP_LIST_FIELDS
+        STRUCTURED_PLAN_STEP_SCALAR_FIELDS
+        | STRUCTURED_PLAN_STEP_OPTIONAL_SCALAR_FIELDS
+        | STRUCTURED_PLAN_STEP_LIST_FIELDS
     )
     if legacy_schema:
         step_fields.add("semantic_constraint_ids")
