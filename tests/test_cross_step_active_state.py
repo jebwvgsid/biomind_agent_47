@@ -22,14 +22,19 @@ from agent_core.controller_audit import (
     parse_executable_script_block,
 )
 from agent_core.plan_tracker import (
+    STATUS_AWAITING_SUPERVISOR,
     advance_plan_after_verified_step,
     apply_recovery_decision,
     build_plan_state,
+    consume_recovery_transition,
     load_plan_state,
     normalize_active_recovery_state,
+    recovery_transition_eligibility,
     save_plan_state,
 )
 from agent_core.recovery import (
+    RecoveryAction,
+    RecoveryDecision,
     RecoveryPolicy,
     build_recovery_execution_envelope,
     contextualize_recovery_decision,
@@ -539,6 +544,71 @@ def test_two_step_normal_and_recovery_integrations_reach_mock_execute(
     assert recovered["task_state"]["recovery_state"]["decision_history"]
     assert recovered["pending_recovery_action"] == {}
     assert recovered["recovery_execution_envelope"] == {}
+
+
+def test_escalate_is_nonterminal_and_routes_supervisor_once() -> None:
+    state = _two_step_plan("escalate")
+    decision = contextualize_recovery_decision(
+        RecoveryDecision.from_mapping({
+            "schema_version": 5,
+            "failure_class": "AMBIGUOUS",
+            "failure_owner": "INTERNAL_PROTOCOL",
+            "recommended_action": RecoveryAction.ESCALATE.value,
+            "reason": "controller adjudication required",
+            "root_cause": "contradictory controller evidence",
+            "evidence": ["protocol conflict"],
+            "evidence_sufficient": True,
+            "error_is_real": True,
+            "primary_execution_succeeded": False,
+            "confidence": 1.0,
+        }),
+        source_node="execute",
+        step_id="validate-inputs",
+        action_id="action-escalate",
+        attempt_id="attempt-escalate",
+        trigger_event_id="attempt-escalate",
+        step_attempt=1,
+    )
+    state["provenance_state"]["attempts"]["attempt-escalate"] = {
+        "attempt_id": "attempt-escalate",
+        "step_id": "validate-inputs",
+        "command_role": "primary",
+        "sequence": 1,
+    }
+    application = apply_recovery_decision(state, decision)
+    eligibility = recovery_transition_eligibility(
+        state,
+        source_node="execute",
+        current_step_id="validate-inputs",
+        current_attempt_id="attempt-escalate",
+        newly_committed_decision_id=decision.decision_id,
+    )
+    supervisor_calls = 0
+
+    def mock_supervisor() -> None:
+        nonlocal supervisor_calls
+        supervisor_calls += 1
+
+    assert application["next_route"] == "supervisor"
+    assert eligibility["eligible"] is True
+    assert eligibility["target_route"] == "supervisor"
+    mock_supervisor()
+    consume_recovery_transition(
+        state,
+        decision_id=decision.decision_id,
+        route_record={
+            "effective_route": "supervisor",
+            "route_event_id": "route-escalate",
+        },
+    )
+    assert state["task_state"]["status"] == "diagnosing"
+    assert state["steps"][0]["status"] == STATUS_AWAITING_SUPERVISOR
+    assert supervisor_calls == 1
+    history = state["task_state"]["recovery_state"]["transition_history"]
+    assert all(
+        str(item.get("superseded_reason") or "") != "EXPIRED_TASK_TERMINAL"
+        for item in history
+    )
 
 
 @pytest.mark.skipif(not INCIDENT_ROOT.is_dir(), reason="incident fixture unavailable")

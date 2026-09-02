@@ -397,6 +397,7 @@ STATUS_REPAIRING = "repairing"
 STATUS_RETRY_PENDING = "retry_pending"
 STATUS_PENDING_RETRY = STATUS_RETRY_PENDING
 STATUS_VERIFICATION_PENDING = "verification_pending"
+STATUS_AWAITING_SUPERVISOR = "awaiting_supervisor"
 STATUS_WAITING_UPSTREAM = "waiting_upstream"
 STATUS_INVALIDATED = "invalidated"
 STATUS_DONE = "done"
@@ -428,6 +429,7 @@ STEP_ACTIVE_STATUSES = {
     STATUS_REPAIRING,
     STATUS_RETRY_PENDING,
     STATUS_VERIFICATION_PENDING,
+    STATUS_AWAITING_SUPERVISOR,
 }
 STEP_SUCCESS_STATUSES = {STATUS_DONE, STATUS_PASSED, STATUS_SKIPPED}
 STEP_TERMINAL_STATUSES = {
@@ -550,6 +552,7 @@ def _mark_from_status(status: str) -> str:
         STATUS_REPAIRING: ">",
         STATUS_RETRY_PENDING: ">",
         STATUS_VERIFICATION_PENDING: ">",
+        STATUS_AWAITING_SUPERVISOR: ">",
         STATUS_BLOCKED: "!",
         STATUS_FAILED: "!",
         STATUS_SKIPPED: "-",
@@ -2835,7 +2838,7 @@ def apply_recovery_decision(
             current_step["status"] = STATUS_DIAGNOSING
         elif kind == "ESCALATE":
             # Escalation is a supervisor handoff, not a terminal verdict.
-            current_step["status"] = STATUS_DIAGNOSING
+            current_step["status"] = STATUS_AWAITING_SUPERVISOR
         elif kind == "PLAN_PATCH_REQUEST":
             current_step["status"] = STATUS_REPAIRING
         _append_evidence(
