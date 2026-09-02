@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "session_id": "session_1788316042",
+  "recovery_context_id": "session_1788316042-context-after-primary-2",
+  "step_id": "ont-structural-variant-detection",
+  "primary_failures": [137, 137],
+  "prior_recovery_action": "PATCH_SCRIPT",
+  "partial_bam_bytes": 93,
+  "diagnostic_decision": {
+    "schema_version": 5,
+    "failure_class": "TOOL_OR_ENV_FAILURE",
+    "failure_owner": "RUNTIME",
+    "recommended_action": "RUN_DIAGNOSTIC_PROBE",
+    "reason": "Collect bounded resource evidence before another primary attempt.",
+    "root_cause": "Two primary processes exited 137; the signal alone does not identify OOM or Slurm.",
+    "evidence": [
+      "primary attempt 1 exit_code=137",
+      "primary attempt 2 exit_code=137"
+    ],
+    "missing_evidence": [
+      "cgroup memory events",
+      "process resource limits",
+      "bounded input readability"
+    ],
+    "probe_objective": "Capture cgroup/ulimit data and a bounded input header without writing formal outputs.",
+    "confidence": 0.82,
+    "preferred_execution_mode": "INLINE"
+  },
+  "diagnostic_shell": "mkdir -p \"$BIOMIND_RECOVERY_SCRATCH_ROOT\"\nulimit -a > \"$BIOMIND_RECOVERY_SCRATCH_ROOT/ulimit.txt\"\nhead -c 4096 /proc/self/status > \"$BIOMIND_RECOVERY_SCRATCH_ROOT/process_status.txt\"",
+  "diagnostic_stdout": "memory.max=2147483648\nmemory.events oom=0 oom_kill=0\n",
+  "external_script": "#!/bin/bash\n#SBATCH --job-name=biomind-recovery-probe\n#SBATCH --cpus-per-task=2\nset -euo pipefail\nulimit -a\n"
+}

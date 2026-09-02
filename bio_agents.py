@@ -275,6 +275,8 @@ from agent_core.recovery import (
     structured_user_decision_required,
     build_recovery_execution_envelope,
     collect_diagnostic_scratch_metadata,
+    create_external_execution_bundle,
+    external_submission_unavailable,
     validate_diagnostic_action,
     validate_diagnostic_probe_code,
 )
@@ -34933,6 +34935,261 @@ question. Never guess a scientific or database identity.
                 "step_completion_candidate", "plan_patch", "blocked"
             }:
                 structured_action = self._bind_pending_action(structured_action, state, task_id)
+            if (
+                structured_action
+                and str(structured_action.get("result_contract") or "")
+                == RecoveryResultContract.EXECUTION_BUNDLE.value
+            ):
+                handoff_store = RecoveryStateStore(self.data_path, task_id)
+                handoff_envelope = RecoveryExecutionEnvelope.from_mapping(
+                    structured_action.get("recovery_execution_envelope")
+                )
+                handoff_plan = load_plan_state(self.data_path, task_id)
+                _, handoff_step = current_plan_step_with_index(handoff_plan)
+                handoff_step = handoff_step or {}
+                declared_output_paths: List[str] = []
+                for declared in handoff_step.get("outputs") or []:
+                    if isinstance(declared, Mapping):
+                        candidate = str(
+                            declared.get("path")
+                            or declared.get("expected_path")
+                            or declared.get("template")
+                            or ""
+                        )
+                    else:
+                        candidate = str(declared or "")
+                    if candidate:
+                        declared_output_paths.append(candidate)
+                bundle_dir = (
+                    handoff_store.root
+                    / "external_jobs"
+                    / handoff_envelope.action_id
+                )
+                try:
+                    external_bundle = create_external_execution_bundle(
+                        task_root=handoff_store.root.parent,
+                        execution_envelope=handoff_envelope,
+                        script_body=str(structured_action.get("code") or ""),
+                        session_id=str(
+                            state.get("session_id") or task_id
+                        ),
+                        task_revision=int(
+                            structured_action.get("task_revision")
+                            or state.get("task_revision")
+                            or 0
+                        ),
+                        plan_revision=int(
+                            structured_action.get("plan_revision")
+                            or handoff_plan.get("plan_revision")
+                            or 0
+                        ),
+                        working_directory=str(
+                            structured_action.get("working_directory")
+                            or os.getcwd()
+                        ),
+                        approved_input_bindings=(
+                            structured_action.get("runtime_binding_records")
+                            or []
+                        ),
+                        declared_output_paths=declared_output_paths,
+                        stdout_pattern=str(bundle_dir / "slurm-%j.out"),
+                        stderr_pattern=str(bundle_dir / "slurm-%j.err"),
+                    )
+                    handoff_store.save_external_execution_bundle(
+                        external_bundle
+                    )
+                except RecoveryExecutionContractError as exc:
+                    rejection_fingerprint = hashlib.sha256(
+                        (
+                            f"{exc.code}|{exc.message}|"
+                            f"{handoff_envelope.immutable_hash}"
+                        ).encode("utf-8", errors="replace")
+                    ).hexdigest()[:24]
+                    payload_revision = int(
+                        structured_action.get("payload_revision") or 0
+                    )
+                    rejection = handoff_store.record_preaction_rejection(
+                        envelope_hash=handoff_envelope.immutable_hash,
+                        validation_fingerprint=rejection_fingerprint,
+                        action_id=handoff_envelope.action_id,
+                        payload_revision=payload_revision,
+                    )
+                    rejection_identity = (
+                        f"{handoff_envelope.action_id}:"
+                        f"{rejection_fingerprint}:{payload_revision}"
+                    )
+                    self._record_recovery_counter_once(
+                        task_id,
+                        "preaction_rejections",
+                        rejection_identity,
+                    )
+                    if (
+                        handoff_envelope.execution_purpose
+                        == "DIAGNOSTIC"
+                    ):
+                        self._record_recovery_counter_once(
+                            task_id,
+                            "diagnostic_probes_not_executed",
+                            rejection_identity,
+                        )
+                    handoff_store.append_trace(
+                        "DIAGNOSTIC_ACTION_NOT_EXECUTED"
+                        if handoff_envelope.execution_purpose == "DIAGNOSTIC"
+                        else "EXTERNAL_EXECUTION_BUNDLE_REJECTED",
+                        {
+                            "action_id": handoff_envelope.action_id,
+                            "code": exc.code,
+                            "message": exc.message,
+                            "validation_fingerprint": rejection_fingerprint,
+                            "payload_revision": payload_revision,
+                            "terminal": bool(rejection.get("terminal")),
+                        },
+                    )
+                    if bool(rejection.get("terminal")):
+                        handoff_store.append_trace(
+                            "RECOVERY_EXHAUSTED",
+                            {
+                                "code": (
+                                    "RECOVERY_PREACTION_REJECTION_EXHAUSTED"
+                                ),
+                                **rejection,
+                            },
+                        )
+                    return {
+                        "messages": [response, SystemMessage(content=(
+                            f"{exc.code}: {exc.message}. "
+                            "Repair only the Slurm script payload; the external "
+                            "execution envelope is immutable."
+                        ))],
+                        "pending_action": {},
+                        "pending_recovery_action": {
+                            "type": (
+                                "internal_protocol_error"
+                                if rejection.get("terminal")
+                                else "same_step_generate"
+                            ),
+                            "reason": (
+                                "RECOVERY_PREACTION_REJECTION_EXHAUSTED"
+                                if rejection.get("terminal")
+                                else exc.code
+                            ),
+                            "failure_owner": (
+                                RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+                                if rejection.get("terminal")
+                                else RecoveryFailureOwner.GENERATED_ACTION.value
+                            ),
+                            "repair_domain": (
+                                PreActionRepairDomain.GENERATED_SEMANTIC.value
+                            ),
+                            "execution_started": False,
+                            "execution_envelope": handoff_envelope.to_dict(),
+                            "payload_revision": payload_revision + 1,
+                        },
+                        "required_next_action": (
+                            "INTERNAL_PROTOCOL_ERROR"
+                            if rejection.get("terminal")
+                            else "CORRECTIVE_GENERATE"
+                        ),
+                        "failure_owner": (
+                            RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+                            if rejection.get("terminal")
+                            else RecoveryFailureOwner.GENERATED_ACTION.value
+                        ),
+                        "execution_started": False,
+                        "generate_result": (
+                            "BLOCKED"
+                            if rejection.get("terminal")
+                            else "NEEDS_RECOVERY"
+                        ),
+                        "generate_exit_reason": (
+                            "external_bundle_preaction_rejection_exhausted"
+                            if rejection.get("terminal")
+                            else "external_bundle_preaction_rejected"
+                        ),
+                        "next_step": (
+                            "supervisor"
+                            if rejection.get("terminal")
+                            else "generate"
+                        ),
+                    }
+                waiting = external_submission_unavailable(
+                    external_bundle,
+                    approved_root=handoff_store.root.parent,
+                    reason=(
+                        "scheduler submission capability is unavailable in "
+                        "the Controller environment"
+                    ),
+                )
+                handoff_store.append_trace(
+                    "EXTERNAL_EXECUTION_BUNDLE_CREATED",
+                    external_bundle.to_dict(),
+                )
+                handoff_store.append_trace(
+                    "EXTERNAL_SUBMISSION_UNAVAILABLE",
+                    waiting,
+                )
+                handoff_store.append_trace(
+                    "AWAITING_USER_SUBMISSION",
+                    waiting,
+                )
+                self._record_recovery_counter_once(
+                    task_id,
+                    "external_handoffs_created",
+                    external_bundle.action_id,
+                )
+                waiting_path = save_waiting_state(
+                    self.data_path,
+                    task_id,
+                    stage="external_execution_submission",
+                    prompt=(
+                        "Submit the validated external job, then resume with "
+                        "the manifest/resume token and job result. Command: "
+                        f"{waiting['submit_command']}"
+                    ),
+                    payload={
+                        "workflow_status": "AWAITING_USER_SUBMISSION",
+                        "external_handoff": waiting,
+                        "execution_bundle": external_bundle.to_dict(),
+                    },
+                    reason="AWAITING_USER_SUBMISSION",
+                    timeout_seconds=None,
+                )
+                if self.state_manager:
+                    try:
+                        self.state_manager.update_task_status(
+                            task_id, "waiting_user"
+                        )
+                    except Exception:
+                        pass
+                return {
+                    "messages": [response, SystemMessage(content=(
+                        "External execution bundle validated. Submit exactly: "
+                        f"{waiting['submit_command']}"
+                    ))],
+                    "pending_action": {},
+                    "pending_human_question": {
+                        "type": "external_execution_submission",
+                        "stage": "external_execution_submission",
+                        "question": (
+                            "Submit the validated job and provide the job ID or "
+                            "completed result references. Exact command: "
+                            f"{waiting['submit_command']}"
+                        ),
+                        "manifest_path": external_bundle.manifest_path,
+                        "resume_token": external_bundle.resume_token,
+                        "resume_step": "supervisor",
+                    },
+                    "external_handoff": waiting,
+                    "external_execution_bundle": external_bundle.to_dict(),
+                    "waiting_state_path": str(waiting_path),
+                    "workflow_status": "AWAITING_USER_SUBMISSION",
+                    "handoff_action_status": "SUCCEEDED",
+                    "step_completion_candidate": {},
+                    "completion_candidate": {},
+                    "generate_result": "GENERATED_ACTION",
+                    "generate_exit_reason": "awaiting_user_submission",
+                    "next_step": "ask_user",
+                }
             action_type = str(structured_action.get("type") or "").strip()
             has_execute_body = bool(
                 (execute_match and execute_match.group(1).strip())

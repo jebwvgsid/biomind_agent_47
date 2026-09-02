@@ -135,6 +135,11 @@ class AgentState(TypedDict, total=False):
     recovery_execution_envelope: dict
     diagnostic_evidence: dict
     probe_lifecycle: List[dict]
+    external_handoff: dict
+    external_execution_bundle: dict
+    workflow_status: Optional[str]
+    handoff_action_status: Optional[str]
+    waiting_state_path: Optional[str]
     recovery_application: dict
     pre_action_evidence: dict
     dependency_evidence: dict

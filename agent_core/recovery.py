@@ -12,7 +12,9 @@ import difflib
 import hashlib
 import json
 import re
+import shlex
 import shutil
+import subprocess
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -419,6 +421,515 @@ class RecoveryPolicyOutcome:
         value = asdict(self)
         value["budget_charges"] = list(self.budget_charges)
         return value
+
+
+@dataclass(frozen=True)
+class ExternalExecutionBundle:
+    """Durable Controller-owned contract for one externally submitted action."""
+
+    schema_version: int = 1
+    session_id: str = ""
+    task_revision: int = 0
+    plan_revision: int = 0
+    step_id: str = ""
+    recovery_decision_id: str = ""
+    action_id: str = ""
+    execution_purpose: str = ""
+    intended_result_contract_after_external_execution: str = ""
+    scheduler: str = "slurm"
+    script_path: str = ""
+    manifest_path: str = ""
+    script_sha256: str = ""
+    working_directory: str = ""
+    approved_input_bindings: Tuple[Mapping[str, Any], ...] = ()
+    declared_output_paths: Tuple[str, ...] = ()
+    stdout_pattern: str = ""
+    stderr_pattern: str = ""
+    submit_argv: Tuple[str, ...] = ()
+    resume_token: str = ""
+    execution_envelope: Mapping[str, Any] = field(default_factory=dict)
+    status: str = "BUNDLE_VALIDATED"
+    created_at: str = field(default_factory=_now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        value = asdict(self)
+        value["approved_input_bindings"] = [
+            dict(item) for item in self.approved_input_bindings
+        ]
+        value["declared_output_paths"] = list(self.declared_output_paths)
+        value["submit_argv"] = list(self.submit_argv)
+        value["execution_envelope"] = dict(self.execution_envelope)
+        value["completion_eligible"] = False
+        return value
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> "ExternalExecutionBundle":
+        if not isinstance(value, Mapping):
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_EXECUTION_BUNDLE_INVALID",
+                "execution bundle must be an object",
+            )
+        data = dict(value)
+        try:
+            bundle = cls(
+                schema_version=int(data.get("schema_version") or 1),
+                session_id=str(data.get("session_id") or ""),
+                task_revision=int(data.get("task_revision") or 0),
+                plan_revision=int(data.get("plan_revision") or 0),
+                step_id=str(data.get("step_id") or ""),
+                recovery_decision_id=str(
+                    data.get("recovery_decision_id") or ""
+                ),
+                action_id=str(data.get("action_id") or ""),
+                execution_purpose=str(
+                    data.get("execution_purpose") or ""
+                ).upper(),
+                intended_result_contract_after_external_execution=str(
+                    data.get(
+                        "intended_result_contract_after_external_execution"
+                    )
+                    or ""
+                ).upper(),
+                scheduler=str(data.get("scheduler") or "").lower(),
+                script_path=str(data.get("script_path") or ""),
+                manifest_path=str(data.get("manifest_path") or ""),
+                script_sha256=str(data.get("script_sha256") or ""),
+                working_directory=str(data.get("working_directory") or ""),
+                approved_input_bindings=tuple(
+                    dict(item)
+                    for item in data.get("approved_input_bindings") or []
+                    if isinstance(item, Mapping)
+                ),
+                declared_output_paths=tuple(
+                    str(item)
+                    for item in data.get("declared_output_paths") or []
+                    if str(item or "")
+                ),
+                stdout_pattern=str(data.get("stdout_pattern") or ""),
+                stderr_pattern=str(data.get("stderr_pattern") or ""),
+                submit_argv=tuple(
+                    str(item) for item in data.get("submit_argv") or []
+                ),
+                resume_token=str(data.get("resume_token") or ""),
+                execution_envelope=dict(data.get("execution_envelope") or {}),
+                status=str(data.get("status") or "BUNDLE_VALIDATED"),
+                created_at=str(data.get("created_at") or _now()),
+            )
+        except (TypeError, ValueError) as exc:
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_EXECUTION_BUNDLE_INVALID",
+                "bundle revisions must be integers",
+            ) from exc
+        required = {
+            "session_id": bundle.session_id,
+            "step_id": bundle.step_id,
+            "recovery_decision_id": bundle.recovery_decision_id,
+            "action_id": bundle.action_id,
+            "script_path": bundle.script_path,
+            "manifest_path": bundle.manifest_path,
+            "script_sha256": bundle.script_sha256,
+            "working_directory": bundle.working_directory,
+            "stdout_pattern": bundle.stdout_pattern,
+            "stderr_pattern": bundle.stderr_pattern,
+            "resume_token": bundle.resume_token,
+        }
+        missing = sorted(key for key, item in required.items() if not item)
+        if missing:
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_EXECUTION_BUNDLE_INVALID",
+                "missing required fields: " + ", ".join(missing),
+            )
+        if bundle.scheduler != "slurm":
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_EXECUTION_BUNDLE_INVALID",
+                "only the Controller-owned slurm scheduler contract is supported",
+            )
+        if bundle.execution_purpose not in {
+            item.value for item in RecoveryExecutionPurpose
+        }:
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_EXECUTION_BUNDLE_INVALID",
+                "execution_purpose is invalid",
+            )
+        expected_result = (
+            RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+            if bundle.execution_purpose
+            == RecoveryExecutionPurpose.DIAGNOSTIC.value
+            else RecoveryResultContract.FORMAL_OUTPUTS.value
+        )
+        if (
+            bundle.intended_result_contract_after_external_execution
+            != expected_result
+        ):
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_EXECUTION_BUNDLE_INVALID",
+                "post-external result contract is incompatible with the purpose",
+            )
+        return bundle
+
+
+@dataclass(frozen=True)
+class ExternalExecutionResult:
+    """Identity-bound result supplied after an external scheduler handoff."""
+
+    schema_version: int = 1
+    session_id: str = ""
+    step_id: str = ""
+    action_id: str = ""
+    recovery_decision_id: str = ""
+    resume_token: str = ""
+    script_sha256: str = ""
+    job_id: str = ""
+    status: str = "RESULT_INGESTED"
+    exit_code: Optional[int] = None
+    signal: Optional[int] = None
+    stdout_ref: str = ""
+    stderr_ref: str = ""
+    result_paths: Tuple[str, ...] = ()
+    validated_artifacts: Tuple[str, ...] = ()
+    created_at: str = field(default_factory=_now)
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> "ExternalExecutionResult":
+        if not isinstance(value, Mapping):
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_RESULT_INVALID", "external result must be an object"
+            )
+        data = dict(value)
+        try:
+            exit_code = (
+                int(data.get("exit_code"))
+                if data.get("exit_code") is not None
+                else None
+            )
+            signal = (
+                int(data.get("signal"))
+                if data.get("signal") is not None
+                else None
+            )
+        except (TypeError, ValueError) as exc:
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_RESULT_INVALID",
+                "exit_code and signal must be integers when present",
+            ) from exc
+        result = cls(
+            schema_version=int(data.get("schema_version") or 1),
+            session_id=str(data.get("session_id") or ""),
+            step_id=str(data.get("step_id") or ""),
+            action_id=str(data.get("action_id") or ""),
+            recovery_decision_id=str(data.get("recovery_decision_id") or ""),
+            resume_token=str(data.get("resume_token") or ""),
+            script_sha256=str(data.get("script_sha256") or ""),
+            job_id=str(data.get("job_id") or ""),
+            status=str(data.get("status") or "RESULT_INGESTED"),
+            exit_code=exit_code,
+            signal=signal,
+            stdout_ref=str(data.get("stdout_ref") or ""),
+            stderr_ref=str(data.get("stderr_ref") or ""),
+            result_paths=tuple(
+                str(item) for item in data.get("result_paths") or []
+                if str(item or "")
+            ),
+            validated_artifacts=tuple(
+                str(item) for item in data.get("validated_artifacts") or []
+                if str(item or "")
+            ),
+            created_at=str(data.get("created_at") or _now()),
+        )
+        required = {
+            "session_id": result.session_id,
+            "step_id": result.step_id,
+            "action_id": result.action_id,
+            "recovery_decision_id": result.recovery_decision_id,
+            "resume_token": result.resume_token,
+            "script_sha256": result.script_sha256,
+        }
+        missing = sorted(key for key, item in required.items() if not item)
+        if missing:
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_RESULT_INVALID",
+                "missing required fields: " + ", ".join(missing),
+            )
+        return result
+
+    def to_dict(self) -> Dict[str, Any]:
+        value = asdict(self)
+        value["result_paths"] = list(self.result_paths)
+        value["validated_artifacts"] = list(self.validated_artifacts)
+        return value
+
+
+def _path_is_within(path: Path, root: Path) -> bool:
+    resolved = path.resolve(strict=False)
+    boundary = root.resolve(strict=False)
+    return resolved == boundary or boundary in resolved.parents
+
+
+def _validate_slurm_script(script: Any) -> str:
+    text = str(script or "").replace("\r\n", "\n").strip() + "\n"
+    if "\x00" in text:
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_SCRIPT_INVALID", "Slurm script contains a NUL byte"
+        )
+    lines = text.splitlines()
+    if not lines or lines[0].strip() not in {"#!/bin/bash", "#!/usr/bin/env bash"}:
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_SCRIPT_INVALID",
+            "Slurm script must start with a bash shebang",
+        )
+    if not any(line.lstrip().startswith("#SBATCH") for line in lines[1:]):
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_SCRIPT_INVALID",
+            "Slurm script must declare at least one #SBATCH directive",
+        )
+    executable = [
+        line for line in lines[1:]
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    if not executable:
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_SCRIPT_INVALID", "Slurm script has no executable body"
+        )
+    try:
+        syntax_check = subprocess.run(
+            ["bash", "-n"],
+            input=text,
+            text=True,
+            capture_output=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_SCRIPT_VALIDATION_UNAVAILABLE",
+            "bash syntax validation could not be completed",
+        ) from exc
+    if syntax_check.returncode != 0:
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_SCRIPT_INVALID",
+            "bash -n rejected the Slurm script: "
+            + _clip(syntax_check.stderr, 1000),
+        )
+    return text
+
+
+def _external_resume_token(
+    *,
+    session_id: str,
+    step_id: str,
+    action_id: str,
+    recovery_decision_id: str,
+    script_sha256: str,
+) -> str:
+    return hashlib.sha256(
+        "|".join((
+            session_id, step_id, action_id, recovery_decision_id,
+            script_sha256,
+        )).encode("utf-8", errors="replace")
+    ).hexdigest()
+
+
+def create_external_execution_bundle(
+    *,
+    task_root: str | Path,
+    execution_envelope: RecoveryExecutionEnvelope | Mapping[str, Any],
+    script_body: str,
+    session_id: str,
+    task_revision: int,
+    plan_revision: int,
+    working_directory: str | Path,
+    approved_input_bindings: Iterable[Mapping[str, Any]] = (),
+    declared_output_paths: Iterable[str] = (),
+    stdout_pattern: str = "slurm-%j.out",
+    stderr_pattern: str = "slurm-%j.err",
+) -> ExternalExecutionBundle:
+    """Persist and validate a run-scoped Slurm handoff without submitting it."""
+    envelope = (
+        execution_envelope
+        if isinstance(execution_envelope, RecoveryExecutionEnvelope)
+        else RecoveryExecutionEnvelope.from_mapping(execution_envelope)
+    )
+    if (
+        envelope.execution_mode
+        != RecoveryExecutionMode.EXTERNAL_HANDOFF.value
+        or envelope.result_contract
+        != RecoveryResultContract.EXECUTION_BUNDLE.value
+    ):
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_EXECUTION_BUNDLE_AUTHORITY_MISMATCH",
+            "external bundle creation requires EXTERNAL_HANDOFF/EXECUTION_BUNDLE",
+        )
+    script = _validate_slurm_script(script_body)
+    root = Path(task_root).resolve(strict=False)
+    bundle_dir = root / "recovery" / "external_jobs" / envelope.action_id
+    script_path = bundle_dir / "job.sh"
+    manifest_path = bundle_dir / "manifest.json"
+    if not _path_is_within(script_path, root) or not _path_is_within(
+        manifest_path, root
+    ):
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_EXECUTION_PATH_ESCAPE",
+            "script and manifest must remain under the task run directory",
+        )
+    script_sha256 = hashlib.sha256(
+        script.encode("utf-8", errors="replace")
+    ).hexdigest()
+    resume_token = _external_resume_token(
+        session_id=str(session_id or ""),
+        step_id=envelope.step_id,
+        action_id=envelope.action_id,
+        recovery_decision_id=envelope.recovery_decision_id,
+        script_sha256=script_sha256,
+    )
+    intended_result_contract = (
+        RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+        if envelope.execution_purpose
+        == RecoveryExecutionPurpose.DIAGNOSTIC.value
+        else RecoveryResultContract.FORMAL_OUTPUTS.value
+    )
+    draft = ExternalExecutionBundle(
+        session_id=str(session_id or ""),
+        task_revision=max(0, int(task_revision or 0)),
+        plan_revision=max(0, int(plan_revision or 0)),
+        step_id=envelope.step_id,
+        recovery_decision_id=envelope.recovery_decision_id,
+        action_id=envelope.action_id,
+        execution_purpose=envelope.execution_purpose,
+        intended_result_contract_after_external_execution=(
+            intended_result_contract
+        ),
+        scheduler="slurm",
+        script_path=str(script_path),
+        manifest_path=str(manifest_path),
+        script_sha256=script_sha256,
+        working_directory=str(Path(working_directory).resolve(strict=False)),
+        approved_input_bindings=tuple(
+            _redact_mapping(dict(item))
+            for item in approved_input_bindings
+            if isinstance(item, Mapping)
+        ),
+        declared_output_paths=tuple(
+            str(item) for item in declared_output_paths if str(item or "")
+        ),
+        stdout_pattern=str(stdout_pattern or "slurm-%j.out"),
+        stderr_pattern=str(stderr_pattern or "slurm-%j.err"),
+        submit_argv=("sbatch", str(script_path)),
+        resume_token=resume_token,
+        execution_envelope=envelope.to_dict(),
+    )
+    bundle_dir.mkdir(parents=True, exist_ok=True)
+    script_path.write_text(script, encoding="utf-8")
+    script_path.chmod(0o750)
+    _json_write(manifest_path, draft.to_dict())
+    return validate_external_execution_bundle(draft, approved_root=root)
+
+
+def validate_external_execution_bundle(
+    value: ExternalExecutionBundle | Mapping[str, Any],
+    *,
+    approved_root: str | Path,
+    expected_envelope: Optional[
+        RecoveryExecutionEnvelope | Mapping[str, Any]
+    ] = None,
+) -> ExternalExecutionBundle:
+    """Verify run boundary, script hash, deterministic argv, and authority."""
+    bundle = ExternalExecutionBundle.from_mapping(
+        value.to_dict()
+        if isinstance(value, ExternalExecutionBundle)
+        else value
+    )
+    root = Path(approved_root).resolve(strict=False)
+    script_path = Path(bundle.script_path)
+    manifest_path = Path(bundle.manifest_path)
+    if not _path_is_within(script_path, root) or not _path_is_within(
+        manifest_path, root
+    ):
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_EXECUTION_PATH_ESCAPE",
+            "script and manifest must remain under the task run directory",
+        )
+    if not script_path.is_file() or not manifest_path.is_file():
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_EXECUTION_BUNDLE_INCOMPLETE",
+            "script and manifest must both exist",
+        )
+    script = _validate_slurm_script(script_path.read_text(encoding="utf-8"))
+    actual_hash = hashlib.sha256(
+        script.encode("utf-8", errors="replace")
+    ).hexdigest()
+    if actual_hash != bundle.script_sha256:
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_SCRIPT_HASH_MISMATCH", "persisted Slurm script changed"
+        )
+    expected_resume_token = _external_resume_token(
+        session_id=bundle.session_id,
+        step_id=bundle.step_id,
+        action_id=bundle.action_id,
+        recovery_decision_id=bundle.recovery_decision_id,
+        script_sha256=bundle.script_sha256,
+    )
+    if bundle.resume_token != expected_resume_token:
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_RESUME_TOKEN_MISMATCH",
+            "resume token does not match the bundle identity",
+        )
+    if tuple(bundle.submit_argv) != ("sbatch", str(script_path)):
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_SUBMIT_ARGV_INVALID",
+            "submit argv must be constructed by the Controller",
+        )
+    envelope = RecoveryExecutionEnvelope.from_mapping(
+        bundle.execution_envelope
+    )
+    if expected_envelope is not None:
+        expected = (
+            expected_envelope
+            if isinstance(expected_envelope, RecoveryExecutionEnvelope)
+            else RecoveryExecutionEnvelope.from_mapping(expected_envelope)
+        )
+        if envelope.immutable_hash != expected.immutable_hash:
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_EXECUTION_ENVELOPE_MISMATCH",
+                "bundle authority does not match the expected recovery action",
+            )
+    if (
+        envelope.action_id != bundle.action_id
+        or envelope.step_id != bundle.step_id
+        or envelope.recovery_decision_id != bundle.recovery_decision_id
+        or envelope.execution_purpose != bundle.execution_purpose
+    ):
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_EXECUTION_IDENTITY_MISMATCH",
+            "bundle identities do not match its execution envelope",
+        )
+    return bundle
+
+
+def external_submission_unavailable(
+    bundle: ExternalExecutionBundle | Mapping[str, Any],
+    *,
+    approved_root: str | Path,
+    reason: str,
+) -> Dict[str, Any]:
+    """Project scheduler denial as waiting, never as a scientific failure."""
+    validated = validate_external_execution_bundle(
+        bundle, approved_root=approved_root
+    )
+    return {
+        "status": "AWAITING_USER_SUBMISSION",
+        "workflow_status": "AWAITING_USER_SUBMISSION",
+        "action_status": "SUCCEEDED",
+        "step_status": "SUSPENDED",
+        "task_complete": False,
+        "task_blocked": False,
+        "scientific_failure": False,
+        "submission_error": _clip(reason, 2000),
+        "manifest_path": validated.manifest_path,
+        "resume_token": validated.resume_token,
+        "submit_argv": list(validated.submit_argv),
+        "submit_command": shlex.join(list(validated.submit_argv)),
+        "completion_eligible": False,
+    }
 
 
 def _diagnostic_write_target(
@@ -1381,6 +1892,108 @@ class DiagnosticEvidenceRecord:
         ]
         value["completion_eligible"] = False
         return value
+
+
+def ingest_external_execution_result(
+    bundle_value: ExternalExecutionBundle | Mapping[str, Any],
+    result_value: ExternalExecutionResult | Mapping[str, Any],
+    *,
+    approved_root: str | Path,
+    expected_session_id: str,
+    expected_step_id: str,
+    expected_action_id: str,
+    formal_artifacts_validated: bool = False,
+) -> Dict[str, Any]:
+    """Validate an external result and route it without bypassing formal gates."""
+    bundle = validate_external_execution_bundle(
+        bundle_value, approved_root=approved_root
+    )
+    result = ExternalExecutionResult.from_mapping(
+        result_value.to_dict()
+        if isinstance(result_value, ExternalExecutionResult)
+        else result_value
+    )
+    expected = {
+        "session_id": str(expected_session_id or ""),
+        "step_id": str(expected_step_id or ""),
+        "action_id": str(expected_action_id or ""),
+    }
+    actual = {
+        "session_id": result.session_id,
+        "step_id": result.step_id,
+        "action_id": result.action_id,
+    }
+    if actual != expected:
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_RESULT_STALE_IDENTITY",
+            "external result belongs to a different session, step, or action",
+        )
+    if (
+        result.session_id != bundle.session_id
+        or result.step_id != bundle.step_id
+        or result.action_id != bundle.action_id
+        or result.recovery_decision_id != bundle.recovery_decision_id
+        or result.resume_token != bundle.resume_token
+        or result.script_sha256 != bundle.script_sha256
+    ):
+        raise RecoveryExecutionContractError(
+            "EXTERNAL_RESULT_IDENTITY_MISMATCH",
+            "resume token or bundle identity does not match",
+        )
+    envelope = RecoveryExecutionEnvelope.from_mapping(
+        bundle.execution_envelope
+    )
+    projection: Dict[str, Any] = {
+        "status": "EXTERNAL_RESULT_INGESTED",
+        "external_result": result.to_dict(),
+        "step_complete": False,
+        "task_complete": False,
+        "completion_eligible": False,
+    }
+    if (
+        envelope.execution_purpose
+        == RecoveryExecutionPurpose.DIAGNOSTIC.value
+    ):
+        evidence = DiagnosticEvidenceRecord.from_execution(
+            {
+                "execution_attempt_id": (
+                    f"external:{result.job_id or result.action_id}"
+                ),
+                "exit_code": result.exit_code,
+                "signal": result.signal,
+                "stdout_log": result.stdout_ref,
+                "stderr_log": result.stderr_ref,
+                "stdout_summary": result.stdout_ref,
+                "stderr_summary": result.stderr_ref,
+                "validation": {
+                    "source": "external_execution_result",
+                    "identity_validated": True,
+                },
+            },
+            envelope,
+        )
+        projection.update({
+            "route": "supervisor",
+            "diagnostic_evidence": evidence.to_dict(),
+            "result_contract": (
+                RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+            ),
+        })
+        return projection
+    validated = [str(item) for item in result.validated_artifacts]
+    projection.update({
+        "route": (
+            "completion_gate"
+            if formal_artifacts_validated and validated
+            else "formal_artifact_validation"
+        ),
+        "result_contract": RecoveryResultContract.FORMAL_OUTPUTS.value,
+        "validated_artifacts": validated,
+        "completion_eligible": bool(
+            formal_artifacts_validated and validated and result.exit_code == 0
+        ),
+    })
+    return projection
 
 
 @dataclass(frozen=True)
@@ -4459,6 +5072,93 @@ class RecoveryStateStore:
 
     def load_probe_lifecycle(self) -> List[Dict[str, Any]]:
         return self._read_jsonl(self.root / "probe_lifecycle.jsonl")
+
+    def save_external_execution_bundle(
+        self,
+        bundle: ExternalExecutionBundle | Mapping[str, Any],
+    ) -> Path:
+        """Index one validated handoff by its stable action identity."""
+        validated = validate_external_execution_bundle(
+            bundle,
+            approved_root=self.root.parent,
+        )
+        path = self.root / "external_jobs" / validated.action_id / "manifest.json"
+        if Path(validated.manifest_path).resolve(strict=False) != path.resolve(
+            strict=False
+        ):
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_EXECUTION_MANIFEST_PATH_MISMATCH",
+                "bundle manifest is not at the Controller-owned action path",
+            )
+        _json_write(path, validated.to_dict())
+        return path
+
+    def load_external_execution_bundle(
+        self,
+        action_id: str,
+    ) -> ExternalExecutionBundle:
+        safe_action_id = re.sub(
+            r"[^A-Za-z0-9_.-]+", "_", str(action_id or "")
+        )
+        if not safe_action_id or safe_action_id != str(action_id or ""):
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_EXECUTION_ACTION_ID_INVALID",
+                "external action_id is invalid",
+            )
+        path = self.root / "external_jobs" / safe_action_id / "manifest.json"
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RecoveryExecutionContractError(
+                "EXTERNAL_EXECUTION_BUNDLE_NOT_FOUND",
+                "external manifest is missing or unreadable",
+            ) from exc
+        return validate_external_execution_bundle(
+            value,
+            approved_root=self.root.parent,
+        )
+
+    def ingest_external_execution_result(
+        self,
+        action_id: str,
+        result: ExternalExecutionResult | Mapping[str, Any],
+        *,
+        expected_session_id: str,
+        expected_step_id: str,
+        formal_artifacts_validated: bool = False,
+    ) -> Dict[str, Any]:
+        """Persist one identity-checked result for later graph resumption."""
+        bundle = self.load_external_execution_bundle(action_id)
+        projection = ingest_external_execution_result(
+            bundle,
+            result,
+            approved_root=self.root.parent,
+            expected_session_id=expected_session_id,
+            expected_step_id=expected_step_id,
+            expected_action_id=action_id,
+            formal_artifacts_validated=formal_artifacts_validated,
+        )
+        result_path = (
+            self.root / "external_jobs" / action_id / "external_result.json"
+        )
+        _json_write(result_path, projection)
+        diagnostic = projection.get("diagnostic_evidence")
+        if isinstance(diagnostic, Mapping):
+            self.save_diagnostic_evidence(
+                DiagnosticEvidenceRecord(**{
+                    key: value
+                    for key, value in dict(diagnostic).items()
+                    if key in DiagnosticEvidenceRecord.__dataclass_fields__
+                })
+            )
+        self.append_trace("EXTERNAL_RESULT_INGESTED", {
+            "action_id": action_id,
+            "manifest_path": bundle.manifest_path,
+            "result_path": str(result_path),
+            "route": projection.get("route"),
+            "completion_eligible": projection.get("completion_eligible"),
+        })
+        return {**projection, "result_path": str(result_path)}
 
     def record_preaction_rejection(
         self,
