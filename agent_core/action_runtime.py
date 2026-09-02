@@ -25,6 +25,20 @@ ACTION_APPROVAL_IDENTITY_SCHEMA_VERSION = 1
 _ENV_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]{1,127}$")
 _BINDING_ID_RE = re.compile(r"^(?:runtime|artifact)\.[a-z0-9][a-z0-9_.-]{0,126}$")
 
+# The internal resolution returned by ``resolve_action_runtime_bindings`` is an
+# authorization object.  Its contract hash and manifest identities must remain
+# Controller-only.  Provider projections are built independently from this
+# explicit semantic allowlist; they are never produced by copying the internal
+# object and deleting a few known keys.
+LLM_CAPABILITY_FIELD_ALLOWLIST = (
+    "capability_id",
+    "selected_skill_id",
+    "required_runtime_binding_ids",
+    "optional_runtime_binding_ids",
+    "required_artifact_binding_ids",
+    "execution_guidance",
+)
+
 
 def _canonical_json(value: Any) -> str:
     return json.dumps(
@@ -411,7 +425,21 @@ def resolve_action_runtime_bindings(
 
 
 def project_action_runtime_for_provider(resolution: Mapping[str, Any]) -> Dict[str, Any]:
-    contract = dict(resolution.get("capability_contract") or {})
+    internal_contract = resolution.get("capability_contract") or {}
+    contract = (
+        internal_contract if isinstance(internal_contract, Mapping) else {}
+    )
+    capability_view: Dict[str, Any] = {}
+    for field in LLM_CAPABILITY_FIELD_ALLOWLIST:
+        value = contract.get(field)
+        if value in (None, "", [], {}):
+            continue
+        if isinstance(value, (list, tuple, set)):
+            capability_view[field] = [
+                str(item) for item in value if str(item).strip()
+            ]
+        else:
+            capability_view[field] = str(value)
     rows = [
         {
             "binding_id": str(row.get("binding_id") or ""),
@@ -423,15 +451,7 @@ def project_action_runtime_for_provider(resolution: Mapping[str, Any]) -> Dict[s
         if isinstance(row, Mapping) and str(row.get("env_name") or "")
     ]
     return {
-        "current_action_capability": {
-            "capability_id": str(contract.get("capability_id") or ""),
-            "contract_hash": str(resolution.get("capability_contract_hash") or ""),
-            "execution_guidance": [
-                str(item)
-                for item in contract.get("execution_guidance", []) or []
-                if str(item).strip()
-            ],
-        },
+        "current_action_capability": capability_view,
         "current_action_runtime_bindings": rows,
     }
 
@@ -563,6 +583,61 @@ def project_action_capability_context_for_provider(
             artifact_environment
         ),
     }
+
+
+def serialize_action_capability_instructions(
+    provider_context: Mapping[str, Any],
+    *,
+    script_protocol: str = "",
+) -> str:
+    """Serialize only the already allowlisted LLM capability view.
+
+    This deliberately reconstructs the three provider-facing sections rather
+    than accepting an internal runtime resolution.  Stable JSON makes prompt
+    audits and offline replays deterministic.
+    """
+    capability = provider_context.get("current_action_capability") or {}
+    runtime_rows = provider_context.get("current_action_runtime_bindings") or []
+    artifact_rows = provider_context.get("current_action_artifact_bindings") or []
+    payload: Dict[str, Any] = {
+        "current_action_capability": {
+            field: deepcopy(capability.get(field))
+            for field in LLM_CAPABILITY_FIELD_ALLOWLIST
+            if isinstance(capability, Mapping)
+            and capability.get(field) not in (None, "", [], {})
+        },
+        "current_action_runtime_bindings": [
+            {
+                field: str(row.get(field) or "")
+                for field in (
+                    "binding_id", "shell_reference", "availability", "source_kind",
+                )
+                if str(row.get(field) or "")
+            }
+            for row in runtime_rows
+            if isinstance(row, Mapping)
+        ],
+        "current_action_artifact_bindings": [
+            {
+                field: str(row.get(field) or "")
+                for field in (
+                    "binding_id", "shell_reference", "direction", "availability",
+                )
+                if str(row.get(field) or "")
+            }
+            for row in artifact_rows
+            if isinstance(row, Mapping)
+        ],
+    }
+    if str(script_protocol or "").strip():
+        payload["script_protocol"] = str(script_protocol).strip()
+    return json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
 
 
 def build_execution_policy_manifest(

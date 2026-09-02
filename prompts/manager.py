@@ -2242,6 +2242,7 @@ document and keep selected/excluded decision sets disjoint.
         llm_payload: Mapping[str, Any],
         *,
         capability_instructions: str = "",
+        task_policy_instructions: str = "",
     ) -> str:
         semantic, focus = PromptManager._node_context_sections(llm_payload)
         focus_for_prompt = deepcopy(dict(focus))
@@ -2486,6 +2487,10 @@ diagnostically relevant stdout and stderr visible; do not redirect them to
 {capability_instructions or "No capability-specific instructions."}
 </capability_instructions>
 
+<task_policy_instructions>
+{task_policy_instructions or "No additional task-mode policy."}
+</task_policy_instructions>
+
 <current_focus>
 {focus_json}
 </current_focus>
@@ -2594,6 +2599,10 @@ blocked, or solution. Do not wrap the JSON in Markdown.
 <capability_instructions>
 {capability_instructions or "No capability-specific instructions."}
 </capability_instructions>
+
+<task_policy_instructions>
+{task_policy_instructions or "No additional task-mode policy."}
+</task_policy_instructions>
 
 <current_focus>
 {focus_json}
