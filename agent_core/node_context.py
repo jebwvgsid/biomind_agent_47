@@ -1935,12 +1935,23 @@ def build_node_context(
         raise NodeContextError(f"NODE_TYPE_UNSUPPORTED: {node_type!r}")
     runtime = dict(runtime or {})
     skill_context = dict(skill_context or {})
-    if normalized_node in {"generate", "recovery"}:
+    if normalized_node == "generate":
         # Inject canonical facts here rather than copying prose into individual
-        # prompts. Initial Generate, Corrective Generate and Recovery therefore
-        # consume the same policy that renders the Executor prologue.
+        # prompts. Initial and Corrective Generate consume the same policy that
+        # renders the Executor prologue. Recovery receives only semantic failure
+        # evidence and must not receive this machine-owned contract projection.
         runtime["execution_runtime_contract"] = execution_runtime_contract()
         runtime["validation_scope_contract"] = validation_scope_contract()
+    elif normalized_node == "recovery":
+        # Fail closed at the common provider boundary: callers cannot smuggle
+        # runtime snapshots, manifests, registries or revision data beside the
+        # approved semantic Recovery projection.
+        recovery_focus = runtime.get("recovery_focus")
+        runtime = (
+            {"recovery_focus": deepcopy(dict(recovery_focus))}
+            if isinstance(recovery_focus, Mapping)
+            else {}
+        )
     plan = dict(plan_state or {})
     semantic_plan_snapshot = dict(
         plan_snapshot or approved_plan_snapshot or {}

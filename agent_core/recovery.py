@@ -11,6 +11,7 @@ from __future__ import annotations
 import difflib
 import hashlib
 import json
+import os
 import re
 import shlex
 import shutil
@@ -20,7 +21,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from agent_core.context_lineage import redact_payload, redact_text
 from agent_core.recovery_contract import (
@@ -2256,6 +2257,121 @@ class RecoveryDecisionKind(str, Enum):
     ESCALATE = "ESCALATE"
     COMPLETE_STEP = "COMPLETE_STEP"
     COMPLETE_TASK = "COMPLETE_TASK"
+
+
+def _recovery_semantic_artifact_facts(
+    action_contract: Mapping[str, Any],
+) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for raw in action_contract.get("concrete_artifact_bindings", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        row = dict(raw)
+        projected = {
+            key: deepcopy(row.get(key))
+            for key in (
+                "semantic_handle", "role", "direction", "required", "format",
+                "artifact_kind", "path", "expected_path", "exists", "readable",
+                "parent_exists", "parent_writable",
+            )
+            if row.get(key) not in (None, "")
+        }
+        if projected:
+            rows.append(projected)
+    if rows:
+        return rows
+    for handle, raw_path in dict(
+        action_contract.get("materialized_artifacts") or {}
+    ).items():
+        path = str(raw_path or "")
+        if not path:
+            continue
+        direction = "output" if str(handle).startswith("output.") else "input"
+        candidate = Path(path).expanduser()
+        rows.append({
+            "semantic_handle": str(handle),
+            "direction": direction,
+            "path" if direction == "input" else "expected_path": path,
+            "exists": candidate.exists(),
+            "readable": bool(candidate.exists() and os.access(candidate, os.R_OK)),
+        })
+    return rows
+
+
+def _recovery_previous_summary(
+    attempts: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for raw in list(attempts or [])[-3:]:
+        if not isinstance(raw, Mapping):
+            continue
+        decision = raw.get("recovery_decision")
+        source = dict(decision) if isinstance(decision, Mapping) else dict(raw)
+        row = {
+            key: deepcopy(source.get(key))
+            for key in (
+                "root_cause", "failure_owner", "recommended_action",
+                "repair_strategy", "reason", "meaningful_progress",
+            )
+            if source.get(key) not in (None, "", [], {})
+        }
+        if row:
+            rows.append(row)
+    return rows
+
+
+def build_recovery_semantic_focus(
+    diagnostic_context: Any,
+) -> Dict[str, Any]:
+    """Return the exact semantic evidence allowed into RecoveryJudge."""
+    raw_current_step = dict(
+        getattr(diagnostic_context, "current_step", {}) or {}
+    )
+    current_step = {
+        key: deepcopy(raw_current_step.get(key))
+        for key in (
+            "title", "action", "purpose", "status", "inputs", "outputs",
+            "dependencies", "success_criteria",
+        )
+        if raw_current_step.get(key) not in (None, "", [], {})
+    }
+    action_contract = dict(
+        getattr(diagnostic_context, "action_contract", {}) or {}
+    )
+    execution = dict(getattr(diagnostic_context, "execution", {}) or {})
+    recent_attempts = list(
+        getattr(diagnostic_context, "recent_attempts", []) or []
+    )
+    semantic_action = {
+        key: deepcopy(action_contract.get(key))
+        for key in (
+            "type", "action_type", "language", "argv", "code", "command",
+            "working_directory", "purpose", "command_role",
+        )
+        if action_contract.get(key) not in (None, "", [], {})
+    }
+    return {
+        "current_step": current_step,
+        "success_criteria": list(current_step.get("success_criteria") or []),
+        "previous_action": semantic_action,
+        "previous_script": str(
+            execution.get("code") or execution.get("script_context") or ""
+        ),
+        "failed_command": str(execution.get("failed_command") or ""),
+        "exit_code": execution.get("returncode"),
+        "bounded_stdout": str(execution.get("stdout_tail") or ""),
+        "bounded_stderr": str(execution.get("stderr_tail") or ""),
+        "artifact_paths": _recovery_semantic_artifact_facts(action_contract),
+        "previous_recovery_summary": _recovery_previous_summary(recent_attempts),
+        "allowed_recovery_actions": [
+            RecoveryAction.PATCH_SCRIPT.value,
+            RecoveryAction.RUN_DIAGNOSTIC_PROBE.value,
+            RecoveryAction.RETRY_EXECUTION.value,
+            RecoveryAction.PATCH_PLAN.value,
+            RecoveryAction.BLOCK_MISSING_INPUT.value,
+            RecoveryAction.ESCALATE.value,
+        ],
+    }
 
 
 class RecoveryDisposition(str, Enum):

@@ -69,6 +69,7 @@ from agent_core.recovery import (
     RecoveryPhase,
     RecoveryPolicy,
     RecoveryStateStore,
+    build_recovery_semantic_focus,
     build_recovery_execution_envelope,
     RepairExecutor,
     error_fingerprint,
@@ -2695,8 +2696,38 @@ def error_recovery_middleware(
                 evidence_returncode not in {None, 0}
                 or str(evidence.get("execution_status") or "").lower() == "failed"
             )
+            controller_protocol_failure = (
+                not structured_execution_failed
+                and str(
+                evidence.get("failure_owner")
+                or diagnosis.get("failure_owner")
+                or ""
+                ).strip().upper()
+                == RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+            )
 
-            if not judge_needed and trigger.deterministic_action:
+            if controller_protocol_failure:
+                # RecoveryJudge owns scientific/runtime failure diagnosis. It
+                # must never be asked to patch Controller Python or its
+                # protocol boundary.
+                decision = recovery_decision_from_diagnosis({
+                    "root_cause": (
+                        "Controller internal protocol failure; scientific "
+                        "RecoveryJudge diagnosis is not applicable."
+                    ),
+                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    "failure_type": "controller_internal_protocol",
+                    "evidence": list(trigger.reasons),
+                    "confidence": 1.0,
+                    "missing_evidence": [],
+                    "repair_strategy": (
+                        "Route to Controller supervision without an LLM repair request."
+                    ),
+                    "next_action": RecoveryAction.ESCALATE.value,
+                    "requires_user_input": False,
+                    "evidence_sufficient": True,
+                })
+            elif not judge_needed and trigger.deterministic_action:
                 # Controller-owned triage outcomes (for example an optional
                 # probe whose approved fallback succeeded) must not be replaced
                 # by a generic diagnostic view of the non-zero helper command.
@@ -2751,58 +2782,9 @@ def error_recovery_middleware(
                         save_plan_state(data_path, task_id, plan_state)
                     judge_text = ""
                     try:
-                        recovery_focus = {
-                            "current_step": dict(diagnostic_context.current_step or {}),
-                            "success_criteria": list(
-                                (diagnostic_context.current_step or {}).get("success_criteria")
-                                or []
-                            ),
-                            "previous_action": dict(diagnostic_context.action_contract or {}),
-                            "previous_generated_script_ref": dict(
-                                evidence.get("generated_script") or {}
-                            ),
-                            "previous_approved_script_ref": dict(
-                                evidence.get("approved_script") or {}
-                            ),
-                            "previous_script": str(
-                                (diagnostic_context.execution or {}).get("code")
-                                or (diagnostic_context.execution or {}).get("script_context")
-                                or ""
-                            ),
-                            "failed_command": str(
-                                (diagnostic_context.execution or {}).get("failed_command")
-                                or ""
-                            ),
-                            "exit_code": (diagnostic_context.execution or {}).get("returncode"),
-                            "bounded_stdout": str(
-                                (diagnostic_context.execution or {}).get("stdout_tail")
-                                or ""
-                            ),
-                            "bounded_stderr": str(
-                                (diagnostic_context.execution or {}).get("stderr_tail")
-                                or ""
-                            ),
-                            "expected_runtime": dict(
-                                (diagnostic_context.execution or {}).get(
-                                    "expected_runtime_contract"
-                                )
-                                or {}
-                            ),
-                            "actual_runtime": dict(
-                                (diagnostic_context.execution or {}).get("actual_environment")
-                                or {}
-                            ),
-                            "controller_machine_audit_findings": list(
-                                diagnostic_context.machine_audit_findings or []
-                            ),
-                            "current_diagnostic": diagnosis,
-                            "available_evidence": list(
-                                diagnostic_context.available_evidence or []
-                            ),
-                            "previous_recovery_decisions": list(
-                                diagnostic_context.recent_attempts or []
-                            ),
-                        }
+                        recovery_focus = build_recovery_semantic_focus(
+                            diagnostic_context
+                        )
                         # From this point the decision is no longer local
                         # RecoveryPolicy: the configured Recovery provider is
                         # being invoked (and may itself fail or return invalid
@@ -2819,15 +2801,6 @@ def error_recovery_middleware(
                             failure_fingerprint=diagnostic_context.error_fingerprint,
                             runtime={
                                 "recovery_focus": recovery_focus,
-                                "resolved_runtime": dict(
-                                    (diagnostic_context.execution or {}).get(
-                                        "expected_runtime_contract"
-                                    )
-                                    or {}
-                                ),
-                                "trigger": trigger.to_dict(),
-                                "progress": progress,
-                                "skill_policy": skill_policy,
                             },
                             evidence=[
                                 {

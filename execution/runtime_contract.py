@@ -18,7 +18,7 @@ class ExecutionRuntimePolicy:
     errtrace: bool = True
     stdin_mode: str = "devnull"
     cwd_mode: str = "inherit_controller_process_cwd"
-    environment_mode: str = "inherit_plus_controller_materialized_bindings"
+    environment_mode: str = "inherit_plus_validated_action_env_and_controller_identity"
     health_interval_env: str = "BIOMIND_EXEC_HEALTH_INTERVAL_SECONDS"
     health_interval_default_seconds: float = 30.0
     early_health_env: str = "BIOMIND_EXEC_EARLY_HEALTH_SECONDS"

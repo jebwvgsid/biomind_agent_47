@@ -275,6 +275,7 @@ from agent_core.recovery import (
     contextualize_recovery_decision,
     structured_user_decision_required,
     build_recovery_execution_envelope,
+    build_recovery_semantic_focus,
     collect_diagnostic_scratch_metadata,
     create_external_execution_bundle,
     external_submission_unavailable,
@@ -557,10 +558,11 @@ from agent_core.managed_artifacts import (
     build_approved_visible_artifact_set,
     build_managed_artifact_bindings,
     capture_managed_output_snapshot,
+    concrete_artifact_provider_view,
     discover_current_attempt_outputs,
     managed_action_fingerprint,
-    materialize_managed_action,
     reconcile_runtime_outputs,
+    validate_concrete_action_artifacts,
     validate_generate_output_coverage,
     validate_materialized_artifacts,
 )
@@ -572,19 +574,16 @@ from agent_core.controller_audit import (
     build_resolved_runtime_snapshot,
     compare_runtime_machine_evidence,
     parse_executable_script_block,
-    project_script_artifact_environment_for_provider,
     project_script_artifact_repair_violations,
     project_script_capabilities_for_provider,
     project_script_repair_candidate,
-    script_artifact_environment,
     script_references_env,
 )
 from agent_core.action_runtime import (
     ActionRuntimeContractError,
-    artifact_environment_values,
     assert_current_action_runtime_scope,
     build_action_approval_identity,
-    build_action_execution_environment,
+    build_exact_action_environment,
     build_artifact_env_manifest,
     build_execution_policy_manifest,
     build_runtime_binding_registry,
@@ -634,9 +633,6 @@ from execution.profiling import (
 from execution.validator import ResultValidator
 from execution.monitoring import ExecutionMonitor, LogCleaner, ErrorRecoverySystem
 from agent_core.middleware import error_recovery_middleware
-
-
-_MANAGED_ACTION_ENV_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def _controller_runtime_path_prefixes(
@@ -724,103 +720,6 @@ def _observed_runtime_executables(
     return observed
 
 
-def _inject_managed_action_environment(
-    code: str,
-    language: str,
-    controller_runtime_bindings: Mapping[str, str],
-    action_env: Mapping[str, str],
-) -> Tuple[str, Dict[str, Any]]:
-    """Inject the managed V2 env without exposing values or overriding runtime keys."""
-    runtime = {
-        str(key): str(value)
-        for key, value in dict(controller_runtime_bindings or {}).items()
-    }
-    materialized_env: Dict[str, str] = {}
-    for key, value in dict(action_env or {}).items():
-        if not isinstance(key, str) or not _MANAGED_ACTION_ENV_KEY_RE.fullmatch(key):
-            return code, {
-                "code": "ACTION_ENV_KEY_INVALID",
-                "owner": RecoveryFailureOwner.GENERATED_ACTION.value,
-                "stage": "pre_action_contract",
-                "message": "Structured action env contains an invalid key.",
-                "env_key": str(key),
-                "execution_started": False,
-            }
-        if not isinstance(value, str):
-            return code, {
-                "code": "ACTION_ENV_VALUE_INVALID",
-                "owner": RecoveryFailureOwner.GENERATED_ACTION.value,
-                "stage": "pre_action_contract",
-                "message": "Structured action env values must be strings.",
-                "env_key": key,
-                "execution_started": False,
-            }
-        materialized_env[key] = value
-    conflicts = sorted(set(runtime) & set(materialized_env))
-    if conflicts:
-        return code, {
-            "code": "MANAGED_ACTION_ENV_KEY_CONFLICT",
-            "owner": RecoveryFailureOwner.GENERATED_ACTION.value,
-            "stage": "pre_action_contract",
-            "message": (
-                "Structured action env conflicts with a Controller runtime binding. "
-                "Remove the action-owned definition and use the Controller-provided variable."
-            ),
-            "env_keys": conflicts,
-            "execution_started": False,
-        }
-    path_prefixes = _controller_runtime_path_prefixes(runtime)
-
-    if language == "Bash":
-        binding_lines = [
-            f"export {key}={shlex.quote(value)}"
-            for key, value in sorted(runtime.items())
-        ]
-        if path_prefixes:
-            binding_lines.insert(
-                0,
-                f"export PATH={shlex.quote(os.pathsep.join(path_prefixes))}:\"${{PATH:-}}\"",
-            )
-        binding_lines.extend(
-            f"export {key}={shlex.quote(value)}"
-            for key, value in sorted(materialized_env.items())
-        )
-        if binding_lines:
-            code = "\n".join(binding_lines) + "\n" + code
-    elif language == "Python":
-        binding_lines = [
-            f"os.environ[{key!r}] = {value!r}"
-            for key, value in sorted(runtime.items())
-        ]
-        if path_prefixes:
-            binding_lines.insert(
-                0,
-                "os.environ['PATH'] = "
-                + repr(os.pathsep.join(path_prefixes))
-                + " + os.pathsep + os.environ.get('PATH', '')",
-            )
-        binding_lines.extend(
-            f"os.environ[{key!r}] = {value!r}"
-            for key, value in sorted(materialized_env.items())
-        )
-        if binding_lines:
-            code = "import os\n" + "\n".join(binding_lines) + "\n" + code
-    elif language == "R":
-        all_bindings = {**runtime, **materialized_env}
-        binding_lines = [
-            f"Sys.setenv({key}={json.dumps(value)})"
-            for key, value in sorted(all_bindings.items())
-        ]
-        if path_prefixes:
-            binding_lines.insert(
-                0,
-                "Sys.setenv(PATH=paste(c("
-                + json.dumps(os.pathsep.join(path_prefixes))
-                + ", Sys.getenv(\"PATH\")), collapse=.Platform$path.sep))",
-            )
-        if binding_lines:
-            code = "\n".join(binding_lines) + "\n" + code
-    return code, {}
 from agent_core.root_cause import RootCauseAnalyzer
 from memory.persistence import PersistentStateManager
 from memory.core_store import CoreMemoryStore
@@ -8379,55 +8278,7 @@ class BioAnalystAgent:
             "state_generation": int(plan_state.get("state_generation") or 0),
             "current_step_id": str(context.step_id or evidence.get("step_id") or ""),
             "runtime": {
-                "recovery_focus": {
-                    "current_step": dict(context.current_step or {}),
-                    "success_criteria": list(
-                        (context.current_step or {}).get("success_criteria") or []
-                    ),
-                    "previous_action": dict(context.action_contract or {}),
-                    "previous_script": str((context.execution or {}).get("code") or ""),
-                    "previous_generated_script_ref": dict(
-                        evidence.get("generated_script") or {}
-                    ),
-                    "previous_approved_script_ref": dict(
-                        evidence.get("approved_script") or {}
-                    ),
-                    "failed_command": str(
-                        (context.execution or {}).get("failed_command") or ""
-                    ),
-                    "exit_code": (context.execution or {}).get("returncode"),
-                    "bounded_stdout": str(
-                        (context.execution or {}).get("stdout_tail") or ""
-                    ),
-                    "bounded_stderr": str(
-                        (context.execution or {}).get("stderr_tail") or ""
-                    ),
-                    "expected_runtime": dict(
-                        (context.execution or {}).get("expected_runtime_contract") or {}
-                    ),
-                    "actual_runtime": dict(
-                        (context.execution or {}).get("actual_environment") or {}
-                    ),
-                    "controller_machine_audit_findings": list(
-                        context.machine_audit_findings or []
-                    ),
-                    "available_evidence": list(context.available_evidence or []),
-                },
-                "action_contract": dict(context.action_contract or {}),
-                "execution": dict(context.execution or {}),
-                "validation": dict(context.validation or {}),
-                "completion": dict(context.completion or {}),
-                "progress": dict(context.progress or {}),
-                "recent_attempts": list(context.recent_attempts or []),
-                "already_tried_strategies": list(context.already_tried_strategies or []),
-                "skill_policy": dict(context.skill_policy or {}),
-            },
-            "feedback": {
-                "diagnosis": {
-                    key: value for key, value in diagnosis.items()
-                    if key != "evidence"
-                },
-                "conflicts": list(context.conflicts or []),
+                "recovery_focus": build_recovery_semantic_focus(context),
             },
             "evidence": recovery_evidence,
             "allowed_operations": [item.value for item in RecoveryAction],
@@ -9881,6 +9732,10 @@ class BioAnalystAgent:
             return {}
         raw_action = dict(action)
         bound = dict(action)
+        # Default V2 actions carry concrete artifact paths in their executable
+        # fields.  Retire the legacy Controller-owned artifact environment even
+        # if an older caller accidentally supplies it.
+        bound.pop("controller_artifact_environment", None)
         # Controller callers that already own a freshly loaded PlanState pass it
         # through so binding and their runtime mutation share one CAS commit.
         # Loading and saving a second copy here would advance the generation and
@@ -10139,7 +9994,7 @@ class BioAnalystAgent:
                 "step_id": step_id,
             }
             artifact_manifest = build_artifact_env_manifest(
-                list(bound.get("controller_artifact_environment") or []),
+                [],
                 action_identity=action_identity,
                 selected_skill_id=selected_skill_id,
                 execution_capability_id=execution_capability_id,
@@ -34331,7 +34186,7 @@ question. Never guess a scientific or database identity.
                     current_step_id=current_step_id,
                     visible_artifacts=generate_visible_artifacts,
                 )
-                generate_artifact_environment = script_artifact_environment(
+                generate_artifact_environment = concrete_artifact_provider_view(
                     generate_managed_bindings
                 )
                 generate_step_action = str(
@@ -34352,8 +34207,8 @@ question. Never guess a scientific or database identity.
                         serialize_action_capability_instructions(
                             generate_action_provider_context,
                             script_protocol=(
-                                "Use only current-action runtime and artifact shell references. "
-                                "Capability and binding scope are Controller-owned."
+                                "Use current-action concrete runtime values and artifact paths "
+                                "explicitly. Controller validates but never substitutes them."
                             ),
                         )
                     )
@@ -34996,9 +34851,6 @@ question. Never guess a scientific or database identity.
                             generate_runtime_resolution.get("runtime_binding_manifest_hash") or ""
                         ),
                     })
-                    structured_action["controller_artifact_environment"] = deepcopy(
-                        generate_artifact_environment
-                    )
                     action_parse_error = {}
                     script_findings = audit_generated_script(
                         script_block,
@@ -35170,19 +35022,11 @@ question. Never guess a scientific or database identity.
                     current_step_id=current_action_step_id,
                     visible_artifacts=visible_artifacts,
                 )
-                materialized_action, artifact_violations = materialize_managed_action(
+                materialized_action, artifact_violations = validate_concrete_action_artifacts(
                     structured_action,
                     managed_bindings,
-                    allow_legacy_exact_literals=False,
-                    operation_bindings=generate_operation_bindings,
-                    approved_visible_artifacts=visible_artifacts,
                 )
                 controller_runtime_keys = {
-                    *dict(
-                        generate_runtime_resolution.get(
-                            "effective_runtime_bindings"
-                        ) or {}
-                    ).keys(),
                     "BIOMIND_TASK_ID",
                     "BIOMIND_ACTION_ID",
                     "BIOMIND_STEP_ID",
@@ -35197,8 +35041,8 @@ question. Never guess a scientific or database identity.
                         owner="GENERATED_ACTION",
                         route="generate",
                         message=(
-                            "Structured action env conflicts with a Controller runtime binding. "
-                            "Remove the action-owned definition and use the Controller-provided variable."
+                            "Structured action env conflicts with a Controller identity name. "
+                            "Remove the reserved action-owned definition."
                         ),
                         field_path="env",
                         proposed=",".join(conflicting_env_keys),
@@ -35426,12 +35270,7 @@ question. Never guess a scientific or database identity.
                         script_violation_payload = (
                             project_script_artifact_repair_violations(
                                 violation_payload,
-                                list(
-                                    structured_action.get(
-                                        "controller_artifact_environment"
-                                    )
-                                    or []
-                                ),
+                                generate_artifact_environment,
                                 language=str(
                                     structured_action.get("language") or "bash"
                                 ),
@@ -35626,7 +35465,7 @@ question. Never guess a scientific or database identity.
                                     "Preserve unrelated executable source text. "
                                     if str(structured_action.get("script_adapter") or "")
                                     == "script_block_v1"
-                                    else "\nUse the required semantic handle placeholder in structured argv/env. "
+                                    else "\nUse the supplied concrete artifact path in structured argv/env. "
                                 )
                                 + "Do not modify the Task or Plan.\n"
                                 "</managed_artifact_action_repair>"
@@ -35673,6 +35512,8 @@ question. Never guess a scientific or database identity.
                                 "NEEDS_RECOVERY" if repair_allowed else "BLOCKED"
                             ),
                             "generate_exit_reason": "managed_artifact_preaction_rejected",
+                            "action_validation_status": "ACTION_VALIDATION_FAILED",
+                            "reason_code": str(first_violation.get("code") or ""),
                             "next_step": policy_decision.next_route,
                         }
                 if (
@@ -37315,9 +37156,7 @@ question. Never guess a scientific or database identity.
             # to the subprocess boundary below.
             generated_model_code = original_code
             runtime_bindings: Dict[str, str] = {}
-            artifact_bindings: Dict[str, str] = {}
             effective_execution_env: Dict[str, str] = {}
-            managed_runtime_env_names: set[str] = set()
             current_runtime_resolution: Dict[str, Any] = {}
             current_runtime_manifest: Dict[str, Any] = {}
             current_artifact_manifest: Dict[str, Any] = {}
@@ -37346,20 +37185,6 @@ question. Never guess a scientific or database identity.
                         else {}
                     )
                     runtime_binding_registry = build_runtime_binding_registry(state)
-                    managed_runtime_env_names.update(
-                        str(row.get("env_name") or "")
-                        for row in runtime_binding_registry.values()
-                        if isinstance(row, Mapping)
-                    )
-                    for runtime_audit in state.get("runtime_audit", []) or []:
-                        if not isinstance(runtime_audit, Mapping):
-                            continue
-                        managed_runtime_env_names.update(
-                            str(name or "").strip().upper()
-                            for name in dict(
-                                runtime_audit.get("resolved_runtime_paths") or {}
-                            )
-                        )
                     current_runtime_resolution = resolve_action_runtime_bindings(
                         selected_skill_id=str(
                             pending_action.get("selected_skill_id") or ""
@@ -37397,10 +37222,7 @@ question. Never guess a scientific or database identity.
                             ),
                         )
                     current_artifact_manifest = build_artifact_env_manifest(
-                        list(
-                            pending_action.get("controller_artifact_environment")
-                            or []
-                        ),
+                        [],
                         action_identity={
                             "action_id": str(pending_action.get("action_id") or ""),
                             "plan_id": str(pending_action.get("plan_id") or ""),
@@ -37454,19 +37276,6 @@ question. Never guess a scientific or database identity.
                             "effective_runtime_bindings"
                         ) or {}
                     )
-                    artifact_bindings = artifact_environment_values(
-                        list(
-                            pending_action.get("controller_artifact_environment")
-                            or []
-                        )
-                    )
-                    conflicts = sorted(set(runtime_bindings) & set(artifact_bindings))
-                    if conflicts:
-                        raise ActionRuntimeContractError(
-                            "RUNTIME_BINDING_MANIFEST_INVALID",
-                            action_id=str(pending_action.get("action_id") or ""),
-                            conflicting_env_names=conflicts,
-                        )
                 except ActionRuntimeContractError as exc:
                     diagnostic = exc.to_diagnostic()
                     return {
@@ -37488,14 +37297,20 @@ question. Never guess a scientific or database identity.
                         "generate_result": "BLOCKED",
                         "next_step": "generate",
                     }
-            effective_execution_env = build_action_execution_environment(
+            # Preserve the ordinary ambient process environment and apply only
+            # env entries explicitly present in the validated action plus
+            # non-scientific Controller identity. Runtime/artifact registries
+            # remain authorization evidence and are never injected here.
+            effective_execution_env = build_exact_action_environment(
                 os.environ,
-                runtime_bindings=runtime_bindings,
-                artifact_bindings=artifact_bindings,
-                controller_bindings=controller_identity_env,
-                managed_runtime_env_names=managed_runtime_env_names,
+                action_environment=dict(pending_action.get("env") or {}),
+                controller_identity=controller_identity_env,
             )
-            code = normalize_script_code(original_code)
+            code = (
+                original_code
+                if str(pending_action.get("script_adapter") or "") == "script_block_v1"
+                else normalize_script_code(original_code)
+            )
             forbidden_actions = [str(item).strip() for item in (state.get("forbidden_recovery_actions") or []) if str(item).strip()]
             if forbidden_actions:
                 normalized_code = ActionSignature.normalize_command(code)
@@ -37681,10 +37496,18 @@ question. Never guess a scientific or database identity.
                     return {"messages": [HumanMessage(content=feedback_msg)], "plan_progress": plan_progress, "next_step": "generate"}
                 else:   
                     # 这是修改后的代码，可以执行
-                    code_to_run = normalize_script_code(final_code)
+                    code_to_run = (
+                        final_code
+                        if str(pending_action.get("script_adapter") or "") == "script_block_v1"
+                        else normalize_script_code(final_code)
+                    )
                     language = detect_script_language(code_to_run)
             else:
-                code_to_run = normalize_script_code(final_code)  # approve 的情况  
+                code_to_run = (
+                    final_code
+                    if str(pending_action.get("script_adapter") or "") == "script_block_v1"
+                    else normalize_script_code(final_code)
+                )  # approve 的情况
 
             boundary_gate = CompletionGate.validate_code_boundary(code_to_run, task_boundary_context)
             if not boundary_gate.passed:
@@ -37723,7 +37546,7 @@ question. Never guess a scientific or database identity.
                         ),
                     },
                     artifact_environment=list(
-                        pending_action.get("controller_artifact_environment") or []
+                        pending_action.get("concrete_artifact_bindings") or []
                     ),
                     evidence_refs=[
                         str(pending_action.get("generated_script_path") or "")
@@ -37984,13 +37807,11 @@ question. Never guess a scientific or database identity.
                 "status": ATTEMPT_APPROVED,
             })
             approved_runner = (
-                runtime_bindings.get("BASH_BIN") or "bash"
+                str(shutil.which("bash") or "bash")
                 if language == "Bash"
-                else runtime_bindings.get("PYTHON_BIN") or sys.executable
+                else sys.executable
                 if language == "Python"
-                else runtime_bindings.get("RSCRIPT_BIN")
-                or runtime_bindings.get("R_BIN")
-                or str(shutil.which("Rscript") or "Rscript")
+                else str(shutil.which("Rscript") or "Rscript")
             )
             approved_runner_argv = [str(approved_runner)]
             if language == "Bash" and bool(
@@ -38000,7 +37821,10 @@ question. Never guess a scientific or database identity.
             ):
                 approved_runner_argv.extend(["-o", "pipefail"])
             approved_runner_argv.append(str(approved_ref["path"]))
-            if shim_path:
+            # Managed scientific actions must name concrete tool/runtime paths.
+            # A package-manager shim remains compatibility inventory only and
+            # must not silently change how the validated script resolves tools.
+            if shim_path and not managed_mode:
                 base_path = str(effective_execution_env.get("PATH") or "")
                 effective_execution_env["PATH"] = (
                     base_path + (os.pathsep if base_path else "") + str(shim_path)
@@ -38355,14 +38179,14 @@ question. Never guess a scientific or database identity.
                         "ENV_PREFIX", "JAVA_HOME", "VIRTUAL_ENV",
                     }
                 },
-                "injected_bindings": dict(runtime_bindings),
+                "injected_bindings": {},
                 "resolved_executables": _observed_runtime_executables(
                     expected_runtime_contract,
                     runtime_bindings,
                     approved_source_code,
                     language,
                     str(approved_runner),
-                    shim_path=str(shim_path or ""),
+                    shim_path=(str(shim_path or "") if not managed_mode else ""),
                 ),
             }
             runtime_machine_comparison = compare_runtime_machine_evidence(

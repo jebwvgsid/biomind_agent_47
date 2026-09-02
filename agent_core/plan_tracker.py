@@ -2823,6 +2823,9 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
             )
         elif kind == "RUN_ALLOWED_PROBE":
             current_step["status"] = STATUS_DIAGNOSING
+        elif kind == "ESCALATE":
+            # Escalation is a supervisor handoff, not a terminal verdict.
+            current_step["status"] = STATUS_DIAGNOSING
         elif kind == "PLAN_PATCH_REQUEST":
             current_step["status"] = STATUS_REPAIRING
         _append_evidence(
@@ -2834,7 +2837,7 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
     if kind == "BLOCKED":
         block_plan_and_downstream(state, str(value.get("reason") or "RecoveryPolicy blocked the task"))
     elif kind == "ESCALATE":
-        set_task_status(state, TASK_STATUS_FAILED, str(value.get("reason") or "RecoveryPolicy escalation"))
+        set_task_status(state, TASK_STATUS_DIAGNOSING, str(value.get("reason") or "RecoveryPolicy escalation"))
     elif kind == "COMPLETE_STEP":
         advance_plan_after_verified_step(state, str(value.get("reason") or "completion contract satisfied"))
     elif kind == "COMPLETE_TASK":
@@ -2867,9 +2870,12 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
             "recorded_at": _now(),
         }
         task_state["resume_route_hint"] = "supervisor"
+    elif kind == "ESCALATE":
+        task_state.pop("verification_pending", None)
+        task_state["resume_route_hint"] = "supervisor"
     elif kind in {
         "FORMAT_REPAIR", "RETRY_CURRENT_ACTION", "RUN_ALLOWED_PROBE",
-        "PLAN_PATCH_REQUEST", "BLOCKED", "ESCALATE", "COMPLETE_STEP",
+        "PLAN_PATCH_REQUEST", "BLOCKED", "COMPLETE_STEP",
         "COMPLETE_TASK", "REWIND_MANIFEST_STAGE", "ROLLBACK_UPSTREAM_STEP",
     }:
         task_state.pop("verification_pending", None)

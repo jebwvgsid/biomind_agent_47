@@ -72,7 +72,7 @@ TOOL_CONTEXT_TEMPLATE = """<environment_context>
 </installed_tools>
 
 <path_configuration>
-- Shim Path: `{shim_path}` (Already in PATH)
+- Compatibility Shim Inventory: `{shim_path}` (not injected into scientific action PATH)
 - Source Install Path: `{source_path}`
 </path_configuration>
 
@@ -344,13 +344,13 @@ Return one JSON object only. Never include shell, Python, R, patches, commands, 
 
 Rules:
 1. Decide whether the error is real and whether the primary execution succeeded.
-2. Treat structured execution evidence, artifact contracts, manifests, validators, and source-typed logs as authoritative machine facts. Controller machine findings are observations, not automatically the complete root cause; derive causality from them together with the Plan, previous script, runtime evidence, and bounded logs.
+2. Use only the projected current step, failed action/script, exit code, bounded streams, concrete artifact facts, previous attempt summary, and allowed recovery actions.
 3. Distinguish primary, required_validation, optional_probe, fallback, and diagnostic commands.
 4. Do not infer success from return code 0 alone or failure from the word `error` alone.
-5. Do not invent tool parameters, bypasses, alternate tools, or degraded modes absent from skill_policy.
+5. Do not invent tool parameters, bypasses, alternate tools, or degraded modes absent from the semantic evidence.
 6. Do not recommend an identical retry after the second same failure without progress.
 7. You cannot finish the task or bypass Supervisor/CompletionGate.
-8. The DiagnosticContextBuilder has already read bounded local scripts, traces, logs, runtime contracts, and manifests. Do not invent a diagnostic shell command.
+8. Controller has already projected the bounded semantic failure evidence. Do not invent a diagnostic shell command.
 9. If evidence remains insufficient, preserve `missing_evidence` and choose ESCALATE. ASK_USER is allowed only for a missing user-owned input or a scientific decision, never for an internal protocol/runtime/renderer error.
 
 Allowed failure_class values:
@@ -489,7 +489,7 @@ TOOL_EXTRACTION_TEMPLATE= """<environment_context>
 </installed_tools>
 
 <path_configuration>
-- Shim Path: `{shim_path}` (Already in PATH)
+- Compatibility Shim Inventory: `{shim_path}` (not injected into scientific action PATH)
 - Source Install Path: `{source_path}`
 </path_configuration>
 

@@ -249,59 +249,6 @@ def build_resolved_runtime_snapshot(state: Mapping[str, Any]) -> Dict[str, Any]:
     }
 
 
-def script_artifact_environment(
-    bindings: Mapping[str, ManagedArtifactBinding],
-) -> List[Dict[str, Any]]:
-    """Return deterministic Controller-owned artifact environment bindings."""
-    rows: List[Dict[str, Any]] = []
-    used_names: Dict[str, str] = {}
-    unique = {
-        binding.semantic_handle: binding
-        for binding in bindings.values()
-        if isinstance(binding, ManagedArtifactBinding)
-    }
-    for handle, binding in sorted(unique.items()):
-        base = re.sub(r"[^A-Za-z0-9]+", "_", handle).strip("_").upper()
-        env_name = f"BIOMIND_{base}"
-        previous = used_names.get(env_name)
-        if previous and previous != handle:
-            suffix = hashlib.sha256(handle.encode("utf-8")).hexdigest()[:8].upper()
-            env_name = f"{env_name}_{suffix}"
-        used_names[env_name] = handle
-        rows.append({
-            "semantic_handle": handle,
-            "direction": binding.direction,
-            "env_var": env_name,
-            "placeholder": binding.placeholder,
-            "required": bool(binding.required),
-            "format": str(binding.format or ""),
-            "artifact_kind": str(binding.artifact_kind or ""),
-        })
-    return rows
-
-
-def project_script_artifact_environment_for_provider(
-    artifact_environment: Sequence[Mapping[str, Any]],
-) -> List[Dict[str, Any]]:
-    """Expose script env names without leaking Controller placeholder bindings."""
-    provider_keys = (
-        "semantic_handle",
-        "direction",
-        "env_var",
-        "required",
-        "format",
-        "artifact_kind",
-    )
-    rows: List[Dict[str, Any]] = []
-    for raw in artifact_environment:
-        row = dict(raw)
-        env_name = str(row.get("env_var") or "")
-        if not env_name or not _ENV_NAME_RE.fullmatch(env_name):
-            continue
-        rows.append({key: row[key] for key in provider_keys if key in row})
-    return rows
-
-
 def project_script_capabilities_for_provider(
     capabilities: Sequence[Mapping[str, Any]],
 ) -> List[Dict[str, Any]]:
@@ -324,19 +271,6 @@ def project_script_capabilities_for_provider(
         for item in capabilities
         if isinstance(item, Mapping)
     ]
-
-
-def script_env_reference(env_var: str, language: str) -> str:
-    """Return the provider-language form for one Controller environment name."""
-    name = str(env_var or "").strip()
-    if not _ENV_NAME_RE.fullmatch(name):
-        raise ValueError(f"Invalid Controller script environment name: {name!r}")
-    normalized = str(language or "bash").strip().lower()
-    if normalized == "python":
-        return f'os.environ["{name}"]'
-    if normalized == "r":
-        return f'Sys.getenv("{name}")'
-    return f"${name}"
 
 
 def project_script_repair_candidate(candidate: Mapping[str, Any]) -> Dict[str, str]:
@@ -397,13 +331,12 @@ def project_script_artifact_repair_violations(
                 "field_path": "script",
                 "artifact_handle": handle,
                 "message": (
-                    "The script violates a managed-artifact boundary. Use the matching "
-                    "Controller-provided BIOMIND environment variable directly; do not "
-                    "write a path fallback or Controller-owned binding in the script."
+                    "The script contains an invalid artifact reference. Use the matching "
+                    "concrete path from current_action_artifact_bindings directly."
                 ),
                 "repair_hint": {
                     "protocol": "script_block_v1",
-                    "strategy": "use_controller_artifact_environment",
+                    "strategy": "use_supplied_concrete_path",
                     "rule": (
                         "Preserve unrelated script logic and replace only the reported "
                         "artifact reference."
@@ -414,35 +347,36 @@ def project_script_artifact_repair_violations(
 
         code = str(violation.get("code") or "")
         for row in matches:
-            env_name = str(row.get("env_var") or "")
-            if not _ENV_NAME_RE.fullmatch(env_name):
+            concrete_path = str(
+                row.get("path") or row.get("expected_path")
+                or violation.get("expected") or ""
+            )
+            if not concrete_path:
                 continue
             semantic_handle = str(row.get("semantic_handle") or handle)
-            provider_reference = script_env_reference(env_name, language)
             strategy = (
-                "replace_literal_fallback_with_controller_env_reference"
+                "replace_invalid_path_with_supplied_concrete_path"
                 if code in {
                     "MANAGED_ARTIFACT_HANDLE_REQUIRED",
                     "ACTION_OUTPUT_BINDING_MISMATCH",
                 }
-                else "replace_controller_placeholder_with_env_reference"
+                else "replace_unresolved_artifact_with_concrete_path"
             )
             projected.append({
                 **base,
                 "field_path": "script",
                 "artifact_handle": semantic_handle,
                 "message": (
-                    f"Read {semantic_handle} directly from Controller environment variable "
-                    f"{env_name}; remove the invalid fallback or Controller-owned binding."
+                    f"Use the supplied concrete path for {semantic_handle} directly; "
+                    "remove the unresolved reference or invalid fallback."
                 ),
                 "repair_hint": {
                     "protocol": "script_block_v1",
                     "strategy": strategy,
-                    "env_var": env_name,
-                    "provider_reference": provider_reference,
+                    "concrete_path": concrete_path,
                     "rule": (
-                        "Use the Controller environment variable directly. Remove any literal "
-                        "default and do not place a managed binding in the executable script."
+                        "Use the supplied concrete path directly. Controller will validate it "
+                        "but will not substitute or inject it at execution time."
                     ),
                 },
             })
@@ -640,17 +574,10 @@ def adapt_script_block_to_action(
             "RECOVERY_EXECUTION_ENVELOPE_MISSING",
             "Recovery-generated script blocks may not default to a primary action",
         )
+    # ``artifact_environment`` is accepted only for call compatibility.  The
+    # default execution contract no longer synthesizes BIOMIND_INPUT/OUTPUT
+    # variables or rewrites artifact references after Generate.
     env: Dict[str, str] = {}
-    referenced: List[str] = []
-    for raw in artifact_environment:
-        row = dict(raw)
-        env_name = str(row.get("env_var") or "")
-        placeholder = str(row.get("placeholder") or "")
-        if env_name and placeholder and script_references_env(
-            block.body, env_name, block.language
-        ):
-            env[env_name] = placeholder
-            referenced.append(str(row.get("semantic_handle") or ""))
     if block.language == "bash":
         argv = ["bash", "-lc", block.body]
     elif block.language == "python":
@@ -665,7 +592,7 @@ def adapt_script_block_to_action(
         "argv": argv,
         "env": env,
         "script_adapter": "script_block_v1",
-        "referenced_artifact_handles": referenced,
+        "referenced_artifact_handles": [],
     }
     if envelope is not None:
         purpose = envelope.execution_purpose.lower()
@@ -905,10 +832,8 @@ def audit_generated_script(
         row = dict(raw)
         if not bool(row.get("required")):
             continue
-        env_name = str(row.get("env_var") or "")
-        if env_name and not script_references_env(
-            script, env_name, block.language
-        ):
+        concrete_path = str(row.get("path") or row.get("expected_path") or "")
+        if concrete_path and concrete_path not in script:
             findings.append(ControllerAuditFinding(
                 code="ARTIFACT_BINDING_NOT_REFERENCED",
                 severity="HIGH",
@@ -916,7 +841,7 @@ def audit_generated_script(
                 location="script",
                 expected={
                     "semantic_handle": str(row.get("semantic_handle") or ""),
-                    "env_var": env_name,
+                    "concrete_path": concrete_path,
                 },
                 observed="binding is absent from the generated script",
                 message="Generated script does not reference a required current-step artifact binding.",

@@ -211,7 +211,7 @@ supplement or replace. {binding_boundary}"""
             f"{runtime_audit_context or 'No selected-skill runtime audit is available.'}\n"
             "</runtime_audit>\n"
             "<path_configuration>\n"
-            f"- Shim Path: `{shim_path}` (Already in PATH)\n"
+            f"- Compatibility Shim Inventory: `{shim_path}` (not injected into scientific action PATH)\n"
             f"- Working Directory: `{work_dir}`\n"
             "</path_configuration>\n"
             "<runtime_policy>\n"
@@ -220,6 +220,8 @@ supplement or replace. {binding_boundary}"""
             "- Delegate installation only when install_required is true.\n"
             "- If resolved_runtime_paths are present, reuse those exact verified paths. "
             "Never reconstruct them from the project, benchmark, or working-directory root.\n"
+            "- Emit concrete executable/conda/tool paths in the action. Controller will not "
+            "append the compatibility shim directory or synthesize runtime variables.\n"
             "</runtime_policy>\n"
             "</environment_context>"
         )
@@ -1538,19 +1540,6 @@ Consultant owns skill discovery and SELECTED_SKILLS is the full allowed pool. Pl
         """RecoveryJudge policy over an exact Controller-built semantic view."""
         semantic, focus = PromptManager._node_context_sections(llm_payload)
         focus_for_prompt = deepcopy(dict(focus))
-        runtime = (
-            dict(focus_for_prompt.get("runtime") or {})
-            if isinstance(focus_for_prompt, Mapping)
-            else {}
-        )
-        recovery_focus = dict(runtime.get("recovery_focus") or {})
-        machine_findings = list(
-            recovery_focus.get("controller_machine_audit_findings") or []
-        )
-        if machine_findings:
-            recovery_focus.pop("controller_machine_audit_findings", None)
-            runtime["recovery_focus"] = recovery_focus
-            focus_for_prompt["runtime"] = runtime
         semantic_json = json.dumps(
             semantic, ensure_ascii=False, sort_keys=False, indent=2, default=str
         )
@@ -1565,26 +1554,8 @@ Consultant owns skill discovery and SELECTED_SKILLS is the full allowed pool. Pl
             "<semantic_history>\n" + semantic_json + "\n</semantic_history>\n\n"
             "<current_focus>\n" + focus_json + "\n</current_focus>"
         )
-        if machine_findings:
-            ordered_context += (
-                "\n\n<controller_machine_audit>\n"
-                "=== CONTROLLER MACHINE AUDIT ===\n"
-                "These are authoritative machine observations, not automatically "
-                "the complete root cause.\n"
-                + json.dumps(
-                    machine_findings,
-                    ensure_ascii=False,
-                    sort_keys=False,
-                    indent=2,
-                    default=str,
-                )
-                + "\n</controller_machine_audit>"
-            )
         base_prompt = RECOVERY_JUDGE_PROMPT.format(
             diagnostic_context=ordered_context
-        ).replace(
-            "DiagnosticContextBuilder has already read bounded local scripts, traces, logs, runtime contracts, and manifests",
-            "Controller has projected the exact current-step contract, structured failure facts, and bounded evidence excerpts",
         )
         evidence_protocol = (
             "Evidence protocol: cite supporting evidence only by the handles shown "
@@ -1603,36 +1574,7 @@ Consultant owns skill discovery and SELECTED_SKILLS is the full allowed pool. Pl
             "targeted range. Never request writes, deletion, execution, absolute paths, "
             "parent traversal, unrestricted cat/find behavior, or complete large-file dumps."
         )
-        skill_policy = """Skill policy for Recovery: first use the current active Skills and any exact excerpts already supplied. If an applicable active or candidate Skill is identified but its exact relevant rule is missing, use REQUEST_SKILL_CONTEXT rather than guessing, generating a read command, or treating missing context as execution failure.
-
-Use SEARCH_SKILLS only when the failure evidence establishes a real capability
-gap that the active Skill text and already-read references do not cover. An
-ordinary command, parameter, path, runtime, dependency, validation, or artifact
-failure is not by itself evidence that a new Skill is needed. Search results are
-candidates only and never authorize use.
-
-Never silently replace a user-specified method. If evidence supports a
-task-level binding or any replacement, return PROPOSE_SKILL_BINDING; Consultant
-reviews task meaning and Planner reviews Plan impact. Recovery may propose a
-current-step supplement, task supplement, or task replacement, but may not
-commit the binding, change TaskSpec or Plan, or continue with the candidate as if
-it were active."""
-        skill_protocol = PromptManager._skill_decision_protocol(
-            binding_boundary=(
-                "Recovery may propose current-step supplement, task supplement, "
-                "or task replacement, but Consultant and Planner own the required "
-                "semantic and Plan-impact review."
-            )
-        )
-        return (
-            base_prompt
-            + "\n\n"
-            + evidence_protocol
-            + "\n\n"
-            + skill_policy
-            + "\n\n"
-            + skill_protocol
-        )
+        return base_prompt + "\n\n" + evidence_protocol
 
     @staticmethod
     def get_repair_generator_prompt(recovery_context: dict) -> str:
@@ -2325,10 +2267,9 @@ document and keep selected/excluded decision sets disjoint.
                     action_repair.setdefault(
                         "script_artifact_rule",
                         (
-                            "For each reported artifact, use the repair_hint BIOMIND env_var "
-                            "through the selected language's environment API. Remove literal "
-                            "or default fallbacks. Controller-owned managed bindings must not "
-                            "appear in the executable block."
+                            "For each reported artifact, replace the unresolved reference with "
+                            "the exact concrete path supplied in current_action_artifact_bindings. "
+                            "Do not introduce BIOMIND_INPUT/OUTPUT variables or path fallbacks."
                         ),
                     )
                 elif any(
@@ -2419,11 +2360,13 @@ document and keep selected/excluded decision sets disjoint.
                 "Consultant for semantic review and Planner for Plan impact."
             )
         )
-        action_binding_rules = """Use only the runtime bindings supplied for the current action.
-Reference runtime bindings using the provided shell references.
-Use only the managed artifact bindings supplied for the current action.
-Do not guess executable paths, tool installations, environment variable names,
-database locations, input paths, or output paths.
+        action_binding_rules = """Use only the concrete runtime resources supplied for the current action.
+Emit required executable, environment, database and tool paths explicitly in the script.
+Use only the concrete artifact paths supplied for the current action.
+Inputs use path; outputs use expected_path. Do not emit {input:*}, {output:*},
+{artifact:*}, BIOMIND_INPUT_*, or BIOMIND_OUTPUT_* references.
+Do not guess executable paths, tool installations, database locations, input paths,
+or output paths.
 Do not request or use bindings outside the current action capability."""
         if script_output_protocol:
             corrective_rules = ""
@@ -2434,9 +2377,8 @@ redesign the current step. Apply the Recovery diagnosis and machine findings,
 preserve unrelated valid logic, current-step obligations, success criteria,
 and every authoritative highlighted constraint. Do not re-diagnose the root
 cause and do not change the Plan. For managed-artifact violations,
-repair_hint is the provider-facing authority: use its exact BIOMIND env_var
-through the selected language's environment API and remove only the reported
-literal/default fallback or Controller-owned binding.
+repair_hint is the provider-facing authority: use its exact concrete path and
+remove only the reported unresolved reference or invalid fallback.
 If the repair genuinely requires missing exact Skill text or exposes a real
 capability gap, return one typed Skill decision instead of guessing. That
 context-acquisition decision is not an executable block and is not a failed
@@ -2471,9 +2413,9 @@ state, or routing. Preserve every item in task_spec.highlighted_constraints
 and all current-step success criteria.
 
 {action_binding_rules}
-For each required current-step artifact, use its supplied environment reference
-through the selected language's environment API. Controller-owned managed
-bindings must never appear as literal values inside the executable block. Keep
+For each required current-step artifact, place its supplied concrete path in the
+executable block. The Controller validates but never substitutes artifact paths.
+Keep
 diagnostically relevant stdout and stderr visible; do not redirect them to
 /dev/null or otherwise suppress failure evidence.
 {corrective_rules}
@@ -2503,7 +2445,7 @@ diagnostically relevant stdout and stderr visible; do not redirect them to
                 "argv": [
                     "bash",
                     "-lc",
-                    'FASTA="{input:reference_fasta}"; tool "$FASTA"',
+                    'tool "{input:reference_fasta}"',
                 ],
                 "env": {},
             },
@@ -2513,8 +2455,8 @@ diagnostically relevant stdout and stderr visible; do not redirect them to
         valid_env_example = json.dumps(
             {
                 "action_type": "execute",
-                "argv": ["bash", "-lc", 'tool "$FASTA"'],
-                "env": {"FASTA": "{input:reference_fasta}"},
+                "argv": ["/opt/tool/bin/tool", "/data/reference.fasta", "-o", "/results/out.vcf"],
+                "env": {},
             },
             ensure_ascii=False,
             separators=(",", ":"),
@@ -2524,7 +2466,7 @@ diagnostically relevant stdout and stderr visible; do not redirect them to
                 "action_type": "execute",
                 "action_kind": "primary|diagnostic|required_validation|recovery",
                 "purpose": "analysis|probe|validation|record_failure",
-                "argv": ["tool", "{input:role}", "-o", "{output:role}"],
+                "argv": ["/absolute/path/to/tool", "/absolute/input/path", "-o", "/absolute/output/path"],
                 "env": {},
             },
             ensure_ascii=False,
@@ -2543,9 +2485,9 @@ honored by the proposed action. Do not weaken, waive, summarize, reclassify, or
 return IDs/compliance claims for these open-world requirements.
 
 For a command, return exactly one JSON object and use structured argv. Required
-managed inputs/outputs must use their complete placeholders as individual argv
-or env values. Never emit an authoritative managed path as a literal and never
-embed a placeholder inside shell text.
+managed inputs/outputs must use the exact concrete paths supplied for the
+current action. Never emit an artifact placeholder or a Controller-created
+BIOMIND_INPUT/OUTPUT environment reference.
 
 {action_binding_rules}
 
@@ -2553,20 +2495,17 @@ For `bash -lc`, this is invalid:
 <action_json_example name="invalid_embedded_placeholder">
 {invalid_embedded_example}
 </action_json_example>
-The invalid shell scalar above is
-`FASTA="{{input:reference_fasta}}"; tool "$FASTA"`.
-Move the complete placeholder to env instead:
-<action_json_example name="valid_env_placeholder">
+The invalid shell scalar above contains an unresolved artifact reference.
+Use the supplied concrete input and output paths directly instead:
+<action_json_example name="valid_concrete_paths">
 {valid_env_example}
 </action_json_example>
-Do not emit `{{runtime:*}}`. Runtime resources are supplied through the current
-action's Controller-managed shell references.
+Do not emit `{{runtime:*}}`. Use the supplied concrete runtime value explicitly.
 
-Managed input/output handles may only use handles explicitly provided by the
-current step contract. A managed placeholder must occupy the entire argv/env
-scalar value. Values such as `{{output:x}}.tmp`, `prefix-{{output:x}}`, and
-`{{output:x}}/file` are invalid. Do not invent a managed project_root/workdir
-handle or rely on an undeclared working directory.
+Managed input/output paths may only come from the current step contract. Values
+such as `{{output:x}}.tmp`, `prefix-{{output:x}}`, and `{{output:x}}/file` are
+invalid unresolved references. Do not invent a project_root/workdir path or rely
+on an undeclared working directory.
 
 Temporary files used only within the same execute action may use a local
 temporary directory such as `tmpdir="$(mktemp -d)"` with cleanup via
@@ -2577,12 +2516,9 @@ artifact; cross-step intermediates must use Planner-declared managed artifacts.
 {canonical_execute_example}
 </action_json_example>
 
-Controller derives input/output coverage, canonical identity, paths, evidence,
-and provenance from the typed placeholders in argv/env. Do not return
-`produced_outputs`, output IDs, artifact IDs, canonical paths, or evidence IDs.
-Only when a real tool creates a required output implicitly and no output
-placeholder can appear in argv/env, add `"outputs":["output.semantic_handle"]`.
-That optional field accepts exact semantic handles only. Generate is the sole
+Controller validates input/output coverage against concrete paths already
+present in argv/env and records provenance without rewriting the command. Do not
+return `produced_outputs`, output IDs, artifact IDs, or evidence IDs. Generate is the sole
 V2 producer of the executable action; do not request or invoke a Renderer
 protocol or manifest.
 

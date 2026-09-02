@@ -440,16 +440,25 @@ def project_action_runtime_for_provider(resolution: Mapping[str, Any]) -> Dict[s
             ]
         else:
             capability_view[field] = str(value)
-    rows = [
-        {
+    concrete_values = dict(resolution.get("effective_runtime_bindings") or {})
+    rows = []
+    for raw in resolution.get("runtime_binding_records", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        row = dict(raw)
+        env_name = str(row.get("env_name") or "")
+        value = str(concrete_values.get(env_name) or "")
+        if not env_name or not value:
+            continue
+        rows.append({
             "binding_id": str(row.get("binding_id") or ""),
-            "shell_reference": "$" + str(row.get("env_name") or ""),
+            "value": value,
+            "value_kind": str(row.get("value_kind") or "runtime_value"),
             "availability": str(row.get("status") or "unavailable"),
-            "source_kind": "verified_runtime",
-        }
-        for row in resolution.get("runtime_binding_records", []) or []
-        if isinstance(row, Mapping) and str(row.get("env_name") or "")
-    ]
+            "exists": bool(Path(value).exists()) if os.path.isabs(value) else True,
+            "executable": bool(os.path.isfile(value) and os.access(value, os.X_OK))
+            if os.path.isabs(value) else False,
+        })
     return {
         "current_action_capability": capability_view,
         "current_action_runtime_bindings": rows,
@@ -510,6 +519,7 @@ def build_artifact_env_manifest(
 def artifact_environment_values(
     artifact_environment: Sequence[Mapping[str, Any]],
 ) -> Dict[str, str]:
+    """Legacy explicit-adapter helper; default Execute never calls it."""
     values: Dict[str, str] = {}
     for raw in artifact_environment:
         if not isinstance(raw, Mapping):
@@ -529,7 +539,7 @@ def build_action_execution_environment(
     controller_bindings: Optional[Mapping[str, Any]] = None,
     managed_runtime_env_names: Iterable[str] = (),
 ) -> Dict[str, str]:
-    """Build one subprocess environment without leaking another action's runtime.
+    """Legacy explicit-adapter environment builder; not the default Execute path.
 
     The ambient process environment remains the base execution environment, but
     every env name owned by the runtime registry is removed before the exact
@@ -557,18 +567,45 @@ def build_action_execution_environment(
     return effective
 
 
+def build_exact_action_environment(
+    base_environment: Mapping[str, Any],
+    *,
+    action_environment: Optional[Mapping[str, Any]] = None,
+    controller_identity: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, str]:
+    """Build the subprocess environment without runtime/artifact materialization.
+
+    Ordinary ambient variables are preserved. Only environment entries already
+    present in the validated action and non-scientific Controller identity are
+    added. Capability registries and artifact bindings are intentionally not
+    accepted by this API, which prevents accidental reintroduction of the old
+    injection chain.
+    """
+    effective = {
+        str(key): str(value)
+        for key, value in base_environment.items()
+        if str(key)
+    }
+    for bindings in (action_environment or {}, controller_identity or {}):
+        for raw_name, raw_value in bindings.items():
+            name = str(raw_name or "").strip()
+            if _ENV_NAME_RE.fullmatch(name):
+                effective[name] = str(raw_value)
+    return effective
+
+
 def project_artifacts_for_provider(
     artifact_environment: Sequence[Mapping[str, Any]],
 ) -> list[Dict[str, Any]]:
+    allowed = (
+        "semantic_handle", "role", "direction", "required", "format",
+        "artifact_kind", "path", "expected_path", "exists", "readable",
+        "parent_exists", "parent_writable",
+    )
     return [
-        {
-            "binding_id": artifact_binding_id(row.get("semantic_handle")),
-            "shell_reference": "$" + str(row.get("env_var") or ""),
-            "direction": str(row.get("direction") or "input"),
-            "availability": "ready",
-        }
+        {key: deepcopy(row.get(key)) for key in allowed if row.get(key) not in (None, "")}
         for row in artifact_environment
-        if isinstance(row, Mapping) and _ENV_NAME_RE.fullmatch(str(row.get("env_var") or ""))
+        if isinstance(row, Mapping) and str(row.get("semantic_handle") or "")
     ]
 
 
@@ -576,7 +613,7 @@ def project_action_capability_context_for_provider(
     resolution: Mapping[str, Any],
     artifact_environment: Sequence[Mapping[str, Any]] = (),
 ) -> Dict[str, Any]:
-    """Project one resolved capability without runtime or artifact values."""
+    """Project concrete current-action resources without control metadata."""
     return {
         **project_action_runtime_for_provider(resolution),
         "current_action_artifact_bindings": project_artifacts_for_provider(
@@ -608,22 +645,25 @@ def serialize_action_capability_instructions(
         },
         "current_action_runtime_bindings": [
             {
-                field: str(row.get(field) or "")
+                field: deepcopy(row.get(field))
                 for field in (
-                    "binding_id", "shell_reference", "availability", "source_kind",
+                    "binding_id", "value", "value_kind", "availability",
+                    "exists", "executable",
                 )
-                if str(row.get(field) or "")
+                if row.get(field) not in (None, "")
             }
             for row in runtime_rows
             if isinstance(row, Mapping)
         ],
         "current_action_artifact_bindings": [
             {
-                field: str(row.get(field) or "")
+                field: deepcopy(row.get(field))
                 for field in (
-                    "binding_id", "shell_reference", "direction", "availability",
+                    "semantic_handle", "role", "direction", "required", "format",
+                    "artifact_kind", "path", "expected_path", "exists", "readable",
+                    "parent_exists", "parent_writable",
                 )
-                if str(row.get(field) or "")
+                if row.get(field) not in (None, "")
             }
             for row in artifact_rows
             if isinstance(row, Mapping)

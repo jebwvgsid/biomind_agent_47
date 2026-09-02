@@ -1,9 +1,9 @@
-"""Deterministic managed-artifact contracts and action materialisation.
+"""Deterministic artifact contracts and exact-action validation.
 
-The model selects semantic handles.  This module is the only boundary that
-turns those handles into authoritative paths.  Typed argv/env fields are the
-validation authority; raw source is preserved and may only produce diagnostic
-signals because this module deliberately does not parse shell semantics.
+Generate receives semantic artifact identities together with concrete paths.
+The default Controller path validates those paths without rewriting executable
+fields. Older materialisation helpers remain isolated for compatibility tests
+and explicit external adapters only.
 """
 
 from __future__ import annotations
@@ -30,6 +30,10 @@ _OPERATION_PLACEHOLDER_RE = re.compile(r"^\{operation:([A-Za-z][A-Za-z0-9_.-]*)\
 _RUNTIME_PLACEHOLDER_RE = re.compile(r"\{runtime:[A-Za-z][A-Za-z0-9_.-]*\}")
 _MANAGED_PLACEHOLDER_RE = re.compile(
     r"\{(?:input|output|operation):[A-Za-z][A-Za-z0-9_.-]*\}"
+)
+_UNRESOLVED_ARTIFACT_REFERENCE_RE = re.compile(
+    r"\{(?P<direction>input|output|artifact):"
+    r"(?P<identity>[A-Za-z][A-Za-z0-9_.-]*)\}"
 )
 _ENV_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -759,6 +763,186 @@ def managed_artifact_llm_view(
     ]
 
 
+def concrete_artifact_provider_view(
+    bindings: Mapping[str, ManagedArtifactBinding],
+) -> List[Dict[str, Any]]:
+    """Expose current-step artifact meaning and concrete locations to Generate.
+
+    This is deliberately a semantic projection rather than an environment
+    manifest.  Inputs include their observed availability; outputs include the
+    exact expected location and whether its parent is currently writable.
+    Controller identities, digests and provenance records stay internal.
+    """
+    rows: List[Dict[str, Any]] = []
+    unique = {
+        binding.semantic_handle: binding
+        for binding in bindings.values()
+        if isinstance(binding, ManagedArtifactBinding)
+    }
+    for handle, binding in sorted(unique.items()):
+        path = Path(binding.canonical_path).expanduser() if binding.canonical_path else None
+        role = str(binding.metadata.get("role") or handle.split(".", 1)[-1])
+        row: Dict[str, Any] = {
+            "semantic_handle": handle,
+            "role": role,
+            "direction": binding.direction,
+            "required": bool(binding.required),
+            "format": str(binding.format or ""),
+            "artifact_kind": str(binding.artifact_kind or ""),
+        }
+        if binding.direction == "input":
+            exists = bool(path and path.exists())
+            row.update({
+                "path": str(binding.canonical_path or ""),
+                "exists": exists,
+                "readable": bool(exists and os.access(path, os.R_OK)),
+            })
+        else:
+            parent = path.parent if path else None
+            row.update({
+                "expected_path": str(binding.canonical_path or ""),
+                "parent_exists": bool(parent and parent.exists()),
+                "parent_writable": bool(parent and os.access(parent, os.W_OK)),
+            })
+        rows.append({key: value for key, value in row.items() if value not in (None, "")})
+    return rows
+
+
+def validate_concrete_action_artifacts(
+    action: Mapping[str, Any],
+    bindings: Mapping[str, ManagedArtifactBinding],
+) -> Tuple[Dict[str, Any], List[ArtifactViolation]]:
+    """Validate an executable action without rewriting any executable value.
+
+    Generate owns the executable representation and must emit concrete paths.
+    Controller may annotate a copy with audit metadata, but it never substitutes
+    artifact placeholders or synthesizes scientific environment bindings.
+    """
+    validated = deepcopy(dict(action or {}))
+    violations: List[ArtifactViolation] = []
+
+    def walk(value: Any, field_path: str) -> Iterable[Tuple[str, str]]:
+        if isinstance(value, Mapping):
+            for key, child in value.items():
+                child_path = f"{field_path}.{key}" if field_path else f"$.{key}"
+                yield from walk(child, child_path)
+        elif isinstance(value, (list, tuple)):
+            for index, child in enumerate(value):
+                yield from walk(child, f"{field_path}[{index}]")
+        elif isinstance(value, str):
+            yield field_path or "$", value
+
+    scalar_rows = list(walk(validated, "$"))
+    for field_path, value in scalar_rows:
+        for match in _UNRESOLVED_ARTIFACT_REFERENCE_RE.finditer(value):
+            direction = match.group("direction")
+            identity = match.group("identity")
+            semantic_handle = (
+                f"{direction}.{identity}" if direction in {"input", "output"}
+                else f"artifact.{identity}"
+            )
+            binding = bindings.get(semantic_handle)
+            violations.append(_violation(
+                code="UNRESOLVED_ARTIFACT_REFERENCE",
+                owner="GENERATED_ACTION",
+                route="generate",
+                message=(
+                    "Executable action contains an unresolved artifact reference; "
+                    "Generate must emit the supplied concrete path."
+                ),
+                binding=binding,
+                artifact_handle=semantic_handle,
+                proposed=match.group(0),
+                field_path=field_path,
+                failure_stage="pre_action_contract",
+                repair_hint={
+                    "strategy": "replace_with_concrete_path",
+                    "artifact_identity": semantic_handle,
+                },
+                offending_placeholders=(match.group(0),),
+            ))
+
+    # Only executable fields count as proof that Generate used a concrete path.
+    executable_projection = {
+        key: deepcopy(validated.get(key))
+        for key in (
+            "argv", "env", "code", "command", "script", "executable",
+            "working_directory", "cwd",
+        )
+        if validated.get(key) not in (None, "", [], {})
+    }
+    executable_text = [value for _, value in walk(executable_projection, "$")]
+    used_handles: List[str] = []
+    for handle, binding in sorted(bindings.items()):
+        if not binding.required:
+            continue
+        path = str(binding.canonical_path or "")
+        if binding.direction == "input":
+            input_path = Path(path).expanduser() if path else None
+            if not path or not input_path.exists() or not os.access(input_path, os.R_OK):
+                violations.append(_violation(
+                    code="ACTION_INPUT_ARTIFACT_UNAVAILABLE",
+                    owner="DEPENDENCY",
+                    route="recovery",
+                    message=(
+                        f"Required input {binding.semantic_handle} is missing or unreadable."
+                    ),
+                    binding=binding,
+                    field_path="$.concrete_artifact_bindings",
+                    failure_stage="pre_action_contract",
+                ))
+                continue
+        if path and any(path in value for value in executable_text):
+            used_handles.append(handle)
+            continue
+        violations.append(_violation(
+            code="ACTION_ARTIFACT_PATH_NOT_REFERENCED",
+            owner="GENERATED_ACTION",
+            route="generate",
+            message=(
+                f"Executable action does not reference the concrete path for "
+                f"{binding.semantic_handle}."
+            ),
+            binding=binding,
+            field_path="$.code/argv/env",
+            failure_stage="pre_action_contract",
+            repair_hint={
+                "strategy": "use_supplied_concrete_path",
+                "artifact_identity": binding.semantic_handle,
+                "concrete_path": path,
+            },
+        ))
+
+    referenced_outputs = sorted(
+        handle for handle in used_handles
+        if handle in bindings and bindings[handle].direction == "output"
+    )
+    validated["managed_artifact_handles"] = sorted(set(used_handles))
+    validated["referenced_output_handles"] = referenced_outputs
+    validated["materialized_artifacts"] = {
+        handle: bindings[handle].canonical_path
+        for handle in sorted(set(used_handles))
+        if handle in bindings
+    }
+    validated["concrete_artifact_bindings"] = concrete_artifact_provider_view(bindings)
+    validated["controller_output_bindings"] = [
+        {
+            "artifact_id": bindings[handle].artifact_id,
+            "semantic_handle": bindings[handle].semantic_handle,
+            "expected_path": bindings[handle].canonical_path,
+            "artifact_kind": bindings[handle].artifact_kind,
+            "format": bindings[handle].format,
+            "validation_contract_id": bindings[handle].validation_contract_id,
+            "required": bindings[handle].required,
+            "constraint_origin": bindings[handle].constraint_origin,
+            "accepted_representations": list(bindings[handle].accepted_representations),
+            "source_authority": bindings[handle].source_authority,
+        }
+        for handle in referenced_outputs
+    ]
+    return validated, violations
+
+
 def _parse_placeholder(value: str) -> Optional[Tuple[str, str]]:
     match = _PLACEHOLDER_RE.fullmatch(str(value or ""))
     if not match:
@@ -797,6 +981,7 @@ def _violation(
     route: str,
     message: str,
     binding: Optional[ManagedArtifactBinding] = None,
+    artifact_handle: str = "",
     expected: str = "",
     proposed: str = "",
     field_path: str = "",
@@ -811,7 +996,7 @@ def _violation(
         owner=owner,
         route=route,
         message=message,
-        artifact_handle=binding.semantic_handle if binding else "",
+        artifact_handle=artifact_handle or (binding.semantic_handle if binding else ""),
         expected=expected or (binding.canonical_path if binding else ""),
         proposed=proposed,
         required_filename=binding.required_basename if binding else "",
@@ -913,10 +1098,10 @@ def materialize_managed_action(
     operation_bindings: Optional[Mapping[str, str]] = None,
     approved_visible_artifacts: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> Tuple[Dict[str, Any], List[ArtifactViolation]]:
-    """Resolve typed placeholders in argv/env and validate declared handles.
+    """Legacy explicit adapter: resolve typed placeholders and validate handles.
 
-    Embedded placeholders are rejected in typed fields.  Raw script/source
-    text is not a machine-semantic field and is therefore diagnostic-only.  A
+    Default Generate/Execute does not call this function. Embedded placeholders
+    are rejected in typed fields. Raw script/source text is diagnostic-only. A
     path containing spaces or shell metacharacters remains one argv value.
     """
     proposal = deepcopy(dict(action or {}))

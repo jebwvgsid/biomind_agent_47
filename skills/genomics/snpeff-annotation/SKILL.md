@@ -120,21 +120,21 @@ metadata:
         required_artifact_binding_ids: [artifact.variant_vcf, artifact.reference_fasta, artifact.annotation_gtf]
         execution_guidance:
           - Compare VCF, FASTA, and annotation contig identifiers with read-only text processing.
-          - Use only the supplied artifact bindings; this capability has no runtime bindings.
+          - Use the supplied concrete artifact paths explicitly; this capability has no runtime resources.
       - capability_id: genomics.snpeff_annotation.build_database
         required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
         optional_runtime_binding_ids: []
         required_artifact_binding_ids: [artifact.reference_fasta, artifact.annotation_gtf, artifact.snpeff_config, artifact.snpeff_data_dir]
         execution_guidance:
           - Build only the approved task-local custom database.
-          - Invoke snpEff using the supplied runtime binding shell references; do not discover or hard-code alternative runtime paths.
+          - Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths.
       - capability_id: genomics.snpeff_annotation.annotate_variants
         required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
         optional_runtime_binding_ids: []
         required_artifact_binding_ids: [artifact.variant_vcf, artifact.snpeff_config, artifact.snpeff_data_dir]
         execution_guidance:
           - Annotate the approved VCF with the approved database identity.
-          - Invoke snpEff using the supplied runtime binding shell references; do not discover or hard-code alternative runtime paths.
+          - Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths.
       - capability_id: genomics.snpeff_annotation.summarize_ann
         required_runtime_binding_ids: []
         optional_runtime_binding_ids: []
@@ -204,8 +204,9 @@ artifact. Do not use `mktemp` or a shell-local variable as a cross-step carrier.
 If the database is not reused across steps, build and annotate may be combined
 inside one managed action.
 
-Use the Controller-provided verified runtime as `"$SNPEFF_JAR"`. Do not emit
-`{runtime:snpeff_jar}`.
+Use the concrete Java and snpEff JAR paths supplied in the current-action
+runtime context. Do not emit `$SNPEFF_JAR`, `{runtime:snpeff_jar}`, or discover
+an alternative runtime inside the generated scientific action.
 
 ## Official Documentation Anchors
 
@@ -227,10 +228,11 @@ Use the Controller-provided verified runtime as `"$SNPEFF_JAR"`. Do not emit
 
 For a V2 managed task, Generate is the sole executable action/script producer.
 Use the verified runtime, TaskSpec inputs, approved Plan materializations, and
-the command patterns below to create the action directly. Declare every
-approved `produced_outputs[].output_id` using the canonical TaskSpec/Plan ID.
-Do not invoke the legacy renderer and do not create or consume a renderer
-manifest as V2 output authority.
+the command patterns below to create the action directly. Put every supplied
+concrete input path, expected output path, Java executable path, and JAR path
+directly in the action. Do not emit artifact placeholders, BIOMIND_INPUT/OUTPUT
+variables, or runtime-variable indirection. Do not invoke the legacy renderer
+and do not create or consume a renderer manifest as V2 output authority.
 
 ## Legacy Renderer Reference (`legacy_renderer_v1` only)
 
