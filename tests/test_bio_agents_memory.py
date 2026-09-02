@@ -43,16 +43,17 @@ class BioAgentMemoryTests(unittest.TestCase):
         router = source[source.index("def generate_router(state):"):source.index("def execute_router(state):")]
         self.assertIn('if step == "supervisor":', router)
 
-    def test_prompt_assembly_failure_is_internal_and_does_not_block_plan_step(self):
+    def test_prompt_assembly_failure_is_terminal_internal_protocol(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
-        start = source.index('reason = f"PROMPT_ASSEMBLY_FAILURE: {compact_exc}"')
+        start = source.index('is_control_metadata_leak = isinstance(')
         end = source.index("generate_response_cached = False", start)
         branch = source[start:end]
 
-        self.assertIn('"type": "internal_protocol_error"', branch)
-        self.assertIn('"task_status": TASK_STATUS_FAILED', branch)
+        self.assertIn('"pending_recovery_action": {}', branch)
+        self.assertIn('"task_status": TASK_STATUS_BLOCKED', branch)
         self.assertIn('"failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value', branch)
-        self.assertNotIn("_mark_plan_current_blocked", branch)
+        self.assertIn('"terminal_internal_protocol_failure": terminal_failure', branch)
+        self.assertIn('"final_audit_requested": False', branch)
 
     def test_generate_missing_retry_context_routes_to_recovery(self):
         missing = missing_supervisor_retry_fields({

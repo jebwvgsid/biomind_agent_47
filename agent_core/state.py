@@ -200,6 +200,8 @@ class AgentState(TypedDict, total=False):
     failure_id: Optional[str]
     failure: dict
     primary_failure: dict
+    secondary_failures: List[dict]
+    terminal_internal_protocol_failure: dict
     termination_reason: str
     execution_started: bool
     provenance_summary: dict

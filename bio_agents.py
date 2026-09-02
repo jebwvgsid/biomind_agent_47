@@ -523,6 +523,7 @@ from agent_core.task_spec import (
     validate_compiled_constraints,
 )
 from agent_core.node_context import (
+    ControlMetadataLeakError,
     InvocationProtocolError,
     InvocationRegistry,
     NodeContext,
@@ -1124,6 +1125,265 @@ def _consultant_validation_is_format_repair_error(text: str) -> bool:
     )
 
 logger = logging.getLogger("BioMind.Agent")
+
+
+class GeneratePromptAssemblyFailure(RuntimeError):
+    """One terminal pre-provider prompt assembly lifecycle."""
+
+    def __init__(
+        self,
+        primary_exception: BaseException,
+        *,
+        secondary_exception: Optional[BaseException] = None,
+        deterministic_rebuild_attempted: bool = False,
+    ) -> None:
+        super().__init__(str(primary_exception))
+        self.primary_exception = primary_exception
+        self.secondary_exception = secondary_exception
+        self.deterministic_rebuild_attempted = bool(
+            deterministic_rebuild_attempted
+        )
+
+
+def assemble_generate_prompt_deterministically(
+    builder: Callable[[], Any],
+) -> Any:
+    """Assemble once, with one pure Controller rebuild for non-safety errors.
+
+    A control-metadata leak is a failed safety invariant, not a transient
+    formatting problem, so it is terminal on the first observation.  No LLM is
+    involved in either attempt.
+    """
+    try:
+        return builder()
+    except ControlMetadataLeakError as exc:
+        raise GeneratePromptAssemblyFailure(exc) from exc
+    except Exception as primary_exc:
+        try:
+            return builder()
+        except Exception as secondary_exc:
+            raise GeneratePromptAssemblyFailure(
+                primary_exc,
+                secondary_exception=secondary_exc,
+                deterministic_rebuild_attempted=True,
+            ) from secondary_exc
+
+
+def _prompt_assembly_exception_record(
+    exc: BaseException,
+    *,
+    assembly_attempt: int,
+    deterministic_rebuild_attempted: bool,
+) -> Dict[str, Any]:
+    """Return durable, non-provider evidence for one assembly exception."""
+    error_code = str(
+        getattr(exc, "code", "")
+        or "GENERATE_PROMPT_ASSEMBLY_FAILURE"
+    )
+    message = str(exc)
+    control_metadata_paths: List[str] = []
+    marker = "prohibited control metadata at "
+    if marker in message:
+        control_metadata_paths = [
+            item.strip()
+            for item in message.split(marker, 1)[1].split(",")
+            if item.strip()
+        ]
+    identity = {
+        "error_code": error_code,
+        "failure_stage": "generate.prompt_assembly",
+        "exception_type": type(exc).__name__,
+        "message": message,
+        "assembly_attempt": int(assembly_attempt),
+    }
+    return {
+        "schema_version": 1,
+        "failure_id": "failure-" + hashlib.sha256(
+            json.dumps(
+                identity,
+                ensure_ascii=False,
+                sort_keys=True,
+            ).encode("utf-8", errors="replace")
+        ).hexdigest()[:20],
+        "error_code": error_code,
+        "failure_class": "internal_protocol",
+        "owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+        "stage": "generate.prompt_assembly",
+        "failure_stage": "generate.prompt_assembly",
+        "status": "terminal",
+        "retryable": False,
+        "message": message,
+        "exception_type": type(exc).__name__,
+        "exception_evidence": {
+            "type": type(exc).__name__,
+            "message": message,
+            "repr": repr(exc),
+            "control_metadata_paths": control_metadata_paths,
+        },
+        "assembly_attempt": int(assembly_attempt),
+        "deterministic_rebuild_attempted": bool(
+            deterministic_rebuild_attempted
+        ),
+        "llm_invoked": False,
+        "execution_started": False,
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+    }
+
+
+def prompt_assembly_failure_records(
+    failure: GeneratePromptAssemblyFailure,
+) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    """Preserve the first assembly exception and classify later ones as secondary."""
+    primary = _prompt_assembly_exception_record(
+        failure.primary_exception,
+        assembly_attempt=1,
+        deterministic_rebuild_attempted=(
+            failure.deterministic_rebuild_attempted
+        ),
+    )
+    secondary: List[Dict[str, Any]] = []
+    if failure.secondary_exception is not None:
+        later = _prompt_assembly_exception_record(
+            failure.secondary_exception,
+            assembly_attempt=2,
+            deterministic_rebuild_attempted=True,
+        )
+        later["caused_by_failure_id"] = primary["failure_id"]
+        secondary.append(later)
+    return primary, secondary
+
+
+def runtime_state_invariant_violations(state: Mapping[str, Any]) -> List[str]:
+    """Describe contradictions between recovery authority and terminal state."""
+    value = dict(state or {})
+    pending = value.get("pending_recovery_action")
+    pending_recovery = bool(isinstance(pending, Mapping) and pending)
+    status = str(value.get("task_status") or "").strip().lower()
+    route = str(
+        value.get("dispatch_route")
+        or value.get("effective_route")
+        or value.get("next_step")
+        or ""
+    ).strip().lower()
+    terminal = status in TASK_TERMINAL_STATUSES
+    violations: List[str] = []
+    recovery_routes = {
+        "ask_user", "consultant", "generate", "planner", "supervisor",
+    }
+    if pending_recovery and route not in recovery_routes:
+        violations.append("PENDING_RECOVERY_WITHOUT_RECOVERY_ROUTE")
+    if pending_recovery and terminal:
+        violations.append("PENDING_RECOVERY_WITH_TERMINAL_STATUS")
+    if terminal and route == "supervisor_final_audit":
+        violations.append("TERMINAL_STATUS_WITH_LLM_FINAL_AUDIT")
+    return violations
+
+
+def enforce_runtime_state_invariants(
+    state: Mapping[str, Any],
+    *,
+    durable_task_status: str = "",
+) -> Dict[str, Any]:
+    """Fail closed when recovery and terminal route authority conflict."""
+    value = dict(state or {})
+    pending = value.get("pending_recovery_action")
+    pending_recovery = bool(isinstance(pending, Mapping) and pending)
+    status = str(
+        value.get("task_status") or durable_task_status or ""
+    ).strip().lower()
+    terminal = status in TASK_TERMINAL_STATUSES
+    if terminal:
+        value.update({
+            "task_status": status,
+            "pending_recovery_action": {},
+            "final_audit_requested": False,
+            "completion_candidate": {},
+            "next_step": "finish",
+        })
+        return value
+    if pending_recovery:
+        pending_type = str(pending.get("type") or "").strip().lower()
+        route = str(value.get("next_step") or "").strip().lower()
+        recovery_routes = {
+            "ask_user", "consultant", "generate", "planner", "supervisor",
+        }
+        if route not in recovery_routes:
+            value["next_step"] = (
+                "ask_user"
+                if pending_type == "ask_user"
+                else "planner"
+                if pending_type in {"plan_patch", "patch_plan"}
+                else "consultant"
+                if pending_type in {
+                    "request_skill_context", "search_skills",
+                    "propose_skill_binding",
+                }
+                else "supervisor"
+            )
+        value.update({
+            "task_status": TASK_STATUS_DIAGNOSING,
+            "final_audit_requested": False,
+            "completion_candidate": {},
+        })
+    return value
+
+
+def pre_llm_internal_protocol_failure(state: Mapping[str, Any]) -> bool:
+    """Return whether final audit is barred by an earlier pre-provider fault."""
+    value = dict(state or {})
+    failure = (
+        value.get("primary_failure")
+        if isinstance(value.get("primary_failure"), Mapping)
+        else value.get("failure")
+    )
+    failure = dict(failure or {}) if isinstance(failure, Mapping) else {}
+    return bool(
+        str(failure.get("failure_class") or "").lower()
+        == "internal_protocol"
+        and str(
+            failure.get("failure_stage")
+            or failure.get("stage")
+            or ""
+        ).lower()
+        == "generate.prompt_assembly"
+        and failure.get("execution_started") is False
+    )
+
+
+def final_audit_entry_eligible(state: Mapping[str, Any]) -> bool:
+    """Admit final audit only for a completion claim or successful Execute evidence."""
+    value = dict(state or {})
+    if pre_llm_internal_protocol_failure(value):
+        return False
+    completion = value.get("completion_candidate")
+    if isinstance(completion, Mapping) and completion:
+        return True
+    execution = value.get("execution_evidence")
+    if not isinstance(execution, Mapping) or not execution:
+        return False
+    has_identity = bool(
+        str(
+            execution.get("execution_id")
+            or execution.get("attempt_id")
+            or execution.get("action_id")
+            or ""
+        )
+    )
+    try:
+        returncode = int(
+            execution.get("returncode")
+            if execution.get("returncode") is not None
+            else execution.get("exit_code")
+        )
+    except (TypeError, ValueError):
+        returncode = None
+    status = str(execution.get("execution_status") or "").strip().lower()
+    return bool(
+        has_identity
+        and returncode == 0
+        and status not in {"failed", "cancelled", "unknown"}
+    )
 
 
 class FinalizeResponsePersistenceError(RuntimeError):
@@ -18025,6 +18285,132 @@ class BioAnalystAgent:
                     )
         return progress
 
+    def _commit_terminal_internal_protocol_failure(
+        self,
+        task_id: str,
+        primary_failure: Mapping[str, Any],
+        secondary_failures: Sequence[Mapping[str, Any]] = (),
+    ) -> Tuple[Dict[str, Any], List[Dict[str, Any]], str]:
+        """Commit a pre-provider terminal while preserving the first failure."""
+        plan_state = load_plan_state(self.data_path, task_id)
+        task_state = dict(plan_state.get("task_state") or {})
+        existing_primary = next(
+            (
+                dict(candidate)
+                for candidate in (
+                    plan_state.get("primary_failure"),
+                    task_state.get("primary_failure"),
+                    plan_state.get("failure"),
+                )
+                if isinstance(candidate, Mapping)
+                and str(candidate.get("error_code") or "")
+            ),
+            {},
+        )
+        proposed_primary = dict(primary_failure or {})
+        committed_primary = existing_primary or proposed_primary
+        committed_secondary = [
+            dict(item)
+            for item in list(
+                plan_state.get("secondary_failures")
+                or task_state.get("secondary_failures")
+                or []
+            )
+            if isinstance(item, Mapping)
+        ]
+        later_candidates: List[Dict[str, Any]] = []
+        if existing_primary and proposed_primary:
+            later_candidates.append(proposed_primary)
+        later_candidates.extend(
+            dict(item)
+            for item in secondary_failures
+            if isinstance(item, Mapping)
+        )
+        seen_failure_ids = {
+            str(item.get("failure_id") or "")
+            for item in [committed_primary, *committed_secondary]
+            if str(item.get("failure_id") or "")
+        }
+        for item in later_candidates:
+            failure_id = str(item.get("failure_id") or "")
+            if failure_id and failure_id in seen_failure_ids:
+                continue
+            committed_secondary.append(item)
+            if failure_id:
+                seen_failure_ids.add(failure_id)
+
+        current_step_id = str(
+            plan_state.get("current_step_id")
+            or task_state.get("current_step_id")
+            or ""
+        )
+        reason = str(
+            committed_primary.get("message")
+            or committed_primary.get("error_code")
+            or "Generate prompt assembly failed before provider invocation."
+        )
+        block_plan_and_downstream(
+            plan_state,
+            f"internal_protocol:generate.prompt_assembly: {reason}",
+        )
+        if current_step_id:
+            for step in plan_state.get("steps", []) or []:
+                if not isinstance(step, dict):
+                    continue
+                if str(step.get("step_id") or "") != current_step_id:
+                    continue
+                step.update({
+                    "status": STATUS_BLOCKED,
+                    "internal_protocol_blocked": True,
+                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    "failure_stage": "generate.prompt_assembly",
+                    "failure_id": str(committed_primary.get("failure_id") or ""),
+                    "blocked_reason": reason[:4000],
+                })
+                break
+
+        task_state = dict(plan_state.get("task_state") or {})
+        recovery_state = dict(task_state.get("recovery_state") or {})
+        active_transition = dict(recovery_state.get("active_transition") or {})
+        if active_transition:
+            active_transition.update({
+                "status": "superseded",
+                "superseded_reason": "TERMINAL_INTERNAL_PROTOCOL_FAILURE",
+                "superseded_at": timestamp_now(),
+            })
+            recovery_state["transition_history"] = [
+                *list(recovery_state.get("transition_history") or []),
+                active_transition,
+            ]
+        recovery_state.update({
+            "active_transition": {},
+            "pending_action": {},
+            "phase": "blocked",
+            "status": "BLOCKED_INTERNAL_PROTOCOL",
+            "reason_code": str(
+                committed_primary.get("error_code")
+                or "GENERATE_PROMPT_ASSEMBLY_FAILURE"
+            ),
+            "reason": reason[:4000],
+        })
+        task_state.update({
+            "status": TASK_STATUS_BLOCKED,
+            "status_reason": reason[:4000],
+            "pending_action": {},
+            "recovery_state": recovery_state,
+            "primary_failure": committed_primary,
+            "secondary_failures": committed_secondary,
+        })
+        plan_state.update({
+            "pending_action": {},
+            "failure": committed_primary,
+            "primary_failure": committed_primary,
+            "secondary_failures": committed_secondary,
+            "task_state": task_state,
+        })
+        progress = self._persist_plan_tracker(task_id, plan_state)
+        return committed_primary, committed_secondary, progress
+
     def _apply_transition_guard(
         self,
         node_name: str,
@@ -18038,6 +18424,40 @@ class BioAnalystAgent:
         guarded = dict(update or {})
         merged = {**dict(state or {}), **guarded}
         plan_state = load_plan_state(self.data_path, task_id)
+
+        terminal_internal = (
+            dict(guarded.get("terminal_internal_protocol_failure") or {})
+            if isinstance(
+                guarded.get("terminal_internal_protocol_failure"), Mapping
+            )
+            else {}
+        )
+        if terminal_internal:
+            committed_primary, committed_secondary, progress = (
+                self._commit_terminal_internal_protocol_failure(
+                    task_id,
+                    terminal_internal.get("primary_failure") or {},
+                    terminal_internal.get("secondary_failures") or [],
+                )
+            )
+            guarded.update({
+                "next_step": "finish",
+                "pending_action": {},
+                "pending_recovery_action": {},
+                "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                "required_next_action": "",
+                "recovery_phase": "blocked",
+                "recovery_status": "BLOCKED_INTERNAL_PROTOCOL",
+                "task_status": TASK_STATUS_BLOCKED,
+                "contract_status": "blocked_internal_protocol",
+                "primary_failure": committed_primary,
+                "secondary_failures": committed_secondary,
+                "final_audit_requested": False,
+                "completion_candidate": {},
+                "plan_progress": progress,
+                "transition_guard": "terminal_internal_protocol_failure",
+            })
+            return guarded
 
         def commit_guard_decision(decision_like: Any) -> Tuple[RecoveryDecision, Dict[str, Any]]:
             nonlocal plan_state
@@ -18153,6 +18573,19 @@ class BioAnalystAgent:
             or guarded.get("generate_exit_reason")
             or "A node reported a terminal blocked recovery state."
         )
+        requested_status = str(guarded.get("task_status") or "").strip().lower()
+        if (
+            recovery_type
+            and recovery_type != "blocked"
+            and requested_status in TASK_TERMINAL_STATUSES
+        ):
+            # A recovery request and a terminal declaration cannot share one
+            # state revision.  Recovery remains non-terminal until a
+            # Controller decision explicitly blocks or completes it.
+            guarded.pop("task_status", None)
+            guarded["final_audit_requested"] = False
+            guarded["completion_candidate"] = {}
+            merged = {**dict(state or {}), **guarded}
         if recovery_type == "ask_user" and (
             recovery_owner != RecoveryFailureOwner.INPUT_DATA.value
             or not recovery_requires_user
@@ -18184,7 +18617,10 @@ class BioAnalystAgent:
             guarded.update({
                 "next_step": "finish",
                 "pending_action": {},
+                "pending_recovery_action": {},
                 "task_status": durable_status,
+                "final_audit_requested": False,
+                "completion_candidate": {},
                 "transition_guard": f"terminal_{durable_status}",
             })
             return guarded
@@ -18210,7 +18646,37 @@ class BioAnalystAgent:
             guarded.update({
                 "next_step": "finish",
                 "pending_action": {},
+                "pending_recovery_action": {},
+                "final_audit_requested": False,
+                "completion_candidate": {},
                 "transition_guard": "terminal_completed",
+            })
+            return guarded
+
+        if (
+            recovery_type
+            and recovery_type != "blocked"
+            and str(guarded.get("next_step") or "").strip().lower()
+            in {"", "finish", "supervisor_final_audit"}
+        ):
+            recovery_route = (
+                "ask_user"
+                if recovery_type == "ask_user"
+                else "planner"
+                if recovery_type in {"plan_patch", "patch_plan"}
+                else "consultant"
+                if recovery_type in {
+                    "request_skill_context", "search_skills",
+                    "propose_skill_binding",
+                }
+                else "supervisor"
+            )
+            guarded.update({
+                "next_step": recovery_route,
+                "task_status": TASK_STATUS_DIAGNOSING,
+                "final_audit_requested": False,
+                "completion_candidate": {},
+                "transition_guard": "pending_recovery_requires_nonterminal_route",
             })
             return guarded
 
@@ -18619,17 +19085,33 @@ class BioAnalystAgent:
                 or committed_decision.get("attempt_id")
                 or ""
             )
-        eligibility = recovery_transition_eligibility(
-            plan_state,
-            source_node=node_name,
-            current_step_id=current_step_id,
-            current_attempt_id=current_attempt,
-            current_execution_succeeded=current_execution_succeeded,
-            newly_committed_decision_id=newly_committed_decision_id,
+        terminal_internal = bool(
+            isinstance(
+                resolved.get("terminal_internal_protocol_failure"), Mapping
+            )
+            and resolved.get("terminal_internal_protocol_failure")
+        )
+        eligibility = (
+            {
+                "eligible": False,
+                "status": "terminal_internal_protocol_failure",
+                "reason": "terminal state cannot consume a recovery transition",
+            }
+            if terminal_internal
+            else recovery_transition_eligibility(
+                plan_state,
+                source_node=node_name,
+                current_step_id=current_step_id,
+                current_attempt_id=current_attempt,
+                current_execution_succeeded=current_execution_succeeded,
+                newly_committed_decision_id=newly_committed_decision_id,
+            )
         )
 
-        effective_route = pre_recovery_route
-        override_source = ""
+        effective_route = "finish" if terminal_internal else pre_recovery_route
+        override_source = (
+            "terminal_internal_protocol_failure" if terminal_internal else ""
+        )
         override_decision_id = ""
         if eligibility.get("eligible"):
             effective_route = str(eligibility.get("target_route") or "")
@@ -18714,7 +19196,36 @@ class BioAnalystAgent:
         )
         block_reason_code = ""
         block_reason = ""
-        if should_block:
+        incoming_state_revision = int(
+            state.get("state_generation")
+            or state.get("task_revision")
+            or plan_state.get("state_generation")
+            or plan_state.get("plan_revision")
+            or 0
+        )
+        current_state_revision = int(
+            plan_state.get("state_generation")
+            or plan_state.get("plan_revision")
+            or incoming_state_revision
+            or 0
+        )
+        supervisor_self_loop = bool(
+            node_name == "supervisor"
+            and effective_route == "supervisor"
+            and incoming_state_revision == current_state_revision
+        )
+        if supervisor_self_loop:
+            block_reason_code = "SUPERVISOR_SELF_LOOP_BLOCKED"
+            block_reason = (
+                "Supervisor proposed Supervisor again without a state revision change."
+            )
+            block_plan_and_downstream(
+                plan_state,
+                f"{block_reason_code}: {block_reason}",
+            )
+            effective_route = "blocked"
+            override_source = "supervisor_self_loop_guard"
+        elif should_block:
             block_reason_code = "RECOVERY_NO_PROGRESS_EXHAUSTED"
             block_reason = str(
                 progress_guard.get("reason")
@@ -18826,6 +19337,7 @@ class BioAnalystAgent:
             "override_decision_id": override_decision_id,
             "current_step_id": current_step_id,
             "current_attempt": current_attempt,
+            "state_revision": current_state_revision,
         }
         route_event_id = "route-" + hashlib.sha256(
             json.dumps(route_identity, ensure_ascii=False, sort_keys=True).encode("utf-8")
@@ -18926,6 +19438,8 @@ class BioAnalystAgent:
                     if block_reason_code == "RECOVERY_NO_PROGRESS_EXHAUSTED"
                     else "same_transition_budget_exhausted"
                     if block_reason_code == "STATE_MACHINE_STALLED"
+                    else "supervisor_self_loop_blocked"
+                    if block_reason_code == "SUPERVISOR_SELF_LOOP_BLOCKED"
                     else "recovery_transition_consume_failed"
                     if block_reason_code == "RECOVERY_TRANSITION_CONSUME_FAILED"
                     else "recovery_policy_blocked"
@@ -19118,12 +19632,31 @@ class BioAnalystAgent:
                 if node_name in {
                     "generate", "execute", "supervisor", "supervisor_final_audit",
                 }:
+                    result = enforce_runtime_state_invariants(
+                        result,
+                        durable_task_status=task_status(
+                            load_plan_state(self.data_path, task_id)
+                        ),
+                    )
                     result = self._resolve_and_commit_effective_transition(
                         node_name,
                         state,
                         result,
                         task_id,
                     )
+                    invariant_violations = runtime_state_invariant_violations({
+                        **result,
+                        "task_status": task_status(
+                            load_plan_state(self.data_path, task_id)
+                        ),
+                    })
+                    if invariant_violations:
+                        logger.error(
+                            "RUNTIME_STATE_INVARIANT_VIOLATION task=%s node=%s violations=%s",
+                            task_id,
+                            node_name,
+                            invariant_violations,
+                        )
             self._record_profiler_state_update(task_id, node_name, state, result)
             return result
         return wrapped
@@ -33788,31 +34321,101 @@ question. Never guess a scientific or database identity.
                     capability_instructions=loaded_skills,
                 ))]
             except Exception as exc:
+                rebuild_lifecycle = (
+                    dict(state.get("generate_prompt_assembly_rebuild") or {})
+                    if isinstance(
+                        state.get("generate_prompt_assembly_rebuild"), Mapping
+                    )
+                    else {}
+                )
+                is_control_metadata_leak = isinstance(
+                    exc, ControlMetadataLeakError
+                )
+                if not is_control_metadata_leak and not rebuild_lifecycle:
+                    first_failure = _prompt_assembly_exception_record(
+                        exc,
+                        assembly_attempt=1,
+                        deterministic_rebuild_attempted=True,
+                    )
+                    logger.warning(
+                        "Generate prompt assembly failed before provider invocation; "
+                        "performing the sole deterministic Controller rebuild: "
+                        "task=%s error=%s",
+                        task_id,
+                        str(first_failure.get("error_code") or ""),
+                    )
+                    rebuild_state = dict(state)
+                    rebuild_state["generate_prompt_assembly_rebuild"] = {
+                        "attempted": True,
+                        "primary_failure": first_failure,
+                    }
+                    return await _generate_impl(rebuild_state)
+
+                if rebuild_lifecycle:
+                    primary_failure = dict(
+                        rebuild_lifecycle.get("primary_failure") or {}
+                    )
+                    secondary_failures = [
+                        _prompt_assembly_exception_record(
+                            exc,
+                            assembly_attempt=2,
+                            deterministic_rebuild_attempted=True,
+                        )
+                    ]
+                    if secondary_failures:
+                        secondary_failures[0]["caused_by_failure_id"] = str(
+                            primary_failure.get("failure_id") or ""
+                        )
+                else:
+                    primary_failure = _prompt_assembly_exception_record(
+                        exc,
+                        assembly_attempt=1,
+                        deterministic_rebuild_attempted=False,
+                    )
+                    secondary_failures = []
                 compact_exc = self._clip_observation_text(
-                    f"{type(exc).__name__}: {exc}",
+                    (
+                        f"{primary_failure.get('exception_type') or type(exc).__name__}: "
+                        f"{primary_failure.get('message') or exc}"
+                    ),
                     1200,
                 )
                 reason = f"PROMPT_ASSEMBLY_FAILURE: {compact_exc}"
-                logger.exception("Generate V2 LLMPayload assembly failed: task=%s", task_id)
+                logger.exception(
+                    "Generate V2 prompt assembly terminated before provider invocation: task=%s",
+                    task_id,
+                )
                 await self._finalize_task_memory(
                     task_id,
-                    "failed",
+                    "blocked",
                     messages,
-                    {"reason": reason, "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value},
+                    {
+                        "reason": reason,
+                        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                        "primary_failure": primary_failure,
+                    },
                 )
+                terminal_failure = {
+                    "primary_failure": primary_failure,
+                    "secondary_failures": secondary_failures,
+                }
                 return {
                     "messages": [SystemMessage(content=reason)],
                     "pending_action": {},
-                    "pending_recovery_action": {
-                        "type": "internal_protocol_error",
-                        "reason": reason,
-                        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                    },
+                    "pending_recovery_action": {},
                     "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                    "required_next_action": "INTERNAL_PROTOCOL_ERROR",
-                    "generate_result": "BLOCKED",
-                    "generate_exit_reason": "prompt_assembly_failure",
-                    "task_status": TASK_STATUS_FAILED,
+                    "failure_stage": "generate.prompt_assembly",
+                    "required_next_action": "",
+                    "generate_result": "BLOCKED_INTERNAL_PROTOCOL",
+                    "generate_exit_reason": "prompt_assembly_terminal",
+                    "task_status": TASK_STATUS_BLOCKED,
+                    "contract_status": "blocked_internal_protocol",
+                    "primary_failure": primary_failure,
+                    "secondary_failures": secondary_failures,
+                    "terminal_internal_protocol_failure": terminal_failure,
+                    "final_audit_requested": False,
+                    "completion_candidate": {},
+                    "execution_started": False,
                     "next_step": "finish",
                 }
             generate_response_cached = False
@@ -39499,6 +40102,73 @@ question. Never guess a scientific or database identity.
             """Controller-owned final gate following fact-only validation."""
             output.print_node_header("supervisor_final_audit")
             task_id = state.get("task_id", "default")
+            durable_audit_plan = load_plan_state(self.data_path, task_id)
+            durable_audit_task = dict(
+                durable_audit_plan.get("task_state") or {}
+            )
+            durable_primary_failure = next(
+                (
+                    dict(candidate)
+                    for candidate in (
+                        state.get("primary_failure"),
+                        durable_audit_plan.get("primary_failure"),
+                        durable_audit_task.get("primary_failure"),
+                        durable_audit_plan.get("failure"),
+                    )
+                    if isinstance(candidate, Mapping)
+                    and str(candidate.get("error_code") or "")
+                ),
+                {},
+            )
+            audit_entry_state = {
+                **dict(state),
+                "primary_failure": durable_primary_failure,
+            }
+            if pre_llm_internal_protocol_failure(audit_entry_state):
+                return {
+                    "messages": [SystemMessage(content=(
+                        "FINAL_AUDIT_SKIPPED: Generate failed an internal "
+                        "prompt-assembly invariant before any provider or "
+                        "Execute call; the primary failure remains authoritative."
+                    ))],
+                    "pending_action": {},
+                    "pending_recovery_action": {},
+                    "primary_failure": durable_primary_failure,
+                    "secondary_failures": list(
+                        durable_audit_plan.get("secondary_failures")
+                        or durable_audit_task.get("secondary_failures")
+                        or []
+                    ),
+                    "terminal_internal_protocol_failure": {
+                        "primary_failure": durable_primary_failure,
+                        "secondary_failures": list(
+                            durable_audit_plan.get("secondary_failures")
+                            or durable_audit_task.get("secondary_failures")
+                            or []
+                        ),
+                    },
+                    "task_status": TASK_STATUS_BLOCKED,
+                    "final_audit_requested": False,
+                    "completion_candidate": {},
+                    "next_step": "finish",
+                }
+            if not final_audit_entry_eligible(audit_entry_state):
+                return {
+                    "messages": [SystemMessage(content=(
+                        "FINAL_AUDIT_ENTRY_INELIGIBLE: no completion candidate "
+                        "or successful Execute evidence was present."
+                    ))],
+                    "pending_action": {},
+                    "pending_recovery_action": {
+                        "type": "blocked",
+                        "reason": "FINAL_AUDIT_ENTRY_INELIGIBLE",
+                        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    },
+                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    "final_audit_requested": False,
+                    "completion_candidate": {},
+                    "next_step": "finish",
+                }
             synced_from_status, reconciled_progress = self._reconcile_completion_candidate_plan(
                 task_id,
                 dict(state),
