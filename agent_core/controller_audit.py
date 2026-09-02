@@ -624,7 +624,17 @@ def adapt_script_block_to_action(
 
     envelope: Optional[RecoveryExecutionEnvelope] = None
     if execution_envelope is not None:
-        envelope = RecoveryExecutionEnvelope.from_mapping(execution_envelope)
+        try:
+            envelope = RecoveryExecutionEnvelope.from_mapping(
+                execution_envelope
+            )
+        except RecoveryExecutionContractError as exc:
+            if int(payload_revision or 0) > 0:
+                raise RecoveryExecutionContractError(
+                    "RECOVERY_ENVELOPE_MUTATION_ATTEMPT",
+                    "payload repair attempted to change Controller-owned authority",
+                ) from exc
+            raise
     elif recovery_generated:
         raise RecoveryExecutionContractError(
             "RECOVERY_EXECUTION_ENVELOPE_MISSING",
@@ -689,6 +699,13 @@ def adapt_script_block_to_action(
             "completion_eligible": envelope.to_dict()["completion_eligible"],
             "payload_revision": max(0, int(payload_revision or 0)),
         })
+        if envelope.scratch_capability is not None:
+            action["env"]["BIOMIND_RECOVERY_SCRATCH_ROOT"] = (
+                envelope.scratch_capability.scratch_root
+            )
+            action["timeout_seconds"] = (
+                envelope.scratch_capability.max_wall_seconds
+            )
     return action
 
 

@@ -76,6 +76,7 @@ def diagnostic_command_masks_failure(command: Any) -> bool:
     return bool(
         re.search(r"\|\|\s*(?:echo|printf|true|:)(?:\s|$)", text)
         or re.search(r"(?:^|[;&]\s*)[^\n;]+\|\|\s*[^\n;]+&&", text)
+        or re.search(r"(?:^|[;&]\s*)(?:true|:)(?:\s*(?:[;&]|$))", text)
     )
 
 
@@ -110,6 +111,22 @@ class RecoveryDecisionSource(str, Enum):
     CACHE = "cache"
     FALLBACK = "fallback"
     DETERMINISTIC = "deterministic"
+
+
+class DiagnosticEvidenceStatus(str, Enum):
+    SUCCEEDED = "SUCCEEDED"
+    FAILED = "FAILED"
+    TIMED_OUT = "TIMED_OUT"
+    NOT_EXECUTED = "NOT_EXECUTED"
+
+
+class ProbeLifecycleStatus(str, Enum):
+    PROPOSED = "PROPOSED"
+    VALIDATED = "VALIDATED"
+    DISPATCHED = "DISPATCHED"
+    SUCCEEDED = "SUCCEEDED"
+    FAILED = "FAILED"
+    NOT_EXECUTED = "NOT_EXECUTED"
 
 
 def recovery_completion_eligible(result_contract: Any) -> bool:
@@ -404,7 +421,45 @@ class RecoveryPolicyOutcome:
         return value
 
 
-def validate_diagnostic_probe_code(code: Any) -> Tuple[bool, str]:
+def _diagnostic_write_target(
+    token: str,
+    capability: DiagnosticScratchCapability,
+) -> Tuple[bool, str]:
+    raw = str(token or "").strip().strip("'\"")
+    if raw == "/dev/null" or re.fullmatch(r"&(?:\d+|-)", raw):
+        return True, ""
+    scratch_root = Path(capability.scratch_root).resolve(strict=False)
+    expanded = raw
+    for prefix in (
+        "$BIOMIND_RECOVERY_SCRATCH_ROOT",
+        "${BIOMIND_RECOVERY_SCRATCH_ROOT}",
+    ):
+        if expanded == prefix:
+            expanded = str(scratch_root)
+        elif expanded.startswith(prefix + "/"):
+            expanded = str(scratch_root / expanded[len(prefix) + 1 :])
+    target = Path(expanded)
+    if not target.is_absolute():
+        return False, "diagnostic write targets must use the declared scratch root"
+    resolved = target.resolve(strict=False)
+    if resolved != scratch_root and scratch_root not in resolved.parents:
+        return False, "diagnostic probe writes outside the declared scratch root"
+    forbidden = [
+        Path(item).resolve(strict=False)
+        for item in capability.forbidden_formal_output_paths
+        if str(item or "")
+    ]
+    if any(resolved == item for item in forbidden):
+        return False, "diagnostic probe may not write a formal managed output"
+    return True, ""
+
+
+def validate_diagnostic_probe_code(
+    code: Any,
+    scratch_capability: Optional[
+        DiagnosticScratchCapability | Mapping[str, Any]
+    ] = None,
+) -> Tuple[bool, str]:
     """Reject mutating or unbounded commands before a diagnostic probe runs.
 
     This is intentionally tool-neutral. A probe may inspect bounded metadata,
@@ -419,24 +474,79 @@ def validate_diagnostic_probe_code(code: Any) -> Tuple[bool, str]:
     if diagnostic_command_masks_failure(text):
         return False, "diagnostic probe masks a failed check with a successful fallback"
 
+    capability = (
+        scratch_capability
+        if isinstance(scratch_capability, DiagnosticScratchCapability)
+        else DiagnosticScratchCapability.from_mapping(scratch_capability)
+        if isinstance(scratch_capability, Mapping)
+        else None
+    )
     mutation_patterns = (
-        r"(?:^|[;&|]\s*)(?:rm|mv|cp|mkdir|touch|chmod|chown|install)\b",
+        r"(?:^|[;&|]\s*)(?:rm|mv|cp|chmod|chown|install)\b",
         r"\b(?:conda|mamba|pip|pip3)\s+(?:install|create|remove|uninstall|update)\b",
         r"\b(?:curl|wget)\b",
         r"\bsed\b[^\n;|]*\s-i(?:\s|$)",
-        r"\b(?:tee|truncate)\b",
-        r"\b(?:os\.(?:remove|unlink|rename|replace|mkdir|makedirs)|shutil\.(?:rmtree|move|copy))\s*\(",
+        r"\btruncate\b",
+        r"\b(?:os\.(?:remove|unlink|rename|replace)|shutil\.(?:rmtree|move|copy))\s*\(",
         r"\bopen\s*\([^)]*['\"][wax+]",
         r"\b(?:write_text|write_bytes|savefig|to_csv|to_excel)\s*\(",
     )
     if any(re.search(pattern, text, re.IGNORECASE) for pattern in mutation_patterns):
         return False, "diagnostic probe contains a mutating, download, or installation operation"
 
+    if capability is None and re.search(
+        r"(?:^|[;&|]\s*)(?:mkdir|touch)\b|\btee\b",
+        text,
+        re.IGNORECASE,
+    ):
+        return False, "diagnostic probe contains a mutating, download, or installation operation"
+
+    write_targets: List[str] = []
     for match in re.finditer(r"(?<!\S)(?:\d*)>>?\s*([^\s;|]+)?", text):
         target = str(match.group(1) or "").strip("'\"")
         if target == "/dev/null" or re.fullmatch(r"&(?:\d+|-)", target):
             continue
-        return False, "diagnostic probe writes to a file"
+        if capability is None:
+            return False, "diagnostic probe writes to a file"
+        allowed, reason = _diagnostic_write_target(target, capability)
+        if not allowed:
+            return False, reason
+        write_targets.append(target)
+
+    if capability is not None:
+        for match in re.finditer(
+            r"(?:^|[;&|]\s*)(?:mkdir(?:\s+-p)?|touch)\s+([^\n;&|]+)",
+            text,
+            re.IGNORECASE,
+        ):
+            for target in re.findall(
+                r"(?:'[^']*'|\"[^\"]*\"|\S+)", match.group(1)
+            ):
+                if target.startswith("-"):
+                    continue
+                allowed, reason = _diagnostic_write_target(target, capability)
+                if not allowed:
+                    return False, reason
+                write_targets.append(target)
+        for match in re.finditer(r"\btee(?:\s+-a)?\s+([^\s;|]+)", text):
+            allowed, reason = _diagnostic_write_target(
+                match.group(1), capability
+            )
+            if not allowed:
+                return False, reason
+            write_targets.append(match.group(1))
+        if len(set(write_targets)) > capability.max_files:
+            return False, "diagnostic probe declares more scratch files than allowed"
+        for match in re.finditer(
+            r"(?:--threads?|--cpus-per-task|-t|-@)(?:=|\s+)(\d+)",
+            text,
+            re.IGNORECASE,
+        ):
+            if int(match.group(1)) > capability.max_threads:
+                return False, "diagnostic probe exceeds the declared thread limit"
+        for match in re.finditer(r"(?:^|[;&|]\s*)timeout\s+(\d+)", text):
+            if int(match.group(1)) > capability.max_wall_seconds:
+                return False, "diagnostic probe exceeds the declared wall-time limit"
 
     for raw_line in re.split(r"[\n;]", text):
         line = raw_line.strip()
@@ -449,7 +559,93 @@ def validate_diagnostic_probe_code(code: Any) -> Tuple[bool, str]:
                 return False, "diagnostic probe may not scan a filesystem or home root"
         if re.search(r"(?:^|&&|\|)\s*(?:rg|grep)\b[^\n]*(?:\s/|\s/public(?:\s|$)|\s/home(?:\s|$))", line):
             return False, "text search must target a bounded task or project path, not a filesystem root"
+        if (
+            capability is not None
+            and re.search(r"(?:^|&&|\|)\s*(?:cat|zcat|bzcat|xzcat)\s+", line)
+            and not re.search(
+                r"\b(?:head|tail)\s+-(?:n|c)\s+\d+|\bsed\s+-n\s+|\bawk\b[^\n]*\bNR\b",
+                line,
+            )
+            and not re.search(r"\s/(?:proc|sys/fs/cgroup)(?:/|\s|$)", line)
+        ):
+            return False, "diagnostic input reads must use an explicit bounded-read operation"
     return True, ""
+
+
+def validate_diagnostic_action(action: Mapping[str, Any]) -> Tuple[bool, str]:
+    """Validate a diagnostic action against its immutable scratch capability."""
+    try:
+        envelope = RecoveryExecutionEnvelope.from_mapping(
+            action.get("recovery_execution_envelope")
+        )
+    except RecoveryExecutionContractError as exc:
+        return False, f"{exc.code}: {exc.message}"
+    if (
+        envelope.execution_purpose
+        != RecoveryExecutionPurpose.DIAGNOSTIC.value
+        or envelope.result_contract
+        != RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+    ):
+        return False, "diagnostic validation requires DIAGNOSTIC_EVIDENCE authority"
+    capability = envelope.scratch_capability
+    if capability is None:
+        return False, "diagnostic action has no scratch capability"
+    try:
+        timeout_seconds = int(
+            action.get("timeout_seconds") or capability.max_wall_seconds
+        )
+    except (TypeError, ValueError):
+        return False, "diagnostic timeout_seconds must be an integer"
+    if timeout_seconds <= 0 or timeout_seconds > capability.max_wall_seconds:
+        return False, "diagnostic action exceeds the declared wall-time limit"
+    code = str(action.get("code") or "")
+    for env_name in dict(action.get("env") or {}):
+        if "OUTPUT" not in str(env_name).upper():
+            continue
+        if re.search(
+            rf"\$(?:\{{{re.escape(str(env_name))}\}}|{re.escape(str(env_name))})(?![A-Za-z0-9_])",
+            code,
+        ):
+            return False, "diagnostic action may not reference a formal output binding"
+    return validate_diagnostic_probe_code(
+        code,
+        capability,
+    )
+
+
+def collect_diagnostic_scratch_metadata(
+    capability: DiagnosticScratchCapability | Mapping[str, Any],
+) -> List[Dict[str, Any]]:
+    """Return a bounded audit projection without adopting scratch as task output."""
+    scratch = (
+        capability
+        if isinstance(capability, DiagnosticScratchCapability)
+        else DiagnosticScratchCapability.from_mapping(capability)
+    )
+    root = Path(scratch.scratch_root)
+    if not root.is_dir():
+        return []
+    records: List[Dict[str, Any]] = []
+    total_bytes = 0
+    for path in sorted(root.rglob("*")):
+        if len(records) >= scratch.max_files:
+            break
+        try:
+            stat = path.stat()
+        except OSError:
+            continue
+        if path.is_dir():
+            continue
+        total_bytes += int(stat.st_size)
+        records.append({
+            "path": str(path),
+            "relative_path": str(path.relative_to(root)),
+            "size_bytes": int(stat.st_size),
+            "within_output_limit": total_bytes <= scratch.max_output_bytes,
+            "artifact_scope": "diagnostic_scratch",
+            "adopted": False,
+        })
+    return records
 
 
 SECRET_RE = re.compile(
@@ -1017,6 +1213,161 @@ class ExecutionRecord:
         data["stdout_empty"] = not bool(self.raw_stdout.strip())
         data["stderr_empty"] = not bool(self.raw_stderr.strip())
         return data
+
+
+@dataclass(frozen=True)
+class DiagnosticEvidenceRecord:
+    """Typed probe result that can inform Recovery but can never complete a step."""
+
+    schema_version: int = 1
+    probe_id: str = ""
+    action_id: str = ""
+    execution_attempt_id: str = ""
+    recovery_decision_id: str = ""
+    step_id: str = ""
+    status: str = DiagnosticEvidenceStatus.NOT_EXECUTED.value
+    exit_code: Optional[int] = None
+    signal: Optional[int] = None
+    stdout_ref: str = ""
+    stderr_ref: str = ""
+    normalized_evidence_summary: str = ""
+    evidence_fingerprint: str = ""
+    scratch_artifact_metadata: Tuple[Mapping[str, Any], ...] = ()
+    validation_result: Mapping[str, Any] = field(default_factory=dict)
+    created_at: str = field(default_factory=_now)
+
+    @classmethod
+    def from_execution(
+        cls,
+        execution: Mapping[str, Any],
+        envelope: RecoveryExecutionEnvelope | Mapping[str, Any],
+        *,
+        timed_out: bool = False,
+        scratch_artifact_metadata: Iterable[Mapping[str, Any]] = (),
+    ) -> "DiagnosticEvidenceRecord":
+        authority = (
+            envelope
+            if isinstance(envelope, RecoveryExecutionEnvelope)
+            else RecoveryExecutionEnvelope.from_mapping(envelope)
+        )
+        if (
+            authority.execution_purpose
+            != RecoveryExecutionPurpose.DIAGNOSTIC.value
+        ):
+            raise RecoveryExecutionContractError(
+                "DIAGNOSTIC_EVIDENCE_AUTHORITY_MISMATCH",
+                "only a diagnostic envelope may create diagnostic evidence",
+            )
+        data = dict(execution or {})
+        exit_code = (
+            int(data.get("returncode"))
+            if data.get("returncode") is not None
+            else int(data.get("exit_code"))
+            if data.get("exit_code") is not None
+            else None
+        )
+        status = (
+            DiagnosticEvidenceStatus.TIMED_OUT.value
+            if timed_out
+            else DiagnosticEvidenceStatus.SUCCEEDED.value
+            if exit_code == 0
+            else DiagnosticEvidenceStatus.FAILED.value
+        )
+        stdout_summary = _clip(
+            data.get("stdout_summary") or data.get("stdout") or "", 4000
+        )
+        stderr_summary = _clip(
+            data.get("stderr_summary") or data.get("stderr") or "", 4000
+        )
+        summary = _redact(
+            "\n".join(
+                item
+                for item in (
+                    f"status={status}",
+                    f"exit_code={exit_code}",
+                    f"signal={data.get('signal')}",
+                    f"stdout={stdout_summary}" if stdout_summary else "",
+                    f"stderr={stderr_summary}" if stderr_summary else "",
+                )
+                if item
+            )
+        )
+        normalized = re.sub(
+            r"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?\b",
+            "<timestamp>",
+            summary,
+        )
+        normalized = re.sub(
+            r"/(?:[^\s/]+/){2,}[^\s]+", "<path>", normalized
+        )
+        fingerprint = hashlib.sha256(
+            json.dumps({
+                "probe_id": authority.probe_id,
+                "status": status,
+                "exit_code": exit_code,
+                "signal": data.get("signal"),
+                "summary": normalized,
+            }, ensure_ascii=False, sort_keys=True).encode(
+                "utf-8", errors="replace"
+            )
+        ).hexdigest()[:24]
+        return cls(
+            probe_id=str(authority.probe_id or ""),
+            action_id=authority.action_id,
+            execution_attempt_id=str(
+                data.get("attempt_id") or data.get("execution_attempt_id") or ""
+            ),
+            recovery_decision_id=authority.recovery_decision_id,
+            step_id=authority.step_id,
+            status=status,
+            exit_code=exit_code,
+            signal=(
+                int(data.get("signal"))
+                if data.get("signal") is not None
+                else None
+            ),
+            stdout_ref=str(data.get("stdout_log") or ""),
+            stderr_ref=str(data.get("stderr_log") or ""),
+            normalized_evidence_summary=normalized,
+            evidence_fingerprint=fingerprint,
+            scratch_artifact_metadata=tuple(
+                _redact_mapping(dict(item))
+                for item in scratch_artifact_metadata
+                if isinstance(item, Mapping)
+            ),
+            validation_result=_redact_mapping(
+                dict(data.get("validation") or {})
+            ),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        value = asdict(self)
+        value["scratch_artifact_metadata"] = [
+            dict(item) for item in self.scratch_artifact_metadata
+        ]
+        value["completion_eligible"] = False
+        return value
+
+
+@dataclass(frozen=True)
+class ProbeLifecycleRecord:
+    schema_version: int = 1
+    recovery_decision_id: str = ""
+    diagnosis: str = ""
+    missing_evidence: Tuple[str, ...] = ()
+    probe_id: str = ""
+    probe_objective: str = ""
+    status: str = ProbeLifecycleStatus.PROPOSED.value
+    evidence_fingerprint: str = ""
+    result_reference: str = ""
+    action_id: str = ""
+    validation_fingerprint: str = ""
+    created_at: str = field(default_factory=_now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        value = asdict(self)
+        value["missing_evidence"] = list(self.missing_evidence)
+        return value
 
 
 @dataclass(frozen=True)
@@ -4015,6 +4366,65 @@ class RecoveryStateStore:
             rows.append(value)
         self._write_jsonl(path, rows)
         return path
+
+    def save_diagnostic_evidence(
+        self,
+        record: DiagnosticEvidenceRecord,
+    ) -> Dict[str, Any]:
+        """Persist a probe result once per stable evidence fingerprint."""
+        path = self.root / "diagnostic_evidence.jsonl"
+        rows = self._read_jsonl(path)
+        for row in rows:
+            if (
+                str(row.get("probe_id") or "") == record.probe_id
+                and str(row.get("evidence_fingerprint") or "")
+                == record.evidence_fingerprint
+            ):
+                return {
+                    "path": str(path),
+                    "created": False,
+                    "record": dict(row),
+                }
+        value = record.to_dict()
+        rows.append(value)
+        self._write_jsonl(path, rows)
+        return {"path": str(path), "created": True, "record": value}
+
+    def save_probe_lifecycle(
+        self,
+        record: ProbeLifecycleRecord,
+    ) -> Dict[str, Any]:
+        """Append one typed lifecycle state idempotently for audit/replay."""
+        path = self.root / "probe_lifecycle.jsonl"
+        rows = self._read_jsonl(path)
+        value = record.to_dict()
+        identity = (
+            record.probe_id,
+            record.status,
+            record.evidence_fingerprint,
+            record.validation_fingerprint,
+        )
+        for row in rows:
+            if (
+                str(row.get("probe_id") or ""),
+                str(row.get("status") or ""),
+                str(row.get("evidence_fingerprint") or ""),
+                str(row.get("validation_fingerprint") or ""),
+            ) == identity:
+                return {
+                    "path": str(path),
+                    "created": False,
+                    "record": dict(row),
+                }
+        rows.append(value)
+        self._write_jsonl(path, rows)
+        return {"path": str(path), "created": True, "record": value}
+
+    def load_diagnostic_evidence(self) -> List[Dict[str, Any]]:
+        return self._read_jsonl(self.root / "diagnostic_evidence.jsonl")
+
+    def load_probe_lifecycle(self) -> List[Dict[str, Any]]:
+        return self._read_jsonl(self.root / "probe_lifecycle.jsonl")
 
     def load_execution_records(self) -> List[Dict[str, Any]]:
         """Return durable executor records for duplicate/action-contract checks."""

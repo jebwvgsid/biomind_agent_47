@@ -9,6 +9,10 @@ from agent_core.controller_audit import (
     parse_executable_script_block,
 )
 from agent_core.recovery import (
+    DiagnosticEvidenceRecord,
+    DiagnosticEvidenceStatus,
+    ProbeLifecycleRecord,
+    ProbeLifecycleStatus,
     RecoveryAction,
     RecoveryDecision,
     RecoveryExecutionContractError,
@@ -17,6 +21,9 @@ from agent_core.recovery import (
     RecoveryResultContract,
     RecoveryStateStore,
     build_recovery_execution_envelope,
+    collect_diagnostic_scratch_metadata,
+    validate_diagnostic_action,
+    validate_diagnostic_probe_code,
 )
 
 
@@ -174,6 +181,164 @@ class RecoveryExecutionEnvelopeTests(unittest.TestCase):
         self.assertEqual(final.missing_evidence, decision.missing_evidence)
         self.assertEqual(final.probe_objective, decision.probe_objective)
         self.assertEqual(outcome.rewrite_reason, "")
+
+    def test_typed_scratch_allows_bounded_writes_only_inside_capability(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, envelope = self._envelope(root)
+            scratch = envelope.scratch_capability
+            inside = (
+                'mkdir -p "$BIOMIND_RECOVERY_SCRATCH_ROOT"\n'
+                'head -n 4 /approved/input.fq '
+                '> "$BIOMIND_RECOVERY_SCRATCH_ROOT/small.fq"'
+            )
+            action = adapt_script_block_to_action(
+                parse_executable_script_block(f"<shell>{inside}</shell>"),
+                execution_envelope=envelope.to_dict(),
+                recovery_generated=True,
+            )
+            self.assertEqual(validate_diagnostic_action(action), (True, ""))
+
+            outside = f"head -n 4 /approved/input.fq > {root / 'escape.fq'}"
+            self.assertFalse(
+                validate_diagnostic_probe_code(outside, scratch)[0]
+            )
+            formal = root / "results" / "sample.bam"
+            self.assertFalse(
+                validate_diagnostic_probe_code(
+                    f"head -n 4 /approved/input.fq > {formal}", scratch
+                )[0]
+            )
+            self.assertFalse(
+                validate_diagnostic_probe_code(
+                    "tool --threads 8 < /dev/null", scratch
+                )[0]
+            )
+            self.assertFalse(
+                validate_diagnostic_probe_code("false || true", scratch)[0]
+            )
+            self.assertFalse(
+                validate_diagnostic_probe_code("false; true", scratch)[0]
+            )
+            self.assertFalse(
+                validate_diagnostic_probe_code(
+                    'cat /approved/input.fq > "$BIOMIND_RECOVERY_SCRATCH_ROOT/all.fq"',
+                    scratch,
+                )[0]
+            )
+
+    def test_diagnostic_evidence_is_deduplicated_and_never_completion_eligible(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            decision, envelope = self._envelope(root)
+            scratch_root = Path(
+                envelope.scratch_capability.scratch_root
+            )
+            scratch_root.mkdir(parents=True)
+            (scratch_root / "limits.txt").write_text(
+                "memory.max=2147483648\n", encoding="utf-8"
+            )
+            execution = {
+                "attempt_id": "attempt-1",
+                "returncode": 0,
+                "signal": None,
+                "stdout": "memory.max=2147483648\n",
+                "stderr": "",
+                "stdout_log": str(root / "stdout.log"),
+                "stderr_log": str(root / "stderr.log"),
+                "validation": {"passed": True},
+            }
+            record = DiagnosticEvidenceRecord.from_execution(
+                execution,
+                envelope,
+                scratch_artifact_metadata=(
+                    collect_diagnostic_scratch_metadata(
+                        envelope.scratch_capability
+                    )
+                ),
+            )
+            self.assertEqual(
+                record.status, DiagnosticEvidenceStatus.SUCCEEDED.value
+            )
+            self.assertFalse(record.to_dict()["completion_eligible"])
+            self.assertTrue(
+                all(
+                    not item["adopted"]
+                    for item in record.to_dict()["scratch_artifact_metadata"]
+                )
+            )
+            store = RecoveryStateStore(root, "task-a")
+            first = store.save_diagnostic_evidence(record)
+            second = store.save_diagnostic_evidence(record)
+            self.assertTrue(first["created"])
+            self.assertFalse(second["created"])
+            self.assertEqual(len(store.load_diagnostic_evidence()), 1)
+
+            store.save_probe_lifecycle(ProbeLifecycleRecord(
+                recovery_decision_id=decision.decision_id,
+                probe_id=envelope.probe_id or "",
+                action_id=envelope.action_id,
+                status=ProbeLifecycleStatus.NOT_EXECUTED.value,
+                validation_fingerprint="rejected-1",
+            ))
+            self.assertEqual(len(store.load_diagnostic_evidence()), 1)
+            self.assertEqual(
+                store.load_probe_lifecycle()[-1]["status"],
+                ProbeLifecycleStatus.NOT_EXECUTED.value,
+            )
+
+    def test_diagnostic_timeout_and_payload_only_repair_semantics(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, envelope = self._envelope(root)
+            first = adapt_script_block_to_action(
+                parse_executable_script_block("<shell>ulimit -a</shell>"),
+                execution_envelope=envelope.to_dict(),
+                recovery_generated=True,
+            )
+            repaired = adapt_script_block_to_action(
+                parse_executable_script_block(
+                    '<shell>ulimit -a > "$BIOMIND_RECOVERY_SCRATCH_ROOT/limits.txt"</shell>'
+                ),
+                execution_envelope=first["recovery_execution_envelope"],
+                recovery_generated=True,
+                payload_revision=1,
+            )
+            self.assertEqual(first["action_id"], repaired["action_id"])
+            self.assertEqual(
+                first["recovery_execution_envelope"]["immutable_hash"],
+                repaired["recovery_execution_envelope"]["immutable_hash"],
+            )
+            timed_out = DiagnosticEvidenceRecord.from_execution(
+                {"attempt_id": "attempt-timeout", "returncode": 124},
+                envelope,
+                timed_out=True,
+            )
+            self.assertEqual(
+                timed_out.status, DiagnosticEvidenceStatus.TIMED_OUT.value
+            )
+
+            for key, replacement in (
+                ("execution_purpose", "PRIMARY"),
+                ("execution_mode", "EXTERNAL_HANDOFF"),
+                ("result_contract", "FORMAL_OUTPUTS"),
+            ):
+                mutated = envelope.to_dict()
+                mutated[key] = replacement
+                with self.assertRaises(RecoveryExecutionContractError):
+                    RecoveryExecutionEnvelope.from_mapping(mutated)
+            mutated = envelope.to_dict()
+            mutated["execution_purpose"] = "PRIMARY"
+            with self.assertRaisesRegex(
+                RecoveryExecutionContractError,
+                "RECOVERY_ENVELOPE_MUTATION_ATTEMPT",
+            ):
+                adapt_script_block_to_action(
+                    parse_executable_script_block("<shell>ulimit -a</shell>"),
+                    execution_envelope=mutated,
+                    recovery_generated=True,
+                    payload_revision=1,
+                )
 
 
 if __name__ == "__main__":

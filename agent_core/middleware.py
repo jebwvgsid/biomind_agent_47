@@ -61,6 +61,8 @@ from agent_core.recovery import (
     RecoveryDecision,
     RecoveryDecisionKind,
     RecoveryDecisionSource,
+    ProbeLifecycleRecord,
+    ProbeLifecycleStatus,
     RecoveryAction,
     RecoveryFailureClass,
     RecoveryFailureOwner,
@@ -3186,6 +3188,25 @@ def error_recovery_middleware(
                         "RECOVERY_EXECUTION_ENVELOPE_CREATED",
                         execution_envelope,
                     )
+                    if envelope.probe_id:
+                        store.save_probe_lifecycle(ProbeLifecycleRecord(
+                            recovery_decision_id=envelope.recovery_decision_id,
+                            diagnosis=str(
+                                semantic_decision.root_cause
+                                or semantic_decision.reason
+                            ),
+                            missing_evidence=tuple(
+                                semantic_decision.missing_evidence or []
+                            ),
+                            probe_id=envelope.probe_id,
+                            probe_objective=str(
+                                semantic_decision.probe_objective
+                                or semantic_decision.probe_reason
+                                or semantic_decision.repair_strategy
+                            ),
+                            status=ProbeLifecycleStatus.PROPOSED.value,
+                            action_id=envelope.action_id,
+                        ))
             next_step = decision.next_route
             pending_type = route["pending_type"]
             required_next_action = route["required_next_action"]

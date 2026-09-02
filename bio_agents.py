@@ -250,6 +250,10 @@ from agent_core.recovery import (
     RecoveryDecision,
     RecoveryDecisionKind,
     RecoveryDecisionSource,
+    DiagnosticEvidenceRecord,
+    DiagnosticEvidenceStatus,
+    ProbeLifecycleRecord,
+    ProbeLifecycleStatus,
     RecoveryExecutionEnvelope,
     RecoveryExecutionContractError,
     RecoveryPolicy,
@@ -270,6 +274,8 @@ from agent_core.recovery import (
     contextualize_recovery_decision,
     structured_user_decision_required,
     build_recovery_execution_envelope,
+    collect_diagnostic_scratch_metadata,
+    validate_diagnostic_action,
     validate_diagnostic_probe_code,
 )
 from agent_core.diagnostics import (
@@ -8676,6 +8682,25 @@ class BioAnalystAgent:
                 "RECOVERY_EXECUTION_ENVELOPE_CREATED",
                 execution_envelope,
             )
+            if envelope.probe_id:
+                store.save_probe_lifecycle(ProbeLifecycleRecord(
+                    recovery_decision_id=envelope.recovery_decision_id,
+                    diagnosis=str(
+                        semantic_decision.root_cause
+                        or semantic_decision.reason
+                    ),
+                    missing_evidence=tuple(
+                        semantic_decision.missing_evidence or []
+                    ),
+                    probe_id=envelope.probe_id,
+                    probe_objective=str(
+                        semantic_decision.probe_objective
+                        or semantic_decision.probe_reason
+                        or semantic_decision.repair_strategy
+                    ),
+                    status=ProbeLifecycleStatus.PROPOSED.value,
+                    action_id=envelope.action_id,
+                ))
         pending = {
             "type": route["pending_type"],
             "reason": decision.reason or decision.root_cause,
@@ -34339,15 +34364,88 @@ question. Never guess a scientific or database identity.
                 artifact_violations.extend(
                     validate_materialized_artifacts(materialized_action, managed_bindings)
                 )
-                artifact_violations.extend(
-                    validate_generate_output_coverage(
-                        current_action_plan,
-                        materialized_action,
-                        managed_bindings,
+                action_result_contract = str(
+                    materialized_action.get("result_contract") or ""
+                ).upper()
+                if (
+                    action_result_contract
+                    == RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+                ):
+                    diagnostic_allowed, diagnostic_error = (
+                        validate_diagnostic_action(materialized_action)
                     )
-                )
+                    if not diagnostic_allowed:
+                        artifact_violations.append(ArtifactViolation(
+                            code="DIAGNOSTIC_ACTION_POLICY_VIOLATION",
+                            owner="GENERATED_ACTION",
+                            route="generate",
+                            message=diagnostic_error,
+                            field_path="code",
+                            failure_stage="pre_action_contract",
+                        ))
+                elif (
+                    action_result_contract
+                    != RecoveryResultContract.EXECUTION_BUNDLE.value
+                ):
+                    artifact_violations.extend(
+                        validate_generate_output_coverage(
+                            current_action_plan,
+                            materialized_action,
+                            managed_bindings,
+                        )
+                    )
                 if artifact_violations:
                     violation_payload = [item.to_dict() for item in artifact_violations]
+                    if (
+                        action_result_contract
+                        == RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+                    ):
+                        diagnostic_envelope = RecoveryExecutionEnvelope.from_mapping(
+                            materialized_action.get(
+                                "recovery_execution_envelope"
+                            )
+                        )
+                        validation_fingerprint = hashlib.sha256(
+                            json.dumps(
+                                violation_payload,
+                                ensure_ascii=False,
+                                sort_keys=True,
+                                separators=(",", ":"),
+                            ).encode("utf-8", errors="replace")
+                        ).hexdigest()[:24]
+                        diagnostic_store = RecoveryStateStore(
+                            self.data_path, task_id
+                        )
+                        diagnostic_store.save_probe_lifecycle(
+                            ProbeLifecycleRecord(
+                                recovery_decision_id=(
+                                    diagnostic_envelope.recovery_decision_id
+                                ),
+                                probe_id=str(
+                                    diagnostic_envelope.probe_id or ""
+                                ),
+                                probe_objective=str(
+                                    recovery_decision.get("probe_objective")
+                                    or recovery_decision.get("probe_reason")
+                                    or recovery_decision.get("repair_strategy")
+                                    or ""
+                                ),
+                                status=(
+                                    ProbeLifecycleStatus.NOT_EXECUTED.value
+                                ),
+                                action_id=diagnostic_envelope.action_id,
+                                validation_fingerprint=validation_fingerprint,
+                            )
+                        )
+                        diagnostic_store.append_trace(
+                            "DIAGNOSTIC_ACTION_NOT_EXECUTED",
+                            {
+                                "probe_id": diagnostic_envelope.probe_id,
+                                "action_id": diagnostic_envelope.action_id,
+                                "validation_fingerprint": validation_fingerprint,
+                                "violations": violation_payload,
+                            },
+                        )
                     first_violation = violation_payload[0]
                     raw_first_owner = str(
                         first_violation.get("owner") or "GENERATED_ACTION"
@@ -34622,6 +34720,15 @@ question. Never guess a scientific or database identity.
                                 "repair_ordinal": recovery_context.repair_ordinal,
                                 "termination_reason": termination_reason,
                                 "execution_started": False,
+                                "execution_envelope": deepcopy(
+                                    structured_action.get(
+                                        "recovery_execution_envelope"
+                                    ) or {}
+                                ),
+                                "payload_revision": int(
+                                    structured_action.get("payload_revision")
+                                    or 0
+                                ) + 1,
                             },
                             "recovery_context": recovery_context.to_dict(),
                             "recovery_context_digest": recovery_context.context_id,
@@ -34644,6 +34751,36 @@ question. Never guess a scientific or database identity.
                             "generate_exit_reason": "managed_artifact_preaction_rejected",
                             "next_step": policy_decision.next_route,
                         }
+                if (
+                    action_result_contract
+                    == RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+                ):
+                    diagnostic_envelope = RecoveryExecutionEnvelope.from_mapping(
+                        materialized_action.get("recovery_execution_envelope")
+                    )
+                    diagnostic_store = RecoveryStateStore(
+                        self.data_path, task_id
+                    )
+                    diagnostic_store.save_probe_lifecycle(
+                        ProbeLifecycleRecord(
+                            recovery_decision_id=(
+                                diagnostic_envelope.recovery_decision_id
+                            ),
+                            probe_id=str(diagnostic_envelope.probe_id or ""),
+                            probe_objective=str(
+                                recovery_decision.get("probe_objective")
+                                or recovery_decision.get("probe_reason")
+                                or recovery_decision.get("repair_strategy")
+                                or ""
+                            ),
+                            status=ProbeLifecycleStatus.VALIDATED.value,
+                            action_id=diagnostic_envelope.action_id,
+                        )
+                    )
+                    diagnostic_store.append_trace(
+                        "DIAGNOSTIC_ACTION_VALIDATED",
+                        diagnostic_envelope.to_dict(),
+                    )
                 materialized_action["candidate_fingerprint"] = candidate_fingerprint
                 if str(materialized_action.get("script_adapter") or "") == "script_block_v1":
                     materialized_action["code"] = str(structured_action.get("code") or "")
@@ -35797,8 +35934,66 @@ question. Never guess a scientific or database identity.
                     }
 
             if command_role in {"diagnostic", "optional_probe"}:
-                probe_allowed, probe_error = validate_diagnostic_probe_code(original_code)
+                diagnostic_envelope: Optional[RecoveryExecutionEnvelope] = None
+                if pending_action.get("recovery_execution_envelope"):
+                    try:
+                        diagnostic_envelope = RecoveryExecutionEnvelope.from_mapping(
+                            pending_action.get("recovery_execution_envelope")
+                        )
+                    except RecoveryExecutionContractError as exc:
+                        probe_allowed, probe_error = False, (
+                            f"{exc.code}: {exc.message}"
+                        )
+                    else:
+                        probe_allowed, probe_error = validate_diagnostic_action(
+                            {**pending_action, "code": original_code}
+                        )
+                else:
+                    # Compatibility-only optional probes retain the legacy
+                    # read-only policy; Recovery probes must carry authority.
+                    if command_role == "diagnostic":
+                        probe_allowed, probe_error = False, (
+                            "RECOVERY_EXECUTION_ENVELOPE_MISSING: diagnostic "
+                            "Recovery action cannot default to primary"
+                        )
+                    else:
+                        probe_allowed, probe_error = (
+                            validate_diagnostic_probe_code(original_code)
+                        )
                 if not probe_allowed:
+                    if diagnostic_envelope is not None:
+                        validation_fingerprint = hashlib.sha256(
+                            probe_error.encode("utf-8", errors="replace")
+                        ).hexdigest()[:24]
+                        diagnostic_store = RecoveryStateStore(
+                            self.data_path, task_id
+                        )
+                        diagnostic_store.save_probe_lifecycle(
+                            ProbeLifecycleRecord(
+                                recovery_decision_id=(
+                                    diagnostic_envelope.recovery_decision_id
+                                ),
+                                probe_id=str(
+                                    diagnostic_envelope.probe_id or ""
+                                ),
+                                status=(
+                                    ProbeLifecycleStatus.NOT_EXECUTED.value
+                                ),
+                                action_id=diagnostic_envelope.action_id,
+                                validation_fingerprint=validation_fingerprint,
+                            )
+                        )
+                        diagnostic_store.append_trace(
+                            "DIAGNOSTIC_ACTION_NOT_EXECUTED",
+                            {
+                                "probe_id": diagnostic_envelope.probe_id,
+                                "action_id": diagnostic_envelope.action_id,
+                                "reason": probe_error,
+                                "validation_fingerprint": (
+                                    validation_fingerprint
+                                ),
+                            },
+                        )
                     plan_progress = self._record_plan_current_evidence(
                         task_id,
                         "diagnostic_probe_boundary_failed",
@@ -35812,8 +36007,24 @@ question. Never guess a scientific or database identity.
                         ))],
                         "plan_progress": plan_progress,
                         "pending_action": {},
-                        "next_step": "generate",
+                        "pending_recovery_action": {
+                            "type": "internal_protocol_error",
+                            "reason": probe_error,
+                            "failure_owner": (
+                                RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+                            ),
+                            "execution_started": False,
+                        },
+                        "required_next_action": "INTERNAL_PROTOCOL_ERROR",
+                        "failure_owner": (
+                            RecoveryFailureOwner.INTERNAL_PROTOCOL.value
+                        ),
+                        "next_step": "supervisor",
                     }
+                if diagnostic_envelope is not None:
+                    Path(
+                        diagnostic_envelope.scratch_capability.scratch_root
+                    ).mkdir(parents=True, exist_ok=True)
 
             if managed_mode:
                 if command_role == "renderer_invocation":
@@ -36459,6 +36670,11 @@ question. Never guess a scientific or database identity.
                 for item in pending_action.get("controller_output_bindings", []) or []
                 if isinstance(item, Mapping)
             ]
+            if str(pending_action.get("result_contract") or "").upper() in {
+                RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value,
+                RecoveryResultContract.EXECUTION_BUNDLE.value,
+            }:
+                managed_output_contracts = []
             managed_output_snapshot_before = capture_managed_output_snapshot(
                 managed_output_contracts
             )
@@ -36717,14 +36933,68 @@ question. Never guess a scientific or database identity.
                     "next_step": "generate",
                 }
 
+            diagnostic_dispatch_envelope: Optional[
+                RecoveryExecutionEnvelope
+            ] = None
+            if (
+                command_role == "diagnostic"
+                and pending_action.get("recovery_execution_envelope")
+            ):
+                diagnostic_dispatch_envelope = (
+                    RecoveryExecutionEnvelope.from_mapping(
+                        pending_action.get("recovery_execution_envelope")
+                    )
+                )
+                dispatch_store = RecoveryStateStore(
+                    self.data_path, task_id
+                )
+                dispatch_store.save_probe_lifecycle(
+                    ProbeLifecycleRecord(
+                        recovery_decision_id=(
+                            diagnostic_dispatch_envelope.recovery_decision_id
+                        ),
+                        probe_id=str(
+                            diagnostic_dispatch_envelope.probe_id or ""
+                        ),
+                        status=ProbeLifecycleStatus.DISPATCHED.value,
+                        action_id=diagnostic_dispatch_envelope.action_id,
+                        result_reference=attempt_id,
+                    )
+                )
+                dispatch_store.append_trace(
+                    "DIAGNOSTIC_ACTION_DISPATCHED",
+                    {
+                        "probe_id": diagnostic_dispatch_envelope.probe_id,
+                        "action_id": diagnostic_dispatch_envelope.action_id,
+                        "execution_attempt_id": attempt_id,
+                    },
+                )
             start_time = time.time()
+            diagnostic_timed_out = False
             try:
-                stdout, stderr, returncode = await run_script_path(
-                    script_file,
-                    expected_sha256=executed_ref["sha256"],
-                    interpreter="bash",
-                    lifecycle_callback=persist_attempt_lifecycle,
-                    env=effective_execution_env,
+                execution_call = run_script_path(
+                        script_file,
+                        expected_sha256=executed_ref["sha256"],
+                        interpreter="bash",
+                        lifecycle_callback=persist_attempt_lifecycle,
+                        env=effective_execution_env,
+                    )
+                if diagnostic_dispatch_envelope is not None:
+                    stdout, stderr, returncode = await asyncio.wait_for(
+                        execution_call,
+                        timeout=float(
+                            diagnostic_dispatch_envelope
+                            .scratch_capability.max_wall_seconds
+                        ),
+                    )
+                else:
+                    stdout, stderr, returncode = await execution_call
+            except asyncio.TimeoutError:
+                diagnostic_timed_out = True
+                stdout, stderr, returncode = (
+                    "",
+                    "Diagnostic execution exceeded its Controller wall-time capability.",
+                    124,
                 )
             except Exception as e:
                 stdout, stderr, returncode = "", str(e), 1
@@ -36926,13 +37196,45 @@ question. Never guess a scientific or database identity.
                 node="execute",
                 detail=script_file,
             )
-            validation_result, validation_block, validation_level = self._validate_execution_result(
-                state,
-                code_to_run,
-                stdout,
-                stderr,
-                returncode,
-            )
+            if diagnostic_dispatch_envelope is not None:
+                validation_result = {
+                    "passed": returncode == 0 and not diagnostic_timed_out,
+                    "status": (
+                        "timed_out"
+                        if diagnostic_timed_out
+                        else "succeeded"
+                        if returncode == 0
+                        else "failed"
+                    ),
+                    "result_contract": (
+                        RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+                    ),
+                    "completion_eligible": False,
+                    "errors": (
+                        []
+                        if returncode == 0 and not diagnostic_timed_out
+                        else [
+                            "Diagnostic process did not complete successfully; "
+                            "its typed evidence remains available to Recovery."
+                        ]
+                    ),
+                }
+                validation_block = (
+                    '\n<validation_result level="diagnostic" '
+                    f'status="{validation_result["status"]}">\n'
+                    "Diagnostic evidence contract evaluated; formal output "
+                    "coverage and CompletionGate are ineligible.\n"
+                    "</validation_result>"
+                )
+                validation_level = "diagnostic_evidence"
+            else:
+                validation_result, validation_block, validation_level = self._validate_execution_result(
+                    state,
+                    code_to_run,
+                    stdout,
+                    stderr,
+                    returncode,
+                )
             managed_output_snapshot_after = capture_managed_output_snapshot(
                 managed_output_contracts
             )
@@ -37224,6 +37526,22 @@ question. Never guess a scientific or database identity.
                 ),
                 "process_status": "succeeded" if returncode == 0 else "failed",
                 "purpose": declared_purpose,
+                "result_contract": str(
+                    pending_action.get("result_contract") or ""
+                ),
+                "execution_mode": str(
+                    pending_action.get("execution_mode") or ""
+                ),
+                "recovery_decision_id": str(
+                    pending_action.get("recovery_decision_id") or ""
+                ),
+                "recovery_context_id": str(
+                    pending_action.get("recovery_context_id") or ""
+                ),
+                "probe_id": str(pending_action.get("probe_id") or ""),
+                "recovery_execution_envelope": deepcopy(
+                    pending_action.get("recovery_execution_envelope") or {}
+                ),
                 "attempt_id": str(attempt_record.get("attempt_id") or ""),
                 "command_role": command_role,
                 "action_kind": str(pending_action.get("action_kind") or pending_action.get("kind") or ""),
@@ -37507,6 +37825,64 @@ question. Never guess a scientific or database identity.
                 generated_model_code,
                 4000,
             )
+            diagnostic_evidence_record: Dict[str, Any] = {}
+            if diagnostic_dispatch_envelope is not None:
+                scratch_metadata = collect_diagnostic_scratch_metadata(
+                    diagnostic_dispatch_envelope.scratch_capability
+                )
+                typed_diagnostic = DiagnosticEvidenceRecord.from_execution(
+                    execution_evidence,
+                    diagnostic_dispatch_envelope,
+                    timed_out=diagnostic_timed_out,
+                    scratch_artifact_metadata=scratch_metadata,
+                )
+                diagnostic_store = RecoveryStateStore(
+                    self.data_path, task_id
+                )
+                persisted_diagnostic = (
+                    diagnostic_store.save_diagnostic_evidence(
+                        typed_diagnostic
+                    )
+                )
+                diagnostic_evidence_record = dict(
+                    persisted_diagnostic.get("record") or {}
+                )
+                lifecycle_status = (
+                    ProbeLifecycleStatus.SUCCEEDED.value
+                    if typed_diagnostic.status
+                    == DiagnosticEvidenceStatus.SUCCEEDED.value
+                    else ProbeLifecycleStatus.FAILED.value
+                )
+                diagnostic_store.save_probe_lifecycle(
+                    ProbeLifecycleRecord(
+                        recovery_decision_id=(
+                            diagnostic_dispatch_envelope.recovery_decision_id
+                        ),
+                        probe_id=str(
+                            diagnostic_dispatch_envelope.probe_id or ""
+                        ),
+                        status=lifecycle_status,
+                        action_id=diagnostic_dispatch_envelope.action_id,
+                        evidence_fingerprint=(
+                            typed_diagnostic.evidence_fingerprint
+                        ),
+                        result_reference=str(
+                            persisted_diagnostic.get("path") or ""
+                        ),
+                    )
+                )
+                diagnostic_store.append_trace(
+                    "DIAGNOSTIC_EVIDENCE_RECORDED",
+                    {
+                        **diagnostic_evidence_record,
+                        "deduplicated": not bool(
+                            persisted_diagnostic.get("created")
+                        ),
+                    },
+                )
+                execution_evidence["diagnostic_evidence"] = (
+                    diagnostic_evidence_record
+                )
             # Raw streams are durable files. Keep only a bounded current-step
             # projection in graph state so one failed build cannot inflate all
             # downstream prompts and checkpoints.
@@ -37530,24 +37906,16 @@ question. Never guess a scientific or database identity.
                     "plan_progress": plan_progress,
                     "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
                     "execution_evidence": execution_evidence,
+                    "diagnostic_evidence": diagnostic_evidence_record,
                     "root_cause_analysis": execution_evidence.get("root_cause_analysis", {}),
                     "command_chain": execution_evidence.get("command_chain", {}),
                     "pending_action": {},
-                    "pending_recovery_action": {
-                        "type": "same_step_generate",
-                        "reason": (
-                            "recovery_observation_available"
-                            if command_role == "recovery"
-                            else "diagnostic_observation_available"
-                        ),
-                        "step_id": str(execution_step.get("step_id") or ""),
-                        "failure_owner": (
-                            RecoveryFailureOwner.SCRIPT.value
-                            if command_role == "recovery"
-                            else RecoveryFailureOwner.DIAGNOSTIC.value
-                        ),
-                    },
-                    "required_next_action": "SAME_STEP_GENERATE",
+                    "pending_recovery_action": {},
+                    "required_next_action": (
+                        "RECOVERY_REASSESS_DIAGNOSTIC_EVIDENCE"
+                        if command_role in {"diagnostic", "optional_probe"}
+                        else "SAME_STEP_GENERATE"
+                    ),
                     "failure_owner": (
                         RecoveryFailureOwner.SCRIPT.value
                         if command_role == "recovery"
@@ -37558,7 +37926,11 @@ question. Never guess a scientific or database identity.
                     "supervisor_verdict": "",
                     "completion_gate_result": {},
                     "retry_count": retry_count,
-                    "next_step": "generate",
+                    "next_step": (
+                        "supervisor"
+                        if command_role in {"diagnostic", "optional_probe"}
+                        else "generate"
+                    ),
                 }
             if runtime_install_blocked:
                 if lightweight_mode:
@@ -37829,10 +38201,15 @@ question. Never guess a scientific or database identity.
             elif command_role in {"probe", "diagnostic", "optional_probe", "capability_probe"}:
                 decision = commit_policy()
                 update["completion_gate_result"] = {
-                    "passed": True,
+                    "passed": False,
                     "classification": "probe_evidence_recorded",
                     "formal_artifact_gate_skipped": True,
+                    "completion_eligible": False,
+                    "step_completed": False,
                 }
+                update["diagnostic_evidence"] = dict(
+                    execution.get("diagnostic_evidence") or {}
+                )
                 update.setdefault("messages", []).append(SystemMessage(content=(
                     "The bounded probe was recorded as capability evidence. No formal artifact or step completion gate ran."
                 )))

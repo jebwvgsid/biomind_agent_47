@@ -133,6 +133,8 @@ class AgentState(TypedDict, total=False):
     recovery_semantic_decision: dict
     recovery_policy_outcome: dict
     recovery_execution_envelope: dict
+    diagnostic_evidence: dict
+    probe_lifecycle: List[dict]
     recovery_application: dict
     pre_action_evidence: dict
     dependency_evidence: dict
