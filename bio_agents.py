@@ -590,7 +590,6 @@ from agent_core.action_runtime import (
     build_runtime_binding_registry,
     project_action_capability_context_for_provider,
     resolve_action_runtime_bindings,
-    serialize_action_capability_instructions,
     validate_action_approval_identity,
     validate_manifest_hash,
 )
@@ -33889,16 +33888,16 @@ question. Never guess a scientific or database identity.
                     "next_step": "finish",
                 }
 
-            # Skill documents remain in NodeContext.skill_context. Capability
-            # instructions are assembled later from a distinct LLM-safe view.
+            # 技能加载
+            loaded_skills = ""
             generate_operation_bindings: Dict[str, str] = {}
             if self.skill_manager and current_plan:
                 selected = state.get("active_skills", []) or []
                 if selected:
-                    skill_capability_catalog, generate_operation_bindings = (
+                    capability_view, generate_operation_bindings = (
                         self.skill_manager.get_semantic_execution_capabilities(selected)
                     )
-                    if skill_capability_catalog:
+                    if capability_view:
                         self.profiler.record_skill_usage(
                             task_id,
                             selected,
@@ -33911,6 +33910,8 @@ question. Never guess a scientific or database identity.
                         )
 
             lightweight_policy = self._lightweight_task_policy(str(state.get("task_mode") or ""))
+            if lightweight_policy:
+                loaded_skills = (loaded_skills + "\n\n" + lightweight_policy).strip()
 
             # Build step-local memory. Broad retrieval stays in Consultant; Generate only retrieves on triggers.
             last_msg_content = str(messages[-1].content) if messages else ""
@@ -33978,7 +33979,7 @@ question. Never guess a scientific or database identity.
                         task_root=Path(self.data_path) / "task_outputs" / task_id,
                         skill_policy={
                             "skill_ids": list(state.get("active_skills") or []),
-                            "relevant_context": self._clip_observation_text(lightweight_policy, 3000),
+                            "relevant_context": self._clip_observation_text(loaded_skills, 3000),
                         },
                         recovery_history=recovery_history,
                     )
@@ -34137,7 +34138,6 @@ question. Never guess a scientific or database identity.
             generate_selected_skill_id = ""
             generate_artifact_environment: List[Dict[str, Any]] = []
             generate_action_provider_context: Dict[str, Any] = {}
-            capability_instructions = ""
             generate_script_protocol = False
             recovery_evidence: List[Dict[str, Any]] = []
             if recovery_context_obj and recovery_context_obj.bounded_log_excerpt:
@@ -34221,15 +34221,21 @@ question. Never guess a scientific or database identity.
                             generate_artifact_environment,
                         )
                     )
-                    capability_instructions = (
-                        serialize_action_capability_instructions(
-                            generate_action_provider_context,
-                            script_protocol=(
+                    loaded_skills = json.dumps(
+                        {
+                            **generate_action_provider_context,
+                            "script_protocol": (
                                 "Use only current-action runtime and artifact shell references. "
                                 "Capability and binding scope are Controller-owned."
                             ),
-                        )
+                        },
+                        ensure_ascii=False,
+                        sort_keys=True,
                     )
+                    if lightweight_policy:
+                        loaded_skills = (
+                            loaded_skills + "\n\n" + lightweight_policy
+                        ).strip()
                 generate_semantic_inputs = self._node_context_semantic_inputs(
                     task_id,
                     generate_plan_state,
@@ -34312,8 +34318,7 @@ question. Never guess a scientific or database identity.
                 )
                 call_msgs = [HumanMessage(content=PromptManager.get_generate_v2_prompt(
                     generate_node_context.llm_payload.to_provider_dict(),
-                    capability_instructions=capability_instructions,
-                    task_policy_instructions=lightweight_policy,
+                    capability_instructions=loaded_skills,
                 ))]
             except Exception as exc:
                 rebuild_lifecycle = (
