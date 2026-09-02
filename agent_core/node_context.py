@@ -894,6 +894,45 @@ def _constraint_rows(
     return rows
 
 
+_LLM_SAFE_STEP_FIELDS = frozenset({
+    "title", "action", "purpose", "tool", "inputs", "input_ids",
+    "input_artifacts", "input_refs", "input_contracts", "outputs",
+    "output_ids", "output_artifacts", "output_refs", "output_contracts",
+    "constraints", "constraint_ids", "semantic_constraint_ids",
+    "requirement_ids", "dependencies", "depends_on", "success_criteria",
+    "risk_level", "step_type", "skill_ids", "skills_declared",
+    "command_intent", "execution_capability_id", "artifacts",
+})
+
+_LLM_SAFE_STEP_ARTIFACT_FIELDS = frozenset({
+    "role", "artifact_type", "required", "validator", "path", "format",
+    "description", "producer_step_id",
+})
+
+
+def _llm_safe_step_projection(raw: Mapping[str, Any]) -> Dict[str, Any]:
+    """Project one Plan step without Controller-only binding metadata."""
+    projected = _without_control_metadata({
+        str(key): deepcopy(value)
+        for key, value in raw.items()
+        if str(key) in _LLM_SAFE_STEP_FIELDS
+        and value not in (None, "", [], {})
+    })
+    row = dict(projected) if isinstance(projected, Mapping) else {}
+    if isinstance(row.get("artifacts"), list):
+        row["artifacts"] = [
+            dict(_without_control_metadata({
+                str(key): deepcopy(value)
+                for key, value in artifact.items()
+                if str(key) in _LLM_SAFE_STEP_ARTIFACT_FIELDS
+                and value not in (None, "", [], {})
+            }))
+            for artifact in row["artifacts"]
+            if isinstance(artifact, Mapping)
+        ]
+    return row
+
+
 def _step_rows(
     plan_state: Mapping[str, Any],
     handle_map: SemanticHandleMap,
@@ -919,36 +958,7 @@ def _step_rows(
             allowed_usage=("reference", "replace", "execute", "review"),
             metadata={"index": index},
         ))
-        semantic_fields = {
-            "title", "action", "purpose", "tool", "inputs", "input_ids",
-            "input_artifacts", "input_refs", "input_contracts", "outputs",
-            "output_ids", "output_artifacts", "output_refs", "output_contracts",
-            "constraints", "constraint_ids", "semantic_constraint_ids",
-            "requirement_ids", "dependencies", "depends_on", "success_criteria",
-            "risk_level", "step_type", "skill_ids", "skills_declared", "command_intent",
-            "execution_capability_id",
-            "capability_contract_hash",
-            "artifacts",
-        }
-        row = {
-            str(key): _without_control_metadata(value)
-            for key, value in raw.items()
-            if str(key) in semantic_fields and value not in (None, "", [], {})
-        }
-        if isinstance(row.get("artifacts"), list):
-            row["artifacts"] = [
-                {
-                    str(key): deepcopy(value)
-                    for key, value in artifact.items()
-                    if str(key) in {
-                        "role", "artifact_type", "required", "validator",
-                        "path", "format", "description", "producer_step_id",
-                    }
-                    and value not in (None, "", [], {})
-                }
-                for artifact in row["artifacts"]
-                if isinstance(artifact, Mapping)
-            ]
+        row = _llm_safe_step_projection(raw)
         row["handle"] = handle
         rows.append(row)
     for row, raw in zip(rows, [x for x in plan_state.get("steps", []) or [] if isinstance(x, Mapping)]):
@@ -1581,7 +1591,7 @@ def _planning_failure_focus(
             if key in {
                 "step_key", "action", "purpose", "tool", "inputs", "outputs",
                 "dependencies", "skill_ids", "workflow_stage_ids", "batch_id",
-                "risk_level", "execution_capability_id", "capability_contract_hash",
+                "risk_level", "execution_capability_id",
             }
         }
         for step in previous.get("steps", []) or []
@@ -1634,41 +1644,12 @@ def _approved_plan_semantic_view(
         for handle, row in handle_map.to_dict().items()
         if row.get("object_type") == "plan_step"
     }
-    semantic_fields = {
-        "title", "action", "purpose", "tool", "inputs", "input_ids",
-        "input_artifacts", "input_refs", "input_contracts", "outputs",
-        "output_ids", "output_artifacts", "output_refs", "output_contracts",
-        "constraints", "constraint_ids", "semantic_constraint_ids",
-        "requirement_ids", "dependencies", "depends_on", "success_criteria",
-        "risk_level", "step_type", "skill_ids", "skills_declared", "command_intent",
-        "execution_capability_id",
-        "capability_contract_hash",
-        "artifacts",
-    }
     approved_steps: List[Dict[str, Any]] = []
     for index, raw in enumerate(snapshot.get("steps", []) or [], start=1):
         if not isinstance(raw, Mapping):
             continue
         step_id = str(raw.get("step_id") or "")
-        row = {
-            str(key): _without_control_metadata(value)
-            for key, value in raw.items()
-            if str(key) in semantic_fields and value not in (None, "", [], {})
-        }
-        if isinstance(row.get("artifacts"), list):
-            row["artifacts"] = [
-                {
-                    str(key): deepcopy(value)
-                    for key, value in artifact.items()
-                    if str(key) in {
-                        "role", "artifact_type", "required", "validator",
-                        "format", "description", "producer_step_id",
-                    }
-                    and value not in (None, "", [], {})
-                }
-                for artifact in row["artifacts"]
-                if isinstance(artifact, Mapping)
-            ]
+        row = _llm_safe_step_projection(raw)
         row["handle"] = stable_to_handle.get(step_id) or f"step.approved_{index}"
         deps = raw.get("dependencies") or raw.get("depends_on") or []
         if isinstance(deps, str):

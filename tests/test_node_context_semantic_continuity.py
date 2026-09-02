@@ -9,7 +9,7 @@ from langchain_core.messages import HumanMessage
 
 from agent_core.diagnostics import RecoveryContext
 from agent_core.middleware import error_recovery_middleware
-from agent_core.node_context import build_node_context
+from agent_core.node_context import assert_llm_payload_clean, build_node_context
 from agent_core.task_spec import ensure_task_spec
 from bio_agents import BioAnalystAgent
 from prompts.manager import PromptManager
@@ -284,6 +284,45 @@ class NodeContextSemanticContinuityTests(unittest.TestCase):
             context.llm_payload.to_dict()["task"]["highlighted_constraints"][0]["text"],
             "public",
         )
+
+    def test_capability_contract_hash_stays_internal_and_never_reaches_llm(self) -> None:
+        plan = _plan()
+        for index, step in enumerate(plan["steps"], start=1):
+            step["capability_contract_hash"] = f"sha256:internal-{index}"
+        context = _context(
+            "generate",
+            plan_state=plan,
+            approved_plan_snapshot=plan,
+        )
+        payload = context.llm_payload.to_provider_dict()
+
+        self.assertEqual(
+            plan["steps"][1]["capability_contract_hash"],
+            "sha256:internal-2",
+        )
+        self.assertNotIn(
+            "capability_contract_hash",
+            payload["current_focus"]["current_step"],
+        )
+        self.assertTrue(payload["semantic_history"]["approved_plan"]["steps"])
+        self.assertTrue(all(
+            "capability_contract_hash" not in step
+            for step in payload["semantic_history"]["approved_plan"]["steps"]
+        ))
+
+        def keys(value):
+            if isinstance(value, dict):
+                return set(value).union(*(
+                    keys(item) for item in value.values()
+                ), set())
+            if isinstance(value, list):
+                return set().union(*(keys(item) for item in value), set())
+            return set()
+
+        visible_keys = keys(payload)
+        self.assertNotIn("capability_contract_hash", visible_keys)
+        self.assertTrue(visible_keys.isdisjoint({"capability_contract_hash"}))
+        assert_llm_payload_clean(payload)
 
     def test_generate_retry_has_byte_identical_stable_prefix(self) -> None:
         first = _context("generate", feedback={"repair": "first"})
