@@ -2241,19 +2241,54 @@ class CompletionGate:
                 classification="step_candidate_unsuccessful_evidence",
             )
 
-        purpose = str(step.get("purpose") or "").strip().lower()
-        same_step_record = any(str(record.get("step_id") or "") == step_id for record in records)
-        if not same_step_record:
-            if purpose != "validation" or any(
-                str(record.get("purpose") or "").strip().lower() != "validation"
-                for record in records
-            ):
-                return GateResult(
-                    False,
-                    message="Cross-step evidence may only satisfy a validation step.",
-                    feedback="Run the current analysis step or cite evidence produced for this exact step.",
-                    classification="step_candidate_cross_step_scope",
+        plan_id = str(plan_state.get("plan_id") or "")
+        plan_version = str(plan_state.get("plan_version") or "")
+        plan_revision = int(plan_state.get("plan_revision") or 0)
+        wrong_scope = []
+        for evidence_id, record in zip(evidence_ids, records):
+            contract = dict(record.get("action_contract") or {})
+            record_step_id = str(
+                record.get("step_id") or contract.get("step_id") or ""
+            )
+            record_plan_id = str(
+                record.get("plan_id") or contract.get("plan_id") or ""
+            )
+            record_plan_version = str(
+                record.get("plan_version") or contract.get("plan_version") or ""
+            )
+            try:
+                record_plan_revision = int(
+                    record.get("plan_revision")
+                    or contract.get("plan_revision")
+                    or 0
                 )
+            except (TypeError, ValueError):
+                record_plan_revision = -1
+            if (
+                record_step_id != step_id
+                or (record_plan_id and plan_id and record_plan_id != plan_id)
+                or (
+                    record_plan_version
+                    and plan_version
+                    and record_plan_version != plan_version
+                )
+                or (
+                    record_plan_revision
+                    and plan_revision
+                    and record_plan_revision != plan_revision
+                )
+            ):
+                wrong_scope.append(evidence_id)
+        if wrong_scope:
+            return GateResult(
+                False,
+                message="Execution evidence belongs to a different Plan/Step scope.",
+                feedback=(
+                    "Run the current step and cite only its ExecutionRecord: "
+                    + ", ".join(wrong_scope)
+                ),
+                classification="step_candidate_cross_step_scope",
+            )
 
         renderer_complete = False
         if _legacy_renderer_completion_enabled(plan_state):

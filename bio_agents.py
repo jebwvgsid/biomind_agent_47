@@ -243,6 +243,13 @@ from agent_core.workflow_manager import (
     validate_workflow_state,
 )
 from agent_core.middleware import HITLMiddleware, build_code_review_provenance
+from agent_core.active_state import (
+    ActiveStateInvariantError,
+    GenerationMode,
+    generation_provenance_for_dispatch,
+    normal_generation_provenance,
+    scoped_execution_evidence,
+)
 from agent_core.recovery import (
     ActionSignature,
     AttemptFailureEvidence,
@@ -448,6 +455,7 @@ from agent_core.plan_tracker import (
     mark_step_verification_pending,
     mark_renderer_action_completed,
     next_action_title,
+    normalize_active_recovery_state,
     next_renderer_manifest_action,
     normalize_plan_contracts,
     normalize_validation_issue,
@@ -1270,6 +1278,51 @@ def prompt_assembly_failure_records(
         later["caused_by_failure_id"] = primary["failure_id"]
         secondary.append(later)
     return primary, secondary
+
+
+def recovery_generation_contract_failure(
+    error: ActiveStateInvariantError,
+    *,
+    provenance: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Build a pre-provider, set-once-compatible Recovery contract failure."""
+    value = dict(provenance or {})
+    identity = {
+        "code": error.code,
+        "stage": "generate.recovery_contract",
+        "step_id": str(value.get("step_id") or ""),
+        "plan_revision": int(value.get("plan_revision") or 0),
+        "recovery_id": str(value.get("recovery_id") or ""),
+    }
+    return {
+        "schema_version": 1,
+        "failure_id": "failure-" + hashlib.sha256(
+            json.dumps(identity, sort_keys=True).encode("utf-8")
+        ).hexdigest()[:20],
+        "code": error.code,
+        "error_code": error.code,
+        "failure_class": "internal_protocol",
+        "owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+        "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+        "stage": "generate.recovery_contract",
+        "failure_stage": "generate.recovery_contract",
+        "status": "terminal",
+        "retryable": False,
+        "message": error.message,
+        "generation_provenance": value,
+        "llm_invoked": False,
+        "provider_call_attempted": False,
+        "llm_request_sent": False,
+        "execution_started": False,
+        "execute_started": False,
+        "machine_recovery_decision": {
+            "decision": "TERMINATE",
+            "reason_code": error.code,
+            "source": "controller",
+            "retryable": False,
+        },
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+    }
 
 
 def runtime_state_invariant_violations(state: Mapping[str, Any]) -> List[str]:
@@ -9216,7 +9269,17 @@ class BioAnalystAgent:
             return {}
         plan_state = load_plan_state(self.data_path, task_id)
         current_step = self._running_plan_step(plan_state) or {}
-        evidence = state.get("execution_evidence") or {}
+        evidence = scoped_execution_evidence(
+            plan_state,
+            [dict(state.get("execution_evidence") or {})]
+            if isinstance(state.get("execution_evidence"), Mapping)
+            and state.get("execution_evidence")
+            else [],
+            active_reference=(
+                (plan_state.get("task_state") or {}).get("active_execution")
+                or {}
+            ),
+        )
         expected = {
             "step_id": str(current_step.get("step_id") or ""),
             "plan_version": str(plan_state.get("plan_version") or "plan_v1"),
@@ -12369,10 +12432,23 @@ class BioAnalystAgent:
             return self._persist_plan_tracker(task_id, state)
         return render_plan_progress(state)
 
-    def _mark_plan_current_done(self, task_id: str, evidence: str, *, source_node: str = "controller") -> str:
+    def _mark_plan_current_done(
+        self,
+        task_id: str,
+        evidence: str,
+        *,
+        source_node: str = "controller",
+        expected_step_id: str = "",
+        transition_id: str = "",
+    ) -> str:
         state = load_plan_state(self.data_path, task_id)
         if state.get("steps"):
-            advance_plan_after_verified_step(state, str(evidence or "controller_verified"))
+            advance_plan_after_verified_step(
+                state,
+                str(evidence or "controller_verified"),
+                expected_step_id=expected_step_id,
+                transition_id=transition_id,
+            )
             return self._persist_plan_tracker(task_id, state)
         return render_plan_progress(state)
 
@@ -12432,7 +12508,18 @@ class BioAnalystAgent:
                 "attempt_id": attempt_id,
                 "status": ATTEMPT_COMPLETED,
             })
-        advance_plan_after_verified_step(plan_state, completion_reason)
+        advance_plan_after_verified_step(
+            plan_state,
+            completion_reason,
+            expected_step_id=step_id,
+            transition_id=(
+                "step-candidate:"
+                + hashlib.sha256(json.dumps({
+                    "step_id": step_id,
+                    "evidence_ids": list(candidate.get("evidence_ids") or []),
+                }, sort_keys=True).encode("utf-8")).hexdigest()[:20]
+            ),
+        )
         return True, gate, self._persist_plan_tracker(task_id, plan_state)
 
     def _advance_satisfied_validation_steps(
@@ -13112,8 +13199,14 @@ class BioAnalystAgent:
                     step_ids=[step_id] if step_id else [], reliability=0.9, confidence=0.9,
                 )
 
-        evidence = state.get("execution_evidence") or {}
-        if isinstance(evidence, dict):
+        raw_evidence = state.get("execution_evidence") or {}
+        task_state = dict(plan_state.get("task_state") or {})
+        evidence = scoped_execution_evidence(
+            plan_state,
+            [dict(raw_evidence)] if isinstance(raw_evidence, dict) and raw_evidence else [],
+            active_reference=dict(task_state.get("active_execution") or {}),
+        )
+        if evidence:
             command = str(evidence.get("command") or evidence.get("generated_code") or "").strip()
             current_step = self._running_plan_step(plan_state)
             step_id = str(current_step.get("step_id") or "")
@@ -13165,8 +13258,26 @@ class BioAnalystAgent:
                         reliability=0.95, confidence=0.9,
                     )
 
-        for recovery_state in (state.get("pending_recovery_action"), state.get("recovery_decision")):
+        active_recovery = dict((task_state.get("recovery_state") or {}).get("active_recovery") or {})
+        active_recovery_id = str(active_recovery.get("recovery_id") or "")
+        current_step = self._running_plan_step(plan_state)
+        current_step_id = str(current_step.get("step_id") or "")
+        recovery_candidates: List[Any] = []
+        if (
+            active_recovery_id
+            and str(active_recovery.get("status") or "") in {"pending", "dispatched"}
+            and str(active_recovery.get("step_id") or "") == current_step_id
+            and str(active_recovery.get("plan_revision") or "")
+            == str(plan_state.get("plan_revision") or "")
+        ):
+            recovery_candidates = [
+                state.get("pending_recovery_action"),
+                state.get("recovery_decision"),
+            ]
+        for recovery_state in recovery_candidates:
             if not isinstance(recovery_state, dict):
+                continue
+            if str(recovery_state.get("recovery_id") or recovery_state.get("decision_id") or "") != active_recovery_id:
                 continue
             for item in recovery_state.get("semantic_claims", []) or []:
                 if isinstance(item, dict):
@@ -18459,7 +18570,17 @@ class BioAnalystAgent:
                 decision_value.pop("decision_id", None)
                 decision_value.pop("idempotency_key", None)
             policy_value = RecoveryDecision.from_mapping(decision_value)
-            application_value = apply_recovery_decision(plan_state, policy_value)
+            application_value = apply_recovery_decision(
+                plan_state,
+                policy_value,
+                execution_envelope=(
+                    guarded.get("recovery_execution_envelope")
+                    or (
+                        guarded.get("pending_recovery_action") or {}
+                    ).get("execution_envelope")
+                    or {}
+                ),
+            )
             # Every controller-created decision must carry its commit receipt
             # into the single route resolver.  Dropping it makes a transition
             # created in this node look stale before its first dispatch.
@@ -19005,15 +19126,23 @@ class BioAnalystAgent:
         # Only evidence emitted by this node invocation is current.  Falling
         # back to AgentState replays the prior Execute attempt on legal early
         # returns and can revive an old exhausted guard or RecoveryDecision.
-        current_evidence = (
+        raw_current_evidence = (
             dict(resolved.get("execution_evidence") or {})
             if isinstance(resolved.get("execution_evidence"), Mapping)
             else {}
         )
+        active_execution = dict(
+            (plan_state.get("task_state") or {}).get("active_execution") or {}
+        )
+        current_evidence = scoped_execution_evidence(
+            plan_state,
+            [raw_current_evidence] if raw_current_evidence else [],
+            active_reference=(active_execution if node_name != "execute" else {}),
+        )
         current_step_id = str(
-            resolved.get("current_step_id")
+            (current_step or {}).get("step_id")
             or current_evidence.get("step_id")
-            or (current_step or {}).get("step_id")
+            or resolved.get("current_step_id")
             or ""
         )
         current_attempt = str(
@@ -19371,6 +19500,18 @@ class BioAnalystAgent:
         # lifecycle.  Re-read it here; writing the pre-consume snapshot back
         # would resurrect active_transition=pending and recreate the incident.
         route_task_state = dict(plan_state.get("task_state") or {})
+        if node_name == "execute" and current_evidence:
+            route_task_state["active_execution"] = {
+                "task_id": str(plan_state.get("task_id") or task_id),
+                "plan_id": str(plan_state.get("plan_id") or ""),
+                "plan_revision": int(plan_state.get("plan_revision") or 0),
+                "plan_version": str(plan_state.get("plan_version") or ""),
+                "step_id": current_step_id,
+                "attempt_id": current_attempt,
+                "execution_id": str(current_evidence.get("execution_id") or ""),
+                "action_id": str(current_evidence.get("action_id") or ""),
+            }
+            route_task_state["current_attempt"] = current_attempt
         route_task_state["route_sequence"] = route_sequence
         route_task_state["last_route_resolution"] = route_record
         route_task_state["route_resolution_history"] = [
@@ -19386,6 +19527,45 @@ class BioAnalystAgent:
                 "reason": block_reason,
             })
             route_task_state["recovery_state"] = recovery_state
+        if dispatch_route == "generate":
+            recovery_state = dict(route_task_state.get("recovery_state") or {})
+            normalization_error: Optional[ActiveStateInvariantError] = None
+            try:
+                normalize_active_recovery_state(plan_state)
+            except ActiveStateInvariantError as exc:
+                normalization_error = exc
+            route_task_state = dict(plan_state.get("task_state") or {})
+            recovery_state = dict(route_task_state.get("recovery_state") or {})
+            active_recovery = dict(recovery_state.get("active_recovery") or {})
+            try:
+                if normalization_error is not None:
+                    raise normalization_error
+                generation_provenance = generation_provenance_for_dispatch(
+                    plan_state,
+                    source_route=node_name,
+                    execution_envelope=(
+                        recovery_state.get("active_recovery_envelope") or {}
+                    ),
+                ).to_dict()
+                generation_provenance_error = ""
+            except ActiveStateInvariantError as exc:
+                # Carry the typed RECOVERY intent to Generate so the missing or
+                # contradictory envelope is terminalized before any provider
+                # call.  Never silently downgrade a real Recovery dispatch.
+                generation_provenance = {
+                    "schema_version": 1,
+                    "mode": GenerationMode.RECOVERY.value,
+                    "source_route": node_name,
+                    "step_id": str(plan_state.get("current_step_id") or ""),
+                    "plan_revision": int(plan_state.get("plan_revision") or 0),
+                    "recovery_id": str(active_recovery.get("recovery_id") or ""),
+                    "recovery_envelope_id": str(active_recovery.get("envelope_id") or ""),
+                }
+                generation_provenance_error = exc.code
+            route_task_state["generation_provenance"] = generation_provenance
+        else:
+            generation_provenance = {}
+            generation_provenance_error = ""
         plan_state["task_state"] = route_task_state
         plan_progress = self._persist_plan_tracker(task_id, plan_state)
 
@@ -19405,6 +19585,25 @@ class BioAnalystAgent:
             "next_step": dispatch_route,
             "plan_progress": plan_progress,
         })
+        if generation_provenance:
+            resolved.update({
+                "generation_mode": str(generation_provenance.get("mode") or ""),
+                "generation_provenance": generation_provenance,
+                "recovery_generated": (
+                    str(generation_provenance.get("mode") or "")
+                    == GenerationMode.RECOVERY.value
+                ),
+            })
+            if generation_provenance_error:
+                resolved["generation_provenance_error"] = generation_provenance_error
+            if str(generation_provenance.get("mode") or "") == GenerationMode.NORMAL.value:
+                resolved.update({
+                    "recovery_decision": {},
+                    "pending_recovery_action": {},
+                    "recovery_execution_envelope": {},
+                    "execution_evidence": {},
+                    "current_attempt": "",
+                })
         if effective_route == "blocked":
             resolved.update({
                 "task_status": TASK_STATUS_BLOCKED,
@@ -33918,18 +34117,160 @@ question. Never guess a scientific or database identity.
             supervisor_instr = ""
             recovery_instr = ""
             recovery_context_obj: Optional[RecoveryContext] = None
-            recovery_action = state.get("pending_recovery_action") or {}
-            recovery_decision = state.get("recovery_decision") or {}
-            recovery_execution_envelope = (
-                state.get("recovery_execution_envelope")
-                or recovery_action.get("execution_envelope")
-                or {}
+            generation_plan_state = load_plan_state(self.data_path, task_id)
+            try:
+                normalization = normalize_active_recovery_state(
+                    generation_plan_state
+                )
+                if normalization.get("changed"):
+                    save_plan_state(
+                        self.data_path,
+                        task_id,
+                        generation_plan_state,
+                    )
+                    generation_plan_state = load_plan_state(
+                        self.data_path,
+                        task_id,
+                    )
+                generation_recovery_state = dict(
+                    (generation_plan_state.get("task_state") or {}).get(
+                        "recovery_state"
+                    )
+                    or {}
+                )
+                durable_recovery_envelope = dict(
+                    generation_recovery_state.get(
+                        "active_recovery_envelope"
+                    )
+                    or {}
+                )
+                effective_recovery_envelope = dict(
+                    durable_recovery_envelope
+                    or state.get("recovery_execution_envelope")
+                    or {}
+                )
+                generation_provenance = generation_provenance_for_dispatch(
+                    generation_plan_state,
+                    source_route=str(
+                        (
+                            (state.get("generation_provenance") or {}).get(
+                                "source_route"
+                            )
+                            if isinstance(
+                                state.get("generation_provenance"), Mapping
+                            )
+                            else ""
+                        )
+                        or state.get("dispatch_route")
+                        or "controller"
+                    ),
+                    execution_envelope=effective_recovery_envelope,
+                )
+            except ActiveStateInvariantError as exc:
+                raw_provenance = (
+                    dict(state.get("generation_provenance") or {})
+                    if isinstance(state.get("generation_provenance"), Mapping)
+                    else {}
+                )
+                if not raw_provenance:
+                    raw_provenance = {
+                        "mode": GenerationMode.RECOVERY.value,
+                        "source_route": str(state.get("dispatch_route") or "controller"),
+                        "step_id": str(generation_plan_state.get("current_step_id") or ""),
+                        "plan_revision": int(generation_plan_state.get("plan_revision") or 0),
+                    }
+                failure = recovery_generation_contract_failure(
+                    exc,
+                    provenance=raw_provenance,
+                )
+                return {
+                    "messages": [SystemMessage(content=json.dumps(
+                        failure,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                    ))],
+                    "pending_action": {},
+                    "pending_recovery_action": {},
+                    "recovery_execution_envelope": {},
+                    "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+                    "required_next_action": "",
+                    "generate_result": "BLOCKED",
+                    "generate_exit_reason": "recovery_execution_contract_invalid",
+                    "terminal_internal_protocol_failure": {
+                        "primary_failure": failure,
+                        "secondary_failures": [],
+                    },
+                    "next_step": "finish",
+                }
+            generation_provenance_value = generation_provenance.to_dict()
+            recovery_generated = (
+                generation_provenance.mode == GenerationMode.RECOVERY.value
             )
-            recovery_generated = bool(recovery_action or recovery_decision)
-            if recovery_action or recovery_decision:
+            active_recovery = dict(
+                generation_recovery_state.get("active_recovery") or {}
+            )
+            active_recovery_id = str(active_recovery.get("recovery_id") or "")
+            graph_recovery_decision = (
+                dict(state.get("recovery_decision") or {})
+                if isinstance(state.get("recovery_decision"), Mapping)
+                else {}
+            )
+            durable_recovery_decision = dict(
+                generation_recovery_state.get("last_recovery_decision") or {}
+            )
+            recovery_decision = next(
+                (
+                    value
+                    for value in (
+                        graph_recovery_decision,
+                        durable_recovery_decision,
+                    )
+                    if recovery_generated
+                    and str(
+                        value.get("decision_id")
+                        or value.get("idempotency_key")
+                        or ""
+                    ) == active_recovery_id
+                ),
+                {},
+            )
+            recovery_action = (
+                dict(state.get("pending_recovery_action") or {})
+                if recovery_generated
+                and isinstance(state.get("pending_recovery_action"), Mapping)
+                else {}
+            )
+            recovery_execution_envelope = (
+                effective_recovery_envelope if recovery_generated else {}
+            )
+            state = dict(state)
+            state.update({
+                "generation_mode": generation_provenance.mode,
+                "generation_provenance": generation_provenance_value,
+                "recovery_generated": recovery_generated,
+            })
+            if not recovery_generated:
+                state.update({
+                    "pending_recovery_action": {},
+                    "recovery_execution_envelope": {},
+                })
+            if recovery_generated:
                 recovery_store = RecoveryStateStore(self.data_path, task_id)
                 recovery_history = recovery_store.load_attempts()
-                recovery_history.extend(recovery_store.load_execution_records())
+                recovery_execution_records = recovery_store.load_execution_records()
+                recovery_history.extend(recovery_execution_records)
+                recovery_execution_evidence = scoped_execution_evidence(
+                    generation_plan_state,
+                    [
+                        *recovery_execution_records,
+                        dict(state.get("execution_evidence") or {}),
+                    ],
+                    active_reference={
+                        "attempt_id": str(
+                            active_recovery.get("source_attempt_id") or ""
+                        ),
+                    },
+                )
                 recovery_state = {
                     **dict(state),
                     "recovery_decision": recovery_decision,
@@ -33952,8 +34293,8 @@ question. Never guess a scientific or database identity.
                 else:
                     recovery_context_obj = build_recovery_context(
                         recovery_state,
-                        dict(state.get("execution_evidence") or {}),
-                        plan_state=load_plan_state(self.data_path, task_id),
+                        recovery_execution_evidence,
+                        plan_state=generation_plan_state,
                         task_root=Path(self.data_path) / "task_outputs" / task_id,
                         skill_policy={
                             "skill_ids": list(state.get("active_skills") or []),
@@ -34828,6 +35169,8 @@ question. Never guess a scientific or database identity.
                     # task runtime snapshot is neither provider-visible nor an
                     # action authorization fallback.
                     structured_action.update({
+                        "generation_mode": generation_provenance.mode,
+                        "generation_provenance": generation_provenance_value,
                         "selected_skill_id": generate_selected_skill_id,
                         "execution_capability_id": str(
                             generate_step.get("execution_capability_id") or ""
@@ -34960,25 +35303,28 @@ question. Never guess a scientific or database identity.
                             "next_step": "generate",
                         }
                 except RecoveryExecutionContractError as exc:
+                    invariant = ActiveStateInvariantError(exc.code, exc.message)
+                    failure = recovery_generation_contract_failure(
+                        invariant,
+                        provenance=generation_provenance_value,
+                    )
                     return {
-                        "messages": [response, SystemMessage(content=json.dumps({
-                            "code": exc.code,
-                            "message": exc.message,
-                            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                            "execution_started": False,
-                        }, ensure_ascii=False, sort_keys=True))],
+                        "messages": [response, SystemMessage(content=json.dumps(
+                            failure,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        ))],
                         "pending_action": {},
-                        "pending_recovery_action": {
-                            "type": "internal_protocol_error",
-                            "reason": exc.code,
-                            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                            "execution_started": False,
-                        },
+                        "pending_recovery_action": {},
                         "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                        "required_next_action": "INTERNAL_PROTOCOL_ERROR",
-                        "generate_result": "NEEDS_RECOVERY",
+                        "required_next_action": "",
+                        "generate_result": "BLOCKED",
                         "generate_exit_reason": "recovery_execution_contract_invalid",
-                        "next_step": "supervisor",
+                        "terminal_internal_protocol_failure": {
+                            "primary_failure": failure,
+                            "secondary_failures": [],
+                        },
+                        "next_step": "finish",
                     }
                 except ScriptBlockError as exc:
                     structured_action = {}
@@ -39135,12 +39481,78 @@ question. Never guess a scientific or database identity.
                     },
                 )
                 return guarded_update
+            _, durable_current_step = current_plan_step_with_index(durable_plan)
+            durable_current_step = durable_current_step or {}
+            durable_current_step_id = str(durable_current_step.get("step_id") or "")
+            durable_task_state = dict(durable_plan.get("task_state") or {})
+            state_execution = (
+                dict(state.get("execution_evidence") or {})
+                if isinstance(state.get("execution_evidence"), Mapping)
+                else {}
+            )
+            persisted_records = RecoveryStateStore(
+                self.data_path,
+                task_id,
+            ).load_execution_records()
+            active_execution_reference = dict(
+                durable_task_state.get("active_execution") or {}
+            )
+            evidence_candidates = (
+                [*persisted_records, state_execution]
+                if active_execution_reference
+                else [state_execution]
+                if state_execution
+                else []
+            )
+            current_execution = scoped_execution_evidence(
+                durable_plan,
+                evidence_candidates,
+                active_reference=active_execution_reference,
+            )
+            if not current_execution:
+                pending_action = (
+                    dict(state.get("pending_action") or {})
+                    if isinstance(state.get("pending_action"), Mapping)
+                    else {}
+                )
+                pending_matches = bool(
+                    pending_action
+                    and str(pending_action.get("step_id") or durable_current_step_id)
+                    == durable_current_step_id
+                )
+                next_route = "execute" if pending_matches else "generate"
+                provenance = normal_generation_provenance(
+                    durable_plan,
+                    source_route="supervisor_unexecuted_step",
+                ).to_dict()
+                return {
+                    "messages": [SystemMessage(content=(
+                        "The current step has no matching ExecutionRecord. It is "
+                        "unexecuted; prior-step execution history was ignored."
+                    ))],
+                    "next_step": next_route,
+                    "proposed_route": next_route,
+                    "execution_evidence": {},
+                    "current_attempt": "",
+                    "pending_recovery_action": {},
+                    "recovery_execution_envelope": {},
+                    "recovery_decision": {},
+                    "generation_mode": GenerationMode.NORMAL.value,
+                    "generation_provenance": provenance,
+                    "recovery_generated": False,
+                    "transition_guard": "current_step_unexecuted",
+                    "plan_progress": render_plan_progress(durable_plan),
+                }
             conflict_update = self._knowledge_conflict_update(
                 task_id,
                 dict(state),
                 phase="before_supervisor",
             )
-            supervisor_state = {**dict(state), **conflict_update}
+            supervisor_state = {
+                **dict(state),
+                **conflict_update,
+                "execution_evidence": current_execution,
+            }
             durable_failure_projection: Dict[str, Any] = {}
             if durable_failure:
                 supervisor_state["failure"] = durable_failure
@@ -39157,7 +39569,7 @@ question. Never guess a scientific or database identity.
                 **durable_failure_projection,
                 **(raw_update if isinstance(raw_update, dict) else {}),
             }
-            execution = dict(state.get("execution_evidence") or {})
+            execution = dict(current_execution)
             validation = ValidationEvidence.from_mapping(update.get("validation_evidence") or {})
             plan_state = load_plan_state(self.data_path, task_id)
             _, current_step = current_plan_step_with_index(plan_state)
@@ -39879,19 +40291,16 @@ question. Never guess a scientific or database identity.
                             task_id,
                             f"supervisor_verdict: {verdict}",
                             source_node="supervisor",
+                            expected_step_id=current_step_id,
+                            transition_id=(
+                                "supervisor:"
+                                + str(
+                                    execution.get("attempt_id")
+                                    or execution.get("execution_id")
+                                    or validation.validation_id
+                                )
+                            ),
                         )
-                        converged_steps, converged_progress = self._advance_satisfied_validation_steps(
-                            task_id,
-                            execution if isinstance(execution, dict) else {},
-                            source_node="supervisor",
-                        )
-                        if converged_steps:
-                            plan_progress = converged_progress
-                            update.setdefault("messages", []).append(SystemMessage(content=(
-                                f"Controller linked the successful ExecutionEvidence to {converged_steps} consecutive "
-                                "validation step(s), verified each step's success criteria through CompletionGate, "
-                                "and advanced without repeating the same check."
-                            )))
                         update["plan_progress"] = plan_progress
                         committed_plan = load_plan_state(self.data_path, task_id)
                         committed_recovery = dict(

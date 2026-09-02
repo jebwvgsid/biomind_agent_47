@@ -1067,7 +1067,7 @@ write_report "PASS"
             save_plan_state(root, "task-a", plan)
             record = ExecutionRecord.from_mapping({
                 "execution_id": "execution-1",
-                "step_id": "step-0",
+                "step_id": "step-1",
                 "execution_status": "succeeded",
                 "purpose": "validation",
                 "returncode": 0,
@@ -1104,7 +1104,7 @@ write_report "PASS"
             save_plan_state(root, "task-a", plan)
             RecoveryStateStore(root, "task-a").save_execution_record(ExecutionRecord.from_mapping({
                 "execution_id": "execution-1",
-                "step_id": "preflight",
+                "step_id": "step-1",
                 "execution_status": "succeeded",
                 "purpose": "validation",
                 "returncode": 0,
@@ -1171,7 +1171,7 @@ write_report "PASS"
         self.assertEqual(second["required_next_action"], "INTERNAL_PROTOCOL_ERROR")
         self.assertEqual(second["recovery_decision"]["kind"], "ESCALATE")
 
-    def test_one_execution_can_converge_consecutive_validation_steps(self):
+    def test_one_execution_cannot_converge_consecutive_validation_steps(self):
         with tempfile.TemporaryDirectory() as root:
             plan = build_plan_state(
                 "task-a",
@@ -1199,10 +1199,10 @@ write_report "PASS"
             )
             persisted = load_plan_state(root, "task-a")
 
-        self.assertEqual(advanced, 2)
+        self.assertEqual(advanced, 0)
         self.assertEqual(
             [step["status"] for step in persisted["steps"]],
-            ["passed", "passed", "running"],
+            ["running", "pending", "pending"],
         )
 
     def test_session_1785308919_replay_closes_input_step_but_not_unproven_name_check(self):
@@ -1245,10 +1245,11 @@ write_report "PASS"
             )
             persisted = load_plan_state(root, task_id)
 
-        self.assertTrue(passed, gate.feedback)
+        self.assertFalse(passed)
+        self.assertEqual(gate.classification, "step_candidate_cross_step_scope")
         self.assertEqual(auto_advanced, 0)
-        self.assertEqual(persisted["steps"][1]["status"], "passed")
-        self.assertEqual(persisted["steps"][2]["status"], "running")
+        self.assertEqual(persisted["steps"][1]["status"], "running")
+        self.assertEqual(persisted["steps"][2]["status"], "pending")
 
     def test_consultant_internal_self_transitions_use_consultant_loop_policy(self):
         with tempfile.TemporaryDirectory() as root:

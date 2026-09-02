@@ -34,6 +34,11 @@ from agent_core.task_spec import (
     validate_compiled_constraints,
 )
 from agent_core.state_contract_store import StateContractStore
+from agent_core.active_state import (
+    ActiveStateInvariantError,
+    GenerationMode,
+    normal_generation_provenance,
+)
 from agent_core.recovery_contract import recovery_route_for_disposition
 from agent_core.plan_contract import (
     MINIMUM_PLAN_READER_VERSION,
@@ -2558,7 +2563,12 @@ def _primary_step_attempt_ordinal(
     )
 
 
-def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
+def apply_recovery_decision(
+    state: PlanState,
+    decision: Any,
+    *,
+    execution_envelope: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
     """Persist one RecoveryPolicy decision exactly once.
 
     This is the only API that may couple a recovery transition with budget or
@@ -2839,7 +2849,12 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
     elif kind == "ESCALATE":
         set_task_status(state, TASK_STATUS_DIAGNOSING, str(value.get("reason") or "RecoveryPolicy escalation"))
     elif kind == "COMPLETE_STEP":
-        advance_plan_after_verified_step(state, str(value.get("reason") or "completion contract satisfied"))
+        advance_plan_after_verified_step(
+            state,
+            str(value.get("reason") or "completion contract satisfied"),
+            expected_step_id=step_id,
+            transition_id=decision_id,
+        )
     elif kind == "COMPLETE_TASK":
         unfinished = [
             item for item in state.get("steps", []) or []
@@ -2932,6 +2947,48 @@ def apply_recovery_decision(state: PlanState, decision: Any) -> Dict[str, Any]:
         },
         "updated_at": _now(),
     })
+    if (
+        str(active_transition.get("target_route") or "").strip().lower()
+        == "generate"
+        and kind not in {"COMPLETE_STEP", "COMPLETE_TASK"}
+    ):
+        envelope = deepcopy(dict(execution_envelope or {}))
+        prior_active_recovery = dict(recovery_state.get("active_recovery") or {})
+        if (
+            prior_active_recovery
+            and str(prior_active_recovery.get("status") or "").lower()
+            in {"pending", "dispatched"}
+            and str(prior_active_recovery.get("recovery_id") or "") != decision_id
+        ):
+            retired = deepcopy(prior_active_recovery)
+            retired.update({
+                "status": "closed",
+                "closed_reason": "SUPERSEDED_BY_NEWER_RECOVERY_DECISION",
+                "closed_at": _now(),
+            })
+            recovery_state["active_recovery_history"] = [
+                *list(recovery_state.get("active_recovery_history") or []),
+                retired,
+            ]
+        recovery_state["active_recovery"] = {
+            "schema_version": 1,
+            "recovery_id": decision_id,
+            "plan_revision": int(state.get("plan_revision") or 0),
+            "step_id": step_id,
+            "source_attempt_id": str(
+                value.get("attempt_id") or value.get("trigger_event_id") or ""
+            ),
+            "status": "pending",
+            "target_route": "generate",
+            "envelope_id": str(envelope.get("immutable_hash") or ""),
+            "created_at": _now(),
+        }
+        recovery_state["active_recovery_envelope"] = envelope
+    elif kind in {"COMPLETE_STEP", "COMPLETE_TASK"}:
+        # Completion decisions own one route dispatch only.  They are audit
+        # history, never authority for a later recovery Generate.
+        recovery_state["active_recovery"] = {}
+        recovery_state["active_recovery_envelope"] = {}
     audit_event = {
         "task_id": str(state.get("task_id") or ""),
         "step_id": step_id,
@@ -3471,6 +3528,14 @@ def consume_recovery_transition(
             "effective_route": consumed["dispatched_route"],
         },
     ]
+    active_recovery = dict(recovery_state.get("active_recovery") or {})
+    if str(active_recovery.get("recovery_id") or "") == active_id:
+        active_recovery.update({
+            "status": "dispatched",
+            "dispatched_at": consumed["consumed_at"],
+            "route_event_id": consumed["route_event_id"],
+        })
+        recovery_state["active_recovery"] = active_recovery
     task_state["recovery_state"] = recovery_state
     state["task_state"] = task_state
     state["updated_at"] = _now()
@@ -10338,11 +10403,233 @@ def set_task_status(state: PlanState, status: str, reason: str = "") -> bool:
     return changed
 
 
+def _append_active_recovery_history(
+    recovery: Dict[str, Any],
+    item: Mapping[str, Any],
+) -> None:
+    value = deepcopy(dict(item or {}))
+    recovery_id = str(value.get("recovery_id") or "")
+    status = str(value.get("status") or "")
+    reason = str(value.get("closed_reason") or "")
+    history = list(recovery.get("active_recovery_history") or [])
+    if not any(
+        isinstance(prior, Mapping)
+        and str(prior.get("recovery_id") or "") == recovery_id
+        and str(prior.get("status") or "") == status
+        and str(prior.get("closed_reason") or "") == reason
+        for prior in history
+    ):
+        history.append(value)
+    recovery["active_recovery_history"] = history
+
+
+def normalize_active_recovery_state(state: PlanState) -> Dict[str, Any]:
+    """Migrate or retire active recovery without consulting an LLM.
+
+    A legacy flat recovery decision is promoted only when it is explicitly
+    pending and matches the current Plan/Step.  Every other legacy decision is
+    retained as history only.
+    """
+    task_state = dict(state.get("task_state") or {})
+    recovery = dict(task_state.get("recovery_state") or {})
+    active_field_present = "active_recovery" in recovery
+    active = dict(recovery.get("active_recovery") or {})
+    current_step_id = str(state.get("current_step_id") or "")
+    plan_revision = int(state.get("plan_revision") or 0)
+    plan_version = str(state.get("plan_version") or "")
+    events_before = len(list(recovery.get("state_events") or []))
+    changed = False
+
+    def step_status(step_id: str) -> str:
+        return next(
+            (
+                str(item.get("status") or "").strip().lower()
+                for item in state.get("steps", []) or []
+                if isinstance(item, Mapping)
+                and str(item.get("step_id") or "") == str(step_id or "")
+            ),
+            "",
+        )
+
+    def record_event(code: str, value: Mapping[str, Any]) -> None:
+        nonlocal changed
+        recovery_id = str(
+            value.get("recovery_id")
+            or value.get("decision_id")
+            or value.get("idempotency_key")
+            or ""
+        )
+        identity = {
+            "code": code,
+            "recovery_id": recovery_id,
+            "active_step_id": str(value.get("step_id") or ""),
+            "current_step_id": current_step_id,
+            "plan_revision": plan_revision,
+        }
+        event_id = "active-state-" + hashlib.sha256(
+            json.dumps(identity, sort_keys=True).encode("utf-8")
+        ).hexdigest()[:20]
+        events = list(recovery.get("state_events") or [])
+        if not any(
+            isinstance(item, Mapping)
+            and str(item.get("event_id") or "") == event_id
+            for item in events
+        ):
+            events.append({**identity, "event_id": event_id, "recorded_at": _now()})
+            recovery["state_events"] = events
+            changed = True
+
+    if not active and not active_field_present:
+        legacy = (
+            dict(state.get("recovery_decision") or {})
+            if isinstance(state.get("recovery_decision"), Mapping)
+            else {}
+        )
+        if legacy:
+            recovery_id = str(
+                legacy.get("recovery_id")
+                or legacy.get("decision_id")
+                or legacy.get("idempotency_key")
+                or ""
+            )
+            legacy_step_id = str(legacy.get("step_id") or "")
+            legacy_status = str(legacy.get("status") or "").strip().lower()
+            legacy_target = str(
+                legacy.get("target_route") or legacy.get("next_route") or ""
+            ).strip().lower()
+            legacy_plan_version = str(legacy.get("plan_version") or "")
+            try:
+                legacy_plan_revision = int(legacy.get("plan_revision") or 0)
+            except (TypeError, ValueError):
+                legacy_plan_revision = 0
+            plan_matches = bool(
+                (not legacy_plan_revision or legacy_plan_revision == plan_revision)
+                and (not legacy_plan_version or legacy_plan_version == plan_version)
+            )
+            decision_history = list(recovery.get("decision_history") or [])
+            if recovery_id and not any(
+                isinstance(item, Mapping)
+                and str(item.get("decision_id") or item.get("idempotency_key") or "")
+                == recovery_id
+                for item in decision_history
+            ):
+                decision_history.append(deepcopy(legacy))
+                recovery["decision_history"] = decision_history
+                changed = True
+            if (
+                recovery_id
+                and legacy_status == "pending"
+                and legacy_target == "generate"
+                and legacy_step_id == current_step_id
+                and plan_matches
+                and step_status(legacy_step_id) not in STEP_SUCCESS_STATUSES | STEP_TERMINAL_STATUSES
+            ):
+                envelope = (
+                    dict(state.get("recovery_execution_envelope") or {})
+                    if isinstance(state.get("recovery_execution_envelope"), Mapping)
+                    else {}
+                )
+                active = {
+                    "schema_version": 1,
+                    "recovery_id": recovery_id,
+                    "plan_revision": plan_revision,
+                    "step_id": legacy_step_id,
+                    "source_attempt_id": str(
+                        legacy.get("attempt_id") or legacy.get("trigger_event_id") or ""
+                    ),
+                    "status": "pending",
+                    "target_route": "generate",
+                    "envelope_id": str(envelope.get("immutable_hash") or ""),
+                    "migrated_from": "legacy_global_recovery_decision",
+                    "created_at": _now(),
+                }
+                recovery["active_recovery"] = active
+                recovery["active_recovery_envelope"] = envelope
+                record_event("LEGACY_ACTIVE_RECOVERY_MIGRATED", active)
+                changed = True
+            else:
+                recovery["active_recovery"] = {}
+                record_event("LEGACY_RECOVERY_RETAINED_AS_HISTORY", legacy)
+                changed = True
+            state["recovery_decision"] = {}
+
+    if active:
+        active_step_id = str(active.get("step_id") or "")
+        try:
+            active_plan_revision = int(active.get("plan_revision") or 0)
+        except (TypeError, ValueError):
+            active_plan_revision = 0
+        scope_mismatch = active_step_id != current_step_id
+        revision_mismatch = active_plan_revision != plan_revision
+        old_step_terminal = step_status(active_step_id) in (
+            STEP_SUCCESS_STATUSES | STEP_TERMINAL_STATUSES
+        )
+        if revision_mismatch or (scope_mismatch and old_step_terminal):
+            retired = deepcopy(active)
+            retired.update({
+                "status": "stale",
+                "closed_reason": (
+                    "PLAN_REVISION_CHANGED"
+                    if revision_mismatch
+                    else "STEP_ADVANCED_AFTER_RECOVERY"
+                ),
+                "closed_at": _now(),
+            })
+            _append_active_recovery_history(recovery, retired)
+            recovery["active_recovery"] = {}
+            recovery["active_recovery_envelope"] = {}
+            task_state["generation_provenance"] = normal_generation_provenance(
+                state,
+                source_route="stale_state_normalization",
+            ).to_dict()
+            record_event("STALE_ACTIVE_RECOVERY_CLOSED", retired)
+            active = {}
+            changed = True
+        elif scope_mismatch:
+            raise ActiveStateInvariantError(
+                "ACTIVE_RECOVERY_SCOPE_MISMATCH",
+                (
+                    f"active recovery step {active_step_id} is not terminal "
+                    f"while current step is {current_step_id}"
+                ),
+            )
+
+    if "active_recovery" not in recovery:
+        recovery["active_recovery"] = {}
+        changed = True
+    recovery.setdefault("active_recovery_history", [])
+    task_state["recovery_state"] = recovery
+    state["task_state"] = task_state
+    if changed:
+        state["updated_at"] = _now()
+    return {
+        "changed": changed,
+        "active_recovery": deepcopy(dict(recovery.get("active_recovery") or {})),
+        "events": deepcopy(list(recovery.get("state_events") or [])[events_before:]),
+    }
+
+
 def clear_step_scoped_recovery(state: PlanState, completed_step_id: str) -> None:
     """Retire active route authority while retaining immutable recovery history."""
     task_state = dict(state.get("task_state") or {})
     recovery = dict(task_state.get("recovery_state") or {})
     recovery_step = str(recovery.get("step_id") or recovery.get("failed_step_id") or "")
+    active_recovery = dict(recovery.get("active_recovery") or {})
+    active_recovery_matches = bool(
+        active_recovery
+        and str(active_recovery.get("step_id") or "") == str(completed_step_id or "")
+    )
+    if active_recovery_matches:
+        retired_recovery = deepcopy(active_recovery)
+        retired_recovery.update({
+            "status": "closed",
+            "closed_reason": "STEP_COMPLETED",
+            "closed_at": _now(),
+        })
+        _append_active_recovery_history(recovery, retired_recovery)
+        recovery["active_recovery"] = {}
+        recovery["active_recovery_envelope"] = {}
+        task_state["recovery_state"] = recovery
     if not recovery or (recovery_step and recovery_step != str(completed_step_id or "")):
         verification = dict(task_state.get("verification_pending") or {})
         if (
@@ -10351,8 +10638,10 @@ def clear_step_scoped_recovery(state: PlanState, completed_step_id: str) -> None
         ):
             task_state.pop("verification_pending", None)
             task_state.pop("resume_route_hint", None)
-            state["task_state"] = task_state
+        state["task_state"] = task_state
         return
+    recovery["active_recovery"] = {}
+    recovery["active_recovery_envelope"] = {}
     active = dict(recovery.get("active_transition") or {})
     if active and str(active.get("status") or "").strip().lower() == "pending":
         active.update({
@@ -10390,21 +10679,59 @@ def clear_step_scoped_recovery(state: PlanState, completed_step_id: str) -> None
     })
     task_state["recovery_state"] = recovery
     task_state["diagnosis_state"] = {}
+    task_state["active_execution"] = {}
+    task_state["current_attempt"] = ""
     task_state.pop("verification_pending", None)
     task_state.pop("resume_route_hint", None)
     state["task_state"] = task_state
 
 
-def advance_plan_after_verified_step(state: PlanState, evidence: str = "") -> bool:
+def advance_plan_after_verified_step(
+    state: PlanState,
+    evidence: str = "",
+    *,
+    expected_step_id: str = "",
+    transition_id: str = "",
+) -> bool:
     """Advance exactly one step after deterministic execution/supervisor verification."""
     if task_status(state) in TASK_TERMINAL_STATUSES:
         return False
-    step = _first_step_by_status(state, tuple(STEP_ACTIVE_STATUSES))
+    if transition_id:
+        task_state = dict(state.get("task_state") or {})
+        if str(transition_id) in {
+            str(item) for item in task_state.get("applied_step_advance_ids") or []
+        }:
+            return False
+    step = next(
+        (
+            item
+            for item in state.get("steps", []) or []
+            if isinstance(item, dict)
+            and str(item.get("step_id") or "") == str(expected_step_id or "")
+            and str(item.get("status") or "") in STEP_ACTIVE_STATUSES
+        ),
+        None,
+    ) if expected_step_id else _first_step_by_status(
+        state,
+        tuple(STEP_ACTIVE_STATUSES),
+    )
     if not step:
         # A verified Execute/Supervisor result is authoritative evidence that
         # the scheduled step ran. Recover from an interrupted or stale
         # pending->running persistence transition instead of rebuilding Plan.
-        step = _first_step_by_status(state, (STATUS_READY, STATUS_PENDING))
+        step = next(
+            (
+                item
+                for item in state.get("steps", []) or []
+                if isinstance(item, dict)
+                and str(item.get("step_id") or "") == str(expected_step_id or "")
+                and str(item.get("status") or "") in {STATUS_READY, STATUS_PENDING}
+            ),
+            None,
+        ) if expected_step_id else _first_step_by_status(
+            state,
+            (STATUS_READY, STATUS_PENDING),
+        )
     if not step:
         return False
     completed_step_id = str(step.get("step_id") or "")
@@ -10438,6 +10765,35 @@ def advance_plan_after_verified_step(state: PlanState, evidence: str = "") -> bo
     else:
         state["current_step_id"] = ""
         state["current_stage_id"] = ""
+    task_state = dict(state.get("task_state") or {})
+    recovery = dict(task_state.get("recovery_state") or {})
+    recovery["pending_action"] = {}
+    recovery["active_recovery"] = {}
+    recovery["active_recovery_envelope"] = {}
+    task_state["recovery_state"] = recovery
+    task_state["active_execution"] = {}
+    task_state["current_attempt"] = ""
+    task_state["generation_provenance"] = normal_generation_provenance(
+        state,
+        source_route="step_advance",
+    ).to_dict()
+    task_state["next_route"] = "generate" if next_step else "supervisor_final_audit"
+    if transition_id:
+        task_state["applied_step_advance_ids"] = list(dict.fromkeys([
+            *list(task_state.get("applied_step_advance_ids") or []),
+            str(transition_id),
+        ]))
+    state["task_state"] = task_state
+    for field in (
+        "recovery_decision",
+        "pending_recovery_action",
+        "recovery_execution_envelope",
+        "execution_evidence",
+        "current_attempt",
+    ):
+        if field in state:
+            state[field] = {} if field != "current_attempt" else ""
+    state["generation_mode"] = GenerationMode.NORMAL.value
     # Final task completion is owned by CompletionGate/Supervisor, not by
     # checklist advancement alone.
     state["updated_at"] = _now()

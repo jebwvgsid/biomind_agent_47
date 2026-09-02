@@ -133,6 +133,9 @@ class AgentState(TypedDict, total=False):
     recovery_semantic_decision: dict
     recovery_policy_outcome: dict
     recovery_execution_envelope: dict
+    generation_mode: Optional[str]
+    generation_provenance: dict
+    recovery_generated: bool
     diagnostic_evidence: dict
     probe_lifecycle: List[dict]
     external_handoff: dict
