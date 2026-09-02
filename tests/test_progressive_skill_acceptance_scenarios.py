@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import tempfile
 import unittest
 from copy import deepcopy
@@ -19,6 +20,8 @@ from agent_core.skill_access import (
     activate_reviewed_binding,
     apply_confirmed_task_skill_change,
     apply_plan_impact_review,
+    canonical_loaded_skill_documents,
+    mark_continuation_resumed,
     new_skill_access_state,
     parse_typed_skill_decision,
     project_skill_context,
@@ -28,6 +31,7 @@ from agent_core.skill_access import (
 from agent_core.skill_manager import SkillManager
 from agent_core.task_spec import canonical_current_task_spec
 from bio_agents import BioAnalystAgent
+from prompts.manager import PromptManager
 
 
 SNPEFF_SKILL = "genomics/snpeff-annotation"
@@ -280,6 +284,182 @@ Use a separately reviewed ANNOVAR protocol.
             )
             self.assertIn("-noCheckCds", inherited_text)
             self.assertIn("-noCheckProtein", inherited_text)
+
+    async def test_consultant_typed_context_commits_once_and_changes_next_prompt(self) -> None:
+        task_spec = _task_spec(revision=12, selected_skill=SNPEFF_SKILL)
+        durable = {
+            "schema_version": 1,
+            "task_id": "task-consultant-context-continuation",
+            "task_spec": deepcopy(task_spec),
+            "plan_revision": 7,
+            "conversation_evidence": {"user_turn_count": 4},
+            "steps": [],
+            "task_state": {
+                "selected_skills": [],
+                "consultation_state": {
+                    "skill_discovery": {
+                        "candidate_skill_ids": [SNPEFF_SKILL],
+                    },
+                },
+            },
+        }
+        decision = {
+            "decision": REQUEST_SKILL_CONTEXT,
+            "reason": "Need exact selected Skill text before deciding",
+            "requests": [{
+                "skill_id": SNPEFF_SKILL,
+                "operation": "full",
+            }],
+        }
+        provider_text = json.dumps(decision)
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.data_path = str(self.root)
+        agent.skill_access_service = self.service
+        store = {"value": deepcopy(durable)}
+
+        def fake_load(*_args, **_kwargs):
+            return deepcopy(store["value"])
+
+        def fake_save(_data_path, _task_id, state, **_kwargs):
+            store["value"] = deepcopy(state)
+            return self.root / "plan_state.json"
+
+        context = build_node_context(
+            node_type="consultant",
+            task_spec=task_spec,
+            plan_state=durable,
+            authoritative_user_turn_revision=4,
+        )
+        empty_prompt = PromptManager.get_consultant_v2_prompt(
+            context.llm_payload.to_dict(),
+            capability_context="{}",
+            consultation_context="{}",
+        )
+        source_path = self.skills_root / "genomics" / "snpeff-annotation" / "SKILL.md"
+        original_read_bytes = Path.read_bytes
+
+        with (
+            patch.object(bio_agents, "load_plan_state", side_effect=fake_load),
+            patch.object(bio_agents, "save_plan_state", side_effect=fake_save),
+            patch.object(
+                Path,
+                "read_bytes",
+                autospec=True,
+                side_effect=lambda path: original_read_bytes(path),
+            ) as read_bytes,
+        ):
+            first = await agent._handle_skill_node_decision(
+                task_id=durable["task_id"],
+                caller_node="consultant",
+                graph_node="consultant",
+                decision=decision,
+                node_context=context,
+                response=AIMessage(content=provider_text),
+            )
+            second = await agent._handle_skill_node_decision(
+                task_id=durable["task_id"],
+                caller_node="consultant",
+                graph_node="consultant",
+                decision=decision,
+                node_context=context,
+                response=AIMessage(content=provider_text),
+            )
+
+        skill_reads = [
+            call for call in read_bytes.call_args_list
+            if call.args and Path(call.args[0]) == source_path
+        ]
+        self.assertEqual(len(skill_reads), 1)
+        self.assertFalse(first["skill_decision_result"]["cache_hit"])
+        self.assertTrue(second["skill_decision_result"]["cache_hit"])
+
+        access = store["value"]["task_state"]["skill_access_state"]
+        documents = canonical_loaded_skill_documents(access)
+        self.assertEqual(len(documents), 1)
+        self.assertEqual(documents[0]["skill_id"], SNPEFF_SKILL)
+        self.assertEqual(
+            documents[0]["content_hash"],
+            hashlib.sha256(documents[0]["document"].encode()).hexdigest(),
+        )
+        discovery, derived_documents = (
+            agent._derive_consultant_discovery_from_skill_access(
+                durable["task_state"]["consultation_state"]["skill_discovery"],
+                access,
+                task_revision=12,
+            )
+        )
+        self.assertEqual(len(discovery["loaded_skill_ids"]), 1)
+        self.assertEqual(len(discovery["loaded_skill_docs"]), 1)
+        self.assertEqual(len(derived_documents), 1)
+
+        continuation_id = second["skill_continuation_id"]
+        projection = agent._skill_context_projection(
+            store["value"],
+            caller_node="consultant",
+            current_step_id="",
+            continuation_id=continuation_id,
+        )
+        next_context = build_node_context(
+            node_type="consultant",
+            task_spec=task_spec,
+            plan_state=store["value"],
+            authoritative_user_turn_revision=4,
+            skill_context=projection,
+            continuation_id=continuation_id,
+        )
+        next_prompt = PromptManager.get_consultant_v2_prompt(
+            next_context.llm_payload.to_dict(),
+            capability_context="{}",
+            consultation_context="{}",
+        )
+        self.assertIn("SKILL_CONTEXT_RESULT", next_prompt)
+        self.assertIn("Custom database construction", next_prompt)
+        self.assertNotEqual(
+            hashlib.sha256(empty_prompt.encode()).hexdigest(),
+            hashlib.sha256(next_prompt.encode()).hexdigest(),
+        )
+
+        resumed = mark_continuation_resumed(
+            access,
+            continuation_id,
+            resumed_invocation_id="consultant-api-retry",
+        )
+        retry_projection = project_skill_context(
+            resumed,
+            caller_node="consultant",
+            continuation_id=continuation_id,
+        )
+        self.assertEqual(len(retry_projection["skill_tool_results"]), 1)
+
+        typed_signature = {
+            key: documents[0][key]
+            for key in ("skill_id", "snapshot_id", "content_hash", "document")
+        }
+        store["value"] = deepcopy(durable)
+        with (
+            patch.object(bio_agents, "load_plan_state", side_effect=fake_load),
+            patch.object(bio_agents, "save_plan_state", side_effect=fake_save),
+        ):
+            legacy_documents, _legacy_projection = (
+                agent._load_and_persist_skill_documents(
+                    durable["task_id"],
+                    [SNPEFF_SKILL],
+                    task_revision=12,
+                    request_id="legacy-load-skill-doc",
+                )
+            )
+        legacy_access = store["value"]["task_state"]["skill_access_state"]
+        self.assertEqual(
+            typed_signature,
+            {
+                key: canonical_loaded_skill_documents(legacy_access)[0][key]
+                for key in ("skill_id", "snapshot_id", "content_hash", "document")
+            },
+        )
+        self.assertEqual(
+            legacy_documents[0]["snapshot_id"],
+            typed_signature["snapshot_id"],
+        )
 
     async def test_generate_search_returns_to_same_node_without_activation(self) -> None:
         task_spec = _task_spec(revision=12, selected_skill=SNPEFF_SKILL)

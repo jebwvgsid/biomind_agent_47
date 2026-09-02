@@ -133,6 +133,7 @@ def new_skill_access_state() -> Dict[str, Any]:
         "schema_version": SKILL_ACCESS_SCHEMA_VERSION,
         "selected_skill_refs": [],
         "snapshots": {},
+        "loaded_skill_documents": {},
         "resource_snapshots": {},
         "excerpts": {},
         "excerpt_cache": {},
@@ -155,7 +156,7 @@ def normalize_skill_access_state(value: Mapping[str, Any] | None) -> Dict[str, A
     state.update(deepcopy(dict(value or {})))
     state["schema_version"] = SKILL_ACCESS_SCHEMA_VERSION
     for field in (
-        "snapshots", "resource_snapshots", "excerpts", "excerpt_cache",
+        "snapshots", "loaded_skill_documents", "resource_snapshots", "excerpts", "excerpt_cache",
         "searches", "search_cache", "continuations", "binding_proposals",
         "skill_tool_results", "request_occurrences", "search_occurrences",
         "proposal_occurrences", "context_rounds", "search_rounds",
@@ -375,6 +376,22 @@ def complete_skill_continuation(
     continuation["status"] = "closed"
     continuation["closed_at"] = _now()
     continuation["close_reason"] = "caller_result_accepted"
+    if str(continuation.get("request_kind") or "") == REQUEST_SKILL_CONTEXT:
+        result = dict(
+            state["skill_tool_results"].get(str(continuation_id or "")) or {}
+        )
+        _record_event(state, "SKILL_CONTEXT_ACKNOWLEDGED", {
+            "request_id": str(
+                continuation.get("request_id") or result.get("request_id") or ""
+            ),
+            "continuation_id": str(continuation_id or ""),
+            "skill_ids": _unique(
+                item.get("skill_id")
+                for item in result.get("results") or []
+                if isinstance(item, Mapping)
+            ),
+            "state_revision": int(continuation.get("task_revision") or 0),
+        })
     _record_event(state, "node_continuation_resumed", {
         "continuation_id": str(continuation_id or ""),
         "caller_node": str(caller_node or ""),
@@ -1252,6 +1269,83 @@ class SkillAccessService:
             state, str(refs[-1].get("snapshot_id") or "")
         )
 
+    def load_skill_documents(
+        self,
+        value: Mapping[str, Any] | None,
+        skill_ids: Sequence[Any],
+        *,
+        task_revision: int,
+        request_id: str = "",
+        max_new_chars: Optional[int] = None,
+    ) -> tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        """Validate and commit canonical immutable Skill documents once."""
+        state = normalize_skill_access_state(value)
+        documents: List[Dict[str, Any]] = []
+        for requested_id in _unique(skill_ids):
+            active = any(
+                str(item.get("skill_id") or "") == requested_id
+                and str(item.get("status") or "") == "active"
+                for item in state["selected_skill_refs"]
+            )
+            state, snapshot, _created = self.ensure_snapshot(
+                state,
+                requested_id,
+                scope="task",
+                status="active" if active else "candidate",
+                selected_at_task_revision=(task_revision if active else 0),
+            )
+            skill_id = str(snapshot.get("skill_id") or requested_id)
+            prior = dict(
+                state["loaded_skill_documents"].get(skill_id) or {}
+            )
+            cache_hit = bool(
+                prior
+                and str(prior.get("snapshot_id") or "")
+                == str(snapshot.get("snapshot_id") or "")
+                and str(prior.get("content_hash") or "")
+                == str(snapshot.get("content_hash") or "")
+            )
+            record = {
+                "skill_id": skill_id,
+                "snapshot_id": str(snapshot.get("snapshot_id") or ""),
+                "source_path": str(snapshot.get("source_path") or ""),
+                "content_hash": str(snapshot.get("content_hash") or ""),
+                "loaded_at_task_revision": max(0, int(task_revision or 0)),
+            }
+            state["loaded_skill_documents"][skill_id] = record
+            meta = dict(self.skill_manager.get_skill_meta(skill_id) or {})
+            documents.append({
+                **record,
+                "document": str(snapshot.get("exact_text") or ""),
+                "document_digest": record["content_hash"],
+                "safe_summary": str(
+                    meta.get("summary") or meta.get("description") or ""
+                ),
+                "cache_hit": cache_hit,
+            })
+            _record_event(
+                state,
+                "SKILL_CONTEXT_CACHE_HIT" if cache_hit else "SKILL_CONTEXT_LOADED",
+                {
+                    "request_id": str(request_id or ""),
+                    "skill_id": skill_id,
+                    "snapshot_id": record["snapshot_id"],
+                    "content_hash": record["content_hash"],
+                    "state_revision": record["loaded_at_task_revision"],
+                },
+            )
+        new_chars = sum(
+            len(str(item.get("document") or ""))
+            for item in documents
+            if not bool(item.get("cache_hit"))
+        )
+        if max_new_chars is not None and new_chars > int(max_new_chars):
+            raise SkillAccessError(
+                "SKILL_DOC_BATCH_CHAR_BUDGET_EXCEEDED",
+                f"aggregate_chars={new_chars}; aggregate_limit={int(max_new_chars)}",
+            )
+        return state, documents
+
     @staticmethod
     def _excerpt_cache_key(snapshot: Mapping[str, Any], request: Mapping[str, Any]) -> str:
         return _digest({
@@ -1481,6 +1575,15 @@ class SkillAccessService:
             "caller_node": runtime["caller_node"],
             "request_count": len(request["requests"]),
         })
+        requested_skill_ids = _unique(
+            item.get("skill_id") for item in request["requests"]
+        )
+        _record_event(state, "SKILL_CONTEXT_REQUESTED", {
+            "request_id": request_id,
+            "continuation_id": continuation["continuation_id"],
+            "skill_ids": requested_skill_ids,
+            "state_revision": runtime["task_revision"],
+        })
         if rounds > int(MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION):
             result = {
                 "decision_result": SKILL_CONTEXT_RESULT,
@@ -1494,6 +1597,12 @@ class SkillAccessService:
                 "rounds": rounds,
             }
         else:
+            state, loaded_documents = self.load_skill_documents(
+                state,
+                requested_skill_ids,
+                task_revision=runtime["task_revision"],
+                request_id=request_id,
+            )
             results = [
                 self._serve_one(state, item, request_id)
                 for item in request["requests"]
@@ -1532,8 +1641,17 @@ class SkillAccessService:
                 "continuation_id": continuation["continuation_id"],
                 "status": status,
                 "results": results,
-                "cache_hit": occurrences > 1,
+                "cache_hit": bool(loaded_documents) and all(
+                    bool(item.get("cache_hit")) for item in loaded_documents
+                ),
             }
+        continuation = state["continuations"].get(
+            str(continuation.get("continuation_id") or "")
+        )
+        if not isinstance(continuation, MutableMapping):
+            raise SkillAccessError(
+                "SKILL_CONTINUATION_UNAVAILABLE", request_id
+            )
         continuation["status"] = "served"
         continuation["request_id"] = request_id
         continuation["result_status"] = result["status"]
@@ -2023,6 +2141,49 @@ class SkillAccessService:
                 "status": "approved_for_plan_impact",
             })
         return state, deepcopy(record)
+
+
+def canonical_loaded_skill_documents(
+    value: Mapping[str, Any] | None,
+) -> List[Dict[str, Any]]:
+    """Return verified documents from the canonical Skill access store."""
+    state = normalize_skill_access_state(value)
+    documents: List[Dict[str, Any]] = []
+    for skill_id, raw in sorted(
+        state["loaded_skill_documents"].items(),
+        key=lambda item: str(item[0]),
+    ):
+        if not isinstance(raw, Mapping):
+            raise SkillAccessError(
+                "SKILL_LOADED_DOCUMENT_INVALID", f"skill_id={skill_id}"
+            )
+        record = dict(raw)
+        snapshot = SkillAccessService._verified_snapshot(
+            state, str(record.get("snapshot_id") or "")
+        )
+        if (
+            str(record.get("skill_id") or "") != str(skill_id)
+            or str(snapshot.get("skill_id") or "") != str(skill_id)
+            or str(record.get("content_hash") or "")
+            != str(snapshot.get("content_hash") or "")
+            or str(record.get("source_path") or "")
+            != str(snapshot.get("source_path") or "")
+        ):
+            raise SkillAccessError(
+                "SKILL_LOADED_DOCUMENT_INVALID", f"skill_id={skill_id}"
+            )
+        documents.append({
+            "skill_id": str(skill_id),
+            "snapshot_id": str(snapshot.get("snapshot_id") or ""),
+            "source_path": str(snapshot.get("source_path") or ""),
+            "content_hash": str(snapshot.get("content_hash") or ""),
+            "document_digest": str(snapshot.get("content_hash") or ""),
+            "loaded_at_task_revision": int(
+                record.get("loaded_at_task_revision") or 0
+            ),
+            "document": str(snapshot.get("exact_text") or ""),
+        })
+    return documents
 
 
 def project_skill_context(

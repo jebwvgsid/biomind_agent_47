@@ -193,6 +193,7 @@ from agent_core.skill_access import (
     activate_reviewed_binding,
     apply_plan_impact_review,
     build_skill_resolution_payload,
+    canonical_loaded_skill_documents,
     close_stale_continuations,
     complete_skill_continuation,
     invalidate_skill_continuations,
@@ -5091,6 +5092,82 @@ class BioAnalystAgent:
             ),
         )
         return access
+
+    def _load_and_persist_skill_documents(
+        self,
+        task_id: str,
+        skill_ids: Sequence[Any],
+        *,
+        task_revision: int,
+        request_id: str = "",
+        max_new_chars: Optional[int] = None,
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        """Use the typed Skill store for both typed and legacy document loads."""
+        service = getattr(self, "skill_access_service", None)
+        if service is None:
+            raise SkillAccessError(
+                "SKILL_CONTEXT_UNAVAILABLE", "SkillManager is not configured"
+            )
+        durable = load_plan_state(self.data_path, task_id)
+        task_state = dict(durable.get("task_state") or {})
+        access = self._prepare_durable_skill_access(
+            durable,
+            selected_skill_ids=(
+                task_state.get("selected_skills")
+                or durable.get("selected_skill_ids")
+                or []
+            ),
+            task_revision=task_revision,
+        )
+        access, documents = service.load_skill_documents(
+            access,
+            skill_ids,
+            task_revision=task_revision,
+            request_id=request_id,
+            max_new_chars=max_new_chars,
+        )
+        projection = self._persist_durable_skill_access(
+            task_id,
+            access,
+            continuation_id=str(task_state.get("skill_continuation_id") or ""),
+        )
+        return documents, projection
+
+    @staticmethod
+    def _derive_consultant_discovery_from_skill_access(
+        discovery_state: Mapping[str, Any] | None,
+        access_state: Mapping[str, Any] | None,
+        *,
+        task_revision: int,
+    ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        """Render legacy discovery fields from the canonical typed store."""
+        derived = normalize_skill_discovery_state(discovery_state)
+        documents = canonical_loaded_skill_documents(access_state)
+        injected = dict(derived.get("injected_document_digests") or {})
+        derived["loaded_skill_ids"] = []
+        derived["loaded_skill_docs"] = {}
+        derived["loaded_skill_refs"] = []
+        derived["pending_document_injection_ids"] = []
+        candidate_refs = []
+        for raw in derived.get("candidate_skill_refs") or []:
+            ref = deepcopy(dict(raw))
+            ref["document_loaded"] = False
+            ref.pop("document_digest", None)
+            candidate_refs.append(ref)
+        derived["candidate_skill_refs"] = candidate_refs
+        derived = record_loaded_skill_docs(
+            derived,
+            documents,
+            loaded_at_revision=task_revision,
+        )
+        derived["injected_document_digests"] = injected
+        derived["pending_document_injection_ids"] = [
+            str(item.get("skill_id") or "")
+            for item in documents
+            if str(injected.get(str(item.get("skill_id") or "")) or "")
+            != str(item.get("document_digest") or "")
+        ]
+        return derived, documents
 
     def _persist_durable_skill_access(
         self,
@@ -26465,6 +26542,19 @@ question. Never guess a scientific or database identity.
             discovery_state = normalize_skill_discovery_state(
                 consultation_state.get("skill_discovery")
             )
+            durable_skill_access = normalize_skill_access_state(
+                durable_preprocess_task_state.get("skill_access_state")
+                or durable_preprocess_state.get("skill_access_state")
+            )
+            (
+                discovery_state,
+                canonical_consultant_documents,
+            ) = self._derive_consultant_discovery_from_skill_access(
+                discovery_state,
+                durable_skill_access,
+                task_revision=task_spec_revision(task_spec),
+            )
+            consultation_state["skill_discovery"] = discovery_state
             intent_admission = dict(
                 durable_preprocess_task_state.get("intent_admission")
                 or state.get("intent_admission")
@@ -26823,9 +26913,6 @@ question. Never guess a scientific or database identity.
                 and "<observation>" in str(m.content)
                 and "❌" in str(m.content)
             ]
-            verified_loaded_skill_ids = self._consultant_verified_loaded_skill_ids(
-                recent_consultant_messages
-            )
             if input_resolution_context.strip():
                 output.print_once(
                     f"formal_upstream_audit:{task_id}",
@@ -27024,22 +27111,9 @@ question. Never guess a scientific or database identity.
                 list(state.get("selected_skills") or [])
             )
             consultation_state["iteration"] = int(consultation_state.get("iteration") or 0) + 1
-            loaded_skill_ids = list(verified_loaded_skill_ids)
-            for skill_id in loaded_skill_ids:
-                if skill_id in set(discovery_state.get("loaded_skill_ids") or []):
-                    continue
-                document = self.skill_manager.load_skill(skill_id) if self.skill_manager else ""
-                meta = self.skill_manager.get_skill_meta(skill_id) if self.skill_manager else {}
-                discovery_state = record_loaded_skill_doc(
-                    discovery_state,
-                    skill_id=skill_id,
-                    path=str((meta or {}).get("_skill_md") or ""),
-                    document=document,
-                    summary=str((meta or {}).get("summary") or (meta or {}).get("description") or ""),
-                    document_digest=str(
-                        (meta or {}).get("_skill_content_hash") or ""
-                    ),
-                )
+            loaded_skill_ids = list(
+                discovery_state.get("loaded_skill_ids") or []
+            )
             current_selected_skill_ids = list(dict.fromkeys([
                 *list(state.get("selected_skills") or []),
                 *list(discovery_state.get("selected_skill_ids") or []),
@@ -27674,6 +27748,33 @@ question. Never guess a scientific or database identity.
                             consultant_node_context.binding.invocation_id
                         ),
                     )
+                    projected_results = list(
+                        consultant_skill_projection.get("skill_tool_results")
+                        or []
+                    )
+                    projected_result = (
+                        dict(projected_results[0])
+                        if projected_results
+                        and isinstance(projected_results[0], Mapping)
+                        else {}
+                    )
+                    consultant_access = record_skill_access_event(
+                        consultant_access,
+                        "SKILL_CONTEXT_PROJECTED",
+                        {
+                            "request_id": str(
+                                projected_result.get("request_id") or ""
+                            ),
+                            "continuation_id": consultant_continuation_id,
+                            "skill_ids": list(dict.fromkeys(
+                                str(item.get("skill_id") or "")
+                                for item in projected_result.get("results") or []
+                                if isinstance(item, Mapping)
+                                and str(item.get("skill_id") or "")
+                            )),
+                            "state_revision": task_spec_revision(task_spec),
+                        },
+                    )
                     try:
                         self._persist_durable_skill_access(
                             task_id,
@@ -27704,14 +27805,21 @@ question. Never guess a scientific or database identity.
                     if str(card.get("skill_id") or "") in set(visible_capability_ids)
                 ]
                 loaded_skill_documents: Dict[str, str] = {}
+                canonical_documents_by_id = {
+                    str(item.get("skill_id") or ""): dict(item)
+                    for item in canonical_consultant_documents
+                    if str(item.get("skill_id") or "")
+                }
                 pending_injection_ids = list(
                     discovery_state.get("pending_document_injection_ids") or []
                 )[:5]
                 for skill_id in pending_injection_ids:
-                    document = self.skill_manager.load_skill(skill_id) if self.skill_manager else ""
+                    canonical_document = canonical_documents_by_id.get(skill_id) or {}
+                    document = str(canonical_document.get("document") or "")
                     if document:
-                        meta = self.skill_manager.get_skill_meta(skill_id) or {}
-                        current_digest = str(meta.get("_skill_content_hash") or "")
+                        current_digest = str(
+                            canonical_document.get("document_digest") or ""
+                        )
                         stored_digest = str(
                             (
                                 (discovery_state.get("loaded_skill_docs") or {}).get(skill_id)
@@ -27723,13 +27831,11 @@ question. Never guess a scientific or database identity.
                             discovery_state = record_loaded_skill_doc(
                                 discovery_state,
                                 skill_id=skill_id,
-                                path=str(meta.get("_skill_md") or ""),
-                                document=document,
-                                summary=str(
-                                    meta.get("summary")
-                                    or meta.get("description")
-                                    or ""
+                                path=str(
+                                    canonical_document.get("source_path") or ""
                                 ),
+                                document=document,
+                                summary="",
                                 loaded_at_revision=task_spec_revision(task_spec),
                                 document_digest=current_digest,
                             )
@@ -27809,7 +27915,7 @@ question. Never guess a scientific or database identity.
                     elapsed_ms=(time.perf_counter() - discovery_projection_render_started) * 1000,
                     call_count=1,
                     visible_candidate_count=len(visible_candidate_cards),
-                    loaded_document_count=len(loaded_skill_documents),
+                    loaded_document_count=len(canonical_consultant_documents),
                 )
                 discovery_escalated = bool(
                     discovery_state.get("reasoning_level") == "escalated"
@@ -29156,32 +29262,27 @@ question. Never guess a scientific or database identity.
                     "📖 Consultant loading skill docs: " + ", ".join(requested_ids),
                     Fore.CYAN,
                 )
-                loaded_documents: List[Dict[str, Any]] = []
-                load_failures: List[str] = []
-                loaded_by_id: Dict[str, Dict[str, Any]] = {}
-                for skill_id in requested_ids:
-                    loaded = self.skill_manager.load_skill(skill_id)
-                    if not loaded:
-                        load_failures.append(skill_id)
-                        continue
-                    meta = self.skill_manager.get_skill_meta(skill_id) or {}
-                    loaded_by_id[skill_id] = {
-                        "skill_id": skill_id,
-                        "source_path": str(meta.get("_skill_md") or ""),
-                        "document": loaded,
-                        "safe_summary": str(
-                            meta.get("summary") or meta.get("description") or ""
-                        ),
-                        "document_digest": str(
-                            meta.get("_skill_content_hash") or ""
-                        ),
-                    }
-                if load_failures:
+                aggregate_limit = min(
+                    int(CONSULTANT_SKILL_CHAR_BUDGET),
+                    int(SKILL_FULL_READ_MAX_CHARS) * 3,
+                )
+                try:
+                    canonical_documents, canonical_projection = (
+                        self._load_and_persist_skill_documents(
+                            task_id,
+                            requested_ids,
+                            task_revision=task_spec_revision(task_spec),
+                            request_id="legacy-load-skill-doc",
+                            max_new_chars=aggregate_limit,
+                        )
+                    )
+                except SkillAccessError as exc:
                     obs = (
                         '<load_error action="LOAD_SKILL_DOC" code="SKILL_DOC_BATCH_LOAD_FAILED">\n'
                         + json.dumps({
-                            "failed_skill_ids": load_failures,
+                            "failed_skill_ids": requested_ids,
                             "persisted_skill_ids": [],
+                            "detail": exc.detail,
                             "allowed_action": "search_skills",
                         }, ensure_ascii=False, sort_keys=True)
                         + "\n</load_error>"
@@ -29191,6 +29292,11 @@ question. Never guess a scientific or database identity.
                         "consultation_state": consultation_state,
                         "next_step": "consultant",
                     }
+                loaded_by_id = {
+                    str(item.get("skill_id") or ""): dict(item)
+                    for item in canonical_documents
+                    if str(item.get("skill_id") or "")
+                }
                 stored_documents = dict(
                     discovery_state.get("loaded_skill_docs") or {}
                 )
@@ -29215,32 +29321,9 @@ question. Never guess a scientific or database identity.
                     skill_id for skill_id in requested_ids
                     if skill_id not in already_loaded
                 ]
-                aggregate_chars = sum(
-                    len(str((loaded_by_id.get(skill_id) or {}).get("document") or ""))
-                    for skill_id in new_ids
-                )
-                aggregate_limit = min(
-                    int(CONSULTANT_SKILL_CHAR_BUDGET),
-                    int(SKILL_FULL_READ_MAX_CHARS) * 3,
-                )
-                for skill_id in new_ids:
-                    loaded_documents.append(loaded_by_id[skill_id])
-                if aggregate_chars > aggregate_limit:
-                    obs = (
-                        '<consultant_validation_error code="SKILL_DOC_BATCH_CHAR_BUDGET_EXCEEDED">'
-                        + json.dumps({
-                            "requested_skill_ids": requested_ids,
-                            "aggregate_chars": aggregate_chars,
-                            "aggregate_limit": aggregate_limit,
-                            "allowed_action": "load_skill_doc",
-                        }, ensure_ascii=False, sort_keys=True)
-                        + "</consultant_validation_error>"
-                    )
-                    return {
-                        "messages": [AIMessage(content=content), SystemMessage(content=obs)],
-                        "consultation_state": consultation_state,
-                        "next_step": "consultant",
-                    }
+                loaded_documents = [
+                    loaded_by_id[skill_id] for skill_id in new_ids
+                ]
                 transition_resolution: Dict[str, Any] = {}
                 if loaded_documents or not new_ids:
                     discovery_state = record_loaded_skill_docs(
@@ -29287,7 +29370,7 @@ question. Never guess a scientific or database identity.
                     obs = (
                         '<load_error action="LOAD_SKILL_DOC">\n'
                         + json.dumps({
-                            "failed_skill_ids": load_failures or requested_ids,
+                            "failed_skill_ids": requested_ids,
                             "allowed_action": "search_skills",
                         }, ensure_ascii=False, sort_keys=True)
                         + "\n"
@@ -29297,6 +29380,7 @@ question. Never guess a scientific or database identity.
                     "messages": [AIMessage(content=content), SystemMessage(content=obs)],
                     "consultation_state": consultation_state,
                     "next_step": "consultant",
+                    **canonical_projection,
                     **transition_resolution,
                 }
 
