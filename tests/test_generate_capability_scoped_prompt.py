@@ -12,6 +12,7 @@ from agent_core.action_runtime import (
     project_action_capability_context_for_provider,
     project_action_runtime_for_provider,
     resolve_action_runtime_bindings,
+    serialize_action_capability_instructions,
 )
 from agent_core.skill_manager import SkillManager
 from prompts.manager import PromptManager
@@ -85,10 +86,11 @@ class GenerateCapabilityScopedPromptTests(unittest.TestCase):
                     },
                 },
             },
-            capability_instructions=json.dumps(
+            capability_instructions=serialize_action_capability_instructions(
                 capability_context,
-                ensure_ascii=False,
-                sort_keys=True,
+                script_protocol=(
+                    "Use only current-action runtime and artifact shell references."
+                ),
             ),
         )
 
@@ -194,6 +196,50 @@ class GenerateCapabilityScopedPromptTests(unittest.TestCase):
         self.assertNotIn("annotate_variants", rendered)
         self.assertNotIn(self.private_java, rendered)
         self.assertNotIn(self.private_jar, rendered)
+        self.assertNotIn("capability_contract_hash", rendered)
+        self.assertNotIn("contract_hash", rendered)
+        self.assertNotRegex(rendered, r"sha256:[0-9a-f]{64}")
+
+    def test_internal_binding_and_llm_capability_view_are_independent(self) -> None:
+        capability_id = "genomics.snpeff_annotation.build_database"
+        resolution = self._resolve_snpeff(capability_id)
+        internal_before = json.loads(json.dumps(resolution, sort_keys=True))
+
+        projection = project_action_capability_context_for_provider(resolution)
+        instructions = serialize_action_capability_instructions(
+            projection,
+            script_protocol="Use current-action references only.",
+        )
+
+        self.assertRegex(
+            resolution["capability_contract_hash"],
+            r"^sha256:[0-9a-f]{64}$",
+        )
+        self.assertEqual(resolution, internal_before)
+        self.assertTrue(projection["current_action_capability"])
+        self.assertTrue(instructions)
+        for prohibited in (
+            "capability_contract_hash",
+            "contract_hash",
+            "binding_hash",
+            "registry_hash",
+            "registry_digest",
+            "contract_digest",
+            "revision_hash",
+            "signature",
+            "nonce",
+            "authorization_token",
+        ):
+            self.assertNotIn(prohibited, instructions)
+        self.assertNotRegex(instructions, r"sha256:[0-9a-f]{64}")
+
+        projection["current_action_capability"]["execution_guidance"].append(
+            "LLM-only mutation"
+        )
+        self.assertNotIn(
+            "LLM-only mutation",
+            resolution["capability_contract"]["execution_guidance"],
+        )
 
     def test_config_and_data_directory_remain_artifact_bindings(self) -> None:
         artifact_environment = [
