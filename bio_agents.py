@@ -19,6 +19,7 @@ import inspect
 import json
 import logging
 import os
+import random
 import re
 import shutil
 import shlex
@@ -101,6 +102,8 @@ from config.config import (
 )
 from config.reliability import (
     GENERATE_PROVIDER_MAX_ATTEMPTS,
+    GENERATE_PROVIDER_RETRY_BASE_SECONDS,
+    GENERATE_PROVIDER_RETRY_CAP_SECONDS,
     LLM_CANCEL_CLEANUP_TIMEOUT_SECONDS,
     LLM_FIRST_CHUNK_TIMEOUT_SECONDS,
     LLM_STREAM_IDLE_TIMEOUT_SECONDS,
@@ -339,12 +342,16 @@ from agent_core.llm_safety import (
     llm_failure_summary,
 )
 from agent_core.provider_attempt import (
+    EMPTY_FINAL_CONTENT,
+    GENERATE_PROVIDER_RETRY_EXHAUSTED,
+    GENERATE_PROVIDER_TERMINAL_REQUEST_ERROR,
     PROVIDER_CANONICAL_CONTEXT_CHANGED,
     ProviderAttemptEnvelope,
     ProviderAttemptFailure,
     ProviderAttemptRecord,
     ProviderStreamObserver,
     ProviderTimeoutPolicy,
+    provider_retry_delay_seconds,
     persist_partial_response_diagnostic,
     run_provider_attempt,
 )
@@ -947,6 +954,34 @@ def bind_generate_llm(
         reasoning_effort=reasoning_effort,
         scope="generate_only",
     )
+
+
+def generate_client_kwargs(shared_kwargs: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return the Generate-only transport policy with one retry owner."""
+
+    result = dict(shared_kwargs)
+    result["max_retries"] = 0
+    # A normal-but-empty response is retried by the application budget, so it
+    # must never enter LangChain's successful completion cache.
+    result["cache"] = False
+    return result
+
+
+def response_has_final_content(response: Any) -> bool:
+    content = getattr(response, "content", "")
+    if isinstance(content, str):
+        return bool(content.strip())
+    if isinstance(content, (list, tuple)):
+        for item in content:
+            value = (
+                item.get("text") or item.get("content") or ""
+                if isinstance(item, Mapping)
+                else item
+            )
+            if str(value or "").strip():
+                return True
+        return False
+    return bool(content)
 
 
 def bind_recovery_llm(
@@ -1710,6 +1745,10 @@ class BioAnalystAgent:
         self.llm_stream_idle_timeout_seconds = LLM_STREAM_IDLE_TIMEOUT_SECONDS
         self.llm_cancel_cleanup_timeout_seconds = LLM_CANCEL_CLEANUP_TIMEOUT_SECONDS
         self.generate_provider_max_attempts = GENERATE_PROVIDER_MAX_ATTEMPTS
+        self.generate_provider_retry_base_seconds = GENERATE_PROVIDER_RETRY_BASE_SECONDS
+        self.generate_provider_retry_cap_seconds = GENERATE_PROVIDER_RETRY_CAP_SECONDS
+        self.generate_llm_sdk_max_retries = 0
+        self.generate_completion_cache_enabled = False
         self.llm_context_limit_tokens = max(1, int(max_memory_tokens))
         self._provider_attempt_history: Dict[str, List[Dict[str, Any]]] = {}
 
@@ -1755,11 +1794,24 @@ class BioAnalystAgent:
         self.llm_reasoning_stream_adapter_active = (
             deepseek_reasoning_stream_enabled(self.llm)
         )
+        generate_transport_llm = init_chat_model(
+            **generate_client_kwargs(llm_kwargs)
+        )
+        if self.llm_provider_is_deepseek:
+            generate_transport_llm = enable_deepseek_reasoning_stream(
+                generate_transport_llm
+            )
         self.generate_llm, self.generate_llm_policy = bind_generate_llm(
-            self.llm,
+            generate_transport_llm,
             model=llm_model,
             base_url=LLM_BASE_URL,
         )
+        self.generate_llm_policy = {
+            **dict(self.generate_llm_policy or {}),
+            "sdk_max_retries": self.generate_llm_sdk_max_retries,
+            "completion_cache_enabled": self.generate_completion_cache_enabled,
+            "application_max_attempts": self.generate_provider_max_attempts,
+        }
         self.recovery_llm, self.recovery_llm_policy = bind_recovery_llm(
             self.llm,
             model=llm_model,
@@ -11777,36 +11829,95 @@ class BioAnalystAgent:
         """Persist a typed provider terminal without entering Recovery."""
 
         plan_state = load_plan_state(self.data_path, task_id)
-        attempt_rows = list(
-            getattr(self, "_provider_attempt_history", {}).get(task_id, [])
-        )[-2:]
+        semantic_invocation_id = str(
+            failure.record.envelope.semantic_invocation_id
+        )
+        all_rows = [
+            row
+            for row in list(
+                getattr(self, "_provider_attempt_history", {}).get(task_id, [])
+            )
+            if str(row.get("semantic_invocation_id") or "")
+            == semantic_invocation_id
+        ]
+        by_attempt_id = {
+            str(row.get("attempt_id") or ""): row
+            for row in all_rows
+            if str(row.get("attempt_id") or "")
+        }
+        attempt_rows = []
+        cursor = str(failure.record.envelope.attempt_id)
+        visited = set()
+        while cursor and cursor not in visited and cursor in by_attempt_id:
+            visited.add(cursor)
+            row = by_attempt_id[cursor]
+            attempt_rows.append(row)
+            cursor = str(row.get("parent_attempt_id") or "")
+        attempt_rows.reverse()
+        configured_max_attempts = int(
+            failure.record.envelope.attempt_ordinal
+            + failure.record.envelope.retry_budget_before
+        )
+        last_attempt_retryable = bool(failure.record.retryable)
+        retry_budget_exhausted = bool(
+            failure.error_code == GENERATE_PROVIDER_RETRY_EXHAUSTED
+            and failure.record.retry_budget_exhausted
+            and last_attempt_retryable
+            and len(attempt_rows) >= configured_max_attempts
+        )
+        terminal_failure_reason = (
+            "generate_provider_retry_exhausted"
+            if retry_budget_exhausted
+            else "generate_provider_terminal_request_error"
+            if failure.error_code == GENERATE_PROVIDER_TERMINAL_REQUEST_ERROR
+            else str(
+                failure.record.terminal_failure_reason
+                or "generate_provider_terminal_failure"
+            )
+        )
+        task_state = dict(plan_state.get("task_state") or {})
+        task_state["pending_action"] = {}
+        plan_state["task_state"] = task_state
+        plan_state["pending_action"] = {}
         durable_failure = {
-            "schema_version": 1,
+            "schema_version": 2,
             "error_code": failure.error_code,
             "owner": "PROVIDER",
             "stage": "GENERATE_PROVIDER",
             "status": "terminal",
             "retryable": False,
+            "last_attempt_retryable": last_attempt_retryable,
+            "retry_budget_exhausted": retry_budget_exhausted,
             "attempt_count": len(attempt_rows),
-            "semantic_invocation_id": str(
-                failure.record.envelope.semantic_invocation_id
-            ),
+            "configured_max_attempts": configured_max_attempts,
+            "semantic_invocation_id": semantic_invocation_id,
             "last_attempt_id": str(failure.record.envelope.attempt_id),
+            "pending_action": {},
+            "generated_action_committed": False,
+            "execution_started": False,
             "attempts": [
                 {
                     key: row.get(key)
                     for key in (
                         "attempt_id", "attempt_ordinal", "parent_attempt_id",
-                        "call_id", "request_hash", "node_context_hash", "state",
-                        "failure_type", "cleanup_result", "retryable",
-                        "total_chunk_count", "reasoning_chunk_count",
-                        "content_chunk_count", "attempt_completed_at",
+                        "call_id", "request_hash", "prompt_hash",
+                        "model_parameter_hash", "node_context_hash", "state",
+                        "failure_type", "normalized_failure_reason",
+                        "cleanup_result", "retryable", "retry_delay_seconds",
+                        "total_chunk_count", "reasoning_callback_fragment_count",
+                        "content_callback_fragment_count", "tool_call_fragment_count",
+                        "observed_payload_callback_count", "attempt_completed_at",
                     )
                 }
                 for row in attempt_rows
             ],
             "last_seen_at": timestamp_now(),
-            "termination_reason": "generate_provider_attempts_exhausted",
+            "terminal_failure_reason": terminal_failure_reason,
+            "termination_reason": (
+                "generate_provider_attempts_exhausted"
+                if retry_budget_exhausted
+                else terminal_failure_reason
+            ),
         }
         plan_state["failure"] = durable_failure
         save_plan_state(self.data_path, task_id, plan_state)
@@ -13075,6 +13186,18 @@ class BioAnalystAgent:
         )
         trace_metadata = dict(trace_metadata or {})
         provider_policy = dict(llm_policy or {})
+        sdk_max_retries = int(
+            provider_policy.get(
+                "sdk_max_retries",
+                getattr(
+                    self,
+                    "generate_llm_sdk_max_retries" if stage == "generate" else "llm_max_retries",
+                    0,
+                ),
+            )
+        )
+        if stage == "generate" and sdk_max_retries != 0:
+            raise RuntimeError("GENERATE_SDK_RETRY_POLICY_VIOLATION")
         thinking_enabled = bool(provider_policy.get("thinking_enabled"))
         effective_temperature = effective_llm_temperature(
             is_deepseek=bool(
@@ -13177,6 +13300,26 @@ class BioAnalystAgent:
                 for message in messages
             ],
         }
+        prompt_hash = hashlib.sha256(
+            json.dumps(
+                semantic_payload["messages"],
+                ensure_ascii=False,
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest()
+        model_parameter_hash = hashlib.sha256(
+            json.dumps(
+                {
+                    "model": str(getattr(self, "llm_model_id", "") or "unknown"),
+                    "temperature": effective_temperature,
+                    "provider_policy": provider_policy,
+                    "sdk_max_retries": sdk_max_retries,
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+                default=str,
+            ).encode("utf-8")
+        ).hexdigest()
         semantic_invocation_id = str(
             trace_metadata.get("semantic_invocation_id")
             or "semantic-invocation-"
@@ -13277,7 +13420,9 @@ class BioAnalystAgent:
                     0,
                     max_attempts - attempt_ordinal - 1,
                 )
-                metadata["sdk_max_retries"] = int(getattr(self, "llm_max_retries", 0))
+                metadata["sdk_max_retries"] = sdk_max_retries
+                metadata["prompt_hash"] = prompt_hash
+                metadata["model_parameter_hash"] = model_parameter_hash
                 base_call_id = str(metadata.pop("call_id", "") or "")
                 if base_call_id:
                     metadata["call_id"] = f"{base_call_id}-attempt-{attempt_ordinal}"
@@ -13324,7 +13469,9 @@ class BioAnalystAgent:
                     timeout_policy=timeout_policy,
                     retry_budget_before=max_attempts - attempt_ordinal,
                     retry_budget_after=max(0, max_attempts - attempt_ordinal - 1),
-                    sdk_max_retries=int(getattr(self, "llm_max_retries", 0)),
+                    sdk_max_retries=sdk_max_retries,
+                    prompt_hash=prompt_hash,
+                    model_parameter_hash=model_parameter_hash,
                 )
 
                 async def invoke(observer: ProviderStreamObserver) -> Any:
@@ -13346,33 +13493,26 @@ class BioAnalystAgent:
                         envelope,
                         progress_callback=progress,
                     )
-                except ProviderAttemptFailure as exc:
-                    latest_error = exc
-                    attempt_record = exc.record
-                    history.setdefault(task_id or "-", []).append(attempt_record.to_dict())
-                    history[task_id or "-"] = history[task_id or "-"][-20:]
-                    if trace_store and snapshot:
-                        try:
-                            if attempt_record.total_chunk_count:
-                                diagnostic_ref = persist_partial_response_diagnostic(
-                                    Path(str(snapshot["snapshot_ref"])).parent
-                                    / "partial_response_diagnostic.json",
-                                    attempt_record,
-                                )
-                            else:
-                                diagnostic_ref = None
-                            snapshot = trace_store.fail_call(snapshot["call_id"], exc)
-                            snapshot = trace_store.annotate_call(snapshot["call_id"], {
-                                "provider_attempt": attempt_record.to_dict(),
-                                "partial_response_diagnostic_ref": str(diagnostic_ref or ""),
-                            })
-                            record_ref(snapshot)
-                        except Exception as trace_exc:  # noqa: BLE001 - preserve provider failure.
-                            logger.warning(
-                                "Failed to persist LLM failure snapshot %s: %s",
-                                snapshot.get("call_id"),
-                                trace_exc,
+                    if stage == "generate" and not response_has_final_content(response):
+                        attempt_record.failure_type = EMPTY_FINAL_CONTENT
+                        attempt_record.failure_detail = (
+                            "provider stream ended normally without final content"
+                        )
+                        attempt_record.normalized_failure_reason = "empty_final_content"
+                        attempt_record.retryable = True
+                        attempt_record.state = "FAILED_TRANSIENT"
+                        if attempt_record.stream_started:
+                            attempt_record.partial_payload_disposition = (
+                                "discarded_before_parse"
                             )
+                        raise ProviderAttemptFailure(
+                            EMPTY_FINAL_CONTENT,
+                            attempt_record.failure_detail,
+                            record=attempt_record,
+                            retryable=True,
+                        )
+                except ProviderAttemptFailure as exc:
+                    attempt_record = exc.record
                     can_retry = (
                         stage == "generate"
                         and exc.retryable
@@ -13389,23 +13529,117 @@ class BioAnalystAgent:
                                 exc_info=True,
                             )
                             context_current = False
+                    terminal_error: ProviderAttemptFailure = exc
                     if can_retry and not context_current:
                         attempt_record.caused_by = attempt_record.failure_type
                         attempt_record.failure_type = PROVIDER_CANONICAL_CONTEXT_CHANGED
                         attempt_record.retryable = False
-                        history[task_id or "-"][-1] = attempt_record.to_dict()
-                        raise ProviderAttemptFailure(
+                        attempt_record.terminal_failure_reason = (
+                            "generate_canonical_context_changed"
+                        )
+                        terminal_error = ProviderAttemptFailure(
                             PROVIDER_CANONICAL_CONTEXT_CHANGED,
                             "Generate canonical plan context changed before retry dispatch",
                             record=attempt_record,
                             retryable=False,
-                        ) from exc
+                        )
+                        can_retry = False
+                    elif (
+                        stage == "generate"
+                        and exc.retryable
+                        and attempt_ordinal >= max_attempts
+                    ):
+                        attempt_record.retry_budget_exhausted = True
+                        attempt_record.terminal_failure_reason = (
+                            "generate_provider_retry_exhausted"
+                        )
+                        terminal_error = ProviderAttemptFailure(
+                            GENERATE_PROVIDER_RETRY_EXHAUSTED,
+                            (
+                                f"Generate consumed {max_attempts} application attempts; "
+                                f"last failure was {attempt_record.failure_type}"
+                            ),
+                            record=attempt_record,
+                            retryable=False,
+                        )
+                    elif stage == "generate" and not exc.retryable:
+                        attempt_record.terminal_failure_reason = (
+                            "generate_provider_terminal_request_error"
+                            if exc.error_code
+                            == GENERATE_PROVIDER_TERMINAL_REQUEST_ERROR
+                            else "generate_provider_terminal_failure"
+                        )
+
+                    if can_retry:
+                        jitter_source = getattr(
+                            self,
+                            "_provider_retry_random",
+                            random.random,
+                        )
+                        try:
+                            jitter_sample = float(jitter_source())
+                        except Exception:
+                            jitter_sample = 1.0
+                        attempt_record.retry_delay_seconds = provider_retry_delay_seconds(
+                            attempt_record,
+                            attempt_ordinal=attempt_ordinal,
+                            jitter_sample=jitter_sample,
+                            base_seconds=float(
+                                getattr(
+                                    self,
+                                    "generate_provider_retry_base_seconds",
+                                    0.5,
+                                )
+                            ),
+                            cap_seconds=float(
+                                getattr(
+                                    self,
+                                    "generate_provider_retry_cap_seconds",
+                                    8.0,
+                                )
+                            ),
+                        )
+
+                    latest_error = terminal_error
+                    history.setdefault(task_id or "-", []).append(attempt_record.to_dict())
+                    history[task_id or "-"] = history[task_id or "-"][-20:]
+                    if trace_store and snapshot:
+                        try:
+                            if attempt_record.observed_payload_callback_count:
+                                diagnostic_ref = persist_partial_response_diagnostic(
+                                    Path(str(snapshot["snapshot_ref"])).parent
+                                    / "partial_response_diagnostic.json",
+                                    attempt_record,
+                                )
+                            else:
+                                diagnostic_ref = None
+                            snapshot = trace_store.fail_call(
+                                snapshot["call_id"], terminal_error
+                            )
+                            snapshot = trace_store.annotate_call(snapshot["call_id"], {
+                                "provider_attempt": attempt_record.to_dict(),
+                                "partial_response_diagnostic_ref": str(diagnostic_ref or ""),
+                            })
+                            record_ref(snapshot)
+                        except Exception as trace_exc:  # noqa: BLE001 - preserve provider failure.
+                            logger.warning(
+                                "Failed to persist LLM failure snapshot %s: %s",
+                                snapshot.get("call_id"),
+                                trace_exc,
+                            )
+
                     if can_retry:
                         output.print_once(
                             f"provider:retry:{attempt_id}",
                             f"🔁 Retrying the same Generate request once after {exc.error_code}.",
                             Fore.YELLOW,
                         )
+                        sleeper = getattr(
+                            self,
+                            "_provider_retry_sleep",
+                            asyncio.sleep,
+                        )
+                        await sleeper(float(attempt_record.retry_delay_seconds or 0.0))
                         parent_attempt_id = attempt_id
                         continue
                     if (
@@ -13417,6 +13651,8 @@ class BioAnalystAgent:
                         # exception contract. They gain attempt telemetry and
                         # cleanup, but no new controller business retry policy.
                         raise exc.__cause__
+                    if terminal_error is not exc:
+                        raise terminal_error from exc
                     raise
                 else:
                     history.setdefault(task_id or "-", []).append(attempt_record.to_dict())

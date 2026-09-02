@@ -5,19 +5,28 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import Mock
 
+import httpx
+import openai
 from langchain_core.messages import AIMessage, HumanMessage
 
 from agent_core.context_lineage import ContextLineageStore
+from agent_core.plan_tracker import load_plan_state, save_plan_state
 from agent_core.provider_attempt import (
     CLEANUP_CONFIRMED,
+    EMPTY_FINAL_CONTENT,
+    GENERATE_PROVIDER_RETRY_EXHAUSTED,
+    GENERATE_PROVIDER_TERMINAL_REQUEST_ERROR,
     PROVIDER_CANONICAL_CONTEXT_CHANGED,
     PROVIDER_CANCEL_CLEANUP_FAILED,
     PROVIDER_CONNECT_TIMEOUT,
     PROVIDER_FIRST_CHUNK_TIMEOUT,
     PROVIDER_HTTP_ERROR,
     PROVIDER_OUTCOME_UNKNOWN,
+    PROVIDER_CONNECTION_FAILURE,
     PROVIDER_SDK_ERROR,
+    PROVIDER_STREAM_READ_INTERRUPTED,
     PROVIDER_STREAM_IDLE_TIMEOUT,
     PROVIDER_TOTAL_TIMEOUT,
     ProviderAttemptEnvelope,
@@ -25,9 +34,10 @@ from agent_core.provider_attempt import (
     ProviderStreamObserver,
     ProviderTimeoutPolicy,
     classify_provider_exception,
+    exception_diagnostic,
     run_provider_attempt,
 )
-from bio_agents import BioAnalystAgent
+from bio_agents import BioAnalystAgent, generate_client_kwargs
 
 
 class _ChunkMessage:
@@ -49,6 +59,7 @@ class _ScenarioLLM:
         self.calls = 0
         self.cancelled = 0
         self.tasks = []
+        self.callback_batches = []
         self.release = asyncio.Event()
 
     async def ainvoke(self, messages, config=None):
@@ -56,6 +67,7 @@ class _ScenarioLLM:
         scenario = self.scenarios[min(self.calls - 1, len(self.scenarios) - 1)]
         callbacks = list((config or {}).get("callbacks") or [])
         self.tasks.append(asyncio.current_task())
+        self.callback_batches.append(callbacks)
 
         def content(value="x"):
             for callback in callbacks:
@@ -65,10 +77,31 @@ class _ScenarioLLM:
             for callback in callbacks:
                 callback.on_llm_new_token("", chunk=_Chunk(reasoning=value))
 
+        if isinstance(scenario, BaseException):
+            raise scenario
+
         if scenario == "success":
             return AIMessage(content="completed")
         if scenario == "malformed":
             return AIMessage(content="not a structured Generate action")
+        if scenario == "empty":
+            return AIMessage(content="")
+        if scenario == "reasoning_empty":
+            reasoning()
+            return AIMessage(content="")
+        if scenario == "partial_empty":
+            content("<execute>discard-me")
+            return AIMessage(content="")
+        if scenario == "reasoning_read_error":
+            reasoning("discarded-reasoning")
+            request = httpx.Request("POST", "https://provider.invalid/v1/chat")
+            raise httpx.ReadError("stream read interrupted", request=request)
+        if scenario == "partial_read_error":
+            content("<execute>discard-me")
+            request = httpx.Request("POST", "https://provider.invalid/v1/chat")
+            raise httpx.ReadError("stream read interrupted", request=request)
+        if scenario == "cancel":
+            raise asyncio.CancelledError()
         if scenario == "no_chunks":
             try:
                 await asyncio.Event().wait()
@@ -117,7 +150,7 @@ def _envelope(policy: ProviderTimeoutPolicy, ordinal: int = 1) -> ProviderAttemp
         timeout_policy=policy,
         retry_budget_before=1 if ordinal == 1 else 0,
         retry_budget_after=0,
-        sdk_max_retries=2,
+        sdk_max_retries=0,
     )
 
 
@@ -135,11 +168,31 @@ def _agent(llm, *, data_path="", attempts=2):
     agent.llm_stream_idle_timeout_seconds = 0.02
     agent.llm_cancel_cleanup_timeout_seconds = 0.02
     agent.generate_provider_max_attempts = attempts
+    agent.generate_provider_retry_base_seconds = 0.5
+    agent.generate_provider_retry_cap_seconds = 8.0
+    agent.generate_llm_sdk_max_retries = 0
     agent.llm_max_retries = 2
     agent.llm_context_limit_tokens = 200_000
     agent._provider_attempt_history = {}
     agent._latest_llm_call_refs = {}
+    agent._provider_retry_random = lambda: 1.0
+
+    async def no_wait(_delay):
+        return None
+
+    agent._provider_retry_sleep = no_wait
     return agent
+
+
+def _http_status_error(status: int, *, retry_after: str = "") -> httpx.HTTPStatusError:
+    request = httpx.Request("POST", "https://provider.invalid/v1/chat")
+    headers = {"Retry-After": retry_after} if retry_after else {}
+    response = httpx.Response(status, headers=headers, request=request)
+    return httpx.HTTPStatusError(
+        f"provider returned HTTP {status}",
+        request=request,
+        response=response,
+    )
 
 
 class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
@@ -165,7 +218,10 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
                     stage="generate",
                     task_id="a2",
                 )
-            self.assertEqual(caught.exception.error_code, PROVIDER_FIRST_CHUNK_TIMEOUT)
+            self.assertEqual(
+                caught.exception.error_code,
+                GENERATE_PROVIDER_RETRY_EXHAUSTED,
+            )
             self.assertEqual(llm.calls, 2)
             agent._mark_generate_provider_blocked("a2", caught.exception)
             blocked = json.loads(
@@ -179,7 +235,10 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(blocked["status"], "blocked")
             self.assertEqual(blocked["error_owner"], "PROVIDER")
             self.assertEqual(blocked["failure_stage"], "GENERATE_PROVIDER")
-            self.assertEqual(blocked["error_code"], PROVIDER_FIRST_CHUNK_TIMEOUT)
+            self.assertEqual(
+                blocked["error_code"],
+                GENERATE_PROVIDER_RETRY_EXHAUSTED,
+            )
 
     async def test_a3_first_chunk_timeout_is_typed(self):
         llm = _ScenarioLLM(["no_chunks"])
@@ -298,12 +357,14 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(
             classify_provider_exception(RuntimeError("ConnectTimeout"))[0],
-            PROVIDER_CONNECT_TIMEOUT,
+            PROVIDER_CONNECTION_FAILURE,
         )
         self.assertEqual(classify_provider_exception(HTTPError("busy"))[0], PROVIDER_HTTP_ERROR)
         self.assertEqual(classify_provider_exception(ValueError("sdk exploded"))[0], PROVIDER_SDK_ERROR)
         self.assertEqual(len({
             PROVIDER_CONNECT_TIMEOUT,
+            PROVIDER_CONNECTION_FAILURE,
+            PROVIDER_STREAM_READ_INTERRUPTED,
             PROVIDER_FIRST_CHUNK_TIMEOUT,
             PROVIDER_STREAM_IDLE_TIMEOUT,
             PROVIDER_TOTAL_TIMEOUT,
@@ -311,7 +372,7 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
             PROVIDER_SDK_ERROR,
             PROVIDER_CANCEL_CLEANUP_FAILED,
             PROVIDER_OUTCOME_UNKNOWN,
-        }), 8)
+        }), 10)
 
     async def test_a13_completed_malformed_response_is_not_transport_retry(self):
         llm = _ScenarioLLM(["malformed", "success"])
@@ -364,6 +425,385 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
             )
         self.assertEqual(caught.exception.error_code, PROVIDER_CANONICAL_CONTEXT_CHANGED)
         self.assertEqual(llm.calls, 1)
+
+    async def test_p1_reasoning_then_read_error_retries_once_and_commits_only_final(self):
+        llm = _ScenarioLLM(["reasoning_read_error", "success"])
+        agent = _agent(llm)
+        response = await agent._ainvoke_llm(
+            [HumanMessage(content="produce one action")],
+            stage="generate",
+            task_id="p1",
+        )
+        self.assertEqual(response.content, "completed")
+        self.assertEqual(llm.calls, 2)
+        first, second = agent._provider_attempt_history["p1"]
+        self.assertEqual(first["failure_type"], PROVIDER_STREAM_READ_INTERRUPTED)
+        self.assertEqual(first["reasoning_callback_fragment_count"], 1)
+        self.assertEqual(first["partial_payload_disposition"], "discarded_before_parse")
+        self.assertEqual(second["state"], "COMPLETED")
+
+    async def test_p2_partial_content_is_not_concatenated_into_retry_success(self):
+        llm = _ScenarioLLM(["partial_read_error", "success"])
+        agent = _agent(llm)
+        response = await agent._ainvoke_llm(
+            [HumanMessage(content="produce one action")],
+            stage="generate",
+            task_id="p2",
+        )
+        self.assertEqual(response.content, "completed")
+        self.assertNotIn("discard-me", str(response.content))
+        first, second = agent._provider_attempt_history["p2"]
+        self.assertEqual(first["content_callback_fragment_count"], 1)
+        self.assertEqual(second["content_callback_fragment_count"], 0)
+        self.assertNotEqual(first["attempt_id"], second["attempt_id"])
+
+    async def test_p3_two_read_errors_exhaust_budget_without_action_or_execution(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            task_id = "p3"
+            plan = load_plan_state(tmpdir, task_id)
+            plan["steps"] = [
+                {"step_id": "done", "status": "done", "description": "done"},
+                {"step_id": "current", "status": "running", "description": "current"},
+                {"step_id": "later", "status": "pending", "description": "later"},
+            ]
+            plan["current_step_id"] = "current"
+            save_plan_state(tmpdir, task_id, plan)
+            llm = _ScenarioLLM(["reasoning_read_error", "partial_read_error"])
+            agent = _agent(llm, data_path=tmpdir)
+            with self.assertRaises(ProviderAttemptFailure) as caught:
+                await agent._ainvoke_llm(
+                    [HumanMessage(content="produce one action")],
+                    stage="generate",
+                    task_id=task_id,
+                )
+            self.assertEqual(caught.exception.error_code, GENERATE_PROVIDER_RETRY_EXHAUSTED)
+            self.assertEqual(llm.calls, 2)
+            agent._mark_generate_provider_blocked(task_id, caught.exception)
+            blocked_plan = load_plan_state(tmpdir, task_id)
+            self.assertEqual(
+                [step["status"] for step in blocked_plan["steps"]],
+                ["done", "blocked", "skipped_upstream_blocked"],
+            )
+            self.assertEqual(blocked_plan["current_step_id"], "current")
+            failure = blocked_plan["failure"]
+            self.assertEqual(failure["attempt_count"], 2)
+            self.assertEqual(failure["configured_max_attempts"], 2)
+            self.assertTrue(failure["last_attempt_retryable"])
+            self.assertTrue(failure["retry_budget_exhausted"])
+            self.assertEqual(failure["pending_action"], {})
+            self.assertFalse(failure["generated_action_committed"])
+            self.assertFalse(failure["execution_started"])
+            snapshots = ContextLineageStore(tmpdir, task_id).list_snapshots()
+            self.assertEqual([row["status"] for row in snapshots], ["failed", "failed"])
+            self.assertTrue(all(
+                row["annotations"]["provider_attempt"]["partial_payload_disposition"]
+                == "discarded_before_parse"
+                for row in snapshots
+            ))
+
+    async def test_p4_wrapped_openai_connection_error_uses_cause_chain(self):
+        request = httpx.Request("POST", "https://provider.invalid/v1/chat")
+        inner = httpx.ReadError("read interrupted", request=request)
+        outer = openai.APIConnectionError(request=request)
+        outer.__cause__ = inner
+        llm = _ScenarioLLM([outer, "success"])
+        agent = _agent(llm)
+        response = await agent._ainvoke_llm(
+            [HumanMessage(content="same request")],
+            stage="generate",
+            task_id="p4",
+        )
+        self.assertEqual(response.content, "completed")
+        self.assertEqual(llm.calls, 2)
+        first = agent._provider_attempt_history["p4"][0]
+        self.assertEqual(first["failure_type"], PROVIDER_CONNECTION_FAILURE)
+        self.assertTrue(first["exception_cause_chain"])
+
+    async def test_p5_context_only_read_error_cycle_is_bounded_and_retryable(self):
+        request = httpx.Request("POST", "https://provider.invalid/v1/chat")
+        outer = RuntimeError("outer wrapper")
+        inner = httpx.ReadError("read interrupted", request=request)
+        outer.__context__ = inner
+        inner.__context__ = outer
+        code, retryable = classify_provider_exception(outer)
+        diagnostic = exception_diagnostic(outer)
+        self.assertEqual(code, PROVIDER_CONNECTION_FAILURE)
+        self.assertTrue(retryable)
+        self.assertLessEqual(len(diagnostic["exception_chain"]), 2)
+        self.assertTrue(diagnostic["exception_chain_cycle_safe"])
+        self.assertTrue(diagnostic["exception_context_chain"])
+
+    async def test_p6_http_400_is_one_send_terminal_request_error(self):
+        llm = _ScenarioLLM([_http_status_error(400), "success"])
+        agent = _agent(llm)
+        with self.assertRaises(ProviderAttemptFailure) as caught:
+            await agent._ainvoke_llm(
+                [HumanMessage(content="same request")],
+                stage="generate",
+                task_id="p6",
+            )
+        self.assertEqual(
+            caught.exception.error_code,
+            GENERATE_PROVIDER_TERMINAL_REQUEST_ERROR,
+        )
+        self.assertEqual(llm.calls, 1)
+        self.assertFalse(caught.exception.record.retry_budget_exhausted)
+
+    async def test_p7_http_401_and_403_are_one_send_terminal_errors(self):
+        for status in (401, 403):
+            with self.subTest(status=status):
+                llm = _ScenarioLLM([_http_status_error(status), "success"])
+                agent = _agent(llm)
+                with self.assertRaises(ProviderAttemptFailure) as caught:
+                    await agent._ainvoke_llm(
+                        [HumanMessage(content="same request")],
+                        stage="generate",
+                        task_id=f"p7-{status}",
+                    )
+                self.assertEqual(
+                    caught.exception.error_code,
+                    GENERATE_PROVIDER_TERMINAL_REQUEST_ERROR,
+                )
+                self.assertEqual(llm.calls, 1)
+
+    async def test_p8_http_429_honors_retry_after_with_mocked_sleep(self):
+        delays = []
+
+        async def record_sleep(delay):
+            delays.append(delay)
+
+        llm = _ScenarioLLM([_http_status_error(429, retry_after="2"), "success"])
+        agent = _agent(llm)
+        agent._provider_retry_sleep = record_sleep
+        response = await agent._ainvoke_llm(
+            [HumanMessage(content="same request")],
+            stage="generate",
+            task_id="p8",
+        )
+        self.assertEqual(response.content, "completed")
+        self.assertEqual(llm.calls, 2)
+        self.assertEqual(delays, [2.0])
+        self.assertEqual(
+            agent._provider_attempt_history["p8"][0]["retry_delay_seconds"],
+            2.0,
+        )
+
+    async def test_p9_gateway_errors_are_bounded_and_generate_sdk_retry_is_zero(self):
+        shared = {"max_retries": 3, "streaming": True}
+        generated = generate_client_kwargs(shared)
+        self.assertEqual(generated["max_retries"], 0)
+        self.assertFalse(generated["cache"])
+        self.assertEqual(shared["max_retries"], 3)
+        for status in (502, 503, 504):
+            with self.subTest(status=status):
+                llm = _ScenarioLLM([
+                    _http_status_error(status),
+                    _http_status_error(status),
+                    "success",
+                ])
+                agent = _agent(llm)
+                with self.assertRaises(ProviderAttemptFailure) as caught:
+                    await agent._ainvoke_llm(
+                        [HumanMessage(content="same request")],
+                        stage="generate",
+                        task_id=f"p9-{status}",
+                    )
+                self.assertEqual(caught.exception.error_code, GENERATE_PROVIDER_RETRY_EXHAUSTED)
+                self.assertEqual(llm.calls, 2)
+                self.assertTrue(all(
+                    row["sdk_max_retries"] == 0
+                    for row in agent._provider_attempt_history[f"p9-{status}"]
+                ))
+
+    async def test_p10_cancelled_error_is_not_wrapped_or_retried(self):
+        llm = _ScenarioLLM(["cancel", "success"])
+        agent = _agent(llm)
+        with self.assertRaises(asyncio.CancelledError):
+            await agent._ainvoke_llm(
+                [HumanMessage(content="same request")],
+                stage="generate",
+                task_id="p10",
+            )
+        self.assertEqual(llm.calls, 1)
+
+    async def test_p11_reasoning_only_empty_response_uses_provider_budget(self):
+        llm = _ScenarioLLM(["reasoning_empty", "success"])
+        agent = _agent(llm)
+        agent._record_action_format_failure = Mock()
+        response = await agent._ainvoke_llm(
+            [HumanMessage(content="same request")],
+            stage="generate",
+            task_id="p11",
+        )
+        self.assertEqual(response.content, "completed")
+        self.assertEqual(llm.calls, 2)
+        first = agent._provider_attempt_history["p11"][0]
+        self.assertEqual(first["failure_type"], EMPTY_FINAL_CONTENT)
+        self.assertEqual(first["reasoning_callback_fragment_count"], 1)
+        agent._record_action_format_failure.assert_not_called()
+
+    async def test_p12_mixed_read_and_empty_failures_never_dispatch_a_third_request(self):
+        for scenarios in (
+            ["reasoning_read_error", "empty", "success"],
+            ["empty", "partial_read_error", "success"],
+        ):
+            with self.subTest(scenarios=scenarios[:2]):
+                llm = _ScenarioLLM(scenarios)
+                agent = _agent(llm)
+                with self.assertRaises(ProviderAttemptFailure) as caught:
+                    await agent._ainvoke_llm(
+                        [HumanMessage(content="same request")],
+                        stage="generate",
+                        task_id=f"p12-{scenarios[0]}",
+                    )
+                self.assertEqual(caught.exception.error_code, GENERATE_PROVIDER_RETRY_EXHAUSTED)
+                self.assertEqual(llm.calls, 2)
+
+    async def test_p13_partial_empty_attempt_is_failed_not_successfully_cached(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            llm = _ScenarioLLM(["partial_empty", "success"])
+            agent = _agent(llm, data_path=tmpdir)
+            response = await agent._ainvoke_llm(
+                [HumanMessage(content="same request")],
+                stage="generate",
+                task_id="p13",
+            )
+            self.assertEqual(response.content, "completed")
+            snapshots = ContextLineageStore(tmpdir, "p13").list_snapshots()
+            self.assertEqual([row["status"] for row in snapshots], ["failed", "completed"])
+            failed_payload = json.loads(
+                Path(snapshots[0]["response_payload_ref"]).read_text(encoding="utf-8")
+            )
+            self.assertEqual(failed_payload["role"], "error")
+            self.assertEqual(
+                snapshots[0]["annotations"]["provider_attempt"]["failure_type"],
+                EMPTY_FINAL_CONTENT,
+            )
+
+    async def test_p14_attempt_ids_buffers_and_lineage_are_independent(self):
+        llm = _ScenarioLLM(["partial_read_error", "success"])
+        agent = _agent(llm)
+        await agent._ainvoke_llm(
+            [HumanMessage(content="immutable prompt")],
+            stage="generate",
+            task_id="p14",
+            trace_metadata={"node_context_hash": "fixed-context"},
+        )
+        first, second = agent._provider_attempt_history["p14"]
+        self.assertNotEqual(first["attempt_id"], second["attempt_id"])
+        self.assertEqual(second["parent_attempt_id"], first["attempt_id"])
+        self.assertEqual(first["semantic_invocation_id"], second["semantic_invocation_id"])
+        self.assertEqual(first["request_hash"], second["request_hash"])
+        self.assertEqual(first["prompt_hash"], second["prompt_hash"])
+        self.assertEqual(first["model_parameter_hash"], second["model_parameter_hash"])
+        self.assertEqual(first["content_callback_fragment_count"], 1)
+        self.assertEqual(second["content_callback_fragment_count"], 0)
+        self.assertEqual(first["partial_payload_disposition"], "discarded_before_parse")
+        self.assertIsNot(llm.tasks[0], llm.tasks[1])
+        self.assertIsNot(llm.callback_batches[0], llm.callback_batches[1])
+        self.assertIsNot(
+            llm.callback_batches[0][0],
+            llm.callback_batches[1][0],
+        )
+
+    async def test_p15_action_binding_consumer_runs_once_after_retry_success(self):
+        llm = _ScenarioLLM(["partial_read_error", "success"])
+        agent = _agent(llm)
+        agent._bind_pending_action = Mock(return_value={"action_id": "one"})
+        execution_spy = Mock()
+        response = await agent._ainvoke_llm(
+            [HumanMessage(content="one action")],
+            stage="generate",
+            task_id="p15",
+        )
+        parsed_action = {"type": "execute", "script": str(response.content)}
+        agent._bind_pending_action(parsed_action, {}, "p15")
+        agent._bind_pending_action.assert_called_once()
+        execution_spy.assert_not_called()
+        self.assertEqual(llm.calls, 2)
+
+    async def test_p16_prior_success_is_not_counted_for_current_terminal_401(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            task_id = "p16"
+            messages = [HumanMessage(content="same semantic request")]
+            agent = _agent(_ScenarioLLM(["success"]), data_path=tmpdir)
+            await agent._ainvoke_llm(messages, stage="generate", task_id=task_id)
+            terminal_llm = _ScenarioLLM([_http_status_error(401)])
+            agent.llm = terminal_llm
+            with self.assertRaises(ProviderAttemptFailure) as caught:
+                await agent._ainvoke_llm(messages, stage="generate", task_id=task_id)
+            agent._mark_generate_provider_blocked(task_id, caught.exception)
+            failure = load_plan_state(tmpdir, task_id)["failure"]
+            self.assertEqual(failure["attempt_count"], 1)
+            self.assertEqual(failure["configured_max_attempts"], 2)
+            self.assertFalse(failure["last_attempt_retryable"])
+            self.assertFalse(failure["retry_budget_exhausted"])
+            self.assertEqual(
+                failure["terminal_failure_reason"],
+                "generate_provider_terminal_request_error",
+            )
+            self.assertEqual(terminal_llm.calls, 1)
+
+    async def test_p17_exception_diagnostics_are_bounded_and_redacted(self):
+        class DiagnosticError(RuntimeError):
+            status_code = 429
+
+            def __init__(self):
+                super().__init__(
+                    "Authorization: Bearer unit-test-credential "
+                    "https://user:pass@provider.invalid/path?signature=unit-test-signature#fragment",
+                    "Cookie: session=unit-test-cookie",
+                    {
+                        "Authorization": "Bearer unit-test-mapping-credential",
+                        "HTTPS_PROXY": "https://proxy-user:proxy-pass@proxy.invalid",
+                    },
+                )
+                self.response = type("Response", (), {
+                    "status_code": 429,
+                    "headers": {
+                        "Retry-After": "1",
+                        "X-Request-Id": "safe-request-id",
+                        "Authorization": "Bearer unit-test-header-credential",
+                        "Cookie": "session=unit-test-cookie",
+                    },
+                })()
+
+        diagnostic = exception_diagnostic(DiagnosticError())
+        encoded = json.dumps(diagnostic, ensure_ascii=False, sort_keys=True)
+        for forbidden in (
+            "unit-test-credential",
+            "unit-test-signature",
+            "unit-test-header-credential",
+            "unit-test-mapping-credential",
+            "unit-test-cookie",
+            "user:pass@",
+            "proxy-user:proxy-pass@",
+            "#fragment",
+        ):
+            self.assertNotIn(forbidden, encoded)
+        self.assertEqual(diagnostic["http_response_headers"]["Retry-After"], "1")
+        self.assertEqual(
+            diagnostic["provider_request_id_from_headers"],
+            "safe-request-id",
+        )
+        self.assertNotIn("Authorization", diagnostic["http_response_headers"])
+        self.assertTrue(diagnostic["exception_mro"])
+        self.assertIn("exception_repr", diagnostic)
+
+    async def test_p18_generate_sdk_retry_policy_violation_fails_before_dispatch(self):
+        llm = _ScenarioLLM(["success"])
+        agent = _agent(llm)
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "GENERATE_SDK_RETRY_POLICY_VIOLATION",
+        ):
+            await agent._ainvoke_llm(
+                [HumanMessage(content="same request")],
+                stage="generate",
+                task_id="p18",
+                llm_policy={"sdk_max_retries": 1},
+            )
+        self.assertEqual(llm.calls, 0)
 
 
 if __name__ == "__main__":

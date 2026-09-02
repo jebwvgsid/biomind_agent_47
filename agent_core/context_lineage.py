@@ -109,7 +109,7 @@ _FINALIZE_RESERVATION_STATUSES = {
     "released",
 }
 _SECRET_KEY = re.compile(
-    r"(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|authorization|credential|client[_-]?secret|secret[_-]?key|cookie)$",
+    r"(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|authorization|credential|client[_-]?secret|secret[_-]?key|cookie|(?:https?|all)_proxy)$",
     re.IGNORECASE,
 )
 _ASSIGNMENT_SECRET = re.compile(
@@ -123,10 +123,18 @@ _CLI_SECRET = re.compile(
 _AUTH_SECRET = re.compile(r"(?i)(Authorization\s*:\s*(?:Bearer|Basic)\s+)([^\s]+)")
 _BEARER_SECRET = re.compile(r"(?i)(\bBearer\s+)([A-Za-z0-9._~+/=-]{8,})")
 _OPENAI_STYLE_SECRET = re.compile(r"\bsk-[A-Za-z0-9_-]{8,}\b")
-_COOKIE_SECRET = re.compile(r"(?im)^((?:Set-)?Cookie\s*:\s*)([^\r\n]+)")
+_COOKIE_SECRET = re.compile(r"(?i)(\b(?:Set-)?Cookie\s*:\s*)([^\r\n]+)")
 _URL_CREDENTIAL = re.compile(r"(?i)(https?://)([^\s/@:]+):([^\s/@]+)@")
 _URL_QUERY_SECRET = re.compile(
     r"(?i)([?&](?:access_token|refresh_token|api_key|apikey|token|password|secret)=)([^&#\s]+)"
+)
+_URL_QUERY_OR_FRAGMENT = re.compile(
+    r"(?i)(https?://[^\s?#\"'<>]+)(?:[?#][^\s\"'<>]*)"
+)
+_INLINE_MAPPING_SECRET = re.compile(
+    r"(?i)([\"']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|"
+    r"authorization|credential|client[_-]?secret|secret[_-]?key|cookie|"
+    r"(?:https?|all)_proxy)[\"']?\s*:\s*[\"']?)([^\"',}\]]+)"
 )
 _SSH_PRIVATE_KEY = re.compile(
     r"-----BEGIN (?:OPENSSH|RSA|DSA|EC|ENCRYPTED) PRIVATE KEY-----.*?"
@@ -354,10 +362,18 @@ def _redact(value: Any, path: str = "$", manifest: Optional[List[Dict[str, str]]
 
     def replace_url_credential(match: re.Match[str]) -> str:
         rules.append("url_credential")
-        return f"{match.group(1)}[REDACTED]@"
+        return match.group(1)
 
     def replace_query_secret(match: re.Match[str]) -> str:
         rules.append("url_query_secret")
+        return f"{match.group(1)}[REDACTED]"
+
+    def replace_url_query_or_fragment(match: re.Match[str]) -> str:
+        rules.append("url_query_or_fragment")
+        return match.group(1)
+
+    def replace_inline_mapping_secret(match: re.Match[str]) -> str:
+        rules.append("credential_mapping_value")
         return f"{match.group(1)}[REDACTED]"
 
     def replace_cloud_secret(match: re.Match[str]) -> str:
@@ -371,6 +387,8 @@ def _redact(value: Any, path: str = "$", manifest: Optional[List[Dict[str, str]]
     text = _COOKIE_SECRET.sub(replace_cookie, text)
     text = _URL_CREDENTIAL.sub(replace_url_credential, text)
     text = _URL_QUERY_SECRET.sub(replace_query_secret, text)
+    text = _URL_QUERY_OR_FRAGMENT.sub(replace_url_query_or_fragment, text)
+    text = _INLINE_MAPPING_SECRET.sub(replace_inline_mapping_secret, text)
     text = _CLOUD_CREDENTIAL.sub(replace_cloud_secret, text)
     if _SSH_PRIVATE_KEY.search(text):
         rules.append("ssh_private_key")
