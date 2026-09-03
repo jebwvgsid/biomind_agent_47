@@ -7,7 +7,7 @@ from typing import Any, Awaitable, Callable, Mapping
 from agent_core.completion_gate import CompletionGate
 from agent_core.plan_tracker import load_plan_state
 from agent_core.recovery import ValidationEvidence, ValidationStatus
-from agent_core.workflow.outcomes import VerificationOutcome
+from agent_core.workflow.outcomes import ExecuteOutcome, VerificationOutcome
 
 
 Verifier = Callable[[dict[str, Any]], Awaitable[Mapping[str, Any]]]
@@ -40,7 +40,22 @@ class TypedSupervisor:
         task_id = str(state.get("task_id") or "")
         if not task_id:
             raise ValueError("TYPED_SUPERVISOR_TASK_ID_REQUIRED")
-        result = await self.verifier(dict(state))
+        verifier_state = dict(state)
+        execution = (
+            dict(state.get("execution_evidence") or {})
+            if isinstance(state.get("execution_evidence"), Mapping)
+            else {}
+        )
+        if not execution and isinstance(state.get("execute_outcome"), Mapping):
+            execute_outcome = ExecuteOutcome.from_mapping(state["execute_outcome"])
+            execute_payload = dict(execute_outcome.to_dict().get("payload") or {})
+            execution = dict(
+                execute_payload.get("execution_record")
+                or execute_payload.get("diagnostic_record")
+                or {}
+            )
+            verifier_state["execution_evidence"] = execution
+        result = await self.verifier(verifier_state)
         if not isinstance(result, Mapping):
             raise TypeError("SupervisorNode.run must return a mapping")
         raw_validation = result.get("validation_evidence")
@@ -48,11 +63,6 @@ class TypedSupervisor:
             raise ValueError("TYPED_SUPERVISOR_VALIDATION_EVIDENCE_REQUIRED")
         validation = ValidationEvidence.from_mapping(raw_validation)
         durable = load_plan_state(self.data_path, task_id)
-        execution = (
-            dict(state.get("execution_evidence") or {})
-            if isinstance(state.get("execution_evidence"), Mapping)
-            else {}
-        )
         plan_id = str(durable.get("plan_id") or "")
         plan_version = str(durable.get("plan_version") or "")
         step_id = str(durable.get("current_step_id") or validation.step_id or "")

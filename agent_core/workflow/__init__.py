@@ -50,6 +50,12 @@ from agent_core.workflow.runtime_graph import (
     route_verification_outcome,
 )
 from agent_core.workflow.verifier import TypedSupervisor, verification_harness_error
+from agent_core.workflow.execution import (
+    TypedExecute,
+    TypedGenerate,
+    execute_harness_error,
+    generate_harness_error,
+)
 
 __all__ = [
     "STEP_OUTCOME_SCHEMA_VERSION",
@@ -94,6 +100,10 @@ __all__ = [
     "commit_step_harness_error",
     "profile_typed_node",
     "TypedSupervisor",
+    "TypedExecute",
+    "TypedGenerate",
+    "execute_harness_error",
+    "generate_harness_error",
     "verification_harness_error",
     "workflow_routing_schema_version",
 ]

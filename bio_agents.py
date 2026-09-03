@@ -139,6 +139,13 @@ from agent_core.workflow.typed_node import profile_typed_node
 from agent_core.workflow.commit_step import CommitStep, commit_step_harness_error
 from agent_core.workflow.verifier import TypedSupervisor, verification_harness_error
 from agent_core.workflow.outcomes import CommitStepOutcome, VerificationOutcome
+from agent_core.workflow.outcomes import ExecuteOutcome, GenerateOutcome, workflow_routing_schema_version
+from agent_core.workflow.execution import (
+    TypedExecute,
+    TypedGenerate,
+    execute_harness_error,
+    generate_harness_error,
+)
 from agent_core.deepseek_stream import (
     deepseek_reasoning_stream_enabled,
     enable_deepseek_reasoning_stream,
@@ -2374,6 +2381,26 @@ class BioAnalystAgent:
         )
         commit_step = CommitStep(data_path=self.data_path)
         self._schema2_runtime_node_handlers = {
+            "generate": profile_typed_node(
+                "generate",
+                TypedGenerate(
+                    generator=self._schema2_runtime_sources["generate"]
+                ).run,
+                outcome_field="generate_outcome",
+                outcome_contract=GenerateOutcome,
+                profiler=self.profiler,
+                harness_error_factory=generate_harness_error,
+            ),
+            "execute": profile_typed_node(
+                "execute",
+                TypedExecute(
+                    executor=self._schema2_runtime_sources["execute"]
+                ).run,
+                outcome_field="execute_outcome",
+                outcome_contract=ExecuteOutcome,
+                profiler=self.profiler,
+                harness_error_factory=execute_harness_error,
+            ),
             "supervisor": profile_typed_node(
                 "supervisor",
                 typed_supervisor.run,
@@ -37446,6 +37473,10 @@ question. Never guess a scientific or database identity.
 
             try:
                 result = await _generate_impl(state)
+            except GraphBubbleUp:
+                raise
+            except asyncio.CancelledError:
+                raise
             except Exception as exc:
                 logger.exception("Generate failed before producing an explicit state transition: task=%s", task_id)
                 result = {
@@ -38462,6 +38493,17 @@ question. Never guess a scientific or database identity.
                     "selected_skills": selected_skill_pool_state,
                     "active_skills": runtime_skills_state,
                     "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
+                    "installation_request": {
+                        "tool_or_capability": install_tool_name,
+                        "requirement_evidence": {
+                            "install_redirect": install_redirect[:1000],
+                            "selected_skills": list(runtime_skills_state),
+                        },
+                        "approval_policy": "existing_install_policy",
+                        "attempt_fingerprint": hashlib.sha256(
+                            f"{task_id}|{install_tool_name}|pre_review".encode("utf-8")
+                        ).hexdigest()[:24],
+                    },
                     "next_step": "install_subagent",
                 }
 
@@ -38513,6 +38555,17 @@ question. Never guess a scientific or database identity.
                     "selected_skills": selected_skill_pool_state,
                     "active_skills": runtime_skills_state,
                     "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
+                    "installation_request": {
+                        "tool_or_capability": self._install_tool_name(runtime_redirect),
+                        "requirement_evidence": {
+                            "runtime_redirect": runtime_redirect[:1000],
+                            "selected_skills": list(runtime_skills_state),
+                        },
+                        "approval_policy": "existing_install_policy",
+                        "attempt_fingerprint": hashlib.sha256(
+                            f"{task_id}|{runtime_redirect}|runtime_preflight".encode("utf-8")
+                        ).hexdigest()[:24],
+                    },
                     "next_step": "install_subagent",
                 }
 
@@ -38549,6 +38602,16 @@ question. Never guess a scientific or database identity.
                 return {"messages": [HumanMessage(content=obs)],
                         "plan_progress": plan_progress,
                         "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
+                        "approval_decision": {
+                            "approval_request_id": str(
+                                (pending_action.get("action_approval_identity") or {}).get("approval_request_id")
+                                or pending_action.get("action_id")
+                                or ""
+                            ),
+                            "decision": "rejected",
+                            "guidance": rejection_reason,
+                            "command_started": False,
+                        },
                         "next_step": "generate"}
             if action == "quit":
                 await self._finalize_task_memory(
@@ -38557,7 +38620,16 @@ question. Never guess a scientific or database identity.
                     state.get("messages", []),
                     {"reason": "User terminated during code review."},
                 )
-                return {"messages": [HumanMessage(content="Task terminated.")], "next_step": "finish"}
+                return {
+                    "messages": [HumanMessage(content="Task terminated.")],
+                    "cancellation_receipt": {
+                        "task_id": task_id,
+                        "action_id": str(pending_action.get("action_id") or ""),
+                        "source": "execute_code_review",
+                        "command_started": False,
+                    },
+                    "next_step": "finish",
+                }
 
             elif action == "edit":
                 # 判断：是直接粘贴的代码，还是指导意见？
@@ -38567,7 +38639,21 @@ question. Never guess a scientific or database identity.
                     # 这是指导意见，不是代码
                     feedback_msg = f"<observation>⚠️ User provided guidance:\n{final_code}\n\nPlease regenerate code based on this feedback.</observation>"
                     plan_progress = self._record_plan_current_evidence(task_id, "execute_user_guidance", final_code[:1000])
-                    return {"messages": [HumanMessage(content=feedback_msg)], "plan_progress": plan_progress, "next_step": "generate"}
+                    return {
+                        "messages": [HumanMessage(content=feedback_msg)],
+                        "plan_progress": plan_progress,
+                        "approval_decision": {
+                            "approval_request_id": str(
+                                (pending_action.get("action_approval_identity") or {}).get("approval_request_id")
+                                or pending_action.get("action_id")
+                                or ""
+                            ),
+                            "decision": "guidance",
+                            "guidance": str(final_code),
+                            "command_started": False,
+                        },
+                        "next_step": "generate",
+                    }
                 else:   
                     # 这是修改后的代码，可以执行
                     code_to_run = (
@@ -38686,6 +38772,17 @@ question. Never guess a scientific or database identity.
                     "selected_skills": selected_skill_pool_state,
                     "active_skills": runtime_skills_state,
                     "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
+                    "installation_request": {
+                        "tool_or_capability": self._install_tool_name(install_redirect),
+                        "requirement_evidence": {
+                            "install_redirect": install_redirect[:1000],
+                            "selected_skills": list(runtime_skills_state),
+                        },
+                        "approval_policy": "existing_install_policy",
+                        "attempt_fingerprint": hashlib.sha256(
+                            f"{task_id}|{install_redirect}|post_review".encode("utf-8")
+                        ).hexdigest()[:24],
+                    },
                     "next_step": "install_subagent",
                 }
 
@@ -38737,6 +38834,17 @@ question. Never guess a scientific or database identity.
                     "selected_skills": selected_skill_pool_state,
                     "active_skills": runtime_skills_state,
                     "runtime_status": self._runtime_status_for_task(task_id, runtime_skills_state),
+                    "installation_request": {
+                        "tool_or_capability": self._install_tool_name(runtime_redirect),
+                        "requirement_evidence": {
+                            "runtime_redirect": runtime_redirect[:1000],
+                            "selected_skills": list(runtime_skills_state),
+                        },
+                        "approval_policy": "existing_install_policy",
+                        "attempt_fingerprint": hashlib.sha256(
+                            f"{task_id}|{runtime_redirect}|post_review_runtime".encode("utf-8")
+                        ).hexdigest()[:24],
+                    },
                     "next_step": "install_subagent",
                 }
 
@@ -39932,12 +40040,16 @@ question. Never guess a scientific or database identity.
                     "execution_record": {**execution_evidence, **record.summary()},
                 })
                 record.produced_artifact_ids = list(provenance_result.get("produced_artifact_ids") or [])
-                accepted_bindings = accept_action_binding_candidates(
-                    provenance_plan,
-                    pending_action,
-                    execution_evidence,
-                    validation_result,
-                )
+                accepted_bindings = ()
+                if workflow_routing_schema_version(
+                    provenance_plan, state
+                ) != 2:
+                    accepted_bindings = accept_action_binding_candidates(
+                        provenance_plan,
+                        pending_action,
+                        execution_evidence,
+                        validation_result,
+                    )
                 if accepted_bindings:
                     execution_evidence["accepted_plan_binding_ids"] = [
                         item.binding_id for item in accepted_bindings
@@ -40181,6 +40293,8 @@ question. Never guess a scientific or database identity.
                 # LangGraph interrupts are control-plane signals, not Harness
                 # preparation failures.  Preserve them for checkpoint/pause.
                 raise
+            except asyncio.CancelledError:
+                raise
             except Exception as exc:
                 if bool(preparation_boundary.get("command_launch_entered")):
                     raise
@@ -40190,6 +40304,13 @@ question. Never guess a scientific or database identity.
                     exc,
                     phase=str(preparation_boundary.get("phase") or "unknown"),
                 )
+
+        # Retain raw semantic implementations for the isolated schema-2
+        # adapters.  They are not registered as production entry nodes.
+        self._schema2_runtime_sources = {
+            "generate": generate,
+            "execute": execute_logic,
+        }
 
         execute_node = error_recovery_middleware(
             self.recovery_llm,

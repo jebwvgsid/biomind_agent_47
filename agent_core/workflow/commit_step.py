@@ -26,6 +26,8 @@ from agent_core.plan_tracker import (
 from agent_core.recovery import ValidationEvidence, ValidationStatus
 from agent_core.workflow.outcomes import (
     CommitStepOutcome,
+    ExecuteOutcome,
+    GenerateOutcome,
     VerificationOutcome,
     WORKFLOW_ROUTING_SCHEMA_TYPED,
     workflow_routing_schema_version,
@@ -240,7 +242,18 @@ class CommitStep:
             return self._rejected(task_id, "COMPLETION_GATE_SCOPE_MISMATCH", "plan_version", validation.validation_id)
 
         action = dict(state.get("pending_action") or {}) if isinstance(state.get("pending_action"), Mapping) else {}
+        if not action and isinstance(state.get("generate_outcome"), Mapping):
+            generate_outcome = GenerateOutcome.from_mapping(state["generate_outcome"])
+            action = dict(generate_outcome.to_dict().get("payload", {}).get("action") or {})
         execution = dict(state.get("execution_evidence") or {}) if isinstance(state.get("execution_evidence"), Mapping) else {}
+        if not execution and isinstance(state.get("execute_outcome"), Mapping):
+            execute_outcome = ExecuteOutcome.from_mapping(state["execute_outcome"])
+            execute_payload = dict(execute_outcome.to_dict().get("payload") or {})
+            execution = dict(
+                execute_payload.get("execution_record")
+                or execute_payload.get("diagnostic_record")
+                or {}
+            )
         if action and str(action.get("action_id") or "") != validation.action_id:
             return self._rejected(task_id, "ACTION_SCOPE_MISMATCH", "pending_action.action_id", validation.validation_id)
         if execution:

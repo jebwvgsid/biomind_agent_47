@@ -220,6 +220,8 @@ class AgentState(TypedDict, total=False):
     step_worker_route_audit: dict
     verification_outcome: dict
     commit_step_outcome: dict
+    generate_outcome: dict
+    execute_outcome: dict
 
 # 安装子智能体状态
 class InstallerState(TypedDict):
