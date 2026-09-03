@@ -94,6 +94,122 @@ def active_task_skill_refs(
     ]
 
 
+def consultant_planning_readiness(
+    plan_state: Mapping[str, Any] | None,
+) -> Dict[str, Any]:
+    """Classify the durable, route-free Consultant-to-Planner handoff.
+
+    A successful Consultant commit has two live representations: the current
+    canonical TaskSpec plus an accepted handoff and ready consultation
+    lifecycle, or the versioned FINALIZE receipt used by older live paths.
+    Neither representation needs (or is allowed to use) a destination field.
+    """
+
+    state = dict(plan_state or {})
+    task_state = dict(state.get("task_state") or {})
+    current_task = dict(state.get("current_task") or {})
+    task_spec = canonical_task_spec_for_state(state)
+    consultation = dict(task_state.get("consultation_state") or {})
+    accepted = dict(task_state.get("accepted_consultant_handoff") or {})
+    selected = list(dict.fromkeys(
+        str(value)
+        for value in (
+            task_state.get("selected_skills")
+            or state.get("selected_skill_ids")
+            or []
+        )
+        if str(value)
+    ))
+    accepted_selected = list(dict.fromkeys(
+        str(value)
+        for value in accepted.get("selected_skills") or []
+        if str(value)
+    ))
+    revision = int(
+        current_task.get("task_revision")
+        or task_spec_revision(task_spec)
+        or 0
+    )
+    pending_question = (
+        task_state.get("pending_question")
+        or consultation.get("pending_question")
+        or consultation.get("pending_human_question")
+        or {}
+    )
+    requirements = [
+        dict(value)
+        for value in dict(consultation.get("requirements") or {}).values()
+        if isinstance(value, Mapping)
+    ]
+    unmet_mandatory = [
+        str(item.get("id") or "unknown")
+        for item in requirements
+        if item.get("mandatory") is True
+        and str(item.get("status") or "").lower() != "satisfied"
+    ]
+    protocol = dict(consultation.get("finalize_protocol") or {})
+    compile_outcome = dict(protocol.get("compile_outcome") or {})
+    compiled = bool(
+        int(protocol.get("schema_version") or 0) == 4
+        and str(protocol.get("finalize_status") or "").lower() == "compiled"
+        and str(compile_outcome.get("status") or "").lower() == "compiled"
+    )
+    lifecycle_ready = bool(
+        str(consultation.get("phase") or "").lower() == "ready_to_plan"
+        and str(consultation.get("consultation_status") or "").lower()
+        in {"ready", "completed"}
+        and str(consultation.get("completion_decision") or "").lower()
+        in {"ready_to_finalize", "ready_to_plan", "completed"}
+    )
+    selection_consistent = bool(
+        not accepted_selected or accepted_selected == selected
+    )
+    accepted_ready = bool(
+        accepted
+        and lifecycle_ready
+        and selection_consistent
+        and not unmet_mandatory
+    )
+    ready = bool(
+        task_spec_is_initialized(task_spec)
+        and revision > 0
+        and not pending_question
+        and (compiled or accepted_ready)
+    )
+    if ready:
+        reason_code = (
+            "versioned_finalize_compiled"
+            if compiled
+            else "accepted_consultant_handoff_ready"
+        )
+    elif pending_question:
+        reason_code = "consultant_question_pending"
+    elif not task_spec_is_initialized(task_spec):
+        reason_code = "canonical_task_spec_missing"
+    elif revision <= 0:
+        reason_code = "canonical_task_revision_missing"
+    elif unmet_mandatory:
+        reason_code = "mandatory_consultation_requirements_unresolved"
+    elif accepted and not selection_consistent:
+        reason_code = "accepted_handoff_skill_selection_mismatch"
+    else:
+        reason_code = "consultant_handoff_not_committed"
+    return {
+        "ready": ready,
+        "reason_code": reason_code,
+        "task_revision": revision,
+        "contract_status": (
+            "compiled" if compiled else "canonical_task_ready" if accepted_ready else "incomplete"
+        ),
+        "phase": str(consultation.get("phase") or ""),
+        "consultation_status": str(consultation.get("consultation_status") or ""),
+        "completion_decision": str(consultation.get("completion_decision") or ""),
+        "accepted_handoff": bool(accepted),
+        "selected_skill_ids": selected,
+        "unmet_mandatory_requirement_ids": unmet_mandatory,
+    }
+
+
 def classify_consultant_binding_phase(
     plan_state: Mapping[str, Any] | None,
     *,

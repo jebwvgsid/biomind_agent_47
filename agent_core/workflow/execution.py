@@ -86,7 +86,14 @@ class TypedGenerate:
             str(item) for item in value.get("evidence_refs", ()) or () if str(item)
         )
 
-        if action:
+        if isinstance(value.get("cancellation_receipt"), Mapping):
+            outcome_type = "cancelled"
+            payload = {
+                "cancellation_source": str(value.get("cancellation_source") or "user"),
+                "cancellation_receipt": dict(value["cancellation_receipt"]),
+            }
+            summary = "Generate stopped on an authoritative cancellation receipt."
+        elif action:
             candidate_fingerprint = str(
                 action.get("candidate_fingerprint") or _fingerprint(action)
             )
@@ -163,8 +170,17 @@ class TypedGenerate:
                 "retryability_policy": str(provider.get("retryability_policy") or "typed_v1_fail_closed"),
             }
             summary = "Provider lifecycle ended without an adoptable action."
+        elif exit_reason in _REPAIRABLE_GENERATE_EXITS and not isinstance(
+            value.get("action_format_repair"), Mapping
+        ):
+            outcome_type = "internal_protocol_error"
+            payload = {
+                "error_code": "GENERATE_REPAIR_RECEIPT_MISSING",
+                "component": "typed_generate_adapter",
+            }
+            summary = "Generate declared a repairable exit without a candidate-repair receipt."
         elif exit_reason in _REPAIRABLE_GENERATE_EXITS:
-            repair = dict(value.get("action_format_repair") or value.get("pending_recovery_action") or {})
+            repair = dict(value.get("action_format_repair") or {})
             candidate_fingerprint = str(
                 repair.get("candidate_fingerprint")
                 or repair.get("invalid_response_hash")
@@ -395,10 +411,26 @@ class TypedExecute:
                 "command_started": False,
             }
             summary = "Execute policy established a terminal blocker."
-        else:
-            pending = dict(value.get("pending_recovery_action") or {}) if isinstance(value.get("pending_recovery_action"), Mapping) else {}
-            violation_owner = str(value.get("failure_owner") or pending.get("failure_owner") or "INTERNAL_PROTOCOL")
-            violation_code = str(value.get("required_next_action") or pending.get("reason") or value.get("contract_status") or "PRE_EXECUTION_REJECTED")
+        elif (
+            isinstance(value.get("pre_execution_rejection"), Mapping)
+            or isinstance(value.get("failure"), Mapping)
+            or str(value.get("contract_status") or "").lower().startswith(
+                ("blocked", "rejected", "invalid", "missing", "failed")
+            )
+        ):
+            rejection = dict(value.get("pre_execution_rejection") or value.get("failure") or {})
+            violation_owner = str(
+                rejection.get("failure_owner")
+                or rejection.get("owner")
+                or value.get("failure_owner")
+                or "INTERNAL_PROTOCOL"
+            )
+            violation_code = str(
+                rejection.get("violation_code")
+                or rejection.get("reason_code")
+                or value.get("contract_status")
+                or "PRE_EXECUTION_REJECTED"
+            )
             outcome_type = "pre_execution_rejected"
             payload = {
                 "violation_owner": violation_owner,
@@ -408,6 +440,15 @@ class TypedExecute:
                 "budget_receipt": dict(value.get("budget_receipt") or {"consumed": False}),
             }
             summary = "Execute rejected the candidate before command launch."
+        else:
+            outcome_type = "harness_error"
+            payload = {
+                "error_code": "EXECUTE_OUTCOME_AMBIGUOUS",
+                "exception_class": "SemanticCoverageError",
+                "phase": "post_execution_classification",
+                "command_started": False,
+            }
+            summary = "Execute returned without authoritative execution or rejection evidence."
 
         outcome = ExecuteOutcome(
             schema_version=1,

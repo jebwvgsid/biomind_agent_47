@@ -211,6 +211,7 @@ from agent_core.consultant_binding import (
     ConsultantEntryDisposition,
     advance_consultant_commit_no_progress,
     classify_consultant_binding_phase,
+    consultant_planning_readiness,
     consultant_commit_no_progress_fingerprint,
     consultant_entry_disposition,
     consultant_uninitialized_entry_diagnostic,
@@ -4293,19 +4294,7 @@ class BioAnalystAgent:
             durable, task_spec_revision(canonical_task_spec_for_state(durable))
         )
         task_spec = canonical_task_spec_for_state(durable)
-        selected = list(
-            task_state_value.get("selected_skills")
-            or durable.get("selected_skill_ids")
-            or []
-        )
-        consultation = dict(task_state_value.get("consultation_state") or {})
-        protocol = dict(consultation.get("finalize_protocol") or {})
-        compile_outcome = dict(protocol.get("compile_outcome") or {})
-        compiled = (
-            int(protocol.get("schema_version") or 0) == 4
-            and str(protocol.get("finalize_status") or "") == "compiled"
-            and str(compile_outcome.get("status") or "") == "compiled"
-        )
+        planning_readiness = consultant_planning_readiness(durable)
 
         if status in {TASK_STATUS_COMPLETED, TASK_STATUS_CANCELLED, TASK_STATUS_BLOCKED, TASK_STATUS_FAILED}:
             semantic, reason = "terminal", f"task_{status}"
@@ -4337,10 +4326,28 @@ class BioAnalystAgent:
             semantic, reason = "step_execution_ready", "approved_plan_ready"
         elif steps and validation.get("reason_code") == "plan_not_approved":
             semantic, reason = "plan_review_pending", "plan_requires_approval"
-        elif task_spec_is_initialized(task_spec) and selected and compiled:
-            semantic, reason = "planning_ready", "semantic_contract_compiled"
-        else:
+        elif planning_readiness["ready"]:
+            semantic, reason = "planning_ready", str(planning_readiness["reason_code"])
+        elif not task_spec_is_initialized(task_spec):
             semantic, reason = "consultation_ready", "semantic_contract_incomplete"
+        else:
+            consultation = dict(task_state_value.get("consultation_state") or {})
+            phase = str(consultation.get("phase") or "").lower()
+            consultation_status = str(
+                consultation.get("consultation_status") or ""
+            ).lower()
+            if (
+                phase in {"consulting", "finalize", "skill_discovery"}
+                and consultation_status in {"active", "pending", "in_progress"}
+            ):
+                semantic, reason = "consultation_ready", str(
+                    planning_readiness["reason_code"]
+                )
+            else:
+                raise ValueError(
+                    "SCHEMA2_RESUME_SEMANTIC_STATE_AMBIGUOUS: "
+                    + str(planning_readiness["reason_code"])
+                )
 
         payload: Dict[str, Any] = {"reason_code": reason}
         if semantic == "terminal":

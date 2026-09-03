@@ -10,7 +10,13 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Awaitable, Callable, Mapping
 
-from agent_core.plan_tracker import load_plan_state, task_spec_is_initialized
+from agent_core.consultant_binding import consultant_planning_readiness
+from agent_core.plan_tracker import (
+    has_materialized_plan,
+    load_plan_state,
+    task_spec_is_initialized,
+    task_status,
+)
 from agent_core.human_io import load_waiting_state
 from agent_core.workflow.outcomes import (
     AskUserOutcome,
@@ -78,6 +84,28 @@ def _outcome(
         scope=_scope(state, durable),
         payload=dict(payload),
     ).to_dict()
+
+
+def _semantic_harness_error(
+    contract: type[StrictOutcome],
+    state: Mapping[str, Any],
+    durable: Mapping[str, Any],
+    *,
+    error_code: str,
+    detail: str,
+) -> dict[str, Any]:
+    return _outcome(
+        contract,
+        "harness_error",
+        state,
+        durable,
+        {
+            "error_code": error_code,
+            "exception_class": "SemanticCoverageError",
+            "detail": detail,
+        },
+        "The typed adapter failed closed on ambiguous semantic state.",
+    )
 
 
 def early_harness_error(
@@ -164,8 +192,16 @@ class TypedTriage(_TypedEarlyNode):
             kind = "direct_response_ready"
         elif mode in {"readonly", "simple_execute"}:
             kind = "step_execution_ready"
-        else:
+        elif mode == "managed":
             kind = "consultation_ready"
+        else:
+            return _semantic_harness_error(
+                self.contract,
+                state,
+                durable,
+                error_code="TRIAGE_MODE_INVALID",
+                detail=f"Unsupported task_mode: {mode!r}",
+            )
         return _outcome(
             TriageOutcome, kind, state, durable,
             {"task_mode": mode, "request_kind": request_kind},
@@ -178,7 +214,15 @@ class TypedConsultant(_TypedEarlyNode):
     contract = ConsultantOutcome
 
     def classify(self, before, state, durable):
-        pending = dict(state.get("pending_human_question") or {})
+        task_state = dict(durable.get("task_state") or {})
+        consultation = dict(task_state.get("consultation_state") or {})
+        pending = dict(
+            state.get("pending_human_question")
+            or task_state.get("pending_question")
+            or consultation.get("pending_question")
+            or consultation.get("pending_human_question")
+            or {}
+        )
         if pending:
             question = str(pending.get("question") or "").strip()
             question_id = str(pending.get("question_id") or "semantic-question")
@@ -191,30 +235,38 @@ class TypedConsultant(_TypedEarlyNode):
             return _outcome(self.contract, "stale_result", state, durable, {
                 "changed_preconditions": list(stale.get("changed_preconditions") or []),
             }, "Consultation result became stale before commit.")
-        status = str(state.get("task_status") or durable.get("task_status") or "").lower()
+        status = str(state.get("task_status") or task_status(durable) or "").lower()
         contract_status = str(state.get("contract_status") or "")
         if status in {"blocked", "failed", "cancelled", "completed"} or contract_status.startswith("blocked_"):
             return _outcome(self.contract, "terminal", state, durable, {
                 "status": status or "blocked", "reason_code": contract_status or "consultation_terminal",
             }, "Consultation reached a terminal business state.")
-        consultation = dict(state.get("consultation_state") or {})
-        protocol = dict(consultation.get("finalize_protocol") or {})
-        compile_outcome = dict(protocol.get("compile_outcome") or {})
-        compiled = (
-            int(protocol.get("schema_version") or 0) == 4
-            and str(protocol.get("finalize_status") or "") == "compiled"
-            and str(compile_outcome.get("status") or "") == "compiled"
-        )
-        task_spec = (durable.get("current_task") or {}).get("task_spec")
-        if compiled or (task_spec_is_initialized(task_spec) and state.get("pending_action")):
-            revision = int((durable.get("current_task") or {}).get("task_revision") or state.get("task_revision") or 0)
+        readiness = consultant_planning_readiness(durable)
+        if readiness["ready"]:
             return _outcome(self.contract, "planning_ready", state, durable, {
-                "task_revision": revision, "contract_status": contract_status or "compiled",
+                "task_revision": int(readiness["task_revision"]),
+                "contract_status": contract_status or str(readiness["contract_status"]),
             }, "Consultation produced a planning-ready semantic contract.")
-        return _outcome(self.contract, "consultation_continues", state, durable, {
-            "phase": str(consultation.get("phase") or "consulting"),
-            "completion_decision": str(consultation.get("completion_decision") or "needs_evidence"),
-        }, "Consultation needs another semantic convergence turn.")
+        phase = str(consultation.get("phase") or "").lower()
+        consultation_status = str(consultation.get("consultation_status") or "").lower()
+        completion = str(consultation.get("completion_decision") or "").lower()
+        explicit_continuation = bool(
+            phase in {"consulting", "finalize", "skill_discovery"}
+            and consultation_status in {"active", "pending", "in_progress"}
+            and completion not in {"ready_to_finalize", "ready_to_plan", "completed"}
+        )
+        if explicit_continuation:
+            return _outcome(self.contract, "consultation_continues", state, durable, {
+                "phase": phase,
+                "completion_decision": completion or "needs_evidence",
+            }, "Durable consultation lifecycle proves more convergence work is required.")
+        return _semantic_harness_error(
+            self.contract,
+            state,
+            durable,
+            error_code="CONSULTANT_SEMANTIC_STATE_AMBIGUOUS",
+            detail=str(readiness["reason_code"]),
+        )
 
 
 class TypedPlanner(_TypedEarlyNode):
@@ -222,7 +274,7 @@ class TypedPlanner(_TypedEarlyNode):
     contract = PlannerOutcome
 
     def classify(self, before, state, durable):
-        status = str(state.get("task_status") or durable.get("task_status") or "").lower()
+        status = str(state.get("task_status") or task_status(durable) or "").lower()
         if status in {"blocked", "failed", "cancelled", "completed", "paused_retryable"}:
             return _outcome(self.contract, "terminal", state, durable, {
                 "status": status, "reason_code": "planning_terminal",
@@ -232,39 +284,62 @@ class TypedPlanner(_TypedEarlyNode):
             return _outcome(self.contract, "stale_result", state, durable, {
                 "changed_preconditions": list(stale.get("changed_preconditions") or []),
             }, "Planner result became stale before commit.")
-        task_spec = (durable.get("current_task") or {}).get("task_spec")
-        consultation = dict(state.get("consultation_state") or {})
-        protocol = dict(consultation.get("finalize_protocol") or {})
-        compile_outcome = dict(protocol.get("compile_outcome") or {})
-        compiled = (
-            int(protocol.get("schema_version") or 0) == 4
-            and str(protocol.get("finalize_status") or "") == "compiled"
-            and str(compile_outcome.get("status") or "") == "compiled"
-        )
-        selected = list(
-            state.get("selected_skills")
-            or (durable.get("task_state") or {}).get("selected_skills")
-            or durable.get("selected_skill_ids")
-            or []
-        )
-        if not task_spec_is_initialized(task_spec) or (
-            str(consultation.get("phase") or "") in {"consulting", "finalize"}
-            and not compiled
-        ) or (not selected and not durable.get("steps")):
+        readiness = consultant_planning_readiness(durable)
+        if not readiness["ready"] and not has_materialized_plan(durable):
             return _outcome(self.contract, "consultation_required", state, durable, {
-                "reason_code": "semantic_contract_not_planning_ready",
+                "reason_code": str(readiness["reason_code"]),
             }, "Planner requires a finalized semantic contract.")
-        if durable.get("steps") or str(state.get("current_plan") or "").strip():
+        issues = [
+            dict(item)
+            for item in durable.get("validation_issues") or state.get("validation_issues") or []
+            if isinstance(item, Mapping)
+            and str(item.get("severity") or "").lower() in {"error", "blocking", "fatal"}
+        ]
+        owners = {str(item.get("owner") or "internal").lower() for item in issues}
+        if has_materialized_plan(durable) and not issues:
             return _outcome(self.contract, "plan_review_ready", state, durable, {
                 "plan_id": str(durable.get("plan_id") or "pending-plan"),
                 "plan_version": str(durable.get("plan_version") or durable.get("plan_revision") or "1"),
                 "plan_revision": int(durable.get("plan_revision") or 0),
             }, "Planner produced a reviewable plan.")
-        retry_counts = dict(state.get("llm_retry_counts") or {})
-        return _outcome(self.contract, "planning_continues", state, durable, {
-            "reason_code": "plan_not_yet_committed",
-            "attempt_ordinal": sum(int(v or 0) for v in retry_counts.values()) + 1,
-        }, "Planner needs another bounded convergence turn.")
+        if owners & {"task_spec", "external_input", "consultant"}:
+            return _outcome(self.contract, "consultation_required", state, durable, {
+                "reason_code": "plan_validation_requires_semantic_reconsultation",
+            }, "Planner validation requires authoritative semantic correction.")
+        task_state = dict(durable.get("task_state") or {})
+        planning_failure = dict(task_state.get("planning_failure") or {})
+        planning_epoch = dict(task_state.get("planning_epoch") or state.get("planning_epoch") or {})
+        explicit_continuation = bool(
+            (
+                planning_failure
+                and str(planning_failure.get("status") or "").lower()
+                in {"active", "pending", "unresolved", "repairing"}
+            )
+            or (
+                str(planning_epoch.get("status") or "").lower() == "active"
+                and int(planning_epoch.get("planner_calls_total") or 0) > 0
+            )
+        )
+        if explicit_continuation:
+            attempt = int(
+                planning_epoch.get("planner_calls_total")
+                or planning_failure.get("attempt")
+                or 1
+            )
+            return _outcome(self.contract, "planning_continues", state, durable, {
+                "reason_code": str(
+                    planning_failure.get("validation_source")
+                    or "durable_planning_epoch_active"
+                ),
+                "attempt_ordinal": attempt,
+            }, "Durable planning convergence evidence requires another bounded turn.")
+        return _semantic_harness_error(
+            self.contract,
+            state,
+            durable,
+            error_code="PLANNER_SEMANTIC_STATE_AMBIGUOUS",
+            detail="No committed Plan and no durable planning-progress receipt.",
+        )
 
 
 class TypedPlanReview(_TypedEarlyNode):
@@ -291,7 +366,7 @@ class TypedPlanReview(_TypedEarlyNode):
                 "question": str(pending.get("question") or "Plan review needs user input."),
                 "owner": str(pending.get("owner") or "user"),
             }, "Plan review requires authoritative user input.")
-        status = str(state.get("task_status") or durable.get("task_status") or "").lower()
+        status = str(state.get("task_status") or task_status(durable) or "").lower()
         if status in {"blocked", "failed", "cancelled", "completed"}:
             return _outcome(self.contract, "terminal", state, durable, {
                 "status": status, "reason_code": "plan_review_terminal",
@@ -306,7 +381,7 @@ class TypedPlanReview(_TypedEarlyNode):
             or (durable.get("current_approval") or {}).get("status")
             or ""
         ).lower()
-        if approval in {"approved", "accepted"} and durable.get("steps"):
+        if approval in {"approved", "accepted"} and has_materialized_plan(durable):
             backend = "external_worker" if self.execution_backend != "legacy" else "in_process"
             return _outcome(self.contract, "approved_for_execution", state, durable, {
                 "plan_id": str(durable.get("plan_id") or "approved-plan"),
@@ -314,6 +389,14 @@ class TypedPlanReview(_TypedEarlyNode):
                 "approval_status": approval,
                 "execution_backend": backend,
             }, "Plan review approved the plan for execution.")
+        if not has_materialized_plan(durable):
+            return _semantic_harness_error(
+                self.contract,
+                state,
+                durable,
+                error_code="PLAN_REVIEW_PLAN_NOT_MATERIALIZED",
+                detail="PlanReview has neither a committed PlanSpec nor PlanSnapshot.",
+            )
         issues = [dict(item) for item in state.get("validation_issues") or durable.get("validation_issues") or [] if isinstance(item, Mapping)]
         owners = {str(item.get("owner") or "") for item in issues}
         if owners & {"task_spec", "external_input", "consultant"}:
@@ -343,6 +426,26 @@ class TypedAskUser(_TypedEarlyNode):
             payload = {"semantic_state": "consultation_ready", "reason_code": "question_missing"}
             summary = "No durable human question was available."
         else:
+            answered = dict(
+                (clean.get("consultation_state") or {}).get("pending_question")
+                or (clean.get("consultation_state") or {}).get("pending_human_question")
+                or {}
+            )
+            answer_matches = bool(
+                str(answered.get("status") or "") == "answered_pending_interpretation"
+                and str(answered.get("answer_turn_ref") or "").strip()
+                and str(answered.get("question_id") or pending.get("question_id") or "")
+                == str(pending.get("question_id") or "")
+            )
+            if not answer_matches:
+                clean[self.outcome_field] = _semantic_harness_error(
+                    self.contract,
+                    state,
+                    durable,
+                    error_code="ASK_USER_ANSWER_RECEIPT_MISSING",
+                    detail="AskUser returned without a matching durable answer-turn receipt.",
+                )
+                return clean
             semantic = "planning_ready" if str(pending.get("type") or "") == "plan_impact_review" else "consultation_ready"
             kind = "answer_recorded"
             payload = {
@@ -360,19 +463,44 @@ class TypedInstallSubagent(_TypedEarlyNode):
     contract = InstallSubagentOutcome
 
     def classify(self, before, state, durable):
-        text = "\n".join(str(getattr(item, "content", item) or "") for item in state.get("messages") or [])[-6000:]
-        lowered = text.lower()
-        status = str(state.get("task_status") or durable.get("task_status") or "").lower()
+        status = str(state.get("task_status") or task_status(durable) or "").lower()
         if status in {"blocked", "failed", "cancelled"}:
             return _outcome(self.contract, "terminal", state, durable, {
                 "status": status, "reason_code": "installation_terminal",
             }, "Installation reached a terminal business state.")
-        failed = any(marker in lowered for marker in ("installation failed", "healthcheck failed", "blocked:", "loop detected"))
-        kind = "installation_failed" if failed else "capability_available"
+        runtime = dict(state.get("runtime_status") or {})
+        records = [dict(item) for item in runtime.values() if isinstance(item, Mapping)]
+        current_step_id = str(durable.get("current_step_id") or "")
+        current_step = next(
+            (
+                dict(item)
+                for item in durable.get("steps") or []
+                if isinstance(item, Mapping)
+                and str(item.get("step_id") or "") == current_step_id
+            ),
+            {},
+        )
+        step_status = str(current_step.get("status") or "").lower()
+        if records and any(item.get("ok") is True for item in records):
+            kind, evidence = "capability_available", {"runtime_status": records}
+        elif records and any(item.get("ok") is False for item in records):
+            kind, evidence = "installation_failed", {"runtime_status": records}
+        elif step_status in {"done", "passed", "completed", "success"}:
+            kind, evidence = "capability_available", {"step_id": current_step_id, "step_status": step_status}
+        elif step_status in {"blocked", "failed"}:
+            kind, evidence = "installation_failed", {"step_id": current_step_id, "step_status": step_status}
+        else:
+            return _semantic_harness_error(
+                self.contract,
+                state,
+                durable,
+                error_code="INSTALLATION_SEMANTIC_RECEIPT_MISSING",
+                detail="Installer returned without runtime healthcheck or durable step status.",
+            )
         return _outcome(self.contract, kind, state, durable, {
-            "status": "failed" if failed else "available",
-            "evidence": text[-1200:] or "installer completed without textual evidence",
-        }, "Installation capability check completed.")
+            "status": "failed" if kind == "installation_failed" else "available",
+            "evidence": evidence,
+        }, "Installation capability check completed from authoritative receipts.")
 
 
 async def route_blind_direct_response(source: SourceNode, state: Mapping[str, Any]) -> dict[str, Any]:

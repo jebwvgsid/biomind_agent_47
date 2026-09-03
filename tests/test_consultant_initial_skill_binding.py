@@ -12,12 +12,14 @@ from agent_core.consultant_binding import (
     ConsultantEntryDisposition,
     advance_consultant_commit_no_progress,
     classify_consultant_binding_phase,
+    consultant_planning_readiness,
     consultant_commit_no_progress_fingerprint,
     consultant_entry_disposition,
     consultant_uninitialized_entry_diagnostic,
     consultant_validation_no_progress_fingerprint,
     legacy_uninitialized_task_reset_decision,
 )
+from agent_core.workflow.early_nodes import TypedConsultant
 from agent_core.plan_tracker import (
     canonical_task_spec_for_state,
     has_materialized_plan,
@@ -154,6 +156,23 @@ class ConsultantInitialSkillBindingTests(unittest.TestCase):
                 durable["task_state"]["consultation_state"]["phase"],
                 "ready_to_plan",
             )
+
+            readiness = consultant_planning_readiness(durable)
+            self.assertTrue(readiness["ready"])
+            self.assertEqual(
+                readiness["reason_code"], "accepted_consultant_handoff_ready"
+            )
+            typed = TypedConsultant(data_path=root, source=None).classify(
+                {},
+                {
+                    **result,
+                    "next_step": "corrupted",
+                    "dispatch_route": "corrupted",
+                    "effective_route": "corrupted",
+                },
+                durable,
+            )
+            self.assertEqual(typed["type"], "planning_ready")
 
     def test_02_initial_bootstrap_classifier_ignores_plan_revision_value(self) -> None:
         base = {
