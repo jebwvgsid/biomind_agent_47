@@ -11044,6 +11044,11 @@ class BioAnalystAgent:
             )
         return ""
 
+    def _initialize_execute_attempt_state(self, task_id: str) -> Dict[str, Any]:
+        """Load the single authoritative PlanState used by one Execute attempt."""
+
+        return load_plan_state(self.data_path, task_id)
+
     def _validate_generate_context(self, state: AgentState, task_id: str) -> Dict[str, Any]:
         """Use the canonical Plan validator for every managed Generate entry."""
         if str(state.get("task_mode") or "managed").lower() != "managed":
@@ -37576,6 +37581,11 @@ question. Never guess a scientific or database identity.
                 }
             pending_action = captured_pending_action
             managed_mode = str(state.get("task_mode") or "managed").lower() == "managed"
+            # This preflight snapshot selects the current approved step. It is
+            # intentionally distinct from the attempt snapshot established
+            # after durable preflight counters have been committed.
+            action_plan_state = load_plan_state(self.data_path, task_id)
+            _, action_step = current_plan_step_with_index(action_plan_state)
             if managed_mode:
                 if self._pending_action_is(pending_action, "execute"):
                     try:
@@ -37745,8 +37755,6 @@ question. Never guess a scientific or database identity.
                 else:
                     command_role = "primary"
 
-            action_plan_state = load_plan_state(self.data_path, task_id)
-            _, action_step = current_plan_step_with_index(action_plan_state)
             action_step_purpose = str((action_step or {}).get("purpose") or "analysis").strip().lower()
             manifest_managed_action = str(pending_action.get("action_source") or "") == "manifest_runner"
             bypass_step_gate = (
@@ -38010,6 +38018,10 @@ question. Never guess a scientific or database identity.
                 "BIOMIND_ACTION_ID": str(pending_action.get("action_id") or ""),
                 "BIOMIND_STEP_ID": str(pending_action.get("step_id") or ""),
             }
+            # Exactly one authoritative attempt snapshot owns binding
+            # resolution, command preparation, attempt registration, and the
+            # eventual pre-launch CAS commit.
+            attempt_plan_state = self._initialize_execute_attempt_state(task_id)
             if managed_mode:
                 try:
                     for manifest_key in (
@@ -38583,7 +38595,6 @@ question. Never guess a scientific or database identity.
             step_index = len(state["messages"])
             shim_path  = self.pm.get_shim_dir_str()
             started_at = datetime.now().isoformat(timespec="seconds")
-            attempt_plan_state = load_plan_state(self.data_path, task_id)
             managed_output_contracts = [
                 dict(item)
                 for item in pending_action.get("controller_output_bindings", []) or []

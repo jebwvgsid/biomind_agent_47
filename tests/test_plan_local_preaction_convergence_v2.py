@@ -562,7 +562,9 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         self.agent._ensure_skill_runtime_ready = lambda *_args, **_kwargs: (True, "")
         self.agent._selected_skill_env_runner_violation = lambda *_args, **_kwargs: ""
         self.agent._workflow_future_skill_violation = lambda *_args, **_kwargs: ""
-        self.agent.middleware.review_code = lambda code, _language: ("approve", code)
+        self.agent.middleware.review_code = (
+            lambda code, _language, **_kwargs: ("approve", code)
+        )
 
     async def asyncTearDown(self) -> None:
         for item in reversed(self.patches):
@@ -769,6 +771,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         generate_action: Any,
         *,
         binding_patch: Any = None,
+        command_calls: list[str] | None = None,
     ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], Path]:
         report_path = self.root / task_id / "report.md"
         report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -805,8 +808,11 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
             expected_sha256: str = "",
             interpreter: str = "bash",
             lifecycle_callback: Any = None,
+            env: Mapping[str, str] | None = None,
         ):
-            del expected_sha256, interpreter
+            del expected_sha256, interpreter, env
+            if command_calls is not None:
+                command_calls.append(_script_path)
             if lifecycle_callback:
                 await lifecycle_callback("PROCESS_STARTED", {"pid": 1, "pgid": 1})
             durable = load_plan_state(self.root, task_id)
@@ -853,6 +859,89 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
             for item in reversed(patches):
                 item.stop()
         return events, captures, report_path
+
+    async def test_execute_initializes_one_authoritative_attempt_state_before_binding_resolution(
+        self,
+    ) -> None:
+        task_id = "execute-attempt-state-ordering"
+        command_calls: list[str] = []
+        initialization_calls: list[dict[str, Any]] = []
+        resolver_calls: list[dict[str, Any]] = []
+        original_initialize = self.agent._initialize_execute_attempt_state
+        original_resolver = bio_agents.resolve_action_binding_environment
+        original_planner = self._planner_payload
+        original_consultant = self._consultant_payload
+        capability_registry = self.agent.skill_manager.get_execution_capability_registry(
+            [self.SKILL_ID]
+        )
+        capability_id = next(iter(capability_registry))
+
+        def one_step_plan() -> dict[str, Any]:
+            payload = original_planner()
+            payload["proposed_artifacts"] = []
+            payload["steps"] = [{
+                "step_id": "step-direct",
+                "title": "Write the required report",
+                "action": "execute",
+                "purpose": "analysis",
+                "tool": "test",
+                "inputs": [],
+                "outputs": [],
+                "dependencies": [],
+                "success_criteria": ["the report exists and is non-empty"],
+                "skill_ids": [self.SKILL_ID],
+                "workflow_stage_ids": [],
+                "batch_id": "",
+                "risk_level": "low",
+                "execution_capability_id": capability_id,
+            }]
+            return payload
+
+        def no_output_consultant(_report_path: Path) -> dict[str, Any]:
+            payload = original_consultant(_report_path)
+            payload["task_spec_operations"] = [
+                payload["task_spec_operations"][0]
+            ]
+            return payload
+
+        def initialize_spy(observed_task_id: str) -> dict[str, Any]:
+            initialized = original_initialize(observed_task_id)
+            initialization_calls.append(initialized)
+            return initialized
+
+        def resolver_spy(
+            plan_state: Mapping[str, Any],
+            action: Mapping[str, Any],
+        ) -> dict[str, Any]:
+            self.assertIs(plan_state, initialization_calls[-1])
+            self.assertEqual(plan_state["plan_id"], action["plan_id"])
+            self.assertEqual(plan_state["plan_version"], action["plan_version"])
+            self.assertEqual(plan_state["current_step_id"], action["step_id"])
+            resolver_calls.append(dict(action))
+            return original_resolver(plan_state, action)
+
+        self._planner_payload = one_step_plan
+        self._consultant_payload = no_output_consultant
+        with patch.object(
+            self.agent,
+            "_initialize_execute_attempt_state",
+            side_effect=initialize_spy,
+        ), patch.object(
+            bio_agents,
+            "resolve_action_binding_environment",
+            side_effect=resolver_spy,
+        ):
+            events, captures, _report = await self._run_graph(
+                task_id,
+                lambda payload, _ordinal: self._script_action(payload),
+                command_calls=command_calls,
+            )
+
+        self.assertEqual(len(initialization_calls), 1)
+        self.assertEqual(len(resolver_calls), 1)
+        self.assertEqual(len(command_calls), 1)
+        self.assertNotIn("UnboundLocalError", json.dumps(events, default=str))
+        self.assertEqual(len(captures), 1)
 
     async def test_graph_a_plan_local_directory_happy_path(self) -> None:
         events, captures, report = await self._run_graph(
