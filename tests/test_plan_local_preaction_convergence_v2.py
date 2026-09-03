@@ -18,6 +18,7 @@ from agent_core.managed_artifacts import (
     materialize_managed_action,
 )
 from agent_core.node_context import build_node_context
+from agent_core.plan_bindings import PlanBindingError
 from agent_core.plan_tracker import (
     approve_plan_state,
     bind_plan_to_task_revision,
@@ -772,6 +773,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         *,
         binding_patch: Any = None,
         command_calls: list[str] | None = None,
+        command_results: list[tuple[str, str, int]] | None = None,
     ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], Path]:
         report_path = self.root / task_id / "report.md"
         report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -815,17 +817,23 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
                 command_calls.append(_script_path)
             if lifecycle_callback:
                 await lifecycle_callback("PROCESS_STARTED", {"pid": 1, "pgid": 1})
+            result = (
+                command_results.pop(0)
+                if command_results
+                else ("stubbed external tool succeeded\n", "", 0)
+            )
             durable = load_plan_state(self.root, task_id)
             _, step = current_plan_step_with_index(durable)
-            if str((step or {}).get("step_id") or "") == "step-1":
-                ledger = dict(durable.get("plan_artifacts") or {})
-                self.assertEqual(len(ledger), 1)
-                Path(next(iter(ledger.values()))["canonical_path"]).mkdir(parents=True, exist_ok=True)
-            else:
-                report_path.write_text("plan-local directory consumed\n", encoding="utf-8")
+            if result[2] == 0:
+                if str((step or {}).get("step_id") or "") == "step-1":
+                    ledger = dict(durable.get("plan_artifacts") or {})
+                    self.assertEqual(len(ledger), 1)
+                    Path(next(iter(ledger.values()))["canonical_path"]).mkdir(parents=True, exist_ok=True)
+                else:
+                    report_path.write_text("plan-local directory consumed\n", encoding="utf-8")
             if lifecycle_callback:
-                await lifecycle_callback("PROCESS_EXITED", {"returncode": 0})
-            return "stubbed external tool succeeded\n", "", 0
+                await lifecycle_callback("PROCESS_EXITED", {"returncode": result[2]})
+            return result
 
         self.agent._ainvoke_node_llm = scripted
         events: list[dict[str, Any]] = []
@@ -1001,6 +1009,154 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(metrics["failure"]["owner"], "CONTROLLER")
         self.assertNotIn("TASK_FAILED", json.dumps(events, default=str))
+
+    async def test_format_repair_reentry_reaches_initialized_execute_once(self) -> None:
+        task_id = "execute-format-repair-reentry"
+        command_calls: list[str] = []
+        initialization_calls: list[dict[str, Any]] = []
+        resolver_calls: list[dict[str, Any]] = []
+        original_initialize = self.agent._initialize_execute_attempt_state
+        original_resolver = bio_agents.resolve_action_binding_environment
+        self._configure_one_step_no_output_plan()
+
+        def candidate(payload: Mapping[str, Any], ordinal: int) -> str:
+            if ordinal == 1:
+                return "\n".join([
+                    "```json",
+                    "{",
+                    '  "action_type": "execute",',
+                    '  "action_kind": "primary",',
+                    '  "purpose": "analysis",',
+                    '  "argv": [',
+                    '    "bash",',
+                    '    "-lc",',
+                    '    "true",',
+                    '    "env": {"OUT": "/tmp/not-a-binding"}',
+                    "  ]",
+                    "}",
+                    "```",
+                ])
+            return self._script_action(payload)
+
+        def initialize_spy(observed_task_id: str) -> dict[str, Any]:
+            initialized = original_initialize(observed_task_id)
+            initialization_calls.append(initialized)
+            return initialized
+
+        def resolver_spy(
+            plan_state: Mapping[str, Any],
+            action: Mapping[str, Any],
+        ) -> dict[str, Any]:
+            self.assertIs(plan_state, initialization_calls[-1])
+            self.assertEqual(plan_state["current_step_id"], action["step_id"])
+            resolver_calls.append(dict(action))
+            return original_resolver(plan_state, action)
+
+        with patch.object(
+            self.agent,
+            "_initialize_execute_attempt_state",
+            side_effect=initialize_spy,
+        ), patch.object(
+            bio_agents,
+            "resolve_action_binding_environment",
+            side_effect=resolver_spy,
+        ):
+            events, captures, _report = await self._run_graph(
+                task_id,
+                candidate,
+                command_calls=command_calls,
+            )
+
+        serialized = json.dumps(events, default=str)
+        self.assertEqual(len(captures), 2)
+        self.assertEqual(len(initialization_calls), 1)
+        self.assertEqual(len(resolver_calls), 1)
+        self.assertEqual(len(command_calls), 1)
+        self.assertIn("GENERATE_SCRIPT_BLOCK_INVALID", serialized)
+        self.assertNotIn("UnboundLocalError", serialized)
+        self.assertNotIn("EXECUTE_PREPARATION_INTERNAL_ERROR", serialized)
+
+    async def test_plan_binding_error_retains_controlled_corrective_generate_path(
+        self,
+    ) -> None:
+        task_id = "execute-controlled-plan-binding-error"
+        command_calls: list[str] = []
+        resolver_calls: list[str] = []
+        original_resolver = bio_agents.resolve_action_binding_environment
+        self._configure_one_step_no_output_plan()
+
+        def resolver(
+            plan_state: Mapping[str, Any],
+            action: Mapping[str, Any],
+        ) -> dict[str, Any]:
+            resolver_calls.append(str(action.get("action_id") or ""))
+            if len(resolver_calls) == 1:
+                raise PlanBindingError(
+                    "PLAN_BINDING_REFERENCE_MISSING",
+                    binding_name="fixture.binding",
+                )
+            return original_resolver(plan_state, action)
+
+        with patch.object(
+            bio_agents,
+            "resolve_action_binding_environment",
+            side_effect=resolver,
+        ):
+            events, captures, _report = await self._run_graph(
+                task_id,
+                lambda payload, _ordinal: self._script_action(payload),
+                command_calls=command_calls,
+            )
+
+        serialized = json.dumps(events, default=str)
+        self.assertEqual(len(resolver_calls), 2)
+        self.assertEqual(len(captures), 2)
+        self.assertEqual(len(command_calls), 1)
+        self.assertIn("BINDING_REFERENCE_MISMATCH", serialized)
+        self.assertIn("CORRECTIVE_GENERATE", serialized)
+        self.assertNotIn("EXECUTE_PREPARATION_INTERNAL_ERROR", serialized)
+
+    async def test_started_nonzero_command_keeps_execution_record_and_recovery_path(
+        self,
+    ) -> None:
+        task_id = "execute-real-command-failure"
+        command_calls: list[str] = []
+        command_results = [
+            ("", "fixture tool exited nonzero", 7),
+            ("stubbed retry succeeded\n", "", 0),
+        ]
+        self._configure_one_step_no_output_plan()
+
+        events, captures, _report = await self._run_graph(
+            task_id,
+            lambda payload, _ordinal: self._script_action(payload),
+            command_calls=command_calls,
+            command_results=command_results,
+        )
+
+        records = RecoveryStateStore(self.root, task_id).load_execution_records()
+        failed_records = [
+            record for record in records
+            if int(record.get("returncode") or record.get("exit_code") or 0) == 7
+        ]
+        execute_updates = [
+            dict(event.get("execute") or {})
+            for event in events
+            if isinstance(event, Mapping) and isinstance(event.get("execute"), Mapping)
+        ]
+        recovery_eligible = any(
+            bool((update.get("recovery_trigger") or {}).get("required"))
+            for update in execute_updates
+        )
+
+        self.assertGreaterEqual(len(captures), 1)
+        self.assertGreaterEqual(len(command_calls), 1)
+        self.assertTrue(failed_records, json.dumps(records, default=str))
+        self.assertTrue(recovery_eligible, json.dumps(execute_updates, default=str))
+        self.assertNotIn(
+            "EXECUTE_PREPARATION_INTERNAL_ERROR",
+            json.dumps(events, default=str),
+        )
 
     async def test_graph_a_plan_local_directory_happy_path(self) -> None:
         events, captures, report = await self._run_graph(
