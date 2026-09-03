@@ -168,7 +168,7 @@ class ConsultationStateTests(unittest.TestCase):
         self.assertEqual(second["decision"], "duplicate_failed_action_suppressed")
         self.assertEqual(second["state"]["execute_call_count"], 1)
 
-    def test_g_total_execute_ceiling_is_only_emergency_guard(self):
+    def test_g_distinct_observations_do_not_become_a_business_block(self):
         state = _seeded(max_total_execute=2, max_no_progress=10)
         for command in ("dummy --one", "dummy --two"):
             check = preflight_execute(state, _proposal(command), cwd="/work")
@@ -176,8 +176,8 @@ class ConsultationStateTests(unittest.TestCase):
                 check["state"], fingerprint=check["fingerprint"], proposal=_proposal(command),
                 returncode=1, observation="failed",
             )
-        self.assertEqual(state["completion_decision"], "blocked")
-        self.assertEqual(state["completion_reason"], "emergency_execute_ceiling_reached")
+        self.assertNotEqual(state["completion_decision"], "blocked")
+        self.assertNotEqual(state["consultation_status"], "blocked")
 
     def test_h_finalize_schema_allows_only_finish_or_ask(self):
         state = _seeded()

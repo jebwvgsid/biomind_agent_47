@@ -123,6 +123,9 @@ class ConsultantInitialSkillBindingTests(unittest.TestCase):
             },
             "contract_status": "canonical_task_ready",
             "requirements_summary": "Validated Consultant handoff.",
+            "handoff_kind": "execution_planning",
+            "agent_initiated": True,
+            "handoff_protocol_version": 1,
             "next_step": "planner",
         }
 

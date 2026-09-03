@@ -259,6 +259,48 @@ class Schema2ResumeStateTests(unittest.TestCase):
         self.assertNotIn("resume_route_hint", str(rendered))
         self.assertNotIn("finish", str(rendered))
 
+    def test_resume_uses_shared_lifecycle_for_needs_evidence(self):
+        durable = {
+            "task_id": "resume-needs-evidence",
+            "workflow_routing_schema_version": 2,
+            "current_task": {
+                "task_spec": {
+                    "schema_version": 1,
+                    "task_id": "resume-needs-evidence",
+                    "goal": "inspect more evidence",
+                    "revision": 1,
+                },
+                "task_revision": 1,
+            },
+            "task_state": {
+                "workflow_routing_schema_version": 2,
+                "status": "running",
+                "consultation_state": {
+                    "schema_version": 2,
+                    "phase": "needs_evidence",
+                    "consultation_status": "active",
+                    "completion_decision": "needs_evidence",
+                    "agent_disposition": "continue",
+                },
+            },
+            "task_status": "running",
+            "steps": [],
+        }
+        recovery_store = unittest.mock.MagicMock()
+        recovery_store.load_phase.return_value = {}
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.data_path = "/unused"
+        with (
+            patch("bio_agents.load_plan_state", return_value=durable),
+            patch("bio_agents.load_waiting_state", return_value={}),
+            patch("bio_agents.RecoveryStateStore", return_value=recovery_store),
+        ):
+            result = agent._resolve_schema2_resume_state(
+                "resume-needs-evidence", {"next_step": "finish"}
+            )
+        self.assertEqual(result.type, "consultation_ready")
+        self.assertEqual(result.payload["reason_code"], "needs_evidence")
+
 
 if __name__ == "__main__":
     unittest.main()

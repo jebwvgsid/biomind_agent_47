@@ -11,6 +11,10 @@ from copy import deepcopy
 from typing import Any, Awaitable, Callable, Mapping
 
 from agent_core.consultant_binding import consultant_planning_readiness
+from agent_core.consultation_state import (
+    ConsultationDisposition,
+    classify_consultation_lifecycle,
+)
 from agent_core.plan_tracker import (
     has_materialized_plan,
     load_plan_state,
@@ -103,6 +107,13 @@ def _semantic_harness_error(
             "error_code": error_code,
             "exception_class": "SemanticCoverageError",
             "detail": detail,
+            "source_node": contract.OUTCOME_NAME.removesuffix("Outcome").lower(),
+            "semantic_state": {
+                "phase": str(
+                    (state.get("consultation_state") or {}).get("phase") or ""
+                ) if isinstance(state.get("consultation_state"), Mapping) else "",
+                "task_status": str(state.get("task_status") or ""),
+            },
         },
         "The typed adapter failed closed on ambiguous semantic state.",
     )
@@ -143,6 +154,15 @@ class _TypedEarlyNode:
         clean = _clean_update(raw)
         merged = {**dict(state), **clean}
         clean[self.outcome_field] = self.classify(state, merged, durable)
+        outcome = dict(clean[self.outcome_field] or {})
+        if str(outcome.get("type") or "") == "harness_error":
+            payload = dict(outcome.get("payload") or {})
+            clean["terminal_diagnostic"] = {
+                "source_node": self.outcome_field.removesuffix("_outcome"),
+                "error_code": str(payload.get("error_code") or "FRONT_HALF_HARNESS_ERROR"),
+                "detail": str(payload.get("detail") or "")[:800],
+                "semantic_state": deepcopy(payload.get("semantic_state") or {}),
+            }
         return clean
 
     def classify(
@@ -215,11 +235,6 @@ class TypedConsultant(_TypedEarlyNode):
 
     def classify(self, before, state, durable):
         task_state = dict(durable.get("task_state") or {})
-        # Intermediate Consultant actions (for example SEARCH_SKILLS and
-        # LOAD_SKILL_DOC) advance the LangGraph consultation state without
-        # committing a canonical TaskSpec yet.  That node-local semantic
-        # result is authoritative for deciding whether consultation continues;
-        # plan_state remains authoritative for the final Planner handoff.
         current_consultation = state.get("consultation_state")
         consultation = dict(
             current_consultation
@@ -247,35 +262,62 @@ class TypedConsultant(_TypedEarlyNode):
             }, "Consultation result became stale before commit.")
         status = str(state.get("task_status") or task_status(durable) or "").lower()
         contract_status = str(state.get("contract_status") or "")
-        if status in {"blocked", "failed", "cancelled", "completed"} or contract_status.startswith("blocked_"):
+        readiness = consultant_planning_readiness(
+            durable, require_agent_initiated=True
+        )
+        lifecycle = classify_consultation_lifecycle(
+            consultation,
+            planning_handoff_committed=bool(readiness["ready"]),
+        )
+        disposition = str(lifecycle.get("disposition") or "")
+        if (
+            status in {"blocked", "failed", "cancelled", "completed"}
+            or contract_status.startswith("blocked_")
+        ) and disposition != ConsultationDisposition.ANSWER_READY.value:
             return _outcome(self.contract, "terminal", state, durable, {
                 "status": status or "blocked", "reason_code": contract_status or "consultation_terminal",
             }, "Consultation reached a terminal business state.")
-        readiness = consultant_planning_readiness(durable)
-        if readiness["ready"]:
+        if disposition == ConsultationDisposition.PLANNING_READY.value:
             return _outcome(self.contract, "planning_ready", state, durable, {
                 "task_revision": int(readiness["task_revision"]),
                 "contract_status": contract_status or str(readiness["contract_status"]),
-            }, "Consultation produced a planning-ready semantic contract.")
-        phase = str(consultation.get("phase") or "").lower()
-        consultation_status = str(consultation.get("consultation_status") or "").lower()
-        completion = str(consultation.get("completion_decision") or "").lower()
-        explicit_continuation = bool(
-            phase in {"consulting", "finalize", "skill_discovery"}
-            and consultation_status in {"active", "pending", "in_progress"}
-            and completion not in {"ready_to_finalize", "ready_to_plan", "completed"}
-        )
-        if explicit_continuation:
+            }, "The Agent initiated and durably committed the planning handoff.")
+        if disposition == ConsultationDisposition.ANSWER_READY.value:
+            return _outcome(self.contract, "answer_ready", state, durable, {
+                "answer_id": str(lifecycle.get("answer_id") or ""),
+                "completion_mode": "consultation_only",
+            }, "The Consultant completed the request without an execution plan.")
+        if disposition == ConsultationDisposition.CONTINUE.value:
+            semantic = dict(lifecycle.get("semantic_state") or {})
             return _outcome(self.contract, "consultation_continues", state, durable, {
-                "phase": phase,
-                "completion_decision": completion or "needs_evidence",
-            }, "Authoritative consultation lifecycle proves more convergence work is required.")
+                "phase": str(semantic.get("phase") or "consulting"),
+                "completion_decision": str(
+                    semantic.get("completion_decision") or "needs_reasoning"
+                ),
+            }, "The local Consultant agent has another reasoning turn available.")
+        if disposition == ConsultationDisposition.NEEDS_USER.value:
+            # The pending-question protocol above owns the detailed payload.
+            return _semantic_harness_error(
+                self.contract,
+                state,
+                durable,
+                error_code="CONSULTANT_QUESTION_RECEIPT_INVALID",
+                detail="Lifecycle requires user input but no pending question was projected.",
+            )
+        if disposition == ConsultationDisposition.BLOCKED.value:
+            return _outcome(self.contract, "terminal", state, durable, {
+                "status": "blocked",
+                "reason_code": str(lifecycle.get("reason_code") or "consultation_blocked"),
+            }, "The Consultant explicitly reported an irrecoverable business block.")
         return _semantic_harness_error(
             self.contract,
             state,
             durable,
-            error_code="CONSULTANT_SEMANTIC_STATE_AMBIGUOUS",
-            detail=str(readiness["reason_code"]),
+            error_code=str(
+                lifecycle.get("reason_code")
+                or "CONSULTANT_SEMANTIC_STATE_AMBIGUOUS"
+            ),
+            detail=str(lifecycle.get("detail") or readiness["reason_code"]),
         )
 
 
@@ -294,7 +336,9 @@ class TypedPlanner(_TypedEarlyNode):
             return _outcome(self.contract, "stale_result", state, durable, {
                 "changed_preconditions": list(stale.get("changed_preconditions") or []),
             }, "Planner result became stale before commit.")
-        readiness = consultant_planning_readiness(durable)
+        readiness = consultant_planning_readiness(
+            durable, require_agent_initiated=True
+        )
         if not readiness["ready"] and not has_materialized_plan(durable):
             return _outcome(self.contract, "consultation_required", state, durable, {
                 "reason_code": str(readiness["reason_code"]),

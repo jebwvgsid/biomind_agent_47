@@ -1,8 +1,8 @@
-"""Deterministic Consultant evidence ledger and completion state machine.
+"""Deterministic Consultant evidence ledger and lifecycle protocol.
 
 This module deliberately knows nothing about individual tools or command keywords.
 It turns structured input/runtime facts and bounded read-only observations into a
-small controller-owned state that can be checkpointed by LangGraph.
+route-free state that can be checkpointed by LangGraph.
 """
 
 from __future__ import annotations
@@ -13,6 +13,8 @@ import os
 import re
 from copy import deepcopy
 from datetime import datetime, timezone
+from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence
 
 from agent_core.task_spec import (
@@ -31,11 +33,15 @@ from agent_core.skill_discovery import skill_discovery_progress_projection
 CONSULTATION_PHASES = {
     "consulting",
     "needs_evidence",
+    "observing",
     "evaluate",
     "ready_to_finalize",
     "finalize",
+    "answer_ready",
+    "planning_handoff_pending",
     "needs_user",
     "blocked",
+    "invalid",
 }
 EVIDENCE_STATUSES = {"unresolved", "satisfied", "failed", "blocked", "waived"}
 TERMINAL_REQUIREMENT_STATUSES = {"satisfied", "waived"}
@@ -108,6 +114,29 @@ _RAW_RESPONSE_KEYS = {
     "response_content",
     "exact_response",
 }
+
+
+class ConsultationDisposition(str, Enum):
+    """Route-free lifecycle meanings emitted by the Consultant domain.
+
+    These values describe what the local agent has accomplished.  They never
+    name a graph node; the schema-2 graph is the only layer allowed to map
+    them to an edge.
+    """
+
+    CONTINUE = "continue"
+    NEEDS_USER = "needs_user"
+    ANSWER_READY = "answer_ready"
+    PLANNING_READY = "planning_ready"
+    BLOCKED = "blocked"
+    INVALID = "invalid"
+
+
+RESOURCE_EPISTEMIC_STATUSES = frozenset({
+    "conceptual",
+    "user_asserted",
+    "observed",
+})
 
 
 def _now() -> str:
@@ -1647,7 +1676,7 @@ def new_consultation_state(
     max_total_execute: int = 4,
     max_no_progress: int = 2,
 ) -> Dict[str, Any]:
-    """Create an empty, serializable consultation controller state."""
+    """Create an empty, serializable local-agent consultation state."""
     return {
         "schema_version": 1,
         "consultation_id": str(consultation_id),
@@ -1665,10 +1694,437 @@ def new_consultation_state(
         "max_no_progress": max(1, int(max_no_progress)),
         "completion_decision": "needs_evidence",
         "completion_reason": "requirements_not_seeded",
+        "agent_disposition": ConsultationDisposition.CONTINUE.value,
+        "tool_observations": [],
+        "resource_bindings": [],
+        "agent_progress": {
+            "turn_count": 0,
+            "identical_no_progress_count": 0,
+            "last_fingerprint": "",
+        },
         "finalize_protocol": None,
         "created_at": _now(),
         "updated_at": _now(),
     }
+
+
+def classify_consultation_lifecycle(
+    state: Mapping[str, Any] | None,
+    *,
+    planning_handoff_committed: bool = False,
+) -> Dict[str, Any]:
+    """Classify the shared Consultant lifecycle without choosing a route.
+
+    The classifier recognizes protocol receipts and broad lifecycle facts.  It
+    deliberately does not inspect file existence, selected Skill count,
+    TaskSpec contents, or scientific requirements.  Those facts are
+    observations interpreted by the Consultant agent.  A ready-looking local
+    state cannot claim planning readiness until the durable handoff commit is
+    independently proven by the caller.
+    """
+
+    current = dict(state or {})
+    compact = {
+        "phase": str(current.get("phase") or "").strip().lower(),
+        "consultation_status": str(
+            current.get("consultation_status") or ""
+        ).strip().lower(),
+        "completion_decision": str(
+            current.get("completion_decision") or ""
+        ).strip().lower(),
+        "agent_disposition": str(
+            current.get("agent_disposition") or ""
+        ).strip().lower(),
+    }
+    protocol_error = current.get("controller_protocol_error")
+    diagnostic = dict(current.get("terminal_diagnostic") or {})
+    if protocol_error:
+        return {
+            "disposition": ConsultationDisposition.INVALID.value,
+            "reason_code": "CONSULTATION_PROTOCOL_ERROR",
+            "detail": _canonical(protocol_error)[:800],
+            "semantic_state": compact,
+        }
+    if diagnostic and str(diagnostic.get("error_code") or ""):
+        return {
+            "disposition": ConsultationDisposition.INVALID.value,
+            "reason_code": str(diagnostic.get("error_code")),
+            "detail": str(diagnostic.get("detail") or "")[:800],
+            "semantic_state": compact,
+        }
+
+    pending = (
+        current.get("pending_question")
+        or current.get("pending_human_question")
+        or {}
+    )
+    if isinstance(pending, Mapping) and pending:
+        return {
+            "disposition": ConsultationDisposition.NEEDS_USER.value,
+            "reason_code": "CONSULTATION_QUESTION_PENDING",
+            "semantic_state": compact,
+        }
+
+    answer = dict(current.get("answer_receipt") or {})
+    if (
+        compact["agent_disposition"] == ConsultationDisposition.ANSWER_READY.value
+        or compact["phase"] == "answer_ready"
+    ):
+        if not str(answer.get("answer_id") or "") or not str(
+            answer.get("answer") or ""
+        ).strip():
+            return {
+                "disposition": ConsultationDisposition.INVALID.value,
+                "reason_code": "CONSULTATION_ANSWER_RECEIPT_INVALID",
+                "detail": "answer_ready requires a non-empty answer receipt",
+                "semantic_state": compact,
+            }
+        return {
+            "disposition": ConsultationDisposition.ANSWER_READY.value,
+            "reason_code": "CONSULTATION_ANSWER_COMMITTED",
+            "answer_id": str(answer["answer_id"]),
+            "semantic_state": compact,
+        }
+
+    if planning_handoff_committed:
+        return {
+            "disposition": ConsultationDisposition.PLANNING_READY.value,
+            "reason_code": "PLANNING_HANDOFF_COMMITTED",
+            "semantic_state": compact,
+        }
+
+    if (
+        compact["phase"] == "blocked"
+        or compact["consultation_status"] == "blocked"
+        or compact["completion_decision"] == "blocked"
+        or compact["agent_disposition"] == ConsultationDisposition.BLOCKED.value
+    ):
+        return {
+            "disposition": ConsultationDisposition.BLOCKED.value,
+            "reason_code": str(
+                current.get("completion_reason") or "CONSULTATION_BLOCKED"
+            ),
+            "semantic_state": compact,
+        }
+
+    if compact["agent_disposition"] in {
+        ConsultationDisposition.PLANNING_READY.value,
+    } or compact["phase"] in {"ready_to_plan", "planning_handoff_pending"}:
+        return {
+            "disposition": ConsultationDisposition.CONTINUE.value,
+            "reason_code": "PLANNING_HANDOFF_NOT_COMMITTED",
+            "semantic_state": compact,
+        }
+
+    if compact["agent_disposition"] == ConsultationDisposition.NEEDS_USER.value:
+        return {
+            "disposition": ConsultationDisposition.INVALID.value,
+            "reason_code": "CONSULTATION_QUESTION_RECEIPT_MISSING",
+            "detail": "needs_user requires a pending question receipt",
+            "semantic_state": compact,
+        }
+
+    # Active consultation is one semantic class.  Phase names such as
+    # needs_evidence and observing are descriptive facts, not a second routing
+    # state machine maintained by the workflow adapter.
+    if compact["agent_disposition"] == ConsultationDisposition.CONTINUE.value or (
+        compact["consultation_status"] in {"active", "pending", "in_progress"}
+        and compact["completion_decision"] not in {"blocked", "invalid"}
+    ):
+        return {
+            "disposition": ConsultationDisposition.CONTINUE.value,
+            "reason_code": str(
+                current.get("completion_reason")
+                or compact["completion_decision"]
+                or "CONSULTATION_ACTIVE"
+            ),
+            "semantic_state": compact,
+        }
+
+    return {
+        "disposition": ConsultationDisposition.INVALID.value,
+        "reason_code": "CONSULTATION_LIFECYCLE_CONTRADICTION",
+        "detail": "No valid protocol receipt or active lifecycle fact was present.",
+        "semantic_state": compact,
+    }
+
+
+def resource_binding(
+    resource: str,
+    *,
+    role: str = "",
+    epistemic_status: str = "user_asserted",
+    observation: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Create a minimal resource claim without pretending it was inspected."""
+
+    status = str(epistemic_status or "").strip().lower()
+    if status not in RESOURCE_EPISTEMIC_STATUSES:
+        raise ValueError(f"RESOURCE_EPISTEMIC_STATUS_INVALID: {status!r}")
+    value = str(resource or "").strip()
+    if not value:
+        raise ValueError("RESOURCE_VALUE_REQUIRED")
+    result: Dict[str, Any] = {
+        "resource": value,
+        "role": str(role or "").strip(),
+        "epistemic_status": status,
+    }
+    if observation is not None:
+        if status != "observed":
+            raise ValueError("RESOURCE_OBSERVATION_REQUIRES_OBSERVED_STATUS")
+        result["observation"] = deepcopy(dict(observation))
+    return result
+
+
+def inspect_resource(resource: str, *, role: str = "") -> Dict[str, Any]:
+    """Return bounded filesystem facts; never infer a workflow disposition."""
+
+    raw = str(resource or "").strip()
+    if not raw or "\x00" in raw:
+        raise ValueError("RESOURCE_PATH_INVALID")
+    path = Path(raw)
+    observation: Dict[str, Any] = {
+        "resource": raw,
+        "exists": False,
+        "kind": "missing",
+        "readable": False,
+        "size": None,
+        "epistemic_status": "observed",
+    }
+    try:
+        stat_result = path.stat()
+    except (FileNotFoundError, NotADirectoryError):
+        pass
+    except OSError as exc:
+        observation["inspection_error"] = type(exc).__name__
+    else:
+        observation.update({
+            "exists": True,
+            "kind": "directory" if path.is_dir() else "file" if path.is_file() else "other",
+            "readable": os.access(path, os.R_OK),
+            "size": int(stat_result.st_size),
+        })
+    observation["binding"] = resource_binding(
+        raw,
+        role=role,
+        epistemic_status="observed",
+        observation={
+            key: deepcopy(value)
+            for key, value in observation.items()
+            if key not in {"binding"}
+        },
+    )
+    return observation
+
+
+def glob_resources(pattern: str, *, limit: int = 50) -> Dict[str, Any]:
+    """Return a bounded path-match observation without selecting a next action."""
+
+    import glob as globlib
+
+    raw = str(pattern or "").strip()
+    if not raw or "\x00" in raw or len(raw) > 2048:
+        raise ValueError("RESOURCE_GLOB_INVALID")
+    bounded = max(1, min(int(limit or 50), 50))
+    matches = sorted(globlib.glob(raw, recursive=False))
+    return {
+        "pattern": raw,
+        "matches": matches[:bounded],
+        "match_count": len(matches),
+        "truncated": len(matches) > bounded,
+        "epistemic_status": "observed",
+    }
+
+
+def record_consultant_tool_observation(
+    state: Mapping[str, Any],
+    *,
+    action_type: str,
+    action: Mapping[str, Any],
+    observation: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Record one action/observation turn and bound genuine no-progress."""
+
+    updated = deepcopy(dict(state or {}))
+    semantic = {
+        "action_type": str(action_type or "").strip().lower(),
+        "action": deepcopy(dict(action or {})),
+        "observation": deepcopy(dict(observation or {})),
+    }
+    fingerprint = _digest(semantic)
+    progress = dict(updated.get("agent_progress") or {})
+    repeated = fingerprint == str(progress.get("last_fingerprint") or "")
+    identical = int(progress.get("identical_no_progress_count") or 0) + 1 if repeated else 0
+    progress.update({
+        "turn_count": int(progress.get("turn_count") or 0) + 1,
+        "identical_no_progress_count": identical,
+        "last_fingerprint": fingerprint,
+        "last_action_type": semantic["action_type"],
+    })
+    receipt = {
+        "observation_id": "obs-" + fingerprint[:16],
+        "action_type": semantic["action_type"],
+        "action": semantic["action"],
+        "observation": semantic["observation"],
+        "fingerprint": fingerprint,
+        "recorded_at": _now(),
+    }
+    updated["tool_observations"] = [
+        *list(updated.get("tool_observations") or [])[-23:],
+        receipt,
+    ]
+    if semantic["action_type"] in {"inspect_resource", "glob_resource"}:
+        bindings = list(updated.get("resource_bindings") or [])
+        binding = semantic["observation"].get("binding")
+        if isinstance(binding, Mapping):
+            bindings.append(deepcopy(dict(binding)))
+        updated["resource_bindings"] = bindings[-24:]
+    updated["agent_progress"] = progress
+    updated.update({
+        "phase": "needs_evidence",
+        "consultation_status": "active",
+        "completion_decision": "needs_reasoning",
+        "completion_reason": "tool_observation_recorded",
+        "agent_disposition": ConsultationDisposition.CONTINUE.value,
+        "updated_at": _now(),
+    })
+    threshold = max(1, int(updated.get("max_no_progress") or 2))
+    if identical >= threshold:
+        updated.update({
+            "phase": "invalid",
+            "consultation_status": "invalid",
+            "completion_decision": "invalid",
+            "completion_reason": "CONSULTANT_AGENT_NO_PROGRESS",
+            "agent_disposition": ConsultationDisposition.INVALID.value,
+            "terminal_diagnostic": {
+                "source_node": "consultant",
+                "error_code": "CONSULTANT_AGENT_NO_PROGRESS",
+                "detail": (
+                    "The same action and observation repeated without durable "
+                    "semantic or evidence progress."
+                ),
+                "semantic_state": {
+                    "action_type": semantic["action_type"],
+                    "identical_no_progress_count": identical,
+                    "turn_count": progress["turn_count"],
+                },
+            },
+        })
+    return updated
+
+
+def record_consultant_answer(
+    state: Mapping[str, Any],
+    answer: str,
+) -> Dict[str, Any]:
+    """Commit a consultation-only answer receipt; no TaskSpec is required."""
+
+    text = str(answer or "").strip()
+    if not text:
+        raise ValueError("CONSULTANT_ANSWER_REQUIRED")
+    updated = deepcopy(dict(state or {}))
+    answer_id = "answer-" + _digest({"answer": text})[:16]
+    updated.update({
+        "phase": "answer_ready",
+        "consultation_status": "ready",
+        "completion_decision": "answer_ready",
+        "completion_reason": "agent_completed_consultation",
+        "agent_disposition": ConsultationDisposition.ANSWER_READY.value,
+        "answer_receipt": {
+            "answer_id": answer_id,
+            "answer": text[:20000],
+            "committed_at": _now(),
+        },
+        "pending_question": None,
+        "pending_human_question": None,
+        "updated_at": _now(),
+    })
+    return updated
+
+
+def validate_planning_handoff_protocol(
+    candidate: Mapping[str, Any] | None,
+) -> Dict[str, Any]:
+    """Validate only the structural preconditions of an explicit handoff."""
+
+    current = dict(candidate or {})
+    task_spec = current.get("task_spec")
+    if not task_spec_is_initialized(task_spec):
+        return {
+            "valid": False,
+            "error_code": "PLANNING_HANDOFF_TASKSPEC_REQUIRED",
+            "detail": "An execution handoff requires an initialized canonical TaskSpec.",
+        }
+    pending = current.get("pending_question") or (
+        current.get("consultation_state") or {}
+    ).get("pending_question")
+    if isinstance(pending, Mapping) and pending:
+        return {
+            "valid": False,
+            "error_code": "PLANNING_HANDOFF_QUESTION_PENDING",
+            "detail": "The handoff cannot commit while its user question receipt is pending.",
+        }
+    violations = [
+        dict(item)
+        for item in current.get("output_contract_violations") or []
+        if isinstance(item, Mapping)
+    ]
+    if violations:
+        first = violations[0]
+        return {
+            "valid": False,
+            "error_code": str(first.get("code") or "PLANNING_HANDOFF_SCHEMA_INVALID"),
+            "detail": str(first.get("message") or "TaskSpec output contract is structurally invalid."),
+        }
+    return {
+        "valid": True,
+        "error_code": "",
+        "detail": "The explicit planning handoff is structurally valid.",
+    }
+
+
+def record_planning_handoff_attempt(
+    state: Mapping[str, Any],
+    *,
+    committed: bool,
+    error_code: str = "",
+    detail: str = "",
+) -> Dict[str, Any]:
+    """Record a handoff receipt; only a successful commit may become ready."""
+
+    updated = deepcopy(dict(state or {}))
+    attempts = list(updated.get("planning_handoff_attempts") or [])
+    receipt = {
+        "attempt_id": "handoff-" + _digest({
+            "ordinal": len(attempts) + 1,
+            "committed": bool(committed),
+            "error_code": str(error_code or ""),
+            "detail": str(detail or "")[:800],
+        })[:16],
+        "committed": bool(committed),
+        "error_code": str(error_code or ""),
+        "detail": str(detail or "")[:800],
+        "recorded_at": _now(),
+    }
+    updated["planning_handoff_attempts"] = [*attempts[-7:], receipt]
+    if committed:
+        updated.update({
+            "phase": "ready_to_plan",
+            "consultation_status": "ready",
+            "completion_decision": "ready_to_plan",
+            "completion_reason": "agent_planning_handoff_committed",
+            "agent_disposition": ConsultationDisposition.PLANNING_READY.value,
+        })
+    else:
+        updated.update({
+            "phase": "planning_handoff_pending",
+            "consultation_status": "active",
+            "completion_decision": "needs_reasoning",
+            "completion_reason": str(error_code or "planning_handoff_repair_required"),
+            "agent_disposition": ConsultationDisposition.CONTINUE.value,
+        })
+    updated["updated_at"] = _now()
+    return updated
 
 
 def add_requirement(state: Mapping[str, Any], requirement: Mapping[str, Any]) -> Dict[str, Any]:
@@ -2307,7 +2763,10 @@ def preflight_execute(
 ) -> Dict[str, Any]:
     """Validate evidence purpose and deduplicate before confirmation/spawn."""
     updated = evaluate_consultation_completion(state)
-    if updated.get("phase") in {"ready_to_finalize", "finalize"}:
+    # Only the explicit legacy FINALIZE protocol closes tool use.  A
+    # ready-looking evidence projection is not itself an Agent completion
+    # choice and must not prevent a useful observation.
+    if str(state.get("phase") or "") == "finalize":
         return {"decision": "finalize_execute_forbidden", "state": begin_finalize(updated)}
     if updated.get("completion_decision") in {"blocked", "needs_user"}:
         return {"decision": str(updated.get("completion_decision")), "state": updated}
@@ -2418,7 +2877,7 @@ def record_execution_observation(
 
 
 def consultation_prompt_context(state: Mapping[str, Any]) -> str:
-    """Render only the compact controller contract required by the Consultant."""
+    """Render the compact route-free lifecycle contract for the Consultant."""
     payload = {
         "consultation_id": state.get("consultation_id"),
         "phase": state.get("phase"),
@@ -2428,7 +2887,9 @@ def consultation_prompt_context(state: Mapping[str, Any]) -> str:
         "no_progress_count": state.get("no_progress_count", 0),
         "requirements": list((state.get("requirements") or {}).values()),
         "allowed_actions": ["finish", "ask"] if state.get("phase") == "finalize" else [
-            "execute", "search", "load_workflow_template", "load_skill_doc", "load_reference", "load_script", "ask", "finish"
+            "search_skills", "load_skill_doc", "select_skill",
+            "inspect_resource", "glob_resource", "update_taskspec",
+            "ask_user", "answer_user", "submit_planning_handoff",
         ],
     }
     return "<consultation_controller>\n" + json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2, default=str) + "\n</consultation_controller>"

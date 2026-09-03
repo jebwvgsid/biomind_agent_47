@@ -62,6 +62,9 @@ def _ready_consultant(task_id: str = "semantic-coverage") -> dict:
                 "summary": "Canonical Consultant commit succeeded.",
                 "selected_skills": ["genomics/snpeff-annotation"],
                 "goal_interpretation": "Use the accepted documented capability",
+                "handoff_kind": "execution_planning",
+                "agent_initiated": True,
+                "handoff_protocol_version": 1,
             },
             "consultation_state": {
                 "phase": "ready_to_plan",
@@ -132,7 +135,7 @@ class FrontHalfSemanticCoverageTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(clean["type"], "planning_ready")
         self.assertEqual(poisoned, clean)
 
-    def test_consultant_self_loop_requires_explicit_active_lifecycle(self):
+    def test_consultant_ready_like_state_without_handoff_stays_in_loop(self):
         durable = _ready_consultant()
         durable["task_state"].pop("accepted_consultant_handoff")
         durable["task_state"]["consultation_state"].update({
@@ -145,7 +148,10 @@ class FrontHalfSemanticCoverageTests(unittest.IsolatedAsyncioTestCase):
         durable["task_state"]["consultation_state"].update({
             "phase": "ready_to_plan", "consultation_status": "ready"
         })
-        self.assertEqual(adapter.classify({}, {}, durable)["type"], "harness_error")
+        self.assertEqual(
+            adapter.classify({}, {}, durable)["type"],
+            "consultation_continues",
+        )
 
     async def test_consultant_search_result_continues_before_durable_handoff(self):
         """Reproduce the fresh-session SEARCH_SKILLS production timing."""
@@ -218,10 +224,8 @@ class FrontHalfSemanticCoverageTests(unittest.IsolatedAsyncioTestCase):
         outcome = TypedConsultant(data_path="/unused", source=None).classify(
             {}, transient, durable
         )
-        self.assertEqual(outcome["type"], "harness_error")
-        self.assertEqual(
-            outcome["payload"]["detail"], "canonical_task_spec_missing"
-        )
+        self.assertEqual(outcome["type"], "consultation_continues")
+        self.assertNotEqual(outcome["type"], "planning_ready")
 
     def test_planner_success_continuation_and_ambiguous_fallthrough(self):
         adapter = TypedPlanner(data_path="/unused", source=None)
@@ -450,11 +454,14 @@ class ResumeSemanticCoverageTests(unittest.TestCase):
                 self.assertEqual(result.type, expected)
                 self.assertNotIn("finish", str(result.to_dict()))
 
-    def test_ambiguous_initialized_task_fails_closed(self):
+    def test_initialized_ready_like_task_without_handoff_resumes_consultant(self):
         durable = _ready_consultant()
         durable["task_state"].pop("accepted_consultant_handoff")
-        with self.assertRaisesRegex(ValueError, "SCHEMA2_RESUME_SEMANTIC_STATE_AMBIGUOUS"):
-            self._classify(durable)
+        result = self._classify(durable)
+        self.assertEqual(result.type, "consultation_ready")
+        self.assertEqual(
+            result.payload["reason_code"], "PLANNING_HANDOFF_NOT_COMMITTED"
+        )
 
 
 if __name__ == "__main__":

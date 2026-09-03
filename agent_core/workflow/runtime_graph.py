@@ -259,6 +259,7 @@ def build_schema2_production_graph(
         outcome = ConsultantOutcome.from_mapping(state.get("consultant_outcome") or {})
         return {
             "planning_ready": "planner",
+            "answer_ready": END,
             "consultation_continues": "consultant",
             "user_input_needed": "ask_user",
             "stale_result": "consultant",

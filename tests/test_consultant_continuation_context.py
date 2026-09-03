@@ -224,11 +224,12 @@ class ConsultantContinuationContextTests(unittest.TestCase):
         self.assertEqual(decision["route"], "planner")
         self.assertEqual(decision["code"], "CONSULTANT_CANDIDATE_COMPLETE")
 
-    def test_p6_unresolved_runtime_evidence_stays_with_consultant(self) -> None:
+    def test_p6_legacy_candidate_gate_is_not_schema2_runtime_authority(self) -> None:
         candidate = self._ready_candidate(runtime_ready=False)
         decision = evaluate_consultant_candidate_route(candidate)
-        self.assertEqual(decision["route"], "consultant")
-        self.assertIn("runtime", " ".join(decision.get("unresolved_requirement_ids") or []))
+        # Retained only for legacy FINISH compatibility. Schema-2 uses the
+        # explicit handoff protocol and leaves runtime facts to Agent reasoning.
+        self.assertEqual(decision["route"], "planner")
 
     def test_p7_select_and_finish_use_the_same_route_gate(self) -> None:
         candidate = self._ready_candidate(runtime_ready=True)
@@ -375,15 +376,16 @@ class ConsultantContinuationContextTests(unittest.TestCase):
         ).strip()
         self.assertEqual(output, "False True max high")
 
-    def test_select_prompt_requests_candidate_completion_without_ceremonial_finish(self) -> None:
+    def test_select_prompt_requires_explicit_answer_or_planning_handoff(self) -> None:
         prompt = PromptManager.get_consultant_v2_prompt({})
         select_example = next(
             line for line in prompt.splitlines()
             if '"action_type":"select_skill"' in line
         )
         self.assertIn("task_spec_operations", select_example)
-        self.assertIn("same deterministic completion gate", prompt)
-        self.assertIn("Do not emit a later", prompt)
+        self.assertIn("Selection alone does not enter Planner", prompt)
+        self.assertIn("submit an explicit planning handoff", prompt)
+        self.assertIn('"action_type":"answer_user"', prompt)
 
 
 if __name__ == "__main__":

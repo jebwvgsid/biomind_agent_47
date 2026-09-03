@@ -96,6 +96,8 @@ def active_task_skill_refs(
 
 def consultant_planning_readiness(
     plan_state: Mapping[str, Any] | None,
+    *,
+    require_agent_initiated: bool = False,
 ) -> Dict[str, Any]:
     """Classify the durable, route-free Consultant-to-Planner handoff.
 
@@ -136,17 +138,6 @@ def consultant_planning_readiness(
         or consultation.get("pending_human_question")
         or {}
     )
-    requirements = [
-        dict(value)
-        for value in dict(consultation.get("requirements") or {}).values()
-        if isinstance(value, Mapping)
-    ]
-    unmet_mandatory = [
-        str(item.get("id") or "unknown")
-        for item in requirements
-        if item.get("mandatory") is True
-        and str(item.get("status") or "").lower() != "satisfied"
-    ]
     protocol = dict(consultation.get("finalize_protocol") or {})
     compile_outcome = dict(protocol.get("compile_outcome") or {})
     compiled = bool(
@@ -164,23 +155,31 @@ def consultant_planning_readiness(
     selection_consistent = bool(
         not accepted_selected or accepted_selected == selected
     )
+    agent_handoff = bool(
+        accepted.get("agent_initiated") is True
+        and str(accepted.get("handoff_kind") or "") == "execution_planning"
+        and int(accepted.get("handoff_protocol_version") or 0) >= 1
+    )
     accepted_ready = bool(
         accepted
         and lifecycle_ready
         and selection_consistent
-        and not unmet_mandatory
+        and (agent_handoff or not require_agent_initiated)
     )
     ready = bool(
         task_spec_is_initialized(task_spec)
         and revision > 0
         and not pending_question
-        and (compiled or accepted_ready)
+        and (
+            accepted_ready
+            or (compiled and not require_agent_initiated)
+        )
     )
     if ready:
         reason_code = (
-            "versioned_finalize_compiled"
-            if compiled
-            else "accepted_consultant_handoff_ready"
+            "accepted_consultant_handoff_ready"
+            if accepted_ready
+            else "versioned_finalize_compiled"
         )
     elif pending_question:
         reason_code = "consultant_question_pending"
@@ -188,10 +187,10 @@ def consultant_planning_readiness(
         reason_code = "canonical_task_spec_missing"
     elif revision <= 0:
         reason_code = "canonical_task_revision_missing"
-    elif unmet_mandatory:
-        reason_code = "mandatory_consultation_requirements_unresolved"
     elif accepted and not selection_consistent:
         reason_code = "accepted_handoff_skill_selection_mismatch"
+    elif require_agent_initiated and not agent_handoff:
+        reason_code = "agent_initiated_handoff_missing"
     else:
         reason_code = "consultant_handoff_not_committed"
     return {
@@ -205,8 +204,11 @@ def consultant_planning_readiness(
         "consultation_status": str(consultation.get("consultation_status") or ""),
         "completion_decision": str(consultation.get("completion_decision") or ""),
         "accepted_handoff": bool(accepted),
+        "agent_initiated_handoff": agent_handoff,
         "selected_skill_ids": selected,
-        "unmet_mandatory_requirement_ids": unmet_mandatory,
+        # Business-evidence requirements remain available to the Agent as
+        # observations.  They are intentionally not a global planning gate.
+        "unmet_mandatory_requirement_ids": [],
     }
 
 

@@ -183,10 +183,12 @@ from agent_core.deepseek_stream import (
     enable_deepseek_reasoning_stream,
 )
 from agent_core.consultation_state import (
+    ConsultationDisposition,
     begin_finalize,
     build_consultant_candidate,
     commit_finalize_v4_transition,
     commit_finalize_decision,
+    classify_consultation_lifecycle,
     consultation_prompt_context,
     emit_finalize_repair_projection,
     evaluate_consultation_completion,
@@ -197,13 +199,19 @@ from agent_core.consultation_state import (
     finalize_protocol_runner,
     initialize_finalize_protocol,
     initialize_finalize_protocol_v4,
+    glob_resources,
+    inspect_resource,
     legacy_finalize_migration_eligibility,
     migrate_finalize_protocol_state,
     new_consultation_state,
     preflight_execute,
     record_execution_observation,
+    record_consultant_answer,
+    record_consultant_tool_observation,
+    record_planning_handoff_attempt,
     route_runtime_preflight,
     seed_structured_evidence,
+    validate_planning_handoff_protocol,
     validate_finalize_protocol_v4,
 )
 from agent_core.consultant_binding import (
@@ -4294,7 +4302,9 @@ class BioAnalystAgent:
             durable, task_spec_revision(canonical_task_spec_for_state(durable))
         )
         task_spec = canonical_task_spec_for_state(durable)
-        planning_readiness = consultant_planning_readiness(durable)
+        planning_readiness = consultant_planning_readiness(
+            durable, require_agent_initiated=True
+        )
 
         if status in {TASK_STATUS_COMPLETED, TASK_STATUS_CANCELLED, TASK_STATUS_BLOCKED, TASK_STATUS_FAILED}:
             semantic, reason = "terminal", f"task_{status}"
@@ -4332,21 +4342,27 @@ class BioAnalystAgent:
             semantic, reason = "consultation_ready", "semantic_contract_incomplete"
         else:
             consultation = dict(task_state_value.get("consultation_state") or {})
-            phase = str(consultation.get("phase") or "").lower()
-            consultation_status = str(
-                consultation.get("consultation_status") or ""
-            ).lower()
-            if (
-                phase in {"consulting", "finalize", "skill_discovery"}
-                and consultation_status in {"active", "pending", "in_progress"}
-            ):
-                semantic, reason = "consultation_ready", str(
-                    planning_readiness["reason_code"]
-                )
+            lifecycle = classify_consultation_lifecycle(
+                consultation,
+                planning_handoff_committed=bool(planning_readiness["ready"]),
+            )
+            disposition = str(lifecycle.get("disposition") or "")
+            reason = str(
+                lifecycle.get("reason_code")
+                or planning_readiness["reason_code"]
+            )
+            if disposition == ConsultationDisposition.CONTINUE.value:
+                semantic = "consultation_ready"
+            elif disposition == ConsultationDisposition.NEEDS_USER.value:
+                semantic = "awaiting_user_input"
+            elif disposition == ConsultationDisposition.ANSWER_READY.value:
+                semantic, status = "terminal", TASK_STATUS_COMPLETED
+            elif disposition == ConsultationDisposition.BLOCKED.value:
+                semantic, status = "terminal", TASK_STATUS_BLOCKED
             else:
                 raise ValueError(
                     "SCHEMA2_RESUME_SEMANTIC_STATE_AMBIGUOUS: "
-                    + str(planning_readiness["reason_code"])
+                    + reason
                 )
 
         payload: Dict[str, Any] = {"reason_code": reason}
@@ -5265,7 +5281,8 @@ class BioAnalystAgent:
             "goal_interpretation", "input_files", "required_outputs",
             "selected_skills", "capability_decisions",
             "runtime_requirements", "resolved_ambiguities",
-            "unresolved_questions", "database_strategy",
+            "unresolved_questions", "database_strategy", "handoff_kind",
+            "agent_initiated", "handoff_protocol_version",
         ):
             value = raw.get(key)
             if value not in (None, "", [], {}):
@@ -17735,7 +17752,10 @@ class BioAnalystAgent:
             "install": "install_tool",
             "finish": "solution",
             "final": "solution",
-            "answer": "solution",
+            "answer": "answer_user",
+            "submit_handoff": "submit_planning_handoff",
+            "planning_handoff": "submit_planning_handoff",
+            "update_task_spec": "update_taskspec",
             "activate": "activate_batch",
             "invoke_renderer": "renderer_invocation",
             "render": "renderer_invocation",
@@ -18221,13 +18241,32 @@ class BioAnalystAgent:
                 "question": "ask",
                 "final": "finish",
                 "solution": "finish",
-                "answer": "finish",
+                "answer": "answer_user",
                 "load_workflow": "load_workflow_template",
                 "workflow_template": "load_workflow_template",
                 "load_skill": "load_skill_doc",
                 "skill_doc": "load_skill_doc",
                 "load_ref": "load_reference",
             }.get(action_type, action_type)
+
+            if action_type == "answer_user":
+                answer = str(
+                    obj.get("answer") or obj.get("text") or obj.get("body") or ""
+                ).strip()
+                if answer:
+                    return "ANSWER_USER " + answer
+            if action_type in {"submit_planning_handoff", "submit_handoff"}:
+                return "SUBMIT_PLANNING_HANDOFF"
+            if action_type in {"update_taskspec", "update_task_spec"}:
+                return "UPDATE_TASKSPEC"
+            if action_type == "inspect_resource":
+                resource = str(obj.get("resource") or obj.get("path") or "").strip()
+                if resource:
+                    return "INSPECT_RESOURCE " + resource
+            if action_type in {"glob_resource", "glob_resources"}:
+                pattern = str(obj.get("pattern") or obj.get("path") or "").strip()
+                if pattern:
+                    return "GLOB_RESOURCE " + pattern
 
             if action_type == "execute":
                 code = str(obj.get("code") or obj.get("command") or obj.get("body") or "").strip()
@@ -28675,6 +28714,46 @@ question. Never guess a scientific or database identity.
                 )
             )
             if not finalize_mode and loop_guard_exhausted:
+                if (
+                    int(state.get("workflow_routing_schema_version") or 1)
+                    == WORKFLOW_ROUTING_SCHEMA_TYPED
+                ):
+                    diagnostic = {
+                        "source_node": "consultant",
+                        "error_code": "CONSULTANT_AGENT_TURN_BUDGET_EXHAUSTED",
+                        "detail": (
+                            "The bounded action-repair budget was exhausted without "
+                            "a new durable observation or semantic mutation."
+                        ),
+                        "semantic_state": {
+                            "load_action_count": len(load_actions),
+                            "validation_error_count": len(internal_validation_errors),
+                            "load_error_count": len(load_errors),
+                            "format_repair_error_count": len(format_repair_errors),
+                        },
+                    }
+                    invalid_consultation = deepcopy(consultation_state)
+                    invalid_consultation.update({
+                        "phase": "invalid",
+                        "consultation_status": "invalid",
+                        "completion_decision": "invalid",
+                        "completion_reason": diagnostic["error_code"],
+                        "agent_disposition": "invalid",
+                        "terminal_diagnostic": diagnostic,
+                    })
+                    return {
+                        "messages": [SystemMessage(content=json.dumps(
+                            diagnostic,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        ))],
+                        "input_audit": input_resolution_result,
+                        "consultation_state": invalid_consultation,
+                        "pending_human_question": {},
+                        "terminal_diagnostic": diagnostic,
+                        "contract_status": "internal_protocol",
+                        "next_step": "finish",
+                    }
                 selected = self.skill_manager.normalize_selected_skills(
                     loaded_skill_ids,
                     max_results=consultant_max_skills,
@@ -28814,6 +28893,34 @@ question. Never guess a scientific or database identity.
                     "contract exceeds the configured 100k-token history pool."
                 )
                 logger.error("%s task=%s", reason, task_id)
+                if (
+                    int(state.get("workflow_routing_schema_version") or 1)
+                    == WORKFLOW_ROUTING_SCHEMA_TYPED
+                ):
+                    diagnostic = {
+                        "source_node": "consultant",
+                        "error_code": "CONSULTANT_CONTEXT_BUDGET_UNSATISFIED",
+                        "detail": reason,
+                        "semantic_state": {
+                            "phase": str(consultation_state.get("phase") or ""),
+                        },
+                    }
+                    invalid_consultation = deepcopy(consultation_state)
+                    invalid_consultation.update({
+                        "phase": "invalid",
+                        "consultation_status": "invalid",
+                        "completion_decision": "invalid",
+                        "completion_reason": diagnostic["error_code"],
+                        "agent_disposition": "invalid",
+                        "terminal_diagnostic": diagnostic,
+                    })
+                    return {
+                        "messages": [SystemMessage(content=reason)],
+                        "consultation_state": invalid_consultation,
+                        "terminal_diagnostic": diagnostic,
+                        "contract_status": "internal_protocol",
+                        "next_step": "finish",
+                    }
                 return {
                     "messages": [SystemMessage(content=reason)],
                     "plan_progress": self._mark_plan_current_blocked(task_id, reason),
@@ -30059,6 +30166,176 @@ question. Never guess a scientific or database identity.
                 cached["updated_at"] = datetime.now(timezone.utc).isoformat()
                 current_consultation["discovery_continuation"] = cached
 
+            if (
+                int(state.get("workflow_routing_schema_version") or 1)
+                == WORKFLOW_ROUTING_SCHEMA_TYPED
+                and (
+                    payload_action_type == "solution"
+                    or content.startswith("FINISH")
+                )
+            ):
+                observation = {
+                    "accepted": False,
+                    "error_code": "SCHEMA2_EXPLICIT_COMPLETION_ACTION_REQUIRED",
+                    "allowed_completion_actions": [
+                        "answer_user", "submit_planning_handoff",
+                    ],
+                }
+                consultation_state = record_consultant_tool_observation(
+                    consultation_state,
+                    action_type="legacy_finish",
+                    action={},
+                    observation=observation,
+                )
+                return {
+                    "messages": [
+                        AIMessage(content=raw_content),
+                        SystemMessage(content=(
+                            '<consultant_validation_error code="SCHEMA2_EXPLICIT_COMPLETION_ACTION_REQUIRED">'
+                            "Choose ANSWER_USER for consultation-only completion or "
+                            "SUBMIT_PLANNING_HANDOFF for execution planning."
+                            "</consultant_validation_error>"
+                        )),
+                    ],
+                    "consultation_state": consultation_state,
+                    "pending_human_question": {},
+                    "next_step": "consultant",
+                }
+
+            # Schema-2 local-agent actions.  Each read-only tool returns facts
+            # to Consultant; none of these branches chooses a workflow node.
+            if content.startswith("INSPECT_RESOURCE"):
+                resource = str(
+                    consultant_json_payload.get("resource")
+                    or consultant_json_payload.get("path")
+                    or content.removeprefix("INSPECT_RESOURCE").strip()
+                ).strip()
+                role = str(consultant_json_payload.get("role") or "").strip()
+                try:
+                    resource_observation = inspect_resource(resource, role=role)
+                except ValueError as exc:
+                    resource_observation = {
+                        "resource": resource,
+                        "inspection_error": str(exc),
+                        "epistemic_status": "observed",
+                    }
+                consultation_state = record_consultant_tool_observation(
+                    consultation_state,
+                    action_type="inspect_resource",
+                    action={"resource": resource, "role": role},
+                    observation=resource_observation,
+                )
+                return {
+                    "messages": [
+                        AIMessage(content=raw_content),
+                        SystemMessage(content=(
+                            '<resource_observation action="INSPECT_RESOURCE">\n'
+                            + json.dumps(
+                                resource_observation,
+                                ensure_ascii=False,
+                                sort_keys=True,
+                                default=str,
+                            )
+                            + "\n</resource_observation>"
+                        )),
+                    ],
+                    "consultation_state": consultation_state,
+                    "pending_human_question": {},
+                    "next_step": "consultant",
+                }
+
+            if content.startswith("GLOB_RESOURCE"):
+                pattern = str(
+                    consultant_json_payload.get("pattern")
+                    or consultant_json_payload.get("path")
+                    or content.removeprefix("GLOB_RESOURCE").strip()
+                ).strip()
+                try:
+                    resource_observation = glob_resources(pattern)
+                except ValueError as exc:
+                    resource_observation = {
+                        "pattern": pattern,
+                        "inspection_error": str(exc),
+                        "epistemic_status": "observed",
+                    }
+                consultation_state = record_consultant_tool_observation(
+                    consultation_state,
+                    action_type="glob_resource",
+                    action={"pattern": pattern},
+                    observation=resource_observation,
+                )
+                return {
+                    "messages": [
+                        AIMessage(content=raw_content),
+                        SystemMessage(content=(
+                            '<resource_observation action="GLOB_RESOURCE">\n'
+                            + json.dumps(
+                                resource_observation,
+                                ensure_ascii=False,
+                                sort_keys=True,
+                                default=str,
+                            )
+                            + "\n</resource_observation>"
+                        )),
+                    ],
+                    "consultation_state": consultation_state,
+                    "pending_human_question": {},
+                    "next_step": "consultant",
+                }
+
+            if content.startswith("ANSWER_USER"):
+                answer = str(
+                    consultant_json_payload.get("answer")
+                    or consultant_json_payload.get("text")
+                    or content.removeprefix("ANSWER_USER").strip()
+                ).strip()
+                try:
+                    consultation_state = record_consultant_answer(
+                        consultation_state, answer
+                    )
+                except ValueError as exc:
+                    consultation_state = record_consultant_tool_observation(
+                        consultation_state,
+                        action_type="answer_user",
+                        action={},
+                        observation={"accepted": False, "error_code": str(exc)},
+                    )
+                    return {
+                        "messages": [
+                            AIMessage(content=raw_content),
+                            SystemMessage(content=(
+                                '<consultant_validation_error code="CONSULTANT_ANSWER_REQUIRED">'
+                                "ANSWER_USER requires a non-empty answer."
+                                "</consultant_validation_error>"
+                            )),
+                        ],
+                        "consultation_state": consultation_state,
+                        "pending_human_question": {},
+                        "next_step": "consultant",
+                    }
+                output.print_ai(answer)
+                answer_message = AIMessage(content=answer)
+                await self._finalize_task_memory(
+                    task_id,
+                    "completed",
+                    messages + [answer_message],
+                    {
+                        "task_mode": "managed_consultation",
+                        "completion_mode": "consultation_only",
+                        "solution": answer[:3000],
+                    },
+                )
+                return {
+                    "messages": [answer_message],
+                    "consultation_state": consultation_state,
+                    "consultation_answer": deepcopy(
+                        consultation_state.get("answer_receipt") or {}
+                    ),
+                    "pending_human_question": {},
+                    "task_status": TASK_STATUS_COMPLETED,
+                    "next_step": "finish",
+                }
+
             # EXECUTE 动作
             if content.startswith("EXECUTE"):
                 output.print_node_header("execute")
@@ -30396,6 +30673,20 @@ question. Never guess a scientific or database identity.
                     + "\nnext_actions="
                     + json.dumps(discovery_next_actions(discovery_state), ensure_ascii=False)
                     + "\n</skill_search_result>"
+                )
+                consultation_state = record_consultant_tool_observation(
+                    consultation_state,
+                    action_type="search_skills",
+                    action={"queries": queries, "top_k": top_k},
+                    observation={
+                        "catalog_digest": str(
+                            search_batch.get("catalog_digest") or ""
+                        ),
+                        "candidate_skill_ids": [
+                            str(card.get("skill_id") or "") for card in cards
+                            if str(card.get("skill_id") or "")
+                        ],
+                    },
                 )
                 return {
                     "messages": [AIMessage(content=content), SystemMessage(content=obs)],
@@ -30861,6 +31152,19 @@ question. Never guess a scientific or database identity.
                         for skill_id in requested_ids if skill_id in already_loaded
                     ]
                     obs = "\n".join([*rendered_docs, *cache_rows])
+                    consultation_state = record_consultant_tool_observation(
+                        consultation_state,
+                        action_type="load_skill_doc",
+                        action={"skill_ids": requested_ids},
+                        observation={
+                            "loaded_skill_ids": [
+                                str(item.get("skill_id") or "")
+                                for item in loaded_documents
+                                if str(item.get("skill_id") or "")
+                            ],
+                            "cache_reused_skill_ids": sorted(already_loaded),
+                        },
+                    )
                     transition_resolution = {
                         "consultant_pending_transition": {},
                         "consultant_no_progress_ledger": {},
@@ -30874,6 +31178,15 @@ question. Never guess a scientific or database identity.
                         }, ensure_ascii=False, sort_keys=True)
                         + "\n"
                         "</load_error>"
+                    )
+                    consultation_state = record_consultant_tool_observation(
+                        consultation_state,
+                        action_type="load_skill_doc",
+                        action={"skill_ids": requested_ids},
+                        observation={
+                            "loaded_skill_ids": [],
+                            "failed_skill_ids": requested_ids,
+                        },
                     )
                 return {
                     "messages": [AIMessage(content=content), SystemMessage(content=obs)],
@@ -30949,10 +31262,15 @@ question. Never guess a scientific or database identity.
             # responses remain readable below, but all new V2 prompts use this
             # candidate-state path.
             if (
-                payload_action_type in {"ask_user", "solution", "select_skill"}
+                payload_action_type in {
+                    "ask_user", "solution", "select_skill",
+                    "update_taskspec", "submit_planning_handoff",
+                }
                 and (
                     "task_spec_operations" in consultant_json_payload
-                    or payload_action_type == "select_skill"
+                    or payload_action_type in {
+                        "select_skill", "submit_planning_handoff",
+                    }
                 )
             ):
                 durable_before = load_plan_state(self.data_path, task_id)
@@ -31313,20 +31631,179 @@ question. Never guess a scientific or database identity.
                         str(exc),
                     )
 
+                if payload_action_type == "update_taskspec":
+                    if not task_spec_is_initialized(candidate.get("task_spec")):
+                        return candidate_rejection(
+                            "TASKSPEC_MUTATION_INCOMPLETE",
+                            (
+                                "The TaskSpec mutation was structurally valid but did not yet "
+                                "initialize an execution contract. Continue reasoning or add the "
+                                "missing semantic mutation; ordinary consultation itself remains valid."
+                            ),
+                            candidate=candidate,
+                        )
+                    candidate_consultation = record_consultant_tool_observation(
+                        candidate.get("consultation_state") or consultation_state,
+                        action_type="update_taskspec",
+                        action={
+                            "operation_count": len(
+                                consultant_json_payload.get("task_spec_operations") or []
+                            )
+                        },
+                        observation={
+                            "accepted": True,
+                            "task_revision": task_spec_revision(candidate["task_spec"]),
+                        },
+                    )
+                    return commit_candidate_update({
+                        "messages": [
+                            AIMessage(content=raw_content),
+                            SystemMessage(content=(
+                                '<taskspec_observation accepted="true">'
+                                "The canonical TaskSpec mutation committed. Interpret the new "
+                                "revision and choose the next local action."
+                                "</taskspec_observation>"
+                            )),
+                        ],
+                        "task_spec": candidate["task_spec"],
+                        "task_revision": task_spec_revision(candidate["task_spec"]),
+                        "selected_skills": selected,
+                        "resolved_bindings": candidate.get("resolved_bindings") or {},
+                        "consultation_state": candidate_consultation,
+                        "pending_human_question": {},
+                        "contract_status": "consultation_in_progress",
+                        "next_step": "consultant",
+                    })
+
+                if payload_action_type == "select_skill":
+                    candidate_consultation = record_consultant_tool_observation(
+                        candidate.get("consultation_state") or consultation_state,
+                        action_type="select_skill",
+                        action={"selected_skills": selected},
+                        observation={
+                            "accepted": True,
+                            "selected_skill_ids": selected,
+                        },
+                    )
+                    selection_update = {
+                        "messages": [
+                            AIMessage(content=raw_content),
+                            SystemMessage(content=(
+                                '<skill_selection_observation accepted="true">'
+                                "The documented selection was recorded. Interpret it and "
+                                "choose ANSWER_USER, another tool, UPDATE_TASKSPEC, or an "
+                                "explicit SUBMIT_PLANNING_HANDOFF."
+                                "</skill_selection_observation>"
+                            )),
+                        ],
+                        "selected_skills": selected,
+                        "selected_skills_raw": list(raw_selected),
+                        "resolved_bindings": candidate.get("resolved_bindings") or {},
+                        "consultation_state": candidate_consultation,
+                        "pending_human_question": {},
+                        "contract_status": "consultation_in_progress",
+                        "next_step": "consultant",
+                    }
+                    if task_spec_is_initialized(candidate.get("task_spec")):
+                        selection_update.update({
+                            "task_spec": candidate["task_spec"],
+                            "task_revision": task_spec_revision(candidate["task_spec"]),
+                        })
+                    return commit_candidate_update(selection_update)
+
+                if payload_action_type == "submit_planning_handoff":
+                    handoff_check = validate_planning_handoff_protocol(candidate)
+                    if not handoff_check.get("valid"):
+                        candidate["consultation_state"] = record_planning_handoff_attempt(
+                            candidate.get("consultation_state") or consultation_state,
+                            committed=False,
+                            error_code=str(handoff_check.get("error_code") or ""),
+                            detail=str(handoff_check.get("detail") or ""),
+                        )
+                        return candidate_rejection(
+                            str(
+                                handoff_check.get("error_code")
+                                or "PLANNING_HANDOFF_REJECTED"
+                            ),
+                            str(
+                                handoff_check.get("detail")
+                                or "Repair the handoff protocol and try again."
+                            ),
+                            candidate=candidate,
+                        )
+                    summary = str(
+                        consultant_json_payload.get("summary")
+                        or "Consultant submitted an explicit execution-planning handoff."
+                    ).strip()
+                    candidate_consultation = record_planning_handoff_attempt(
+                        candidate.get("consultation_state") or consultation_state,
+                        committed=True,
+                    )
+                    candidate_consultation.update({
+                        "pending_question": None,
+                        "pending_human_question": None,
+                    })
+                    committed_update = commit_candidate_update({
+                        "messages": [AIMessage(content=raw_content)],
+                        "selected_skills": selected,
+                        "selected_skills_raw": list(raw_selected),
+                        "resolved_bindings": candidate.get("resolved_bindings") or {},
+                        "requirements_summary": summary,
+                        "task_spec": candidate["task_spec"],
+                        "task_revision": task_spec_revision(candidate["task_spec"]),
+                        "consultation_state": candidate_consultation,
+                        "pending_human_question": {},
+                        "contract_status": "canonical_task_ready",
+                        "handoff_kind": "execution_planning",
+                        "agent_initiated": True,
+                        "handoff_protocol_version": 1,
+                        **({"planner_feedback": planner_feedback} if planner_feedback else {}),
+                        "memory_packet_context": self._consultant_handoff_memory_packet(
+                            summary, consultant_memory_retrieval_context
+                        ),
+                        "wiki_memory_context": consultant_wiki_context,
+                        "next_step": "planner",
+                    })
+                    return self._finalize_consultant_commit_events(
+                        task_id,
+                        committed_update,
+                        source="submit_planning_handoff",
+                        selected_skill_ids=selected,
+                    )
+
                 if payload_action_type == "ask_user":
                     requested_slots = list(consultant_json_payload.get("requested_slots") or [])
+                    question_text = str(
+                        consultant_json_payload.get("question") or ""
+                    ).strip()
                     prior_asked = {
                         str(item)
                         for item in consultation_state.get("asked_slots", []) or []
                         if str(item)
                     }
                     repeated = sorted(prior_asked.intersection(str(item) for item in requested_slots))
-                    ask_decision = evaluate_consultant_ask(
-                        consultant_json_payload,
-                        capabilities=semantic_capabilities,
-                        resolved_bindings=candidate.get("resolved_bindings") or {},
-                        task_spec=candidate.get("task_spec") or {},
-                    )
+                    if (
+                        int(state.get("workflow_routing_schema_version") or 1)
+                        == WORKFLOW_ROUTING_SCHEMA_TYPED
+                    ):
+                        # The Agent owns whether a question is scientifically
+                        # necessary.  The protocol layer checks only that a
+                        # concrete question receipt can be formed.
+                        ask_decision = {
+                            "allowed": bool(question_text),
+                            "code": (
+                                "ASK_USER_RECEIPT_READY"
+                                if question_text else "ASK_QUESTION_REQUIRED"
+                            ),
+                            "resolved_slots": {},
+                        }
+                    else:
+                        ask_decision = evaluate_consultant_ask(
+                            consultant_json_payload,
+                            capabilities=semantic_capabilities,
+                            resolved_bindings=candidate.get("resolved_bindings") or {},
+                            task_spec=candidate.get("task_spec") or {},
+                        )
                     if repeated and ask_decision.get("allowed"):
                         ask_decision = {
                             "allowed": False,
@@ -31352,47 +31829,8 @@ question. Never guess a scientific or database identity.
                                 "Do not repeat the same question without new evidence."
                             ),
                         }.get(code, "ASK requires a missing, required, user-owned slot from the capability contract.")
-                        if (
-                            code in {
-                                "INVALID_ASK_CONTROLLER_OWNED_SLOT",
-                                "INVALID_ASK_ALREADY_KNOWN_SLOT",
-                                "INVALID_ASK_OPTIONAL_SLOT",
-                            }
-                            and candidate.get("completion", {}).get("decision") == "ready_to_finalize"
-                        ):
-                            resolved_consultation = deepcopy(dict(candidate.get("consultation_state") or {}))
-                            resolved_consultation.update({
-                                "phase": "ready_to_plan",
-                                "consultation_status": "ready",
-                                "completion_decision": "ready_to_finalize",
-                                "completion_reason": "controller_resolved_unnecessary_ask",
-                                "last_feedback": [{"code": code, "instruction": instruction}],
-                                "last_invocation_guard": {
-                                    **current_invocation_guard,
-                                    "retry_pending": False,
-                                },
-                                "pending_question": None,
-                                "pending_human_question": None,
-                            })
-                            return commit_candidate_update({
-                                "messages": [AIMessage(content=raw_content), SystemMessage(content=(
-                                    f'<consultant_ask_resolved code="{code}">{instruction}</consultant_ask_resolved>'
-                                ))],
-                                "task_spec": candidate["task_spec"],
-                                "task_revision": task_spec_revision(candidate["task_spec"]),
-                                "selected_skills": selected,
-                                "selected_skills_raw": list(raw_selected),
-                                "resolved_bindings": candidate.get("resolved_bindings") or {},
-                                "runtime_audit": candidate_runtime_audits,
-                                "consultation_state": resolved_consultation,
-                                "pending_human_question": {},
-                                "contract_status": "canonical_task_ready",
-                                "requirements_summary": instruction,
-                                **({"planner_feedback": planner_feedback} if planner_feedback else {}),
-                                "next_step": "planner",
-                            })
                         return candidate_rejection(code, instruction, candidate=candidate)
-                    question = str(consultant_json_payload.get("question") or "").strip()
+                    question = question_text
                     if not question:
                         return candidate_rejection(
                             "ASK_QUESTION_REQUIRED",

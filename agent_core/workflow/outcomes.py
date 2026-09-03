@@ -373,11 +373,12 @@ class TriageOutcome(StrictOutcome):
 class ConsultantOutcome(StrictOutcome):
     OUTCOME_NAME = "ConsultantOutcome"
     ALLOWED_TYPES = frozenset({
-        "planning_ready", "consultation_continues", "user_input_needed",
+        "planning_ready", "answer_ready", "consultation_continues", "user_input_needed",
         "stale_result", "terminal", "harness_error",
     })
     REQUIRED_PAYLOAD = _requirements(
         planning_ready=("task_revision", "contract_status"),
+        answer_ready=("answer_id", "completion_mode"),
         consultation_continues=("phase", "completion_decision"),
         user_input_needed=("question_id", "question", "owner"),
         stale_result=("changed_preconditions",),
