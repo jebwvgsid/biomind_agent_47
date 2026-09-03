@@ -15,6 +15,16 @@ The fix makes completion/continuation decisions from durable business facts,
 removes legacy recovery projections from Generate/Execute classification, and
 fails closed when neither completion nor continuation is proven.
 
+Post-fix canary `session_1788444307` exposed the complementary fresh-session
+timing case. `SEARCH_SKILLS` produced a valid active `consultation_state` in the
+current LangGraph node result, while no canonical TaskSpec was supposed to be
+durable yet. The adapter reloaded `plan_state.json` and ignored that node-local
+semantic result, so it failed closed with
+`CONSULTANT_SEMANTIC_STATE_AMBIGUOUS/canonical_task_spec_missing`. Intermediate
+Consultant lifecycle classification now uses the route-blind current node
+result when present; the final `planning_ready` decision remains gated solely
+by the durable committed predicate below.
+
 ## Consultant predicate
 
 Before:
@@ -53,7 +63,7 @@ The `CURRENT` column describes the classifier after this task.
 | Triage | readonly/simple request | normalized mode | exact supported mode | `step_execution_ready` | same | YES | NO | NO |
 | Consultant | select-skill canonical commit | initialized TaskSpec, positive revision, accepted handoff, ready lifecycle, satisfied mandatory requirements | `consultant_planning_readiness.ready` | `planning_ready` | same | YES | NO | YES |
 | Consultant | versioned FINALIZE success | initialized TaskSpec plus compiled schema-4 receipt | `consultant_planning_readiness.ready` | `planning_ready` | same | YES | NO | PRESERVED |
-| Consultant | bounded discovery continues | durable active consultation phase and non-ready completion decision | explicit lifecycle continuation | `consultation_continues` | same | YES | NO | YES: no generic fallthrough |
+| Consultant | bounded discovery continues | current node-local or durable active consultation phase and non-ready completion decision | explicit lifecycle continuation | `consultation_continues` | same | YES | NO | YES: fresh-session timing covered; no generic fallthrough |
 | Consultant | unresolved question | durable pending question | question receipt exists | `user_input_needed` | same | YES | NO | YES: durable fallback added |
 | Consultant | stale commit | stale-result receipt | stale receipt exists | `stale_result` | same | YES | NO | NO |
 | Consultant | terminal/protocol block | durable terminal task status or blocked contract | explicit terminal fact | `terminal` | same | YES | NO | NO |
@@ -108,8 +118,10 @@ does not guess a graph destination.
 
 ## Fallthrough and loop safety
 
-- Consultant self-entry requires an active durable consultation lifecycle and a
-  non-ready completion decision.
+- Consultant self-entry requires an active route-blind consultation lifecycle
+  from the current node result or durable state and a non-ready completion
+  decision. A transient ready-like lifecycle cannot produce `planning_ready`;
+  the canonical TaskSpec and handoff must already be durably committed.
 - Planner self-entry requires an active durable planning failure or planning
   epoch with a positive call count.
 - Generate corrective self-entry requires a changed candidate/error
@@ -132,7 +144,15 @@ methods and the schema-2 Resume classifier do not read those fields.
 - `154` focused CTRL-02/CTRL-03, typed adapter, StepWorker, GraphInterrupt,
   CommitStep, Recovery, CompletionGate, PlanReview and Controller-authority
   tests passed.
-- `13` new semantic coverage tests passed (included in the 154 count).
+- `15` semantic coverage tests now pass: the original `13` included in the
+  154-test audit plus `2` post-canary timing/commit regressions.
+- The post-fix fresh-session regression uses the live consultation/discovery
+  state builders and proves `SEARCH_SKILLS -> consultation_continues` before a
+  durable handoff, with all legacy route fields poisoned and scrubbed.
+- A paired negative regression proves transient `ready_to_plan` cannot bypass
+  durable TaskSpec/handoff commit. The focused post-fix suite passes `128`
+  tests plus `152` subtests; the select/load/re-entry Consultant integration
+  case also passes.
 - The preserved real canary state was read without modification and currently
   classifies as `ready=true`, reason
   `accepted_consultant_handoff_ready`, TaskSpec revision `1`.

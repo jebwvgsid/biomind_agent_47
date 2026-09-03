@@ -215,7 +215,17 @@ class TypedConsultant(_TypedEarlyNode):
 
     def classify(self, before, state, durable):
         task_state = dict(durable.get("task_state") or {})
-        consultation = dict(task_state.get("consultation_state") or {})
+        # Intermediate Consultant actions (for example SEARCH_SKILLS and
+        # LOAD_SKILL_DOC) advance the LangGraph consultation state without
+        # committing a canonical TaskSpec yet.  That node-local semantic
+        # result is authoritative for deciding whether consultation continues;
+        # plan_state remains authoritative for the final Planner handoff.
+        current_consultation = state.get("consultation_state")
+        consultation = dict(
+            current_consultation
+            if isinstance(current_consultation, Mapping) and current_consultation
+            else task_state.get("consultation_state") or {}
+        )
         pending = dict(
             state.get("pending_human_question")
             or task_state.get("pending_question")
@@ -259,7 +269,7 @@ class TypedConsultant(_TypedEarlyNode):
             return _outcome(self.contract, "consultation_continues", state, durable, {
                 "phase": phase,
                 "completion_decision": completion or "needs_evidence",
-            }, "Durable consultation lifecycle proves more convergence work is required.")
+            }, "Authoritative consultation lifecycle proves more convergence work is required.")
         return _semantic_harness_error(
             self.contract,
             state,

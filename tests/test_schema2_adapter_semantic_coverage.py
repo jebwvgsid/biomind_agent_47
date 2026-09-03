@@ -14,6 +14,12 @@ from agent_core.workflow.early_nodes import (
     TypedTriage,
 )
 from agent_core.workflow.execution import TypedExecute, TypedGenerate
+from agent_core.consultant_continuation import consultant_discovery_delta
+from agent_core.consultation_state import new_consultation_state
+from agent_core.skill_discovery import (
+    new_skill_discovery_state,
+    record_skill_search_batch,
+)
 from bio_agents import BioAnalystAgent
 
 
@@ -99,6 +105,24 @@ def _materialized_plan(*, approved: bool = False) -> dict:
     return state
 
 
+def _uninitialized_consultant(task_id: str = "semantic-coverage") -> dict:
+    return {
+        "task_id": task_id,
+        "workflow_routing_schema_version": 2,
+        "current_task": {
+            "task_spec": None,
+            "task_revision": 0,
+            "lifecycle": "uninitialized",
+        },
+        "selected_skill_ids": [],
+        "task_state": {
+            "status": "running",
+            "workflow_routing_schema_version": 2,
+        },
+        "steps": [],
+    }
+
+
 class FrontHalfSemanticCoverageTests(unittest.IsolatedAsyncioTestCase):
     def test_consultant_real_handoff_shape_and_poison_are_planning_ready(self):
         durable = _ready_consultant()
@@ -122,6 +146,82 @@ class FrontHalfSemanticCoverageTests(unittest.IsolatedAsyncioTestCase):
             "phase": "ready_to_plan", "consultation_status": "ready"
         })
         self.assertEqual(adapter.classify({}, {}, durable)["type"], "harness_error")
+
+    async def test_consultant_search_result_continues_before_durable_handoff(self):
+        """Reproduce the fresh-session SEARCH_SKILLS production timing."""
+
+        durable = _uninitialized_consultant("search-in-progress")
+        consultation_state = new_consultation_state(
+            "consultant-discovery-search-in-progress",
+            "search-in-progress",
+        )
+        discovery = record_skill_search_batch(
+            new_skill_discovery_state(),
+            queries=[{
+                "query_id": "q1",
+                "text": "snpeff custom genome annotation with GTF",
+                "purpose": "primary scientific method",
+            }],
+            candidate_cards=[{
+                "skill_id": "genomics/snpeff-annotation",
+                "name": "snpEff annotation",
+                "summary": "Build and use a custom snpEff database.",
+                "deterministic_score": 100,
+                "source_query_id": "q1",
+            }],
+            catalog_digest="sha256:catalog",
+            input_roles=["reference_fasta", "annotation_gtf", "input_vcf"],
+            task_hypothesis="Annotate a VCF with a custom snpEff database.",
+        )
+        consultation_state["skill_discovery"] = discovery
+        consultation_state["discovery_continuation"] = {
+            "discovery_delta": consultant_discovery_delta(discovery),
+        }
+
+        async def search_source(_state):
+            return {
+                "messages": ["SEARCH_SKILLS", "skill_search_result"],
+                "consultation_state": deepcopy(consultation_state),
+                "pending_human_question": {},
+                **ROUTE_POISON,
+            }
+
+        adapter = TypedConsultant(data_path="/unused", source=search_source)
+        with patch(
+            "agent_core.workflow.early_nodes.load_plan_state",
+            return_value=durable,
+        ):
+            result = await adapter.run({
+                "task_id": "search-in-progress",
+                "task_mode": "managed",
+                **ROUTE_POISON,
+            })
+
+        self.assertEqual(result["consultant_outcome"]["type"], "consultation_continues")
+        self.assertEqual(
+            result["consultant_outcome"]["payload"]["phase"], "consulting"
+        )
+        self.assertEqual(result["consultation_state"], consultation_state)
+        for route_field in ROUTE_POISON:
+            self.assertNotIn(route_field, result)
+
+    def test_consultant_transient_ready_state_cannot_bypass_durable_commit(self):
+        durable = _uninitialized_consultant("uncommitted-ready")
+        transient = {
+            "consultation_state": {
+                "phase": "ready_to_plan",
+                "consultation_status": "ready",
+                "completion_decision": "ready_to_finalize",
+            },
+            **ROUTE_POISON,
+        }
+        outcome = TypedConsultant(data_path="/unused", source=None).classify(
+            {}, transient, durable
+        )
+        self.assertEqual(outcome["type"], "harness_error")
+        self.assertEqual(
+            outcome["payload"]["detail"], "canonical_task_spec_missing"
+        )
 
     def test_planner_success_continuation_and_ambiguous_fallthrough(self):
         adapter = TypedPlanner(data_path="/unused", source=None)
