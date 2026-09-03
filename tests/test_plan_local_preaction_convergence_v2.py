@@ -1010,6 +1010,96 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(metrics["failure"]["owner"], "CONTROLLER")
         self.assertNotIn("TASK_FAILED", json.dumps(events, default=str))
 
+    async def test_graph_interrupt_pauses_without_harness_failure_and_resumes_once(
+        self,
+    ) -> None:
+        task_id = "execute-approval-graph-interrupt"
+        command_calls: list[str] = []
+        captures: list[dict[str, Any]] = []
+        report_path = self.root / f"{task_id}.txt"
+        runner = self._runner_state(task_id)
+        self._configure_one_step_no_output_plan()
+
+        async def scripted(
+            _messages: Any,
+            *,
+            node_context: Any,
+            stage: str,
+            **_kwargs: Any,
+        ) -> AIMessage:
+            if stage == "consultant":
+                return AIMessage(content=json.dumps(self._consultant_payload(report_path)))
+            if stage in {"planner", "planner_structure_repair", "planner_repair"}:
+                return AIMessage(content=json.dumps(self._planner_payload()))
+            if stage == "generate":
+                payload = node_context.llm_payload.to_dict()
+                captures.append(payload)
+                return AIMessage(content=self._script_action(payload))
+            raise AssertionError(f"unexpected stage: {stage}")
+
+        async def fake_run_script(
+            script_path: str,
+            *,
+            expected_sha256: str = "",
+            interpreter: str = "bash",
+            lifecycle_callback: Any = None,
+            env: Mapping[str, str] | None = None,
+        ):
+            del expected_sha256, interpreter, env
+            command_calls.append(script_path)
+            if lifecycle_callback:
+                await lifecycle_callback("PROCESS_STARTED", {"pid": 1, "pgid": 1})
+                await lifecycle_callback("PROCESS_EXITED", {"returncode": 0})
+            return "approved command ran once\n", "", 0
+
+        self.agent._ainvoke_node_llm = scripted
+        # Use the production HITL implementation and force even a safe fixture
+        # through LangGraph interrupt/resume.
+        del self.agent.middleware.review_code
+        self.agent.middleware.auto_approve_safe = False
+        config = {
+            "configurable": {"thread_id": task_id},
+            "recursion_limit": 40,
+        }
+        paused_events: list[dict[str, Any]] = []
+        resumed_events: list[dict[str, Any]] = []
+
+        with patch.object(bio_agents, "run_script_path", new=fake_run_script):
+            async for event in self.agent.app.astream(
+                runner,
+                config=config,
+                stream_mode="updates",
+            ):
+                paused_events.append(event)
+
+            paused_snapshot = self.agent.app.get_state(config)
+            paused_durable = load_plan_state(self.root, task_id)
+            self.assertTrue(paused_snapshot.tasks[0].interrupts)
+            self.assertEqual(command_calls, [])
+            self.assertEqual(
+                RecoveryStateStore(self.root, task_id).load_execution_records(),
+                [],
+            )
+            self.assertNotEqual(
+                str((paused_durable.get("failure") or {}).get("error_code") or ""),
+                "EXECUTE_PREPARATION_INTERNAL_ERROR",
+            )
+
+            async for event in self.agent.app.astream(
+                bio_agents.Command(resume="y"),
+                config=config,
+                stream_mode="updates",
+            ):
+                resumed_events.append(event)
+
+        self.assertEqual(len(captures), 1)
+        self.assertEqual(len(command_calls), 1)
+        self.assertTrue(any("__interrupt__" in event for event in paused_events))
+        self.assertNotIn(
+            "EXECUTE_PREPARATION_INTERNAL_ERROR",
+            json.dumps([paused_events, resumed_events], default=str),
+        )
+
     async def test_format_repair_reentry_reaches_initialized_execute_once(self) -> None:
         task_id = "execute-format-repair-reentry"
         command_calls: list[str] = []

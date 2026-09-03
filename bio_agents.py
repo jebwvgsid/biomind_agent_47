@@ -48,6 +48,7 @@ import config.startup
 # ── 第三方库 ──────────────────────────────────────────────────
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.errors import GraphBubbleUp
 from langgraph.types import interrupt, Command
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, BaseMessage, RemoveMessage
 from langgraph.graph.message import REMOVE_ALL_MESSAGES, add_messages
@@ -40123,6 +40124,10 @@ question. Never guess a scientific or database identity.
             }
             try:
                 return await execute_logic_impl(state, preparation_boundary)
+            except GraphBubbleUp:
+                # LangGraph interrupts are control-plane signals, not Harness
+                # preparation failures.  Preserve them for checkpoint/pause.
+                raise
             except Exception as exc:
                 if bool(preparation_boundary.get("command_launch_entered")):
                     raise

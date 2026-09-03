@@ -7,6 +7,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Tuple, Dict, Any, List, Mapping, Optional, Callable
 from dataclasses import asdict
+from langgraph.errors import GraphBubbleUp
 from langgraph.types import interrupt
 from langchain_core.messages import HumanMessage, SystemMessage
 from execution.confirmation import RiskAnalyzer, RiskLevel
@@ -3337,6 +3338,11 @@ def error_recovery_middleware(
                     _result_holder=holder,
                     **kwargs,
                 )
+            except GraphBubbleUp:
+                # Interrupt/resume belongs exclusively to LangGraph.  Never
+                # reinterpret it as a Recovery middleware failure, even if a
+                # future interrupt is added after Execute produced a result.
+                raise
             except Exception as exc:
                 if "result" not in holder or not isinstance(holder["result"], dict):
                     raise
