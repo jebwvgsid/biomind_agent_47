@@ -200,6 +200,7 @@ class AgentState(TypedDict, total=False):
     contract_status: Optional[str]
     resume_mode: Optional[str]
     resolved_resume_node: Optional[str]
+    resume_route_hint: Optional[str]
     resume_audit: dict
     failure_type: Optional[str]
     failure_stage: Optional[str]
@@ -225,6 +226,13 @@ class AgentState(TypedDict, total=False):
     recovery_fact: dict
     recovery_outcome: dict
     final_audit_outcome: dict
+    triage_outcome: dict
+    consultant_outcome: dict
+    planner_outcome: dict
+    plan_review_outcome: dict
+    ask_user_outcome: dict
+    install_subagent_outcome: dict
+    resume_state: dict
 
 # 安装子智能体状态
 class InstallerState(TypedDict):

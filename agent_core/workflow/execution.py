@@ -14,7 +14,11 @@ from typing import Any, Awaitable, Callable, Mapping
 
 from langgraph.errors import GraphBubbleUp
 
-from agent_core.workflow.outcomes import ExecuteOutcome, GenerateOutcome
+from agent_core.workflow.outcomes import (
+    ExecuteOutcome,
+    GenerateOutcome,
+    route_blind_state_projection,
+)
 
 
 NodeCallable = Callable[[dict[str, Any]], Awaitable[Mapping[str, Any]]]
@@ -64,6 +68,7 @@ class TypedGenerate:
         self.repair_limit = max(1, int(repair_limit))
 
     async def run(self, state: Mapping[str, Any]) -> dict[str, Any]:
+        state = route_blind_state_projection(state)
         try:
             result = await self.generator(dict(state))
         except GraphBubbleUp:
@@ -253,6 +258,7 @@ class TypedExecute:
         self.executor = executor
 
     async def run(self, state: Mapping[str, Any]) -> dict[str, Any]:
+        state = route_blind_state_projection(state)
         invocation = dict(state)
         raw_generate = state.get("generate_outcome")
         generate = None

@@ -8,6 +8,7 @@ from functools import wraps
 from typing import Any, Awaitable, Callable, Mapping, TypeVar
 
 from langgraph.errors import GraphBubbleUp
+from agent_core.workflow.outcomes import route_blind_state_projection
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ def profile_typed_node(
 
         async def invoke() -> dict[str, Any]:
             try:
-                raw_result = await func(state)
+                raw_result = await func(route_blind_state_projection(state))
                 if not isinstance(raw_result, Mapping):
                     raise TypeError(
                         f"{node_name} returned {type(raw_result).__name__}, expected mapping"

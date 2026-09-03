@@ -6,19 +6,34 @@ from contextlib import contextmanager
 from langgraph.errors import GraphBubbleUp
 
 from agent_core.workflow.outcomes import (
+    AskUserOutcome,
     CommitStepOutcome,
     ExecuteOutcome,
     FinalAuditOutcome,
     GenerateOutcome,
+    InstallSubagentOutcome,
     OutcomeContractError,
     RecoveryOutcome,
+    ResumeState,
+    TriageOutcome,
+    ConsultantOutcome,
+    PlannerOutcome,
+    PlanReviewOutcome,
     VerificationOutcome,
+    bind_workflow_routing_schema_for_task,
     workflow_routing_schema_version,
 )
 from agent_core.workflow.typed_node import profile_typed_node
 
 
 OUTCOME_CLASSES = (
+    TriageOutcome,
+    ConsultantOutcome,
+    PlannerOutcome,
+    PlanReviewOutcome,
+    AskUserOutcome,
+    InstallSubagentOutcome,
+    ResumeState,
     GenerateOutcome,
     ExecuteOutcome,
     VerificationOutcome,
@@ -98,6 +113,8 @@ class TypedOutcomeContractTests(unittest.TestCase):
             "pending_recovery_action": {"type": "retry"},
             "active_transition": {"target_route": "generate"},
             "graph_node": "execute",
+            "resume_route_hint": "supervisor",
+            "resume_step": "planner",
         }
         for poison_key, poison_value in route_poison.items():
             value = _mapping(GenerateOutcome, "action_ready")
@@ -136,6 +153,22 @@ class TypedOutcomeContractTests(unittest.TestCase):
             workflow_routing_schema_version(
                 {"workflow_routing_schema_version": 3}
             )
+
+    def test_schema_binding_is_new_task_default_and_checkpoint_sticky(self):
+        new_task = bind_workflow_routing_schema_for_task({}, brand_new=True)
+        self.assertEqual(workflow_routing_schema_version(new_task), 2)
+        self.assertEqual(new_task["task_state"]["workflow_routing_schema_version"], 2)
+
+        historical_missing = bind_workflow_routing_schema_for_task({}, brand_new=False)
+        self.assertEqual(workflow_routing_schema_version(historical_missing), 1)
+        self.assertEqual(
+            workflow_routing_schema_version(
+                bind_workflow_routing_schema_for_task(
+                    {"workflow_routing_schema_version": 1}, brand_new=True
+                )
+            ),
+            1,
+        )
 
 
 class _RecordingProfiler:

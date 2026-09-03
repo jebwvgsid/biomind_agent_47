@@ -1,5 +1,10 @@
 # CTRL-02 — Controller Runtime Migration
 
+> Historical stage report. CTRL-03 subsequently activated the complete
+> schema-2 graph for new tasks; see
+> `controller_front_half_retirement_20260903.md`. Schema-1 compatibility
+> statements below still apply to historical checkpoints.
+
 Date: 2026-09-03
 
 Branch: `refactor/consultant-controller-authority`

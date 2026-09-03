@@ -37,6 +37,14 @@ _FORBIDDEN_CONTROL_KEYS = frozenset({
     "controller_transition",
     "controller_transition_metadata",
     "command_goto",
+    "resume_route_hint",
+    "resume_step",
+    "terminal_route",
+    "pre_guard_effective_route",
+    "override_source",
+    "override_decision_id",
+    "route_event_id",
+    "resolved_resume_node",
 })
 
 
@@ -97,6 +105,25 @@ def _thaw_json(value: Any) -> Any:
     if isinstance(value, tuple):
         return [_thaw_json(item) for item in value]
     return value
+
+
+def route_blind_state_projection(value: Mapping[str, Any]) -> dict[str, Any]:
+    """Recursively remove legacy routing authority before a schema-2 node."""
+
+    def scrub(item: Any) -> Any:
+        if isinstance(item, Mapping):
+            return {
+                str(key): scrub(child)
+                for key, child in item.items()
+                if str(key).strip().lower() not in _FORBIDDEN_CONTROL_KEYS
+            }
+        if isinstance(item, list):
+            return [scrub(child) for child in item]
+        if isinstance(item, tuple):
+            return tuple(scrub(child) for child in item)
+        return item
+
+    return scrub(dict(value))
 
 
 def _required_text(value: Any, field: str) -> str:
@@ -328,6 +355,123 @@ class FinalAuditOutcome(StrictOutcome):
     )
 
 
+class TriageOutcome(StrictOutcome):
+    OUTCOME_NAME = "TriageOutcome"
+    ALLOWED_TYPES = frozenset({
+        "direct_response_ready", "consultation_ready", "step_execution_ready",
+        "resume_classified", "harness_error",
+    })
+    REQUIRED_PAYLOAD = _requirements(
+        direct_response_ready=("task_mode", "request_kind"),
+        consultation_ready=("task_mode", "request_kind"),
+        step_execution_ready=("task_mode", "request_kind"),
+        resume_classified=("semantic_state", "reason_code"),
+        harness_error=("error_code", "exception_class", "detail"),
+    )
+
+
+class ConsultantOutcome(StrictOutcome):
+    OUTCOME_NAME = "ConsultantOutcome"
+    ALLOWED_TYPES = frozenset({
+        "planning_ready", "consultation_continues", "user_input_needed",
+        "stale_result", "terminal", "harness_error",
+    })
+    REQUIRED_PAYLOAD = _requirements(
+        planning_ready=("task_revision", "contract_status"),
+        consultation_continues=("phase", "completion_decision"),
+        user_input_needed=("question_id", "question", "owner"),
+        stale_result=("changed_preconditions",),
+        terminal=("status", "reason_code"),
+        harness_error=("error_code", "exception_class", "detail"),
+    )
+
+
+class PlannerOutcome(StrictOutcome):
+    OUTCOME_NAME = "PlannerOutcome"
+    ALLOWED_TYPES = frozenset({
+        "plan_review_ready", "consultation_required", "planning_continues",
+        "stale_result", "terminal", "harness_error",
+    })
+    REQUIRED_PAYLOAD = _requirements(
+        plan_review_ready=("plan_id", "plan_version", "plan_revision"),
+        consultation_required=("reason_code",),
+        planning_continues=("reason_code", "attempt_ordinal"),
+        stale_result=("changed_preconditions",),
+        terminal=("status", "reason_code"),
+        harness_error=("error_code", "exception_class", "detail"),
+    )
+
+
+class PlanReviewOutcome(StrictOutcome):
+    OUTCOME_NAME = "PlanReviewOutcome"
+    ALLOWED_TYPES = frozenset({
+        "approved_for_execution", "revision_required",
+        "reconsultation_required", "user_input_needed", "approval_pending", "terminal",
+        "harness_error",
+    })
+    REQUIRED_PAYLOAD = _requirements(
+        approved_for_execution=("plan_id", "plan_version", "approval_status", "execution_backend"),
+        revision_required=("validation_issues", "reason_code"),
+        reconsultation_required=("reason_code",),
+        user_input_needed=("question_id", "question", "owner"),
+        approval_pending=("approval_scope", "reason_code"),
+        terminal=("status", "reason_code"),
+        harness_error=("error_code", "exception_class", "detail"),
+    )
+
+
+class AskUserOutcome(StrictOutcome):
+    OUTCOME_NAME = "AskUserOutcome"
+    ALLOWED_TYPES = frozenset({
+        "answer_recorded", "question_missing", "harness_error",
+    })
+    REQUIRED_PAYLOAD = _requirements(
+        answer_recorded=("question_id", "semantic_state", "answer_recorded"),
+        question_missing=("semantic_state", "reason_code"),
+        harness_error=("error_code", "exception_class", "detail"),
+    )
+
+
+class InstallSubagentOutcome(StrictOutcome):
+    OUTCOME_NAME = "InstallSubagentOutcome"
+    ALLOWED_TYPES = frozenset({
+        "capability_available", "installation_failed", "terminal",
+        "harness_error",
+    })
+    REQUIRED_PAYLOAD = _requirements(
+        capability_available=("status", "evidence"),
+        installation_failed=("status", "evidence"),
+        terminal=("status", "reason_code"),
+        harness_error=("error_code", "exception_class", "detail"),
+    )
+
+
+class ResumeState(StrictOutcome):
+    """Semantic resume classification; it can never encode a graph node."""
+
+    OUTCOME_NAME = "ResumeState"
+    ALLOWED_TYPES = frozenset({
+        "awaiting_user_input", "consultation_ready", "planning_ready",
+        "plan_review_pending", "step_execution_ready", "verification_pending",
+        "action_execution_ready",
+        "recovery_pending", "installation_pending", "final_audit_pending",
+        "terminal",
+    })
+    REQUIRED_PAYLOAD = _requirements(
+        awaiting_user_input=("reason_code",),
+        consultation_ready=("reason_code",),
+        planning_ready=("reason_code",),
+        plan_review_pending=("reason_code",),
+        step_execution_ready=("reason_code",),
+        action_execution_ready=("reason_code",),
+        verification_pending=("reason_code",),
+        recovery_pending=("reason_code",),
+        installation_pending=("reason_code",),
+        final_audit_pending=("reason_code",),
+        terminal=("reason_code", "status"),
+    )
+
+
 def workflow_routing_schema_version(*states: Mapping[str, Any] | None) -> int:
     """Resolve a sticky routing schema without mutating or migrating state.
 
@@ -362,6 +506,28 @@ def workflow_routing_schema_version(*states: Mapping[str, Any] | None) -> int:
     return WORKFLOW_ROUTING_SCHEMA_LEGACY
 
 
+def bind_workflow_routing_schema_for_task(
+    state: Mapping[str, Any], *, brand_new: bool
+) -> dict[str, Any]:
+    """Return a sticky durable schema binding for task creation/continuation."""
+    bound = dict(state or {})
+    task_state = dict(bound.get("task_state") or {})
+    explicit = (
+        task_state.get("workflow_routing_schema_version")
+        if task_state.get("workflow_routing_schema_version") not in (None, "")
+        else bound.get("workflow_routing_schema_version")
+    )
+    version = (
+        WORKFLOW_ROUTING_SCHEMA_TYPED
+        if brand_new and explicit in (None, "")
+        else workflow_routing_schema_version(bound)
+    )
+    bound["workflow_routing_schema_version"] = version
+    task_state["workflow_routing_schema_version"] = version
+    bound["task_state"] = task_state
+    return bound
+
+
 __all__ = [
     "OUTCOME_SCHEMA_VERSION",
     "WORKFLOW_ROUTING_SCHEMA_LEGACY",
@@ -374,5 +540,14 @@ __all__ = [
     "RecoveryOutcome",
     "CommitStepOutcome",
     "FinalAuditOutcome",
+    "TriageOutcome",
+    "ConsultantOutcome",
+    "PlannerOutcome",
+    "PlanReviewOutcome",
+    "AskUserOutcome",
+    "InstallSubagentOutcome",
+    "ResumeState",
     "workflow_routing_schema_version",
+    "bind_workflow_routing_schema_for_task",
+    "route_blind_state_projection",
 ]

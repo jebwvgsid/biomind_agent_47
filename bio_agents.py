@@ -139,13 +139,32 @@ from agent_core.workflow.typed_node import profile_typed_node
 from agent_core.workflow.commit_step import CommitStep, commit_step_harness_error
 from agent_core.workflow.verifier import TypedSupervisor, verification_harness_error
 from agent_core.workflow.outcomes import (
+    AskUserOutcome,
     CommitStepOutcome,
+    ConsultantOutcome,
     ExecuteOutcome,
     FinalAuditOutcome,
     GenerateOutcome,
+    InstallSubagentOutcome,
+    PlannerOutcome,
+    PlanReviewOutcome,
     RecoveryOutcome,
+    ResumeState,
+    TriageOutcome,
     VerificationOutcome,
+    WORKFLOW_ROUTING_SCHEMA_TYPED,
+    bind_workflow_routing_schema_for_task,
     workflow_routing_schema_version,
+)
+from agent_core.workflow.early_nodes import (
+    TypedAskUser,
+    TypedConsultant,
+    TypedInstallSubagent,
+    TypedPlanner,
+    TypedPlanReview,
+    TypedTriage,
+    early_harness_error,
+    route_blind_direct_response,
 )
 from agent_core.workflow.execution import (
     TypedExecute,
@@ -155,7 +174,10 @@ from agent_core.workflow.execution import (
 )
 from agent_core.workflow.recovery_runtime import TypedRecovery, recovery_harness_error
 from agent_core.workflow.final_audit import TypedFinalAudit, final_audit_harness_error
-from agent_core.workflow.runtime_graph import build_schema2_runtime_graph
+from agent_core.workflow.runtime_graph import (
+    build_schema2_production_graph,
+    build_schema2_runtime_graph,
+)
 from agent_core.deepseek_stream import (
     deepseek_reasoning_stream_enabled,
     enable_deepseek_reasoning_stream,
@@ -2453,6 +2475,65 @@ class BioAnalystAgent:
             self._schema2_runtime_node_handlers
         ).compile(checkpointer=MemorySaver())
 
+        async def typed_direct_response(state: Mapping[str, Any]) -> Dict[str, Any]:
+            return await route_blind_direct_response(
+                self._schema2_early_sources["direct_response"], state
+            )
+
+        early_specs = {
+            "triage": (
+                TypedTriage(data_path=self.data_path, source=self._schema2_early_sources["triage"]),
+                "triage_outcome", TriageOutcome,
+            ),
+            "consultant": (
+                TypedConsultant(data_path=self.data_path, source=self._schema2_early_sources["consultant"]),
+                "consultant_outcome", ConsultantOutcome,
+            ),
+            "planner": (
+                TypedPlanner(data_path=self.data_path, source=self._schema2_early_sources["planner"]),
+                "planner_outcome", PlannerOutcome,
+            ),
+            "plan_review": (
+                TypedPlanReview(
+                    data_path=self.data_path,
+                    source=self._schema2_early_sources["plan_review"],
+                    execution_backend=self.step_worker_backend_name,
+                ),
+                "plan_review_outcome", PlanReviewOutcome,
+            ),
+            "ask_user": (
+                TypedAskUser(data_path=self.data_path, source=self._schema2_early_sources["ask_user"]),
+                "ask_user_outcome", AskUserOutcome,
+            ),
+            "install_subagent": (
+                TypedInstallSubagent(data_path=self.data_path, source=self._schema2_early_sources["install_subagent"]),
+                "install_subagent_outcome", InstallSubagentOutcome,
+            ),
+        }
+        self._schema2_early_node_handlers = {
+            name: profile_typed_node(
+                name,
+                adapter.run,
+                outcome_field=field,
+                outcome_contract=contract,
+                profiler=self.profiler,
+                harness_error_factory=(
+                    lambda exc, state, contract=contract:
+                    early_harness_error(contract, exc, state)
+                ),
+            )
+            for name, (adapter, field, contract) in early_specs.items()
+        }
+        self._schema2_node_handlers = {
+            **self._schema2_runtime_node_handlers,
+            **self._schema2_early_node_handlers,
+            "direct_response": typed_direct_response,
+            "step_worker": self._graph_node_handlers["step_worker"],
+        }
+        self.schema2_app = build_schema2_production_graph(
+            self._schema2_node_handlers
+        ).compile(checkpointer=self.checkpointer)
+
     # ────────────────────────────────────────────────────────────
     #  工具方法
     # ────────────────────────────────────────────────────────────
@@ -4176,6 +4257,157 @@ class BioAnalystAgent:
         }
         return node, audit
 
+    def _resolve_schema2_resume_state(
+        self,
+        task_id: str,
+        values: Optional[Mapping[str, Any]] = None,
+    ) -> ResumeState:
+        """Classify durable business state without resolving a graph node.
+
+        Legacy route projections, recovery targets, and node-name hints are
+        intentionally absent.  The schema-2 graph is the sole consumer that
+        maps this semantic state to a node.
+        """
+        values = dict(values or {})
+        durable = load_plan_state(self.data_path, task_id)
+        if workflow_routing_schema_version(durable, values) != WORKFLOW_ROUTING_SCHEMA_TYPED:
+            raise ValueError("SCHEMA2_RESUME_REQUIRES_TYPED_CHECKPOINT")
+        task_state_value = dict(durable.get("task_state") or {})
+        persisted_recovery = RecoveryStateStore(self.data_path, task_id).load_phase()
+        recovery = self._merge_recovery_phase_evidence(
+            task_state_value.get("recovery_state") or {}, persisted_recovery
+        )
+        waiting = load_waiting_state(self.data_path, task_id)
+        pending_question = (
+            values.get("pending_human_question")
+            or task_state_value.get("pending_question")
+            or {}
+        )
+        pending_action = values.get("pending_action") or task_state_value.get("pending_action") or {}
+        steps = [item for item in durable.get("steps") or [] if isinstance(item, Mapping)]
+        statuses = {str(item.get("status") or "").lower() for item in steps}
+        status = task_status(durable)
+        recovery_phase = str(recovery.get("phase") or "").lower()
+        recovery_status = str(recovery.get("status") or "").lower()
+        validation = validate_plan_for_generate(
+            durable, task_spec_revision(canonical_task_spec_for_state(durable))
+        )
+        task_spec = canonical_task_spec_for_state(durable)
+        selected = list(
+            task_state_value.get("selected_skills")
+            or durable.get("selected_skill_ids")
+            or []
+        )
+        consultation = dict(task_state_value.get("consultation_state") or {})
+        protocol = dict(consultation.get("finalize_protocol") or {})
+        compile_outcome = dict(protocol.get("compile_outcome") or {})
+        compiled = (
+            int(protocol.get("schema_version") or 0) == 4
+            and str(protocol.get("finalize_status") or "") == "compiled"
+            and str(compile_outcome.get("status") or "") == "compiled"
+        )
+
+        if status in {TASK_STATUS_COMPLETED, TASK_STATUS_CANCELLED, TASK_STATUS_BLOCKED, TASK_STATUS_FAILED}:
+            semantic, reason = "terminal", f"task_{status}"
+        elif recovery_phase in {"blocked", "exhausted"} or recovery_status in {"blocked", "exhausted"}:
+            semantic, reason = "terminal", "recovery_budget_terminal"
+            status = TASK_STATUS_BLOCKED
+        elif str(waiting.get("stage") or "") in {"plan_review", "plan_review_feedback"}:
+            semantic, reason = "plan_review_pending", "human_plan_review_pending"
+        elif str(waiting.get("stage") or "") in {"install_subagent", "env_selection"}:
+            semantic, reason = "installation_pending", "installation_approval_pending"
+        elif pending_question or self._business_waiting_state(waiting):
+            semantic, reason = "awaiting_user_input", "durable_user_question_pending"
+        elif "verification_pending" in statuses:
+            semantic, reason = "verification_pending", "execution_requires_verification"
+        elif isinstance(pending_action, Mapping) and str(pending_action.get("type") or "") == "install_tool":
+            semantic, reason = "installation_pending", "installation_action_pending"
+        elif pending_action:
+            semantic, reason = "action_execution_ready", "validated_action_pending"
+        elif recovery_phase in {
+            "capture", "unwrap", "diagnose", "probe", "plan_repair",
+            "apply_repair", "rerun", "verify", "rollback",
+        } or recovery_status in {"active", "pending", "diagnosing", "repairing"}:
+            semantic, reason = "recovery_pending", "durable_recovery_lifecycle_active"
+        elif steps and statuses and statuses <= {
+            "done", "passed", "skipped", "skipped_upstream_blocked", "cancelled"
+        }:
+            semantic, reason = "final_audit_pending", "all_plan_steps_terminal"
+        elif validation.get("valid"):
+            semantic, reason = "step_execution_ready", "approved_plan_ready"
+        elif steps and validation.get("reason_code") == "plan_not_approved":
+            semantic, reason = "plan_review_pending", "plan_requires_approval"
+        elif task_spec_is_initialized(task_spec) and selected and compiled:
+            semantic, reason = "planning_ready", "semantic_contract_compiled"
+        else:
+            semantic, reason = "consultation_ready", "semantic_contract_incomplete"
+
+        payload: Dict[str, Any] = {"reason_code": reason}
+        if semantic == "terminal":
+            payload["status"] = str(status or TASK_STATUS_BLOCKED)
+        return ResumeState(
+            schema_version=1,
+            type=semantic,
+            summary=f"Schema-2 resume classified durable state as {semantic}.",
+            scope={
+                "task_id": task_id,
+                "plan_id": str(durable.get("plan_id") or ""),
+                "plan_version": str(durable.get("plan_version") or ""),
+                "step_id": str(durable.get("current_step_id") or ""),
+            },
+            payload=payload,
+        )
+
+    def _build_schema2_resume_runner_state(
+        self,
+        task_id: str,
+        user_prompt: Any = "",
+        checkpoint_values: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        values = dict(checkpoint_values or {})
+        durable = load_plan_state(self.data_path, task_id)
+        semantic = self._resolve_schema2_resume_state(task_id, values)
+        task_state_value = dict(durable.get("task_state") or {})
+        task_spec = canonical_task_spec_for_state(durable)
+        project_id = str(values.get("project_id") or self.default_project_id)
+        stable_record = self._get_or_create_stable_prompt(task_id, project_id)
+        messages = list(values.get("messages") or [])
+        if not messages:
+            record = self._persistent_task_record(task_id)
+            messages = [HumanMessage(content=str(task_spec.get("goal") or record.get("user_query") or user_prompt or "Resume task"))]
+        messages.append(SystemMessage(content=(
+            "<semantic_resume>"
+            + json.dumps(semantic.to_dict(), ensure_ascii=False, sort_keys=True)
+            + "</semantic_resume>"
+        )))
+        plan_file = Path(str(durable.get("plan_file") or default_plan_file(self.data_path, task_id)))
+        try:
+            current_plan = plan_file.read_text(encoding="utf-8")
+        except OSError:
+            current_plan = str(values.get("current_plan") or "")
+        return {
+            **values,
+            "workflow_routing_schema_version": WORKFLOW_ROUTING_SCHEMA_TYPED,
+            "messages": messages,
+            "task_id": task_id,
+            "session_id": task_id,
+            "project_id": project_id,
+            "stable_system_prompt": stable_record["prompt"],
+            "core_memory_loaded_at": stable_record["core_memory_loaded_at"],
+            "task_mode": str(values.get("task_mode") or "managed"),
+            "task_spec": deepcopy(task_spec),
+            "task_revision": task_spec_revision(task_spec),
+            "current_plan": current_plan,
+            "plan_progress": render_plan_progress(durable),
+            "selected_skills": list(task_state_value.get("selected_skills") or durable.get("selected_skill_ids") or []),
+            "consultation_state": deepcopy(dict(task_state_value.get("consultation_state") or {})),
+            "pending_action": deepcopy(dict(values.get("pending_action") or task_state_value.get("pending_action") or {})),
+            "pending_human_question": deepcopy(dict(values.get("pending_human_question") or task_state_value.get("pending_question") or {})),
+            "execution_evidence": deepcopy(dict(values.get("execution_evidence") or task_state_value.get("execution_evidence") or {})),
+            "resume_mode": "semantic_state",
+            "resume_state": semantic.to_dict(),
+        }
+
     async def _resume_durable_attempt_update(
         self,
         task_id: str,
@@ -4601,6 +4833,18 @@ class BioAnalystAgent:
         has_plan = plan_state_path(self.data_path, task_id).exists()
         if not task_record and not has_plan:
             return {"action": "new_task"}
+        durable = load_plan_state(self.data_path, task_id)
+        if workflow_routing_schema_version(durable) == WORKFLOW_ROUTING_SCHEMA_TYPED:
+            semantic = self._resolve_schema2_resume_state(task_id)
+            if semantic.type == "terminal":
+                return {"action": "completed", "resume_state": semantic.to_dict()}
+            if semantic.type == "awaiting_user_input":
+                return {
+                    "action": "waiting_user",
+                    "waiting": load_waiting_state(self.data_path, task_id),
+                    "resume_state": semantic.to_dict(),
+                }
+            return {"action": "resume", "resume_state": semantic.to_dict()}
         waiting = load_waiting_state(self.data_path, task_id)
         if self._business_waiting_state(waiting):
             return {"action": "waiting_user", "waiting": waiting}
@@ -12058,6 +12302,7 @@ class BioAnalystAgent:
             },
         )
         existing_path = plan_state_path(self.data_path, task_id)
+        is_brand_new = not existing_path.is_file()
         existing_plan = (
             load_plan_state(self.data_path, task_id)
             if existing_path.is_file()
@@ -12088,6 +12333,12 @@ class BioAnalystAgent:
                 conversation_evidence=conversation_evidence,
             )
         durable = load_plan_state(self.data_path, task_id)
+        if is_brand_new:
+            durable = bind_workflow_routing_schema_for_task(
+                durable, brand_new=True
+            )
+            save_plan_state(self.data_path, task_id, durable)
+            durable = load_plan_state(self.data_path, task_id)
         durable_task_state = dict(durable.get("task_state") or {})
         if (
             durable_task_state.get("skill_access_state")
@@ -42446,6 +42697,19 @@ question. Never guess a scientific or database identity.
         # ════════════════════════════════════════════
         # 节点注册 & 连线
         # ════════════════════════════════════════════
+        # Raw domain implementations are retained for the schema-2 typed
+        # front-half adapters.  They are never registered directly in the
+        # schema-2 graph and their legacy route projections are discarded.
+        self._schema2_early_sources = {
+            "triage": triage,
+            "direct_response": direct_chat,
+            "consultant": consultant,
+            "ask_user": ask_user,
+            "planner": planner,
+            "plan_review": plan_review,
+            "install_subagent": install_subagent,
+            "step_worker": step_worker,
+        }
         profiled_nodes = {
             "triage": self._profile_node("triage", triage),
             "direct_chat": self._profile_node("direct_chat", direct_chat),
@@ -42637,10 +42901,23 @@ question. Never guess a scientific or database identity.
     #  主运行入口
     # ────────────────────────────────────────────────────────────
 
+    def _app_for_task(
+        self,
+        task_id: str,
+        state: Optional[Mapping[str, Any]] = None,
+    ):
+        """Select the sticky graph schema; absence always means legacy."""
+        try:
+            durable = load_plan_state(self.data_path, task_id)
+        except Exception:
+            durable = {}
+        version = workflow_routing_schema_version(durable, state)
+        return self.schema2_app if version == WORKFLOW_ROUTING_SCHEMA_TYPED else self.app
+
     def _messages_for_memory_status(self, task_id: str, config: Dict[str, Any], runner_input: Any) -> List[BaseMessage]:
         """Return the best available message list for the memory pressure display."""
         try:
-            snapshot = self.app.get_state(config)
+            snapshot = self._app_for_task(task_id, runner_input if isinstance(runner_input, Mapping) else None).get_state(config)
             values = snapshot.values if snapshot and snapshot.values else {}
             messages = values.get("messages", []) if isinstance(values, dict) else []
             if messages:
@@ -42957,12 +43234,20 @@ question. Never guess a scientific or database identity.
             prompt = input_data
             project_id = self.default_project_id
             if resume:
+                active_app = self._app_for_task(task_id)
                 try:
-                    checkpoint = self.app.get_state(config)
+                    checkpoint = active_app.get_state(config)
                     checkpoint_values = self._snapshot_values(checkpoint)
                 except Exception:
                     checkpoint_values = {}
-                runner_input = self._build_resume_runner_state(task_id, prompt, checkpoint_values)
+                if workflow_routing_schema_version(
+                    load_plan_state(self.data_path, task_id), checkpoint_values
+                ) == WORKFLOW_ROUTING_SCHEMA_TYPED:
+                    runner_input = self._build_schema2_resume_runner_state(
+                        task_id, prompt, checkpoint_values
+                    )
+                else:
+                    runner_input = self._build_resume_runner_state(task_id, prompt, checkpoint_values)
                 print(f"\n🔄 Resuming: {task_id}")
             else:
                 stable_record = self._get_or_create_stable_prompt(task_id, project_id)
@@ -43014,6 +43299,9 @@ question. Never guess a scientific or database identity.
                     "planner_feedback": deepcopy(dict(
                         durable_task_state.get("planner_feedback") or {}
                     )),
+                    "workflow_routing_schema_version": workflow_routing_schema_version(
+                        durable_start
+                    ),
                 }
                 if is_continuation:
                     print(f"\n↪ Continuing: {task_id}")
@@ -43025,7 +43313,10 @@ question. Never guess a scientific or database identity.
 
         with self.profiler.task_context(task_id):
             try:
-                async for event in self.app.astream(runner_input, config=config):
+                active_app = self._app_for_task(
+                    task_id, runner_input if isinstance(runner_input, Mapping) else None
+                )
+                async for event in active_app.astream(runner_input, config=config):
                     self.profiler.heartbeat(task_id)
             except asyncio.CancelledError:
                 self.profiler.finish_for_exception(task_id, asyncio.CancelledError())
@@ -43062,7 +43353,7 @@ question. Never guess a scientific or database identity.
                 raise
             except BaseException as exc:
                 try:
-                    failed_snapshot = self.app.get_state(
+                    failed_snapshot = self._app_for_task(task_id).get_state(
                         {"configurable": {"thread_id": task_id}}
                     )
                 except Exception:
@@ -43076,7 +43367,7 @@ question. Never guess a scientific or database identity.
                 )
             resume_initial = False
             config = {"configurable": {"thread_id": task_id}}
-            snapshot = self.app.get_state(config)
+            snapshot = self._app_for_task(task_id).get_state(config)
 
             if not (snapshot.tasks and snapshot.tasks[0].interrupts):
                 terminal_status = self._terminal_status_from_snapshot(task_id, snapshot)
@@ -43385,7 +43676,7 @@ Commands:
 
                 if user_input == "/memory":
                     config = {"configurable": {"thread_id": current_session_id}}
-                    snap   = self.app.get_state(config)
+                    snap   = self._app_for_task(current_session_id).get_state(config)
                     msgs   = snap.values.get("messages", []) if snap.values else []
                     self.memory_manager.print_status(msgs)
                     print(self.core_memory_store.status_text(self.default_project_id))
@@ -43551,7 +43842,7 @@ Commands:
                         payload={"reason": "User stopped the current task."},
                     )
                     try:
-                        stop_snapshot = self.app.get_state(
+                        stop_snapshot = self._app_for_task(current_session_id).get_state(
                             {"configurable": {"thread_id": current_session_id}}
                         )
                     except Exception:
@@ -43590,7 +43881,7 @@ Commands:
                             Fore.CYAN,
                         )
                     config = {"configurable": {"thread_id": tid}}
-                    snapshot = self.app.get_state(config)
+                    snapshot = self._app_for_task(tid).get_state(config)
                     if snapshot.tasks and snapshot.tasks[0].interrupts:
                         payload = snapshot.tasks[0].interrupts[0].value
                         output.page_text(
@@ -43638,7 +43929,7 @@ Commands:
 
                 if user_input == "/debug":
                     config   = {"configurable": {"thread_id": current_session_id}}
-                    snapshot = self.app.get_state(config)
+                    snapshot = self._app_for_task(current_session_id).get_state(config)
                     print(f"Next nodes: {snapshot.next}")
                     if snapshot.tasks and snapshot.tasks[0].interrupts:
                         print(f"Interrupt payload: {snapshot.tasks[0].interrupts[0].value}")
@@ -43690,7 +43981,7 @@ Commands:
                     self.state_manager.update_task_status(current_session_id, "interrupted")
                 self.profiler.finish_task(current_session_id, "interrupted")
                 try:
-                    interrupted_snapshot = self.app.get_state(
+                    interrupted_snapshot = self._app_for_task(current_session_id).get_state(
                         {"configurable": {"thread_id": current_session_id}}
                     )
                 except Exception:
