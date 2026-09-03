@@ -396,6 +396,54 @@ def test_generation_claim_restart_states_fail_closed_or_resume_same_target():
         )
 
 
+def test_terminal_chain_preserves_execution_decision_transition_and_blocker(tmp_path):
+    from bio_agents import BioAnalystAgent
+
+    state = build_plan_state("task-a", "- [ ] Step 1: repair")
+    state.update({
+        "plan_id": "plan-a",
+        "plan_version": "plan-v1",
+        "current_step_id": "step-4",
+        "primary_execution_failure": {
+            "failure_id": "failure-execute",
+            "error_code": "PRIMARY_EXECUTION_FAILED",
+            "failure_stage": "execute",
+        },
+    })
+    state["steps"][0].update({"step_id": "step-4", "status": "running"})
+    decision = _final()
+    state.setdefault("task_state", {}).setdefault("recovery_state", {}).update({
+        "last_recovery_decision": decision.to_dict(),
+        "active_transition": {
+            **decision.to_dict(),
+            "status": "pending",
+        },
+    })
+    save_plan_state(tmp_path, "task-a", state)
+    agent = BioAnalystAgent.__new__(BioAnalystAgent)
+    agent.data_path = tmp_path
+    agent._commit_terminal_internal_protocol_failure(
+        "task-a",
+        {
+            "failure_id": "failure-transition",
+            "error_code": "RECOVERY_EXECUTION_ENVELOPE_MISMATCH",
+            "failure_stage": "generate.recovery.contract",
+            "message": "decision and envelope differ",
+        },
+    )
+    persisted = load_plan_state(tmp_path, "task-a")
+    assert persisted["primary_execution_failure"]["error_code"] == (
+        "PRIMARY_EXECUTION_FAILED"
+    )
+    assert persisted["recovery_decision_summary"]["decision_id"] == (
+        decision.decision_id
+    )
+    assert persisted["recovery_transition_failure"]["error_code"] == (
+        "RECOVERY_EXECUTION_ENVELOPE_MISMATCH"
+    )
+    assert persisted["terminal_failure"]["failure_id"] == "failure-transition"
+
+
 def test_snpeff_skill_declares_typed_producer_build_and_annotation_operations():
     document = (
         Path(__file__).resolve().parents[1]

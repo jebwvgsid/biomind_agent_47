@@ -382,10 +382,12 @@ class NodeContextSemanticContinuityTests(unittest.TestCase):
         ):
             self.assertIn(expected, stable)
         for expected in (
-            "java -jar snpEff.jar", "exit_code", "CURRENT_STDERR_FOCUSED",
+            "CURRENT_STDERR_FOCUSED",
             "class 65 cannot run on class 52",
         ):
             self.assertIn(expected, focus)
+        self.assertNotIn("java -jar snpEff.jar", focus)
+        self.assertNotIn("expected_java", focus)
         self.assertNotIn("OLD_STDOUT_FULL_", stable)
         self.assertNotIn("OLD_STDERR_FULL_", stable)
         self.assertEqual(

@@ -184,9 +184,7 @@ def test_terminal_commit_preserves_primary_and_blocks_current_step(
     assert persisted["failure"]["error_code"] == "LLM_CONTROL_METADATA_LEAK"
     assert persisted["primary_execution_failure"] == {}
     assert persisted["recovery_decision_summary"] == {}
-    assert persisted["recovery_transition_failure"]["error_code"] == (
-        "LLM_CONTROL_METADATA_LEAK"
-    )
+    assert persisted["recovery_transition_failure"] == {}
     assert persisted["terminal_failure"]["error_code"] == (
         "LLM_CONTROL_METADATA_LEAK"
     )
