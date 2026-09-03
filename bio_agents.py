@@ -136,6 +136,9 @@ from agent_core.workflow.step_worker import (
     route_step_worker_outcome,
 )
 from agent_core.workflow.typed_node import profile_typed_node
+from agent_core.workflow.commit_step import CommitStep, commit_step_harness_error
+from agent_core.workflow.verifier import TypedSupervisor, verification_harness_error
+from agent_core.workflow.outcomes import CommitStepOutcome, VerificationOutcome
 from agent_core.deepseek_stream import (
     deepseek_reasoning_stream_enabled,
     enable_deepseek_reasoning_stream,
@@ -2362,6 +2365,32 @@ class BioAnalystAgent:
         # ── 图 ────────────────────────────────────────────────
         self.checkpointer = MemorySaver()
         self.app = self._build_graph()
+        # CTRL-02 builds an integration-testable schema-2 runtime segment while
+        # the production entry graph remains sticky schema 1 until CTRL-03
+        # migrates Triage/Consultant/Planner/PlanReview/AskUser/resume.
+        typed_supervisor = TypedSupervisor(
+            data_path=self.data_path,
+            verifier=self.supervisor_node.run,
+        )
+        commit_step = CommitStep(data_path=self.data_path)
+        self._schema2_runtime_node_handlers = {
+            "supervisor": profile_typed_node(
+                "supervisor",
+                typed_supervisor.run,
+                outcome_field="verification_outcome",
+                outcome_contract=VerificationOutcome,
+                profiler=self.profiler,
+                harness_error_factory=verification_harness_error,
+            ),
+            "commit_step": profile_typed_node(
+                "commit_step",
+                commit_step.run,
+                outcome_field="commit_step_outcome",
+                outcome_contract=CommitStepOutcome,
+                profiler=self.profiler,
+                harness_error_factory=commit_step_harness_error,
+            ),
+        }
 
     # ────────────────────────────────────────────────────────────
     #  工具方法

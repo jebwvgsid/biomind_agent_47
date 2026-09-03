@@ -44,6 +44,12 @@ from agent_core.workflow.outcomes import (
     workflow_routing_schema_version,
 )
 from agent_core.workflow.typed_node import profile_typed_node
+from agent_core.workflow.commit_step import CommitStep, commit_step_harness_error
+from agent_core.workflow.runtime_graph import (
+    route_commit_step_outcome,
+    route_verification_outcome,
+)
+from agent_core.workflow.verifier import TypedSupervisor, verification_harness_error
 
 __all__ = [
     "STEP_OUTCOME_SCHEMA_VERSION",
@@ -62,6 +68,7 @@ __all__ = [
     "PiSessionBinding",
     "PiStepWorkerBackend",
     "CommitStepOutcome",
+    "CommitStep",
     "ExecuteOutcome",
     "FinalAuditOutcome",
     "GenerateOutcome",
@@ -82,6 +89,11 @@ __all__ = [
     "plan_review_destination",
     "resolve_step_worker_backend_name",
     "route_step_worker_outcome",
+    "route_commit_step_outcome",
+    "route_verification_outcome",
+    "commit_step_harness_error",
     "profile_typed_node",
+    "TypedSupervisor",
+    "verification_harness_error",
     "workflow_routing_schema_version",
 ]

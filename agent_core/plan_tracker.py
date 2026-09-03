@@ -10980,6 +10980,7 @@ def advance_plan_after_verified_step(
     *,
     expected_step_id: str = "",
     transition_id: str = "",
+    legacy_route_projection: bool = True,
 ) -> bool:
     """Advance exactly one step after deterministic execution/supervisor verification."""
     if task_status(state) in TASK_TERMINAL_STATUSES:
@@ -11065,11 +11066,21 @@ def advance_plan_after_verified_step(
     task_state["active_completion_ref"] = {}
     task_state["active_supervisor_ref"] = {}
     task_state["active_recovery_ref"] = {}
-    task_state["generation_provenance"] = normal_generation_provenance(
-        state,
-        source_route="step_advance",
-    ).to_dict()
-    task_state["next_route"] = "generate" if next_step else "supervisor_final_audit"
+    if legacy_route_projection:
+        task_state["generation_provenance"] = normal_generation_provenance(
+            state,
+            source_route="step_advance",
+        ).to_dict()
+        task_state["next_route"] = "generate" if next_step else "supervisor_final_audit"
+    else:
+        task_state["generation_provenance"] = {
+            "schema_version": 2,
+            "mode": GenerationMode.NORMAL.value,
+            "semantic_trigger": "verified_step_committed",
+            "step_id": str(state.get("current_step_id") or ""),
+            "plan_revision": int(state.get("plan_revision") or 0),
+        }
+        task_state.pop("next_route", None)
     if transition_id:
         task_state["applied_step_advance_ids"] = list(dict.fromkeys([
             *list(task_state.get("applied_step_advance_ids") or []),
