@@ -258,6 +258,8 @@ from agent_core.recovery import (
     RecoveryDecision,
     RecoveryDecisionKind,
     RecoveryDecisionSource,
+    RecoverySourceScope,
+    RecoveryCommitBundle,
     DiagnosticEvidenceRecord,
     DiagnosticEvidenceStatus,
     ProbeLifecycleRecord,
@@ -280,6 +282,8 @@ from agent_core.recovery import (
     constrain_recovery_decision,
     recovery_decision_from_diagnosis,
     contextualize_recovery_decision,
+    finalize_recovery_decision,
+    bind_recovery_policy_outcome,
     structured_user_decision_required,
     build_recovery_execution_envelope,
     build_recovery_semantic_focus,
@@ -421,6 +425,7 @@ from agent_core.plan_tracker import (
     STATUS_SKIPPED_UPSTREAM_BLOCKED,
     advance_plan_after_verified_step,
     apply_recovery_decision,
+    commit_recovery_bundle,
     attach_execution_evidence_relation,
     apply_artifact_reconciliation,
     approve_plan_state,
@@ -466,6 +471,7 @@ from agent_core.plan_tracker import (
     plan_state_path,
     provenance_debug_dump,
     record_current_step_evidence,
+    record_scoped_evidence,
     record_planning_failure,
     record_preaction_contract_failure,
     record_runtime_output_failure,
@@ -486,6 +492,7 @@ from agent_core.plan_tracker import (
     step_artifact_contracts,
     validate_renderer_action_artifacts,
     validate_action_approval_lineage,
+    update_recovery_generation_claim,
     sync_plan_state_from_stage_status,
     task_status,
     consume_recovery_transition,
@@ -610,6 +617,12 @@ from agent_core.action_runtime import (
     serialize_action_capability_instructions,
     validate_action_approval_identity,
     validate_manifest_hash,
+)
+from agent_core.plan_bindings import (
+    PlanBindingError,
+    accept_action_binding_candidates,
+    resolve_action_binding_environment,
+    validate_declared_binding_operation,
 )
 from agent_core.state_contract_store import StateContractStore
 from agent_core.completion_gate import CompletionGate
@@ -9013,7 +9026,21 @@ class BioAnalystAgent:
             dict(merged.get("recovery_progress") or {}),
             dict((plan_state.get("task_state") or {}).get("budgets") or {}),
         )
-        decision = contextualize_recovery_decision(decision, source_node="supervisor")
+        source_scope = RecoverySourceScope.from_state_and_record(
+            {**plan_state, "task_id": str(plan_state.get("task_id") or task_id or "")},
+            evidence,
+        )
+        decision = finalize_recovery_decision(
+            decision,
+            source_scope=source_scope,
+            recovery_context_fingerprint=context.error_fingerprint,
+            policy_outcome=policy_outcome,
+            source_node="supervisor",
+            expected_state_generation=int(plan_state.get("state_generation") or 0),
+        )
+        policy_outcome = bind_recovery_policy_outcome(
+            policy_outcome, decision
+        )
         store.save_diagnostic_context(context)
         store.save_recovery_decision(decision)
         store.append_trace(
@@ -9086,11 +9113,6 @@ class BioAnalystAgent:
                 execution_envelope,
             )
             if envelope.probe_id:
-                self._record_recovery_counter_once(
-                    task_id,
-                    "diagnostic_probes_proposed",
-                    envelope.probe_id,
-                )
                 store.save_probe_lifecycle(ProbeLifecycleRecord(
                     recovery_decision_id=envelope.recovery_decision_id,
                     diagnosis=str(
@@ -9287,7 +9309,37 @@ class BioAnalystAgent:
                 budgets=budgets,
             )
         decision = contextualize_recovery_decision(decision, source_node=source_node)
+        source_record = {
+            **evidence,
+            "step_id": step_id,
+            "action_id": action_id,
+            "attempt_id": attempt_id,
+            "failure_fingerprint": str(
+                evidence.get("failure_fingerprint")
+                or hashlib.sha256(
+                    json.dumps(
+                        {
+                            "verdict": verdict,
+                            "required": required,
+                            "pending_type": pending_type,
+                            "step_id": step_id,
+                            "attempt_id": attempt_id,
+                        },
+                        ensure_ascii=False,
+                        sort_keys=True,
+                    ).encode("utf-8", errors="replace")
+                ).hexdigest()[:20]
+            ),
+        }
+        decision, envelope = self._finalize_controller_recovery_decision(
+            task_id,
+            decision,
+            source_node=source_node,
+            source_record=source_record,
+            recovery_context_fingerprint=source_record["failure_fingerprint"],
+        )
         update["recovery_decision"] = decision.to_dict()
+        update["recovery_execution_envelope"] = envelope
         update["recovery_application"] = {}
         update["next_step"] = decision.next_route
         update["recovery_status"] = decision.kind
@@ -12750,13 +12802,59 @@ class BioAnalystAgent:
         plan_state["task_state"] = task_state
         save_plan_state(self.data_path, task_id, plan_state)
 
+    def _finalize_controller_recovery_decision(
+        self,
+        task_id: str,
+        decision: RecoveryDecision,
+        *,
+        source_node: str,
+        source_record: Mapping[str, Any],
+        recovery_context_fingerprint: str,
+    ) -> Tuple[RecoveryDecision, Dict[str, Any]]:
+        """Bind a semantic policy result to one durable Controller scope."""
+        plan_state = load_plan_state(self.data_path, task_id)
+        record = dict(source_record or {})
+        source_scope = RecoverySourceScope.from_state_and_record(
+            {
+                **plan_state,
+                "task_id": str(plan_state.get("task_id") or task_id or ""),
+            },
+            record,
+        )
+        finalized = finalize_recovery_decision(
+            decision,
+            source_scope=source_scope,
+            recovery_context_fingerprint=str(
+                recovery_context_fingerprint
+                or source_scope.source_failure_fingerprint
+            ),
+            source_node=source_node,
+            expected_state_generation=int(
+                plan_state.get("state_generation") or 0
+            ),
+        )
+        envelope: Dict[str, Any] = {}
+        if finalized.target_route == "generate":
+            envelope = build_recovery_execution_envelope(
+                finalized,
+                recovery_context_id=finalized.recovery_context_fingerprint,
+                step_id=source_scope.step_id,
+                task_root=(
+                    Path(self.data_path)
+                    / "task_outputs"
+                    / str(task_id or "default")
+                ),
+                created_from=RecoveryDecisionSource.DETERMINISTIC.value,
+            ).to_dict()
+        return finalized, envelope
+
     def _record_action_format_failure(
         self,
         task_id: str,
         step_id: str,
         response_text: str,
         schema_error: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[int, int, str, RecoveryDecision]:
+    ) -> Tuple[int, int, str, RecoveryDecision, Dict[str, Any]]:
         protocol_error = dict(schema_error or {})
         response_hash = hashlib.sha256(
             str(response_text or "").strip().encode("utf-8", errors="replace")
@@ -12842,7 +12940,19 @@ class BioAnalystAgent:
             # Compatibility field for readers that have not migrated to protocol_error.
             "schema_error": protocol_error,
         }, ensure_ascii=False, indent=2), encoding="utf-8")
-        return count, duplicate_count, response_hash, decision
+        decision, envelope = self._finalize_controller_recovery_decision(
+            task_id,
+            decision,
+            source_node="generate",
+            source_record={
+                "step_id": step_key,
+                "action_id": f"generate:{step_key}",
+                "attempt_id": f"format-{current_count + 1}:{response_hash}",
+                "failure_fingerprint": response_hash,
+            },
+            recovery_context_fingerprint=response_hash,
+        )
+        return count, duplicate_count, response_hash, decision, envelope
 
     def _commit_preaction_policy_decision(
         self,
@@ -12852,7 +12962,7 @@ class BioAnalystAgent:
         *,
         attempt_id: str,
         source_node: str = "generate",
-    ) -> RecoveryDecision:
+    ) -> Tuple[RecoveryDecision, Dict[str, Any]]:
         plan_state = load_plan_state(self.data_path, task_id)
         budgets = dict((plan_state.get("task_state") or {}).get("budgets") or {})
         step_key = str(step_id or "task")
@@ -12872,7 +12982,21 @@ class BioAnalystAgent:
             budgets=budgets,
         )
         decision = contextualize_recovery_decision(decision, source_node=source_node)
-        return decision
+        fingerprint = hashlib.sha256(
+            str(violation or "").encode("utf-8", errors="replace")
+        ).hexdigest()[:20]
+        return self._finalize_controller_recovery_decision(
+            task_id,
+            decision,
+            source_node=source_node,
+            source_record={
+                "step_id": step_id or "task",
+                "action_id": f"{source_node}:{step_id or 'task'}",
+                "attempt_id": attempt_id,
+                "failure_fingerprint": fingerprint,
+            },
+            recovery_context_fingerprint=fingerprint,
+        )
 
     def _managed_preaction_recovery(
         self,
@@ -17314,6 +17438,32 @@ class BioAnalystAgent:
                 "outputs": [str(item) for item in raw_outputs if str(item).strip()],
                 "language": str(obj.get("language") or "").strip(),
             })
+            if "operation" in obj:
+                operation = str(obj.get("operation") or "").strip()
+                if not operation:
+                    return fail(
+                        "ACTION_SCHEMA_VALUE_ERROR",
+                        "execute.operation must be a non-empty string when present.",
+                        field_path="operation",
+                        expected="non-empty string",
+                        actual=cls._json_value_type(obj.get("operation")),
+                    )
+                action["operation"] = operation
+            for binding_field in (
+                "produced_bindings", "consumed_bindings", "binding_env"
+            ):
+                if binding_field not in obj:
+                    continue
+                binding_value = obj.get(binding_field)
+                if not isinstance(binding_value, Mapping):
+                    return fail(
+                        "ACTION_SCHEMA_TYPE_ERROR",
+                        f"execute.{binding_field} must be an object.",
+                        field_path=binding_field,
+                        expected="object",
+                        actual=cls._json_value_type(binding_value),
+                    )
+                action[binding_field] = deepcopy(dict(binding_value))
             purpose = str(obj.get("purpose") or "").strip().lower()
             if purpose in {"analysis", "probe", "validation", "record_failure"}:
                 action["purpose"] = purpose
@@ -18494,6 +18644,32 @@ class BioAnalystAgent:
 
         task_state = dict(plan_state.get("task_state") or {})
         recovery_state = dict(task_state.get("recovery_state") or {})
+        existing_execution_failure = dict(
+            plan_state.get("primary_execution_failure")
+            or task_state.get("primary_execution_failure")
+            or {}
+        )
+        if not existing_execution_failure and str(
+            committed_primary.get("failure_stage")
+            or committed_primary.get("stage")
+            or ""
+        ).startswith("execute"):
+            existing_execution_failure = deepcopy(committed_primary)
+        recovery_decision_summary = dict(
+            recovery_state.get("last_recovery_decision")
+            or task_state.get("last_recovery_decision")
+            or {}
+        )
+        recovery_transition_failure = (
+            deepcopy(proposed_primary)
+            if str(
+                proposed_primary.get("failure_stage")
+                or proposed_primary.get("stage")
+                or ""
+            ).startswith("generate.recovery")
+            else {}
+        )
+        terminal_failure = deepcopy(proposed_primary or committed_primary)
         active_transition = dict(recovery_state.get("active_transition") or {})
         if active_transition:
             active_transition.update({
@@ -18525,12 +18701,20 @@ class BioAnalystAgent:
             "machine_recovery_decision": machine_recovery_decision,
             "primary_failure": committed_primary,
             "secondary_failures": committed_secondary,
+            "primary_execution_failure": existing_execution_failure,
+            "recovery_decision_summary": recovery_decision_summary,
+            "recovery_transition_failure": recovery_transition_failure,
+            "terminal_failure": terminal_failure,
         })
         plan_state.update({
             "pending_action": {},
             "failure": committed_primary,
             "primary_failure": committed_primary,
             "secondary_failures": committed_secondary,
+            "primary_execution_failure": existing_execution_failure,
+            "recovery_decision_summary": recovery_decision_summary,
+            "recovery_transition_failure": recovery_transition_failure,
+            "terminal_failure": terminal_failure,
             "machine_recovery_decision": machine_recovery_decision,
             "task_state": task_state,
         })
@@ -18550,6 +18734,41 @@ class BioAnalystAgent:
         guarded = dict(update or {})
         merged = {**dict(state or {}), **guarded}
         plan_state = load_plan_state(self.data_path, task_id)
+
+        generated_action = (
+            dict(guarded.get("pending_action") or {})
+            if node_name == "generate"
+            and isinstance(guarded.get("pending_action"), Mapping)
+            else {}
+        )
+        generation_claim = dict(
+            ((((plan_state.get("task_state") or {}).get("recovery_state") or {}).get("generation_claim")))
+            or {}
+        )
+        if generated_action and str(generation_claim.get("status") or "").lower() in {
+            "provider_completed", "action_adopted"
+        }:
+            action_fingerprint = hashlib.sha256(
+                json.dumps(
+                    generated_action,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    default=str,
+                ).encode("utf-8", errors="replace")
+            ).hexdigest()
+            adoption = update_recovery_generation_claim(
+                plan_state,
+                target_generation_id=str(
+                    generation_claim.get("target_generation_id") or ""
+                ),
+                status="action_adopted",
+                action_fingerprint=action_fingerprint,
+            )
+            if adoption.get("changed"):
+                save_plan_state(self.data_path, task_id, plan_state)
+                plan_state = load_plan_state(self.data_path, task_id)
+            guarded["recovery_generation_adoption"] = adoption
 
         terminal_internal = (
             dict(guarded.get("terminal_internal_protocol_failure") or {})
@@ -18592,35 +18811,72 @@ class BioAnalystAgent:
                 if hasattr(decision_like, "to_dict")
                 else dict(decision_like or {})
             )
-            identity_changed = False
-            for key, value in (
-                ("task_id", str(plan_state.get("task_id") or task_id)),
-                ("plan_id", str(plan_state.get("plan_id") or "")),
-                ("plan_version", str(plan_state.get("plan_version") or "")),
-            ):
-                if not str(decision_value.get(key) or "") and value:
-                    decision_value[key] = value
-                    identity_changed = True
-            if identity_changed:
-                decision_value.pop("decision_id", None)
-                decision_value.pop("idempotency_key", None)
             policy_value = RecoveryDecision.from_mapping(decision_value)
-            application_value = apply_recovery_decision(
-                plan_state,
-                policy_value,
+            if not policy_value.identity_finalized:
+                raise RecoveryExecutionContractError(
+                    "RECOVERY_DECISION_NOT_FINALIZED",
+                    "transition guard accepts only finalized RecoveryPolicy decisions",
+                )
+            expected_scope = {
+                "task_id": str(plan_state.get("task_id") or task_id),
+                "plan_id": str(plan_state.get("plan_id") or ""),
+                "plan_version": str(plan_state.get("plan_version") or ""),
+                "step_id": str(plan_state.get("current_step_id") or ""),
+            }
+            scope = dict(policy_value.source_scope or {})
+            mismatches = {
+                key: {"decision": str(scope.get(key) or ""), "current": current}
+                for key, current in expected_scope.items()
+                if str(scope.get(key) or "") != current
+            }
+            if mismatches:
+                raise RecoveryExecutionContractError(
+                    "RECOVERY_DECISION_SCOPE_MISMATCH",
+                    json.dumps(mismatches, ensure_ascii=False, sort_keys=True),
+                )
+            envelope_value = (
+                guarded.get("recovery_execution_envelope")
+                or (guarded.get("pending_recovery_action") or {}).get(
+                    "execution_envelope"
+                )
+                or {}
+            )
+            if policy_value.target_route == "generate":
+                envelope = RecoveryExecutionEnvelope.from_mapping(envelope_value)
+                if (
+                    envelope.recovery_decision_id != policy_value.decision_id
+                    or dict(envelope.source_scope or {}) != scope
+                ):
+                    raise RecoveryExecutionContractError(
+                        "RECOVERY_BUNDLE_IDENTITY_MISMATCH",
+                        "decision and execution envelope identify different failures",
+                    )
+            bundle = RecoveryCommitBundle(
+                finalized_decision=policy_value,
                 execution_envelope=(
-                    guarded.get("recovery_execution_envelope")
-                    or (
-                        guarded.get("pending_recovery_action") or {}
-                    ).get("execution_envelope")
-                    or {}
+                    RecoveryExecutionEnvelope.from_mapping(envelope_value)
+                    if envelope_value
+                    else None
                 ),
+                active_recovery={},
+                transition={},
+                budget_reservation=(
+                    {"budget_class": str(policy_value.consume_budget or "")}
+                    if policy_value.consume_budget
+                    else None
+                ),
+                expected_state_generation=int(
+                    policy_value.expected_state_generation
+                ),
+            )
+            application_value = commit_recovery_bundle(
+                self.data_path, task_id, bundle
             )
             # Every controller-created decision must carry its commit receipt
             # into the single route resolver.  Dropping it makes a transition
             # created in this node look stale before its first dispatch.
             guarded["recovery_application"] = application_value
-            save_plan_state(self.data_path, task_id, plan_state)
+            plan_state = load_plan_state(self.data_path, task_id)
             return policy_value, application_value
 
         proposed_decision = guarded.get("recovery_decision")
@@ -18657,10 +18913,9 @@ class BioAnalystAgent:
                     guarded["current_stage_id"] = str(application["current_stage_id"])
                 merged = {**dict(state or {}), **guarded}
             except (TypeError, ValueError) as exc:
-                # apply_recovery_decision records the rejected decision in the
-                # PlanTracker state; persist that audit even though no state
-                # transition or retry budget was applied.
-                save_plan_state(self.data_path, task_id, plan_state)
+                # A rejected bundle is not a PlanState mutation.  Rejection
+                # details remain in controller logs/sidecars; the authoritative
+                # generation and recovery budget must stay unchanged.
                 guarded.update({
                     "next_step": "supervisor",
                     "pending_action": {},
@@ -18858,12 +19113,13 @@ class BioAnalystAgent:
                         "reason": "STEP_COMPLETION_CANDIDATE is invalid before Renderer manifest registration.",
                     },
                 )
-                policy_decision = self._commit_preaction_policy_decision(
+                policy_decision, policy_envelope = self._commit_preaction_policy_decision(
                     task_id,
                     str(step_candidate.get("step_id") or "task"),
                     "renderer_invocation_required_before_step_completion",
                     attempt_id=f"step-candidate:{candidate_hash}",
                 )
+                guarded["recovery_execution_envelope"] = policy_envelope
                 policy_decision, _ = commit_guard_decision(policy_decision)
                 guarded.update({
                     "next_step": policy_decision.next_route,
@@ -18928,13 +19184,14 @@ class BioAnalystAgent:
                 ).encode("utf-8", errors="replace")).hexdigest()[:20]
                 candidate_budgets = dict((load_plan_state(self.data_path, task_id).get("task_state") or {}).get("budgets") or {})
                 candidate_sequence = int(candidate_budgets.get("generate_action_count") or 0) + 1
-                policy_decision = self._commit_preaction_policy_decision(
+                policy_decision, policy_envelope = self._commit_preaction_policy_decision(
                     task_id,
                     str(step_candidate.get("step_id") or "task"),
                     f"step_completion_candidate_rejected: {gate.message}",
                     attempt_id=f"step-candidate-rejected:{rejection_signature}:{candidate_sequence}",
                     source_node=node_name,
                 )
+                guarded["recovery_execution_envelope"] = policy_envelope
                 policy_decision, _ = commit_guard_decision(policy_decision)
                 guarded.update({
                     "next_step": policy_decision.next_route,
@@ -18992,7 +19249,7 @@ class BioAnalystAgent:
                 attempt_sequence = int(
                     (current_budgets.get("action_format_repair_by_step") or {}).get(step_id) or 0
                 ) + 1
-                policy_decision = self._commit_preaction_policy_decision(
+                policy_decision, policy_envelope = self._commit_preaction_policy_decision(
                     task_id,
                     step_id,
                     contract_error,
@@ -19001,6 +19258,7 @@ class BioAnalystAgent:
                         f"{attempt_sequence}"
                     ),
                 )
+                guarded["recovery_execution_envelope"] = policy_envelope
                 policy_decision, _ = commit_guard_decision(policy_decision)
                 pending_type = (
                     "ACTION_FORMAT_REPAIR"
@@ -19041,12 +19299,13 @@ class BioAnalystAgent:
         elif node_name == "generate":
             _, missing_transition_step = current_plan_step_with_index(plan_state)
             missing_transition_id = str((missing_transition_step or {}).get("step_id") or "task")
-            policy_decision = self._commit_preaction_policy_decision(
+            policy_decision, policy_envelope = self._commit_preaction_policy_decision(
                 task_id,
                 missing_transition_id,
                 "generate_result_missing_transition",
                 attempt_id=f"missing-transition:{hashlib.sha256(json.dumps(guarded, default=str, sort_keys=True).encode('utf-8')).hexdigest()[:16]}",
             )
+            guarded["recovery_execution_envelope"] = policy_envelope
             policy_decision, _ = commit_guard_decision(policy_decision)
             guarded.update({
                 "next_step": policy_decision.next_route,
@@ -34245,6 +34504,43 @@ question. Never guess a scientific or database identity.
                 generation_recovery_state.get("active_recovery") or {}
             )
             active_recovery_id = str(active_recovery.get("recovery_id") or "")
+            target_generation_id = str(
+                active_recovery.get("target_generation_id") or ""
+            )
+            if recovery_generated:
+                claim_state = dict(
+                    generation_recovery_state.get("generation_claim") or {}
+                )
+                claim_status = str(claim_state.get("status") or "issued").lower()
+                if claim_status == "claimed":
+                    update_recovery_generation_claim(
+                        generation_plan_state,
+                        target_generation_id=target_generation_id,
+                        status="outcome_unknown",
+                        detail="Generate resumed after a persisted in-flight provider claim.",
+                    )
+                    claim_status = "outcome_unknown"
+                if claim_status in {"issued", "outcome_unknown"}:
+                    update_recovery_generation_claim(
+                        generation_plan_state,
+                        target_generation_id=target_generation_id,
+                        status="claimed",
+                    )
+                    save_plan_state(
+                        self.data_path, task_id, generation_plan_state
+                    )
+                    generation_plan_state = load_plan_state(
+                        self.data_path, task_id
+                    )
+                    generation_recovery_state = dict(
+                        (generation_plan_state.get("task_state") or {}).get(
+                            "recovery_state"
+                        )
+                        or {}
+                    )
+                    active_recovery = dict(
+                        generation_recovery_state.get("active_recovery") or {}
+                    )
             graph_recovery_decision = (
                 dict(state.get("recovery_decision") or {})
                 if isinstance(state.get("recovery_decision"), Mapping)
@@ -34494,6 +34790,7 @@ question. Never guess a scientific or database identity.
             generate_action_provider_context: Dict[str, Any] = {}
             capability_instructions = ""
             generate_script_protocol = False
+            generate_binding_contract: Dict[str, Any] = {}
             recovery_evidence: List[Dict[str, Any]] = []
             if recovery_context_obj and recovery_context_obj.bounded_log_excerpt:
                 recovery_evidence.append({
@@ -34523,6 +34820,16 @@ question. Never guess a scientific or database identity.
                 generate_selected_skill_id = str(
                     selected_contract.get("selected_skill_id") or ""
                 )
+                if generate_selected_skill_id and self.skill_manager:
+                    generate_binding_contract = dict(
+                        (
+                            self.skill_manager.get_skill_meta(
+                                generate_selected_skill_id
+                            ).get("generate")
+                            or {}
+                        ).get("binding_contract")
+                        or {}
+                    )
                 generate_runtime_resolution = resolve_action_runtime_bindings(
                     selected_skill_id=generate_selected_skill_id,
                     execution_capability_id=execution_capability_id,
@@ -34568,11 +34875,14 @@ question. Never guess a scientific or database identity.
                 generate_step_action = str(
                     generate_step.get("action") or "execute"
                 ).strip().lower()
-                generate_script_protocol = generate_step_action not in {
-                    "ask_user", "install", "install_tool", "search", "finish",
-                    "solution", "blocked", "plan_patch",
-                }
-                if generate_script_protocol:
+                generate_script_protocol = (
+                    generate_step_action not in {
+                        "ask_user", "install", "install_tool", "search", "finish",
+                        "solution", "blocked", "plan_patch",
+                    }
+                    and not generate_binding_contract
+                )
+                if generate_script_protocol or generate_binding_contract:
                     generate_action_provider_context = (
                         project_action_capability_context_for_provider(
                             generate_runtime_resolution,
@@ -34585,6 +34895,13 @@ question. Never guess a scientific or database identity.
                             script_protocol=(
                                 "Use current-action concrete runtime values and artifact paths "
                                 "explicitly. Controller validates but never substitutes them."
+                                if generate_script_protocol
+                                else (
+                                    "Return one action_json execute object with code or argv plus "
+                                    "the declared operation, produced_bindings, consumed_bindings, "
+                                    "and binding_env fields. Binding values are semantic and must "
+                                    "be created or reused exactly as the selected Skill declares."
+                                )
                             ),
                         )
                     )
@@ -34878,6 +35195,13 @@ question. Never guess a scientific or database identity.
                         recovery_cache_identity["repair_ordinal"],
                     )
                 else:
+                    if recovery_generated and claim_status in {
+                        "provider_completed", "action_adopted"
+                    }:
+                        raise RecoveryExecutionContractError(
+                            "RECOVERY_PROVIDER_COMPLETION_CACHE_MISSING",
+                            "a completed recovery provider claim has no durable response to adopt",
+                        )
                     if recovery_context_obj:
                         logger.info(
                             "RECOVERY_CACHE_REJECTED_AS_STALE_OR_INVALID task=%s context_id=%s "
@@ -34921,6 +35245,9 @@ question. Never guess a scientific or database identity.
                                 generate_node_context.llm_payload
                             ),
                             "generate_llm_policy": dict(self.generate_llm_policy),
+                            "provider_idempotency_key": (
+                                target_generation_id if recovery_generated else ""
+                            ),
                         },
                         llm_override=self.generate_llm,
                         llm_policy=self.generate_llm_policy,
@@ -34969,6 +35296,31 @@ question. Never guess a scientific or database identity.
                                 ),
                             )
             except Exception as exc:
+                if recovery_generated and target_generation_id:
+                    try:
+                        failed_generation_state = load_plan_state(
+                            self.data_path, task_id
+                        )
+                        claim_terminal_status = (
+                            "outcome_unknown"
+                            if isinstance(exc, ProviderAttemptFailure)
+                            and "OUTCOME_UNKNOWN" in str(exc.error_code or "").upper()
+                            else "failed"
+                        )
+                        update_recovery_generation_claim(
+                            failed_generation_state,
+                            target_generation_id=target_generation_id,
+                            status=claim_terminal_status,
+                            detail=str(exc),
+                        )
+                        save_plan_state(
+                            self.data_path, task_id, failed_generation_state
+                        )
+                    except (OSError, ValueError, StateCASConflict) as claim_exc:
+                        logger.warning(
+                            "Could not persist Recovery Generate provider outcome: %s",
+                            claim_exc,
+                        )
                 if isinstance(exc, ProviderAttemptFailure):
                     response = self._generate_provider_failure_response(exc, task_id)
                     plan_progress = self._mark_generate_provider_blocked(task_id, exc)
@@ -35023,6 +35375,20 @@ question. Never guess a scientific or database identity.
                     "task_status": TASK_STATUS_BLOCKED,
                     "next_step": "finish",
                 }
+            if recovery_generated and response is not None:
+                provider_state = load_plan_state(self.data_path, task_id)
+                provider_claim = dict(
+                    (((provider_state.get("task_state") or {}).get("recovery_state") or {}).get("generation_claim"))
+                    or {}
+                )
+                if str(provider_claim.get("status") or "").lower() == "claimed":
+                    update_recovery_generation_claim(
+                        provider_state,
+                        target_generation_id=target_generation_id,
+                        status="provider_completed",
+                        detail=("cache_replay" if generate_response_cached else "provider_response_complete"),
+                    )
+                    save_plan_state(self.data_path, task_id, provider_state)
             # Cached and newly generated responses cross the same current
             # authority gate before parsing or action binding.
             if response is not None:
@@ -35275,7 +35641,7 @@ question. Never guess a scientific or database identity.
                             "code": "CONTROLLER_SCRIPT_AUDIT_FAILED",
                             "findings": script_findings,
                         }
-                        format_count, duplicate_count, invalid_hash, format_decision = (
+                        format_count, duplicate_count, invalid_hash, format_decision, format_envelope = (
                             self._record_action_format_failure(
                                 task_id,
                                 current_step_id or "lightweight",
@@ -35300,6 +35666,7 @@ question. Never guess a scientific or database identity.
                                     "machine_audit_findings": script_findings,
                                 },
                                 "recovery_decision": format_decision.to_dict(),
+                                "recovery_execution_envelope": format_envelope,
                                 "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
                                 "required_next_action": "INTERNAL_PROTOCOL_ERROR",
                                 "generate_result": "BLOCKED",
@@ -35332,6 +35699,7 @@ question. Never guess a scientific or database identity.
                             "controller_machine_audit_findings": script_findings,
                             "required_next_action": "CORRECTIVE_GENERATE",
                             "recovery_decision": format_decision.to_dict(),
+                            "recovery_execution_envelope": format_envelope,
                             "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
                             "generate_result": "NEEDS_RECOVERY",
                             "generate_exit_reason": "controller_script_audit_failed",
@@ -35373,6 +35741,40 @@ question. Never guess a scientific or database identity.
                 if structured_action
                 else ""
             )
+            operation_contract = dict(
+                (self.skill_manager.get_skill_meta(generate_selected_skill_id).get("generate") or {}).get("binding_contract")
+                or {}
+            ) if generate_selected_skill_id else {}
+            if operation_contract and any(
+                key in structured_action
+                for key in ("operation", "produced_bindings", "consumed_bindings", "binding_env")
+            ):
+                operation_violations = validate_declared_binding_operation(
+                    structured_action,
+                    operation_contract,
+                )
+                if operation_violations:
+                    return {
+                        "messages": [response, SystemMessage(content=json.dumps(
+                            {"violations": list(operation_violations)},
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        ))],
+                        "pending_action": {},
+                        "pending_recovery_action": {
+                            "type": "binding_reference_repair",
+                            "reason": "BINDING_REFERENCE_MISMATCH",
+                            "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                            "violations": list(operation_violations),
+                            "failure_stage": "pre_action_contract",
+                            "execution_started": False,
+                        },
+                        "required_next_action": "CORRECTIVE_GENERATE",
+                        "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                        "generate_result": "NEEDS_RECOVERY",
+                        "generate_exit_reason": "binding_operation_contract_mismatch",
+                        "next_step": "generate",
+                    }
             renderer_contract_error: Dict[str, Any] = {}
             if (
                 str(structured_action.get("type") or "") == "execute"
@@ -35804,6 +36206,30 @@ question. Never guess a scientific or database identity.
                             task_id,
                             current_action_plan,
                         )
+                        policy_decision, policy_envelope = (
+                            self._finalize_controller_recovery_decision(
+                                task_id,
+                                policy_decision,
+                                source_node="generate",
+                                source_record={
+                                    "step_id": current_action_step_id,
+                                    "action_id": recovery_context.action_id,
+                                    "attempt_id": recovery_context.attempt_id,
+                                    "failure_fingerprint": (
+                                        recovery_context.error_fingerprint
+                                    ),
+                                },
+                                recovery_context_fingerprint=(
+                                    recovery_context.error_fingerprint
+                                ),
+                            )
+                        )
+                        recovery_context.recovery_decision = (
+                            policy_decision.to_dict()
+                        )
+                        RecoveryStateStore(
+                            self.data_path, task_id
+                        ).save_diagnostic_context(recovery_context)
                         pending_type = (
                             "ACTION_FORMAT_REPAIR"
                             if format_repair_allowed
@@ -35865,9 +36291,7 @@ question. Never guess a scientific or database identity.
                                 "termination_reason": termination_reason,
                                 "execution_started": False,
                                 "execution_envelope": deepcopy(
-                                    structured_action.get(
-                                        "recovery_execution_envelope"
-                                    ) or {}
+                                    policy_envelope
                                 ),
                                 "payload_revision": int(
                                     structured_action.get("payload_revision")
@@ -35877,6 +36301,7 @@ question. Never guess a scientific or database identity.
                             "recovery_context": recovery_context.to_dict(),
                             "recovery_context_digest": recovery_context.context_id,
                             "recovery_decision": policy_decision.to_dict(),
+                            "recovery_execution_envelope": policy_envelope,
                             "failure": durable_failure,
                             "primary_failure": durable_failure,
                             "termination_reason": termination_reason,
@@ -36585,7 +37010,7 @@ question. Never guess a scientific or database identity.
                 )
                 if previous_candidate in (None, "", [], {}):
                     previous_candidate = self._bounded_protocol_excerpt(str(content or ""))
-                format_count, duplicate_count, invalid_hash, format_decision = self._record_action_format_failure(
+                format_count, duplicate_count, invalid_hash, format_decision, format_envelope = self._record_action_format_failure(
                     task_id,
                     str((current_plan_step_with_index(load_plan_state(self.data_path, task_id))[1] or {}).get("step_id") or "lightweight"),
                     str(content or ""),
@@ -36669,6 +37094,7 @@ question. Never guess a scientific or database identity.
                         "generate_exit_reason": "internal_protocol_error",
                         "task_status": TASK_STATUS_BLOCKED,
                         "recovery_decision": format_decision.to_dict(),
+                        "recovery_execution_envelope": format_envelope,
                         "next_step": "finish",
                     }
                 repair_feedback = self._action_format_repair_feedback(
@@ -36710,6 +37136,7 @@ question. Never guess a scientific or database identity.
                     },
                     "required_next_action": "ACTION_FORMAT_REPAIR",
                     "recovery_decision": format_decision.to_dict(),
+                    "recovery_execution_envelope": format_envelope,
                     "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
                     "generate_result": "NEEDS_RECOVERY",
                     "generate_exit_reason": "unrecognized_action",
@@ -37345,6 +37772,40 @@ question. Never guess a scientific or database identity.
                         attempt_id=str(pending_action.get("attempt_id") or "dependency-gate"),
                     )
                     decision = contextualize_recovery_decision(decision, source_node="controller")
+                    dependency_fingerprint = hashlib.sha256(
+                        json.dumps(
+                            dependency_evidence.to_dict(),
+                            ensure_ascii=False,
+                            sort_keys=True,
+                            default=str,
+                        ).encode("utf-8", errors="replace")
+                    ).hexdigest()[:20]
+                    decision, dependency_envelope = (
+                        self._finalize_controller_recovery_decision(
+                            task_id,
+                            decision,
+                            source_node="controller",
+                            source_record={
+                                "step_id": str(
+                                    (action_step or {}).get("step_id")
+                                    or pending_action.get("step_id")
+                                    or ""
+                                ),
+                                "action_id": str(
+                                    pending_action.get("action_id")
+                                    or "dependency-gate"
+                                ),
+                                "attempt_id": str(
+                                    pending_action.get("attempt_id")
+                                    or "dependency-gate"
+                                ),
+                                "failure_fingerprint": dependency_fingerprint,
+                            },
+                            recovery_context_fingerprint=(
+                                dependency_fingerprint
+                            ),
+                        )
+                    )
                     pending_type = {
                         RecoveryDecisionKind.PLAN_PATCH_REQUEST.value: "PLAN_PATCH",
                         RecoveryDecisionKind.ROLLBACK_UPSTREAM_STEP.value: "ROLLBACK_UPSTREAM_STEP",
@@ -37357,6 +37818,7 @@ question. Never guess a scientific or database identity.
                         ))],
                         "dependency_evidence": dependency_evidence.to_dict(),
                         "recovery_decision": decision.to_dict(),
+                        "recovery_execution_envelope": dependency_envelope,
                         "recovery_application": {},
                         "recovery_status": decision.kind,
                         "pending_recovery_action": {
@@ -37682,9 +38144,47 @@ question. Never guess a scientific or database identity.
             # env entries explicitly present in the validated action plus
             # non-scientific Controller identity. Runtime/artifact registries
             # remain authorization evidence and are never injected here.
+            try:
+                plan_binding_resolution = resolve_action_binding_environment(
+                    attempt_plan_state,
+                    pending_action,
+                )
+                declared_action_env = dict(pending_action.get("env") or {})
+                for env_name, env_value in dict(
+                    plan_binding_resolution.get("environment") or {}
+                ).items():
+                    if (
+                        env_name in declared_action_env
+                        and str(declared_action_env[env_name]) != str(env_value)
+                    ):
+                        raise PlanBindingError(
+                            "PLAN_BINDING_ENV_COLLISION",
+                            env_name=env_name,
+                        )
+                    declared_action_env[env_name] = env_value
+            except PlanBindingError as exc:
+                return {
+                    "messages": [SystemMessage(content=json.dumps(
+                        exc.to_dict(), ensure_ascii=False, sort_keys=True,
+                    ))],
+                    "pending_action": {},
+                    "pending_recovery_action": {
+                        "type": "binding_reference_repair",
+                        "reason": exc.code,
+                        "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                        "violation": exc.to_dict(),
+                        "failure_stage": "pre_action_contract",
+                        "execution_started": False,
+                    },
+                    "required_next_action": "CORRECTIVE_GENERATE",
+                    "failure_owner": RecoveryFailureOwner.GENERATED_ACTION.value,
+                    "recovery_status": "BINDING_REFERENCE_MISMATCH",
+                    "generate_result": "NEEDS_RECOVERY",
+                    "next_step": "generate",
+                }
             effective_execution_env = build_exact_action_environment(
                 os.environ,
-                action_environment=dict(pending_action.get("env") or {}),
+                action_environment=declared_action_env,
                 controller_identity=controller_identity_env,
             )
             code = (
@@ -39236,6 +39736,16 @@ question. Never guess a scientific or database identity.
                     "execution_record": {**execution_evidence, **record.summary()},
                 })
                 record.produced_artifact_ids = list(provenance_result.get("produced_artifact_ids") or [])
+                accepted_bindings = accept_action_binding_candidates(
+                    provenance_plan,
+                    pending_action,
+                    execution_evidence,
+                    validation_result,
+                )
+                if accepted_bindings:
+                    execution_evidence["accepted_plan_binding_ids"] = [
+                        item.binding_id for item in accepted_bindings
+                    ]
                 if runtime_artifact_failure:
                     execution_evidence["typed_failure"] = runtime_artifact_failure
                 recovery_store.save_execution_record(record)
@@ -39266,6 +39776,8 @@ question. Never guess a scientific or database identity.
                 execution_evidence["returncode"] = record.exit_code
                 execution_evidence["script_file"] = record.script_path
                 execution_evidence["cwd"] = record.working_directory
+            except PlanBindingError:
+                raise
             except Exception as exc:
                 logger.warning("Could not persist execution record for %s: %s", task_id, exc)
             execution_evidence["failure_log_projection"] = failure_log_projection(
@@ -39683,6 +40195,23 @@ question. Never guess a scientific or database identity.
                         "attempt_id": str(execution.get("attempt_id") or ""),
                         "validation": validation.to_dict(),
                     })
+                    scoped_validation = {
+                        **validation.to_dict(),
+                        "task_id": str(provenance_plan.get("task_id") or task_id),
+                        "plan_id": str(provenance_plan.get("plan_id") or ""),
+                        "plan_version": str(provenance_plan.get("plan_version") or ""),
+                        "step_id": current_step_id,
+                        "action_id": str(execution.get("action_id") or ""),
+                        "execution_attempt_id": str(execution.get("attempt_id") or ""),
+                    }
+                    record_scoped_evidence(
+                        provenance_plan,
+                        "validation",
+                        scoped_validation,
+                        action_id=str(execution.get("action_id") or ""),
+                        execution_attempt_id=str(execution.get("attempt_id") or ""),
+                        failure_fingerprint=str(execution.get("failure_fingerprint") or ""),
+                    )
                     save_plan_state(self.data_path, task_id, provenance_plan)
                     plan_state = provenance_plan
                     update["provenance_summary"] = provenance_debug_dump(provenance_plan)["summary"]
@@ -39696,7 +40225,31 @@ question. Never guess a scientific or database identity.
                 completion: Optional[Dict[str, Any]] = None,
             ) -> RecoveryDecision:
                 current = load_plan_state(self.data_path, task_id)
-                decision = RecoveryPolicy().decide(
+                if completion is not None:
+                    scoped_completion = {
+                        **dict(completion),
+                        "task_id": str(current.get("task_id") or task_id),
+                        "plan_id": str(current.get("plan_id") or ""),
+                        "plan_version": str(current.get("plan_version") or ""),
+                        "step_id": current_step_id,
+                        "action_id": str(execution.get("action_id") or ""),
+                        "execution_attempt_id": str(
+                            execution.get("attempt_id") or execution.get("execution_id") or ""
+                        ),
+                    }
+                    record_scoped_evidence(
+                        current,
+                        "completion",
+                        scoped_completion,
+                        action_id=str(execution.get("action_id") or ""),
+                        execution_attempt_id=str(
+                            execution.get("attempt_id") or execution.get("execution_id") or ""
+                        ),
+                        failure_fingerprint=str(execution.get("failure_fingerprint") or ""),
+                    )
+                    save_plan_state(self.data_path, task_id, current)
+                    current = load_plan_state(self.data_path, task_id)
+                semantic_decision = RecoveryPolicy().decide(
                     execution_evidence=execution,
                     validation_evidence=evidence if evidence is not None else validation_payload,
                     progress_snapshot=dict(state.get("recovery_progress") or {}),
@@ -39706,7 +40259,72 @@ question. Never guess a scientific or database identity.
                     step_id=current_step_id,
                     attempt_id=str(execution.get("attempt_id") or execution.get("execution_id") or validation.validation_id),
                 )
-                decision = contextualize_recovery_decision(decision, source_node="supervisor")
+                semantic_decision = contextualize_recovery_decision(
+                    semantic_decision, source_node="supervisor"
+                )
+                decision, policy_outcome = RecoveryPolicy().apply_with_outcome(
+                    semantic_decision,
+                    dict(state.get("recovery_progress") or {}),
+                    dict((current.get("task_state") or {}).get("budgets") or {}),
+                )
+                source_record = {
+                    **execution,
+                    "action_id": str(
+                        execution.get("action_id")
+                        or execution.get("execution_id")
+                        or "supervisor"
+                    ),
+                    "attempt_id": str(
+                        execution.get("attempt_id")
+                        or execution.get("execution_id")
+                        or validation.validation_id
+                    ),
+                    "failure_fingerprint": str(
+                        execution.get("failure_fingerprint")
+                        or hashlib.sha256(
+                            json.dumps(
+                                {
+                                    "validation_id": validation.validation_id,
+                                    "step_id": current_step_id,
+                                    "attempt_id": execution.get("attempt_id") or "",
+                                },
+                                sort_keys=True,
+                            ).encode("utf-8")
+                        ).hexdigest()[:20]
+                    ),
+                }
+                decision = finalize_recovery_decision(
+                    decision,
+                    source_scope=RecoverySourceScope.from_state_and_record(
+                        current, source_record
+                    ),
+                    recovery_context_fingerprint=str(
+                        execution.get("failure_fingerprint") or ""
+                    ),
+                    policy_outcome=policy_outcome,
+                    source_node="supervisor",
+                    expected_state_generation=int(current.get("state_generation") or 0),
+                )
+                policy_outcome = bind_recovery_policy_outcome(
+                    policy_outcome, decision
+                )
+                if decision.target_route == "generate":
+                    recovery_context_id = str(
+                        state.get("recovery_context_digest")
+                        or execution.get("recovery_context_id")
+                        or source_record["failure_fingerprint"]
+                    )
+                    envelope = build_recovery_execution_envelope(
+                        decision,
+                        recovery_context_id=recovery_context_id,
+                        step_id=current_step_id,
+                        task_root=Path(self.data_path) / "task_outputs" / task_id,
+                        allowed_input_roots=[
+                            str(Path(self.data_path) / "task_outputs" / task_id)
+                        ],
+                        policy_version=policy_outcome.policy_version,
+                    )
+                    update["recovery_execution_envelope"] = envelope.to_dict()
                 update["recovery_decision"] = decision.to_dict()
                 update["recovery_application"] = {}
                 update["recovery_status"] = decision.kind
@@ -39843,6 +40461,7 @@ question. Never guess a scientific or database identity.
                     if step_gate.passed:
                         decision = commit_policy(
                             completion={
+                                **step_gate.to_dict(),
                                 "completion_satisfied": True,
                                 "task_complete": False,
                                 "evidence": [validation.validation_id, "current_step_completion_gate_passed"],
@@ -39859,7 +40478,18 @@ question. Never guess a scientific or database identity.
                             *validation.errors,
                             str(step_gate.message or step_gate.feedback or "Current step contract failed."),
                         ]))
-                        decision = commit_policy(evidence=failed_validation)
+                        decision = commit_policy(
+                            evidence=failed_validation,
+                            completion={
+                                **step_gate.to_dict(),
+                                "completion_satisfied": False,
+                                "task_complete": False,
+                                "evidence": [
+                                    validation.validation_id,
+                                    "current_step_completion_gate_failed",
+                                ],
+                            },
+                        )
 
             update["validation_evidence"] = validation.to_dict()
             update["last_supervisor_feedback"] = {
@@ -40659,7 +41289,84 @@ question. Never guess a scientific or database identity.
                 attempt_id=f"final-audit:{task_id}:{validation.validation_id}",
             )
             decision = contextualize_recovery_decision(decision, source_node="supervisor")
+            scoped_final_validation = {
+                **validation.to_dict(),
+                "task_id": str(plan_state.get("task_id") or task_id),
+                "plan_id": str(plan_state.get("plan_id") or ""),
+                "plan_version": str(plan_state.get("plan_version") or ""),
+                "step_id": str(
+                    plan_state.get("current_step_id")
+                    or execution.get("step_id")
+                    or state.get("current_step_id")
+                    or ""
+                ),
+                "action_id": str(
+                    execution.get("action_id")
+                    or execution.get("execution_id")
+                    or "final-audit"
+                ),
+                "execution_attempt_id": str(
+                    execution.get("attempt_id")
+                    or execution.get("execution_id")
+                    or f"final-audit:{task_id}:{validation.validation_id}"
+                ),
+            }
+            record_scoped_evidence(
+                plan_state,
+                "validation",
+                scoped_final_validation,
+                action_id=scoped_final_validation["action_id"],
+                execution_attempt_id=scoped_final_validation[
+                    "execution_attempt_id"
+                ],
+            )
+            record_scoped_evidence(
+                plan_state,
+                "completion",
+                {
+                    **final_gate.to_dict(),
+                    **completion,
+                    **{
+                        key: scoped_final_validation[key]
+                        for key in (
+                            "task_id", "plan_id", "plan_version", "step_id",
+                            "action_id", "execution_attempt_id",
+                        )
+                    },
+                },
+                action_id=scoped_final_validation["action_id"],
+                execution_attempt_id=scoped_final_validation[
+                    "execution_attempt_id"
+                ],
+            )
+            save_plan_state(self.data_path, task_id, plan_state)
+            final_source_fingerprint = hashlib.sha256(
+                json.dumps(
+                    {
+                        "validation_id": validation.validation_id,
+                        "completion": final_gate.to_dict(),
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    default=str,
+                ).encode("utf-8", errors="replace")
+            ).hexdigest()[:20]
+            decision, final_envelope = self._finalize_controller_recovery_decision(
+                task_id,
+                decision,
+                source_node="supervisor",
+                source_record={
+                    "step_id": scoped_final_validation["step_id"],
+                    "action_id": scoped_final_validation["action_id"],
+                    "attempt_id": scoped_final_validation[
+                        "execution_attempt_id"
+                    ],
+                    "failure_fingerprint": final_source_fingerprint,
+                },
+                recovery_context_fingerprint=final_source_fingerprint,
+            )
             update["recovery_decision"] = decision.to_dict()
+            update["recovery_execution_envelope"] = final_envelope
             update["recovery_application"] = {}
             update["recovery_status"] = decision.kind
             update["plan_progress"] = render_plan_progress(plan_state)
@@ -40777,7 +41484,43 @@ question. Never guess a scientific or database identity.
                         completion_decision,
                         source_node="supervisor",
                     )
+                    legacy_final_fingerprint = hashlib.sha256(
+                        json.dumps(
+                            final_gate.to_dict(),
+                            ensure_ascii=False,
+                            sort_keys=True,
+                            default=str,
+                        ).encode("utf-8", errors="replace")
+                    ).hexdigest()[:20]
+                    completion_decision, completion_envelope = (
+                        self._finalize_controller_recovery_decision(
+                            task_id,
+                            completion_decision,
+                            source_node="supervisor",
+                            source_record={
+                                "step_id": str(
+                                    completed_state.get("current_step_id")
+                                    or state.get("current_step_id")
+                                    or ""
+                                ),
+                                "action_id": str(
+                                    (state.get("execution_evidence") or {}).get(
+                                        "action_id"
+                                    )
+                                    or "final-audit"
+                                ),
+                                "attempt_id": f"final-audit:{task_id}",
+                                "failure_fingerprint": (
+                                    legacy_final_fingerprint
+                                ),
+                            },
+                            recovery_context_fingerprint=(
+                                legacy_final_fingerprint
+                            ),
+                        )
+                    )
                     update["recovery_decision"] = completion_decision.to_dict()
+                    update["recovery_execution_envelope"] = completion_envelope
                     update["recovery_application"] = {}
                     update["next_step"] = completion_decision.next_route
                     update["final_audit_requested"] = False
