@@ -224,6 +224,7 @@ class RecoveryExecutionEnvelope:
     execution_purpose: str
     execution_mode: str
     result_contract: str
+    source_scope: Mapping[str, Any] = field(default_factory=dict)
     hypothesis_id: Optional[str] = None
     probe_id: Optional[str] = None
     scratch_capability: Optional[DiagnosticScratchCapability] = None
@@ -242,6 +243,7 @@ class RecoveryExecutionEnvelope:
             "execution_purpose": self.execution_purpose,
             "execution_mode": self.execution_mode,
             "result_contract": self.result_contract,
+            "source_scope": dict(self.source_scope),
             "hypothesis_id": self.hypothesis_id,
             "probe_id": self.probe_id,
             "scratch_capability": (
@@ -300,6 +302,7 @@ class RecoveryExecutionEnvelope:
             execution_purpose=str(data.get("execution_purpose") or "").upper(),
             execution_mode=str(data.get("execution_mode") or "").upper(),
             result_contract=str(data.get("result_contract") or "").upper(),
+            source_scope=dict(data.get("source_scope") or {}),
             hypothesis_id=(
                 str(data.get("hypothesis_id"))
                 if data.get("hypothesis_id") not in (None, "")
@@ -326,6 +329,7 @@ class RecoveryExecutionEnvelope:
             "step_id": envelope.step_id,
             "action_id": envelope.action_id,
             "recovery_strategy": envelope.recovery_strategy,
+            "source_scope": envelope.source_scope,
         }
         missing = sorted(key for key, item in required.items() if not item)
         if missing:
@@ -2398,6 +2402,123 @@ class RecoveryTransitionStatus(str, Enum):
     EXPIRED = "expired"
 
 
+_RECOVERY_MACHINE_AUTHORITY_FIELDS = frozenset({
+    "task_id", "plan_id", "plan_version", "step_id", "action_id",
+    "attempt_id", "failed_action_id", "failed_execution_attempt_id",
+    "source_failure_fingerprint", "decision_id", "incident_id",
+    "idempotency_key", "kind", "disposition", "next_route", "target_route",
+    "status", "step_attempt", "trigger_event_id", "trigger_node",
+    "source_node", "consume_budget", "budget_class", "execution_purpose",
+    "completion_eligibility", "source_scope", "identity_finalized",
+    "identity_payload_hash",
+    "expected_state_generation",
+})
+
+
+@dataclass(frozen=True)
+class RecoveryDecisionDraft:
+    """Semantic-only RecoveryJudge proposal without route or identity authority."""
+
+    semantic_payload: Mapping[str, Any]
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> "RecoveryDecisionDraft":
+        if not isinstance(value, Mapping):
+            raise ValueError("RecoveryDecisionDraft must be an object")
+        supplied = sorted(_RECOVERY_MACHINE_AUTHORITY_FIELDS & set(value))
+        if supplied:
+            raise ValueError(
+                "IGNORE_OR_REJECT_MACHINE_IDENTITY: RecoveryJudge may not set "
+                + ", ".join(supplied)
+            )
+        return cls(semantic_payload=deepcopy(dict(value)))
+
+    def to_mapping(self) -> Dict[str, Any]:
+        return deepcopy(dict(self.semantic_payload))
+
+
+@dataclass(frozen=True)
+class RecoverySourceScope:
+    """Controller-owned identity of the immutable failed execution."""
+
+    task_id: str
+    plan_id: str
+    plan_version: str
+    step_id: str
+    failed_action_id: str
+    failed_execution_attempt_id: str
+    source_failure_fingerprint: str
+
+    def to_dict(self) -> Dict[str, str]:
+        return asdict(self)
+
+    @classmethod
+    def from_state_and_record(
+        cls,
+        state: Mapping[str, Any],
+        record: Mapping[str, Any],
+    ) -> "RecoverySourceScope":
+        state_value = dict(state or {})
+        record_value = dict(record or {})
+        source_failure_fingerprint = str(
+            record_value.get("source_failure_fingerprint")
+            or record_value.get("failure_fingerprint")
+            or ""
+        )
+        if not source_failure_fingerprint:
+            # The source fingerprint is Controller authority.  Older execution
+            # records need not have stored it, so derive it from immutable
+            # execution facts rather than borrowing the diagnostic-context
+            # fingerprint or requiring the model to supply one.
+            source_facts = {
+                key: record_value.get(key)
+                for key in (
+                    "execution_id", "attempt_id", "action_id", "step_id",
+                    "returncode", "signal", "execution_status", "command_role",
+                    "stderr_hash", "stdout_hash", "validation_fingerprint",
+                )
+                if record_value.get(key) is not None
+            }
+            source_failure_fingerprint = "failure-" + hashlib.sha256(
+                json.dumps(
+                    source_facts,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    default=str,
+                ).encode("utf-8", errors="replace")
+            ).hexdigest()[:20]
+        scope = cls(
+            task_id=str(state_value.get("task_id") or ""),
+            plan_id=str(state_value.get("plan_id") or ""),
+            plan_version=str(state_value.get("plan_version") or ""),
+            step_id=str(
+                record_value.get("step_id")
+                or state_value.get("current_step_id")
+                or ""
+            ),
+            failed_action_id=str(record_value.get("action_id") or ""),
+            failed_execution_attempt_id=str(
+                record_value.get("attempt_id")
+                or record_value.get("execution_attempt_id")
+                or record_value.get("execution_id")
+                or ""
+            ),
+            source_failure_fingerprint=source_failure_fingerprint,
+        )
+        missing = [
+            name
+            for name, item in scope.to_dict().items()
+            if not str(item or "")
+        ]
+        if missing:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_SOURCE_SCOPE_INCOMPLETE",
+                "missing Controller-owned source fields: " + ", ".join(missing),
+            )
+        return scope
+
+
 _ACTION_TO_DECISION_KIND = {
     RecoveryAction.CONTINUE.value: RecoveryDecisionKind.CONTINUE.value,
     RecoveryAction.FORMAT_REPAIR.value: RecoveryDecisionKind.FORMAT_REPAIR.value,
@@ -2474,6 +2595,27 @@ def contextualize_recovery_decision(
     trigger_event_id: str = "",
 ) -> "RecoveryDecision":
     """Bind a judge/policy decision to one concrete action attempt."""
+    if decision.identity_finalized:
+        requested = {
+            "action_id": action_id,
+            "step_id": step_id,
+            "attempt_id": attempt_id,
+            "source_node": source_node,
+            "step_attempt": step_attempt,
+            "trigger_event_id": trigger_event_id,
+        }
+        current = decision.to_dict()
+        changed = [
+            key for key, item in requested.items()
+            if item not in (None, "", 0)
+            and str(current.get(key) or "") != str(item)
+        ]
+        if changed:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_DECISION_FINALIZED_SCOPE_MUTATION",
+                "cannot contextualize finalized fields: " + ", ".join(changed),
+            )
+        return decision
     value = decision.to_dict()
     original_source_node = str(
         value.get("trigger_node") or value.get("source_node") or ""
@@ -2884,6 +3026,17 @@ class RecoveryDecision:
     missing_capability: str = ""
     missing_producer_artifact_id: str = ""
     allowed_patch_scope: List[str] = field(default_factory=list)
+    source_failure_fingerprint: str = ""
+    recovery_context_fingerprint: str = ""
+    failed_action_id: str = ""
+    failed_execution_attempt_id: str = ""
+    budget_class: str = ""
+    execution_purpose: str = ""
+    completion_eligibility: bool = False
+    source_scope: Dict[str, Any] = field(default_factory=dict)
+    identity_finalized: bool = False
+    identity_payload_hash: str = ""
+    expected_state_generation: int = 0
 
     VERDICTS = {"probe", "repair", "rerun", "rollback", "blocked", "escalate", "continue"}
     ACTIONS = {
@@ -2903,23 +3056,22 @@ class RecoveryDecision:
     @staticmethod
     def _stable_decision_id(value: Dict[str, Any]) -> str:
         identity = {
-            "kind": value.get("kind"),
-            "reason_code": value.get("reason_code"),
-            "repair_domain": value.get("repair_domain"),
-            "action_id": value.get("action_id"),
-            "step_id": value.get("step_id"),
-            "attempt_id": value.get("attempt_id"),
-            "step_attempt": value.get("step_attempt"),
-            "trigger_event_id": value.get("trigger_event_id"),
-            "trigger_node": value.get("trigger_node"),
+            "schema_version": int(value.get("schema_version") or 5),
+            "source_scope": dict(value.get("source_scope") or {}),
+            "failure_class": value.get("failure_class"),
+            "failure_owner": value.get("failure_owner"),
+            "effective_strategy": value.get("recommended_action"),
+            "effective_route": value.get("target_route") or value.get("next_route"),
             "disposition": value.get("disposition"),
-            "plan_id": value.get("plan_id"),
-            "plan_version": value.get("plan_version"),
-            "incident_id": value.get("incident_id"),
+            "budget_class": value.get("budget_class") or value.get("consume_budget") or "",
+            "execution_purpose": value.get("execution_purpose") or "",
+            "completion_eligibility": bool(value.get("completion_eligibility")),
+            "selected_hypothesis_id": value.get("selected_hypothesis_id"),
+            "selected_probe_id": value.get("recommended_probe_id"),
             "rollback_to_step_id": value.get("rollback_to_step_id"),
             "rewind_to_stage_id": value.get("rewind_to_stage_id"),
-            "evidence": value.get("evidence") or [],
-            "blocked_evidence": value.get("blocked_evidence") or [],
+            "affected_step_ids": sorted(value.get("affected_step_ids") or []),
+            "invalidate_stage_ids": sorted(value.get("invalidate_stage_ids") or []),
         }
         digest = hashlib.sha256(
             json.dumps(identity, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
@@ -2928,16 +3080,22 @@ class RecoveryDecision:
 
     @staticmethod
     def _stable_incident_id(value: Dict[str, Any]) -> str:
-        identity = {
-            "task_id": value.get("task_id"),
-            "plan_id": value.get("plan_id"),
-            "plan_version": value.get("plan_version"),
-            "step_id": value.get("step_id"),
-            "action_id": value.get("action_id"),
-            "attempt_id": value.get("attempt_id"),
-            "failure_type": value.get("failure_type"),
-            "reason_code": value.get("reason_code"),
-        }
+        source_scope = dict(value.get("source_scope") or {})
+        identity = (
+            {"source_scope": source_scope}
+            if source_scope
+            else {
+                # Compatibility only for pre-finalizer legacy decisions.
+                "task_id": value.get("task_id"),
+                "plan_id": value.get("plan_id"),
+                "plan_version": value.get("plan_version"),
+                "step_id": value.get("step_id"),
+                "action_id": value.get("action_id"),
+                "attempt_id": value.get("attempt_id"),
+                "failure_type": value.get("failure_type"),
+                "reason_code": value.get("reason_code"),
+            }
+        )
         digest = hashlib.sha256(
             json.dumps(identity, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
         ).hexdigest()[:20]
@@ -3425,7 +3583,192 @@ class RecoveryDecision:
     def to_dict(self) -> Dict[str, Any]:
         value = asdict(self)
         value["schema_version"] = 5
+        if self.identity_finalized:
+            expected_id = self._stable_decision_id(value)
+            expected_hash = hashlib.sha256(
+                json.dumps(
+                    {
+                        "decision_id": expected_id,
+                        "source_scope": value.get("source_scope") or {},
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8", errors="replace")
+            ).hexdigest()
+            if self.decision_id != expected_id or self.idempotency_key != expected_id:
+                raise RecoveryExecutionContractError(
+                    "RECOVERY_DECISION_IDENTITY_MUTATED",
+                    "finalized RecoveryDecision identity no longer matches its canonical payload",
+                )
+            if self.identity_payload_hash and self.identity_payload_hash != expected_hash:
+                raise RecoveryExecutionContractError(
+                    "RECOVERY_DECISION_IDENTITY_MUTATED",
+                    "finalized RecoveryDecision source scope was modified",
+                )
         return value
+
+
+def finalize_recovery_decision(
+    decision: RecoveryDecision,
+    *,
+    source_scope: RecoverySourceScope,
+    recovery_context_fingerprint: str,
+    policy_outcome: Optional[RecoveryPolicyOutcome] = None,
+    source_node: str,
+    step_attempt: int = 0,
+    expected_state_generation: int = 0,
+) -> RecoveryDecision:
+    """Attach Controller scope and compute the authoritative decision ID once."""
+    scope = source_scope.to_dict()
+    if decision.identity_finalized:
+        current = decision.to_dict()
+        if dict(current.get("source_scope") or {}) != scope:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_DECISION_FINALIZED_SCOPE_MISMATCH",
+                "a finalized decision cannot be rebound to another failure",
+            )
+        return decision
+
+    value = decision.to_dict()
+    for key in (
+        "decision_id", "idempotency_key", "incident_id",
+        "identity_payload_hash",
+    ):
+        value.pop(key, None)
+    purpose = (
+        RecoveryExecutionPurpose.DIAGNOSTIC.value
+        if str(value.get("recommended_action") or "").upper()
+        == RecoveryAction.RUN_DIAGNOSTIC_PROBE.value
+        else RecoveryExecutionPurpose.VALIDATION.value
+        if str(value.get("recommended_action") or "").upper()
+        == RecoveryAction.REVALIDATE.value
+        else RecoveryExecutionPurpose.PRIMARY.value
+    )
+    value.update({
+        "schema_version": 5,
+        "task_id": scope["task_id"],
+        "plan_id": scope["plan_id"],
+        "plan_version": scope["plan_version"],
+        "step_id": scope["step_id"],
+        "action_id": scope["failed_action_id"],
+        "attempt_id": scope["failed_execution_attempt_id"],
+        "failed_action_id": scope["failed_action_id"],
+        "failed_execution_attempt_id": scope["failed_execution_attempt_id"],
+        "source_failure_fingerprint": scope["source_failure_fingerprint"],
+        "recovery_context_fingerprint": str(recovery_context_fingerprint or ""),
+        "source_scope": scope,
+        "source_node": str(source_node or ""),
+        "trigger_node": str(source_node or ""),
+        "trigger_event_id": scope["failed_execution_attempt_id"],
+        "step_attempt": max(0, int(step_attempt or value.get("step_attempt") or 0)),
+        "budget_class": str(value.get("consume_budget") or ""),
+        "execution_purpose": purpose,
+        "completion_eligibility": recovery_completion_eligible(
+            RecoveryResultContract.FORMAL_OUTPUTS.value
+            if purpose != RecoveryExecutionPurpose.DIAGNOSTIC.value
+            else RecoveryResultContract.DIAGNOSTIC_EVIDENCE.value
+        ),
+        "identity_finalized": False,
+        "expected_state_generation": max(0, int(expected_state_generation or 0)),
+    })
+    if policy_outcome is not None:
+        if policy_outcome.effective_route and str(value.get("target_route") or value.get("next_route") or "") != policy_outcome.effective_route:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_POLICY_ROUTE_MISMATCH",
+                "policy outcome route does not match the normalized decision",
+            )
+        if policy_outcome.effective_strategy and str(value.get("recommended_action") or "") != policy_outcome.effective_strategy:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_POLICY_STRATEGY_MISMATCH",
+                "policy outcome strategy does not match the normalized decision",
+            )
+    normalized = RecoveryDecision.from_mapping(value)
+    canonical = normalized.to_dict()
+    canonical["incident_id"] = RecoveryDecision._stable_incident_id(canonical)
+    canonical["decision_id"] = RecoveryDecision._stable_decision_id(canonical)
+    canonical["idempotency_key"] = canonical["decision_id"]
+    canonical["identity_payload_hash"] = hashlib.sha256(
+        json.dumps(
+            {
+                "decision_id": canonical["decision_id"],
+                "source_scope": canonical["source_scope"],
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8", errors="replace")
+    ).hexdigest()
+    canonical["identity_finalized"] = True
+    return RecoveryDecision.from_mapping(canonical)
+
+
+def bind_recovery_policy_outcome(
+    outcome: RecoveryPolicyOutcome,
+    finalized_decision: RecoveryDecision,
+) -> RecoveryPolicyOutcome:
+    """Re-key an audit outcome to the one Controller-finalized identity."""
+    if not finalized_decision.identity_finalized:
+        raise RecoveryExecutionContractError(
+            "RECOVERY_DECISION_NOT_FINALIZED",
+            "policy outcome can only bind to a finalized decision",
+        )
+    return RecoveryPolicyOutcome(
+        schema_version=outcome.schema_version,
+        policy_version=outcome.policy_version,
+        allowed=outcome.allowed,
+        raw_decision_id=outcome.raw_decision_id,
+        final_decision_id=finalized_decision.decision_id,
+        effective_route=outcome.effective_route,
+        effective_strategy=outcome.effective_strategy,
+        budget_charges=outcome.budget_charges,
+        reason=outcome.reason,
+        rewrite_reason=outcome.rewrite_reason,
+    )
+
+
+@dataclass(frozen=True)
+class RecoveryCommitBundle:
+    """One authoritative Recovery transition committed by a PlanState CAS."""
+
+    finalized_decision: RecoveryDecision
+    execution_envelope: Optional[RecoveryExecutionEnvelope]
+    active_recovery: Mapping[str, Any]
+    transition: Mapping[str, Any]
+    budget_reservation: Optional[Mapping[str, Any]]
+    expected_state_generation: int
+
+    def validate(self) -> None:
+        decision = self.finalized_decision
+        if not decision.identity_finalized:
+            raise RecoveryExecutionContractError(
+                "RECOVERY_DECISION_NOT_FINALIZED",
+                "RecoveryCommitBundle requires a finalized decision",
+            )
+        decision.to_dict()
+        if int(self.expected_state_generation) != int(
+            decision.expected_state_generation
+        ):
+            raise RecoveryExecutionContractError(
+                "RECOVERY_BUNDLE_GENERATION_MISMATCH",
+                "bundle generation differs from finalized decision generation",
+            )
+        envelope = self.execution_envelope
+        if decision.target_route == "generate":
+            if envelope is None:
+                raise RecoveryExecutionContractError(
+                    "RECOVERY_EXECUTION_ENVELOPE_MISSING",
+                    "Generate recovery requires an immutable envelope",
+                )
+            if (
+                envelope.recovery_decision_id != decision.decision_id
+                or dict(envelope.source_scope or {})
+                != dict(decision.source_scope or {})
+            ):
+                raise RecoveryExecutionContractError(
+                    "RECOVERY_BUNDLE_IDENTITY_MISMATCH",
+                    "decision and envelope identities differ",
+                )
 
 
 def build_recovery_execution_envelope(
@@ -3440,6 +3783,11 @@ def build_recovery_execution_envelope(
     policy_version: str = "recovery-execution-policy-v1",
 ) -> RecoveryExecutionEnvelope:
     """Derive one stable execution authority object from a semantic decision."""
+    if not decision.identity_finalized:
+        raise RecoveryExecutionContractError(
+            "RECOVERY_DECISION_NOT_FINALIZED",
+            "execution envelope requires a finalized RecoveryDecision",
+        )
     strategy = str(decision.recommended_action or "").upper()
     purpose = (
         RecoveryExecutionPurpose.DIAGNOSTIC.value
@@ -3470,6 +3818,11 @@ def build_recovery_execution_envelope(
         raise RecoveryExecutionContractError(
             "RECOVERY_EXECUTION_ENVELOPE_INVALID",
             "decision, context, and step identities are required",
+        )
+    if resolved_step_id != str(decision.step_id or ""):
+        raise RecoveryExecutionContractError(
+            "RECOVERY_EXECUTION_SCOPE_MISMATCH",
+            "envelope step differs from finalized decision scope",
         )
     probe_id: Optional[str] = None
     if purpose == RecoveryExecutionPurpose.DIAGNOSTIC.value:
@@ -3537,6 +3890,7 @@ def build_recovery_execution_envelope(
         execution_purpose=purpose,
         execution_mode=mode,
         result_contract=result_contract,
+        source_scope=deepcopy(decision.source_scope),
         hypothesis_id=decision.selected_hypothesis_id,
         probe_id=probe_id,
         scratch_capability=scratch,
@@ -3574,18 +3928,8 @@ def parse_recovery_judge_decision(text: str) -> RecoveryDecision:
     missing = sorted(required - set(value))
     if missing:
         raise ValueError("RecoveryJudge decision missing fields: " + ", ".join(missing))
-    controller_owned = {
-        "kind", "disposition", "next_route", "target_route", "status",
-        "step_attempt", "trigger_event_id", "trigger_node", "decision_id",
-        "idempotency_key", "source_node",
-    }
-    supplied_controller_fields = sorted(controller_owned & set(value))
-    if supplied_controller_fields:
-        raise ValueError(
-            "RecoveryJudge may not set Controller-owned transition fields: "
-            + ", ".join(supplied_controller_fields)
-        )
-    decision = RecoveryDecision.from_mapping(value)
+    draft = RecoveryDecisionDraft.from_mapping(value)
+    decision = RecoveryDecision.from_mapping(draft.to_mapping())
     if decision.kind in {
         RecoveryDecisionKind.COMPLETE_STEP.value,
         RecoveryDecisionKind.COMPLETE_TASK.value,

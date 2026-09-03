@@ -65,6 +65,7 @@ from agent_core.recovery import (
     RecoveryDecision,
     RecoveryDecisionKind,
     RecoveryDecisionSource,
+    RecoverySourceScope,
     ProbeLifecycleRecord,
     ProbeLifecycleStatus,
     RecoveryAction,
@@ -84,6 +85,8 @@ from agent_core.recovery import (
     constrain_recovery_decision,
     recovery_decision_from_diagnosis,
     contextualize_recovery_decision,
+    finalize_recovery_decision,
+    bind_recovery_policy_outcome,
     structured_user_decision_required,
     parse_recovery_decision,
     parse_recovery_judge_decision,
@@ -3074,7 +3077,21 @@ def error_recovery_middleware(
                 progress,
                 dict((plan_state.get("task_state") or {}).get("budgets") or {}),
             )
-            decision = contextualize_recovery_decision(decision, source_node="execute")
+            source_scope = RecoverySourceScope.from_state_and_record(
+                {**plan_state, "task_id": str(plan_state.get("task_id") or task_id or "")},
+                evidence,
+            )
+            decision = finalize_recovery_decision(
+                decision,
+                source_scope=source_scope,
+                recovery_context_fingerprint=diagnostic_context.error_fingerprint,
+                policy_outcome=policy_outcome,
+                source_node="execute",
+                expected_state_generation=int(plan_state.get("state_generation") or 0),
+            )
+            policy_outcome = bind_recovery_policy_outcome(
+                policy_outcome, decision
+            )
 
             if store:
                 store.save_diagnostic_context(diagnostic_context)
@@ -3192,17 +3209,6 @@ def error_recovery_middleware(
                         execution_envelope,
                     )
                     if envelope.probe_id:
-                        proposal_plan = load_plan_state(
-                            data_path, task_id
-                        )
-                        if record_recovery_counter_once(
-                            proposal_plan,
-                            "diagnostic_probes_proposed",
-                            envelope.probe_id,
-                        ):
-                            save_plan_state(
-                                data_path, task_id, proposal_plan
-                            )
                         store.save_probe_lifecycle(ProbeLifecycleRecord(
                             recovery_decision_id=envelope.recovery_decision_id,
                             diagnosis=str(
