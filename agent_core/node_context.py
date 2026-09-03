@@ -2053,6 +2053,21 @@ def build_node_context(
     if normalized_node not in NODE_STALENESS_DOMAINS:
         raise NodeContextError(f"NODE_TYPE_UNSUPPORTED: {node_type!r}")
     runtime = dict(runtime or {})
+    if normalized_node == "generate":
+        from agent_core.plan_bindings import project_accepted_plan_bindings
+
+        accepted_plan_bindings = project_accepted_plan_bindings(plan_state or {})
+        if accepted_plan_bindings:
+            runtime["accepted_plan_bindings"] = [
+                {
+                    "name": str(item.get("name") or ""),
+                    "value": deepcopy(item.get("value")),
+                    "value_type": str(item.get("value_type") or ""),
+                    "producer_step": str(item.get("producer_step_id") or ""),
+                    "instruction": "Reuse this accepted value exactly through a declared binding reference.",
+                }
+                for item in accepted_plan_bindings
+            ]
     skill_context = dict(skill_context or {})
     if normalized_node == "generate":
         # Inject canonical facts here rather than copying prose into individual
