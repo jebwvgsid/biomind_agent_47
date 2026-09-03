@@ -66,15 +66,10 @@ metadata:
     invocation:
       binding_rules:
         genome_version:
-          owner: task_spec
-          repair_target: task_spec.requirements[role=database_source]
+          owner: generate
+          repair_target: generated_action.produced_bindings.genome_version
           sources:
-            - {kind: requirement, role: genome_version, rule_id: snpeff.genome_version.explicit.v1}
-            - kind: stable_task_identifier
-              role: database_source
-              prefix: biomind
-              rule_id: snpeff.custom_database.task_id.v1
-              when: {role: database_source, operator: eq, value: custom_genome}
+            - {kind: explicit_produced_binding, role: genome_version, rule_id: snpeff.genome_version.generated.v2}
       arguments:
         vcf: {flag: --vcf, required: true, aliases: [variant_file]}
         genome_version: {flag: --genome-version, required: true}
@@ -113,6 +108,23 @@ metadata:
     - {output_id: report, default_filename: report.md, format: markdown}
     - {output_id: reproduce_script, default_filename: reproduce.sh, format: bash}
   generate:
+    binding_contract:
+      schema_version: 1
+      operations:
+        prepare_database:
+          produces_bindings: [genome_version, snpeff_db]
+          consumes_bindings: []
+        build_database:
+          produces_bindings: []
+          consumes_bindings: [genome_version, snpeff_db]
+        annotate_variants:
+          produces_bindings: []
+          consumes_bindings: [genome_version, snpeff_db]
+      derived_artifact_layout:
+        data_root: "<snpeff_db artifact>/data"
+        genome_fasta: "<data_root>/genomes/<genome_version>.fa"
+        annotation_gtf: "<data_root>/<genome_version>/genes.gtf"
+        predictor: "<data_root>/<genome_version>/snpEffectPredictor.bin"
     execution_capabilities:
       - capability_id: genomics.snpeff_annotation.check_contig_compatibility
         required_runtime_binding_ids: []
@@ -144,12 +156,16 @@ metadata:
     required_bindings:
       - {name: variant_vcf, required: true, required_for_execution: true, owner: user, user_input_required: true, aliases: [vcf, variant_file]}
       - {name: database_source, required: true, required_for_execution: true, owner: user, user_input_required: true}
-      - {name: genome_version, required: true, required_for_execution: true, owner: controller, user_input_required: false, resolution: stable_task_identifier}
+      - {name: genome_version, required: true, required_for_execution: true, owner: generate, user_input_required: false, resolution: produced_binding}
+      - {name: snpeff_db, required: true, required_for_execution: true, owner: generate, user_input_required: false, resolution: produced_binding_to_managed_artifact}
       - {name: snpeff_jar, required: true, required_for_execution: true, owner: runtime, user_input_required: false, resolution: runtime_discovery}
     execution_guidance:
       - Resolve and verify the pinned snpEff JAR and Java runtime before annotation.
       - For a custom reference, create a task-local snpEff config/data directory, stage the FASTA and matching GTF/GFF3, build the database, then annotate the VCF.
       - Generate one structured executable action for the approved step and write every approved output_id at its managed path.
+      - The prepare_database action chooses one stable genome_version and explicitly declares genome_version and snpeff_db under produced_bindings; the Controller never invents either value.
+      - Use binding_env with source=produced_binding in the producer and source=accepted_binding in build_database and annotate_variants. Shell source must consume the injected environment values rather than copying the literal identifier again.
+      - Declare operation metadata and consumed_bindings using exact plan_binding refs so the deterministic Skill contract can reject mismatches before Execute.
       - Validate contig-name compatibility and the ANN header; summarize ANN effects without inventing annotations.
       - Do not invoke the legacy render_snpeff_annotation_scripts.py Renderer or use its manifest as output authority.
   runtime:
@@ -206,7 +222,10 @@ inside one managed action.
 
 Use the concrete Java and snpEff JAR paths supplied in the current-action
 runtime context. Do not emit `$SNPEFF_JAR`, `{runtime:snpeff_jar}`, or discover
-an alternative runtime inside the generated scientific action.
+an alternative runtime inside the generated scientific action. Cross-step
+semantic values are different: Generate must declare them as produced or
+consumed bindings and use the exact `binding_env` variables in executable
+source.
 
 ## Official Documentation Anchors
 
@@ -230,9 +249,11 @@ For a V2 managed task, Generate is the sole executable action/script producer.
 Use the verified runtime, TaskSpec inputs, approved Plan materializations, and
 the command patterns below to create the action directly. Put every supplied
 concrete input path, expected output path, Java executable path, and JAR path
-directly in the action. Do not emit artifact placeholders, BIOMIND_INPUT/OUTPUT
-variables, or runtime-variable indirection. Do not invoke the legacy renderer
-and do not create or consume a renderer manifest as V2 output authority.
+directly in the action. Cross-step semantic values must use structured
+`produced_bindings`, `consumed_bindings`, and `binding_env`; reuse an accepted
+value exactly. Do not emit artifact placeholders or BIOMIND_INPUT/OUTPUT
+variables. Do not invoke the legacy renderer and do not create or consume a
+renderer manifest as V2 output authority.
 
 ## Legacy Renderer Reference (`legacy_renderer_v1` only)
 
