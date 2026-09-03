@@ -46,7 +46,12 @@ from agent_core.workflow.outcomes import (
 from agent_core.workflow.typed_node import profile_typed_node
 from agent_core.workflow.commit_step import CommitStep, commit_step_harness_error
 from agent_core.workflow.runtime_graph import (
+    build_schema2_runtime_graph,
     route_commit_step_outcome,
+    route_execute_outcome,
+    route_final_audit_outcome,
+    route_generate_outcome,
+    route_recovery_outcome,
     route_verification_outcome,
 )
 from agent_core.workflow.verifier import TypedSupervisor, verification_harness_error
@@ -56,6 +61,8 @@ from agent_core.workflow.execution import (
     execute_harness_error,
     generate_harness_error,
 )
+from agent_core.workflow.recovery_runtime import TypedRecovery, recovery_harness_error
+from agent_core.workflow.final_audit import TypedFinalAudit, final_audit_harness_error
 
 __all__ = [
     "STEP_OUTCOME_SCHEMA_VERSION",
@@ -96,6 +103,8 @@ __all__ = [
     "resolve_step_worker_backend_name",
     "route_step_worker_outcome",
     "route_commit_step_outcome",
+    "route_generate_outcome",
+    "route_execute_outcome",
     "route_verification_outcome",
     "commit_step_harness_error",
     "profile_typed_node",
@@ -104,6 +113,13 @@ __all__ = [
     "TypedGenerate",
     "execute_harness_error",
     "generate_harness_error",
+    "TypedRecovery",
+    "recovery_harness_error",
+    "TypedFinalAudit",
+    "final_audit_harness_error",
+    "build_schema2_runtime_graph",
+    "route_recovery_outcome",
+    "route_final_audit_outcome",
     "verification_harness_error",
     "workflow_routing_schema_version",
 ]

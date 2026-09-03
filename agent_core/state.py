@@ -222,6 +222,9 @@ class AgentState(TypedDict, total=False):
     commit_step_outcome: dict
     generate_outcome: dict
     execute_outcome: dict
+    recovery_fact: dict
+    recovery_outcome: dict
+    final_audit_outcome: dict
 
 # 安装子智能体状态
 class InstallerState(TypedDict):

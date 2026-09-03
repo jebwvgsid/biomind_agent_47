@@ -138,14 +138,24 @@ from agent_core.workflow.step_worker import (
 from agent_core.workflow.typed_node import profile_typed_node
 from agent_core.workflow.commit_step import CommitStep, commit_step_harness_error
 from agent_core.workflow.verifier import TypedSupervisor, verification_harness_error
-from agent_core.workflow.outcomes import CommitStepOutcome, VerificationOutcome
-from agent_core.workflow.outcomes import ExecuteOutcome, GenerateOutcome, workflow_routing_schema_version
+from agent_core.workflow.outcomes import (
+    CommitStepOutcome,
+    ExecuteOutcome,
+    FinalAuditOutcome,
+    GenerateOutcome,
+    RecoveryOutcome,
+    VerificationOutcome,
+    workflow_routing_schema_version,
+)
 from agent_core.workflow.execution import (
     TypedExecute,
     TypedGenerate,
     execute_harness_error,
     generate_harness_error,
 )
+from agent_core.workflow.recovery_runtime import TypedRecovery, recovery_harness_error
+from agent_core.workflow.final_audit import TypedFinalAudit, final_audit_harness_error
+from agent_core.workflow.runtime_graph import build_schema2_runtime_graph
 from agent_core.deepseek_stream import (
     deepseek_reasoning_stream_enabled,
     enable_deepseek_reasoning_stream,
@@ -2380,6 +2390,11 @@ class BioAnalystAgent:
             verifier=self.supervisor_node.run,
         )
         commit_step = CommitStep(data_path=self.data_path)
+        typed_recovery = TypedRecovery(data_path=self.data_path)
+        typed_final_audit = TypedFinalAudit(
+            data_path=self.data_path,
+            auditor=self.supervisor_node.final_audit,
+        )
         self._schema2_runtime_node_handlers = {
             "generate": profile_typed_node(
                 "generate",
@@ -2417,7 +2432,26 @@ class BioAnalystAgent:
                 profiler=self.profiler,
                 harness_error_factory=commit_step_harness_error,
             ),
+            "recovery": profile_typed_node(
+                "recovery",
+                typed_recovery.run,
+                outcome_field="recovery_outcome",
+                outcome_contract=RecoveryOutcome,
+                profiler=self.profiler,
+                harness_error_factory=recovery_harness_error,
+            ),
+            "final_audit": profile_typed_node(
+                "final_audit",
+                typed_final_audit.run,
+                outcome_field="final_audit_outcome",
+                outcome_contract=FinalAuditOutcome,
+                profiler=self.profiler,
+                harness_error_factory=final_audit_harness_error,
+            ),
         }
+        self._schema2_runtime_graph = build_schema2_runtime_graph(
+            self._schema2_runtime_node_handlers
+        ).compile(checkpointer=MemorySaver())
 
     # ────────────────────────────────────────────────────────────
     #  工具方法

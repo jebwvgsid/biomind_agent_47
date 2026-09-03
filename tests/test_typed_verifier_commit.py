@@ -445,13 +445,16 @@ class CompiledStageBGraphTests(unittest.IsolatedAsyncioTestCase):
         async def recovery_node(_state):
             raise AssertionError("route poison reached Recovery")
 
+        async def verification_route(state):
+            return route_verification_outcome(state)
+
         workflow.add_node("supervisor", supervisor_node)
         workflow.add_node("commit_step", commit_node)
         workflow.add_node("recovery", recovery_node)
         workflow.add_edge(START, "supervisor")
         workflow.add_conditional_edges(
             "supervisor",
-            route_verification_outcome,
+            verification_route,
             ["commit_step", "recovery", END],
         )
         workflow.add_edge("commit_step", END)
@@ -472,7 +475,7 @@ class CompiledStageBGraphTests(unittest.IsolatedAsyncioTestCase):
 
         commit_destinations = {
             "next_step_ready": "generate",
-            "plan_complete": "supervisor_final_audit",
+            "plan_complete": "final_audit",
             "commit_conflict": "recovery",
             "contract_rejected": "recovery",
             "harness_error": END,

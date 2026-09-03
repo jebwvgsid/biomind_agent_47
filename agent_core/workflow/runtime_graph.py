@@ -6,14 +6,17 @@ outcome types to LangGraph node names.  It never reads legacy route fields.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any, Awaitable, Callable, Mapping
 
-from langgraph.graph import END
+from langgraph.graph import END, START, StateGraph
 
+from agent_core.state import AgentState
 from agent_core.workflow.outcomes import (
     CommitStepOutcome,
     ExecuteOutcome,
+    FinalAuditOutcome,
     GenerateOutcome,
+    RecoveryOutcome,
     VerificationOutcome,
 )
 
@@ -95,11 +98,112 @@ def route_commit_step_outcome(state: Mapping[str, Any]) -> str:
     outcome = CommitStepOutcome.from_mapping(state.get("commit_step_outcome") or {})
     return {
         "next_step_ready": "generate",
-        "plan_complete": "supervisor_final_audit",
+        "plan_complete": "final_audit",
         "commit_conflict": "recovery",
         "contract_rejected": "recovery",
         "harness_error": END,
     }[outcome.type]
+
+
+def route_recovery_outcome(state: Mapping[str, Any]) -> str:
+    outcome = RecoveryOutcome.from_mapping(state.get("recovery_outcome") or {})
+    return {
+        "candidate_repair_required": "generate",
+        "plan_revision_required": "planner",
+        "reconsultation_required": "consultant",
+        "revalidation_required": "supervisor",
+        "user_input_required": "ask_user",
+        "blocked": END,
+        "internal_protocol_error": END,
+        "harness_error": END,
+    }[outcome.type]
+
+
+def route_final_audit_outcome(state: Mapping[str, Any]) -> str:
+    FinalAuditOutcome.from_mapping(state.get("final_audit_outcome") or {})
+    return END
+
+
+RuntimeNode = Callable[[Mapping[str, Any]], Awaitable[Mapping[str, Any]]]
+
+
+def build_schema2_runtime_graph(
+    node_handlers: Mapping[str, RuntimeNode],
+    *,
+    boundary_handlers: Mapping[str, RuntimeNode] | None = None,
+) -> StateGraph:
+    """Build the isolated typed runtime segment without activating it.
+
+    Early-graph destinations are explicit boundary nodes until CTRL-03 owns
+    their typed contracts.  They terminate this isolated segment and never
+    interpret legacy route fields.
+    """
+
+    required = {
+        "generate", "execute", "supervisor", "commit_step", "recovery", "final_audit"
+    }
+    missing = sorted(required - set(node_handlers))
+    if missing:
+        raise ValueError("SCHEMA2_RUNTIME_HANDLER_MISSING: " + ", ".join(missing))
+
+    async def boundary(_state: Mapping[str, Any]) -> dict[str, Any]:
+        return {}
+
+    # Keep graph decisions on the async scheduler.  Some deployed LangGraph
+    # builds delegate synchronous conditional callables to a shared executor;
+    # a cyclic runtime segment can then wait on executor shutdown after END.
+    async def generate_route(state: Mapping[str, Any]) -> str:
+        return route_generate_outcome(state)
+
+    async def execute_route(state: Mapping[str, Any]) -> str:
+        return route_execute_outcome(state)
+
+    async def verification_route(state: Mapping[str, Any]) -> str:
+        return route_verification_outcome(state)
+
+    async def commit_route(state: Mapping[str, Any]) -> str:
+        return route_commit_step_outcome(state)
+
+    async def recovery_route(state: Mapping[str, Any]) -> str:
+        return route_recovery_outcome(state)
+
+    async def final_route(state: Mapping[str, Any]) -> str:
+        return route_final_audit_outcome(state)
+
+    graph = StateGraph(AgentState)
+    for name in sorted(required):
+        graph.add_node(name, node_handlers[name])
+    supplied_boundaries = dict(boundary_handlers or {})
+    for name in ("planner", "consultant", "ask_user", "install_subagent"):
+        graph.add_node(name, supplied_boundaries.get(name, boundary))
+        graph.add_edge(name, END)
+    graph.add_edge(START, "generate")
+    graph.add_conditional_edges(
+        "generate",
+        generate_route,
+        ["generate", "execute", "supervisor", "planner", "consultant", "ask_user", END],
+    )
+    graph.add_conditional_edges(
+        "execute",
+        execute_route,
+        [
+            "supervisor", "recovery", "generate", "planner", "consultant",
+            "ask_user", "install_subagent", END,
+        ],
+    )
+    graph.add_conditional_edges(
+        "supervisor", verification_route, ["commit_step", "recovery", END]
+    )
+    graph.add_conditional_edges(
+        "commit_step", commit_route, ["generate", "final_audit", "recovery", END]
+    )
+    graph.add_conditional_edges(
+        "recovery",
+        recovery_route,
+        ["generate", "planner", "consultant", "supervisor", "ask_user", END],
+    )
+    graph.add_conditional_edges("final_audit", final_route, [END])
+    return graph
 
 
 __all__ = [
@@ -107,4 +211,7 @@ __all__ = [
     "route_execute_outcome",
     "route_verification_outcome",
     "route_commit_step_outcome",
+    "route_recovery_outcome",
+    "route_final_audit_outcome",
+    "build_schema2_runtime_graph",
 ]
