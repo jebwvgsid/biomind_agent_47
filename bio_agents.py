@@ -42239,16 +42239,22 @@ question. Never guess a scientific or database identity.
                     "STEP_WORKER_BACKEND_ERROR",
                     f"{type(exc).__name__}: {str(exc)[:800]}",
                 ))
+            route_audit: Dict[str, Any] = {
+                "schema_version": 1,
+                "route_authority": "STEP_WORKER_OUTCOME",
+                "legacy_route_fields_authoritative": False,
+                "backend": self.step_worker_backend_name,
+            }
+            transport_audit = getattr(self.step_worker_backend, "last_audit", None)
+            if isinstance(transport_audit, Mapping):
+                # Route-neutral transport facts only.  This projection is not
+                # consumed by the typed conditional edge below.
+                route_audit["worker_transport"] = deepcopy(dict(transport_audit))
             return {
                 "step_worker_request": request_payload,
                 "step_worker_outcome": outcome.to_dict(),
                 "step_worker_attempt_ordinal": attempt_ordinal,
-                "step_worker_route_audit": {
-                    "schema_version": 1,
-                    "route_authority": "STEP_WORKER_OUTCOME",
-                    "legacy_route_fields_authoritative": False,
-                    "backend": self.step_worker_backend_name,
-                },
+                "step_worker_route_audit": route_audit,
             }
 
         # ════════════════════════════════════════════

@@ -39,7 +39,7 @@ _ALLOWED_OUTCOME_TYPES = {
     "harness_error",
     "cancelled",
 }
-_ALLOWED_BACKENDS = {"legacy", "typed_stub"}
+_ALLOWED_BACKENDS = {"legacy", "typed_stub", "pi_rpc_poc"}
 _ACTIVE_STEP_STATUSES = {
     "pending",
     "ready",
@@ -334,7 +334,15 @@ def get_step_worker_backend(
                 "legacy mode cannot install a typed backend",
             )
         return None
-    return override or TypedStubStepWorkerBackend()
+    if override is not None:
+        return override
+    if name == "typed_stub":
+        return TypedStubStepWorkerBackend()
+    # Keep the optional RPC implementation out of the frozen core contract and
+    # avoid a module cycle: pi_rpc imports StepRequest/StepOutcome from here.
+    from agent_core.workflow.pi_rpc import PiStepWorkerBackend
+
+    return PiStepWorkerBackend()
 
 
 def _plan_step_source(

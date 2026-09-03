@@ -18,11 +18,31 @@ from agent_core.workflow.step_worker import (
     resolve_step_worker_backend_name,
     route_step_worker_outcome,
 )
+from agent_core.workflow.pi_rpc import (
+    PI_PACKAGE_NAME,
+    PI_PINNED_VERSION,
+    PI_RPC_BACKEND_NAME,
+    PI_TERMINAL_TOOL_NAME,
+    PiRpcConfig,
+    PiRpcError,
+    PiRpcProcess,
+    PiSessionBinding,
+    PiStepWorkerBackend,
+)
 
 __all__ = [
     "STEP_OUTCOME_SCHEMA_VERSION",
     "STEP_REQUEST_SCHEMA_VERSION",
     "STEP_WORKER_BACKEND_ENV",
+    "PI_PACKAGE_NAME",
+    "PI_PINNED_VERSION",
+    "PI_RPC_BACKEND_NAME",
+    "PI_TERMINAL_TOOL_NAME",
+    "PiRpcConfig",
+    "PiRpcError",
+    "PiRpcProcess",
+    "PiSessionBinding",
+    "PiStepWorkerBackend",
     "StepOutcome",
     "StepOutcomeType",
     "StepRequest",
