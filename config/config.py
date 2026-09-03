@@ -44,6 +44,9 @@ RAGFLOW_DATASET_IDS = _split_env_list("RAGFLOW_DATASET_IDS") or [
 RERANK_MODEL_ID = os.getenv("RERANK_MODEL_ID", "gte-rerank@Tongyi-Qianwen")
 
 DEFAULT_PROJECT_ID = os.getenv("BIOMIND_PROJECT_ID", "default")
+BIOMIND_STEP_WORKER_BACKEND = os.getenv(
+    "BIOMIND_STEP_WORKER_BACKEND", "legacy"
+).strip().lower() or "legacy"
 BIOMIND_MEMORY_DIR = os.getenv("BIOMIND_MEMORY_DIR", "").strip()
 BIOMIND_WIKI_ENABLED = os.getenv("BIOMIND_WIKI_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
 BIOMIND_WIKI_DIR = os.getenv("BIOMIND_WIKI_DIR", "").strip()

@@ -211,6 +211,10 @@ class AgentState(TypedDict, total=False):
     provenance_state_path: Optional[str]
     llm_call_refs: List[dict]
     context_lineage_ref: Optional[str]
+    step_worker_request: dict
+    step_worker_outcome: dict
+    step_worker_attempt_ordinal: int
+    step_worker_route_audit: dict
 
 # 安装子智能体状态
 class InstallerState(TypedDict):

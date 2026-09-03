@@ -88,7 +88,7 @@ from config.config import (
     PLANNER_NOMINAL_CHAR_BUDGET, PLANNER_SOFT_TOKEN_RATIO,
     PLANNER_COMPRESSION_TOKEN_RATIO, PLANNER_HARD_TOKEN_RATIO,
     PLANNER_RESERVED_HEADROOM_TOKENS,
-    DEFAULT_PROJECT_ID, BIOMIND_MEMORY_DIR, BIOMIND_WIKI_ENABLED, BIOMIND_WIKI_DIR, BIOMIND_WIKI_INGEST_MODE, WIKI_EMBEDDING_ENABLED, WIKI_EMBEDDING_BASE_URL,
+    DEFAULT_PROJECT_ID, BIOMIND_STEP_WORKER_BACKEND, BIOMIND_MEMORY_DIR, BIOMIND_WIKI_ENABLED, BIOMIND_WIKI_DIR, BIOMIND_WIKI_INGEST_MODE, WIKI_EMBEDDING_ENABLED, WIKI_EMBEDDING_BASE_URL,
     WIKI_EMBEDDING_API_KEY, WIKI_EMBEDDING_MODEL, WIKI_EMBEDDING_DIMENSIONS,
     ENABLE_ROOT_CAUSE_ANALYZER, ENABLE_COMMAND_TRACE, ENABLE_PIPESTATUS_CAPTURE,
     ROOT_CAUSE_TIMEOUT_SECONDS, RECOVERY_THINKING_ENABLED,
@@ -123,6 +123,17 @@ except ImportError:
     from package_manager import PackageManager
 
 from agent_core.state import AgentState
+from agent_core.workflow.step_worker import (
+    StepWorkerBackend,
+    StepWorkerContractError,
+    build_step_request,
+    fail_closed_step_outcome,
+    get_step_worker_backend,
+    invoke_step_worker,
+    plan_review_destination,
+    resolve_step_worker_backend_name,
+    route_step_worker_outcome,
+)
 from agent_core.deepseek_stream import (
     deepseek_reasoning_stream_enabled,
     enable_deepseek_reasoning_stream,
@@ -2064,8 +2075,19 @@ class BioAnalystAgent:
         enable_persistence: bool = True,
         max_memory_tokens: int = 200_000,
         use_llm_supervisor: bool = True,
+        step_worker_backend_name: Optional[str] = None,
+        step_worker_backend: Optional[StepWorkerBackend] = None,
     ):
         self.data_path = data_path
+        self.step_worker_backend_name = resolve_step_worker_backend_name(
+            BIOMIND_STEP_WORKER_BACKEND
+            if step_worker_backend_name is None
+            else step_worker_backend_name
+        )
+        self.step_worker_backend = get_step_worker_backend(
+            self.step_worker_backend_name,
+            override=step_worker_backend,
+        )
         self.profiler = RunProfiler(output_root=Path(data_path) / "task_outputs")
         self.input_timeout_seconds = resolve_input_timeout()
         self.llm_timeout_seconds = LLM_TIMEOUT_SECONDS
@@ -42172,6 +42194,64 @@ question. Never guess a scientific or database identity.
                     "next_step": self._next_step_after_install_result(task_id)}
 
         # ════════════════════════════════════════════
+        # Node 8: typed StepWorker boundary (explicit opt-in only)
+        # ════════════════════════════════════════════
+        async def step_worker(state: AgentState) -> AgentState:
+            output.print_node_header("step_worker")
+            task_id = str(state.get("task_id") or "default")
+            try:
+                attempt_ordinal = int(state.get("step_worker_attempt_ordinal") or 0) + 1
+            except (TypeError, ValueError):
+                attempt_ordinal = 1
+            request_payload: Dict[str, Any] = {}
+            try:
+                if self.step_worker_backend is None:
+                    raise StepWorkerContractError(
+                        "STEP_WORKER_BACKEND_INVALID",
+                        "typed StepWorker node has no configured backend",
+                    )
+                durable = load_plan_state(self.data_path, task_id)
+                approved_snapshot = load_approved_plan_snapshot(
+                    self.data_path,
+                    task_id,
+                    state=durable,
+                )
+                request = build_step_request(
+                    durable,
+                    workspace=self.data_path,
+                    approved_plan_snapshot=approved_snapshot,
+                    graph_scope={
+                        "task_id": state.get("task_id"),
+                        "plan_id": state.get("plan_id"),
+                        "plan_version": state.get("plan_version"),
+                        "current_step_id": state.get("current_step_id"),
+                    },
+                    attempt_ordinal=attempt_ordinal,
+                )
+                request_payload = request.to_dict()
+                outcome = await invoke_step_worker(self.step_worker_backend, request)
+            except GraphBubbleUp:
+                raise
+            except StepWorkerContractError as exc:
+                outcome = fail_closed_step_outcome(exc)
+            except Exception as exc:
+                outcome = fail_closed_step_outcome(StepWorkerContractError(
+                    "STEP_WORKER_BACKEND_ERROR",
+                    f"{type(exc).__name__}: {str(exc)[:800]}",
+                ))
+            return {
+                "step_worker_request": request_payload,
+                "step_worker_outcome": outcome.to_dict(),
+                "step_worker_attempt_ordinal": attempt_ordinal,
+                "step_worker_route_audit": {
+                    "schema_version": 1,
+                    "route_authority": "STEP_WORKER_OUTCOME",
+                    "legacy_route_fields_authoritative": False,
+                    "backend": self.step_worker_backend_name,
+                },
+            }
+
+        # ════════════════════════════════════════════
         # 节点注册 & 连线
         # ════════════════════════════════════════════
         profiled_nodes = {
@@ -42189,10 +42269,13 @@ question. Never guess a scientific or database identity.
             ),
             "install_subagent": self._profile_node("install_subagent", install_subagent),
         }
+        # The typed worker intentionally bypasses _profile_node: that wrapper
+        # invokes the legacy Controller transition guard/resolver.
+        typed_nodes = {"step_worker": step_worker}
         # Expose the exact registered wrappers to integration tests.  Tests do
         # not receive a parallel implementation of routing or persistence.
-        self._graph_node_handlers = profiled_nodes
-        for node_name, handler in profiled_nodes.items():
+        self._graph_node_handlers = {**profiled_nodes, **typed_nodes}
+        for node_name, handler in self._graph_node_handlers.items():
             workflow.add_node(node_name, handler)
 
         workflow.add_edge(START, "triage")
@@ -42262,10 +42345,24 @@ question. Never guess a scientific or database identity.
             if step == "ask_user": return "ask_user"
             if step == "finish":  return END
             if step == "human_input": return END
-            return "generate"
+            return plan_review_destination("generate", self.step_worker_backend_name)
 
         workflow.add_conditional_edges("plan_review", plan_review_router,
-                                       ["generate", "consultant", "planner", "ask_user", END])
+                                       ["generate", "step_worker", "consultant", "planner", "ask_user", END])
+
+        def step_worker_router(state):
+            destination = route_step_worker_outcome(state)
+            if destination == "finish":
+                return END
+            return destination
+
+        # This edge reads only step_worker_outcome.  Legacy route fields remain
+        # in AgentState for old checkpoints but cannot influence this branch.
+        workflow.add_conditional_edges(
+            "step_worker",
+            step_worker_router,
+            ["supervisor", "planner", END],
+        )
 
         runtime_destinations = [
             "consultant", "planner", "ask_user", "execute", "install_subagent",
