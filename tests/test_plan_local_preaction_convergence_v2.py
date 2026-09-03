@@ -860,15 +860,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
                 item.stop()
         return events, captures, report_path
 
-    async def test_execute_initializes_one_authoritative_attempt_state_before_binding_resolution(
-        self,
-    ) -> None:
-        task_id = "execute-attempt-state-ordering"
-        command_calls: list[str] = []
-        initialization_calls: list[dict[str, Any]] = []
-        resolver_calls: list[dict[str, Any]] = []
-        original_initialize = self.agent._initialize_execute_attempt_state
-        original_resolver = bio_agents.resolve_action_binding_environment
+    def _configure_one_step_no_output_plan(self) -> None:
         original_planner = self._planner_payload
         original_consultant = self._consultant_payload
         capability_registry = self.agent.skill_manager.get_execution_capability_registry(
@@ -881,14 +873,14 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
             payload["proposed_artifacts"] = []
             payload["steps"] = [{
                 "step_id": "step-direct",
-                "title": "Write the required report",
+                "title": "Run one approved command",
                 "action": "execute",
                 "purpose": "analysis",
                 "tool": "test",
                 "inputs": [],
                 "outputs": [],
                 "dependencies": [],
-                "success_criteria": ["the report exists and is non-empty"],
+                "success_criteria": ["the approved command exits"],
                 "skill_ids": [self.SKILL_ID],
                 "workflow_stage_ids": [],
                 "batch_id": "",
@@ -903,6 +895,19 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
                 payload["task_spec_operations"][0]
             ]
             return payload
+
+        self._planner_payload = one_step_plan
+        self._consultant_payload = no_output_consultant
+
+    async def test_execute_initializes_one_authoritative_attempt_state_before_binding_resolution(
+        self,
+    ) -> None:
+        task_id = "execute-attempt-state-ordering"
+        command_calls: list[str] = []
+        initialization_calls: list[dict[str, Any]] = []
+        resolver_calls: list[dict[str, Any]] = []
+        original_initialize = self.agent._initialize_execute_attempt_state
+        original_resolver = bio_agents.resolve_action_binding_environment
 
         def initialize_spy(observed_task_id: str) -> dict[str, Any]:
             initialized = original_initialize(observed_task_id)
@@ -920,8 +925,7 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
             resolver_calls.append(dict(action))
             return original_resolver(plan_state, action)
 
-        self._planner_payload = one_step_plan
-        self._consultant_payload = no_output_consultant
+        self._configure_one_step_no_output_plan()
         with patch.object(
             self.agent,
             "_initialize_execute_attempt_state",
@@ -942,6 +946,61 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(command_calls), 1)
         self.assertNotIn("UnboundLocalError", json.dumps(events, default=str))
         self.assertEqual(len(captures), 1)
+
+    async def test_unexpected_execute_preparation_exception_is_terminal_not_recovery(
+        self,
+    ) -> None:
+        task_id = "execute-preparation-internal-error"
+        command_calls: list[str] = []
+        self._configure_one_step_no_output_plan()
+
+        with patch.object(
+            bio_agents,
+            "resolve_action_binding_environment",
+            side_effect=RuntimeError("synthetic internal failure secret=not-durable"),
+        ):
+            events, captures, _report = await self._run_graph(
+                task_id,
+                lambda payload, _ordinal: self._script_action(payload),
+                command_calls=command_calls,
+            )
+
+        durable = load_plan_state(self.root, task_id)
+        failure = dict(durable.get("terminal_failure") or durable.get("failure") or {})
+        records = RecoveryStateStore(self.root, task_id).load_execution_records()
+        self.agent.profiler.finish_task(task_id, "blocked")
+        metrics = self.agent.profiler.snapshot(task_id)
+
+        self.assertEqual(len(captures), 1)
+        self.assertEqual(command_calls, [])
+        self.assertEqual(records, [])
+        self.assertEqual(
+            int(
+                ((durable.get("task_state") or {}).get("budgets") or {}).get(
+                    "recovery_judge_count"
+                )
+                or 0
+            ),
+            0,
+        )
+        self.assertEqual(failure["error_code"], "EXECUTE_PREPARATION_INTERNAL_ERROR")
+        self.assertEqual(failure["owner"], "CONTROLLER")
+        self.assertEqual(failure["node"], "execute")
+        self.assertEqual(failure["phase"], "binding_resolution")
+        self.assertEqual(failure["exception_type"], "RuntimeError")
+        self.assertIs(failure["command_started"], False)
+        self.assertIs(failure["execution_started"], False)
+        self.assertEqual(failure["step_id"], "step-direct")
+        self.assertTrue(failure["action_id"])
+        self.assertNotIn("secret=not-durable", json.dumps(durable, default=str))
+        self.assertEqual(metrics["summary"]["commands"], 0)
+        self.assertEqual(metrics["summary"]["command_execution_seconds"], 0)
+        self.assertEqual(
+            metrics["failure"]["error_code"],
+            "EXECUTE_PREPARATION_INTERNAL_ERROR",
+        )
+        self.assertEqual(metrics["failure"]["owner"], "CONTROLLER")
+        self.assertNotIn("TASK_FAILED", json.dumps(events, default=str))
 
     async def test_graph_a_plan_local_directory_happy_path(self) -> None:
         events, captures, report = await self._run_graph(

@@ -11049,6 +11049,103 @@ class BioAnalystAgent:
 
         return load_plan_state(self.data_path, task_id)
 
+    def _execute_preparation_internal_failure_update(
+        self,
+        task_id: str,
+        state: Mapping[str, Any],
+        exc: Exception,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Fail closed when unexpected Controller code breaks before launch."""
+
+        plan_state = load_plan_state(self.data_path, task_id)
+        task_state = dict(plan_state.get("task_state") or {})
+        pending_action = dict(state.get("pending_action") or {})
+        durable_pending_action = (
+            dict(task_state.get("pending_action") or {})
+            if isinstance(task_state.get("pending_action"), Mapping)
+            else {}
+        )
+        current_step_id = str(
+            plan_state.get("current_step_id")
+            or task_state.get("current_step_id")
+            or pending_action.get("step_id")
+            or ""
+        )
+        action_id = str(
+            pending_action.get("action_id")
+            or durable_pending_action.get("action_id")
+            or ""
+        )
+        normalized_phase = re.sub(
+            r"[^a-z0-9_.-]+", "_", str(phase or "unknown").strip().lower()
+        )[:80] or "unknown"
+        exception_type = type(exc).__name__[:160]
+        failure_identity = {
+            "task_id": str(plan_state.get("task_id") or task_id),
+            "plan_id": str(plan_state.get("plan_id") or ""),
+            "plan_version": str(plan_state.get("plan_version") or ""),
+            "step_id": current_step_id,
+            "action_id": action_id,
+            "phase": normalized_phase,
+            "exception_type": exception_type,
+        }
+        failure_id = "execute-preparation-" + hashlib.sha256(
+            json.dumps(
+                failure_identity,
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()[:24]
+        message = (
+            "Execute stopped before command launch because BioMind encountered "
+            f"an internal Controller error during {normalized_phase}. No scientific "
+            "command was executed."
+        )
+        failure = {
+            "schema_version": 1,
+            "failure_id": failure_id,
+            "owner": "CONTROLLER",
+            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+            "node": "execute",
+            "stage": f"execute.preparation.{normalized_phase}",
+            "failure_stage": f"execute.preparation.{normalized_phase}",
+            "phase": normalized_phase,
+            "error_code": "EXECUTE_PREPARATION_INTERNAL_ERROR",
+            "exception_type": exception_type,
+            "message": message[:1000],
+            "command_started": False,
+            "execution_started": False,
+            **failure_identity,
+            "machine_recovery_decision": {
+                "decision": "TERMINATE",
+                "reason_code": "EXECUTE_PREPARATION_INTERNAL_ERROR",
+                "source": "controller",
+                "retryable": False,
+            },
+        }
+        logger.error(
+            "Unexpected Execute preparation failure: task=%s phase=%s exception_type=%s",
+            task_id,
+            normalized_phase,
+            exception_type,
+        )
+        return {
+            "messages": [SystemMessage(content=message)],
+            "terminal_internal_protocol_failure": {
+                "primary_failure": failure,
+                "secondary_failures": [],
+            },
+            "pending_action": {},
+            "pending_recovery_action": {},
+            "required_next_action": "",
+            "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
+            "execution_started": False,
+            "next_step": "finish",
+        }
+
     def _validate_generate_context(self, state: AgentState, task_id: str) -> Dict[str, Any]:
         """Use the canonical Plan validator for every managed Generate entry."""
         if str(state.get("task_mode") or "managed").lower() != "managed":
@@ -18561,7 +18658,7 @@ class BioAnalystAgent:
         primary_failure: Mapping[str, Any],
         secondary_failures: Sequence[Mapping[str, Any]] = (),
     ) -> Tuple[Dict[str, Any], List[Dict[str, Any]], str]:
-        """Commit a pre-provider terminal while preserving the first failure."""
+        """Commit a Controller terminal while preserving the first failure."""
         plan_state = load_plan_state(self.data_path, task_id)
         task_state = dict(plan_state.get("task_state") or {})
         existing_primary = next(
@@ -18614,22 +18711,39 @@ class BioAnalystAgent:
             or task_state.get("current_step_id")
             or ""
         )
-        reason = str(
-            committed_primary.get("message")
+        terminal_failure = deepcopy(proposed_primary or committed_primary)
+        terminal_stage = str(
+            terminal_failure.get("failure_stage")
+            or terminal_failure.get("stage")
+            or committed_primary.get("failure_stage")
+            or committed_primary.get("stage")
+            or "generate.prompt_assembly"
+        )[:240]
+        terminal_error_code = str(
+            terminal_failure.get("error_code")
             or committed_primary.get("error_code")
-            or "Generate prompt assembly failed before provider invocation."
+            or "GENERATE_PROMPT_ASSEMBLY_FAILURE"
+        )[:240]
+        reason = str(
+            terminal_failure.get("message")
+            or terminal_failure.get("error_code")
+            or committed_primary.get("message")
+            or committed_primary.get("error_code")
+            or "Controller internal protocol failure."
         )
         machine_recovery_decision = dict(
-            committed_primary.get("machine_recovery_decision") or {
+            terminal_failure.get("machine_recovery_decision")
+            or committed_primary.get("machine_recovery_decision")
+            or {
                 "decision": "TERMINATE",
-                "reason_code": "GENERATE_PROMPT_ASSEMBLY_FAILURE",
+                "reason_code": terminal_error_code,
                 "source": "controller",
                 "retryable": False,
             }
         )
         block_plan_and_downstream(
             plan_state,
-            f"internal_protocol:generate.prompt_assembly: {reason}",
+            f"internal_protocol:{terminal_stage}: {reason}",
         )
         if current_step_id:
             for step in plan_state.get("steps", []) or []:
@@ -18641,8 +18755,8 @@ class BioAnalystAgent:
                     "status": STATUS_BLOCKED,
                     "internal_protocol_blocked": True,
                     "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
-                    "failure_stage": "generate.prompt_assembly",
-                    "failure_id": str(committed_primary.get("failure_id") or ""),
+                    "failure_stage": terminal_stage,
+                    "failure_id": str(terminal_failure.get("failure_id") or ""),
                     "blocked_reason": reason[:4000],
                 })
                 break
@@ -18654,12 +18768,15 @@ class BioAnalystAgent:
             or task_state.get("primary_execution_failure")
             or {}
         )
-        if not existing_execution_failure and str(
-            committed_primary.get("failure_stage")
-            or committed_primary.get("stage")
-            or ""
-        ).startswith("execute"):
-            existing_execution_failure = deepcopy(committed_primary)
+        if not existing_execution_failure:
+            for failure_candidate in (terminal_failure, committed_primary):
+                if str(
+                    failure_candidate.get("failure_stage")
+                    or failure_candidate.get("stage")
+                    or ""
+                ).startswith("execute"):
+                    existing_execution_failure = deepcopy(failure_candidate)
+                    break
         recovery_decision_summary = dict(
             recovery_state.get("last_recovery_decision")
             or task_state.get("last_recovery_decision")
@@ -18674,7 +18791,6 @@ class BioAnalystAgent:
             ).startswith("generate.recovery")
             else {}
         )
-        terminal_failure = deepcopy(proposed_primary or committed_primary)
         active_transition = dict(recovery_state.get("active_transition") or {})
         if active_transition:
             active_transition.update({
@@ -18693,8 +18809,7 @@ class BioAnalystAgent:
             "status": "BLOCKED_INTERNAL_PROTOCOL",
             "machine_recovery_decision": machine_recovery_decision,
             "reason_code": str(
-                committed_primary.get("error_code")
-                or "GENERATE_PROMPT_ASSEMBLY_FAILURE"
+                terminal_error_code
             ),
             "reason": reason[:4000],
         })
@@ -37366,9 +37481,13 @@ question. Never guess a scientific or database identity.
         # ════════════════════════════════════════════
         # Node 3: Execute
         # ════════════════════════════════════════════
-        async def execute_logic(state: AgentState) -> AgentState:
+        async def execute_logic_impl(
+            state: AgentState,
+            preparation_boundary: MutableMapping[str, Any],
+        ) -> AgentState:
             output.print_node_header("execute")
             task_id      = state.get("task_id", "default")
+            preparation_boundary["phase"] = "execute_entry"
 
             def stale_pending_action_update(
                 action: Mapping[str, Any],
@@ -37438,10 +37557,12 @@ question. Never guess a scientific or database identity.
                     "next_step": route,
                 }
 
+            preparation_boundary["phase"] = "durable_attempt_resume"
             resumed_attempt = await self._resume_durable_attempt_update(task_id, state)
             if resumed_attempt is not None:
                 return resumed_attempt
 
+            preparation_boundary["phase"] = "pending_action_preflight"
             captured_pending_action = dict(state.get("pending_action") or {})
             prestart_plan_state = load_plan_state(self.data_path, task_id)
             prestart_mismatches = self._pending_action_revision_mismatches(
@@ -37478,6 +37599,7 @@ question. Never guess a scientific or database identity.
                     "next_step": "planner",
                 }
 
+            preparation_boundary["phase"] = "execution_policy_preflight"
             task_spec = self._task_spec_for_state(dict(state), state.get("messages", []))
             observed_conditions: Dict[str, Any] = {}
             for source in (state.get("runtime_status"), state.get("execution_evidence")):
@@ -37584,6 +37706,7 @@ question. Never guess a scientific or database identity.
             # This preflight snapshot selects the current approved step. It is
             # intentionally distinct from the attempt snapshot established
             # after durable preflight counters have been committed.
+            preparation_boundary["phase"] = "action_contract_validation"
             action_plan_state = load_plan_state(self.data_path, task_id)
             _, action_step = current_plan_step_with_index(action_plan_state)
             if managed_mode:
@@ -38021,8 +38144,10 @@ question. Never guess a scientific or database identity.
             # Exactly one authoritative attempt snapshot owns binding
             # resolution, command preparation, attempt registration, and the
             # eventual pre-launch CAS commit.
+            preparation_boundary["phase"] = "attempt_state_initialization"
             attempt_plan_state = self._initialize_execute_attempt_state(task_id)
             if managed_mode:
+                preparation_boundary["phase"] = "runtime_contract_validation"
                 try:
                     for manifest_key in (
                         "runtime_binding_manifest",
@@ -38156,6 +38281,7 @@ question. Never guess a scientific or database identity.
             # env entries explicitly present in the validated action plus
             # non-scientific Controller identity. Runtime/artifact registries
             # remain authorization evidence and are never injected here.
+            preparation_boundary["phase"] = "binding_resolution"
             try:
                 plan_binding_resolution = resolve_action_binding_environment(
                     attempt_plan_state,
@@ -38194,6 +38320,7 @@ question. Never guess a scientific or database identity.
                     "generate_result": "NEEDS_RECOVERY",
                     "next_step": "generate",
                 }
+            preparation_boundary["phase"] = "command_preparation"
             effective_execution_env = build_exact_action_environment(
                 os.environ,
                 action_environment=declared_action_env,
@@ -38827,6 +38954,7 @@ question. Never guess a scientific or database identity.
                 record_provenance_event(lifecycle_state, "attempt_state_changed", lifecycle_payload)
                 save_plan_state(self.data_path, task_id, lifecycle_state)
 
+            preparation_boundary["phase"] = "prelaunch_approval_validation"
             try:
                 preexec_approval_identity = build_action_approval_identity(
                     generated_script_sha256=str(
@@ -38864,6 +38992,7 @@ question. Never guess a scientific or database identity.
                     "next_step": "generate",
                 }
 
+            preparation_boundary["phase"] = "dispatch_registration"
             diagnostic_dispatch_envelope: Optional[
                 RecoveryExecutionEnvelope
             ] = None
@@ -38914,6 +39043,8 @@ question. Never guess a scientific or database identity.
             start_time = time.time()
             diagnostic_timed_out = False
             try:
+                preparation_boundary["phase"] = "command_launch"
+                preparation_boundary["command_launch_entered"] = True
                 execution_call = run_script_path(
                         script_file,
                         expected_sha256=executed_ref["sha256"],
@@ -39984,6 +40115,23 @@ question. Never guess a scientific or database identity.
                 "retry_count": retry_count,
                 "next_step": "finish" if task_mode in {"readonly", "simple_execute"} else "supervisor",
             }
+
+        async def execute_logic(state: AgentState) -> AgentState:
+            preparation_boundary: Dict[str, Any] = {
+                "phase": "execute_entry",
+                "command_launch_entered": False,
+            }
+            try:
+                return await execute_logic_impl(state, preparation_boundary)
+            except Exception as exc:
+                if bool(preparation_boundary.get("command_launch_entered")):
+                    raise
+                return self._execute_preparation_internal_failure_update(
+                    str(state.get("task_id") or "default"),
+                    state,
+                    exc,
+                    phase=str(preparation_boundary.get("phase") or "unknown"),
+                )
 
         execute_node = error_recovery_middleware(
             self.recovery_llm,
