@@ -499,6 +499,10 @@ class ProductionStepWorkerWiringTests(unittest.IsolatedAsyncioTestCase):
             "route_resolution": {"dispatch_route": "finish"},
             "required_next_action": "REPLAN",
             "pending_recovery_action": {"type": "INTERNAL_PROTOCOL_ERROR"},
+            "recovery_decision": {
+                "target_route": "planner",
+                "next_route": "generate",
+            },
         }
         with (
             patch.object(bio_agents, "load_plan_state", return_value=durable),
@@ -535,6 +539,11 @@ class ProductionStepWorkerWiringTests(unittest.IsolatedAsyncioTestCase):
         resolver.assert_not_called()
         dispatcher.assert_not_called()
         self.assertEqual(_NoProviderLLM.call_count, 0)
+        node_events = [
+            event for event in self.agent.profiler.snapshot(durable["task_id"])["events"]
+            if event.get("type") == "node" and event.get("node") == "step_worker"
+        ]
+        self.assertEqual(len(node_events), 1)
 
         invalid_payloads = (
             {

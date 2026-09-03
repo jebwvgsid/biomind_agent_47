@@ -4,6 +4,9 @@ from langgraph.graph.message import add_messages
 
 # 主智能体状态
 class AgentState(TypedDict, total=False):
+    # Sticky graph schema.  Historical checkpoints omit it and therefore stay
+    # on legacy Controller routing (schema 1).
+    workflow_routing_schema_version: int
     messages: Annotated[List[BaseMessage], add_messages]
     next_step: Optional[str]
     proposed_route: Optional[str]

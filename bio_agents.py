@@ -124,6 +124,7 @@ except ImportError:
 
 from agent_core.state import AgentState
 from agent_core.workflow.step_worker import (
+    StepOutcome,
     StepWorkerBackend,
     StepWorkerContractError,
     build_step_request,
@@ -134,6 +135,7 @@ from agent_core.workflow.step_worker import (
     resolve_step_worker_backend_name,
     route_step_worker_outcome,
 )
+from agent_core.workflow.typed_node import profile_typed_node
 from agent_core.deepseek_stream import (
     deepseek_reasoning_stream_enabled,
     enable_deepseek_reasoning_stream,
@@ -42275,9 +42277,24 @@ question. Never guess a scientific or database identity.
             ),
             "install_subagent": self._profile_node("install_subagent", install_subagent),
         }
-        # The typed worker intentionally bypasses _profile_node: that wrapper
-        # invokes the legacy Controller transition guard/resolver.
-        typed_nodes = {"step_worker": step_worker}
+        # Typed nodes use a route-neutral profiler.  It observes and validates
+        # the outcome but cannot compact messages, mutate PlanState, or invoke
+        # the legacy Controller guard/resolver/dispatcher.
+        typed_nodes = {
+            "step_worker": profile_typed_node(
+                "step_worker",
+                step_worker,
+                outcome_field="step_worker_outcome",
+                outcome_contract=StepOutcome,
+                profiler=self.profiler,
+                harness_error_factory=lambda exc, _state: fail_closed_step_outcome(
+                    StepWorkerContractError(
+                        "STEP_WORKER_NODE_HARNESS_ERROR",
+                        f"{type(exc).__name__}: {str(exc)[:800]}",
+                    )
+                ),
+            )
+        }
         # Expose the exact registered wrappers to integration tests.  Tests do
         # not receive a parallel implementation of routing or persistence.
         self._graph_node_handlers = {**profiled_nodes, **typed_nodes}

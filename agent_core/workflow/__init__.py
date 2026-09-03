@@ -29,6 +29,21 @@ from agent_core.workflow.pi_rpc import (
     PiSessionBinding,
     PiStepWorkerBackend,
 )
+from agent_core.workflow.outcomes import (
+    OUTCOME_SCHEMA_VERSION,
+    WORKFLOW_ROUTING_SCHEMA_LEGACY,
+    WORKFLOW_ROUTING_SCHEMA_TYPED,
+    CommitStepOutcome,
+    ExecuteOutcome,
+    FinalAuditOutcome,
+    GenerateOutcome,
+    OutcomeContractError,
+    RecoveryOutcome,
+    StrictOutcome,
+    VerificationOutcome,
+    workflow_routing_schema_version,
+)
+from agent_core.workflow.typed_node import profile_typed_node
 
 __all__ = [
     "STEP_OUTCOME_SCHEMA_VERSION",
@@ -38,11 +53,22 @@ __all__ = [
     "PI_PINNED_VERSION",
     "PI_RPC_BACKEND_NAME",
     "PI_TERMINAL_TOOL_NAME",
+    "OUTCOME_SCHEMA_VERSION",
+    "WORKFLOW_ROUTING_SCHEMA_LEGACY",
+    "WORKFLOW_ROUTING_SCHEMA_TYPED",
     "PiRpcConfig",
     "PiRpcError",
     "PiRpcProcess",
     "PiSessionBinding",
     "PiStepWorkerBackend",
+    "CommitStepOutcome",
+    "ExecuteOutcome",
+    "FinalAuditOutcome",
+    "GenerateOutcome",
+    "OutcomeContractError",
+    "RecoveryOutcome",
+    "StrictOutcome",
+    "VerificationOutcome",
     "StepOutcome",
     "StepOutcomeType",
     "StepRequest",
@@ -56,4 +82,6 @@ __all__ = [
     "plan_review_destination",
     "resolve_step_worker_backend_name",
     "route_step_worker_outcome",
+    "profile_typed_node",
+    "workflow_routing_schema_version",
 ]
