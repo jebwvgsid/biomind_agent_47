@@ -5,7 +5,7 @@ import functools
 import logging
 from copy import deepcopy
 from pathlib import Path
-from typing import Tuple, Dict, Any, List, Mapping, Optional
+from typing import Tuple, Dict, Any, List, Mapping, Optional, Callable
 from dataclasses import asdict
 from langgraph.types import interrupt
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -31,8 +31,12 @@ from agent_core.node_context import (
 )
 from agent_core.recovery_evidence import (
     RecoveryEvidenceAccessError,
-    RecoveryEvidenceReader,
     parse_evidence_request,
+)
+from agent_core.recovery_provider import (
+    MAX_RECOVERY_EVIDENCE_FOLLOWUPS,
+    build_recovery_evidence_followup,
+    guarded_recovery_provider_messages,
 )
 from agent_core.state_contract_store import StateContractStore
 from agent_core.skill_access import (
@@ -650,6 +654,8 @@ async def _invoke_recovery_v2(
     _skill_depth: int = 0,
     _skill_context_rounds: int = 0,
     _skill_search_rounds: int = 0,
+    _evidence_followups: int = 0,
+    _on_provider_dispatch: Optional[Callable[[], None]] = None,
 ) -> Tuple[Any, Dict[str, Any]]:
     """Invoke Recovery through the same control/LLM-plane boundary as nodes."""
     skill_service: SkillAccessService | None = None
@@ -794,9 +800,14 @@ async def _invoke_recovery_v2(
     _RECOVERY_INVOCATIONS.register(context.binding, stale_signature=stale_signature)
     invocation_consumed = False
     try:
-        prompt = PromptManager.get_recovery_v2_prompt(
-            context.llm_payload.to_provider_dict()
+        provider_payload = context.llm_payload.to_provider_dict()
+        messages = guarded_recovery_provider_messages(
+            provider_payload,
+            stage="recovery.execute.initial.provider_dispatch",
         )
+        if _on_provider_dispatch is not None:
+            _on_provider_dispatch()
+        prompt = str(messages[0].content)
         trace_metadata = {
             "node_name": "recovery_judge",
             "call_kind": "recovery_judge_v2",
@@ -806,7 +817,7 @@ async def _invoke_recovery_v2(
         try:
             message, snapshot = await ainvoke_with_snapshot(
                 llm,
-                [HumanMessage(content=prompt)],
+                messages,
                 data_path=data_path,
                 task_id=task_id,
                 metadata=trace_metadata,
@@ -818,53 +829,33 @@ async def _invoke_recovery_v2(
         evidence_request = parse_evidence_request(
             str(getattr(message, "content", message) or "")
         )
-        if evidence_request:
-            if not data_path:
-                raise RecoveryEvidenceAccessError(
-                    "RECOVERY_EVIDENCE_ACCESS_DENIED: current task root is unavailable"
-                )
-            task_component = Path(str(task_id or ""))
-            if (
-                task_component.is_absolute()
-                or len(task_component.parts) != 1
-                or task_component.name in {"", ".", ".."}
-            ):
-                raise RecoveryEvidenceAccessError(
-                    "RECOVERY_EVIDENCE_ACCESS_DENIED: invalid current task identity"
-                )
-            evidence_base = (Path(data_path) / "task_outputs").resolve()
-            evidence_root = (evidence_base / str(task_id)).resolve()
-            try:
-                evidence_root.relative_to(evidence_base)
-            except ValueError as exc:
-                raise RecoveryEvidenceAccessError(
-                    "RECOVERY_EVIDENCE_ACCESS_DENIED: task identity escapes the evidence root"
-                ) from exc
-            reader = RecoveryEvidenceReader(evidence_root)
-            try:
-                evidence_result = reader.execute_request(evidence_request)
-            except RecoveryEvidenceAccessError as exc:
-                evidence_result = {
-                    "tool": str(evidence_request.get("tool") or ""),
-                    "error": str(exc),
-                }
-            followup = (
-                prompt
-                + "\n\n<evidence_result>\n"
-                + json.dumps(evidence_result, ensure_ascii=False, indent=2)
-                + "\n</evidence_result>\n"
-                + "Return the final RecoveryDecision JSON now. Do not request more evidence."
+        if (
+            evidence_request
+            and _evidence_followups >= MAX_RECOVERY_EVIDENCE_FOLLOWUPS
+        ):
+            raise RecoveryEvidenceAccessError(
+                "RECOVERY_EVIDENCE_ACCESS_DENIED: evidence follow-up limit reached"
             )
+        evidence_followup = build_recovery_evidence_followup(
+            provider_payload,
+            str(getattr(message, "content", message) or ""),
+            data_path=str(data_path or ""),
+            task_id=task_id,
+            stage="recovery.execute.evidence_followup.provider_dispatch",
+        )
+        if evidence_followup is not None:
             try:
                 message, followup_snapshot = await ainvoke_with_snapshot(
                     llm,
-                    [HumanMessage(content=followup)],
+                    list(evidence_followup.messages),
                     data_path=data_path,
                     task_id=task_id,
                     metadata={
                         **trace_metadata,
                         "call_kind": "recovery_judge_v2_evidence_followup",
-                        "evidence_operation": str(evidence_request.get("tool") or ""),
+                        "evidence_operation": str(
+                            evidence_followup.request.get("tool") or ""
+                        ),
                     },
                 )
             except Exception as exc:
@@ -872,8 +863,15 @@ async def _invoke_recovery_v2(
                     f"RecoveryJudge evidence follow-up failed: {exc}"
                 ) from exc
             snapshot = dict(followup_snapshot or {})
-            snapshot["evidence_request"] = dict(evidence_request)
-            snapshot["evidence_result"] = evidence_result
+            snapshot["evidence_request"] = dict(evidence_followup.request)
+            snapshot["evidence_result"] = dict(evidence_followup.result)
+            _evidence_followups += 1
+            if parse_evidence_request(
+                str(getattr(message, "content", message) or "")
+            ):
+                raise RecoveryEvidenceAccessError(
+                    "RECOVERY_EVIDENCE_ACCESS_DENIED: evidence follow-up limit reached"
+                )
         snapshot = dict(snapshot or {})
         snapshot["prompt_projection_hash"] = hashlib.sha256(
             prompt.encode("utf-8", errors="replace")
@@ -1113,6 +1111,8 @@ async def _invoke_recovery_v2(
                     _skill_search_rounds
                     + (1 if kind == SEARCH_SKILLS else 0)
                 ),
+                _evidence_followups=_evidence_followups,
+                _on_provider_dispatch=_on_provider_dispatch,
             )
             resumed_snapshot = dict(resumed_snapshot or {})
             resumed_snapshot["skill_access_history"] = [
@@ -2772,24 +2772,32 @@ def error_recovery_middleware(
                         "evidence_sufficient": True,
                     })
                 elif not cached_judge_valid:
-                    if data_path:
-                        increment_plan_budget(plan_state, "recovery_judge_count")
-                        record_recovery_counter_once(
-                            plan_state,
-                            "recovery_judge_calls",
-                            diagnostic_context.context_id,
-                        )
-                        save_plan_state(data_path, task_id, plan_state)
                     judge_text = ""
                     try:
                         recovery_focus = build_recovery_semantic_focus(
                             diagnostic_context
                         )
-                        # From this point the decision is no longer local
-                        # RecoveryPolicy: the configured Recovery provider is
-                        # being invoked (and may itself fail or return invalid
-                        # schema).  Preserve that distinction in the trace.
-                        recovery_judge_invoked = True
+                        recovery_dispatch_recorded = False
+
+                        def _record_recovery_provider_dispatch() -> None:
+                            """Charge the semantic call only after message safety passes."""
+                            nonlocal recovery_dispatch_recorded
+                            nonlocal recovery_judge_invoked
+                            if recovery_dispatch_recorded:
+                                return
+                            recovery_dispatch_recorded = True
+                            recovery_judge_invoked = True
+                            if data_path:
+                                increment_plan_budget(
+                                    plan_state, "recovery_judge_count"
+                                )
+                                record_recovery_counter_once(
+                                    plan_state,
+                                    "recovery_judge_calls",
+                                    diagnostic_context.context_id,
+                                )
+                                save_plan_state(data_path, task_id, plan_state)
+
                         judge_message, judge_snapshot = await _invoke_recovery_v2(
                             llm,
                             data_path=data_path,
@@ -2829,6 +2837,9 @@ def error_recovery_middleware(
                             provider_policy=dict(recovery_llm_policy or {}),
                             skill_manager=skill_manager,
                             selected_skill_ids=active_skills,
+                            _on_provider_dispatch=(
+                                _record_recovery_provider_dispatch
+                            ),
                         )
                         stale_result = dict(
                             (judge_snapshot or {}).get("stale_node_result") or {}
@@ -3070,6 +3081,15 @@ def error_recovery_middleware(
                 store.save_recovery_decision(decision)
                 store.save_attempt_mapping({
                     "attempt_id": diagnostic_context.attempt_id,
+                    "source_attempt_id": diagnostic_context.attempt_id,
+                    "source_action_id": diagnostic_context.action_id,
+                    "task_id": str(task_id or ""),
+                    "session_id": str(
+                        plan_state.get("session_id") or task_id or ""
+                    ),
+                    "plan_id": str(plan_state.get("plan_id") or ""),
+                    "plan_version": str(plan_state.get("plan_version") or ""),
+                    "plan_revision": int(plan_state.get("plan_revision") or 0),
                     "step_id": diagnostic_context.step_id,
                     "action_type": str(evidence.get("action_kind") or evidence.get("command_role") or ""),
                     "command_role": str(evidence.get("command_role") or ""),

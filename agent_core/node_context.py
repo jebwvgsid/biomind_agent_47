@@ -1859,8 +1859,27 @@ def _accepted_execution_outcomes(
 def _accepted_recovery_decisions(
     attempts: Sequence[Mapping[str, Any]],
     step_handles: Mapping[str, str],
+    *,
+    task_id: str,
+    session_id: str,
+    plan_id: str,
+    plan_version: str,
+    plan_revision: int,
+    step_id: str,
+    source_attempt_id: str,
+    source_action_id: str,
+    failure_fingerprint: str,
+    action_family: str,
+    max_items: int = 3,
 ) -> List[Dict[str, Any]]:
-    """Project accepted decisions only; omit attempts, IDs, evidence and traces."""
+    """Project one bounded, failure-scoped Recovery history.
+
+    Durable RecoveryStateStore history remains append-only.  This function is
+    deliberately stricter than the store: a row must prove task/session, plan
+    lineage, and current-step ownership, then match at least one available
+    source-attempt/action/fingerprint/action-family fact.  Legacy rows that
+    cannot prove those boundaries stay machine-side.
+    """
     rows: List[Dict[str, Any]] = []
     allowed = (
         "recommended_action", "failure_owner", "failure_type", "root_cause",
@@ -1876,17 +1895,117 @@ def _accepted_recovery_decisions(
             raw = attempt if any(key in attempt for key in allowed) else {}
         if not raw:
             continue
+        row_task_id = str(attempt.get("task_id") or raw.get("task_id") or "")
+        row_session_id = str(
+            attempt.get("session_id") or raw.get("session_id") or ""
+        )
+        task_comparisons = [
+            (row_task_id, task_id),
+            (row_session_id, session_id),
+        ]
+        required_task_facts = [
+            (row_value, current_value)
+            for row_value, current_value in task_comparisons
+            if current_value
+        ]
+        if not required_task_facts or any(
+            row_value != current_value
+            for row_value, current_value in required_task_facts
+        ):
+            continue
+
+        row_plan_id = str(attempt.get("plan_id") or raw.get("plan_id") or "")
+        row_plan_version = str(
+            attempt.get("plan_version") or raw.get("plan_version") or ""
+        )
+        try:
+            row_plan_revision = int(
+                attempt.get("plan_revision")
+                if attempt.get("plan_revision") not in (None, "")
+                else raw.get("plan_revision") or 0
+            )
+        except (TypeError, ValueError):
+            continue
+        plan_comparisons = [
+            (row_plan_id, plan_id),
+            (row_plan_version, plan_version),
+            (
+                str(row_plan_revision) if row_plan_revision else "",
+                str(plan_revision) if plan_revision else "",
+            ),
+        ]
+        required_plan_facts = [
+            (row_value, current_value)
+            for row_value, current_value in plan_comparisons
+            if current_value
+        ]
+        if not required_plan_facts or any(
+            row_value != current_value
+            for row_value, current_value in required_plan_facts
+        ):
+            continue
+
+        row_step_id = str(
+            attempt.get("step_id")
+            or attempt.get("stage_id")
+            or raw.get("step_id")
+            or ""
+        )
+        if not step_id or row_step_id != step_id:
+            continue
+
+        row_attempt_id = str(
+            attempt.get("source_attempt_id")
+            or attempt.get("attempt_id")
+            or raw.get("source_attempt_id")
+            or raw.get("attempt_id")
+            or ""
+        )
+        row_action_id = str(
+            attempt.get("source_action_id")
+            or attempt.get("action_id")
+            or raw.get("source_action_id")
+            or raw.get("action_id")
+            or ""
+        )
+        row_fingerprint = str(
+            attempt.get("error_fingerprint")
+            or attempt.get("failure_fingerprint")
+            or attempt.get("failure_fingerprint_before")
+            or raw.get("failure_fingerprint")
+            or ""
+        )
+        row_family = str(
+            attempt.get("action_family")
+            or attempt.get("action_type")
+            or attempt.get("action_kind")
+            or attempt.get("command_role")
+            or raw.get("action_family")
+            or raw.get("action_type")
+            or ""
+        ).strip().lower()
+        relevance = (
+            bool(source_attempt_id and row_attempt_id == source_attempt_id)
+            or bool(source_action_id and row_action_id == source_action_id)
+            or bool(
+                failure_fingerprint and row_fingerprint == failure_fingerprint
+            )
+            or bool(action_family and row_family == action_family)
+        )
+        if not relevance:
+            continue
+
         row: Dict[str, Any] = OrderedDict()
-        step_id = str(attempt.get("step_id") or raw.get("step_id") or "")
-        if step_id and step_id in step_handles:
-            row["step"] = step_handles[step_id]
+        if row_step_id in step_handles:
+            row["step"] = step_handles[row_step_id]
         for key in allowed:
             value = raw.get(key)
             if value not in (None, "", [], {}):
                 row[key] = _without_control_metadata(value)
         if row:
             rows.append(dict(row))
-    return rows
+    limit = max(0, int(max_items or 0))
+    return rows[-limit:] if limit else []
 
 
 def build_node_context(
@@ -1947,8 +2066,15 @@ def build_node_context(
         # runtime snapshots, manifests, registries or revision data beside the
         # approved semantic Recovery projection.
         recovery_focus = runtime.get("recovery_focus")
+        if isinstance(recovery_focus, Mapping):
+            recovery_focus = deepcopy(dict(recovery_focus))
+            # accepted_recovery_decisions below is the single authoritative
+            # provider-facing history.  Keep the broader/legacy summary only
+            # in durable RecoveryContext.
+            recovery_focus.pop("previous_recovery", None)
+            recovery_focus.pop("previous_recovery_summary", None)
         runtime = (
-            {"recovery_focus": deepcopy(dict(recovery_focus))}
+            {"recovery_focus": recovery_focus}
             if isinstance(recovery_focus, Mapping)
             else {}
         )
@@ -2262,9 +2388,45 @@ def build_node_context(
         )
         if outcomes:
             semantic_history["accepted_execution_outcomes"] = outcomes
+        recovery_focus = dict(runtime.get("recovery_focus") or {})
+        previous_action = dict(recovery_focus.get("previous_action") or {})
         accepted_decisions = _accepted_recovery_decisions(
             recovery_decisions,
             step_handles,
+            task_id=str(plan.get("task_id") or task_spec.get("task_id") or ""),
+            session_id=str(
+                plan.get("session_id")
+                or task_spec.get("session_id")
+                or plan.get("task_id")
+                or task_spec.get("task_id")
+                or ""
+            ),
+            plan_id=str(
+                plan.get("plan_id")
+                or semantic_plan_snapshot.get("plan_id")
+                or ""
+            ),
+            plan_version=str(
+                plan.get("plan_version")
+                or semantic_plan_snapshot.get("plan_version")
+                or ""
+            ),
+            plan_revision=int(
+                plan.get("plan_revision")
+                or semantic_plan_snapshot.get("plan_revision")
+                or 0
+            ),
+            step_id=str(current_step_id or ""),
+            source_attempt_id=str(attempt_id or ""),
+            source_action_id=str(action_identity or ""),
+            failure_fingerprint=str(failure_fingerprint or ""),
+            action_family=str(
+                previous_action.get("action_family")
+                or previous_action.get("action_type")
+                or previous_action.get("type")
+                or previous_action.get("command_role")
+                or ""
+            ).strip().lower(),
         )
         if accepted_decisions:
             semantic_history["accepted_recovery_decisions"] = accepted_decisions

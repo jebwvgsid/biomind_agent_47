@@ -24,6 +24,42 @@ class RecoveryEvidenceLimits:
     max_glob_entries: int = 4096
 
 
+_MACHINE_ONLY_DIRECTORIES = {
+    "conflicts",
+    "context_trace",
+    "plans",
+    "recovery",
+    "state_contract",
+}
+_MACHINE_ONLY_FILENAMES = {
+    "active_plan.json",
+    "diagnostic_context.json",
+    "diagnostic_summary.json",
+    "execution_records.jsonl",
+    "failure_context.json",
+    "llm_results.json",
+    "plan_state.json",
+    "recovery_context.json",
+    "recovery_decision.json",
+    "recovery_state.json",
+    "run_metrics.json",
+    "run_metrics.md",
+    "recovery_trace.md",
+}
+
+
+def _is_machine_only_path(relative: Path) -> bool:
+    parts = {part.lower() for part in relative.parts[:-1]}
+    name = relative.name.lower()
+    return bool(
+        parts.intersection(_MACHINE_ONLY_DIRECTORIES)
+        or name in _MACHINE_ONLY_FILENAMES
+        or name.startswith("cot_session_")
+        or name.endswith(".jsonl")
+        or "manifest" in name
+    )
+
+
 class RecoveryEvidenceReader:
     """Expose bounded Read/Glob operations beneath one resolved task root."""
 
@@ -44,11 +80,15 @@ class RecoveryEvidenceReader:
             )
         try:
             resolved = (self.root / candidate).resolve(strict=True)
-            resolved.relative_to(self.root)
+            relative = resolved.relative_to(self.root)
         except (OSError, ValueError) as exc:
             raise RecoveryEvidenceAccessError(
                 f"{RecoveryEvidenceAccessError.code}: path escapes or is absent from the current evidence root"
             ) from exc
+        if _is_machine_only_path(relative):
+            raise RecoveryEvidenceAccessError(
+                f"{RecoveryEvidenceAccessError.code}: machine-only state is not readable"
+            )
         if require_file and not resolved.is_file():
             raise RecoveryEvidenceAccessError(
                 f"{RecoveryEvidenceAccessError.code}: requested evidence is not a file"
@@ -193,6 +233,8 @@ class RecoveryEvidenceReader:
                 if len(relative.parts) > self.limits.max_glob_depth or not resolved.is_file():
                     continue
                 relative_text = relative.as_posix()
+                if _is_machine_only_path(relative):
+                    continue
                 if fnmatch.fnmatch(relative_text, raw) or fnmatch.fnmatch(relative.name, raw):
                     matches.append(relative_text)
                     if len(matches) > self.limits.max_glob_results:
@@ -252,3 +294,43 @@ def parse_evidence_request(text: Any) -> Dict[str, Any]:
             f"{RecoveryEvidenceAccessError.code}: evidence_request must be an object"
         )
     return dict(request)
+
+
+def recovery_evidence_root(data_path: str | Path, task_id: str) -> Path:
+    """Resolve one task evidence root without permitting identity traversal."""
+    if not str(data_path or "").strip():
+        raise RecoveryEvidenceAccessError(
+            f"{RecoveryEvidenceAccessError.code}: current task root is unavailable"
+        )
+    task_component = Path(str(task_id or ""))
+    if (
+        task_component.is_absolute()
+        or len(task_component.parts) != 1
+        or task_component.name in {"", ".", ".."}
+    ):
+        raise RecoveryEvidenceAccessError(
+            f"{RecoveryEvidenceAccessError.code}: invalid current task identity"
+        )
+    evidence_base = (Path(data_path) / "task_outputs").resolve()
+    evidence_root = (evidence_base / str(task_id)).resolve()
+    try:
+        evidence_root.relative_to(evidence_base)
+    except ValueError as exc:
+        raise RecoveryEvidenceAccessError(
+            f"{RecoveryEvidenceAccessError.code}: task identity escapes the evidence root"
+        ) from exc
+    return evidence_root
+
+
+def execute_recovery_evidence_request(
+    *,
+    data_path: str | Path,
+    task_id: str,
+    request: Mapping[str, Any],
+    limits: RecoveryEvidenceLimits | None = None,
+) -> Dict[str, Any]:
+    """Execute the shared bounded read/glob contract for any Recovery entry."""
+    return RecoveryEvidenceReader(
+        recovery_evidence_root(data_path, task_id),
+        limits=limits,
+    ).execute_request(request)

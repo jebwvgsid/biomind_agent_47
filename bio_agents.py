@@ -545,6 +545,16 @@ from agent_core.node_context import (
     resolve_plan_proposal_handles,
     resolve_response_handles,
 )
+from agent_core.provider_message_safety import assert_v2_llm_messages_clean
+from agent_core.recovery_provider import (
+    MAX_RECOVERY_EVIDENCE_FOLLOWUPS,
+    build_recovery_evidence_followup,
+    guarded_recovery_provider_messages,
+)
+from agent_core.recovery_evidence import (
+    RecoveryEvidenceAccessError,
+    parse_evidence_request,
+)
 from agent_core.plan_contract import (
     TASKSPEC_RECONCILIATION_REQUIRED,
     PlannerCandidateError,
@@ -1033,55 +1043,6 @@ def _consultant_validation_is_format_repair_error(text: str) -> bool:
     )
 
 logger = logging.getLogger("BioMind.Agent")
-
-
-_V2_MESSAGE_CONTROL_RULES = (
-    (
-        "CONTROL_OBJECT_DIGEST",
-        re.compile(r"\b(?:object|audit|evidence):sha256:[0-9a-f]{16,}\b", re.IGNORECASE),
-    ),
-    (
-        "RAW_SHA256_DIGEST",
-        re.compile(r"\bsha256:[0-9a-f]{32,}\b", re.IGNORECASE),
-    ),
-    (
-        "TASK_PLAN_SEMANTIC_HASH_KEY",
-        re.compile(r'["\'](?:task|plan)_(?:semantic|record)_hash["\']\s*:', re.IGNORECASE),
-    ),
-    (
-        "STATE_GENERATION_KEY",
-        re.compile(r'["\']state_generation["\']\s*:', re.IGNORECASE),
-    ),
-    (
-        "CONTROLLER_IDENTITY_KEY",
-        re.compile(
-            r'["\'](?:approval_ref|cas_token|node_context_hash|projection_semantic_hash)["\']\s*:',
-            re.IGNORECASE,
-        ),
-    ),
-)
-
-
-def assert_v2_llm_messages_clean(
-    messages: Sequence[BaseMessage],
-    *,
-    stage: str = "llm.provider_dispatch",
-) -> None:
-    """Reject complete provider messages with typed, value-free evidence."""
-    offending_paths: List[str] = []
-    matched_rule_ids: List[str] = []
-    for index, message in enumerate(messages):
-        content = str(getattr(message, "content", message) or "")
-        for rule_id, pattern in _V2_MESSAGE_CONTROL_RULES:
-            if pattern.search(content):
-                offending_paths.append(f"$messages[{index}].content")
-                matched_rule_ids.append(rule_id)
-    if matched_rule_ids:
-        raise ControlMetadataLeakError(
-            stage=stage,
-            offending_paths=offending_paths,
-            matched_rule_ids=matched_rule_ids,
-        )
 
 
 @dataclass
@@ -8404,11 +8365,11 @@ class BioAnalystAgent:
                     cached_judge_valid = False
             if not cached_judge:
                 try:
-                    post_review_judge_invoked = True
                     recovery_judge_budget_charged = False
                     recovery_round_plan = plan_state
                     skill_context_rounds = 0
                     skill_search_rounds = 0
+                    evidence_followups = 0
                     recovery_skill_round_limit = max(
                         1,
                         int(MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION)
@@ -8505,34 +8466,108 @@ class BioAnalystAgent:
                                 recovery_round_plan = load_plan_state(
                                     self.data_path, task_id
                                 )
-                        prompt = PromptManager.get_recovery_v2_prompt(
+                        provider_payload = (
                             recovery_node_context.llm_payload.to_provider_dict()
                         )
+                        messages = guarded_recovery_provider_messages(
+                            provider_payload,
+                            stage="recovery.post_review.initial.provider_dispatch",
+                        )
+                        # This flag is provider-attempt evidence.  Complete
+                        # message safety must pass before it can become true.
+                        post_review_judge_invoked = True
+                        recovery_trace_metadata = {
+                            "call_kind": "recovery_judge",
+                            "attempt_id": str(evidence.get("attempt_id") or ""),
+                            "action_id": str(evidence.get("action_id") or ""),
+                            "step_id": str(evidence.get("step_id") or ""),
+                            "recovery_context_ref": str(
+                                store.root / "recovery_context.json"
+                            ),
+                            "provider_context_manifest": provider_context_manifest(
+                                recovery_node_context.llm_payload
+                            ),
+                            "recovery_llm_policy": dict(self.recovery_llm_policy),
+                        }
                         response = await self._ainvoke_node_llm(
-                            [HumanMessage(content=prompt)],
+                            messages,
                             node_context=recovery_node_context,
                             stage="recovery_judge",
                             task_id=task_id,
                             task_mode=str(state.get("task_mode") or "managed"),
-                            trace_metadata={
-                                "call_kind": "recovery_judge",
-                                "attempt_id": str(evidence.get("attempt_id") or ""),
-                                "action_id": str(evidence.get("action_id") or ""),
-                                "step_id": str(evidence.get("step_id") or ""),
-                                "recovery_context_ref": str(
-                                    store.root / "recovery_context.json"
-                                ),
-                                "provider_context_manifest": provider_context_manifest(
-                                    recovery_node_context.llm_payload
-                                ),
-                                "recovery_llm_policy": dict(self.recovery_llm_policy),
-                            },
+                            trace_metadata=recovery_trace_metadata,
                             llm_override=self.recovery_llm,
                             llm_policy=self.recovery_llm_policy,
                         )
                         raw_response = str(
                             getattr(response, "content", response) or ""
                         )
+                        evidence_request = parse_evidence_request(raw_response)
+                        if (
+                            evidence_request
+                            and evidence_followups
+                            >= MAX_RECOVERY_EVIDENCE_FOLLOWUPS
+                        ):
+                            raise RecoveryEvidenceAccessError(
+                                "RECOVERY_EVIDENCE_ACCESS_DENIED: "
+                                "evidence follow-up limit reached"
+                            )
+                        evidence_followup = build_recovery_evidence_followup(
+                            provider_payload,
+                            raw_response,
+                            data_path=str(self.data_path),
+                            task_id=task_id,
+                            stage=(
+                                "recovery.post_review.evidence_followup."
+                                "provider_dispatch"
+                            ),
+                        )
+                        if evidence_followup is not None:
+                            followup_node_context = build_node_context(
+                                **{
+                                    **recovery_context_kwargs,
+                                    "task_spec": round_task_spec,
+                                    "plan_state": recovery_round_plan,
+                                    "state_generation": int(
+                                        recovery_round_plan.get("state_generation")
+                                        or 0
+                                    ),
+                                    "skill_context": round_skill_context,
+                                    "continuation_id": skill_continuation_id,
+                                },
+                                approved_plan_snapshot=recovery_approved_snapshot,
+                                **recovery_semantic_inputs,
+                            )
+                            response = await self._ainvoke_node_llm(
+                                list(evidence_followup.messages),
+                                node_context=followup_node_context,
+                                stage="recovery_judge",
+                                task_id=task_id,
+                                task_mode=str(
+                                    state.get("task_mode") or "managed"
+                                ),
+                                trace_metadata={
+                                    **recovery_trace_metadata,
+                                    "call_kind": (
+                                        "recovery_judge_v2_evidence_followup"
+                                    ),
+                                    "evidence_operation": str(
+                                        evidence_followup.request.get("tool") or ""
+                                    ),
+                                },
+                                llm_override=self.recovery_llm,
+                                llm_policy=self.recovery_llm_policy,
+                            )
+                            recovery_node_context = followup_node_context
+                            raw_response = str(
+                                getattr(response, "content", response) or ""
+                            )
+                            evidence_followups += 1
+                            if parse_evidence_request(raw_response):
+                                raise RecoveryEvidenceAccessError(
+                                    "RECOVERY_EVIDENCE_ACCESS_DENIED: "
+                                    "evidence follow-up limit reached"
+                                )
                         current_plan_state = load_plan_state(self.data_path, task_id)
                         current_task_spec = canonical_task_spec_for_state(
                             current_plan_state
