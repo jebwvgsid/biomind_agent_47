@@ -23,12 +23,14 @@ from agent_core.recovery import (
     RecoveryExecutionEnvelope,
     RecoveryPolicy,
     RecoveryResultContract,
+    RecoverySourceScope,
     RecoveryStateStore,
     build_recovery_execution_envelope,
     collect_diagnostic_scratch_metadata,
     create_external_execution_bundle,
     external_submission_unavailable,
     ingest_external_execution_result,
+    finalize_recovery_decision,
     validate_external_execution_bundle,
     validate_diagnostic_action,
     validate_diagnostic_probe_code,
@@ -51,7 +53,7 @@ class RecoveryExecutionEnvelopeTests(unittest.TestCase):
         })
 
     def _envelope(self, root: Path, action: str = RecoveryAction.RUN_DIAGNOSTIC_PROBE.value):
-        decision = self._decision(action)
+        decision = self._finalize(self._decision(action), "step-1")
         return decision, build_recovery_execution_envelope(
             decision,
             recovery_context_id="context-1",
@@ -59,6 +61,23 @@ class RecoveryExecutionEnvelopeTests(unittest.TestCase):
             task_root=root,
             allowed_input_roots=[str(root / "inputs")],
             forbidden_formal_output_paths=[str(root / "results" / "sample.bam")],
+        )
+
+    def _finalize(self, decision: RecoveryDecision, step_id: str) -> RecoveryDecision:
+        return finalize_recovery_decision(
+            decision,
+            source_scope=RecoverySourceScope(
+                task_id="task-a",
+                plan_id="plan-a",
+                plan_version="plan-v1",
+                step_id=step_id,
+                failed_action_id=f"action:{step_id}",
+                failed_execution_attempt_id=f"attempt:{step_id}",
+                source_failure_fingerprint=f"failure:{step_id}",
+            ),
+            recovery_context_fingerprint=f"context:{step_id}",
+            source_node="execute",
+            expected_state_generation=1,
         )
 
     def test_diagnostic_and_primary_contracts_are_controller_derived(self):
@@ -399,6 +418,7 @@ class RecoveryExecutionEnvelopeTests(unittest.TestCase):
                 RecoveryAction.RUN_DIAGNOSTIC_PROBE.value
             )
             decision.preferred_execution_mode = "EXTERNAL_HANDOFF"
+            decision = self._finalize(decision, "step-1")
             envelope = build_recovery_execution_envelope(
                 decision,
                 recovery_context_id="context-external",
@@ -515,6 +535,7 @@ class RecoveryExecutionEnvelopeTests(unittest.TestCase):
             root = Path(tmp)
             decision = self._decision(RecoveryAction.PATCH_SCRIPT.value)
             decision.preferred_execution_mode = "EXTERNAL_HANDOFF"
+            decision = self._finalize(decision, "step-primary")
             envelope = build_recovery_execution_envelope(
                 decision,
                 recovery_context_id="context-primary-external",
@@ -613,6 +634,7 @@ class RecoveryExecutionEnvelopeTests(unittest.TestCase):
             decision = RecoveryDecision.from_mapping(
                 fixture["diagnostic_decision"]
             )
+            decision = self._finalize(decision, fixture["step_id"])
             envelope = build_recovery_execution_envelope(
                 decision,
                 recovery_context_id=fixture["recovery_context_id"],
@@ -696,6 +718,7 @@ class RecoveryExecutionEnvelopeTests(unittest.TestCase):
                 fixture["diagnostic_decision"]
             )
             external_decision.preferred_execution_mode = "EXTERNAL_HANDOFF"
+            external_decision = self._finalize(external_decision, fixture["step_id"])
             external_envelope = build_recovery_execution_envelope(
                 external_decision,
                 recovery_context_id=fixture["recovery_context_id"],

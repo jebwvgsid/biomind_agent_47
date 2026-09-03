@@ -36,8 +36,10 @@ from agent_core.recovery import (
     RecoveryAction,
     RecoveryDecision,
     RecoveryPolicy,
+    RecoverySourceScope,
     build_recovery_execution_envelope,
     contextualize_recovery_decision,
+    finalize_recovery_decision,
 )
 
 
@@ -91,6 +93,20 @@ def _normal_action(script: str = "echo ok") -> Dict[str, Any]:
     return adapt_script_block_to_action(
         parse_executable_script_block(f"<shell>{script}</shell>"),
         recovery_generated=False,
+    )
+
+
+def _finalize_for_state(
+    state: Dict[str, Any], decision: RecoveryDecision, record: Dict[str, Any]
+) -> RecoveryDecision:
+    return finalize_recovery_decision(
+        decision,
+        source_scope=RecoverySourceScope.from_state_and_record(state, record),
+        recovery_context_fingerprint=str(
+            record.get("failure_fingerprint") or f"context:{record.get('attempt_id')}"
+        ),
+        source_node=decision.source_node or "execute",
+        expected_state_generation=int(state.get("state_generation") or 0),
     )
 
 
@@ -285,6 +301,17 @@ def test_matching_recovery_generation_requires_and_accepts_matching_envelope(
         action_id="action-step-2-failed",
         attempt_id="attempt-step-2-failed",
         trigger_event_id="attempt-step-2-failed",
+    )
+    decision = _finalize_for_state(
+        state,
+        decision,
+        _record(
+            state,
+            step_id="check-contig-compatibility",
+            attempt_id="attempt-step-2-failed",
+            action_id="action-step-2-failed",
+            returncode=1,
+        ),
     )
     envelope = build_recovery_execution_envelope(
         decision,
@@ -504,6 +531,7 @@ def test_two_step_normal_and_recovery_integrations_reach_mock_execute(
         attempt_id="attempt-failed",
         trigger_event_id="attempt-failed",
     )
+    decision = _finalize_for_state(recovered, decision, failure)
     envelope = build_recovery_execution_envelope(
         decision,
         recovery_context_id="recovery-context-step-1",
@@ -568,6 +596,17 @@ def test_escalate_is_nonterminal_and_routes_supervisor_once() -> None:
         attempt_id="attempt-escalate",
         trigger_event_id="attempt-escalate",
         step_attempt=1,
+    )
+    decision = _finalize_for_state(
+        state,
+        decision,
+        _record(
+            state,
+            step_id="validate-inputs",
+            attempt_id="attempt-escalate",
+            action_id="action-escalate",
+            returncode=1,
+        ),
     )
     state["provenance_state"]["attempts"]["attempt-escalate"] = {
         "attempt_id": "attempt-escalate",

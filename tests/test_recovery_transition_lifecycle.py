@@ -31,8 +31,11 @@ from agent_core.recovery import (
     RecoveryDecisionKind,
     RecoveryDisposition,
     RecoveryPolicy,
+    RecoverySourceScope,
     RecoveryTransitionStatus,
+    build_recovery_execution_envelope,
     contextualize_recovery_decision,
+    finalize_recovery_decision,
     parse_recovery_judge_decision,
     recovery_route_from_state,
 )
@@ -137,6 +140,7 @@ def _record_attempt(
 
 def _accepted_decision(
     fixture: Dict[str, Any],
+    state: Dict[str, Any],
     *,
     action_id: str = "action-accepted",
     attempt_id: str = "attempt-accepted",
@@ -151,7 +155,7 @@ def _accepted_decision(
             "source_node": "execute",
         }
     )
-    return contextualize_recovery_decision(
+    decision = contextualize_recovery_decision(
         RecoveryDecision.from_mapping(value),
         action_id=action_id,
         attempt_id=attempt_id,
@@ -160,9 +164,15 @@ def _accepted_decision(
         step_attempt=step_attempt,
         trigger_event_id=attempt_id,
     )
+    return _finalize_for_state(state, decision)
 
 
-def _retry_decision(evidence: Dict[str, Any], *, step_attempt: int = 1) -> RecoveryDecision:
+def _retry_decision(
+    state: Dict[str, Any],
+    evidence: Dict[str, Any],
+    *,
+    step_attempt: int = 1,
+) -> RecoveryDecision:
     decision = RecoveryPolicy().decide(
         execution_evidence=evidence,
         budgets={},
@@ -171,7 +181,7 @@ def _retry_decision(evidence: Dict[str, Any], *, step_attempt: int = 1) -> Recov
         step_id="step-1",
     )
     assert decision.kind == RecoveryDecisionKind.RETRY_CURRENT_ACTION.value
-    return contextualize_recovery_decision(
+    decision = contextualize_recovery_decision(
         decision,
         action_id=str(evidence["action_id"]),
         attempt_id=str(evidence["attempt_id"]),
@@ -180,6 +190,40 @@ def _retry_decision(evidence: Dict[str, Any], *, step_attempt: int = 1) -> Recov
         step_attempt=step_attempt,
         trigger_event_id=str(evidence["attempt_id"]),
     )
+    return _finalize_for_state(state, decision, evidence=evidence)
+
+
+def _finalize_for_state(
+    state: Dict[str, Any],
+    decision: RecoveryDecision,
+    *,
+    evidence: Dict[str, Any] | None = None,
+) -> RecoveryDecision:
+    record = dict(evidence or {})
+    record.setdefault("step_id", decision.step_id)
+    record.setdefault("action_id", decision.action_id)
+    record.setdefault("attempt_id", decision.attempt_id)
+    return finalize_recovery_decision(
+        decision,
+        source_scope=RecoverySourceScope.from_state_and_record(state, record),
+        recovery_context_fingerprint=str(
+            record.get("failure_fingerprint") or f"context:{decision.attempt_id}"
+        ),
+        source_node=decision.source_node or "execute",
+        expected_state_generation=int(state.get("state_generation") or 0),
+    )
+
+
+def _apply_finalized(state: Dict[str, Any], decision: RecoveryDecision) -> Dict[str, Any]:
+    envelope = None
+    if decision.target_route == "generate":
+        envelope = build_recovery_execution_envelope(
+            decision,
+            recovery_context_id=decision.recovery_context_fingerprint,
+            step_id=decision.step_id,
+            task_root="/tmp",
+        ).to_dict()
+    return apply_recovery_decision(state, decision, execution_envelope=envelope)
 
 
 def _agent(root: Path) -> BioAnalystAgent:
@@ -293,8 +337,8 @@ def test_b_recovery_transition_is_consumed_once_and_not_reapplied(
         result_path=result_path,
         result_content="##fileformat=VCFv4.2\n# accepted\n",
     )
-    application = apply_recovery_decision(
-        state, _accepted_decision(incident_fixture)
+    application = _apply_finalized(
+        state, _accepted_decision(incident_fixture, state)
     )
     save_plan_state(tmp_path, task_id, state)
 
@@ -344,9 +388,9 @@ def test_c_old_generate_decision_cannot_override_newer_execute_success(
         returncode=1,
         stderr_summary="old recoverable failure",
     )
-    old_decision = _retry_decision(old_evidence)
+    old_decision = _retry_decision(state, old_evidence)
     assert old_decision.target_route == "generate"
-    application = apply_recovery_decision(state, old_decision)
+    application = _apply_finalized(state, old_decision)
     newer_evidence = _record_attempt(
         state,
         action_id="action-new",
@@ -422,8 +466,8 @@ def test_e_integration_accept_validate_complete_and_start_next_step(
         result_content="##fileformat=VCFv4.2\n# canonical accepted result\n",
         stderr_summary=str(incident_fixture["incident_evidence"]["stderr_summary"]),
     )
-    application = apply_recovery_decision(
-        state, _accepted_decision(incident_fixture)
+    application = _apply_finalized(
+        state, _accepted_decision(incident_fixture, state)
     )
     save_plan_state(tmp_path, task_id, state)
 
@@ -475,7 +519,10 @@ def test_e_integration_accept_validate_complete_and_start_next_step(
         trigger_event_id=evidence["attempt_id"],
     )
     assert completion_decision.kind == RecoveryDecisionKind.COMPLETE_STEP.value
-    completion_application = apply_recovery_decision(supervised, completion_decision)
+    completion_decision = _finalize_for_state(
+        supervised, completion_decision, evidence=evidence
+    )
+    completion_application = _apply_finalized(supervised, completion_decision)
     route_trace.append("step-2")
 
     statuses = _status_by_step(supervised)
@@ -530,7 +577,7 @@ def test_f_progress_guard_observes_effective_override_route(
         attempt_id="attempt-retry",
         returncode=1,
     )
-    application = apply_recovery_decision(state, _retry_decision(evidence))
+    application = _apply_finalized(state, _retry_decision(state, evidence))
     save_plan_state(tmp_path, task_id, state)
 
     resolved = _resolve_execute(
@@ -754,8 +801,8 @@ def test_migration_does_not_treat_an_older_success_as_newer_than_trigger(
         attempt["created_at"] = "2026-08-27T00:00:00"
         attempt["started_at"] = "2026-08-27T00:00:00"
         attempt["finished_at"] = "2026-08-27T00:00:00"
-    decision = _retry_decision(latest_failure, step_attempt=2)
-    application = apply_recovery_decision(state, decision)
+    decision = _retry_decision(state, latest_failure, step_attempt=2)
+    application = _apply_finalized(state, decision)
 
     migrated, _ = migrate_plan_state(state, task_id)
     recovery_state = migrated["task_state"]["recovery_state"]
@@ -783,7 +830,7 @@ def test_missing_current_event_fails_closed_instead_of_replaying_old_route(
         attempt_id="attempt-old-event",
         returncode=1,
     )
-    application = apply_recovery_decision(state, _retry_decision(evidence))
+    application = _apply_finalized(state, _retry_decision(state, evidence))
 
     eligibility = recovery_transition_eligibility(
         state,
@@ -811,7 +858,7 @@ def test_completed_step_expiration_cannot_be_promoted_back_to_active(
         attempt_id="attempt-expire",
         returncode=1,
     )
-    application = apply_recovery_decision(state, _retry_decision(evidence))
+    application = _apply_finalized(state, _retry_decision(state, evidence))
     clear_step_scoped_recovery(state, "step-1")
 
     first = recovery_transition_eligibility(
@@ -847,7 +894,7 @@ def test_execute_early_return_does_not_reuse_state_execution_evidence(
         attempt_id="attempt-prior-failure",
         returncode=1,
     )
-    application = apply_recovery_decision(state, _retry_decision(evidence))
+    application = _apply_finalized(state, _retry_decision(state, evidence))
     save_plan_state(tmp_path, task_id, state)
 
     resolved = _agent(tmp_path)._resolve_and_commit_effective_transition(
@@ -1082,9 +1129,9 @@ def test_primary_attempt_ordinal_ignores_diagnostic_probe(
         attempt_id="primary-attempt",
         returncode=1,
     )
-    application = apply_recovery_decision(
+    application = _apply_finalized(
         state,
-        _retry_decision(primary, step_attempt=1),
+        _retry_decision(state, primary, step_attempt=1),
     )
     save_plan_state(tmp_path, task_id, state)
     persisted = load_plan_state(tmp_path, task_id)
@@ -1113,10 +1160,11 @@ def test_plain_continue_previews_then_crash_resume_consumes_accept_once(
         returncode=0,
         result_path=result_path,
     )
-    application = apply_recovery_decision(
+    application = _apply_finalized(
         state,
         _accepted_decision(
             incident_fixture,
+            state,
             action_id="resume-action",
             attempt_id="resume-attempt",
         ),
@@ -1243,10 +1291,11 @@ def test_persisted_route_conflict_is_derived_from_typed_disposition(
         returncode=0,
         result_path=result_path,
     )
-    application = apply_recovery_decision(
+    application = _apply_finalized(
         state,
         _accepted_decision(
             incident_fixture,
+            state,
             action_id="typed-action",
             attempt_id="typed-attempt",
         ),
@@ -1290,6 +1339,7 @@ def test_typed_accept_anomaly_marks_verification_pending_even_when_rc_nonzero(
     )
     decision = _accepted_decision(
         incident_fixture,
+        state,
         action_id="anomaly-action",
         attempt_id="anomaly-attempt",
     ).to_dict()

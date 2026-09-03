@@ -8,6 +8,9 @@ from agent_core.recovery import (
     RecoveryDecisionKind,
     RecoveryDisposition,
     RecoveryPolicy,
+    RecoverySourceScope,
+    build_recovery_execution_envelope,
+    finalize_recovery_decision,
     recovery_action_route,
     recovery_route_from_state,
 )
@@ -29,6 +32,32 @@ class RecoveryPolicyOwnershipTests(unittest.TestCase):
                 "- [ ] Step 2: Finalize | Action: EXECUTE | Done: report.md exists",
             ]),
         )
+
+    def _finalized(self, plan, decision):
+        decision = finalize_recovery_decision(
+            decision,
+            source_scope=RecoverySourceScope(
+                task_id=str(plan["task_id"]),
+                plan_id=str(plan["plan_id"]),
+                plan_version=str(plan["plan_version"]),
+                step_id=str(decision.step_id or plan["current_step_id"]),
+                failed_action_id=str(decision.action_id or "action-1"),
+                failed_execution_attempt_id=str(decision.attempt_id or "attempt-1"),
+                source_failure_fingerprint="fixture-failure",
+            ),
+            recovery_context_fingerprint="fixture-context",
+            source_node=decision.source_node or "execute",
+            expected_state_generation=int(plan.get("state_generation") or 0),
+        )
+        envelope = None
+        if decision.target_route == "generate":
+            envelope = build_recovery_execution_envelope(
+                decision,
+                recovery_context_id="fixture-context",
+                step_id=decision.step_id,
+                task_root="/tmp",
+            ).to_dict()
+        return decision, envelope
 
     def test_protocol_error_uses_format_budget_only(self):
         decision = self.policy.decide(
@@ -91,7 +120,8 @@ class RecoveryPolicyOwnershipTests(unittest.TestCase):
         )
 
         plan = self._plan()
-        apply_recovery_decision(plan, decision)
+        decision, envelope = self._finalized(plan, decision)
+        apply_recovery_decision(plan, decision, execution_envelope=envelope)
         budgets = plan["task_state"]["budgets"]
         self.assertEqual(budgets["generate_attempts_by_step"]["step-1"], 1)
         self.assertEqual(budgets["action_format_repair_count"], 0)
@@ -297,8 +327,9 @@ class RecoveryPolicyOwnershipTests(unittest.TestCase):
             budgets={"execution_retry_count": 0},
         )
 
-        first = apply_recovery_decision(plan, decision)
-        second = apply_recovery_decision(plan, decision)
+        decision, envelope = self._finalized(plan, decision)
+        first = apply_recovery_decision(plan, decision, execution_envelope=envelope)
+        second = apply_recovery_decision(plan, decision, execution_envelope=envelope)
         budgets = plan["task_state"]["budgets"]
 
         self.assertTrue(first["applied"])

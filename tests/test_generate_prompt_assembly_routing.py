@@ -182,6 +182,14 @@ def test_terminal_commit_preserves_primary_and_blocks_current_step(
     assert persisted["task_state"]["status"] == "blocked"
     assert persisted["primary_failure"]["error_code"] == "LLM_CONTROL_METADATA_LEAK"
     assert persisted["failure"]["error_code"] == "LLM_CONTROL_METADATA_LEAK"
+    assert persisted["primary_execution_failure"] == {}
+    assert persisted["recovery_decision_summary"] == {}
+    assert persisted["recovery_transition_failure"]["error_code"] == (
+        "LLM_CONTROL_METADATA_LEAK"
+    )
+    assert persisted["terminal_failure"]["error_code"] == (
+        "LLM_CONTROL_METADATA_LEAK"
+    )
     assert persisted["task_state"]["recovery_state"]["active_transition"] == {}
     assert persisted["machine_recovery_decision"]["decision"] == "TERMINATE"
     assert persisted["machine_recovery_decision"]["reason_code"] == (

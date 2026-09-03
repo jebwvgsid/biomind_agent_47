@@ -315,6 +315,22 @@ class PreActionConvergenceTests(unittest.TestCase):
             "message": "placeholder must be atomic",
         }]
 
+    def _finalize(self, agent, context, decision):
+        finalized, envelope = agent._finalize_controller_recovery_decision(
+            "preaction",
+            decision,
+            source_node="generate",
+            source_record={
+                "step_id": context.step_id,
+                "action_id": context.action_id,
+                "attempt_id": context.attempt_id,
+                "failure_fingerprint": context.error_fingerprint,
+            },
+            recovery_context_fingerprint=context.error_fingerprint,
+        )
+        context.recovery_decision = finalized.to_dict()
+        return finalized, envelope
+
     def test_n1_first_semantic_rejection_commits_corrective_generate_budget(self) -> None:
         with tempfile.TemporaryDirectory() as root:
             agent = self._durable_agent(root)
@@ -333,6 +349,7 @@ class PreActionConvergenceTests(unittest.TestCase):
                 violations=self._violation(),
                 visible_artifacts={},
             )
+            decision, envelope = self._finalize(agent, context, decision)
             guarded = agent._apply_transition_guard(
                 "generate",
                 {},
@@ -341,6 +358,7 @@ class PreActionConvergenceTests(unittest.TestCase):
                     "pending_recovery_action": {"type": "same_step_repair"},
                     "recovery_context": context.to_dict(),
                     "recovery_decision": decision.to_dict(),
+                    "recovery_execution_envelope": envelope,
                 },
                 "preaction",
             )
@@ -369,6 +387,9 @@ class PreActionConvergenceTests(unittest.TestCase):
                 violations=self._violation(),
                 visible_artifacts={},
             )
+            first_decision, first_envelope = self._finalize(
+                agent, first_context, first_decision
+            )
             agent._apply_transition_guard(
                 "generate",
                 {},
@@ -377,6 +398,7 @@ class PreActionConvergenceTests(unittest.TestCase):
                     "pending_recovery_action": {"type": "same_step_repair"},
                     "recovery_context": first_context.to_dict(),
                     "recovery_decision": first_decision.to_dict(),
+                    "recovery_execution_envelope": first_envelope,
                 },
                 "preaction",
             )
@@ -392,6 +414,9 @@ class PreActionConvergenceTests(unittest.TestCase):
                 violations=self._violation(),
                 visible_artifacts={},
             )
+            second_decision, second_envelope = self._finalize(
+                agent, second_context, second_decision
+            )
             guarded = agent._apply_transition_guard(
                 "generate",
                 {},
@@ -400,13 +425,14 @@ class PreActionConvergenceTests(unittest.TestCase):
                     "pending_recovery_action": {"type": "internal_protocol_error"},
                     "recovery_context": second_context.to_dict(),
                     "recovery_decision": second_decision.to_dict(),
+                    "recovery_execution_envelope": second_envelope,
                 },
                 "preaction",
             )
             budgets = load_plan_state(root, "preaction")["task_state"]["budgets"]
 
         self.assertEqual(second_decision.kind, RecoveryDecisionKind.ESCALATE.value)
-        self.assertEqual(guarded["next_step"], "finish")
+        self.assertEqual(guarded["next_step"], "supervisor")
         self.assertEqual(int(budgets.get("action_format_repair_count") or 0), 0)
         self.assertEqual(budgets["generate_attempts_by_step"]["step-1"], 1)
 
@@ -457,6 +483,7 @@ class PreActionConvergenceTests(unittest.TestCase):
                 violations=self._violation(),
                 visible_artifacts={},
             )
+            decision, envelope = self._finalize(agent, context, decision)
             agent._apply_transition_guard(
                 "generate",
                 {"generate_response_cached": True},
@@ -465,6 +492,7 @@ class PreActionConvergenceTests(unittest.TestCase):
                     "pending_recovery_action": {"type": "same_step_repair"},
                     "recovery_context": context.to_dict(),
                     "recovery_decision": decision.to_dict(),
+                    "recovery_execution_envelope": envelope,
                 },
                 "preaction",
             )

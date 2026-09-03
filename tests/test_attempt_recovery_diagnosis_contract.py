@@ -624,6 +624,8 @@ class RecoveryRoutingContractTests(unittest.IsolatedAsyncioTestCase):
         """A budget write must not make an approved-plan recovery reply stale."""
         plan_state = {
             "task_id": "task-b",
+            "plan_id": "plan-b",
+            "plan_version": "plan-v1",
             "state_generation": 7,
             "task_state": {"budgets": {}},
             "steps": [{"step_id": "step-b", "status": "running"}],

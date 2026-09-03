@@ -1,0 +1,16 @@
+{
+  "session_shape": "session_1788401254-like",
+  "task_id": "incident-replay",
+  "plan_id": "incident-plan",
+  "plan_version": "incident-plan-v1",
+  "producer_step_id": "step-3",
+  "consumer_step_id": "step-4",
+  "producer_action_id": "prepare-db",
+  "producer_attempt_id": "attempt-step-3",
+  "failed_action_id": "annotate",
+  "failed_attempt_id": "attempt-step-4",
+  "accepted_value": "biomind_bm_remain_annot_007",
+  "incorrect_regenerated_value": "biomind_remaining_annot_007",
+  "source_failure_fingerprint": "snpeff-rc255-step-4",
+  "recovery_context_fingerprint": "context-step-4-rc255"
+}

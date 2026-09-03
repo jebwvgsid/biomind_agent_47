@@ -32,6 +32,8 @@ class RecoveryContextTests(unittest.TestCase):
             "validation_evidence": {
                 "validation_id": "validation-1",
                 "task_id": "task-a",
+                "plan_id": "plan-a",
+                "plan_version": "plan-v3",
                 "step_id": "step-2",
                 "action_id": "action-1",
                 "attempt_id": "attempt-1",
@@ -55,6 +57,12 @@ class RecoveryContextTests(unittest.TestCase):
                 "llm_advisory_conflict": True,
             },
             "completion_gate_result": {
+                "task_id": "task-a",
+                "plan_id": "plan-a",
+                "plan_version": "plan-v3",
+                "step_id": "step-2",
+                "action_id": "action-1",
+                "attempt_id": "attempt-1",
                 "passed": False,
                 "classification": "required_artifact_missing",
                 "message": "annotated VCF missing",
@@ -71,6 +79,7 @@ class RecoveryContextTests(unittest.TestCase):
     def _plan(self):
         return {
             "task_id": "task-a",
+            "plan_id": "plan-a",
             "plan_version": "plan-v3",
             "steps": [{
                 "step_id": "step-2",
@@ -547,8 +556,8 @@ class RecoveryJudgeIdempotencyTests(unittest.IsolatedAsyncioTestCase):
                     "attempt_id": "attempt-1",
                     "action_id": "action-1",
                     "step_id": "step-2",
-                    "returncode": 0,
-                    "execution_status": "succeeded",
+                    "returncode": 1,
+                    "execution_status": "failed",
                     "command_role": "primary",
                 },
             }

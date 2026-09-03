@@ -337,11 +337,14 @@ class SnpEffPlanDataflowContractTests(unittest.TestCase):
         self.assertIn("Cross-step Artifact Review", review)
         self.assertIn("mktemp, shell variables, cwd assumptions, or prose", review)
 
-    def test_skill_contract_uses_controller_runtime_variable(self) -> None:
+    def test_skill_contract_separates_runtime_paths_from_semantic_bindings(self) -> None:
         document = _skill_document()
         planning_contract = document.split("## Planning Contract", 1)[1].split("##", 1)[0]
-        self.assertIn('"$SNPEFF_JAR"', planning_contract)
-        self.assertIn("Do not emit\n`{runtime:snpeff_jar}`", planning_contract)
+        self.assertIn("Do not emit `$SNPEFF_JAR`", planning_contract)
+        self.assertIn("produced or\nconsumed bindings", planning_contract)
+        self.assertIn("binding_contract:", document)
+        self.assertIn("produces_bindings: [genome_version, snpeff_db]", document)
+        self.assertIn("consumes_bindings: [genome_version, snpeff_db]", document)
 
 
 if __name__ == "__main__":
