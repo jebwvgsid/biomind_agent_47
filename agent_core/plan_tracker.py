@@ -2428,6 +2428,13 @@ def _apply_upstream_step_rollback(state: PlanState, value: Dict[str, Any]) -> Di
         step_ids={target_id, *affected},
         invalid_artifact_ids=invalid_ids,
     )
+    from agent_core.plan_bindings import invalidate_producer_bindings
+
+    invalidate_producer_bindings(
+        state,
+        producer_step_id=target_id,
+        reason="upstream producer superseded by Recovery rollback",
+    )
     state["current_step_id"] = target_id
     state["current_stage_id"] = ""
     set_task_status(state, TASK_STATUS_REPAIRING, f"rollback to {target_id}")
@@ -2579,6 +2586,8 @@ def apply_recovery_decision(
     they must not increment recovery budgets or alter step status directly.
     """
     value = decision.to_dict() if hasattr(decision, "to_dict") else dict(decision or {})
+    if not bool(value.get("identity_finalized")):
+        raise ValueError("RecoveryDecision must be finalized before application")
     decision_id = str(value.get("idempotency_key") or value.get("decision_id") or "").strip()
     if not decision_id:
         raise ValueError("RecoveryDecision requires a stable decision_id")
@@ -2956,6 +2965,12 @@ def apply_recovery_decision(
         and kind not in {"COMPLETE_STEP", "COMPLETE_TASK"}
     ):
         envelope = deepcopy(dict(execution_envelope or {}))
+        if (
+            str(envelope.get("recovery_decision_id") or "") != decision_id
+            or dict(envelope.get("source_scope") or {})
+            != dict(value.get("source_scope") or {})
+        ):
+            raise ValueError("Recovery decision and execution envelope scope mismatch")
         prior_active_recovery = dict(recovery_state.get("active_recovery") or {})
         if (
             prior_active_recovery
@@ -2973,6 +2988,23 @@ def apply_recovery_decision(
                 *list(recovery_state.get("active_recovery_history") or []),
                 retired,
             ]
+        target_generation_identity = {
+            "task_id": str(state.get("task_id") or ""),
+            "plan_id": str(state.get("plan_id") or ""),
+            "plan_version": str(state.get("plan_version") or ""),
+            "step_id": step_id,
+            "recovery_decision_id": decision_id,
+            "envelope_hash": str(envelope.get("immutable_hash") or ""),
+            "operation": "recovery_generate",
+        }
+        target_generation_id = "generation-" + hashlib.sha256(
+            json.dumps(
+                target_generation_identity,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8", errors="replace")
+        ).hexdigest()[:20]
         recovery_state["active_recovery"] = {
             "schema_version": 1,
             "recovery_id": decision_id,
@@ -2984,7 +3016,17 @@ def apply_recovery_decision(
             "status": "pending",
             "target_route": "generate",
             "envelope_id": str(envelope.get("immutable_hash") or ""),
+            "target_generation_id": target_generation_id,
             "created_at": _now(),
+        }
+        recovery_state["generation_claim"] = {
+            "schema_version": 1,
+            "target_generation_id": target_generation_id,
+            "recovery_id": decision_id,
+            "status": "issued",
+            "provider_idempotency_key": target_generation_id,
+            "remote_delivery_semantics": "at_least_once_without_provider_idempotency",
+            "issued_at": _now(),
         }
         recovery_state["active_recovery_envelope"] = envelope
     elif kind in {"COMPLETE_STEP", "COMPLETE_TASK"}:
@@ -3036,6 +3078,14 @@ def apply_recovery_decision(
     task_state["recovery_state"] = recovery_state
     task_state["last_recovery_decision"] = value
     state["task_state"] = task_state
+    record_scoped_evidence(
+        state,
+        "recovery",
+        value,
+        action_id=str(value.get("action_id") or ""),
+        execution_attempt_id=str(value.get("attempt_id") or ""),
+        failure_fingerprint=str(value.get("source_failure_fingerprint") or ""),
+    )
     normalized = task_status(state)
     if normalized == TASK_STATUS_COMPLETED:
         state["execution_status"] = "completed"
@@ -3056,6 +3106,67 @@ def apply_recovery_decision(
         "audit": audit_event,
         **transition,
     }
+
+
+def update_recovery_generation_claim(
+    state: PlanState,
+    *,
+    target_generation_id: str,
+    status: str,
+    action_fingerprint: str = "",
+    detail: str = "",
+) -> Dict[str, Any]:
+    """Advance the durable recovery Generate claim without duplicating adoption."""
+    allowed = {
+        "issued", "claimed", "provider_completed", "action_adopted",
+        "failed", "superseded", "outcome_unknown",
+    }
+    next_status = str(status or "").strip().lower()
+    if next_status not in allowed:
+        raise ValueError(f"Unsupported recovery generation claim status: {next_status}")
+    task_state = dict(state.get("task_state") or {})
+    recovery_state = dict(task_state.get("recovery_state") or {})
+    active = dict(recovery_state.get("active_recovery") or {})
+    claim = dict(recovery_state.get("generation_claim") or {})
+    expected = str(active.get("target_generation_id") or claim.get("target_generation_id") or "")
+    if not expected or expected != str(target_generation_id or ""):
+        raise ValueError("RECOVERY_GENERATION_TARGET_MISMATCH")
+    current_status = str(claim.get("status") or "issued").lower()
+    if current_status == "action_adopted":
+        if next_status == "action_adopted" and (
+            not action_fingerprint
+            or str(claim.get("action_fingerprint") or "") == action_fingerprint
+        ):
+            return {"changed": False, "duplicate": True, **claim}
+        raise ValueError("RECOVERY_GENERATION_ALREADY_ADOPTED")
+    transitions = {
+        "issued": {"claimed", "failed", "superseded"},
+        "claimed": {"provider_completed", "failed", "outcome_unknown", "superseded"},
+        "provider_completed": {"action_adopted", "failed", "superseded"},
+        "outcome_unknown": {"claimed", "provider_completed", "failed", "superseded"},
+        "failed": set(),
+        "superseded": set(),
+    }
+    if next_status != current_status and next_status not in transitions.get(current_status, set()):
+        raise ValueError(
+            f"RECOVERY_GENERATION_INVALID_TRANSITION:{current_status}->{next_status}"
+        )
+    claim.update({
+        "schema_version": 1,
+        "target_generation_id": expected,
+        "recovery_id": str(active.get("recovery_id") or claim.get("recovery_id") or ""),
+        "status": next_status,
+        "updated_at": _now(),
+    })
+    if action_fingerprint:
+        claim["action_fingerprint"] = str(action_fingerprint)
+    if detail:
+        claim["detail"] = str(detail)[:2000]
+    claim[f"{next_status}_at"] = _now()
+    recovery_state["generation_claim"] = claim
+    task_state["recovery_state"] = recovery_state
+    state["task_state"] = task_state
+    return {"changed": next_status != current_status, "duplicate": False, **claim}
 
 
 def mark_step_verification_pending(
@@ -9558,6 +9669,116 @@ def save_plan_state(
     return path
 
 
+def commit_recovery_bundle(
+    data_path: str | Path,
+    task_id: str,
+    bundle: Any,
+) -> Dict[str, Any]:
+    """Atomically adopt one finalized Recovery bundle as PlanState truth."""
+    from agent_core.recovery import RecoveryCommitBundle
+
+    if not isinstance(bundle, RecoveryCommitBundle):
+        raise TypeError("bundle must be a RecoveryCommitBundle")
+    bundle.validate()
+    decision = bundle.finalized_decision
+    decision_value = decision.to_dict()
+    current = load_plan_state(data_path, task_id)
+    expected_generation = int(bundle.expected_state_generation)
+    current_generation = int(current.get("state_generation") or 0)
+    recovery_state = dict(
+        ((current.get("task_state") or {}).get("recovery_state")) or {}
+    )
+    applied_ids = {
+        str(item)
+        for item in recovery_state.get("applied_decision_ids") or []
+        if str(item)
+    }
+    if current_generation != expected_generation:
+        if decision.decision_id in applied_ids:
+            return {
+                "applied": False,
+                "duplicate": True,
+                "decision_id": decision.decision_id,
+                "next_route": "",
+                "transition_status": "committed",
+                "state_generation": current_generation,
+            }
+        raise StateCASConflict(
+            "STATE_CAS_CONFLICT: expected generation "
+            f"{expected_generation}, current generation {current_generation}"
+        )
+
+    scope = dict(decision.source_scope or {})
+    expected_scope = {
+        "task_id": str(current.get("task_id") or task_id),
+        "plan_id": str(current.get("plan_id") or ""),
+        "plan_version": str(current.get("plan_version") or ""),
+        "step_id": str(current.get("current_step_id") or ""),
+    }
+    mismatches = {
+        key: {"decision": str(scope.get(key) or ""), "current": value}
+        for key, value in expected_scope.items()
+        if str(scope.get(key) or "") != value
+    }
+    if mismatches:
+        raise ValueError(
+            "RECOVERY_BUNDLE_SCOPE_STALE: "
+            + json.dumps(mismatches, ensure_ascii=False, sort_keys=True)
+        )
+    source_attempt_id = str(scope.get("failed_execution_attempt_id") or "")
+    source_attempt = dict(
+        ((current.get("provenance_state") or {}).get("attempts") or {}).get(
+            source_attempt_id
+        )
+        or {}
+    )
+    if str(source_attempt.get("status") or "").upper() in {
+        "SUPERSEDED", "INVALIDATED", "STALE"
+    }:
+        raise ValueError("RECOVERY_BUNDLE_SOURCE_ATTEMPT_STALE")
+
+    candidate = deepcopy(current)
+    envelope_value = (
+        bundle.execution_envelope.to_dict()
+        if bundle.execution_envelope is not None
+        else {}
+    )
+    application = apply_recovery_decision(
+        candidate,
+        decision,
+        execution_envelope=envelope_value,
+    )
+    task_state = dict(candidate.get("task_state") or {})
+    committed_recovery = dict(task_state.get("recovery_state") or {})
+    active = dict(committed_recovery.get("active_recovery") or {})
+    if decision.target_route == "generate" and (
+        str(active.get("recovery_id") or "") != decision.decision_id
+        or str(envelope_value.get("recovery_decision_id") or "")
+        != decision.decision_id
+    ):
+        raise ValueError("RECOVERY_BUNDLE_ACTIVE_IDENTITY_MISMATCH")
+    committed_recovery["authoritative_commit"] = {
+        "schema_version": 1,
+        "decision": decision_value,
+        "execution_envelope": envelope_value,
+        "active_recovery": deepcopy(active),
+        "transition": deepcopy(
+            committed_recovery.get("active_transition") or {}
+        ),
+        "budget_reservation": deepcopy(
+            dict(bundle.budget_reservation or {})
+        ),
+        "expected_state_generation": expected_generation,
+        "committed_state_generation": expected_generation + 1,
+    }
+    task_state["recovery_state"] = committed_recovery
+    candidate["task_state"] = task_state
+    save_plan_state(data_path, task_id, candidate)
+    application["state_generation"] = int(candidate.get("state_generation") or 0)
+    application["commit_authority"] = "plan_state_cas"
+    return application
+
+
 def initialize_consultant_bootstrap_state(
     data_path: str | Path,
     task_id: str,
@@ -10689,6 +10910,70 @@ def clear_step_scoped_recovery(state: PlanState, completed_step_id: str) -> None
     state["task_state"] = task_state
 
 
+def record_scoped_evidence(
+    state: PlanState,
+    kind: str,
+    payload: Mapping[str, Any],
+    *,
+    action_id: str = "",
+    execution_attempt_id: str = "",
+    failure_fingerprint: str = "",
+) -> Dict[str, Any]:
+    """Append immutable evidence history and move only its active reference."""
+    normalized_kind = str(kind or "").strip().lower()
+    if normalized_kind not in {"validation", "completion", "supervisor", "recovery"}:
+        raise ValueError(f"Unsupported scoped evidence kind: {normalized_kind}")
+    scope = {
+        "task_id": str(state.get("task_id") or ""),
+        "plan_id": str(state.get("plan_id") or ""),
+        "plan_version": str(state.get("plan_version") or ""),
+        "step_id": str(state.get("current_step_id") or ""),
+        "action_id": str(action_id or payload.get("action_id") or ""),
+        "execution_attempt_id": str(
+            execution_attempt_id
+            or payload.get("execution_attempt_id")
+            or payload.get("attempt_id")
+            or payload.get("execution_id")
+            or ""
+        ),
+    }
+    if failure_fingerprint:
+        scope["failure_fingerprint"] = str(failure_fingerprint)
+    identity = {
+        "kind": normalized_kind,
+        "scope": scope,
+        "payload": dict(payload or {}),
+    }
+    record_id = f"{normalized_kind}-" + hashlib.sha256(
+        json.dumps(
+            identity,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8", errors="replace")
+    ).hexdigest()[:20]
+    record = {
+        "schema_version": 1,
+        "record_id": record_id,
+        **scope,
+        "payload": deepcopy(dict(payload or {})),
+        "recorded_at": _now(),
+    }
+    task_state = dict(state.get("task_state") or {})
+    history_key = f"{normalized_kind}_history"
+    history = list(task_state.get(history_key) or [])
+    if not any(str(item.get("record_id") or "") == record_id for item in history if isinstance(item, Mapping)):
+        history.append(record)
+    task_state[history_key] = history
+    task_state[f"active_{normalized_kind}_ref"] = {
+        "record_id": record_id,
+        **scope,
+    }
+    state["task_state"] = task_state
+    return record
+
+
 def advance_plan_after_verified_step(
     state: PlanState,
     evidence: str = "",
@@ -10776,6 +11061,10 @@ def advance_plan_after_verified_step(
     task_state["recovery_state"] = recovery
     task_state["active_execution"] = {}
     task_state["current_attempt"] = ""
+    task_state["active_validation_ref"] = {}
+    task_state["active_completion_ref"] = {}
+    task_state["active_supervisor_ref"] = {}
+    task_state["active_recovery_ref"] = {}
     task_state["generation_provenance"] = normal_generation_provenance(
         state,
         source_route="step_advance",

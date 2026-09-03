@@ -1039,12 +1039,75 @@ def build_current_step_context(
     )
 
 
-def _validation_projection(state: Dict[str, Any]) -> Dict[str, Any]:
-    value = dict(state.get("validation_evidence") or {})
+def _scope_matches(
+    value: Mapping[str, Any], expected_scope: Mapping[str, Any]
+) -> bool:
+    aliases = {
+        "execution_attempt_id": ("execution_attempt_id", "attempt_id", "execution_id"),
+        "action_id": ("action_id",),
+        "step_id": ("step_id",),
+        "task_id": ("task_id",),
+        "plan_id": ("plan_id",),
+        "plan_version": ("plan_version",),
+    }
+    for key, expected in expected_scope.items():
+        if key not in aliases or not str(expected or ""):
+            continue
+        observed = next(
+            (str(value.get(alias) or "") for alias in aliases[key] if value.get(alias)),
+            "",
+        )
+        if observed != str(expected):
+            return False
+    return True
+
+
+def _scoped_evidence_value(
+    state: Mapping[str, Any],
+    *,
+    kind: str,
+    legacy_field: str,
+    expected_scope: Mapping[str, Any],
+) -> Dict[str, Any]:
+    task_state = dict(state.get("task_state") or {})
+    history = list(
+        task_state.get(f"{kind}_history")
+        or state.get(f"{kind}_history")
+        or []
+    )
+    active_ref = dict(
+        task_state.get(f"active_{kind}_ref")
+        or state.get(f"active_{kind}_ref")
+        or {}
+    )
+    if active_ref and _scope_matches(active_ref, expected_scope):
+        ref_id = str(active_ref.get("record_id") or active_ref.get(f"{kind}_id") or "")
+        for raw in reversed(history):
+            if not isinstance(raw, Mapping):
+                continue
+            record = dict(raw)
+            record_id = str(record.get("record_id") or record.get(f"{kind}_id") or "")
+            if (not ref_id or record_id == ref_id) and _scope_matches(record, expected_scope):
+                return dict(record.get("payload") or record)
+    legacy = dict(state.get(legacy_field) or {})
+    if legacy and _scope_matches(legacy, expected_scope):
+        return legacy
+    return {}
+
+
+def _validation_projection(
+    state: Dict[str, Any], expected_scope: Mapping[str, Any]
+) -> Dict[str, Any]:
+    value = _scoped_evidence_value(
+        state,
+        kind="validation",
+        legacy_field="validation_evidence",
+        expected_scope=expected_scope,
+    )
     if not value:
         return {
             "validation_id": "",
-            "status": "",
+            "status": "ABSENT_CURRENT_EVIDENCE",
             "deterministic_errors": [],
             "warnings": [],
             "returncode_check": {},
@@ -1081,8 +1144,24 @@ def _validation_projection(state: Dict[str, Any]) -> Dict[str, Any]:
     })
 
 
-def _completion_projection(state: Dict[str, Any]) -> Dict[str, Any]:
-    value = dict(state.get("completion_gate_result") or {})
+def _completion_projection(
+    state: Dict[str, Any], expected_scope: Mapping[str, Any]
+) -> Dict[str, Any]:
+    value = _scoped_evidence_value(
+        state,
+        kind="completion",
+        legacy_field="completion_gate_result",
+        expected_scope=expected_scope,
+    )
+    if not value:
+        return {
+            "passed": None,
+            "verdict": "",
+            "classification": "ABSENT_CURRENT_EVIDENCE",
+            "reason": "",
+            "missing_artifacts": [],
+            "reconciliation": {},
+        }
     return _sanitize({
         "passed": value.get("passed"),
         "verdict": value.get("verdict") or "",
@@ -1290,8 +1369,23 @@ def build_recovery_context(
         },
     }
     diagnosis = diagnose_execution_evidence(evidence)
-    validation = _validation_projection(state)
-    completion = _completion_projection(state)
+    expected_scope = {
+        "task_id": str(plan_state.get("task_id") or state.get("task_id") or ""),
+        "plan_id": str(plan_state.get("plan_id") or ""),
+        "plan_version": str(plan_state.get("plan_version") or ""),
+        "step_id": canonical_step.step_id,
+        "action_id": str(evidence.get("action_id") or ""),
+        "execution_attempt_id": str(
+            evidence.get("attempt_id") or evidence.get("execution_id") or ""
+        ),
+    }
+    scoped_state = {**plan_state, **state}
+    scoped_state["task_state"] = {
+        **dict(plan_state.get("task_state") or {}),
+        **dict(state.get("task_state") or {}),
+    }
+    validation = _validation_projection(scoped_state, expected_scope)
+    completion = _completion_projection(scoped_state, expected_scope)
     action_family = _attempt_family(execution)
     recent_attempts = _related_attempts(
         history,
