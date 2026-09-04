@@ -49,6 +49,8 @@ class PhaseInspectionServiceTests(unittest.TestCase):
             "summary": "annotation failed",
             "retryable": True,
             "evidence_refs": (self.record.archive_ref,),
+            "source": "step_worker_outcome",
+            "source_outcome_ref": "outcome:sha256:step-worker-failure",
         }
         values.update(overrides)
         return FailurePacket(**values)

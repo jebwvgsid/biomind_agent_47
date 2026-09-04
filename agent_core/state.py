@@ -224,6 +224,11 @@ class AgentState(TypedDict, total=False):
     generate_outcome: dict
     execute_outcome: dict
     recovery_fact: dict
+    # Schema-2 Recovery receives one producer-bound causal packet.  Historical
+    # outcome channels above are never source-selection authority.
+    failure_packet: dict
+    failure_source: dict
+    active_failure_packet_ref: str
     recovery_outcome: dict
     final_audit_outcome: dict
     triage_outcome: dict

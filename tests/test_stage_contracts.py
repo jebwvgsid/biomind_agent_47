@@ -189,6 +189,8 @@ def failure_packet(**updates):
         "summary": "The selected database was not available.",
         "retryable": True,
         "evidence_refs": ["evidence:failed-attempt"],
+        "source": "execute_outcome",
+        "source_outcome_ref": "outcome:sha256:failed-attempt",
         "plan_spec_ref": plan_ref(),
         "attempt_ref": "attempt:step-2:1",
         "action_ref": "action:step-2:1",
@@ -202,6 +204,7 @@ def failure_packet(**updates):
                 "confidence": 1.0,
             }
         ],
+        "inspection_refs": ["outcome:sha256:failed-attempt"],
     }
     value.update(updates)
     return value

@@ -10,13 +10,13 @@ from typing import Any, Callable, Mapping
 from agent_core.plan_contract import StateCASConflict
 from agent_core.plan_tracker import load_plan_state, save_plan_state
 from agent_core.workflow.outcomes import (
-    CommitStepOutcome,
-    ExecuteOutcome,
     RecoveryOutcome,
     VerificationOutcome,
     WORKFLOW_ROUTING_SCHEMA_TYPED,
     workflow_routing_schema_version,
 )
+from agent_core.workflow.recovery_projection import project_recovery_seed
+from agent_core.workflow.stage_contracts import StageContractError
 
 
 Loader = Callable[[str, str], dict[str, Any]]
@@ -33,13 +33,6 @@ def _hash(value: Any) -> str:
             default=str,
         ).encode("utf-8")
     ).hexdigest()[:24]
-
-
-def _outcome_value(state: Mapping[str, Any], field: str, contract: type) -> dict[str, Any]:
-    raw = state.get(field)
-    if not isinstance(raw, Mapping):
-        return {}
-    return contract.from_mapping(raw).to_dict()
 
 
 class TypedRecovery:
@@ -66,48 +59,11 @@ class TypedRecovery:
     def _result(outcome: RecoveryOutcome) -> dict[str, Any]:
         return {"recovery_outcome": outcome.to_dict()}
 
-    def _source(
-        self, state: Mapping[str, Any], durable: Mapping[str, Any]
-    ) -> tuple[str, dict[str, Any]]:
-        candidates: list[tuple[str, dict[str, Any]]] = []
-        fact = state.get("recovery_fact")
-        if isinstance(fact, Mapping) and fact:
-            candidates.append(("recovery_fact", dict(fact)))
-        commit = _outcome_value(state, "commit_step_outcome", CommitStepOutcome)
-        if commit and commit["type"] in {"commit_conflict", "contract_rejected"}:
-            candidates.append(("commit_step_outcome", commit))
-        verification = _outcome_value(state, "verification_outcome", VerificationOutcome)
-        if verification and verification["type"] not in {"verified", "verified_with_warnings"}:
-            candidates.append(("verification_outcome", verification))
-        execute = _outcome_value(state, "execute_outcome", ExecuteOutcome)
-        if execute and execute["type"] in {"execution_failed", "diagnostic_completed"}:
-            candidates.append(("execute_outcome", execute))
-        if not candidates:
-            return "", {}
-        receipts = dict((durable.get("task_state") or {}).get("typed_recovery_receipts") or {})
-        consumed = {
-            str(item.get("source_fingerprint") or "")
-            for item in receipts.values()
-            if isinstance(item, Mapping)
-        }
-        # A checkpoint retains old outcome fields. Prefer the first unconsumed
-        # semantic failure; if all are consumed, return the first candidate so
-        # exact duplicate replay can return its stored receipt.
-        return next(
-            (
-                candidate
-                for candidate in candidates
-                if _hash({"kind": candidate[0], "source": candidate[1]}) not in consumed
-            ),
-            candidates[0],
-        )
-
     async def run(self, state: Mapping[str, Any]) -> dict[str, Any]:
         task_id = str(state.get("task_id") or "")
         if not task_id:
             raise ValueError("TYPED_RECOVERY_TASK_ID_REQUIRED")
         durable = self.loader(self.data_path, task_id)
-        source_kind, source = self._source(state, durable)
         scope = {
             "task_id": task_id,
             "plan_id": str(durable.get("plan_id") or ""),
@@ -128,19 +84,46 @@ class TypedRecovery:
                 },
             ))
 
+        try:
+            projection = project_recovery_seed(state, durable)
+        except StageContractError as exc:
+            return self._result(RecoveryOutcome(
+                schema_version=1,
+                type="internal_protocol_error",
+                summary="Recovery rejected an invalid causal failure packet.",
+                scope=scope,
+                payload={
+                    "error_code": exc.code,
+                    "source_scope": scope,
+                    "identity_conflict": {"detail": exc.detail},
+                },
+            ))
+        source_kind = projection.source_kind if projection is not None else ""
+        source = projection.source if projection is not None else {}
+        failure_packet = (
+            projection.recovery_seed.failure_packet
+            if projection is not None
+            else None
+        )
+
         source_payload = dict(source.get("payload") or {}) if source_kind.endswith("outcome") else dict(source)
         source_scope = dict(source.get("scope") or {}) if source_kind.endswith("outcome") else {}
         for key in ("action_id", "attempt_id"):
             value = source_scope.get(key) or source_payload.get(key)
             if value:
                 scope[key] = str(value)
-        source_fingerprint = _hash({"kind": source_kind, "source": source})
+        source_fingerprint = (
+            projection.source_fingerprint
+            if projection is not None
+            else _hash({"kind": source_kind, "source": source})
+        )
         explicit_decision_id = str(source_payload.get("decision_id") or "").strip()
         decision_id = explicit_decision_id or f"typed-recovery-{source_fingerprint}"
         incident_id = str(source_payload.get("incident_id") or f"incident-{source_fingerprint}")
         failure_fingerprint = str(
             source_payload.get("failure_fingerprint")
             or source_payload.get("candidate_fingerprint")
+            or (failure_packet.failure_fingerprint if failure_packet else "")
             or source_fingerprint
         )
         task_state = dict(durable.get("task_state") or {})
@@ -173,7 +156,11 @@ class TypedRecovery:
             or source.get("summary")
             or "Runtime evidence requires a recovery decision."
         )
-        evidence_refs = tuple(str(item) for item in source.get("evidence_refs", ()) or () if str(item))
+        evidence_refs = tuple(
+            str(item)
+            for item in source.get("evidence_refs", ()) or ()
+            if str(item)
+        )
         outcome_type = "internal_protocol_error"
         payload: dict[str, Any]
 
@@ -185,7 +172,7 @@ class TypedRecovery:
             }
         elif not source_kind:
             payload = {
-                "error_code": "RECOVERY_SOURCE_FACT_REQUIRED",
+                "error_code": "RECOVERY_CAUSAL_PACKET_MISSING",
                 "source_scope": scope,
                 "identity_conflict": {},
             }
@@ -195,7 +182,9 @@ class TypedRecovery:
                     disposition = "candidate_repair"
                 elif source_kind == "execute_outcome" and source.get("type") == "diagnostic_completed":
                     disposition = "revalidation"
-                elif source_kind == "verification_outcome":
+                elif source_kind == "execute_outcome" and source.get("type") == "pre_execution_rejected":
+                    disposition = "candidate_repair"
+                elif source_kind in {"verification_outcome", "completion_gate_outcome"}:
                     if source.get("type") == "verification_error":
                         disposition = "internal_protocol"
                     elif source.get("type") == "diagnostic_evidence_recorded":
@@ -208,6 +197,8 @@ class TypedRecovery:
                     disposition = "plan_revision"
                 elif source_kind == "commit_step_outcome":
                     disposition = "internal_protocol"
+                elif source_kind == "install_subagent_outcome":
+                    disposition = "candidate_repair"
 
             ledger = dict(task_state.get("typed_recovery_budget") or {})
             consumed_before = int(ledger.get(incident_id) or 0)
@@ -235,7 +226,11 @@ class TypedRecovery:
                 outcome_type = "candidate_repair_required"
                 payload = {
                     "diagnosis": diagnosis,
-                    "failure_owner": str(source_payload.get("failure_owner") or "GENERATED_ACTION"),
+                    "failure_owner": str(
+                        source_payload.get("failure_owner")
+                        or (failure_packet.failure_owner if failure_packet else "")
+                        or "GENERATED_ACTION"
+                    ),
                     "strategy": str(source_payload.get("strategy") or "repair_candidate_from_persisted_failure"),
                     "repair_instruction": str(source_payload.get("repair_instruction") or "Generate a changed candidate that addresses the recorded failure."),
                     "source_scope": scope,
@@ -358,6 +353,22 @@ class TypedRecovery:
             "outcome": outcome.to_dict(),
         }
         candidate_task["typed_recovery_receipts"] = candidate_receipts
+        packet_ref = str(
+            state.get("active_failure_packet_ref")
+            or candidate_task.get("active_failure_packet_ref")
+            or ""
+        )
+        if packet_ref:
+            consumed_packets = dict(
+                candidate_task.get("consumed_failure_packet_refs") or {}
+            )
+            consumed_packets[packet_ref] = {
+                "decision_id": decision_id,
+                "source_fingerprint": source_fingerprint,
+            }
+            candidate_task["consumed_failure_packet_refs"] = consumed_packets
+            if str(candidate_task.get("active_failure_packet_ref") or "") == packet_ref:
+                candidate_task["active_failure_packet_ref"] = ""
         candidate["task_state"] = candidate_task
         try:
             self.saver(self.data_path, task_id, candidate)

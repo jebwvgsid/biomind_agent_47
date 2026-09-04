@@ -173,6 +173,10 @@ from agent_core.workflow.execution import (
     generate_harness_error,
 )
 from agent_core.workflow.recovery_runtime import TypedRecovery, recovery_harness_error
+from agent_core.workflow.recovery_projection import (
+    CausalFailurePacketBinder,
+    bind_causal_failure_node,
+)
 from agent_core.workflow.final_audit import TypedFinalAudit, final_audit_harness_error
 from agent_core.workflow.runtime_graph import (
     build_schema2_production_graph,
@@ -2422,6 +2426,9 @@ class BioAnalystAgent:
         )
         commit_step = CommitStep(data_path=self.data_path)
         typed_recovery = TypedRecovery(data_path=self.data_path)
+        causal_failure_binder = CausalFailurePacketBinder(
+            data_path=self.data_path
+        )
         typed_final_audit = TypedFinalAudit(
             data_path=self.data_path,
             auditor=self.supervisor_node.final_audit,
@@ -2480,6 +2487,18 @@ class BioAnalystAgent:
                 harness_error_factory=final_audit_harness_error,
             ),
         }
+        for node_name, outcome_field in (
+            ("execute", "execute_outcome"),
+            ("supervisor", "verification_outcome"),
+            ("commit_step", "commit_step_outcome"),
+        ):
+            self._schema2_runtime_node_handlers[node_name] = (
+                bind_causal_failure_node(
+                    self._schema2_runtime_node_handlers[node_name],
+                    binder=causal_failure_binder,
+                    outcome_field=outcome_field,
+                )
+            )
         self._schema2_runtime_graph = build_schema2_runtime_graph(
             self._schema2_runtime_node_handlers
         ).compile(checkpointer=MemorySaver())
@@ -2533,6 +2552,13 @@ class BioAnalystAgent:
             )
             for name, (adapter, field, contract) in early_specs.items()
         }
+        self._schema2_early_node_handlers["install_subagent"] = (
+            bind_causal_failure_node(
+                self._schema2_early_node_handlers["install_subagent"],
+                binder=causal_failure_binder,
+                outcome_field="install_subagent_outcome",
+            )
+        )
         self._schema2_node_handlers = {
             **self._schema2_runtime_node_handlers,
             **self._schema2_early_node_handlers,

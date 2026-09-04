@@ -849,23 +849,32 @@ class FailurePacket(ImmutableStageContract):
     summary: str
     retryable: bool
     evidence_refs: tuple[str, ...]
+    source: str
+    source_outcome_ref: str
     plan_spec_ref: PlanSpecRef | None = None
     attempt_ref: str = ""
     action_ref: str = ""
     failure_fingerprint: str = ""
     diagnostic_facts: tuple[Mapping[str, Any], ...] = ()
+    inspection_refs: tuple[str, ...] = ()
 
     REQUIRED: ClassVar[frozenset[str]] = frozenset({
         "schema_version", "failure_id", "task_id", "step_id", "failure_type",
         "failure_owner", "error_code", "summary", "retryable", "evidence_refs",
+        "source", "source_outcome_ref",
     })
     OPTIONAL: ClassVar[frozenset[str]] = frozenset({
-        "plan_spec_ref", "attempt_ref", "action_ref", "failure_fingerprint", "diagnostic_facts",
+        "plan_spec_ref", "attempt_ref", "action_ref", "failure_fingerprint",
+        "diagnostic_facts", "inspection_refs",
     })
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "schema_version", _validate_schema(self.schema_version, type(self).__name__))
-        for field in ("failure_id", "task_id", "step_id", "failure_type", "failure_owner", "error_code", "summary"):
+        for field in (
+            "failure_id", "task_id", "step_id", "failure_type",
+            "failure_owner", "error_code", "summary", "source",
+            "source_outcome_ref",
+        ):
             object.__setattr__(self, field, _required_text(getattr(self, field), f"FailurePacket.{field}"))
         if not isinstance(self.retryable, bool):
             raise StageContractError("STAGE_FIELD_INVALID", "FailurePacket.retryable must be boolean")
@@ -877,6 +886,7 @@ class FailurePacket(ImmutableStageContract):
         for field in ("attempt_ref", "action_ref", "failure_fingerprint"):
             object.__setattr__(self, field, _optional_text(getattr(self, field)))
         object.__setattr__(self, "diagnostic_facts", _mapping_rows(self.diagnostic_facts, "FailurePacket.diagnostic_facts", required=frozenset({"fact_id", "kind", "summary"}), allowed=_DIAGNOSTIC_FACT_FIELDS))
+        object.__setattr__(self, "inspection_refs", _text_tuple(self.inspection_refs, "FailurePacket.inspection_refs"))
         _json_round_trip(self.to_dict())
 
     @classmethod
@@ -886,10 +896,12 @@ class FailurePacket(ImmutableStageContract):
             schema_version=raw["schema_version"], failure_id=raw["failure_id"], task_id=raw["task_id"],
             step_id=raw["step_id"], failure_type=raw["failure_type"], failure_owner=raw["failure_owner"],
             error_code=raw["error_code"], summary=raw["summary"], retryable=raw["retryable"],
-            evidence_refs=tuple(raw["evidence_refs"]),
+            evidence_refs=tuple(raw["evidence_refs"]), source=raw["source"],
+            source_outcome_ref=raw["source_outcome_ref"],
             plan_spec_ref=(PlanSpecRef.from_mapping(raw["plan_spec_ref"]) if isinstance(raw.get("plan_spec_ref"), Mapping) else raw.get("plan_spec_ref")),
             attempt_ref=raw.get("attempt_ref", ""), action_ref=raw.get("action_ref", ""),
             failure_fingerprint=raw.get("failure_fingerprint", ""), diagnostic_facts=tuple(raw.get("diagnostic_facts") or ()),
+            inspection_refs=tuple(raw.get("inspection_refs") or ()),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -898,7 +910,8 @@ class FailurePacket(ImmutableStageContract):
             "task_id": self.task_id, "step_id": self.step_id, "failure_type": self.failure_type,
             "failure_owner": self.failure_owner, "error_code": self.error_code,
             "summary": self.summary, "retryable": self.retryable,
-            "evidence_refs": list(self.evidence_refs),
+            "evidence_refs": list(self.evidence_refs), "source": self.source,
+            "source_outcome_ref": self.source_outcome_ref,
         }
         if self.plan_spec_ref is not None:
             result["plan_spec_ref"] = self.plan_spec_ref.to_dict()
@@ -908,6 +921,8 @@ class FailurePacket(ImmutableStageContract):
                 result[field] = value
         if self.diagnostic_facts:
             result["diagnostic_facts"] = _thaw_json(self.diagnostic_facts)
+        if self.inspection_refs:
+            result["inspection_refs"] = list(self.inspection_refs)
         return result
 
 

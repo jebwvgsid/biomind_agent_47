@@ -9,17 +9,19 @@ from langgraph.graph import END
 
 import agent_core.workflow.final_audit as typed_final_audit_module
 import agent_core.workflow.recovery_runtime as typed_recovery_module
+from agent_core.plan_tracker import plan_record_hash, semantic_plan_hash
 from agent_core.state import AgentState
+from agent_core.task_spec import create_task_spec, task_record_hash, task_semantic_hash
 from agent_core.workflow.final_audit import TypedFinalAudit
 from agent_core.workflow.outcomes import (
     CommitStepOutcome,
     ExecuteOutcome,
-    FinalAuditOutcome,
     GenerateOutcome,
     RecoveryOutcome,
     VerificationOutcome,
 )
 from agent_core.workflow.recovery_runtime import TypedRecovery
+from agent_core.workflow.recovery_projection import build_causal_failure_record
 from agent_core.workflow.runtime_graph import (
     build_schema2_runtime_graph,
     route_final_audit_outcome,
@@ -67,8 +69,14 @@ def _execution(returncode: int = 0) -> dict:
     }
 
 
-def _execute_outcome(returncode: int = 0) -> dict:
+def _execute_outcome(
+    returncode: int = 0,
+    *,
+    failure_fingerprint: str = "failure-1",
+    incident_id: str = "",
+) -> dict:
     execution = _execution(returncode)
+    execution["failure_fingerprint"] = failure_fingerprint if returncode else ""
     return ExecuteOutcome(
         schema_version=1,
         type="execution_succeeded" if returncode == 0 else "execution_failed",
@@ -85,7 +93,9 @@ def _execute_outcome(returncode: int = 0) -> dict:
             "attempt_id": "attempt-1",
             "return_code": returncode,
             **({"validation": {"passed": True}} if returncode == 0 else {
-                "failure_fingerprint": "failure-1", "progress_snapshot": {}
+                "failure_fingerprint": failure_fingerprint,
+                "progress_snapshot": {},
+                **({"incident_id": incident_id} if incident_id else {}),
             }),
         },
         evidence_refs=("execution-1",),
@@ -136,6 +146,18 @@ def _commit() -> dict:
 
 def _durable(*, final: bool = False) -> dict:
     commit = _commit()
+    task_spec = create_task_spec(
+        "Execute the typed Recovery fixture.", task_id="task-typed"
+    )
+    steps = [{"step_id": "step-1", "status": "passed" if final else "running"}]
+    plan_spec = {
+        "plan_id": "plan-typed",
+        "plan_version": "plan-v2",
+        "plan_revision": 1,
+        "generated_from_task_revision": 1,
+        "base_task_semantic_hash": task_semantic_hash(task_spec),
+        "steps": copy.deepcopy(steps),
+    }
     state = {
         "schema_version": 10,
         "workflow_routing_schema_version": 2,
@@ -144,6 +166,20 @@ def _durable(*, final: bool = False) -> dict:
         "plan_version": "plan-v2",
         "state_generation": 8 if final else 4,
         "current_step_id": "" if final else "step-1",
+        "current_task": {
+            "task_spec": copy.deepcopy(task_spec),
+            "task_revision": 1,
+            "task_semantic_hash": task_semantic_hash(task_spec),
+            "task_record_hash": task_record_hash(task_spec),
+        },
+        "current_plan": {
+            "plan_spec": copy.deepcopy(plan_spec),
+            "plan_revision": 1,
+            "plan_semantic_hash": "sha256:" + semantic_plan_hash(plan_spec),
+            "plan_record_hash": plan_record_hash(plan_spec),
+            "base_task_revision": 1,
+            "base_task_semantic_hash": task_semantic_hash(task_spec),
+        },
         "task_state": {
             "status": "running",
             "workflow_routing_schema_version": 2,
@@ -155,7 +191,7 @@ def _durable(*, final: bool = False) -> dict:
                 }
             } if final else {}),
         },
-        "steps": [{"step_id": "step-1", "status": "passed" if final else "running"}],
+        "steps": steps,
         "provenance_state": {
             "attempts": {
                 "attempt-1": {
@@ -190,6 +226,26 @@ class _MemoryStore:
         self.value["state_generation"] = expected + 1
 
 
+def _bind_causal(
+    store: _MemoryStore, source_kind: str, source: dict
+) -> dict:
+    record = build_causal_failure_record(
+        source_kind, source, store.value, task_id="task-typed"
+    )
+    task_state = dict(store.value.get("task_state") or {})
+    packets = dict(task_state.get("causal_failure_packets") or {})
+    packets[record["packet_ref"]] = copy.deepcopy(record)
+    task_state["causal_failure_packets"] = packets
+    task_state["active_failure_packet_ref"] = record["packet_ref"]
+    store.value["task_state"] = task_state
+    return {
+        "task_id": "task-typed",
+        "active_failure_packet_ref": record["packet_ref"],
+        "failure_packet": copy.deepcopy(record["failure_packet"]),
+        "failure_source": copy.deepcopy(record["failure_source"]),
+    }
+
+
 class TypedRecoveryTests(unittest.IsolatedAsyncioTestCase):
     async def test_route_free_decision_is_consumed_once(self):
         store = _MemoryStore(_durable())
@@ -197,8 +253,7 @@ class TypedRecoveryTests(unittest.IsolatedAsyncioTestCase):
             data_path="/fixture", loader=store.load, saver=store.save
         )
         state = {
-            "task_id": "task-typed",
-            "execute_outcome": _execute_outcome(17),
+            **_bind_causal(store, "execute_outcome", _execute_outcome(17)),
             "next_step": "finish",
             "proposed_route": "finish",
             "effective_route": "finish",
@@ -259,16 +314,14 @@ class TypedRecoveryTests(unittest.IsolatedAsyncioTestCase):
         )
         outcomes = []
         for ordinal in (1, 2, 3):
-            outcomes.append(await recovery.run({
-                "task_id": "task-typed",
-                "recovery_fact": {
-                    "disposition": "candidate_repair",
-                    "decision_id": f"repair-{ordinal}",
-                    "incident_id": "incident-shared",
-                    "failure_fingerprint": "failure-shared",
-                    "diagnosis": f"candidate failure {ordinal}",
-                },
-            }))
+            source = _execute_outcome(
+                17,
+                failure_fingerprint=f"failure-shared-{ordinal}",
+                incident_id="incident-shared",
+            )
+            outcomes.append(await recovery.run(
+                _bind_causal(store, "execute_outcome", source)
+            ))
         self.assertEqual(
             [item["recovery_outcome"]["type"] for item in outcomes],
             ["candidate_repair_required", "candidate_repair_required", "blocked"],
@@ -291,11 +344,14 @@ class TypedRecoveryTests(unittest.IsolatedAsyncioTestCase):
                 "no_partial_mutation": True,
             },
         ).to_dict()
-        first = await recovery.run({
-            "task_id": "task-typed", "commit_step_outcome": conflict,
-        })
+        first = await recovery.run(
+            _bind_causal(store, "commit_step_outcome", conflict)
+        )
+        second_state = _bind_causal(
+            store, "execute_outcome", _execute_outcome(17)
+        )
         second = await recovery.run({
-            "task_id": "task-typed",
+            **second_state,
             "commit_step_outcome": conflict,
             "execute_outcome": _execute_outcome(17),
         })
