@@ -403,6 +403,12 @@ class RecoveryLocalToolDispatcher:
 
     def dispatch(self, tool: str, arguments: Mapping[str, Any] | None = None) -> dict[str, Any]:
         name = str(tool or "").strip().lower()
+        if name not in {
+            "failure.inspect", "step.inspect", "artifact.inspect", "artifact.read",
+            "skill.headings", "skill.read", "skill.search", "skill.resource",
+            "evidence.read", "evidence.glob",
+        }:
+            name = name.replace("_", ".")
         args = dict(arguments or {})
         handlers = {
             "failure.inspect": self._failure_inspect,
