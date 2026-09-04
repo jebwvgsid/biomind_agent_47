@@ -139,6 +139,44 @@ class RecoveryAgentLoopTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(model.requests[0], model.requests[1])
         self.assertEqual(result["audit"]["transport_attempt_count"], 2)
 
+    async def test_four_provider_calls_preserve_every_prior_prefix(self) -> None:
+        durable, seed = _seed_fixture()
+
+        class ThreeToolsThenDirective:
+            def __init__(self):
+                self.requests = []
+
+            async def ainvoke(self, messages):
+                self.requests.append([
+                    provider_visible_payload(item) for item in messages
+                ])
+                if len(self.requests) <= 3:
+                    ordinal = len(self.requests)
+                    return AIMessage(content="", tool_calls=[{
+                        "id": f"call-{ordinal}",
+                        "name": "failure_inspect",
+                        "args": {"ref_id": f"failure-ref-{ordinal}"},
+                        "type": "tool_call",
+                    }])
+                return AIMessage(content=_directive())
+
+        model = ThreeToolsThenDirective()
+        result = await RecoveryAgentLoop(
+            model=model,
+            dispatcher=_Dispatcher(),
+            config=RecoveryAgentLoopConfig(
+                max_consecutive_no_progress_rounds=4,
+            ),
+            bind_tools=False,
+        ).ainvoke(seed=seed, durable=durable)
+        self.assertFalse(result["terminal_error"])
+        self.assertEqual(len(model.requests), 4)
+        for previous, current in zip(model.requests, model.requests[1:]):
+            self.assertEqual(current[:len(previous)], previous)
+        self.assertEqual(
+            [len(request) for request in model.requests], [2, 4, 6, 8]
+        )
+
     async def test_exact_repeat_budget_stops_third_identical_request(self) -> None:
         durable, seed = _seed_fixture()
 

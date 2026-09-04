@@ -20,6 +20,10 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, System
 from langgraph.graph import END, START, StateGraph
 
 from agent_core.plan_tracker import canonical_task_spec_for_state
+from agent_core.workflow.recovery_context import (
+    RecoveryObservationStore,
+    build_recovery_checkpoint,
+)
 from agent_core.workflow.scoped_context import (
     AppendOnlyProviderMessages,
     FixedProviderMessage,
@@ -445,6 +449,7 @@ class _RecoveryLoopState(TypedDict, total=False):
     inspected_refs: list[str]
     no_progress_rounds: int
     observation_chars: int
+    observation_receipts: list[dict[str, Any]]
     soft_limit_reached: bool
     transport_attempt_count: int
 
@@ -563,9 +568,11 @@ class RecoveryAgentLoop:
         dispatcher: Any,
         config: RecoveryAgentLoopConfig | None = None,
         bind_tools: bool = True,
+        observation_store: RecoveryObservationStore | None = None,
     ) -> None:
         self.config = config or RecoveryAgentLoopConfig()
         self.dispatcher = dispatcher
+        self.observation_store = observation_store
         self.model = model
         if bind_tools and hasattr(model, "bind_tools"):
             self.model = model.bind_tools(recovery_tool_schemas())
@@ -597,7 +604,7 @@ class RecoveryAgentLoop:
                 }}
             wire = build_provider_messages(state)
             context_chars = _message_chars(wire)
-            if context_chars > config.local_context_hard_chars:
+            if context_chars >= config.local_context_hard_chars:
                 return {"terminal_error": {
                     "code": "RECOVERY_LOCAL_CONTEXT_HARD_LIMIT",
                     "detail": f"chars={context_chars}",
@@ -652,7 +659,13 @@ class RecoveryAgentLoop:
             inspected_refs = set(state.get("inspected_refs") or ())
             total = int(state.get("tool_call_count") or 0)
             observation_chars = int(state.get("observation_chars") or 0)
+            observation_receipts = [
+                deepcopy(dict(item))
+                for item in state.get("observation_receipts") or ()
+                if isinstance(item, Mapping)
+            ]
             no_progress = int(state.get("no_progress_rounds") or 0)
+            soft_limit_reached = bool(state.get("soft_limit_reached"))
             tool_messages: list[ToolMessage] = []
             terminal_error: dict[str, Any] = {}
             round_progress = False
@@ -704,6 +717,47 @@ class RecoveryAgentLoop:
                     seed=seed,
                 )
                 encoded = _canonical(envelope)
+                projected_context_chars = _message_chars(
+                    build_provider_messages(state)
+                ) + len(encoded)
+                should_externalize = bool(
+                    not error
+                    and self.observation_store is not None
+                    and (
+                        len(encoded) > config.single_observation_chars
+                        or observation_chars + len(encoded)
+                        > config.cumulative_observation_chars
+                        or projected_context_chars >= config.local_context_soft_chars
+                        or (
+                            soft_limit_reached
+                            and len(encoded) > min(
+                                config.single_observation_chars,
+                                4_096,
+                            )
+                        )
+                    )
+                )
+                if should_externalize:
+                    externalized = self.observation_store.externalize(
+                        seed=seed,
+                        request_id=str(call["id"]),
+                        tool=dotted_tool,
+                        source_ref=str(envelope.get("source_ref") or ""),
+                        result=result,
+                    )
+                    envelope = _observation_envelope(
+                        request_id=str(call["id"]),
+                        tool=dotted_tool,
+                        arguments=arguments,
+                        result=externalized,
+                        error={},
+                        seed=seed,
+                    )
+                    encoded = _canonical(envelope)
+                    soft_limit_reached = bool(
+                        soft_limit_reached
+                        or projected_context_chars >= config.local_context_soft_chars
+                    )
                 if len(encoded) > config.single_observation_chars:
                     envelope = _observation_envelope(
                         request_id=str(call["id"]),
@@ -732,6 +786,7 @@ class RecoveryAgentLoop:
                     )
                     encoded = _canonical(envelope)
                 observation_chars += len(encoded)
+                observation_receipts.append(deepcopy(envelope))
                 signature = hashlib.sha256(_canonical({
                     "source_ref": envelope["source_ref"],
                     "content_sha256": envelope["content_sha256"],
@@ -765,6 +820,8 @@ class RecoveryAgentLoop:
                 "inspected_refs": sorted(inspected_refs),
                 "tool_call_count": total,
                 "observation_chars": observation_chars,
+                "observation_receipts": observation_receipts,
+                "soft_limit_reached": soft_limit_reached,
                 "no_progress_rounds": no_progress,
             }
             if terminal_error:
@@ -798,10 +855,22 @@ class RecoveryAgentLoop:
         seed: RecoverySeed | Mapping[str, Any],
         durable: Mapping[str, Any],
         inspection_manifest: Sequence[Mapping[str, Any]] = (),
+        overflow_epoch: int = 0,
+        linked_previous_archive_ref: str = "",
     ) -> dict[str, Any]:
         """Run one fresh episode; no parent/global message history is accepted."""
 
         parsed = seed if isinstance(seed, RecoverySeed) else RecoverySeed.from_mapping(seed)
+        if (
+            isinstance(overflow_epoch, bool)
+            or not isinstance(overflow_epoch, int)
+            or overflow_epoch < 0
+            or overflow_epoch > self.config.max_overflow_epochs
+        ):
+            raise RecoveryAgentError(
+                "RECOVERY_OVERFLOW_EPOCH_LIMIT",
+                f"epoch={overflow_epoch} limit={self.config.max_overflow_epochs}",
+            )
         provider_seed = project_recovery_seed_for_provider(
             parsed,
             durable,
@@ -831,6 +900,7 @@ class RecoveryAgentLoop:
             "inspected_refs": [],
             "no_progress_rounds": 0,
             "observation_chars": 0,
+            "observation_receipts": [],
             "soft_limit_reached": False,
             "transport_attempt_count": 0,
         }
@@ -839,27 +909,46 @@ class RecoveryAgentLoop:
             config={"recursion_limit": self.config.max_llm_turns * 2 + 8},
         )
         local_messages = list(result.get("messages") or ())
+        audit = {
+            "schema_version": 1,
+            "prompt_version": RECOVERY_SYSTEM_PROMPT_VERSION,
+            "seed_digest": recovery_seed_digest(parsed),
+            "provider_seed_chars": recovery_seed_capacity(provider_seed)["chars"],
+            "turn_count": int(result.get("turn_count") or 0),
+            "tool_call_count": int(result.get("tool_call_count") or 0),
+            "observation_chars": int(result.get("observation_chars") or 0),
+            "no_progress_rounds": int(result.get("no_progress_rounds") or 0),
+            "soft_limit_reached": bool(result.get("soft_limit_reached")),
+            "transport_attempt_count": int(result.get("transport_attempt_count") or 0),
+            "inspected_refs": sorted({
+                str(item) for item in result.get("inspected_refs") or ()
+                if str(item)
+            }),
+            "provider_message_count": 2 + len(local_messages),
+            "append_only": True,
+            "overflow_epoch": overflow_epoch,
+            "max_overflow_epochs": self.config.max_overflow_epochs,
+        }
+        terminal_error = deepcopy(dict(result.get("terminal_error") or {}))
+        checkpoint: dict[str, Any] = {}
+        if str(terminal_error.get("code") or "") == "RECOVERY_LOCAL_CONTEXT_HARD_LIMIT":
+            checkpoint = build_recovery_checkpoint(
+                seed=parsed,
+                seed_digest=str(audit["seed_digest"]),
+                observation_receipts=list(result.get("observation_receipts") or ()),
+                audit=audit,
+                linked_previous_archive_ref=linked_previous_archive_ref,
+                overflow_epoch=overflow_epoch,
+            ).to_dict()
         return {
             "directive": deepcopy(dict(result.get("directive") or {})),
-            "terminal_error": deepcopy(dict(result.get("terminal_error") or {})),
-            "audit": {
-                "schema_version": 1,
-                "prompt_version": RECOVERY_SYSTEM_PROMPT_VERSION,
-                "seed_digest": recovery_seed_digest(parsed),
-                "provider_seed_chars": recovery_seed_capacity(provider_seed)["chars"],
-                "turn_count": int(result.get("turn_count") or 0),
-                "tool_call_count": int(result.get("tool_call_count") or 0),
-                "observation_chars": int(result.get("observation_chars") or 0),
-                "no_progress_rounds": int(result.get("no_progress_rounds") or 0),
-                "soft_limit_reached": bool(result.get("soft_limit_reached")),
-                "transport_attempt_count": int(result.get("transport_attempt_count") or 0),
-                "inspected_refs": sorted({
-                    str(item) for item in result.get("inspected_refs") or ()
-                    if str(item)
-                }),
-                "provider_message_count": 2 + len(local_messages),
-                "append_only": True,
-            },
+            "terminal_error": terminal_error,
+            "checkpoint": checkpoint,
+            "validator_feedback": [],
+            "audit": audit,
+            "_observation_receipts": deepcopy(
+                list(result.get("observation_receipts") or ())
+            ),
             # Ephemeral and consumed by the Recovery archive adapter before a
             # parent-state update.  It is never an allowed graph handoff field.
             "_provider_episode": [

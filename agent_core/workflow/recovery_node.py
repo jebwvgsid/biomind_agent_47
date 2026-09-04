@@ -14,6 +14,10 @@ from agent_core.workflow.recovery_agent import (
     RecoveryAgentLoop,
     RecoveryAgentLoopConfig,
 )
+from agent_core.workflow.recovery_context import (
+    RecoveryObservationStore,
+    archive_recovery_episode,
+)
 from agent_core.workflow.recovery_projection import project_recovery_seed
 from agent_core.workflow.recovery_runtime import RecoveryRuntime
 from agent_core.workflow.recovery_tools import (
@@ -59,7 +63,12 @@ class Schema2RecoveryNode:
 
     @staticmethod
     def _internal(
-        *, task_id: str, durable: Mapping[str, Any], code: str, detail: str = ""
+        *,
+        task_id: str,
+        durable: Mapping[str, Any],
+        code: str,
+        detail: str = "",
+        recovery_archive_ref: str = "",
     ) -> dict[str, Any]:
         scope = {
             "task_id": task_id,
@@ -76,7 +85,13 @@ class Schema2RecoveryNode:
             payload={
                 "error_code": str(code),
                 "source_scope": scope,
-                "identity_conflict": {"detail": str(detail)[:800]},
+                "identity_conflict": {
+                    "detail": str(detail)[:800],
+                    **(
+                        {"recovery_archive_ref": recovery_archive_ref}
+                        if recovery_archive_ref else {}
+                    ),
+                },
             },
         ).to_dict()}
 
@@ -109,6 +124,7 @@ class Schema2RecoveryNode:
                 model=self.model,
                 dispatcher=dispatcher,
                 config=self.loop_config,
+                observation_store=RecoveryObservationStore(self.phase_store),
             ).ainvoke(
                 seed=seed,
                 durable=durable,
@@ -126,6 +142,23 @@ class Schema2RecoveryNode:
                 detail=str(getattr(exc, "detail", None) or exc),
             )
 
+        try:
+            archive = archive_recovery_episode(
+                phase_store=self.phase_store,
+                seed=seed,
+                episode=episode,
+            )
+        except Exception as exc:
+            return self._internal(
+                task_id=task_id,
+                durable=durable,
+                code=str(
+                    getattr(exc, "code", None)
+                    or "RECOVERY_PHASE_ARCHIVE_FAILED"
+                ),
+                detail=str(getattr(exc, "detail", None) or exc),
+            )
+
         error = dict(episode.get("terminal_error") or {})
         directive = dict(episode.get("directive") or {})
         if error or not directive:
@@ -134,6 +167,7 @@ class Schema2RecoveryNode:
                 durable=durable,
                 code=str(error.get("code") or "RECOVERY_DIRECTIVE_MISSING"),
                 detail=str(error.get("detail") or ""),
+                recovery_archive_ref=archive.archive_ref,
             )
         admitted_state = {
             **deepcopy(dict(state)),
@@ -141,6 +175,7 @@ class Schema2RecoveryNode:
             "recovery_inspected_refs": list(
                 (episode.get("audit") or {}).get("inspected_refs") or ()
             ),
+            "recovery_archive_ref": archive.archive_ref,
         }
         # The provider episode stays local.  Only the semantic directive and
         # bounded inspected-ref receipt reach the deterministic runtime.

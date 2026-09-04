@@ -1,0 +1,298 @@
+"""Bounded Recovery observation storage, checkpoints, and phase archives.
+
+All projections in this module are deterministic and exclude hidden reasoning.
+Large tool results are stored behind immutable archive references; hard context
+limits produce a machine-readable checkpoint instead of an LLM summary.
+"""
+
+from __future__ import annotations
+
+from copy import deepcopy
+from dataclasses import dataclass
+import hashlib
+import json
+from typing import Any, Mapping, Sequence
+
+from agent_core.workflow.phase_archive import PhaseArchiveRecord, PhaseArchiveStore
+from agent_core.workflow.stage_contracts import RecoverySeed
+
+
+RECOVERY_CHECKPOINT_SCHEMA_VERSION = 1
+RECOVERY_OBSERVATION_EXCERPT_CHARS = 2_048
+
+
+def _canonical(value: Any) -> str:
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+        default=str,
+    )
+
+
+def _digest(value: Any) -> str:
+    return "sha256:" + hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
+
+
+def _unique_text(values: Sequence[Any]) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(str(value) for value in values if str(value)))
+
+
+@dataclass(frozen=True)
+class RecoveryCheckpoint:
+    """Deterministic hard-bound state; never a conversational summary."""
+
+    checkpoint_id: str
+    failure_id: str
+    seed_digest: str
+    inspected_refs: tuple[dict[str, str], ...]
+    accepted_machine_facts: tuple[dict[str, Any], ...]
+    unresolved_evidence: tuple[str, ...]
+    tool_cursors: tuple[dict[str, Any], ...]
+    budget_counters: dict[str, int]
+    linked_previous_archive_ref: str = ""
+    overflow_epoch: int = 0
+    schema_version: int = RECOVERY_CHECKPOINT_SCHEMA_VERSION
+
+    def to_dict(self) -> dict[str, Any]:
+        value: dict[str, Any] = {
+            "schema_version": self.schema_version,
+            "checkpoint_id": self.checkpoint_id,
+            "failure_id": self.failure_id,
+            "seed_digest": self.seed_digest,
+            "inspected_refs": [deepcopy(item) for item in self.inspected_refs],
+            "accepted_machine_facts": [
+                deepcopy(item) for item in self.accepted_machine_facts
+            ],
+            "unresolved_evidence": list(self.unresolved_evidence),
+            "tool_cursors": [deepcopy(item) for item in self.tool_cursors],
+            "budget_counters": deepcopy(self.budget_counters),
+            "overflow_epoch": self.overflow_epoch,
+        }
+        if self.linked_previous_archive_ref:
+            value["linked_previous_archive_ref"] = self.linked_previous_archive_ref
+        return value
+
+
+class RecoveryObservationStore:
+    """Externalize one complete tool result behind an immutable opaque ref."""
+
+    def __init__(
+        self,
+        phase_store: PhaseArchiveStore,
+        *,
+        excerpt_chars: int = RECOVERY_OBSERVATION_EXCERPT_CHARS,
+    ) -> None:
+        self.phase_store = phase_store
+        self.excerpt_chars = max(0, int(excerpt_chars))
+
+    def externalize(
+        self,
+        *,
+        seed: RecoverySeed,
+        request_id: str,
+        tool: str,
+        source_ref: str,
+        result: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        payload = deepcopy(dict(result))
+        payload_digest = _digest(payload)
+        invocation_id = (
+            f"{seed.seed_id}:observation:{request_id}:"
+            f"{payload_digest.removeprefix('sha256:')[:24]}"
+        )
+        record = self.phase_store.archive(
+            task_id=seed.failure_packet.task_id,
+            phase="recovery-observation",
+            invocation_id=invocation_id,
+            summary={
+                "schema_version": 1,
+                "tool": tool,
+                "source_ref": source_ref,
+                "content_sha256": payload_digest,
+                "result": payload,
+            },
+            metadata={
+                "seed_id": seed.seed_id,
+                "failure_id": seed.failure_packet.failure_id,
+                "request_id": request_id,
+                "step_id": seed.failure_packet.step_id,
+            },
+        )
+        serialized = _canonical(payload)
+        return {
+            "status": "EXTERNALIZED",
+            "observation_ref": record.archive_ref,
+            "content_sha256": payload_digest,
+            "observed_chars": len(serialized),
+            "bounded_excerpt": serialized[: self.excerpt_chars],
+        }
+
+
+def build_recovery_checkpoint(
+    *,
+    seed: RecoverySeed,
+    seed_digest: str,
+    observation_receipts: Sequence[Mapping[str, Any]],
+    audit: Mapping[str, Any],
+    linked_previous_archive_ref: str = "",
+    overflow_epoch: int = 0,
+) -> RecoveryCheckpoint:
+    inspected: list[dict[str, str]] = []
+    facts: list[dict[str, Any]] = []
+    unresolved: list[str] = []
+    cursors: list[dict[str, Any]] = []
+    for raw in observation_receipts:
+        item = dict(raw)
+        source_ref = str(item.get("source_ref") or "")
+        result = dict(item.get("result") or {})
+        content_hash = str(
+            result.get("content_sha256") or item.get("content_sha256") or ""
+        )
+        if source_ref:
+            inspected.append({"ref": source_ref, "content_sha256": content_hash})
+        fact = {
+            key: deepcopy(value)
+            for key, value in {
+                "request_id": item.get("request_id"),
+                "tool": item.get("tool"),
+                "source_ref": source_ref,
+                "status": result.get("status"),
+                "returncode": result.get("returncode"),
+                "exit_code": result.get("exit_code"),
+                "content_sha256": content_hash,
+            }.items()
+            if value not in (None, "", [], {})
+        }
+        if fact:
+            facts.append(fact)
+        cursor = item.get("cursor")
+        if isinstance(cursor, Mapping) and cursor:
+            cursors.append({
+                "request_id": str(item.get("request_id") or ""),
+                "tool": str(item.get("tool") or ""),
+                "cursor": deepcopy(dict(cursor)),
+            })
+        status = str(result.get("status") or "").upper()
+        error = dict(item.get("error") or {})
+        if error:
+            unresolved.append(
+                f"{str(item.get('request_id') or '')}:{str(error.get('code') or 'TOOL_ERROR')}"
+            )
+        elif status in {
+            "REQUIRES_NARROWING",
+            "RECOVERY_OBSERVATION_BUDGET_EXCEEDED",
+        }:
+            unresolved.append(f"{str(item.get('request_id') or '')}:{status}")
+
+    counters = {
+        key: int(audit.get(key) or 0)
+        for key in (
+            "turn_count",
+            "tool_call_count",
+            "observation_chars",
+            "no_progress_rounds",
+            "transport_attempt_count",
+        )
+    }
+    identity = {
+        "failure_id": seed.failure_packet.failure_id,
+        "seed_digest": seed_digest,
+        "inspected_refs": inspected,
+        "accepted_machine_facts": facts,
+        "unresolved_evidence": unresolved,
+        "tool_cursors": cursors,
+        "budget_counters": counters,
+        "linked_previous_archive_ref": linked_previous_archive_ref,
+        "overflow_epoch": int(overflow_epoch),
+    }
+    return RecoveryCheckpoint(
+        checkpoint_id=(
+            "recovery-checkpoint-" + _digest(identity).removeprefix("sha256:")[:24]
+        ),
+        failure_id=seed.failure_packet.failure_id,
+        seed_digest=seed_digest,
+        inspected_refs=tuple(inspected),
+        accepted_machine_facts=tuple(facts),
+        unresolved_evidence=_unique_text(unresolved),
+        tool_cursors=tuple(cursors),
+        budget_counters=counters,
+        linked_previous_archive_ref=str(linked_previous_archive_ref or ""),
+        overflow_epoch=int(overflow_epoch),
+    )
+
+
+def archive_recovery_episode(
+    *,
+    phase_store: PhaseArchiveStore,
+    seed: RecoverySeed,
+    episode: Mapping[str, Any],
+    overflow_epoch: int = 0,
+    linked_previous_archive_ref: str = "",
+) -> PhaseArchiveRecord:
+    """Persist exactly the provider-visible episode plus bounded audit facts."""
+
+    directive = deepcopy(dict(episode.get("directive") or {}))
+    terminal_error = deepcopy(dict(episode.get("terminal_error") or {}))
+    checkpoint = deepcopy(dict(episode.get("checkpoint") or {}))
+    transcript = deepcopy(list(episode.get("_provider_episode") or ()))
+    audit = deepcopy(dict(episode.get("audit") or {}))
+    episode_digest = _digest({
+        "seed_id": seed.seed_id,
+        "transcript": transcript,
+        "directive": directive,
+        "terminal_error": terminal_error,
+        "checkpoint": checkpoint,
+        "overflow_epoch": int(overflow_epoch),
+        "linked_previous_archive_ref": str(linked_previous_archive_ref or ""),
+    })
+    invocation_id = (
+        f"{seed.seed_id}:epoch:{int(overflow_epoch)}:"
+        f"{episode_digest.removeprefix('sha256:')[:24]}"
+    )
+    evidence = [
+        {"ref": str(ref)}
+        for ref in audit.get("inspected_refs") or ()
+        if str(ref)
+    ]
+    terminal_state = "directive_ready" if directive and not terminal_error else "failed_closed"
+    return phase_store.archive(
+        task_id=seed.failure_packet.task_id,
+        phase="recovery",
+        invocation_id=invocation_id,
+        summary={
+            "schema_version": 1,
+            "terminal_state": terminal_state,
+            "failure_id": seed.failure_packet.failure_id,
+            "final_recovery_directive": directive,
+            "terminal_error": terminal_error,
+            "recovery_checkpoint": checkpoint,
+            "validator_feedback": deepcopy(list(episode.get("validator_feedback") or ())),
+        },
+        evidence=evidence,
+        transcript=transcript,
+        metadata={
+            "prompt_version": str(audit.get("prompt_version") or ""),
+            "prompt_ref": str(audit.get("prompt_version") or ""),
+            "frozen_seed_digest": str(audit.get("seed_digest") or ""),
+            "seed_id": seed.seed_id,
+            "step_id": seed.failure_packet.step_id,
+            "provider_message_count": int(audit.get("provider_message_count") or 0),
+            "append_only": bool(audit.get("append_only")),
+            "overflow_epoch": int(overflow_epoch),
+            "linked_previous_archive_ref": str(linked_previous_archive_ref or ""),
+            "hidden_reasoning_excluded": True,
+        },
+    )
+
+
+__all__ = [
+    "RECOVERY_CHECKPOINT_SCHEMA_VERSION",
+    "RECOVERY_OBSERVATION_EXCERPT_CHARS",
+    "RecoveryCheckpoint",
+    "RecoveryObservationStore",
+    "archive_recovery_episode",
+    "build_recovery_checkpoint",
+]
