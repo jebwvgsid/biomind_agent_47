@@ -107,6 +107,8 @@ class _FailureReference:
 
 def _failure_references(packet: FailurePacket) -> tuple[_FailureReference, ...]:
     references: list[_FailureReference] = []
+    for index, value in enumerate(packet.inspection_refs):
+        references.append(_FailureReference(value, f"inspection_refs[{index}]"))
     for index, value in enumerate(packet.evidence_refs):
         references.append(_FailureReference(value, f"evidence_refs[{index}]"))
     if packet.attempt_ref:
