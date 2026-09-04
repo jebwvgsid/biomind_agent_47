@@ -860,6 +860,7 @@ def build_causal_failure_record(
     durable: Mapping[str, Any],
     *,
     task_id: str = "",
+    inspection_refs: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     """Build the immutable record owned by one failing producer adapter."""
 
@@ -935,7 +936,7 @@ def build_causal_failure_record(
         action_ref=action_ref,
         failure_fingerprint=fingerprint,
         diagnostic_facts=_diagnostic_facts(source_kind, raw_source),
-        inspection_refs=(source_outcome_ref,),
+        inspection_refs=_unique_text(source_outcome_ref, inspection_refs),
     )
     packet_wire = packet.to_dict()
     packet_ref = _content_ref("failure-packet", packet_wire)
@@ -984,8 +985,18 @@ class CausalFailurePacketBinder:
         if not task_id:
             raise StageContractError("STAGE_FIELD_REQUIRED", "Recovery task_id")
         durable = self.loader(self.data_path, task_id)
+        step_worker = state.get("step_worker_outcome")
+        step_archive_ref = (
+            str(step_worker.get("archive_ref") or "")
+            if isinstance(step_worker, Mapping)
+            else ""
+        )
         record = build_causal_failure_record(
-            source_kind, source, durable, task_id=task_id
+            source_kind,
+            source,
+            durable,
+            task_id=task_id,
+            inspection_refs=((step_archive_ref,) if step_archive_ref else ()),
         )
         packet_ref = str(record["packet_ref"])
         task_state = dict(durable.get("task_state") or {})

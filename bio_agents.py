@@ -127,6 +127,7 @@ from agent_core.workflow.step_worker import (
     StepOutcome,
     StepWorkerBackend,
     StepWorkerContractError,
+    archive_step_worker_attempt,
     build_step_request,
     fail_closed_step_outcome,
     get_step_worker_backend,
@@ -178,6 +179,7 @@ from agent_core.workflow.recovery_projection import (
     bind_causal_failure_node,
 )
 from agent_core.workflow.final_audit import TypedFinalAudit, final_audit_harness_error
+from agent_core.workflow.phase_archive import PhaseArchiveStore
 from agent_core.workflow.runtime_graph import (
     build_schema2_production_graph,
     build_schema2_runtime_graph,
@@ -2416,6 +2418,7 @@ class BioAnalystAgent:
 
         # ── 图 ────────────────────────────────────────────────
         self.checkpointer = MemorySaver()
+        self.phase_archive_store = PhaseArchiveStore(self.data_path)
         self.app = self._build_graph()
         # CTRL-02 builds an integration-testable schema-2 runtime segment while
         # the production entry graph remains sticky schema 1 until CTRL-03
@@ -43158,6 +43161,34 @@ question. Never guess a scientific or database identity.
                 # Route-neutral transport facts only.  This projection is not
                 # consumed by the typed conditional edge below.
                 route_audit["worker_transport"] = deepcopy(dict(transport_audit))
+            local_events: List[Any] = []
+            for attribute in ("last_events", "last_transcript"):
+                observed = getattr(self.step_worker_backend, attribute, None)
+                if isinstance(observed, (list, tuple)):
+                    local_events.extend(deepcopy(list(observed)))
+            try:
+                outcome = archive_step_worker_attempt(
+                    self.phase_archive_store,
+                    task_id=task_id,
+                    request=request_payload,
+                    outcome=outcome,
+                    attempt_ordinal=attempt_ordinal,
+                    backend=self.step_worker_backend_name,
+                    graph_scope={
+                        "task_id": state.get("task_id"),
+                        "plan_id": state.get("plan_id"),
+                        "plan_version": state.get("plan_version"),
+                        "current_step_id": state.get("current_step_id"),
+                    },
+                    local_events=local_events,
+                )
+            except StepWorkerContractError as exc:
+                outcome = fail_closed_step_outcome(exc)
+            except Exception as exc:
+                outcome = fail_closed_step_outcome(StepWorkerContractError(
+                    "STEP_WORKER_ARCHIVE_WRITE_FAILED",
+                    f"{type(exc).__name__}: {str(exc)[:800]}",
+                ))
             return {
                 "step_worker_request": request_payload,
                 "step_worker_outcome": outcome.to_dict(),

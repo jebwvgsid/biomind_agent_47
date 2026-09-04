@@ -372,6 +372,32 @@ class RecoveryProjectionTests(unittest.TestCase):
         assert commit is not None
         self.assertEqual(commit.failure_packet.error_code, "COMMIT_CONFLICT")
 
+    def test_completion_failure_packet_carries_step_archive_inspection_ref(self) -> None:
+        store = _MemoryStore(_durable())
+        archive_ref = "phase-archive:sha256:" + "c" * 64
+        update = CausalFailurePacketBinder(
+            data_path="/fixture", loader=store.load, saver=store.save
+        ).bind(
+            {
+                "task_id": "task-recovery",
+                "step_worker_outcome": {
+                    "schema_version": 1,
+                    "type": "completion_claimed",
+                    "summary": "worker claims completion",
+                    "evidence_refs": [],
+                    "artifact_refs": [],
+                    "binding_refs": [],
+                    "effect_refs": [],
+                    "blocker": None,
+                    "worker_session_ref": "worker-session:fixture",
+                    "archive_ref": archive_ref,
+                },
+            },
+            "completion_gate_outcome",
+            _verification_rejected(),
+        )
+        self.assertIn(archive_ref, update["failure_packet"]["inspection_refs"])
+
     def test_pre_execution_rejection_has_unambiguous_identity(self) -> None:
         outcome = ExecuteOutcome(
             schema_version=1,

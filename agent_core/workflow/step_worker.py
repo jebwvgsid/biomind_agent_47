@@ -7,17 +7,19 @@ contracts.  Node selection is a BioMind-owned mapping performed only by
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from types import MappingProxyType
 from typing import Any, Literal, Mapping, Protocol, Sequence, cast
 
 from agent_core.managed_artifacts import build_approved_visible_artifact_set
 from agent_core.plan_bindings import project_accepted_plan_bindings
 from agent_core.plan_tracker import canonical_task_spec_for_state
+from agent_core.workflow.phase_archive import PhaseArchiveStore
 
 
 STEP_REQUEST_SCHEMA_VERSION = 1
@@ -185,6 +187,7 @@ class StepOutcome:
     binding_refs: tuple[str, ...] = ()
     blocker: Mapping[str, Any] | None = None
     worker_session_ref: str | None = None
+    archive_ref: str | None = None
 
     def __post_init__(self) -> None:
         if int(self.schema_version) != STEP_OUTCOME_SCHEMA_VERSION:
@@ -223,6 +226,20 @@ class StepOutcome:
         object.__setattr__(self, "blocker", blocker)
         session_ref = str(self.worker_session_ref or "").strip() or None
         object.__setattr__(self, "worker_session_ref", session_ref)
+        archive_ref = str(self.archive_ref or "").strip() or None
+        if archive_ref is not None and not archive_ref.startswith(
+            "phase-archive:sha256:"
+        ):
+            raise StepWorkerContractError(
+                "STEP_WORKER_OUTCOME_PROTOCOL_ERROR",
+                "archive_ref must be an immutable phase archive reference",
+            )
+        if archive_ref is not None and archive_ref == session_ref:
+            raise StepWorkerContractError(
+                "STEP_WORKER_OUTCOME_PROTOCOL_ERROR",
+                "worker_session_ref and archive_ref must remain distinct",
+            )
+        object.__setattr__(self, "archive_ref", archive_ref)
         json.dumps(self.to_dict(), ensure_ascii=False, sort_keys=True, allow_nan=False)
 
     @classmethod
@@ -236,6 +253,7 @@ class StepOutcome:
             "binding_refs",
             "blocker",
             "worker_session_ref",
+            "archive_ref",
         }
         required = {"schema_version", "type", "summary"}
         missing = sorted(required - set(value))
@@ -265,6 +283,7 @@ class StepOutcome:
             binding_refs=tuple(value.get("binding_refs") or ()),
             blocker=blocker,
             worker_session_ref=value.get("worker_session_ref"),
+            archive_ref=value.get("archive_ref"),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -277,7 +296,18 @@ class StepOutcome:
             "binding_refs": list(self.binding_refs),
             "blocker": _thaw_json(self.blocker) if self.blocker is not None else None,
             "worker_session_ref": self.worker_session_ref,
+            "archive_ref": self.archive_ref,
         }
+
+    def with_archive_ref(self, archive_ref: str) -> "StepOutcome":
+        """Return a new outcome bound to a boundary-owned immutable archive."""
+
+        if self.archive_ref:
+            raise StepWorkerContractError(
+                "STEP_WORKER_ARCHIVE_AUTHORITY_VIOLATION",
+                "backend outcomes cannot pre-bind archive_ref",
+            )
+        return replace(self, archive_ref=str(archive_ref or ""))
 
 
 class StepWorkerBackend(Protocol):
@@ -556,6 +586,101 @@ def fail_closed_step_outcome(error: StepWorkerContractError) -> StepOutcome:
         summary=error.code,
         blocker={"code": error.code, "detail": error.detail},
     )
+
+
+def archive_step_worker_attempt(
+    store: PhaseArchiveStore,
+    *,
+    task_id: str,
+    request: Mapping[str, Any],
+    outcome: StepOutcome,
+    attempt_ordinal: int,
+    backend: str,
+    graph_scope: Mapping[str, Any] | None = None,
+    local_events: Sequence[Any] = (),
+) -> StepOutcome:
+    """Archive one complete private attempt and bind only its ref to outcome."""
+
+    if not isinstance(outcome, StepOutcome):
+        raise StepWorkerContractError(
+            "STEP_WORKER_OUTCOME_PROTOCOL_ERROR",
+            "archive boundary requires a validated StepOutcome",
+        )
+    if outcome.archive_ref:
+        raise StepWorkerContractError(
+            "STEP_WORKER_ARCHIVE_AUTHORITY_VIOLATION",
+            "backend attempted to supply archive_ref",
+        )
+    scope = dict(graph_scope or {})
+    step_id = _required_text(
+        request.get("step_id") or scope.get("current_step_id"),
+        "step_id",
+        code="STEP_WORKER_ARCHIVE_SCOPE_INVALID",
+    )
+    plan_id = _required_text(
+        request.get("plan_id") or scope.get("plan_id"),
+        "plan_id",
+        code="STEP_WORKER_ARCHIVE_SCOPE_INVALID",
+    )
+    plan_version = _required_text(
+        request.get("plan_version") or scope.get("plan_version"),
+        "plan_version",
+        code="STEP_WORKER_ARCHIVE_SCOPE_INVALID",
+    )
+    task_id = _required_text(
+        task_id or request.get("task_id") or scope.get("task_id"),
+        "task_id",
+        code="STEP_WORKER_ARCHIVE_SCOPE_INVALID",
+    )
+    transcript = [
+        {"type": "step_request", "payload": deepcopy(dict(request))},
+        *deepcopy(list(local_events)),
+        {"type": "step_outcome", "payload": outcome.to_dict()},
+    ]
+    invocation_evidence = (
+        outcome.worker_session_ref
+        or hashlib.sha256(
+            json.dumps(
+                {
+                    "outcome": outcome.to_dict(),
+                    "local_events": list(local_events),
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+                default=str,
+            ).encode("utf-8")
+        ).hexdigest()
+    )
+    invocation_suffix = hashlib.sha256(
+        str(invocation_evidence).encode("utf-8")
+    ).hexdigest()[:16]
+    record = store.archive(
+        task_id=task_id,
+        phase="step_worker",
+        invocation_id=(
+            f"{plan_id}:{plan_version}:{step_id}:attempt-{int(attempt_ordinal)}:"
+            f"{invocation_suffix}"
+        ),
+        summary={
+            "type": outcome.type,
+            "summary": outcome.summary,
+            "step_id": step_id,
+            "attempt_ordinal": int(attempt_ordinal),
+            "worker_session_ref": outcome.worker_session_ref,
+        },
+        artifacts=list(outcome.artifact_refs),
+        evidence=list(outcome.evidence_refs),
+        transcript=transcript,
+        metadata={
+            "plan_id": plan_id,
+            "plan_version": plan_version,
+            "step_id": step_id,
+            "backend": str(backend or "unknown"),
+            "worker_session_ref": outcome.worker_session_ref,
+        },
+    )
+    return outcome.with_archive_ref(record.archive_ref)
 
 
 def route_step_worker_outcome(state: Mapping[str, Any]) -> str:
