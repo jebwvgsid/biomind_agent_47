@@ -246,6 +246,29 @@ def _bind_causal(
     }
 
 
+def _recovery_directive(
+    action: str,
+    *,
+    directive_id: str,
+    summary: str = "The causal failure requires a semantic correction.",
+    evidence_refs=(),
+) -> dict:
+    value = {
+        "schema_version": 1,
+        "directive_id": directive_id,
+        "task_id": "task-typed",
+        "action": action,
+        "summary": summary,
+        "reason_code": "CAUSAL_FAILURE_DIAGNOSED",
+        "evidence_refs": list(evidence_refs),
+    }
+    if action in {"retry_step", "revalidate"}:
+        value["target_step_id"] = "step-1"
+    if action in {"retry_step", "revise_plan", "reconsult"}:
+        value["instruction"] = "Correct only the failed semantic scope."
+    return value
+
+
 class TypedRecoveryTests(unittest.IsolatedAsyncioTestCase):
     async def test_route_free_decision_is_consumed_once(self):
         store = _MemoryStore(_durable())
@@ -254,6 +277,11 @@ class TypedRecoveryTests(unittest.IsolatedAsyncioTestCase):
         )
         state = {
             **_bind_causal(store, "execute_outcome", _execute_outcome(17)),
+            "recovery_directive": _recovery_directive(
+                "retry_step",
+                directive_id="directive-route-free",
+                evidence_refs=("execution-1",),
+            ),
             "next_step": "finish",
             "proposed_route": "finish",
             "effective_route": "finish",
@@ -320,7 +348,15 @@ class TypedRecoveryTests(unittest.IsolatedAsyncioTestCase):
                 incident_id="incident-shared",
             )
             outcomes.append(await recovery.run(
-                _bind_causal(store, "execute_outcome", source)
+                {
+                    **_bind_causal(store, "execute_outcome", source),
+                    "recovery_directive": _recovery_directive(
+                        "retry_step",
+                        directive_id=f"directive-budget-{ordinal}",
+                        summary=f"Changed diagnosis {ordinal}.",
+                        evidence_refs=("execution-1",),
+                    ),
+                }
             ))
         self.assertEqual(
             [item["recovery_outcome"]["type"] for item in outcomes],
@@ -344,14 +380,22 @@ class TypedRecoveryTests(unittest.IsolatedAsyncioTestCase):
                 "no_partial_mutation": True,
             },
         ).to_dict()
-        first = await recovery.run(
-            _bind_causal(store, "commit_step_outcome", conflict)
-        )
+        first = await recovery.run({
+            **_bind_causal(store, "commit_step_outcome", conflict),
+            "recovery_directive": _recovery_directive(
+                "revise_plan", directive_id="directive-conflict"
+            ),
+        })
         second_state = _bind_causal(
             store, "execute_outcome", _execute_outcome(17)
         )
         second = await recovery.run({
             **second_state,
+            "recovery_directive": _recovery_directive(
+                "retry_step",
+                directive_id="directive-execute",
+                evidence_refs=("execution-1",),
+            ),
             "commit_step_outcome": conflict,
             "execute_outcome": _execute_outcome(17),
         })

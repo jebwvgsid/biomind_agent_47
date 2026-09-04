@@ -443,10 +443,41 @@ class RecoveryProjectionTests(unittest.TestCase):
 
 
 class RecoveryRuntimeProjectionIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    @staticmethod
+    def _directive(
+        action: str,
+        *,
+        directive_id: str = "directive-1",
+        evidence_refs: tuple[str, ...] = (),
+    ) -> dict:
+        value = {
+            "schema_version": 1,
+            "directive_id": directive_id,
+            "task_id": "task-recovery",
+            "action": action,
+            "summary": "The causal failure requires a bounded semantic correction.",
+            "reason_code": "CAUSAL_FAILURE_DIAGNOSED",
+            "evidence_refs": list(evidence_refs),
+        }
+        if action in {"retry_step", "revalidate"}:
+            value["target_step_id"] = "step-1"
+        if action in {"retry_step", "revise_plan", "reconsult"}:
+            value["instruction"] = "Correct only the failed semantic scope."
+        return value
+
     async def _run(
         self, source_kind: str, source: dict
     ) -> tuple[dict, _MemoryStore, dict]:
         state, durable, _ = _causal_fixture(source_kind, source)
+        action = (
+            "revise_plan"
+            if source_kind in {"completion_gate_outcome", "commit_step_outcome"}
+            else "retry_step"
+        )
+        state["recovery_directive"] = self._directive(
+            action,
+            evidence_refs=tuple(source.get("evidence_refs") or ()),
+        )
         store = _MemoryStore(durable)
         result = await TypedRecovery(
             data_path="/fixture", loader=store.load, saver=store.save
@@ -472,10 +503,7 @@ class RecoveryRuntimeProjectionIntegrationTests(unittest.IsolatedAsyncioTestCase
         )
         self.assertEqual(
             result["recovery_outcome"]["payload"]["contract_violations"],
-            [{
-                "code": "PLAN_OUTPUT_MISSING",
-                "message": "Output required by the plan is absent.",
-            }],
+            ["Correct only the failed semantic scope."],
         )
 
     async def test_commit_requests_plan_revision(self) -> None:
@@ -494,7 +522,12 @@ class RecoveryRuntimeProjectionIntegrationTests(unittest.IsolatedAsyncioTestCase
         recovery = TypedRecovery(
             data_path="/fixture", loader=store.load, saver=store.save
         )
-        resumed = await recovery.run({"task_id": "task-recovery"})
+        directive = self._directive("retry_step", evidence_refs=("execution-1",))
+        resumed = await recovery.run({
+            "task_id": "task-recovery",
+            "recovery_directive": directive,
+        })
+        state["recovery_directive"] = directive
         replayed = await recovery.run(state)
         self.assertEqual(resumed, replayed)
         self.assertEqual(

@@ -1,4 +1,11 @@
-"""Route-free Recovery decision boundary for routing schema 2."""
+"""Deterministic admission runtime for route-blind Recovery directives.
+
+The model-facing RecoveryAgent owns diagnosis and emits one strict
+``RecoveryDirective``.  This module never infers a disposition from failure
+text.  It validates the directive against the causal packet, preserves the
+existing budget/CAS/idempotency boundary, and maps the semantic action into a
+typed ``RecoveryOutcome`` for the graph's fixed conditional edges.
+"""
 
 from __future__ import annotations
 
@@ -11,36 +18,45 @@ from agent_core.plan_contract import StateCASConflict
 from agent_core.plan_tracker import load_plan_state, save_plan_state
 from agent_core.workflow.outcomes import (
     RecoveryOutcome,
-    VerificationOutcome,
     WORKFLOW_ROUTING_SCHEMA_TYPED,
     workflow_routing_schema_version,
 )
 from agent_core.workflow.recovery_projection import project_recovery_seed
-from agent_core.workflow.stage_contracts import StageContractError
+from agent_core.workflow.stage_contracts import (
+    RecoveryDirective,
+    StageContractError,
+)
 
 
 Loader = Callable[[str, str], dict[str, Any]]
 Saver = Callable[[str, str, dict[str, Any]], Any]
 
 
+def _canonical(value: Any) -> str:
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+        default=str,
+    )
+
+
 def _hash(value: Any) -> str:
-    return hashlib.sha256(
-        json.dumps(
-            value,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-            default=str,
-        ).encode("utf-8")
-    ).hexdigest()[:24]
+    return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()[:24]
 
 
-class TypedRecovery:
-    """Consume one semantic failure and persist one route-blind receipt.
+def _full_hash(value: Any) -> str:
+    return "sha256:" + hashlib.sha256(
+        _canonical(value).encode("utf-8")
+    ).hexdigest()
 
-    The durable receipt is the exactly-once boundary.  No legacy
-    ``RecoveryDecision`` or Controller route projection is read or written.
-    """
+
+class RecoveryRuntime:
+    """Admit one semantic directive and persist one route-blind receipt."""
+
+    BUDGETED_ACTIONS = frozenset({"retry_step", "revise_plan"})
 
     def __init__(
         self,
@@ -59,297 +75,333 @@ class TypedRecovery:
     def _result(outcome: RecoveryOutcome) -> dict[str, Any]:
         return {"recovery_outcome": outcome.to_dict()}
 
-    async def run(self, state: Mapping[str, Any]) -> dict[str, Any]:
-        task_id = str(state.get("task_id") or "")
-        if not task_id:
-            raise ValueError("TYPED_RECOVERY_TASK_ID_REQUIRED")
-        durable = self.loader(self.data_path, task_id)
-        scope = {
+    @staticmethod
+    def _internal(
+        scope: Mapping[str, Any], code: str, detail: Mapping[str, Any] | None = None
+    ) -> dict[str, Any]:
+        return RecoveryRuntime._result(RecoveryOutcome(
+            schema_version=1,
+            type="internal_protocol_error",
+            summary="Recovery failed closed on an invalid internal protocol.",
+            scope=dict(scope),
+            payload={
+                "error_code": str(code),
+                "source_scope": dict(scope),
+                "identity_conflict": deepcopy(dict(detail or {})),
+            },
+        ))
+
+    @staticmethod
+    def _scope(task_id: str, durable: Mapping[str, Any]) -> dict[str, Any]:
+        return {
             "task_id": task_id,
             "plan_id": str(durable.get("plan_id") or ""),
             "plan_version": str(durable.get("plan_version") or ""),
             "step_id": str(durable.get("current_step_id") or ""),
             "state_generation": int(durable.get("state_generation") or 0),
         }
-        if workflow_routing_schema_version(durable, state) != WORKFLOW_ROUTING_SCHEMA_TYPED:
-            return self._result(RecoveryOutcome(
-                schema_version=1,
-                type="internal_protocol_error",
-                summary="Typed Recovery rejected a legacy routing checkpoint.",
-                scope=scope,
-                payload={
-                    "error_code": "WORKFLOW_ROUTING_SCHEMA_NOT_TYPED",
-                    "source_scope": scope,
-                    "identity_conflict": {"observed_schema": workflow_routing_schema_version(durable, state)},
-                },
-            ))
+
+    async def run(self, state: Mapping[str, Any]) -> dict[str, Any]:
+        task_id = str(state.get("task_id") or "")
+        if not task_id:
+            raise ValueError("TYPED_RECOVERY_TASK_ID_REQUIRED")
+        durable = self.loader(self.data_path, task_id)
+        scope = self._scope(task_id, durable)
+        observed_schema = workflow_routing_schema_version(durable, state)
+        if observed_schema != WORKFLOW_ROUTING_SCHEMA_TYPED:
+            return self._internal(scope, "WORKFLOW_ROUTING_SCHEMA_NOT_TYPED", {
+                "observed_schema": observed_schema,
+            })
 
         try:
             projection = project_recovery_seed(state, durable)
         except StageContractError as exc:
-            return self._result(RecoveryOutcome(
-                schema_version=1,
-                type="internal_protocol_error",
-                summary="Recovery rejected an invalid causal failure packet.",
-                scope=scope,
-                payload={
-                    "error_code": exc.code,
-                    "source_scope": scope,
-                    "identity_conflict": {"detail": exc.detail},
-                },
-            ))
-        source_kind = projection.source_kind if projection is not None else ""
-        source = projection.source if projection is not None else {}
-        failure_packet = (
-            projection.recovery_seed.failure_packet
-            if projection is not None
-            else None
-        )
+            return self._internal(scope, exc.code, {"detail": exc.detail})
+        if projection is None:
+            return self._internal(scope, "RECOVERY_CAUSAL_PACKET_MISSING")
+        seed = projection.recovery_seed
+        packet = seed.failure_packet
+        if packet.action_ref:
+            scope["action_id"] = packet.action_ref
+        if packet.attempt_ref:
+            scope["attempt_id"] = packet.attempt_ref
 
-        source_payload = dict(source.get("payload") or {}) if source_kind.endswith("outcome") else dict(source)
-        source_scope = dict(source.get("scope") or {}) if source_kind.endswith("outcome") else {}
-        for key in ("action_id", "attempt_id"):
-            value = source_scope.get(key) or source_payload.get(key)
-            if value:
-                scope[key] = str(value)
-        source_fingerprint = (
-            projection.source_fingerprint
-            if projection is not None
-            else _hash({"kind": source_kind, "source": source})
+        raw_directive = state.get("recovery_directive")
+        if not isinstance(raw_directive, Mapping):
+            return self._internal(scope, "RECOVERY_DIRECTIVE_MISSING")
+        try:
+            directive = RecoveryDirective.from_mapping(raw_directive)
+        except StageContractError as exc:
+            return self._internal(scope, exc.code, {"detail": exc.detail})
+
+        if directive.task_id != packet.task_id:
+            return self._internal(scope, "RECOVERY_DIRECTIVE_TASK_MISMATCH", {
+                "directive_task_id": directive.task_id,
+                "packet_task_id": packet.task_id,
+            })
+        if directive.target_step_id and directive.target_step_id != packet.step_id:
+            return self._internal(scope, "RECOVERY_DIRECTIVE_STEP_MISMATCH", {
+                "directive_step_id": directive.target_step_id,
+                "packet_step_id": packet.step_id,
+            })
+
+        inspected_refs = {
+            str(item) for item in state.get("recovery_inspected_refs") or ()
+            if str(item)
+        }
+        declared_refs = {
+            packet.source_outcome_ref,
+            *packet.evidence_refs,
+            *packet.inspection_refs,
+            *seed.evidence_refs,
+            *inspected_refs,
+        }
+        undeclared = sorted(set(directive.evidence_refs) - declared_refs)
+        if undeclared:
+            return self._internal(
+                scope,
+                "RECOVERY_DIRECTIVE_EVIDENCE_SCOPE_INVALID",
+                {"undeclared_evidence_refs": undeclared},
+            )
+
+        source = dict(projection.source or {})
+        source_payload = (
+            dict(source.get("payload") or {})
+            if projection.source_kind.endswith("outcome")
+            else dict(source)
         )
-        explicit_decision_id = str(source_payload.get("decision_id") or "").strip()
-        decision_id = explicit_decision_id or f"typed-recovery-{source_fingerprint}"
-        incident_id = str(source_payload.get("incident_id") or f"incident-{source_fingerprint}")
+        source_scope = (
+            dict(source.get("scope") or {})
+            if projection.source_kind.endswith("outcome")
+            else {}
+        )
+        source_fingerprint = projection.source_fingerprint
         failure_fingerprint = str(
-            source_payload.get("failure_fingerprint")
-            or source_payload.get("candidate_fingerprint")
-            or (failure_packet.failure_fingerprint if failure_packet else "")
-            or source_fingerprint
+            packet.failure_fingerprint or source_fingerprint
         )
+        incident_id = str(
+            source_payload.get("incident_id") or packet.failure_id
+        )
+        decision_id = directive.directive_id
+        directive_wire = directive.to_dict()
+        directive_digest = _full_hash(directive_wire)
+
         task_state = dict(durable.get("task_state") or {})
         receipts = dict(task_state.get("typed_recovery_receipts") or {})
         prior = receipts.get(decision_id)
         if isinstance(prior, Mapping):
-            if str(prior.get("source_fingerprint") or "") != source_fingerprint:
-                return self._result(RecoveryOutcome(
-                    schema_version=1,
-                    type="internal_protocol_error",
-                    summary="Recovery decision identity collided with different evidence.",
-                    scope=scope,
-                    payload={
-                        "error_code": "RECOVERY_DECISION_IDENTITY_CONFLICT",
-                        "source_scope": scope,
-                        "identity_conflict": {
-                            "decision_id": decision_id,
-                            "stored_source_fingerprint": str(prior.get("source_fingerprint") or ""),
-                            "observed_source_fingerprint": source_fingerprint,
-                        },
-                    },
-                ))
-            return {"recovery_outcome": RecoveryOutcome.from_mapping(prior.get("outcome") or {}).to_dict()}
-
-        disposition = str(source_payload.get("disposition") or "").strip().lower()
-        diagnosis = str(
-            source_payload.get("diagnosis")
-            or source_payload.get("reason_code")
-            or source_payload.get("violation_code")
-            or source.get("summary")
-            or "Runtime evidence requires a recovery decision."
-        )
-        evidence_refs = tuple(
-            str(item)
-            for item in source.get("evidence_refs", ()) or ()
-            if str(item)
-        )
-        outcome_type = "internal_protocol_error"
-        payload: dict[str, Any]
-
-        if disposition in {"complete_step", "complete_task"}:
-            payload = {
-                "error_code": "RECOVERY_COMPLETION_AUTHORITY_FORBIDDEN",
-                "source_scope": scope,
-                "identity_conflict": {"disposition": disposition},
-            }
-        elif not source_kind:
-            payload = {
-                "error_code": "RECOVERY_CAUSAL_PACKET_MISSING",
-                "source_scope": scope,
-                "identity_conflict": {},
-            }
-        else:
-            if not disposition:
-                if source_kind == "execute_outcome" and source.get("type") == "execution_failed":
-                    disposition = "candidate_repair"
-                elif source_kind == "execute_outcome" and source.get("type") == "diagnostic_completed":
-                    disposition = "revalidation"
-                elif source_kind == "execute_outcome" and source.get("type") == "pre_execution_rejected":
-                    disposition = "candidate_repair"
-                elif source_kind in {"verification_outcome", "completion_gate_outcome"}:
-                    if source.get("type") == "verification_error":
-                        disposition = "internal_protocol"
-                    elif source.get("type") == "diagnostic_evidence_recorded":
-                        disposition = "revalidation"
-                    elif str(source_payload.get("failure_owner") or "").upper() in {"PLAN", "PLANNER"}:
-                        disposition = "plan_revision"
-                    else:
-                        disposition = "candidate_repair"
-                elif source_kind == "commit_step_outcome" and source.get("type") == "commit_conflict":
-                    disposition = "plan_revision"
-                elif source_kind == "commit_step_outcome":
-                    disposition = "internal_protocol"
-                elif source_kind == "install_subagent_outcome":
-                    disposition = "candidate_repair"
-
-            ledger = dict(task_state.get("typed_recovery_budget") or {})
-            consumed_before = int(ledger.get(incident_id) or 0)
-            budget_receipt = {
-                "incident_id": incident_id,
-                "ordinal": consumed_before + 1,
-                "limit": self.repair_limit,
-                "remaining": max(0, self.repair_limit - consumed_before - 1),
-                "consumed": disposition in {"candidate_repair", "plan_revision"},
-                "source_fingerprint": source_fingerprint,
-            }
-            if disposition in {"candidate_repair", "plan_revision"} and consumed_before >= self.repair_limit:
-                outcome_type = "blocked"
-                payload = {
-                    "reason_code": "RECOVERY_BUDGET_EXHAUSTED",
-                    "blocked_evidence": {
+            if (
+                str(prior.get("source_fingerprint") or "") != source_fingerprint
+                or str(prior.get("directive_digest") or "") != directive_digest
+            ):
+                return self._internal(
+                    scope,
+                    "RECOVERY_DECISION_IDENTITY_CONFLICT",
+                    {
                         "decision_id": decision_id,
-                        "incident_id": incident_id,
-                        "failure_fingerprint": failure_fingerprint,
+                        "stored_source_fingerprint": str(prior.get("source_fingerprint") or ""),
+                        "observed_source_fingerprint": source_fingerprint,
+                        "stored_directive_digest": str(prior.get("directive_digest") or ""),
+                        "observed_directive_digest": directive_digest,
                     },
-                    "source_scope": scope,
-                    "budget_receipt": {**budget_receipt, "consumed": False, "ordinal": consumed_before},
-                }
-            elif disposition == "candidate_repair":
-                outcome_type = "candidate_repair_required"
-                payload = {
-                    "diagnosis": diagnosis,
-                    "failure_owner": str(
-                        source_payload.get("failure_owner")
-                        or (failure_packet.failure_owner if failure_packet else "")
-                        or "GENERATED_ACTION"
-                    ),
-                    "strategy": str(source_payload.get("strategy") or "repair_candidate_from_persisted_failure"),
-                    "repair_instruction": str(source_payload.get("repair_instruction") or "Generate a changed candidate that addresses the recorded failure."),
-                    "source_scope": scope,
+                )
+            return self._result(
+                RecoveryOutcome.from_mapping(prior.get("outcome") or {})
+            )
+
+        ledger = dict(task_state.get("typed_recovery_budget") or {})
+        consumed_before = int(ledger.get(incident_id) or 0)
+        consumes_budget = directive.action in self.BUDGETED_ACTIONS
+        budget_receipt = {
+            "incident_id": incident_id,
+            "ordinal": consumed_before + (1 if consumes_budget else 0),
+            "limit": self.repair_limit,
+            "remaining": max(
+                0,
+                self.repair_limit - consumed_before - (1 if consumes_budget else 0),
+            ),
+            "consumed": consumes_budget,
+            "source_fingerprint": source_fingerprint,
+        }
+
+        progress = dict(task_state.get("typed_recovery_progress") or {})
+        prior_progress = dict(progress.get(incident_id) or {})
+        semantic_progress = {
+            "action": directive.action,
+            "summary": directive.summary,
+            "reason_code": directive.reason_code,
+            "instruction": directive.instruction,
+            "question": directive.question,
+        }
+        prior_evidence = {
+            str(item) for item in prior_progress.get("evidence_refs") or ()
+            if str(item)
+        }
+        same_diagnosis = (
+            str(prior_progress.get("semantic_digest") or "")
+            == _full_hash(semantic_progress)
+        )
+        has_new_evidence = bool(set(directive.evidence_refs) - prior_evidence)
+
+        outcome_type: str
+        payload: dict[str, Any]
+        if consumes_budget and consumed_before >= self.repair_limit:
+            outcome_type = "blocked"
+            payload = {
+                "reason_code": "RECOVERY_BUDGET_EXHAUSTED",
+                "blocked_evidence": {
                     "decision_id": decision_id,
                     "incident_id": incident_id,
                     "failure_fingerprint": failure_fingerprint,
-                    "budget_receipt": budget_receipt,
-                }
-            elif disposition == "plan_revision":
-                outcome_type = "plan_revision_required"
-                payload = {
-                    "diagnosis": diagnosis,
-                    "contract_violations": list(source_payload.get("contract_violations") or [diagnosis]),
-                    "source_scope": scope,
+                },
+                "source_scope": scope,
+                "budget_receipt": {
+                    **budget_receipt,
+                    "consumed": False,
+                    "ordinal": consumed_before,
+                },
+            }
+        elif same_diagnosis and not has_new_evidence:
+            outcome_type = "blocked"
+            payload = {
+                "reason_code": "RECOVERY_NO_PROGRESS",
+                "blocked_evidence": {
                     "decision_id": decision_id,
-                    "budget_receipt": budget_receipt,
-                }
-            elif disposition == "reconsultation":
-                outcome_type = "reconsultation_required"
-                payload = {
-                    "diagnosis": diagnosis,
-                    "missing_facts": list(source_payload.get("missing_facts") or ()),
-                    "source_scope": scope,
-                    "decision_id": decision_id,
-                }
-            elif disposition == "revalidation":
-                new_refs = list(source_payload.get("new_evidence_refs") or evidence_refs)
-                diagnostic = dict(source_payload.get("diagnostic_record") or {})
-                if not new_refs:
-                    new_refs = [
-                        str(value)
-                        for value in (
-                            diagnostic.get("execution_id"),
-                            diagnostic.get("attempt_id"),
-                            source_payload.get("envelope_identity"),
-                        )
-                        if value is not None and str(value).strip()
-                    ]
-                prior_validation = str(source_payload.get("prior_validation_id") or "")
-                if not prior_validation and isinstance(state.get("verification_outcome"), Mapping):
-                    try:
-                        prior_validation = str(
-                            VerificationOutcome.from_mapping(
-                                state["verification_outcome"]
-                            ).scope.get("validation_id")
-                            or ""
-                        )
-                    except Exception:
-                        prior_validation = ""
-                if not new_refs:
-                    outcome_type = "internal_protocol_error"
-                    payload = {
-                        "error_code": "REVALIDATION_REQUIRES_NEW_EVIDENCE",
-                        "source_scope": scope,
-                        "identity_conflict": {"prior_validation_id": prior_validation},
-                    }
-                else:
-                    outcome_type = "revalidation_required"
-                    payload = {
-                        "diagnosis": diagnosis,
-                        "new_evidence_refs": new_refs,
-                        "prior_validation_id": prior_validation,
-                        "source_scope": scope,
-                        "decision_id": decision_id,
-                    }
-            elif disposition == "user_input":
-                outcome_type = "user_input_required"
-                payload = {
-                    "diagnosis": diagnosis,
-                    "question_id": str(source_payload.get("question_id") or f"question-{source_fingerprint}"),
-                    "question": str(source_payload.get("question") or "Additional input is required."),
-                    "owner": "INPUT_DATA",
-                    "requires_user_input": True,
-                    "source_scope": scope,
-                    "decision_id": decision_id,
-                }
-            elif disposition == "blocked":
-                outcome_type = "blocked"
-                payload = {
-                    "reason_code": str(source_payload.get("reason_code") or "RECOVERY_BLOCKED"),
-                    "blocked_evidence": dict(source_payload.get("blocked_evidence") or {"diagnosis": diagnosis}),
-                    "source_scope": scope,
-                    "budget_receipt": budget_receipt,
-                }
-            else:
-                payload = {
-                    "error_code": str(source_payload.get("error_code") or "RECOVERY_DISPOSITION_INVALID"),
-                    "source_scope": scope,
-                    "identity_conflict": {"disposition": disposition},
-                }
+                    "incident_id": incident_id,
+                    "failure_fingerprint": failure_fingerprint,
+                },
+                "source_scope": scope,
+                "budget_receipt": {
+                    **budget_receipt,
+                    "consumed": False,
+                    "ordinal": consumed_before,
+                },
+            }
+        elif directive.action == "retry_step":
+            outcome_type = "candidate_repair_required"
+            payload = {
+                "diagnosis": directive.summary,
+                "failure_owner": packet.failure_owner,
+                "strategy": "semantic_directive:retry_step",
+                "repair_instruction": directive.instruction,
+                "source_scope": scope,
+                "decision_id": decision_id,
+                "incident_id": incident_id,
+                "failure_fingerprint": failure_fingerprint,
+                "budget_receipt": budget_receipt,
+            }
+        elif directive.action == "revise_plan":
+            outcome_type = "plan_revision_required"
+            payload = {
+                "diagnosis": directive.summary,
+                "contract_violations": [directive.instruction],
+                "source_scope": scope,
+                "decision_id": decision_id,
+                "budget_receipt": budget_receipt,
+            }
+        elif directive.action == "reconsult":
+            outcome_type = "reconsultation_required"
+            payload = {
+                "diagnosis": directive.summary,
+                "missing_facts": [directive.instruction],
+                "source_scope": scope,
+                "decision_id": decision_id,
+            }
+        elif directive.action == "revalidate":
+            if not directive.evidence_refs:
+                return self._internal(
+                    scope,
+                    "REVALIDATION_REQUIRES_NEW_EVIDENCE",
+                    {"directive_id": decision_id},
+                )
+            outcome_type = "revalidation_required"
+            payload = {
+                "diagnosis": directive.summary,
+                "new_evidence_refs": list(directive.evidence_refs),
+                "prior_validation_id": str(
+                    source_scope.get("validation_id")
+                    or source_payload.get("prior_validation_id")
+                    or ""
+                ),
+                "source_scope": scope,
+                "decision_id": decision_id,
+            }
+        elif directive.action == "ask_user":
+            outcome_type = "user_input_required"
+            payload = {
+                "diagnosis": directive.summary,
+                "question_id": "question-" + _hash({
+                    "directive_id": decision_id,
+                    "slots": list(directive.requested_slots),
+                }),
+                "question": directive.question,
+                "owner": "INPUT_DATA",
+                "requires_user_input": True,
+                "source_scope": scope,
+                "decision_id": decision_id,
+            }
+        elif directive.action == "blocked":
+            outcome_type = "blocked"
+            payload = {
+                "reason_code": directive.reason_code,
+                "blocked_evidence": {
+                    "diagnosis": directive.summary,
+                    "unresolved_evidence": list(directive.evidence_refs),
+                },
+                "source_scope": scope,
+                "budget_receipt": {**budget_receipt, "consumed": False},
+            }
+        else:  # RecoveryDirective is closed, but fail closed if it ever expands.
+            return self._internal(scope, "RECOVERY_ACTION_UNMAPPED", {
+                "action": directive.action,
+            })
 
-            if outcome_type in {"candidate_repair_required", "plan_revision_required"}:
-                ledger[incident_id] = consumed_before + 1
-                task_state["typed_recovery_budget"] = ledger
-
+        summaries = {
+            "candidate_repair_required": "A bounded changed candidate is required.",
+            "plan_revision_required": "The approved Plan contract requires revision.",
+            "reconsultation_required": "Authoritative task facts require reconsultation.",
+            "revalidation_required": "New diagnostic evidence requires deterministic revalidation.",
+            "user_input_required": "Recovery requires an input-owned user fact.",
+            "blocked": "Recovery reached a durable terminal blocker.",
+        }
         outcome = RecoveryOutcome(
             schema_version=1,
             type=outcome_type,
-            summary={
-                "candidate_repair_required": "A bounded changed candidate is required.",
-                "plan_revision_required": "The approved Plan contract requires revision.",
-                "reconsultation_required": "Authoritative task facts require reconsultation.",
-                "revalidation_required": "New diagnostic evidence requires deterministic revalidation.",
-                "user_input_required": "Recovery requires an input-owned user fact.",
-                "blocked": "Recovery reached a durable terminal blocker.",
-                "internal_protocol_error": "Recovery failed closed on an invalid internal protocol.",
-            }[outcome_type],
+            summary=summaries[outcome_type],
             scope=scope,
             payload=payload,
-            evidence_refs=evidence_refs,
+            evidence_refs=directive.evidence_refs,
         )
+
+        if consumes_budget and outcome_type in {
+            "candidate_repair_required", "plan_revision_required"
+        }:
+            ledger[incident_id] = consumed_before + 1
+            task_state["typed_recovery_budget"] = ledger
+        if outcome_type != "blocked":
+            progress[incident_id] = {
+                "semantic_digest": _full_hash(semantic_progress),
+                "evidence_refs": sorted(prior_evidence | set(directive.evidence_refs)),
+                "directive_id": decision_id,
+            }
+            task_state["typed_recovery_progress"] = progress
+
         candidate = deepcopy(durable)
         candidate_task = dict(candidate.get("task_state") or {})
-        if "typed_recovery_budget" in task_state:
-            candidate_task["typed_recovery_budget"] = deepcopy(task_state["typed_recovery_budget"])
+        for key in ("typed_recovery_budget", "typed_recovery_progress"):
+            if key in task_state:
+                candidate_task[key] = deepcopy(task_state[key])
         candidate_receipts = dict(candidate_task.get("typed_recovery_receipts") or {})
         candidate_receipts[decision_id] = {
             "schema_version": 1,
             "source_fingerprint": source_fingerprint,
+            "directive_digest": directive_digest,
+            "failure_packet_ref": str(
+                state.get("active_failure_packet_ref")
+                or candidate_task.get("active_failure_packet_ref")
+                or ""
+            ),
+            "recovery_archive_ref": str(state.get("recovery_archive_ref") or ""),
             "outcome": outcome.to_dict(),
         }
         candidate_task["typed_recovery_receipts"] = candidate_receipts
@@ -365,33 +417,41 @@ class TypedRecovery:
             consumed_packets[packet_ref] = {
                 "decision_id": decision_id,
                 "source_fingerprint": source_fingerprint,
+                "directive_digest": directive_digest,
             }
             candidate_task["consumed_failure_packet_refs"] = consumed_packets
             if str(candidate_task.get("active_failure_packet_ref") or "") == packet_ref:
                 candidate_task["active_failure_packet_ref"] = ""
         candidate["task_state"] = candidate_task
+
         try:
             self.saver(self.data_path, task_id, candidate)
         except StateCASConflict:
             refreshed = self.loader(self.data_path, task_id)
-            refreshed_receipt = dict((refreshed.get("task_state") or {}).get("typed_recovery_receipts") or {}).get(decision_id)
+            refreshed_receipt = dict(
+                (refreshed.get("task_state") or {}).get("typed_recovery_receipts")
+                or {}
+            ).get(decision_id)
             if isinstance(refreshed_receipt, Mapping):
-                return {"recovery_outcome": RecoveryOutcome.from_mapping(refreshed_receipt.get("outcome") or {}).to_dict()}
-            return self._result(RecoveryOutcome(
-                schema_version=1,
-                type="internal_protocol_error",
-                summary="Recovery CAS changed before its route-blind receipt committed.",
-                scope=scope,
-                payload={
-                    "error_code": "RECOVERY_RECEIPT_CAS_CONFLICT",
-                    "source_scope": scope,
-                    "identity_conflict": {
-                        "expected_state_generation": int(durable.get("state_generation") or 0),
-                        "current_state_generation": int(refreshed.get("state_generation") or 0),
-                    },
-                },
-            ))
+                if (
+                    str(refreshed_receipt.get("source_fingerprint") or "")
+                    == source_fingerprint
+                    and str(refreshed_receipt.get("directive_digest") or "")
+                    == directive_digest
+                ):
+                    return self._result(RecoveryOutcome.from_mapping(
+                        refreshed_receipt.get("outcome") or {}
+                    ))
+            return self._internal(scope, "RECOVERY_RECEIPT_CAS_CONFLICT", {
+                "expected_state_generation": int(durable.get("state_generation") or 0),
+                "current_state_generation": int(refreshed.get("state_generation") or 0),
+            })
         return self._result(outcome)
+
+
+# Import compatibility for existing schema-2 wiring while callers migrate to
+# the more accurate name.  This is not the schema-1 Recovery implementation.
+TypedRecovery = RecoveryRuntime
 
 
 def recovery_harness_error(exc: Exception, state: Mapping[str, Any]) -> RecoveryOutcome:
@@ -408,4 +468,4 @@ def recovery_harness_error(exc: Exception, state: Mapping[str, Any]) -> Recovery
     )
 
 
-__all__ = ["TypedRecovery", "recovery_harness_error"]
+__all__ = ["RecoveryRuntime", "TypedRecovery", "recovery_harness_error"]

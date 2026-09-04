@@ -173,7 +173,8 @@ from agent_core.workflow.execution import (
     execute_harness_error,
     generate_harness_error,
 )
-from agent_core.workflow.recovery_runtime import TypedRecovery, recovery_harness_error
+from agent_core.workflow.recovery_runtime import recovery_harness_error
+from agent_core.workflow.recovery_node import Schema2RecoveryNode
 from agent_core.workflow.recovery_projection import (
     CausalFailurePacketBinder,
     bind_causal_failure_node,
@@ -2428,7 +2429,12 @@ class BioAnalystAgent:
             verifier=self.supervisor_node.run,
         )
         commit_step = CommitStep(data_path=self.data_path)
-        typed_recovery = TypedRecovery(data_path=self.data_path)
+        typed_recovery = Schema2RecoveryNode(
+            data_path=self.data_path,
+            model=self.recovery_llm,
+            phase_store=self.phase_archive_store,
+            skill_service=self.skill_access_service,
+        )
         causal_failure_binder = CausalFailurePacketBinder(
             data_path=self.data_path
         )

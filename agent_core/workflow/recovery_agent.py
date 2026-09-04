@@ -442,6 +442,7 @@ class _RecoveryLoopState(TypedDict, total=False):
     tool_call_count: int
     tool_request_counts: dict[str, int]
     progress_signatures: list[str]
+    inspected_refs: list[str]
     no_progress_rounds: int
     observation_chars: int
     soft_limit_reached: bool
@@ -648,6 +649,7 @@ class RecoveryAgentLoop:
             calls = list(state.get("pending_tool_calls") or ())
             counts = dict(state.get("tool_request_counts") or {})
             known_progress = set(state.get("progress_signatures") or ())
+            inspected_refs = set(state.get("inspected_refs") or ())
             total = int(state.get("tool_call_count") or 0)
             observation_chars = int(state.get("observation_chars") or 0)
             no_progress = int(state.get("no_progress_rounds") or 0)
@@ -737,6 +739,8 @@ class RecoveryAgentLoop:
                 if not envelope["error"] and signature not in known_progress:
                     known_progress.add(signature)
                     round_progress = True
+                if not envelope["error"] and str(envelope["source_ref"]):
+                    inspected_refs.add(str(envelope["source_ref"]))
                 tool_messages.append(ToolMessage(
                     id=f"{seed.seed_id}:tool:{total:03d}",
                     tool_call_id=str(call["id"]),
@@ -758,6 +762,7 @@ class RecoveryAgentLoop:
                 "pending_tool_calls": [],
                 "tool_request_counts": counts,
                 "progress_signatures": sorted(known_progress),
+                "inspected_refs": sorted(inspected_refs),
                 "tool_call_count": total,
                 "observation_chars": observation_chars,
                 "no_progress_rounds": no_progress,
@@ -823,6 +828,7 @@ class RecoveryAgentLoop:
             "tool_call_count": 0,
             "tool_request_counts": {},
             "progress_signatures": [],
+            "inspected_refs": [],
             "no_progress_rounds": 0,
             "observation_chars": 0,
             "soft_limit_reached": False,
@@ -847,6 +853,10 @@ class RecoveryAgentLoop:
                 "no_progress_rounds": int(result.get("no_progress_rounds") or 0),
                 "soft_limit_reached": bool(result.get("soft_limit_reached")),
                 "transport_attempt_count": int(result.get("transport_attempt_count") or 0),
+                "inspected_refs": sorted({
+                    str(item) for item in result.get("inspected_refs") or ()
+                    if str(item)
+                }),
                 "provider_message_count": 2 + len(local_messages),
                 "append_only": True,
             },
