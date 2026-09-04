@@ -17,6 +17,7 @@ RunProfiler = profiling_module.RunProfiler
 ProfilingCallbackHandler = profiling_module.ProfilingCallbackHandler
 benchmark_metadata_for_task = profiling_module.benchmark_metadata_for_task
 generic_metadata_for_prompt = profiling_module.generic_metadata_for_prompt
+normalize_usage = profiling_module._normalize_usage
 
 
 class RunProfilerTests(unittest.TestCase):
@@ -35,10 +36,14 @@ class RunProfilerTests(unittest.TestCase):
                     prompt_tokens=25_162,
                     completion_tokens=8_192,
                     total_tokens=33_354,
+                    prompt_cache_hit_tokens=8_000,
+                    prompt_cache_miss_tokens=17_162,
                     model_dump=lambda: {
                         "prompt_tokens": 25_162,
                         "completion_tokens": 8_192,
                         "total_tokens": 33_354,
+                        "prompt_cache_hit_tokens": 8_000,
+                        "prompt_cache_miss_tokens": 17_162,
                     },
                 ),
                 choices=[SimpleNamespace(
@@ -66,12 +71,186 @@ class RunProfilerTests(unittest.TestCase):
         self.assertEqual(event["prompt_tokens"], 25_162)
         self.assertEqual(event["completion_tokens"], 8_192)
         self.assertEqual(event["total_tokens"], 33_354)
+        self.assertEqual(event["prompt_cache_hit_tokens"], 8_000)
+        self.assertEqual(event["prompt_cache_miss_tokens"], 17_162)
         self.assertFalse(event["tokens_estimated"])
         self.assertEqual(event["finish_reason"], "length")
         self.assertEqual(event["provider_status"], "succeeded")
         self.assertEqual(event["completion_integrity"], "truncated")
         self.assertEqual(event["protocol_status"], "not_validated")
         self.assertEqual(event["usage_source"], "provider_exception_completion")
+
+    def test_success_response_preserves_deepseek_prompt_cache_usage(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            profiler = RunProfiler(Path(tmpdir))
+            handler = ProfilingCallbackHandler(profiler)
+            task_id = "session_deepseek_cache_usage"
+            response = SimpleNamespace(
+                llm_output={
+                    "token_usage": {
+                        "prompt_tokens": 10_000,
+                        "completion_tokens": 100,
+                        "total_tokens": 10_100,
+                        "reasoning_tokens": 40,
+                        "prompt_cache_hit_tokens": 8_000,
+                        "prompt_cache_miss_tokens": 2_000,
+                    }
+                },
+                generations=[[
+                    SimpleNamespace(
+                        message=SimpleNamespace(content="ok"),
+                        generation_info={"finish_reason": "stop"},
+                    )
+                ]],
+            )
+
+            with profiler.task_context(task_id):
+                handler.on_chat_model_start(
+                    {"name": "deepseek-test"},
+                    [[SimpleNamespace(content="input")]],
+                    "cache-run",
+                )
+                handler.on_llm_end(response, "cache-run")
+
+            snapshot = profiler.snapshot(task_id)
+            event = next(
+                item for item in snapshot["events"]
+                if item.get("type") == "llm"
+            )
+
+        self.assertEqual(event["prompt_cache_hit_tokens"], 8_000)
+        self.assertEqual(event["prompt_cache_miss_tokens"], 2_000)
+        self.assertEqual(event["reasoning_tokens"], 40)
+        self.assertEqual(event["cache_metric_status"], "reported")
+        self.assertEqual(snapshot["summary"]["tokens"], {
+            "prompt_tokens": 10_000,
+            "completion_tokens": 100,
+            "total_tokens": 10_100,
+            "reasoning_tokens": 40,
+            "contains_estimates": False,
+            "prompt_cache_hit_tokens": 8_000,
+            "prompt_cache_miss_tokens": 2_000,
+            "prompt_cache_usage_reported_calls": 1,
+            "cache_metric_status": "reported",
+            "prompt_cache_hit_rate": 0.8,
+        })
+
+    def test_common_cached_token_shapes_normalize_to_prompt_cache_usage(self):
+        cases = [
+            (
+                {
+                    "prompt_tokens": 100,
+                    "completion_tokens": 1,
+                    "prompt_tokens_details": {"cached_tokens": 64},
+                },
+                64,
+            ),
+            (
+                {
+                    "input_tokens": 100,
+                    "output_tokens": 1,
+                    "input_tokens_details": {"cached_tokens": 48},
+                },
+                48,
+            ),
+            (
+                {
+                    "input_tokens": 100,
+                    "output_tokens": 1,
+                    "input_token_details": {"cache_read": 32},
+                },
+                32,
+            ),
+            (
+                {
+                    "prompt_tokens": 100,
+                    "completion_tokens": 1,
+                    "cached_tokens": 16,
+                },
+                16,
+            ),
+        ]
+
+        for usage, expected_hit in cases:
+            with self.subTest(usage=usage):
+                normalized = normalize_usage(usage)
+                self.assertEqual(
+                    normalized["prompt_cache_hit_tokens"],
+                    expected_hit,
+                )
+                self.assertEqual(
+                    normalized["prompt_cache_miss_tokens"],
+                    100 - expected_hit,
+                )
+                self.assertEqual(
+                    normalized["cache_metric_status"],
+                    "partially_reported_derived",
+                )
+
+    def test_reasoning_tokens_and_unreported_cache_remain_lossless(self):
+        normalized = normalize_usage({
+            "input_tokens": 100,
+            "output_tokens": 21,
+            "total_tokens": 121,
+            "output_token_details": {"reasoning": 13},
+        })
+        self.assertEqual(normalized["reasoning_tokens"], 13)
+        self.assertIsNone(normalized["prompt_cache_hit_tokens"])
+        self.assertIsNone(normalized["prompt_cache_miss_tokens"])
+        self.assertEqual(normalized["cache_metric_status"], "not_reported")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            profiler = RunProfiler(Path(tmpdir))
+            profiler.start_task("missing-cache")
+            profiler.record_llm(
+                "missing-cache",
+                "recovery",
+                0.1,
+                prompt_tokens=100,
+                completion_tokens=21,
+                total_tokens=121,
+                reasoning_tokens=13,
+                estimated=False,
+            )
+            tokens = profiler.snapshot("missing-cache")["summary"]["tokens"]
+        self.assertEqual(tokens["reasoning_tokens"], 13)
+        self.assertIsNone(tokens["prompt_cache_hit_tokens"])
+        self.assertIsNone(tokens["prompt_cache_miss_tokens"])
+        self.assertIsNone(tokens["prompt_cache_hit_rate"])
+        self.assertEqual(tokens["cache_metric_status"], "not_reported")
+
+    def test_split_langchain_usage_and_response_metadata_are_merged(self):
+        response = SimpleNamespace(
+            generations=[[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content="ok",
+                        usage_metadata={
+                            "input_tokens": 1_000,
+                            "output_tokens": 10,
+                            "total_tokens": 1_010,
+                        },
+                        response_metadata={
+                            "token_usage": {
+                                "prompt_cache_hit_tokens": 750,
+                                "prompt_cache_miss_tokens": 250,
+                            }
+                        },
+                        additional_kwargs={},
+                    ),
+                    generation_info={},
+                )
+            ]],
+            llm_output=None,
+        )
+
+        normalized = profiling_module._response_usage(response)
+
+        self.assertEqual(normalized["prompt_tokens"], 1_000)
+        self.assertEqual(normalized["completion_tokens"], 10)
+        self.assertEqual(normalized["total_tokens"], 1_010)
+        self.assertEqual(normalized["prompt_cache_hit_tokens"], 750)
+        self.assertEqual(normalized["prompt_cache_miss_tokens"], 250)
 
     def test_blocked_finish_projects_durable_diagnostic_and_selected_skill(self):
         with tempfile.TemporaryDirectory() as tmpdir:

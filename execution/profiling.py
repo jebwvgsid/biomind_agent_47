@@ -123,10 +123,34 @@ def _mapping_view(value: Any) -> Optional[Dict[str, Any]]:
     return None
 
 
-def _normalize_usage(data: Any) -> Dict[str, Optional[int]]:
+def _nested_first_int(
+    data: Mapping[str, Any],
+    container_keys: Iterable[str],
+    value_keys: Iterable[str],
+) -> Optional[int]:
+    """Read the first integer-like token detail from common SDK shapes."""
+    for container_key in container_keys:
+        details = _mapping_view(data.get(container_key))
+        if details is None:
+            continue
+        value = _first_int(*(details.get(key) for key in value_keys))
+        if value is not None:
+            return value
+    return None
+
+
+def _normalize_usage(data: Any) -> Dict[str, Any]:
     data = _mapping_view(data)
     if data is None:
-        return {"prompt_tokens": None, "completion_tokens": None, "total_tokens": None}
+        return {
+            "prompt_tokens": None,
+            "completion_tokens": None,
+            "total_tokens": None,
+            "reasoning_tokens": None,
+            "prompt_cache_hit_tokens": None,
+            "prompt_cache_miss_tokens": None,
+            "cache_metric_status": "not_reported",
+        }
 
     prompt = _first_int(
         data.get("prompt_tokens"),
@@ -139,12 +163,82 @@ def _normalize_usage(data: Any) -> Dict[str, Optional[int]]:
         data.get("completion_token_count"),
     )
     total = _first_int(data.get("total_tokens"), data.get("total_token_count"))
+    reasoning = _first_int(
+        data.get("reasoning_tokens"),
+        _nested_first_int(
+            data,
+            ("completion_tokens_details", "output_tokens_details"),
+            ("reasoning_tokens", "reasoning"),
+        ),
+        _nested_first_int(
+            data,
+            ("output_token_details",),
+            ("reasoning", "reasoning_tokens"),
+        ),
+    )
     if total is None and (prompt is not None or completion is not None):
         total = (prompt or 0) + (completion or 0)
+
+    # DeepSeek exposes the first two direct fields. OpenAI-compatible SDKs
+    # commonly expose cached input as either ``cached_tokens`` directly or
+    # below prompt/input token details. LangChain standardizes the same value
+    # as ``input_token_details.cache_read``. Keep one provider-neutral shape in
+    # the profiler so cache accounting is not silently discarded.
+    prompt_cache_hit = _first_int(
+        data.get("prompt_cache_hit_tokens"),
+        data.get("cached_tokens"),
+        data.get("cache_read_input_tokens"),
+        data.get("cache_read_tokens"),
+        _nested_first_int(
+            data,
+            ("prompt_tokens_details", "input_tokens_details"),
+            ("cached_tokens",),
+        ),
+        _nested_first_int(
+            data,
+            ("input_token_details",),
+            ("cache_read", "cached_tokens", "cache_read_tokens"),
+        ),
+    )
+    prompt_cache_miss = _first_int(data.get("prompt_cache_miss_tokens"))
+    cache_fields_reported = (
+        prompt_cache_hit is not None or prompt_cache_miss is not None
+    )
+    cache_derived = False
+
+    # Providers that report only cached_tokens still give enough information
+    # to account for the uncached portion when prompt_tokens is the total input.
+    if (
+        prompt_cache_miss is None
+        and prompt is not None
+        and prompt_cache_hit is not None
+        and 0 <= prompt_cache_hit <= prompt
+    ):
+        prompt_cache_miss = prompt - prompt_cache_hit
+        cache_derived = True
+    elif (
+        prompt_cache_hit is None
+        and prompt is not None
+        and prompt_cache_miss is not None
+        and 0 <= prompt_cache_miss <= prompt
+    ):
+        prompt_cache_hit = prompt - prompt_cache_miss
+        cache_derived = True
+
     return {
         "prompt_tokens": prompt,
         "completion_tokens": completion,
         "total_tokens": total,
+        "reasoning_tokens": reasoning,
+        "prompt_cache_hit_tokens": prompt_cache_hit,
+        "prompt_cache_miss_tokens": prompt_cache_miss,
+        "cache_metric_status": (
+            "partially_reported_derived"
+            if cache_fields_reported and cache_derived
+            else "reported"
+            if cache_fields_reported
+            else "not_reported"
+        ),
     }
 
 
@@ -154,7 +248,17 @@ def _find_usage_dict(value: Any, depth: int = 0) -> Optional[Dict[str, Any]]:
     mapping = _mapping_view(value)
     if mapping is not None:
         normalized = _normalize_usage(mapping)
-        if normalized["total_tokens"] is not None or normalized["prompt_tokens"] is not None:
+        if any(
+            normalized.get(key) is not None
+            for key in (
+                "prompt_tokens",
+                "completion_tokens",
+                "total_tokens",
+                "reasoning_tokens",
+                "prompt_cache_hit_tokens",
+                "prompt_cache_miss_tokens",
+            )
+        ):
             return mapping
         for key in ("token_usage", "usage", "usage_metadata", "response_metadata", "llm_output"):
             nested = mapping.get(key)
@@ -185,7 +289,7 @@ def _response_text(response: Any) -> str:
     return "\n".join(texts)
 
 
-def _response_usage(response: Any) -> Dict[str, Optional[int]]:
+def _response_usage(response: Any) -> Dict[str, Any]:
     candidates: List[Any] = [
         getattr(response, "usage", None),
         getattr(response, "usage_metadata", None),
@@ -202,12 +306,49 @@ def _response_usage(response: Any) -> Dict[str, Optional[int]]:
                     getattr(getattr(generation, "message", None), "additional_kwargs", None),
                 ]
             )
+    merged: Dict[str, Any] = {
+        "prompt_tokens": None,
+        "completion_tokens": None,
+        "total_tokens": None,
+        "reasoning_tokens": None,
+        "prompt_cache_hit_tokens": None,
+        "prompt_cache_miss_tokens": None,
+        "cache_metric_status": "not_reported",
+    }
     for candidate in candidates:
         found = _find_usage_dict(candidate)
         normalized = _normalize_usage(found)
-        if normalized["total_tokens"] is not None or normalized["prompt_tokens"] is not None:
-            return normalized
-    return {"prompt_tokens": None, "completion_tokens": None, "total_tokens": None}
+        for key, value in normalized.items():
+            if key == "cache_metric_status":
+                if value != "not_reported":
+                    merged[key] = value
+                continue
+            if merged[key] is None and value is not None:
+                merged[key] = value
+
+    # Some LangChain adapters split standard token totals into usage_metadata
+    # and provider-specific cache counters into response_metadata. Merge those
+    # views instead of returning the first one and losing cache observability.
+    prompt = merged["prompt_tokens"]
+    prompt_cache_hit = merged["prompt_cache_hit_tokens"]
+    prompt_cache_miss = merged["prompt_cache_miss_tokens"]
+    if (
+        prompt_cache_miss is None
+        and prompt is not None
+        and prompt_cache_hit is not None
+        and 0 <= prompt_cache_hit <= prompt
+    ):
+        merged["prompt_cache_miss_tokens"] = prompt - prompt_cache_hit
+        merged["cache_metric_status"] = "partially_reported_derived"
+    elif (
+        prompt_cache_hit is None
+        and prompt is not None
+        and prompt_cache_miss is not None
+        and 0 <= prompt_cache_miss <= prompt
+    ):
+        merged["prompt_cache_hit_tokens"] = prompt - prompt_cache_miss
+        merged["cache_metric_status"] = "partially_reported_derived"
+    return merged
 
 
 def _response_finish_reason(response: Any) -> str:
@@ -773,6 +914,10 @@ class RunProfiler:
         protocol_status: str = "",
         response_artifact_ref: str = "",
         usage_source: str = "",
+        reasoning_tokens: Optional[int] = None,
+        prompt_cache_hit_tokens: Optional[int] = None,
+        prompt_cache_miss_tokens: Optional[int] = None,
+        cache_metric_status: str = "not_reported",
     ) -> None:
         self._append_event(
             task_id,
@@ -786,6 +931,12 @@ class RunProfiler:
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
                 "total_tokens": total_tokens,
+                "reasoning_tokens": reasoning_tokens,
+                "prompt_cache_hit_tokens": prompt_cache_hit_tokens,
+                "prompt_cache_miss_tokens": prompt_cache_miss_tokens,
+                "cache_metric_status": str(
+                    cache_metric_status or "not_reported"
+                ),
                 "tokens_estimated": estimated,
                 "error": error,
                 "finish_reason": str(finish_reason or ""),
@@ -1455,11 +1606,60 @@ class RunProfiler:
             node = event.get("node") or "unknown"
             node_totals[node] = round(node_totals.get(node, 0.0) + float(event.get("duration_seconds") or 0), 3)
 
+        cache_usage_events = [
+            event
+            for event in llm_events
+            if event.get("prompt_cache_hit_tokens") is not None
+            or event.get("prompt_cache_miss_tokens") is not None
+        ]
+        hit_usage_events = [
+            event for event in cache_usage_events
+            if event.get("prompt_cache_hit_tokens") is not None
+        ]
+        miss_usage_events = [
+            event for event in cache_usage_events
+            if event.get("prompt_cache_miss_tokens") is not None
+        ]
+        reasoning_usage_events = [
+            event for event in llm_events
+            if event.get("reasoning_tokens") is not None
+        ]
+        prompt_cache_hit_tokens = sum(
+            int(event.get("prompt_cache_hit_tokens") or 0)
+            for event in hit_usage_events
+        ) if hit_usage_events else None
+        prompt_cache_miss_tokens = sum(
+            int(event.get("prompt_cache_miss_tokens") or 0)
+            for event in miss_usage_events
+        ) if miss_usage_events else None
+        reasoning_tokens = sum(
+            int(event.get("reasoning_tokens") or 0)
+            for event in reasoning_usage_events
+        ) if reasoning_usage_events else None
+        prompt_cache_observed_tokens = (
+            prompt_cache_hit_tokens + prompt_cache_miss_tokens
+            if prompt_cache_hit_tokens is not None
+            and prompt_cache_miss_tokens is not None
+            else None
+        )
         token_totals = {
             "prompt_tokens": sum(int(e.get("prompt_tokens") or 0) for e in llm_events),
             "completion_tokens": sum(int(e.get("completion_tokens") or 0) for e in llm_events),
             "total_tokens": sum(int(e.get("total_tokens") or 0) for e in llm_events),
+            "reasoning_tokens": reasoning_tokens,
             "contains_estimates": any(e.get("tokens_estimated") for e in llm_events),
+            "prompt_cache_hit_tokens": prompt_cache_hit_tokens,
+            "prompt_cache_miss_tokens": prompt_cache_miss_tokens,
+            "prompt_cache_usage_reported_calls": len(cache_usage_events),
+            "cache_metric_status": (
+                "reported" if cache_usage_events else "not_reported"
+            ),
+            "prompt_cache_hit_rate": (
+                round(prompt_cache_hit_tokens / prompt_cache_observed_tokens, 6)
+                if prompt_cache_observed_tokens is not None
+                and prompt_cache_observed_tokens > 0
+                else None
+            ),
         }
 
         summary = {
@@ -1567,6 +1767,14 @@ class RunProfiler:
         skills = snapshot.get("skills") or {}
         final_result = snapshot.get("final_result") or {}
         token_note = "yes" if summary["tokens"].get("contains_estimates") else "no"
+        cache_hit_rate = summary["tokens"].get("prompt_cache_hit_rate")
+        cache_hit_rate_text = (
+            f"{cache_hit_rate:.2%}" if cache_hit_rate is not None else "not reported"
+        )
+        cache_hit_tokens = summary["tokens"].get("prompt_cache_hit_tokens")
+        cache_miss_tokens = summary["tokens"].get("prompt_cache_miss_tokens")
+        cache_hit_text = str(cache_hit_tokens) if cache_hit_tokens is not None else "not reported"
+        cache_miss_text = str(cache_miss_tokens) if cache_miss_tokens is not None else "not reported"
         lines = [
             f"# Run Metrics: {snapshot['task_id']}",
             "",
@@ -1595,6 +1803,7 @@ class RunProfiler:
             f"- Confirmations: {summary['manual_confirmations']} manual, {summary['auto_confirmations']} automatic",
             f"- Review feedback/rejections: {summary['manual_feedback_or_rejection_count']}",
             f"- Tokens: prompt={summary['tokens']['prompt_tokens']}, completion={summary['tokens']['completion_tokens']}, total={summary['tokens']['total_tokens']} (contains estimates: {token_note})",
+            f"- Prompt cache: hit={cache_hit_text}, miss={cache_miss_text}, rate={cache_hit_rate_text}, status={summary['tokens'].get('cache_metric_status', 'not_reported')}, reported calls={summary['tokens'].get('prompt_cache_usage_reported_calls', 0)}",
             "",
             "## Task Metadata",
             "",
@@ -1801,6 +2010,10 @@ class ProfilingCallbackHandler(BaseCallbackHandler):
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
             total_tokens=total_tokens,
+            reasoning_tokens=usage["reasoning_tokens"],
+            prompt_cache_hit_tokens=usage["prompt_cache_hit_tokens"],
+            prompt_cache_miss_tokens=usage["prompt_cache_miss_tokens"],
+            cache_metric_status=usage["cache_metric_status"],
             estimated=estimated,
             started_at=start.get("started_at"),
             finish_reason=finish_reason,
@@ -1851,6 +2064,10 @@ class ProfilingCallbackHandler(BaseCallbackHandler):
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
                 total_tokens=total_tokens,
+                reasoning_tokens=usage["reasoning_tokens"],
+                prompt_cache_hit_tokens=usage["prompt_cache_hit_tokens"],
+                prompt_cache_miss_tokens=usage["prompt_cache_miss_tokens"],
+                cache_metric_status=usage["cache_metric_status"],
                 estimated=estimated,
                 error=type(error).__name__,
                 started_at=start.get("started_at"),
