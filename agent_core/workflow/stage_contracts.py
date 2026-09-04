@@ -1066,6 +1066,95 @@ class RecoveryDirective(ImmutableStageContract):
         return result
 
 
+@dataclass(frozen=True)
+class GenerateSeed(ImmutableStageContract):
+    """Fresh corrective-Generate handoff; never a Recovery transcript carrier."""
+
+    schema_version: int
+    seed_id: str
+    task_id: str
+    step_id: str
+    failure_id: str
+    failure_packet_ref: str
+    source_outcome_ref: str
+    recovery_directive: RecoveryDirective
+    evidence_refs: tuple[str, ...]
+    recovery_archive_ref: str
+
+    REQUIRED: ClassVar[frozenset[str]] = frozenset({
+        "schema_version", "seed_id", "task_id", "step_id", "failure_id",
+        "failure_packet_ref", "source_outcome_ref", "recovery_directive",
+        "evidence_refs", "recovery_archive_ref",
+    })
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "schema_version", _validate_schema(self.schema_version, type(self).__name__)
+        )
+        for field_name in (
+            "seed_id", "task_id", "step_id", "failure_id",
+            "failure_packet_ref", "source_outcome_ref", "recovery_archive_ref",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _required_text(getattr(self, field_name), f"GenerateSeed.{field_name}"),
+            )
+        directive = _contract_mapping(
+            self.recovery_directive, RecoveryDirective, "GenerateSeed.recovery_directive"
+        )
+        if directive.task_id != self.task_id:
+            raise StageContractError(
+                "STAGE_SCOPE_MISMATCH", "GenerateSeed.recovery_directive.task_id"
+            )
+        if directive.target_step_id and directive.target_step_id != self.step_id:
+            raise StageContractError(
+                "STAGE_SCOPE_MISMATCH", "GenerateSeed.recovery_directive.target_step_id"
+            )
+        object.__setattr__(self, "recovery_directive", directive)
+        evidence = _text_tuple(self.evidence_refs, "GenerateSeed.evidence_refs")
+        if set(directive.evidence_refs) - set(evidence):
+            raise StageContractError(
+                "STAGE_SCOPE_MISMATCH", "GenerateSeed.recovery_directive.evidence_refs"
+            )
+        object.__setattr__(self, "evidence_refs", evidence)
+        _json_round_trip(self.to_dict())
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> "GenerateSeed":
+        raw = _validate_fields(
+            value,
+            contract_name=cls.__name__,
+            required=cls.REQUIRED,
+        )
+        return cls(
+            schema_version=raw["schema_version"],
+            seed_id=raw["seed_id"],
+            task_id=raw["task_id"],
+            step_id=raw["step_id"],
+            failure_id=raw["failure_id"],
+            failure_packet_ref=raw["failure_packet_ref"],
+            source_outcome_ref=raw["source_outcome_ref"],
+            recovery_directive=RecoveryDirective.from_mapping(raw["recovery_directive"]),
+            evidence_refs=tuple(raw["evidence_refs"]),
+            recovery_archive_ref=raw["recovery_archive_ref"],
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "seed_id": self.seed_id,
+            "task_id": self.task_id,
+            "step_id": self.step_id,
+            "failure_id": self.failure_id,
+            "failure_packet_ref": self.failure_packet_ref,
+            "source_outcome_ref": self.source_outcome_ref,
+            "recovery_directive": self.recovery_directive.to_dict(),
+            "evidence_refs": list(self.evidence_refs),
+            "recovery_archive_ref": self.recovery_archive_ref,
+        }
+
+
 __all__ = [
     "STAGE_CONTRACT_SCHEMA_VERSION",
     "StageContractError",
@@ -1083,4 +1172,5 @@ __all__ = [
     "FailurePacket",
     "RecoverySeed",
     "RecoveryDirective",
+    "GenerateSeed",
 ]

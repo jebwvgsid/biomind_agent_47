@@ -2446,7 +2446,8 @@ class BioAnalystAgent:
             "generate": profile_typed_node(
                 "generate",
                 TypedGenerate(
-                    generator=self._schema2_runtime_sources["generate"]
+                    generator=self._schema2_runtime_sources["generate"],
+                    data_path=self.data_path,
                 ).run,
                 outcome_field="generate_outcome",
                 outcome_contract=GenerateOutcome,

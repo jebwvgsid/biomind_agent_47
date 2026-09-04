@@ -14,9 +14,12 @@ from typing import Any, Awaitable, Callable, Mapping
 
 from langgraph.errors import GraphBubbleUp
 
+from agent_core.plan_tracker import load_plan_state
+from agent_core.workflow.generate_handoff import project_corrective_generate_seed
 from agent_core.workflow.outcomes import (
     ExecuteOutcome,
     GenerateOutcome,
+    RecoveryOutcome,
     route_blind_state_projection,
 )
 
@@ -63,14 +66,70 @@ def _scope(state: Mapping[str, Any], *, action: Mapping[str, Any] | None = None)
 class TypedGenerate:
     """Translate Generate facts and enforce a monotonic corrective loop."""
 
-    def __init__(self, *, generator: NodeCallable, repair_limit: int = 2) -> None:
+    def __init__(
+        self,
+        *,
+        generator: NodeCallable,
+        repair_limit: int = 2,
+        data_path: str | None = None,
+    ) -> None:
         self.generator = generator
         self.repair_limit = max(1, int(repair_limit))
+        self.data_path = str(data_path) if data_path is not None else None
 
     async def run(self, state: Mapping[str, Any]) -> dict[str, Any]:
         state = route_blind_state_projection(state)
+        generator_state = dict(state)
+        raw_recovery = state.get("recovery_outcome")
+        if isinstance(raw_recovery, Mapping):
+            try:
+                recovery_outcome = RecoveryOutcome.from_mapping(raw_recovery)
+            except Exception:
+                recovery_outcome = None
+            if recovery_outcome is not None and recovery_outcome.type == "candidate_repair_required":
+                if self.data_path is None:
+                    return {"generate_outcome": GenerateOutcome(
+                        schema_version=1,
+                        type="internal_protocol_error",
+                        summary="Corrective Generate could not resolve its Recovery handoff.",
+                        scope=_scope(state),
+                        payload={
+                            "error_code": "GENERATE_RECOVERY_DURABLE_STATE_REQUIRED",
+                            "component": "generate_recovery_handoff",
+                            "detail": "TypedGenerate.data_path is not configured.",
+                        },
+                    ).to_dict()}
+                try:
+                    durable = load_plan_state(
+                        self.data_path, str(state.get("task_id") or "default")
+                    )
+                    generate_seed = project_corrective_generate_seed(
+                        recovery_outcome, durable
+                    )
+                except Exception as exc:
+                    return {"generate_outcome": GenerateOutcome(
+                        schema_version=1,
+                        type="internal_protocol_error",
+                        summary="Corrective Generate rejected an invalid Recovery handoff.",
+                        scope=_scope(state),
+                        payload={
+                            "error_code": str(
+                                getattr(exc, "code", None)
+                                or "GENERATE_RECOVERY_HANDOFF_INVALID"
+                            ),
+                            "component": "generate_recovery_handoff",
+                            "detail": str(getattr(exc, "detail", None) or exc)[:800],
+                        },
+                    ).to_dict()}
+                for key in list(generator_state):
+                    if key.startswith("recovery_") or key in {
+                        "messages", "failure_packet", "failure_source",
+                        "active_failure_packet_ref", "_provider_episode",
+                    }:
+                        generator_state.pop(key, None)
+                generator_state["generate_seed"] = generate_seed.to_dict()
         try:
-            result = await self.generator(dict(state))
+            result = await self.generator(generator_state)
         except GraphBubbleUp:
             raise
         except asyncio.CancelledError:

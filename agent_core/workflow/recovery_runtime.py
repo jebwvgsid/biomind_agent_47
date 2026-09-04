@@ -396,12 +396,14 @@ class RecoveryRuntime:
             "schema_version": 1,
             "source_fingerprint": source_fingerprint,
             "directive_digest": directive_digest,
+            "directive": directive_wire,
             "failure_packet_ref": str(
                 state.get("active_failure_packet_ref")
                 or candidate_task.get("active_failure_packet_ref")
                 or ""
             ),
             "recovery_archive_ref": str(state.get("recovery_archive_ref") or ""),
+            "outcome_digest": _full_hash(outcome.to_dict()),
             "outcome": outcome.to_dict(),
         }
         candidate_task["typed_recovery_receipts"] = candidate_receipts
