@@ -1,0 +1,10 @@
+{
+  "base_commit": "e4f01f9969425a07b0903abff1917c19f90ac784",
+  "candidate_version": "e4f01f9969425a07b0903abff1917c19f90ac784 + RT-01 source sha256:a60d70c3d9c9673a7aa25240f8b177994fce6ae7f01869839f296bbcb7fa7750",
+  "production_sources": {
+    "bio_agents.py": "846f75a6e01f53d208f4a7174044f46d475b4461382d20211b11fb85b085d9dd",
+    "agent_core/plan_tracker.py": "0171fa77a8bb76def39bfd7170135a67e2f9dbd71f9c918911ab5a815f92a951",
+    "agent_core/action_runtime.py": "244a4029f89f8630224561c7b43258fd258b8a6390b85a6e76b544e55d74f36e",
+    "agent_core/runtime_evidence.py": "0592e54d55b7dc9beaa83d6994a7ed0e2e25c0fed18a64613ff373ac5a054424"
+  }
+}

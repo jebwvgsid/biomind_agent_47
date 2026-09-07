@@ -34,6 +34,7 @@ from agent_core.task_spec import (
     validate_compiled_constraints,
 )
 from agent_core.state_contract_store import StateContractStore
+from agent_core.runtime_evidence import merge_runtime_evidence, runtime_evidence_state
 from agent_core.active_state import (
     ActiveStateInvariantError,
     GenerationMode,
@@ -9816,6 +9817,28 @@ def initialize_consultant_bootstrap_state(
     return load_plan_state(data_path, task_id)
 
 
+def _accept_runtime_records(task_state, records, *, task_id):
+    prior = dict(task_state.get("runtime_evidence") or {})
+    merged = merge_runtime_evidence(prior.get("records") or [], records, task_id=task_id)
+    if merged != list(prior.get("records") or []):
+        task_state["runtime_evidence"] = runtime_evidence_state(
+            merged, prior_revision=int(prior.get("revision") or 0)
+        )
+    # Compatibility projections are rebuilt from the evidence, never authority.
+    if "runtime_evidence" in task_state:
+        task_state.pop("runtime_audit", None)
+
+
+def commit_runtime_evidence_state(data_path, task_id, records):
+    """Accept inspection evidence with the existing task-state CAS boundary."""
+    state = load_plan_state(data_path, task_id)
+    task_state = deepcopy(dict(state.get("task_state") or {}))
+    _accept_runtime_records(task_state, records, task_id=task_id)
+    state["task_state"] = task_state
+    save_plan_state(data_path, task_id, state)
+    return load_plan_state(data_path, task_id)
+
+
 def commit_consultant_candidate_state(
     data_path: str | Path,
     task_id: str,
@@ -9880,6 +9903,9 @@ def commit_consultant_candidate_state(
         canonical,
         previous=dict(state.get("current_task") or {}),
         generation=int(state.get("state_generation") or 0),
+    )
+    _accept_runtime_records(
+        task_state, proposed.get("runtime_evidence_records") or [], task_id=task_id
     )
     task_state["consultation_state"] = deepcopy(dict(proposed.get("consultation_state") or {}))
     task_state["selected_skills"] = [
@@ -9996,6 +10022,9 @@ def update_task_state_projection(
     if "canonical_task_spec" in projected:
         raise ValueError("CANONICAL_TASKSPEC_WRITE_FORBIDDEN: projection writer")
     projected.pop("task_spec", None)
+    projected.pop("runtime_evidence", None)
+    if "runtime_evidence" in task_state:
+        projected.pop("runtime_audit", None)
     for key, value in projected.items():
         if value is not None:
             task_state[str(key)] = deepcopy(value)

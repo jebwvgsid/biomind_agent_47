@@ -213,8 +213,16 @@ def _registry_record(
 
 def build_runtime_binding_registry(state_or_audits: Any) -> Dict[str, Dict[str, Any]]:
     """Build a canonical registry without exporting compatibility aliases."""
+    evaluations = {}
     if isinstance(state_or_audits, Mapping):
         audits = state_or_audits.get("runtime_audit", []) or []
+        evaluations = state_or_audits.get("runtime_binding_evaluations") or {}
+        task_state = state_or_audits.get("task_state") or {}
+        if "runtime_evidence" in task_state:
+            from agent_core.runtime_evidence import project_runtime_audits, evaluate_runtime_evidence
+            task_id = state_or_audits.get("task_id")
+            audits = project_runtime_audits(task_state, task_id=task_id)
+            evaluations = evaluate_runtime_evidence(task_state, task_id=task_id)
     else:
         audits = state_or_audits or []
     registry: Dict[str, Dict[str, Any]] = {}
@@ -269,6 +277,17 @@ def build_runtime_binding_registry(state_or_audits: Any) -> Dict[str, Dict[str, 
                 value_kind="executable_path",
                 audit=audit,
             )
+    # A derived path never overrules an explicit negative or conflict about
+    # that fact. Apply this rule to every materialized binding, independent of
+    # the tool-specific derivations already supported above.
+    for binding_id, evaluation in evaluations.items():
+        availability = evaluation.get("availability")
+        if availability in {"UNAVAILABLE", "AMBIGUOUS"}:
+            registry[binding_id] = {
+                "binding_id": binding_id,
+                "status": "unavailable" if availability == "UNAVAILABLE" else "ambiguous",
+                "runtime_evidence": deepcopy(evaluation),
+            }
     return {key: registry[key] for key in sorted(registry)}
 
 

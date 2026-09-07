@@ -166,13 +166,13 @@ class ActionScopedRuntimeBindingTests(unittest.TestCase):
 
         self.assertEqual(raised.exception.code, "UNDECLARED_RUNTIME_BINDING")
 
-    def test_provider_projection_has_references_not_paths_or_unrelated_bindings(self):
+    def test_provider_projection_has_exact_current_value_and_no_unrelated_bindings(self):
         projection = project_action_runtime_for_provider(self._resolve("demo.run"))
         rendered = str(projection)
 
         self.assertIn("runtime.tool.bin", rendered)
-        self.assertIn("$TOOL_BIN", rendered)
-        self.assertNotIn(self.paths["tool_bin"], rendered)
+        self.assertIn(self.paths["tool_bin"], rendered)
+        self.assertNotIn("$TOOL_BIN", rendered)
         self.assertNotIn("runtime.java.bin", rendered)
         self.assertNotIn("runtime.snpeff.jar", rendered)
 

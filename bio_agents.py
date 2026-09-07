@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import random
+import platform
 import re
 import shutil
 import shlex
@@ -509,6 +510,7 @@ from agent_core.plan_tracker import (
     build_plan_state,
     canonical_task_spec_for_state,
     commit_consultant_candidate_state,
+    commit_runtime_evidence_state,
     carry_forward_completed_execution_history,
     increment_plan_budget,
     record_recovery_counter_once,
@@ -676,8 +678,12 @@ from agent_core.controller_audit import (
     project_script_repair_candidate,
     script_references_env,
 )
+from agent_core.runtime_evidence import (
+    make_runtime_evidence, project_runtime_audits, evaluate_runtime_evidence,
+)
 from agent_core.action_runtime import (
     ActionRuntimeContractError,
+    stable_digest,
     assert_current_action_runtime_scope,
     build_action_approval_identity,
     build_exact_action_environment,
@@ -4823,7 +4829,11 @@ class BioAnalystAgent:
                 or ""
             ),
             "runtime_status": values.get("runtime_status") or self._runtime_status_for_task(task_id),
-            "runtime_audit": values.get("runtime_audit") or task_state.get("runtime_audit") or [],
+            "runtime_audit": (
+                self._runtime_audit_projection(task_id)
+                if workflow_routing_schema_version(plan_state, values) == WORKFLOW_ROUTING_SCHEMA_TYPED
+                else values.get("runtime_audit") or task_state.get("runtime_audit") or []
+            ),
             "input_audit": values.get("input_audit") or task_state.get("input_audit") or {},
             "pending_action": values.get("pending_action") or task_state.get("pending_action") or {},
             "pending_human_question": values.get("pending_human_question") or task_state.get("pending_question") or {},
@@ -7819,7 +7829,17 @@ class BioAnalystAgent:
         """Commit a validated Consultant proposal before it leaves the node."""
         projected = dict(update or {})
         proposed_task = projected.get("task_spec")
+        runtime_records = [
+            deepcopy(item["runtime_evidence_record"])
+            for item in projected.get("runtime_audit", []) or []
+            if isinstance(item, Mapping) and "runtime_evidence_record" in item
+        ]
         if not task_spec_is_initialized(proposed_task):
+            if runtime_records:
+                commit_runtime_evidence_state(self.data_path, task_id, runtime_records)
+                projected["runtime_audit"] = self._runtime_audit_projection(
+                    task_id, projected.get("selected_skills") or None
+                )
             return projected
         durable_before = load_plan_state(self.data_path, task_id)
         task_state_before = dict(durable_before.get("task_state") or {})
@@ -7847,6 +7867,7 @@ class BioAnalystAgent:
                 or {}
             ),
             "pending_question": dict(pending_question),
+            "runtime_evidence_records": runtime_records,
         }
         skill_selection_changed = False
         for skill_transaction_field in (
@@ -8461,6 +8482,8 @@ class BioAnalystAgent:
         )
         committed_task = canonical_task_spec_for_state(committed)
         committed_state = dict(committed.get("task_state") or {})
+        if "runtime_evidence" in committed_state:
+            projected["runtime_audit"] = self._runtime_audit_projection(task_id)
         projected.update({
             "task_spec": deepcopy(committed_task),
             "task_revision": task_spec_revision(committed_task),
@@ -10424,7 +10447,7 @@ class BioAnalystAgent:
                     step.get("capability_contract_hash") or ""
                 ),
                 capability_registry=capability_registry,
-                ready_runtime_binding_registry=build_runtime_binding_registry(state),
+                ready_runtime_binding_registry=build_runtime_binding_registry(self._runtime_binding_source(state, [selected_skill_id])),
                 current_action_identity={
                     "plan_id": plan_id,
                     "step_id": step_id,
@@ -10541,7 +10564,7 @@ class BioAnalystAgent:
                     step.get("capability_contract_hash") or ""
                 ),
                 capability_registry=capability_registry,
-                ready_runtime_binding_registry=build_runtime_binding_registry(state),
+                ready_runtime_binding_registry=build_runtime_binding_registry(self._runtime_binding_source(state, [selected_skill_id])),
                 current_action_identity={
                     "action_id": action_id,
                     "plan_id": plan_id,
@@ -15254,6 +15277,7 @@ class BioAnalystAgent:
         healthcheck: str,
         env_runner: str,
         mode: str = "",
+        observed_at: str = "",
     ):
         if not hasattr(self, "runtime_status") or self.runtime_status is None:
             self.runtime_status = {}
@@ -15266,7 +15290,7 @@ class BioAnalystAgent:
             "detail": detail or "",
             "healthcheck": healthcheck or "",
             "env_runner": env_runner or "",
-            "checked_at": datetime.now().isoformat(timespec="seconds"),
+            "checked_at": observed_at or datetime.now().astimezone().isoformat(timespec="seconds"),
         }
 
     @staticmethod
@@ -15461,6 +15485,8 @@ class BioAnalystAgent:
                 detail or ("OK" if ok else "Healthcheck failed."),
                 resolved_healthcheck,
                 requirements.get("env_runner", ""),
+                observed_at=(str(self.pm.get_environment(env).get("last_verified_at") or "")
+                             if recent_detail is not None else ""),
             )
         if not ok:
             return ok, detail, env
@@ -15572,7 +15598,7 @@ class BioAnalystAgent:
             })
         return found
 
-    def _runtime_audit_for_skill(self, skill_id: str, task_id: str) -> Dict[str, Any]:
+    def _runtime_audit_for_skill(self, skill_id: str, task_id: str, *, use_cache: bool = True) -> Dict[str, Any]:
         requirements = self._skill_runtime_requirements(skill_id)
         declared_env = str(requirements.get("env") or requirements.get("default_env") or "").strip()
         healthcheck = self._runtime_healthcheck_for_env(requirements, declared_env)
@@ -15684,17 +15710,26 @@ class BioAnalystAgent:
         audit["registered_tools"] = self._registered_runtime_tools(requirements)
 
         code_hint = self._consultant_runtime_code_hint(skill_id)
+        inspection_started_at = datetime.now().astimezone().isoformat()
         ok, detail, checked_env = self._verify_skill_runtime(
             skill_id,
             task_id=task_id,
-            use_cache=True,
+            use_cache=use_cache,
             code=code_hint,
         )
         audit["declared_ok"] = bool(ok)
         audit["declared_detail"] = detail or ("OK" if ok else "Healthcheck failed.")
         audit["checked_env"] = checked_env or declared_env
+        cache = getattr(self, "runtime_status", {}).get(task_id, {}).get(
+            self._runtime_cache_key(skill_id, checked_env or declared_env), {}
+        )
+        audit["observed_at"] = str(cache.get("checked_at") or inspection_started_at)
         if ok:
             audit["decision"] = "runtime_ready"
+            return finalize()
+
+        if not use_cache:
+            audit["decision"] = "declared_runtime_healthcheck_failed"
             return finalize()
 
         match = None
@@ -15842,6 +15877,8 @@ class BioAnalystAgent:
         self,
         selected_skills: Optional[List[str]],
         task_id: str,
+        *,
+        require_scoped_evidence: bool = False,
     ) -> Tuple[List[Dict[str, Any]], str]:
         """Verify selected runtimes and return structured plus prompt-safe audit evidence."""
         if not getattr(self, "skill_manager", None) or not getattr(self, "pm", None):
@@ -15865,7 +15902,21 @@ class BioAnalystAgent:
                 continue
             requirements = self._skill_runtime_requirements(sid)
             env = str(requirements.get("env") or requirements.get("default_env") or "").strip()
-            audit = self._runtime_audit_for_skill(sid, task_id)
+            restored = self._runtime_audit_projection(task_id, [sid]) if require_scoped_evidence else []
+            if restored:
+                audits.extend(restored)
+                rows.append(f"- {sid}: verified task evidence restored; env={env}")
+                continue
+            observation_scope = self._runtime_evidence_scope(sid) if require_scoped_evidence else {}
+            audit = (
+                self._runtime_audit_for_skill(sid, task_id, use_cache=False)
+                if require_scoped_evidence else self._runtime_audit_for_skill(sid, task_id)
+            )
+            if require_scoped_evidence:
+                audit["runtime_observation_scope"] = observation_scope
+                if observation_scope != self._runtime_evidence_scope(sid):
+                    audit.update(status="unknown", declared_ok=False,
+                                 availability_status="unknown", reason_code="RUNTIME_EVIDENCE_SCOPE_CHANGED")
             audits.append(audit)
             ok = bool(audit.get("declared_ok"))
             detail = str(audit.get("reason") or audit.get("declared_detail") or "")
@@ -15901,20 +15952,123 @@ class BioAnalystAgent:
         )
         return audits, summary
 
+    def _runtime_evidence_scope(self, skill_id: str) -> Dict[str, str]:
+        """Current declared runtime subject; never derived from model output."""
+        manager = getattr(self, "skill_manager", None)
+        meta = manager.get_skill_meta(skill_id) if manager else {}
+        document_digest = str(meta.get("_skill_content_hash") or "").removeprefix("sha256:")
+        try:
+            document = Path(meta["_skill_md"]).resolve(strict=True)
+            document.relative_to(Path(manager.skills_root).resolve())
+            if hashlib.sha256(document.read_bytes()).hexdigest() != document_digest:
+                document_digest = ""  # cached contract no longer describes this document
+        except (KeyError, OSError, ValueError, AttributeError):
+            document_digest = ""
+        requirements = self._skill_runtime_requirements(skill_id)
+        environment = str(requirements.get("env") or requirements.get("default_env") or "")
+        root = str(getattr(getattr(self, "pm", None), "conda_root", "") or "")
+        prefix = Path(root) / "envs" / environment if root and environment else None
+        identity = {}
+        if prefix is not None:
+            try:
+                stat = prefix.stat()
+                identity = {"path": str(prefix.resolve()), "device": stat.st_dev, "inode": stat.st_ino,
+                            "env_runner": str(requirements.get("env_runner") or "")}
+            except OSError:
+                pass
+        contract = manager.get_execution_capability_registry([skill_id]) if manager else {}
+        method = self._runtime_healthcheck_for_env(requirements, environment)
+        return {
+            "skill_id": skill_id,
+            "skill_document_digest": "sha256:" + document_digest if document_digest else "",
+            "skill_contract_digest": stable_digest(contract) if contract else "",
+            "environment_id": environment,
+            "environment_fingerprint": stable_digest(identity) if identity else "",
+            "host_id": stable_digest({"host": platform.node(), "system": platform.system(), "machine": platform.machine()}),
+            "inspection_contract_digest": stable_digest(method) if method else "",
+        }
+
+    def _runtime_audit_projection(self, task_id: str, skill_ids=None) -> List[Dict[str, Any]]:
+        durable = load_plan_state(self.data_path, task_id)
+        task_state = dict(durable.get("task_state") or {})
+        if "runtime_evidence" not in task_state:
+            return []
+        selected = list(skill_ids if skill_ids is not None else (
+            task_state.get("selected_skills") or durable.get("selected_skill_ids") or []
+        ))
+        return [audit for skill_id in selected for audit in project_runtime_audits(
+            task_state, task_id=task_id, skill_scope=self._runtime_evidence_scope(skill_id)
+        )]
+
+    def _runtime_binding_source(self, state: Mapping[str, Any], skill_ids=None) -> Mapping[str, Any]:
+        task_id = str(state.get("task_id") or state.get("session_id") or "")
+        durable = load_plan_state(self.data_path, task_id)
+        if workflow_routing_schema_version(durable, state) != WORKFLOW_ROUTING_SCHEMA_TYPED:
+            return state
+        task_state = dict(durable.get("task_state") or {})
+        selected = list(skill_ids if skill_ids is not None else (
+            task_state.get("selected_skills") or durable.get("selected_skill_ids") or []
+        ))
+        evaluations = {}
+        for skill_id in selected:
+            evaluations.update(evaluate_runtime_evidence(
+                task_state, task_id=task_id, skill_scope=self._runtime_evidence_scope(skill_id)
+            ))
+        return {"runtime_audit": self._runtime_audit_projection(task_id, selected),
+                "runtime_binding_evaluations": evaluations}
+
     def _consultant_runtime_seed_evidence(
         self,
         selected_skills: Sequence[str],
         task_id: str,
     ) -> Tuple[List[Dict[str, Any]], Dict[str, Dict[str, Any]], str]:
         """Run controller-owned runtime checks and key them for the evidence ledger."""
+        durable = load_plan_state(self.data_path, task_id)
+        if workflow_routing_schema_version(durable) != WORKFLOW_ROUTING_SCHEMA_TYPED:
+            audits, summary = self._consultant_runtime_preflight(list(selected_skills or []), task_id)
+            return audits, {
+                str(audit.get("skill_id") or audit.get("skill")): dict(audit)
+                for audit in audits if audit.get("skill_id") or audit.get("skill")
+            }, summary
         audits, summary = self._consultant_runtime_preflight(
             list(selected_skills or []),
             task_id,
+            require_scoped_evidence=True,
         )
+        durable_records = {
+            record["evidence_id"]: record for record in (
+                (load_plan_state(self.data_path, task_id).get("task_state") or {}).get("runtime_evidence") or {}
+            ).get("records", [])
+        }
         evidence: Dict[str, Dict[str, Any]] = {}
         for audit in audits:
             skill_id = str(audit.get("skill_id") or audit.get("skill") or "").strip()
             if skill_id:
+                previous = durable_records.get(audit.get("runtime_audit_id"))
+                if previous:
+                    audit["runtime_evidence_record"] = deepcopy(previous)
+                    audit["declared_ok"] = True
+                    evidence[skill_id] = dict(audit)
+                    continue
+                scope = dict(audit.get("runtime_observation_scope") or self._runtime_evidence_scope(skill_id))
+                cache = getattr(self, "runtime_status", {}).get(task_id, {}).get(
+                    self._runtime_cache_key(skill_id, str(audit.get("env") or "")), {}
+                )
+                # Cache reuse preserves its original observation time. Missing
+                # producer timestamps do not manufacture a fresh observation.
+                observed_at = str(audit.get("observed_at") or cache.get("checked_at") or "")
+                if observed_at:
+                    try:
+                        observed_at = datetime.fromisoformat(observed_at).astimezone().isoformat()
+                    except ValueError:
+                        observed_at = ""
+                if not observed_at:
+                    evidence[skill_id] = dict(audit)
+                    continue
+                audit["runtime_evidence_record"] = make_runtime_evidence(
+                    audit, task_id=task_id, skill_scope=scope,
+                    observed_at=observed_at,
+                )
                 evidence[skill_id] = dict(audit)
         return audits, evidence, summary
 
@@ -29348,7 +29502,13 @@ question. Never guess a scientific or database identity.
                                 if isinstance(item, Mapping) and str(item.get("path") or "")
                             }),
                         },
-                        "runtime_checks": deepcopy(runtime_seed_audits),
+                        "runtime_checks": [
+                            {key: deepcopy(audit[key]) for key in (
+                                "skill_id", "env", "status", "healthcheck_status",
+                                "reason_code", "resolved_runtime_paths",
+                            ) if key in audit}
+                            for audit in runtime_seed_audits
+                        ],
                     },
                     evidence=semantic_conversation_evidence,
                     allowed_operations=[
@@ -31702,6 +31862,7 @@ question. Never guess a scientific or database identity.
                             )),
                         ],
                         "task_spec": candidate["task_spec"],
+                        "runtime_audit": candidate_runtime_audits,
                         "task_revision": task_spec_revision(candidate["task_spec"]),
                         "selected_skills": selected,
                         "resolved_bindings": candidate.get("resolved_bindings") or {},
@@ -31732,6 +31893,7 @@ question. Never guess a scientific or database identity.
                                 "</skill_selection_observation>"
                             )),
                         ],
+                        "runtime_audit": candidate_runtime_audits,
                         "selected_skills": selected,
                         "selected_skills_raw": list(raw_selected),
                         "resolved_bindings": candidate.get("resolved_bindings") or {},
@@ -31781,6 +31943,7 @@ question. Never guess a scientific or database identity.
                     })
                     committed_update = commit_candidate_update({
                         "messages": [AIMessage(content=raw_content)],
+                        "runtime_audit": candidate_runtime_audits,
                         "selected_skills": selected,
                         "selected_skills_raw": list(raw_selected),
                         "resolved_bindings": candidate.get("resolved_bindings") or {},
@@ -33349,7 +33512,7 @@ question. Never guess a scientific or database identity.
                 immutable_consultant_contract
                 or dict(consultation_owner.get("final_contract") or {})
             )
-            runtime_audits = list(state.get("runtime_audit", []) or [])
+            runtime_audits = list(self._runtime_binding_source(state).get("runtime_audit") or [])
             selected_skills = state.get("selected_skills", []) or []
             # Planner schedules the Consultant-selected pool. No skill is
             # active until an approved plan step starts.
@@ -35827,7 +35990,7 @@ question. Never guess a scientific or database identity.
                         generate_step.get("capability_contract_hash") or ""
                     ),
                     capability_registry=capability_registry,
-                    ready_runtime_binding_registry=build_runtime_binding_registry(state),
+                    ready_runtime_binding_registry=build_runtime_binding_registry(self._runtime_binding_source(state, [generate_selected_skill_id])),
                     current_action_identity={
                         "plan_id": str(generate_plan_state.get("plan_id") or ""),
                         "step_id": current_step_id,
@@ -39038,7 +39201,7 @@ question. Never guess a scientific or database identity.
                         if self.skill_manager
                         else {}
                     )
-                    runtime_binding_registry = build_runtime_binding_registry(state)
+                    runtime_binding_registry = build_runtime_binding_registry(self._runtime_binding_source(state, [str(pending_action.get("selected_skill_id") or "")]))
                     current_runtime_resolution = resolve_action_runtime_bindings(
                         selected_skill_id=str(
                             pending_action.get("selected_skill_id") or ""
