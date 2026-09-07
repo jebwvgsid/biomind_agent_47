@@ -63,3 +63,19 @@ def test_secure_open_rejects_link_swap(tmp_path):
     path.unlink();path.symlink_to(tmp_path/"elsewhere")
     with pytest.raises(ResourceLocatorError,match="SYMLINK_DENIED"):
         with open_approved_resource(path): pass
+
+
+def test_durable_authority_is_rechecked_before_inspect_and_read(tmp_path):
+    fixture=fixtures.RecoveryToolsTests(methodName='runTest');fixture.setUp()
+    try:
+        durable=deepcopy(fixture.durable)
+        authority=fixture.phase_store.root.parent/'task_outputs'/fixture.seed.failure_packet.task_id/'plan_state.json'
+        authority.parent.mkdir(parents=True,exist_ok=True);authority.write_text(json.dumps(durable))
+        registry=build_recovery_inspection_registry(fixture.seed,durable,phase_store=fixture.phase_store)
+        dispatcher=RecoveryLocalToolDispatcher(seed=fixture.seed,durable=durable,registry=registry,phase_store=fixture.phase_store)
+        ref=next(row['ref_id'] for row in registry.provider_manifest() if row['kind']=='artifact')
+        durable['current_task']['task_revision']+=1;authority.write_text(json.dumps(durable))
+        for tool in ('artifact.inspect','artifact.read'):
+            with pytest.raises(RecoveryToolError,match='ARTIFACT_AUTHORITY_STALE'):
+                dispatcher.dispatch(tool,{'ref_id':ref})
+    finally:fixture.tearDown()

@@ -360,6 +360,8 @@ class RecoveryLocalToolDispatcher:
         self.seed = seed if isinstance(seed, RecoverySeed) else RecoverySeed.from_mapping(seed)
         self.durable = deepcopy(dict(durable))
         self.registry = registry
+        authority = Path(phase_store.root.parent) / "task_outputs" / self.seed.failure_packet.task_id / "plan_state.json"
+        self._artifact_authority_path = authority if authority.is_file() else None
         self.phase_service = PhaseInspectionService(
             phase_store,
             reference_resolver=lambda ref: next(
@@ -523,6 +525,28 @@ class RecoveryLocalToolDispatcher:
         )
         if any(key in args for key in ("path", "canonical_path", "resolved_path", "root", "task_id", "revision")):
             raise RecoveryToolError("ARTIFACT_AUTHORITY_ARGUMENT_FORBIDDEN", entry.ref_id)
+        if self._artifact_authority_path is not None:
+            # Production managed readers recheck the current durable resource
+            # authority. Legacy in-memory dispatchers retain registry scope.
+            try:
+                with open_approved_resource(self._artifact_authority_path) as stream:
+                    encoded = stream.read(16 * 1024 * 1024 + 1)
+                if len(encoded) > 16 * 1024 * 1024:
+                    raise RecoveryToolError("ARTIFACT_AUTHORITY_SIZE_LIMIT", entry.ref_id)
+                fresh = json.loads(encoded)
+                if not isinstance(fresh, Mapping): raise ValueError()
+            except OSError as exc:
+                raise RecoveryToolError("ARTIFACT_AUTHORITY_IO_ERROR", entry.ref_id) from exc
+            except (ValueError, TypeError) as exc:
+                if isinstance(exc, RecoveryToolError): raise
+                raise RecoveryToolError("ARTIFACT_AUTHORITY_INVALID", entry.ref_id) from exc
+            for key in ("task_id", "plan_id", "plan_version", "current_step_id", "plan_revision"):
+                if fresh.get(key) != self.durable.get(key):
+                    raise RecoveryToolError("ARTIFACT_AUTHORITY_STALE", key)
+            current, expected = fresh.get("current_task") or {}, self.durable.get("current_task") or {}
+            for key in ("task_revision", "task_semantic_hash"):
+                if current.get(key) != expected.get(key):
+                    raise RecoveryToolError("ARTIFACT_AUTHORITY_STALE", key)
         if locator.get("locator_error"):
             raise RecoveryToolError(str(locator["locator_error"]), entry.ref_id)
         raw_path = str(locator.get("path") or "")
