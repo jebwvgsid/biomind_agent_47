@@ -33008,15 +33008,38 @@ question. Never guess a scientific or database identity.
                         "pending_action": {},
                         "next_step": "planner",
                     }
+            planner_entry_state = load_plan_state(self.data_path, task_id)
+            planner_entry_schema = workflow_routing_schema_version(planner_entry_state, state)
+            schema2_handoff_ready = bool(
+                consultant_planning_readiness(
+                    planner_entry_state, require_agent_initiated=True,
+                ).get("ready")
+            ) if planner_entry_schema == WORKFLOW_ROUTING_SCHEMA_TYPED else False
             consultation_owner = dict(state.get("consultation_state") or {})
-            planner_protocol = dict(
-                consultation_owner.get("finalize_protocol") or {}
+            if planner_entry_schema == WORKFLOW_ROUTING_SCHEMA_TYPED and not schema2_handoff_ready:
+                return {
+                    "messages": [SystemMessage(content=(
+                        "<planner_contract_gate_pending>"
+                        "SCHEMA2_PLANNING_HANDOFF_REQUIRED"
+                        "</planner_contract_gate_pending>"
+                    ))],
+                    "contract_status": "schema2_planning_handoff_required",
+                    "next_step": "consultant",
+                }
+            # Schema 2 admits only the identity-bound durable handoff. The
+            # versioned FINALIZE protocol remains a schema-1 compatibility gate.
+            planner_protocol = (
+                {} if planner_entry_schema == WORKFLOW_ROUTING_SCHEMA_TYPED
+                else dict(consultation_owner.get("finalize_protocol") or {})
             )
             canonical_candidate_ready = bool(
-                task_spec_is_initialized(task_spec)
-                and (state.get("selected_skills") or consultation_owner.get("resolved_selected_skill_ids"))
-                and str(consultation_owner.get("completion_decision") or "") == "ready_to_finalize"
-                and str(consultation_owner.get("phase") or "") in {"ready", "ready_to_plan", "ready_to_finalize"}
+                schema2_handoff_ready or (
+                    planner_entry_schema != WORKFLOW_ROUTING_SCHEMA_TYPED
+                    and task_spec_is_initialized(task_spec)
+                    and (state.get("selected_skills") or consultation_owner.get("resolved_selected_skill_ids"))
+                    and str(consultation_owner.get("completion_decision") or "") == "ready_to_finalize"
+                    and str(consultation_owner.get("phase") or "") in {"ready", "ready_to_plan", "ready_to_finalize"}
+                )
             )
             immutable_consultant_contract: Dict[str, Any] = {}
             if (
