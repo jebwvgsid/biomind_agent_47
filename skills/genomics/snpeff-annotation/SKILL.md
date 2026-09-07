@@ -131,7 +131,9 @@ metadata:
         optional_runtime_binding_ids: []
         required_artifact_binding_ids: [artifact.variant_vcf, artifact.reference_fasta, artifact.annotation_gtf]
         execution_guidance:
-          - Compare VCF, FASTA, and annotation contig identifiers with read-only text processing.
+          - Emit contigs_compatible as a typed boolean claim. The independent structured parser belongs to the verification layer and checks the exact approved TaskSpec input paths.
+          - "Do not parse VCF ##contig records with free-form grep or awk; comma-delimited metadata such as length and assembly is not part of the contig ID."
+          - Review method concerns against the specific approved requirement, execution record, and independent parser receipt. Distinguish an observed violation from uncertainty; an action need not call an internal parser entrypoint unless the approved contract explicitly requires it.
           - Use the supplied concrete artifact paths explicitly; this capability has no runtime resources.
       - capability_id: genomics.snpeff_annotation.build_database
         required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
