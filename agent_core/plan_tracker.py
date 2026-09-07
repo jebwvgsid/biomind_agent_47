@@ -10023,6 +10023,7 @@ def update_task_state_projection(
         raise ValueError("CANONICAL_TASKSPEC_WRITE_FORBIDDEN: projection writer")
     projected.pop("task_spec", None)
     projected.pop("runtime_evidence", None)
+    projected.pop("runtime_recovery", None)
     if "runtime_evidence" in task_state:
         projected.pop("runtime_audit", None)
     for key, value in projected.items():

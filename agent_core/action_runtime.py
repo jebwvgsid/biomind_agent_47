@@ -282,10 +282,12 @@ def build_runtime_binding_registry(state_or_audits: Any) -> Dict[str, Dict[str, 
     # the tool-specific derivations already supported above.
     for binding_id, evaluation in evaluations.items():
         availability = evaluation.get("availability")
-        if availability in {"UNAVAILABLE", "AMBIGUOUS"}:
+        if availability in {"UNAVAILABLE", "AMBIGUOUS"} or (
+            availability == "UNKNOWN" and evaluation.get("evidence_ids")
+        ):
             registry[binding_id] = {
                 "binding_id": binding_id,
-                "status": "unavailable" if availability == "UNAVAILABLE" else "ambiguous",
+                "status": availability.lower(),
                 "runtime_evidence": deepcopy(evaluation),
             }
     return {key: registry[key] for key in sorted(registry)}
@@ -390,6 +392,9 @@ def resolve_action_runtime_bindings(
                 selected_skill_id=str(selected_skill_id or ""),
                 binding_id=binding_id,
                 required=binding_id in required,
+                failure_scope="runtime_fact",
+                availability=("UNAVAILABLE" if record.get("status") == "unavailable" else
+                              "AMBIGUOUS" if record.get("status") == "ambiguous" else "UNKNOWN"),
                 available_runtime_binding_ids=sorted(
                     key for key, value in ready_runtime_binding_registry.items()
                     if str((value or {}).get("status") or "") == "ready"
@@ -441,6 +446,32 @@ def resolve_action_runtime_bindings(
         "runtime_binding_manifest": manifest,
         "runtime_binding_manifest_hash": manifest["manifest_hash"],
     }
+
+
+def validate_runtime_paths_prelaunch(resolution: Mapping[str, Any]) -> None:
+    """Recheck the accepted values without rebuilding approval or evidence."""
+    values = resolution.get("effective_runtime_bindings") or {}
+    for record in resolution.get("runtime_binding_records") or []:
+        value = str(values.get(str(record.get("env_name") or "")) or "")
+        kind = str(record.get("value_kind") or "path")
+        path = Path(value)
+        try:
+            valid = path.is_absolute() and path.exists() and os.access(path, os.R_OK)
+            if kind == "directory_path":
+                valid = valid and path.is_dir() and os.access(path, os.X_OK)
+            elif kind == "executable_path":
+                valid = valid and path.is_file() and os.access(path, os.X_OK)
+            elif kind in {"file_path", "jar_path"}:
+                valid = valid and path.is_file() and path.stat().st_size > 0
+        except (OSError, ValueError):
+            valid = False
+        if not valid:
+            raise ActionRuntimeContractError(
+                "RUNTIME_BINDING_PRELAUNCH_PATH_INVALID",
+                binding_id=str(record.get("binding_id") or ""),
+                value_kind=kind, execution_started=False,
+                approved_value_digest=str(record.get("value_digest") or ""),
+            )
 
 
 def project_action_runtime_for_provider(resolution: Mapping[str, Any]) -> Dict[str, Any]:

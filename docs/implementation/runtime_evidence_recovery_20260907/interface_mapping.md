@@ -9,3 +9,20 @@ Records retain immutable observation identity, trusted producer/source, Skill do
 `evaluate_runtime_evidence` preserves UNKNOWN / AVAILABLE / UNAVAILABLE / AMBIGUOUS separately from inspection status. Explicit negative/conflict facts override materialized paths generically, including existing derivations. Runtime schema-2 consumption filters current scope; an absent graph schema field cannot select legacy authority. Old summary-only state remains UNKNOWN. Schema-1 decoding and the old projection remain supported.
 
 RT-02/03 are not delivered by this commit: typed acquisition/resume, durable episodes/budgets and runtime-specific Recovery/reporting remain subsequent work. The resolver still has its prior terminal missing-binding control path until RT-02.
+
+
+## RT-02 / deterministic RT-03 production mapping
+
+| Responsibility | Producer / consumer | Durable authority |
+|---|---|---|
+| Missing required fact | resolve_action_runtime_bindings → _generate_impl → TypedGenerate | runtime_fact diagnostic; request before provider |
+| Conditional continuation | GenerateOutcome.runtime_evidence_required → runtime_graph → Schema2RecoveryNode | Graph owns destinations |
+| Evidence episode | RuntimeEvidenceRecovery.create_request / recover | task_state.runtime_recovery; PlanTracker CAS |
+| Inspection contract | RuntimeInspectionAdapter.describe → inspect → BubblewrapRuntimeProbe | selected Skill declaration, frozen scope, durable dispatch receipt |
+| Acceptance and retry | runtime_evidence.merge_runtime_evidence → CAS → reload resolver → RecoveryOutcome.runtime_evidence_ready | task_state.runtime_evidence; same plan/step, original guards |
+| Stopped result | finalize_runtime_recovery_result → typed runtime_recovery_stopped → outer result projection | scoped task_state.runtime_recovery_result and report receipts |
+| Shared approval scope | runtime_authorization_scope_digest | service and report use one pure definition |
+| Required user fact | persisted pending_question → existing user_input_required / AskUser / Consultant | immutable conversation answer; never auto approval |
+| Execution last check | validate_runtime_paths_prelaunch | accepted manifest values, no manifest recomputation |
+
+Current compatible-cache and runtime LLM strategy producer/consumer gaps are explicitly recorded in the acceptance matrix; ordinary Recovery retains its prior interfaces.

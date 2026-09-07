@@ -46,6 +46,7 @@ class Schema2RecoveryNode:
         saver: Saver = save_plan_state,
         repair_limit: int = 2,
         loop_config: RecoveryAgentLoopConfig | None = None,
+        runtime_recovery: Callable | None = None,
     ) -> None:
         self.data_path = str(data_path)
         self.model = model
@@ -60,6 +61,7 @@ class Schema2RecoveryNode:
             repair_limit=repair_limit,
         )
         self.loop_config = loop_config or RecoveryAgentLoopConfig()
+        self.runtime_recovery = runtime_recovery
 
     @staticmethod
     def _internal(
@@ -99,6 +101,11 @@ class Schema2RecoveryNode:
         task_id = str(state.get("task_id") or "")
         if not task_id:
             raise ValueError("SCHEMA2_RECOVERY_TASK_ID_REQUIRED")
+        if state.get("pending_runtime_evidence_request"):
+            if self.runtime_recovery is None:
+                return self._internal(task_id=task_id, durable={},
+                                      code="RUNTIME_RECOVERY_HANDLER_MISSING")
+            return await self.runtime_recovery(state)
         durable = self.loader(self.data_path, task_id)
         try:
             projection = project_recovery_seed(state, durable)

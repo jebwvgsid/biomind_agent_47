@@ -45,6 +45,8 @@ def route_generate_outcome(state: Mapping[str, Any]) -> str:
         return "consultant" if changed & {"task_revision", "authoritative_user_turn_revision"} else "planner"
     return {
         "action_ready": "execute",
+        "runtime_evidence_required": "recovery",
+        "runtime_recovery_stopped": END,
         "completion_claimed": "supervisor",
         "user_input_needed": "ask_user",
         "plan_revision_needed": "planner",
@@ -116,6 +118,8 @@ def route_recovery_outcome(state: Mapping[str, Any]) -> str:
     outcome = RecoveryOutcome.from_mapping(state.get("recovery_outcome") or {})
     return {
         "candidate_repair_required": "generate",
+        "runtime_evidence_ready": "generate",
+        "runtime_recovery_stopped": END,
         "plan_revision_required": "planner",
         "reconsultation_required": "consultant",
         "revalidation_required": "supervisor",
@@ -188,7 +192,7 @@ def build_schema2_runtime_graph(
     graph.add_conditional_edges(
         "generate",
         generate_route,
-        ["generate", "execute", "supervisor", "planner", "consultant", "ask_user", END],
+        ["generate", "execute", "supervisor", "planner", "consultant", "ask_user", "recovery", END],
     )
     graph.add_conditional_edges(
         "execute",
@@ -360,7 +364,7 @@ def build_schema2_production_graph(
     graph.add_conditional_edges("ask_user", ask_user_route, ["consultant", "planner", "generate", "supervisor", "recovery", END])
     graph.add_conditional_edges("install_subagent", install_route, ["generate", "recovery", END])
     graph.add_conditional_edges("step_worker", step_worker_route, ["supervisor", "planner", END])
-    graph.add_conditional_edges("generate", generate_route, ["generate", "execute", "supervisor", "planner", "consultant", "ask_user", END])
+    graph.add_conditional_edges("generate", generate_route, ["generate", "execute", "supervisor", "planner", "consultant", "ask_user", "recovery", END])
     graph.add_conditional_edges("execute", execute_route, ["supervisor", "recovery", "generate", "planner", "consultant", "ask_user", "install_subagent", END])
     graph.add_conditional_edges("supervisor", verification_route, ["commit_step", "recovery", END])
     graph.add_conditional_edges("commit_step", commit_route, ["generate", "final_audit", "recovery", END])

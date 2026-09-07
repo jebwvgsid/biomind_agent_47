@@ -230,6 +230,9 @@ class AgentState(TypedDict, total=False):
     failure_source: dict
     active_failure_packet_ref: str
     recovery_outcome: dict
+    # Compatibility projections of task-owned pre-generation runtime recovery.
+    pending_runtime_evidence_request: dict
+    runtime_recovery_result: dict
     final_audit_outcome: dict
     triage_outcome: dict
     consultant_outcome: dict

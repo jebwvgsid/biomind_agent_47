@@ -2321,9 +2321,30 @@ def seed_structured_evidence(
 def route_runtime_preflight(
     task_spec: Mapping[str, Any] | None,
     runtime_evidence: Mapping[str, Mapping[str, Any]] | None,
+    *,
+    schema_version: int = 1,
+    required_binding_ids: Sequence[str] = (),
+    binding_evaluations: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> Dict[str, Any]:
     """Route checked runtime availability without reopening semantic closure."""
     policy = runtime_failure_policy(task_spec)
+    if schema_version == 2:
+        # Checked summaries and empty lists do not establish capability facts.
+        # This is a readiness projection; typed Generate owns acquisition.
+        facts = {binding: str((binding_evaluations or {}).get(binding, {}).get("availability") or "UNKNOWN")
+                 for binding in required_binding_ids}
+        if any(value == "AMBIGUOUS" for value in facts.values()):
+            code = "RUNTIME_EVIDENCE_CONFLICT"
+        elif any(value == "UNAVAILABLE" for value in facts.values()):
+            code = "RUNTIME_DEPENDENCY_CONFIRMED_UNAVAILABLE"
+        elif any(value != "AVAILABLE" for value in facts.values()):
+            code = "RUNTIME_EVIDENCE_PENDING"
+        else:
+            code = "RUNTIME_READY"
+        return {"route": "planner", "code": code, "policy": policy,
+                "execution_started": False, "failure_owner": "",
+                "required_binding_availability": facts,
+                "affected_skill_ids": []}
     audits = {
         str(skill_id): dict(item)
         for skill_id, item in dict(runtime_evidence or {}).items()

@@ -473,6 +473,7 @@ from agent_core.plan_tracker import (
     ATTEMPT_APPROVED,
     ATTEMPT_COMPLETED,
     ATTEMPT_EVIDENCE_COMMITTED,
+    ATTEMPT_FAILED,
     ATTEMPT_PROCESS_EXITED,
     ATTEMPT_RUNNING,
     ATTEMPT_SCRIPT_READY,
@@ -694,6 +695,7 @@ from agent_core.action_runtime import (
     resolve_action_runtime_bindings,
     serialize_action_capability_instructions,
     validate_action_approval_identity,
+    validate_runtime_paths_prelaunch,
     validate_manifest_hash,
 )
 from agent_core.plan_bindings import (
@@ -2440,6 +2442,7 @@ class BioAnalystAgent:
             model=self.recovery_llm,
             phase_store=self.phase_archive_store,
             skill_service=self.skill_access_service,
+            runtime_recovery=self._recover_runtime_evidence,
         )
         causal_failure_binder = CausalFailurePacketBinder(
             data_path=self.data_path
@@ -4324,6 +4327,7 @@ class BioAnalystAgent:
         if workflow_routing_schema_version(durable, values) != WORKFLOW_ROUTING_SCHEMA_TYPED:
             raise ValueError("SCHEMA2_RESUME_REQUIRES_TYPED_CHECKPOINT")
         task_state_value = dict(durable.get("task_state") or {})
+        runtime_request = self._durable_runtime_request(durable)
         persisted_recovery = RecoveryStateStore(self.data_path, task_id).load_phase()
         recovery = self._merge_recovery_phase_evidence(
             task_state_value.get("recovery_state") or {}, persisted_recovery
@@ -4365,6 +4369,8 @@ class BioAnalystAgent:
             semantic, reason = "installation_pending", "installation_action_pending"
         elif pending_action:
             semantic, reason = "action_execution_ready", "validated_action_pending"
+        elif runtime_request:
+            semantic, reason = "recovery_pending", "runtime_evidence_episode_pending"
         elif recovery_phase in {
             "capture", "unwrap", "diagnose", "probe", "plan_repair",
             "apply_repair", "rerun", "verify", "rollback",
@@ -4469,6 +4475,8 @@ class BioAnalystAgent:
             "pending_action": deepcopy(dict(values.get("pending_action") or task_state_value.get("pending_action") or {})),
             "pending_human_question": deepcopy(dict(values.get("pending_human_question") or task_state_value.get("pending_question") or {})),
             "execution_evidence": deepcopy(dict(values.get("execution_evidence") or task_state_value.get("execution_evidence") or {})),
+            "pending_runtime_evidence_request": self._durable_runtime_request(durable),
+            "runtime_recovery_result": {},
             "resume_mode": "semantic_state",
             "resume_state": semantic.to_dict(),
         }
@@ -15952,6 +15960,153 @@ class BioAnalystAgent:
         )
         return audits, summary
 
+    @staticmethod
+    def _durable_runtime_request(durable: Mapping[str, Any]) -> Dict[str, Any]:
+        recovery = (durable.get("task_state") or {}).get("runtime_recovery") or {}
+        episode = (recovery.get("episodes") or {}).get(recovery.get("active_episode_id")) or {}
+        request = episode.get("request") or {}
+        scope = request.get("scope") or {}
+        if (scope.get("step_id") != str(durable.get("current_step_id") or "")
+            or scope.get("plan_id") != str(durable.get("plan_id") or "")
+            or scope.get("plan_version") != str(durable.get("plan_version") or "")):
+            return {}
+        # Existing Execute/CommitStep evidence retains ownership on resume.
+        from agent_core.workflow.runtime_evidence_recovery import _not_dispatched
+        if not _not_dispatched(durable, scope.get("step_id", "")):
+            return {}
+        return deepcopy(dict(request))
+
+    def _runtime_inspection_roots(self, skill_id: str) -> List[str]:
+        # Existing configured software storage is the only extra read root.
+        # The adapter independently refuses broad home/repository roots.
+        root = str(BIO_SOURCE_INSTALL_DIR or "")
+        return [root] if root and Path(root).is_dir() else []
+
+    @classmethod
+    def _runtime_recovery_diagnostic(cls, values: Mapping[str, Any], durable: Mapping[str, Any]) -> Dict[str, Any]:
+        task = durable.get("task_state") or {}
+        recovery = task.get("runtime_recovery") or {}
+        request = cls._durable_runtime_request(durable)
+        for from_graph, diagnostic in ((True, values.get("runtime_recovery_result") or {}),
+                                       (False, task.get("runtime_recovery_result") or {})):
+            if not diagnostic:
+                continue
+            episode_id = diagnostic.get("episode_id")
+            episode = (recovery.get("episodes") or {}).get(episode_id) or {}
+            if episode:
+                if episode.get("status") == "evidence_ready" or not request or request.get("episode_id") != episode_id:
+                    continue
+                if not from_graph and episode.get("status") != diagnostic.get("resolution_disposition"):
+                    continue
+                return dict(diagnostic)
+            # Admission/storage failures may have no durable episode at all.
+            # Only this invocation's scoped diagnostic can explain that case.
+            scope = diagnostic.get("scope") or {}
+            if from_graph and diagnostic.get("resolution_disposition") == "internal_error" and (
+                not durable or durable.get("load_error") or all(
+                    str(scope.get(key) or "") == str(durable.get(field) or "")
+                    for key, field in (("task_id", "task_id"), ("plan_id", "plan_id"),
+                                       ("plan_version", "plan_version"), ("step_id", "current_step_id")))):
+                return dict(diagnostic)
+        return {}
+
+    def _runtime_inspection_environment(self, skill_id: str) -> Dict[str, str]:
+        roots = self._runtime_inspection_roots(skill_id)
+        return {"BIO_SOURCE_INSTALL_DIR": roots[0]} if roots else {}
+
+    def _runtime_evidence_service(self):
+        from agent_core.runtime_inspection import RuntimeInspectionAdapter
+        from agent_core.workflow.runtime_evidence_recovery import RuntimeEvidenceRecovery
+        if not getattr(self, "runtime_evidence_recovery", None):
+            self.runtime_inspection_adapter = RuntimeInspectionAdapter(
+                self.pm, self.skill_manager, scope_provider=self._runtime_evidence_scope,
+                path_validator=self._verified_runtime_paths,
+                allowed_runtime_roots=self._runtime_inspection_roots,
+                envsafevars=self._runtime_inspection_environment,
+                healthcheck_provider=self._runtime_healthcheck_for_env,
+            )
+            self.runtime_evidence_recovery = RuntimeEvidenceRecovery(
+                data_path=self.data_path, scope_provider=self._runtime_evidence_scope,
+                inspect_runtime=self.runtime_inspection_adapter.inspect,
+                inspection_contract_provider=self.runtime_inspection_adapter.describe,
+            )
+        return self.runtime_evidence_recovery
+
+    def _runtime_recovery_stop(self, state: Mapping[str, Any], result: Mapping[str, Any]) -> Dict[str, Any]:
+        from agent_core.workflow.runtime_recovery_reporting import finalize_runtime_recovery_result
+        finalized = finalize_runtime_recovery_result(
+            self.data_path, str(state.get("task_id") or ""), result, state=state,
+        )
+        update = {
+            "messages": [AIMessage(content=finalized["explanation"])],
+            "pending_runtime_evidence_request": {},
+            "runtime_recovery_result": finalized["runtime_recovery_result"],
+        }
+        diagnostic = finalized["runtime_recovery_result"]
+        if diagnostic.get("execution_status") == "not_dispatched" and diagnostic.get("resolution_disposition") != "stale_scope":
+            update.update(pending_action={}, execution_started=False)
+        else:
+            # Old evidence requests never revoke a newer execution owner.
+            for key in ("pending_action", "execution_started"):
+                if key in state:
+                    update[key] = deepcopy(state[key])
+        return update
+
+    async def _recover_runtime_evidence(self, state: Mapping[str, Any]) -> Dict[str, Any]:
+        from agent_core.workflow.outcomes import RecoveryOutcome
+        from agent_core.workflow.runtime_evidence_recovery import RuntimeRecoveryError
+        request = dict(state.get("pending_runtime_evidence_request") or {})
+        result = await self._runtime_evidence_service().recover(state, request)
+        scope = dict((result.get("request") or request).get("scope") or {})
+        if result.get("status") == "evidence_ready":
+            durable = load_plan_state(self.data_path, str(state.get("task_id") or ""))
+            revision = int(((durable.get("task_state") or {}).get("runtime_evidence") or {}).get("revision") or 0)
+            return {
+                "recovery_outcome": RecoveryOutcome(schema_version=1, type="runtime_evidence_ready",
+                    summary="Durably accepted runtime evidence; resume the same Generate assembly.",
+                    scope=scope, payload={"request_id": request["request_id"], "episode_id": request["episode_id"],
+                        "step_id": scope["step_id"], "evidence_revision": revision,
+                        "dispatch_state": "not_dispatched"}).to_dict(),
+                "runtime_audit": result.get("runtime_audit") or [],
+                "pending_runtime_evidence_request": {}, "runtime_recovery_result": {},
+                "generate_prompt_assembly_rebuild": {}, "pending_action": {}, "execution_started": False,
+            }
+        stopped = self._runtime_recovery_stop(state, result)
+        diagnostic = stopped["runtime_recovery_result"]
+        if diagnostic.get("resolution_disposition") == "needs_user_decision" and diagnostic.get("user_question"):
+            try:
+                durable, _episode, _request = self._runtime_evidence_service()._load_request(state, request)
+                question_id = "runtime-question:" + str(request["episode_id"])
+                pending = {"type": "runtime_resolution", "stage": "recovery",
+                    "question_id": question_id, "question": diagnostic["user_question"],
+                    "requested_slots": ["runtime_authorization"], "step_id": scope["step_id"],
+                    "request_id": request["request_id"], "episode_id": request["episode_id"]}
+                task = dict(durable.get("task_state") or {})
+                if task.get("pending_question") and task["pending_question"].get("question_id") != question_id:
+                    raise RuntimeRecoveryError("RUNTIME_QUESTION_OTHER_OWNER_PENDING")
+                task["pending_question"] = pending
+                durable["task_state"] = task
+                save_plan_state(self.data_path, str(state["task_id"]), durable)
+                stopped["pending_human_question"] = pending
+                stopped["recovery_outcome"] = RecoveryOutcome(schema_version=1, type="user_input_required",
+                    summary=diagnostic["explanation"], scope=scope, payload={
+                        "diagnosis": diagnostic["explanation"], "question_id": question_id,
+                        "question": pending["question"], "owner": "RUNTIME_AUTHORIZATION",
+                        "requires_user_input": True, "source_scope": scope,
+                        "decision_id": request["episode_id"],
+                    }).to_dict()
+                return stopped
+            except Exception as question_error:
+                result = {**result, "status": "internal_error", "reason_code": str(
+                    getattr(question_error, "code", "RUNTIME_QUESTION_PERSISTENCE_FAILED"))}
+                stopped = self._runtime_recovery_stop(state, result)
+                diagnostic = stopped["runtime_recovery_result"]
+        stopped["recovery_outcome"] = RecoveryOutcome(schema_version=1, type="runtime_recovery_stopped",
+            summary=diagnostic["explanation"], scope=scope,
+            payload={key: diagnostic[key] for key in ("reason_code", "resolution_disposition",
+                "explanation", "execution_status", "original_error")}).to_dict()
+        return stopped
+
     def _runtime_evidence_scope(self, skill_id: str) -> Dict[str, str]:
         """Current declared runtime subject; never derived from model output."""
         manager = getattr(self, "skill_manager", None)
@@ -15973,7 +16128,9 @@ class BioAnalystAgent:
             try:
                 stat = prefix.stat()
                 identity = {"path": str(prefix.resolve()), "device": stat.st_dev, "inode": stat.st_ino,
-                            "env_runner": str(requirements.get("env_runner") or "")}
+                            "env_runner": str(requirements.get("env_runner") or ""),
+                            "inspection_read_roots": self._runtime_inspection_roots(skill_id),
+                            "inspection_environment": self._runtime_inspection_environment(skill_id)}
             except OSError:
                 pass
         contract = manager.get_execution_capability_registry([skill_id]) if manager else {}
@@ -32176,6 +32333,11 @@ question. Never guess a scientific or database identity.
                 runtime_route = route_runtime_preflight(
                     candidate.get("task_spec"),
                     candidate_runtime_evidence,
+                    schema_version=workflow_routing_schema_version(load_plan_state(self.data_path, task_id), state),
+                    required_binding_ids=sorted({binding
+                        for contract in self.skill_manager.get_execution_capability_registry(selected).values()
+                        for binding in contract.get("required_runtime_binding_ids") or []}) if self.skill_manager else [],
+                    binding_evaluations=self._runtime_binding_source(state, selected).get("runtime_binding_evaluations") or {},
                 )
                 candidate_consultation["runtime_route_decision"] = deepcopy(
                     runtime_route
@@ -36145,6 +36307,36 @@ question. Never guess a scientific or database identity.
                     invocation_audit=invocation_audit,
                 )
             except Exception as exc:
+                if (isinstance(exc, ActionRuntimeContractError)
+                    and exc.code == "REQUIRED_RUNTIME_BINDING_UNAVAILABLE"
+                    and exc.diagnostic.get("failure_scope") == "runtime_fact"
+                    and exc.diagnostic.get("required") is True
+                    and workflow_routing_schema_version(generate_plan_state, state) == WORKFLOW_ROUTING_SCHEMA_TYPED):
+                    # A lookup miss owns a typed evidence episode, never a
+                    # same-input prompt rebuild or an execution failure packet.
+                    try:
+                        request = self._runtime_evidence_service().create_request(
+                            state, selected_skill_id=generate_selected_skill_id,
+                            capability_contract=selected_contract,
+                            missing_binding_ids=[exc.diagnostic["binding_id"]],
+                            original_error=exc.to_diagnostic(),
+                        )
+                    except Exception as admission_error:
+                        result = {"status": "internal_error",
+                            "reason_code": str(getattr(admission_error, "code", "RUNTIME_RECOVERY_REQUEST_PERSISTENCE_FAILED")),
+                            "request": {"scope": {"task_id": task_id,
+                                "plan_id": str(generate_plan_state.get("plan_id") or ""),
+                                "plan_version": str(generate_plan_state.get("plan_version") or ""),
+                                "step_id": str(generate_plan_state.get("current_step_id") or "")},
+                                "original_error_code": exc.code},
+                            "explanation": {"execution_status": "not_started",
+                                "user_summary": "运行证据请求未能安全保存；当前步骤尚未执行，不能据此认定依赖不存在。"}}
+                        return {**self._runtime_recovery_stop(state, result),
+                                "generate_exit_reason": "runtime_recovery_stopped"}
+                    return {"pending_runtime_evidence_request": request,
+                            "generate_exit_reason": "runtime_evidence_required",
+                            "pending_action": {}, "runtime_recovery_result": {},
+                            "execution_started": False}
                 rebuild_lifecycle = (
                     dict(state.get("generate_prompt_assembly_rebuild") or {})
                     if isinstance(
@@ -39293,6 +39485,7 @@ question. Never guess a scientific or database identity.
                             "effective_runtime_bindings"
                         ) or {}
                     )
+                    validate_runtime_paths_prelaunch(current_runtime_resolution)
                 except ActionRuntimeContractError as exc:
                     diagnostic = exc.to_diagnostic()
                     return {
@@ -39300,6 +39493,10 @@ question. Never guess a scientific or database identity.
                             diagnostic, ensure_ascii=False, sort_keys=True,
                         ))],
                         "pending_action": {},
+                        "pre_execution_rejection": {
+                            "violation_owner": "INTERNAL_PROTOCOL", "violation_code": exc.code,
+                            "diagnostic": diagnostic, "execution_started": False,
+                        },
                         "pending_recovery_action": {
                             "type": "runtime_binding_provenance_error",
                             "reason": exc.code,
@@ -40070,6 +40267,7 @@ question. Never guess a scientific or database identity.
 
             preparation_boundary["phase"] = "prelaunch_approval_validation"
             try:
+                validate_runtime_paths_prelaunch(current_runtime_resolution)
                 preexec_approval_identity = build_action_approval_identity(
                     generated_script_sha256=str(
                         pending_action.get("generated_script_hash")
@@ -40095,11 +40293,31 @@ question. Never guess a scientific or database identity.
                     preexec_approval_identity,
                 )
             except ActionRuntimeContractError as exc:
+                prelaunch_diagnostic = exc.to_diagnostic()
+                if exc.code == "RUNTIME_BINDING_PRELAUNCH_PATH_INVALID":
+                    try:
+                        rejected_attempt_state = load_plan_state(self.data_path, task_id)
+                        rejected_attempt = (rejected_attempt_state.get("provenance_state") or {}).get("attempts", {}).get(attempt_id) or {}
+                        if rejected_attempt.get("status") == ATTEMPT_STARTING and not rejected_attempt.get("pid"):
+                            record_provenance_event(rejected_attempt_state, "attempt_state_changed", {
+                                "attempt_id": attempt_id, "status": ATTEMPT_FAILED,
+                                "finished_at": timestamp_now(),
+                            })
+                            save_plan_state(self.data_path, task_id, rejected_attempt_state)
+                    except Exception as persistence_error:
+                        prelaunch_diagnostic["secondary_failure"] = {
+                            "error_code": "PRELAUNCH_ATTEMPT_REJECTION_PERSISTENCE_FAILED",
+                            "exception_type": type(persistence_error).__name__,
+                        }
                 return {
                     "messages": [SystemMessage(content=json.dumps(
-                        exc.to_diagnostic(), ensure_ascii=False, sort_keys=True,
+                        prelaunch_diagnostic, ensure_ascii=False, sort_keys=True,
                     ))],
                     "pending_action": {},
+                    "pre_execution_rejection": {
+                        "violation_owner": "INTERNAL_PROTOCOL", "violation_code": exc.code,
+                        "execution_started": False,
+                    },
                     "required_next_action": exc.code,
                     "failure_owner": RecoveryFailureOwner.INTERNAL_PROTOCOL.value,
                     "execution_started": False,
@@ -43694,6 +43912,19 @@ question. Never guess a scientific or database identity.
 
     def _terminal_status_from_snapshot(self, task_id: str, snapshot: Any) -> str:
         values = self._snapshot_values(snapshot)
+        try:
+            runtime_durable = load_plan_state(self.data_path, task_id)
+        except Exception:
+            runtime_durable = {}
+        runtime_stop = self._runtime_recovery_diagnostic(values, runtime_durable)
+        if runtime_stop:
+            if (str(values.get("task_status") or "") == TASK_STATUS_CANCELLED
+                or task_status(runtime_durable) == TASK_STATUS_CANCELLED):
+                return "cancelled"
+            if values.get("pending_human_question") or self._business_waiting_state(load_waiting_state(self.data_path, task_id)):
+                return "waiting_user"
+            disposition = runtime_stop.get("resolution_disposition")
+            return "blocked" if disposition == "dependency_blocked" else "failed"
         if str(values.get("recovery_status") or "") == "paused_retryable":
             return "paused_retryable"
         if self._snapshot_next_step(snapshot) == "human_input" or self._business_waiting_state(load_waiting_state(self.data_path, task_id)):
@@ -43816,6 +44047,11 @@ question. Never guess a scientific or database identity.
         def add_record(value: Any) -> None:
             if isinstance(value, Mapping) and value:
                 records.append(value)
+
+        runtime_stop = self._runtime_recovery_diagnostic(values, durable_plan)
+        if runtime_stop:
+            add_record({**runtime_stop, "reason": runtime_stop.get("explanation") or "",
+                        "failure_code": runtime_stop.get("reason_code") or ""})
 
         for key in ("terminal_diagnostic", "completion_gate_result"):
             add_record(values.get(key))

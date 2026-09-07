@@ -250,6 +250,7 @@ class GenerateOutcome(StrictOutcome):
         "plan_revision_needed", "skill_context_needed", "candidate_rejected",
         "provider_failed", "stale_result", "internal_protocol_error", "blocked",
         "cancelled", "harness_error",
+        "runtime_evidence_required", "runtime_recovery_stopped",
     })
     REQUIRED_PAYLOAD = _requirements(
         action_ready=("action", "action_id", "candidate_fingerprint", "validation_evidence"),
@@ -264,6 +265,8 @@ class GenerateOutcome(StrictOutcome):
         blocked=("owner", "reason", "terminal_receipt"),
         cancelled=("cancellation_source", "cancellation_receipt"),
         harness_error=("error_code", "exception_class", "detail"),
+        runtime_evidence_required=("request_id", "episode_id", "step_id", "missing_binding_ids", "request", "dispatch_state"),
+        runtime_recovery_stopped=("reason_code", "resolution_disposition", "explanation", "execution_status", "original_error"),
     )
 
 
@@ -314,6 +317,7 @@ class RecoveryOutcome(StrictOutcome):
         "candidate_repair_required", "plan_revision_required",
         "reconsultation_required", "revalidation_required", "user_input_required",
         "blocked", "internal_protocol_error", "harness_error",
+        "runtime_evidence_ready", "runtime_recovery_stopped",
     })
     REQUIRED_PAYLOAD = _requirements(
         candidate_repair_required=("diagnosis", "failure_owner", "strategy", "repair_instruction", "source_scope", "decision_id", "incident_id", "failure_fingerprint", "budget_receipt"),
@@ -324,6 +328,8 @@ class RecoveryOutcome(StrictOutcome):
         blocked=("reason_code", "blocked_evidence", "source_scope", "budget_receipt"),
         internal_protocol_error=("error_code", "source_scope", "identity_conflict"),
         harness_error=("error_code", "exception_class", "detail"),
+        runtime_evidence_ready=("request_id", "episode_id", "step_id", "evidence_revision", "dispatch_state"),
+        runtime_recovery_stopped=("reason_code", "resolution_disposition", "explanation", "execution_status", "original_error"),
     )
 
 

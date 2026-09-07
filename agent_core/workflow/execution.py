@@ -152,6 +152,28 @@ class TypedGenerate:
                 "cancellation_receipt": dict(value["cancellation_receipt"]),
             }
             summary = "Generate stopped on an authoritative cancellation receipt."
+        elif exit_reason == "runtime_evidence_required":
+            request = dict(value.get("pending_runtime_evidence_request") or {})
+            outcome_type = "runtime_evidence_required"
+            payload = {
+                "request_id": request["request_id"], "episode_id": request["episode_id"],
+                "step_id": request["scope"]["step_id"],
+                "missing_binding_ids": list(request["missing_binding_ids"]),
+                "request": request, "dispatch_state": "not_dispatched",
+            }
+            scope = {key: request["scope"][key] for key in ("task_id", "plan_id", "plan_version", "step_id")}
+            summary = "Current capability requires runtime evidence before provider invocation."
+        elif exit_reason == "runtime_recovery_stopped":
+            outcome_type = "runtime_recovery_stopped"
+            explanation = dict(value.get("runtime_recovery_result") or {})
+            payload = {
+                "reason_code": explanation["reason_code"],
+                "resolution_disposition": explanation["resolution_disposition"],
+                "explanation": explanation["explanation"],
+                "execution_status": explanation["execution_status"],
+                "original_error": explanation["original_error"],
+            }
+            summary = str(explanation["explanation"])
         elif action:
             candidate_fingerprint = str(
                 action.get("candidate_fingerprint") or _fingerprint(action)
@@ -323,6 +345,14 @@ class TypedGenerate:
             payload=payload,
             evidence_refs=evidence_refs,
         )
+        if outcome_type in {"runtime_evidence_required", "runtime_recovery_stopped"}:
+            return {
+                "generate_outcome": outcome.to_dict(),
+                "pending_runtime_evidence_request": dict(value.get("pending_runtime_evidence_request") or {}),
+                "runtime_recovery_result": dict(value.get("runtime_recovery_result") or {}),
+                "messages": list(value.get("messages") or []),
+                **{key: value[key] for key in ("pending_action", "execution_started") if key in value},
+            }
         return {"generate_outcome": outcome.to_dict()}
 
 
