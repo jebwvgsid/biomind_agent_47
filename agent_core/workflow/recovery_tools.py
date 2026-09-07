@@ -16,6 +16,7 @@ from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
 from agent_core.managed_artifacts import build_approved_visible_artifact_set
+from agent_core.approved_resource_locator import approved_resource_locator, open_approved_resource, ResourceLocatorError
 from agent_core.plan_tracker import canonical_task_spec_for_state
 from agent_core.recovery_evidence import RecoveryEvidenceReader
 from agent_core.skill_access import REQUEST_SKILL_CONTEXT, SkillAccessService
@@ -309,12 +310,11 @@ def build_recovery_inspection_registry(
         visible = {}
     for artifact_id, value in sorted(visible.items()):
         row = dict(value.get("row") or {})
-        path = str(
-            row.get("path")
-            or row.get("resolved_path")
-            or row.get("value")
-            or ""
-        )
+        try:
+            normalized = approved_resource_locator(row)
+        except ResourceLocatorError as exc:
+            normalized = {"locator_error": exc.code}
+        path = str(normalized.get("path") or "")
         ref_id = "artifact:" + str(artifact_id)
         registry.register(InspectionRef(
             ref_id=ref_id,
@@ -326,7 +326,7 @@ def build_recovery_inspection_registry(
             digest=str(row.get("sha256") or _digest(value)),
             size_hint=int(row.get("size") or 0),
             scope={"access": "current_step", "direction": value.get("direction")},
-        ), locator={"artifact_id": artifact_id, "path": path, "binding": value})
+        ), locator={**normalized, "artifact_id": artifact_id, "path": path, "binding": value})
 
     for skill in parsed.selected_skill_bundle.skills:
         registry.register(InspectionRef(
@@ -425,7 +425,19 @@ class RecoveryLocalToolDispatcher:
         handler = handlers.get(name)
         if handler is None:
             raise RecoveryToolError("RECOVERY_TOOL_UNKNOWN", name)
-        return self._bounded(name, handler(args))
+        try:
+            return self._bounded(name, handler(args))
+        except ResourceLocatorError as exc:
+            raise RecoveryToolError(exc.code, name) from exc
+        except PermissionError as exc:
+            if not name.startswith("artifact."): raise
+            raise RecoveryToolError("ARTIFACT_PERMISSION_DENIED", name) from exc
+        except FileNotFoundError as exc:
+            if not name.startswith("artifact."): raise
+            raise RecoveryToolError("ARTIFACT_FILE_NOT_FOUND", name) from exc
+        except OSError as exc:
+            if not name.startswith("artifact."): raise
+            raise RecoveryToolError("ARTIFACT_IO_ERROR", name) from exc
 
     def _failure_inspect(self, args: Mapping[str, Any]) -> dict[str, Any]:
         packet = self.seed.failure_packet
@@ -509,10 +521,25 @@ class RecoveryLocalToolDispatcher:
         entry, locator = self.registry.resolve(
             str(args.get("ref_id") or ""), kinds=("artifact",)
         )
+        if any(key in args for key in ("path", "canonical_path", "resolved_path", "root", "task_id", "revision")):
+            raise RecoveryToolError("ARTIFACT_AUTHORITY_ARGUMENT_FORBIDDEN", entry.ref_id)
+        if locator.get("locator_error"):
+            raise RecoveryToolError(str(locator["locator_error"]), entry.ref_id)
         raw_path = str(locator.get("path") or "")
-        if not raw_path:
-            raise RecoveryToolError("ARTIFACT_CONTENT_UNAVAILABLE", entry.ref_id)
-        path = Path(raw_path).expanduser()
+        try:
+            # Validate again at the read boundary; a link may have appeared
+            # since this invocation's manifest was built.
+            checked = approved_resource_locator({"canonical_path": raw_path})
+        except ResourceLocatorError as exc:
+            raise RecoveryToolError(exc.code, entry.ref_id) from exc
+        path = Path(checked["path"])
+        try:
+            if not path.exists():
+                raise RecoveryToolError("ARTIFACT_FILE_NOT_FOUND", entry.ref_id)
+            if not path.is_file():
+                raise RecoveryToolError("ARTIFACT_FORMAT_UNSUPPORTED", entry.ref_id)
+        except PermissionError as exc:
+            raise RecoveryToolError("ARTIFACT_PERMISSION_DENIED", entry.ref_id) from exc
         return entry, locator, path
 
     def _artifact_inspect(self, args: Mapping[str, Any]) -> dict[str, Any]:
@@ -524,7 +551,7 @@ class RecoveryLocalToolDispatcher:
         hash_status = "not_file"
         if is_file and size <= MAX_ARTIFACT_HASH_BYTES:
             digest = hashlib.sha256()
-            with path.open("rb") as handle:
+            with open_approved_resource(path) as handle:
                 for chunk in iter(lambda: handle.read(1024 * 1024), b""):
                     digest.update(chunk)
             observed_hash = "sha256:" + digest.hexdigest()
@@ -575,7 +602,13 @@ class RecoveryLocalToolDispatcher:
         end_line = min(requested_end, start_line + MAX_ARTIFACT_READ_LINES - 1)
         if end_line < start_line:
             raise RecoveryToolError("RECOVERY_TOOL_ARGUMENT_INVALID", "artifact line range")
-        payload = path.read_bytes()[: max_bytes + 1]
+        try:
+            with open_approved_resource(path) as handle:
+                payload = handle.read(max_bytes + 1)
+        except PermissionError as exc:
+            raise RecoveryToolError("ARTIFACT_PERMISSION_DENIED", entry.ref_id) from exc
+        except OSError as exc:
+            raise RecoveryToolError("ARTIFACT_IO_ERROR", entry.ref_id) from exc
         if b"\x00" in payload[:4096]:
             raise RecoveryToolError("ARTIFACT_BINARY_READ_FORBIDDEN", entry.ref_id)
         try:
