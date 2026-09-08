@@ -2045,6 +2045,7 @@ class SupervisorNode:
                 "step_status": "failed",
                 "next_step": "finish",
             }
+        pre_review_report = None
         started = time.monotonic()
         context = self._structured_execution_context(state)
         execution = dict(context["execution"] or {})
@@ -2403,6 +2404,7 @@ class SupervisorNode:
                 + "\n</validation_evidence>"
             ))],
             "validation_evidence": evidence.to_dict(),
+            "completion_report": pre_review_report.to_dict() if pre_review_report is not None else {},
             # Compatibility-only UI field. Routers and RecoveryPolicy must not
             # use it; INVALID maps to FAIL rather than recovery semantics.
             "supervisor_verdict": self._legacy_compat_status(evidence.status),

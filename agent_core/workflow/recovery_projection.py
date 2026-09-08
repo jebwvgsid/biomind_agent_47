@@ -230,7 +230,10 @@ def is_recovery_failure_source(
             in {"VERIFICATION", "DEPENDENCY"}
         )
     if source_kind in {"verification_outcome", "completion_gate_outcome"}:
-        return outcome_type not in {"verified", "verified_with_warnings", "harness_error"}
+        return outcome_type in {
+            "rejected", "incomplete_evidence", "diagnostic_evidence_recorded",
+            "verification_error", "inspection_required", "correction_required", "assessment_pending",
+        }
     if source_kind == "commit_step_outcome":
         return outcome_type in {"commit_conflict", "contract_rejected"}
     if source_kind == "install_subagent_outcome":
@@ -1837,7 +1840,11 @@ class CausalFailurePacketBinder:
         )
         inspection_entries: dict[str, dict[str, Any]] = {}
         publication_failures: tuple[Mapping[str, Any], ...] = ()
-        if (source_kind == "verification_outcome" and str(source.get("type") or "") == "inspection_required") or (source_kind == "execute_outcome" and source.get("type") == "execution_failed"):
+        # build_causal_failure_record has already validated the typed source
+        # and the legal Recovery edge. Publication is shared by those edges;
+        # readers authorize the resulting active CAS publication, not a second
+        # list of source-kind spellings.
+        if is_recovery_failure_source(source_kind, source):
             inspection_entries = prepare_inspection_evidence(
                 data_path=self.data_path, durable=durable, state=state,
                 source=source,
@@ -1929,6 +1936,11 @@ class CausalFailurePacketBinder:
                     inspection_publication_failures=publication_failures,
                 )
 
+        record["inspection_publication"] = {
+            "schema_version": 1, "policy": "typed_recovery_evidence_v2",
+            "source_fingerprint": record["source_fingerprint"],
+            "refs": sorted(inspection_entries),
+        }
         packet_ref = str(record["packet_ref"])
         prior = registry.get(packet_ref)
         if isinstance(prior, Mapping):

@@ -437,9 +437,10 @@ def recovery_tool_schemas() -> list[dict[str, Any]]:
             "validator": {}, "execution": {}, "query": {"type": "string"},
         }),
         ("artifact_inspect", "Inspect metadata for an approved artifact ref.", {"ref_id": {"type": "string"}}),
-        ("artifact_read", "Read a bounded text range from an approved artifact ref.", {
+        ("artifact_read", "Read bounded UTF-8, gzip text, or four-line FASTQ prefix from an approved artifact ref. Limits are coverage, not absence.", {
             "ref_id": {"type": "string"}, "start_line": {"type": "integer"},
             "end_line": {"type": "integer"}, "max_bytes": {"type": "integer"},
+            "representation": {"type": "string", "enum": ["text", "gzip_text", "fastq_prefix"]},
             "max_chars": {"type": "integer"}, "binary_policy": {"type": "string", "enum": ["deny"]},
         }),
         ("skill_headings", "List headings for an already-selected Skill.", {"skill_id": {"type": "string"}}),

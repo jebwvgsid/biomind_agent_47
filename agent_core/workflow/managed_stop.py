@@ -23,7 +23,8 @@ from agent_core.workflow.inspection_stop import (
 from agent_core.workflow.runtime_recovery_reporting import _path
 
 PRODUCER = "managed_run_stop_v1"
-SUMMARY_PROMPT = """自动执行和恢复已停止。你只能解释冻结事实，不能继续解决任务。
+SUMMARY_PROMPT = """优先返回 {"fact_ids": [冻结事实键]}，选择最能解释停止的事实。旧 explanation 为未验证表达，不作为正式事实采用。
+自动执行和恢复已停止。你只能解释冻结事实，不能继续解决任务。
 分别说明原始失败、恢复障碍、停止条件、实际进度与未完成项。脚本的断言未经独立验证时不能作为客观数据结论。
 读取失败不证明文件不存在，预算用尽不证明依赖不存在。不得声称有未发生的查询、修复、重跑、验证或文件。
 不能调用工具、给出执行 directive、改变状态、要求内部 handle、重新规划或开始 Recovery。
@@ -285,7 +286,7 @@ def build_managed_stop(task_id, values, durable, boundary):
         value["origin"].update(error_code=primary.get("error_code") or value["stop_reason"]["error_code"],
             summary=_safe(primary.get("message") or primary.get("summary") or outcome.get("summary")))
     value["primary_cause"] = deepcopy(primary or value["origin"])
-    value["latest_failure"] = deepcopy(latest)
+    value["latest_failure"] = deepcopy(latest or value.get("latest_failure") or ((value.get("inspection_failures") or [{}])[-1]))
     value["stop_reason"].update(termination_reason=str(payload.get("termination_reason") or ""),
         budget_receipt=deepcopy(_mapping(payload.get("budget_receipt"))))
     if boundary["node"] == "generate" and not fixed_scope["attempt_id"]:
@@ -558,6 +559,7 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
                 for i in value["planning"].get("validation_issues") or []]}
     frozen["execution"] = {k:v for k,v in frozen["execution"].items() if k != "command_body"}
     frozen["base"] = explanation(value)
+    frozen["inspection_observations"] = deepcopy(value.get("inspection_observations") or [])
     wire = json.dumps(frozen, ensure_ascii=False)
     reserve = len(wire.encode()) + 1500
     if len(wire) > 20000: skip = skip or "FACT_BUDGET_EXCEEDED"
@@ -588,22 +590,39 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
                     llm_policy={"sdk_max_retries": 0, "application_max_attempts": 1, "completion_cache_enabled": False,
                         "total_timeout_seconds": min(30, float(policy.get("timeout_seconds", 30)))},
                     trace_metadata={"call_kind": "terminal_summary", "semantic_invocation_id": value["stop_id"]})
-                if getattr(response, "tool_calls", None) or _mapping(getattr(response, "additional_kwargs", {})).get("tool_calls"):
-                    raise ValueError("SUMMARY_TOOL_CALL_FORBIDDEN")
-                parsed = json.loads(response.content)
-                if set(parsed) != {"explanation", "fact_ids"} or not isinstance(parsed["explanation"], str) or not parsed["explanation"].strip() or len(parsed["explanation"]) > 4000:
-                    raise ValueError("SUMMARY_INVALID_STRUCTURE")
-                if not isinstance(parsed["fact_ids"], list) or not parsed["fact_ids"] or any(k not in frozen or k == "base" for k in parsed["fact_ids"]):
-                    raise ValueError("SUMMARY_UNDECLARED_FACT")
-                text = _safe(parsed["explanation"], 4000)
-                if text == "[redacted]" or any(x in text.lower() for x in ("已完成", "已修复", "验证通过", "任务成功", "successfully completed", "all steps passed", "文件不存在", "数据不兼容", "依赖不存在", "依赖不可用", "已生成", "已重跑", "```", "<action", "directive")):
-                    raise ValueError("SUMMARY_UNSUPPORTED_CLAIM")
-                value.update(summary_text=text, summary_status="COMPLETED")
             except asyncio.CancelledError: raise
             except Exception as exc:
                 value["summary_status"] = "FAILED"
                 _secondary(value, "summary.provider", "SUMMARY_FAILED", exc)
                 value["summary_cleanup"] = str(getattr(getattr(exc, "record", None), "cleanup_result", "not_observed"))
+            else:
+                try:
+                    if getattr(response, "tool_calls", None) or _mapping(getattr(response, "additional_kwargs", {})).get("tool_calls"):
+                        raise ValueError("SUMMARY_TOOL_CALL_FORBIDDEN")
+                    parsed = json.loads(response.content)
+                    if (not isinstance(parsed, dict) or set(parsed) not in ({"fact_ids"}, {"explanation", "fact_ids"})
+                            or ("explanation" in parsed and (not isinstance(parsed["explanation"], str) or not parsed["explanation"].strip() or len(parsed["explanation"]) > 4000))
+                            or not isinstance(parsed.get("fact_ids"), list) or not parsed["fact_ids"]):
+                        raise ValueError("SUMMARY_INVALID_STRUCTURE")
+                except Exception as exc:
+                    value["summary_status"] = "FAILED"
+                    _secondary(value, "summary.parse", "SUMMARY_RESPONSE_INVALID", exc)
+                else:
+                    try:
+                        if any(not isinstance(k, str) or k not in frozen or k == "base" for k in parsed["fact_ids"]):
+                            raise ValueError("SUMMARY_UNDECLARED_FACT")
+                        # Free prose cannot attest scientific completion or
+                        # nonexistence. Neither negative nor positive wording
+                        # is classified by a substring blacklist. The single
+                        # provider selects frozen facts; deterministic rendering
+                        # retains their value and uncertainty without new claims.
+                        value.update(summary_status="COMPLETED", summary_consumption_status="GROUNDED_FACT_SELECTION",
+                                     summary_selected_fact_ids=list(dict.fromkeys(parsed["fact_ids"])),
+                                     summary_unverified_prose=_safe(parsed.get("explanation") or "", 4000))
+                        value["summary_text"] = "选定的已记录事实：" + "；".join(value["summary_selected_fact_ids"]) + "。事实及未确定事项见上述确定性说明。"
+                    except Exception as exc:
+                        value["summary_status"] = "FAILED"
+                        _secondary(value, "summary.facts", "SUMMARY_FACT_CONSUMPTION_FAILED", exc)
     # Persist summary result before report publication; reload never reissues it.
     try: durable = _save(agent.data_path, value, loader=loader, saver=saver)
     except Exception as exc: _secondary(value, "summary.persist", "SUMMARY_RECEIPT_PERSIST_FAILED", exc)

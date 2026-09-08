@@ -149,12 +149,14 @@ def _render_material_message(
             + "\n</missing_details>\n"
             + "</inherited_skill_material_state>"
         )
+    if item.get("material_kind") == "recovery_evidence":
+        content = content.replace("inherited_skill_material", "inherited_recovery_evidence")
     message = HumanMessage(
         id=(
             f"{epoch_id}:inherited:"
             + hashlib.sha256(material_id.encode("utf-8")).hexdigest()[:24]
         ),
-        name="inherited_skill_material",
+        name="inherited_recovery_evidence" if item.get("material_kind") == "recovery_evidence" else "inherited_skill_material",
         content=content,
     )
     descriptor = {
@@ -1076,11 +1078,36 @@ class Schema2RecoveryNode:
             if isinstance(residency_by_phase.get("recovery"), Mapping)
             else {}
         )
-        return selected_skill_materials_for_carry(
-            access,
-            current_step_id=seed.failure_packet.step_id,
-            residency_state=residency,
-        )
+        materials = list(selected_skill_materials_for_carry(
+            access, current_step_id=seed.failure_packet.step_id, residency_state=residency,
+        ))
+        from agent_core.workflow.inspection_evidence import InspectionObjectReader, inspection_scope, INSPECTION_BACKEND
+        reader = InspectionObjectReader(self.data_path, scope=inspection_scope(seed.failure_packet, seed.seed_id))
+        index = dict((durable.get("task_state") or {}).get("inspection_ref_registry") or {})
+        # Same scoped reader as evidence.read. Source identities and hashes are
+        # retained in the provider message and the existing phase archive.
+        remaining = 96_000
+        for ref in seed.failure_packet.inspection_refs:
+            entry = index.get(ref) or {}
+            kind = (entry.get("scope") or {}).get("object_kind")
+            if entry.get("backend") != INSPECTION_BACKEND or kind not in {
+                "execution", "script", "action", "task_context", "plan", "completion_report", "parser_receipt", "diagnostic",
+            }:
+                continue
+            item = {"material_id": ref, "source_ref": ref, "retrieval_ref": ref,
+                    "material_kind": "recovery_evidence", "object_kind": kind, "selected": True,
+                    "source_digest": entry.get("digest"), "coverage": "complete immutable object"}
+            try:
+                body = _canonical(reader.read_body(entry, entry.get("locator") or {}))
+                if len(body) > remaining:
+                    raise ValueError("RECOVERY_INHERITED_BODY_CAPACITY; retrieve with evidence.read")
+                remaining -= len(body)
+                item.update(residency="exact", body=body, content_hash=_sha256_text(body))
+            except (ValueError, OSError) as exc:
+                item.update(residency="externalized", summary="Body not resident; explicit scoped reader remains authoritative.",
+                            missing_details=str(getattr(exc, "code", "") or type(exc).__name__) + ": " + str(exc)[:300])
+            materials.append(item)
+        return materials
 
     def _restore_active_context(
         self,
@@ -1568,8 +1595,12 @@ class Schema2RecoveryNode:
             seed=projection.recovery_seed, durable=durable,
             source=projection.source, episode=episode, archive_ref=archive_ref,
         )
-        # Keep the existing non-inspection protocol outcome semantics.
-        if projection.failure_packet.failure_type != "inspection_required" and episode.get("terminal_error"):
+        # Classify the terminal event itself. Policy exhaustion is unresolved,
+        # independent of which legal producer initiated the investigation.
+        if (episode.get("terminal_error") and str(episode["terminal_error"].get("code") or "") not in {
+            "RECOVERY_NO_PROGRESS_LIMIT", "RECOVERY_TOOL_CALL_LIMIT", "RECOVERY_MODEL_TURN_LIMIT",
+            "RECOVERY_BUDGET_EXHAUSTED", "RECOVERY_NO_PROGRESS",
+        } and projection.failure_packet.failure_type != "inspection_required"):
             result = self._internal(task_id=stop["scope"]["task_id"], durable=durable,
                 code=stop["stop_reason"]["error_code"], detail=str(episode["terminal_error"].get("detail") or ""),
                 recovery_archive_ref=archive_ref)

@@ -184,7 +184,11 @@ class TypedInspectionRegistry:
             )
         if kinds and ref.kind not in set(kinds):
             raise RecoveryToolError(
-                "INSPECTION_REF_KIND_MISMATCH", f"{ref.ref_id}:{ref.kind}"
+                "INSPECTION_REF_KIND_MISMATCH", _canonical({
+                    "ref_id": ref.ref_id, "actual_kind": ref.kind, "expected_kinds": list(kinds),
+                    "allowed_tools": next((row["allowed_tools"] for row in self.provider_manifest() if row["ref_id"] == ref.ref_id), []),
+                    "declared_readable_candidates": [row for row in self.provider_manifest() if row.get("readable") and row["kind"] in kinds][:4],
+                })
             )
         access = str(ref.scope.get("access") or "current_step")
         if ref.step_id and ref.step_id != self.step_id:
@@ -700,35 +704,40 @@ class RecoveryLocalToolDispatcher:
         end_line = min(requested_end, start_line + MAX_ARTIFACT_READ_LINES - 1)
         if end_line < start_line:
             raise RecoveryToolError("RECOVERY_TOOL_ARGUMENT_INVALID", "artifact line range")
+        from agent_core.inspection_readers import inspect_stream, ReadLimits, InspectionReadError
+        representation = str(args.get("representation") or "text")
+        if representation not in {"text", "gzip_text", "fastq_prefix"}:
+            raise RecoveryToolError("ARTIFACT_REPRESENTATION_UNSUPPORTED", representation)
+        if start_line > 1024:
+            raise RecoveryToolError("RECOVERY_TOOL_ARGUMENT_INVALID", "bounded reader can scan at most 1024 lines; request a scoped diagnostic for deeper content")
         try:
             with open_approved_resource(path) as handle:
-                payload = handle.read(max_bytes + 1)
+                observation = inspect_stream(handle, representation=representation, limits=ReadLimits(
+                    input_bytes=min(1024 * 1024, max_bytes * 16), decoded_bytes=max_bytes,
+                    lines=min(1024, end_line), records=32,
+                ))
+        except InspectionReadError as exc:
+            raise RecoveryToolError(exc.code, exc.detail) from exc
         except PermissionError as exc:
             raise RecoveryToolError("ARTIFACT_PERMISSION_DENIED", entry.ref_id) from exc
         except OSError as exc:
             raise RecoveryToolError("ARTIFACT_IO_ERROR", entry.ref_id) from exc
-        if b"\x00" in payload[:4096]:
-            raise RecoveryToolError("ARTIFACT_BINARY_READ_FORBIDDEN", entry.ref_id)
-        try:
-            text = payload[:max_bytes].decode("utf-8")
-        except UnicodeDecodeError as exc:
-            raise RecoveryToolError("ARTIFACT_BINARY_READ_FORBIDDEN", entry.ref_id) from exc
-        lines = text.splitlines()
-        selected = "\n".join(lines[start_line - 1:end_line])[:max_chars]
+        if observation["status"] == "error":
+            # Keep bounds and technical cause in the next ToolMessage. No read
+            # limitation is a claim of absence or authorization for a probe.
+            detail = {key: value for key, value in observation.items() if key != "content"}
+            detail.update(ref_id=entry.ref_id, available_alternatives=["formal scoped diagnostic request subject to approval"])
+            raise RecoveryToolError(str(observation["error"]["code"]), _canonical(detail))
+        lines = observation.pop("content").splitlines()
+        selected = "\n".join(lines[start_line - 1:end_line])
         return {
-            "ref_id": entry.ref_id,
-            "start_line": start_line,
+            "ref_id": entry.ref_id, "start_line": start_line,
             "end_line": start_line + len(lines[start_line - 1:end_line]) - 1,
-            "content": selected,
-            "truncated": bool(
-                len(payload) > max_bytes
-                or requested_end > end_line
-                or len("\n".join(lines[start_line - 1:end_line])) > max_chars
-            ),
-            "byte_limit": max_bytes,
-            "char_limit": max_chars,
-            "line_limit": MAX_ARTIFACT_READ_LINES,
-            "binary_policy": binary_policy,
+            "content": selected[:max_chars],
+            "truncated": not observation["eof"] or requested_end > end_line or len(selected) > max_chars,
+            "byte_limit": max_bytes, "char_limit": max_chars,
+            "line_limit": MAX_ARTIFACT_READ_LINES, "binary_policy": binary_policy,
+            "inspection": observation,
         }
 
     def _skill_call(self, skill_id: str, request: Mapping[str, Any]) -> dict[str, Any]:

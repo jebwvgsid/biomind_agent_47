@@ -18413,9 +18413,20 @@ class BioAnalystAgent:
         )
 
     def _execution_validation_level(self, state: AgentState, code: str) -> str:
-        # ResultValidator checks process/known text signals. Scientific truth
-        # belongs to scoped ValidationEvidence and CompletionReport predicates.
-        return "none" if str(state.get("validation_level") or "").lower() == "none" else "process"
+        explicit = str(state.get("validation_level") or "").strip().lower()
+        if explicit in {"none", "basic", "artifact", "scientific"}:
+            return explicit
+        if state.get("active_skills") or state.get("selected_skills") or state.get("workflow_id"):
+            return "scientific"
+        plan_text = str(state.get("current_plan") or state.get("plan_progress") or "").lower()
+        code_text = str(code or "").lower()
+        analysis_terms = (
+            "analysis", "workflow", "pipeline", "qc", "align", "mapping",
+            "cluster", "differential", "tad", "variant", "fastqc", "seurat",
+        )
+        if any(term in plan_text or term in code_text for term in analysis_terms):
+            return "artifact"
+        return "basic"
 
     def _validate_execution_result(
         self,
@@ -18435,7 +18446,7 @@ class BioAnalystAgent:
         report = self.validator.format_report(validation)
         report = str(report or "").strip()[:1800]
         block = (
-            f'\n<validation_result level="{level}" status="{status}">\n'
+            f'\n<validation_result level="process" status="{status}">\n'
             f"{report}\n"
             "</validation_result>"
         )
@@ -49658,7 +49669,8 @@ question. Never guess a scientific or database identity.
                 from agent_core.state_contract_store import StateContractStore
                 from agent_core.context_lineage import redact_text
                 held_execution = {key: execution_evidence[key] for key in
-                    ("task_id", "plan_id", "plan_version", "step_id", "attempt_id", "action_id", "execution_id", "code", "stdout", "stderr", "returncode", "exit_code", "execution_status") if key in execution_evidence}
+                    ("task_id", "plan_id", "plan_version", "step_id", "attempt_id", "action_id", "execution_id", "code", "generated_code", "stdout", "stderr", "returncode", "exit_code", "execution_status", "effect_evidence", "validation", "pipeline_statuses") if key in execution_evidence}
+                held_execution["execution_wrapper"] = wrapper
                 held_execution = {key: redact_text(value) if isinstance(value, str) else value for key, value in held_execution.items()}
                 execution_evidence["recovery_execution_facts_ref"] = StateContractStore(self.data_path, task_id).put_object("execution.recovery_facts", held_execution)
             except Exception as facts_error:

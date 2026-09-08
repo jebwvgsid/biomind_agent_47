@@ -211,7 +211,7 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
             "tool": _code(receipt.get("tool")), "evidence_ref": _safe(receipt.get("source_ref"), 800),
             "error_code": _code(issue.get("code"), "INSPECTION_TOOL_FAILED"),
             "detail": _safe(issue.get("detail")), "stage": "recovery.inspection"})
-    origin = {"source_stage": "supervisor", "source_owner": _code(packet.get("failure_owner"), "semantic_review"),
+    origin = {"source_stage": {"execute_outcome": "execute", "verification_outcome": "supervisor", "completion_gate_outcome": "supervisor", "commit_step_outcome": "commit_step", "install_outcome": "install_subagent"}.get(str(packet.get("source") or ""), "recovery"), "source_owner": _code(packet.get("failure_owner"), "semantic_review"),
         "failure_id": _code(packet.get("failure_id")), "failure_type": _code(packet.get("failure_type")),
         "error_code": _code(packet.get("error_code"), "VERIFICATION_FAILED"),
         "summary": _safe(packet.get("summary")),
@@ -234,6 +234,11 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
         "authority": _authority(durable),
         "expected_state_generation": int(durable.get("state_generation") or 0),
         "origin": origin, "inspection_failures": failures, "publication_failures": publication_failures,
+        "latest_failure": deepcopy(failures[-1]) if failures else {},
+        "inspection_observations": [{"tool": _code(row.get("tool")), "source_ref": _safe(row.get("source_ref"), 800),
+            "content_sha256": _safe(row.get("content_sha256"), 100),
+            "facts": {key: deepcopy(row.get("result", {}).get(key)) for key in ("exists", "is_file", "size", "hash", "hash_status", "inspection") if key in _mapping(row.get("result"))}}
+            for row in receipts if isinstance(row, Mapping) and not row.get("error")],
         "task_summary": _safe(task_spec.get("goal") or task_spec.get("question") or task_spec.get("objective") or task_spec.get("user_request"), 1800),
         "stop_reason": {"error_code": reason, "detail": _safe(error.get("detail")),
             "no_progress_rounds": int(audit.get("no_progress_rounds") or 0),
@@ -310,6 +315,9 @@ def _secondary(stop, stage, code, exc=None):
     row = {"stage": stage, "error_code": code}
     if exc is not None:
         row["exception_type"] = type(exc).__name__
+        row["detail"] = _safe(str(exc), 800)
+        if exc.__cause__ is not None:
+            row["cause_type"] = type(exc.__cause__).__name__
     if row not in stop["secondary_failures"]:
         stop["secondary_failures"].append(row)
 

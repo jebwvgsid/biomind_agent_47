@@ -3848,7 +3848,35 @@ def build_recovery_execution_envelope(
             "RECOVERY_DECISION_NOT_FINALIZED",
             "execution envelope requires a finalized RecoveryDecision",
         )
-    strategy = str(decision.recommended_action or "").upper()
+    return build_scoped_recovery_execution_envelope(
+        decision_id=str(decision.decision_id or decision.idempotency_key or ""),
+        source_scope=decision.source_scope, strategy=decision.recommended_action,
+        recovery_context_id=recovery_context_id, step_id=step_id or decision.step_id,
+        task_root=task_root, created_from=created_from, allowed_input_roots=allowed_input_roots,
+        forbidden_formal_output_paths=forbidden_formal_output_paths, policy_version=policy_version,
+        preferred_execution_mode=decision.preferred_execution_mode,
+        objective=decision.probe_objective or decision.probe_reason or decision.repair_strategy or decision.reason,
+        missing_evidence=decision.missing_evidence, recommended_probe_id=decision.recommended_probe_id,
+        selected_hypothesis_id=decision.selected_hypothesis_id,
+    )
+
+
+def build_scoped_recovery_execution_envelope(
+    *, decision_id: str, source_scope: Mapping[str, Any], strategy: str,
+    recovery_context_id: str, step_id: str, task_root: str | Path,
+    created_from: str = RecoveryDecisionSource.DETERMINISTIC.value,
+    allowed_input_roots: Iterable[str] = (), forbidden_formal_output_paths: Iterable[str] = (),
+    policy_version: str = "recovery-execution-policy-v1", preferred_execution_mode: str = "INLINE",
+    objective: str = "", missing_evidence: Iterable[str] = (), recommended_probe_id: str = "",
+    selected_hypothesis_id: Optional[str] = None,
+) -> RecoveryExecutionEnvelope:
+    """Bind already admitted semantics. This constructor grants no graph route.
+
+    Callers must validate their decision/receipt and persist this envelope with
+    its invocation authority atomically; an independently computed hash grants
+    no permission to Execute.
+    """
+    strategy = str(strategy or "").upper()
     purpose = (
         RecoveryExecutionPurpose.DIAGNOSTIC.value
         if strategy == RecoveryAction.RUN_DIAGNOSTIC_PROBE.value
@@ -3857,7 +3885,7 @@ def build_recovery_execution_envelope(
         else RecoveryExecutionPurpose.PRIMARY.value
     )
     proposed_mode = str(
-        decision.preferred_execution_mode or RecoveryExecutionMode.INLINE.value
+        preferred_execution_mode or RecoveryExecutionMode.INLINE.value
     ).upper()
     mode = (
         proposed_mode
@@ -3871,15 +3899,15 @@ def build_recovery_execution_envelope(
         if purpose == RecoveryExecutionPurpose.DIAGNOSTIC.value
         else RecoveryResultContract.FORMAL_OUTPUTS.value
     )
-    decision_id = str(decision.decision_id or decision.idempotency_key or "")
+    decision_id = str(decision_id or "")
     context_id = str(recovery_context_id or "")
-    resolved_step_id = str(step_id or decision.step_id or "")
+    resolved_step_id = str(step_id or "")
     if not decision_id or not context_id or not resolved_step_id:
         raise RecoveryExecutionContractError(
             "RECOVERY_EXECUTION_ENVELOPE_INVALID",
             "decision, context, and step identities are required",
         )
-    if resolved_step_id != str(decision.step_id or ""):
+    if resolved_step_id != str(source_scope.get("step_id") or ""):
         raise RecoveryExecutionContractError(
             "RECOVERY_EXECUTION_SCOPE_MISMATCH",
             "envelope step differs from finalized decision scope",
@@ -3889,14 +3917,11 @@ def build_recovery_execution_envelope(
         probe_identity = {
             "decision_id": decision_id,
             "objective": str(
-                decision.probe_objective
-                or decision.probe_reason
-                or decision.repair_strategy
-                or decision.reason
+                objective
             ),
-            "missing_evidence": list(decision.missing_evidence or []),
+            "missing_evidence": list(missing_evidence or []),
         }
-        probe_id = str(decision.recommended_probe_id or "") or (
+        probe_id = str(recommended_probe_id or "") or (
             "probe_"
             + hashlib.sha256(
                 json.dumps(
@@ -3950,8 +3975,8 @@ def build_recovery_execution_envelope(
         execution_purpose=purpose,
         execution_mode=mode,
         result_contract=result_contract,
-        source_scope=deepcopy(decision.source_scope),
-        hypothesis_id=decision.selected_hypothesis_id,
+        source_scope=deepcopy(source_scope),
+        hypothesis_id=selected_hypothesis_id,
         probe_id=probe_id,
         scratch_capability=scratch,
         policy_version=str(policy_version),

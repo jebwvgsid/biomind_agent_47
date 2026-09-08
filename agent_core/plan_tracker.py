@@ -3229,6 +3229,83 @@ def _primary_step_attempt_ordinal(
     )
 
 
+def bind_recovery_generation_authority(
+    state: Mapping[str, Any], recovery_state: Mapping[str, Any], *,
+    decision_id: str, envelope: Mapping[str, Any], source_attempt_id: str = "",
+) -> Dict[str, Any]:
+    """Mechanical owner/claim binding shared by admitted legacy and typed calls.
+
+    No routing decision, persistence, budget charge or step transition occurs
+    here. The caller commits this value with its validated decision receipt.
+    """
+    from agent_core.recovery import RecoveryExecutionEnvelope
+    checked = RecoveryExecutionEnvelope.from_mapping(envelope)
+    step_id = str(state.get("current_step_id") or "")
+    if (checked.step_id != step_id or checked.recovery_decision_id != decision_id
+            or int(state.get("plan_revision") or 0) <= 0):
+        raise ValueError("RECOVERY_GENERATION_AUTHORITY_SCOPE_MISMATCH")
+    recovery_state = deepcopy(dict(recovery_state))
+    prior_active_recovery = dict(recovery_state.get("active_recovery") or {})
+    if (
+        prior_active_recovery
+        and str(prior_active_recovery.get("status") or "").lower()
+        in {"pending", "dispatched"}
+        and str(prior_active_recovery.get("recovery_id") or "") != decision_id
+    ):
+        retired = deepcopy(prior_active_recovery)
+        retired.update({
+            "status": "closed",
+            "closed_reason": "SUPERSEDED_BY_NEWER_RECOVERY_DECISION",
+            "closed_at": _now(),
+        })
+        recovery_state["active_recovery_history"] = [
+            *list(recovery_state.get("active_recovery_history") or []),
+            retired,
+        ]
+    target_generation_identity = {
+        "task_id": str(state.get("task_id") or ""),
+        "plan_id": str(state.get("plan_id") or ""),
+        "plan_version": str(state.get("plan_version") or ""),
+        "step_id": step_id,
+        "recovery_decision_id": decision_id,
+        "envelope_hash": str(envelope.get("immutable_hash") or ""),
+        "operation": "recovery_generate",
+    }
+    target_generation_id = "generation-" + hashlib.sha256(
+        json.dumps(
+            target_generation_identity,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8", errors="replace")
+    ).hexdigest()[:20]
+    recovery_state["active_recovery"] = {
+        "schema_version": 1,
+        "recovery_id": decision_id,
+        "plan_revision": int(state.get("plan_revision") or 0),
+        "step_id": step_id,
+        "source_attempt_id": str(
+            source_attempt_id or ""
+        ),
+        "status": "pending",
+        "target_route": "generate",
+        "envelope_id": str(envelope.get("immutable_hash") or ""),
+        "target_generation_id": target_generation_id,
+        "created_at": _now(),
+    }
+    recovery_state["generation_claim"] = {
+        "schema_version": 1,
+        "target_generation_id": target_generation_id,
+        "recovery_id": decision_id,
+        "status": "issued",
+        "provider_idempotency_key": target_generation_id,
+        "remote_delivery_semantics": "at_least_once_without_provider_idempotency",
+        "issued_at": _now(),
+    }
+    recovery_state["active_recovery_envelope"] = envelope
+    return recovery_state
+
+
 def apply_recovery_decision(
     state: PlanState,
     decision: Any,
@@ -3627,64 +3704,10 @@ def apply_recovery_decision(
             != dict(value.get("source_scope") or {})
         ):
             raise ValueError("Recovery decision and execution envelope scope mismatch")
-        prior_active_recovery = dict(recovery_state.get("active_recovery") or {})
-        if (
-            prior_active_recovery
-            and str(prior_active_recovery.get("status") or "").lower()
-            in {"pending", "dispatched"}
-            and str(prior_active_recovery.get("recovery_id") or "") != decision_id
-        ):
-            retired = deepcopy(prior_active_recovery)
-            retired.update({
-                "status": "closed",
-                "closed_reason": "SUPERSEDED_BY_NEWER_RECOVERY_DECISION",
-                "closed_at": _now(),
-            })
-            recovery_state["active_recovery_history"] = [
-                *list(recovery_state.get("active_recovery_history") or []),
-                retired,
-            ]
-        target_generation_identity = {
-            "task_id": str(state.get("task_id") or ""),
-            "plan_id": str(state.get("plan_id") or ""),
-            "plan_version": str(state.get("plan_version") or ""),
-            "step_id": step_id,
-            "recovery_decision_id": decision_id,
-            "envelope_hash": str(envelope.get("immutable_hash") or ""),
-            "operation": "recovery_generate",
-        }
-        target_generation_id = "generation-" + hashlib.sha256(
-            json.dumps(
-                target_generation_identity,
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-            ).encode("utf-8", errors="replace")
-        ).hexdigest()[:20]
-        recovery_state["active_recovery"] = {
-            "schema_version": 1,
-            "recovery_id": decision_id,
-            "plan_revision": int(state.get("plan_revision") or 0),
-            "step_id": step_id,
-            "source_attempt_id": str(
-                value.get("attempt_id") or value.get("trigger_event_id") or ""
-            ),
-            "status": "pending",
-            "target_route": "generate",
-            "envelope_id": str(envelope.get("immutable_hash") or ""),
-            "target_generation_id": target_generation_id,
-            "created_at": _now(),
-        }
-        recovery_state["generation_claim"] = {
-            "schema_version": 1,
-            "target_generation_id": target_generation_id,
-            "recovery_id": decision_id,
-            "status": "issued",
-            "provider_idempotency_key": target_generation_id,
-            "remote_delivery_semantics": "at_least_once_without_provider_idempotency",
-            "issued_at": _now(),
-        }
-        recovery_state["active_recovery_envelope"] = envelope
+        recovery_state = bind_recovery_generation_authority(
+            state, recovery_state, decision_id=decision_id, envelope=envelope,
+            source_attempt_id=str(value.get("attempt_id") or value.get("trigger_event_id") or ""),
+        )
     elif kind in {"COMPLETE_STEP", "COMPLETE_TASK"}:
         # Completion decisions own one route dispatch only.  They are audit
         # history, never authority for a later recovery Generate.

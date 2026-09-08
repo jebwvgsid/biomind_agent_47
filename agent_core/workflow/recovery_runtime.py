@@ -15,7 +15,7 @@ from copy import deepcopy
 from typing import Any, Callable, Mapping
 
 from agent_core.plan_contract import StateCASConflict
-from agent_core.plan_tracker import load_plan_state, save_plan_state
+from agent_core.plan_tracker import load_plan_state, save_plan_state, bind_recovery_generation_authority
 from agent_core.workflow.outcomes import (
     RecoveryOutcome,
     WORKFLOW_ROUTING_SCHEMA_TYPED,
@@ -60,7 +60,7 @@ def _full_hash(value: Any) -> str:
 class RecoveryRuntime:
     """Admit one semantic directive and persist one route-blind receipt."""
 
-    BUDGETED_ACTIONS = frozenset({"retry_step", "revise_plan"})
+    BUDGETED_ACTIONS = frozenset({"retry_step", "revise_plan", "run_diagnostic_probe"})
 
     def __init__(
         self,
@@ -309,12 +309,12 @@ class RecoveryRuntime:
                     "ordinal": consumed_before,
                 },
             }
-        elif directive.action == "retry_step":
+        elif directive.action in {"retry_step", "run_diagnostic_probe"}:
             outcome_type = "candidate_repair_required"
             payload = {
                 "diagnosis": directive.summary,
                 "failure_owner": packet.failure_owner,
-                "strategy": "semantic_directive:retry_step",
+                "strategy": "semantic_directive:" + directive.action,
                 "repair_instruction": directive.instruction,
                 "source_scope": scope,
                 "decision_id": decision_id,
@@ -439,6 +439,25 @@ class RecoveryRuntime:
             "outcome_digest": _full_hash(outcome.to_dict()),
             "outcome": outcome.to_dict(),
         }
+        if outcome_type == "candidate_repair_required":
+            from pathlib import Path
+            from agent_core.recovery import build_scoped_recovery_execution_envelope
+            envelope = build_scoped_recovery_execution_envelope(
+                decision_id=decision_id, source_scope=scope,
+                strategy="RUN_DIAGNOSTIC_PROBE" if directive.action == "run_diagnostic_probe" else "PATCH_SCRIPT",
+                recovery_context_id=seed.seed_id, step_id=packet.step_id,
+                task_root=Path(self.data_path) / "task_outputs" / task_id,
+                objective=directive.instruction,
+            )
+            candidate_task["recovery_state"] = bind_recovery_generation_authority(
+                candidate, candidate_task.get("recovery_state") or {},
+                decision_id=decision_id, envelope=envelope.to_dict(), source_attempt_id=packet.attempt_ref,
+            )
+            candidate_receipts[decision_id].update(
+                execution_envelope=envelope.to_dict(), execution_envelope_digest=envelope.immutable_hash,
+                generation_authority=deepcopy(candidate_task["recovery_state"]["active_recovery"]),
+                business_resume_state=deepcopy(state.get("recovery_business_resume_state") or {}),
+            )
         candidate_task["typed_recovery_receipts"] = candidate_receipts
         packet_ref = str(
             state.get("active_failure_packet_ref")

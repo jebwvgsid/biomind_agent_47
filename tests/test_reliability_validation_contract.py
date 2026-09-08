@@ -48,7 +48,7 @@ def test_process_validator_does_not_claim_scientific_validation():
     agent._execution_validation_level = lambda state, code: cls._execution_validation_level(agent, state, code)
     raw = 'BIOMIND_EFFECT_EVIDENCE_JSON={"value":{"ok":false,"error":"no_reads_found"}}'
     validation, display, level = cls._validate_execution_result(agent, {"selected_skills": ["science"]}, "echo result", raw, "", 0)
-    assert validation["passed"] and level == "process"
+    assert validation["passed"] and level == "scientific"  # Existing Supervisor review policy remains enabled.
     assert 'level="process"' in display and "scientific" not in display
     assert RootCauseAnalyzer._errors(raw)[0] is None
 

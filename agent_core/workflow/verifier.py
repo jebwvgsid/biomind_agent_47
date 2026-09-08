@@ -87,6 +87,7 @@ class TypedSupervisor:
             raise ValueError("TYPED_SUPERVISOR_VALIDATION_SCOPE_MISMATCH")
 
         validation_value = validation.to_dict()
+        producer_report = deepcopy(dict(result.get("completion_report") or {}))
         semantic_refs: list[str] = []
         role = str(validation.command_role or execution.get("command_role") or "").lower()
         if role in {"probe", "diagnostic", "optional_probe", "capability_probe"}:
@@ -227,6 +228,10 @@ class TypedSupervisor:
                         "accepted_warnings": list(validation.warnings),
                     }
                     summary = "Current execution and CompletionGate are verified."
+
+        if producer_report and "completion_report" not in payload:
+            payload["completion_report"] = producer_report
+            payload["semantic_decision"] = deepcopy(producer_report.get("effective_decision") or {})
 
         outcome = VerificationOutcome(
             schema_version=1,
