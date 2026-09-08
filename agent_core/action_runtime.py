@@ -33,6 +33,8 @@ _BINDING_ID_RE = re.compile(r"^(?:runtime|artifact)\.[a-z0-9][a-z0-9_.-]{0,126}$
 LLM_CAPABILITY_FIELD_ALLOWLIST = (
     "capability_id",
     "selected_skill_id",
+    "contract_source",
+    "contract_revision",
     "required_runtime_binding_ids",
     "optional_runtime_binding_ids",
     "required_artifact_binding_ids",
@@ -203,6 +205,12 @@ def normalize_capability_contract(
     # from the absence of an effect contract.
     if "operation" in value:
         normalized["operation"] = str(value.get("operation") or "").strip()
+    # The declaration's source and revision travel with its semantic contract.
+    # Keep this additive: absent fields on legacy capabilities must not change
+    # an already approved capability hash merely because the reader upgraded.
+    for field in ("contract_source", "contract_revision"):
+        if field in value:
+            normalized[field] = str(value.get(field) or "").strip()
     for field in _OPTIONAL_CAPABILITY_EFFECT_LIST_FIELDS:
         if field in value:
             normalized[field] = (

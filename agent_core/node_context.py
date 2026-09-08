@@ -774,6 +774,9 @@ def _semantic_artifact_rows(
                 "output_id": str(raw.get("output_id") or stable_id),
                 "artifact_id": str(raw.get("artifact_id") or ""),
                 "artifact_kind": str(raw.get("artifact_kind") or raw.get("object_kind") or "file"),
+                **{key: deepcopy(raw[key]) for key in (
+                    "resource_kind", "contract_revision", "contract_source", "initial_state",
+                ) if key in raw},
                 "producer_owner": str(raw.get("producer_owner") or "planner"),
                 "canonical_path": str(
                     raw.get("canonical_path")
@@ -788,6 +791,9 @@ def _semantic_artifact_rows(
             "output_id": str(raw.get("output_id") or stable_id),
             "role": str(role),
             "artifact_kind": str(raw.get("artifact_kind") or raw.get("object_kind") or "file"),
+            **{key: deepcopy(raw[key]) for key in (
+                "resource_kind", "contract_revision", "contract_source", "initial_state",
+            ) if key in raw},
             "format": raw.get("format") or raw.get("type") or "",
             "required": bool(raw.get("required", True)),
             "path_policy": str(raw.get("path_policy") or ""),

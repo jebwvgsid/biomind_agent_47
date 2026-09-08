@@ -809,6 +809,8 @@ from agent_core.workspace_attestation import (
     validate_workspace_action_admission,
 )
 from agent_core.state_contract_store import StateContractStore
+from agent_core.planner_context import save_correction_context, load_correction_context, restore_correction_messages
+from agent_core.plan_bindings import planner_resource_requirements
 from agent_core.completion_gate import CompletionGate
 
 
@@ -37971,6 +37973,15 @@ question. Never guess a scientific or database identity.
                     ) or ""
                 ),
             )
+            planner_effect_registry = (self.skill_manager.get_execution_capability_registry(selected_skills) if self.skill_manager else {})
+            restored_planner_context = load_correction_context(
+                self.data_path, task_id, planner_source_state,
+                task_spec=task_spec, capabilities=planner_effect_registry,
+            )
+            if restored_planner_context and (planner_phase_context is None or not planner_phase_context.messages):
+                restored_planner_messages = restore_correction_messages(planner_phase_context, restored_planner_context)
+            else:
+                restored_planner_messages = None
             planner_skill_context = planner_skill_context_exact
             if planner_phase_context is not None:
                 planner_skill_context = manifest_only_skill_context(
@@ -38013,6 +38024,7 @@ question. Never guess a scientific or database identity.
                 ),
                 **planner_semantic_inputs,
             )
+            planner_requirements = [planner_resource_requirements(planner_node_context.binding.semantic_handle_map, planner_effect_registry)]
             planner_system_prompt = PromptManager.get_planner_v2_system_prompt()
             planner_human_prompt = PromptManager.get_planner_v2_human_prompt(
                 planner_node_context.llm_payload.to_provider_dict()
@@ -38075,6 +38087,8 @@ question. Never guess a scientific or database identity.
                     ),
                 }
 
+            if planner_phase_context is None and restored_planner_messages:
+                planner_llm_messages = restored_planner_messages
             planner_accounting = planner_prompt_accounting()
             compressible_chars = 0
             planner_budget = assess_prompt_budget(
@@ -38573,6 +38587,8 @@ question. Never guess a scientific or database identity.
                             # below after handle resolution and capability
                             # StepEffect compilation.
                             validate_dataflow=False,
+                            require_declared_references=True,
+                            capability_ids=tuple(planner_effect_registry),
                         )
                         if deterministic_issues:
                             structure_errors = [
@@ -38583,6 +38599,7 @@ question. Never guess a scientific or database identity.
                             candidate_resource_bindings = (
                                 compile_plan_resource_bindings(
                                     plan_proposal,
+                                    require_declared_references=True,
                                     candidate_scope_id=(
                                         planner_node_context.binding.candidate_scope_id
                                     ),
@@ -38688,6 +38705,7 @@ question. Never guess a scientific or database identity.
                         planning_epoch.get("planning_epoch_id") or ""
                     ),
                     task_spec_revision_value=task_revision,
+                    requirements=planner_requirements,
                     validation_source="planner_candidate_admission",
                     candidate=(
                         plan_proposal
@@ -38709,6 +38727,13 @@ question. Never guess a scientific or database identity.
                     ) or {}).get("validation_issues")
                     or []
                 )
+                planner_feedback = save_correction_context(
+                    self.data_path, task_id, rejected_state, task_spec=task_spec,
+                    raw=str(response.content or ""), candidate=plan_proposal if isinstance(plan_proposal, Mapping) else {},
+                    provider_messages=planner_llm_messages,
+                    fixed_prefix_count=(2 + len(planner_phase_context.inherited_messages) if planner_phase_context else 2),
+                    capabilities=planner_effect_registry,
+                )
                 save_plan_state(self.data_path, task_id, rejected_state)
                 rejected_epoch = dict(
                     (rejected_state.get("task_state") or {}).get("planning_epoch")
@@ -38716,10 +38741,7 @@ question. Never guess a scientific or database identity.
                 )
                 return {
                     "messages": [SystemMessage(content=json.dumps(
-                        {
-                            "code": "PLANNER_CANDIDATE_REJECTED",
-                            "validation_issues": structure_errors,
-                        },
+                        planner_feedback,
                         ensure_ascii=False,
                         sort_keys=True,
                         default=str,
@@ -38832,6 +38854,7 @@ question. Never guess a scientific or database identity.
                         planning_epoch.get("planning_epoch_id") or ""
                     ),
                     task_spec_revision_value=task_revision,
+                    requirements=planner_requirements,
                     validation_source="plan_contract_validation",
                     candidate=candidate_for_repair,
                     previous_correction={
@@ -38849,6 +38872,13 @@ question. Never guess a scientific or database identity.
                     ) or {}).get("validation_issues")
                     or []
                 )
+                planner_feedback = save_correction_context(
+                    self.data_path, task_id, rejected_state, task_spec=task_spec,
+                    raw=str(response.content or ""), candidate=candidate_for_repair if isinstance(candidate_for_repair, Mapping) else {},
+                    provider_messages=planner_llm_messages,
+                    fixed_prefix_count=(2 + len(planner_phase_context.inherited_messages) if planner_phase_context else 2),
+                    capabilities=planner_effect_registry,
+                )
                 save_plan_state(self.data_path, task_id, rejected_state)
                 rejected_epoch = dict(
                     (rejected_state.get("task_state") or {}).get("planning_epoch")
@@ -38856,10 +38886,7 @@ question. Never guess a scientific or database identity.
                 )
                 return {
                     "messages": [SystemMessage(content=json.dumps(
-                        {
-                            "code": "PLANNER_CANDIDATE_REJECTED",
-                            "validation_issues": violations,
-                        },
+                        planner_feedback,
                         ensure_ascii=False,
                         sort_keys=True,
                         default=str,

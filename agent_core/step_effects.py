@@ -776,7 +776,12 @@ def _merge_effects(
 
 
 def _contract_source(contract: Mapping[str, Any], fallback: str = "") -> str:
-    explicit = str(contract.get("source_ref") or contract.get("contract_ref") or "").strip()
+    explicit = str(
+        contract.get("contract_source")
+        or contract.get("source_ref")
+        or contract.get("contract_ref")
+        or ""
+    ).strip()
     if explicit:
         return explicit
     skill_id = str(contract.get("selected_skill_id") or contract.get("skill_id") or "").strip()
@@ -1366,6 +1371,10 @@ def compile_step_effect(
                 violation_code="STEP_EFFECT_CAPABILITY_MISMATCH",
                 unsupported_effects=unsupported,
                 capability_id=capability_id,
+                actual={field: deepcopy(explicit_effect[field]) for field in unsupported},
+                expected={field: deepcopy(selected_effect[field]) for field in unsupported},
+                contract_source=source_ref,
+                contract_revision=str(selected_contract.get("contract_revision") or ""),
             ))
         try:
             inferred_effect = deepcopy(selected_effect)
@@ -1452,6 +1461,16 @@ def compile_step_effect(
                 ),
                 violation_code="EXPLICIT_SIDE_EFFECT_UNSUPPORTED",
                 unsupported_effect_ids=unsupported_side_effects,
+                capability_id=capability_id,
+                actual=deepcopy(explicit_effect["explicit_side_effects"]),
+                expected={
+                    "supported_forms": [
+                        "selected capability declares this side-effect identity",
+                        "inline side-effect object with a typed evidence_contract",
+                    ],
+                },
+                contract_source="agent_core.step_effects.compile_step_effect",
+                contract_revision=f"step-effect-schema-{STEP_EFFECT_SCHEMA_VERSION}",
             ))
 
     complete = step_effect_complete(compiled_effect)

@@ -1806,13 +1806,20 @@ materialization_policy_id=managed_intermediate_v1. Inputs consume; outputs produ
 dependencies only order steps. A consumed intermediate must be produced by one
 reachable dependency.
 
-Resource identity is exact and explicit. A plan.* handle and an artifact.*
-capability resource are the same resource only when proposed_artifacts declares
-a resource_binding with the exact canonical_resource_id, resource_kind,
-availability_origin, and contract_revision from the selected capability
-contract. Never infer aliases from basename, suffix, path, role prose, or
-similar spelling. resource_kind and availability_origin are independent: an
-externally sourced resource may still be a mutable_workspace.
+Plan resource protocol version 2: a capability ID names executable ability,
+never a file or workspace. For a NEW resource, OMIT resource_binding. Declare
+local_ref, semantic_view and artifact_contract; the system creates its scoped
+identity and revision. Set artifact_contract.resource_kind=mutable_workspace
+only for an explicitly intended shared mutable directory. A directory can simply
+contain independent file outputs; directory shape grants no mutation permission.
+For an EXISTING resource use its current input/output handle directly. An exact
+alias, only when needed, is resource_binding={"resource_ref":"<current resource handle>"};
+the system copies identity, lifecycle and revision from that authoritative row.
+Do not manufacture canonical_resource_id, availability_origin or revision.
+Wrong-domain, stale or unregistered references are rejected, never silently renamed.
+Never infer aliases from basename, suffix, path, role prose or similar spelling.
+Old approved snapshots retain their original reader semantics; new candidates
+must satisfy this current admission contract.
 
 Every step must declare an interpretable effect, but it does not need to write
 a file. `outputs` describes only immutable-artifact production. Use `operation`
@@ -1822,7 +1829,12 @@ effects. An empty `outputs` array is valid when another effect is declared.
 Use exact operation/effect identities from the selected Skill capability. If a
 validator reports PLAN_STEP_EFFECT_UNSPECIFIED, revise the complete candidate
 from that structured evidence; never invent a file merely to satisfy review.
-For mutable workspaces, copy the capability's typed transition object exactly:
+Use the actual declared capability/evidence schema, not invented state names or
+revisions. If required material is absent, request typed Skill context or identify
+the concrete missing declaration. An independent file PRODUCE does not establish
+a state on a different container. Inline side effects must include a typed
+evidence_contract; a bare unsupported event name is invalid.
+For genuinely shared mutable workspaces, use the declared typed transition:
 workspace_ref, requires_available and/or requires_state,
 available_after_success and/or establishes_state, contract_source, and
 contract_revision. A mutation cannot satisfy a READ or required state in the
@@ -1836,8 +1848,7 @@ SUBMIT_PLAN_FOR_REVIEW schema placeholders:
   "proposed_artifacts": [{
     "local_ref": "plan.<task-specific-local-handle>",
     "semantic_view": {"role": "<task-specific-role>", "format": "<format>", "description": "<description>"},
-    "artifact_contract": {"object_kind": "file|directory", "lifecycle": "plan_local", "materialization_policy_id": "managed_intermediate_v1"},
-    "resource_binding": {"canonical_resource_id": "<exact-capability-resource-id>", "resource_kind": "immutable_artifact|mutable_workspace", "availability_origin": "<explicit-origin>", "contract_revision": "<exact-capability-contract-revision>"}
+    "artifact_contract": {"object_kind": "file|directory", "lifecycle": "plan_local", "resource_kind": "immutable_artifact|mutable_workspace", "materialization_policy_id": "managed_intermediate_v1"}
   }],
   "steps": [{
     "step_id": "<task-specific-step-id>",
@@ -1861,7 +1872,7 @@ SUBMIT_PLAN_FOR_REVIEW schema placeholders:
     "risk_level": "low|medium|high"
   }],
   "validation_checklist": [{"check_id": "<task-specific-check-id>", "description": "<semantic-self-check>"}],
-  "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2"},
+  "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2", "resource_contract_version": 2},
   "task_output_materializations": [{"output_ref": "<existing-output-handle>", "path": "<safe-relative-filename>"}]
 }
 

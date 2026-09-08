@@ -691,12 +691,16 @@ def validation_issue(
         "field_path": str(field_path or "").strip(),
         "message": str(message or "").strip(),
     }
+    semantic_extra = _semantic_diagnostic_value(extra)
+    violation_code = str(extra.get("violation_code") or body["code"])
+    # The display location alone is not an issue identity: two resources, or
+    # two conflicting edge pairs, can both fail at ``$.steps``.  Preserve the
+    # compiler's complete semantic evidence for candidate-local deduplication.
+    # Cross-turn no-progress comparison has its separate event-free projection.
     fingerprint_payload = {
         **body,
-        "renderer_field": str(extra.get("renderer_field") or ""),
-        "plan_step_id": str(extra.get("plan_step_id") or extra.get("step_id") or ""),
-        "artifact_id": str(extra.get("artifact_id") or ""),
-        "caused_by": sorted(str(item) for item in extra.get("caused_by", []) or []),
+        "violation_code": violation_code,
+        **semantic_extra,
     }
     fingerprint = hashlib.sha256(
         json.dumps(
@@ -710,9 +714,9 @@ def validation_issue(
     return {
         "schema_version": VALIDATION_ISSUE_SCHEMA_VERSION,
         **body,
-        "violation_code": body["code"],
+        "violation_code": violation_code,
         "fingerprint": fingerprint,
-        **_semantic_diagnostic_value(extra),
+        **semantic_extra,
     }
 
 
@@ -737,6 +741,16 @@ _VALIDATION_VOLATILE_KEYS = {
 # though the same key is volatile in validator observation envelopes.
 _CANDIDATE_VOLATILE_KEYS = _VALIDATION_VOLATILE_KEYS - {"observation_id"}
 
+# An explicit empty observed value is evidence, not an omitted field.  Keep
+# these bounded diagnostic facts while still dropping empty presentation data.
+_VALIDATION_EMPTY_FACT_FIELDS = {
+    "actual", "actual_value", "actual_facts", "expected", "expected_contract",
+    "required_condition", "accepted_sources", "rejected_sources",
+    "recognized_candidate_sources", "dependency_ancestors",
+    "producer_step_ids", "source_effect_kinds", "unsupported_effect_ids",
+    "actual_issues", "requirements",
+}
+
 
 def _semantic_diagnostic_value(value: Any) -> Any:
     """Remove workflow authority and per-attempt identities from diagnostics.
@@ -751,7 +765,10 @@ def _semantic_diagnostic_value(value: Any) -> Any:
             for key, item in value.items()
             if str(key).strip().lower() not in _VALIDATION_ROUTE_KEYS
             and str(key).strip().lower() not in _VALIDATION_VOLATILE_KEYS
-            and item not in (None, "", [], {})
+            and (
+                item not in (None, "", [], {})
+                or str(key) in _VALIDATION_EMPTY_FACT_FIELDS
+            )
         }
     if isinstance(value, list):
         return [_semantic_diagnostic_value(item) for item in value]
@@ -815,10 +832,13 @@ def normalize_validation_issue(value: Any) -> Dict[str, Any]:
             key: deepcopy(value)
             for key, value in raw.items()
             if key not in ({
-                "code", "violation_code", "severity", "owner", "repair_target",
+                "code", "severity", "owner", "repair_target",
                 "field_path", "message", "reason", "fingerprint", "schema_version",
             } | _VALIDATION_ROUTE_KEYS)
-            and value not in (None, "", [], {})
+            and (
+                value not in (None, "", [], {})
+                or key in _VALIDATION_EMPTY_FACT_FIELDS
+            )
         },
     )
 
@@ -854,7 +874,7 @@ def _bounded_candidate_semantic_view(
             continue
         proposed.append({
             key: deepcopy(raw.get(key))
-            for key in ("local_ref", "semantic_view", "artifact_contract")
+            for key in ("local_ref", "semantic_view", "artifact_contract", "resource_binding")
             if key in raw
         })
     if proposed:
@@ -900,8 +920,12 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
     )
     normalized = normalize_validation_issue(value)
     visible_fields = (
-        "code", "message", "severity", "disposition", "field_path",
+        "code", "violation_code", "message", "severity", "disposition", "field_path",
         "repair_target",
+        "step_id", "plan_step_id", "artifact_id", "resource_ref",
+        "mutation_id", "mutation_operation", "effect_id", "caused_by",
+        "dependency_step_id", "affected_edge_ids", "conflicting_step_ids",
+        "unordered_mutator_step_ids", "producer_edges", "conflicting_edges",
         "affected_step_ids", "affected_artifact",
         "affected_output", "expected_identity", "observed_identity",
         "violated_invariant", "required_postcondition", "affected_fields",
@@ -911,12 +935,17 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
         "consumer_step_id", "producer_step_ids", "actual_value",
         "expected_contract", "possible_effect_kinds", "candidate_sources",
         "expected", "actual", "source", "capability_id",
-        "capability_artifact_effects", "unsupported_effects",
+        "capability_artifact_effects", "unsupported_effects", "unsupported_effect_ids",
+        "contract_source", "contract_version", "schema_ref", "requirements",
+        "actual_issues",
     )
     issue = _semantic_diagnostic_value({
         key: deepcopy(normalized.get(key))
         for key in visible_fields
-        if normalized.get(key) not in (None, "", [], {})
+        if key in normalized and (
+            normalized.get(key) not in (None, "", [], {})
+            or key in _VALIDATION_EMPTY_FACT_FIELDS
+        )
     })
     if explicit_message:
         issue["message"] = explicit_message[:800]
@@ -976,6 +1005,8 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
         "actual_value", "expected_contract", "selected_skill_id",
         "validator_id", "possible_effect_kinds", "candidate_sources",
         "expected", "actual", "source", "capability_id",
+        "violation_code", "unsupported_effect_ids", "canonical_resource_id",
+        "resource_id", "mutation_id", "affected_edge_ids", "conflicting_edges",
     ):
         if normalized.get(key) not in (None, "", [], {}):
             machine_evidence.setdefault(key, deepcopy(normalized.get(key)))
@@ -1019,9 +1050,9 @@ def _candidate_correction_signature(
     issues: Sequence[Mapping[str, Any]],
 ) -> str:
     """Hash only validator-relevant candidate structure for no-progress checks."""
-    bounded = _bounded_candidate_semantic_view(candidate)
-    if not bounded:
+    if not isinstance(candidate, Mapping):
         return ""
+    semantic_candidate = _semantic_candidate_value(candidate)
     affected_step_ids = set(_planning_issue_affected_step_ids(issues))
     affected_fields = {
         str(field)
@@ -1033,7 +1064,7 @@ def _candidate_correction_signature(
     if not affected_fields:
         affected_fields = set(_PLANNER_CORRECTION_STRUCTURE_FIELDS)
     projected_steps: List[Dict[str, Any]] = []
-    for raw in bounded.get("steps", []) or []:
+    for raw in semantic_candidate.get("steps", []) or []:
         if not isinstance(raw, Mapping):
             continue
         step_id = str(raw.get("step_id") or "")
@@ -1055,13 +1086,21 @@ def _candidate_correction_signature(
             key=lambda row: str(row.get("step_id") or ""),
         ),
     }
-    if not affected_step_ids:
-        signature_payload["proposed_artifacts"] = deepcopy(
-            bounded.get("proposed_artifacts") or []
-        )
-        signature_payload["task_output_materializations"] = deepcopy(
-            bounded.get("task_output_materializations") or []
-        )
+    # Candidate-local resource identity and lifecycle declarations can repair a
+    # step's dataflow without changing its input/output spelling. They belong
+    # in the structural signature even when the compiler names affected steps.
+    signature_payload["proposed_artifacts"] = [
+        {
+            key: deepcopy(raw.get(key))
+            for key in ("local_ref", "artifact_contract", "resource_binding")
+            if key in raw
+        }
+        for raw in semantic_candidate.get("proposed_artifacts", []) or []
+        if isinstance(raw, Mapping)
+    ]
+    signature_payload["task_output_materializations"] = deepcopy(
+        semantic_candidate.get("task_output_materializations") or []
+    )
     return hashlib.sha256(
         json.dumps(
             signature_payload,
@@ -1096,7 +1135,14 @@ def _planning_issue_fingerprint_view(issue: Mapping[str, Any]) -> Dict[str, Any]
     """Project one issue onto its route-free, source-complete semantic facts."""
 
     fields = (
-        "code", "severity", "disposition", "field_path", "repair_target",
+        "code", "violation_code", "severity", "disposition", "field_path", "repair_target",
+        "step_id", "plan_step_id", "artifact_id", "resource_ref",
+        "mutation_id", "mutation_operation", "effect_id", "caused_by",
+        "affected_edge_ids", "conflicting_step_ids", "unordered_mutator_step_ids",
+        "producer_edges", "conflicting_edges", "unsupported_effect_ids",
+        "contract_source", "constraint_source", "source_ref", "contract_version",
+        "expected", "actual", "actual_value", "expected_contract", "source",
+        "capability_id", "capability_artifact_effects", "unsupported_effects",
         "affected_step_ids", "affected_artifact", "affected_output",
         "expected_identity", "observed_identity", "violated_invariant",
         "required_postcondition", "affected_fields", "machine_evidence",
@@ -1125,6 +1171,7 @@ def record_planning_failure(
     validation_source: str,
     candidate: Optional[Mapping[str, Any]] = None,
     previous_correction: Optional[Mapping[str, Any]] = None,
+    requirements: Iterable[Mapping[str, Any]] = (),
     terminal: bool = False,
     terminal_diagnostic: Optional[Mapping[str, Any]] = None,
 ) -> PlanState:
@@ -1163,7 +1210,7 @@ def record_planning_failure(
         ).encode("utf-8")
     ).hexdigest()
     candidate_correction_signature = _candidate_correction_signature(
-        bounded_candidate,
+        candidate,
         issues,
     )
     fingerprint_payload = {
@@ -1210,6 +1257,12 @@ def record_planning_failure(
         "task_spec_revision": int(task_spec_revision_value),
         "validation_source": str(validation_source or "planner_candidate_admission"),
         "validation_issues": issues,
+        # Compatibility readers retain validation_issues. New readers can
+        # distinguish checks that actually ran from desired target contracts.
+        "actual_issues": deepcopy(issues),
+        "requirements": _semantic_diagnostic_value([
+            dict(item) for item in requirements if isinstance(item, Mapping)
+        ]),
         "failure_fingerprint": fingerprint,
         "issue_fingerprint": issue_fingerprint,
         "candidate_correction_signature": candidate_correction_signature,
@@ -7635,6 +7688,12 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
                 },
             })]
         sanitized_failure["validation_issues"] = sanitized_issues
+        sanitized_failure["actual_issues"] = deepcopy(sanitized_issues)
+        sanitized_failure["requirements"] = _semantic_diagnostic_value([
+            dict(item)
+            for item in sanitized_failure.get("requirements", []) or []
+            if isinstance(item, Mapping)
+        ])
         task_state["planning_failure"] = sanitized_failure
     task_state.setdefault("planning_failure", {})
     budgets = dict(task_state.get("budgets") or {})

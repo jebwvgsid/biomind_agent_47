@@ -648,11 +648,12 @@ def test_plan_09_title_only_change_does_not_change_dataflow_gate() -> None:
 def test_plan_10_planner_prompt_exposes_exact_binding_and_typed_mutation() -> None:
     prompt = PromptManager.get_planner_v2_system_prompt()
 
-    assert '"resource_binding": {' in prompt
+    assert "resource_contract_version" in prompt
+    assert "resource_ref" in prompt
+    assert "omit resource_binding" in prompt.lower()
+    assert "capability" in prompt and "scoped" in prompt
     for field in (
-        "canonical_resource_id",
         "resource_kind",
-        "availability_origin",
         "contract_revision",
         "mutation",
         "requires_available",

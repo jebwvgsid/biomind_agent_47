@@ -1033,6 +1033,15 @@ def normalize_output_binding(
         "description": _text(raw.get("description")),
         "aliases": list(raw.get("aliases") or []),
     })
+    if "resource_kind" in raw:
+        kind = raw["resource_kind"]
+        if kind not in {"immutable_artifact", "mutable_workspace"}:
+            raise ValueError("TASK_RESOURCE_KIND_INVALID: declare immutable_artifact or mutable_workspace")
+        if kind == "mutable_workspace" and artifact_kind != "directory":
+            raise ValueError("TASK_RESOURCE_KIND_INVALID: mutable_workspace requires an explicit directory")
+        normalized["resource_kind"] = kind
+        normalized["contract_revision"] = _text(raw.get("contract_revision") or "task-resource-v2")
+        normalized["contract_source"] = _text(raw.get("contract_source") or "TaskSpec.output_contracts")
     return normalized
 
 
@@ -5725,6 +5734,7 @@ def format_planner_task_contract_context(spec: Mapping[str, Any] | None) -> str:
         "canonical_path", "required_basename", "required", "validation_contract_id",
         "source_type", "source_ref", "source_id", "producer_owner", "producer_step_id",
         "user_visible", "resolution_base", "provenance",
+        "resource_kind", "contract_revision", "contract_source",
     )
     compact_outputs = compact(outputs, output_fields)
     categorized: Dict[str, List[Dict[str, Any]]] = {

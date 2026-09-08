@@ -1,0 +1,239 @@
+{
+  "source_session": "session_1788855155",
+  "historical_runtime_source_revision": "NOT_PERSISTED",
+  "raw_sha256": "1eca4503bfcfd4cd95b42387bba4981c0a0fdb609e3d02d03ff2fcb2d8e65c05",
+  "correction": "Explicit test-authored declaration; not normalizer auto-repair",
+  "retained": {
+    "steps": 21,
+    "step_ids": true,
+    "scientific_success_criteria": true,
+    "dependencies": true
+  },
+  "known_input_boundary": "This PLAN fixture retains recorded paired_fastq defect; INPUT-FIX acceptance is independent",
+  "added_resources": {
+    "plan.reference_indexes": [
+      "reference_indexes",
+      "directory",
+      "An immutable bundle of reference indexes created in the managed output area, without modifying input.reference_fasta"
+    ],
+    "plan.s1_sorted_bam": [
+      "s1_sorted_bam",
+      "bam",
+      "S1 coordinate-sorted BAM with read groups"
+    ],
+    "plan.s2_sorted_bam": [
+      "s2_sorted_bam",
+      "bam",
+      "S2 coordinate-sorted BAM with read groups"
+    ],
+    "plan.s1_markdup_bam": [
+      "s1_markdup_bam",
+      "bam",
+      "S1 duplicate-marked BAM"
+    ],
+    "plan.s2_markdup_bam": [
+      "s2_markdup_bam",
+      "bam",
+      "S2 duplicate-marked BAM"
+    ],
+    "plan.s1_bam_index": [
+      "s1_bam_index",
+      "bai",
+      "S1 duplicate-marked BAM index"
+    ],
+    "plan.s2_bam_index": [
+      "s2_bam_index",
+      "bai",
+      "S2 duplicate-marked BAM index"
+    ],
+    "plan.s1_duplicate_metrics": [
+      "s1_duplicate_metrics",
+      "tsv",
+      "S1 duplicate marking metrics"
+    ],
+    "plan.s2_duplicate_metrics": [
+      "s2_duplicate_metrics",
+      "tsv",
+      "S2 duplicate marking metrics"
+    ],
+    "plan.s1_gvcf": [
+      "s1_gvcf",
+      "vcf_gz",
+      "S1 GVCF"
+    ],
+    "plan.s2_gvcf": [
+      "s2_gvcf",
+      "vcf_gz",
+      "S2 GVCF"
+    ],
+    "plan.s1_gvcf_index": [
+      "s1_gvcf_index",
+      "tbi",
+      "S1 GVCF index"
+    ],
+    "plan.s2_gvcf_index": [
+      "s2_gvcf_index",
+      "tbi",
+      "S2 GVCF index"
+    ],
+    "plan.raw_cohort_vcf": [
+      "raw_cohort_vcf",
+      "vcf_gz",
+      "Joint-genotyped cohort VCF containing S1 and S2"
+    ],
+    "plan.snp_stats": [
+      "snp_stats",
+      "txt",
+      "bcftools statistics for filtered SNP VCF"
+    ],
+    "plan.indel_stats": [
+      "indel_stats",
+      "txt",
+      "bcftools statistics for filtered InDel VCF"
+    ]
+  },
+  "explicit_resource_flow_changes": {
+    "prepare_reference": [
+      [
+        "input.reference_fasta"
+      ],
+      [
+        "plan.reference_indexes"
+      ]
+    ],
+    "map_sample_s1": [
+      [
+        "input.reference_fasta",
+        "plan.reference_indexes",
+        "plan.sample_table"
+      ],
+      [
+        "plan.s1_sorted_bam"
+      ]
+    ],
+    "map_sample_s2": [
+      [
+        "input.reference_fasta",
+        "plan.reference_indexes",
+        "plan.sample_table"
+      ],
+      [
+        "plan.s2_sorted_bam"
+      ]
+    ],
+    "mark_duplicates_s1": [
+      [
+        "plan.s1_sorted_bam"
+      ],
+      [
+        "plan.s1_markdup_bam",
+        "plan.s1_bam_index",
+        "plan.s1_duplicate_metrics"
+      ]
+    ],
+    "mark_duplicates_s2": [
+      [
+        "plan.s2_sorted_bam"
+      ],
+      [
+        "plan.s2_markdup_bam",
+        "plan.s2_bam_index",
+        "plan.s2_duplicate_metrics"
+      ]
+    ],
+    "qc_mapped_bams": [
+      [
+        "plan.s1_markdup_bam",
+        "plan.s2_markdup_bam",
+        "plan.s1_bam_index",
+        "plan.s2_bam_index"
+      ],
+      []
+    ],
+    "create_bam_list": [
+      [
+        "plan.s1_markdup_bam",
+        "plan.s2_markdup_bam"
+      ],
+      [
+        "plan.bam_list"
+      ]
+    ],
+    "haplotypecaller_s1": [
+      [
+        "input.reference_fasta",
+        "plan.reference_indexes",
+        "plan.bam_list",
+        "plan.s1_markdup_bam",
+        "plan.s1_bam_index"
+      ],
+      [
+        "plan.s1_gvcf",
+        "plan.s1_gvcf_index"
+      ]
+    ],
+    "haplotypecaller_s2": [
+      [
+        "input.reference_fasta",
+        "plan.reference_indexes",
+        "plan.bam_list",
+        "plan.s2_markdup_bam",
+        "plan.s2_bam_index"
+      ],
+      [
+        "plan.s2_gvcf",
+        "plan.s2_gvcf_index"
+      ]
+    ],
+    "combine_gvcfs": [
+      [
+        "input.reference_fasta",
+        "plan.s1_gvcf",
+        "plan.s2_gvcf",
+        "plan.s1_gvcf_index",
+        "plan.s2_gvcf_index"
+      ],
+      [
+        "plan.combined_gvcf"
+      ]
+    ],
+    "joint_genotyping": [
+      [
+        "input.reference_fasta",
+        "plan.combined_gvcf"
+      ],
+      [
+        "plan.raw_cohort_vcf"
+      ]
+    ],
+    "split_snp_indel": [
+      [
+        "input.reference_fasta",
+        "plan.raw_cohort_vcf"
+      ],
+      [
+        "plan.raw_snp_vcf",
+        "plan.raw_indel_vcf"
+      ]
+    ],
+    "bcftools_stats": [
+      [
+        "plan.filtered_snp_vcf",
+        "plan.filtered_indel_vcf"
+      ],
+      [
+        "plan.snp_stats",
+        "plan.indel_stats"
+      ]
+    ],
+    "write_report": [
+      [
+        "plan.snp_stats",
+        "plan.indel_stats"
+      ],
+      [
+        "output.report"
+      ]
+    ]
+  }
+}

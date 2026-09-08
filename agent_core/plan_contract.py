@@ -1407,6 +1407,8 @@ def validate_planner_candidate_deterministically(
     availability_origins: Mapping[str, str],
     authoritative_bindings: Optional[Mapping[str, Mapping[str, Any]]] = None,
     validate_dataflow: bool = True,
+    require_declared_references: bool = False,
+    capability_ids: Sequence[str] = (),
 ) -> Tuple[Dict[str, ArtifactRefKey], List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Run the shared schema/identity path and, by default, dataflow admission.
 
@@ -1466,6 +1468,8 @@ def validate_planner_candidate_deterministically(
             authoritative_handles=authoritative_handles,
             availability_origins=availability_origins,
             authoritative_bindings=authoritative_bindings,
+            require_declared_references=require_declared_references,
+            capability_ids=capability_ids,
         )
     except PlanBindingError as exc:
         diagnostic = (
@@ -1474,6 +1478,8 @@ def validate_planner_candidate_deterministically(
                 "message": str(exc),
             }
         )
+        if diagnostic.get("validation_issues"):
+            return ref_keys, usage, list(diagnostic["validation_issues"])
         diagnostic.setdefault("owner", "planner")
         diagnostic.setdefault("validator_id", "plan_resource_bindings")
         diagnostic.setdefault("field_path", "$.proposed_artifacts")

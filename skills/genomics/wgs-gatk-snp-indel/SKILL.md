@@ -1,13 +1,49 @@
 ---
 name: wgs-gatk-snp-indel
 description: Call short-read WGS SNPs and InDels with the GATK HaplotypeCaller GVCF workflow, including per-sample GVCFs, GenomicsDBImport or CombineGVCFs, joint genotyping, hard filtering, validation, and summary counts. Use for high-confidence cohort resequencing variant calling from duplicate-marked BAMs. Do not use for RNA-seq, long-read SV, CNV, or assembly comparison.
-version: "1.0.0"
+version: "1.1.0"
 tags: [WGS, GATK, HaplotypeCaller, GVCF, GenomicsDBImport, SNP, InDel, joint-genotyping, hard-filtering]
 legacy_ids: [gatk-wgs, wgs-gatk, gatk-snp-indel, resequencing-gatk, GATK SNP和InDel检测, GATK SNP InDel, 双端WGS GATK SNP InDel, WGS fastq GATK]
 task_types: [wgs_snp_indel_calling]
 stage_tags: [gatk_haplotypecaller, joint_genotyping, hard_filtering]
 inputs: [reference_fasta, sorted_markdup_bam, bam_list, interval_plan]
 outputs: [gvcf, raw_vcf, filtered_snp_vcf, filtered_indel_vcf, stats]
+generate:
+  execution_capabilities:
+    - capability_id: genomics.wgs.gatk.snp.indel.execute
+      operation: produce_files
+      contract_source: skills/genomics/wgs-gatk-snp-indel/SKILL.md#generate.execution_capabilities
+      contract_revision: wgs-gatk-snp-indel-effects-v1
+      required_runtime_binding_ids: []
+      optional_runtime_binding_ids: []
+      required_artifact_binding_ids: []
+      produces_artifacts:
+        - {artifact_id: generated_artifact, resource_kind: immutable_artifact}
+      produces_bindings: []
+      produces_observations: []
+      workspace_mutations: []
+      explicit_side_effects: []
+      execution_guidance:
+        - Bind each concrete GVCF, combined GVCF, VCF, index, or statistics file through step.outputs using a distinct candidate-local artifact declaration. generated_artifact names an effect kind, not a resource to alias.
+        - Read actual upstream products through step.inputs and explicit producer dependencies. GenotypeGVCFs consumes a combined GVCF or a declared GenomicsDB bundle; bcftools stats consumes the actual VCF it reports.
+        - Use a new explicitly declared immutable directory artifact for a one-shot GenomicsDB bundle. An output container does not authorize incremental workspace mutations or supply another file's state.
+    - capability_id: genomics.wgs.gatk.snp.indel.inspect
+      operation: inspect
+      contract_source: skills/genomics/wgs-gatk-snp-indel/SKILL.md#generate.execution_capabilities
+      contract_revision: wgs-gatk-snp-indel-effects-v1
+      required_runtime_binding_ids: []
+      optional_runtime_binding_ids: []
+      required_artifact_binding_ids: []
+      produces_artifacts: []
+      produces_bindings: []
+      produces_observations:
+        - observation_id: validation_observation
+          evidence_contract: {required_fields: [value]}
+      workspace_mutations: []
+      explicit_side_effects: []
+      execution_guidance:
+        - Use for preflight or variant validation that produces no durable output file. Emit structured validation_observation evidence with a value, including an adverse value for a failed check.
+        - Scientific success criteria and the existing verification layer judge the observation. A successful structural evidence match does not by itself validate scientific compatibility.
 runtime:
   default_env: bio_gatk
   env_runner: bash
@@ -20,6 +56,30 @@ runtime:
 # WGS GATK SNP/InDel Calling
 
 Use this skill for the GATK best-practice style short-read WGS GVCF workflow. For large crop/non-model projects, prefer reusing the existing `genomics/wgs-variant-calling` renderer because it already creates interval plans and reproducible scripts.
+
+## Formal planning contract
+
+The versioned `generate.execution_capabilities` above is the formal effect
+declaration. Use `.execute` with `operation: produce_files` for new file/bundle
+products and `.inspect` with `operation: inspect` for observation-only checks.
+Retain HaplotypeCaller, joint genotyping, filtering, and other scientific choices
+in the title, description, parameters, and success criteria. An execution
+capability ID is not a resource identity or an alias for its output files.
+
+Assign each new file or one-shot GenomicsDB bundle its own candidate-local ref,
+with one producer and explicit consumer dependencies. Reads of combined GVCFs,
+GenomicsDB bundles, raw VCFs, and filtered VCFs must name that actual upstream
+artifact; producing a different file never establishes its state. Independent
+sample products may be independent resources; two writers to one mutable
+identity may not be treated as independent merely because sample names differ.
+
+This Skill declares no shared mutable-workspace lifecycle or transitions.
+`artifact_kind: directory` describes a bundle's shape, not mutation permission.
+Do not turn each output-file creation into a mutation of the container directory
+or invent workspace state/revision strings. A real incremental shared database
+needs a supported lifecycle and ordered transitions before it can be admitted.
+Planning future dependencies does not claim their files already exist or pass
+execution validation.
 
 ## 确认任务边界
 

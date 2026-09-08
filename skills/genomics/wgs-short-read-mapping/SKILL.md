@@ -1,13 +1,68 @@
 ---
 name: wgs-short-read-mapping
 description: Map paired-end short-read WGS resequencing FASTQ to a reference genome with BWA-MEM or BWA-MEM2, samtools, and duplicate marking, producing coordinate-sorted indexed BAMs for downstream SNP/InDel, SV, and CNV calling. Use before WGS variant calling when users provide FASTQ rather than ready BAM files. Do not use for RNA-seq, long-read, or assembly comparison data.
-version: "1.0.0"
+version: "1.1.0"
 tags: [WGS, resequencing, mapping, BWA, BWA-MEM2, samtools, Picard, sambamba, mark-duplicates, BAM]
 legacy_ids: [short-read-mapping, bwa-mapping, wgs-bwa-mem, resequencing-mapping, 双端WGS fastq, WGS fastq比对, 先比对再做GATK]
 task_types: [wgs_mapping]
 stage_tags: [read_mapping, bam_preparation]
 inputs: [reference_fasta, paired_fastq_sample_table, output_directory]
 outputs: [sorted_markdup_bam, bam_index, flagstat, coverage, duplicate_metrics, bam_list]
+generate:
+  execution_capabilities:
+    - capability_id: genomics.wgs.short.read.mapping.execute
+      operation: produce_files
+      contract_source: skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities
+      contract_revision: wgs-short-read-mapping-effects-v1
+      required_runtime_binding_ids: []
+      optional_runtime_binding_ids: []
+      required_artifact_binding_ids: []
+      produces_artifacts:
+        - {artifact_id: generated_artifact, resource_kind: immutable_artifact}
+      produces_bindings: []
+      produces_observations: []
+      workspace_mutations: []
+      explicit_side_effects: []
+      execution_guidance:
+        - Bind each concrete BAM, index, metrics file, or report through step.outputs using a distinct candidate-local artifact declaration. generated_artifact names the effect kind, not a resource to alias.
+        - Read exact TaskSpec inputs or reachable upstream artifacts through step.inputs. Keep the scientific command choice in the step title, description, parameters, and success criteria.
+        - A container directory grants no mutable-workspace authority. These operations produce new immutable files or an explicitly declared immutable bundle; they do not mutate a shared output directory.
+    - capability_id: genomics.wgs.short.read.mapping.inspect
+      operation: inspect
+      contract_source: skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities
+      contract_revision: wgs-short-read-mapping-effects-v1
+      required_runtime_binding_ids: []
+      optional_runtime_binding_ids: []
+      required_artifact_binding_ids: []
+      produces_artifacts: []
+      produces_bindings: []
+      produces_observations:
+        - observation_id: validation_observation
+          evidence_contract: {required_fields: [value]}
+      workspace_mutations: []
+      explicit_side_effects: []
+      execution_guidance:
+        - Use for input, reference, or BAM checks that produce no durable output file. Emit structured validation_observation evidence with a value, including an adverse value when the check fails.
+        - Scientific success criteria and the existing verification layer judge the observation; the action claim alone does not establish success.
+    - capability_id: genomics.wgs.short.read.mapping.prepare_reference
+      operation: prepare_reference
+      contract_source: skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities
+      contract_revision: wgs-short-read-mapping-effects-v1
+      required_runtime_binding_ids: []
+      optional_runtime_binding_ids: []
+      required_artifact_binding_ids: []
+      produces_artifacts:
+        - {artifact_id: reference_indexes, resource_kind: immutable_artifact}
+      produces_bindings: []
+      produces_observations: []
+      workspace_mutations: []
+      explicit_side_effects:
+        - effect_id: create_reference_indexes
+          evidence_contract:
+            required_fields: [reference_resource_ref, index_artifacts]
+      execution_guidance:
+        - Declare the reference index files or index bundle in step.outputs and the exact source reference in step.inputs. Keep the approved input immutable and place new index products only at approved output locations.
+        - Report create_reference_indexes with reference_resource_ref and index_artifacts identifying the actual products. Planning is a promise; execution, artifact validation, and approval still must establish completion.
 runtime:
   default_env: bio_wgs
   env_runner: bash
@@ -22,6 +77,25 @@ runtime:
 # WGS Short-Read Mapping
 
 Use this skill to convert paired-end WGS FASTQ into duplicate-marked coordinate-sorted BAMs. The downstream caller decides whether duplicates should be marked or removed; for variant calling, default to **mark and keep**.
+
+## Formal planning contract
+
+The versioned `generate.execution_capabilities` above is the formal effect
+declaration. Use `.execute` with `operation: produce_files` for independently
+produced files, `.inspect` with `operation: inspect` for observation-only checks,
+and `.prepare_reference` for the declared index-producing operation. Preserve
+the scientific operation in each step's semantic fields. Capability IDs select
+execution authority; they are never `resource_binding` aliases for new files.
+
+Create one candidate-local declaration for each new immutable artifact and
+reuse that local ref in producer `outputs` and consumer `inputs`. Existing
+resources must use exact current catalog references. A directory used merely
+to contain those files is not a shared mutable object. This Skill declares no
+shared-workspace lifecycle or transitions; do not invent workspace state names
+or contract revisions. A genuinely incremental mutable workflow needs an
+explicit supported lifecycle/transition declaration before it can be planned.
+No upstream artifact needs to exist at planning time, but every read must have
+an explicit dependency path to its producer or a trusted initial resource.
 
 ## 确认任务边界
 

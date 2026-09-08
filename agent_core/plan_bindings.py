@@ -19,6 +19,7 @@ _NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]{0,126}$")
 _ENV_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
 _VALUE_TYPES = {"string", "integer", "number", "boolean", "json", "artifact_ref"}
 _RESOURCE_KINDS = {"immutable_artifact", "mutable_workspace"}
+PLAN_RESOURCE_PROTOCOL_VERSION = 2
 _INITIALLY_AVAILABLE_ORIGINS = {
     "external",
     "verified_task_input",
@@ -135,6 +136,36 @@ def _exact_aliases(*groups: Any) -> Tuple[str, ...]:
     return tuple(sorted(aliases))
 
 
+def planner_resource_requirements(authoritative_bindings: Mapping[str, Any], capability_registry: Mapping[str, Any]) -> Dict[str, Any]:
+    """Public repair requirements from the same declarations admission uses."""
+    return {
+        "protocol": "plan_resource_protocol_v2",
+        "new_resource": {
+            "local_ref": "plan.<candidate-local-name>",
+            "artifact_contract": {
+                "object_kind": ["file", "directory"], "lifecycle": "plan_local",
+                "resource_kind": sorted(_RESOURCE_KINDS),
+                "materialization_policy_id": "managed_intermediate_v1",
+            },
+            "resource_binding": "omit for a new resource; the binder creates identity",
+        },
+        "existing_resource_reference": {"resource_ref": "exact current resource handle"},
+        "resources": [{
+            "handle": str(handle),
+            "resource_kind": str((row.get("metadata") or {}).get("resource_kind") or row.get("resource_kind") or "immutable_artifact"),
+            "contract_revision": str((row.get("metadata") or {}).get("contract_revision") or row.get("contract_revision") or ""),
+        } for handle, row in sorted(authoritative_bindings.items()) if isinstance(row, Mapping) and row.get("object_type") == "artifact"],
+        "execution_capabilities": deepcopy(dict(capability_registry)),
+        "invariants": [
+            "capability identity is not resource identity",
+            "directory shape does not confer mutable permission",
+            "independent files use PRODUCE/READ; a shared workspace requires explicitly ordered MUTATE",
+            "a required state must be established on the SAME resource by a reachable predecessor",
+            "inline typed evidence_contract is supported for otherwise undeclared side effects",
+        ],
+    }
+
+
 def compile_plan_resource_bindings(
     candidate: Mapping[str, Any],
     *,
@@ -142,14 +173,16 @@ def compile_plan_resource_bindings(
     authoritative_handles: Mapping[str, str],
     availability_origins: Optional[Mapping[str, str]] = None,
     authoritative_bindings: Optional[Mapping[str, Mapping[str, Any]]] = None,
+    require_declared_references: bool = False,
+    capability_ids: Sequence[str] = (),
 ) -> Dict[str, Dict[str, Any]]:
     """Compile exact Plan handles into one canonical resource registry.
 
-    ``proposed_artifacts[*].resource_binding`` is the additive schema-2 seam
-    for a Plan-local handle that explicitly binds a capability resource ID.
-    Omitting it preserves the existing candidate-local immutable artifact
-    identity.  In particular, ``plan.foo`` and ``artifact.foo`` remain distinct
-    unless one explicit binding lists both exact identities.
+    In protocol v2, ``proposed_artifacts[*].resource_binding`` references a
+    current authority-owned resource. Execution capabilities confer no resource
+    authority. Omitting it creates a candidate-local identity with the explicitly
+    declared resource kind (immutable by default). Legacy stored candidates keep
+    their prior explicit-binding reader unless the live strict gate is selected.
 
     The returned mapping is indexed by every accepted exact alias.  Every alias
     for one resource carries the same canonical record.
@@ -164,6 +197,8 @@ def compile_plan_resource_bindings(
         for key, value in dict(authoritative_bindings or {}).items()
         if isinstance(value, Mapping)
     }
+    metadata = dict(candidate.get("metadata") or (candidate.get("plan_document") or {}).get("metadata") or {})
+    strict_references = require_declared_references or metadata.get("resource_contract_version") == PLAN_RESOURCE_PROTOCOL_VERSION
     records: list[Dict[str, Any]] = []
 
     for handle, raw_identity in sorted(authoritative_handles.items()):
@@ -219,6 +254,49 @@ def compile_plan_resource_bindings(
         row["binding_id"] = _resource_binding_id(row)
         records.append(row)
 
+    # Only authority-owned records confer resource identity. A capability ID,
+    # or another model-authored alias, cannot create that authority.
+    declared = {
+        str(alias): row
+        for row in records
+        for alias in row["aliases"]
+    }
+    reference_issues = []
+    if strict_references:
+        for index, raw in enumerate(candidate.get("proposed_artifacts", []) or []):
+            if not isinstance(raw, Mapping) or not raw.get("resource_binding"):
+                continue
+            supplied = raw["resource_binding"]
+            path = f"$.proposed_artifacts[{index}].resource_binding"
+            if not isinstance(supplied, Mapping):
+                reference_issues.append({"code": "PLAN_RESOURCE_BINDING_INVALID", "field_path": path, "actual": supplied, "expected": "object"})
+                continue
+            ref = str(supplied.get("resource_ref") or supplied.get("canonical_resource_id") or supplied.get("resource_id") or "")
+            target = declared.get(ref)
+            code = ""
+            if target is None:
+                code = "PLAN_RESOURCE_REFERENCE_WRONG_DOMAIN" if ref in capability_ids else "PLAN_RESOURCE_REFERENCE_NOT_DECLARED"
+            elif supplied.get("candidate_scope_id") not in (None, "", candidate_scope_id):
+                code = "PLAN_RESOURCE_REFERENCE_STALE_SCOPE"
+            elif any(key in supplied and supplied[key] != target.get(key) for key in (
+                "canonical_resource_id", "resource_kind", "availability_origin", "initially_available", "initial_state", "contract_revision",
+            )):
+                code = "PLAN_RESOURCE_REFERENCE_CONTRACT_MISMATCH"
+            elif any(str(alias) not in target["aliases"] for alias in supplied.get("aliases", []) or []):
+                code = "PLAN_RESOURCE_ALIAS_NOT_DECLARED"
+            if code:
+                reference_issues.append({
+                    "code": code, "owner": "planner", "severity": "error",
+                    "disposition": "PROTOCOL_INVALID", "field_path": path,
+                    "affected_artifact": {"handle": str(raw.get("local_ref") or "")},
+                    "actual": deepcopy(dict(supplied)),
+                    "expected": {"resource_ref": "one current declared resource handle; omit resource_binding for a NEW resource"},
+                    "constraint_source": "plan_resource_protocol_v2", "contract_revision": "2",
+                    "message": "New resources use candidate-local identity; existing resources require an exact current resource reference.",
+                })
+        if reference_issues:
+            raise PlanBindingError(reference_issues[0]["code"], validation_issues=reference_issues)
+
     for index, raw in enumerate(candidate.get("proposed_artifacts", []) or []):
         if not isinstance(raw, Mapping):
             continue
@@ -235,7 +313,18 @@ def compile_plan_resource_bindings(
             )
         binding = dict(explicit or {})
         contract = dict(raw.get("artifact_contract") or {})
-        if binding:
+        if binding and strict_references:
+            ref = str(binding.get("resource_ref") or binding.get("canonical_resource_id") or binding.get("resource_id") or "")
+            target = declared[ref]
+            identity = target["canonical_resource_id"]
+            kind = target["resource_kind"]
+            origin = target["availability_origin"]
+            aliases = _exact_aliases(local_ref, target["aliases"])
+            binding_source = "exact_declared_resource_reference"
+            contract_revision = target["contract_revision"]
+            initial_state = target["initial_state"]
+            initially_available = target["initially_available"]
+        elif binding:
             identity = str(
                 binding.get("canonical_resource_id")
                 or binding.get("resource_id")
@@ -280,11 +369,13 @@ def compile_plan_resource_bindings(
             # The scope prefix makes accidental cross-candidate unification
             # impossible while keeping the Planner-facing handle unchanged.
             identity = f"candidate:{candidate_scope_id}:{local_ref}"
-            kind = "immutable_artifact"
+            kind = _resource_kind(contract.get("resource_kind"), field_path=f"$.proposed_artifacts[{index}].artifact_contract.resource_kind")
+            if kind == "mutable_workspace" and contract.get("object_kind") != "directory":
+                raise PlanBindingError("PLAN_RESOURCE_KIND_INVALID", field_path=f"$.proposed_artifacts[{index}].artifact_contract", expected="explicit directory workspace", actual=contract)
             origin = "plan_local"
             aliases = _exact_aliases(local_ref, identity)
             binding_source = "candidate_local_artifact"
-            contract_revision = ""
+            contract_revision = "plan-resource-v2" if strict_references else ""
             initial_state = ""
             initially_available = False
         row = {
@@ -314,6 +405,7 @@ def compile_plan_resource_bindings(
                 "availability_origin",
                 "initially_available",
                 "initial_state",
+                "contract_revision",
             )
         ):
             raise PlanBindingError(
