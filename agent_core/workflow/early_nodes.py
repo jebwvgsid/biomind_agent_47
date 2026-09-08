@@ -8,12 +8,21 @@ projection, and publish one strict node-specific semantic outcome.
 from __future__ import annotations
 
 from copy import deepcopy
+import hashlib
+import json
 from typing import Any, Awaitable, Callable, Mapping
 
 from agent_core.consultant_binding import consultant_planning_readiness
 from agent_core.consultation_state import (
     ConsultationDisposition,
     classify_consultation_lifecycle,
+)
+from agent_core.planner_loop import (
+    PlannerDisposition,
+    classify_planner_lifecycle,
+    plan_review_acceptance_readiness,
+    plan_review_submission_readiness,
+    review_evidence_from_issues,
 )
 from agent_core.plan_tracker import (
     has_materialized_plan,
@@ -62,6 +71,82 @@ def _scrub_legacy_routes(value: Any) -> Any:
 
 def _clean_update(raw: Mapping[str, Any]) -> dict[str, Any]:
     return _scrub_legacy_routes(dict(raw))
+
+
+def _semantic_receipt(prefix: str, value: Mapping[str, Any]) -> str:
+    encoded = json.dumps(
+        dict(value),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    ).encode("utf-8")
+    return f"{prefix}:" + hashlib.sha256(encoded).hexdigest()[:24]
+
+
+def _prior_payload(
+    contract: type[StrictOutcome],
+    before: Mapping[str, Any],
+    field: str,
+    outcome_type: str,
+) -> dict[str, Any]:
+    raw = before.get(field)
+    if not isinstance(raw, Mapping):
+        return {}
+    try:
+        outcome = contract.from_mapping(raw)
+    except Exception:
+        return {}
+    if outcome.type != outcome_type:
+        return {}
+    return dict(outcome.to_dict().get("payload") or {})
+
+
+def _stale_result_or_replay(
+    contract: type[StrictOutcome],
+    field: str,
+    before: Mapping[str, Any],
+    state: Mapping[str, Any],
+    durable: Mapping[str, Any],
+    stale: Mapping[str, Any],
+) -> dict[str, Any]:
+    receipt_id = str(
+        stale.get("caller_invocation_id")
+        or stale.get("invocation_id")
+        or stale.get("decision_id")
+        or stale.get("audit_ref")
+        or _semantic_receipt("stale-result", {
+            "changed_preconditions": list(
+                stale.get("changed_preconditions") or []
+            ),
+            "detail": str(stale.get("detail") or ""),
+            "caller_node": str(stale.get("caller_node") or ""),
+        })
+    )
+    prior = _prior_payload(contract, before, field, "stale_result")
+    if (
+        prior
+        and str(prior.get("stale_receipt_id") or "") == receipt_id
+    ):
+        return _semantic_harness_error(
+            contract,
+            state,
+            durable,
+            error_code=(
+                contract.OUTCOME_NAME.removesuffix("Outcome").upper()
+                + "_STALE_RESULT_REPLAY"
+            ),
+            detail=(
+                "The same one-shot stale-result receipt was emitted twice "
+                "without a new source invocation identity."
+            ),
+        )
+    return _outcome(contract, "stale_result", state, durable, {
+        "changed_preconditions": list(
+            stale.get("changed_preconditions") or []
+        ),
+        "stale_receipt_id": receipt_id,
+    }, "The node result became stale before commit.")
 
 
 def _scope(state: Mapping[str, Any], durable: Mapping[str, Any]) -> dict[str, Any]:
@@ -138,6 +223,7 @@ def early_harness_error(
 class _TypedEarlyNode:
     outcome_field = ""
     contract: type[StrictOutcome]
+    skill_continuation_owner = ""
 
     def __init__(self, *, data_path: str, source: SourceNode) -> None:
         self.data_path = data_path
@@ -145,14 +231,57 @@ class _TypedEarlyNode:
 
     async def run(self, state: Mapping[str, Any]) -> dict[str, Any]:
         state = route_blind_state_projection(state)
-        raw = await self.source(state)
+        if self.skill_continuation_owner:
+            durable_before = load_plan_state(
+                self.data_path, str(state.get("task_id") or "default")
+            )
+            issue = self._skill_continuation_issue(durable_before)
+            if issue is not None:
+                error_code, detail = issue
+                return {
+                    self.outcome_field: _semantic_harness_error(
+                        self.contract,
+                        state,
+                        durable_before,
+                        error_code=error_code,
+                        detail=detail,
+                    ),
+                    "terminal_diagnostic": {
+                        "source_node": self.skill_continuation_owner,
+                        "error_code": error_code,
+                        "detail": detail,
+                    },
+                }
+        # These are one-invocation observations. LangGraph LastValue channels
+        # retain omitted fields, so forwarding either receipt would let an old
+        # result classify every later invocation forever.
+        one_shot_fields = (
+            "stale_node_result",
+            "skill_resolution_transition",
+        )
+        source_state = dict(state)
+        for field in one_shot_fields:
+            source_state.pop(field, None)
+        raw = await self.source(source_state)
         if not isinstance(raw, Mapping):
             raise TypeError(f"front-half source returned {type(raw).__name__}")
         durable = load_plan_state(
             self.data_path, str(state.get("task_id") or "default")
         )
         clean = _clean_update(raw)
-        merged = {**dict(state), **clean}
+        for field in one_shot_fields:
+            if state.get(field) and field not in clean:
+                # Clear a consumed LastValue receipt when the source did not
+                # emit a replacement during this invocation.
+                clean[field] = {}
+        merged = {
+            **{
+                key: value
+                for key, value in dict(state).items()
+                if key not in one_shot_fields
+            },
+            **clean,
+        }
         clean[self.outcome_field] = self.classify(state, merged, durable)
         outcome = dict(clean[self.outcome_field] or {})
         if str(outcome.get("type") or "") == "harness_error":
@@ -164,6 +293,51 @@ class _TypedEarlyNode:
                 "semantic_state": deepcopy(payload.get("semantic_state") or {}),
             }
         return clean
+
+    def _skill_continuation_issue(
+        self, durable: Mapping[str, Any]
+    ) -> tuple[str, str] | None:
+        """Reject a durable continuation not consumable by this source node."""
+
+        task_state = dict(durable.get("task_state") or {})
+        continuation_id = str(task_state.get("skill_continuation_id") or "")
+        if not continuation_id:
+            return None
+        access = task_state.get("skill_access_state") or durable.get(
+            "skill_access_state"
+        )
+        continuations = (
+            access.get("continuations") if isinstance(access, Mapping) else None
+        )
+        continuation = (
+            dict(continuations.get(continuation_id) or {})
+            if isinstance(continuations, Mapping)
+            else {}
+        )
+        if (
+            not continuation
+            or str(continuation.get("continuation_id") or "")
+            != continuation_id
+            or not str(continuation.get("caller_node") or "")
+        ):
+            return (
+                "SKILL_CONTINUATION_RECEIPT_INVALID",
+                f"continuation={continuation_id}; durable owner receipt missing",
+            )
+        owner = str(continuation.get("caller_node") or "")
+        if owner != self.skill_continuation_owner:
+            return (
+                "SKILL_CONTINUATION_CALLER_MISMATCH",
+                f"continuation={continuation_id}; expected={owner}; "
+                f"actual={self.skill_continuation_owner}",
+            )
+        status = str(continuation.get("status") or "")
+        if status not in {"served", "resumed", "rejected"}:
+            return (
+                "SKILL_CONTINUATION_NOT_RESUMABLE",
+                f"continuation={continuation_id}; status={status or 'missing'}",
+            )
+        return None
 
     def classify(
         self,
@@ -232,6 +406,216 @@ class TypedTriage(_TypedEarlyNode):
 class TypedConsultant(_TypedEarlyNode):
     outcome_field = "consultant_outcome"
     contract = ConsultantOutcome
+    skill_continuation_owner = "consultant"
+
+    def _classify_skill_resolution_transition(
+        self,
+        state: Mapping[str, Any],
+        durable: Mapping[str, Any],
+    ) -> dict[str, Any] | None:
+        raw = state.get("skill_resolution_transition")
+        if not isinstance(raw, Mapping) or not raw:
+            return None
+        transition = dict(raw)
+
+        def invalid(code: str, detail: str) -> dict[str, Any]:
+            return _semantic_harness_error(
+                self.contract,
+                state,
+                durable,
+                error_code=code,
+                detail=detail,
+            )
+
+        receipt_id = str(transition.get("resolution_receipt_id") or "")
+        material = {
+            str(key): deepcopy(value)
+            for key, value in transition.items()
+            if key not in {"schema_version", "resolution_receipt_id"}
+        }
+        if (
+            int(transition.get("schema_version") or 0) != 1
+            or not receipt_id
+            or receipt_id != _semantic_receipt("skill-resolution", material)
+        ):
+            return invalid(
+                "SKILL_RESOLUTION_RECEIPT_INVALID",
+                "Consultant Skill resolution lacks a valid semantic receipt.",
+            )
+
+        disposition = str(transition.get("disposition") or "")
+        proposal_id = str(transition.get("proposal_id") or "")
+        requester_role = str(transition.get("requester_role") or "")
+        role_owners = {
+            "action_generation": {"generate", "corrective_generate"},
+            "plan_authoring": {"planner"},
+            "failure_verification": {"recovery"},
+            "semantic_consultation": {"consultant"},
+        }
+        task_state = dict(durable.get("task_state") or {})
+        access = task_state.get("skill_access_state") or durable.get(
+            "skill_access_state"
+        )
+        proposals = (
+            access.get("binding_proposals")
+            if isinstance(access, Mapping)
+            else None
+        )
+        proposal = (
+            dict(proposals.get(proposal_id) or {})
+            if isinstance(proposals, Mapping) and proposal_id
+            else {}
+        )
+        proposal_owner = str(proposal.get("caller_node") or "")
+        if (
+            requester_role not in role_owners
+            or not proposal
+            or str(proposal.get("proposal_id") or "") != proposal_id
+            or proposal_owner not in role_owners.get(requester_role, set())
+        ):
+            return invalid(
+                "SKILL_RESOLUTION_IDENTITY_MISMATCH",
+                "Resolution role and durable proposal owner do not match.",
+            )
+
+        common = {
+            "proposal_id": proposal_id,
+            "resolution_receipt_id": receipt_id,
+        }
+        if disposition == "observation_ready":
+            continuation_id = str(transition.get("continuation_id") or "")
+            observation_id = str(transition.get("observation_id") or "")
+            result_status = str(transition.get("result_status") or "")
+            continuations = (
+                access.get("continuations")
+                if isinstance(access, Mapping)
+                else None
+            )
+            results = (
+                access.get("skill_tool_results")
+                if isinstance(access, Mapping)
+                else None
+            )
+            continuation = (
+                dict(continuations.get(continuation_id) or {})
+                if isinstance(continuations, Mapping)
+                else {}
+            )
+            stored_result = (
+                dict(results.get(continuation_id) or {})
+                if isinstance(results, Mapping)
+                else {}
+            )
+            result_kind = str(stored_result.get("decision_result") or "")
+            identity_key = (
+                "request_id"
+                if result_kind == "SKILL_CONTEXT_RESULT"
+                else "search_id"
+            )
+            ready_statuses = (
+                {"COMPLETE", "REQUIRES_NARROWING"}
+                if result_kind == "SKILL_CONTEXT_RESULT"
+                else {"MATCHES_FOUND", "NO_MATCH"}
+            )
+            state_result = dict(state.get("skill_decision_result") or {})
+            if (
+                not continuation_id
+                or str(task_state.get("skill_continuation_id") or "")
+                != continuation_id
+                or str(continuation.get("continuation_id") or "")
+                != continuation_id
+                or str(continuation.get("caller_node") or "")
+                != proposal_owner
+                or str(continuation.get("status") or "") != "served"
+                or not stored_result
+                or _semantic_receipt("skill-result", stored_result)
+                != _semantic_receipt("skill-result", state_result)
+                or str(stored_result.get(identity_key) or "") != observation_id
+                or str(stored_result.get("status") or "") != result_status
+                or result_status not in ready_statuses
+            ):
+                return invalid(
+                    "SKILL_RESOLUTION_OBSERVATION_MISMATCH",
+                    "Resolution observation is not bound to its original caller.",
+                )
+            return _outcome(
+                self.contract,
+                "skill_observation_ready",
+                state,
+                durable,
+                {
+                    **common,
+                    "requester_role": requester_role,
+                    "continuation_id": continuation_id,
+                    "observation_id": observation_id,
+                    "result_status": result_status,
+                },
+                "Consultant produced a caller-bound Skill observation.",
+            )
+
+        if disposition == "proposal_rejected":
+            if str(proposal.get("status") or "") != "rejected":
+                return invalid(
+                    "SKILL_RESOLUTION_REJECTION_MISMATCH",
+                    "Rejected resolution lacks a durable rejected proposal.",
+                )
+            return _outcome(
+                self.contract,
+                "skill_proposal_rejected",
+                state,
+                durable,
+                {**common, "requester_role": requester_role},
+                "Consultant rejected the proposed Skill binding.",
+            )
+
+        if disposition == "task_commit_required":
+            pending = dict(task_state.get("pending_skill_binding_proposal") or {})
+            if (
+                str(proposal.get("status") or "") != "approved_for_task_commit"
+                or str(pending.get("proposal_id") or "") != proposal_id
+            ):
+                return invalid(
+                    "SKILL_RESOLUTION_TASK_COMMIT_MISMATCH",
+                    "Task-level Skill change lacks its durable commit candidate.",
+                )
+            return _outcome(
+                self.contract,
+                "task_skill_commit_required",
+                state,
+                durable,
+                {
+                    **common,
+                    "task_revision": int(transition.get("task_revision") or 0),
+                },
+                "A reviewed task-level Skill change requires semantic commit.",
+            )
+
+        if disposition == "plan_impact_ready":
+            pending = dict(task_state.get("pending_plan_impact_review") or {})
+            if (
+                str(proposal.get("status") or "") != "approved_for_plan_impact"
+                or str(pending.get("proposal_id") or "") != proposal_id
+            ):
+                return invalid(
+                    "SKILL_RESOLUTION_PLAN_IMPACT_MISMATCH",
+                    "Step Skill approval lacks its durable plan-impact receipt.",
+                )
+            return _outcome(
+                self.contract,
+                "skill_plan_impact_ready",
+                state,
+                durable,
+                {
+                    **common,
+                    "plan_revision": int(transition.get("plan_revision") or 0),
+                },
+                "A reviewed step Skill change requires Planner impact review.",
+            )
+
+        return invalid(
+            "SKILL_RESOLUTION_DISPOSITION_INVALID",
+            f"Unsupported Skill resolution disposition: {disposition or 'missing'}",
+        )
 
     def classify(self, before, state, durable):
         task_state = dict(durable.get("task_state") or {})
@@ -257,9 +641,19 @@ class TypedConsultant(_TypedEarlyNode):
             }, "Consultation requires authoritative user input.")
         stale = dict(state.get("stale_node_result") or {})
         if stale:
-            return _outcome(self.contract, "stale_result", state, durable, {
-                "changed_preconditions": list(stale.get("changed_preconditions") or []),
-            }, "Consultation result became stale before commit.")
+            return _stale_result_or_replay(
+                self.contract,
+                self.outcome_field,
+                before,
+                state,
+                durable,
+                stale,
+            )
+        skill_resolution = self._classify_skill_resolution_transition(
+            state, durable
+        )
+        if skill_resolution is not None:
+            return skill_resolution
         status = str(state.get("task_status") or task_status(durable) or "").lower()
         contract_status = str(state.get("contract_status") or "")
         readiness = consultant_planning_readiness(
@@ -289,11 +683,81 @@ class TypedConsultant(_TypedEarlyNode):
             }, "The Consultant completed the request without an execution plan.")
         if disposition == ConsultationDisposition.CONTINUE.value:
             semantic = dict(lifecycle.get("semantic_state") or {})
+            agent_progress = dict(consultation.get("agent_progress") or {})
+            tool_observations = [
+                dict(item)
+                for item in consultation.get("tool_observations") or []
+                if isinstance(item, Mapping)
+            ]
+            last_observation = tool_observations[-1] if tool_observations else {}
+            skill_decision_result = dict(
+                state.get("skill_decision_result") or {}
+            )
+            progress_receipt_id = _semantic_receipt(
+                "consultant-progress",
+                {
+                    "task_revision": int(readiness.get("task_revision") or 0),
+                    "selected_skill_ids": list(
+                        readiness.get("selected_skill_ids") or []
+                    ),
+                    "contract_status": contract_status,
+                    "phase": str(semantic.get("phase") or ""),
+                    "consultation_status": str(
+                        semantic.get("consultation_status") or ""
+                    ),
+                    "completion_decision": str(
+                        semantic.get("completion_decision") or ""
+                    ),
+                    "agent_disposition": str(
+                        semantic.get("agent_disposition") or ""
+                    ),
+                    "turn_count": int(agent_progress.get("turn_count") or 0),
+                    "last_fingerprint": str(
+                        agent_progress.get("last_fingerprint") or ""
+                    ),
+                    "last_observation_fingerprint": str(
+                        last_observation.get("fingerprint")
+                        or last_observation.get("observation_id")
+                        or ""
+                    ),
+                    "skill_decision_result_fingerprint": (
+                        _semantic_receipt(
+                            "consultant-skill-observation",
+                            skill_decision_result,
+                        )
+                        if skill_decision_result
+                        else ""
+                    ),
+                },
+            )
+            prior = _prior_payload(
+                self.contract,
+                before,
+                self.outcome_field,
+                "consultation_continues",
+            )
+            if (
+                prior
+                and str(prior.get("progress_receipt_id") or "")
+                == progress_receipt_id
+            ):
+                return _semantic_harness_error(
+                    self.contract,
+                    state,
+                    durable,
+                    error_code="CONSULTANT_NON_PROGRESS_REPLAY",
+                    detail=(
+                        "Consultant attempted to self-loop without a new "
+                        "semantic or tool-observation receipt."
+                    ),
+                )
             return _outcome(self.contract, "consultation_continues", state, durable, {
                 "phase": str(semantic.get("phase") or "consulting"),
                 "completion_decision": str(
                     semantic.get("completion_decision") or "needs_reasoning"
                 ),
+                "progress_receipt_id": progress_receipt_id,
+                "turn_ordinal": int(agent_progress.get("turn_count") or 0),
             }, "The local Consultant agent has another reasoning turn available.")
         if disposition == ConsultationDisposition.NEEDS_USER.value:
             # The pending-question protocol above owns the detailed payload.
@@ -324,6 +788,7 @@ class TypedConsultant(_TypedEarlyNode):
 class TypedPlanner(_TypedEarlyNode):
     outcome_field = "planner_outcome"
     contract = PlannerOutcome
+    skill_continuation_owner = "planner"
 
     def classify(self, before, state, durable):
         status = str(state.get("task_status") or task_status(durable) or "").lower()
@@ -333,9 +798,14 @@ class TypedPlanner(_TypedEarlyNode):
             }, "Planner reached a terminal business state.")
         stale = dict(state.get("stale_node_result") or {})
         if stale:
-            return _outcome(self.contract, "stale_result", state, durable, {
-                "changed_preconditions": list(stale.get("changed_preconditions") or []),
-            }, "Planner result became stale before commit.")
+            return _stale_result_or_replay(
+                self.contract,
+                self.outcome_field,
+                before,
+                state,
+                durable,
+                stale,
+            )
         readiness = consultant_planning_readiness(
             durable, require_agent_initiated=True
         )
@@ -343,50 +813,71 @@ class TypedPlanner(_TypedEarlyNode):
             return _outcome(self.contract, "consultation_required", state, durable, {
                 "reason_code": str(readiness["reason_code"]),
             }, "Planner requires a finalized semantic contract.")
-        issues = [
-            dict(item)
-            for item in durable.get("validation_issues") or state.get("validation_issues") or []
-            if isinstance(item, Mapping)
-            and str(item.get("severity") or "").lower() in {"error", "blocking", "fatal"}
-        ]
-        owners = {str(item.get("owner") or "internal").lower() for item in issues}
-        if has_materialized_plan(durable) and not issues:
+        lifecycle = classify_planner_lifecycle(durable)
+        disposition = str(lifecycle.get("disposition") or "")
+        if disposition == PlannerDisposition.REVIEW_READY.value:
             return _outcome(self.contract, "plan_review_ready", state, durable, {
                 "plan_id": str(durable.get("plan_id") or "pending-plan"),
                 "plan_version": str(durable.get("plan_version") or durable.get("plan_revision") or "1"),
                 "plan_revision": int(durable.get("plan_revision") or 0),
-            }, "Planner produced a reviewable plan.")
-        if owners & {"task_spec", "external_input", "consultant"}:
+                "submission_id": str(lifecycle.get("submission_id") or ""),
+            }, "Planner explicitly submitted a durable candidate for review.")
+        if disposition == PlannerDisposition.CONSULTATION_REQUIRED.value:
             return _outcome(self.contract, "consultation_required", state, durable, {
-                "reason_code": "plan_validation_requires_semantic_reconsultation",
-            }, "Planner validation requires authoritative semantic correction.")
-        task_state = dict(durable.get("task_state") or {})
-        planning_failure = dict(task_state.get("planning_failure") or {})
-        planning_epoch = dict(task_state.get("planning_epoch") or state.get("planning_epoch") or {})
-        explicit_continuation = bool(
-            (
-                planning_failure
-                and str(planning_failure.get("status") or "").lower()
-                in {"active", "pending", "unresolved", "repairing"}
+                "reason_code": str(lifecycle.get("reason_code") or "TASKSPEC_RECONCILIATION_REQUIRED"),
+            }, "Planner explicitly reported a TaskSpec reconciliation requirement.")
+        if disposition == PlannerDisposition.CONTINUE.value:
+            progress_receipt_id = str(
+                lifecycle.get("progress_receipt_id") or ""
             )
-            or (
-                str(planning_epoch.get("status") or "").lower() == "active"
-                and int(planning_epoch.get("planner_calls_total") or 0) > 0
+            if not progress_receipt_id:
+                return _semantic_harness_error(
+                    self.contract,
+                    state,
+                    durable,
+                    error_code="PLANNER_PROGRESS_RECEIPT_MISSING",
+                    detail=(
+                        "planning_continues requires a durable Planner progress "
+                        "receipt produced by the current local loop."
+                    ),
+                )
+            prior_payload = _prior_payload(
+                self.contract,
+                before,
+                self.outcome_field,
+                "planning_continues",
             )
-        )
-        if explicit_continuation:
-            attempt = int(
-                planning_epoch.get("planner_calls_total")
-                or planning_failure.get("attempt")
-                or 1
-            )
+            if (
+                prior_payload
+                and str(prior_payload.get("progress_receipt_id") or "")
+                == progress_receipt_id
+            ):
+                return _semantic_harness_error(
+                    self.contract,
+                    state,
+                    durable,
+                    error_code="PLANNER_NON_PROGRESS_REPLAY",
+                    detail=(
+                        "Planner attempted to self-loop with the same durable "
+                        "progress receipt as the preceding invocation."
+                    ),
+                )
             return _outcome(self.contract, "planning_continues", state, durable, {
-                "reason_code": str(
-                    planning_failure.get("validation_source")
-                    or "durable_planning_epoch_active"
+                "reason_code": str(lifecycle.get("reason_code") or "PLANNER_LOCAL_LOOP_ACTIVE"),
+                "attempt_ordinal": int(lifecycle.get("attempt_ordinal") or 1),
+                "progress_receipt_id": progress_receipt_id,
+                "progress_kind": str(
+                    lifecycle.get("progress_kind") or "planner_progress"
                 ),
-                "attempt_ordinal": attempt,
-            }, "Durable planning convergence evidence requires another bounded turn.")
+            }, "The local Planner agent has another reasoning turn available.")
+        if disposition == PlannerDisposition.INVALID.value:
+            return _semantic_harness_error(
+                self.contract,
+                state,
+                durable,
+                error_code=str(lifecycle.get("reason_code") or "PLANNER_LOOP_INVALID"),
+                detail=str(lifecycle.get("detail") or "Planner lifecycle is invalid."),
+            )
         return _semantic_harness_error(
             self.contract,
             state,
@@ -435,14 +926,36 @@ class TypedPlanReview(_TypedEarlyNode):
             or (durable.get("current_approval") or {}).get("status")
             or ""
         ).lower()
-        if approval in {"approved", "accepted"} and has_materialized_plan(durable):
+        acceptance = plan_review_acceptance_readiness(durable)
+        submission = plan_review_submission_readiness(durable)
+        if acceptance["ready"] and has_materialized_plan(durable):
             backend = "external_worker" if self.execution_backend != "legacy" else "in_process"
             return _outcome(self.contract, "approved_for_execution", state, durable, {
                 "plan_id": str(durable.get("plan_id") or "approved-plan"),
                 "plan_version": str(durable.get("plan_version") or durable.get("plan_revision") or "1"),
                 "approval_status": approval,
                 "execution_backend": backend,
+                "review_receipt_id": str(acceptance.get("review_receipt_id") or ""),
             }, "Plan review approved the plan for execution.")
+        if approval in {"approved", "accepted"}:
+            return _semantic_harness_error(
+                self.contract,
+                state,
+                durable,
+                error_code="PLAN_REVIEW_ACCEPTANCE_RECEIPT_MISSING",
+                detail="An approval-like state cannot execute without a matching durable review receipt.",
+            )
+        if not submission["identity_matches"]:
+            return _semantic_harness_error(
+                self.contract,
+                state,
+                durable,
+                error_code="PLAN_REVIEW_SUBMISSION_MISSING_OR_STALE",
+                detail=(
+                    "PlanReview cannot consume a candidate without a matching "
+                    "Agent-initiated Planner submission receipt."
+                ),
+            )
         if not has_materialized_plan(durable):
             return _semantic_harness_error(
                 self.contract,
@@ -452,15 +965,41 @@ class TypedPlanReview(_TypedEarlyNode):
                 detail="PlanReview has neither a committed PlanSpec nor PlanSnapshot.",
             )
         issues = [dict(item) for item in state.get("validation_issues") or durable.get("validation_issues") or [] if isinstance(item, Mapping)]
-        owners = {str(item.get("owner") or "") for item in issues}
-        if owners & {"task_spec", "external_input", "consultant"}:
-            return _outcome(self.contract, "reconsultation_required", state, durable, {
-                "reason_code": "semantic_contract_validation_failed",
-            }, "Plan review found a semantic-contract issue.")
+        task_state = dict(durable.get("task_state") or {})
+        submission = dict(task_state.get("plan_review_submission") or {})
+        review_evidence = list(
+            state.get("plan_review_evidence")
+            or submission.get("review_evidence")
+            or review_evidence_from_issues(issues)
+        )
+        if str(submission.get("status") or "") != "repair_required":
+            return _semantic_harness_error(
+                self.contract,
+                state,
+                durable,
+                error_code="PLAN_REVIEW_RESULT_RECEIPT_MISSING",
+                detail=(
+                    "PlanReview cannot request another Planner turn without "
+                    "a durable repair-required receipt bound to the submitted "
+                    "Plan identity."
+                ),
+            )
+        if not review_evidence:
+            return _semantic_harness_error(
+                self.contract,
+                state,
+                durable,
+                error_code="PLAN_REVIEW_EVIDENCE_MISSING",
+                detail=(
+                    "A repair-required review receipt must include structured "
+                    "evidence for the next Planner turn."
+                ),
+            )
         return _outcome(self.contract, "revision_required", state, durable, {
             "validation_issues": issues,
+            "review_evidence": review_evidence,
             "reason_code": "plan_not_approved",
-        }, "Plan review requires a planner revision.")
+        }, "PlanReview produced evidence for another Planner turn.")
 
 
 class TypedAskUser(_TypedEarlyNode):

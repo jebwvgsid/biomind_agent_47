@@ -24,6 +24,13 @@ from agent_core.plan_tracker import (
     task_status,
 )
 from agent_core.recovery import ValidationEvidence, ValidationStatus
+from agent_core.semantic_completion import (
+    COMPLETION_ACCEPTED,
+    CompletionReport,
+    SemanticCompletionError,
+    SemanticDecision,
+    build_completion_report,
+)
 from agent_core.workflow.outcomes import (
     CommitStepOutcome,
     ExecuteOutcome,
@@ -45,6 +52,53 @@ def _fingerprint(value: Mapping[str, Any]) -> str:
     return hashlib.sha256(
         json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
     ).hexdigest()
+
+
+def _accepted_effect_refs(
+    effect_results: Mapping[str, Any], gate: Mapping[str, Any]
+) -> list[str]:
+    refs = [str(item) for item in gate.get("evidence_refs", ()) or () if str(item)]
+    identity_keys = (
+        "evidence_ref", "receipt_id", "artifact_version_id", "binding_id",
+        "observation_id", "side_effect_id", "effect_id", "identity", "id",
+        "name",
+    )
+    for kind, raw in dict(effect_results or {}).items():
+        if kind not in {
+            "produces_artifacts", "produces_bindings", "produces_observations",
+            "workspace_mutations", "explicit_side_effects",
+        }:
+            continue
+        if isinstance(raw, Mapping):
+            values = [raw] if any(key in raw for key in identity_keys) else [
+                ({**dict(item), "name": str(name)} if isinstance(item, Mapping) else {
+                    "name": str(name), "value": item,
+                })
+                for name, item in raw.items()
+            ]
+        elif isinstance(raw, (list, tuple)):
+            values = list(raw)
+        else:
+            values = [raw]
+        for value in values:
+            if isinstance(value, Mapping):
+                ref = next(
+                    (
+                        str(value.get(key))
+                        for key in identity_keys
+                        if str(value.get(key) or "")
+                    ),
+                    "",
+                )
+                if not ref and kind == "workspace_mutations":
+                    workspace_ref = str(value.get("workspace_ref") or value.get("workspace_id") or "")
+                    mutation = str(value.get("mutation") or value.get("operation") or "")
+                    ref = f"{workspace_ref}::{mutation}" if workspace_ref and mutation else ""
+            else:
+                ref = str(value or "")
+            if ref:
+                refs.append(ref)
+    return list(dict.fromkeys(refs))
 
 
 class CommitStep:
@@ -110,6 +164,54 @@ class CommitStep:
             return self._rejected(
                 task_id, "VERIFICATION_NOT_COMMIT_ELIGIBLE", verification.type
             )
+        raw_report = verification_payload.get("completion_report")
+        raw_decision = verification_payload.get("semantic_decision")
+        try:
+            report = CompletionReport.from_mapping(raw_report or {})
+            decision = SemanticDecision.from_mapping(raw_decision or {})
+        except SemanticCompletionError as exc:
+            return self._rejected(
+                task_id,
+                exc.code,
+                "payload.completion_report_or_semantic_decision",
+            )
+        if report.effective_decision.decision_id != decision.decision_id:
+            return self._rejected(
+                task_id,
+                "SEMANTIC_DECISION_REPORT_MISMATCH",
+                "payload.semantic_decision.decision_id",
+                report.report_id,
+                decision.decision_id,
+            )
+        for key, report_value in report.scope.items():
+            supplied_value = scope.get(key)
+            if key == "state_generation":
+                try:
+                    matches = int(supplied_value) == int(report_value)
+                except (TypeError, ValueError):
+                    matches = False
+            else:
+                matches = str(supplied_value or "") == str(report_value or "")
+            if not matches:
+                return self._rejected(
+                    task_id,
+                    "SEMANTIC_REPORT_SCOPE_MISMATCH",
+                    key,
+                    report.report_id,
+                    decision.decision_id,
+                )
+        if (
+            report.deterministic_veto
+            or report.effective_disposition != COMPLETION_ACCEPTED
+            or decision.disposition != COMPLETION_ACCEPTED
+        ):
+            return self._rejected(
+                task_id,
+                "SEMANTIC_COMPLETION_NOT_COMMIT_ELIGIBLE",
+                report.effective_disposition,
+                report.report_id,
+                decision.decision_id,
+            )
         request_identity = {
             key: scope.get(key)
             for key in (
@@ -117,6 +219,11 @@ class CommitStep:
                 "state_generation", "action_id", "attempt_id", "validation_id",
             )
         }
+        request_identity.update({
+            "completion_report_id": report.report_id,
+            "semantic_decision_id": decision.decision_id,
+            "semantic_consumption_token": report.consumption_token,
+        })
         request_fingerprint = _fingerprint(request_identity)
         commit_id = "commit-step-" + request_fingerprint[:24]
         current = load_plan_state(self.data_path, task_id)
@@ -135,7 +242,32 @@ class CommitStep:
                 return self._rejected(
                     task_id, "COMMIT_RECEIPT_CORRUPT", type(exc).__name__, commit_id
                 )
+            semantic_consumptions = dict(
+                task_state.get("semantic_completion_consumptions") or {}
+            )
+            consumed = semantic_consumptions.get(report.consumption_token)
+            if not isinstance(consumed, Mapping) or any((
+                str(consumed.get("report_id") or "") != report.report_id,
+                str(consumed.get("decision_id") or "") != decision.decision_id,
+                str(consumed.get("commit_id") or "") != commit_id,
+            )):
+                return self._rejected(
+                    task_id,
+                    "SEMANTIC_CONSUMPTION_RECEIPT_INVALID",
+                    report.consumption_token,
+                    commit_id,
+                    report.report_id,
+                )
             return {"commit_step_outcome": replay.to_dict()}
+
+        # A terminal PlanState owns the race regardless of which stale
+        # generation the late verifier observed.  Report the semantic terminal
+        # conflict before the generic CAS mismatch and never construct a
+        # candidate mutation from cancelled/completed authority.
+        if task_status(current) in TASK_TERMINAL_STATUSES:
+            return self._rejected(
+                task_id, "TERMINAL_STATE_CONFLICT", task_status(current)
+            )
 
         try:
             expected_generation = int(scope.get("state_generation"))
@@ -170,10 +302,6 @@ class CommitStep:
                 return self._rejected(
                     task_id, "COMMIT_SCOPE_MISMATCH", key, verification.evidence_refs[0] if verification.evidence_refs else ""
                 )
-        if task_status(current) in TASK_TERMINAL_STATUSES:
-            return self._rejected(
-                task_id, "TERMINAL_STATE_CONFLICT", task_status(current)
-            )
         step = next(
             (
                 item for item in current.get("steps", ())
@@ -188,7 +316,15 @@ class CommitStep:
         raw_validation = verification_payload.get("validation_evidence")
         if not isinstance(raw_validation, Mapping):
             return self._rejected(task_id, "VALIDATION_EVIDENCE_INVALID", "payload.validation_evidence")
-        validation = ValidationEvidence.from_mapping(dict(raw_validation))
+        try:
+            validation = ValidationEvidence.from_mapping(dict(raw_validation))
+        except (TypeError, ValueError) as exc:
+            return self._rejected(
+                task_id,
+                "VALIDATION_EVIDENCE_INVALID",
+                type(exc).__name__,
+                report.report_id,
+            )
         for key, actual in (
             ("task_id", validation.task_id),
             ("step_id", validation.step_id),
@@ -227,20 +363,6 @@ class CommitStep:
         }:
             return self._rejected(task_id, "EXECUTION_ATTEMPT_STATUS_INELIGIBLE", str(attempt.get("status") or ""), validation.attempt_id)
 
-        candidate = deepcopy(current)
-        if str(attempt.get("status") or "").upper() != ATTEMPT_VALIDATION_PASSED:
-            record_provenance_event(candidate, "validation_recorded", {
-                "attempt_id": validation.attempt_id,
-                "validation": validation.to_dict(),
-                "validation_evidence_ref": validation.validation_id,
-            })
-        gate = dict(self.gate_evaluator(self.data_path, task_id, candidate))
-        supplied_gate = dict(verification_payload.get("completion_gate") or {})
-        if not supplied_gate.get("passed") or not gate.get("passed"):
-            return self._rejected(task_id, "COMPLETION_GATE_REJECTED", str(gate.get("classification") or "gate_failed"), validation.validation_id)
-        if supplied_gate.get("plan_version") and str(supplied_gate.get("plan_version")) != expected_scope["plan_version"]:
-            return self._rejected(task_id, "COMPLETION_GATE_SCOPE_MISMATCH", "plan_version", validation.validation_id)
-
         action = dict(state.get("pending_action") or {}) if isinstance(state.get("pending_action"), Mapping) else {}
         if not action and isinstance(state.get("generate_outcome"), Mapping):
             generate_outcome = GenerateOutcome.from_mapping(state["generate_outcome"])
@@ -263,6 +385,87 @@ class CommitStep:
             ):
                 if str(execution.get(key) or "") != str(expected or ""):
                     return self._rejected(task_id, "EXECUTION_RECORD_SCOPE_MISMATCH", key, validation.validation_id)
+
+        semantic_candidate = deepcopy(current)
+        if str(attempt.get("status") or "").upper() != ATTEMPT_VALIDATION_PASSED:
+            record_provenance_event(semantic_candidate, "validation_recorded", {
+                "attempt_id": validation.attempt_id,
+                "validation": validation.to_dict(),
+                "validation_evidence_ref": validation.validation_id,
+            })
+        semantic_gate = dict(
+            self.gate_evaluator(self.data_path, task_id, semantic_candidate)
+        )
+        try:
+            recomputed_report = build_completion_report(
+                plan_state=current,
+                validation=validation.to_dict(),
+                execution_evidence=execution or attempt,
+                completion_gate=semantic_gate,
+            )
+        except SemanticCompletionError as exc:
+            return self._rejected(
+                task_id,
+                exc.code,
+                "completion_report_recompute",
+                report.report_id,
+            )
+        failing_predicate = next(
+            (
+                dict(item)
+                for item in recomputed_report.predicate_results
+                if item.get("passed") is not True
+            ),
+            {},
+        )
+        if (
+            recomputed_report.deterministic_veto
+            or recomputed_report.effective_disposition != COMPLETION_ACCEPTED
+        ):
+            return self._rejected(
+                task_id,
+                "DETERMINISTIC_SEMANTIC_VETO",
+                str(
+                    failing_predicate.get("reason_code")
+                    or recomputed_report.effective_disposition
+                ),
+                recomputed_report.report_id,
+                recomputed_report.effective_decision.decision_id,
+            )
+        if any((
+            recomputed_report.report_id != report.report_id,
+            recomputed_report.effective_decision.decision_id != decision.decision_id,
+            recomputed_report.consumption_token != report.consumption_token,
+        )):
+            return self._rejected(
+                task_id,
+                "COMPLETION_REPORT_RECOMPUTE_MISMATCH",
+                "report_id_or_decision_id_or_consumption_token",
+                report.report_id,
+                recomputed_report.report_id,
+            )
+        current_consumptions = dict(
+            (current.get("task_state") or {}).get(
+                "semantic_completion_consumptions"
+            )
+            or {}
+        )
+        if report.consumption_token in current_consumptions:
+            return self._rejected(
+                task_id,
+                "SEMANTIC_CONSUMPTION_ALREADY_RECORDED",
+                report.consumption_token,
+                report.report_id,
+            )
+
+        candidate = semantic_candidate
+        gate = semantic_gate
+        supplied_gate = dict(verification_payload.get("completion_gate") or {})
+        if not supplied_gate.get("passed") or not gate.get("passed"):
+            return self._rejected(task_id, "COMPLETION_GATE_REJECTED", str(gate.get("classification") or "gate_failed"), validation.validation_id)
+        if supplied_gate.get("plan_version") and str(supplied_gate.get("plan_version")) != expected_scope["plan_version"]:
+            return self._rejected(task_id, "COMPLETION_GATE_SCOPE_MISMATCH", "plan_version", validation.validation_id)
+
         for version_id in attempt.get("artifact_version_ids", ()) or ():
             artifact = dict((candidate.get("provenance_state") or {}).get("artifacts", {}).get(str(version_id)) or {})
             if (
@@ -293,6 +496,7 @@ class CommitStep:
             committed_attempt["status"] = ATTEMPT_COMPLETED
         successor_step_id = str(candidate.get("current_step_id") or "")
         outcome_type = "next_step_ready" if successor_step_id else "plan_complete"
+        accepted_effect_refs = _accepted_effect_refs(validation.effect_results, gate)
         outcome_payload = {
             "commit_id": commit_id,
             "receipt": f"typed-step-commit:{commit_id}",
@@ -301,6 +505,10 @@ class CommitStep:
             "completed_step_id": validation.step_id,
             "accepted_binding_refs": [item.binding_id for item in accepted],
             "accepted_artifact_refs": list(attempt.get("artifact_version_ids") or []),
+            "accepted_effect_refs": accepted_effect_refs,
+            "completion_report_ref": report.report_id,
+            "semantic_decision_ref": decision.decision_id,
+            "semantic_consumption_ref": report.consumption_token,
         }
         if successor_step_id:
             outcome_payload["successor_step_id"] = successor_step_id
@@ -313,7 +521,12 @@ class CommitStep:
             ),
             scope={"task_id": task_id},
             payload=outcome_payload,
-            evidence_refs=(validation.validation_id,),
+            evidence_refs=tuple(dict.fromkeys((
+                validation.validation_id,
+                report.report_id,
+                decision.decision_id,
+                report.consumption_token,
+            ))),
         )
         task_state = dict(candidate.get("task_state") or {})
         receipts = dict(task_state.get("typed_step_commit_receipts") or {})
@@ -323,6 +536,18 @@ class CommitStep:
             "outcome": semantic_outcome.to_dict(),
         }
         task_state["typed_step_commit_receipts"] = receipts
+        semantic_consumptions = dict(
+            task_state.get("semantic_completion_consumptions") or {}
+        )
+        semantic_consumptions[report.consumption_token] = {
+            "schema_version": 1,
+            "report_id": report.report_id,
+            "decision_id": decision.decision_id,
+            "commit_id": commit_id,
+            "request_fingerprint": request_fingerprint,
+            "scope": dict(report.scope),
+        }
+        task_state["semantic_completion_consumptions"] = semantic_consumptions
         candidate["task_state"] = task_state
         try:
             save_plan_state(self.data_path, task_id, candidate)

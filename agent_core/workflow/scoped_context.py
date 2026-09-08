@@ -316,7 +316,13 @@ def append_parallel_tool_messages(
 
 
 def build_provider_messages(state: Mapping[str, Any]) -> list[BaseMessage]:
-    """Build ``system + seed + local transcript`` in cache-stable order."""
+    """Build the cache-stable provider wire for one context epoch.
+
+    Inherited source material is a frozen phase-entry region.  It is kept
+    separate from the semantic Seed so exact Skill/resource bodies are not
+    copied into TaskSpec or handoff payloads, and separate from ``messages``
+    so later local events remain strictly append-only.
+    """
 
     systems = _coerce_messages(state.get("system_message"), field="system_message")
     seeds = _coerce_messages(state.get("seed_message"), field="seed_message")
@@ -328,8 +334,16 @@ def build_provider_messages(state: Mapping[str, Any]) -> list[BaseMessage]:
         raise ScopedContextError(
             "PHASE_SEED_INVALID", "phase context requires one HumanMessage seed"
         )
+    inherited = _coerce_messages(
+        state.get("inherited_messages"), field="inherited_messages"
+    )
+    if any(not isinstance(message, HumanMessage) for message in inherited):
+        raise ScopedContextError(
+            "PHASE_INHERITED_MATERIAL_INVALID",
+            "inherited material must use ordinary HumanMessage source containers",
+        )
     local = _coerce_messages(state.get("messages"), field="messages")
-    wire = [systems[0], seeds[0], *local]
+    wire = [systems[0], seeds[0], *inherited, *local]
     seen: set[str] = set()
     for index, message in enumerate(wire):
         message_id = _message_id(message, field=f"provider_messages[{index}]")
@@ -372,6 +386,7 @@ class PhaseContextInput(TypedDict):
     phase_id: str
     system_message: FixedProviderMessage
     seed_message: FixedProviderMessage
+    inherited_messages: list[BaseMessage]
 
 
 class PhaseContextOutput(TypedDict, total=False):
@@ -387,6 +402,7 @@ class PhaseContextState(TypedDict, total=False):
     phase_id: str
     system_message: FixedProviderMessage
     seed_message: FixedProviderMessage
+    inherited_messages: list[BaseMessage]
     messages: AppendOnlyProviderMessages
     phase_outcome: dict[str, Any]
     transcript_ref: str

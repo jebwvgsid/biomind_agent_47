@@ -60,11 +60,19 @@ def profile_typed_node(
                 if str(result[outcome_field].get("type") or "") == "harness_error":
                     payload = dict(result[outcome_field].get("payload") or {})
                     logger.warning(
-                        "TYPED_NODE_DIAGNOSTIC task=%s source_node=%s error_code=%s detail=%s semantic_state=%s",
+                        "TYPED_NODE_DIAGNOSTIC task=%s source_node=%s "
+                        "error_code=%s phase=%s component=%s "
+                        "failed_event_type=%s attempt_id=%s detail=%s "
+                        "trace_ref=%s semantic_state=%s",
                         task_id,
                         node_name,
                         str(payload.get("error_code") or "TYPED_NODE_HARNESS_ERROR"),
+                        str(payload.get("phase") or "")[:160],
+                        str(payload.get("component") or "")[:240],
+                        str(payload.get("failed_event_type") or "")[:160],
+                        str(payload.get("attempt_id") or "")[:240],
                         str(payload.get("detail") or "")[:800],
+                        str(payload.get("diagnostic_ref") or "")[:240],
                         str(payload.get("semantic_state") or {})[:800],
                     )
                 return result

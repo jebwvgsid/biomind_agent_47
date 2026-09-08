@@ -38,6 +38,13 @@ from .managed_artifacts import (
     PHYSICAL_HARD,
     physical_constraint_origin,
 )
+from .step_effects import (
+    CANONICAL_STEP_EFFECT_FIELDS,
+    StepEffectProtocolError,
+    canonical_execution_effect_evidence,
+    canonical_step_effect,
+    match_step_effect_evidence,
+)
 
 
 ARTIFACT_RE = re.compile(
@@ -184,6 +191,11 @@ class GateResult:
     artifact_version_ids: List[str] = field(default_factory=list)
     validation_ids: List[str] = field(default_factory=list)
     evidence_refs: List[str] = field(default_factory=list)
+    declared_effects: Dict[str, Any] = field(default_factory=dict)
+    satisfied_effects: Dict[str, Any] = field(default_factory=dict)
+    missing_effects: Dict[str, Any] = field(default_factory=dict)
+    unexpected_effects: Dict[str, Any] = field(default_factory=dict)
+    invalid_effects: Dict[str, Any] = field(default_factory=dict)
     plan_version: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
@@ -202,6 +214,11 @@ class GateResult:
             "artifact_version_ids": list(self.artifact_version_ids),
             "validation_ids": list(self.validation_ids),
             "evidence_refs": list(self.evidence_refs),
+            "declared_effects": deepcopy(dict(self.declared_effects or {})),
+            "satisfied_effects": deepcopy(dict(self.satisfied_effects or {})),
+            "missing_effects": deepcopy(dict(self.missing_effects or {})),
+            "unexpected_effects": deepcopy(dict(self.unexpected_effects or {})),
+            "invalid_effects": deepcopy(dict(self.invalid_effects or {})),
             "plan_version": self.plan_version,
         }
 
@@ -241,6 +258,12 @@ class StepCompletionEvidence:
     attempt_ids: List[str] = field(default_factory=list)
     artifact_version_ids: List[str] = field(default_factory=list)
     validation_ids: List[str] = field(default_factory=list)
+    declared_effects: Dict[str, Any] = field(default_factory=dict)
+    satisfied_effects: Dict[str, Any] = field(default_factory=dict)
+    missing_effects: Dict[str, Any] = field(default_factory=dict)
+    unexpected_effects: Dict[str, Any] = field(default_factory=dict)
+    invalid_effects: Dict[str, Any] = field(default_factory=dict)
+    effect_evidence_refs: List[str] = field(default_factory=list)
     plan_version: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
@@ -278,6 +301,418 @@ def current_running_step(plan_state: Dict[str, Any]) -> Optional[Dict[str, Any]]
         if str(step.get("status") or "").strip().lower() in STEP_RECOVERABLE_STATUSES:
             return step
     return None
+
+
+_STEP_EFFECT_KEYS = tuple(CANONICAL_STEP_EFFECT_FIELDS)
+_NON_ARTIFACT_EFFECT_KEYS = _STEP_EFFECT_KEYS[1:]
+_POSITIVE_EFFECT_STATUSES = {
+    "accepted", "applied", "changed", "complete", "completed", "done",
+    "observed", "passed", "produced", "satisfied", "success", "succeeded",
+    "valid", "validated", "verified", "already_satisfied",
+}
+_NEGATIVE_EFFECT_STATUSES = {
+    "absent", "failed", "false", "incomplete", "invalid", "missing",
+    "not_applied", "not_observed", "not_produced", "rejected", "stale",
+    "unknown", "unverified",
+}
+_ELIGIBLE_EFFECT_ATTEMPT_STATUSES = {
+    "EVIDENCE_COMMITTED", "VALIDATED", "VALIDATION_PASSED", "COMPLETED",
+    "PROCESS_EXITED",
+}
+_INELIGIBLE_EFFECT_ROLES = {
+    "capability_probe", "diagnostic", "optional_probe", "probe",
+}
+
+
+def _completion_eligible_effect_role(value: Mapping[str, Any]) -> bool:
+    return str(value.get("command_role") or "").strip().lower() not in (
+        _INELIGIBLE_EFFECT_ROLES
+    )
+
+
+def _schema2_step_effect(
+    plan_state: Mapping[str, Any], step: Mapping[str, Any]
+) -> Optional[Dict[str, Any]]:
+    """Return a canonical StepEffect only for the typed schema-2 path.
+
+    Historical checkpoints have no StepEffect and intentionally continue down
+    the legacy completion path.
+    """
+    task_state = plan_state.get("task_state")
+    task_state = dict(task_state) if isinstance(task_state, Mapping) else {}
+    raw_schema = (
+        plan_state.get("workflow_routing_schema_version")
+        or task_state.get("workflow_routing_schema_version")
+        or 1
+    )
+    try:
+        typed = int(raw_schema) == 2
+    except (TypeError, ValueError):
+        typed = False
+    if not typed:
+        return None
+    raw = step.get("step_effect")
+    # A schema-2 step may never fall through to the schema-1 heuristic gate.
+    # Missing or malformed typed effect state is represented as an empty
+    # contract so validate_step_evidence deterministically fails closed.
+    if not isinstance(raw, Mapping):
+        return {}
+    return deepcopy(dict(raw))
+
+
+def _effect_identity(kind: str, value: Any) -> str:
+    if isinstance(value, str):
+        return value.strip()
+    if not isinstance(value, Mapping):
+        return ""
+    row = dict(value)
+    if kind == "workspace_mutations":
+        workspace_ref = str(
+            row.get("workspace_ref")
+            or row.get("workspace_id")
+            or row.get("workspace")
+            or row.get("identity")
+            or ""
+        ).strip()
+        mutation = str(
+            row.get("mutation")
+            or row.get("operation")
+            or row.get("mutation_type")
+            or row.get("mode")
+            or ""
+        ).strip()
+        return f"{workspace_ref}::{mutation}" if workspace_ref and mutation else ""
+    identity_keys = {
+        "produces_artifacts": (
+            "artifact_id", "logical_artifact_id", "artifact_version_id",
+            "identity", "id", "name",
+        ),
+        "produces_bindings": (
+            "binding_id", "binding_name", "name", "identity", "id",
+        ),
+        "produces_observations": (
+            "observation_id", "observation_name", "name", "identity", "id",
+        ),
+        "explicit_side_effects": (
+            "side_effect_id", "effect_id", "name", "identity", "id",
+        ),
+    }
+    for key in identity_keys.get(kind, ("identity", "id", "name")):
+        if str(row.get(key) or "").strip():
+            return str(row[key]).strip()
+    return ""
+
+
+def _effect_items(value: Any) -> List[Any]:
+    if value in (None, "", [], {}):
+        return []
+    if isinstance(value, Mapping):
+        # Binding candidates use ``name -> {type, value}``; other typed result
+        # rows normally carry their identity in the row itself.
+        if any(
+            key in value
+            for key in (
+                "artifact_id", "binding_id", "binding_name", "observation_id",
+                "workspace_ref", "workspace_id", "side_effect_id", "effect_id",
+                "identity", "id", "name",
+            )
+        ):
+            return [dict(value)]
+        rows: List[Any] = []
+        for name, item in value.items():
+            if isinstance(item, Mapping):
+                row = dict(item)
+                row.setdefault("name", str(name))
+                rows.append(row)
+            else:
+                rows.append({"name": str(name), "value": deepcopy(item)})
+        return rows
+    if isinstance(value, (list, tuple, set)):
+        return list(value)
+    return [value]
+
+
+def _effect_result_satisfied(kind: str, value: Any) -> bool:
+    if isinstance(value, str):
+        return bool(value.strip())
+    if not isinstance(value, Mapping):
+        return False
+    row = dict(value)
+    for key in ("satisfied", "passed", "valid", "verified", "produced"):
+        if key in row:
+            return bool(row.get(key))
+    status = str(row.get("status") or row.get("result_status") or "").strip().lower()
+    if status == "candidate" and kind == "produces_bindings":
+        return True
+    if status in _NEGATIVE_EFFECT_STATUSES:
+        return False
+    if kind == "workspace_mutations":
+        return bool(
+            row.get("changed") is True
+            or row.get("applied") is True
+            or row.get("postcondition_satisfied") is True
+            or row.get("receipt_id")
+            or row.get("evidence_ref")
+        )
+    if kind == "explicit_side_effects":
+        return bool(
+            row.get("receipt_id") or row.get("evidence_ref") or "evidence" in row
+        )
+    if kind == "produces_observations":
+        return any(key in row for key in ("value", "result", "observed_value", "evidence")) or bool(
+            row.get("receipt_id") or row.get("evidence_ref")
+        )
+    if kind == "produces_bindings":
+        return any(key in row for key in ("value", "value_hash", "evidence")) or bool(
+            row.get("binding_id") or row.get("receipt_id") or row.get("evidence_ref")
+        )
+    if status in _POSITIVE_EFFECT_STATUSES:
+        return True
+    return bool(row.get("receipt_id") or row.get("evidence_ref"))
+
+
+def _effect_reference(kind: str, value: Any, identity: str) -> str:
+    if isinstance(value, Mapping):
+        for key in (
+            "evidence_ref", "receipt_id", "artifact_version_id", "binding_id",
+            "observation_id", "side_effect_id", "effect_id",
+        ):
+            if str(value.get(key) or "").strip():
+                return str(value[key]).strip()
+    return identity
+
+
+def _effect_payload(value: Mapping[str, Any]) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {}
+    for envelope_key in ("effect_results", "effect_evidence"):
+        envelope = value.get(envelope_key)
+        if isinstance(envelope, Mapping):
+            payload.update(deepcopy(dict(envelope)))
+    for key in _STEP_EFFECT_KEYS:
+        if key in value:
+            payload[key] = deepcopy(value.get(key))
+    if "produced_bindings" in value and "produces_bindings" not in payload:
+        payload["produces_bindings"] = deepcopy(value.get("produced_bindings"))
+    return payload
+
+
+def _normalized_declared_effects(
+    step_effect: Mapping[str, Any], artifact_ids: Iterable[Any]
+) -> Dict[str, List[str]]:
+    canonical = canonical_step_effect({"step_effect": dict(step_effect)})
+    canonical_artifact_ids = {
+        str(item).strip() for item in artifact_ids if str(item).strip()
+    }
+    result: Dict[str, List[str]] = {}
+    for kind in _STEP_EFFECT_KEYS:
+        identities = {
+            _effect_identity(kind, item)
+            for item in canonical.get(kind, ())
+        }
+        identities.discard("")
+        if kind == "produces_artifacts" and canonical_artifact_ids:
+            # ``step_effect.produces_artifacts`` carries Planner-local logical
+            # handles.  After Plan compilation, ``output_artifact_ids`` is the
+            # authoritative provenance namespace for those same outputs.  Do
+            # not require both aliases as if they were two produced objects.
+            # The compiler receipt already proves that every artifact effect
+            # is bound through ``step.outputs`` before execution is admitted.
+            identities = canonical_artifact_ids
+        result[kind] = sorted(identities)
+    return result
+
+
+def _current_effect_sources(
+    plan_state: Mapping[str, Any], step_id: str
+) -> Tuple[List[Tuple[Dict[str, Any], bool]], List[str]]:
+    """Collect only evidence tied to the current concrete execution attempt."""
+    provenance = plan_state.get("provenance_state")
+    provenance = dict(provenance) if isinstance(provenance, Mapping) else {}
+    attempts = dict(provenance.get("attempts") or {})
+    matching_attempts = [
+        (str(attempt_id), dict(row))
+        for attempt_id, row in attempts.items()
+        if isinstance(row, Mapping) and str(row.get("step_id") or "") == step_id
+    ]
+
+    top_validation = plan_state.get("validation_evidence")
+    top_validation = dict(top_validation) if isinstance(top_validation, Mapping) else {}
+    top_execution = plan_state.get("execution_evidence")
+    top_execution = dict(top_execution) if isinstance(top_execution, Mapping) else {}
+    selected_attempt_id = ""
+    for row in (top_validation, top_execution):
+        if str(row.get("step_id") or step_id) == step_id and str(row.get("attempt_id") or ""):
+            selected_attempt_id = str(row.get("attempt_id"))
+            break
+    if not selected_attempt_id and matching_attempts:
+        selected_attempt_id = matching_attempts[-1][0]
+    selected_attempt = next(
+        (row for attempt_id, row in matching_attempts if attempt_id == selected_attempt_id),
+        {},
+    )
+    explicit_returncode = selected_attempt.get("returncode")
+    attempt_status = str(selected_attempt.get("status") or "").strip().upper()
+    attempt_success = bool(selected_attempt) and (
+        explicit_returncode == 0
+        or (explicit_returncode is None and attempt_status in _ELIGIBLE_EFFECT_ATTEMPT_STATUSES)
+    ) and _completion_eligible_effect_role(selected_attempt)
+
+    sources: List[Tuple[Dict[str, Any], bool]] = []
+    refs: List[str] = []
+    if selected_attempt:
+        payload = _effect_payload(selected_attempt)
+        if payload:
+            sources.append((payload, attempt_success))
+        if selected_attempt_id:
+            refs.append(selected_attempt_id)
+
+    validations = dict(provenance.get("validations") or {})
+    for validation_id, raw in validations.items():
+        if not isinstance(raw, Mapping):
+            continue
+        row = dict(raw)
+        if str(row.get("step_id") or "") != step_id:
+            continue
+        if selected_attempt_id and str(row.get("attempt_id") or "") != selected_attempt_id:
+            continue
+        payload = _effect_payload(row)
+        if not payload:
+            continue
+        status = str(row.get("status") or "").strip().lower()
+        valid = status in {"valid", "valid_with_warnings", "pass", "passed", "success", "succeeded"} and (
+            _completion_eligible_effect_role(row)
+            and attempt_success
+        )
+        sources.append((payload, valid))
+        refs.append(str(row.get("validation_id") or validation_id))
+
+    if selected_attempt and top_validation and str(top_validation.get("step_id") or step_id) == step_id:
+        if not selected_attempt_id or str(top_validation.get("attempt_id") or "") == selected_attempt_id:
+            payload = _effect_payload(top_validation)
+            if payload:
+                status = str(top_validation.get("status") or "").strip().lower()
+                sources.append((payload, status in {
+                    "valid", "valid_with_warnings", "pass", "passed", "success", "succeeded",
+                } and _completion_eligible_effect_role(top_validation) and attempt_success))
+                refs.append(str(top_validation.get("validation_id") or ""))
+
+    if selected_attempt and top_execution and str(top_execution.get("step_id") or step_id) == step_id:
+        if not selected_attempt_id or str(top_execution.get("attempt_id") or "") == selected_attempt_id:
+            payload = _effect_payload(top_execution)
+            if payload:
+                returncode = top_execution.get("returncode", top_execution.get("exit_code"))
+                sources.append((
+                    payload,
+                    returncode == 0
+                    and _completion_eligible_effect_role(top_execution)
+                    and attempt_success,
+                ))
+                refs.append(str(top_execution.get("execution_id") or top_execution.get("attempt_id") or ""))
+
+    # Existing schema-2 binding candidates are persisted on the immutable
+    # action record and are promoted only by CommitStep.  They are therefore a
+    # valid pre-commit effect source only when their linked attempt succeeded.
+    if selected_attempt and attempt_success:
+        action_id = str(selected_attempt.get("action_id") or "")
+        action = dict((provenance.get("actions") or {}).get(action_id) or {})
+        normalized_action = action.get("normalized_action") or action.get("raw_action")
+        normalized_action = dict(normalized_action) if isinstance(normalized_action, Mapping) else {}
+        candidates = normalized_action.get("produced_bindings")
+        if candidates not in (None, "", [], {}):
+            sources.append(({"produces_bindings": deepcopy(candidates)}, True))
+            refs.append(action_id)
+    return sources, list(dict.fromkeys(ref for ref in refs if ref))
+
+
+def _evaluate_non_artifact_effects(
+    plan_state: Mapping[str, Any],
+    step_id: str,
+    declared: Mapping[str, List[str]],
+    declared_contract: Mapping[str, Any],
+) -> Tuple[Dict[str, List[str]], Dict[str, List[str]], Dict[str, List[str]], Dict[str, List[str]], List[str]]:
+    observed = {kind: set() for kind in _NON_ARTIFACT_EFFECT_KEYS}
+    invalid_observed = {kind: set() for kind in _NON_ARTIFACT_EFFECT_KEYS}
+    refs_by_identity: Dict[Tuple[str, str], str] = {}
+    sources, source_refs = _current_effect_sources(plan_state, step_id)
+    accepted_payloads = [payload for payload, source_valid in sources if source_valid]
+    contract_match = match_step_effect_evidence(
+        declared_contract,
+        accepted_payloads,
+    )
+    contract_matched: Dict[str, set[str]] = {}
+    for kind in _NON_ARTIFACT_EFFECT_KEYS:
+        identities = {
+            _effect_identity(kind, item)
+            for item in contract_match.get("matched_effects", {}).get(kind, ())
+        }
+        if kind == "workspace_mutations":
+            identities.update(item.partition("::")[0] for item in tuple(identities))
+        contract_matched[kind] = identities
+    for payload, source_valid in sources:
+        try:
+            canonical_payload = canonical_execution_effect_evidence(payload)
+        except StepEffectProtocolError:
+            canonical_payload = {kind: [] for kind in _STEP_EFFECT_KEYS}
+        for kind in _NON_ARTIFACT_EFFECT_KEYS:
+            for item in canonical_payload.get(kind, ()):
+                identity = _effect_identity(kind, item)
+                if not identity:
+                    continue
+                if kind == "workspace_mutations" and identity not in set(
+                    declared.get(kind) or []
+                ):
+                    workspace_identity = identity.partition("::")[0]
+                    if workspace_identity in set(declared.get(kind) or []):
+                        # A declaration containing only the workspace identity
+                        # intentionally leaves the concrete mutation to the
+                        # capability verifier.  When a mutation is declared,
+                        # the full ``workspace::mutation`` identity must match.
+                        identity = workspace_identity
+                declared_identities = set(declared.get(kind) or [])
+                contract_identity = identity.partition("::")[0] if kind == "workspace_mutations" else identity
+                contract_allows = (
+                    identity not in declared_identities
+                    and contract_identity not in declared_identities
+                ) or contract_identity in contract_matched[kind]
+                satisfied = (
+                    source_valid
+                    and contract_allows
+                    and _effect_result_satisfied(kind, item)
+                )
+                target = observed if satisfied else invalid_observed
+                target[kind].add(identity)
+                if satisfied:
+                    refs_by_identity[(kind, identity)] = _effect_reference(kind, item, identity)
+
+    satisfied: Dict[str, List[str]] = {}
+    missing: Dict[str, List[str]] = {}
+    unexpected: Dict[str, List[str]] = {}
+    invalid: Dict[str, List[str]] = {}
+    accepted_refs: List[str] = []
+    for kind in _NON_ARTIFACT_EFFECT_KEYS:
+        expected = set(declared.get(kind) or [])
+        valid_values = observed[kind]
+        matched = expected & valid_values
+        missing_values = expected - valid_values
+        unexpected_values = valid_values - expected
+        # A later deterministic ValidationEvidence may validate an initially
+        # unverified execution receipt for the same identity.
+        invalid_values = (invalid_observed[kind] - valid_values) & expected
+        if matched:
+            satisfied[kind] = sorted(matched)
+            accepted_refs.extend(
+                refs_by_identity.get((kind, identity), identity)
+                for identity in sorted(matched)
+            )
+        if missing_values:
+            missing[kind] = sorted(missing_values)
+        if unexpected_values:
+            unexpected[kind] = sorted(unexpected_values)
+        if invalid_values:
+            invalid[kind] = sorted(invalid_values)
+    return satisfied, missing, unexpected, invalid, list(dict.fromkeys([
+        *accepted_refs, *source_refs,
+    ]))
 
 
 def _step_title(step: Optional[Dict[str, Any]]) -> str:
@@ -2065,7 +2500,27 @@ class CompletionGate:
         attempts: List[str] = []
         versions: List[str] = []
         validations: List[str] = []
-        for artifact_id in step.get("output_artifact_ids", []) or []:
+        failed_criteria: List[str] = []
+        typed_effect = _schema2_step_effect(plan_state, step)
+        declared_effects: Dict[str, List[str]] = {}
+        canonical_effect_contract: Dict[str, Any] = {}
+        effect_protocol_error = ""
+        artifact_ids = [
+            str(item) for item in step.get("output_artifact_ids", []) or [] if str(item)
+        ]
+        if typed_effect is not None:
+            try:
+                canonical_effect_contract = canonical_step_effect({
+                    "step_effect": typed_effect,
+                })
+                declared_effects = _normalized_declared_effects(
+                    canonical_effect_contract, artifact_ids
+                )
+                artifact_ids = list(declared_effects["produces_artifacts"])
+            except StepEffectProtocolError as exc:
+                declared_effects = {key: [] for key in _STEP_EFFECT_KEYS}
+                effect_protocol_error = f"step_effect_protocol_invalid:{exc.code}"
+        for artifact_id in artifact_ids:
             artifact_id = str(artifact_id)
             version_id = str(provenance.get("artifact_heads", {}).get(artifact_id) or "")
             artifact = provenance.get("artifacts", {}).get(version_id, {})
@@ -2094,7 +2549,45 @@ class CompletionGate:
             if str(artifact.get("validation_id") or ""):
                 validations.append(str(artifact["validation_id"]))
         renderer = dict(step.get("renderer_execution") or {})
-        failed_criteria: List[str] = []
+        satisfied_effects: Dict[str, List[str]] = {}
+        missing_effects: Dict[str, List[str]] = {}
+        unexpected_effects: Dict[str, List[str]] = {}
+        invalid_effects: Dict[str, List[str]] = {}
+        effect_evidence_refs: List[str] = []
+        if typed_effect is not None:
+            if effect_protocol_error:
+                failed_criteria.append(effect_protocol_error)
+            elif not any(declared_effects.values()):
+                failed_criteria.append("step_effect_empty")
+            (
+                non_artifact_satisfied,
+                non_artifact_missing,
+                non_artifact_unexpected,
+                non_artifact_invalid,
+                effect_evidence_refs,
+            ) = _evaluate_non_artifact_effects(
+                plan_state,
+                str(step_id),
+                declared_effects,
+                canonical_effect_contract,
+            )
+            satisfied_effects.update(non_artifact_satisfied)
+            missing_effects.update(non_artifact_missing)
+            unexpected_effects.update(non_artifact_unexpected)
+            invalid_effects.update(non_artifact_invalid)
+            declared_artifacts = set(declared_effects["produces_artifacts"])
+            missing_artifacts = declared_artifacts & set(missing)
+            invalid_artifacts = declared_artifacts & set(invalid)
+            stale_artifacts = declared_artifacts & set(stale)
+            satisfied_artifacts = declared_artifacts - missing_artifacts - invalid_artifacts - stale_artifacts
+            if satisfied_artifacts:
+                satisfied_effects["produces_artifacts"] = sorted(satisfied_artifacts)
+            if missing_artifacts:
+                missing_effects["produces_artifacts"] = sorted(missing_artifacts)
+            if invalid_artifacts or stale_artifacts:
+                invalid_effects["produces_artifacts"] = sorted(
+                    invalid_artifacts | stale_artifacts
+                )
         manifest_id = str(renderer.get("manifest_id") or "")
         if manifest_id:
             stage_ids = list(provenance.get("manifests", {}).get(manifest_id, {}).get("stage_ids") or [])
@@ -2106,7 +2599,10 @@ class CompletionGate:
             if incomplete:
                 failed_criteria.append("incomplete_manifest_stages:" + ",".join(incomplete))
         return StepCompletionEvidence(
-            completion_satisfied=not any((missing, invalid, stale, failed_criteria)),
+            completion_satisfied=not any((
+                missing, invalid, stale, failed_criteria, missing_effects,
+                unexpected_effects, invalid_effects,
+            )),
             step_id=str(step_id),
             missing_outputs=missing,
             invalid_outputs=invalid,
@@ -2115,6 +2611,12 @@ class CompletionGate:
             attempt_ids=list(dict.fromkeys(attempts)),
             artifact_version_ids=list(dict.fromkeys(versions)),
             validation_ids=list(dict.fromkeys(validations)),
+            declared_effects=deepcopy(declared_effects),
+            satisfied_effects=deepcopy(satisfied_effects),
+            missing_effects=deepcopy(missing_effects),
+            unexpected_effects=deepcopy(unexpected_effects),
+            invalid_effects=deepcopy(invalid_effects),
+            effect_evidence_refs=list(dict.fromkeys(effect_evidence_refs)),
             plan_version=str(plan_state.get("plan_version") or ""),
         )
 
@@ -2323,6 +2825,9 @@ class CompletionGate:
             "detail": _relation_detail(records[-1], step_id),
         })
         preview_step["evidence"] = preview_evidence[-20:]
+        # Typed StepEffect evidence is carried by the cited ExecutionRecord,
+        # not by the legacy prose relation above.
+        preview["execution_evidence"] = deepcopy(records[-1])
         step_gate = CompletionGate.validate_current_step(data_path, task_id, preview)
         if not step_gate.passed:
             step_gate.classification = step_gate.classification or "step_candidate_gate_failed"
@@ -2356,6 +2861,66 @@ class CompletionGate:
             )
         provenance_evidence = CompletionGate.validate_step_evidence(plan_state, step_id)
         provenance = ensure_provenance_state(plan_state)
+        typed_effect = _schema2_step_effect(plan_state, step)
+        if typed_effect is not None:
+            effect_refs = list(dict.fromkeys([
+                *provenance_evidence.effect_evidence_refs,
+                *provenance_evidence.artifact_version_ids,
+                *provenance_evidence.validation_ids,
+            ]))
+            if not provenance_evidence.completion_satisfied:
+                classification = "step_effect_incomplete"
+                if any(
+                    item == "step_effect_empty"
+                    or str(item).startswith("step_effect_protocol_invalid:")
+                    for item in provenance_evidence.failed_criteria
+                ):
+                    classification = "step_effect_contract_invalid"
+                elif provenance_evidence.unexpected_effects:
+                    classification = "step_effect_evidence_mismatch"
+                return GateResult(
+                    False,
+                    message="Current execution does not satisfy the approved StepEffect.",
+                    feedback=(
+                        "Produce and deterministically validate the missing declared effects; "
+                        "do not invent an artifact for a non-artifact effect."
+                    ),
+                    missing_artifacts=list(provenance_evidence.missing_outputs),
+                    checked_artifacts=list(
+                        provenance_evidence.declared_effects.get("produces_artifacts") or []
+                    ),
+                    classification=classification,
+                    stale_artifacts=list(provenance_evidence.stale_outputs),
+                    invalid_artifacts=list(provenance_evidence.invalid_outputs),
+                    attempt_ids=list(provenance_evidence.attempt_ids),
+                    artifact_version_ids=list(provenance_evidence.artifact_version_ids),
+                    validation_ids=list(provenance_evidence.validation_ids),
+                    evidence_refs=effect_refs,
+                    declared_effects=deepcopy(provenance_evidence.declared_effects),
+                    satisfied_effects=deepcopy(provenance_evidence.satisfied_effects),
+                    missing_effects=deepcopy(provenance_evidence.missing_effects),
+                    unexpected_effects=deepcopy(provenance_evidence.unexpected_effects),
+                    invalid_effects=deepcopy(provenance_evidence.invalid_effects),
+                    plan_version=provenance_evidence.plan_version,
+                    reconciliation={
+                        "failed_criteria": list(provenance_evidence.failed_criteria),
+                    },
+                )
+            return GateResult(
+                True,
+                message="Validated evidence exactly satisfies the approved StepEffect.",
+                checked_artifacts=list(
+                    provenance_evidence.declared_effects.get("produces_artifacts") or []
+                ),
+                classification="step_effect_satisfied",
+                attempt_ids=list(provenance_evidence.attempt_ids),
+                artifact_version_ids=list(provenance_evidence.artifact_version_ids),
+                validation_ids=list(provenance_evidence.validation_ids),
+                evidence_refs=effect_refs,
+                declared_effects=deepcopy(provenance_evidence.declared_effects),
+                satisfied_effects=deepcopy(provenance_evidence.satisfied_effects),
+                plan_version=provenance_evidence.plan_version,
+            )
         explicitly_invalid = [
             artifact_id
             for artifact_id in step.get("output_artifact_ids", []) or []

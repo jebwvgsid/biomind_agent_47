@@ -20,6 +20,7 @@ WORKFLOW_ROUTING_SCHEMA_TYPED = 2
 
 _FORBIDDEN_CONTROL_KEYS = frozenset({
     "next_step",
+    "next_node",
     "next_route",
     "target_route",
     "goto",
@@ -115,7 +116,7 @@ def route_blind_state_projection(value: Mapping[str, Any]) -> dict[str, Any]:
             return {
                 str(key): scrub(child)
                 for key, child in item.items()
-                if str(key).strip().lower() not in _FORBIDDEN_CONTROL_KEYS
+                if str(key).strip().lower() not in _FORBIDDEN_CONTROL_KEYS | {"managed_run_boundary", "managed_terminal_projection"}
             }
         if isinstance(item, list):
             return [scrub(child) for child in item]
@@ -247,7 +248,9 @@ class GenerateOutcome(StrictOutcome):
     OUTCOME_NAME = "GenerateOutcome"
     ALLOWED_TYPES = frozenset({
         "action_ready", "completion_claimed", "user_input_needed",
-        "plan_revision_needed", "skill_context_needed", "candidate_rejected",
+        "plan_revision_needed", "skill_context_served",
+        "skill_search_result_ready", "skill_binding_review_needed",
+        "skill_context_needed", "candidate_rejected",
         "provider_failed", "stale_result", "internal_protocol_error", "blocked",
         "cancelled", "harness_error",
         "runtime_evidence_required", "runtime_recovery_stopped",
@@ -257,6 +260,18 @@ class GenerateOutcome(StrictOutcome):
         completion_claimed=("step_id", "candidate_fingerprint"),
         user_input_needed=("question_id", "question", "requested_slots", "owner"),
         plan_revision_needed=("step_id", "reason_code", "contract_violations"),
+        skill_context_served=(
+            "step_id", "continuation_id", "request_id", "result_status",
+            "continuation_fingerprint",
+        ),
+        skill_search_result_ready=(
+            "step_id", "continuation_id", "search_id", "result_status",
+            "candidate_count", "continuation_fingerprint",
+        ),
+        skill_binding_review_needed=(
+            "step_id", "proposal_id", "candidate_skill_id",
+            "requested_scope", "relation", "proposal_fingerprint",
+        ),
         skill_context_needed=("step_id", "requested_capability", "continuation_fingerprint"),
         candidate_rejected=("step_id", "violation_owner", "candidate_fingerprint", "error_fingerprint", "feedback", "budget_receipt", "repairable"),
         provider_failed=("error_code", "provider_attempt_ref", "claim_status", "retryability_policy"),
@@ -299,11 +314,18 @@ class VerificationOutcome(StrictOutcome):
     ALLOWED_TYPES = frozenset({
         "verified", "verified_with_warnings", "rejected", "incomplete_evidence",
         "diagnostic_evidence_recorded", "verification_error", "harness_error",
+        "inspection_required", "correction_required", "plan_revision_required",
+        "user_information_required", "assessment_pending",
     })
     REQUIRED_PAYLOAD = _requirements(
         verified=("validation_evidence", "completion_gate", "accepted_warnings"),
         verified_with_warnings=("validation_evidence", "completion_gate", "accepted_warnings"),
         rejected=("validation_evidence", "completion_gate", "contract_violations", "failure_owner"),
+        inspection_required=("validation_evidence", "completion_gate", "completion_report", "semantic_decision", "contract_violations", "failure_owner"),
+        correction_required=("validation_evidence", "completion_gate", "completion_report", "semantic_decision", "contract_violations", "failure_owner"),
+        plan_revision_required=("validation_evidence", "completion_gate", "completion_report", "semantic_decision", "contract_violations", "failure_owner"),
+        user_information_required=("validation_evidence", "completion_gate", "completion_report", "semantic_decision", "contract_violations", "failure_owner"),
+        assessment_pending=("validation_evidence", "completion_gate", "completion_report", "semantic_decision", "contract_violations", "failure_owner"),
         incomplete_evidence=("validation_evidence", "missing_evidence", "eligible_probe_capabilities"),
         diagnostic_evidence_recorded=("diagnostic_record", "validation_evidence", "command_role"),
         verification_error=("validation_evidence", "error_code", "exception_class"),
@@ -380,6 +402,8 @@ class ConsultantOutcome(StrictOutcome):
     OUTCOME_NAME = "ConsultantOutcome"
     ALLOWED_TYPES = frozenset({
         "planning_ready", "answer_ready", "consultation_continues", "user_input_needed",
+        "skill_observation_ready", "skill_proposal_rejected",
+        "task_skill_commit_required", "skill_plan_impact_ready",
         "stale_result", "terminal", "harness_error",
     })
     REQUIRED_PAYLOAD = _requirements(
@@ -387,6 +411,19 @@ class ConsultantOutcome(StrictOutcome):
         answer_ready=("answer_id", "completion_mode"),
         consultation_continues=("phase", "completion_decision"),
         user_input_needed=("question_id", "question", "owner"),
+        skill_observation_ready=(
+            "proposal_id", "requester_role", "continuation_id",
+            "observation_id", "result_status", "resolution_receipt_id",
+        ),
+        skill_proposal_rejected=(
+            "proposal_id", "requester_role", "resolution_receipt_id",
+        ),
+        task_skill_commit_required=(
+            "proposal_id", "task_revision", "resolution_receipt_id",
+        ),
+        skill_plan_impact_ready=(
+            "proposal_id", "plan_revision", "resolution_receipt_id",
+        ),
         stale_result=("changed_preconditions",),
         terminal=("status", "reason_code"),
         harness_error=("error_code", "exception_class", "detail"),
@@ -400,6 +437,10 @@ class PlannerOutcome(StrictOutcome):
         "stale_result", "terminal", "harness_error",
     })
     REQUIRED_PAYLOAD = _requirements(
+        # Identity-bound receipts are emitted by current schema-2 adapters but
+        # remain optional at the v1 wire-reader boundary so already persisted
+        # schema-2 outcomes can still be deserialized.  Durable PlanState, not
+        # an old outcome payload, is the transition authority.
         plan_review_ready=("plan_id", "plan_version", "plan_revision"),
         consultation_required=("reason_code",),
         planning_continues=("reason_code", "attempt_ordinal"),

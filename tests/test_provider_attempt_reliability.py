@@ -19,7 +19,9 @@ from agent_core.provider_attempt import (
     GENERATE_PROVIDER_RETRY_EXHAUSTED,
     GENERATE_PROVIDER_TERMINAL_REQUEST_ERROR,
     PROVIDER_CANONICAL_CONTEXT_CHANGED,
+    PROVIDER_CALLER_CANCELLED,
     PROVIDER_CANCEL_CLEANUP_FAILED,
+    PROVIDER_CLIENT_CANCELLED,
     PROVIDER_CONNECT_TIMEOUT,
     PROVIDER_FIRST_CHUNK_TIMEOUT,
     PROVIDER_HTTP_ERROR,
@@ -38,18 +40,36 @@ from agent_core.provider_attempt import (
     run_provider_attempt,
 )
 from bio_agents import BioAnalystAgent, generate_client_kwargs
+from bio_agents import recovery_client_kwargs
 
 
 class _ChunkMessage:
-    def __init__(self, *, content: str = "", reasoning: str = ""):
+    def __init__(
+        self,
+        *,
+        content: str = "",
+        reasoning: str = "",
+        tool_call_chunks=None,
+    ):
         self.content = content
         self.additional_kwargs = {"reasoning_content": reasoning} if reasoning else {}
         self.response_metadata = {}
+        self.tool_call_chunks = list(tool_call_chunks or [])
 
 
 class _Chunk:
-    def __init__(self, *, content: str = "", reasoning: str = ""):
-        self.message = _ChunkMessage(content=content, reasoning=reasoning)
+    def __init__(
+        self,
+        *,
+        content: str = "",
+        reasoning: str = "",
+        tool_call_chunks=None,
+    ):
+        self.message = _ChunkMessage(
+            content=content,
+            reasoning=reasoning,
+            tool_call_chunks=tool_call_chunks,
+        )
         self.generation_info = {}
 
 
@@ -77,6 +97,21 @@ class _ScenarioLLM:
             for callback in callbacks:
                 callback.on_llm_new_token("", chunk=_Chunk(reasoning=value))
 
+        def tool_argument(value='{"ref_id":'):
+            for callback in callbacks:
+                callback.on_llm_new_token(
+                    "",
+                    chunk=_Chunk(tool_call_chunks=[{
+                        "id": "partial-tool",
+                        "name": "failure_inspect",
+                        "args": value,
+                    }]),
+                )
+
+        def empty_heartbeat():
+            for callback in callbacks:
+                callback.on_llm_new_token("", chunk=_Chunk())
+
         if isinstance(scenario, BaseException):
             raise scenario
 
@@ -100,6 +135,10 @@ class _ScenarioLLM:
             content("<execute>discard-me")
             request = httpx.Request("POST", "https://provider.invalid/v1/chat")
             raise httpx.ReadError("stream read interrupted", request=request)
+        if scenario == "tool_partial_read_error":
+            tool_argument()
+            request = httpx.Request("POST", "https://provider.invalid/v1/chat")
+            raise httpx.ReadError("stream read interrupted", request=request)
         if scenario == "cancel":
             raise asyncio.CancelledError()
         if scenario == "no_chunks":
@@ -120,11 +159,21 @@ class _ScenarioLLM:
                 await asyncio.Event().wait()
             finally:
                 self.cancelled += 1
-        if scenario in {"reasoning_active", "content_active", "active_forever"}:
+        if scenario in {
+            "reasoning_active", "content_active", "tool_active",
+            "empty_heartbeat", "active_forever",
+        }:
             count = 6 if scenario != "active_forever" else 100
             try:
                 for _ in range(count):
-                    reasoning() if scenario == "reasoning_active" else content()
+                    if scenario == "reasoning_active":
+                        reasoning()
+                    elif scenario == "tool_active":
+                        tool_argument()
+                    elif scenario == "empty_heartbeat":
+                        empty_heartbeat()
+                    else:
+                        content()
                     await asyncio.sleep(0.004)
             finally:
                 if asyncio.current_task() and asyncio.current_task().cancelling():
@@ -271,6 +320,43 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertGreaterEqual(record.content_chunk_count, 6)
         self.assertTrue(record.last_any_chunk_at)
 
+    async def test_a5b_tool_argument_only_chunks_refresh_idle_watchdog(self):
+        llm = _ScenarioLLM(["tool_active"])
+        response, record = await run_provider_attempt(
+            lambda observer: llm.ainvoke([], {"callbacks": [observer]}),
+            _envelope(ProviderTimeoutPolicy(0.02, 0.012, 0.08, 0.02)),
+        )
+        self.assertEqual(response.content, "completed")
+        self.assertGreaterEqual(record.tool_call_fragment_count, 6)
+        self.assertEqual(record.content_chunk_count, 0)
+        self.assertEqual(record.reasoning_chunk_count, 0)
+
+    async def test_a5c_empty_transport_heartbeats_do_not_reset_watchdog(self):
+        llm = _ScenarioLLM(["empty_heartbeat"])
+        with self.assertRaises(ProviderAttemptFailure) as caught:
+            await run_provider_attempt(
+                lambda observer: llm.ainvoke([], {"callbacks": [observer]}),
+                _envelope(ProviderTimeoutPolicy(0.012, 0.012, 0.08, 0.02)),
+            )
+        self.assertEqual(
+            caught.exception.error_code,
+            PROVIDER_FIRST_CHUNK_TIMEOUT,
+        )
+        self.assertEqual(caught.exception.record.total_chunk_count, 0)
+        self.assertFalse(caught.exception.record.stream_started)
+
+    async def test_a5d_missing_provider_usage_is_unknown_not_zero(self):
+        response, record = await run_provider_attempt(
+            lambda observer: _ScenarioLLM(["success"]).ainvoke(
+                [], {"callbacks": [observer]}
+            ),
+            _envelope(ProviderTimeoutPolicy(0.02, 0.02, 0.08, 0.02)),
+        )
+        self.assertEqual(response.content, "completed")
+        self.assertEqual(record.usage_status, "UNKNOWN")
+        self.assertEqual(record.provider_usage, {})
+        self.assertEqual(record.usage_reported_at, "")
+
     async def test_a6_midstream_stall_is_idle_timeout(self):
         llm = _ScenarioLLM(["partial_then_stall"])
         with self.assertRaises(ProviderAttemptFailure) as caught:
@@ -300,6 +386,48 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(caught.exception.record.cleanup_result, CLEANUP_CONFIRMED)
         self.assertEqual(llm.cancelled, 1)
         self.assertTrue(all(task.done() for task in llm.tasks))
+
+    async def test_a8b_external_cancellation_emits_terminal_record_and_drains(self):
+        llm = _ScenarioLLM(["no_chunks"])
+        events = []
+        attempt = asyncio.create_task(run_provider_attempt(
+            lambda observer: llm.ainvoke([], {"callbacks": [observer]}),
+            _envelope(ProviderTimeoutPolicy(1.0, 1.0, 2.0, 0.05)),
+            progress_callback=lambda event, payload: events.append(
+                (event, dict(payload))
+            ),
+        ))
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
+        attempt.cancel()
+        with self.assertRaises(asyncio.CancelledError) as caught:
+            await attempt
+
+        record = getattr(caught.exception, "provider_attempt_record")
+        self.assertEqual(record.failure_type, PROVIDER_CALLER_CANCELLED)
+        self.assertEqual(record.state, "CANCELLED")
+        self.assertEqual(record.cancellation_source, "caller")
+        self.assertFalse(record.retryable)
+        self.assertEqual(record.cleanup_result, CLEANUP_CONFIRMED)
+        self.assertTrue(record.attempt_completed_at)
+        self.assertEqual(events[-1][0], "attempt_cancelled")
+        self.assertEqual(events[-1][1]["failure_type"], PROVIDER_CALLER_CANCELLED)
+        self.assertTrue(all(task.done() for task in llm.tasks))
+
+    async def test_a8c_provider_self_cancellation_is_typed_transport_failure(self):
+        llm = _ScenarioLLM(["cancel"])
+        events = []
+        with self.assertRaises(ProviderAttemptFailure) as caught:
+            await run_provider_attempt(
+                lambda observer: llm.ainvoke([], {"callbacks": [observer]}),
+                _envelope(ProviderTimeoutPolicy(1.0, 1.0, 2.0, 0.05)),
+                progress_callback=lambda event, payload: events.append(
+                    (event, dict(payload))
+                ),
+            )
+        self.assertEqual(caught.exception.error_code, PROVIDER_CLIENT_CANCELLED)
+        self.assertTrue(caught.exception.retryable)
+        self.assertEqual(events[-1][0], "attempt_failed")
 
     async def test_a9_cleanup_unknown_never_retries(self):
         llm = _ScenarioLLM(["ignore_cancel", "success"])
@@ -615,16 +743,333 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
                     for row in agent._provider_attempt_history[f"p9-{status}"]
                 ))
 
-    async def test_p10_cancelled_error_is_not_wrapped_or_retried(self):
+    async def test_p10_provider_self_cancel_is_bounded_and_retryable(self):
         llm = _ScenarioLLM(["cancel", "success"])
         agent = _agent(llm)
-        with self.assertRaises(asyncio.CancelledError):
-            await agent._ainvoke_llm(
+        response = await agent._ainvoke_llm(
+            [HumanMessage(content="same request")],
+            stage="generate",
+            task_id="p10",
+        )
+        self.assertEqual(response.content, "completed")
+        self.assertEqual(llm.calls, 2)
+        self.assertEqual(
+            agent._provider_attempt_history["p10"][0]["failure_type"],
+            PROVIDER_CLIENT_CANCELLED,
+        )
+
+    async def test_p10b_external_cancel_closes_context_manifest_as_cancelled(self):
+        with tempfile.TemporaryDirectory(prefix="provider-cancel-trace-") as root:
+            llm = _ScenarioLLM(["no_chunks"])
+            agent = _agent(llm, data_path=root, attempts=1)
+            request = asyncio.create_task(agent._ainvoke_llm(
                 [HumanMessage(content="same request")],
-                stage="generate",
-                task_id="p10",
+                stage="planner",
+                task_id="p10b",
+            ))
+            await asyncio.sleep(0)
+            await asyncio.sleep(0)
+            request.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await request
+
+            snapshots = ContextLineageStore(root, "p10b").list_snapshots()
+            self.assertEqual(len(snapshots), 1)
+            self.assertEqual(snapshots[0]["status"], "cancelled")
+            attempt = snapshots[0]["annotations"]["provider_attempt"]
+            self.assertEqual(attempt["failure_type"], PROVIDER_CALLER_CANCELLED)
+            self.assertEqual(attempt["state"], "CANCELLED")
+            self.assertEqual(llm.calls, 1)
+
+    async def test_recovery_adapter_uses_exact_wire_and_persists_attempt_events(self):
+        class CaptureLLM:
+            def __init__(self):
+                self.requests = []
+
+            async def ainvoke(self, messages, config=None):
+                self.requests.append(list(messages))
+                return AIMessage(content="recovery response")
+
+        with tempfile.TemporaryDirectory(prefix="recovery-provider-adapter-") as root:
+            llm = CaptureLLM()
+            agent = _agent(llm, data_path=root, attempts=1)
+            agent.recovery_llm_policy = {}
+            messages = [
+                HumanMessage(content="frozen recovery seed"),
+                AIMessage(content="append-only local event"),
+            ]
+            response = await agent._schema2_recovery_provider_invoke(
+                messages,
+                model=llm,
+                call_context={
+                    "task_id": "recovery-adapter",
+                    "step_id": "step-1",
+                    "seed_id": "seed-1",
+                    "failure_id": "failure-1",
+                    "context_epoch_id": "epoch-1",
+                    "overflow_epoch": 0,
+                    "turn_ordinal": 1,
+                    "request_ordinal": 1,
+                    "wire_fingerprint": "wire-1",
+                },
             )
+
+            self.assertEqual(response.content, "recovery response")
+            self.assertEqual(llm.requests[0], messages)
+            snapshots = ContextLineageStore(
+                root, "recovery-adapter"
+            ).list_snapshots()
+            self.assertEqual(len(snapshots), 1)
+            self.assertEqual(snapshots[0]["call_kind"], "recovery_turn")
+            self.assertEqual(snapshots[0]["status"], "completed")
+            events_path = (
+                Path(root)
+                / "task_outputs"
+                / "recovery-adapter"
+                / "context_trace"
+                / "events.jsonl"
+            )
+            events = [
+                json.loads(line)
+                for line in events_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            kinds = [item["event_kind"] for item in events]
+            self.assertIn("recovery_provider_attempt_started", kinds)
+            self.assertIn("recovery_provider_attempt_completed", kinds)
+
+    async def test_recovery_truncated_tool_arguments_are_partial_not_executable(self):
+        with tempfile.TemporaryDirectory(prefix="recovery-tool-partial-") as root:
+            llm = _ScenarioLLM(["tool_partial_read_error"])
+            agent = _agent(llm, data_path=root, attempts=1)
+            agent.recovery_llm_policy = {"sdk_max_retries": 0}
+            with self.assertRaises(httpx.ReadError):
+                await agent._schema2_recovery_provider_invoke(
+                    [HumanMessage(content="frozen recovery seed")],
+                    model=llm,
+                    call_context={
+                        "task_id": "recovery-tool-partial",
+                        "step_id": "step-1",
+                        "seed_id": "seed-tool-partial",
+                        "failure_id": "failure-tool-partial",
+                        "context_epoch_id": "epoch-tool-partial",
+                        "overflow_epoch": 0,
+                        "turn_ordinal": 1,
+                        "request_ordinal": 1,
+                        "wire_fingerprint": "wire-tool-partial",
+                    },
+                )
+
+            lineage = ContextLineageStore(root, "recovery-tool-partial")
+            manifest = lineage.list_snapshots()[0]
+            attempt = (manifest.get("annotations") or {}).get(
+                "provider_attempt"
+            ) or {}
+            events = [
+                json.loads(line)
+                for line in (lineage.root / "events.jsonl").read_text(
+                    encoding="utf-8"
+                ).splitlines()
+                if line.strip()
+            ]
+            terminal = next(
+                row for row in events
+                if row["event_kind"] == "recovery_provider_attempt_failed"
+            )["payload"]
+
         self.assertEqual(llm.calls, 1)
+        self.assertEqual(manifest["status"], "failed")
+        self.assertEqual(attempt["tool_call_fragment_count"], 1)
+        self.assertEqual(
+            attempt["partial_payload_disposition"], "discarded_before_parse"
+        )
+        self.assertFalse(attempt["stream_completed"])
+        self.assertEqual(terminal["tool_call_fragment_count"], 1)
+        self.assertEqual(
+            terminal["partial_payload_disposition"], "discarded_before_parse"
+        )
+
+    async def test_recovery_manifest_and_attempt_event_precede_provider_entry(self):
+        class InspectingLLM:
+            def __init__(self, root):
+                self.root = root
+                self.calls = 0
+
+            async def ainvoke(self, _messages, config=None):
+                self.calls += 1
+                store = ContextLineageStore(self.root, "recovery-order")
+                snapshots = store.list_snapshots()
+                self.assertions = {
+                    "manifest_started": (
+                        len(snapshots) == 1
+                        and snapshots[0]["status"] == "started"
+                    ),
+                    "sdk_max_retries": snapshots[0].get("sdk_max_retries"),
+                }
+                events_path = store.root / "events.jsonl"
+                events = [
+                    json.loads(line)
+                    for line in events_path.read_text(encoding="utf-8").splitlines()
+                    if line.strip()
+                ]
+                started = [
+                    row for row in events
+                    if row["event_kind"] == "recovery_provider_attempt_started"
+                ]
+                self.assertions["attempt_event_exists"] = len(started) == 1
+                self.assertions["attempt_sdk_max_retries"] = (
+                    started[0]["payload"]["sdk_max_retries"]
+                    if started else None
+                )
+                return AIMessage(content="recovery response")
+
+        with tempfile.TemporaryDirectory(prefix="recovery-order-") as root:
+            llm = InspectingLLM(root)
+            agent = _agent(llm, data_path=root, attempts=1)
+            agent.recovery_llm_policy = {"sdk_max_retries": 0}
+            await agent._schema2_recovery_provider_invoke(
+                [HumanMessage(content="frozen recovery seed")],
+                model=llm,
+                call_context={
+                    "task_id": "recovery-order",
+                    "step_id": "step-1",
+                    "seed_id": "seed-order",
+                    "failure_id": "failure-order",
+                    "context_epoch_id": "epoch-order",
+                    "overflow_epoch": 0,
+                    "turn_ordinal": 1,
+                    "request_ordinal": 1,
+                    "wire_fingerprint": "wire-order",
+                },
+            )
+
+        self.assertEqual(llm.calls, 1)
+        self.assertTrue(llm.assertions["manifest_started"])
+        self.assertTrue(llm.assertions["attempt_event_exists"])
+        self.assertEqual(llm.assertions["sdk_max_retries"], 0)
+        self.assertEqual(llm.assertions["attempt_sdk_max_retries"], 0)
+
+    async def test_recovery_attempt_event_failure_prevents_provider_dispatch(self):
+        class NeverCalledLLM:
+            def __init__(self):
+                self.calls = 0
+
+            async def ainvoke(self, _messages, config=None):
+                self.calls += 1
+                return AIMessage(content="must not run")
+
+        with tempfile.TemporaryDirectory(prefix="recovery-event-fail-") as root:
+            llm = NeverCalledLLM()
+            agent = _agent(llm, data_path=root, attempts=1)
+            agent.recovery_llm_policy = {"sdk_max_retries": 0}
+
+            def fail_event(_event, _payload):
+                raise OSError("event store unavailable")
+
+            agent._schema2_recovery_event_sink = fail_event
+            with self.assertRaises(OSError):
+                await agent._schema2_recovery_provider_invoke(
+                    [HumanMessage(content="frozen recovery seed")],
+                    model=llm,
+                    call_context={
+                        "task_id": "recovery-event-fail",
+                        "step_id": "step-1",
+                        "seed_id": "seed-event-fail",
+                        "failure_id": "failure-event-fail",
+                        "context_epoch_id": "epoch-event-fail",
+                        "overflow_epoch": 0,
+                        "turn_ordinal": 1,
+                        "request_ordinal": 1,
+                        "wire_fingerprint": "wire-event-fail",
+                    },
+                )
+        self.assertEqual(llm.calls, 0)
+
+    async def test_recovery_compactor_uses_zero_retry_transport_and_durable_start(self):
+        class InspectingCompactorLLM:
+            def __init__(self, root):
+                self.root = root
+                self.calls = 0
+                self.assertions = {}
+
+            async def ainvoke(self, _messages, config=None):
+                self.calls += 1
+                attempt_id = str(
+                    ((config or {}).get("metadata") or {}).get(
+                        "provider_attempt_id"
+                    )
+                    or ""
+                )
+                store = ContextLineageStore(self.root, "recovery-compactor-order")
+                manifest = next(
+                    item for item in store.list_snapshots()
+                    if str(item.get("attempt_id") or "") == attempt_id
+                )
+                events = [
+                    json.loads(line)
+                    for line in (store.root / "events.jsonl").read_text(
+                        encoding="utf-8"
+                    ).splitlines()
+                    if line.strip()
+                ]
+                started = next(
+                    row for row in events
+                    if row["event_kind"]
+                    == "recovery_compactor_provider_attempt_started"
+                    and str((row.get("payload") or {}).get("attempt_id") or "")
+                    == attempt_id
+                )
+                self.assertions = {
+                    "manifest_status": manifest.get("status"),
+                    "manifest_sdk_max_retries": manifest.get("sdk_max_retries"),
+                    "attempt_sdk_max_retries": started["payload"].get(
+                        "sdk_max_retries"
+                    ),
+                }
+                return AIMessage(content='{"summary":"bounded"}')
+
+        with tempfile.TemporaryDirectory(prefix="recovery-compactor-order-") as root:
+            llm = InspectingCompactorLLM(root)
+            agent = _agent(object(), data_path=root, attempts=1)
+            agent.recovery_transport_llm = llm
+            response = await agent._schema2_context_compactor_invoke(
+                [HumanMessage(content="compact this recovery epoch")],
+                task_id="recovery-compactor-order",
+                phase="recovery",
+                source_epoch_id="epoch-source",
+                compaction_request_id="compaction-order",
+            )
+            lineage = ContextLineageStore(root, "recovery-compactor-order")
+            completed = next(
+                row for row in [
+                    json.loads(line)
+                    for line in (lineage.root / "events.jsonl").read_text(
+                        encoding="utf-8"
+                    ).splitlines()
+                    if line.strip()
+                ]
+                if row["event_kind"]
+                == "recovery_compactor_provider_attempt_completed"
+            )["payload"]
+
+        self.assertEqual(response.content, '{"summary":"bounded"}')
+        self.assertEqual(llm.calls, 1)
+        self.assertEqual(llm.assertions, {
+            "manifest_status": "started",
+            "manifest_sdk_max_retries": 0,
+            "attempt_sdk_max_retries": 0,
+        })
+        self.assertEqual(completed["state"], "COMPLETED")
+        self.assertEqual(completed["usage_status"], "UNKNOWN")
+        self.assertEqual(completed["provider_usage"], {})
+
+    def test_recovery_client_kwargs_disable_sdk_retries_without_mutation(self):
+        shared = {"max_retries": 2, "streaming": True, "cache": True}
+        recovery = recovery_client_kwargs(shared)
+        self.assertEqual(recovery["max_retries"], 0)
+        self.assertFalse(recovery["cache"])
+        self.assertEqual(shared["max_retries"], 2)
+        self.assertTrue(shared["cache"])
 
     async def test_p11_reasoning_only_empty_response_uses_provider_budget(self):
         llm = _ScenarioLLM(["reasoning_empty", "success"])

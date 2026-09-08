@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -8,11 +7,10 @@ from agent_core.plan_contract import (
     PlannerCandidateError,
     candidate_artifact_ref_keys,
     prepare_allocation_intent,
-    promote_allocation_intent,
-    rewrite_candidate_local_refs,
     structured_plan_candidate_diagnostics,
     validate_candidate_graph_and_flow,
 )
+from agent_core.step_effects import compile_plan_dataflow
 from agent_core.plan_tracker import render_plan_review_content
 from prompts.manager import PromptManager
 
@@ -117,48 +115,53 @@ class SnpEffPlanDataflowContractTests(unittest.TestCase):
             [],
         )
 
-    def test_split_plan_reuses_one_allocated_directory_identity(self) -> None:
+    def test_split_plan_uses_mutable_workspace_without_immutable_output(self) -> None:
+        workspace = _plan_local_directory("plan.snpeff_data_dir")
+        workspace["artifact_contract"]["resource_kind"] = "mutable_workspace"
+        workspace["resource_binding"] = {
+            "canonical_resource_id": "artifact.snpeff_data_dir",
+            "resource_kind": "mutable_workspace",
+            "availability_origin": "plan_local",
+            "contract_revision": "snpeff-workspace-v1",
+        }
+        build = _step("build-db", inputs=[], outputs=[], dependencies=[])
+        build["workspace_mutations"] = [{
+            "workspace_ref": "plan.snpeff_data_dir",
+            "mutation": "create",
+            "requires_available": False,
+            "available_after_success": True,
+            "establishes_state": "snpeff_database_ready",
+            "contract_revision": "snpeff-workspace-v1",
+        }]
         candidate = _candidate(
             [
-                _step("build-db", inputs=[], outputs=["plan.snpeff_database_dir"], dependencies=[]),
-                _step("annotate", inputs=["plan.snpeff_database_dir"], outputs=[], dependencies=["build-db"]),
+                build,
+                _step(
+                    "annotate",
+                    inputs=["plan.snpeff_data_dir"],
+                    outputs=[],
+                    dependencies=["build-db"],
+                ),
             ],
-            proposed_artifacts=[_plan_local_directory()],
+            proposed_artifacts=[workspace],
         )
         scope = "candidate-scope-snpeff"
-        ref_keys, usage = candidate_artifact_ref_keys(
+        compiled, _, issues = compile_plan_dataflow(
             candidate,
             candidate_scope_id=scope,
             authoritative_handles={},
+            compile_effect_contracts=False,
         )
+        self.assertEqual(issues, [])
+        self.assertNotIn("plan.snpeff_data_dir", compiled["steps"][0]["outputs"])
+        workspace_edges = [
+            row for row in compiled["compiled_dataflow"]["edges"]
+            if row["canonical_resource_id"] == "artifact.snpeff_data_dir"
+        ]
         self.assertEqual(
-            validate_candidate_graph_and_flow(
-                candidate,
-                ref_keys=ref_keys,
-                usage=usage,
-                availability_origins={},
-            ),
-            [],
+            [row["effect_kind"] for row in workspace_edges],
+            ["MUTATE", "READ"],
         )
-        intent = prepare_allocation_intent(
-            candidate,
-            candidate_scope_id=scope,
-            planning_epoch_id="planning-epoch-snpeff",
-        )
-        with tempfile.TemporaryDirectory() as root:
-            mapping, bindings = promote_allocation_intent(
-                intent,
-                task_id="snpeff-plan",
-                managed_root=str(Path(root) / "plan_artifacts"),
-            )
-        rewritten = rewrite_candidate_local_refs(candidate, mapping)
-        producer_id = rewritten["steps"][0]["outputs"][0]
-        consumer_id = rewritten["steps"][1]["inputs"][0]
-
-        self.assertEqual(producer_id, consumer_id)
-        self.assertEqual(producer_id, mapping["plan.snpeff_database_dir"])
-        self.assertEqual(bindings[producer_id]["object_kind"], "directory")
-        self.assertEqual(bindings[producer_id]["lifecycle"], "plan_local")
 
     def test_unknown_artifact_reference_fails_closed(self) -> None:
         candidate = _candidate([
@@ -207,29 +210,29 @@ class SnpEffPlanDataflowContractTests(unittest.TestCase):
             {str(issue.get("code") or "") for issue in issues},
         )
 
-    def test_multiple_artifact_producers_fail_closed(self) -> None:
+    def test_multiple_immutable_artifact_producers_fail_closed(self) -> None:
         candidate = _candidate(
             [
                 _step(
-                    "build-db-a",
+                    "write-report-a",
                     inputs=[],
-                    outputs=["plan.snpeff_database_dir"],
+                    outputs=["plan.immutable_report"],
                     dependencies=[],
                 ),
                 _step(
-                    "build-db-b",
+                    "write-report-b",
                     inputs=[],
-                    outputs=["plan.snpeff_database_dir"],
+                    outputs=["plan.immutable_report"],
                     dependencies=[],
                 ),
                 _step(
-                    "annotate",
-                    inputs=["plan.snpeff_database_dir"],
+                    "consume-report",
+                    inputs=["plan.immutable_report"],
                     outputs=[],
-                    dependencies=["build-db-a", "build-db-b"],
+                    dependencies=["write-report-a", "write-report-b"],
                 ),
             ],
-            proposed_artifacts=[_plan_local_directory()],
+            proposed_artifacts=[_plan_local_directory("plan.immutable_report")],
         )
         ref_keys, usage = candidate_artifact_ref_keys(
             candidate,

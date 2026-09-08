@@ -2,12 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import tempfile
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from langgraph.graph import END, START, StateGraph
 
+from agent_core.completion_gate import CompletionGate
 from agent_core.plan_contract import StateCASConflict
+from agent_core.plan_tracker import record_provenance_event
+from agent_core.recovery import ValidationEvidence
+from agent_core.semantic_completion import build_completion_report
 from agent_core.state import AgentState
 from agent_core.workflow.commit_step import CommitStep
 from agent_core.workflow.outcomes import (
@@ -93,7 +100,39 @@ def _validation(*, role: str = "analysis_execution", status: str = "VALID") -> d
     }
 
 
-def _verified_outcome(*, generation: int = 7, role: str = "analysis_execution") -> dict:
+def _attach_semantic_report(
+    outcome: dict,
+    plan_state: dict,
+    *,
+    execution_evidence: dict | None = None,
+    completion_gate: dict | None = None,
+) -> dict:
+    validation = ValidationEvidence.from_mapping(
+        outcome["payload"]["validation_evidence"]
+    ).to_dict()
+    outcome["payload"]["validation_evidence"] = validation
+    report = build_completion_report(
+        plan_state=plan_state,
+        validation=validation,
+        execution_evidence=execution_evidence or {
+            "step_id": validation["step_id"],
+            "action_id": validation["action_id"],
+            "attempt_id": validation["attempt_id"],
+        },
+        completion_gate=(
+            dict(completion_gate)
+            if completion_gate is not None
+            else dict(outcome["payload"].get("completion_gate") or {})
+        ),
+    )
+    outcome["payload"]["completion_report"] = report.to_dict()
+    outcome["payload"]["semantic_decision"] = report.effective_decision.to_dict()
+    return outcome
+
+
+def _raw_verified_outcome(
+    *, generation: int = 7, role: str = "analysis_execution"
+) -> dict:
     return VerificationOutcome(
         schema_version=1,
         type="verified",
@@ -115,6 +154,13 @@ def _verified_outcome(*, generation: int = 7, role: str = "analysis_execution") 
         },
         evidence_refs=("validation-1",),
     ).to_dict()
+
+
+def _verified_outcome(*, generation: int = 7, role: str = "analysis_execution") -> dict:
+    plan_state = _durable_state()
+    plan_state["state_generation"] = generation
+    outcome = _raw_verified_outcome(generation=generation, role=role)
+    return _attach_semantic_report(outcome, plan_state)
 
 
 class _MemoryStore:
@@ -216,6 +262,86 @@ class TypedSupervisorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(route_verification_outcome(probe), "recovery")
         self.assertEqual(route_verification_outcome(invalid), "recovery")
 
+    async def test_artifact_validation_is_projected_for_gate_without_precommit_write(self):
+        durable = _durable_state()
+        durable["steps"][0].update({
+            "outputs": ["plan.result"],
+            "output_artifact_ids": ["artifact-result"],
+            "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": ["plan.result"],
+            },
+        })
+        attempt = durable["provenance_state"]["attempts"]["attempt-1"]
+        attempt["artifact_version_ids"] = ["artifact-result@attempt-1"]
+        captured_gate_state = {}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output = Path(tmpdir) / "result.tsv"
+            output.write_text("value\n", encoding="utf-8")
+            durable["provenance_state"]["artifact_heads"] = {
+                "artifact-result": "artifact-result@attempt-1"
+            }
+            durable["provenance_state"]["artifacts"] = {
+                "artifact-result@attempt-1": {
+                    "artifact_id": "artifact-result",
+                    "logical_artifact_id": "plan.result",
+                    "artifact_version_id": "artifact-result@attempt-1",
+                    "producer_step_id": "step-1",
+                    "producer_action_id": "action-1",
+                    "producer_attempt_id": "attempt-1",
+                    "status": "materialized",
+                    "validation_status": "unknown",
+                    "path": str(output),
+                }
+            }
+
+            def gate(_data_path, _task_id, candidate):
+                captured_gate_state.update(copy.deepcopy(candidate))
+                artifact = candidate["provenance_state"]["artifacts"][
+                    "artifact-result@attempt-1"
+                ]
+                return {
+                    "passed": artifact.get("status") == "valid",
+                    "classification": "projected_validation",
+                    "plan_version": "plan-v2",
+                }
+
+            with patch(
+                "agent_core.workflow.verifier.load_plan_state",
+                return_value=durable,
+            ):
+                result = await TypedSupervisor(
+                    data_path="/fixture",
+                    verifier=AsyncMock(return_value={
+                        "validation_evidence": _validation()
+                    }),
+                    gate_evaluator=gate,
+                ).run({
+                    "task_id": "task-typed",
+                    "execution_evidence": {
+                        "step_id": "step-1",
+                        "action_id": "action-1",
+                        "attempt_id": "attempt-1",
+                    },
+                })
+
+        self.assertEqual(result["verification_outcome"]["type"], "verified")
+        projected_artifact = captured_gate_state["provenance_state"]["artifacts"][
+            "artifact-result@attempt-1"
+        ]
+        self.assertEqual(projected_artifact["status"], "valid")
+        self.assertEqual(
+            projected_artifact["validation_id"], "validation-1"
+        )
+        # TypedSupervisor does not steal CommitStep's atomic CAS write.
+        self.assertEqual(
+            durable["provenance_state"]["artifacts"][
+                "artifact-result@attempt-1"
+            ]["status"],
+            "materialized",
+        )
+
 
 class CommitStepTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
@@ -224,7 +350,6 @@ class CommitStepTests(unittest.IsolatedAsyncioTestCase):
             data_path="/fixture",
             gate_evaluator=lambda *_args: {
                 "passed": True,
-                "classification": "fixture_pass",
                 "plan_version": "plan-v2",
             },
         )
@@ -285,6 +410,95 @@ class CommitStepTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.store.value["current_step_id"], before["current_step_id"])
         self.assertEqual(self.store.value["task_state"], before["task_state"])
 
+    async def test_canonical_cancel_wins_before_late_commitstep(self):
+        class Profiler:
+            def finish_task(self, *_args, **_kwargs):
+                return None
+
+        with tempfile.TemporaryDirectory(prefix="commit-cancel-race-") as root:
+            agent = BioAnalystAgent.__new__(BioAnalystAgent)
+            agent.data_path = root
+            agent.state_manager = None
+            agent.profiler = Profiler()
+            with (
+                patch("bio_agents.load_plan_state", self.store.load),
+                patch("bio_agents.save_plan_state", self.store.save),
+            ):
+                receipt = agent._commit_user_cancellation(
+                    "task-typed",
+                    source="signal",
+                    reason="user cancelled before late CommitStep",
+                )
+            cancelled = copy.deepcopy(self.store.value)
+            save_count = self.store.save_count
+
+            fake_decision = SimpleNamespace(
+                decision_id="decision-terminal-race",
+                disposition="completion_accepted",
+            )
+            fake_report = SimpleNamespace(
+                report_id="report-terminal-race",
+                scope={},
+                deterministic_veto=False,
+                effective_disposition="completion_accepted",
+                effective_decision=fake_decision,
+                consumption_token="consumption-terminal-race",
+            )
+            with (
+                patch(
+                    "agent_core.workflow.commit_step.CompletionReport.from_mapping",
+                    return_value=fake_report,
+                ),
+                patch(
+                    "agent_core.workflow.commit_step.SemanticDecision.from_mapping",
+                    return_value=fake_decision,
+                ),
+            ):
+                result = await self.committer.run({
+                    "task_id": "task-typed",
+                    "verification_outcome": _raw_verified_outcome(generation=7),
+                })
+
+        self.assertTrue(receipt["receipt_id"].startswith("cancel-"))
+        self.assertEqual(
+            result["commit_step_outcome"]["payload"]["reason_code"],
+            "TERMINAL_STATE_CONFLICT",
+        )
+        self.assertEqual(self.store.value, cancelled)
+        self.assertEqual(self.store.save_count, save_count)
+
+    async def test_completed_commit_wins_before_late_cancel(self):
+        # Model the successful terminal authority as the first PlanState CAS.
+        # CommitStep itself yields ``plan_complete`` and FinalAudit owns this
+        # later terminal write; the cancellation helper must not overwrite it.
+        candidate = copy.deepcopy(self.store.value)
+        candidate["task_state"]["status"] = "completed"
+        self.store.save("/fixture", "task-typed", candidate)
+        completed = copy.deepcopy(self.store.value)
+        save_count = self.store.save_count
+        agent = BioAnalystAgent.__new__(BioAnalystAgent)
+        agent.data_path = "/unused-terminal-race"
+        agent.state_manager = None
+        agent.profiler = None
+        with (
+            patch("bio_agents.load_plan_state", self.store.load),
+            patch("bio_agents.save_plan_state", self.store.save),
+        ):
+            cancellation = agent._commit_user_cancellation(
+                "task-typed",
+                source="signal",
+                reason="late cancellation after completed CAS",
+            )
+
+        self.assertEqual(completed["task_state"]["status"], "completed")
+        self.assertEqual(
+            cancellation["status"],
+            "not_committed_terminal_already_authoritative",
+        )
+        self.assertEqual(cancellation["authoritative_task_status"], "completed")
+        self.assertEqual(self.store.value, completed)
+        self.assertEqual(self.store.save_count, save_count)
+
     async def test_artifact_and_binding_heads_are_accepted_in_same_write(self):
         attempt = self.store.value["provenance_state"]["attempts"]["attempt-1"]
         attempt["artifact_version_ids"] = ["artifact-report@attempt-1"]
@@ -333,6 +547,103 @@ class CommitStepTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             self.store.value["provenance_state"]["artifacts"]["artifact-report@attempt-1"]["status"],
             "valid",
+        )
+
+    async def test_declared_binding_effect_is_gated_and_persisted_atomically(self):
+        binding_candidate = {
+            "assembly": {"type": "string", "value": "fixture-v1"},
+        }
+        step = self.store.value["steps"][0]
+        step.update({
+            "outputs": [],
+            "output_artifact_ids": [],
+            "success_criteria": [],
+            "step_effect": {
+                "schema_version": 1,
+                "produces_bindings": ["assembly"],
+            },
+        })
+        attempt = self.store.value["provenance_state"]["attempts"]["attempt-1"]
+        attempt.update({
+            "returncode": 0,
+            "declared_step_effect": copy.deepcopy(step["step_effect"]),
+            "effect_evidence": {
+                "produces_bindings": [{
+                    "binding_id": "assembly",
+                    "status": "candidate",
+                    "source": "generated_action",
+                }],
+            },
+        })
+        self.store.value["provenance_state"]["actions"]["action-1"] = {
+            "action_id": "action-1",
+            "normalized_action": {
+                "action_type": "execute",
+                "produced_bindings": copy.deepcopy(binding_candidate),
+            },
+        }
+        verified = _verified_outcome()
+        verified["payload"]["validation_evidence"]["effect_results"] = {
+            "produces_bindings": [{
+                "binding_id": "assembly",
+                "status": "candidate",
+                "source": "generated_action",
+            }],
+        }
+        projected = copy.deepcopy(self.store.value)
+        projected_validation = ValidationEvidence.from_mapping(
+            verified["payload"]["validation_evidence"]
+        )
+        record_provenance_event(projected, "validation_recorded", {
+            "attempt_id": "attempt-1",
+            "validation": projected_validation.to_dict(),
+            "validation_evidence_ref": projected_validation.validation_id,
+        })
+        projected_gate = CompletionGate.validate_current_step(
+            "/fixture", "task-typed", projected
+        ).to_dict()
+        verified["payload"]["completion_gate"] = projected_gate
+        verified = _attach_semantic_report(
+            verified,
+            self.store.value,
+            completion_gate=projected_gate,
+        )
+        self.committer.gate_evaluator = (
+            lambda data_path, task_id, state: CompletionGate.validate_current_step(
+                data_path,
+                task_id,
+                state,
+            ).to_dict()
+        )
+
+        result = await self.committer.run({
+            "task_id": "task-typed",
+            "verification_outcome": verified,
+            "pending_action": {
+                "action_id": "action-1",
+                "produced_bindings": copy.deepcopy(binding_candidate),
+            },
+            "execution_evidence": {
+                "step_id": "step-1",
+                "action_id": "action-1",
+                "attempt_id": "attempt-1",
+                "returncode": 0,
+            },
+        })
+
+        self.assertEqual(result["commit_step_outcome"]["type"], "next_step_ready")
+        task_state = self.store.value["task_state"]
+        binding_id = task_state["accepted_plan_bindings"]["assembly"]
+        binding = next(
+            row for row in task_state["plan_binding_history"]
+            if row["binding_id"] == binding_id
+        )
+        self.assertEqual(binding["producer_step_id"], "step-1")
+        self.assertEqual(binding["producer_action_id"], "action-1")
+        self.assertEqual(binding["producer_execution_attempt_id"], "attempt-1")
+        self.assertEqual(
+            result["commit_step_outcome"]["payload"]["accepted_binding_refs"],
+            [binding_id],
         )
 
     async def test_foreign_artifact_head_rejects_without_save(self):
@@ -396,6 +707,11 @@ class TypedRuntimeMappingTests(unittest.TestCase):
             "incomplete_evidence": "recovery",
             "diagnostic_evidence_recorded": "recovery",
             "verification_error": "recovery",
+            "inspection_required": "recovery",
+            "correction_required": "recovery",
+            "plan_revision_required": "planner",
+            "user_information_required": "ask_user",
+            "assessment_pending": "recovery",
             "harness_error": END,
         }
         for outcome_type, expected in verification_destinations.items():

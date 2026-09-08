@@ -142,6 +142,10 @@ def new_skill_access_state() -> Dict[str, Any]:
         "continuations": {},
         "binding_proposals": {},
         "skill_tool_results": {},
+        # Lightweight model-visible coverage and residency records.  Bodies
+        # remain single-sourced in snapshots/resource_snapshots/excerpts.
+        "provider_visible_materials": {},
+        "material_visibility_sequence": 0,
         "request_occurrences": {},
         "context_rounds": {},
         "search_occurrences": {},
@@ -158,7 +162,8 @@ def normalize_skill_access_state(value: Mapping[str, Any] | None) -> Dict[str, A
     for field in (
         "snapshots", "loaded_skill_documents", "resource_snapshots", "excerpts", "excerpt_cache",
         "searches", "search_cache", "continuations", "binding_proposals",
-        "skill_tool_results", "request_occurrences", "search_occurrences",
+        "skill_tool_results", "provider_visible_materials",
+        "request_occurrences", "search_occurrences",
         "proposal_occurrences", "context_rounds", "search_rounds",
     ):
         state[field] = deepcopy(dict(state.get(field) or {}))
@@ -172,6 +177,15 @@ def normalize_skill_access_state(value: Mapping[str, Any] | None) -> Dict[str, A
         for item in state.get("events") or []
         if isinstance(item, Mapping)
     ][-500:]
+    try:
+        state["material_visibility_sequence"] = max(
+            0, int(state.get("material_visibility_sequence") or 0)
+        )
+    except (TypeError, ValueError) as exc:
+        raise SkillAccessError(
+            "SKILL_VISIBLE_MATERIAL_SEQUENCE_INVALID",
+            type(state.get("material_visibility_sequence")).__name__,
+        ) from exc
     return state
 
 
@@ -400,6 +414,24 @@ def complete_skill_continuation(
         "continuation_id": str(continuation_id or ""),
         "caller_node": str(caller_node or ""),
     })
+    if str(continuation.get("request_kind") or "") == REQUEST_SKILL_CONTEXT:
+        descriptors = [
+            {"kind": "excerpt", "excerpt_id": item.get("excerpt_id")}
+            for item in result.get("results") or []
+            if isinstance(item, Mapping) and item.get("excerpt_id")
+        ]
+        if descriptors:
+            state = record_provider_visible_materials(
+                state,
+                descriptors,
+                phase=str(caller_node or ""),
+                invocation_id=str(
+                    continuation.get("resumed_invocation_id")
+                    or continuation.get("caller_invocation_id")
+                    or ""
+                ),
+                event_id=str(continuation_id or ""),
+            )
     return state
 
 
@@ -2184,6 +2216,314 @@ def canonical_loaded_skill_documents(
             "document": str(snapshot.get("exact_text") or ""),
         })
     return documents
+
+
+def _material_record_from_descriptor(
+    state: Mapping[str, Any],
+    descriptor: Mapping[str, Any],
+) -> tuple[Dict[str, Any], str]:
+    """Resolve one visibility descriptor to immutable provenance and body.
+
+    The returned record intentionally excludes the body.  The second return
+    value is used only for hash verification and phase assembly.
+    """
+
+    kind = str(descriptor.get("kind") or "").strip().lower()
+    if kind == "skill_document":
+        snapshot = SkillAccessService._verified_snapshot(
+            state, str(descriptor.get("snapshot_id") or "")
+        )
+        skill_id = str(snapshot.get("skill_id") or "")
+        loaded = dict((state.get("loaded_skill_documents") or {}).get(skill_id) or {})
+        if (
+            str(loaded.get("snapshot_id") or "") != str(snapshot.get("snapshot_id") or "")
+            or str(loaded.get("content_hash") or "") != str(snapshot.get("content_hash") or "")
+        ):
+            raise SkillAccessError(
+                "SKILL_VISIBLE_MATERIAL_NOT_LOADED", f"skill_id={skill_id}"
+            )
+        body = str(snapshot.get("exact_text") or "")
+        identity = {
+            "source_kind": "skill_document",
+            "skill_id": skill_id,
+            "snapshot_id": str(snapshot.get("snapshot_id") or ""),
+            "source_path": str(snapshot.get("source_path") or ""),
+            "content_hash": str(snapshot.get("content_hash") or ""),
+            "coverage": {"kind": "full"},
+        }
+        source_ref = f"skill-snapshot:{identity['snapshot_id']}"
+    elif kind == "excerpt":
+        excerpt = SkillAccessService._verified_excerpt(
+            state, str(descriptor.get("excerpt_id") or "")
+        )
+        body = str(excerpt.get("exact_text") or "")
+        resource_snapshot_id = str(excerpt.get("resource_snapshot_id") or "")
+        identity = {
+            "source_kind": (
+                "skill_resource" if resource_snapshot_id else "skill_document_excerpt"
+            ),
+            "skill_id": str(excerpt.get("skill_id") or ""),
+            "snapshot_id": str(excerpt.get("snapshot_id") or ""),
+            "excerpt_id": str(excerpt.get("excerpt_id") or ""),
+            "content_hash": str(excerpt.get("content_hash") or ""),
+            "coverage": {
+                "kind": (
+                    "full"
+                    if str(excerpt.get("operation") or "") == "full"
+                    else "range"
+                ),
+                "start_line": int(excerpt.get("start_line") or 1),
+                "end_line": int(excerpt.get("end_line") or 1),
+            },
+        }
+        if resource_snapshot_id:
+            identity.update({
+                "resource_snapshot_id": resource_snapshot_id,
+                "resource_path": str(excerpt.get("resource_path") or ""),
+                "resource_content_hash": str(
+                    excerpt.get("resource_content_hash") or ""
+                ),
+            })
+        source_ref = f"skill-excerpt:{identity['excerpt_id']}"
+    else:
+        raise SkillAccessError(
+            "SKILL_VISIBLE_MATERIAL_KIND_INVALID", kind or "<missing>"
+        )
+
+    supplied_hash = str(descriptor.get("content_hash") or "")
+    if supplied_hash and supplied_hash != str(identity.get("content_hash") or ""):
+        raise SkillAccessError(
+            "SKILL_VISIBLE_MATERIAL_HASH_MISMATCH", source_ref
+        )
+    identity["source_ref"] = source_ref
+    material_id = _stable_id("skill-material", identity)
+    return {
+        "schema_version": 1,
+        "material_id": material_id,
+        **identity,
+    }, body
+
+
+def resolve_skill_material_descriptor(
+    value: Mapping[str, Any] | None,
+    descriptor: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Resolve one exact, already-served Skill material for context ownership.
+
+    This is the public identity boundary used when a phase-local Skill result
+    must remain attributable during a later context compaction.  It performs
+    the same immutable snapshot/excerpt linkage and hash checks as visibility
+    recording; it does not itself assert provider visibility or mutate state.
+    """
+
+    state = normalize_skill_access_state(value)
+    record, body = _material_record_from_descriptor(state, descriptor)
+    return {**deepcopy(record), "body": body, "residency": "exact"}
+
+
+def record_provider_visible_materials(
+    value: Mapping[str, Any] | None,
+    descriptors: Sequence[Mapping[str, Any]],
+    *,
+    phase: str,
+    invocation_id: str,
+    event_id: str,
+) -> Dict[str, Any]:
+    """Commit exact material coverage once a provider-visible request exists.
+
+    This is an auditable proxy for visibility, not a claim about model
+    cognition.  Replaying the same event is idempotent; a later genuine event
+    is retained without copying the source body.
+    """
+
+    state = normalize_skill_access_state(value)
+    records = state["provider_visible_materials"]
+    for descriptor in descriptors or ():
+        if not isinstance(descriptor, Mapping):
+            raise SkillAccessError(
+                "SKILL_VISIBLE_MATERIAL_DESCRIPTOR_INVALID",
+                type(descriptor).__name__,
+            )
+        record, _body = _material_record_from_descriptor(state, descriptor)
+        material_id = str(record["material_id"])
+        prior = deepcopy(dict(records.get(material_id) or {}))
+        if prior:
+            immutable_fields = (
+                "skill_id", "snapshot_id", "excerpt_id", "source_ref",
+                "content_hash", "coverage", "resource_snapshot_id",
+                "resource_content_hash", "resource_path", "source_path",
+            )
+            if any(prior.get(field) != record.get(field) for field in immutable_fields):
+                raise SkillAccessError(
+                    "SKILL_VISIBLE_MATERIAL_IDENTITY_CONFLICT", material_id
+                )
+        else:
+            state["material_visibility_sequence"] += 1
+            prior = {
+                **record,
+                "first_seen_sequence": state["material_visibility_sequence"],
+                "residency": "exact",
+                "visibility_events": [],
+            }
+        visibility = {
+            "phase": str(phase or ""),
+            "invocation_id": str(invocation_id or ""),
+            "event_id": str(event_id or ""),
+            "selection_refs": [
+                {
+                    "status": str(ref.get("status") or ""),
+                    "scope": str(ref.get("scope") or "task"),
+                    "target_step_id": str(ref.get("target_step_id") or ""),
+                    "selected_at_task_revision": int(
+                        ref.get("selected_at_task_revision") or 0
+                    ),
+                }
+                for ref in state["selected_skill_refs"]
+                if isinstance(ref, Mapping)
+                and str(ref.get("snapshot_id") or "")
+                == str(record.get("snapshot_id") or "")
+            ],
+        }
+        events = [
+            deepcopy(dict(item))
+            for item in prior.get("visibility_events") or []
+            if isinstance(item, Mapping)
+        ]
+        if visibility not in events:
+            events.append(visibility)
+        prior["visibility_events"] = events[-32:]
+        records[material_id] = prior
+    state["provider_visible_materials"] = records
+    return state
+
+
+def selected_skill_materials_for_carry(
+    value: Mapping[str, Any] | None,
+    *,
+    current_step_id: str = "",
+    residency_state: Mapping[str, Any] | None = None,
+) -> List[Dict[str, Any]]:
+    """Resolve selected, actually-visible materials for a new model phase.
+
+    Selection is a mechanical identity/scope filter.  No filename, extension,
+    heading, age, or task-language relevance heuristic participates.
+    """
+
+    state = normalize_skill_access_state(value)
+    active_refs = {
+        str(ref.get("snapshot_id") or ""): deepcopy(dict(ref))
+        for ref in state["selected_skill_refs"]
+        if isinstance(ref, Mapping)
+        and str(ref.get("status") or "") == "active"
+        and (
+            str(ref.get("scope") or "task") == "task"
+            or (
+                str(ref.get("scope") or "") == "step"
+                and str(ref.get("target_step_id") or "") == str(current_step_id or "")
+            )
+        )
+    }
+    overrides = {
+        str(key): deepcopy(dict(item))
+        for key, item in dict(residency_state or {}).items()
+        if isinstance(item, Mapping)
+    }
+    candidates: list[tuple[Dict[str, Any], str]] = []
+    for raw in state["provider_visible_materials"].values():
+        if not isinstance(raw, Mapping):
+            continue
+        record = deepcopy(dict(raw))
+        active_ref = active_refs.get(str(record.get("snapshot_id") or ""))
+        if not active_ref:
+            continue
+        descriptor = (
+            {"kind": "excerpt", "excerpt_id": record.get("excerpt_id")}
+            if record.get("excerpt_id")
+            else {
+                "kind": "skill_document",
+                "snapshot_id": record.get("snapshot_id"),
+            }
+        )
+        verified, body = _material_record_from_descriptor(state, descriptor)
+        if any(
+            verified.get(field) != record.get(field)
+            for field in (
+                "material_id", "skill_id", "snapshot_id", "excerpt_id",
+                "source_ref", "content_hash", "coverage",
+                "resource_snapshot_id", "resource_content_hash",
+            )
+        ):
+            raise SkillAccessError(
+                "SKILL_VISIBLE_MATERIAL_LINKAGE_INVALID",
+                str(record.get("material_id") or ""),
+            )
+        override = overrides.get(str(record.get("material_id") or "")) or {}
+        residency = str(override.get("residency") or record.get("residency") or "exact")
+        if residency not in {"exact", "summarized", "externalized"}:
+            raise SkillAccessError(
+                "SKILL_MATERIAL_RESIDENCY_INVALID", residency
+            )
+        public = {
+            key: deepcopy(item)
+            for key, item in record.items()
+            if key not in {"visibility_events"}
+        }
+        public["residency"] = residency
+        public["selected_scope"] = str(active_ref.get("scope") or "task")
+        public["selected_target_step_id"] = str(
+            active_ref.get("target_step_id") or ""
+        )
+        public["selected_at_task_revision"] = int(
+            active_ref.get("selected_at_task_revision") or 0
+        )
+        if residency == "exact":
+            public["body"] = body
+        else:
+            if (
+                str(override.get("content_hash") or record.get("content_hash") or "")
+                != str(record.get("content_hash") or "")
+                or not str(override.get("summary") or "").strip()
+                or not str(override.get("retrieval_ref") or record.get("source_ref") or "").strip()
+            ):
+                raise SkillAccessError(
+                    "SKILL_MATERIAL_RECOVERY_STATE_INVALID",
+                    str(record.get("material_id") or ""),
+                )
+            public.update({
+                "summary": str(override.get("summary") or ""),
+                "missing_details": str(override.get("missing_details") or ""),
+                "retrieval_ref": str(
+                    override.get("retrieval_ref") or record.get("source_ref") or ""
+                ),
+                "compaction_request_id": str(
+                    override.get("compaction_request_id") or ""
+                ),
+            })
+        candidates.append((public, body))
+
+    # A visible full SKILL.md mechanically covers its own earlier line excerpts.
+    # Resource files remain distinct even when their text happens to match.
+    full_snapshots = {
+        str(item.get("snapshot_id") or "")
+        for item, _ in candidates
+        if str(item.get("source_kind") or "") == "skill_document"
+        and str((item.get("coverage") or {}).get("kind") or "") == "full"
+        and str(item.get("residency") or "") == "exact"
+    }
+    result = [
+        item
+        for item, _body in candidates
+        if not (
+            str(item.get("source_kind") or "") == "skill_document_excerpt"
+            and str(item.get("snapshot_id") or "") in full_snapshots
+            and str(item.get("residency") or "") == "exact"
+        )
+    ]
+    result.sort(key=lambda item: (
+        int(item.get("first_seen_sequence") or 0),
+        str(item.get("material_id") or ""),
+    ))
+    return result
 
 
 def project_skill_context(

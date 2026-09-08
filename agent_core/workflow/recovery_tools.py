@@ -19,12 +19,20 @@ from agent_core.managed_artifacts import build_approved_visible_artifact_set
 from agent_core.approved_resource_locator import approved_resource_locator, open_approved_resource, ResourceLocatorError
 from agent_core.plan_tracker import canonical_task_spec_for_state
 from agent_core.recovery_evidence import RecoveryEvidenceReader
-from agent_core.skill_access import REQUEST_SKILL_CONTEXT, SkillAccessService
+from agent_core.skill_access import (
+    REQUEST_SKILL_CONTEXT,
+    SkillAccessService,
+    resolve_skill_material_descriptor,
+)
 from agent_core.workflow.phase_archive import (
     PHASE_ARCHIVE_REF_PREFIX,
     PhaseArchiveStore,
 )
 from agent_core.workflow.phase_inspection import PhaseInspectionService
+from agent_core.workflow.inspection_evidence import (
+    INSPECTION_BACKEND, InspectionEvidenceError, InspectionObjectReader,
+    assert_current_inspection_scope, inspection_scope, validate_inspection_descriptor,
+)
 from agent_core.workflow.stage_contracts import RecoverySeed
 
 
@@ -128,7 +136,9 @@ class InspectionRef:
 class TypedInspectionRegistry:
     """Invocation-local registry whose locators are never provider-visible."""
 
-    def __init__(self, *, task_id: str, plan_id: str, step_id: str) -> None:
+    def __init__(self, *, task_id: str, plan_id: str, step_id: str,
+                 expected_scope: Mapping[str, Any] | None = None) -> None:
+        self.expected_scope = dict(expected_scope or {})
         self.task_id = _required(task_id, "task_id")
         self.plan_id = str(plan_id or "").strip()
         self.step_id = _required(step_id, "step_id")
@@ -142,6 +152,8 @@ class TypedInspectionRegistry:
             raise RecoveryToolError("INSPECTION_REF_SCOPE_MISMATCH", entry.ref_id)
         if entry.plan_id and self.plan_id and entry.plan_id != self.plan_id:
             raise RecoveryToolError("INSPECTION_REF_SCOPE_MISMATCH", entry.ref_id)
+        if entry.backend == INSPECTION_BACKEND:
+            validate_inspection_descriptor(entry.to_dict(), self.expected_scope)
         normalized_locator = MappingProxyType(deepcopy(dict(locator or {})))
         prior = self._entries.get(entry.ref_id)
         if prior is not None:
@@ -161,7 +173,15 @@ class TypedInspectionRegistry:
     ) -> tuple[InspectionRef, Mapping[str, Any]]:
         ref = self._entries.get(str(ref_id or ""))
         if ref is None:
-            raise RecoveryToolError("INSPECTION_REF_NOT_DECLARED", str(ref_id or ""))
+            candidates = [
+                {"ref_id": row["ref_id"], "allowed_tools": row.get("allowed_tools", [])}
+                for row in self.provider_manifest()
+                if row.get("readable") and (not kinds or row["kind"] in kinds)
+            ][:4]
+            raise RecoveryToolError(
+                "INSPECTION_REF_NOT_DECLARED",
+                str(ref_id or "") + "; declared_readable_candidates=" + _canonical(candidates),
+            )
         if kinds and ref.kind not in set(kinds):
             raise RecoveryToolError(
                 "INSPECTION_REF_KIND_MISMATCH", f"{ref.ref_id}:{ref.kind}"
@@ -170,10 +190,30 @@ class TypedInspectionRegistry:
         if ref.step_id and ref.step_id != self.step_id:
             if not allow_dependency_step or access != "direct_dependency":
                 raise RecoveryToolError("INSPECTION_REF_SCOPE_MISMATCH", ref.ref_id)
+        if ref.backend == INSPECTION_BACKEND:
+            validate_inspection_descriptor(ref.to_dict(), self.expected_scope)
         return ref, self._locators[ref.ref_id]
 
     def provider_manifest(self) -> list[dict[str, Any]]:
-        return [self._entries[key].to_dict() for key in sorted(self._entries)]
+        rows = []
+        tools_by_kind = {
+            "failure": ["failure.inspect"], "phase_archive": ["step.inspect"],
+            "artifact": ["artifact.inspect", "artifact.read"],
+            "skill_resource": ["skill.headings", "skill.read", "skill.search", "skill.resource"],
+            "evidence_scope": ["evidence.glob"],
+        }
+        for key in sorted(self._entries):
+            row = self._entries[key].to_dict()
+            scope = dict(row["scope"])
+            readable = bool(scope.get("readable", scope.get("resolvable", row["backend"] != "opaque_reference")))
+            row.update({
+                "source_object_id": str(scope.get("source_object_id") or key),
+                "readable": readable,
+                "unavailable_reason": str(scope.get("unavailable_reason") or ("" if readable else "NO_REGISTERED_LOCATOR")),
+                "allowed_tools": list(scope.get("allowed_tools") or tools_by_kind.get(row["kind"], ["evidence.read"])),
+            })
+            rows.append(row)
+        return rows
 
 
 def _ref_kind(ref_id: str) -> str:
@@ -192,6 +232,8 @@ def _ref_kind(ref_id: str) -> str:
 def _entry_from_durable(
     value: Mapping[str, Any], *, default_ref: str, default_task: str
 ) -> tuple[InspectionRef, Mapping[str, Any]]:
+    if value.get("ref_id") and str(value["ref_id"]) != default_ref:
+        raise RecoveryToolError("INSPECTION_REF_INDEX_MISMATCH", default_ref)
     locator = dict(value.get("locator") or {})
     descriptor = InspectionRef(
         ref_id=str(value.get("ref_id") or default_ref),
@@ -221,6 +263,7 @@ def build_recovery_inspection_registry(
         task_id=packet.task_id,
         plan_id=parsed.plan_spec_ref.plan_id,
         step_id=packet.step_id,
+        expected_scope=inspection_scope(packet, parsed.seed_id),
     )
     registry.register(InspectionRef(
         ref_id=packet.source_outcome_ref,
@@ -279,6 +322,8 @@ def build_recovery_inspection_registry(
             continue
         durable_entry = durable_refs.get(ref_id)
         if isinstance(durable_entry, Mapping):
+            if durable_entry.get("backend") == INSPECTION_BACKEND:
+                assert_current_inspection_scope(durable, registry.expected_scope)
             entry, locator = _entry_from_durable(
                 durable_entry, default_ref=ref_id, default_task=packet.task_id
             )
@@ -356,6 +401,7 @@ class RecoveryLocalToolDispatcher:
         skill_service: SkillAccessService | None = None,
         evidence_reader: RecoveryEvidenceReader | None = None,
         max_result_chars: int = MAX_TOOL_RESULT_CHARS,
+        inspection_reader: InspectionObjectReader | None = None,
     ) -> None:
         self.seed = seed if isinstance(seed, RecoverySeed) else RecoverySeed.from_mapping(seed)
         self.durable = deepcopy(dict(durable))
@@ -374,6 +420,10 @@ class RecoveryLocalToolDispatcher:
         )
         self.skill_service = skill_service
         self.evidence_reader = evidence_reader
+        self.inspection_reader = inspection_reader or InspectionObjectReader(
+            str(phase_store.root.parent),
+            scope=inspection_scope(self.seed.failure_packet, self.seed.seed_id),
+        )
         self.max_result_chars = max(512, min(int(max_result_chars), MAX_TOOL_RESULT_CHARS))
         self._skill_state = deepcopy(dict(
             (durable.get("task_state") or {}).get("skill_access_state")
@@ -404,6 +454,31 @@ class RecoveryLocalToolDispatcher:
         return result
 
     def dispatch(self, tool: str, arguments: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """Compatibility entrypoint returning a provider-bounded result.
+
+        The production Recovery loop calls ``dispatch_full`` instead so a
+        complete legal result can be written to immutable observation storage
+        before this projection ever replaces it with ``REQUIRES_NARROWING``.
+        """
+
+        name, result = self._dispatch_complete(tool, arguments)
+        return self._bounded(name, result)
+
+    def dispatch_full(
+        self,
+        tool: str,
+        arguments: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Return the complete validated local result to the archive owner."""
+
+        _name, result = self._dispatch_complete(tool, arguments)
+        return result
+
+    def _dispatch_complete(
+        self,
+        tool: str,
+        arguments: Mapping[str, Any] | None = None,
+    ) -> tuple[str, dict[str, Any]]:
         name = str(tool or "").strip().lower()
         if name not in {
             "failure.inspect", "step.inspect", "artifact.inspect", "artifact.read",
@@ -428,18 +503,17 @@ class RecoveryLocalToolDispatcher:
         if handler is None:
             raise RecoveryToolError("RECOVERY_TOOL_UNKNOWN", name)
         try:
-            return self._bounded(name, handler(args))
+            result = deepcopy(dict(handler(args)))
         except ResourceLocatorError as exc:
             raise RecoveryToolError(exc.code, name) from exc
-        except PermissionError as exc:
-            if not name.startswith("artifact."): raise
-            raise RecoveryToolError("ARTIFACT_PERMISSION_DENIED", name) from exc
         except FileNotFoundError as exc:
-            if not name.startswith("artifact."): raise
-            raise RecoveryToolError("ARTIFACT_FILE_NOT_FOUND", name) from exc
+            raise RecoveryToolError("ARTIFACT_FILE_NOT_FOUND" if name.startswith("artifact.") else "INSPECTION_FILE_NOT_FOUND", name) from exc
+        except PermissionError as exc:
+            raise RecoveryToolError("ARTIFACT_PERMISSION_DENIED" if name.startswith("artifact.") else "INSPECTION_PERMISSION_DENIED", name) from exc
         except OSError as exc:
-            if not name.startswith("artifact."): raise
-            raise RecoveryToolError("ARTIFACT_IO_ERROR", name) from exc
+            raise RecoveryToolError("ARTIFACT_IO_ERROR" if name.startswith("artifact.") else "INSPECTION_IO_ERROR", name) from exc
+        result.setdefault("tool", name)
+        return name, result
 
     def _failure_inspect(self, args: Mapping[str, Any]) -> dict[str, Any]:
         packet = self.seed.failure_packet
@@ -713,7 +787,137 @@ class RecoveryLocalToolDispatcher:
             "query": str(args.get("query") or ""),
         })
 
+    def _retrieve_skill_resource(
+        self,
+        args: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Recover one already-served resource by immutable excerpt identity.
+
+        A compaction summary may tell the provider that an exact selected
+        resource is no longer resident.  The provider is allowed to name that
+        immutable ``skill-excerpt:...`` reference, but it is not allowed to
+        redirect the read to a current on-disk path or a different selected
+        snapshot.  Path, coverage, and body are all resolved from the existing
+        canonical Skill access store before the normal ``skill.resource``
+        reader is invoked.
+        """
+
+        skill_id = str(args.get("skill_id") or "").strip()
+        retrieval_ref = str(args.get("retrieval_ref") or "").strip()
+        if not retrieval_ref.startswith("skill-excerpt:"):
+            raise RecoveryToolError(
+                "RECOVERY_SKILL_RETRIEVAL_REF_INVALID", retrieval_ref
+            )
+        if skill_id not in self._selected_skills:
+            raise RecoveryToolError("RECOVERY_SKILL_NOT_SELECTED", skill_id)
+        entry, locator = self.registry.resolve(
+            "skill:" + skill_id, kinds=("skill_resource",)
+        )
+        excerpt_id = retrieval_ref.removeprefix("skill-excerpt:")
+        try:
+            resolved = resolve_skill_material_descriptor(
+                self._skill_state,
+                {"kind": "excerpt", "excerpt_id": excerpt_id},
+            )
+        except Exception as exc:
+            raise RecoveryToolError(
+                "RECOVERY_SKILL_RETRIEVAL_REF_INVALID",
+                f"{type(exc).__name__}: {exc}",
+            ) from exc
+        if (
+            str(resolved.get("source_ref") or "") != retrieval_ref
+            or str(resolved.get("source_kind") or "") != "skill_resource"
+            or str(resolved.get("skill_id") or "") != skill_id
+            or str(resolved.get("snapshot_id") or "")
+            != str(locator.get("snapshot_id") or "")
+        ):
+            raise RecoveryToolError(
+                "RECOVERY_SKILL_RETRIEVAL_SCOPE_MISMATCH", retrieval_ref
+            )
+
+        resource_path = str(resolved.get("resource_path") or "")
+        supplied_path = str(args.get("resource_path") or "").replace(
+            "\\", "/"
+        )
+        if supplied_path and supplied_path != resource_path:
+            raise RecoveryToolError(
+                "RECOVERY_SKILL_RETRIEVAL_PATH_MISMATCH", supplied_path
+            )
+        content_hash = str(resolved.get("content_hash") or "").lower()
+        supplied_hash = str(args.get("content_hash") or "").lower()
+        if supplied_hash.startswith("sha256:"):
+            supplied_hash = supplied_hash.removeprefix("sha256:")
+        if supplied_hash and supplied_hash != content_hash:
+            raise RecoveryToolError(
+                "RECOVERY_SKILL_RETRIEVAL_HASH_MISMATCH", retrieval_ref
+            )
+        coverage = deepcopy(dict(resolved.get("coverage") or {}))
+        supplied_coverage = args.get("coverage")
+        if supplied_coverage is not None:
+            if (
+                not isinstance(supplied_coverage, Mapping)
+                or dict(supplied_coverage) != coverage
+            ):
+                raise RecoveryToolError(
+                    "RECOVERY_SKILL_RETRIEVAL_COVERAGE_MISMATCH",
+                    retrieval_ref,
+                )
+        request: dict[str, Any] = {
+            "skill_id": skill_id,
+            "operation": "resource",
+            "resource_path": resource_path,
+        }
+        if str(coverage.get("kind") or "") == "range":
+            request.update({
+                "start_line": int(coverage.get("start_line") or 0),
+                "end_line": int(coverage.get("end_line") or 0),
+            })
+        for field in ("start_line", "end_line"):
+            if args.get(field) is not None and int(args[field]) != int(
+                request.get(field) or 0
+            ):
+                raise RecoveryToolError(
+                    "RECOVERY_SKILL_RETRIEVAL_COVERAGE_MISMATCH",
+                    retrieval_ref,
+                )
+
+        result = self._skill_call(skill_id, request)
+        rows = list(result.get("results") or ())
+        observed = dict(rows[0]) if len(rows) == 1 else {}
+        body = str(observed.get("exact_text") or "")
+        observed_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()
+        if (
+            str(result.get("status") or "") != "COMPLETE"
+            or observed_hash != content_hash
+            or str(observed.get("snapshot_id") or "")
+            != str(resolved.get("snapshot_id") or "")
+            or str(observed.get("resource_snapshot_id") or "")
+            != str(resolved.get("resource_snapshot_id") or "")
+            or str(observed.get("resource_content_hash") or "")
+            != str(resolved.get("resource_content_hash") or "")
+        ):
+            raise RecoveryToolError(
+                "RECOVERY_SKILL_RETRIEVAL_BODY_MISMATCH", retrieval_ref
+            )
+        result["retrieval_verification"] = {
+            "retrieval_ref": retrieval_ref,
+            "content_hash": content_hash,
+            "coverage": coverage,
+            "body_hash_verified": True,
+            "immutable_snapshot_verified": True,
+            "scope": {
+                "task_id": entry.task_id,
+                "plan_id": entry.plan_id,
+                "step_id": self.seed.failure_packet.step_id,
+                "skill_id": skill_id,
+                "snapshot_id": str(resolved.get("snapshot_id") or ""),
+            },
+        }
+        return result
+
     def _skill_resource(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        if str(args.get("retrieval_ref") or "").strip():
+            return self._retrieve_skill_resource(args)
         skill_id = str(args.get("skill_id") or "")
         request = {
             "skill_id": skill_id,
@@ -730,11 +934,26 @@ class RecoveryLocalToolDispatcher:
         entry, locator = self.registry.resolve(
             str(args.get("evidence_ref") or ""), kinds=("evidence", "execution", "attempt")
         )
-        if self.evidence_reader is None:
-            raise RecoveryToolError("RECOVERY_EVIDENCE_SERVICE_UNAVAILABLE", entry.ref_id)
+        if entry.backend == INSPECTION_BACKEND:
+            return self.inspection_reader.read(
+                entry.to_dict(), locator,
+                start_line=args.get("start_line", 1), end_line=args.get("end_line"),
+            )
+        if entry.backend not in {"recovery_evidence", "durable_registry", "opaque_reference"}:
+            raise RecoveryToolError("INSPECTION_BACKEND_UNSUPPORTED", entry.backend)
         path = str(locator.get("relative_path") or locator.get("path") or "")
         if not path:
-            raise RecoveryToolError("INSPECTION_REF_NOT_RESOLVABLE", entry.ref_id)
+            alternatives = [
+                {"ref_id": row["ref_id"], "allowed_tools": row.get("allowed_tools", [])}
+                for row in self.registry.provider_manifest()
+                if row.get("readable") and row.get("source_object_id") == entry.ref_id
+            ][:4]
+            raise RecoveryToolError(
+                "INSPECTION_REF_NOT_RESOLVABLE",
+                entry.ref_id + "; reason=NO_REGISTERED_LOCATOR; alternatives=" + _canonical(alternatives),
+            )
+        if self.evidence_reader is None:
+            raise RecoveryToolError("RECOVERY_EVIDENCE_SERVICE_UNAVAILABLE", entry.ref_id)
         return self.evidence_reader.read(
             path,
             start_line=int(args.get("start_line") or 1),

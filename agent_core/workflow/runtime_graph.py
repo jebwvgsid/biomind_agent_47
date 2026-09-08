@@ -11,6 +11,7 @@ from typing import Any, Awaitable, Callable, Mapping
 from langgraph.graph import END, START, StateGraph
 
 from agent_core.state import AgentState
+from agent_core.workflow.managed_stop import observe_managed_node
 from agent_core.workflow.outcomes import (
     AskUserOutcome,
     CommitStepOutcome,
@@ -42,7 +43,13 @@ def route_generate_outcome(state: Mapping[str, Any]) -> str:
         return END
     if outcome.type == "stale_result":
         changed = set(outcome.to_dict().get("payload", {}).get("changed_preconditions") or ())
-        return "consultant" if changed & {"task_revision", "authoritative_user_turn_revision"} else "planner"
+        if changed & {"task_revision", "authoritative_user_turn_revision"}:
+            return "consultant"
+        if changed & {"skill_access_transaction"}:
+            # The latest durable continuation is still owned by Generate; the
+            # same node must reload it before any Planner/Consultant work.
+            return "generate"
+        return "planner"
     return {
         "action_ready": "execute",
         "runtime_evidence_required": "recovery",
@@ -50,6 +57,11 @@ def route_generate_outcome(state: Mapping[str, Any]) -> str:
         "completion_claimed": "supervisor",
         "user_input_needed": "ask_user",
         "plan_revision_needed": "planner",
+        "skill_context_served": "generate",
+        "skill_search_result_ready": "generate",
+        "skill_binding_review_needed": "consultant",
+        # Persisted v1 compatibility only.  Current adapters emit the more
+        # precise served/search/binding outcomes above.
         "skill_context_needed": "consultant",
         "provider_failed": END,
         "internal_protocol_error": END,
@@ -99,6 +111,11 @@ def route_verification_outcome(state: Mapping[str, Any]) -> str:
         "incomplete_evidence": "recovery",
         "diagnostic_evidence_recorded": "recovery",
         "verification_error": "recovery",
+        "inspection_required": "recovery",
+        "correction_required": "recovery",
+        "plan_revision_required": "planner",
+        "user_information_required": "ask_user",
+        "assessment_pending": "recovery",
         "harness_error": END,
     }[outcome.type]
 
@@ -183,10 +200,10 @@ def build_schema2_runtime_graph(
 
     graph = StateGraph(AgentState)
     for name in sorted(required):
-        graph.add_node(name, node_handlers[name])
+        graph.add_node(name, observe_managed_node(name, node_handlers[name]))
     supplied_boundaries = dict(boundary_handlers or {})
     for name in ("planner", "consultant", "ask_user", "install_subagent"):
-        graph.add_node(name, supplied_boundaries.get(name, boundary))
+        graph.add_node(name, observe_managed_node(name, supplied_boundaries.get(name, boundary)))
         graph.add_edge(name, END)
     graph.add_edge(START, "generate")
     graph.add_conditional_edges(
@@ -203,7 +220,9 @@ def build_schema2_runtime_graph(
         ],
     )
     graph.add_conditional_edges(
-        "supervisor", verification_route, ["commit_step", "recovery", END]
+        "supervisor",
+        verification_route,
+        ["commit_step", "recovery", "planner", "ask_user", END],
     )
     graph.add_conditional_edges(
         "commit_step", commit_route, ["generate", "final_audit", "recovery", END]
@@ -215,6 +234,122 @@ def build_schema2_runtime_graph(
     )
     graph.add_conditional_edges("final_audit", final_route, [END])
     return graph
+
+
+def route_triage_outcome(state: Mapping[str, Any]) -> str:
+    outcome = TriageOutcome.from_mapping(state.get("triage_outcome") or {})
+    if outcome.type == "resume_classified":
+        semantic = str(outcome.payload.get("semantic_state") or "")
+        return {
+            "awaiting_user_input": "ask_user",
+            "consultation_ready": "consultant",
+            "planning_ready": "planner",
+            "plan_review_pending": "plan_review",
+            "step_execution_ready": "generate",
+            "action_execution_ready": "execute",
+            "verification_pending": "supervisor",
+            "recovery_pending": "recovery",
+            "installation_pending": "install_subagent",
+            "final_audit_pending": "final_audit",
+            "terminal": END,
+        }[semantic]
+    return {
+        "direct_response_ready": "direct_response",
+        "consultation_ready": "consultant",
+        "step_execution_ready": "generate",
+        "harness_error": END,
+    }[outcome.type]
+
+
+def route_consultant_outcome(state: Mapping[str, Any]) -> str:
+    outcome = ConsultantOutcome.from_mapping(state.get("consultant_outcome") or {})
+    if outcome.type in {
+        "skill_observation_ready",
+        "skill_proposal_rejected",
+    }:
+        requester_role = str(outcome.payload.get("requester_role") or "")
+        return {
+            "action_generation": "generate",
+            "plan_authoring": "planner",
+            "failure_verification": "supervisor",
+            "semantic_consultation": "consultant",
+        }[requester_role]
+    return {
+        "planning_ready": "planner",
+        "answer_ready": END,
+        "consultation_continues": "consultant",
+        "user_input_needed": "ask_user",
+        "task_skill_commit_required": "consultant",
+        "skill_plan_impact_ready": "planner",
+        "stale_result": "consultant",
+        "terminal": END,
+        "harness_error": END,
+    }[outcome.type]
+
+
+def route_planner_outcome(state: Mapping[str, Any]) -> str:
+    outcome = PlannerOutcome.from_mapping(state.get("planner_outcome") or {})
+    return {
+        "plan_review_ready": "plan_review",
+        "consultation_required": "consultant",
+        "planning_continues": "planner",
+        "stale_result": "planner",
+        "terminal": END,
+        "harness_error": END,
+    }[outcome.type]
+
+
+def route_plan_review_outcome(state: Mapping[str, Any]) -> str:
+    outcome = PlanReviewOutcome.from_mapping(state.get("plan_review_outcome") or {})
+    if outcome.type == "approved_for_execution":
+        return (
+            "step_worker"
+            if str(outcome.payload.get("execution_backend") or "") == "external_worker"
+            else "generate"
+        )
+    return {
+        "revision_required": "planner",
+        "reconsultation_required": "consultant",
+        "user_input_needed": "ask_user",
+        "approval_pending": END,
+        "terminal": END,
+        "harness_error": END,
+    }[outcome.type]
+
+
+def route_ask_user_outcome(state: Mapping[str, Any]) -> str:
+    outcome = AskUserOutcome.from_mapping(state.get("ask_user_outcome") or {})
+    semantic = str(outcome.payload.get("semantic_state") or "consultation_ready")
+    return {
+        "consultation_ready": "consultant",
+        "planning_ready": "planner",
+        "step_execution_ready": "generate",
+        "verification_pending": "supervisor",
+        "recovery_pending": "recovery",
+    }.get(semantic, END)
+
+
+def route_install_outcome(state: Mapping[str, Any]) -> str:
+    outcome = InstallSubagentOutcome.from_mapping(
+        state.get("install_subagent_outcome") or {}
+    )
+    return {
+        "capability_available": "generate",
+        "installation_failed": "recovery",
+        "terminal": END,
+        "harness_error": END,
+    }[outcome.type]
+
+
+def route_step_worker_outcome(state: Mapping[str, Any]) -> str:
+    outcome = StepOutcome.from_mapping(state.get("step_worker_outcome") or {})
+    return {
+        "completion_claimed": "supervisor",
+        "needs_replan": "planner",
+        "blocked": END,
+        "harness_error": END,
+        "cancelled": END,
+    }[outcome.type]
 
 
 def build_schema2_production_graph(
@@ -236,100 +371,25 @@ def build_schema2_production_graph(
         raise ValueError("SCHEMA2_PRODUCTION_HANDLER_MISSING: " + ", ".join(missing))
 
     async def triage_route(state: Mapping[str, Any]) -> str:
-        outcome = TriageOutcome.from_mapping(state.get("triage_outcome") or {})
-        if outcome.type == "resume_classified":
-            semantic = str(outcome.payload.get("semantic_state") or "")
-            return {
-                "awaiting_user_input": "ask_user",
-                "consultation_ready": "consultant",
-                "planning_ready": "planner",
-                "plan_review_pending": "plan_review",
-                "step_execution_ready": "generate",
-                "action_execution_ready": "execute",
-                "verification_pending": "supervisor",
-                "recovery_pending": "recovery",
-                "installation_pending": "install_subagent",
-                "final_audit_pending": "final_audit",
-                "terminal": END,
-            }[semantic]
-        return {
-            "direct_response_ready": "direct_response",
-            "consultation_ready": "consultant",
-            "step_execution_ready": "generate",
-            "harness_error": END,
-        }[outcome.type]
+        return route_triage_outcome(state)
 
     async def consultant_route(state: Mapping[str, Any]) -> str:
-        outcome = ConsultantOutcome.from_mapping(state.get("consultant_outcome") or {})
-        return {
-            "planning_ready": "planner",
-            "answer_ready": END,
-            "consultation_continues": "consultant",
-            "user_input_needed": "ask_user",
-            "stale_result": "consultant",
-            "terminal": END,
-            "harness_error": END,
-        }[outcome.type]
+        return route_consultant_outcome(state)
 
     async def planner_route(state: Mapping[str, Any]) -> str:
-        outcome = PlannerOutcome.from_mapping(state.get("planner_outcome") or {})
-        return {
-            "plan_review_ready": "plan_review",
-            "consultation_required": "consultant",
-            "planning_continues": "planner",
-            "stale_result": "planner",
-            "terminal": END,
-            "harness_error": END,
-        }[outcome.type]
+        return route_planner_outcome(state)
 
     async def plan_review_route(state: Mapping[str, Any]) -> str:
-        outcome = PlanReviewOutcome.from_mapping(state.get("plan_review_outcome") or {})
-        if outcome.type == "approved_for_execution":
-            return (
-                "step_worker"
-                if str(outcome.payload.get("execution_backend") or "") == "external_worker"
-                else "generate"
-            )
-        return {
-            "revision_required": "planner",
-            "reconsultation_required": "consultant",
-            "user_input_needed": "ask_user",
-            "approval_pending": END,
-            "terminal": END,
-            "harness_error": END,
-        }[outcome.type]
+        return route_plan_review_outcome(state)
 
     async def ask_user_route(state: Mapping[str, Any]) -> str:
-        outcome = AskUserOutcome.from_mapping(state.get("ask_user_outcome") or {})
-        semantic = str(outcome.payload.get("semantic_state") or "consultation_ready")
-        return {
-            "consultation_ready": "consultant",
-            "planning_ready": "planner",
-            "step_execution_ready": "generate",
-            "verification_pending": "supervisor",
-            "recovery_pending": "recovery",
-        }.get(semantic, END)
+        return route_ask_user_outcome(state)
 
     async def install_route(state: Mapping[str, Any]) -> str:
-        outcome = InstallSubagentOutcome.from_mapping(
-            state.get("install_subagent_outcome") or {}
-        )
-        return {
-            "capability_available": "generate",
-            "installation_failed": "recovery",
-            "terminal": END,
-            "harness_error": END,
-        }[outcome.type]
+        return route_install_outcome(state)
 
     async def step_worker_route(state: Mapping[str, Any]) -> str:
-        outcome = StepOutcome.from_mapping(state.get("step_worker_outcome") or {})
-        return {
-            "completion_claimed": "supervisor",
-            "needs_replan": "planner",
-            "blocked": END,
-            "harness_error": END,
-            "cancelled": END,
-        }[outcome.type]
+        return route_step_worker_outcome(state)
 
     async def generate_route(state: Mapping[str, Any]) -> str:
         return route_generate_outcome(state)
@@ -351,14 +411,18 @@ def build_schema2_production_graph(
 
     graph = StateGraph(AgentState)
     for name in sorted(required):
-        graph.add_node(name, node_handlers[name])
+        graph.add_node(name, observe_managed_node(name, node_handlers[name]))
     graph.add_edge(START, "triage")
     graph.add_edge("direct_response", END)
     graph.add_conditional_edges("triage", triage_route, [
         "direct_response", "consultant", "planner", "plan_review", "ask_user",
         "generate", "execute", "supervisor", "recovery", "install_subagent", "final_audit", END,
     ])
-    graph.add_conditional_edges("consultant", consultant_route, ["planner", "consultant", "ask_user", END])
+    graph.add_conditional_edges(
+        "consultant",
+        consultant_route,
+        ["generate", "planner", "consultant", "supervisor", "ask_user", END],
+    )
     graph.add_conditional_edges("planner", planner_route, ["plan_review", "consultant", "planner", END])
     graph.add_conditional_edges("plan_review", plan_review_route, ["generate", "step_worker", "planner", "consultant", "ask_user", END])
     graph.add_conditional_edges("ask_user", ask_user_route, ["consultant", "planner", "generate", "supervisor", "recovery", END])
@@ -366,7 +430,11 @@ def build_schema2_production_graph(
     graph.add_conditional_edges("step_worker", step_worker_route, ["supervisor", "planner", END])
     graph.add_conditional_edges("generate", generate_route, ["generate", "execute", "supervisor", "planner", "consultant", "ask_user", "recovery", END])
     graph.add_conditional_edges("execute", execute_route, ["supervisor", "recovery", "generate", "planner", "consultant", "ask_user", "install_subagent", END])
-    graph.add_conditional_edges("supervisor", verification_route, ["commit_step", "recovery", END])
+    graph.add_conditional_edges(
+        "supervisor",
+        verification_route,
+        ["commit_step", "recovery", "planner", "ask_user", END],
+    )
     graph.add_conditional_edges("commit_step", commit_route, ["generate", "final_audit", "recovery", END])
     graph.add_conditional_edges("recovery", recovery_route, ["generate", "planner", "consultant", "supervisor", "ask_user", END])
     graph.add_conditional_edges("final_audit", final_route, [END])

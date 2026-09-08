@@ -185,6 +185,7 @@ class StepOutcome:
     evidence_refs: tuple[str, ...] = ()
     artifact_refs: tuple[str, ...] = ()
     binding_refs: tuple[str, ...] = ()
+    effect_refs: tuple[str, ...] = ()
     blocker: Mapping[str, Any] | None = None
     worker_session_ref: str | None = None
     archive_ref: str | None = None
@@ -211,7 +212,7 @@ class StepOutcome:
                 code="STEP_WORKER_OUTCOME_PROTOCOL_ERROR",
             ),
         )
-        for field in ("evidence_refs", "artifact_refs", "binding_refs"):
+        for field in ("evidence_refs", "artifact_refs", "binding_refs", "effect_refs"):
             object.__setattr__(
                 self,
                 field,
@@ -251,6 +252,7 @@ class StepOutcome:
             "evidence_refs",
             "artifact_refs",
             "binding_refs",
+            "effect_refs",
             "blocker",
             "worker_session_ref",
             "archive_ref",
@@ -281,6 +283,7 @@ class StepOutcome:
             evidence_refs=tuple(value.get("evidence_refs") or ()),
             artifact_refs=tuple(value.get("artifact_refs") or ()),
             binding_refs=tuple(value.get("binding_refs") or ()),
+            effect_refs=tuple(value.get("effect_refs") or ()),
             blocker=blocker,
             worker_session_ref=value.get("worker_session_ref"),
             archive_ref=value.get("archive_ref"),
@@ -294,6 +297,7 @@ class StepOutcome:
             "evidence_refs": list(self.evidence_refs),
             "artifact_refs": list(self.artifact_refs),
             "binding_refs": list(self.binding_refs),
+            "effect_refs": list(self.effect_refs),
             "blocker": _thaw_json(self.blocker) if self.blocker is not None else None,
             "worker_session_ref": self.worker_session_ref,
             "archive_ref": self.archive_ref,
@@ -536,6 +540,7 @@ def build_step_request(
         "success_criteria": deepcopy(list(step.get("success_criteria") or ())),
         "declared_outputs": deepcopy(list(step.get("outputs") or ())),
         "artifact_contracts": deepcopy(list(step.get("artifacts") or ())),
+        "step_effect": deepcopy(dict(step.get("step_effect") or {})),
     }
     step_goal = str(step.get("title") or step.get("purpose") or "").strip()
     selected_skill_ids = tuple(

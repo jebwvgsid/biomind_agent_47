@@ -21,7 +21,11 @@ from agent_core.workflow.outcomes import (
     WORKFLOW_ROUTING_SCHEMA_TYPED,
     workflow_routing_schema_version,
 )
-from agent_core.workflow.recovery_projection import project_recovery_seed
+from agent_core.workflow.recovery_projection import (
+    append_causal_failure_lifecycle_transition,
+    has_causal_failure_lifecycle_transition,
+    project_recovery_seed,
+)
 from agent_core.workflow.stage_contracts import (
     RecoveryDirective,
     StageContractError,
@@ -179,9 +183,33 @@ class RecoveryRuntime:
         failure_fingerprint = str(
             packet.failure_fingerprint or source_fingerprint
         )
+        source_incident_id = str(
+            source_payload.get("incident_id") or ""
+        ).strip()
+        if (
+            packet.incident_id
+            and source_incident_id
+            and packet.incident_id != source_incident_id
+        ):
+            return self._internal(scope, "RECOVERY_INCIDENT_ID_MISMATCH", {
+                "packet_incident_id": packet.incident_id,
+                "source_incident_id": source_incident_id,
+            })
+        # New schema-1 packets make the immutable FailurePacket authoritative.
+        # Legacy packets retain the prior source-payload/failure-id fallback.
         incident_id = str(
-            source_payload.get("incident_id") or packet.failure_id
+            packet.incident_id or source_incident_id or packet.failure_id
         )
+        failure_packet_ref = str(
+            state.get("active_failure_packet_ref")
+            or (durable.get("task_state") or {}).get(
+                "active_failure_packet_ref"
+            )
+            or ""
+        )
+        if packet.incident_id:
+            scope["incident_id"] = packet.incident_id
+            scope["failure_packet_version"] = packet.packet_version
         decision_id = directive.directive_id
         directive_wire = directive.to_dict()
         directive_digest = _full_hash(directive_wire)
@@ -222,6 +250,10 @@ class RecoveryRuntime:
             ),
             "consumed": consumes_budget,
             "source_fingerprint": source_fingerprint,
+            **({
+                "failure_packet_ref": failure_packet_ref,
+                "failure_packet_version": packet.packet_version,
+            } if packet.incident_id else {}),
         }
 
         progress = dict(task_state.get("typed_recovery_progress") or {})
@@ -397,11 +429,12 @@ class RecoveryRuntime:
             "source_fingerprint": source_fingerprint,
             "directive_digest": directive_digest,
             "directive": directive_wire,
-            "failure_packet_ref": str(
-                state.get("active_failure_packet_ref")
-                or candidate_task.get("active_failure_packet_ref")
-                or ""
-            ),
+            "failure_packet_ref": failure_packet_ref,
+            **({
+                "incident_id": packet.incident_id,
+                "failure_packet_version": packet.packet_version,
+                "supersedes_packet_ref": packet.supersedes_packet_ref,
+            } if packet.incident_id else {}),
             "recovery_archive_ref": str(state.get("recovery_archive_ref") or ""),
             "outcome_digest": _full_hash(outcome.to_dict()),
             "outcome": outcome.to_dict(),
@@ -420,8 +453,24 @@ class RecoveryRuntime:
                 "decision_id": decision_id,
                 "source_fingerprint": source_fingerprint,
                 "directive_digest": directive_digest,
+                **({
+                    "incident_id": packet.incident_id,
+                    "failure_packet_version": packet.packet_version,
+                    "supersedes_packet_ref": packet.supersedes_packet_ref,
+                } if packet.incident_id else {}),
             }
             candidate_task["consumed_failure_packet_refs"] = consumed_packets
+            try:
+                append_causal_failure_lifecycle_transition(
+                    candidate_task,
+                    packet_ref=packet_ref,
+                    packet=packet,
+                    transition="resolved",
+                    reason=f"recovery_outcome_committed:{outcome_type}",
+                    related_ref=decision_id,
+                )
+            except StageContractError as exc:
+                return self._internal(scope, exc.code, {"detail": exc.detail})
             if str(candidate_task.get("active_failure_packet_ref") or "") == packet_ref:
                 candidate_task["active_failure_packet_ref"] = ""
         candidate["task_state"] = candidate_task
@@ -440,6 +489,11 @@ class RecoveryRuntime:
                     == source_fingerprint
                     and str(refreshed_receipt.get("directive_digest") or "")
                     == directive_digest
+                    and has_causal_failure_lifecycle_transition(
+                        refreshed.get("task_state") or {},
+                        packet_ref=failure_packet_ref,
+                        transition="resolved",
+                    )
                 ):
                     return self._result(RecoveryOutcome.from_mapping(
                         refreshed_receipt.get("outcome") or {}

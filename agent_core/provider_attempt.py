@@ -56,6 +56,11 @@ GENERATE_PROVIDER_TERMINAL_REQUEST_ERROR = "GENERATE_PROVIDER_TERMINAL_REQUEST_E
 PROVIDER_CANCEL_CLEANUP_FAILED = "PROVIDER_CANCEL_CLEANUP_FAILED"
 PROVIDER_OUTCOME_UNKNOWN = "PROVIDER_OUTCOME_UNKNOWN"
 PROVIDER_CANONICAL_CONTEXT_CHANGED = "PROVIDER_CANONICAL_CONTEXT_CHANGED"
+PROVIDER_CALLER_CANCELLED = "PROVIDER_CALLER_CANCELLED"
+PROVIDER_CLIENT_CANCELLED = "PROVIDER_CLIENT_CANCELLED"
+PROVIDER_ATTEMPT_START_PERSISTENCE_FAILED = (
+    "PROVIDER_ATTEMPT_START_PERSISTENCE_FAILED"
+)
 
 _MAX_EXCEPTION_CHAIN_DEPTH = 8
 _MAX_EXCEPTION_CHAIN_NODES = 32
@@ -204,6 +209,7 @@ class ProviderAttemptRecord:
     stream_close_supported: bool = False
     cleanup_result: str = CLEANUP_NOT_REQUIRED
     cleanup_failure_type: str = ""
+    cancellation_source: str = ""
     attempt_completed_at: str = ""
     failure_type: str = ""
     failure_detail: str = ""
@@ -220,6 +226,9 @@ class ProviderAttemptRecord:
     late_chunk_count: int = 0
     content_sha256: str = ""
     reasoning_sha256: str = ""
+    usage_status: str = "UNKNOWN"
+    usage_reported_at: str = ""
+    provider_usage: Dict[str, int] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         record = {
@@ -249,6 +258,18 @@ class ProviderAttemptRecord:
             "first_content_at": self.first_content_chunk_at,
             "last_event_at": self.last_any_chunk_at,
             "model_name": self.envelope.model,
+            # LangChain's ``ainvoke`` callback contract exposes token/chunk
+            # activity but not the underlying HTTP response-head boundary.
+            # Keep that absence explicit instead of treating a null timestamp
+            # as evidence that no headers were received by the SDK.
+            "headers_observation_status": (
+                "OBSERVED" if self.headers_received_at else "NOT_OBSERVABLE"
+            ),
+            "headers_observation_reason": (
+                ""
+                if self.headers_received_at
+                else "AINVOKE_CALLBACK_HEADERS_UNAVAILABLE"
+            ),
             "time_to_headers_seconds": _elapsed_seconds(
                 self.request_started_at, self.headers_received_at
             ),
@@ -281,6 +302,58 @@ def _elapsed_seconds(start: Optional[str], end: Optional[str]) -> Optional[float
     except (TypeError, ValueError):
         return None
     return max(0.0, round((end_at - start_at).total_seconds(), 6))
+
+
+def _response_provider_usage(response: Any) -> Tuple[str, Dict[str, int]]:
+    """Return only provider-reported token counts, never local estimates.
+
+    LangChain providers expose usage either on ``usage_metadata`` or inside
+    ``response_metadata``. Missing fields stay absent: in particular, this
+    helper never fills unknown usage with zero and never derives ``total``.
+    """
+
+    response_metadata = _safe_getattr(response, "response_metadata", {}) or {}
+    candidates = (
+        _safe_getattr(response, "usage_metadata", None),
+        (
+            response_metadata.get("token_usage")
+            if isinstance(response_metadata, Mapping)
+            else None
+        ),
+        (
+            response_metadata.get("usage")
+            if isinstance(response_metadata, Mapping)
+            else None
+        ),
+    )
+    raw_usage = next(
+        (dict(item) for item in candidates if isinstance(item, Mapping) and item),
+        {},
+    )
+    aliases = {
+        "input_tokens": ("input_tokens", "prompt_tokens"),
+        "output_tokens": ("output_tokens", "completion_tokens"),
+        "total_tokens": ("total_tokens",),
+    }
+    normalized: Dict[str, int] = {}
+    for target, source_keys in aliases.items():
+        value = next(
+            (raw_usage.get(key) for key in source_keys if key in raw_usage),
+            None,
+        )
+        if isinstance(value, bool):
+            continue
+        try:
+            count = int(value)
+        except (TypeError, ValueError):
+            continue
+        if count >= 0:
+            normalized[target] = count
+    if not normalized:
+        return "UNKNOWN", {}
+    if set(normalized) == set(aliases):
+        return "REPORTED", normalized
+    return "PARTIAL", normalized
 
 
 class ProviderAttemptFailure(RuntimeError):
@@ -892,6 +965,8 @@ def _emit(
     callback: Optional[Callable[[str, Mapping[str, Any]], None]],
     event: str,
     record: ProviderAttemptRecord,
+    *,
+    fail_closed: bool = False,
 ) -> None:
     payload = record.to_dict()
     # Routine logs are an operational state channel, not an exception/body
@@ -907,6 +982,8 @@ def _emit(
         try:
             callback(event, payload)
         except Exception:
+            if fail_closed:
+                raise
             logger.debug("Provider progress callback failed", exc_info=True)
 
 
@@ -947,6 +1024,7 @@ async def run_provider_attempt(
     envelope: ProviderAttemptEnvelope,
     *,
     progress_callback: Optional[Callable[[str, Mapping[str, Any]], None]] = None,
+    progress_start_fail_closed: bool = False,
 ) -> Tuple[Any, ProviderAttemptRecord]:
     """Run one provider dispatch with phased watchdogs and bounded cleanup."""
 
@@ -959,7 +1037,27 @@ async def run_provider_attempt(
     # Logging/output can itself be slow under a captured terminal.  Emit the
     # lifecycle marker before starting the provider clock so observer overhead
     # cannot consume the first-chunk allowance before dispatch is scheduled.
-    _emit(progress_callback, "attempt_started", record)
+    try:
+        _emit(
+            progress_callback,
+            "attempt_started",
+            record,
+            fail_closed=progress_start_fail_closed,
+        )
+    except Exception as exc:
+        record.failure_type = PROVIDER_ATTEMPT_START_PERSISTENCE_FAILED
+        record.failure_detail = type(exc).__name__
+        record.normalized_failure_reason = "attempt_start_persistence_failed"
+        record.exception_at = utc_now()
+        record.attempt_completed_at = utc_now()
+        record.retryable = False
+        record.state = "FAILED_TERMINAL"
+        raise ProviderAttemptFailure(
+            record.failure_type,
+            "provider attempt start could not be persisted",
+            record=record,
+            retryable=False,
+        ) from exc
     started_monotonic = time.monotonic()
     invoke_task = asyncio.create_task(invoke(observer), name=envelope.attempt_id)
     try:
@@ -1038,10 +1136,34 @@ async def run_provider_attempt(
             if invoke_task in done:
                 try:
                     response = invoke_task.result()
-                except asyncio.CancelledError:
+                except asyncio.CancelledError as exc:
                     _apply_observer(record, observer)
                     observer.fence()
-                    raise
+                    current = asyncio.current_task()
+                    if current is not None and current.cancelling():
+                        # Cancellation belongs to the caller.  The outer handler
+                        # owns bounded provider cleanup and emits the durable
+                        # terminal attempt event before propagation.
+                        raise
+                    # The provider/client task cancelled itself while the
+                    # semantic caller remains live.  This is a transport
+                    # outcome, not user cancellation, and is therefore exposed
+                    # through the typed provider-failure contract.
+                    record.failure_type = PROVIDER_CLIENT_CANCELLED
+                    record.failure_detail = "provider/client invocation cancelled itself"
+                    record.retryable = True
+                    record.normalized_failure_reason = "provider_client_cancelled"
+                    record.exception_at = utc_now()
+                    record.cleanup_result = CLEANUP_CONFIRMED
+                    record.attempt_completed_at = utc_now()
+                    record.state = "FAILED_TRANSIENT"
+                    _emit(progress_callback, "attempt_failed", record)
+                    raise ProviderAttemptTimeout(
+                        PROVIDER_CLIENT_CANCELLED,
+                        "provider request was cancelled by the provider/client",
+                        record=record,
+                        retryable=True,
+                    ) from exc
                 except BaseException as exc:
                     _apply_observer(record, observer)
                     observer.fence()
@@ -1086,6 +1208,11 @@ async def run_provider_attempt(
                 observer.complete_from_response(response)
                 observer.fence()
                 _apply_observer(record, observer)
+                record.usage_status, record.provider_usage = (
+                    _response_provider_usage(response)
+                )
+                if record.usage_status != "UNKNOWN":
+                    record.usage_reported_at = utc_now()
                 record.state = "COMPLETED"
                 record.stream_completed = True
                 record.cleanup_result = CLEANUP_NOT_REQUIRED
@@ -1099,15 +1226,47 @@ async def run_provider_attempt(
                 record.state = "STREAM_ACTIVE"
                 _apply_observer(record, observer)
                 _emit(progress_callback, "stream_active", record)
-    except asyncio.CancelledError:
+    except asyncio.CancelledError as exc:
+        cleanup = record.cleanup_result
         if not invoke_task.done():
-            await _cancel_and_drain(
+            cleanup = await _cancel_and_drain(
                 invoke_task,
                 observer,
                 record,
                 policy.cleanup_seconds,
             )
+        else:
+            # Consume a completed task so asyncio does not report an orphaned
+            # exception while the caller's cancellation remains authoritative.
+            try:
+                invoke_task.result()
+            except BaseException:
+                pass
+            cleanup = CLEANUP_NOT_REQUIRED
         observer.fence()
+        _apply_observer(record, observer)
+        record.cancellation_source = "caller"
+        record.retryable = False
+        record.normalized_failure_reason = "caller_cancelled"
+        record.exception_at = record.exception_at or utc_now()
+        if record.stream_started:
+            record.partial_payload_disposition = "discarded_after_caller_cancellation"
+        if cleanup in {CLEANUP_CONFIRMED, CLEANUP_NOT_REQUIRED}:
+            record.failure_type = PROVIDER_CALLER_CANCELLED
+            record.state = "CANCELLED"
+        else:
+            record.caused_by = PROVIDER_CALLER_CANCELLED
+            record.cleanup_failure_type = PROVIDER_CANCEL_CLEANUP_FAILED
+            record.failure_type = PROVIDER_OUTCOME_UNKNOWN
+            record.state = "OUTCOME_UNKNOWN"
+        record.attempt_completed_at = utc_now()
+        _emit(progress_callback, "attempt_cancelled", record)
+        # Preserve the original cancellation identity while allowing the
+        # orchestration adapter to close its durable call manifest.
+        try:
+            setattr(exc, "provider_attempt_record", record)
+        except Exception:
+            pass
         raise
 
 

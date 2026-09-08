@@ -15,6 +15,7 @@ temporary state and use it to turn a rebuilt prompt into a stable
 from copy import deepcopy
 import asyncio
 import hashlib
+import inspect
 import json
 from typing import (
     Any,
@@ -271,6 +272,7 @@ class PhaseProviderContext:
     def __init__(
         self,
         *,
+        task_id: str = "",
         phase_name: str,
         invocation_id: str,
         epoch_ordinal: int,
@@ -278,7 +280,16 @@ class PhaseProviderContext:
         system_message: BaseMessage | None,
         seed_message: BaseMessage | None,
         messages: Sequence[BaseMessage],
+        inherited_messages: Sequence[BaseMessage] = (),
+        inherited_material_descriptors: Sequence[Mapping[str, Any]] = (),
+        inherited_material_records: Sequence[Mapping[str, Any]] = (),
+        compaction_handler: Callable[..., Any] | None = None,
+        compaction_activation_recorder: Callable[..., Any] | None = None,
+        compaction_state: Mapping[str, Any] | None = None,
+        selected_revision: int = 0,
+        invocation_ordinal: int = 0,
     ) -> None:
+        self.task_id = str(task_id or "default")
         self.phase_name = str(phase_name)
         self.invocation_id = str(invocation_id)
         self.epoch_ordinal = int(epoch_ordinal)
@@ -291,11 +302,94 @@ class PhaseProviderContext:
         self.provider_seed_contract = deepcopy(dict(provider_seed_contract))
         self.system_message = system_message
         self.seed_message = seed_message
+        self.inherited_messages = list(inherited_messages)
         self.messages = list(messages)
         self.bootstrap_system: BaseMessage | None = None
         self.bootstrap_seed: BaseMessage | None = None
         self.assistant_response: BaseMessage | None = None
         self.provider_messages: list[BaseMessage] = []
+        self.pending_provider_events: list[BaseMessage] = []
+        self.visible_material_descriptors: list[dict[str, Any]] = []
+        self.inherited_material_descriptors = [
+            deepcopy(dict(item))
+            for item in inherited_material_descriptors or ()
+            if isinstance(item, Mapping)
+        ]
+        self.note_provider_visible_materials(
+            self.inherited_material_descriptors
+        )
+        self.inherited_material_records = [
+            deepcopy(dict(item))
+            for item in inherited_material_records or ()
+            if isinstance(item, Mapping)
+        ]
+        self.compaction_handler = compaction_handler
+        self.compaction_activation_recorder = compaction_activation_recorder
+        self.compaction_state = deepcopy(dict(compaction_state or {}))
+        self.compaction_telemetry: dict[str, Any] = {}
+        self.compaction_triggered = False
+        self.selected_revision = max(0, int(selected_revision or 0))
+        self.invocation_ordinal = max(0, int(invocation_ordinal or 0))
+
+    def note_provider_visible_materials(
+        self, descriptors: Sequence[Mapping[str, Any]]
+    ) -> None:
+        """Bind canonical material descriptors to this prepared request.
+
+        The domain builder calls this only for bodies it actually places in
+        the final wire.  The outer phase owner records the descriptors after a
+        successful assistant response, avoiding the false inference that a
+        stored snapshot was necessarily sent to the provider.
+        """
+
+        for raw in descriptors or ():
+            if not isinstance(raw, Mapping):
+                raise PhaseLoopError(
+                    "PHASE_VISIBLE_MATERIAL_DESCRIPTOR_INVALID",
+                    type(raw).__name__,
+                )
+            item = deepcopy(dict(raw))
+            if item not in self.visible_material_descriptors:
+                self.visible_material_descriptors.append(item)
+
+    def queue_provider_event(
+        self,
+        *,
+        event_id: str,
+        content: str,
+        name: str = "phase_event",
+    ) -> None:
+        """Queue one causal event for the next request and durable suffix.
+
+        ``event_id`` is business identity, not a content hash: replaying the
+        same event is idempotent, while two genuine events with equal text are
+        retained separately.  The event is committed by the local graph only
+        after the turn returns, so request preparation itself has no durable
+        side effect.
+        """
+
+        identity = str(event_id or "").strip()
+        if not identity:
+            raise PhaseLoopError("PHASE_EVENT_ID_REQUIRED")
+        message_id = (
+            f"{self.epoch_id}:event:"
+            + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:24]
+        )
+        candidate = HumanMessage(
+            id=message_id,
+            name=str(name or "phase_event"),
+            content=str(content or ""),
+            additional_kwargs={"phase_event_id": identity},
+        )
+        for prior in [*self.messages, *self.pending_provider_events]:
+            if str(getattr(prior, "id", None) or "") != message_id:
+                continue
+            if provider_visible_payload(prior) != provider_visible_payload(candidate):
+                raise PhaseLoopError(
+                    "PHASE_EVENT_ID_CONFLICT", f"event_id={identity}"
+                )
+            return
+        self.pending_provider_events.append(candidate)
 
     @staticmethod
     def split_prompt(
@@ -324,6 +418,19 @@ class PhaseProviderContext:
             full_prompt, dynamic_markers=dynamic_markers
         )
         return self.prepare_messages(system_prompt, seed_payload)
+
+    async def prepare_split_prompt_with_compaction(
+        self,
+        full_prompt: str,
+        *,
+        dynamic_markers: Sequence[str],
+    ) -> list[BaseMessage]:
+        system_prompt, seed_payload = self.split_prompt(
+            full_prompt, dynamic_markers=dynamic_markers
+        )
+        return await self.prepare_messages_with_compaction(
+            system_prompt, seed_payload
+        )
 
     def prepare_messages(
         self,
@@ -385,29 +492,145 @@ class PhaseProviderContext:
         self.provider_messages = build_provider_messages({
             "system_message": active_system,
             "seed_message": active_seed,
-            "messages": self.messages,
+            "inherited_messages": self.inherited_messages,
+            "messages": [*self.messages, *self.pending_provider_events],
         })
-        if self.seed_message is not None and str(seed_payload or "").strip():
-            # The immutable seed is a provider-prefix contract, not a reason to
-            # hide later local-agent observations.  Rebuilt Planner correction
-            # context is appended as a turn-local observation so validation
-            # evidence, the corrected candidate, and Skill effect contracts are
-            # visible without mutating the original seed.
-            initial_seed = str(getattr(active_seed, "content", "") or "")
-            latest_payload = str(seed_payload).strip()
-            if latest_payload not in initial_seed:
-                self.provider_messages.append(HumanMessage(
-                    id=f"{self.epoch_id}:runtime-observation",
-                    content=(
-                        '<phase_runtime_observation schema_version="1">\n'
-                        + latest_payload
-                        + "\n</phase_runtime_observation>"
-                    ),
-                ))
         assert_v2_llm_messages_clean(
             self.provider_messages,
             stage=f"{self.phase_name}.phase_provider_seed",
         )
+        return list(self.provider_messages)
+
+    async def prepare_messages_with_compaction(
+        self,
+        system_prompt: str,
+        seed_payload: str,
+    ) -> list[BaseMessage]:
+        """Prepare the real wire and compact it at the private phase boundary.
+
+        The synchronous method remains available for legacy/non-schema-2
+        callers and tests.  Production scoped phases use this method so the
+        compactor sees the complete provider request before dispatch.
+        """
+
+        original = self.prepare_messages(system_prompt, seed_payload)
+        if self.compaction_handler is None:
+            return original
+        active_system = self.bootstrap_system or self.system_message
+        active_seed = self.bootstrap_seed or self.seed_message
+        if not isinstance(active_system, BaseMessage) or not isinstance(
+            active_seed, BaseMessage
+        ):
+            raise PhaseLoopError("PHASE_COMPACTION_FIXED_PREFIX_MISSING")
+        prepared = self.compaction_handler(
+            task_id=self.task_id,
+            phase=self.phase_name,
+            invocation_id=self.invocation_id,
+            source_epoch_id=self.epoch_id,
+            system_message=active_system,
+            seed_message=active_seed,
+            inherited_messages=list(self.inherited_messages),
+            local_messages=list(self.messages),
+            pending_messages=list(self.pending_provider_events),
+            material_descriptors=deepcopy(self.inherited_material_records),
+            prior_state=deepcopy(self.compaction_state),
+            selected_revision=self.selected_revision,
+        )
+        if inspect.isawaitable(prepared):
+            prepared = await prepared
+        messages = list(getattr(prepared, "messages", ()) or ())
+        if len(messages) < 2 or not all(
+            isinstance(message, BaseMessage) for message in messages
+        ):
+            raise PhaseLoopError(
+                "PHASE_COMPACTION_RESULT_INVALID", type(prepared).__name__
+            )
+        # Static System and frozen Seed are protocol authority, never model
+        # selected content.  Reject any adapter that changes either one.
+        fixed_provider_message(active_system, messages[0])
+        fixed_provider_message(active_seed, messages[1])
+        assert_v2_llm_messages_clean(
+            messages,
+            stage=f"{self.phase_name}.phase_provider_compacted",
+        )
+        next_compaction_state = deepcopy(
+            dict(getattr(prepared, "state", {}) or {})
+        )
+        next_compaction_telemetry = deepcopy(
+            dict(getattr(prepared, "telemetry", {}) or {})
+        )
+        next_compaction_triggered = bool(
+            getattr(prepared, "triggered", False)
+        )
+        if (
+            self.compaction_activation_recorder is not None
+            and next_compaction_triggered
+            and next_compaction_telemetry.get("compaction_committed") is True
+        ):
+            # The immutable candidate archive is already durable at this
+            # point.  Persist its active pointer and material residency before
+            # exposing the compacted wire to the business provider.  A CAS
+            # failure therefore leaves the previous epoch active and prevents
+            # a request from running against an uncommitted working baseline.
+            recorded = self.compaction_activation_recorder(
+                task_id=self.task_id,
+                phase=self.phase_name,
+                invocation_id=self.invocation_id,
+                invocation_ordinal=self.invocation_ordinal,
+                source_epoch_id=self.epoch_id,
+                selected_revision=max(
+                    int(
+                        next_compaction_state.get(
+                            "effective_selected_revision"
+                        )
+                        or (
+                            next_compaction_state.get("active_pointer") or {}
+                        ).get("selected_revision")
+                        or self.selected_revision
+                    ),
+                    0,
+                ),
+                compaction_state=deepcopy(next_compaction_state),
+                compaction_telemetry=deepcopy(next_compaction_telemetry),
+            )
+            if inspect.isawaitable(recorded):
+                await recorded
+        # Publish the new working baseline only after its durable activation
+        # record has committed.  If the recorder raises, callers retain the
+        # prior context fields and cannot observe or dispatch an uncommitted
+        # candidate wire.
+        self.provider_messages = messages
+        self.compaction_state = next_compaction_state
+        self.compaction_telemetry = next_compaction_telemetry
+        self.compaction_triggered = next_compaction_triggered
+        # A capacity-pressure plan may replace an inherited exact source with
+        # a lossy summary.  Visibility receipts must describe the final wire,
+        # not the pre-compaction candidate request.  Descriptors added later
+        # by the phase (for example a document embedded in its frozen Seed)
+        # remain valid because fixed components cannot be model-disposed.
+        final_ids = {
+            str(getattr(message, "id", None) or "")
+            for message in messages
+            if str(getattr(message, "id", None) or "")
+        }
+        retained_inherited_descriptors = [
+            descriptor
+            for message, descriptor in zip(
+                self.inherited_messages,
+                self.inherited_material_descriptors,
+            )
+            if str(getattr(message, "id", None) or "") in final_ids
+        ]
+        phase_local_descriptors = [
+            descriptor
+            for descriptor in self.visible_material_descriptors
+            if descriptor not in self.inherited_material_descriptors
+        ]
+        self.visible_material_descriptors = []
+        self.note_provider_visible_materials([
+            *retained_inherited_descriptors,
+            *phase_local_descriptors,
+        ])
         return list(self.provider_messages)
 
     def record_assistant_response(self, message: BaseMessage) -> None:
@@ -437,6 +660,17 @@ class PhaseProviderContext:
             "provider_seed_contract_sha256": _digest_json(
                 self.provider_seed_contract
             ),
+            "inherited_message_count": len(self.inherited_messages),
+            "pending_event_count": len(self.pending_provider_events),
+            "visible_material_descriptors": deepcopy(
+                self.visible_material_descriptors
+            ),
+            "provider_request_fingerprint": _digest_json([
+                provider_visible_payload(message)
+                for message in self.provider_messages
+            ]),
+            "context_compaction_triggered": self.compaction_triggered,
+            "context_compaction": deepcopy(self.compaction_telemetry),
         }
 
 
@@ -448,10 +682,9 @@ def phase_provider_context(state: Mapping[str, Any]) -> PhaseProviderContext | N
 def manifest_only_skill_context(value: Mapping[str, Any] | None) -> dict[str, Any]:
     """Project Skill identity/headings without passively injecting excerpts.
 
-    A scoped Planner receives exact Skill text only as the append-only result of
-    an explicit Skill inspection action.  Previously loaded excerpts and tool
-    results remain durable domain state, but are not copied into a fresh phase
-    seed merely because another node loaded them earlier.
+    Exact selected material is carried in the dedicated inherited input region,
+    not duplicated inside the dynamic NodeContext/Seed projection.  New reads
+    still arrive as append-only local events.
     """
 
     source = dict(value or {})
@@ -473,6 +706,7 @@ def _normalize_turn_messages(
     context: PhaseProviderContext,
     existing_count: int,
 ) -> list[BaseMessage]:
+    pending = list(context.pending_provider_events)
     source: list[BaseMessage] = []
     recorded = context.assistant_response
     if recorded is not None:
@@ -490,9 +724,12 @@ def _normalize_turn_messages(
             continue
         source.append(message)
 
-    normalized: list[BaseMessage] = []
+    normalized: list[BaseMessage] = [deepcopy(message) for message in pending]
     for offset, message in enumerate(source):
-        message_id = f"{context.epoch_id}:message:{existing_count + offset:06d}"
+        message_id = (
+            f"{context.epoch_id}:message:"
+            f"{existing_count + len(pending) + offset:06d}"
+        )
         normalized.append(
             _as_provider_observation(message, message_id=message_id)
         )
@@ -502,10 +739,16 @@ def _normalize_turn_messages(
 class _PhaseLoopInput(TypedDict):
     phase_name: str
     invocation_id: str
+    invocation_ordinal: int
     epoch_ordinal: int
     seed_contract: dict[str, Any]
     provider_seed_contract: dict[str, Any]
+    inherited_messages: list[BaseMessage]
+    inherited_material_descriptors: list[dict[str, Any]]
+    inherited_material_records: list[dict[str, Any]]
+    selected_revision: int
     parent_snapshot: dict[str, Any]
+    compaction_state: dict[str, Any]
 
 
 class _PhaseLoopOutput(TypedDict, total=False):
@@ -518,9 +761,14 @@ class _PhaseLoopOutput(TypedDict, total=False):
 class _PhaseLoopState(TypedDict, total=False):
     phase_name: str
     invocation_id: str
+    invocation_ordinal: int
     epoch_ordinal: int
     seed_contract: dict[str, Any]
     provider_seed_contract: dict[str, Any]
+    inherited_messages: list[BaseMessage]
+    inherited_material_descriptors: list[dict[str, Any]]
+    inherited_material_records: list[dict[str, Any]]
+    selected_revision: int
     parent_snapshot: dict[str, Any]
     working_update: dict[str, Any]
     system_message: FixedProviderMessage
@@ -533,13 +781,102 @@ class _PhaseLoopState(TypedDict, total=False):
     phase_audit: dict[str, Any]
     transcript_ref: str
     epoch_boundary: bool
+    compaction_state: dict[str, Any]
+    provider_transcript_messages: list[BaseMessage]
 
 
 TurnHandler = Callable[[Mapping[str, Any]], Awaitable[Mapping[str, Any]]]
 SeedFactory = Callable[[Mapping[str, Any]], Mapping[str, Any]]
 SeedProjector = Callable[[Mapping[str, Any]], Mapping[str, Any]]
 ParentProjector = Callable[[Mapping[str, Any]], Mapping[str, Any]]
+InheritedMaterialFactory = Callable[
+    [Mapping[str, Any]], Sequence[Mapping[str, Any]]
+]
+SelectedRevisionFactory = Callable[[Mapping[str, Any]], int]
+MaterialVisibilityRecorder = Callable[..., Mapping[str, Any] | None]
+PhaseCompactionHandler = Callable[..., Any]
+PhaseCompactionActivationRecorder = Callable[..., Mapping[str, Any] | None]
 ArchiveWriter = Callable[..., str]
+
+
+def inherited_skill_material_messages(
+    materials: Sequence[Mapping[str, Any]],
+    *,
+    epoch_id: str,
+) -> list[HumanMessage]:
+    """Render verified carry records as ordinary, frozen source messages."""
+
+    result: list[HumanMessage] = []
+    seen: set[str] = set()
+    for index, raw in enumerate(materials or ()):
+        if not isinstance(raw, Mapping):
+            raise PhaseLoopError(
+                "PHASE_INHERITED_MATERIAL_INVALID",
+                f"materials[{index}] is {type(raw).__name__}",
+            )
+        item = deepcopy(dict(raw))
+        material_id = str(item.get("material_id") or "").strip()
+        residency = str(item.get("residency") or "exact").strip()
+        if not material_id or residency not in {
+            "exact", "summarized", "externalized",
+        }:
+            raise PhaseLoopError(
+                "PHASE_INHERITED_MATERIAL_INVALID",
+                f"materials[{index}] lacks valid identity/residency",
+            )
+        if material_id in seen:
+            continue
+        seen.add(material_id)
+        metadata = {
+            key: deepcopy(value)
+            for key, value in item.items()
+            if key not in {"body", "summary", "missing_details"}
+            and value not in (None, "", [], {})
+        }
+        metadata_json = json.dumps(
+            metadata,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+        if residency == "exact":
+            if "body" not in item:
+                raise PhaseLoopError(
+                    "PHASE_INHERITED_MATERIAL_BODY_MISSING", material_id
+                )
+            body = str(item.get("body") or "")
+            content = (
+                '<inherited_skill_material schema_version="1">\n'
+                + metadata_json
+                + "\n---BEGIN EXACT SOURCE BODY---\n"
+                + body
+                + "\n---END EXACT SOURCE BODY---\n"
+                + "</inherited_skill_material>"
+            )
+        else:
+            summary = str(item.get("summary") or "").strip()
+            retrieval_ref = str(item.get("retrieval_ref") or "").strip()
+            if not summary or not retrieval_ref:
+                raise PhaseLoopError(
+                    "PHASE_INHERITED_MATERIAL_RECOVERY_MISSING", material_id
+                )
+            content = (
+                '<inherited_skill_material_state schema_version="1">\n'
+                + metadata_json
+                + "\n<summary>\n"
+                + summary
+                + "\n</summary>\n<missing_details>\n"
+                + str(item.get("missing_details") or "")
+                + "\n</missing_details>\n"
+                + "</inherited_skill_material_state>"
+            )
+        result.append(HumanMessage(
+            id=f"{epoch_id}:inherited:{material_id}",
+            name="inherited_skill_material",
+            content=content,
+        ))
+    return result
 
 
 def archive_writer_for_store(store: PhaseArchiveStore) -> ArchiveWriter:
@@ -634,6 +971,9 @@ def _build_epoch_graph(
     continue_types: frozenset[str],
     max_turns: int,
     archive_writer: ArchiveWriter | None,
+    material_visibility_recorder: MaterialVisibilityRecorder | None,
+    compaction_handler: PhaseCompactionHandler | None,
+    compaction_activation_recorder: PhaseCompactionActivationRecorder | None,
 ):
     async def run_turn(state: _PhaseLoopState) -> dict[str, Any]:
         parent_snapshot = dict(state.get("parent_snapshot") or {})
@@ -654,8 +994,10 @@ def _build_epoch_graph(
                 f"received {type(raw_provider_seed).__name__}",
             )
         context = PhaseProviderContext(
+            task_id=str(parent_snapshot.get("task_id") or "default"),
             phase_name=phase_name,
             invocation_id=str(state.get("invocation_id") or ""),
+            invocation_ordinal=int(state.get("invocation_ordinal") or 0),
             epoch_ordinal=int(state.get("epoch_ordinal") or 1),
             provider_seed_contract=raw_provider_seed,
             system_message=(
@@ -666,6 +1008,32 @@ def _build_epoch_graph(
             seed_message=(
                 seed_message if isinstance(seed_message, BaseMessage) else None
             ),
+            inherited_messages=[
+                message
+                for message in state.get("inherited_messages") or []
+                if isinstance(message, BaseMessage)
+            ],
+            inherited_material_descriptors=[
+                dict(item)
+                for item in state.get("inherited_material_descriptors") or []
+                if isinstance(item, Mapping)
+            ],
+            inherited_material_records=[
+                dict(item)
+                for item in state.get("inherited_material_records") or []
+                if isinstance(item, Mapping)
+            ],
+            compaction_handler=compaction_handler,
+            compaction_activation_recorder=compaction_activation_recorder,
+            compaction_state=dict(state.get("compaction_state") or {}),
+            selected_revision=max((
+                int(state.get("selected_revision") or 0),
+                *[
+                    int(item.get("selected_at_task_revision") or 0)
+                    for item in state.get("inherited_material_records") or []
+                    if isinstance(item, Mapping)
+                ],
+            )),
             messages=existing_messages,
         )
         working[PHASE_CONTEXT_RUNTIME_KEY] = context
@@ -695,6 +1063,26 @@ def _build_epoch_graph(
                 f"{phase_name} returned {type(raw).__name__}",
             )
         result = dict(raw)
+        turn_audit = context.audit()
+        if (
+            material_visibility_recorder is not None
+            and context.assistant_response is not None
+            and context.visible_material_descriptors
+        ):
+            recorded = material_visibility_recorder(
+                phase=phase_name,
+                invocation_id=str(state.get("invocation_id") or ""),
+                epoch_id=context.epoch_id,
+                request_fingerprint=str(
+                    turn_audit.get("provider_request_fingerprint") or ""
+                ),
+                descriptors=deepcopy(context.visible_material_descriptors),
+                parent_state=deepcopy(parent_snapshot),
+            )
+            if inspect.isawaitable(recorded):
+                recorded = await recorded
+            if isinstance(recorded, Mapping):
+                result.update(deepcopy(dict(recorded)))
         raw_outcome = result.get(outcome_field)
         outcome = (
             raw_outcome
@@ -710,6 +1098,19 @@ def _build_epoch_graph(
             context=context,
             existing_count=len(existing_messages),
         )
+        provider_transcript = list(context.provider_messages)
+        provider_ids = {
+            str(getattr(message, "id", None) or "")
+            for message in provider_transcript
+            if str(getattr(message, "id", None) or "")
+        }
+        for addition in additions:
+            message_id = str(getattr(addition, "id", None) or "")
+            if message_id and message_id in provider_ids:
+                continue
+            provider_transcript.append(addition)
+            if message_id:
+                provider_ids.add(message_id)
         update: dict[str, Any] = {
             "working_update": next_working,
             "latest_outcome": outcome.to_dict(),
@@ -717,7 +1118,13 @@ def _build_epoch_graph(
             "turn_count": int(state.get("turn_count") or 0) + 1,
             "provider_call_count": int(state.get("provider_call_count") or 0)
             + (1 if context.provider_messages else 0),
+            "phase_audit": {
+                **dict(state.get("phase_audit") or {}),
+                "last_provider_request": turn_audit,
+            },
             "epoch_boundary": False,
+            "compaction_state": deepcopy(context.compaction_state),
+            "provider_transcript_messages": provider_transcript,
         }
         if context.bootstrap_system is not None:
             update["system_message"] = context.bootstrap_system
@@ -763,13 +1170,26 @@ def _build_epoch_graph(
         wait indefinitely while finalizing a synchronous terminal node.
         """
         transcript: list[dict[str, Any]] = []
-        for message in (
-            state.get("system_message"),
-            state.get("seed_message"),
-            *list(state.get("messages") or []),
-        ):
+        actual_transcript = list(state.get("provider_transcript_messages") or [])
+        if not actual_transcript:
+            actual_transcript = [
+                state.get("system_message"),
+                state.get("seed_message"),
+                *list(state.get("inherited_messages") or []),
+                *list(state.get("messages") or []),
+            ]
+        for message in actual_transcript:
             if isinstance(message, BaseMessage):
-                transcript.append(provider_visible_payload(message))
+                archived = provider_visible_payload(message)
+                archived["message_id"] = str(
+                    getattr(message, "id", None) or ""
+                )
+                archived["content_sha256"] = hashlib.sha256(
+                    str(getattr(message, "content", "") or "").encode(
+                        "utf-8", errors="replace"
+                    )
+                ).hexdigest()
+                transcript.append(archived)
         latest = dict(state.get("latest_outcome") or {})
         audit = {
             **dict(state.get("phase_audit") or {}),
@@ -780,6 +1200,9 @@ def _build_epoch_graph(
             "turn_count": int(state.get("turn_count") or 0),
             "provider_call_count": int(state.get("provider_call_count") or 0),
             "provider_message_count": len(transcript),
+            "inherited_message_count": len(
+                list(state.get("inherited_messages") or [])
+            ),
             "seed_contract_sha256": _digest_json(
                 state.get("seed_contract") or {}
             ),
@@ -841,6 +1264,11 @@ def build_scoped_phase_node(
     continue_types: Sequence[str],
     seed_factory: SeedFactory,
     provider_seed_projector: SeedProjector,
+    inherited_material_factory: InheritedMaterialFactory | None = None,
+    selected_revision_factory: SelectedRevisionFactory | None = None,
+    material_visibility_recorder: MaterialVisibilityRecorder | None = None,
+    compaction_handler: PhaseCompactionHandler | None = None,
+    compaction_activation_recorder: PhaseCompactionActivationRecorder | None = None,
     parent_projector: ParentProjector | None = None,
     max_turns: int = 32,
     max_epochs: int = 4,
@@ -862,6 +1290,9 @@ def build_scoped_phase_node(
         continue_types=continuing,
         max_turns=max_turns,
         archive_writer=archive_writer,
+        material_visibility_recorder=material_visibility_recorder,
+        compaction_handler=compaction_handler,
+        compaction_activation_recorder=compaction_activation_recorder,
     )
 
     async def scoped_node(
@@ -928,12 +1359,74 @@ def build_scoped_phase_node(
             "seed_contract": seed_contract,
         }
         invocation_id = f"{phase}-" + _digest_json(identity)[:24]
+        try:
+            inherited_materials = list(
+                inherited_material_factory(parent)
+                if inherited_material_factory is not None
+                else ()
+            )
+        except GraphBubbleUp:
+            raise
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            error_code = str(
+                getattr(exc, "error_code", None)
+                or getattr(exc, "code", None)
+                or "PHASE_INHERITED_MATERIAL_PROJECTION_FAILED"
+            )
+            return {
+                outcome_field: _harness_outcome(
+                    outcome_contract,
+                    task_id=str(parent.get("task_id") or "default"),
+                    code=error_code,
+                    detail=f"{type(exc).__name__}: {exc}",
+                    exception_class=type(exc).__name__,
+                ),
+            }
+        try:
+            selected_revision = max((
+                int(
+                    selected_revision_factory(parent)
+                    if selected_revision_factory is not None
+                    else 0
+                ),
+                *[
+                    int(item.get("selected_at_task_revision") or 0)
+                    for item in inherited_materials
+                    if isinstance(item, Mapping)
+                ],
+            ))
+        except GraphBubbleUp:
+            raise
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            error_code = str(
+                getattr(exc, "error_code", None)
+                or getattr(exc, "code", None)
+                or "PHASE_SELECTION_REVISION_PROJECTION_FAILED"
+            )
+            return {
+                outcome_field: _harness_outcome(
+                    outcome_contract,
+                    task_id=str(parent.get("task_id") or "default"),
+                    code=error_code,
+                    detail=f"{type(exc).__name__}: {exc}",
+                    exception_class=type(exc).__name__,
+                ),
+            }
         combined_update: dict[str, Any] = {}
         epoch_audits: list[dict[str, Any]] = []
         transcript_refs: list[str] = []
         final_result: dict[str, Any] = {}
 
         for epoch_ordinal in range(1, max_epochs + 1):
+            epoch_id = f"{invocation_id}:e{epoch_ordinal}"
+            inherited_messages = inherited_skill_material_messages(
+                inherited_materials,
+                epoch_id=epoch_id,
+            )
             child_config = dict(config or {})
             child_config["recursion_limit"] = max(
                 int(child_config.get("recursion_limit") or 0),
@@ -943,10 +1436,41 @@ def build_scoped_phase_node(
                 {
                     "phase_name": phase,
                     "invocation_id": invocation_id,
+                    "invocation_ordinal": invocation_ordinal,
                     "epoch_ordinal": epoch_ordinal,
                     "seed_contract": seed_contract,
                     "provider_seed_contract": provider_seed_contract,
+                    "inherited_messages": inherited_messages,
+                    "inherited_material_descriptors": [
+                        (
+                            {
+                                "kind": "excerpt",
+                                "excerpt_id": str(item.get("excerpt_id") or ""),
+                                "content_hash": str(item.get("content_hash") or ""),
+                            }
+                            if str(item.get("excerpt_id") or "")
+                            else {
+                                "kind": "skill_document",
+                                "snapshot_id": str(item.get("snapshot_id") or ""),
+                                "content_hash": str(item.get("content_hash") or ""),
+                            }
+                        )
+                        for item in inherited_materials
+                        if isinstance(item, Mapping)
+                        and str(item.get("residency") or "exact") == "exact"
+                    ],
+                    "inherited_material_records": [
+                        {
+                            key: deepcopy(value)
+                            for key, value in dict(item).items()
+                            if key != "body"
+                        }
+                        for item in inherited_materials
+                        if isinstance(item, Mapping)
+                    ],
+                    "selected_revision": selected_revision,
                     "parent_snapshot": {**parent, **combined_update},
+                    "compaction_state": {},
                 },
                 config=child_config,
             )
@@ -996,11 +1520,16 @@ __all__ = [
     "PHASE_LOOP_SCHEMA_VERSION",
     "ParentProjector",
     "SeedProjector",
+    "InheritedMaterialFactory",
+    "SelectedRevisionFactory",
+    "MaterialVisibilityRecorder",
+    "PhaseCompactionHandler",
     "PhaseEpochBoundaryRequired",
     "PhaseLoopError",
     "PhaseProviderContext",
     "archive_writer_for_store",
     "build_scoped_phase_node",
+    "inherited_skill_material_messages",
     "manifest_only_skill_context",
     "phase_provider_context",
     "project_phase_seed_for_provider",

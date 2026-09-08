@@ -6,6 +6,8 @@ from langgraph.graph.message import add_messages
 class AgentState(TypedDict, total=False):
     # Sticky graph schema.  Historical checkpoints omit it and therefore stay
     # on legacy Controller routing (schema 1).
+    managed_run_boundary: dict
+    managed_terminal_projection: dict
     workflow_routing_schema_version: int
     messages: Annotated[List[BaseMessage], add_messages]
     next_step: Optional[str]
@@ -36,6 +38,7 @@ class AgentState(TypedDict, total=False):
     skill_access_state: dict
     skill_continuation_id: Optional[str]
     skill_decision_result: dict
+    skill_resolution_transition: dict
     pending_skill_binding_proposal: dict
     pending_plan_impact_review: dict
     plan_impact_review: dict
@@ -173,8 +176,10 @@ class AgentState(TypedDict, total=False):
     knowledge_progress_events: List[dict]
     conflict_resolution: dict
     plan_revision: int
+    plan_id: Optional[str]
     plan_revision_result: dict
     plan_version: Optional[str]
+    state_generation: int
     revision_status: Optional[str]
     approval_status: Optional[str]
     execution_status: Optional[str]
@@ -215,6 +220,14 @@ class AgentState(TypedDict, total=False):
     provenance_state_path: Optional[str]
     llm_call_refs: List[dict]
     context_lineage_ref: Optional[str]
+    # Schema-2 phase loops keep their model transcripts in private subgraphs.
+    # The parent graph receives only bounded audit/archive references.
+    phase_invocation_ordinals: dict
+    phase_context_audit: dict
+    phase_archive_refs: dict
+    # Public terminal Consultant payload; unlike the private local transcript,
+    # this bounded answer receipt is part of the parent/API contract.
+    consultation_answer: dict
     step_worker_request: dict
     step_worker_outcome: dict
     step_worker_attempt_ordinal: int

@@ -801,9 +801,19 @@ class RunProfiler:
             },
         }
 
-    def finish_task(self, task_id: str, status: str = "completed") -> None:
+    def finish_task(
+        self,
+        task_id: str,
+        status: str = "completed",
+        *,
+        terminal_projection: Optional[Mapping[str, Any]] = None,
+    ) -> None:
         task = self._ensure_task(task_id)
-        self._reconcile_durable_terminal_projection(task_id, status)
+        self._reconcile_durable_terminal_projection(
+            task_id,
+            status,
+            terminal_projection=terminal_projection,
+        )
         task["status"] = status
         task["ended_at"] = _now_iso()
         task["last_updated_at"] = task["ended_at"]
@@ -1414,6 +1424,10 @@ class RunProfiler:
         if not isinstance(data, dict):
             return {}
         task_state = data.get("task_state") if isinstance(data.get("task_state"), dict) else {}
+        from agent_core.workflow.managed_stop import current_managed_stop, projection
+        common = current_managed_stop(data)
+        if common:
+            return projection(common)
         consultation = (
             task_state.get("consultation_state")
             if isinstance(task_state.get("consultation_state"), dict)
@@ -1440,6 +1454,31 @@ class RunProfiler:
             (_dedupe_text(candidate) for candidate in skill_candidates if _dedupe_text(candidate)),
             [],
         )
+        lineage_primary_failure = next(
+            (
+                dict(candidate)
+                for candidate in (
+                    data.get("primary_failure"),
+                    task_state.get("primary_failure"),
+                    data.get("failure"),
+                )
+                if isinstance(candidate, Mapping)
+                and str(candidate.get("error_code") or "")
+            ),
+            {},
+        )
+        durable_terminal_failure = next(
+            (
+                dict(candidate)
+                for candidate in (
+                    data.get("terminal_failure"),
+                    task_state.get("terminal_failure"),
+                )
+                if isinstance(candidate, Mapping)
+                and str(candidate.get("error_code") or "")
+            ),
+            {},
+        )
         durable_failure = (
             dict(data.get("failure") or {})
             if isinstance(data.get("failure"), Mapping)
@@ -1465,6 +1504,7 @@ class RunProfiler:
             # terminal diagnosis for a later, unrelated outcome.
             durable_failure = {}
         diagnostic_candidates = (
+            durable_terminal_failure,
             durable_failure,
             planning_terminal,
             task_state.get("terminal_diagnostic"),
@@ -1475,19 +1515,36 @@ class RunProfiler:
             (dict(candidate) for candidate in diagnostic_candidates if isinstance(candidate, Mapping) and candidate),
             {},
         )
-        if durable_failure:
+        source_failure = durable_terminal_failure or durable_failure
+        if source_failure:
             diagnostic.setdefault(
                 "error_owner",
-                str(durable_failure.get("owner") or durable_failure.get("error_owner") or ""),
+                str(source_failure.get("owner") or source_failure.get("error_owner") or ""),
             )
             diagnostic.setdefault(
                 "stage",
-                str(durable_failure.get("stage") or durable_failure.get("failure_stage") or ""),
+                str(source_failure.get("stage") or source_failure.get("failure_stage") or ""),
             )
             diagnostic.setdefault(
                 "detail",
-                str(durable_failure.get("message") or durable_failure.get("detail") or ""),
+                str(source_failure.get("detail") or source_failure.get("message") or ""),
             )
+        if durable_terminal_failure and lineage_primary_failure:
+            terminal_failure_id = str(
+                durable_terminal_failure.get("failure_id") or ""
+            )
+            lineage_failure_id = str(
+                lineage_primary_failure.get("failure_id") or ""
+            )
+            same_failure = (
+                bool(terminal_failure_id and lineage_failure_id)
+                and terminal_failure_id == lineage_failure_id
+            ) or durable_terminal_failure == lineage_primary_failure
+            if not same_failure:
+                diagnostic.setdefault(
+                    "lineage_primary_cause",
+                    lineage_primary_failure,
+                )
         if not diagnostic and str(task_state.get("status_reason") or "").strip():
             diagnostic = {
                 "error_code": f"TASK_{str(task_state.get('status') or 'terminal').upper()}",
@@ -1545,8 +1602,36 @@ class RunProfiler:
             }),
         }
 
-    def _reconcile_durable_terminal_projection(self, task_id: str, status: str) -> None:
-        projection = self._durable_terminal_projection(task_id)
+    def _reconcile_durable_terminal_projection(
+        self,
+        task_id: str,
+        status: str,
+        *,
+        terminal_projection: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        durable = self._durable_terminal_projection(task_id)
+        explicit = dict(terminal_projection or {})
+        projection = dict(durable)
+        if explicit:
+            # A terminal graph outcome is newer and more specific than an
+            # incomplete-Plan fallback.  Durable skill identities and evidence
+            # may still supplement it, but cannot replace its diagnosis.
+            projection = {
+                "selected_skills": (
+                    explicit.get("selected_skills")
+                    or durable.get("selected_skills")
+                    or []
+                ),
+                "terminal_diagnostic": (
+                    explicit.get("terminal_diagnostic")
+                    or durable.get("terminal_diagnostic")
+                    or {}
+                ),
+                "evidence_refs": _dedupe_text([
+                    *_ensure_list(explicit.get("evidence_refs")),
+                    *_ensure_list(durable.get("evidence_refs")),
+                ]),
+            }
         if not projection and str(status or "").strip().lower() not in {
             "blocked", "failed", "cancelled", "timeout", "interrupted",
         }:
@@ -1557,6 +1642,11 @@ class RunProfiler:
             terminal_diagnostic=projection.get("terminal_diagnostic") or {},
             evidence_refs=projection.get("evidence_refs") or [],
             selected_skills=projection.get("selected_skills") or [],
+            node=(
+                "typed_generate_terminal_projection"
+                if explicit
+                else "terminal_projection"
+            ),
         )
 
     def flush(self, task_id: str) -> Optional[Path]:

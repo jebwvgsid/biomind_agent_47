@@ -832,8 +832,52 @@ def validate_concrete_action_artifacts(
         elif isinstance(value, str):
             yield field_path or "$", value
 
-    scalar_rows = list(walk(validated, "$"))
+    authoritative_fields = (
+        "$.argv", "$.env", "$.code", "$.command", "$.script",
+        "$.executable", "$.working_directory", "$.cwd",
+    )
+    scalar_rows = [
+        (field_path, value)
+        for field_path, value in walk(validated, "$")
+        if field_path.startswith(authoritative_fields)
+    ]
+    script_protocol = str(validated.get("script_adapter") or "") == "script_block_v1"
+
+    def authoritative_scalar(field_path: str, value: str) -> bool:
+        """Return whether a scalar has typed executable semantics.
+
+        A script-block body is deliberately opaque source owned by Generate.
+        It may be inspected for diagnostics, but lexical tokens inside it are
+        not typed artifact references.  argv[2] is the byte-identical adapter
+        copy of that same body and must follow the same rule.  Structured
+        argv/env fields remain authoritative and retain the hard check.
+        """
+
+        if not script_protocol:
+            return True
+        if field_path in {"$.code", "$.script"}:
+            return False
+        return not (
+            field_path == "$.argv[2]"
+            and value == str(validated.get("code") or "")
+        )
+
+    raw_source_references: List[Tuple[str, str, str]] = []
     for field_path, value in scalar_rows:
+        if not authoritative_scalar(field_path, value):
+            if field_path == "$.code":
+                for match in _UNRESOLVED_ARTIFACT_REFERENCE_RE.finditer(value):
+                    direction = match.group("direction")
+                    identity = match.group("identity")
+                    semantic_handle = (
+                        f"{direction}.{identity}"
+                        if direction in {"input", "output"}
+                        else f"artifact.{identity}"
+                    )
+                    raw_source_references.append(
+                        (semantic_handle, match.group(0), field_path)
+                    )
+            continue
         for match in _UNRESOLVED_ARTIFACT_REFERENCE_RE.finditer(value):
             direction = match.group("direction")
             identity = match.group("identity")
@@ -911,6 +955,35 @@ def validate_concrete_action_artifacts(
                 "artifact_identity": binding.semantic_handle,
                 "concrete_path": path,
             },
+        ))
+
+    # A lexical token in an opaque script body is not independently
+    # authoritative when that same binding is already referenced by its
+    # concrete path.  If the concrete binding is absent, retain the hard
+    # pre-action rejection so a placeholder cannot stand in for the required
+    # executable value.
+    for semantic_handle, token, field_path in raw_source_references:
+        if semantic_handle in used_handles:
+            continue
+        binding = bindings.get(semantic_handle)
+        violations.append(_violation(
+            code="UNRESOLVED_ARTIFACT_REFERENCE",
+            owner="GENERATED_ACTION",
+            route="generate",
+            message=(
+                "Executable action contains an unresolved artifact reference; "
+                "Generate must emit the supplied concrete path."
+            ),
+            binding=binding,
+            artifact_handle=semantic_handle,
+            proposed=token,
+            field_path=field_path,
+            failure_stage="pre_action_contract",
+            repair_hint={
+                "strategy": "replace_with_concrete_path",
+                "artifact_identity": semantic_handle,
+            },
+            offending_placeholders=(token,),
         ))
 
     referenced_outputs = sorted(

@@ -91,6 +91,7 @@ class Schema2ProductionGraphTests(unittest.IsolatedAsyncioTestCase):
         ]
         poison = {
             "next_step": "finish",
+            "next_node": "finish",
             "proposed_route": "finish",
             "effective_route": "finish",
             "dispatch_route": "finish",

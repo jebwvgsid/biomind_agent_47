@@ -1,0 +1,420 @@
+{
+  "schema_version": 1,
+  "source_session": "session_1788681718",
+  "source_plan_state_file_sha256": "3b32750de857d48686064d0ee3e092dd901594fdede33f61c7ab4a3bb60fc3c1",
+  "source_identity": {
+    "plan_id": "plan_d9baa036946d09cf6c29",
+    "plan_version": "plan_v1",
+    "plan_revision": 1,
+    "approved_plan_semantic_hash": "sha256:b136c5a90b1ef445b44c4b6ad2c401db74e82abc59abf635fbbbd77a2fd5717f",
+    "approval_id": "approval-749b568a24b9f26b4355",
+    "current_step_id": "step.check_contigs",
+    "selected_skill_ids": [
+      "genomics/snpeff-annotation"
+    ]
+  },
+  "task_inputs": [
+    {
+      "artifact_id": "artifact-508d45c7878a6e80fe61",
+      "semantic_handle": "input.variant_vcf",
+      "role": "variant_vcf",
+      "required": true
+    },
+    {
+      "artifact_id": "artifact-3249dbdf634c89efa2f1",
+      "semantic_handle": "input.reference_fasta",
+      "role": "reference_fasta",
+      "required": true
+    },
+    {
+      "artifact_id": "artifact-8415fe22d2eb9615d68f",
+      "semantic_handle": "input.annotation_gtf",
+      "role": "annotation_gtf",
+      "required": true
+    }
+  ],
+  "candidate": {
+    "steps": [
+      {
+        "step_id": "step.check_contigs",
+        "title": "Check chromosome/contig compatibility across VCF, FASTA, and GTF",
+        "action": "execute",
+        "purpose": "validation",
+        "tool": "bash",
+        "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+        "operation": "check_contig_compatibility",
+        "inputs": [
+          "artifact-508d45c7878a6e80fe61",
+          "artifact-3249dbdf634c89efa2f1",
+          "artifact-8415fe22d2eb9615d68f"
+        ],
+        "outputs": [],
+        "produces_bindings": [],
+        "produces_observations": [
+          "contigs_compatible"
+        ],
+        "workspace_mutations": [],
+        "explicit_side_effects": [],
+        "dependencies": [],
+        "success_criteria": [
+          "Contig identifier sets extracted from VCF header, FASTA headers, and GTF column 1",
+          "All VCF contigs present in both FASTA and GTF, or mismatch explicitly recorded as blocking",
+          "No blind chr-prefix patching performed"
+        ],
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "workflow_stage_ids": [],
+        "batch_id": "",
+        "risk_level": "high"
+      },
+      {
+        "step_id": "step.prepare_database",
+        "title": "Prepare task-local snpEff config and database layout with declared genome-version",
+        "action": "execute",
+        "purpose": "analysis",
+        "tool": "bash",
+        "execution_capability_id": "genomics.snpeff_annotation.prepare_database",
+        "operation": "prepare_database",
+        "inputs": [
+          "artifact-3249dbdf634c89efa2f1",
+          "artifact-8415fe22d2eb9615d68f"
+        ],
+        "outputs": [
+          "plan-artifact-fda0859fce2fece52ffc32cb"
+        ],
+        "produces_bindings": [
+          "genome_version",
+          "snpeff_db"
+        ],
+        "produces_observations": [
+          "database_layout_prepared"
+        ],
+        "workspace_mutations": [
+          {
+            "identity": "artifact.snpeff_data_dir",
+            "available_after_success": true,
+            "contract_revision": "snpeff-workspace-transition-v1",
+            "contract_source": "genomics.snpeff_annotation.prepare_database.workspace_mutations",
+            "declared_resource_ref": "plan.snpeff_data_dir",
+            "establishes_state": "database_layout_prepared",
+            "mutation": "prepare_database",
+            "requires_available": false,
+            "requires_state": ""
+          }
+        ],
+        "explicit_side_effects": [],
+        "dependencies": [
+          "step.check_contigs"
+        ],
+        "success_criteria": [
+          "One stable genome-version chosen from the exact reference/annotation release and declared as produced binding",
+          "snpEff config written with <genome-version>.genome entry",
+          "data/<genome-version>/genes.gtf and data/genomes/<genome-version>.fa staged from the provided inputs",
+          "snpeff_db binding declared pointing to the task-local data directory"
+        ],
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "workflow_stage_ids": [],
+        "batch_id": "",
+        "risk_level": "medium"
+      },
+      {
+        "step_id": "step.build_database",
+        "title": "Build custom snpEff database from staged FASTA and GTF",
+        "action": "execute",
+        "purpose": "install",
+        "tool": "bash",
+        "execution_capability_id": "genomics.snpeff_annotation.build_database",
+        "operation": "build_database",
+        "inputs": [
+          "artifact-3249dbdf634c89efa2f1",
+          "artifact-8415fe22d2eb9615d68f",
+          "plan-artifact-fda0859fce2fece52ffc32cb"
+        ],
+        "outputs": [],
+        "produces_bindings": [],
+        "produces_observations": [
+          "snpeff_database_ready"
+        ],
+        "workspace_mutations": [
+          {
+            "identity": "artifact.snpeff_data_dir",
+            "available_after_success": true,
+            "contract_revision": "snpeff-workspace-transition-v1",
+            "contract_source": "genomics.snpeff_annotation.build_database.workspace_mutations",
+            "declared_resource_ref": "plan.snpeff_data_dir",
+            "establishes_state": "snpeff_database_ready",
+            "mutation": "build_database",
+            "requires_available": true,
+            "requires_state": "database_layout_prepared"
+          }
+        ],
+        "explicit_side_effects": [],
+        "dependencies": [
+          "step.prepare_database"
+        ],
+        "success_criteria": [
+          "snpEff build invoked with -gtf22 using the verified Java and JAR paths",
+          "Core predictor file data/<genome-version>/snpEffectPredictor.bin exists and is non-empty",
+          "Build log shows no fatal 'Database check failed' result",
+          "Database loadable by the same launcher during annotation preflight",
+          "On any build failure, stage marked blocked with no downstream annotation attempted"
+        ],
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "workflow_stage_ids": [],
+        "batch_id": "",
+        "risk_level": "high"
+      },
+      {
+        "step_id": "step.annotate_variants",
+        "title": "Annotate VCF with snpEff using the built custom database",
+        "action": "execute",
+        "purpose": "analysis",
+        "tool": "bash",
+        "execution_capability_id": "genomics.snpeff_annotation.annotate_variants",
+        "operation": "annotate_variants",
+        "inputs": [
+          "artifact-508d45c7878a6e80fe61",
+          "plan-artifact-fda0859fce2fece52ffc32cb"
+        ],
+        "outputs": [
+          "annotated_vcf"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": [],
+        "dependencies": [
+          "step.build_database",
+          "step.prepare_database"
+        ],
+        "success_criteria": [
+          "snpEff annotation run with the declared genome-version against the built database",
+          "Annotated VCF header contains ##SnpEffVersion and ##INFO=<ID=ANN",
+          "Variants carry plausible ANN fields with no systematic chromosome-not-found warnings",
+          "No ANN fabricated when database build or annotation failed"
+        ],
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "workflow_stage_ids": [],
+        "batch_id": "",
+        "risk_level": "high"
+      },
+      {
+        "step_id": "step.summarize_ann",
+        "title": "Summarize ANN effects from the annotated VCF",
+        "action": "execute",
+        "purpose": "analysis",
+        "tool": "bash",
+        "execution_capability_id": "genomics.snpeff_annotation.summarize_ann",
+        "operation": "summarize_ann",
+        "inputs": [
+          "annotated_vcf"
+        ],
+        "outputs": [
+          "ann_summary"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [
+          "ann_summary_completed"
+        ],
+        "workspace_mutations": [],
+        "explicit_side_effects": [],
+        "dependencies": [
+          "step.annotate_variants"
+        ],
+        "success_criteria": [
+          "ANN records parsed from the annotated VCF without invoking annotation runtime",
+          "Summary counts by Annotation_Impact and Sequence Ontology effect with transcript multiplicity explicit",
+          "No invented annotations in the summary"
+        ],
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "workflow_stage_ids": [],
+        "batch_id": "",
+        "risk_level": "medium"
+      },
+      {
+        "step_id": "step.finalize_outputs",
+        "title": "Write report.md, reproduce.sh, and stage_status.tsv from verified evidence",
+        "action": "execute",
+        "purpose": "analysis",
+        "tool": "bash",
+        "execution_capability_id": "genomics.snpeff_annotation.finalize_outputs",
+        "operation": "finalize_outputs",
+        "inputs": [
+          "annotated_vcf",
+          "ann_summary"
+        ],
+        "outputs": [
+          "report",
+          "reproduce_script",
+          "stage_status"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [
+          "final_outputs_recorded"
+        ],
+        "workspace_mutations": [],
+        "explicit_side_effects": [],
+        "dependencies": [
+          "step.summarize_ann",
+          "step.annotate_variants"
+        ],
+        "success_criteria": [
+          "report.md explains chosen skill/workflow and records per-stage status including any blocked stages",
+          "reproduce.sh contains the exact verified commands for runtime resolution, database build, and annotation",
+          "stage_status.tsv lists each stage with real status (completed/blocked/skipped) and reasons",
+          "No scientific completion claimed for outputs not actually produced and verified"
+        ],
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "workflow_stage_ids": [],
+        "batch_id": "",
+        "risk_level": "medium"
+      }
+    ],
+    "validation_checklist": [
+      {
+        "check_id": "check.contig_compatibility",
+        "description": "VCF, FASTA, and GTF contig identifiers are compared read-only; any mismatch blocks annotation rather than being patched blindly"
+      },
+      {
+        "check_id": "check.custom_db_not_guessed",
+        "description": "No public snpEff database guessed from taxonomy; genome-version is task-local and declared from the exact reference/annotation release"
+      },
+      {
+        "check_id": "check.no_demo_inputs",
+        "description": "Only the provided all.filtered.snp.vcf, genome.fasta, and genome.gtf are used; no demo/toy/tests/fixtures files referenced"
+      },
+      {
+        "check_id": "check.blocked_on_failure",
+        "description": "If snpEff/Java/database build fails, stage_status and report record blocked and no fake ANN is produced"
+      },
+      {
+        "check_id": "check.workspace_contract",
+        "description": "plan.snpeff_data_dir is bound to artifact.snpeff_data_dir with snpeff-workspace-transition-v1; prepare and build are ordered mutations of the same workspace"
+      },
+      {
+        "check_id": "check.output_identity",
+        "description": "Each required TaskSpec output (annotated_vcf, ann_summary, report, reproduce_script, stage_status) is produced by exactly one step and not redeclared in proposed_artifacts"
+      },
+      {
+        "check_id": "check.ann_header_verified",
+        "description": "Annotated VCF header is checked for ##SnpEffVersion and ##INFO=<ID=ANN before summarization"
+      },
+      {
+        "check_id": "check.runtime_verified",
+        "description": "snpEff JAR and Java runtime are verified in bio_gatk before any build or annotation step"
+      }
+    ],
+    "metadata": {
+      "planner_contract": "structured_plan_v2",
+      "schema_version": 2
+    }
+  },
+  "step_effects": {
+    "step.check_contigs": {
+      "schema_version": 1,
+      "produces_artifacts": [],
+      "produces_bindings": [],
+      "produces_observations": [
+        "contigs_compatible"
+      ],
+      "workspace_mutations": [],
+      "explicit_side_effects": []
+    },
+    "step.prepare_database": {
+      "schema_version": 1,
+      "produces_artifacts": [
+        "plan-artifact-fda0859fce2fece52ffc32cb"
+      ],
+      "produces_bindings": [
+        "genome_version",
+        "snpeff_db"
+      ],
+      "produces_observations": [
+        "database_layout_prepared"
+      ],
+      "workspace_mutations": [
+        {
+          "identity": "artifact.snpeff_data_dir",
+          "available_after_success": true,
+          "contract_revision": "snpeff-workspace-transition-v1",
+          "contract_source": "genomics.snpeff_annotation.prepare_database.workspace_mutations",
+          "declared_resource_ref": "plan.snpeff_data_dir",
+          "establishes_state": "database_layout_prepared",
+          "mutation": "prepare_database",
+          "requires_available": false,
+          "requires_state": ""
+        }
+      ],
+      "explicit_side_effects": []
+    },
+    "step.build_database": {
+      "schema_version": 1,
+      "produces_artifacts": [],
+      "produces_bindings": [],
+      "produces_observations": [
+        "snpeff_database_ready"
+      ],
+      "workspace_mutations": [
+        {
+          "identity": "artifact.snpeff_data_dir",
+          "available_after_success": true,
+          "contract_revision": "snpeff-workspace-transition-v1",
+          "contract_source": "genomics.snpeff_annotation.build_database.workspace_mutations",
+          "declared_resource_ref": "plan.snpeff_data_dir",
+          "establishes_state": "snpeff_database_ready",
+          "mutation": "build_database",
+          "requires_available": true,
+          "requires_state": "database_layout_prepared"
+        }
+      ],
+      "explicit_side_effects": []
+    },
+    "step.annotate_variants": {
+      "schema_version": 1,
+      "produces_artifacts": [
+        "annotated_vcf"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": []
+    },
+    "step.summarize_ann": {
+      "schema_version": 1,
+      "produces_artifacts": [
+        "ann_summary"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [
+        "ann_summary_completed"
+      ],
+      "workspace_mutations": [],
+      "explicit_side_effects": []
+    },
+    "step.finalize_outputs": {
+      "schema_version": 1,
+      "produces_artifacts": [
+        "report",
+        "reproduce_script",
+        "stage_status"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [
+        "final_outputs_recorded"
+      ],
+      "workspace_mutations": [],
+      "explicit_side_effects": []
+    }
+  }
+}

@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Any, Awaitable, Callable, Mapping
 
 from agent_core.completion_gate import CompletionGate
-from agent_core.plan_tracker import load_plan_state
+from agent_core.plan_tracker import load_plan_state, record_provenance_event
 from agent_core.recovery import ValidationEvidence, ValidationStatus
+from agent_core.semantic_completion import (
+    COMPLETION_ACCEPTED,
+    build_completion_report,
+)
 from agent_core.workflow.outcomes import ExecuteOutcome, VerificationOutcome
 
 
@@ -82,6 +87,7 @@ class TypedSupervisor:
             raise ValueError("TYPED_SUPERVISOR_VALIDATION_SCOPE_MISMATCH")
 
         validation_value = validation.to_dict()
+        semantic_refs: list[str] = []
         role = str(validation.command_role or execution.get("command_role") or "").lower()
         if role in {"probe", "diagnostic", "optional_probe", "capability_probe"}:
             outcome_type = "diagnostic_evidence_recorded"
@@ -117,30 +123,110 @@ class TypedSupervisor:
             }
             summary = "Deterministic verification rejected the current execution."
         else:
-            gate = dict(self.gate_evaluator(self.data_path, task_id, durable))
-            if not gate.get("passed"):
-                outcome_type = "rejected"
-                payload = {
-                    "validation_evidence": validation_value,
-                    "completion_gate": gate,
-                    "contract_violations": [
-                        str(gate.get("message") or gate.get("feedback") or "completion gate rejected")
+            # CompletionGate is a pure fact evaluator here.  Its artifact and
+            # StepEffect findings must be part of the CompletionReport already
+            # consumed by the structured reviewer; it does not route or mutate
+            # durable state.
+            gate_state = deepcopy(durable)
+            attempts = dict(
+                ((gate_state.get("provenance_state") or {}).get("attempts"))
+                or {}
+            )
+            if attempt_id and attempt_id in attempts:
+                record_provenance_event(gate_state, "validation_recorded", {
+                    "attempt_id": attempt_id,
+                    "validation": validation_value,
+                    "validation_evidence_ref": validation.validation_id,
+                })
+            gate = dict(self.gate_evaluator(self.data_path, task_id, gate_state))
+            report = build_completion_report(
+                plan_state=durable,
+                validation=validation_value,
+                execution_evidence=execution,
+                completion_gate=gate,
+            )
+            report_value = report.to_dict()
+            decision_value = report.effective_decision.to_dict()
+            semantic_refs = [report.report_id, report.effective_decision.decision_id]
+            if report.effective_disposition != COMPLETION_ACCEPTED:
+                outcome_type = report.effective_disposition
+                failed_predicates = [
+                    dict(item)
+                    for item in report.predicate_results
+                    if item.get("passed") is not True
+                ]
+                violations = list(dict.fromkeys([
+                    *[
+                        str(item.get("reason_code") or "SEMANTIC_PREDICATE_FAILED")
+                        for item in failed_predicates
                     ],
-                    "failure_owner": "completion_contract",
-                }
-                summary = "CompletionGate rejected the verified execution candidate."
-            else:
-                outcome_type = (
-                    "verified_with_warnings"
-                    if validation.status == ValidationStatus.VALID_WITH_WARNINGS.value
-                    else "verified"
-                )
+                    *list(report.effective_decision.concerns),
+                ]))
                 payload = {
                     "validation_evidence": validation_value,
-                    "completion_gate": gate,
-                    "accepted_warnings": list(validation.warnings),
+                    "completion_gate": {
+                        "passed": False,
+                        "classification": "semantic_completion_rejected",
+                        "plan_version": plan_version,
+                        "evidence_refs": list(semantic_refs),
+                    },
+                    "completion_report": report_value,
+                    "semantic_decision": decision_value,
+                    "contract_violations": violations or [
+                        "SEMANTIC_COMPLETION_NOT_ACCEPTED"
+                    ],
+                    "failure_owner": (
+                        "deterministic_predicate"
+                        if report.deterministic_veto
+                        else "semantic_review"
+                    ),
                 }
-                summary = "Current execution and CompletionGate are verified."
+                if outcome_type == "user_information_required":
+                    payload.update({
+                        "question_id": (
+                            "semantic-question-"
+                            + report.effective_decision.decision_id.rsplit("-", 1)[-1][:20]
+                        ),
+                        "question": (
+                            violations[0]
+                            if violations
+                            else "Additional user information is required."
+                        ),
+                    })
+                summary = (
+                    "Deterministic semantic completion predicates rejected the "
+                    "candidate."
+                    if report.deterministic_veto
+                    else "The typed semantic reviewer disposition requires follow-up."
+                )
+            else:
+                if not gate.get("passed"):
+                    outcome_type = "rejected"
+                    payload = {
+                        "validation_evidence": validation_value,
+                        "completion_gate": gate,
+                        "completion_report": report_value,
+                        "semantic_decision": decision_value,
+                        "contract_violations": [
+                            str(gate.get("message") or gate.get("feedback") or "completion gate rejected")
+                        ],
+                        "failure_owner": "completion_contract",
+                    }
+                    summary = "CompletionGate rejected the verified execution candidate."
+                else:
+                    outcome_type = (
+                        "verified_with_warnings"
+                        if validation.status == ValidationStatus.VALID_WITH_WARNINGS.value
+                        else "verified"
+                    )
+                    payload = {
+                        "validation_evidence": validation_value,
+                        "completion_gate": gate,
+                        "completion_report": report_value,
+                        "semantic_decision": decision_value,
+                        "accepted_warnings": list(validation.warnings),
+                    }
+                    summary = "Current execution and CompletionGate are verified."
 
         outcome = VerificationOutcome(
             schema_version=1,
@@ -148,9 +234,24 @@ class TypedSupervisor:
             summary=summary,
             scope=scope,
             payload=payload,
-            evidence_refs=(validation.validation_id,),
+            evidence_refs=tuple(dict.fromkeys([
+                validation.validation_id,
+                *semantic_refs,
+            ])),
         )
-        return {"verification_outcome": outcome.to_dict()}
+        update: dict[str, Any] = {"verification_outcome": outcome.to_dict()}
+        if outcome_type == "user_information_required":
+            update["pending_human_question"] = {
+                "question_id": str(payload.get("question_id") or "semantic-question"),
+                "question": str(
+                    payload.get("question")
+                    or "Additional user information is required."
+                ),
+                "owner": "user",
+                "type": "semantic_completion",
+                "status": "pending",
+            }
+        return update
 
 
 def verification_harness_error(exc: Exception, state: Mapping[str, Any]) -> VerificationOutcome:

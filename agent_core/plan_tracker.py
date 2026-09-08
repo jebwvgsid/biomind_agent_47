@@ -54,6 +54,13 @@ from agent_core.plan_contract import (
     structured_plan_candidate_diagnostics,
     typed_task_plan_traceability,
 )
+from agent_core.workspace_attestation import (
+    MUTATION_INTENT_REGISTRATION_SCHEMA_VERSION,
+    RUNTIME_ATTESTER_PRODUCER,
+    WORKSPACE_MUTATION_INTENT_RECORDED_EVENT,
+    WorkspaceAttestationError,
+    load_verified_mutation_journal_reference,
+)
 
 PlanState = Dict[str, Any]
 PlanStep = Dict[str, Any]
@@ -662,13 +669,21 @@ def validation_issue(
     message: str = "",
     **extra: Any,
 ) -> Dict[str, Any]:
-    """Build one stable, machine-routable validation issue."""
+    """Build one stable, route-blind validation observation."""
     normalized_owner = str(owner or "internal").strip().lower()
     if normalized_owner not in VALIDATION_ISSUE_OWNERS:
         normalized_owner = "internal"
+    disposition = str(extra.pop("disposition", "") or "").strip().upper()
+    if disposition not in {
+        "NORMALIZED", "REPAIR_REQUIRED", "PROTOCOL_INVALID", "INTERNAL_INVALID",
+    }:
+        disposition = (
+            "INTERNAL_INVALID" if normalized_owner == "internal" else "REPAIR_REQUIRED"
+        )
     body = {
         "code": str(code or "VALIDATION_ERROR").strip().upper(),
         "severity": str(severity or "error").strip().lower(),
+        "disposition": disposition,
         "owner": normalized_owner,
         "repair_target": str(repair_target or "").strip(),
         "field_path": str(field_path or "").strip(),
@@ -695,16 +710,76 @@ def validation_issue(
         **body,
         "violation_code": body["code"],
         "fingerprint": fingerprint,
-        **{
-            key: deepcopy(value)
-            for key, value in extra.items()
-            if value not in (None, "", [], {})
-        },
+        **_semantic_diagnostic_value(extra),
     }
 
 
+_VALIDATION_ROUTE_KEYS = {
+    "route", "next_step", "next_route", "target_route", "goto",
+    "proposed_route", "effective_route", "dispatch_route",
+    "route_resolution", "planner_full_replan", "required_next_action",
+    "node_recommended_next_step", "pending_recovery_action",
+    "resume_route_hint", "resolved_resume_node", "resume_step",
+    "terminal_route", "graph_node", "graph_node_name", "source_graph_node",
+    "destination_graph_node", "controller_transition",
+    "controller_transition_metadata", "command_goto", "route_event_id",
+}
+_VALIDATION_VOLATILE_KEYS = {
+    "candidate_scope_id", "request_id", "turn_id", "trace_id", "receipt_id",
+    "invocation_id", "submission_id", "observation_id", "timestamp",
+    "created_at", "updated_at", "observed_at",
+}
+
+# Candidate effect declarations legitimately use ``observation_id`` as a
+# semantic identity, so it must survive candidate no-progress projections even
+# though the same key is volatile in validator observation envelopes.
+_CANDIDATE_VOLATILE_KEYS = _VALIDATION_VOLATILE_KEYS - {"observation_id"}
+
+
+def _semantic_diagnostic_value(value: Any) -> Any:
+    """Remove workflow authority and per-attempt identities from diagnostics.
+
+    Issues describe semantic/protocol facts. Graph routing and volatile request
+    identities are deliberately outside that ABI, so equal defects retain an
+    equal fingerprint across Planner turns.
+    """
+    if isinstance(value, Mapping):
+        return {
+            str(key): _semantic_diagnostic_value(item)
+            for key, item in value.items()
+            if str(key).strip().lower() not in _VALIDATION_ROUTE_KEYS
+            and str(key).strip().lower() not in _VALIDATION_VOLATILE_KEYS
+            and item not in (None, "", [], {})
+        }
+    if isinstance(value, list):
+        return [_semantic_diagnostic_value(item) for item in value]
+    if isinstance(value, tuple):
+        return [_semantic_diagnostic_value(item) for item in value]
+    return deepcopy(value)
+
+
+def _semantic_candidate_value(value: Any) -> Any:
+    """Remove control-plane and per-turn metadata from rejected Plan semantics."""
+    if isinstance(value, Mapping):
+        return {
+            str(key): _semantic_candidate_value(item)
+            for key, item in value.items()
+            if str(key).strip().lower() not in _VALIDATION_ROUTE_KEYS
+            and str(key).strip().lower() not in _CANDIDATE_VOLATILE_KEYS
+        }
+    if isinstance(value, list):
+        return [_semantic_candidate_value(item) for item in value]
+    if isinstance(value, tuple):
+        return [_semantic_candidate_value(item) for item in value]
+    return deepcopy(value)
+
+
 def normalize_validation_issue(value: Any) -> Dict[str, Any]:
-    raw = dict(value) if isinstance(value, Mapping) else {"message": str(value or "")}
+    raw = (
+        _semantic_diagnostic_value(dict(value))
+        if isinstance(value, Mapping)
+        else {"message": str(value or "")}
+    )
     code = raw.get("code") or raw.get("violation_code") or raw.get("field") or "VALIDATION_ERROR"
     owner = raw.get("owner")
     if not owner:
@@ -737,10 +812,10 @@ def normalize_validation_issue(value: Any) -> Dict[str, Any]:
         **{
             key: deepcopy(value)
             for key, value in raw.items()
-            if key not in {
+            if key not in ({
                 "code", "violation_code", "severity", "owner", "repair_target",
                 "field_path", "message", "reason", "fingerprint", "schema_version",
-            }
+            } | _VALIDATION_ROUTE_KEYS)
             and value not in (None, "", [], {})
         },
     )
@@ -758,7 +833,9 @@ def _bounded_candidate_semantic_view(
     allowed_step_fields = (
         "step_id", "title", "action", "purpose", "tool", "inputs", "outputs",
         "dependencies", "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
-        "execution_capability_id",
+        "execution_capability_id", "operation", "produces_bindings",
+        "produces_observations", "workspace_mutations", "explicit_side_effects",
+        "step_effect",
     )
     for raw in list(candidate.get("steps") or [])[:max_steps]:
         if not isinstance(raw, Mapping):
@@ -789,7 +866,9 @@ def _bounded_candidate_semantic_view(
             })
     if materializations:
         result["task_output_materializations"] = materializations
-    return result
+    # Nested StepEffect metadata is model-authored data.  It must not retain
+    # graph destinations or vary the no-progress signature through request IDs.
+    return _semantic_candidate_value(result)
 
 
 def current_planning_failure(
@@ -811,6 +890,7 @@ def current_planning_failure(
 
 def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
     """Reduce one validator result to the durable machine-diagnostic ABI."""
+    raw_issue = deepcopy(dict(value)) if isinstance(value, Mapping) else {}
     explicit_message = (
         str(value.get("message") or value.get("reason") or "").strip()
         if isinstance(value, Mapping)
@@ -818,18 +898,24 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
     )
     normalized = normalize_validation_issue(value)
     visible_fields = (
-        "code", "message", "field_path", "affected_step_ids", "affected_artifact",
+        "code", "message", "severity", "disposition", "field_path",
+        "repair_target",
+        "affected_step_ids", "affected_artifact",
         "affected_output", "expected_identity", "observed_identity",
         "violated_invariant", "required_postcondition", "affected_fields",
         "machine_evidence", "expected_type", "received_type",
         "received_excerpt", "parser_message", "line", "column", "offset",
-        "response_excerpt",
+        "response_excerpt", "constraint_source", "source_ref", "validator_id",
+        "consumer_step_id", "producer_step_ids", "actual_value",
+        "expected_contract", "possible_effect_kinds", "candidate_sources",
+        "expected", "actual", "source", "capability_id",
+        "capability_artifact_effects", "unsupported_effects",
     )
-    issue = {
+    issue = _semantic_diagnostic_value({
         key: deepcopy(normalized.get(key))
         for key in visible_fields
         if normalized.get(key) not in (None, "", [], {})
-    }
+    })
     if explicit_message:
         issue["message"] = explicit_message[:800]
     else:
@@ -847,12 +933,47 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
     issue["affected_step_ids"] = affected_steps
     issue.setdefault("affected_artifact", {})
     issue.setdefault("affected_output", {})
+
+    # Dataflow validators already emit a bounded, typed source analysis.  Keep
+    # that ABI intact for the next Planner turn instead of reducing it to only
+    # a code and a generic message.  The allowlist deliberately excludes the
+    # candidate body, raw provider response, logs, and arbitrary validator
+    # payloads.  Empty source lists are meaningful evidence (the compiler
+    # completed its search and found no source), so copy them from the raw
+    # issue after generic diagnostic normalization has removed empty values.
+    dataflow_evidence_fields = (
+        "issue_id", "candidate_revision", "validator_id",
+        "authority", "blocking", "explicit_contract_source",
+        "contract_revision", "resource_id", "canonical_resource_id",
+        "binding_evidence", "consumer_step", "consumer_step_id",
+        "dependency_ancestors", "recognized_candidate_sources",
+        "source_effect_kinds", "accepted_sources", "rejected_sources",
+        "producer_step_ids", "affected_fields", "actual_facts",
+        "required_condition",
+    )
+    for key in dataflow_evidence_fields:
+        if key not in raw_issue:
+            continue
+        issue[key] = _semantic_diagnostic_value(deepcopy(raw_issue[key]))
+    if (
+        str(issue.get("validator_id") or "")
+        == "biomind.plan_dataflow_compiler.v1"
+        or str(issue.get("source") or "") == "compiled_plan_dataflow"
+    ):
+        for key in (
+            "dependency_ancestors", "recognized_candidate_sources",
+            "source_effect_kinds", "accepted_sources", "rejected_sources",
+            "producer_step_ids",
+        ):
+            issue.setdefault(key, [])
+
     machine_evidence = dict(issue.get("machine_evidence") or {})
     for key in (
         "dependency_step_id", "consumer_step_id", "producer_step_ids",
         "affected_output_ids", "cycle", "artifact_ref", "reason_code",
         "actual_value", "expected_contract", "selected_skill_id",
-        "validator_id",
+        "validator_id", "possible_effect_kinds", "candidate_sources",
+        "expected", "actual", "source", "capability_id",
     ):
         if normalized.get(key) not in (None, "", [], {}):
             machine_evidence.setdefault(key, deepcopy(normalized.get(key)))
@@ -863,7 +984,9 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
 _PLANNER_CORRECTION_STRUCTURE_FIELDS = (
     "action", "purpose", "tool", "inputs", "outputs", "dependencies",
     "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
-    "execution_capability_id",
+    "execution_capability_id", "operation", "produces_bindings",
+    "produces_observations", "workspace_mutations", "explicit_side_effects",
+    "step_effect",
 )
 
 
@@ -948,6 +1071,49 @@ def _candidate_correction_signature(
     ).hexdigest()
 
 
+def _planning_issue_fingerprint_value(value: Any) -> Any:
+    """Remove event-only identity while retaining semantic failure evidence."""
+
+    semantic = _semantic_diagnostic_value(value)
+    if isinstance(semantic, Mapping):
+        return {
+            str(key): _planning_issue_fingerprint_value(item)
+            for key, item in semantic.items()
+            if str(key) not in {"issue_id", "binding_id"}
+        }
+    if isinstance(semantic, list):
+        return [_planning_issue_fingerprint_value(item) for item in semantic]
+    if isinstance(semantic, str):
+        marker = ":plan."
+        if semantic.startswith("candidate:") and marker in semantic:
+            return "candidate-local:plan." + semantic.split(marker, 1)[1]
+    return deepcopy(semantic)
+
+
+def _planning_issue_fingerprint_view(issue: Mapping[str, Any]) -> Dict[str, Any]:
+    """Project one issue onto its route-free, source-complete semantic facts."""
+
+    fields = (
+        "code", "severity", "disposition", "field_path", "repair_target",
+        "affected_step_ids", "affected_artifact", "affected_output",
+        "expected_identity", "observed_identity", "violated_invariant",
+        "required_postcondition", "affected_fields", "machine_evidence",
+        "expected_type", "received_type", "received_excerpt",
+        "parser_message", "line", "column", "offset", "response_excerpt",
+        "validator_id", "authority", "blocking", "explicit_contract_source",
+        "contract_revision", "resource_id", "canonical_resource_id",
+        "binding_evidence", "consumer_step", "consumer_step_id",
+        "dependency_ancestors", "recognized_candidate_sources",
+        "source_effect_kinds", "accepted_sources", "rejected_sources",
+        "producer_step_ids", "actual_facts", "required_condition",
+    )
+    return _planning_issue_fingerprint_value({
+        key: deepcopy(issue.get(key))
+        for key in fields
+        if issue.get(key) not in (None, "", [], {})
+    })
+
+
 def record_planning_failure(
     state: PlanState,
     *,
@@ -981,18 +1147,7 @@ def record_planning_failure(
         "planning_epoch_id": str(planning_epoch_id or ""),
         "validation_source": str(validation_source or "planner_candidate_admission"),
         "issues": [
-            {
-                key: deepcopy(issue.get(key))
-                for key in (
-                    "code", "field_path", "affected_step_ids", "affected_artifact",
-                    "affected_output", "expected_identity", "observed_identity",
-                    "violated_invariant", "required_postcondition", "affected_fields",
-                    "machine_evidence", "expected_type", "received_type",
-                    "received_excerpt", "parser_message", "line", "column",
-                    "offset", "response_excerpt",
-                )
-                if issue.get(key) not in (None, "", [], {})
-            }
+            _planning_issue_fingerprint_view(issue)
             for issue in issues
         ],
     }
@@ -1243,6 +1398,35 @@ def _string_list(value: Any, *, dict_keys: Tuple[str, ...] = ()) -> List[str]:
         text = _valid_contract_text(candidate)
         if text and text not in normalized:
             normalized.append(text)
+    return normalized
+
+
+def _typed_effect_list(value: Any) -> List[Any]:
+    """Keep effect evidence contracts intact across Plan normalization."""
+    if value in (None, "", [], {}):
+        return []
+    items = value if isinstance(value, (list, tuple, set)) else [value]
+    normalized: List[Any] = []
+    seen: set[str] = set()
+    for item in items:
+        candidate: Any
+        if isinstance(item, Mapping):
+            candidate = deepcopy(dict(item))
+        else:
+            candidate = _valid_contract_text(item)
+        if candidate in (None, "", [], {}):
+            continue
+        identity = json.dumps(
+            candidate,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        )
+        if identity in seen:
+            continue
+        seen.add(identity)
+        normalized.append(candidate)
     return normalized
 
 
@@ -1838,7 +2022,14 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             "plan_id": str(state.get("plan_id") or ""),
             "plan_version": str(action.get("plan_version") or state.get("plan_version") or ""),
             "execution_epoch": str(action.get("execution_epoch") or ""),
-            "action_hash": str(action.get("action_hash") or ""),
+            # Match the digest authority used by prepare_mutation_intents.
+            # The candidate fingerprint is the established fallback for older
+            # legal actions that do not yet carry a dedicated action_hash.
+            "action_hash": str(
+                action.get("action_hash")
+                or action.get("candidate_fingerprint")
+                or ""
+            ),
             "step_id": str(action.get("step_id") or ""),
             "stage_id": str(action.get("stage_id") or ""),
             "manifest_id": manifest_id,
@@ -1846,6 +2037,10 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             "action_type": str(action.get("type") or "execute"),
             "command_role": str(action.get("command_role") or "primary"),
             "source": str(action.get("action_source") or "generate"),
+            "status": "bound",
+            "revoked_at": "",
+            "revocation_reason": "",
+            "execution_started": False,
             "raw_action": _safe_action_payload(dict(value.get("raw_action") or action)),
             "normalized_action": _safe_action_payload(action),
             "generated_script": dict(action.get("generated_script") or {}),
@@ -1861,19 +2056,61 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
         provenance["actions"][action_id] = {**previous, **record, "created_at": previous.get("created_at") or now}
         result = deepcopy(provenance["actions"][action_id])
 
+    elif event == "action_revoked":
+        action_id = str(value.get("action_id") or "")
+        action = provenance["actions"].get(action_id)
+        if not isinstance(action, dict):
+            raise ValueError(f"Unknown provenance action: {action_id}")
+        action["status"] = "revoked"
+        action["revoked_at"] = now
+        action["revocation_reason"] = str(
+            value.get("reason") or "pre_execution_revocation"
+        )[:1000]
+        action["execution_started"] = bool(value.get("execution_started", False))
+        action["updated_at"] = now
+        result = deepcopy(action)
+
     elif event in {"attempt_created", "attempt_started"}:
         action_id = str(value.get("action_id") or "")
         action = dict(provenance["actions"].get(action_id) or {})
         if not action:
             raise ValueError(f"Unknown provenance action: {action_id}")
+        step_id = str(value.get("step_id") or action.get("step_id") or "")
         explicit_attempt_id = str(value.get("attempt_id") or "")
         if explicit_attempt_id and explicit_attempt_id in provenance["attempts"]:
-            result = deepcopy(provenance["attempts"][explicit_attempt_id])
+            existing_attempt = dict(
+                provenance["attempts"][explicit_attempt_id]
+            )
+            expected_scope = {
+                "action_id": action_id,
+                "step_id": step_id,
+                "plan_id": str(state.get("plan_id") or ""),
+                "plan_version": str(
+                    action.get("plan_version")
+                    or state.get("plan_version")
+                    or ""
+                ),
+                "execution_epoch": str(action.get("execution_epoch") or ""),
+            }
+            conflicts = {
+                key: {
+                    "expected": expected,
+                    "observed": str(existing_attempt.get(key) or ""),
+                }
+                for key, expected in expected_scope.items()
+                if expected
+                and str(existing_attempt.get(key) or "") != expected
+            }
+            if conflicts:
+                raise ValueError(
+                    "Attempt replay identity conflict: "
+                    + json.dumps(conflicts, sort_keys=True)
+                )
+            result = deepcopy(existing_attempt)
             provenance["updated_at"] = now
             state["provenance_state"] = provenance
             state["updated_at"] = now
             return result
-        step_id = str(value.get("step_id") or action.get("step_id") or "")
         existing_active = active_attempt(state, step_id)
         if existing_active and str(existing_active.get("attempt_id") or "") != explicit_attempt_id:
             existing_action_id = str(existing_active.get("action_id") or "")
@@ -1915,6 +2152,7 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             record = {
                 "schema_version": PROVENANCE_SCHEMA_VERSION,
                 "attempt_id": attempt_id,
+                "attempt_sequence": sequence,
                 "action_id": action_id,
                 "plan_id": str(state.get("plan_id") or ""),
                 "plan_version": str(state.get("plan_version") or action.get("plan_version") or ""),
@@ -1925,7 +2163,10 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                 "generated_script": dict(value.get("generated_script") or {}),
                 "approved_script": dict(value.get("approved_script") or {}),
                 "executed_script": dict(value.get("executed_script") or {}),
-                "executed_script_path": str(value.get("executed_script_path") or action.get("generated_script_path") or ""),
+                # A generated candidate path is not evidence that the approved
+                # execution wrapper was materialized or that launch began.
+                # Only the explicit lifecycle payload may populate this field.
+                "executed_script_path": str(value.get("executed_script_path") or ""),
                 "execution_record_id": "",
                 "created_at": str(value.get("created_at") or now),
                 "started_at": str(value.get("started_at") or ""),
@@ -1959,6 +2200,324 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
         if event == "attempt_started":
             state["execution_cursor_step_id"] = str(result.get("step_id") or "")
             state["execution_status"] = "in_progress"
+
+    elif event == WORKSPACE_MUTATION_INTENT_RECORDED_EVENT:
+        # This event is an execution-preparation authority boundary.  Payload
+        # fields are intentionally not coerced: an invalid reference must not
+        # become valid merely because ``str(value)`` happens to look right.
+        attempt_id_value = value.get("attempt_id")
+        journal_path_value = value.get("journal_path")
+        journal_digest_value = value.get("journal_digest")
+        intent_ids_value = value.get("intent_ids")
+        for field, field_value in (
+            ("attempt_id", attempt_id_value),
+            ("journal_path", journal_path_value),
+            ("journal_digest", journal_digest_value),
+        ):
+            if type(field_value) is not str or not field_value.strip():
+                raise WorkspaceAttestationError(
+                    "MUTATION_INTENT_EVENT_PAYLOAD_INVALID",
+                    field=field,
+                    observed_type=type(field_value).__name__,
+                )
+        if type(intent_ids_value) is not list:
+            raise WorkspaceAttestationError(
+                "MUTATION_INTENT_EVENT_PAYLOAD_INVALID",
+                field="intent_ids",
+                observed_type=type(intent_ids_value).__name__,
+            )
+        if any(
+            type(intent_id) is not str or not intent_id.strip()
+            for intent_id in intent_ids_value
+        ):
+            raise WorkspaceAttestationError(
+                "MUTATION_JOURNAL_INTENT_IDS_INVALID",
+                field="intent_ids",
+            )
+        if len(set(intent_ids_value)) != len(intent_ids_value):
+            raise WorkspaceAttestationError(
+                "MUTATION_JOURNAL_INTENT_IDS_INVALID",
+                field="intent_ids",
+                reason="duplicate_intent_id",
+            )
+
+        attempt_id = attempt_id_value
+        attempt = provenance["attempts"].get(attempt_id)
+        if not isinstance(attempt, dict):
+            raise WorkspaceAttestationError(
+                "MUTATION_INTENT_ATTEMPT_UNKNOWN",
+                attempt_id=attempt_id,
+            )
+        action_id = attempt.get("action_id")
+        if type(action_id) is not str or not action_id:
+            raise WorkspaceAttestationError(
+                "MUTATION_INTENT_ACTION_SCOPE_MISMATCH",
+                attempt_id=attempt_id,
+                reason="attempt_action_id_invalid",
+            )
+        action = provenance["actions"].get(action_id)
+        if not isinstance(action, dict):
+            raise WorkspaceAttestationError(
+                "MUTATION_INTENT_ACTION_SCOPE_MISMATCH",
+                attempt_id=attempt_id,
+                action_id=action_id,
+                reason="action_unknown",
+            )
+        task_id = state.get("task_id")
+        plan_id = state.get("plan_id")
+        step_id = attempt.get("step_id")
+        if any(
+            type(item) is not str or not item
+            for item in (task_id, plan_id, step_id)
+        ):
+            raise WorkspaceAttestationError(
+                "MUTATION_INTENT_PROVENANCE_SCOPE_INVALID",
+                attempt_id=attempt_id,
+                reason="state_or_attempt_scope_invalid",
+            )
+        step = _step_by_id(state, step_id)
+        scope_mismatches: Dict[str, Any] = {}
+        if str(provenance.get("task_id") or "") != task_id:
+            scope_mismatches["task_id"] = provenance.get("task_id")
+        if attempt.get("plan_id") != plan_id:
+            scope_mismatches["attempt.plan_id"] = attempt.get("plan_id")
+        if action.get("plan_id") != plan_id:
+            scope_mismatches["action.plan_id"] = action.get("plan_id")
+        if attempt.get("action_id") != action.get("action_id"):
+            scope_mismatches["action_id"] = action.get("action_id")
+        if action.get("step_id") != step_id:
+            scope_mismatches["action.step_id"] = action.get("step_id")
+        if not step:
+            scope_mismatches["step_id"] = "unknown_step"
+        attempt_action_digest = attempt.get("action_hash")
+        normalized_action = action.get("normalized_action")
+        normalized_action = (
+            normalized_action if isinstance(normalized_action, Mapping) else {}
+        )
+        action_digest = (
+            action.get("action_hash")
+            or normalized_action.get("action_hash")
+            or normalized_action.get("candidate_fingerprint")
+        )
+        if (
+            attempt_action_digest
+            and action_digest
+            and attempt_action_digest != action_digest
+        ):
+            scope_mismatches["action_digest"] = {
+                "attempt": attempt_action_digest,
+                "action": action_digest,
+            }
+        trusted_action_digest = attempt_action_digest or action_digest
+        if type(trusted_action_digest) is not str or not trusted_action_digest:
+            scope_mismatches["action_digest"] = "missing"
+        if scope_mismatches:
+            raise WorkspaceAttestationError(
+                "MUTATION_INTENT_PROVENANCE_SCOPE_MISMATCH",
+                attempt_id=attempt_id,
+                mismatches=scope_mismatches,
+            )
+
+        plan_file_value = state.get("plan_file")
+        if type(plan_file_value) is not str or not plan_file_value:
+            raise WorkspaceAttestationError(
+                "MUTATION_JOURNAL_PATH_SCOPE_UNAVAILABLE",
+                attempt_id=attempt_id,
+                reason="plan_file_missing",
+            )
+        plan_file = Path(plan_file_value)
+        if not plan_file.is_absolute():
+            raise WorkspaceAttestationError(
+                "MUTATION_JOURNAL_PATH_SCOPE_UNAVAILABLE",
+                attempt_id=attempt_id,
+                reason="plan_file_not_absolute",
+            )
+        try:
+            task_output_dir = plan_file.parent.resolve(strict=True)
+        except (OSError, RuntimeError) as exc:
+            raise WorkspaceAttestationError(
+                "MUTATION_JOURNAL_PATH_SCOPE_UNAVAILABLE",
+                attempt_id=attempt_id,
+                error_type=type(exc).__name__,
+            ) from exc
+        if (
+            task_output_dir.name != task_id
+            or task_output_dir.parent.name != "task_outputs"
+        ):
+            raise WorkspaceAttestationError(
+                "MUTATION_JOURNAL_PATH_SCOPE_UNAVAILABLE",
+                attempt_id=attempt_id,
+                task_output_dir=str(task_output_dir),
+            )
+        expected_attempt_dir = task_output_dir / "attempts" / attempt_id
+        durable_field = "workspace_mutation_intent_registration"
+        existing = attempt.get(durable_field)
+        if existing is not None:
+            if not isinstance(existing, Mapping):
+                raise WorkspaceAttestationError(
+                    "MUTATION_INTENT_DURABLE_REGISTRATION_INVALID",
+                    attempt_id=attempt_id,
+                    reason="registration_type_invalid",
+                )
+            expected_existing_scope = {
+                "schema_version": MUTATION_INTENT_REGISTRATION_SCHEMA_VERSION,
+                "event_type": WORKSPACE_MUTATION_INTENT_RECORDED_EVENT,
+                "producer": RUNTIME_ATTESTER_PRODUCER,
+                "task_id": task_id,
+                "plan_id": plan_id,
+                "plan_revision": state.get("plan_revision"),
+                "step_id": step_id,
+                "action_id": action_id,
+                "action_digest": trusted_action_digest,
+                "attempt_id": attempt_id,
+                "journal_path": str(
+                    expected_attempt_dir / "mutation_intent.json"
+                ),
+            }
+            existing_scope_mismatches = {
+                field: {
+                    "expected": deepcopy(expected_value),
+                    "observed": deepcopy(existing.get(field)),
+                }
+                for field, expected_value in expected_existing_scope.items()
+                if type(existing.get(field)) is not type(expected_value)
+                or existing.get(field) != expected_value
+            }
+            existing_ids = existing.get("intent_ids")
+            existing_digest_fields_valid = all(
+                type(existing.get(field)) is str
+                and str(existing.get(field)).startswith("sha256:")
+                and len(str(existing.get(field))) == len("sha256:") + 64
+                for field in ("journal_digest", "registration_digest")
+            )
+            existing_metadata_valid = bool(
+                type(existing_ids) is list
+                and all(
+                    type(intent_id) is str and bool(intent_id.strip())
+                    for intent_id in existing_ids
+                )
+                and len(set(existing_ids)) == len(existing_ids)
+                and type(existing.get("journal_status")) is str
+                and existing.get("journal_status")
+                in {
+                    "attempt_started",
+                    "not_applicable",
+                    "completed",
+                    "reconciliation_required",
+                }
+                and type(existing.get("journal_finished_at")) is str
+                and type(existing.get("registered_at")) is str
+                and bool(existing.get("registered_at", "").strip())
+            )
+            if (
+                existing_scope_mismatches
+                or not existing_digest_fields_valid
+                or not existing_metadata_valid
+            ):
+                raise WorkspaceAttestationError(
+                    "MUTATION_INTENT_DURABLE_REGISTRATION_INVALID",
+                    attempt_id=attempt_id,
+                    mismatches=existing_scope_mismatches,
+                    digest_fields_valid=existing_digest_fields_valid,
+                    metadata_valid=existing_metadata_valid,
+                )
+        if isinstance(existing, Mapping) and all(
+            deepcopy(existing.get(field)) == deepcopy(observed)
+            for field, observed in (
+                ("attempt_id", attempt_id_value),
+                ("journal_path", journal_path_value),
+                ("journal_digest", journal_digest_value),
+                ("intent_ids", intent_ids_value),
+            )
+        ):
+            # This exact event was already verified and committed.  Its
+            # journal is finalized in place, so a later replay of the original
+            # event must not compare the historical whole-file digest with the
+            # current receipt-bearing version.  Any consumer that intends to
+            # use the current journal still reloads and validates it separately.
+            return deepcopy(dict(existing))
+        verified_reference = load_verified_mutation_journal_reference(
+            journal_path_value,
+            expected_attempt_dir=expected_attempt_dir,
+            expected_task_id=task_id,
+            expected_plan_id=plan_id,
+            expected_plan_revision=state.get("plan_revision"),
+            expected_step_id=step_id,
+            expected_action_id=action_id,
+            expected_action_digest=trusted_action_digest,
+            expected_attempt_id=attempt_id,
+            expected_journal_digest=journal_digest_value,
+            expected_intent_ids=intent_ids_value,
+        )
+
+        identity_fields = (
+            "schema_version",
+            "event_type",
+            "producer",
+            "task_id",
+            "plan_id",
+            "plan_revision",
+            "step_id",
+            "action_id",
+            "action_digest",
+            "attempt_id",
+            "journal_path",
+            "registration_digest",
+            "intent_ids",
+        )
+        verified_record = verified_reference.to_dict()
+        if existing is not None:
+            if not isinstance(existing, Mapping) or any(
+                deepcopy(existing.get(field))
+                != deepcopy(verified_record.get(field))
+                for field in identity_fields
+            ):
+                raise WorkspaceAttestationError(
+                    "MUTATION_INTENT_REGISTRATION_CONFLICT",
+                    attempt_id=attempt_id,
+                    existing_registration_digest=(
+                        existing.get("registration_digest")
+                        if isinstance(existing, Mapping)
+                        else ""
+                    ),
+                    proposed_registration_digest=verified_record.get(
+                        "registration_digest"
+                    ),
+                )
+            # The whole-file digest/status may have advanced through the
+            # journal's normal finalize/reconcile lifecycle.  The immutable
+            # registration is already authoritative, so do not rewrite its
+            # timestamp or the attempt's current/terminal status.
+            return deepcopy(dict(existing))
+
+        current_attempt_status = str(
+            attempt.get("status") or ATTEMPT_CREATED
+        ).upper()
+        if (
+            current_attempt_status != ATTEMPT_CREATED
+            or verified_reference.journal_finished_at
+            or verified_reference.journal_status
+            not in {"attempt_started", "not_applicable"}
+        ):
+            raise WorkspaceAttestationError(
+                "MUTATION_INTENT_REGISTRATION_LATE",
+                attempt_id=attempt_id,
+                attempt_status=current_attempt_status,
+                journal_status=verified_reference.journal_status,
+            )
+        if (
+            str(action.get("status") or "") != "bound"
+            or action.get("revoked_at")
+        ):
+            raise WorkspaceAttestationError(
+                "MUTATION_INTENT_ACTION_NOT_ACTIVE",
+                attempt_id=attempt_id,
+                action_id=action_id,
+                action_status=action.get("status"),
+            )
+        verified_record["registered_at"] = now
+        attempt[durable_field] = verified_record
+        result = deepcopy(verified_record)
 
     elif event == "attempt_state_changed":
         attempt_id = str(value.get("attempt_id") or "")
@@ -2037,6 +2596,30 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             "status": ATTEMPT_EVIDENCE_COMMITTED,
             "command_role": role,
         })
+        # StepEffect completion is evaluated after this graph turn from the
+        # durable PlanState.  Keep the immutable expectation separate from the
+        # attempt-scoped observed facts and persist both with the concrete
+        # attempt; otherwise an outputless observation/binding/workspace step
+        # loses its evidence when Supervisor reloads the checkpoint and is
+        # falsely treated as incomplete.
+        for key in ("declared_step_effect", "step_effect", "effect_evidence"):
+            raw_effect_value = execution.get(key)
+            if isinstance(raw_effect_value, Mapping):
+                attempt[key] = deepcopy(dict(raw_effect_value))
+        if "effect_evidence" not in attempt:
+            projected_effect_evidence = {
+                key: deepcopy(execution.get(key))
+                for key in (
+                    "produces_artifacts",
+                    "produces_bindings",
+                    "produces_observations",
+                    "workspace_mutations",
+                    "explicit_side_effects",
+                )
+                if key in execution
+            }
+            if projected_effect_evidence:
+                attempt["effect_evidence"] = projected_effect_evidence
         if str(state.get("execution_cursor_step_id") or "") == str(attempt.get("step_id") or ""):
             state["execution_cursor_step_id"] = ""
         state["execution_status"] = "in_progress" if attempt.get("returncode") == 0 else "failed"
@@ -3139,13 +3722,18 @@ def update_recovery_generation_claim(
             or str(claim.get("action_fingerprint") or "") == action_fingerprint
         ):
             return {"changed": False, "duplicate": True, **claim}
-        raise ValueError("RECOVERY_GENERATION_ALREADY_ADOPTED")
+        # An action may still be rejected by a deterministic Execute TOCTOU
+        # preflight before process launch.  That transition revokes its durable
+        # pending authority and supersedes the claim in the same PlanState CAS.
+        if next_status != "superseded":
+            raise ValueError("RECOVERY_GENERATION_ALREADY_ADOPTED")
     transitions = {
         "issued": {"claimed", "failed", "superseded"},
         "claimed": {"provider_completed", "failed", "outcome_unknown", "superseded"},
         "provider_completed": {"action_adopted", "failed", "superseded"},
         "outcome_unknown": {"claimed", "provider_completed", "failed", "superseded"},
         "failed": set(),
+        "action_adopted": {"superseded"},
         "superseded": set(),
     }
     if next_status != current_status and next_status not in transitions.get(current_status, set()):
@@ -3168,6 +3756,205 @@ def update_recovery_generation_claim(
     task_state["recovery_state"] = recovery_state
     state["task_state"] = task_state
     return {"changed": next_status != current_status, "duplicate": False, **claim}
+
+
+def rollover_recovery_generation_claim_after_candidate_rejection(
+    state: PlanState,
+    *,
+    target_generation_id: str,
+    rejection_event_id: str,
+    candidate_fingerprint: str,
+    repair_ordinal: int,
+    receipt_ref: str,
+) -> Dict[str, Any]:
+    """Roll one rejected Recovery Generate claim within the same envelope.
+
+    The provider response has completed, but admission rejected the candidate
+    before execution.  The immutable candidate-repair receipt authorizes a new
+    provider generation, while the original Recovery decision and execution
+    envelope remain the authority for execution mode and scope.  This mutates
+    the same PlanState CAS object that receives the candidate-repair ledger.
+    """
+
+    task_state = dict(state.get("task_state") or {})
+    recovery_state = dict(task_state.get("recovery_state") or {})
+    active = dict(recovery_state.get("active_recovery") or {})
+    claim = dict(recovery_state.get("generation_claim") or {})
+    target_id = str(target_generation_id or "").strip()
+    event_id = str(rejection_event_id or "").strip()
+    candidate_id = str(candidate_fingerprint or "").strip()
+    receipt_id = str(receipt_ref or "").strip()
+    ordinal = int(repair_ordinal or 0)
+    expected_target = str(
+        active.get("target_generation_id")
+        or claim.get("target_generation_id")
+        or ""
+    )
+    if not target_id or target_id != expected_target:
+        raise ValueError("CANDIDATE_REPAIR_RECOVERY_TARGET_MISMATCH")
+    if not event_id:
+        raise ValueError("CANDIDATE_REPAIR_REJECTION_EVENT_ID_MISSING")
+    if not candidate_id:
+        raise ValueError("CANDIDATE_REPAIR_CANDIDATE_FINGERPRINT_MISSING")
+    if ordinal < 1:
+        raise ValueError("CANDIDATE_REPAIR_ORDINAL_INVALID")
+    if not receipt_id:
+        raise ValueError("CANDIDATE_REPAIR_RECEIPT_REF_MISSING")
+    if not active:
+        raise ValueError("CANDIDATE_REPAIR_ACTIVE_RECOVERY_MISSING")
+    recovery_id = str(active.get("recovery_id") or "").strip()
+    envelope_id = str(active.get("envelope_id") or "").strip()
+    envelope = dict(recovery_state.get("active_recovery_envelope") or {})
+    if (
+        not recovery_id
+        or str(active.get("target_route") or "").strip().lower() != "generate"
+        or str(active.get("status") or "").strip().lower()
+        not in {"pending", "dispatched"}
+    ):
+        raise ValueError("CANDIDATE_REPAIR_ACTIVE_RECOVERY_NOT_GENERATABLE")
+    if (
+        str(active.get("step_id") or "").strip()
+        != str(state.get("current_step_id") or "").strip()
+        or int(active.get("plan_revision") or 0)
+        != int(state.get("plan_revision") or 0)
+    ):
+        raise ValueError("CANDIDATE_REPAIR_ACTIVE_RECOVERY_SCOPE_STALE")
+    if (
+        not envelope_id
+        or str(envelope.get("immutable_hash") or "").strip() != envelope_id
+        or str(
+            envelope.get("recovery_id")
+            or envelope.get("recovery_decision_id")
+            or ""
+        ).strip() != recovery_id
+        or str(envelope.get("step_id") or "").strip()
+        != str(state.get("current_step_id") or "").strip()
+    ):
+        raise ValueError("CANDIDATE_REPAIR_RECOVERY_ENVELOPE_MISMATCH")
+    if (
+        str(claim.get("target_generation_id") or "").strip() != target_id
+        or str(claim.get("recovery_id") or "").strip() != recovery_id
+    ):
+        raise ValueError("CANDIDATE_REPAIR_RECOVERY_CLAIM_SCOPE_MISMATCH")
+
+    history = [
+        deepcopy(dict(item))
+        for item in recovery_state.get("generation_claim_history") or []
+        if isinstance(item, Mapping)
+    ]
+    duplicate = next(
+        (
+            item for item in history
+            if str(item.get("candidate_rejection_event_id") or "") == event_id
+            and str(item.get("target_generation_id") or "") == target_id
+        ),
+        None,
+    )
+    if duplicate is not None:
+        current_target = str(
+            (recovery_state.get("generation_claim") or {}).get(
+                "target_generation_id"
+            )
+            or ""
+        )
+        return {
+            "changed": False,
+            "duplicate": True,
+            "prior_target_generation_id": target_id,
+            "target_generation_id": current_target,
+            "rejection_event_id": event_id,
+        }
+
+    current_status = str(claim.get("status") or "issued").strip().lower()
+    if current_status not in {"provider_completed", "action_adopted"}:
+        raise ValueError(
+            "CANDIDATE_REPAIR_RECOVERY_CLAIM_NOT_COMPLETED:"
+            + current_status
+        )
+
+    update_recovery_generation_claim(
+        state,
+        target_generation_id=target_id,
+        status="superseded",
+        detail=(
+            "Recovery provider candidate was rejected before execution; "
+            f"typed candidate repair owns {event_id}."
+        ),
+    )
+    task_state = dict(state.get("task_state") or {})
+    recovery_state = dict(task_state.get("recovery_state") or {})
+    claim = dict(recovery_state.get("generation_claim") or {})
+    claim.update({
+        "candidate_rejection_event_id": event_id,
+        "candidate_fingerprint": candidate_id,
+        "repair_ordinal": ordinal,
+        "receipt_ref": receipt_id,
+    })
+    history = [
+        item for item in history
+        if not (
+            str(item.get("candidate_rejection_event_id") or "") == event_id
+            and str(item.get("target_generation_id") or "") == target_id
+        )
+    ]
+    history.append(deepcopy(claim))
+
+    next_target_identity = {
+        "recovery_id": recovery_id,
+        "envelope_id": envelope_id,
+        "parent_target_generation_id": target_id,
+        "candidate_rejection_event_id": event_id,
+        "candidate_fingerprint": candidate_id,
+        "repair_ordinal": ordinal,
+    }
+    next_target_id = "generation-" + hashlib.sha256(
+        json.dumps(
+            next_target_identity,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8", errors="replace")
+    ).hexdigest()[:20]
+    now = _now()
+    active.update({
+        "target_generation_id": next_target_id,
+        "updated_at": now,
+    })
+    recovery_state["active_recovery"] = active
+    recovery_state["active_recovery_envelope"] = envelope
+    recovery_state["generation_claim_history"] = history
+    recovery_state["generation_claim"] = {
+        "schema_version": 1,
+        "target_generation_id": next_target_id,
+        "parent_target_generation_id": target_id,
+        "recovery_id": recovery_id,
+        "status": "issued",
+        "provider_idempotency_key": next_target_id,
+        "remote_delivery_semantics": str(
+            claim.get("remote_delivery_semantics")
+            or "at_least_once_without_provider_idempotency"
+        ),
+        "candidate_rejection_event_id": event_id,
+        "candidate_fingerprint": candidate_id,
+        "repair_ordinal": ordinal,
+        "receipt_ref": receipt_id,
+        "issued_at": now,
+    }
+    task_state["recovery_state"] = recovery_state
+    state["task_state"] = task_state
+    state["updated_at"] = now
+    return {
+        "changed": True,
+        "duplicate": False,
+        "prior_target_generation_id": target_id,
+        "target_generation_id": next_target_id,
+        "rejection_event_id": event_id,
+        "prior_claim_status": current_status,
+        "claim_status": "issued",
+        "active_recovery_status": str(active.get("status") or ""),
+        "recovery_id": recovery_id,
+        "envelope_id": envelope_id,
+    }
 
 
 def mark_step_verification_pending(
@@ -4609,6 +5396,7 @@ def normalize_plan_step(
     step["execution_capability_id"] = str(
         step.get("execution_capability_id") or ""
     ).strip()
+    step["operation"] = str(step.get("operation") or "").strip()
     step["capability_contract_hash"] = str(
         step.get("capability_contract_hash") or ""
     ).strip()
@@ -4637,6 +5425,21 @@ def normalize_plan_step(
         step.get("outputs") if step.get("outputs") not in (None, "", []) else (step.get("output_contracts") or parsed.get("outputs")),
         dict_keys=("path", "description", "role"),
     )
+    step["produces_bindings"] = _typed_effect_list(step.get("produces_bindings"))
+    step["produces_observations"] = _typed_effect_list(
+        step.get("produces_observations")
+    )
+    step["explicit_side_effects"] = _typed_effect_list(
+        step.get("explicit_side_effects")
+    )
+    raw_workspace_mutations = step.get("workspace_mutations") or []
+    step["workspace_mutations"] = [
+        deepcopy(dict(item)) if isinstance(item, Mapping) else str(item).strip()
+        for item in raw_workspace_mutations
+        if isinstance(item, Mapping) or str(item).strip()
+    ] if isinstance(raw_workspace_mutations, list) else []
+    if isinstance(step.get("step_effect"), Mapping):
+        step["step_effect"] = deepcopy(dict(step["step_effect"]))
     raw_dependencies = _string_list(
         step.get("dependencies") if step.get("dependencies") not in (None, "", []) else (step.get("depends_on") or parsed.get("dependencies"))
     )
@@ -5233,6 +6036,10 @@ def _semantic_step(step: PlanStep) -> Dict[str, Any]:
     payload = {field: normalized.get(field) for field in PLAN_STEP_FIELDS if field != "status"}
     payload["title"] = semantic_title
     payload["selected_skill_id"] = str(normalized.get("selected_skill_id") or "")
+    if normalized.get("operation"):
+        payload["operation"] = str(normalized.get("operation") or "")
+    if isinstance(normalized.get("step_effect"), Mapping):
+        payload["step_effect"] = deepcopy(dict(normalized.get("step_effect") or {}))
     payload["bound_outputs"] = deepcopy(list(normalized.get("bound_outputs") or []))
     payload["renderer_invocation_contract"] = deepcopy(
         dict(normalized.get("renderer_invocation_contract") or {})
@@ -5751,11 +6558,18 @@ def render_structured_plan(state: PlanState) -> str:
             f"  - Action: {str(step.get('action') or '').upper()}",
             f"  - Purpose: {str(step.get('purpose') or 'analysis').upper()}",
             f"  - Execution capability: {str(step.get('execution_capability_id') or 'none')}",
+            f"  - Operation: {str(step.get('operation') or 'none')}",
             f"  - Skills: [{skills}]",
             "  - Inputs:",
             *([f"    - {item}" for item in step.get("inputs", []) or []] or ["    - []"]),
             "  - Outputs:",
             *([f"    - {item}" for item in step.get("outputs", []) or []] or ["    - []"]),
+            "  - Step effect: " + json.dumps(
+                step.get("step_effect") or {},
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ),
             f"  - Depends on: [{', '.join(step.get('depends_on') or step.get('dependencies') or [])}]",
             f"  - Success criteria: {'; '.join(step.get('success_criteria') or [])}",
             f"  - Stage: [{stages}]",
@@ -7333,6 +8147,15 @@ def build_approval_projection(state: PlanState) -> Dict[str, Any]:
             "skill_ids": list(step.get("skill_ids") or []),
             "inputs": list(step.get("inputs") or []),
             "outputs": list(step.get("outputs") or []),
+            **(
+                {"operation": str(step.get("operation") or "")}
+                if str(step.get("operation") or "") else {}
+            ),
+            **(
+                {"step_effect": deepcopy(dict(step.get("step_effect") or {}))}
+                if isinstance(step.get("step_effect"), Mapping)
+                and step.get("step_effect") else {}
+            ),
             "depends_on": list(step.get("depends_on") or step.get("dependencies") or []),
             "success_criteria": list(step.get("success_criteria") or []),
             "step_type": str(step.get("step_type") or "atomic"),
@@ -9181,6 +10004,9 @@ def _plan_spec_v2_record(state: PlanState) -> Dict[str, Any]:
             "base_task_semantic_hash", "selected_skill_ids", "steps", "plan_document",
             "plan_artifacts", "artifact_allocation_mapping", "artifact_usage",
             "task_plan_traceability", "task_output_materializations",
+            "plan_compilation_receipt", "step_effect_normalizations",
+            "plan_resource_bindings", "compiled_dataflow",
+            "plan_dataflow_receipt",
         )
         if state.get(key) not in (None, "", [], {})
     }
@@ -9639,6 +10465,7 @@ def save_plan_state(
     state: PlanState,
     *,
     allow_canonical_task_write: bool = False,
+    step_effect_capability_registry: Any = None,
 ) -> Path:
     path = plan_state_path(data_path, task_id)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -9666,8 +10493,61 @@ def save_plan_state(
             or legacy_builder_import
             or "promote_legacy_taskspec_to_current_task_v8" in migrations
         ),
+        step_effect_capability_registry=step_effect_capability_registry,
     )
     return path
+
+
+def recovery_decision_scope_mismatches(
+    state: Mapping[str, Any],
+    decision: Any,
+) -> Dict[str, Dict[str, str]]:
+    """Compare a finalized decision scope with the current durable plan.
+
+    COMPLETE_TASK is anchored to the last Supervisor-verified step even though
+    COMPLETE_STEP has already cleared the execution cursor.  That one shape is
+    current (not stale) only when every durable step is already successful and
+    the anchored step is one of those completed steps.
+    """
+    decision_value = (
+        decision.to_dict()
+        if hasattr(decision, "to_dict")
+        else dict(decision or {})
+    )
+    scope = dict(decision_value.get("source_scope") or {})
+    expected_scope = {
+        "task_id": str(state.get("task_id") or ""),
+        "plan_id": str(state.get("plan_id") or ""),
+        "plan_version": str(state.get("plan_version") or ""),
+        "step_id": str(state.get("current_step_id") or ""),
+    }
+    mismatches = {
+        key: {"decision": str(scope.get(key) or ""), "current": current}
+        for key, current in expected_scope.items()
+        if str(scope.get(key) or "") != current
+    }
+    if (
+        str(decision_value.get("kind") or "").upper() == "COMPLETE_TASK"
+        and expected_scope["step_id"] == ""
+        and "step_id" in mismatches
+    ):
+        steps = [
+            item for item in state.get("steps", []) or []
+            if isinstance(item, Mapping)
+        ]
+        completed_step_ids = {
+            str(item.get("step_id") or "")
+            for item in steps
+            if str(item.get("status") or "") in STEP_SUCCESS_STATUSES
+        }
+        scoped_step_id = str(scope.get("step_id") or "")
+        if (
+            steps
+            and len(completed_step_ids) == len(steps)
+            and scoped_step_id in completed_step_ids
+        ):
+            mismatches.pop("step_id", None)
+    return mismatches
 
 
 def commit_recovery_bundle(
@@ -9710,17 +10590,7 @@ def commit_recovery_bundle(
         )
 
     scope = dict(decision.source_scope or {})
-    expected_scope = {
-        "task_id": str(current.get("task_id") or task_id),
-        "plan_id": str(current.get("plan_id") or ""),
-        "plan_version": str(current.get("plan_version") or ""),
-        "step_id": str(current.get("current_step_id") or ""),
-    }
-    mismatches = {
-        key: {"decision": str(scope.get(key) or ""), "current": value}
-        for key, value in expected_scope.items()
-        if str(scope.get(key) or "") != value
-    }
+    mismatches = recovery_decision_scope_mismatches(current, decision)
     if mismatches:
         raise ValueError(
             "RECOVERY_BUNDLE_SCOPE_STALE: "
@@ -9752,10 +10622,19 @@ def commit_recovery_bundle(
     task_state = dict(candidate.get("task_state") or {})
     committed_recovery = dict(task_state.get("recovery_state") or {})
     active = dict(committed_recovery.get("active_recovery") or {})
-    if decision.target_route == "generate" and (
+    # COMPLETE_STEP advances the plan cursor and may legitimately route to the
+    # next Generate node, but it is a completion transition rather than an
+    # active recovery generation.  apply_recovery_decision intentionally
+    # clears active_recovery for completion decisions, so the recovery-envelope
+    # identity postcondition applies only to repair/retry Generate transitions.
+    if (
+        decision.target_route == "generate"
+        and str(decision.kind or "").upper() not in {"COMPLETE_STEP", "COMPLETE_TASK"}
+        and (
         str(active.get("recovery_id") or "") != decision.decision_id
         or str(envelope_value.get("recovery_decision_id") or "")
         != decision.decision_id
+        )
     ):
         raise ValueError("RECOVERY_BUNDLE_ACTIVE_IDENTITY_MISMATCH")
     committed_recovery["authoritative_commit"] = {
@@ -10077,6 +10956,85 @@ def _immutable_plan_steps(state: Mapping[str, Any]) -> List[Dict[str, Any]]:
     ]
 
 
+def _rewrite_plan_resource_bindings_after_allocation(
+    resource_bindings: Any,
+    allocation_mapping: Mapping[str, str],
+) -> Dict[str, Dict[str, Any]]:
+    """Extend one compiled resource registry with allocated exact aliases.
+
+    Allocation changes only the controller-owned handle used by persisted Plan
+    steps.  It must not infer a new resource identity or silently recompile the
+    Planner's explicit alias contract from filenames.  Every allocated handle
+    is therefore added mechanically to the same canonical record that already
+    contained its candidate-local handle.
+    """
+
+    source = {
+        str(alias): deepcopy(dict(row))
+        for alias, row in dict(resource_bindings or {}).items()
+        if str(alias) and isinstance(row, Mapping)
+    }
+    if not source:
+        return {}
+
+    rows_by_identity: Dict[str, Dict[str, Any]] = {}
+    aliases_by_identity: Dict[str, set[str]] = {}
+    for alias, raw_row in source.items():
+        row = deepcopy(raw_row)
+        identity = str(row.get("canonical_resource_id") or "").strip()
+        if not identity:
+            raise ValueError(
+                "PLAN_RESOURCE_BINDING_CANONICAL_ID_MISSING_AFTER_ALLOCATION"
+            )
+        aliases = {
+            str(value)
+            for value in row.get("aliases", []) or []
+            if str(value)
+        }
+        aliases.update({alias, identity})
+        for local_ref, allocated_ref in allocation_mapping.items():
+            if str(local_ref) in aliases:
+                aliases.add(str(allocated_ref))
+        prior = rows_by_identity.get(identity)
+        if prior is not None:
+            comparable_prior = {
+                key: value for key, value in prior.items() if key != "aliases"
+            }
+            comparable_row = {
+                key: value for key, value in row.items() if key != "aliases"
+            }
+            if comparable_prior != comparable_row:
+                raise ValueError(
+                    "PLAN_RESOURCE_BINDING_CONFLICT_AFTER_ALLOCATION: "
+                    + identity
+                )
+        else:
+            rows_by_identity[identity] = row
+        aliases_by_identity.setdefault(identity, set()).update(aliases)
+
+    rewritten: Dict[str, Dict[str, Any]] = {}
+    for identity in sorted(rows_by_identity):
+        row = deepcopy(rows_by_identity[identity])
+        row["aliases"] = sorted(aliases_by_identity[identity])
+        binding_body = {
+            key: deepcopy(value)
+            for key, value in row.items()
+            if key != "binding_id"
+        }
+        row["binding_id"] = "plan-resource-binding-" + hashlib.sha256(
+            json.dumps(
+                binding_body,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()[:20]
+        for alias in row["aliases"]:
+            rewritten[alias] = deepcopy(row)
+    return {alias: rewritten[alias] for alias in sorted(rewritten)}
+
+
 def _prepare_atomic_plan_objects(
     *,
     path: Path,
@@ -10084,6 +11042,7 @@ def _prepare_atomic_plan_objects(
     current_value: Mapping[str, Any],
     store: StateContractStore,
     current_generation: int,
+    step_effect_capability_registry: Any = None,
 ) -> Dict[str, str]:
     """Prewrite one unreachable snapshot/approval pair under the state lock."""
     previous_plan_hash = str(
@@ -10116,10 +11075,79 @@ def _prepare_atomic_plan_objects(
             "planning_epoch_id": str(intent.get("planning_epoch_id") or ""),
             "local_to_authoritative": dict(sorted(allocation_mapping.items())),
         }
+        if state.get("plan_resource_bindings") not in (None, {}, []):
+            state["plan_resource_bindings"] = (
+                _rewrite_plan_resource_bindings_after_allocation(
+                    state.get("plan_resource_bindings"), allocation_mapping
+                )
+            )
         state.pop("allocation_intent", None)
         state.pop("proposed_artifacts", None)
         state.pop("candidate_scope_id", None)
         state.pop("planning_epoch_id", None)
+        if step_effect_capability_registry is not None:
+            # Allocation replaces candidate-local artifact identities while
+            # the PlanState lock is held. Re-run the idempotent Plan
+            # canonicalizer before sealing: it synchronizes derived aliases
+            # such as input/output_contracts and provenance artifact IDs with
+            # the newly authoritative handles.  Otherwise load_plan_state()
+            # performs that synchronization later and immediately makes the
+            # just-written receipt stale.
+            migrate_plan_state(
+                state,
+                str(state.get("task_id") or path.parent.name),
+                path.parents[2],
+            )
+            # Seal only after every allocation-derived semantic field is in
+            # its final persisted form, so PlanReview validates the exact
+            # committed Plan rather than a pre-allocation projection.
+            from agent_core.step_effects import (
+                compile_plan_dataflow,
+                compile_plan_step_effects,
+            )
+
+            resource_bindings = {
+                str(alias): deepcopy(dict(row))
+                for alias, row in dict(
+                    state.get("plan_resource_bindings") or {}
+                ).items()
+                if isinstance(row, Mapping)
+            }
+
+            compiled, receipt, issues = compile_plan_step_effects(
+                state,
+                step_effect_capability_registry,
+                allow_legacy_untyped=False,
+                resource_bindings=resource_bindings or None,
+            )
+            dataflow_receipt: Dict[str, Any] = {}
+            if not issues:
+                # An empty registry is still an authoritative typed dataflow
+                # (for example an observation-only step), not a legacy signal.
+                compiled, dataflow_receipt, dataflow_issues = (
+                    compile_plan_dataflow(
+                        compiled,
+                        step_effect_capability_registry,
+                        resource_bindings=resource_bindings,
+                        compile_effect_contracts=False,
+                        allow_legacy_untyped=False,
+                    )
+                )
+                issues.extend(dataflow_issues)
+            if issues:
+                codes = sorted({
+                    str(item.get("code") or "PLAN_COMPILATION_INVALID")
+                    for item in issues
+                    if isinstance(item, Mapping)
+                })
+                raise ValueError(
+                    "PLAN_POST_ALLOCATION_COMPILATION_INVALID: "
+                    + ",".join(codes)
+                )
+            state.clear()
+            state.update(compiled)
+            state["plan_compilation_receipt"] = deepcopy(receipt)
+            state["plan_dataflow_receipt"] = deepcopy(dataflow_receipt)
         state["semantic_plan_hash"] = semantic_plan_hash(state)
         refresh_state_contract_v2(state)
 
@@ -10281,6 +11309,7 @@ def _atomic_write_plan_state(
     expected_generation: Optional[int] = None,
     advance_generation: bool = False,
     allow_canonical_task_write: bool = False,
+    step_effect_capability_registry: Any = None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = path.with_suffix(path.suffix + ".lock")
@@ -10341,6 +11370,7 @@ def _atomic_write_plan_state(
             current_value=current_value,
             store=store,
             current_generation=current_generation,
+            step_effect_capability_registry=step_effect_capability_registry,
         )
         # Allocation may rewrite candidate-local refs. Recompute the hashes
         # only after that promotion has completed inside this lock.

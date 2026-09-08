@@ -24,9 +24,11 @@ PLANNING_EPOCH_SCHEMA_VERSION = 1
 MAX_RECONCILIATION_NONPROGRESS = 2
 
 PLAN_CANDIDATE = "PLAN_CANDIDATE"
+SUBMIT_PLAN_FOR_REVIEW = "SUBMIT_PLAN_FOR_REVIEW"
 TASKSPEC_RECONCILIATION_REQUIRED = "TASKSPEC_RECONCILIATION_REQUIRED"
 RECOGNIZED_PLANNER_OUTCOMES = {
     PLAN_CANDIDATE,
+    SUBMIT_PLAN_FOR_REVIEW,
     TASKSPEC_RECONCILIATION_REQUIRED,
 }
 
@@ -75,6 +77,7 @@ STRUCTURED_PLAN_STEP_SCALAR_FIELDS = frozenset({
 })
 STRUCTURED_PLAN_STEP_OPTIONAL_SCALAR_FIELDS = frozenset({
     "execution_capability_id",
+    "operation",
 })
 STRUCTURED_PLAN_STEP_LIST_FIELDS = frozenset({
     "inputs",
@@ -83,6 +86,12 @@ STRUCTURED_PLAN_STEP_LIST_FIELDS = frozenset({
     "success_criteria",
     "skill_ids",
     "workflow_stage_ids",
+})
+STRUCTURED_PLAN_STEP_OPTIONAL_LIST_FIELDS = frozenset({
+    "produces_bindings",
+    "produces_observations",
+    "workspace_mutations",
+    "explicit_side_effects",
 })
 
 _SINGLE_JSON_FENCE_RE = re.compile(
@@ -145,7 +154,7 @@ class PlannerCandidateError(PlanContractError):
             "field_path": self.field_path,
             "message": self.detail,
             "owner": "planner",
-            "route": "planner_full_replan",
+            "disposition": "PROTOCOL_INVALID",
             **deepcopy(self.diagnostic),
         }
 
@@ -246,7 +255,7 @@ class PlannerOutcomeEnvelope:
     legacy_envelope: bool = False
 
     def plan_candidate_body(self) -> Dict[str, Any]:
-        if self.outcome_type != PLAN_CANDIDATE:
+        if self.outcome_type not in {PLAN_CANDIDATE, SUBMIT_PLAN_FOR_REVIEW}:
             raise PlannerEnvelopeError("PLANNER_OUTCOME_IS_NOT_PLAN_CANDIDATE")
         body = deepcopy(dict(self.payload))
         body.pop("outcome_type", None)
@@ -396,7 +405,7 @@ def structured_plan_candidate_diagnostics(
                     "field_path": f"$.steps[{index}].{field}",
                     "message": "must be a string",
                 })
-        for field in sorted(step_list_fields):
+        for field in sorted(step_list_fields | STRUCTURED_PLAN_STEP_OPTIONAL_LIST_FIELDS):
             if field in step and not isinstance(step.get(field), list):
                 diagnostics.append({
                     "field_path": f"$.steps[{index}].{field}",
@@ -418,6 +427,7 @@ def structured_plan_candidate_diagnostics(
                 STRUCTURED_PLAN_STEP_SCALAR_FIELDS
                 | STRUCTURED_PLAN_STEP_OPTIONAL_SCALAR_FIELDS
                 | step_list_fields
+                | STRUCTURED_PLAN_STEP_OPTIONAL_LIST_FIELDS
                 | (frozenset({"semantic_claims"}) if legacy_schema else frozenset())
             )
         )
@@ -678,7 +688,10 @@ def parse_planner_outcome_envelope(
             outcome_type or "<missing>",
             diagnostic={
                 "field_path": "$.outcome_type",
-                "expected_type": "PLAN_CANDIDATE|TASKSPEC_RECONCILIATION_REQUIRED",
+                "expected_type": (
+                    "SUBMIT_PLAN_FOR_REVIEW|PLAN_CANDIDATE|"
+                    "TASKSPEC_RECONCILIATION_REQUIRED"
+                ),
                 "received_type": "string" if outcome_type else "missing",
                 "received_excerpt": outcome_type[:200],
             },
@@ -963,8 +976,15 @@ def validate_candidate_graph_and_flow(
     ref_keys: Mapping[str, ArtifactRefKey],
     usage: Sequence[Mapping[str, Any]],
     availability_origins: Mapping[str, str],
+    resource_bindings: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
-    """Validate explicit DAG and artifact availability without semantic guesses."""
+    """Compatibility wrapper over the canonical compiled dataflow validator.
+
+    The dependency checks remain here because they require no effect
+    interpretation.  READ/PRODUCE/MUTATE availability is delegated to
+    ``compile_plan_dataflow`` so this legacy entry point no longer owns a
+    second outputs-only producer model.
+    """
     steps = [dict(item) for item in candidate.get("steps", []) or [] if isinstance(item, Mapping)]
     step_ids = [str(step.get("step_id") or "") for step in steps]
     issues: List[Dict[str, Any]] = []
@@ -972,7 +992,23 @@ def validate_candidate_graph_and_flow(
         issues.append({"code": "PLAN_STEP_ID_MISSING"})
         return issues
     if len(set(step_ids)) != len(step_ids):
-        issues.append({"code": "PLAN_STEP_ID_DUPLICATE"})
+        duplicate_step_ids = sorted({
+            step_id for step_id in step_ids if step_ids.count(step_id) > 1
+        })
+        duplicate_indexes = {
+            step_id: [
+                index
+                for index, candidate_step_id in enumerate(step_ids)
+                if candidate_step_id == step_id
+            ]
+            for step_id in duplicate_step_ids
+        }
+        issues.append({
+            "code": "PLAN_STEP_ID_DUPLICATE",
+            "affected_step_ids": duplicate_step_ids,
+            "duplicate_step_ids": duplicate_step_ids,
+            "duplicate_step_indexes": duplicate_indexes,
+        })
         return issues
 
     known = set(step_ids)
@@ -1017,73 +1053,42 @@ def validate_candidate_graph_and_flow(
     for step_id in step_ids:
         visit(step_id)
 
-    def ancestors(step_id: str) -> set[str]:
-        result: set[str] = set()
-        pending = list(dependencies.get(step_id, set()))
-        while pending:
-            dependency = pending.pop()
-            if dependency in result or dependency not in known:
-                continue
-            result.add(dependency)
-            pending.extend(dependencies.get(dependency, set()))
-        return result
+    del usage  # Kept in the ABI for persisted callers; no longer a flow authority.
+    compiled_bindings = (
+        {
+            str(alias): deepcopy(dict(row))
+            for alias, row in resource_bindings.items()
+            if isinstance(row, Mapping)
+        }
+        if resource_bindings is not None
+        else None
+    )
+    candidate_scope_id = next(
+        (
+            key.candidate_scope_id
+            for key in ref_keys.values()
+            if key.kind == "candidate_local" and key.candidate_scope_id
+        ),
+        "candidate-scope-compatibility",
+    )
+    authoritative_handles = {
+        str(handle): key.identity
+        for handle, key in ref_keys.items()
+        if key.kind == "authoritative"
+    }
+    from agent_core.step_effects import compile_plan_dataflow
 
-    producers: Dict[ArtifactRefKey, List[str]] = {}
-    consumers: Dict[ArtifactRefKey, List[str]] = {}
-    for row in usage:
-        ref = dict(row.get("artifact_ref") or {})
-        key = ArtifactRefKey(
-            str(ref.get("kind") or ""),
-            str(ref.get("identity") or ""),
-            str(ref.get("candidate_scope_id") or ""),
-        )
-        target = producers if row.get("relation") == "produce" else consumers
-        target.setdefault(key, []).append(str(row.get("step_id") or ""))
-
-    for key, step_producers in sorted(producers.items(), key=lambda item: item[0]):
-        if len(step_producers) != 1:
-            issues.append({
-                "code": "PLAN_ARTIFACT_PRODUCER_CARDINALITY",
-                "artifact_ref": key.to_dict(),
-                "producer_step_ids": list(step_producers),
-            })
-    for key, step_consumers in sorted(consumers.items(), key=lambda item: item[0]):
-        step_producers = producers.get(key, [])
-        initially_available = bool(
-            key.kind == "authoritative"
-            and str(availability_origins.get(key.identity) or "")
-            in {
-                AvailabilityOrigin.VERIFIED_TASK_INPUT.value,
-                AvailabilityOrigin.ADMITTED_RESUME_VERSION.value,
-            }
-        )
-        for consumer in step_consumers:
-            if consumer in step_producers:
-                issues.append({
-                    "code": "PLAN_ARTIFACT_ORIGIN_CONFLICT",
-                    "artifact_ref": key.to_dict(),
-                    "step_id": consumer,
-                    "reason": "same_step_consume_and_produce",
-                })
-                continue
-            if initially_available:
-                continue
-            reachable_producers = [
-                producer for producer in step_producers
-                if producer in ancestors(consumer)
-            ]
-            if len(reachable_producers) != 1:
-                issues.append({
-                    "code": "PLAN_ARTIFACT_UNAVAILABLE",
-                    "artifact_ref": key.to_dict(),
-                    "consumer_step_id": consumer,
-                    "producer_step_ids": list(step_producers),
-                })
-
-    issues.extend(validate_v1_no_in_place(
-        usage,
+    _, _, dataflow_issues = compile_plan_dataflow(
+        candidate,
+        {},
+        resource_bindings=compiled_bindings,
+        candidate_scope_id=candidate_scope_id,
+        authoritative_handles=authoritative_handles,
         availability_origins=availability_origins,
-    ))
+        compile_effect_contracts=False,
+        validate_dependencies=False,
+    )
+    issues.extend(dataflow_issues)
     # Stable de-duplication permits validators to report the same origin
     # conflict through both the producer and same-step checks.
     unique: Dict[str, Dict[str, Any]] = {}
@@ -1115,6 +1120,7 @@ def planner_candidate_body_from_state(state: Mapping[str, Any]) -> Dict[str, Any
         STRUCTURED_PLAN_STEP_SCALAR_FIELDS
         | STRUCTURED_PLAN_STEP_OPTIONAL_SCALAR_FIELDS
         | STRUCTURED_PLAN_STEP_LIST_FIELDS
+        | STRUCTURED_PLAN_STEP_OPTIONAL_LIST_FIELDS
     )
     if legacy_schema:
         step_fields.add("semantic_constraint_ids")
@@ -1206,8 +1212,8 @@ def _candidate_flow_diagnostic(
     code = str(row.get("code") or "PLAN_CANDIDATE_INVALID")
     step_id = str(row.get("step_id") or row.get("consumer_step_id") or "")
     field_path = "$.steps"
-    validator_id = "plan_artifact_flow"
-    message = code
+    validator_id = str(row.get("validator_id") or "plan_artifact_flow")
+    message = str(row.get("message") or code)
     affected_fields: List[str] = []
     violated_invariant = "candidate_satisfies_deterministic_plan_contract"
     required_postcondition = "The returned candidate passes this deterministic validator."
@@ -1252,10 +1258,16 @@ def _candidate_flow_diagnostic(
         field_path = "$.steps"
         message = "Plan dependencies contain a cycle."
     elif code == "PLAN_ARTIFACT_PRODUCER_CARDINALITY":
-        affected_fields = ["outputs"]
+        affected_fields = list(row.get("affected_fields") or ["outputs"])
         violated_invariant = "each_planned_artifact_has_exactly_one_producer"
-        required_postcondition = "Each planned artifact has exactly one producing step."
-        message = "A planned artifact must have exactly one producer."
+        required_postcondition = str(
+            row.get("required_condition")
+            or "Each planned artifact has exactly one producing step."
+        )
+        field_path = str(row.get("field_path") or "$.steps")
+        message = str(
+            row.get("message") or "A planned artifact must have exactly one producer."
+        )
     elif code == "PLAN_ARTIFACT_UNAVAILABLE":
         affected_fields = ["inputs", "outputs", "dependencies"]
         violated_invariant = "consumed_artifacts_are_available_from_verified_or_reachable_producers"
@@ -1263,23 +1275,45 @@ def _candidate_flow_diagnostic(
             "Every consumed artifact is a verified input or is produced by exactly "
             "one reachable dependency."
         )
-        if step_id:
-            field_path = _candidate_step_field_path(
-                candidate, step_id=step_id, field="inputs"
-            )
-        message = (
+        field_path = str(row.get("field_path") or field_path)
+        message = str(row.get("message") or (
             "Consumed artifact is neither a verified task input nor produced "
             "by exactly one reachable dependency."
+        ))
+    elif code in {
+        "PLAN_RESOURCE_UNAVAILABLE",
+        "PLAN_RESOURCE_READ_BEFORE_MUTATION",
+        "PLAN_MUTATION_PRECONDITION_UNSATISFIED",
+        "PLAN_MUTATION_TRANSITION_UNSPECIFIED",
+        "PLAN_MUTATION_ORDER_AMBIGUOUS",
+        "PLAN_RESOURCE_BINDING_MISSING",
+        "PLAN_RESOURCE_KIND_MISMATCH",
+        "PLAN_MUTABLE_RESOURCE_DECLARED_AS_OUTPUT",
+    }:
+        affected_fields = list(row.get("affected_fields") or [
+            "inputs", "workspace_mutations", "dependencies"
+        ])
+        violated_invariant = "compiled_resource_effects_satisfy_explicit_availability_contract"
+        required_postcondition = str(
+            row.get("required_condition")
+            or "Every READ and MUTATE precondition has one explicit reachable source."
         )
+        field_path = str(row.get("field_path") or "$.steps")
+        message = str(row.get("message") or code)
     elif code == "PLAN_ARTIFACT_ORIGIN_CONFLICT":
-        affected_fields = ["inputs", "outputs"]
-        violated_invariant = "artifact_origin_is_unambiguous_per_step"
-        required_postcondition = "No step declares conflicting origins for the same artifact."
-        if step_id:
-            field_path = _candidate_step_field_path(
-                candidate, step_id=step_id, field="inputs"
-            )
-        message = "Plan declares conflicting production and consumption origins."
+        affected_fields = list(
+            row.get("affected_fields") or ["inputs", "outputs"]
+        )
+        violated_invariant = "immutable_artifact_origin_is_unambiguous"
+        required_postcondition = str(
+            row.get("required_condition")
+            or "Every immutable artifact has exactly one authoritative origin."
+        )
+        field_path = str(row.get("field_path") or "$.steps")
+        message = str(
+            row.get("message")
+            or "Plan declares conflicting origins for one immutable artifact."
+        )
     elif step_id:
         field_path = _candidate_step_field_path(
             candidate,
@@ -1297,14 +1331,15 @@ def _candidate_flow_diagnostic(
         "affected_fields": affected_fields,
         "violated_invariant": violated_invariant,
         "required_postcondition": required_postcondition,
-        "route": "planner_full_replan",
+        "disposition": "PROTOCOL_INVALID",
     }
     if step_id:
         result.setdefault("step_id", step_id)
     affected_step_ids = [
         str(value)
         for value in (
-            row.get("producer_step_ids")
+            row.get("affected_step_ids")
+            or row.get("producer_step_ids")
             or ([step_id] if step_id else [])
         )
         if str(value)
@@ -1312,6 +1347,11 @@ def _candidate_flow_diagnostic(
     if row.get("consumer_step_id") and str(row.get("consumer_step_id")) not in affected_step_ids:
         affected_step_ids.append(str(row.get("consumer_step_id")))
     artifact_ref = deepcopy(dict(row.get("artifact_ref") or {}))
+    if not artifact_ref and row.get("canonical_resource_id"):
+        artifact_ref = {
+            "kind": "resource",
+            "identity": str(row.get("canonical_resource_id") or ""),
+        }
     if not artifact_ref and row.get("artifact_id"):
         artifact_ref = {
             "kind": "authoritative",
@@ -1366,8 +1406,16 @@ def validate_planner_candidate_deterministically(
     authoritative_handles: Mapping[str, str],
     availability_origins: Mapping[str, str],
     authoritative_bindings: Optional[Mapping[str, Mapping[str, Any]]] = None,
+    validate_dataflow: bool = True,
 ) -> Tuple[Dict[str, ArtifactRefKey], List[Dict[str, Any]], List[Dict[str, Any]]]:
-    """Run the shared schema, identity, DAG, and artifact-flow admission path."""
+    """Run the shared schema/identity path and, by default, dataflow admission.
+
+    Production schema-2 admission uses ``validate_dataflow=False`` for its
+    first, side-effect-free structure/identity pass.  It then resolves exact
+    handles, compiles capability effects, and runs ``compile_plan_dataflow``
+    once over that compiled view.  The default remains ``True`` for callers
+    that intentionally use this function as the complete compatibility gate.
+    """
     structure = structured_plan_candidate_diagnostics(candidate)
     if structure:
         return {}, [], [
@@ -1378,7 +1426,7 @@ def validate_planner_candidate_deterministically(
                 "field_path": str(item.get("field_path") or "$"),
                 "repair_target": str(item.get("field_path") or "$"),
                 "message": str(item.get("message") or "Structured Plan is invalid."),
-                "route": "planner_full_replan",
+                "disposition": "PROTOCOL_INVALID",
                 "expected_type": str(item.get("expected_type") or "value"),
                 "received_type": str(item.get("received_type") or "unknown"),
                 "received_excerpt": str(item.get("received_excerpt") or ""),
@@ -1406,11 +1454,42 @@ def validate_planner_candidate_deterministically(
             "repair_target": str(exc.field_path or "$"),
         })
         return {}, [], [diagnostic]
-    issues = validate_candidate_graph_and_flow(
-        candidate,
-        ref_keys=ref_keys,
-        usage=usage,
-        availability_origins=availability_origins,
+    try:
+        from agent_core.plan_bindings import (
+            PlanBindingError,
+            compile_plan_resource_bindings,
+        )
+
+        resource_bindings = compile_plan_resource_bindings(
+            candidate,
+            candidate_scope_id=candidate_scope_id,
+            authoritative_handles=authoritative_handles,
+            availability_origins=availability_origins,
+            authoritative_bindings=authoritative_bindings,
+        )
+    except PlanBindingError as exc:
+        diagnostic = (
+            exc.to_dict() if hasattr(exc, "to_dict") else {
+                "code": "PLAN_RESOURCE_BINDING_INVALID",
+                "message": str(exc),
+            }
+        )
+        diagnostic.setdefault("owner", "planner")
+        diagnostic.setdefault("validator_id", "plan_resource_bindings")
+        diagnostic.setdefault("field_path", "$.proposed_artifacts")
+        diagnostic.setdefault("repair_target", diagnostic["field_path"])
+        diagnostic.setdefault("disposition", "PROTOCOL_INVALID")
+        return ref_keys, usage, [diagnostic]
+    issues = (
+        validate_candidate_graph_and_flow(
+            candidate,
+            ref_keys=ref_keys,
+            usage=usage,
+            availability_origins=availability_origins,
+            resource_bindings=resource_bindings,
+        )
+        if validate_dataflow
+        else []
     )
     return (
         ref_keys,
@@ -1526,6 +1605,7 @@ def prepare_allocation_intent(
             ).to_dict(),
             "semantic_view": deepcopy(dict(semantic_view)),
             "artifact_contract": deepcopy(dict(contract)),
+            "resource_binding": deepcopy(dict(raw.get("resource_binding") or {})),
         })
     return {
         "schema_version": 1,
@@ -1556,6 +1636,7 @@ def promote_allocation_intent(
         ).hexdigest()[:24]
         logical_id = f"plan-artifact-{digest}"
         contract = dict(declaration.get("artifact_contract") or {})
+        resource_binding = dict(declaration.get("resource_binding") or {})
         object_kind = str(contract.get("object_kind") or "")
         canonical_path = f"{str(managed_root).rstrip('/')}/{logical_id}"
         mapping[local_ref] = logical_id
@@ -1567,6 +1648,17 @@ def promote_allocation_intent(
             "materialization_policy_id": str(contract.get("materialization_policy_id") or ""),
             "lifecycle": str(contract.get("lifecycle") or ""),
             "availability_origin": AvailabilityOrigin.NOT_YET_AVAILABLE.value,
+            "resource_kind": str(
+                resource_binding.get("resource_kind")
+                or contract.get("resource_kind")
+                or "immutable_artifact"
+            ),
+            "canonical_resource_id": str(
+                resource_binding.get("canonical_resource_id")
+                or resource_binding.get("resource_id")
+                or logical_id
+            ),
+            "resource_binding": deepcopy(resource_binding),
             "semantic_view": deepcopy(dict(declaration.get("semantic_view") or {})),
             "candidate_scope_id": scope,
             "local_ref": local_ref,
@@ -1578,6 +1670,35 @@ def rewrite_candidate_local_refs(
     candidate: Mapping[str, Any],
     mapping: Mapping[str, str],
 ) -> Dict[str, Any]:
+    def rewrite_artifact_effect(value: Any) -> Any:
+        if isinstance(value, str):
+            return str(mapping.get(value, value))
+        if not isinstance(value, Mapping):
+            return deepcopy(value)
+        row = deepcopy(dict(value))
+        for key in (
+            "artifact_id", "logical_artifact_id", "identity", "id", "name",
+        ):
+            identity = str(row.get(key) or "")
+            if identity in mapping:
+                row[key] = str(mapping[identity])
+        return row
+
+    def rewrite_workspace_effect(value: Any) -> Any:
+        if isinstance(value, str):
+            return str(mapping.get(value, value))
+        if not isinstance(value, Mapping):
+            return deepcopy(value)
+        row = deepcopy(dict(value))
+        for key in (
+            "identity", "workspace_ref", "workspace_id", "artifact_id",
+            "object_ref", "name", "id",
+        ):
+            identity = str(row.get(key) or "")
+            if identity in mapping:
+                row[key] = str(mapping[identity])
+        return row
+
     result = deepcopy(dict(candidate))
     for step in result.get("steps", []) or []:
         if not isinstance(step, dict):
@@ -1587,6 +1708,44 @@ def rewrite_candidate_local_refs(
                 str(mapping.get(str(value), str(value)))
                 for value in step.get(field, []) or []
             ]
+        if "produces_artifacts" in step:
+            step["produces_artifacts"] = [
+                rewrite_artifact_effect(value)
+                for value in step.get("produces_artifacts", []) or []
+            ]
+        if "workspace_mutations" in step:
+            step["workspace_mutations"] = [
+                rewrite_workspace_effect(value)
+                for value in step.get("workspace_mutations", []) or []
+            ]
+        if isinstance(step.get("step_effect"), Mapping):
+            effect = deepcopy(dict(step["step_effect"]))
+            effect["produces_artifacts"] = [
+                rewrite_artifact_effect(value)
+                for value in effect.get("produces_artifacts", []) or []
+            ]
+            effect["workspace_mutations"] = [
+                rewrite_workspace_effect(value)
+                for value in effect.get("workspace_mutations", []) or []
+            ]
+            step["step_effect"] = effect
+    for declaration in result.get("proposed_artifacts", []) or []:
+        if not isinstance(declaration, dict):
+            continue
+        local_ref = str(declaration.get("local_ref") or "")
+        allocated = str(mapping.get(local_ref) or "")
+        resource_binding = declaration.get("resource_binding")
+        if not allocated or not isinstance(resource_binding, Mapping):
+            continue
+        binding = deepcopy(dict(resource_binding))
+        aliases = {
+            str(value)
+            for value in binding.get("aliases", []) or []
+            if str(value)
+        }
+        aliases.update({local_ref, allocated})
+        binding["aliases"] = sorted(aliases)
+        declaration["resource_binding"] = binding
     return result
 
 

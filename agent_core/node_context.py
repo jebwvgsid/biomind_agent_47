@@ -25,6 +25,7 @@ from agent_core.task_spec import (
     task_semantic_hash,
 )
 from agent_core.plan_contract import new_candidate_scope_id
+from agent_core.step_effects import canonical_execution_effect_evidence
 from execution.runtime_contract import (
     execution_runtime_contract,
     validation_scope_contract,
@@ -948,7 +949,9 @@ _LLM_SAFE_STEP_FIELDS = frozenset({
     "constraints", "constraint_ids", "semantic_constraint_ids",
     "requirement_ids", "dependencies", "depends_on", "success_criteria",
     "risk_level", "step_type", "skill_ids", "skills_declared",
-    "command_intent", "execution_capability_id", "artifacts",
+    "command_intent", "execution_capability_id", "operation", "artifacts",
+    "step_effect", "produces_bindings", "produces_observations",
+    "workspace_mutations", "explicit_side_effects",
 })
 
 _LLM_SAFE_STEP_ARTIFACT_FIELDS = frozenset({
@@ -1343,6 +1346,7 @@ def _select_current_step_closure(
             if key in {
                 "handle", "title", "action", "outputs", "output_refs",
                 "output_artifacts", "output_artifact_handles", "success_criteria",
+                "operation", "step_effect",
             }
             and value not in (None, "", [], {})
         })
@@ -1601,12 +1605,14 @@ def _planning_failure_focus(
         if not isinstance(raw, Mapping):
             continue
         visible_fields = {
-            "code", "message", "field_path", "affected_step_ids", "affected_artifact",
+            "code", "message", "severity", "disposition", "field_path",
+            "affected_step_ids", "affected_artifact",
             "affected_output", "expected_identity", "observed_identity",
             "violated_invariant", "required_postcondition", "affected_fields",
             "machine_evidence", "expected_type", "received_type",
             "received_excerpt", "parser_message", "line", "column", "offset",
             "response_excerpt",
+            "possible_effect_kinds", "normalization_source", "expected_contract",
         }
         row = _without_control_metadata({
             key: deepcopy(value)
@@ -1638,7 +1644,9 @@ def _planning_failure_focus(
             if key in {
                 "step_key", "action", "purpose", "tool", "inputs", "outputs",
                 "dependencies", "skill_ids", "workflow_stage_ids", "batch_id",
-                "risk_level", "execution_capability_id",
+                "risk_level", "execution_capability_id", "operation",
+                "produces_bindings", "produces_observations",
+                "workspace_mutations", "explicit_side_effects", "step_effect",
             }
         }
         for step in previous.get("steps", []) or []
@@ -1849,6 +1857,19 @@ def _accepted_execution_outcomes(
         }
         if artifacts:
             row["produced_artifacts"] = artifacts
+        effect_evidence = canonical_execution_effect_evidence(raw)
+        accepted_effects = {
+            field: _without_control_metadata(effect_evidence.get(field) or [])
+            for field in (
+                "produces_bindings",
+                "produces_observations",
+                "workspace_mutations",
+                "explicit_side_effects",
+            )
+            if effect_evidence.get(field)
+        }
+        if accepted_effects:
+            row["effect_evidence"] = accepted_effects
         reconciliation = str(raw.get("output_reconciliation_status") or "")
         if reconciliation:
             row["output_reconciliation_status"] = reconciliation
@@ -2471,6 +2492,43 @@ def build_node_context(
                     "attempt": 1,
                     "instruction": {"return_complete_plan": True},
                 }
+            planner_loop = dict(
+                (plan.get("task_state") or {}).get("planner_loop") or {}
+            )
+            if planner_loop:
+                planning_focus = dict(current_focus.get("planning") or {})
+                observations = [
+                    {
+                        "action_type": str(item.get("action_type") or ""),
+                        "action": _without_control_metadata(
+                            dict(item.get("action") or {})
+                        ),
+                        "observation": _without_control_metadata(
+                            dict(item.get("observation") or {})
+                        ),
+                    }
+                    for item in planner_loop.get("observations", [])[-4:]
+                    if isinstance(item, Mapping)
+                ]
+                raw_progress = dict(planner_loop.get("progress") or {})
+                planning_focus["agent_loop"] = {
+                    "phase": str(planner_loop.get("phase") or "reasoning"),
+                    "status": str(planner_loop.get("status") or "active"),
+                    "recent_observations": observations,
+                    # Fingerprints are controller-side no-progress/CAS
+                    # identities, not semantic feedback for the provider.
+                    # The bounded counters remain visible so the Planner can
+                    # understand that it is repairing a repeated candidate.
+                    "progress": {
+                        key: int(raw_progress.get(key) or 0)
+                        for key in (
+                            "identical_no_progress_count",
+                            "max_identical_no_progress",
+                        )
+                        if raw_progress.get(key) is not None
+                    },
+                }
+                current_focus["planning"] = planning_focus
         if normalized_node == "planner_repair":
             current_focus["candidate_plan"] = {"steps": steps}
         if normalized_node in {"generate", "recovery"}:

@@ -36,7 +36,23 @@ LLM_CAPABILITY_FIELD_ALLOWLIST = (
     "required_runtime_binding_ids",
     "optional_runtime_binding_ids",
     "required_artifact_binding_ids",
+    "operation",
+    "consumes_artifacts",
+    "produces_artifacts",
+    "produces_bindings",
+    "produces_observations",
+    "workspace_mutations",
+    "explicit_side_effects",
     "execution_guidance",
+)
+
+_OPTIONAL_CAPABILITY_EFFECT_LIST_FIELDS = (
+    "consumes_artifacts",
+    "produces_artifacts",
+    "produces_bindings",
+    "produces_observations",
+    "workspace_mutations",
+    "explicit_side_effects",
 )
 
 
@@ -85,6 +101,50 @@ def _string_ids(value: Any) -> list[str]:
     return sorted({str(item).strip() for item in values if str(item).strip()})
 
 
+def _typed_effect_entries(value: Any) -> list[Any]:
+    """Preserve typed effect rows while keeping string-only hashes stable."""
+    values = value if isinstance(value, (list, tuple, set)) else []
+    by_identity: Dict[str, Any] = {}
+    for item in values:
+        if isinstance(item, Mapping):
+            row: Any = deepcopy(dict(item))
+        elif str(item).strip():
+            row = str(item).strip()
+        else:
+            continue
+        by_identity[_canonical_json(row)] = row
+    return [by_identity[key] for key in sorted(by_identity)]
+
+
+def _workspace_mutations(value: Any) -> list[Any]:
+    """Normalize mutable workspace declarations without treating them as files."""
+    values = value if isinstance(value, (list, tuple, set)) else []
+    rows: list[Any] = []
+    for item in values:
+        if isinstance(item, Mapping):
+            source = deepcopy(dict(item))
+            workspace_ref = str(
+                source.get("workspace_ref")
+                or source.get("id")
+                or source.get("identity")
+                or ""
+            ).strip()
+            if not workspace_ref:
+                continue
+            source.update({
+                "workspace_ref": workspace_ref,
+                "mutation": str(
+                    source.get("mutation") or source.get("mode") or "readwrite"
+                ).strip().lower(),
+            })
+            for alias in ("id", "identity", "mode"):
+                source.pop(alias, None)
+            rows.append(source)
+        elif str(item).strip():
+            rows.append(str(item).strip())
+    return sorted(rows, key=lambda item: _canonical_json(item))
+
+
 def normalize_capability_contract(
     value: Mapping[str, Any],
     *,
@@ -125,7 +185,7 @@ def normalize_capability_contract(
         for item in value.get("execution_guidance", []) or []
         if str(item).strip()
     ]
-    return {
+    normalized = {
         "schema_version": 1,
         "capability_id": capability_id,
         "selected_skill_id": str(
@@ -136,6 +196,64 @@ def normalize_capability_contract(
         "required_artifact_binding_ids": required_artifacts,
         "execution_guidance": guidance,
     }
+    # Effect semantics are an additive contract extension.  Preserve the exact
+    # normalized shape (and therefore the contract hash) of every legacy
+    # capability that did not declare them.  An explicitly declared empty list
+    # remains visible internally so producers can distinguish "declared none"
+    # from the absence of an effect contract.
+    if "operation" in value:
+        normalized["operation"] = str(value.get("operation") or "").strip()
+    for field in _OPTIONAL_CAPABILITY_EFFECT_LIST_FIELDS:
+        if field in value:
+            normalized[field] = (
+                _workspace_mutations(value.get(field))
+                if field == "workspace_mutations"
+                else _string_ids(value.get(field))
+                if field == "consumes_artifacts"
+                else _typed_effect_entries(value.get(field))
+            )
+    if "binding_applicability" in value:
+        raw_applicability = value.get("binding_applicability")
+        if not isinstance(raw_applicability, Mapping):
+            raise ActionRuntimeContractError(
+                "ACTION_CAPABILITY_BINDING_APPLICABILITY_INVALID",
+                execution_capability_id=capability_id,
+                selected_skill_id=str(
+                    selected_skill_id or value.get("selected_skill_id") or ""
+                ),
+            )
+        applicability = dict(raw_applicability)
+        try:
+            applicability_schema_version = int(
+                applicability.get("schema_version") or 1
+            )
+            binding_contract_schema_version = int(
+                applicability.get("binding_contract_schema_version") or 0
+            )
+        except (TypeError, ValueError) as exc:
+            raise ActionRuntimeContractError(
+                "ACTION_CAPABILITY_BINDING_APPLICABILITY_INVALID",
+                execution_capability_id=capability_id,
+                selected_skill_id=str(
+                    selected_skill_id or value.get("selected_skill_id") or ""
+                ),
+            ) from exc
+        normalized["binding_applicability"] = {
+            "schema_version": applicability_schema_version,
+            "applicable": applicability.get("applicable") is True,
+            "binding_contract_schema_version": binding_contract_schema_version,
+            "contract_source": str(
+                applicability.get("contract_source")
+                or "generate.binding_contract"
+            ),
+            "consumes_bindings": _string_ids(
+                applicability.get("consumes_bindings")
+            ),
+            "produces_bindings": _string_ids(
+                applicability.get("produces_bindings")
+            ),
+        }
+    return normalized
 
 
 def capability_contract_hash(value: Mapping[str, Any]) -> str:
@@ -486,7 +604,9 @@ def project_action_runtime_for_provider(resolution: Mapping[str, Any]) -> Dict[s
             continue
         if isinstance(value, (list, tuple, set)):
             capability_view[field] = [
-                str(item) for item in value if str(item).strip()
+                deepcopy(dict(item)) if isinstance(item, Mapping) else str(item)
+                for item in value
+                if isinstance(item, Mapping) or str(item).strip()
             ]
         else:
             capability_view[field] = str(value)
@@ -662,12 +782,20 @@ def project_artifacts_for_provider(
 def project_action_capability_context_for_provider(
     resolution: Mapping[str, Any],
     artifact_environment: Sequence[Mapping[str, Any]] = (),
+    workspace_bindings: Sequence[Mapping[str, Any]] = (),
 ) -> Dict[str, Any]:
     """Project concrete current-action resources without control metadata."""
+    from agent_core.workspace_attestation import provider_workspace_view
+
     return {
         **project_action_runtime_for_provider(resolution),
         "current_action_artifact_bindings": project_artifacts_for_provider(
             artifact_environment
+        ),
+        # Mutable resources are not outputs.  Keep their canonical identity,
+        # allocator path, revision and evidence contract in a separate section.
+        "current_action_workspace_bindings": provider_workspace_view(
+            workspace_bindings
         ),
     }
 
@@ -686,6 +814,7 @@ def serialize_action_capability_instructions(
     capability = provider_context.get("current_action_capability") or {}
     runtime_rows = provider_context.get("current_action_runtime_bindings") or []
     artifact_rows = provider_context.get("current_action_artifact_bindings") or []
+    workspace_rows = provider_context.get("current_action_workspace_bindings") or []
     payload: Dict[str, Any] = {
         "current_action_capability": {
             field: deepcopy(capability.get(field))
@@ -717,6 +846,13 @@ def serialize_action_capability_instructions(
             }
             for row in artifact_rows
             if isinstance(row, Mapping)
+        ],
+        "current_action_workspace_bindings": [
+            deepcopy(dict(row))
+            for row in workspace_rows
+            if isinstance(row, Mapping)
+            and str(row.get("canonical_resource_id") or "")
+            and str(row.get("formal_concrete_path") or "")
         ],
     }
     if str(script_protocol or "").strip():

@@ -32,6 +32,9 @@ _SCRIPT_BLOCK_RE = re.compile(
 )
 _ANY_SCRIPT_TAG_RE = re.compile(r"</?[A-Za-z][A-Za-z0-9_-]*\s*>", re.IGNORECASE)
 _ENV_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]{1,127}$")
+_MANAGED_FREE_SOURCE_TOKEN_RE = re.compile(
+    r"\{(?:input|output|artifact|operation):[A-Za-z][A-Za-z0-9_.-]*\}"
+)
 
 
 class ScriptBlockError(ValueError):
@@ -548,32 +551,6 @@ def adapt_script_block_to_action(
     payload_revision: int = 0,
 ) -> Dict[str, Any]:
     """Combine model-owned script payload with Controller-owned execution intent."""
-    # Delayed import avoids the intentional recovery -> diagnostics -> audit
-    # module cycle during interpreter initialization.
-    from agent_core.recovery import (
-        RecoveryExecutionContractError,
-        RecoveryExecutionEnvelope,
-        RecoveryExecutionPurpose,
-    )
-
-    envelope: Optional[RecoveryExecutionEnvelope] = None
-    if execution_envelope is not None:
-        try:
-            envelope = RecoveryExecutionEnvelope.from_mapping(
-                execution_envelope
-            )
-        except RecoveryExecutionContractError as exc:
-            if int(payload_revision or 0) > 0:
-                raise RecoveryExecutionContractError(
-                    "RECOVERY_ENVELOPE_MUTATION_ATTEMPT",
-                    "payload repair attempted to change Controller-owned authority",
-                ) from exc
-            raise
-    elif recovery_generated:
-        raise RecoveryExecutionContractError(
-            "RECOVERY_EXECUTION_ENVELOPE_MISSING",
-            "Recovery-generated script blocks may not default to a primary action",
-        )
     # ``artifact_environment`` is accepted only for call compatibility.  The
     # default execution contract no longer synthesizes BIOMIND_INPUT/OUTPUT
     # variables or rewrites artifact references after Generate.
@@ -594,46 +571,98 @@ def adapt_script_block_to_action(
         "script_adapter": "script_block_v1",
         "referenced_artifact_handles": [],
     }
-    if envelope is not None:
-        purpose = envelope.execution_purpose.lower()
-        command_role = (
-            "diagnostic"
-            if envelope.execution_purpose
-            == RecoveryExecutionPurpose.DIAGNOSTIC.value
-            else "required_validation"
-            if envelope.execution_purpose
-            == RecoveryExecutionPurpose.VALIDATION.value
-            else "primary"
+    return attach_recovery_execution_authority(
+        action,
+        execution_envelope=execution_envelope,
+        recovery_generated=recovery_generated,
+        payload_revision=payload_revision,
+    )
+
+
+def attach_recovery_execution_authority(
+    action: Mapping[str, Any],
+    *,
+    execution_envelope: Optional[Mapping[str, Any]] = None,
+    recovery_generated: bool = False,
+    payload_revision: int = 0,
+) -> Dict[str, Any]:
+    """Attach verified Controller Recovery authority to a provider payload.
+
+    The provider-facing semantic action schema deliberately excludes these
+    fields.  Both script-block and semantic-action adapters therefore cross the
+    same immutable-envelope boundary before deterministic admission.
+    """
+
+    # Delayed import avoids the intentional recovery -> diagnostics -> audit
+    # module cycle during interpreter initialization.
+    from agent_core.recovery import (
+        RecoveryExecutionContractError,
+        RecoveryExecutionEnvelope,
+        RecoveryExecutionPurpose,
+    )
+
+    result = dict(action or {})
+    envelope: Optional[RecoveryExecutionEnvelope] = None
+    if execution_envelope is not None:
+        try:
+            envelope = RecoveryExecutionEnvelope.from_mapping(
+                execution_envelope
+            )
+        except RecoveryExecutionContractError as exc:
+            if int(payload_revision or 0) > 0:
+                raise RecoveryExecutionContractError(
+                    "RECOVERY_ENVELOPE_MUTATION_ATTEMPT",
+                    "payload repair attempted to change Controller-owned authority",
+                ) from exc
+            raise
+    elif recovery_generated:
+        raise RecoveryExecutionContractError(
+            "RECOVERY_EXECUTION_ENVELOPE_MISSING",
+            "Recovery-generated actions may not default to primary authority",
         )
-        action.update({
-            "recovery_generated": True,
-            "recovery_execution_envelope": envelope.to_dict(),
-            "recovery_decision_id": envelope.recovery_decision_id,
-            "recovery_context_id": envelope.recovery_context_id,
-            "recovery_strategy": envelope.recovery_strategy,
-            "action_id": envelope.action_id,
-            "step_id": envelope.step_id,
-            "probe_id": envelope.probe_id,
-            "purpose": purpose,
-            "command_role": command_role,
-            "execution_mode": envelope.execution_mode,
-            "result_contract": envelope.result_contract,
-            "scratch_capability": (
-                envelope.scratch_capability.to_dict()
-                if envelope.scratch_capability is not None
-                else None
-            ),
-            "completion_eligible": envelope.to_dict()["completion_eligible"],
-            "payload_revision": max(0, int(payload_revision or 0)),
-        })
-        if envelope.scratch_capability is not None:
-            action["env"]["BIOMIND_RECOVERY_SCRATCH_ROOT"] = (
-                envelope.scratch_capability.scratch_root
-            )
-            action["timeout_seconds"] = (
-                envelope.scratch_capability.max_wall_seconds
-            )
-    return action
+    if envelope is None:
+        return result
+
+    purpose = envelope.execution_purpose.lower()
+    command_role = (
+        "diagnostic"
+        if envelope.execution_purpose
+        == RecoveryExecutionPurpose.DIAGNOSTIC.value
+        else "required_validation"
+        if envelope.execution_purpose
+        == RecoveryExecutionPurpose.VALIDATION.value
+        else "primary"
+    )
+    result.update({
+        "recovery_generated": True,
+        "recovery_execution_envelope": envelope.to_dict(),
+        "recovery_decision_id": envelope.recovery_decision_id,
+        "recovery_context_id": envelope.recovery_context_id,
+        "recovery_strategy": envelope.recovery_strategy,
+        "action_id": envelope.action_id,
+        "step_id": envelope.step_id,
+        "probe_id": envelope.probe_id,
+        "purpose": purpose,
+        "command_role": command_role,
+        "execution_mode": envelope.execution_mode,
+        "result_contract": envelope.result_contract,
+        "scratch_capability": (
+            envelope.scratch_capability.to_dict()
+            if envelope.scratch_capability is not None
+            else None
+        ),
+        "completion_eligible": envelope.to_dict()["completion_eligible"],
+        "payload_revision": max(0, int(payload_revision or 0)),
+    })
+    result["env"] = dict(result.get("env") or {})
+    if envelope.scratch_capability is not None:
+        result["env"]["BIOMIND_RECOVERY_SCRATCH_ROOT"] = (
+            envelope.scratch_capability.scratch_root
+        )
+        result["timeout_seconds"] = (
+            envelope.scratch_capability.max_wall_seconds
+        )
+    return result
 
 
 def _line_for_pattern(script: str, pattern: re.Pattern[str]) -> str:
@@ -828,11 +857,59 @@ def audit_generated_script(
             evidence_refs=tuple(str(item) for item in evidence_refs if str(item)),
             authoritative=False,
         ))
+    for token in sorted(set(_MANAGED_FREE_SOURCE_TOKEN_RE.findall(script))):
+        findings.append(ControllerAuditFinding(
+            code="MANAGED_PLACEHOLDER_IN_FREE_SOURCE",
+            severity="HIGH",
+            source="managed_artifact_free_source_scan",
+            location=_line_for_pattern(script, re.compile(re.escape(token))),
+            expected=(
+                "raw source is diagnostic-only; typed artifact authority is "
+                "established by the concrete current-action binding"
+            ),
+            observed=token,
+            message=(
+                "A managed-artifact token occurs in raw source text. The "
+                "occurrence is reported but has no routing authority."
+            ),
+            evidence_refs=tuple(str(item) for item in evidence_refs if str(item)),
+            authoritative=False,
+        ))
     for raw in artifact_environment:
         row = dict(raw)
         if not bool(row.get("required")):
             continue
         concrete_path = str(row.get("path") or row.get("expected_path") or "")
+        required_basename = str(row.get("required_basename") or "")
+        observed_literal = (
+            concrete_path
+            if concrete_path and concrete_path in script
+            else required_basename
+            if required_basename and required_basename in script
+            else ""
+        )
+        if observed_literal:
+            findings.append(ControllerAuditFinding(
+                code="MANAGED_LITERAL_IN_FREE_SOURCE",
+                severity="HIGH",
+                source="managed_artifact_free_source_scan",
+                location=_line_for_pattern(
+                    script, re.compile(re.escape(observed_literal))
+                ),
+                expected={
+                    "semantic_handle": str(row.get("semantic_handle") or ""),
+                    "concrete_path": concrete_path,
+                },
+                observed=observed_literal,
+                message=(
+                    "A managed-artifact literal occurs in raw source text. "
+                    "The occurrence is visible for audit but is not a route decision."
+                ),
+                evidence_refs=tuple(
+                    str(item) for item in evidence_refs if str(item)
+                ),
+                authoritative=False,
+            ))
         if concrete_path and concrete_path not in script:
             findings.append(ControllerAuditFinding(
                 code="ARTIFACT_BINDING_NOT_REFERENCED",

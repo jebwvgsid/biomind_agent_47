@@ -268,7 +268,7 @@ def _explanation(summary):
     return "\n\n".join(lines)
 
 
-def finalize_runtime_recovery_result(data_path, task_id, result, *, state=None):
+def finalize_runtime_recovery_result(data_path, task_id, result, *, state=None, defer_reports=False):
     """Always return complete user text, including after durable/report failure."""
     failures, report_paths, receipts = [], {}, {}
     request = deepcopy(dict(result.get("request") or {}))
@@ -347,7 +347,7 @@ def finalize_runtime_recovery_result(data_path, task_id, result, *, state=None):
     if summary.get("user_question"):
         summary["next_condition"] = summary["user_question"] + " 未回答前不执行依赖步骤。"
     explanation = _explanation(summary)
-    if durable is not None and matching:
+    if durable is not None and matching and not defer_reports:
         try:
             targets = _requested_reports(durable, task_root)
             prior = dict((durable.get("task_state") or {}).get("runtime_recovery_report_receipts") or {})

@@ -22,6 +22,7 @@ from agent_core.plan_tracker import (
     commit_recovery_bundle,
     load_plan_state,
     record_scoped_evidence,
+    rollover_recovery_generation_claim_after_candidate_rejection,
     save_plan_state,
     update_recovery_generation_claim,
 )
@@ -34,8 +35,10 @@ from agent_core.recovery import (
     RecoveryDecisionDraft,
     RecoveryExecutionContractError,
     RecoveryExecutionEnvelope,
+    RecoveryPolicy,
     RecoverySourceScope,
     build_recovery_execution_envelope,
+    contextualize_recovery_decision,
     finalize_recovery_decision,
 )
 
@@ -160,6 +163,148 @@ def test_atomic_bundle_commits_one_active_identity_and_budget_once(tmp_path):
     assert duplicate["duplicate"] is True
 
 
+def test_complete_step_bundle_routes_to_generate_without_active_recovery(tmp_path):
+    """A completion transition is not a recovery Generate invocation."""
+    state = build_plan_state("task-complete", "- [ ] Step 1\n- [ ] Step 2")
+    state["plan_id"] = "plan-complete"
+    state["plan_version"] = "plan-v1"
+    state["plan_revision"] = 1
+    state["steps"][0]["step_id"] = "step-1"
+    state["steps"][0]["status"] = "running"
+    state["steps"][1]["step_id"] = "step-2"
+    state["steps"][1]["status"] = "pending"
+    state["current_step_id"] = "step-1"
+    save_plan_state(tmp_path, "task-complete", state)
+    current = load_plan_state(tmp_path, "task-complete")
+
+    semantic = RecoveryPolicy().decide(
+        completion_evidence={
+            "completion_satisfied": True,
+            "task_complete": False,
+            "evidence": ["validation-current-step", "completion-gate-passed"],
+        },
+        action_id="action-1",
+        step_id="step-1",
+        attempt_id="attempt-1",
+    )
+    semantic = contextualize_recovery_decision(
+        semantic,
+        source_node="supervisor",
+    )
+    decision = finalize_recovery_decision(
+        semantic,
+        source_scope=RecoverySourceScope(
+            task_id="task-complete",
+            plan_id="plan-complete",
+            plan_version="plan-v1",
+            step_id="step-1",
+            failed_action_id="action-1",
+            failed_execution_attempt_id="attempt-1",
+            source_failure_fingerprint="completion-gate-passed",
+        ),
+        recovery_context_fingerprint="completion-gate-passed",
+        source_node="supervisor",
+        expected_state_generation=current["state_generation"],
+    )
+    assert decision.kind == "COMPLETE_STEP"
+    assert decision.target_route == "generate"
+    envelope = build_recovery_execution_envelope(
+        decision,
+        recovery_context_id="completion-gate-passed",
+        step_id="step-1",
+        task_root=tmp_path,
+    )
+
+    receipt = commit_recovery_bundle(
+        tmp_path,
+        "task-complete",
+        RecoveryCommitBundle(
+            decision,
+            envelope,
+            {},
+            {},
+            None,
+            current["state_generation"],
+        ),
+    )
+
+    committed = load_plan_state(tmp_path, "task-complete")
+    recovery = committed["task_state"]["recovery_state"]
+    assert receipt["applied"] is True
+    assert committed["steps"][0]["status"] == "passed"
+    assert committed["steps"][1]["status"] == "running"
+    assert committed["current_step_id"] == "step-2"
+    assert recovery["active_recovery"] == {}
+    assert recovery["active_recovery_envelope"] == {}
+    assert recovery["active_transition"]["decision_id"] == decision.decision_id
+
+
+def test_complete_task_bundle_accepts_last_completed_step_scope(tmp_path):
+    state = build_plan_state("task-final", "- [ ] Final step")
+    state["plan_id"] = "plan-final"
+    state["plan_version"] = "plan-v1"
+    state["plan_revision"] = 1
+    state["steps"][0]["step_id"] = "step-final"
+    state["steps"][0]["status"] = "passed"
+    state["current_step_id"] = ""
+    save_plan_state(tmp_path, "task-final", state)
+    current = load_plan_state(tmp_path, "task-final")
+
+    semantic = RecoveryPolicy().decide(
+        completion_evidence={
+            "completion_satisfied": True,
+            "task_complete": True,
+            "evidence": ["final-completion-gate-passed"],
+        },
+        action_id="action-final",
+        step_id="step-final",
+        attempt_id="attempt-final",
+    )
+    semantic = contextualize_recovery_decision(
+        semantic,
+        source_node="supervisor",
+    )
+    decision = finalize_recovery_decision(
+        semantic,
+        source_scope=RecoverySourceScope(
+            task_id="task-final",
+            plan_id="plan-final",
+            plan_version="plan-v1",
+            step_id="step-final",
+            failed_action_id="action-final",
+            failed_execution_attempt_id="attempt-final",
+            source_failure_fingerprint="final-completion-gate-passed",
+        ),
+        recovery_context_fingerprint="final-completion-gate-passed",
+        source_node="supervisor",
+        expected_state_generation=current["state_generation"],
+    )
+    assert decision.kind == "COMPLETE_TASK"
+
+    receipt = commit_recovery_bundle(
+        tmp_path,
+        "task-final",
+        RecoveryCommitBundle(
+            decision,
+            None,
+            {},
+            {},
+            None,
+            current["state_generation"],
+        ),
+    )
+
+    committed = load_plan_state(tmp_path, "task-final")
+    assert receipt["applied"] is True
+    assert committed["task_state"]["status"] == "completed"
+    assert (
+        committed["task_state"]["recovery_state"]["active_transition"][
+            "decision_id"
+        ]
+        == decision.decision_id
+    )
+
+
 def test_strict_active_state_rejects_old_envelope_before_provider():
     decision = _final()
     envelope = build_recovery_execution_envelope(
@@ -274,7 +419,7 @@ def test_binding_is_immutable_and_rewind_keeps_stale_history():
     assert state["task_state"]["plan_binding_history"][0]["status"] == "stale"
 
 
-def test_typed_skill_operation_mismatch_routes_to_corrective_generate():
+def test_typed_skill_operation_mismatch_returns_route_free_repair_evidence():
     contract = {"operations": {"consume": {"consumes_bindings": ["stable_name"]}}}
     violations = validate_declared_binding_operation(
         {"operation": "consume", "consumed_bindings": {}}, contract
@@ -284,7 +429,7 @@ def test_typed_skill_operation_mismatch_routes_to_corrective_generate():
         "operation": "consume",
         "binding_name": "stable_name",
         "expected_ref": "plan_binding:stable_name",
-        "route": "corrective_generate",
+        "disposition": "REPAIR_REQUIRED",
     },)
 
 
@@ -360,6 +505,271 @@ def test_generation_claim_lifecycle_and_local_adoption_are_exactly_once(tmp_path
             status="action_adopted",
             action_fingerprint="different-action",
         )
+
+
+def test_recovery_candidate_adoption_rejects_missing_active_recovery(tmp_path):
+    from bio_agents import BioAnalystAgent
+
+    state = build_plan_state("task-a", "- [ ] Step 1: repair")
+    save_plan_state(tmp_path, "task-a", state)
+    agent = BioAnalystAgent.__new__(BioAnalystAgent)
+    agent.data_path = tmp_path
+
+    with pytest.raises(
+        ValueError,
+        match="RECOVERY_GENERATION_ADOPTION_SCOPE_MISMATCH",
+    ):
+        agent._adopt_recovery_generation_candidate(
+            "task-a",
+            expected_recovery_id="recovery-missing",
+            expected_recovery_envelope_id="envelope-missing",
+            expected_target_generation_id="generation-missing",
+            candidate={},
+            action_fingerprint="candidate-fingerprint",
+        )
+
+
+def test_recovery_candidate_duplicate_adoption_requires_durable_pending_action(
+    tmp_path,
+):
+    from bio_agents import BioAnalystAgent
+
+    state = build_plan_state("task-a", "- [ ] Step 1: repair")
+    state.update({
+        "plan_id": "plan-a",
+        "plan_version": "plan-v1",
+        "current_step_id": "step-4",
+    })
+    state["steps"][0].update({"step_id": "step-4", "status": "running"})
+    save_plan_state(tmp_path, "task-a", state)
+    current = load_plan_state(tmp_path, "task-a")
+    decision = finalize_recovery_decision(
+        _semantic(),
+        source_scope=_scope(),
+        recovery_context_fingerprint="context-fp-4",
+        source_node="execute",
+        expected_state_generation=current["state_generation"],
+    )
+    envelope = build_recovery_execution_envelope(
+        decision,
+        recovery_context_id="context-4",
+        step_id="step-4",
+        task_root=tmp_path,
+    )
+    commit_recovery_bundle(
+        tmp_path,
+        "task-a",
+        RecoveryCommitBundle(
+            decision, envelope, {}, {}, None, current["state_generation"]
+        ),
+    )
+    durable = load_plan_state(tmp_path, "task-a")
+    target = durable["task_state"]["recovery_state"]["generation_claim"][
+        "target_generation_id"
+    ]
+    update_recovery_generation_claim(
+        durable,
+        target_generation_id=target,
+        status="claimed",
+    )
+    update_recovery_generation_claim(
+        durable,
+        target_generation_id=target,
+        status="provider_completed",
+    )
+    update_recovery_generation_claim(
+        durable,
+        target_generation_id=target,
+        status="action_adopted",
+        action_fingerprint="candidate-fingerprint",
+    )
+    save_plan_state(tmp_path, "task-a", durable)
+    persisted = load_plan_state(tmp_path, "task-a")
+    persisted_recovery = persisted["task_state"]["recovery_state"]
+    persisted_active = persisted_recovery["active_recovery"]
+    candidate = {
+        "action_id": "candidate-action",
+        "action_hash": "candidate-action-hash",
+        "step_id": persisted["current_step_id"],
+        "plan_id": persisted["plan_id"],
+        "plan_version": persisted["plan_version"],
+        "plan_revision": persisted["plan_revision"],
+    }
+    agent = BioAnalystAgent.__new__(BioAnalystAgent)
+    agent.data_path = tmp_path
+
+    with pytest.raises(
+        ValueError,
+        match="RECOVERY_GENERATION_ADOPTED_ACTION_MISSING",
+    ):
+        agent._adopt_recovery_generation_candidate(
+            "task-a",
+            expected_recovery_id=persisted_active["recovery_id"],
+            expected_recovery_envelope_id=persisted_active["envelope_id"],
+            expected_target_generation_id=(
+                persisted_active["target_generation_id"]
+            ),
+            candidate=candidate,
+            action_fingerprint="candidate-fingerprint",
+        )
+
+
+def test_recovery_candidate_adoption_rejects_superseded_dispatch_target(
+    tmp_path,
+):
+    from bio_agents import BioAnalystAgent
+
+    state = build_plan_state("task-a", "- [ ] Step 1: repair")
+    state.update({
+        "plan_id": "plan-a",
+        "plan_version": "plan-v1",
+        "current_step_id": "step-4",
+    })
+    state["steps"][0].update({"step_id": "step-4", "status": "running"})
+    save_plan_state(tmp_path, "task-a", state)
+    current = load_plan_state(tmp_path, "task-a")
+    decision = finalize_recovery_decision(
+        _semantic(),
+        source_scope=_scope(),
+        recovery_context_fingerprint="context-fp-4",
+        source_node="execute",
+        expected_state_generation=current["state_generation"],
+    )
+    envelope = build_recovery_execution_envelope(
+        decision,
+        recovery_context_id="context-4",
+        step_id="step-4",
+        task_root=tmp_path,
+    )
+    commit_recovery_bundle(
+        tmp_path,
+        "task-a",
+        RecoveryCommitBundle(
+            decision, envelope, {}, {}, None, current["state_generation"]
+        ),
+    )
+    durable = load_plan_state(tmp_path, "task-a")
+    recovery_before = durable["task_state"]["recovery_state"]
+    active_before = dict(recovery_before["active_recovery"])
+    old_target = active_before["target_generation_id"]
+    update_recovery_generation_claim(
+        durable,
+        target_generation_id=old_target,
+        status="claimed",
+    )
+    update_recovery_generation_claim(
+        durable,
+        target_generation_id=old_target,
+        status="provider_completed",
+    )
+    rollover = rollover_recovery_generation_claim_after_candidate_rejection(
+        durable,
+        target_generation_id=old_target,
+        rejection_event_id="candidate-rejection-race",
+        candidate_fingerprint="candidate-fingerprint-race",
+        repair_ordinal=1,
+        receipt_ref="state://candidate-repair/receipt-race",
+    )
+    save_plan_state(tmp_path, "task-a", durable)
+
+    agent = BioAnalystAgent.__new__(BioAnalystAgent)
+    agent.data_path = tmp_path
+    with pytest.raises(
+        ValueError,
+        match="RECOVERY_GENERATION_ADOPTION_SCOPE_MISMATCH",
+    ):
+        agent._adopt_recovery_generation_candidate(
+            "task-a",
+            expected_recovery_id=active_before["recovery_id"],
+            expected_recovery_envelope_id=active_before["envelope_id"],
+            expected_target_generation_id=old_target,
+            candidate={},
+            action_fingerprint="late-candidate-fingerprint",
+        )
+
+    persisted = load_plan_state(tmp_path, "task-a")
+    persisted_recovery = persisted["task_state"]["recovery_state"]
+    assert (
+        persisted_recovery["generation_claim"]["target_generation_id"]
+        == rollover["target_generation_id"]
+    )
+    assert persisted_recovery["generation_claim"]["status"] == "issued"
+    assert (persisted.get("task_state") or {}).get("pending_action") in (
+        None,
+        {},
+    )
+
+
+def test_candidate_rejection_rolls_generation_claim_without_replacing_recovery_envelope(
+    tmp_path,
+):
+    state = build_plan_state("task-a", "- [ ] Step 1: repair")
+    state.update({
+        "plan_id": "plan-a",
+        "plan_version": "plan-v1",
+        "current_step_id": "step-4",
+    })
+    state["steps"][0].update({"step_id": "step-4", "status": "running"})
+    save_plan_state(tmp_path, "task-a", state)
+    current = load_plan_state(tmp_path, "task-a")
+    decision = finalize_recovery_decision(
+        _semantic(),
+        source_scope=_scope(),
+        recovery_context_fingerprint="context-fp-4",
+        source_node="execute",
+        expected_state_generation=current["state_generation"],
+    )
+    envelope = build_recovery_execution_envelope(
+        decision,
+        recovery_context_id="context-4",
+        step_id="step-4",
+        task_root=tmp_path,
+    )
+    commit_recovery_bundle(
+        tmp_path,
+        "task-a",
+        RecoveryCommitBundle(
+            decision, envelope, {}, {}, None, current["state_generation"]
+        ),
+    )
+    durable = load_plan_state(tmp_path, "task-a")
+    recovery_before = durable["task_state"]["recovery_state"]
+    active_before = dict(recovery_before["active_recovery"])
+    envelope_before = dict(recovery_before["active_recovery_envelope"])
+    old_target = active_before["target_generation_id"]
+    update_recovery_generation_claim(
+        durable, target_generation_id=old_target, status="claimed"
+    )
+    update_recovery_generation_claim(
+        durable, target_generation_id=old_target, status="provider_completed"
+    )
+
+    rollover = rollover_recovery_generation_claim_after_candidate_rejection(
+        durable,
+        target_generation_id=old_target,
+        rejection_event_id="candidate-rejection-1",
+        candidate_fingerprint="candidate-fp-1",
+        repair_ordinal=1,
+        receipt_ref="state://candidate-repair/receipt-1",
+    )
+
+    recovery_after = durable["task_state"]["recovery_state"]
+    active_after = recovery_after["active_recovery"]
+    claim_after = recovery_after["generation_claim"]
+    old_claim = recovery_after["generation_claim_history"][-1]
+    assert rollover["prior_target_generation_id"] == old_target
+    assert rollover["target_generation_id"] != old_target
+    assert active_after["recovery_id"] == active_before["recovery_id"]
+    assert active_after["envelope_id"] == active_before["envelope_id"]
+    assert active_after["target_generation_id"] == rollover["target_generation_id"]
+    assert recovery_after["active_recovery_envelope"] == envelope_before
+    assert old_claim["target_generation_id"] == old_target
+    assert old_claim["status"] == "superseded"
+    assert old_claim["candidate_rejection_event_id"] == "candidate-rejection-1"
+    assert claim_after["status"] == "issued"
+    assert claim_after["parent_target_generation_id"] == old_target
+    assert claim_after["provider_idempotency_key"] == claim_after["target_generation_id"]
+    assert claim_after["receipt_ref"] == "state://candidate-repair/receipt-1"
 
 
 def test_generation_claim_restart_states_fail_closed_or_resume_same_target():

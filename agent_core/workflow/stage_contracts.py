@@ -857,6 +857,13 @@ class FailurePacket(ImmutableStageContract):
     failure_fingerprint: str = ""
     diagnostic_facts: tuple[Mapping[str, Any], ...] = ()
     inspection_refs: tuple[str, ...] = ()
+    # Schema-1 additive lineage.  Legacy packets omit all three fields and
+    # retain their original content-addressed wire representation.  New
+    # producer packets seal a stable incident identity, a monotonic version,
+    # and the exact packet they supersede without changing the stage schema.
+    incident_id: str = ""
+    packet_version: int = 0
+    supersedes_packet_ref: str = ""
 
     REQUIRED: ClassVar[frozenset[str]] = frozenset({
         "schema_version", "failure_id", "task_id", "step_id", "failure_type",
@@ -865,7 +872,8 @@ class FailurePacket(ImmutableStageContract):
     })
     OPTIONAL: ClassVar[frozenset[str]] = frozenset({
         "plan_spec_ref", "attempt_ref", "action_ref", "failure_fingerprint",
-        "diagnostic_facts", "inspection_refs",
+        "diagnostic_facts", "inspection_refs", "incident_id",
+        "packet_version", "supersedes_packet_ref",
     })
 
     def __post_init__(self) -> None:
@@ -887,6 +895,37 @@ class FailurePacket(ImmutableStageContract):
             object.__setattr__(self, field, _optional_text(getattr(self, field)))
         object.__setattr__(self, "diagnostic_facts", _mapping_rows(self.diagnostic_facts, "FailurePacket.diagnostic_facts", required=frozenset({"fact_id", "kind", "summary"}), allowed=_DIAGNOSTIC_FACT_FIELDS))
         object.__setattr__(self, "inspection_refs", _text_tuple(self.inspection_refs, "FailurePacket.inspection_refs"))
+        incident_id = _optional_text(self.incident_id)
+        supersedes_packet_ref = _optional_text(self.supersedes_packet_ref)
+        if type(self.packet_version) is not int or self.packet_version < 0:
+            raise StageContractError(
+                "STAGE_FIELD_INVALID",
+                "FailurePacket.packet_version must be a non-negative integer",
+            )
+        packet_version = int(self.packet_version)
+        has_lineage = bool(
+            incident_id or packet_version or supersedes_packet_ref
+        )
+        if has_lineage and (not incident_id or packet_version < 1):
+            raise StageContractError(
+                "FAILURE_PACKET_LINEAGE_INVALID",
+                "incident_id and a positive packet_version are required together",
+            )
+        if packet_version == 1 and supersedes_packet_ref:
+            raise StageContractError(
+                "FAILURE_PACKET_LINEAGE_INVALID",
+                "the first incident packet cannot supersede another packet",
+            )
+        if packet_version > 1 and not supersedes_packet_ref:
+            raise StageContractError(
+                "FAILURE_PACKET_LINEAGE_INVALID",
+                "a later incident packet must identify the packet it supersedes",
+            )
+        object.__setattr__(self, "incident_id", incident_id)
+        object.__setattr__(self, "packet_version", packet_version)
+        object.__setattr__(
+            self, "supersedes_packet_ref", supersedes_packet_ref
+        )
         _json_round_trip(self.to_dict())
 
     @classmethod
@@ -902,6 +941,9 @@ class FailurePacket(ImmutableStageContract):
             attempt_ref=raw.get("attempt_ref", ""), action_ref=raw.get("action_ref", ""),
             failure_fingerprint=raw.get("failure_fingerprint", ""), diagnostic_facts=tuple(raw.get("diagnostic_facts") or ()),
             inspection_refs=tuple(raw.get("inspection_refs") or ()),
+            incident_id=raw.get("incident_id", ""),
+            packet_version=raw.get("packet_version", 0),
+            supersedes_packet_ref=raw.get("supersedes_packet_ref", ""),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -923,6 +965,11 @@ class FailurePacket(ImmutableStageContract):
             result["diagnostic_facts"] = _thaw_json(self.diagnostic_facts)
         if self.inspection_refs:
             result["inspection_refs"] = list(self.inspection_refs)
+        if self.incident_id:
+            result["incident_id"] = self.incident_id
+            result["packet_version"] = self.packet_version
+        if self.supersedes_packet_ref:
+            result["supersedes_packet_ref"] = self.supersedes_packet_ref
         return result
 
 

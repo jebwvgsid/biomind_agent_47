@@ -2025,7 +2025,11 @@ class SkillManager:
             }
             execution_registry = self.get_execution_capability_registry([sid])
             row["execution_capabilities"] = [
-                deepcopy(contract)
+                {
+                    key: deepcopy(value)
+                    for key, value in contract.items()
+                    if key != "binding_applicability"
+                }
                 for contract in execution_registry.values()
             ]
             required_bindings = (
@@ -2066,6 +2070,24 @@ class SkillManager:
                 continue
             generate = dict(meta.get("generate") or {})
             declared = generate.get("execution_capabilities") or []
+            raw_binding_contract = generate.get("binding_contract")
+            binding_contract = (
+                dict(raw_binding_contract)
+                if isinstance(raw_binding_contract, Mapping)
+                else {}
+            )
+            raw_binding_operations = binding_contract.get("operations")
+            binding_operations = (
+                dict(raw_binding_operations)
+                if isinstance(raw_binding_operations, Mapping)
+                else {}
+            )
+            try:
+                binding_contract_schema_version = int(
+                    binding_contract.get("schema_version") or 0
+                )
+            except (TypeError, ValueError):
+                binding_contract_schema_version = 0
             declared_rows = (
                 [dict(item) for item in declared if isinstance(item, Mapping)]
                 if isinstance(declared, list)
@@ -2098,8 +2120,35 @@ class SkillManager:
                     "execution_guidance": list(generate.get("execution_guidance") or []),
                 }]
             for raw_contract in declared_rows:
+                normalized_input = dict(raw_contract)
+                operation = str(normalized_input.get("operation") or "").strip()
+                if operation and operation in binding_operations:
+                    raw_rule = binding_operations.get(operation)
+                    rule = dict(raw_rule) if isinstance(raw_rule, Mapping) else {}
+                    # This is a capability-owned applicability descriptor
+                    # compiled from the one existing binding sub-contract. It
+                    # is not a second operation registry and cannot authorize
+                    # an operation absent from execution_capabilities.
+                    normalized_input["binding_applicability"] = {
+                        "schema_version": 1,
+                        "applicable": True,
+                        "binding_contract_schema_version": (
+                            binding_contract_schema_version
+                        ),
+                        "contract_source": "generate.binding_contract",
+                        "consumes_bindings": deepcopy(
+                            rule.get("consumes_bindings")
+                            if isinstance(rule.get("consumes_bindings"), list)
+                            else []
+                        ),
+                        "produces_bindings": deepcopy(
+                            rule.get("produces_bindings")
+                            if isinstance(rule.get("produces_bindings"), list)
+                            else []
+                        ),
+                    }
                 contract = normalize_capability_contract(
-                    {**raw_contract, "selected_skill_id": sid},
+                    {**normalized_input, "selected_skill_id": sid},
                     selected_skill_id=sid,
                 )
                 capability_id = str(contract["capability_id"])

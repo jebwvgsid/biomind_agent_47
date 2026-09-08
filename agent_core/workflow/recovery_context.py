@@ -1,8 +1,9 @@
 """Bounded Recovery observation storage, checkpoints, and phase archives.
 
 All projections in this module are deterministic and exclude hidden reasoning.
-Large tool results are stored behind immutable archive references; hard context
-limits produce a machine-readable checkpoint instead of an LLM summary.
+Large tool results are stored behind immutable archive references.  Token
+pressure archives the complete source episode before a separately validated
+LLM compaction candidate is made active for a new private Recovery epoch.
 """
 
 from __future__ import annotations
@@ -237,6 +238,9 @@ def archive_recovery_episode(
     directive = deepcopy(dict(episode.get("directive") or {}))
     terminal_error = deepcopy(dict(episode.get("terminal_error") or {}))
     checkpoint = deepcopy(dict(episode.get("checkpoint") or {}))
+    compaction_required = deepcopy(dict(
+        episode.get("compaction_required") or {}
+    ))
     transcript = deepcopy(list(episode.get("_provider_episode") or ()))
     audit = deepcopy(dict(episode.get("audit") or {}))
     episode_digest = _digest({
@@ -245,6 +249,8 @@ def archive_recovery_episode(
         "directive": directive,
         "terminal_error": terminal_error,
         "checkpoint": checkpoint,
+        "compaction_required": compaction_required,
+        "audit": audit,
         "overflow_epoch": int(overflow_epoch),
         "linked_previous_archive_ref": str(linked_previous_archive_ref or ""),
     })
@@ -257,7 +263,12 @@ def archive_recovery_episode(
         for ref in audit.get("inspected_refs") or ()
         if str(ref)
     ]
-    terminal_state = "directive_ready" if directive and not terminal_error else "failed_closed"
+    if directive and not terminal_error:
+        terminal_state = "directive_ready"
+    elif compaction_required and not terminal_error:
+        terminal_state = "compaction_boundary"
+    else:
+        terminal_state = "failed_closed"
     return phase_store.archive(
         task_id=seed.failure_packet.task_id,
         phase="recovery",
@@ -269,7 +280,39 @@ def archive_recovery_episode(
             "final_recovery_directive": directive,
             "terminal_error": terminal_error,
             "recovery_checkpoint": checkpoint,
+            "context_compaction_required": compaction_required,
             "validator_feedback": deepcopy(list(episode.get("validator_feedback") or ())),
+            "provider_observability": {
+                "provider_call_count": int(audit.get("provider_call_count") or 0),
+                "epoch_provider_call_count": int(
+                    audit.get("epoch_provider_call_count") or 0
+                ),
+                "provider_request_audit": deepcopy(list(
+                    audit.get("provider_request_audit") or ()
+                )),
+                "provider_usage": deepcopy(list(
+                    audit.get("provider_usage") or ()
+                )),
+                "context_budget_checks": deepcopy(list(
+                    audit.get("context_budget_checks") or ()
+                )),
+            },
+            "business_budget_counters": {
+                "turn_count": int(audit.get("turn_count") or 0),
+                "tool_call_count": int(audit.get("tool_call_count") or 0),
+                "tool_request_counts": deepcopy(dict(
+                    audit.get("tool_request_counts") or {}
+                )),
+                "no_progress_rounds": int(
+                    audit.get("no_progress_rounds") or 0
+                ),
+                "transport_attempt_count": int(
+                    audit.get("transport_attempt_count") or 0
+                ),
+            },
+            "context_compaction_failures": deepcopy(list(
+                audit.get("compaction_failures") or ()
+            )),
         },
         evidence=evidence,
         transcript=transcript,
@@ -280,9 +323,88 @@ def archive_recovery_episode(
             "seed_id": seed.seed_id,
             "step_id": seed.failure_packet.step_id,
             "provider_message_count": int(audit.get("provider_message_count") or 0),
+            "provider_call_count": int(audit.get("provider_call_count") or 0),
+            "epoch_provider_call_count": int(
+                audit.get("epoch_provider_call_count") or 0
+            ),
+            "context_epoch_id": str(audit.get("context_epoch_id") or ""),
+            "inherited_material_message_count": int(
+                audit.get("inherited_material_message_count") or 0
+            ),
             "append_only": bool(audit.get("append_only")),
             "overflow_epoch": int(overflow_epoch),
             "linked_previous_archive_ref": str(linked_previous_archive_ref or ""),
+            "hidden_reasoning_excluded": True,
+        },
+    )
+
+
+def archive_recovery_compaction_epoch(
+    *,
+    phase_store: PhaseArchiveStore,
+    seed: RecoverySeed,
+    prepared: Any,
+    source_archive_ref: str,
+    overflow_epoch: int,
+    compactor_observability: Sequence[Mapping[str, Any]] = (),
+    provider_baseline_manifest: Sequence[Mapping[str, Any]] = (),
+    business_resume_state: Mapping[str, Any] | None = None,
+) -> PhaseArchiveRecord:
+    """Archive a validated compaction candidate before local activation."""
+
+    epoch = prepared.epoch
+    record = epoch.record
+    candidate_digest = _digest({
+        "record": record.to_dict(),
+        "source_archive_ref": str(source_archive_ref),
+        "attempts": [item.to_dict() for item in prepared.attempts],
+        "compactor_observability": [
+            dict(item) for item in compactor_observability
+        ],
+        "provider_baseline_manifest": [
+            dict(item) for item in provider_baseline_manifest
+        ],
+        "business_resume_state": dict(business_resume_state or {}),
+    })
+    invocation_id = (
+        f"{seed.seed_id}:compacted-epoch:{int(overflow_epoch)}:"
+        f"{str(record.epoch_id)}:{candidate_digest.removeprefix('sha256:')[:24]}"
+    )
+    return phase_store.archive(
+        task_id=seed.failure_packet.task_id,
+        phase="recovery-context-epoch",
+        invocation_id=invocation_id,
+        summary={
+            "schema_version": 1,
+            "source_failure_id": seed.failure_packet.failure_id,
+            "source_archive_ref": str(source_archive_ref),
+            "prepared_context_epoch": epoch.to_archive_payload(),
+            "compaction_attempts": [
+                item.to_dict() for item in prepared.attempts
+            ],
+            "initial_budget": prepared.initial_budget.to_dict(),
+            "compactor_observability": [
+                deepcopy(dict(item)) for item in compactor_observability
+            ],
+            # Exact retained bodies stay single-sourced in the linked source
+            # archive.  This manifest stores only source-unit pointers plus
+            # newly generated lossy summary messages, so a post-CAS restart
+            # can rebuild the active provider prefix without copying source.
+            "provider_baseline_manifest": [
+                deepcopy(dict(item))
+                for item in provider_baseline_manifest
+            ],
+            "business_resume_state": deepcopy(dict(
+                business_resume_state or {}
+            )),
+        },
+        evidence=[{"ref": str(source_archive_ref)}],
+        metadata={
+            "source_failure_id": seed.failure_packet.failure_id,
+            "source_context_epoch_id": str(record.source_epoch_id),
+            "active_context_epoch_id": str(record.epoch_id),
+            "overflow_epoch": int(overflow_epoch),
+            "archive_before_activate": True,
             "hidden_reasoning_excluded": True,
         },
     )
@@ -293,6 +415,7 @@ __all__ = [
     "RECOVERY_OBSERVATION_EXCERPT_CHARS",
     "RecoveryCheckpoint",
     "RecoveryObservationStore",
+    "archive_recovery_compaction_epoch",
     "archive_recovery_episode",
     "build_recovery_checkpoint",
 ]

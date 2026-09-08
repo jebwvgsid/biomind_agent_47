@@ -1580,6 +1580,13 @@ class ExecutionRecord:
     renderer_manifest_summary: Dict[str, Any] = field(default_factory=dict)
     renderer_manifest_error: str = ""
     action_contract: Dict[str, Any] = field(default_factory=dict)
+    # ``step_effect`` is the immutable, plan-authored expectation bound to this
+    # execution.  ``effect_evidence`` contains only attempt-scoped observed
+    # facts; keeping the two separate prevents a generated action from proving
+    # its own completion contract.
+    declared_step_effect: Dict[str, Any] = field(default_factory=dict)
+    step_effect: Dict[str, Any] = field(default_factory=dict)
+    effect_evidence: Dict[str, Any] = field(default_factory=dict)
     recent_attempts: List[Dict[str, Any]] = field(default_factory=list)
     declared_outputs: List[str] = field(default_factory=list)
     observed_outputs: List[str] = field(default_factory=list)
@@ -1601,6 +1608,35 @@ class ExecutionRecord:
     @classmethod
     def from_mapping(cls, value: Dict[str, Any]) -> "ExecutionRecord":
         data = dict(value or {})
+        action_contract = dict(data.get("action_contract") or {})
+        step_effect = data.get("step_effect") or data.get("declared_step_effect")
+        if not isinstance(step_effect, Mapping):
+            step_effect = action_contract.get("expected_step_effect")
+        step_effect = dict(step_effect) if isinstance(step_effect, Mapping) else {}
+        effect_evidence = data.get("effect_evidence")
+        effect_evidence = (
+            dict(effect_evidence) if isinstance(effect_evidence, Mapping) else {}
+        )
+        # Accept the canonical effect keys at the execution-record top level as
+        # a narrow compatibility input.  Persistence always converges on the
+        # single ``effect_evidence`` envelope.
+        for effect_key in (
+            "produces_artifacts",
+            "produces_bindings",
+            "produces_observations",
+            "workspace_mutations",
+            "explicit_side_effects",
+        ):
+            if effect_key in data and effect_key not in effect_evidence:
+                effect_evidence[effect_key] = deepcopy(data.get(effect_key))
+        if "produced_bindings" in data and "produces_bindings" not in effect_evidence:
+            effect_evidence["produces_bindings"] = deepcopy(
+                data.get("produced_bindings")
+            )
+        if "produced_observations" in data and "produces_observations" not in effect_evidence:
+            effect_evidence["produces_observations"] = deepcopy(
+                data.get("produced_observations")
+            )
         purpose = str(data.get("purpose") or "analysis")
         role = str(data.get("command_role") or "").strip().lower()
         if not role:
@@ -1720,9 +1756,12 @@ class ExecutionRecord:
             renderer_manifest_error=str(data.get("renderer_manifest_error") or ""),
             action_contract=_redact_mapping({
                 str(key): item
-                for key, item in dict(data.get("action_contract") or {}).items()
+                for key, item in action_contract.items()
                 if str(key) not in {"code", "command", "messages", "raw_response"}
             }),
+            declared_step_effect=_redact_mapping(step_effect),
+            step_effect=_redact_mapping(step_effect),
+            effect_evidence=_redact_mapping(effect_evidence),
             recent_attempts=[
                 _redact_mapping(item) for item in data.get("recent_attempts", []) or [] if isinstance(item, dict)
             ][-3:],
@@ -2818,6 +2857,9 @@ class ValidationEvidence:
     manifest_results: List[Dict[str, Any]] = field(default_factory=list)
     artifact_results: List[Dict[str, Any]] = field(default_factory=list)
     success_criteria_results: List[Dict[str, Any]] = field(default_factory=list)
+    # Deterministic results keyed by the canonical StepEffect fields.  These
+    # are facts about one concrete action/attempt, not routing instructions.
+    effect_results: Dict[str, Any] = field(default_factory=dict)
     scientific_checks: List[Dict[str, Any]] = field(default_factory=list)
     recoverability_hints: List[str] = field(default_factory=list)
     llm_advisory: Optional[Dict[str, Any]] = None
@@ -2881,6 +2923,22 @@ class ValidationEvidence:
         normalized.setdefault("manifest_results", [])
         normalized.setdefault("artifact_results", [])
         normalized.setdefault("success_criteria_results", [])
+        effect_results = normalized.get("effect_results")
+        if not isinstance(effect_results, Mapping):
+            effect_results = normalized.get("effect_evidence")
+        effect_results = (
+            dict(effect_results) if isinstance(effect_results, Mapping) else {}
+        )
+        for effect_key in (
+            "produces_artifacts",
+            "produces_bindings",
+            "produces_observations",
+            "workspace_mutations",
+            "explicit_side_effects",
+        ):
+            if effect_key in normalized and effect_key not in effect_results:
+                effect_results[effect_key] = deepcopy(normalized.get(effect_key))
+        normalized["effect_results"] = effect_results
         normalized.setdefault("scientific_checks", [])
         normalized.setdefault("recoverability_hints", [])
         normalized.setdefault("llm_advisory", None)

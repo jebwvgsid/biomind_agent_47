@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "source_session": "session_1788681718",
+  "source_call_id": "generate-0008-45718d14625a",
+  "source_response_file_sha256": "7e6b107bfa80351be0d4d2507427505bfb582f56c317f387612b14c9ebab6945",
+  "source_response_content_sha256": "ab3f5ab7f492c7a94e56d6f910509619b7bb064d8caaa7b3a8c680481f6117b9",
+  "response": {
+    "content": "```json\n{\n  \"action_type\": \"execute\",\n  \"operation\": \"check_contig_compatibility\",\n  \"purpose\": \"validation\",\n  \"argv\": [\n    \"bash\",\n    \"-lc\",\n    \"set -euo pipefail\\nvcf=\\\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/all.filtered.snp.vcf\\\"\\nfasta=\\\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.fasta\\\"\\ngtf=\\\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.gtf\\\"\\n\\nvcf_contigs=$(grep -v '^#' \\\"$vcf\\\" | cut -f1 | sort -u)\\nfasta_contigs=$(grep '^>' \\\"$fasta\\\" | sed 's/^>//' | cut -d' ' -f1 | sort -u)\\ngtf_contigs=$(awk -F'\\\\t' '!/^#/ && NF>=1 {print $1}' \\\"$gtf\\\" | sort -u)\\n\\nmissing_in_fasta=$(comm -23 <(printf '%s\\\\n' \\\"$vcf_contigs\\\") <(printf '%s\\\\n' \\\"$fasta_contigs\\\"))\\nmissing_in_gtf=$(comm -23 <(printf '%s\\\\n' \\\"$vcf_contigs\\\") <(printf '%s\\\\n' \\\"$gtf_contigs\\\"))\\n\\ncompatible=true\\nif [ -n \\\"$missing_in_fasta\\\" ] || [ -n \\\"$missing_in_gtf\\\" ]; then\\n  compatible=false\\nfi\\n\\nprintf 'VCF contigs: %s\\\\n' \\\"$(printf '%s\\\\n' \\\"$vcf_contigs\\\" | tr '\\\\n' ',' | sed 's/,$//')\\\"\\nprintf 'FASTA contigs: %s\\\\n' \\\"$(printf '%s\\\\n' \\\"$fasta_contigs\\\" | tr '\\\\n' ',' | sed 's/,$//')\\\"\\nprintf 'GTF contigs: %s\\\\n' \\\"$(printf '%s\\\\n' \\\"$gtf_contigs\\\" | tr '\\\\n' ',' | sed 's/,$//')\\\"\\nprintf 'VCF contigs missing in FASTA: %s\\\\n' \\\"$(printf '%s\\\\n' \\\"$missing_in_fasta\\\" | tr '\\\\n' ',' | sed 's/,$//')\\\"\\nprintf 'VCF contigs missing in GTF: %s\\\\n' \\\"$(printf '%s\\\\n' \\\"$missing_in_gtf\\\" | tr '\\\\n' ',' | sed 's/,$//')\\\"\\nprintf 'BIOMIND_EFFECT_EVIDENCE_JSON={\\\"produces_observations\\\":[{\\\"observation_id\\\":\\\"contigs_compatible\\\",\\\"value\\\":%s}]}\\\\n' \\\"$compatible\\\"\\n\"\n  ],\n  \"env\": {}\n}\n```",
+    "id": "lc_run--01a075be-b4f8-7ec3-ab66-14d1a83e1597",
+    "role": "assistant"
+  },
+  "path_mappings": [
+    {
+      "semantic_handle": "input.variant_vcf",
+      "source_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/all.filtered.snp.vcf",
+      "fixture_filename": "all.filtered.snp.vcf"
+    },
+    {
+      "semantic_handle": "input.reference_fasta",
+      "source_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.fasta",
+      "fixture_filename": "genome.fasta"
+    },
+    {
+      "semantic_handle": "input.annotation_gtf",
+      "source_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.gtf",
+      "fixture_filename": "genome.gtf"
+    }
+  ]
+}
