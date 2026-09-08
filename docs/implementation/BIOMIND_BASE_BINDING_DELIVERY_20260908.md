@@ -245,3 +245,5 @@ PASS 表示所列层级的断言通过；不得把 normalizer 单元测试解释
 6. 既有精确 Skill 形状断言、rep_08 期望差异和原 4→1 次数断言未被改绿；未宣称全仓测试、真实环境、真实模型/科学 benchmark 通过。额外 runtime 专项测试曾因外部测试依赖缺失而 collection error，未记 PASS；未顺带实施其他 RT/provenance 任务。
 
 DEPENDENCY_CLOSURE_RESULT：本次 BASE/SF/BN/FB/RP 主链已闭合且有真实逻辑提交；TARGET_ACCEPTANCE_RESULTS：核心成功/有界停止/收尾与隔离安全验证通过，上述剩余验收项保持 PARTIAL/NOT_RUN，不补造证据。
+
+最终字节保护补记：全部 145 个被测候选文件与 Git commit blob 一致；工作区 `agent_core/retriever.py` 保留开始时原有 CRLF，候选/commit 为 LF。该差异仅是行尾，工作文件 SHA-256 与原 W 冻结参考相同，未进行清理/覆盖。不能把提交 blob 一致说成工作区每个文件字节都等于候选。
