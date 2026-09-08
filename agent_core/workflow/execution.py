@@ -36,6 +36,7 @@ NodeCallable = Callable[[dict[str, Any]], Awaitable[Mapping[str, Any]]]
 _REPAIRABLE_GENERATE_EXITS = frozenset({
     "unrecognized_action",
     "binding_operation_contract_mismatch",
+    "public_binding_rejected",
     "workspace_effect_contract_mismatch",
     "full_binding_admission_rejected",
     "managed_artifact_preaction_rejected",

@@ -1,5 +1,6 @@
 """Synthetic handles through the production binder, approval, runner and commit."""
 import asyncio,json,os
+import pytest
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
@@ -17,7 +18,8 @@ from tests.formal_generate_fixture import formalize
 from tests.test_inspection_workflow import InspectionReviewer
 
 
-def test_handle_producer_actual_approval_commit_and_consumer():
+@pytest.mark.parametrize('bad_shape', ['parent','unknown'])
+def test_handle_producer_actual_approval_commit_and_consumer(bad_shape):
  async def scenario():
   f=gf.Session1788681718GenerateProductionPathTests(methodName='test_adm_01_saved_candidate_reaches_fake_executor_once')
   await f.asyncSetUp()
@@ -35,7 +37,7 @@ def test_handle_producer_actual_approval_commit_and_consumer():
    raw=json.loads(text.removeprefix('<action_json>').removesuffix('</action_json>'))
    raw['produced_bindings']['snpeff_db']['value']={'handle':handle};raw.pop('binding_env')
    raw['code'] += '\nprintf "config\\n" > '+configrow['canonical_path']+'\n'
-   bad=deepcopy(raw);bad['produced_bindings']['snpeff_db']['value']='bad-parent'
+   bad=deepcopy(raw);bad['produced_bindings']['snpeff_db']['value']='bad-parent' if bad_shape=='parent' else {'handle':'unknown-handle'}
    f.provider.responses=[f.saved_response_content,json.dumps(bad),json.dumps(raw)]
    f.provider.calls.clear(); f.agent.middleware.auto_approve_safe=False
    handlers=f.agent._schema2_runtime_node_handlers;commits=[];calls=[]
