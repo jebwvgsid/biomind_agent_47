@@ -55,7 +55,7 @@ def _evidence(name, value):
     return root
 
 
-async def run_planner_stop(tmp_path, mode="success", *, transition=None):
+async def run_planner_stop(tmp_path, mode="success", *, transition=None, evidence_case=""):
     raw = (F / "original_response.txt").read_text()
     responses = [raw] * 8
     if mode == "format_variation":
@@ -136,16 +136,17 @@ async def run_planner_stop(tmp_path, mode="success", *, transition=None):
         diagnostic = getattr(agent, "_managed_terminal_results", {}).get(task_id, {}).get("terminal_diagnostic", {})
         durable = load_plan_state(tmp_path, task_id) if mode != "load" else {}
         stop = managed_stop.current_managed_stop(durable)
-        record = {"mode": mode, "source": bio_agents.__file__, "result": result.__dict__,
+        evidence_key = mode + ("-" + evidence_case if evidence_case else "")
+        record = {"mode": mode, "evidence_case": evidence_case, "source": bio_agents.__file__, "result": result.__dict__,
             "typed_outcome": snapshot.values.get("planner_outcome"), "stop": stop,
             "diagnostic": diagnostic, "before_stop": before_stop,
             "provider_calls": len(model.calls), "summary_calls": len(summary.calls), "fault_hits": fault_hits,
             "summary_messages": [[m.content for m in messages] for messages in summary.calls],
             "profiler": agent.profiler.snapshot(task_id)}
-        delivery = _evidence(mode, record)
+        delivery = _evidence(evidence_key, record)
         for name, filename in diagnostic.get("report_paths", {}).items():
             body = Path(filename).read_bytes()
-            (delivery / (mode + "-" + name)).write_bytes(body)
+            (delivery / (evidence_key + "-" + name)).write_bytes(body)
         if mode in fault_hits:
             assert fault_hits[mode] > 0, (mode, fault_hits, diagnostic)
             expected_code = {
@@ -231,7 +232,8 @@ def test_actual_planner_stop_loses_authority_after_fresh_transition(tmp_path, ch
             else:
                 plan_tracker.set_task_status(current, "cancelled", "independent cancellation wins")
             save_plan_state(tmp_path, task_id, current)
-        result, diagnostic, stop, before, model, summary, agent = await run_planner_stop(tmp_path, "success", transition=transition)
+        result, diagnostic, stop, before, model, summary, agent = await run_planner_stop(
+            tmp_path, "success", transition=transition, evidence_case="transition-" + change)
         assert len(model.calls) == 2
         assert not summary.calls and not stop
         assert result.status == ("cancelled" if change == "cancelled" else "stale_result")
