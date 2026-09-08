@@ -17629,7 +17629,29 @@ class BioAnalystAgent:
                 receive_phase = "等待响应" if idle is None else "流式接收"
                 detail = f"{receive_phase}，正文 {int(row.get('content_char_count') or 0)} 字符，已等待 {elapsed:.1f}s，{activity}"
             elif event == "attempt_completed":
-                detail = f"响应完整，等待解析与校验，耗时 {elapsed:.1f}s"
+                integrity = row.get("response_integrity") or row
+                finish = str(integrity.get("finish_reason") or "UNKNOWN")
+                if finish == "length":
+                    detail = f"接收结束；输出触及长度边界，本次候选未接纳，耗时 {elapsed:.1f}s"
+                    usage = integrity.get("reported_usage") or row.get("reported_usage") or row.get("provider_usage")
+                    policy = integrity.get("resolved_output_policy") or integrity.get("output_policy") or row.get("output_policy") or {}
+                    if usage:
+                        detail += "；provider 报告用量 " + json.dumps(usage, ensure_ascii=False, default=str)
+                    requested_limit = policy.get("requested_output_limit")
+                    detail += "；本地请求输出上限=" + str(requested_limit if requested_limit is not None else "UNKNOWN")
+                    detail += "，wire 观察=" + str(policy.get("wire_observation_status") or "UNKNOWN")
+                else:
+                    detail = f"接收结束，待解析与校验，耗时 {elapsed:.1f}s"
+            elif event == "length_remediation":
+                remediation = row.get("attempted_remediation") or {}
+                detail = "输出长度补救策略=" + str(remediation.get("kind") or "UNKNOWN")
+                detail += "；状态=" + str(remediation.get("status") or "UNKNOWN")
+                policy = remediation.get("output_policy") or remediation.get("resolved_output_policy") or {}
+                requested_limit = policy.get("requested_output_limit")
+                detail += "；本地请求输出上限=" + str(requested_limit if requested_limit is not None else "UNKNOWN")
+                detail += "；重新生成完整候选，仍须通过解析与校验"
+            elif event in {"planning_stopped", "candidate_stopped"}:
+                detail = "规划停止：" + str(row.get("error_code") or row.get("reason_code") or "UNKNOWN")
             elif event == "phase_completed":
                 detail = f"{phase} 完成，耗时 {elapsed:.3f}s"
             elif event == "candidate_started":
@@ -17691,9 +17713,12 @@ class BioAnalystAgent:
         scoped.estimator = original.estimator
         phase_context.compaction_handler = scoped.prepare
 
-    def _planner_output_policy_failure_update(self, task_id: str, error: PlannerOutputPolicyError) -> Dict[str, Any]:
+    def _planner_output_policy_failure_update(
+        self, task_id: str, error: PlannerOutputPolicyError,
+        *, durable_state: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
         issue = error.to_diagnostic()
-        durable = load_plan_state(self.data_path, task_id)
+        durable = deepcopy(dict(durable_state)) if durable_state is not None else load_plan_state(self.data_path, task_id)
         epoch = dict((durable.get("task_state") or {}).get("planning_epoch") or {})
         task = canonical_task_spec_for_state(durable) or {}
         stopped = terminalize_planning_failure(
@@ -37412,6 +37437,10 @@ question. Never guess a scientific or database identity.
         # Node 1: Planner（详细规划 + 脚本预生成）
         # ════════════════════════════════════════════
         async def planner(state: AgentState):
+            from agent_core.planner_recovery import (
+                PlannerCallError, claim_planner_call, complete_planner_claim,
+                response_integrity, select_length_remediation, unsettled_call,
+            )
             output.print_node_header("planner")
             messages   = state["messages"]
             planner_phase_context = phase_provider_context(state)
@@ -37989,6 +38018,64 @@ question. Never guess a scientific or database identity.
                     planner_feedback_revision=planner_feedback_revision,
                 )
                 planning_epoch["planner_output_policy_version"] = PLANNER_OUTPUT_POLICY_VERSION
+                planning_epoch["planner_response_protocol_version"] = 2
+
+            planner_node_context = None
+
+            def planner_stale_update(changed_preconditions):
+                stale = {
+                    "decision_result": "STALE_NODE_RESULT", "caller_node": "planner",
+                    "caller_invocation_id": str(
+                        getattr(getattr(planner_node_context, "binding", None), "invocation_id", "")
+                        or getattr(planner_phase_context, "invocation_id", "") or ""
+                    ),
+                    "changed_preconditions": list(changed_preconditions),
+                    "counts_as_failure": False, "consumes_execution_retry": False,
+                    "consumes_recovery_retry": False,
+                }
+                return {"messages": [SystemMessage(content=json.dumps(stale, ensure_ascii=False, sort_keys=True))],
+                        "stale_node_result": stale, "pending_action": {}, "next_step": "planner"}
+
+            def planner_scope_stale(current):
+                current_revision = int((current.get("current_task") or {}).get("task_revision") or current.get("task_revision") or 0)
+                current_epoch_id = str(((current.get("task_state") or {}).get("planning_epoch") or {}).get("planning_epoch_id") or "")
+                changed = []
+                if current_revision != task_revision:
+                    changed.append("task_revision")
+                if current_epoch_id != str(planning_epoch.get("planning_epoch_id") or ""):
+                    changed.append("planning_epoch_id")
+                return planner_stale_update(changed) if changed else None
+
+            def planner_call_stop(current, diagnostic):
+                # A late local stop belongs to its invocation, not a successor
+                # task/epoch that another producer has already committed.
+                stale = planner_scope_stale(load_plan_state(self.data_path, task_id))
+                if stale:
+                    return stale
+                stopped = terminalize_planning_failure(
+                    current, planning_epoch_id=str(planning_epoch.get("planning_epoch_id") or ""),
+                    task_spec_revision_value=task_revision, terminal_diagnostic=diagnostic,
+                    fallback_validation_issues=[{"code": diagnostic["error_code"], "field_path": "$",
+                                                 "message": str(diagnostic.get("detail") or "")}],
+                )
+                save_plan_state(self.data_path, task_id, stopped)
+                self._planner_progress(task_id, "planning_stopped", diagnostic)
+                return {"messages": [SystemMessage(content=json.dumps(diagnostic, ensure_ascii=False, sort_keys=True))],
+                        "task_status": "failed", "failure_type": diagnostic["error_code"],
+                        "failure_owner": "planner", "pending_action": {}, "next_step": "finish"}
+
+            def planner_policy_stop(error):
+                current = load_plan_state(self.data_path, task_id)
+                stale = planner_scope_stale(current)
+                if stale:
+                    return stale
+                return self._planner_output_policy_failure_update(task_id, error, durable_state=current)
+
+            if unsettled_call(planner_source_state):
+                return planner_call_stop(planner_source_state, {
+                    "error_code": "PLANNER_CALL_RESULT_UNKNOWN", "error_owner": "planner",
+                    "detail": "A prior Planner call is already durably claimed but has no accepted result. It is not refunded or automatically dispatched again.",
+                })
             planner_calls_total = int(
                 planning_epoch.get("planner_calls_total") or 0
             )
@@ -38079,7 +38166,9 @@ question. Never guess a scientific or database identity.
                     "planning_epoch": planning_epoch,
                     "next_step": "finish",
                 }
-            planning_epoch["planner_calls_total"] = planner_calls_total + 1
+            # Initialize/reload the epoch here; the existing call counter is
+            # charged atomically with the invocation claim immediately before
+            # dispatch, after input admission. It is never refunded on crash.
             planner_task_state["planning_epoch"] = planning_epoch
             planner_source_state["task_state"] = planner_task_state
             save_plan_state(self.data_path, task_id, planner_source_state)
@@ -38317,9 +38406,27 @@ question. Never guess a scientific or database identity.
                     legacy_epoch=not bool(planning_epoch.get("planner_output_policy_version")),
                     task_output_token_limit=(planner_task_state.get("budgets") or {}).get("max_planner_output_tokens"),
                 )
+                planner_initial_output_policy = deepcopy(planner_output_policy)
+                planner_remediation = deepcopy(dict(active_planning_failure.get("remediation_authorization") or {}))
+                if (active_planning_failure.get("response_integrity") or {}).get("finish_reason") == "length":
+                    if planner_remediation.get("status") != "available":
+                        return planner_call_stop(planner_source_state, {
+                            "error_code": str(planner_remediation.get("reason_code") or "PLANNER_LENGTH_RECOVERY_UNAVAILABLE"),
+                            "error_owner": "planner", "detail": str(planner_remediation.get("detail") or "No unused length remediation is authorized."),
+                        })
+                else:
+                    planner_remediation = {}
+                # Prepare the retained request with the current initial reserve.
+                # A saved higher reserve is only a proposed remediation; it must
+                # not force compaction or override subsequently tightened limits.
+                if planner_phase_context is not None:
+                    phase_compactor = getattr(planner_phase_context.compaction_handler, "__self__", None)
+                    base_compactor = getattr(self, "_schema2_phase_compactor", None)
+                    if isinstance(phase_compactor, PhaseContextCompactor) and isinstance(base_compactor, PhaseContextCompactor):
+                        planner_phase_context.compaction_handler = base_compactor.prepare
                 self._configure_planner_output_reserve(planner_phase_context, planner_output_policy)
             except PlannerOutputPolicyError as exc:
-                return self._planner_output_policy_failure_update(task_id, exc)
+                return planner_policy_stop(exc)
             if planner_phase_context is not None:
                 planner_llm_messages = await planner_phase_context.prepare_messages_with_compaction(
                     planner_system_prompt,
@@ -38336,6 +38443,102 @@ question. Never guess a scientific or database identity.
                     SystemMessage(content=planner_system_prompt),
                     HumanMessage(content=planner_human_prompt),
                 ]
+            if planner_phase_context is None and restored_planner_messages:
+                planner_llm_messages = restored_planner_messages
+            if planner_remediation:
+                from agent_core.planner_recovery import length_feedback
+
+                # Reload authority after assembling all frozen and retained
+                # materials. Re-select under current client/task restrictions;
+                # the previous response's policy remains historical evidence.
+                remediation_state = load_plan_state(self.data_path, task_id)
+                stale = planner_scope_stale(remediation_state)
+                if stale:
+                    return stale
+                current_failure = (remediation_state.get("task_state") or {}).get("planning_failure") or {}
+                if (current_failure.get("occurrence_receipt") != active_planning_failure.get("occurrence_receipt")
+                    or current_failure.get("remediation_authorization") != planner_remediation
+                    or unsettled_call(remediation_state)):
+                    return planner_stale_update(["planner_length_authorization"])
+                current_budgets = (remediation_state.get("task_state") or {}).get("budgets") or {}
+                rejected_increase_diagnostic = None
+                try:
+                    planner_initial_output_policy = self._resolve_planner_output_policy(
+                        legacy_epoch=not bool(planning_epoch.get("planner_output_policy_version")),
+                        task_output_token_limit=current_budgets.get("max_planner_output_tokens"),
+                    )
+                    try:
+                        recovery_policy = self._resolve_planner_output_policy(
+                            recovery=True, legacy_epoch=not bool(planning_epoch.get("planner_output_policy_version")),
+                            task_output_token_limit=current_budgets.get("max_planner_output_tokens"),
+                        )
+                    except PlannerOutputPolicyError as exc:
+                        recovery_policy = planner_initial_output_policy
+                        rejected_increase_diagnostic = exc.to_diagnostic()
+                    selected = select_length_remediation(remediation_state, planner_initial_output_policy, recovery_policy)
+                    if selected.get("status") != "available":
+                        return planner_call_stop(remediation_state, {
+                            "error_code": str(selected.get("reason_code") or "PLANNER_LENGTH_RECOVERY_UNAVAILABLE"),
+                            "error_owner": "planner", "detail": str(selected.get("detail") or "No unused legal length remediation remains."),
+                        })
+                    base_compactor = getattr(self, "_schema2_phase_compactor", None)
+
+                    def selected_strategy_message(authorization):
+                        observation = {
+                            "code": "PLANNER_LENGTH_REMEDIATION_SELECTED",
+                            **length_feedback(current_failure.get("response_integrity") or {}, authorization),
+                        }
+                        if authorization.get("rejected_increase_diagnostic"):
+                            observation["rejected_increase_diagnostic"] = deepcopy(authorization["rejected_increase_diagnostic"])
+                        return HumanMessage(name="planner_length_strategy", content=json.dumps(observation, ensure_ascii=False, sort_keys=True))
+
+                    if rejected_increase_diagnostic:
+                        selected["rejected_increase_diagnostic"] = rejected_increase_diagnostic
+                    strategy_message = selected_strategy_message(selected)
+                    try:
+                        selected_input_admission = planner_input_admission(
+                            [*planner_llm_messages, strategy_message], selected["output_policy"],
+                            base_policy=getattr(base_compactor, "policy", None) or ContextBudgetPolicy(),
+                            estimator=getattr(base_compactor, "estimator", None),
+                        )
+                    except PlannerOutputPolicyError as exc:
+                        if selected.get("kind") != "increase_output_limit" or exc.code != "PLANNER_OUTPUT_CONTEXT_CAPACITY_INSUFFICIENT":
+                            raise
+                        # Keep the failed higher-reserve observation, then test
+                        # the complete request again with the compact strategy.
+                        selected = select_length_remediation(remediation_state, planner_initial_output_policy, planner_initial_output_policy)
+                        selected["rejected_increase_diagnostic"] = exc.to_diagnostic()
+                        strategy_message = selected_strategy_message(selected)
+                        selected_input_admission = planner_input_admission(
+                            [*planner_llm_messages, strategy_message], selected["output_policy"],
+                            base_policy=getattr(base_compactor, "policy", None) or ContextBudgetPolicy(),
+                            estimator=getattr(base_compactor, "estimator", None),
+                        )
+                    selected["input_admission"] = selected_input_admission
+                    current_failure["remediation_authorization"] = deepcopy(selected)
+                    remediation_state["task_state"]["planning_failure"] = current_failure
+                    # Existing PlanState CAS precedes the sole dispatch claim.
+                    # This writes no new epoch, revision, call charge or raw fact.
+                    stale = planner_scope_stale(load_plan_state(self.data_path, task_id))
+                    if stale:
+                        return stale
+                    save_plan_state(self.data_path, task_id, remediation_state)
+                    planner_remediation = selected
+                    planner_output_policy = deepcopy(selected["output_policy"])
+                    if planner_phase_context is not None:
+                        event_id = "planner-length-strategy:" + str((current_failure.get("occurrence_receipt") or {}).get("id") or "") + ":" + selected["signature"] + ":" + str(planner_output_policy.get("output_policy_hash") or "")
+                        planner_phase_context.queue_provider_event(event_id=event_id, content=str(strategy_message.content), name=str(strategy_message.name))
+                        strategy_message = next(message for message in [*planner_phase_context.messages, *planner_phase_context.pending_provider_events]
+                                                if (getattr(message, "additional_kwargs", {}) or {}).get("phase_event_id") == event_id)
+                    planner_llm_messages = [*planner_llm_messages, strategy_message]
+                    if planner_phase_context is not None:
+                        # Final trace/persistence sees exactly the actual request,
+                        # including the newly authorized strategy observation.
+                        planner_phase_context.provider_messages = list(planner_llm_messages)
+                        planner_phase_context.compaction_telemetry["output_policy_input_admission"] = deepcopy(selected_input_admission)
+                        self._configure_planner_output_reserve(planner_phase_context, planner_output_policy)
+                except PlannerOutputPolicyError as exc:
+                    return planner_policy_stop(exc)
             planner_no_structural_progress = planner_correction_requires_thinking(
                 active_planning_failure
             )
@@ -38378,8 +38581,6 @@ question. Never guess a scientific or database identity.
                     ),
                 }
 
-            if planner_phase_context is None and restored_planner_messages:
-                planner_llm_messages = restored_planner_messages
             planner_accounting = planner_prompt_accounting()
             compressible_chars = 0
             planner_budget = assess_prompt_budget(
@@ -38440,11 +38641,40 @@ question. Never guess a scientific or database identity.
             # Persist the Planner input contract before the remote call so a
             # timeout/restart cannot erase Consultant-selected skills or task facts.
             durable_preplan = load_plan_state(self.data_path, task_id)
+            stale = planner_scope_stale(durable_preplan)
+            if stale:
+                return stale
             _bind_current_task_spec_record(durable_preplan, task_spec)
             durable_preplan["selected_skill_ids"] = list(selected_skills)
             if not durable_preplan.get("steps"):
                 durable_preplan["generated_from_task_revision"] = task_revision
             save_plan_state(self.data_path, task_id, durable_preplan)
+
+            planner_call_scope = {
+                "task_id": task_id, "task_revision": task_revision,
+                "planning_epoch_id": str(planning_epoch.get("planning_epoch_id") or ""),
+                "invocation_id": planner_node_context.binding.invocation_id,
+                "candidate_scope_id": planner_node_context.binding.candidate_scope_id,
+            }
+            try:
+                base_compactor = getattr(self, "_schema2_phase_compactor", None)
+                planner_budget["output_policy_input_admission"] = planner_input_admission(
+                    planner_llm_messages, planner_output_policy,
+                    base_policy=getattr(base_compactor, "policy", None) or ContextBudgetPolicy(),
+                    estimator=getattr(base_compactor, "estimator", None),
+                )
+            except PlannerOutputPolicyError as exc:
+                return planner_policy_stop(exc)
+            try:
+                _, planner_call_claim = claim_planner_call(
+                    self.data_path, task_id, load_plan_state(self.data_path, task_id),
+                    planner_call_scope, planner_output_policy, planner_remediation,
+                )
+            except PlannerCallError as exc:
+                return planner_call_stop(load_plan_state(self.data_path, task_id), exc.to_diagnostic())
+            planning_epoch = dict((load_plan_state(self.data_path, task_id).get("task_state") or {}).get("planning_epoch") or {})
+            if planner_remediation:
+                self._planner_progress(task_id, "length_remediation", {"attempted_remediation": planner_remediation})
 
             planner_observation = {
                 "candidate_ordinal": int(planning_epoch.get("planner_calls_total") or 0),
@@ -38496,7 +38726,7 @@ question. Never guess a scientific or database identity.
                     llm_policy=planner_correction_policy,
                 )
             except PlannerOutputPolicyError as exc:
-                return self._planner_output_policy_failure_update(task_id, exc)
+                return planner_policy_stop(exc)
             except Exception as exc:
                 if is_transient_llm_failure(exc) and not is_llm_input_rejected(exc):
                     update = self._pause_retryable_llm_failure(state, task_id, "planner", exc)
@@ -38516,8 +38746,12 @@ question. Never guess a scientific or database identity.
             if planner_phase_context is not None:
                 planner_phase_context.record_assistant_response(response)
             raw_plan_content = str(response.content or "").strip()
+            planner_response_integrity = response_integrity(
+                response, scope=planner_call_scope, claim=planner_call_claim, policy=planner_output_policy,
+            )
+            planner_length_terminated = planner_response_integrity["finish_reason"] == "length"
             try:
-                typed_planner_skill_decision = self._planner_observed_call(task_id, planner_observation, "parse_skill_envelope", parse_typed_skill_decision,
+                typed_planner_skill_decision = None if planner_length_terminated else self._planner_observed_call(task_id, planner_observation, "parse_skill_envelope", parse_typed_skill_decision,
                     raw_plan_content
                 )
             except SkillAccessError as exc:
@@ -38543,6 +38777,11 @@ question. Never guess a scientific or database identity.
                     )
                 except PlannerEnvelopeError as exc:
                     planner_envelope_error = exc.to_diagnostic()
+            planner_response_integrity["parser_diagnostic"] = {
+                "status": "failed" if planner_envelope_error else "passed" if planner_envelope is not None else "not_run",
+                "source": "live_planner_envelope_parser",
+                **deepcopy(planner_envelope_error),
+            }
 
             current_planner_state = load_plan_state(self.data_path, task_id)
             current_planner_task = canonical_task_spec_for_state(
@@ -38576,10 +38815,21 @@ question. Never guess a scientific or database identity.
                 planner_node_context.binding,
                 current_planner_context.binding.to_dict(),
             )
+            if str(((current_planner_state.get("task_state") or {}).get("planning_epoch") or {}).get("planning_epoch_id") or "") != planner_call_scope["planning_epoch_id"]:
+                # Epoch replacement can leave TaskSpec/Plan semantic hashes
+                # unchanged. It still revokes this call's authority; do not
+                # write its response object/failure into the successor epoch.
+                return {"messages": [SystemMessage(content="STALE_PLANNER_EPOCH: late result discarded before candidate acceptance.")],
+                        "stale_node_result": {"decision_result": "STALE_NODE_RESULT", "caller_node": "planner",
+                                              "caller_invocation_id": planner_call_scope["invocation_id"],
+                                              "changed_preconditions": ["planning_epoch_id"]},
+                        "pending_action": {}, "next_step": "planner"}
             if not planner_staleness.usable:
                 stale_task_state = dict(current_planner_state.get("task_state") or {})
                 stale_epoch = dict(stale_task_state.get("planning_epoch") or {})
-                if stale_epoch:
+                if (stale_epoch
+                    and stale_epoch.get("planning_epoch_id") == planning_epoch.get("planning_epoch_id")
+                    and task_spec_revision(current_planner_task) == task_revision):
                     stale_epoch["status"] = "stale_semantic_base"
                     stale_task_state["planning_epoch"] = stale_epoch
                     current_planner_state["task_state"] = stale_task_state
@@ -38619,11 +38869,69 @@ question. Never guess a scientific or database identity.
                     },
                     "next_step": "planner",
                 }
-            if typed_planner_skill_decision is not None:
-                self._refund_planner_call_for_skill_continuation(
-                    task_id,
-                    str(planning_epoch.get("planning_epoch_id") or ""),
+            def persist_planner_rejection(rejected_state, candidate, remediation=None):
+                feedback = save_correction_context(
+                    self.data_path, task_id, rejected_state, task_spec=task_spec,
+                    raw=str(response.content or ""), candidate=candidate if isinstance(candidate, Mapping) else {},
+                    provider_messages=planner_llm_messages,
+                    fixed_prefix_count=(2 + len(planner_phase_context.inherited_messages) if planner_phase_context else 2),
+                    capabilities=planner_effect_registry, response_metadata=planner_response_integrity,
+                    call_claim=planner_call_claim, remediation=remediation,
                 )
+                save_plan_state(self.data_path, task_id, rejected_state)
+                failure = (rejected_state.get("task_state") or {}).get("planning_failure") or {}
+                self._planner_progress(task_id, "candidate_rejected", {
+                    **planner_observation, "issue_count": len(feedback["validation_issues"]),
+                    "response_integrity": planner_response_integrity,
+                })
+                if failure.get("status") == "terminal":
+                    self._planner_progress(task_id, "planning_stopped", failure.get("terminal_diagnostic") or {})
+                return feedback
+
+            if planner_length_terminated:
+                # A length result cannot mutate skill state, reconcile a task,
+                # or enter Plan admission, even when its text parses as JSON.
+                length_issue = validation_issue(
+                    "PLANNER_OUTPUT_TRUNCATED", owner="planner", field_path="$", repair_target="$",
+                    validator_id="provider_completion_integrity",
+                    message="Provider generation ended at the length boundary; no reliable complete Planner candidate was accepted.",
+                    expected_type="normally_completed_candidate", received_type="length_terminated_response",
+                )
+                rejected_state = record_planning_failure(
+                    current_planner_state, validation_issues=[length_issue],
+                    planning_epoch_id=str(planning_epoch.get("planning_epoch_id") or ""),
+                    task_spec_revision_value=task_revision, validation_source="planner_completion_integrity",
+                    requirements=planner_requirements, candidate={},
+                )
+                rejected_increase_diagnostic = None
+                try:
+                    recovery_policy = self._resolve_planner_output_policy(
+                        recovery=True, legacy_epoch=not bool(planning_epoch.get("planner_output_policy_version")),
+                        task_output_token_limit=(planner_task_state.get("budgets") or {}).get("max_planner_output_tokens"),
+                    )
+                    # Reserve is evaluated against the full retained messages
+                    # plus the completed raw response and bounded feedback at
+                    # the next request. A disallowed increase remains compact.
+                except PlannerOutputPolicyError as exc:
+                    recovery_policy = planner_output_policy
+                    rejected_increase_diagnostic = exc.to_diagnostic()
+                authorization = select_length_remediation(rejected_state, planner_output_policy, recovery_policy)
+                if rejected_increase_diagnostic:
+                    authorization["rejected_increase_diagnostic"] = rejected_increase_diagnostic
+                feedback = persist_planner_rejection(rejected_state, {}, authorization)
+                return {"messages": [SystemMessage(content=json.dumps(feedback, ensure_ascii=False, sort_keys=True))],
+                        "validation_issues": [length_issue], "pending_action": {}, "failure_owner": "planner",
+                        "planning_epoch": deepcopy((rejected_state.get("task_state") or {}).get("planning_epoch") or {}),
+                        "next_step": "planner"}
+
+            if typed_planner_skill_decision is not None:
+                complete_planner_claim(current_planner_state, planner_call_claim, planner_response_integrity, outcome="skill_evidence_request")
+                save_plan_state(self.data_path, task_id, current_planner_state)
+                if not planner_remediation:
+                    self._refund_planner_call_for_skill_continuation(
+                        task_id,
+                        str(planning_epoch.get("planning_epoch_id") or ""),
+                    )
                 try:
                     skill_update = await self._handle_skill_node_decision(
                         task_id=task_id,
@@ -38678,6 +38986,9 @@ question. Never guess a scientific or database identity.
                     "expected": SUBMIT_PLAN_FOR_REVIEW,
                     "actual": PLAN_CANDIDATE,
                 }
+                observed_state = load_plan_state(self.data_path, task_id)
+                complete_planner_claim(observed_state, planner_call_claim, planner_response_integrity, outcome="explicit_submission_required")
+                save_plan_state(self.data_path, task_id, observed_state)
                 self._record_planner_loop_observation(
                     task_id,
                     action_type="produce_plan_candidate",
@@ -38734,13 +39045,10 @@ question. Never guess a scientific or database identity.
                         ) or {}).get("validation_issues")
                         or []
                     )
-                    save_plan_state(self.data_path, task_id, current_planner_state)
+                    planner_feedback = persist_planner_rejection(current_planner_state, planner_envelope.payload)
                     return {
                         "messages": [SystemMessage(content=json.dumps(
-                            {
-                                "code": "PLANNER_CANDIDATE_INVALID",
-                                "validation_issues": reconciliation_issues,
-                            },
+                            planner_feedback,
                             ensure_ascii=False,
                             sort_keys=True,
                         ))],
@@ -38768,6 +39076,7 @@ question. Never guess a scientific or database identity.
                         "TASKSPEC_RECONCILIATION_NONPROGRESS"
                     )
                     current_planner_state["task_state"] = current_task_state
+                    complete_planner_claim(current_planner_state, planner_call_claim, planner_response_integrity, outcome="reconciliation_nonprogress")
                     save_plan_state(self.data_path, task_id, current_planner_state)
                     return {
                         "messages": [SystemMessage(content=(
@@ -38799,6 +39108,7 @@ question. Never guess a scientific or database identity.
                     current_planner_state,
                     outcome_code=TASKSPEC_RECONCILIATION_REQUIRED,
                 )
+                complete_planner_claim(current_planner_state, planner_call_claim, planner_response_integrity, outcome="reconciliation_required")
                 save_plan_state(self.data_path, task_id, current_planner_state)
                 return {
                     "messages": [SystemMessage(content=(
@@ -39030,15 +39340,7 @@ question. Never guess a scientific or database identity.
                     ) or {}).get("validation_issues")
                     or []
                 )
-                planner_feedback = save_correction_context(
-                    self.data_path, task_id, rejected_state, task_spec=task_spec,
-                    raw=str(response.content or ""), candidate=plan_proposal if isinstance(plan_proposal, Mapping) else {},
-                    provider_messages=planner_llm_messages,
-                    fixed_prefix_count=(2 + len(planner_phase_context.inherited_messages) if planner_phase_context else 2),
-                    capabilities=planner_effect_registry,
-                )
-                save_plan_state(self.data_path, task_id, rejected_state)
-                self._planner_progress(task_id, "candidate_rejected", {**planner_observation, "issue_count": len(planner_feedback["validation_issues"])})
+                planner_feedback = persist_planner_rejection(rejected_state, plan_proposal)
                 rejected_epoch = dict(
                     (rejected_state.get("task_state") or {}).get("planning_epoch")
                     or {}
@@ -39176,15 +39478,7 @@ question. Never guess a scientific or database identity.
                     ) or {}).get("validation_issues")
                     or []
                 )
-                planner_feedback = save_correction_context(
-                    self.data_path, task_id, rejected_state, task_spec=task_spec,
-                    raw=str(response.content or ""), candidate=candidate_for_repair if isinstance(candidate_for_repair, Mapping) else {},
-                    provider_messages=planner_llm_messages,
-                    fixed_prefix_count=(2 + len(planner_phase_context.inherited_messages) if planner_phase_context else 2),
-                    capabilities=planner_effect_registry,
-                )
-                save_plan_state(self.data_path, task_id, rejected_state)
-                self._planner_progress(task_id, "candidate_rejected", {**planner_observation, "issue_count": len(planner_feedback["validation_issues"])})
+                planner_feedback = persist_planner_rejection(rejected_state, candidate_for_repair)
                 rejected_epoch = dict(
                     (rejected_state.get("task_state") or {}).get("planning_epoch")
                     or {}
@@ -39258,13 +39552,10 @@ question. Never guess a scientific or database identity.
                     ) or {}).get("validation_issues")
                     or []
                 )
-                save_plan_state(self.data_path, task_id, rejected_state)
+                planner_feedback = persist_planner_rejection(rejected_state, candidate_plan_state)
                 return {
                     "messages": [SystemMessage(content=json.dumps(
-                        {
-                            "code": "FULL_REPLAN_TRANSITION_INVALID",
-                            "validation_issues": transition_issues,
-                        },
+                        planner_feedback,
                         ensure_ascii=False,
                         sort_keys=True,
                         default=str,
@@ -39376,16 +39667,9 @@ question. Never guess a scientific or database identity.
                         validation_source="step_effect_final_compilation",
                         candidate=plan_state,
                     )
-                    save_plan_state(self.data_path, task_id, rejected_state)
+                    planner_feedback = persist_planner_rejection(rejected_state, plan_state)
                     return {
-                        "messages": [SystemMessage(content=json.dumps({
-                            "code": "PLAN_STEP_EFFECT_COMPILATION_REJECTED",
-                            "validation_issues": list(
-                                (rejected_state.get("task_state") or {})
-                                .get("planning_failure", {})
-                                .get("validation_issues", [])
-                            ),
-                        }, ensure_ascii=False, sort_keys=True, default=str))],
+                        "messages": [SystemMessage(content=json.dumps(planner_feedback, ensure_ascii=False, sort_keys=True, default=str))],
                         "validation_issues": list(
                             (rejected_state.get("task_state") or {})
                             .get("planning_failure", {})
@@ -39431,16 +39715,9 @@ question. Never guess a scientific or database identity.
                         validation_source="plan_dataflow_final_compilation",
                         candidate=plan_state,
                     )
-                    save_plan_state(self.data_path, task_id, rejected_state)
+                    planner_feedback = persist_planner_rejection(rejected_state, plan_state)
                     return {
-                        "messages": [SystemMessage(content=json.dumps({
-                            "code": "PLAN_DATAFLOW_COMPILATION_REJECTED",
-                            "validation_issues": list(
-                                (rejected_state.get("task_state") or {})
-                                .get("planning_failure", {})
-                                .get("validation_issues", [])
-                            ),
-                        }, ensure_ascii=False, sort_keys=True, default=str))],
+                        "messages": [SystemMessage(content=json.dumps(planner_feedback, ensure_ascii=False, sort_keys=True, default=str))],
                         "validation_issues": list(
                             (rejected_state.get("task_state") or {})
                             .get("planning_failure", {})
@@ -39465,6 +39742,7 @@ question. Never guess a scientific or database identity.
                     "applied_plan_version": str(plan_state.get("plan_version") or ""),
                 }
                 plan_state["task_state"] = task_state_for_plan
+            complete_planner_claim(plan_state, planner_call_claim, planner_response_integrity, outcome="candidate_ready_for_review")
             try:
                 save_plan_state(
                     self.data_path,

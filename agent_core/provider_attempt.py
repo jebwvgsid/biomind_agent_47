@@ -1193,6 +1193,13 @@ async def run_provider_attempt(
                     activity_task.cancel()
                     try:
                         await activity_task
+                    except asyncio.CancelledError:
+                        # The activity waiter is disposable; its caller is
+                        # not. A caller cancellation can arrive at this drain
+                        # suspension after asyncio.wait already returned.
+                        current = asyncio.current_task()
+                        if current is not None and current.cancelling():
+                            raise
                     except BaseException:
                         pass
             if invoke_task in done:

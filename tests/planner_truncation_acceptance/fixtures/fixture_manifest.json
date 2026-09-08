@@ -1,0 +1,51 @@
+{
+  "fixture_purpose": "Recorded truncated responses and TaskSpec/accepted handoff of session1788868040. Tests copy the semantic seed into a synthetic task via real CAS; not a historical checkpoint restore.",
+  "recorded_raw": [
+    {
+      "filename": "recorded_length_1.txt",
+      "historical_call_id": "planner_initial-0006-357001ee461b",
+      "raw_sha256": "679ed511e62ab3d3c817e886795839bc444466d62a75a4eec162575ab028b530",
+      "raw_characters": 29399,
+      "response_metadata": {
+        "finish_reason": "length"
+      },
+      "reported_usage": {
+        "input_tokens": 16072,
+        "output_tokens": 8192,
+        "total_tokens": 24264
+      },
+      "history_wire_limit": "NOT_PERSISTED",
+      "history_runtime_revision": "NOT_PERSISTED"
+    },
+    {
+      "filename": "recorded_length_2.txt",
+      "historical_call_id": "planner_initial-0007-af07ccaa8f9c",
+      "raw_sha256": "2d8cf8c15823131c86a509ae3b3a1b9fe1b415751fee9912580e9c79495abbba",
+      "raw_characters": 29383,
+      "response_metadata": {
+        "finish_reason": "length"
+      },
+      "reported_usage": {
+        "input_tokens": 26409,
+        "output_tokens": 8192,
+        "total_tokens": 34601
+      },
+      "history_wire_limit": "NOT_PERSISTED",
+      "history_runtime_revision": "NOT_PERSISTED"
+    }
+  ],
+  "synthetic_candidate": {
+    "filename": "synthetic_complete_candidate.json",
+    "kind": "explicit synthetic complete public Plan candidate",
+    "construction": "Reused previously reviewed independent-artifact fixture structure; bound this session four stable sample handles; added distinct PASS selection outputs and aggregate statistics. Not created by repairing/concatenating either recorded truncated body.",
+    "steps": 24,
+    "source_fixture_sha256": "2bff56589d62010ea733207bb08623cbd44853f29aca5effc2f078ebe3fcb8d7",
+    "expected_validation": "Must pass current real parser/binder/compiler/admission/PlanReview in candidate tests; no claim before test.",
+    "fixture_only_validation": {
+      "candidate": "/tmp/biomind-planner-truncation-fix-20260908/fixture-probe-02",
+      "result": "1 passed; process exit 0; actual Planner/compiler/admission/PlanReview approval_pending",
+      "limitation": "HEAD fixture validity only, not LEN implementation acceptance"
+    },
+    "sha256": "45d75915fd9480322ea034e5acb53b4c2aac4662912d9531ad038ad1948b29fe"
+  }
+}

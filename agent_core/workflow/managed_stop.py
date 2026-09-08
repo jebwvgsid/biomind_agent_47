@@ -112,6 +112,47 @@ def _planning_issue_summary(issues):
         "validation_issues": deepcopy(list(issues or []))}
 
 
+def _planning_policy(integrity):
+    integrity = _mapping(integrity)
+    return _mapping(integrity.get("resolved_output_policy") or integrity.get("output_policy"))
+
+
+def _planning_response_projection(integrity):
+    """Small explanation facts; the complete scoped receipt stays in planning."""
+    integrity = _mapping(integrity)
+    return {key: deepcopy(integrity[key]) for key in (
+        "call_id", "provider_attempt_id", "provider_request_id", "finish_reason",
+        "reported_usage", "usage_source", "usage_status", "transport_status", "content_status", "parser_diagnostic",
+    ) if key in integrity}
+
+
+def _planning_response_explanation(label, integrity):
+    integrity = _mapping(integrity)
+    if not integrity:
+        return label + " provider 结束原因与输出策略：UNKNOWN（未记录，不从正文或 token 数推断）。"
+    finish = str(integrity.get("finish_reason") or "UNKNOWN")
+    text = label + " provider：call=" + str(integrity.get("call_id") or "UNKNOWN")
+    text += "；finish_reason=" + finish + "；content_status=" + str(integrity.get("content_status") or "UNKNOWN")
+    if finish == "length":
+        text += "；输出触及 provider 长度边界，本次候选未接纳"
+    usage = integrity.get("reported_usage")
+    text += "；用量记录=" + (_safe(json.dumps(usage, ensure_ascii=False), 600) if usage else "UNKNOWN")
+    text += "；用量来源=" + str(integrity.get("usage_source") or integrity.get("usage_status") or "UNKNOWN") + "。"
+    policy = _planning_policy(integrity)
+    requested_limit = policy.get("requested_output_limit")
+    text += "\n本地请求输出上限=" + str(requested_limit if requested_limit is not None else "UNKNOWN")
+    text += "；wire 观察=" + str(policy.get("wire_observation_status") or "UNKNOWN")
+    if "wire_output_parameter_key" in policy or "wire_output_parameter_value" in policy:
+        wire_value = policy.get("wire_output_parameter_value")
+        text += "；请求参数 " + str(policy.get("wire_output_parameter_key") or "UNKNOWN") + "=" + str(wire_value if wire_value is not None else "UNKNOWN")
+    effective_limit = policy.get("server_effective_output_limit")
+    text += "；服务端实际生效上限=" + str(effective_limit if effective_limit is not None else "UNKNOWN") + "（不把本地设置或用量当作服务端确认）。"
+    parser = _mapping(integrity.get("parser_diagnostic"))
+    if parser:
+        text += "\n解析诊断（仅已记录字段）：" + _safe(json.dumps(parser, ensure_ascii=False), 1600)
+    return text
+
+
 def _build_planning_stop(task_id, durable, boundary, planning):
     """Build the entire no-Plan base from typed, already held facts."""
     planning = deepcopy(planning)
@@ -122,12 +163,19 @@ def _build_planning_stop(task_id, durable, boundary, planning):
     primary = _mapping(planning.get("primary_failure"))
     primary_summary = _planning_issue_summary(primary.get("validation_issues"))
     primary_summary.update(status=primary.get("status", "not_persisted"), source=deepcopy(primary))
+    primary_summary["response_integrity"] = deepcopy(_mapping(primary.get("response_integrity")))
     latest = _planning_issue_summary(planning.get("validation_issues"))
     latest["candidate_source"] = deepcopy(planning.get("candidate_source") or {})
+    latest["response_integrity"] = deepcopy(_mapping(planning.get("response_integrity")))
+    remediation = deepcopy(planning.get("attempted_remediation") or latest["response_integrity"].get("attempted_remediation") or [])
     epoch = _mapping(planning.get("planning_epoch"))
     value = {"schema_version": 1, "producer": PRODUCER, "status": boundary["status"],
         "scope": scope, "authority": _authority(durable), "boundary": deepcopy(boundary),
         "planning": planning, "primary_cause": primary_summary, "latest_failure": latest,
+        "response_integrity": deepcopy(latest["response_integrity"]),
+        "first_truncation": deepcopy(_mapping(planning.get("first_truncation"))),
+        "output_policy": deepcopy(_planning_policy(latest["response_integrity"]) or _mapping(planning.get("output_policy"))),
+        "attempted_remediation": remediation,
         "origin": {"source_stage": "planner", "source_owner": "planner", "failure_type": "planning_candidate_rejected",
             "error_code": primary_summary["error_code"], "summary": primary_summary["message"],
             "evidence_refs": [str(planning["primary_context_ref"])] if planning.get("primary_context_ref") else []},
@@ -141,7 +189,8 @@ def _build_planning_stop(task_id, durable, boundary, planning):
         "stages": [], "prior_completed_work": [], "inspection_failures": [], "publication_failures": [],
         "resolution": "unresolved", "automatic_actions_stopped": True, "technical_classification": "planning_unresolved",
         "summary_status": "IMPLEMENTED", "summary_skip_reason": "", "summary_llm_calls": 0,
-        "persistence_status": "unconfirmed", "reports_status": "not_attempted", "report_paths": {}, "report_receipts": {},
+        "persistence_status": "unconfirmed", "reports_status": "not_attempted", "report_paths": {},
+        "report_receipts": {"reproduce.sh": {"status": "skipped", "reason": "NO_EXECUTION_ATTEMPT"}},
         "secondary_failures": []}
     value["scope"]["task_id"] = task_id
     value["stop_id"] = "managed-stop:" + _hash({"scope": scope, "authority": value["authority"], "stop_reason": value["stop_reason"]})
@@ -318,11 +367,24 @@ def _planning_explanation(stop):
         "本轮已发起 Planner 请求：" + str(reason.get("model_turns", 0)) + "；当前连续结构无进展记录：" + str(reason.get("repeat_count", 0)) + "。",
         "任务 revision=" + str(scope.get("task_revision", "unknown")) + "；planning epoch=" + str(scope.get("planning_epoch_id") or "unknown") + "。"]
     issues = facts.get("validation_issues") or []
+    parts.append(_planning_response_explanation("最初", primary.get("response_integrity")))
+    parts.append(_planning_response_explanation("末次", latest.get("response_integrity")))
+    first_truncation = _mapping(stop.get("first_truncation"))
+    if first_truncation and first_truncation != _mapping(primary.get("response_integrity")):
+        parts.append(_planning_response_explanation("首个截断", first_truncation))
+    remediation = stop.get("attempted_remediation")
+    if remediation:
+        parts.append("实际补救记录（策略及结果以已记录状态为准）：" + _safe(json.dumps(remediation, ensure_ascii=False), 2200))
+    else:
+        parts.append("没有已记录的输出长度补救；不能把未执行的补救描述为已尝试。")
     if issues:
         parts.append("末次完整问题清单（详细 actual/expected/来源保留在结构化停止事实中）：\n" + "\n".join(
             "- " + str(i.get("code") or "UNKNOWN") + " / " + str(i.get("violation_code") or i.get("code") or "UNKNOWN")
             + " @ " + str(i.get("field_path") or "$")
             + (" [" + str(i.get("canonical_resource_id")) + "]" if i.get("canonical_resource_id") else "")
+            + ("；诊断=" + _safe(json.dumps({key: i[key] for key in (
+                "expected_type", "received_type", "position", "line", "column", "diagnostic_source", "position_source", "validator_id"
+            ) if key in i}, ensure_ascii=False), 900) if any(key in i for key in ("expected_type", "received_type", "position", "line", "column", "diagnostic_source", "position_source", "validator_id")) else "")
             for i in issues if isinstance(i, Mapping)))
     else:
         parts.append("末次问题细节尚未持久记录；没有把未执行的检查推定为失败。")
@@ -336,6 +398,12 @@ def _planning_explanation(stop):
         parts.append("已生成停止报告：" + "；".join(str(v) for v in stop["report_paths"].values()))
     else:
         parts.append("尚未确认生成报告文件。")
+    receipts = _mapping(stop.get("report_receipts"))
+    parts.append("文件交付状态（截至说明生成时；报告自身最终写入结果以持久 receipt 为准）：" + "；".join(
+        name + "=" + str(_mapping(receipts.get(name)).get("status") or "not_attempted")
+        + " / " + str(_mapping(receipts.get(name)).get("reason") or ("WRITER_NOT_RUN" if name not in receipts else "receipt recorded"))
+        for name in ("report.md", "stage_status.tsv", "reproduce.sh")))
+    parts.append("没有科学执行 attempt，不生成科学复现脚本；原任务的科学交付尚未完成。")
     if stop.get("secondary_failures"):
         parts.append("附加问题：" + "；".join(str(i.get("error_code") or "UNKNOWN") for i in stop["secondary_failures"]))
     return "\n\n".join(parts)
@@ -355,6 +423,8 @@ def projection(stop):
         d["planning"] = deepcopy(stop["planning"])
         d["validation_issues"] = deepcopy(stop["planning"].get("validation_issues") or [])
         d["scope"] = deepcopy(stop["scope"])
+        for key in ("response_integrity", "first_truncation", "output_policy", "attempted_remediation"):
+            d[key] = deepcopy(stop.get(key) or {})
     if stop["report_paths"].get("report.md"): d["report_path"] = stop["report_paths"]["report.md"]
     return {"status": stop["status"], "terminal_diagnostic": d}
 
@@ -471,10 +541,20 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
         # The summary gets every issue identity/location, with its exact full
         # diagnostic retained durably in planning. Avoid duplicating the same
         # large source analysis in origin, latest and base in a bounded call.
-        frozen["primary_cause"] = {k: v for k, v in value["primary_cause"].items() if k not in {"source", "validation_issues"}}
-        frozen["latest_failure"] = {k: v for k, v in value["latest_failure"].items() if k != "validation_issues"}
+        frozen["primary_cause"] = {k: v for k, v in value["primary_cause"].items() if k not in {"source", "validation_issues", "response_integrity"}}
+        frozen["latest_failure"] = {k: v for k, v in value["latest_failure"].items() if k not in {"validation_issues", "response_integrity"}}
+        frozen["response_integrity"] = {"origin": _planning_response_projection(value["primary_cause"].get("response_integrity")),
+            "latest": _planning_response_projection(value["latest_failure"].get("response_integrity"))}
+        frozen["first_truncation"] = _planning_response_projection(value.get("first_truncation"))
+        frozen["output_policy"] = {"origin": deepcopy(_planning_policy(value["primary_cause"].get("response_integrity"))),
+            "latest": deepcopy(value.get("output_policy") or {}),
+            "first_truncation": deepcopy(_planning_policy(value.get("first_truncation")))}
+        frozen["attempted_remediation"] = deepcopy(value.get("attempted_remediation") or [])
+        frozen["files"] = {name: deepcopy(value["report_receipts"].get(name) or {"status": "not_attempted", "reason": "WRITER_NOT_RUN"})
+            for name in ("report.md", "stage_status.tsv", "reproduce.sh")}
         frozen["planning"] = {"scope": value["scope"], "no_approved_plan": True,
-            "validation_issues": [{k: i[k] for k in ("code", "violation_code", "field_path", "canonical_resource_id", "affected_step_ids", "constraint_source", "explicit_contract_source", "contract_revision") if k in i}
+            "validation_issues": [{k: i[k] for k in ("code", "violation_code", "field_path", "canonical_resource_id", "affected_step_ids", "constraint_source", "explicit_contract_source", "contract_revision",
+                "expected_type", "received_type", "position", "line", "column", "diagnostic_source", "position_source", "validator_id") if k in i}
                 for i in value["planning"].get("validation_issues") or []]}
     frozen["execution"] = {k:v for k,v in frozen["execution"].items() if k != "command_body"}
     frozen["base"] = explanation(value)

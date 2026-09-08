@@ -843,6 +843,11 @@ class TypedPlanner(_TypedEarlyNode):
             "validation_source": str(failure.get("validation_source") or ""),
             "attempt": int(failure.get("attempt") or 0),
             "repeat_count": int(failure.get("repeat_count") or 0),
+            "response_integrity": deepcopy(dict(failure.get("response_integrity") or {})),
+            "occurrence_receipt": deepcopy(dict(failure.get("occurrence_receipt") or {})),
+            "attempted_remediation": deepcopy(list((epoch.get("length_recovery") or {}).get("history") or [])),
+            "first_truncation": deepcopy(dict((epoch.get("length_recovery") or {}).get("first_truncation") or {})),
+            "output_policy": deepcopy(dict((failure.get("response_integrity") or {}).get("resolved_output_policy") or {})),
         }
         payload.update(status=status, reason_code=code, error_code=code, planning_terminal=planning)
         return self.contract(
@@ -875,6 +880,11 @@ class TypedPlanner(_TypedEarlyNode):
             }, "Planner requires a finalized semantic contract.")
         lifecycle = classify_planner_lifecycle(durable)
         disposition = str(lifecycle.get("disposition") or "")
+        if disposition == PlannerDisposition.TERMINAL.value:
+            return _outcome(self.contract, "terminal", state, durable, {
+                "status": str(lifecycle.get("status") or "failed"),
+                "reason_code": str(lifecycle.get("reason_code") or "PLANNER_STOPPED"),
+            }, str(lifecycle.get("detail") or "Planner stopped after a bounded correction."))
         if disposition == PlannerDisposition.REVIEW_READY.value:
             return _outcome(self.contract, "plan_review_ready", state, durable, {
                 "plan_id": str(durable.get("plan_id") or "pending-plan"),
@@ -918,10 +928,18 @@ class TypedPlanner(_TypedEarlyNode):
                     durable,
                     error_code="PLANNER_NON_PROGRESS_REPLAY",
                     detail=(
-                        "Planner attempted to self-loop with the same durable "
-                        "progress receipt as the preceding invocation."
+                        "Planner attempted to consume the same durable occurrence again. No new call, counter increment or approval is authorized."
+                        if int(lifecycle.get("receipt_version") or 1) >= 2
+                        else "Legacy Planner attempted to self-loop with the same semantic progress receipt; historical occurrence identity is unavailable."
                     ),
                 )
+            if (int(lifecycle.get("receipt_version") or 1) >= 2 and prior_payload
+                and lifecycle.get("semantic_failure_fingerprint")
+                and lifecycle.get("semantic_failure_fingerprint") == prior_payload.get("semantic_failure_fingerprint")
+                and (lifecycle.get("remediation_authorization") or {}).get("status") != "available"):
+                return _outcome(self.contract, "terminal", state, durable, {
+                    "status": "failed", "reason_code": "PLANNER_REPEATED_FAILURE",
+                }, "A new occurrence repeated the same failure without an unused effective remediation; changing event IDs is not progress.")
             return _outcome(self.contract, "planning_continues", state, durable, {
                 "reason_code": str(lifecycle.get("reason_code") or "PLANNER_LOCAL_LOOP_ACTIVE"),
                 "attempt_ordinal": int(lifecycle.get("attempt_ordinal") or 1),
@@ -929,6 +947,10 @@ class TypedPlanner(_TypedEarlyNode):
                 "progress_kind": str(
                     lifecycle.get("progress_kind") or "planner_progress"
                 ),
+                "receipt_version": int(lifecycle.get("receipt_version") or 1),
+                "occurrence_receipt": deepcopy(lifecycle.get("occurrence_receipt") or {}),
+                "semantic_failure_fingerprint": str(lifecycle.get("semantic_failure_fingerprint") or ""),
+                "effective_remediation_signature": str(lifecycle.get("effective_remediation_signature") or ""),
             }, "The local Planner agent has another reasoning turn available.")
         if disposition == PlannerDisposition.INVALID.value:
             return _semantic_harness_error(

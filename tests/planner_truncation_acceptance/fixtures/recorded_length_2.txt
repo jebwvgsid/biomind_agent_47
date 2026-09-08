@@ -1,0 +1,993 @@
+```json
+{
+  "outcome_type": "SUBMIT_PLAN_FOR_REVIEW",
+  "proposed_artifacts": [
+    {
+      "local_ref": "plan.s1.sorted_markdup_bam",
+      "semantic_view": {
+        "role": "sorted_markdup_bam",
+        "format": "bam",
+        "description": "Coordinate-sorted duplicate-marked BAM for sample S1"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s1.bam_index",
+      "semantic_view": {
+        "role": "bam_index",
+        "format": "bai",
+        "description": "Index for S1 sorted duplicate-marked BAM"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s1.duplicate_metrics",
+      "semantic_view": {
+        "role": "duplicate_metrics",
+        "format": "txt",
+        "description": "Picard MarkDuplicates metrics for S1"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s1.flagstat",
+      "semantic_view": {
+        "role": "flagstat",
+        "format": "txt",
+        "description": "samtools flagstat output for S1 BAM"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s1.coverage",
+      "semantic_view": {
+        "role": "coverage",
+        "format": "txt",
+        "description": "samtools coverage output for S1 BAM"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s2.sorted_markdup_bam",
+      "semantic_view": {
+        "role": "sorted_markdup_bam",
+        "format": "bam",
+        "description": "Coordinate-sorted duplicate-marked BAM for sample S2"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s2.bam_index",
+      "semantic_view": {
+        "role": "bam_index",
+        "format": "bai",
+        "description": "Index for S2 sorted duplicate-marked BAM"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s2.duplicate_metrics",
+      "semantic_view": {
+        "role": "duplicate_metrics",
+        "format": "txt",
+        "description": "Picard MarkDuplicates metrics for S2"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s2.flagstat",
+      "semantic_view": {
+        "role": "flagstat",
+        "format": "txt",
+        "description": "samtools flagstat output for S2 BAM"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s2.coverage",
+      "semantic_view": {
+        "role": "coverage",
+        "format": "txt",
+        "description": "samtools coverage output for S2 BAM"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.bam_list",
+      "semantic_view": {
+        "role": "bam_list",
+        "format": "tsv",
+        "description": "Sample-to-BAM path list for downstream GATK"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s1.gvcf",
+      "semantic_view": {
+        "role": "gvcf",
+        "format": "vcf.gz",
+        "description": "Per-sample GVCF for S1 from HaplotypeCaller"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s1.gvcf_index",
+      "semantic_view": {
+        "role": "gvcf_index",
+        "format": "tbi",
+        "description": "Index for S1 GVCF"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s2.gvcf",
+      "semantic_view": {
+        "role": "gvcf",
+        "format": "vcf.gz",
+        "description": "Per-sample GVCF for S2 from HaplotypeCaller"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.s2.gvcf_index",
+      "semantic_view": {
+        "role": "gvcf_index",
+        "format": "tbi",
+        "description": "Index for S2 GVCF"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.combined_gvcf",
+      "semantic_view": {
+        "role": "combined_gvcf",
+        "format": "vcf.gz",
+        "description": "Combined cohort GVCF from CombineGVCFs"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.combined_gvcf_index",
+      "semantic_view": {
+        "role": "combined_gvcf_index",
+        "format": "tbi",
+        "description": "Index for combined cohort GVCF"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.raw_vcf",
+      "semantic_view": {
+        "role": "raw_vcf",
+        "format": "vcf.gz",
+        "description": "Raw joint-genotyped cohort VCF"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.raw_vcf_index",
+      "semantic_view": {
+        "role": "raw_vcf_index",
+        "format": "tbi",
+        "description": "Index for raw joint-genotyped VCF"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.raw_snp_vcf",
+      "semantic_view": {
+        "role": "raw_snp_vcf",
+        "format": "vcf.gz",
+        "description": "Raw SNP-only VCF from SelectVariants"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.raw_snp_vcf_index",
+      "semantic_view": {
+        "role": "raw_snp_vcf_index",
+        "format": "tbi",
+        "description": "Index for raw SNP-only VCF"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.raw_indel_vcf",
+      "semantic_view": {
+        "role": "raw_indel_vcf",
+        "format": "vcf.gz",
+        "description": "Raw InDel-only VCF from SelectVariants"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.raw_indel_vcf_index",
+      "semantic_view": {
+        "role": "raw_indel_vcf_index",
+        "format": "tbi",
+        "description": "Index for raw InDel-only VCF"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.filtered_snp_vcf_index",
+      "semantic_view": {
+        "role": "filtered_snp_vcf_index",
+        "format": "tbi",
+        "description": "Index for filtered SNP VCF"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    },
+    {
+      "local_ref": "plan.filtered_indel_vcf_index",
+      "semantic_view": {
+        "role": "filtered_indel_vcf_index",
+        "format": "tbi",
+        "description": "Index for filtered InDel VCF"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "resource_kind": "immutable_artifact",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    }
+  ],
+  "steps": [
+    {
+      "step_id": "preflight-inputs",
+      "title": "Preflight check of formal FASTQ inputs and reference FASTA",
+      "action": "execute",
+      "purpose": "validation",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.short.read.mapping.inspect",
+      "operation": "inspect",
+      "inputs": [
+        "input.reference_fasta",
+        "input.paired_fastq.5098db34c069bcbe",
+        "input.paired_fastq.1be29ca24b12a6b9",
+        "input.paired_fastq.fc7a073f66b2681a",
+        "input.paired_fastq.522b093ee24e479c"
+      ],
+      "outputs": [],
+      "produces_bindings": [],
+      "produces_observations": [
+        "validation_observation"
+      ],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [],
+      "success_criteria": [
+        "All four FASTQ files and genome.fasta exist and are non-empty",
+        "FASTQ files are gzip-compressed paired-end reads",
+        "No demo/toy/fixture/expected_answers files are referenced"
+      ],
+      "skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "low"
+    },
+    {
+      "step_id": "prepare-reference-indexes",
+      "title": "Create reference FASTA indexes (.fai, .dict, BWA index)",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+      "operation": "prepare_reference",
+      "inputs": [
+        "input.reference_fasta"
+      ],
+      "outputs": [],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [
+        "create_reference_indexes"
+      ],
+      "dependencies": [
+        "preflight-inputs"
+      ],
+      "success_criteria": [
+        "genome.fasta.fai, genome.dict, and BWA index files are created",
+        "Index files are placed only under the approved output directory"
+      ],
+      "skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "map-s1",
+      "title": "Map S1 paired FASTQ with BWA-MEM, sort, and mark duplicates",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.short.read.mapping.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "input.paired_fastq.5098db34c069bcbe",
+        "input.paired_fastq.1be29ca24b12a6b9"
+      ],
+      "outputs": [
+        "plan.s1.sorted_markdup_bam",
+        "plan.s1.bam_index",
+        "plan.s1.duplicate_metrics"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "prepare-reference-indexes"
+      ],
+      "success_criteria": [
+        "S1 BAM is coordinate-sorted, indexed, and has @RG with SM=S1",
+        "Duplicates are marked but kept (REMOVE_DUPLICATES=false)",
+        "MarkDuplicates metrics file is produced"
+      ],
+      "skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "map-s2",
+      "title": "Map S2 paired FASTQ with BWA-MEM, sort, and mark duplicates",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.short.read.mapping.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "input.paired_fastq.fc7a073f66b2681a",
+        "input.paired_fastq.522b093ee24e479c"
+      ],
+      "outputs": [
+        "plan.s2.sorted_markdup_bam",
+        "plan.s2.bam_index",
+        "plan.s2.duplicate_metrics"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "prepare-reference-indexes"
+      ],
+      "success_criteria": [
+        "S2 BAM is coordinate-sorted, indexed, and has @RG with SM=S2",
+        "Duplicates are marked but kept (REMOVE_DUPLICATES=false)",
+        "MarkDuplicates metrics file is produced"
+      ],
+      "skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "qc-s1-bam",
+      "title": "Run samtools flagstat and coverage on S1 BAM",
+      "action": "execute",
+      "purpose": "validation",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.short.read.mapping.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "plan.s1.sorted_markdup_bam",
+        "plan.s1.bam_index"
+      ],
+      "outputs": [
+        "plan.s1.flagstat",
+        "plan.s1.coverage"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "map-s1"
+      ],
+      "success_criteria": [
+        "flagstat and coverage files are produced for S1",
+        "Mapping rate and properly-paired percentage are recorded"
+      ],
+      "skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "low"
+    },
+    {
+      "step_id": "qc-s2-bam",
+      "title": "Run samtools flagstat and coverage on S2 BAM",
+      "action": "execute",
+      "purpose": "validation",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.short.read.mapping.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "plan.s2.sorted_markdup_bam",
+        "plan.s2.bam_index"
+      ],
+      "outputs": [
+        "plan.s2.flagstat",
+        "plan.s2.coverage"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "map-s2"
+      ],
+      "success_criteria": [
+        "flagstat and coverage files are produced for S2",
+        "Mapping rate and properly-paired percentage are recorded"
+      ],
+      "skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "low"
+    },
+    {
+      "step_id": "create-bam-list",
+      "title": "Create sample-to-BAM list for downstream GATK",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.short.read.mapping.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "plan.s1.sorted_markdup_bam",
+        "plan.s2.sorted_markdup_bam"
+      ],
+      "outputs": [
+        "plan.bam_list"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "qc-s1-bam",
+        "qc-s2-bam"
+      ],
+      "success_criteria": [
+        "bam.list contains S1 and S2 with their actual BAM paths",
+        "File uses sample<TAB>bam_path format"
+      ],
+      "skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "low"
+    },
+    {
+      "step_id": "preflight-gatk",
+      "title": "Preflight GATK, reference indexes, and BAM read groups",
+      "action": "execute",
+      "purpose": "validation",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.inspect",
+      "operation": "inspect",
+      "inputs": [
+        "input.reference_fasta",
+        "plan.s1.sorted_markdup_bam",
+        "plan.s2.sorted_markdup_bam"
+      ],
+      "outputs": [],
+      "produces_bindings": [],
+      "produces_observations": [
+        "validation_observation"
+      ],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "create-bam-list"
+      ],
+      "success_criteria": [
+        "gatk, bcftools, and samtools are available",
+        "Reference .fai and .dict exist",
+        "Both BAMs pass samtools quickcheck and have @RG headers"
+      ],
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "low"
+    },
+    {
+      "step_id": "haplotypecaller-s1",
+      "title": "Run GATK HaplotypeCaller GVCF mode on S1",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "plan.s1.sorted_markdup_bam",
+        "plan.s1.bam_index"
+      ],
+      "outputs": [
+        "plan.s1.gvcf",
+        "plan.s1.gvcf_index"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "preflight-gatk"
+      ],
+      "success_criteria": [
+        "S1 GVCF and index are produced",
+        "GVCF contains sample S1"
+      ],
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "haplotypecaller-s2",
+      "title": "Run GATK HaplotypeCaller GVCF mode on S2",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "plan.s2.sorted_markdup_bam",
+        "plan.s2.bam_index"
+      ],
+      "outputs": [
+        "plan.s2.gvcf",
+        "plan.s2.gvcf_index"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "preflight-gatk"
+      ],
+      "success_criteria": [
+        "S2 GVCF and index are produced",
+        "GVCF contains sample S2"
+      ],
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "combine-gvcfs",
+      "title": "Combine S1 and S2 GVCFs with CombineGVCFs",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "plan.s1.gvcf",
+        "plan.s2.gvcf"
+      ],
+      "outputs": [
+        "plan.combined_gvcf",
+        "plan.combined_gvcf_index"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "haplotypecaller-s1",
+        "haplotypecaller-s2"
+      ],
+      "success_criteria": [
+        "Combined GVCF is produced using repeated --variant arguments with actual GVCF paths",
+        "No sample-map file is passed to CombineGVCFs"
+      ],
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "genotype-gvcfs",
+      "title": "Joint-genotype combined GVCF with GenotypeGVCFs",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "plan.combined_gvcf"
+      ],
+      "outputs": [
+        "plan.raw_vcf",
+        "plan.raw_vcf_index"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "combine-gvcfs"
+      ],
+      "success_criteria": [
+        "Raw joint-genotyped VCF and index are produced",
+        "VCF contains both S1 and S2 samples"
+      ],
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "select-snp",
+      "title": "Select SNP variants from raw VCF",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "plan.raw_vcf"
+      ],
+      "outputs": [
+        "plan.raw_snp_vcf",
+        "plan.raw_snp_vcf_index"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "genotype-gvcfs"
+      ],
+      "success_criteria": [
+        "SNP-only VCF and index are produced",
+        "SelectVariants used --select-type-to-include SNP"
+      ],
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "select-indel",
+      "title": "Select InDel variants from raw VCF",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "plan.raw_vcf"
+      ],
+      "outputs": [
+        "plan.raw_indel_vcf",
+        "plan.raw_indel_vcf_index"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "genotype-gvcfs"
+      ],
+      "success_criteria": [
+        "InDel-only VCF and index are produced",
+        "SelectVariants used --select-type-to-include INDEL"
+      ],
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "filter-snp",
+      "title": "Hard-filter SNP VCF with VariantFiltration",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "plan.raw_snp_vcf"
+      ],
+      "outputs": [
+        "plan.filtered_snp_vcf_all",
+        "plan.filtered_snp_vcf_index"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "select-snp"
+      ],
+      "success_criteria": [
+        "Filtered SNP VCF is produced with SNP_filter applied",
+        "Filter expression matches QD<2.0 || MQ<40.0 || FS>60.0 || SOR>3.0 || MQRankSum<-12.5 || ReadPosRankSum<-8.0"
+      ],
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "filter-indel",
+      "title": "Hard-filter InDel VCF with VariantFiltration",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "plan.raw_indel_vcf"
+      ],
+      "outputs": [
+        "plan.filtered_indel_vcf_all",
+        "plan.filtered_indel_vcf_index"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "select-indel"
+      ],
+      "success_criteria": [
+        "Filtered InDel VCF is produced with INDEL_filter applied",
+        "Filter expression matches QD<2.0 || FS>200.0 || SOR>10.0 || MQRankSum<-12.5 || ReadPosRankSum<-8.0"
+      ],
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "select-pass-snp",
+      "title": "Select PASS-only SNP variants",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "plan.filtered_snp_vcf_all"
+      ],
+      "outputs": [
+        "output.filtered_snp_vcf"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "filter-snp"
+      ],
+      "success_criteria": [
+        "Final SNP VCF contains only PASS records",
+        "SelectVariants used --exclude-filtered"
+      ],
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "select-pass-indel",
+      "title": "Select PASS-only InDel variants",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "inputs": [
+        "input.reference_fasta",
+        "plan.filtered_indel_vcf_all"
+      ],
+      "outputs": [
+        "output.filtered_indel_vcf"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [],
+      "dependencies": [
+        "filter-indel"
+      ],
+      "success_criteria": [
+        "Final InDel VCF contains only PASS records",
+        "SelectVariants used --exclude-filtered"
+      ],
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "risk_level": "medium"
+    },
+    {
+      "step_id": "validate-vcfs",
+      "title": "Validate filtered SNP and InDel VCFs with GATK ValidateVariants",
+      "action": "execute",
+      "purpose": "validation",
+      "tool": "bash",
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.inspect",
+      "operation": "inspect",
+      "inputs": [
+        "input.reference_fasta",
+        "output.filtered_snp_vcf",
+        "output.filtered_indel_vcf"
+      ],
+      "outputs": [],
+      "produces_bindings": [],
+      "produces_observations": [
+       

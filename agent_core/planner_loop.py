@@ -552,6 +552,13 @@ def classify_planner_lifecycle(
         }
     failure = dict(task_state.get("planning_failure") or {})
     planning_epoch = dict(task_state.get("planning_epoch") or {})
+    failure_diagnostic = dict(failure.get("terminal_diagnostic") or {})
+    if (failure.get("status") == "terminal" and failure_diagnostic
+        and failure.get("planning_epoch_id") == planning_epoch.get("planning_epoch_id")
+        and int(failure.get("task_spec_revision") or 0) == int((state.get("current_task") or {}).get("task_revision") or state.get("task_revision") or 0)):
+        return {"disposition": PlannerDisposition.TERMINAL.value,
+                "reason_code": str(failure_diagnostic.get("error_code") or "PLANNER_STOPPED"),
+                "detail": str(failure_diagnostic.get("detail") or ""), "status": "failed"}
     observations = [
         dict(item)
         for item in loop.get("observations") or []
@@ -591,6 +598,21 @@ def classify_planner_lifecycle(
         }
     if progress_facts:
         progress_receipt_id = "planner-progress:" + _digest(progress_facts)
+        occurrence = dict(failure.get("occurrence_receipt") or {})
+        if occurrence:
+            claim = dict(planning_epoch.get("call_claim") or {})
+            scope = dict(occurrence.get("scope") or {})
+            revision = int((state.get("current_task") or {}).get("task_revision") or state.get("task_revision") or 0)
+            if (scope.get("task_id") != state.get("task_id")
+                or int(scope.get("task_revision") or 0) != revision
+                or scope.get("planning_epoch_id") != planning_epoch.get("planning_epoch_id")
+                or occurrence.get("claim_id") != claim.get("claim_id")
+                or int(occurrence.get("ordinal") or 0) != int(claim.get("ordinal") or 0)
+                or claim.get("status") != "result_recorded"):
+                return {"disposition": PlannerDisposition.INVALID.value,
+                        "reason_code": "PLANNER_OCCURRENCE_RECEIPT_INVALID",
+                        "detail": "The rejection occurrence is not the accepted result of the current scoped durable call claim."}
+            progress_receipt_id = str(occurrence.get("id") or "")
         return {
             "disposition": PlannerDisposition.CONTINUE.value,
             "reason_code": str(
@@ -608,6 +630,11 @@ def classify_planner_lifecycle(
             ),
             "progress_receipt_id": progress_receipt_id,
             "progress_kind": "+".join(sorted(progress_facts)),
+            "receipt_version": 2 if occurrence else 1,
+            "occurrence_receipt": deepcopy(occurrence),
+            "semantic_failure_fingerprint": str(failure.get("semantic_failure_fingerprint") or ""),
+            "effective_remediation_signature": str(failure.get("effective_remediation_signature") or ""),
+            "remediation_authorization": deepcopy(dict(failure.get("remediation_authorization") or {})),
         }
     return {
         "disposition": PlannerDisposition.INVALID.value,

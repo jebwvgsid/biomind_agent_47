@@ -1,8 +1,10 @@
-"""Actual Planner non-progress stop through typed graph, outer, summary and reports.
+"""Actual repeated Planner rejection through graph, outer, summary and reports.
 
 Run using the guarded offline candidate bootstrap. The production go, graph,
 storage and outer loop are real. Only models and deliberate failing I/O are
 substituted; faults are installed after the actual graph has stopped.
+Two accounted candidates with the same semantic failure produce a terminal
+PLANNER_REPEATED_FAILURE; replay of one occurrence has a separate guard.
 """
 from __future__ import annotations
 
@@ -35,7 +37,7 @@ class PlannerSummaryModel:
         assert len(messages) == 2
         assert not any(getattr(m, "tool_calls", None) for m in messages)
         facts = json.loads(messages[1].content)
-        assert facts["stop_reason"]["error_code"] == "PLANNER_NON_PROGRESS_REPLAY"
+        assert facts["stop_reason"]["error_code"] == "PLANNER_REPEATED_FAILURE"
         assert facts["planning"]["no_approved_plan"] is True
         assert facts["execution"]["attempt_id"] == ""
         if self.mode == "provider":
@@ -87,8 +89,8 @@ async def run_planner_stop(tmp_path, mode="success", *, transition=None, evidenc
         snapshot = agent._app_for_task(task_id).get_state({"configurable": {"thread_id": task_id}})
         outcome = snapshot.values["planner_outcome"]
         before_stop.update(load_plan_state(tmp_path, task_id))
-        assert outcome["type"] == "harness_error", outcome
-        assert outcome["payload"]["reason_code"] == "PLANNER_NON_PROGRESS_REPLAY"
+        assert outcome["type"] == "terminal", outcome
+        assert outcome["payload"]["reason_code"] == "PLANNER_REPEATED_FAILURE"
         # Inject failures only after the real graph produced its legitimate
         # terminal. No correct outcome or scope is manufactured by this test.
         if mode == "reader":
@@ -168,7 +170,7 @@ def test_real_planner_nonprogress_stop_actual_outer(tmp_path, mode):
         assert before["task_state"]["planning_epoch"]["planner_calls_total"] == 2
         assert not before.get("steps") and not before.get("current_plan", {}).get("plan_snapshot_ref")
         assert result.status == "failed", result
-        assert result.failure_code == "PLANNER_NON_PROGRESS_REPLAY", result
+        assert result.failure_code == "PLANNER_REPEATED_FAILURE", result
         assert result.stage == "planner"
         assert diagnostic["execution"]["attempt_id"] == ""
         assert diagnostic["execution"]["step_id"] == ""

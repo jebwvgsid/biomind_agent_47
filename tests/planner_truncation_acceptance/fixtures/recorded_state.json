@@ -1,0 +1,2343 @@
+{
+  "current_task": {
+    "task_spec": {
+      "schema_version": 6,
+      "canonicalization_version": "task-c14n-v3",
+      "task_id": "session_1788868040",
+      "revision": 1,
+      "goal": "用正式 WGS FASTQ 和 genome.fasta 做 SNP/InDel 检测，按 BioMind 标准流程输出过滤后的 VCF 和统计。",
+      "inputs": [
+        {
+          "artifact_id": "artifact-a9a97d180ef458548099",
+          "semantic_handle": "input.reference_fasta",
+          "direction": "input",
+          "role": "reference_fasta",
+          "format": "fasta",
+          "path_policy": "managed_exact",
+          "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta",
+          "required_basename": "genome.fasta",
+          "resolution_base": "/",
+          "required": true,
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "verified": false,
+          "status": "declared"
+        },
+        {
+          "artifact_id": "artifact-f45ed785f84d81e9cfab",
+          "semantic_handle": "input.paired_fastq.5098db34c069bcbe",
+          "direction": "input",
+          "input_instance": {
+            "schema_version": 1,
+            "group_id": "S1",
+            "member_id": "R1"
+          },
+          "role": "paired_fastq",
+          "format": "fq",
+          "path_policy": "managed_exact",
+          "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz",
+          "required_basename": "S1_1.fq.gz",
+          "resolution_base": "/",
+          "required": true,
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "verified": false,
+          "status": "declared"
+        },
+        {
+          "artifact_id": "artifact-2faee33f0d19e7f0dab4",
+          "semantic_handle": "input.paired_fastq.1be29ca24b12a6b9",
+          "direction": "input",
+          "input_instance": {
+            "schema_version": 1,
+            "group_id": "S1",
+            "member_id": "R2"
+          },
+          "role": "paired_fastq",
+          "format": "fq",
+          "path_policy": "managed_exact",
+          "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz",
+          "required_basename": "S1_2.fq.gz",
+          "resolution_base": "/",
+          "required": true,
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "verified": false,
+          "status": "declared"
+        },
+        {
+          "artifact_id": "artifact-431c5cce92b5b261677e",
+          "semantic_handle": "input.paired_fastq.fc7a073f66b2681a",
+          "direction": "input",
+          "input_instance": {
+            "schema_version": 1,
+            "group_id": "S2",
+            "member_id": "R1"
+          },
+          "role": "paired_fastq",
+          "format": "fq",
+          "path_policy": "managed_exact",
+          "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz",
+          "required_basename": "S2_1.fq.gz",
+          "resolution_base": "/",
+          "required": true,
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "verified": false,
+          "status": "declared"
+        },
+        {
+          "artifact_id": "artifact-97f64b37bb55399a6d4e",
+          "semantic_handle": "input.paired_fastq.522b093ee24e479c",
+          "direction": "input",
+          "input_instance": {
+            "schema_version": 1,
+            "group_id": "S2",
+            "member_id": "R2"
+          },
+          "role": "paired_fastq",
+          "format": "fq",
+          "path_policy": "managed_exact",
+          "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz",
+          "required_basename": "S2_2.fq.gz",
+          "resolution_base": "/",
+          "required": true,
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "verified": false,
+          "status": "declared"
+        }
+      ],
+      "parameters": {},
+      "output_contracts": [
+        {
+          "artifact_id": "output_dir",
+          "output_id": "output_dir",
+          "semantic_handle": "output.output_dir",
+          "direction": "output",
+          "role": "output_dir",
+          "artifact_kind": "directory",
+          "format": "directory",
+          "path_policy": "managed_exact",
+          "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium",
+          "filename": "medium",
+          "required_basename": "medium",
+          "required": true,
+          "validation_contract_id": "directory-v1",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "user_visible": false,
+          "producer_owner": "plan_step",
+          "relocatable": false,
+          "resolution_base": "/"
+        },
+        {
+          "artifact_id": "report",
+          "output_id": "report",
+          "semantic_handle": "output.report",
+          "direction": "output",
+          "role": "report",
+          "artifact_kind": "file",
+          "format": "file",
+          "path_policy": "planner_materialized",
+          "root_ref": "output_dir",
+          "required": true,
+          "validation_contract_id": "nonempty-file-v1",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "user_visible": true,
+          "producer_owner": "plan_step",
+          "relocatable": false
+        },
+        {
+          "artifact_id": "reproduce_script",
+          "output_id": "reproduce_script",
+          "semantic_handle": "output.reproduce_script",
+          "direction": "output",
+          "role": "reproduce_script",
+          "artifact_kind": "file",
+          "format": "file",
+          "path_policy": "planner_materialized",
+          "root_ref": "output_dir",
+          "required": true,
+          "validation_contract_id": "nonempty-file-v1",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "user_visible": true,
+          "producer_owner": "plan_step",
+          "relocatable": false
+        },
+        {
+          "artifact_id": "stage_status",
+          "output_id": "stage_status",
+          "semantic_handle": "output.stage_status",
+          "direction": "output",
+          "role": "stage_status",
+          "artifact_kind": "file",
+          "format": "file",
+          "path_policy": "planner_materialized",
+          "root_ref": "output_dir",
+          "required": true,
+          "validation_contract_id": "nonempty-file-v1",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "user_visible": true,
+          "producer_owner": "plan_step",
+          "relocatable": false
+        },
+        {
+          "artifact_id": "filtered_snp_vcf",
+          "output_id": "filtered_snp_vcf",
+          "semantic_handle": "output.filtered_snp_vcf",
+          "direction": "output",
+          "role": "filtered_snp_vcf",
+          "artifact_kind": "file",
+          "format": "file",
+          "path_policy": "planner_materialized",
+          "root_ref": "output_dir",
+          "required": true,
+          "validation_contract_id": "nonempty-file-v1",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "user_visible": true,
+          "producer_owner": "plan_step",
+          "relocatable": false
+        },
+        {
+          "artifact_id": "filtered_indel_vcf",
+          "output_id": "filtered_indel_vcf",
+          "semantic_handle": "output.filtered_indel_vcf",
+          "direction": "output",
+          "role": "filtered_indel_vcf",
+          "artifact_kind": "file",
+          "format": "file",
+          "path_policy": "planner_materialized",
+          "root_ref": "output_dir",
+          "required": true,
+          "validation_contract_id": "nonempty-file-v1",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "user_visible": true,
+          "producer_owner": "plan_step",
+          "relocatable": false
+        },
+        {
+          "artifact_id": "stats",
+          "output_id": "stats",
+          "semantic_handle": "output.stats",
+          "direction": "output",
+          "role": "stats",
+          "artifact_kind": "file",
+          "format": "file",
+          "path_policy": "planner_materialized",
+          "root_ref": "output_dir",
+          "required": true,
+          "validation_contract_id": "nonempty-file-v1",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "user_visible": true,
+          "producer_owner": "plan_step",
+          "relocatable": false
+        }
+      ],
+      "confirmed_decisions": [],
+      "unresolved_questions": [],
+      "requirements": [
+        {
+          "requirement_id": "requirement-1",
+          "value": "禁止使用 Part1 中旧 zip/genomeDB 输出作为新结果。",
+          "level": "unknown",
+          "strength": "required",
+          "confidence": 1.0,
+          "ambiguity": false,
+          "needs_clarification": false,
+          "status": "active",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ]
+        },
+        {
+          "requirement_id": "requirement-2",
+          "value": "禁止跳过 mapping 直接对 FASTQ call variants。",
+          "level": "unknown",
+          "strength": "required",
+          "confidence": 1.0,
+          "ambiguity": false,
+          "needs_clarification": false,
+          "status": "active",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ]
+        },
+        {
+          "requirement_id": "requirement-3",
+          "value": "禁止 GATK/bcftools 混用造成不可解释输出。",
+          "level": "unknown",
+          "strength": "required",
+          "confidence": 1.0,
+          "ambiguity": false,
+          "needs_clarification": false,
+          "status": "active",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ]
+        },
+        {
+          "requirement_id": "requirement-4",
+          "value": "BWA/samtools/GATK/bcftools 缺失时对应 stage blocked；不得伪造 VCF。",
+          "level": "unknown",
+          "strength": "required",
+          "confidence": 1.0,
+          "ambiguity": false,
+          "needs_clarification": false,
+          "status": "active",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ]
+        },
+        {
+          "requirement_id": "requirement-5",
+          "value": "只使用本提示词给出的正式输入或数据目录；不得把 BioMind 代码仓库目录误当作 benchmark 数据根目录。",
+          "level": "unknown",
+          "strength": "required",
+          "confidence": 1.0,
+          "ambiguity": false,
+          "needs_clarification": false,
+          "status": "active",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ]
+        },
+        {
+          "requirement_id": "requirement-6",
+          "value": "不要使用 demo、toy、tests、fixtures_legacy_toy、expected_answers 或任何隐藏答案文件作为分析依据。",
+          "level": "unknown",
+          "strength": "required",
+          "confidence": 1.0,
+          "ambiguity": false,
+          "needs_clarification": false,
+          "status": "active",
+          "source": "user_explicit",
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+          "provenance": [
+            {
+              "source_type": "user_explicit",
+              "source_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "source_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ]
+        }
+      ],
+      "source_refs": [
+        "msg-1f2aa7191af4f484fc2e",
+        "object:sha256:0ae24d9ebcac313c0e9cdbd2ebced3ab8b7d9144d002aed1892aa9862506b094",
+        "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+      ],
+      "raw_submission_ref": "object:sha256:0ae24d9ebcac313c0e9cdbd2ebced3ab8b7d9144d002aed1892aa9862506b094"
+    },
+    "task_revision": 1,
+    "task_semantic_hash": "sha256:e7c146b7d5a40fcab707aef214c238c485cd5ed7930c72048c0eab0f1cd0fc86",
+    "task_record_hash": "sha256:4233c3ba0df24bd5008796a6ff6c5de94f5f83a3462d1bfffeefc296d12175fc",
+    "canonicalization_version": "task-c14n-v3",
+    "created_generation": 1,
+    "last_mutation_event_id": "audit:sha256:5c79ba94f05eaf91f59193065a2d6ec65464dfc906a323c6a7c645f918ccdae3",
+    "lifecycle": "initialized"
+  },
+  "task_state": {
+    "accepted_consultant_handoff": {
+      "summary": "WGS resequencing SNP/InDel detection from two paired-end FASTQ samples (S1, S2) against genome.fasta, following the BioMind standard GATK workflow. Execution path: (1) wgs-short-read-mapping maps S1/S2 paired FASTQ to coordinate-sorted duplicate-marked BAMs with BWA-MEM + samtools sort + Picard MarkDuplicates (duplicates marked, kept); (2) wgs-gatk-snp-indel runs GATK HaplotypeCaller per-sample GVCF, CombineGVCFs (small 2-sample cohort), GenotypeGVCFs joint genotyping, hard filtering (SNP/InDel), SelectVariants PASS-only, and bcftools stats summary. Outputs under benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium: filtered SNP VCF, filtered InDel VCF, statistics, report.md, reproduce.sh, and stage_status.tsv. Constraints honored: no reuse of Part1 old zip/genomeDB outputs, no skipping mapping, no GATK/bcftools mixing, exact dependency blocking with no fabricated VCF, and only formal task inputs used.",
+      "selected_skills": [
+        "genomics/wgs-short-read-mapping",
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "handoff_kind": "execution_planning",
+      "agent_initiated": true,
+      "handoff_protocol_version": 1,
+      "goal_interpretation": "用正式 WGS FASTQ 和 genome.fasta 做 SNP/InDel 检测，按 BioMind 标准流程输出过滤后的 VCF 和统计。",
+      "input_files": [
+        {
+          "role": "reference_fasta",
+          "format": "fasta",
+          "required": true
+        },
+        {
+          "role": "paired_fastq",
+          "format": "fq",
+          "required": true
+        },
+        {
+          "role": "paired_fastq",
+          "format": "fq",
+          "required": true
+        },
+        {
+          "role": "paired_fastq",
+          "format": "fq",
+          "required": true
+        },
+        {
+          "role": "paired_fastq",
+          "format": "fq",
+          "required": true
+        }
+      ],
+      "required_outputs": [
+        {
+          "role": "output_dir",
+          "format": "directory",
+          "required": true,
+          "path_policy": "managed_exact"
+        },
+        {
+          "role": "report",
+          "format": "file",
+          "required": true,
+          "path_policy": "planner_materialized"
+        },
+        {
+          "role": "reproduce_script",
+          "format": "file",
+          "required": true,
+          "path_policy": "planner_materialized"
+        },
+        {
+          "role": "stage_status",
+          "format": "file",
+          "required": true,
+          "path_policy": "planner_materialized"
+        },
+        {
+          "role": "filtered_snp_vcf",
+          "format": "file",
+          "required": true,
+          "path_policy": "planner_materialized"
+        },
+        {
+          "role": "filtered_indel_vcf",
+          "format": "file",
+          "required": true,
+          "path_policy": "planner_materialized"
+        },
+        {
+          "role": "stats",
+          "format": "file",
+          "required": true,
+          "path_policy": "planner_materialized"
+        }
+      ]
+    },
+    "consultation_state": {
+      "schema_version": 1,
+      "consultation_id": "session_1788868040:consultant:0",
+      "task_id": "session_1788868040",
+      "phase": "ready_to_plan",
+      "consultation_status": "ready",
+      "iteration": 4,
+      "requirements": {
+        "formal-inputs": {
+          "id": "formal-inputs",
+          "purpose": "Establish the required formal upstream inputs from the structured input audit.",
+          "mandatory": true,
+          "status": "satisfied",
+          "satisfied_by": [
+            "structured_input_audit"
+          ],
+          "evidence_provenance": {
+            "kind": "structured_input_audit",
+            "digest": "3f8dd81fcb83a90a2c90a1354ed803757fb5dcaa6d906863e3b0c55ac02ca2be"
+          },
+          "freshness": "task_revision",
+          "owner": "consultant",
+          "semantic": true,
+          "active": true,
+          "evidence_status": "checked",
+          "availability_status": "available",
+          "disposition": "active",
+          "updated_at": "2026-09-08T11:48:54.733488+00:00"
+        },
+        "skill-routing": {
+          "id": "skill-routing",
+          "purpose": "Consultant selects documented canonical Skill refs for Planner.",
+          "mandatory": true,
+          "status": "satisfied",
+          "satisfied_by": [
+            "consultant_selected_skill_refs"
+          ],
+          "evidence_provenance": {
+            "kind": "consultant_selection",
+            "selected_skill_ids": [
+              "genomics/wgs-short-read-mapping",
+              "genomics/wgs-gatk-snp-indel"
+            ]
+          },
+          "freshness": "task_revision",
+          "owner": "consultant",
+          "semantic": true,
+          "active": true,
+          "evidence_status": "checked",
+          "availability_status": "not_applicable",
+          "disposition": "active",
+          "updated_at": "2026-09-08T11:48:54.733516+00:00"
+        },
+        "runtime:genomics-wgs-short-read-mapping": {
+          "id": "runtime:genomics-wgs-short-read-mapping",
+          "purpose": "Record current runtime availability evidence for selected executable Skill genomics/wgs-short-read-mapping.",
+          "mandatory": false,
+          "status": "satisfied",
+          "satisfied_by": [
+            "structured_runtime_evidence"
+          ],
+          "evidence_provenance": {
+            "kind": "structured_runtime_evidence",
+            "skill_id": "genomics/wgs-short-read-mapping",
+            "digest": "cb2e73b711c8cf33924ad3316dabd1f03afee7b0d8d70768524c167b6cd590bc",
+            "reason_code": ""
+          },
+          "freshness": "current_runtime",
+          "owner": "runtime_preflight",
+          "semantic": false,
+          "active": true,
+          "evidence_status": "checked",
+          "availability_status": "ready",
+          "disposition": "active",
+          "updated_at": "2026-09-08T11:48:54.733580+00:00"
+        },
+        "runtime:genomics-wgs-gatk-snp-indel": {
+          "id": "runtime:genomics-wgs-gatk-snp-indel",
+          "purpose": "Record current runtime availability evidence for selected executable Skill genomics/wgs-gatk-snp-indel.",
+          "mandatory": false,
+          "status": "satisfied",
+          "satisfied_by": [
+            "structured_runtime_evidence"
+          ],
+          "evidence_provenance": {
+            "kind": "structured_runtime_evidence",
+            "skill_id": "genomics/wgs-gatk-snp-indel",
+            "digest": "9cac67474e71bb42a93bddec555de7ce4ecbae224ef46ad6dbb0051619514048",
+            "reason_code": "RUNTIME_HEALTHCHECK_FAILED"
+          },
+          "freshness": "current_runtime",
+          "owner": "runtime_preflight",
+          "semantic": false,
+          "active": true,
+          "evidence_status": "checked",
+          "availability_status": "broken",
+          "disposition": "active",
+          "updated_at": "2026-09-08T11:48:54.733696+00:00"
+        }
+      },
+      "actions": {},
+      "evidence": [],
+      "execute_call_count": 0,
+      "duplicate_reuse_count": 0,
+      "no_progress_count": 0,
+      "max_total_execute": 4,
+      "max_no_progress": 2,
+      "completion_decision": "ready_to_plan",
+      "completion_reason": "agent_planning_handoff_committed",
+      "agent_disposition": "planning_ready",
+      "tool_observations": [
+        {
+          "observation_id": "obs-33cc92027848cf7b",
+          "action_type": "search_skills",
+          "action": {
+            "queries": [
+              {
+                "query_id": "q1",
+                "text": "WGS germline SNP InDel variant calling from paired FASTQ against reference fasta using BWA GATK HaplotypeCaller",
+                "purpose": "primary scientific method"
+              },
+              {
+                "query_id": "q2",
+                "text": "short read mapping alignment then variant calling with samtools bcftools mpileup",
+                "purpose": "bounded alternative method"
+              }
+            ],
+            "top_k": 5
+          },
+          "observation": {
+            "catalog_digest": "skill-catalog-6e24420f70166ee4",
+            "candidate_skill_ids": [
+              "genomics/wgs-gatk-snp-indel",
+              "genomics/wgs-short-read-mapping",
+              "genomics/wgs-bcftools-snp-indel",
+              "genomics/rnaseq-variant-calling",
+              "genomics/reseq-variant-workflow",
+              "genomics/wgs-variant-calling",
+              "genomics/wgs-manta-sv"
+            ]
+          },
+          "fingerprint": "33cc92027848cf7bf382aad007279ed645d7d2c9aa01dc5a8819d0de4b3ccf8f",
+          "recorded_at": "2026-09-08T11:48:33.163224+00:00"
+        },
+        {
+          "observation_id": "obs-ca8f2e09490a52e5",
+          "action_type": "load_skill_doc",
+          "action": {
+            "skill_ids": [
+              "genomics/wgs-short-read-mapping",
+              "genomics/wgs-gatk-snp-indel",
+              "genomics/wgs-bcftools-snp-indel",
+              "genomics/reseq-variant-workflow"
+            ]
+          },
+          "observation": {
+            "loaded_skill_ids": [
+              "genomics/wgs-short-read-mapping",
+              "genomics/wgs-gatk-snp-indel",
+              "genomics/wgs-bcftools-snp-indel",
+              "genomics/reseq-variant-workflow"
+            ],
+            "cache_reused_skill_ids": []
+          },
+          "fingerprint": "ca8f2e09490a52e592a9ae40889caafb04398f9f1bd3a2753ad6e62a97373a91",
+          "recorded_at": "2026-09-08T11:48:36.244121+00:00"
+        },
+        {
+          "observation_id": "obs-06ce4e3bc58a5d1a",
+          "action_type": "select_skill",
+          "action": {
+            "selected_skills": [
+              "genomics/wgs-short-read-mapping",
+              "genomics/wgs-gatk-snp-indel"
+            ]
+          },
+          "observation": {
+            "accepted": true,
+            "selected_skill_ids": [
+              "genomics/wgs-short-read-mapping",
+              "genomics/wgs-gatk-snp-indel"
+            ]
+          },
+          "fingerprint": "06ce4e3bc58a5d1ab3add026578bb8082d2e8f5bd65f9c7ad14f8246c744dfc1",
+          "recorded_at": "2026-09-08T11:48:50.497988+00:00"
+        }
+      ],
+      "resource_bindings": [],
+      "agent_progress": {
+        "turn_count": 3,
+        "identical_no_progress_count": 0,
+        "last_fingerprint": "06ce4e3bc58a5d1ab3add026578bb8082d2e8f5bd65f9c7ad14f8246c744dfc1",
+        "last_action_type": "select_skill"
+      },
+      "finalize_protocol": null,
+      "created_at": "2026-09-08T11:48:30.073243+00:00",
+      "updated_at": "2026-09-08T11:48:54.736455+00:00",
+      "skill_discovery": {
+        "schema_version": 2,
+        "routing_status": "SELECTED",
+        "reasoning_level": "normal",
+        "task_hypothesis": "Detect germline SNPs and InDels from two paired-end WGS FASTQ samples aligned to a provided reference genome, producing filtered VCF and statistics following a BioMind standard variant-calling workflow.",
+        "observed_skill_mentions": [],
+        "input_roles": [
+          "fastq",
+          "reference_fasta",
+          "paired_fastq"
+        ],
+        "search_queries_attempted": [
+          "wgs germline snp indel variant calling from paired fastq against reference fasta using bwa gatk haplotypecaller",
+          "short read mapping alignment then variant calling with samtools bcftools mpileup"
+        ],
+        "search_history": [
+          {
+            "source": "consultant_query_reformulation",
+            "queries": [
+              {
+                "query_id": "q1",
+                "text": "WGS germline SNP InDel variant calling from paired FASTQ against reference fasta using BWA GATK HaplotypeCaller",
+                "normalized_text": "wgs germline snp indel variant calling from paired fastq against reference fasta using bwa gatk haplotypecaller",
+                "purpose": "primary scientific method"
+              },
+              {
+                "query_id": "q2",
+                "text": "short read mapping alignment then variant calling with samtools bcftools mpileup",
+                "normalized_text": "short read mapping alignment then variant calling with samtools bcftools mpileup",
+                "purpose": "bounded alternative method"
+              }
+            ],
+            "catalog_digest": "skill-catalog-6e24420f70166ee4",
+            "candidate_ids": [
+              "genomics/wgs-gatk-snp-indel",
+              "genomics/wgs-short-read-mapping",
+              "genomics/wgs-bcftools-snp-indel",
+              "genomics/rnaseq-variant-calling",
+              "genomics/reseq-variant-workflow",
+              "genomics/wgs-variant-calling",
+              "genomics/wgs-manta-sv"
+            ],
+            "repeated": false,
+            "fingerprint": "f4819fe4bab74cb65e0b8c1584ea91d9c69bddcd24b5d8ba901b141699fe3d0e"
+          }
+        ],
+        "catalog_digest": "skill-catalog-6e24420f70166ee4",
+        "last_search_fingerprint": "f4819fe4bab74cb65e0b8c1584ea91d9c69bddcd24b5d8ba901b141699fe3d0e",
+        "repeated_search_count": 0,
+        "candidate_skill_ids": [
+          "genomics/wgs-gatk-snp-indel",
+          "genomics/wgs-short-read-mapping",
+          "genomics/wgs-bcftools-snp-indel",
+          "genomics/rnaseq-variant-calling",
+          "genomics/reseq-variant-workflow",
+          "genomics/wgs-variant-calling",
+          "genomics/wgs-manta-sv"
+        ],
+        "candidate_evidence": {
+          "genomics/wgs-gatk-snp-indel": {
+            "deterministic_score": 295,
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "tags",
+              "summary",
+              "inputs",
+              "outputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: gatk, indel, snp, wgs",
+              "matched name terms: gatk, indel, snp, wgs",
+              "matched aliases terms: fastq, gatk, indel, snp, wgs",
+              "matched tags",
+              "matched tags terms: calling, gatk, haplotypecaller, indel, snp, wgs",
+              "matched summary terms: calling, gatk, haplotypecaller, variant, wgs",
+              "matched inputs",
+              "matched inputs terms: fasta, reference",
+              "matched outputs terms: indel, snp",
+              "matched declared compatibility alias",
+              "input role matched: reference_fasta"
+            ],
+            "summary": "Call short-read WGS SNPs and InDels with the GATK HaplotypeCaller GVCF workflow, including per-sample GVCFs, GenomicsDBImport or CombineGVCFs, joint genotyping, hard filtering, validation, and summary counts. Use for high-confidence cohort resequencing variant calling from duplicate-marked BAMs. Do not use for RNA-seq, long-read SV, CNV, or assembly comparison.",
+            "document_digest": "a38b06a2d3a372aac684f6b4b821b93899e3143c93d190c172dfa8803f522092",
+            "declares_executable_runtime": true,
+            "source_query_id": "q1"
+          },
+          "genomics/wgs-short-read-mapping": {
+            "deterministic_score": 282,
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "tags",
+              "summary",
+              "inputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: mapping, read, short",
+              "matched name terms: mapping, read, short",
+              "matched aliases",
+              "matched aliases terms: mapping, read, short",
+              "matched tags",
+              "matched tags terms: mapping, read, samtools",
+              "matched summary terms: calling, read, samtools, short, variant",
+              "input role matched: reference_fasta"
+            ],
+            "summary": "Map paired-end short-read WGS resequencing FASTQ to a reference genome with BWA-MEM or BWA-MEM2, samtools, and duplicate marking, producing coordinate-sorted indexed BAMs for downstream SNP/InDel, SV, and CNV calling. Use before WGS variant calling when users provide FASTQ rather than ready BAM files. Do not use for RNA-seq, long-read, or assembly comparison data.",
+            "document_digest": "6ac13d5d765e679fa5b50e8c8787dbd9c29d863df9a9ffc5e1982b33488a93ad",
+            "declares_executable_runtime": true,
+            "source_query_id": "q2"
+          },
+          "genomics/wgs-bcftools-snp-indel": {
+            "deterministic_score": 238,
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "tags",
+              "summary",
+              "inputs",
+              "outputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: indel, snp, wgs",
+              "matched name terms: indel, snp, wgs",
+              "matched aliases terms: indel, snp, variant, wgs",
+              "matched tags",
+              "matched tags terms: calling, indel, snp, variant, wgs",
+              "matched summary terms: calling, gatk, indel, snp, variant, wgs",
+              "matched inputs",
+              "matched inputs terms: fasta, reference",
+              "matched outputs terms: indel, snp",
+              "input role matched: reference_fasta",
+              "matched skill_id terms: bcftools",
+              "matched name terms: bcftools",
+              "matched aliases terms: bcftools, samtools, variant",
+              "matched tags terms: bcftools, calling, mpileup, variant",
+              "matched summary terms: bcftools, calling, mpileup, read, short, then",
+              "matched declared compatibility alias"
+            ],
+            "summary": "Call short-read WGS SNPs and InDels with bcftools mpileup and call, then filter, split SNP/InDel VCFs, index, and summarize. Use for fast lightweight resequencing variant calling on small or medium cohorts when GATK GVCF joint genotyping is unnecessary or unavailable. Do not present it as equivalent to the GATK workflow for high-confidence large cohorts.",
+            "document_digest": "b5a0be00067c41b55f31d41f59a8c52428430bc4efb465b464655f6d4ebbe665",
+            "declares_executable_runtime": true,
+            "source_query_id": "q1"
+          },
+          "genomics/rnaseq-variant-calling": {
+            "deterministic_score": 209,
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "tags",
+              "summary",
+              "inputs",
+              "outputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: calling, variant",
+              "matched name terms: calling, variant",
+              "matched aliases terms: calling, indel, snp, variant",
+              "matched tags",
+              "matched tags terms: calling, gatk, haplotypecaller, indel, snp, variant",
+              "matched summary terms: calling, gatk, haplotypecaller, variant, wgs",
+              "matched inputs",
+              "matched inputs terms: fasta, fastq, reference",
+              "matched outputs terms: indel, snp",
+              "input role matched: reference_fasta",
+              "matched aliases terms: calling, variant",
+              "matched tags terms: calling, mapping, variant",
+              "matched summary terms: alignment, calling, read, variant"
+            ],
+            "summary": "Call SNPs and InDels from RNA-seq reads using splice-aware alignment, duplicate marking, read groups, GATK SplitNCigarReads, HaplotypeCaller, and RNA-seq-specific hard filtering. Use only when the user explicitly wants transcriptome-based variant detection. Do not use for expression-only RNA-seq analysis or WGS variant calling.",
+            "document_digest": "979f8ea4f364b1ebad298705c137537403304732c0dff52adfcc2b5d0bc20089",
+            "declares_executable_runtime": true,
+            "source_query_id": "q1"
+          },
+          "genomics/reseq-variant-workflow": {
+            "deterministic_score": 182,
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "tags",
+              "summary",
+              "inputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: variant",
+              "matched name terms: variant",
+              "matched aliases terms: calling, variant",
+              "matched tags",
+              "matched tags terms: calling, indel, snp, variant",
+              "matched summary terms: calling, indel, snp, variant, wgs",
+              "matched inputs",
+              "matched inputs terms: fasta, fastq, reference",
+              "input role matched: fastq",
+              "input role matched: reference_fasta",
+              "matched tags terms: calling, read, variant",
+              "matched summary terms: calling, read, short, variant"
+            ],
+            "summary": "Route resequencing variant analysis across short-read WGS SNP/InDel, short-read SV, read-depth CNV, RNA-seq variant calling, long-read SV, and assembly-vs-assembly SyRI workflows. Use when the user asks for 重测序变异检测, SNP, InDel, SV, CNV, RNA-seq variants, long-read structural variants, or assembly-based variants and BioMind must choose the right primary downstream skill instead of running every method.",
+            "document_digest": "cfe4f0890b1d6c689b67c9901466c6bdf60b832cd3324051417080fca6994078",
+            "declares_executable_runtime": false,
+            "source_query_id": "q1"
+          },
+          "genomics/wgs-variant-calling": {
+            "deterministic_score": 168,
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "summary",
+              "inputs",
+              "outputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: calling, variant, wgs",
+              "matched name terms: calling, variant, wgs",
+              "matched aliases terms: calling, variant, wgs",
+              "matched summary terms: calling, fasta, fastq, gatk, snp, variant",
+              "matched inputs",
+              "matched inputs terms: fasta, reference",
+              "matched outputs terms: snp",
+              "input role matched: reference_fasta"
+            ],
+            "summary": "Generate and validate WGS resequencing variant calling workflows from FASTQ/BAM through GATK gVCF, GenomicsDBImport, joint genotyping, VCF merge/filtering, PLINK LD pruning/PCA, SNP counting, and optional ANNOVAR-style SNP annotation. Use for large or many-sample genomes where intervals must be planned from FASTA .fai; keep chromosomes/contigs at or below 500 Mb unsplit and split only larger sequences unless the user overrides the threshold.",
+            "document_digest": "f9bc8641e580602126ad80e162f57ce9152d4c7b8b89f05723b8d7036ca47b1e",
+            "declares_executable_runtime": false,
+            "source_query_id": "q1"
+          },
+          "genomics/wgs-manta-sv": {
+            "deterministic_score": 115,
+            "matched_metadata_fields": [
+              "aliases",
+              "tags",
+              "summary",
+              "inputs"
+            ],
+            "reasons": [
+              "matched aliases terms: read, short",
+              "matched tags",
+              "matched tags terms: calling, read, short, variant",
+              "matched summary terms: calling, read, short, variant",
+              "input role matched: reference_fasta"
+            ],
+            "summary": "Primary short-read paired-end WGS structural variant and indel calling with Manta from coordinate-sorted indexed BAM or CRAM files. Use as the default short-read SV skill instead of LUMPY unless the user explicitly requests LUMPY or legacy split-read evidence.",
+            "document_digest": "38428f8312c2a5e1fdc43ec18abec6bab5f97db9713c42d6ec8306946136a206",
+            "declares_executable_runtime": true,
+            "source_query_id": "q2"
+          }
+        },
+        "candidate_skill_refs": [
+          {
+            "skill_id": "genomics/wgs-gatk-snp-indel",
+            "name": "wgs-gatk-snp-indel",
+            "summary": "Call short-read WGS SNPs and InDels with the GATK HaplotypeCaller GVCF workflow, including per-sample GVCFs, GenomicsDBImport or CombineGVCFs, joint genotyping, hard filtering, validation, and summary counts. Use for high-confidence cohort resequencing variant calling from duplicate-marked BAMs. Do not use for RNA-seq, long-read SV, CNV, or assembly comparison.",
+            "domain": "genomics",
+            "tags": [
+              "WGS",
+              "GATK",
+              "HaplotypeCaller",
+              "GVCF",
+              "GenomicsDBImport",
+              "SNP",
+              "InDel",
+              "joint-genotyping",
+              "hard-filtering"
+            ],
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "tags",
+              "summary",
+              "inputs",
+              "outputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: gatk, indel, snp, wgs",
+              "matched name terms: gatk, indel, snp, wgs",
+              "matched aliases terms: fastq, gatk, indel, snp, wgs",
+              "matched tags",
+              "matched tags terms: calling, gatk, haplotypecaller, indel, snp, wgs",
+              "matched summary terms: calling, gatk, haplotypecaller, variant, wgs",
+              "matched inputs",
+              "matched inputs terms: fasta, reference",
+              "matched outputs terms: indel, snp",
+              "matched declared compatibility alias",
+              "input role matched: reference_fasta"
+            ],
+            "deterministic_score": 295,
+            "document_loaded": true,
+            "declares_executable_runtime": true,
+            "source_query_id": "q1",
+            "status": "candidate",
+            "document_digest": "a38b06a2d3a372aac684f6b4b821b93899e3143c93d190c172dfa8803f522092"
+          },
+          {
+            "skill_id": "genomics/wgs-short-read-mapping",
+            "name": "wgs-short-read-mapping",
+            "summary": "Map paired-end short-read WGS resequencing FASTQ to a reference genome with BWA-MEM or BWA-MEM2, samtools, and duplicate marking, producing coordinate-sorted indexed BAMs for downstream SNP/InDel, SV, and CNV calling. Use before WGS variant calling when users provide FASTQ rather than ready BAM files. Do not use for RNA-seq, long-read, or assembly comparison data.",
+            "domain": "genomics",
+            "tags": [
+              "WGS",
+              "resequencing",
+              "mapping",
+              "BWA",
+              "BWA-MEM2",
+              "samtools",
+              "Picard",
+              "sambamba",
+              "mark-duplicates",
+              "BAM"
+            ],
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "tags",
+              "summary",
+              "inputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: mapping, read, short",
+              "matched name terms: mapping, read, short",
+              "matched aliases",
+              "matched aliases terms: mapping, read, short",
+              "matched tags",
+              "matched tags terms: mapping, read, samtools",
+              "matched summary terms: calling, read, samtools, short, variant",
+              "input role matched: reference_fasta"
+            ],
+            "deterministic_score": 282,
+            "document_loaded": true,
+            "declares_executable_runtime": true,
+            "source_query_id": "q2",
+            "status": "candidate",
+            "document_digest": "6ac13d5d765e679fa5b50e8c8787dbd9c29d863df9a9ffc5e1982b33488a93ad"
+          },
+          {
+            "skill_id": "genomics/wgs-bcftools-snp-indel",
+            "name": "wgs-bcftools-snp-indel",
+            "summary": "Call short-read WGS SNPs and InDels with bcftools mpileup and call, then filter, split SNP/InDel VCFs, index, and summarize. Use for fast lightweight resequencing variant calling on small or medium cohorts when GATK GVCF joint genotyping is unnecessary or unavailable. Do not present it as equivalent to the GATK workflow for high-confidence large cohorts.",
+            "domain": "genomics",
+            "tags": [
+              "WGS",
+              "bcftools",
+              "mpileup",
+              "SNP",
+              "InDel",
+              "lightweight",
+              "variant-calling"
+            ],
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "tags",
+              "summary",
+              "inputs",
+              "outputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: indel, snp, wgs",
+              "matched name terms: indel, snp, wgs",
+              "matched aliases terms: indel, snp, variant, wgs",
+              "matched tags",
+              "matched tags terms: calling, indel, snp, variant, wgs",
+              "matched summary terms: calling, gatk, indel, snp, variant, wgs",
+              "matched inputs",
+              "matched inputs terms: fasta, reference",
+              "matched outputs terms: indel, snp",
+              "input role matched: reference_fasta",
+              "matched skill_id terms: bcftools",
+              "matched name terms: bcftools",
+              "matched aliases terms: bcftools, samtools, variant",
+              "matched tags terms: bcftools, calling, mpileup, variant",
+              "matched summary terms: bcftools, calling, mpileup, read, short, then",
+              "matched declared compatibility alias"
+            ],
+            "deterministic_score": 238,
+            "document_loaded": true,
+            "declares_executable_runtime": true,
+            "source_query_id": "q1",
+            "status": "candidate",
+            "document_digest": "b5a0be00067c41b55f31d41f59a8c52428430bc4efb465b464655f6d4ebbe665"
+          },
+          {
+            "skill_id": "genomics/rnaseq-variant-calling",
+            "name": "rnaseq-variant-calling",
+            "summary": "Call SNPs and InDels from RNA-seq reads using splice-aware alignment, duplicate marking, read groups, GATK SplitNCigarReads, HaplotypeCaller, and RNA-seq-specific hard filtering. Use only when the user explicitly wants transcriptome-based variant detection. Do not use for expression-only RNA-seq analysis or WGS variant calling.",
+            "domain": "genomics",
+            "tags": [
+              "RNA-seq",
+              "variant-calling",
+              "HISAT2",
+              "STAR",
+              "GATK",
+              "SplitNCigarReads",
+              "HaplotypeCaller",
+              "SNP",
+              "InDel"
+            ],
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "tags",
+              "summary",
+              "inputs",
+              "outputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: calling, variant",
+              "matched name terms: calling, variant",
+              "matched aliases terms: calling, indel, snp, variant",
+              "matched tags",
+              "matched tags terms: calling, gatk, haplotypecaller, indel, snp, variant",
+              "matched summary terms: calling, gatk, haplotypecaller, variant, wgs",
+              "matched inputs",
+              "matched inputs terms: fasta, fastq, reference",
+              "matched outputs terms: indel, snp",
+              "input role matched: reference_fasta",
+              "matched aliases terms: calling, variant",
+              "matched tags terms: calling, mapping, variant",
+              "matched summary terms: alignment, calling, read, variant"
+            ],
+            "deterministic_score": 209,
+            "document_loaded": false,
+            "declares_executable_runtime": true,
+            "source_query_id": "q1",
+            "status": "candidate"
+          },
+          {
+            "skill_id": "genomics/reseq-variant-workflow",
+            "name": "reseq-variant-workflow",
+            "summary": "Route resequencing variant analysis across short-read WGS SNP/InDel, short-read SV, read-depth CNV, RNA-seq variant calling, long-read SV, and assembly-vs-assembly SyRI workflows. Use when the user asks for 重测序变异检测, SNP, InDel, SV, CNV, RNA-seq variants, long-read structural variants, or assembly-based variants and BioMind must choose the right primary downstream skill instead of running every method.",
+            "domain": "genomics",
+            "tags": [
+              "reseq",
+              "resequencing",
+              "variant-calling",
+              "SNP",
+              "InDel",
+              "SV",
+              "CNV",
+              "RNA-seq",
+              "long-read",
+              "SyRI",
+              "workflow-router"
+            ],
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "tags",
+              "summary",
+              "inputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: variant",
+              "matched name terms: variant",
+              "matched aliases terms: calling, variant",
+              "matched tags",
+              "matched tags terms: calling, indel, snp, variant",
+              "matched summary terms: calling, indel, snp, variant, wgs",
+              "matched inputs",
+              "matched inputs terms: fasta, fastq, reference",
+              "input role matched: fastq",
+              "input role matched: reference_fasta",
+              "matched tags terms: calling, read, variant",
+              "matched summary terms: calling, read, short, variant"
+            ],
+            "deterministic_score": 182,
+            "document_loaded": true,
+            "declares_executable_runtime": false,
+            "source_query_id": "q1",
+            "status": "candidate",
+            "document_digest": "cfe4f0890b1d6c689b67c9901466c6bdf60b832cd3324051417080fca6994078"
+          },
+          {
+            "skill_id": "genomics/wgs-variant-calling",
+            "name": "wgs-variant-calling",
+            "summary": "Generate and validate WGS resequencing variant calling workflows from FASTQ/BAM through GATK gVCF, GenomicsDBImport, joint genotyping, VCF merge/filtering, PLINK LD pruning/PCA, SNP counting, and optional ANNOVAR-style SNP annotation. Use for large or many-sample genomes where intervals must be planned from FASTA .fai; keep chromosomes/contigs at or below 500 Mb unsplit and split only larger sequences unless the user overrides the threshold.",
+            "domain": "genomics",
+            "tags": [],
+            "matched_metadata_fields": [
+              "skill_id",
+              "name",
+              "aliases",
+              "summary",
+              "inputs",
+              "outputs"
+            ],
+            "reasons": [
+              "matched skill_id terms: calling, variant, wgs",
+              "matched name terms: calling, variant, wgs",
+              "matched aliases terms: calling, variant, wgs",
+              "matched summary terms: calling, fasta, fastq, gatk, snp, variant",
+              "matched inputs",
+              "matched inputs terms: fasta, reference",
+              "matched outputs terms: snp",
+              "input role matched: reference_fasta"
+            ],
+            "deterministic_score": 168,
+            "document_loaded": false,
+            "declares_executable_runtime": false,
+            "source_query_id": "q1",
+            "status": "candidate"
+          },
+          {
+            "skill_id": "genomics/wgs-manta-sv",
+            "name": "wgs-manta-sv",
+            "summary": "Primary short-read paired-end WGS structural variant and indel calling with Manta from coordinate-sorted indexed BAM or CRAM files. Use as the default short-read SV skill instead of LUMPY unless the user explicitly requests LUMPY or legacy split-read evidence.",
+            "domain": "genomics",
+            "tags": [
+              "WGS",
+              "short-read",
+              "paired-end",
+              "SV",
+              "Manta",
+              "deletion",
+              "duplication",
+              "inversion",
+              "translocation",
+              "indel",
+              "primary-caller"
+            ],
+            "matched_metadata_fields": [
+              "aliases",
+              "tags",
+              "summary",
+              "inputs"
+            ],
+            "reasons": [
+              "matched aliases terms: read, short",
+              "matched tags",
+              "matched tags terms: calling, read, short, variant",
+              "matched summary terms: calling, read, short, variant",
+              "input role matched: reference_fasta"
+            ],
+            "deterministic_score": 115,
+            "document_loaded": false,
+            "declares_executable_runtime": true,
+            "source_query_id": "q2",
+            "status": "candidate"
+          }
+        ],
+        "loaded_skill_ids": [
+          "genomics/reseq-variant-workflow",
+          "genomics/wgs-bcftools-snp-indel",
+          "genomics/wgs-gatk-snp-indel",
+          "genomics/wgs-short-read-mapping"
+        ],
+        "loaded_skill_docs": {
+          "genomics/reseq-variant-workflow": {
+            "path": "skills/genomics/reseq-variant-workflow/SKILL.md",
+            "source_path": "skills/genomics/reseq-variant-workflow/SKILL.md",
+            "sha256": "cfe4f0890b1d6c689b67c9901466c6bdf60b832cd3324051417080fca6994078",
+            "document_digest": "cfe4f0890b1d6c689b67c9901466c6bdf60b832cd3324051417080fca6994078",
+            "loaded_at_revision": 1,
+            "summary": "",
+            "safe_summary": "",
+            "full_doc_cache_reference": "skill-doc:genomics/reseq-variant-workflow:cfe4f0890b1d6c68"
+          },
+          "genomics/wgs-bcftools-snp-indel": {
+            "path": "skills/genomics/wgs-bcftools-snp-indel/SKILL.md",
+            "source_path": "skills/genomics/wgs-bcftools-snp-indel/SKILL.md",
+            "sha256": "b5a0be00067c41b55f31d41f59a8c52428430bc4efb465b464655f6d4ebbe665",
+            "document_digest": "b5a0be00067c41b55f31d41f59a8c52428430bc4efb465b464655f6d4ebbe665",
+            "loaded_at_revision": 1,
+            "summary": "",
+            "safe_summary": "",
+            "full_doc_cache_reference": "skill-doc:genomics/wgs-bcftools-snp-indel:b5a0be00067c41b5"
+          },
+          "genomics/wgs-gatk-snp-indel": {
+            "path": "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+            "source_path": "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+            "sha256": "a38b06a2d3a372aac684f6b4b821b93899e3143c93d190c172dfa8803f522092",
+            "document_digest": "a38b06a2d3a372aac684f6b4b821b93899e3143c93d190c172dfa8803f522092",
+            "loaded_at_revision": 1,
+            "summary": "",
+            "safe_summary": "",
+            "full_doc_cache_reference": "skill-doc:genomics/wgs-gatk-snp-indel:a38b06a2d3a372aa"
+          },
+          "genomics/wgs-short-read-mapping": {
+            "path": "skills/genomics/wgs-short-read-mapping/SKILL.md",
+            "source_path": "skills/genomics/wgs-short-read-mapping/SKILL.md",
+            "sha256": "6ac13d5d765e679fa5b50e8c8787dbd9c29d863df9a9ffc5e1982b33488a93ad",
+            "document_digest": "6ac13d5d765e679fa5b50e8c8787dbd9c29d863df9a9ffc5e1982b33488a93ad",
+            "loaded_at_revision": 1,
+            "summary": "",
+            "safe_summary": "",
+            "full_doc_cache_reference": "skill-doc:genomics/wgs-short-read-mapping:6ac13d5d765e679f"
+          }
+        },
+        "loaded_skill_refs": [
+          {
+            "skill_id": "genomics/reseq-variant-workflow",
+            "document_digest": "cfe4f0890b1d6c689b67c9901466c6bdf60b832cd3324051417080fca6994078",
+            "loaded_at_revision": 1,
+            "source_path": "skills/genomics/reseq-variant-workflow/SKILL.md",
+            "safe_summary": "",
+            "full_doc_cache_reference": "skill-doc:genomics/reseq-variant-workflow:cfe4f0890b1d6c68",
+            "status": "loaded"
+          },
+          {
+            "skill_id": "genomics/wgs-bcftools-snp-indel",
+            "document_digest": "b5a0be00067c41b55f31d41f59a8c52428430bc4efb465b464655f6d4ebbe665",
+            "loaded_at_revision": 1,
+            "source_path": "skills/genomics/wgs-bcftools-snp-indel/SKILL.md",
+            "safe_summary": "",
+            "full_doc_cache_reference": "skill-doc:genomics/wgs-bcftools-snp-indel:b5a0be00067c41b5",
+            "status": "loaded"
+          },
+          {
+            "skill_id": "genomics/wgs-gatk-snp-indel",
+            "document_digest": "a38b06a2d3a372aac684f6b4b821b93899e3143c93d190c172dfa8803f522092",
+            "loaded_at_revision": 1,
+            "source_path": "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+            "safe_summary": "",
+            "full_doc_cache_reference": "skill-doc:genomics/wgs-gatk-snp-indel:a38b06a2d3a372aa",
+            "status": "loaded"
+          },
+          {
+            "skill_id": "genomics/wgs-short-read-mapping",
+            "document_digest": "6ac13d5d765e679fa5b50e8c8787dbd9c29d863df9a9ffc5e1982b33488a93ad",
+            "loaded_at_revision": 1,
+            "source_path": "skills/genomics/wgs-short-read-mapping/SKILL.md",
+            "safe_summary": "",
+            "full_doc_cache_reference": "skill-doc:genomics/wgs-short-read-mapping:6ac13d5d765e679f",
+            "status": "loaded"
+          }
+        ],
+        "pending_document_injection_ids": [],
+        "injected_document_digests": {
+          "genomics/reseq-variant-workflow": "cfe4f0890b1d6c689b67c9901466c6bdf60b832cd3324051417080fca6994078",
+          "genomics/wgs-bcftools-snp-indel": "b5a0be00067c41b55f31d41f59a8c52428430bc4efb465b464655f6d4ebbe665",
+          "genomics/wgs-gatk-snp-indel": "a38b06a2d3a372aac684f6b4b821b93899e3143c93d190c172dfa8803f522092",
+          "genomics/wgs-short-read-mapping": "6ac13d5d765e679fa5b50e8c8787dbd9c29d863df9a9ffc5e1982b33488a93ad"
+        },
+        "selected_skill_refs": [
+          {
+            "skill_id": "genomics/wgs-short-read-mapping",
+            "role": "primary",
+            "reason": "",
+            "document_digest": "6ac13d5d765e679fa5b50e8c8787dbd9c29d863df9a9ffc5e1982b33488a93ad",
+            "selection_revision": 1,
+            "source": "consultant",
+            "status": "selected"
+          },
+          {
+            "skill_id": "genomics/wgs-gatk-snp-indel",
+            "role": "supporting",
+            "reason": "",
+            "document_digest": "a38b06a2d3a372aac684f6b4b821b93899e3143c93d190c172dfa8803f522092",
+            "selection_revision": 1,
+            "source": "consultant",
+            "status": "selected"
+          }
+        ],
+        "excluded_skill_refs": [
+          {
+            "skill_id": "genomics/wgs-bcftools-snp-indel",
+            "reason_code": "not_required",
+            "reason": "Documented as a lightweight alternative when GATK GVCF joint genotyping is unnecessary or unavailable. The user requests a formal standard BioMind workflow, so the higher-confidence GATK path is the appropriate primary; bcftools is not required.",
+            "decision_revision": 0,
+            "source": "consultant",
+            "status": "excluded"
+          },
+          {
+            "skill_id": "genomics/reseq-variant-workflow",
+            "reason_code": "not_required",
+            "reason": "This is a top-level workflow router, not an executable variant-calling stage. Its classification table confirms the path (paired WGS FASTQ -> wgs-short-read-mapping -> wgs-gatk-snp-indel), but the router itself does not produce the VCF outputs and should not be selected as an execution skill.",
+            "decision_revision": 0,
+            "source": "consultant",
+            "status": "excluded"
+          },
+          {
+            "skill_id": "genomics/rnaseq-variant-calling",
+            "reason_code": "input_contract_mismatch",
+            "reason": "Inputs are WGS short-read resequencing FASTQ, not RNA-seq transcriptome reads. Documented not_for states do not use for WGS variant calling.",
+            "decision_revision": 0,
+            "source": "consultant",
+            "status": "excluded"
+          },
+          {
+            "skill_id": "genomics/wgs-manta-sv",
+            "reason_code": "not_required",
+            "reason": "Target is SNP/InDel detection, not structural variants. Manta is the default short-read SV caller and is out of scope for this task.",
+            "decision_revision": 0,
+            "source": "consultant",
+            "status": "excluded"
+          }
+        ],
+        "rejected_candidates": [
+          {
+            "skill_id": "genomics/wgs-bcftools-snp-indel",
+            "reason_code": "not_required",
+            "reason": "Documented as a lightweight alternative when GATK GVCF joint genotyping is unnecessary or unavailable. The user requests a formal standard BioMind workflow, so the higher-confidence GATK path is the appropriate primary; bcftools is not required.",
+            "decision_revision": 0,
+            "source": "consultant",
+            "status": "excluded"
+          },
+          {
+            "skill_id": "genomics/reseq-variant-workflow",
+            "reason_code": "not_required",
+            "reason": "This is a top-level workflow router, not an executable variant-calling stage. Its classification table confirms the path (paired WGS FASTQ -> wgs-short-read-mapping -> wgs-gatk-snp-indel), but the router itself does not produce the VCF outputs and should not be selected as an execution skill.",
+            "decision_revision": 0,
+            "source": "consultant",
+            "status": "excluded"
+          },
+          {
+            "skill_id": "genomics/rnaseq-variant-calling",
+            "reason_code": "input_contract_mismatch",
+            "reason": "Inputs are WGS short-read resequencing FASTQ, not RNA-seq transcriptome reads. Documented not_for states do not use for WGS variant calling.",
+            "decision_revision": 0,
+            "source": "consultant",
+            "status": "excluded"
+          },
+          {
+            "skill_id": "genomics/wgs-manta-sv",
+            "reason_code": "not_required",
+            "reason": "Target is SNP/InDel detection, not structural variants. Manta is the default short-read SV caller and is out of scope for this task.",
+            "decision_revision": 0,
+            "source": "consultant",
+            "status": "excluded"
+          }
+        ],
+        "normal_search_count": 1,
+        "catalog_expansion_count": 0,
+        "reasoning_escalation_count": 0,
+        "premature_finish_count": 0,
+        "capability_gap": false,
+        "capability_gap_reason": "",
+        "budgets": {
+          "normal_searches": 2,
+          "catalog_expansions": 1,
+          "loaded_skill_docs": 8,
+          "reasoning_escalations": 1
+        },
+        "selected_skill_ids": [
+          "genomics/wgs-short-read-mapping",
+          "genomics/wgs-gatk-snp-indel"
+        ]
+      },
+      "active_requirement_ids": [
+        "formal-inputs",
+        "skill-routing",
+        "runtime:genomics-wgs-short-read-mapping",
+        "runtime:genomics-wgs-gatk-snp-indel"
+      ],
+      "active_semantic_requirement_ids": [
+        "formal-inputs",
+        "skill-routing"
+      ],
+      "active_machine_evidence_ids": [
+        "runtime:genomics-wgs-gatk-snp-indel",
+        "runtime:genomics-wgs-short-read-mapping"
+      ],
+      "active_evidence_digest": "753dd0be19db7b592cd1ee2368b0d94ca65480bb12c4c03b57fad9853c6bb7a2",
+      "unresolved_requirement_ids": [],
+      "discovery_continuation": {
+        "schema_version": 1,
+        "episode_id": "consultant-discovery-5493009817649e27414d",
+        "cache_key": "5f563a5587708ff6b70a30ee91c9211b9b3558e0f074ff46e3824a36ea2c66a9",
+        "identity": {
+          "schema_version": 1,
+          "episode_id": "consultant-discovery-5493009817649e27414d",
+          "task_id": "session_1788868040",
+          "consultation_id": "session_1788868040:consultant:0",
+          "conversation": {
+            "head_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+            "turn_count": 1,
+            "user_turn_count": 1
+          },
+          "task_semantic_hash": "sha256:e7c146b7d5a40fcab707aef214c238c485cd5ed7930c72048c0eab0f1cd0fc86",
+          "task_revision_observed": 1,
+          "project_id": "default",
+          "task_mode": "managed",
+          "task_ownership": {
+            "admission_id": "intent-admission-5ab43b7feca2dec2a4c0",
+            "admission_status": "managed_execution_admitted",
+            "request_kind": "execute",
+            "execution_scope": "managed",
+            "managed_intent_explicit": true,
+            "decision_source": "llm_request_intent_router"
+          },
+          "resolved_bindings_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "work_dir": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs",
+          "cache_key": "5f563a5587708ff6b70a30ee91c9211b9b3558e0f074ff46e3824a36ea2c66a9"
+        },
+        "base": {
+          "conversation_turns": [
+            {
+              "content_ref": "object:sha256:0ae24d9ebcac313c0e9cdbd2ebced3ab8b7d9144d002aed1892aa9862506b094",
+              "created_at": "2026-09-08T11:48:28.012298+00:00",
+              "ordinal": 1,
+              "previous_turn_ref": "",
+              "question_id": "",
+              "role": "user",
+              "turn_id": "U1",
+              "content": "请用正式 WGS FASTQ 和 genome.fasta 做 SNP/InDel 检测，按 BioMind 标准流程输出过滤后的 VCF 和统计。\n\n主要输入或数据位置：\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta\n\n输出目录：\nbenchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium\n\n边界条件/禁止：\n- 禁止使用 Part1 中旧 zip/genomeDB 输出作为新结果。\n- 禁止跳过 mapping 直接对 FASTQ call variants。\n- 禁止 GATK/bcftools 混用造成不可解释输出。\n\n依赖和停止条件：\n- BWA/samtools/GATK/bcftools 缺失时对应 stage blocked；不得伪造 VCF。\n- 完成 selected SNP/InDel workflow 或 blocked with exact missing dependency/stage。\n\n执行要求：\n- 先识别输入类型、样本、关键参数和依赖。\n- 自行规划合理步骤，并在 report.md 中说明为什么选择这些 skill/流程。\n- 对能执行的 stage 生成真实结果；对不能执行的 stage 明确 blocked 并说明原因。\n\n通用要求：\n- 只使用本提示词给出的正式输入或数据目录；不得把 BioMind 代码仓库目录误当作 benchmark 数据根目录。\n- 所有 `benchmarks/...` 相对路径都以项目根目录解析；如当前工作目录不同，请先 `cd` 到项目根目录或改用绝对路径。\n- 不要使用 demo、toy、tests、fixtures_legacy_toy、expected_answers 或任何隐藏答案文件作为分析依据。\n- 缺少或无法确认关键输入、样本方向、contrast、resolution、阈值或项目背景时，先做只读验证和正式产物搜索；仍不确定则 ask_user/blocked_need_user_decision，不要猜测。\n- 若本提示词明确标注 `KNOWN_ABSENT_FOR_THIS_TASK`，则该输入已知不提供；不要反复询问或借用其他 benchmark/hidden/fixture 文件，应按本任务规则写 skipped/stage_blocked 并继续可执行步骤。\n- 如果依赖、输入或上游结果不足，请明确写 blocked/stage_blocked，并说明缺少什么；不要伪造结果。\n- 最终至少生成 report.md 和 reproduce.sh；多阶段任务还应生成 stage_status.tsv 或等价状态表。",
+              "turn_ref": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f"
+            }
+          ],
+          "semantic_conversation_evidence": [
+            {
+              "evidence_id": "object:sha256:17f92e042b49f04417f6f25538bc8b6efccf9e8531c2f55e2397b70491f7957f",
+              "kind": "user_message",
+              "excerpt": "[U1 USER]\n请用正式 WGS FASTQ 和 genome.fasta 做 SNP/InDel 检测，按 BioMind 标准流程输出过滤后的 VCF 和统计。\n\n主要输入或数据位置：\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta\n\n输出目录：\nbenchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium\n\n边界条件/禁止：\n- 禁止使用 Part1 中旧 zip/genomeDB 输出作为新结果。\n- 禁止跳过 mapping 直接对 FASTQ call variants。\n- 禁止 GATK/bcftools 混用造成不可解释输出。\n\n依赖和停止条件：\n- BWA/samtools/GATK/bcftools 缺失时对应 stage blocked；不得伪造 VCF。\n- 完成 selected SNP/InDel workflow 或 blocked with exact missing dependency/stage。\n\n执行要求：\n- 先识别输入类型、样本、关键参数和依赖。\n- 自行规划合理步骤，并在 report.md 中说明为什么选择这些 skill/流程。\n- 对能执行的 stage 生成真实结果；对不能执行的 stage 明确 blocked 并说明原因。\n\n通用要求：\n- 只使用本提示词给出的正式输入或数据目录；不得把 BioMind 代码仓库目录误当作 benchmark 数据根目录。\n- 所有 `benchmarks/...` 相对路径都以项目根目录解析；如当前工作目录不同，请先 `cd` 到项目根目录或改用绝对路径。\n- 不要使用 demo、toy、tests、fixtures_legacy_toy、expected_answers 或任何隐藏答案文件作为分析依据。\n- 缺少或无法确认关键输入、样本方向、contrast、resolution、阈值或项目背景时，先做只读验证和正式产物搜索；仍不确定则 ask_user/blocked_need_user_decision，不要猜测。\n- 若本提示词明确标注 `KNOWN_ABSENT_FOR_THIS_TASK`，则该输入已知不提供；不要反复询问或借用其他 benchmark/hidden/fixture 文件，应按本任务规则写 skipped/stage_blocked 并继续可执行步骤。\n- 如果依赖、输入或上游结果不足，请明确写 blocked/stage_blocked，并说明缺少什么；不要伪造结果。\n- 最终至少生成 report.md 和 reproduce.sh；多阶段任务还应生成 stage_status.tsv 或等价状态表。",
+              "truncated": false
+            }
+          ],
+          "consultant_context": "用正式 WGS FASTQ 和 genome.fasta 做 SNP/InDel 检测，按 BioMind 标准流程输出过滤后的 VCF 和统计。\n请用正式 WGS FASTQ 和 genome.fasta 做 SNP/InDel 检测，按 BioMind 标准流程输出过滤后的 VCF 和统计。\n\n主要输入或数据位置：\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz\n- benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta\n\n输出目录：\nbenchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium\n\n边界条件/禁止：\n- 禁止使用 Part1 中旧 zip/genomeDB 输出作为新结果。\n- 禁止跳过 mapping 直接对 FASTQ call variants。\n- 禁止 GATK/bcftools 混用造成不可解释输出。\n\n依赖和停止条件：\n- BWA/samtools/GATK/bcftools 缺失时对应 stage blocked；不得伪造 VCF。\n- 完成 selected SNP/InDel workflow 或 blocked with exact missing dependency/stage。\n\n执行要求：\n- 先识别输入类型、样本、关键参数和依赖。\n- 自行规划合理步骤，并在 report.md 中说明为什么选择这些 skill/流程。\n- 对能执行的 stage 生成真实结果；对不能执行的 stage 明确 blocked 并说明原因。\n\n通用要求：\n- 只使用本提示词给出的正式输入或数据目录；不得把 BioMind 代码仓库目录误当作 benchmark 数据根目录。\n- 所有 `benchmarks/...` 相对路径都以项目根目录解析；如当前工作目录不同，请先 `cd` 到项目根目录或改用绝对路径。\n- 不要使用 demo、toy、tests、fixtures_legacy_toy、expected_answers 或任何隐藏答案文件作为分析依据。\n- 缺少或无法确认关键输入、样本方向、contrast、resolution、阈值或项目背景时，先做只读验证和正式产物搜索；仍不确定则 ask_user/blocked_need_user_decision，不要猜测。\n- 若本提示词明确标注 `KNOWN_ABSENT_FOR_THIS_TASK`，则该输入已知不提供；不要反复询问或借用其他 benchmark/hidden/fixture 文件，应按本任务规则写 skipped/stage_blocked 并继续可执行步骤。\n- 如果依赖、输入或上游结果不足，请明确写 blocked/stage_blocked，并说明缺少什么；不要伪造结果。\n- 最终至少生成 report.md 和 reproduce.sh；多阶段任务还应生成 stage_status.tsv 或等价状态表。",
+          "consultant_wiki_context": "<wiki_memory_policy>\n- wiki_purpose is direction-setting context, not factual evidence.\n- Wiki claims with evidence are preferred for project facts, dataset paths, methods, parameters, and conclusions.\n- If Wiki and Core memory conflict, verify filesystem/evidence and prefer current input/latest observations over stale memory.\n- This context is read-only; do not compile or write wiki pages during consultant/planner/generate.\n</wiki_memory_policy>\n\n<wiki_context>\n<wiki_purpose>\n# BioMind Wiki Purpose\n\nThis Wiki is the long-term, evidence-backed memory for a bioinformatics analysis agent. It is not a generic chat summary. It preserves reusable project knowledge that helps the agent continue, audit, reproduce, and improve bioinformatics work across sessions.\n\n## Mission\n- Preserve durable bioinformatics project knowledge with traceable evidence.\n- Help the agent recover context across sessions without re-reading full logs.\n- Track datasets, input files, methods, parameters, decisions, issues, artifacts, and conclusions.\n- Support reproducible analysis by linking claims to SessionArchive events or artifacts.\n- Keep Core memory small: Core stores user preferences, stable operating habits, and Wiki indexes only.\n\n## What Belongs In This Wiki\n- Dataset facts: sample names, sequencing files, metadata, genome versions, annotations.\n- Method facts: tools, workflows, parameters, commands that shaped the analysis.\n- Decisions: why a method, parameter, reference, filtering rule, or Skill selection was chosen.\n- Issues and fixes: errors, failed attempts, validated repairs, caveats.\n- Artifacts: output files, reports, assemblies, plots, tables, and evaluation results.\n- Conclusions: evidence-backed biological or technical findings.\n\n## What Does Not Belong Here\n- Generic chat summaries without reusable project value.\n- Unverified guesses or facts without evidence.\n- Full noisy execution logs; keep those in raw/session archives.\n- Procedural SOPs that should become reusable Skills.\n- Duplicate Skill lists; reusable Skill choices belong in one canonical Skill Selection section.\n- Temporary thoughts that only matter within the current turn.\n\n## Current Questions\n- Which project facts are needed for future continuation?\n- Which inputs, parameters, and outputs must be remembered for reproducibility?\n- Which decisions or issues should be preserved because they affect later analysis?\n\n## Evolving Hypotheses\n- None recorded yet.\n\n## Evidence Policy\nEvery durable factual claim should cite evidence using session_archive:, task:, or artifact: references. Historical raw: references may exist in older pages, but new ingest should cite session_archive:<id>. If evidence is missing, conflicting, low-confidence, or stale, route the item to review instead of storing it as a claim.\n\n</wiki_purpose>\n</wiki_context>",
+          "consultant_memory_retrieval_context": "<memory_broker_policy>\n- Consultant is the only broad automatic memory retrieval stage for managed tasks.\n- Curate relevant facts into the FINISH handoff; do not copy all retrieved text forward.\n- Planner and Generate should consume the curated handoff packet and request targeted retrieval only when information is missing.\n</memory_broker_policy>\n\n<wiki_memory_retrieval>\n<wiki_memory_policy>\n- wiki_purpose is direction-setting context, not factual evidence.\n- Wiki claims with evidence are preferred for project facts, dataset paths, methods, parameters, and conclusions.\n- If Wiki and Core memory conflict, verify filesystem/evidence and prefer current input/latest observations over stale memory.\n- This context is read-only; do not compile or write wiki pages during consultant/planner/generate.\n</wiki_memory_policy>\n\n<wiki_context>\n<wiki_purpose>\n# BioMind Wiki Purpose\n\nThis Wiki is the long-term, evidence-backed memory for a bioinformatics analysis agent. It is not a generic chat summary. It preserves reusable project knowledge that helps the agent continue, audit, reproduce, and improve bioinformatics work across sessions.\n\n## Mission\n- Preserve durable bioinformatics project knowledge with traceable evidence.\n- Help the agent recover context across sessions without re-reading full logs.\n- Track datasets, input files, methods, parameters, decisions, issues, artifacts, and conclusions.\n- Support reproducible analysis by linking claims to SessionArchive events or artifacts.\n- Keep Core memory small: Core stores user preferences, stable operating habits, and Wiki indexes only.\n\n## What Belongs In This Wiki\n- Dataset facts: sample names, sequencing files, metadata, genome versions, annotations.\n- Method facts: tools, workflows, parameters, commands that shaped the analysis.\n- Decisions: why a method, parameter, reference, filtering rule, or Skill selection was chosen.\n- Issues and fixes: errors, failed attempts, validated repairs, caveats.\n- Artifacts: output files, reports, assemblies, plots, tables, and evaluation results.\n- Conclusions: evidence-backed biological or technical findings.\n\n## What Does Not Belong Here\n- Generic chat summaries without reusable project value.\n- Unverified guesses or facts without evidence.\n- Full noisy execution logs; keep those in raw/session archives.\n- Procedural SOPs that should become reusable Skills.\n- Duplicate Skill lists; reusable Skill choices belong in one canonical Skill Selection section.\n- Temporary thoughts that only matter within the current turn.\n\n## Current Questions\n- Which project facts are needed for future continuation?\n- Which inputs, parameters, and outputs must be remembered for reproducibility?\n- Which decisions or issues should be preserved because they affect later analysis?\n\n## Evolving Hypotheses\n- None recorded yet.\n\n## Evidence Policy\nEvery durable factual claim should cite evidence using session_archive:, task:, or artifact: references. Historical raw: references may exist in older pages, but new ingest should cite session_archive:<id>. If evidence is missing, conflicting, low-confidence, or stale, route the item to review instead of storing it as a claim.\n\n</wiki_purpose>\n</wiki_context>\n</wiki_memory_retrieval>",
+          "user_preferences_context": "### /public/home/liusiqi/03.毕设/Biomind_v1/user_preferences.md\n# BioMind User Preferences\n\n请默认用中文回答，除非用户明确要求使用英文或需要保留英文术语。\n\n回答时优先简洁、直接，先说明结论，再给关键证据和下一步建议。\n\n解释系统问题时，请区分：\n- 当前任务是否已经完成；\n- 是缺输入、缺环境、代码逻辑错误，还是人工确认/中断导致停住；\n- 用户现在应该输入什么命令或回复什么内容。\n\n不要因为这些偏好覆盖当前用户请求、benchmark 约束、skill 文档、输出格式协议或安全规则。",
+          "input_resolution_result": {
+            "relevant": true,
+            "artifact_kind": "",
+            "artifact_label": "",
+            "artifact_role": "",
+            "status": "resolved",
+            "task_id": "session_1788868040",
+            "benchmark_id": "BM-REMAIN-WGS-005",
+            "ambiguity_level": "MEDIUM",
+            "samples": [
+              "FASTQ",
+              "genome.fasta"
+            ],
+            "resolutions": [],
+            "search_roots": [],
+            "verified_explicit_paths": [],
+            "invalid_explicit_paths": [],
+            "excluded_candidates": [],
+            "formal_candidates": [],
+            "selected_by_sample": {},
+            "ambiguous_samples": [],
+            "ambiguous_resolutions": [],
+            "resolved_inputs": [
+              {
+                "role": "fastq",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz",
+                "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz",
+                "source": "explicit",
+                "exists": true,
+                "is_file": true,
+                "is_directory": false,
+                "non_empty": true,
+                "readable": true,
+                "verified": true,
+                "verified_at": "2026-09-08T19:48:50",
+                "verification_evidence": [
+                  "exists",
+                  "is_file",
+                  "non_empty",
+                  "readable"
+                ],
+                "evidence_fingerprint": "18e76c55729c686ac3bf7c4620f5b57301c87909f07e50a5325c4e15db39c03b"
+              },
+              {
+                "role": "fastq",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz",
+                "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz",
+                "source": "explicit",
+                "exists": true,
+                "is_file": true,
+                "is_directory": false,
+                "non_empty": true,
+                "readable": true,
+                "verified": true,
+                "verified_at": "2026-09-08T19:48:50",
+                "verification_evidence": [
+                  "exists",
+                  "is_file",
+                  "non_empty",
+                  "readable"
+                ],
+                "evidence_fingerprint": "3f2bfa51c5d5a496ba19fafd14b75d736151ab10d69e0cd1ab41ae70a2b970f1"
+              },
+              {
+                "role": "fastq",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz",
+                "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz",
+                "source": "explicit",
+                "exists": true,
+                "is_file": true,
+                "is_directory": false,
+                "non_empty": true,
+                "readable": true,
+                "verified": true,
+                "verified_at": "2026-09-08T19:48:50",
+                "verification_evidence": [
+                  "exists",
+                  "is_file",
+                  "non_empty",
+                  "readable"
+                ],
+                "evidence_fingerprint": "8156c5f6391079d195a54ffe7f9fa85e7b67bf20552b8b7dc7392648dd287c01"
+              },
+              {
+                "role": "fastq",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz",
+                "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz",
+                "source": "explicit",
+                "exists": true,
+                "is_file": true,
+                "is_directory": false,
+                "non_empty": true,
+                "readable": true,
+                "verified": true,
+                "verified_at": "2026-09-08T19:48:50",
+                "verification_evidence": [
+                  "exists",
+                  "is_file",
+                  "non_empty",
+                  "readable"
+                ],
+                "evidence_fingerprint": "8c4edce3de35d1da8d1ce10cf8d4982f2806cc936b04c380d49565da353123a6"
+              },
+              {
+                "role": "reference_fasta",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta",
+                "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta",
+                "source": "explicit",
+                "exists": true,
+                "is_file": true,
+                "is_directory": false,
+                "non_empty": true,
+                "readable": true,
+                "verified": true,
+                "verified_at": "2026-09-08T19:48:50",
+                "verification_evidence": [
+                  "exists",
+                  "is_file",
+                  "non_empty",
+                  "readable"
+                ],
+                "evidence_fingerprint": "fb480b93757022e2794b65f27f743c8f19cb16c90837b6e79007eefb1ac46266"
+              },
+              {
+                "role": "paired_fastq",
+                "paths": [
+                  "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz",
+                  "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz"
+                ],
+                "sample": "S1",
+                "source": "sibling_discovery"
+              },
+              {
+                "role": "paired_fastq",
+                "paths": [
+                  "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz",
+                  "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz"
+                ],
+                "sample": "S2",
+                "source": "sibling_discovery"
+              },
+              {
+                "role": "input_file",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta.fai",
+                "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta.fai",
+                "source": "sidecar_discovery",
+                "exists": true,
+                "is_file": true,
+                "is_directory": false,
+                "non_empty": true,
+                "readable": true,
+                "verified": true,
+                "verified_at": "2026-09-08T19:48:50",
+                "verification_evidence": [
+                  "exists",
+                  "is_file",
+                  "non_empty",
+                  "readable"
+                ],
+                "evidence_fingerprint": "728671a2bd92eeb85bc684e363e2e562a4da6f3bb815be0d641da37652a4e773",
+                "detail": "sidecar for genome.fasta"
+              }
+            ],
+            "observed_artifacts": [
+              {
+                "role": "fastq",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz",
+                "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz",
+                "source": "explicit",
+                "exists": true,
+                "is_file": true,
+                "is_directory": false,
+                "non_empty": true,
+                "readable": true,
+                "verified": true,
+                "verified_at": "2026-09-08T19:48:50",
+                "verification_evidence": [
+                  "exists",
+                  "is_file",
+                  "non_empty",
+                  "readable"
+                ],
+                "evidence_fingerprint": "18e76c55729c686ac3bf7c4620f5b57301c87909f07e50a5325c4e15db39c03b",
+                "evidence_status": "checked",
+                "binding_status": "explicit_user_path"
+              },
+              {
+                "role": "fastq",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz",
+                "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz",
+                "source": "explicit",
+                "exists": true,
+                "is_file": true,
+                "is_directory": false,
+                "non_empty": true,
+                "readable": true,
+                "verified": true,
+                "verified_at": "2026-09-08T19:48:50",
+                "verification_evidence": [
+                  "exists",
+                  "is_file",
+                  "non_empty",
+                  "readable"
+                ],
+                "evidence_fingerprint": "3f2bfa51c5d5a496ba19fafd14b75d736151ab10d69e0cd1ab41ae70a2b970f1",
+                "evidence_status": "checked",
+                "binding_status": "explicit_user_path"
+              },
+              {
+                "role": "fastq",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz",
+                "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz",
+                "source": "explicit",
+                "exists": true,
+                "is_file": true,
+                "is_directory": false,
+                "non_empty": true,
+                "readable": true,
+                "verified": true,
+                "verified_at": "2026-09-08T19:48:50",
+                "verification_evidence": [
+                  "exists",
+                  "is_file",
+                  "non_empty",
+                  "readable"
+                ],
+                "evidence_fingerprint": "8156c5f6391079d195a54ffe7f9fa85e7b67bf20552b8b7dc7392648dd287c01",
+                "evidence_status": "checked",
+                "binding_status": "explicit_user_path"
+              },
+              {
+                "role": "fastq",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz",
+                "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz",
+                "source": "explicit",
+                "exists": true,
+                "is_file": true,
+                "is_directory": false,
+                "non_empty": true,
+                "readable": true,
+                "verified": true,
+                "verified_at": "2026-09-08T19:48:50",
+                "verification_evidence": [
+                  "exists",
+                  "is_file",
+                  "non_empty",
+                  "readable"
+                ],
+                "evidence_fingerprint": "8c4edce3de35d1da8d1ce10cf8d4982f2806cc936b04c380d49565da353123a6",
+                "evidence_status": "checked",
+                "binding_status": "explicit_user_path"
+              },
+              {
+                "role": "reference_fasta",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta",
+                "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta",
+                "source": "explicit",
+                "exists": true,
+                "is_file": true,
+                "is_directory": false,
+                "non_empty": true,
+                "readable": true,
+                "verified": true,
+                "verified_at": "2026-09-08T19:48:50",
+                "verification_evidence": [
+                  "exists",
+                  "is_file",
+                  "non_empty",
+                  "readable"
+                ],
+                "evidence_fingerprint": "fb480b93757022e2794b65f27f743c8f19cb16c90837b6e79007eefb1ac46266",
+                "evidence_status": "checked",
+                "binding_status": "explicit_user_path"
+              }
+            ],
+            "candidate_groups": {
+              "paired_fastq": [
+                {
+                  "role": "paired_fastq",
+                  "sample": "S1",
+                  "r1": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz",
+                  "r2": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz",
+                  "source": "sibling_discovery"
+                },
+                {
+                  "role": "paired_fastq",
+                  "sample": "S2",
+                  "r1": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz",
+                  "r2": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz",
+                  "source": "sibling_discovery"
+                }
+              ],
+              "sidecar_files": [
+                {
+                  "role": "input_file",
+                  "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta.fai",
+                  "resolved_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta.fai",
+                  "source": "sidecar_discovery",
+                  "exists": true,
+                  "is_file": true,
+                  "is_directory": false,
+                  "non_empty": true,
+                  "readable": true,
+                  "verified": true,
+                  "verified_at": "2026-09-08T19:48:50",
+                  "verification_evidence": [
+                    "exists",
+                    "is_file",
+                    "non_empty",
+                    "readable"
+                  ],
+                  "evidence_fingerprint": "728671a2bd92eeb85bc684e363e2e562a4da6f3bb815be0d641da37652a4e773",
+                  "detail": "sidecar for genome.fasta"
+                }
+              ]
+            },
+            "missing_roles": [],
+            "ambiguous_roles": [],
+            "discovery_log": [
+              "paired FASTQ mate found for S1_1.fq.gz: S1_2.fq.gz",
+              "paired FASTQ mate found for S2_1.fq.gz: S2_2.fq.gz"
+            ],
+            "unresolved": false,
+            "unresolved_reasons": [],
+            "consultant_action_hint": ""
+          },
+          "input_resolution_context": "[INPUT_RESOLUTION_AUDIT]\npolicy:先找再问; verify formal project artifacts before ASK or BLOCK\nartifact_kind:unknown\nartifact_label:unknown\nartifact_role:unknown\nstatus:resolved\ntask_id:session_1788868040\nbenchmark_id:BM-REMAIN-WGS-005\nambiguity_level:MEDIUM\nsamples:FASTQ, genome.fasta\nresolutions:unknown\nunresolved:False\nunresolved_reasons:none\nconsultant_action_hint:none\ndecision:no valid formal upstream candidates found\nresolved_inputs:\n- role=fastq; source=explicit; path=/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz\n- role=fastq; source=explicit; path=/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz\n- role=fastq; source=explicit; path=/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz\n- role=fastq; source=explicit; path=/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz\n- role=reference_fasta; source=explicit; path=/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta\n- role=paired_fastq; source=sibling_discovery; path=['/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz', '/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz']\n- role=paired_fastq; source=sibling_discovery; path=['/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz', '/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz']\n- role=input_file; source=sidecar_discovery; path=/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta.fai; detail=sidecar for genome.fasta\ndiscovery_log:\n- paired FASTQ mate found for S1_1.fq.gz: S1_2.fq.gz\n- paired FASTQ mate found for S2_1.fq.gz: S2_2.fq.gz\n[/INPUT_RESOLUTION_AUDIT]\n[FORMAL_UPSTREAM_CANDIDATES]\n- none\n[/FORMAL_UPSTREAM_CANDIDATES]",
+          "workflow_candidate_ids": [],
+          "workflow_catalog": "<workflow_catalog>\nNo metadata workflow match was found. Do not invent a workflow ID; use canonical skills directly unless a loaded template proves a match.\n</workflow_catalog>",
+          "archive_telemetry": {
+            "query_count": 0,
+            "query_chars": 410,
+            "result_chars": 0,
+            "rows_returned": 0,
+            "timed_out": false,
+            "failed_open": true,
+            "busy_or_locked": false,
+            "error_type": "OptionalArchiveObservationDeferred",
+            "elapsed_ms": 0.0,
+            "deferred": true
+          }
+        },
+        "input_inventory_signature": {
+          "schema_version": 1,
+          "path_count": 6,
+          "paths": [
+            {
+              "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz",
+              "exists": true,
+              "kind": "file",
+              "size": 32917258,
+              "mtime_ns": 1630635167000000000,
+              "mode": 33188,
+              "content_sample_sha256": "e0d7b0fc1b3c819df41470667c0bd9e46c57aa7449dfadf7d442c693ff9b185d"
+            },
+            {
+              "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz",
+              "exists": true,
+              "kind": "file",
+              "size": 33806856,
+              "mtime_ns": 1630635167000000000,
+              "mode": 33188,
+              "content_sample_sha256": "2a09becf3be5d6cbb0890dc806f5c0c6d79b40d4f0a5d042932d59fac9b582b7"
+            },
+            {
+              "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz",
+              "exists": true,
+              "kind": "file",
+              "size": 33160882,
+              "mtime_ns": 1630635167000000000,
+              "mode": 33188,
+              "content_sample_sha256": "3bad29b7e50b1769d42ae0ac2fa94bdf8663c6fcf958d089efdfa67e0164c204"
+            },
+            {
+              "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz",
+              "exists": true,
+              "kind": "file",
+              "size": 34316769,
+              "mtime_ns": 1630635167000000000,
+              "mode": 33188,
+              "content_sample_sha256": "4f3f81cccd51bd0443ac79c3d231970e3c46a0f90fc11866aa14fdda47dad213"
+            },
+            {
+              "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta",
+              "exists": true,
+              "kind": "file",
+              "size": 16000014,
+              "mtime_ns": 1630635167000000000,
+              "mode": 33261,
+              "content_sample_sha256": "a5269b3f82f10063bb21308dbe6ec779495ec7ed4d28b30a1c32ae662bdde240"
+            },
+            {
+              "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta.fai",
+              "exists": true,
+              "kind": "file",
+              "size": 68,
+              "mtime_ns": 1783574121000000000,
+              "mode": 33152,
+              "content_sample_sha256": "05b6460852e1a9c2a5447a250aca2bdcc81f1fbc73b7e48d8dd02890a9c50188"
+            }
+          ],
+          "digest": "56d104c89a4ce942c760ba75ba5750a8a20e0b398e5fd9ce0ef8e7d251044f34"
+        },
+        "hit_count": 0,
+        "last_cache_hit": false,
+        "updated_at": "2026-09-08T11:48:54.647208+00:00",
+        "invocation_count": 4,
+        "last_cache_reason": "task_spec_material_change",
+        "discovery_delta": {
+          "routing_status": "SELECTED",
+          "discovery_round": 1,
+          "task_hypothesis": "Detect germline SNPs and InDels from two paired-end WGS FASTQ samples aligned to a provided reference genome, producing filtered VCF and statistics following a BioMind standard variant-calling workflow.",
+          "search_queries_attempted": [
+            "wgs germline snp indel variant calling from paired fastq against reference fasta using bwa gatk haplotypecaller",
+            "short read mapping alignment then variant calling with samtools bcftools mpileup"
+          ],
+          "candidate_skill_ids": [
+            "genomics/wgs-gatk-snp-indel",
+            "genomics/wgs-short-read-mapping",
+            "genomics/wgs-bcftools-snp-indel",
+            "genomics/rnaseq-variant-calling",
+            "genomics/reseq-variant-workflow",
+            "genomics/wgs-variant-calling",
+            "genomics/wgs-manta-sv"
+          ],
+          "candidate_evidence": {
+            "genomics/wgs-gatk-snp-indel": {
+              "deterministic_score": 295,
+              "matched_metadata_fields": [
+                "skill_id",
+                "name",
+                "aliases",
+                "tags",
+                "summary",
+                "inputs",
+                "outputs"
+              ],
+              "reasons": [
+                "matched skill_id terms: gatk, indel, snp, wgs",
+                "matched name terms: gatk, indel, snp, wgs",
+                "matched aliases terms: fastq, gatk, indel, snp, wgs",
+                "matched tags",
+                "matched tags terms: calling, gatk, haplotypecaller, indel, snp, wgs",
+                "matched summary terms: calling, gatk, haplotypecaller, variant, wgs",
+                "matched inputs",
+                "matched inputs terms: fasta, reference",
+                "matched outputs terms: indel, snp",
+                "matched declared compatibility alias",
+                "input role matched: reference_fasta"
+              ],
+              "summary": "Call short-read WGS SNPs and InDels with the GATK HaplotypeCaller GVCF workflow, including per-sample GVCFs, GenomicsDBImport or CombineGVCFs, joint genotyping, hard filtering, validation, and summary counts. Use for high-confidence cohort resequencing variant calling from duplicate-marked BAMs. Do not use for RNA-seq, long-read SV, CNV, or assembly comparison.",
+              "document_digest": "a38b06a2d3a372aac684f6b4b821b93899e3143c93d190c172dfa8803f522092",
+              "declares_executable_runtime": true,
+              "source_query_id": "q1"
+            },
+            "genomics/wgs-short-read-mapping": {
+              "deterministic_score": 282,
+              "matched_metadata_fields": [
+                "skill_id",
+                "name",
+                "aliases",
+                "tags",
+                "summary",
+                "inputs"
+              ],
+              "reasons": [
+                "matched skill_id terms: mapping, read, short",
+                "matched name terms: mapping, read, short",
+                "matched aliases",
+                "matched aliases terms: mapping, read, short",
+                "matched tags",
+                "matched tags terms: mapping, read, samtools",
+                "matched summary terms: calling, read, samtools, short, variant",
+                "input role matched: reference_fasta"
+              ],
+              "summary": "Map paired-end short-read WGS resequencing FASTQ to a reference genome with BWA-MEM or BWA-MEM2, samtools, and duplicate marking, producing coordinate-sorted indexed BAMs for downstream SNP/InDel, SV, and CNV calling. Use before WGS variant calling when users provide FASTQ rather than ready BAM files. Do not use for RNA-seq, long-read, or assembly comparison data.",
+              "document_digest": "6ac13d5d765e679fa5b50e8c8787dbd9c29d863df9a9ffc5e1982b33488a93ad",
+              "declares_executable_runtime": true,
+              "source_query_id": "q2"
+            },
+            "genomics/wgs-bcftools-snp-indel": {
+              "deterministic_score": 238,
+              "matched_metadata_fields": [
+                "skill_id",
+                "name",
+                "aliases",
+                "tags",
+                "summary",
+                "inputs",
+                "outputs"
+              ],
+              "reasons": [
+                "matched skill_id terms: indel, snp, wgs",
+                "matched name terms: indel, snp, wgs",
+                "matched aliases terms: indel, snp, variant, wgs",
+                "matched tags",
+                "matched tags terms: calling, indel, snp, variant, wgs",
+                "matched summary terms: calling, gatk, indel, snp, variant, wgs",
+                "matched inputs",
+                "matched inputs terms: fasta, reference",
+                "matched outputs terms: indel, snp",
+                "input role matched: reference_fasta",
+                "matched skill_id terms: bcftools",
+                "matched name terms: bcftools",
+                "matched aliases terms: bcftools, samtools, variant",
+                "matched tags terms: bcftools, calling, mpileup, variant",
+                "matched summary terms: bcftools, calling, mpileup, read, short, then",
+                "matched declared compatibility alias"
+              ],
+              "summary": "Call short-read WGS SNPs and InDels with bcftools mpileup and call, then filter, split SNP/InDel VCFs, index, and summarize. Use for fast lightweight resequencing variant calling on small or medium cohorts when GATK GVCF joint genotyping is unnecessary or unavailable. Do not present it as equivalent to the GATK workflow for high-confidence large cohorts.",
+              "document_digest": "b5a0be00067c41b55f31d41f59a8c52428430bc4efb465b464655f6d4ebbe665",
+              "declares_executable_runtime": true,
+              "source_query_id": "q1"
+            },
+            "genomics/rnaseq-variant-calling": {
+              "deterministic_score": 209,
+              "matched_metadata_fields": [
+                "skill_id",
+                "name",
+                "aliases",
+                "tags",
+                "summary",
+                "inputs",
+                "outputs"
+              ],
+              "reasons": [
+                "matched skill_id terms: calling, variant",
+                "matched name terms: calling, variant",
+                "matched aliases terms: calling, indel, snp, variant",
+                "matched tags",
+                "matched tags terms: calling, gatk, haplotypecaller, indel, snp, variant",
+                "matched summary terms: calling, gatk, haplotypecaller, variant, wgs",
+                "matched inputs",
+                "matched inputs terms: fasta, fastq, reference",
+                "matched outputs terms: indel, snp",
+                "input role matched: reference_fasta",
+                "matched aliases terms: calling, variant",
+                "matched tags terms: calling, mapping, variant",
+                "matched summary terms: alignment, calling, read, variant"
+              ],
+              "summary": "Call SNPs and InDels from RNA-seq reads using splice-aware alignment, duplicate marking, read groups, GATK SplitNCigarReads, HaplotypeCaller, and RNA-seq-specific hard filtering. Use only when the user explicitly wants transcriptome-based variant detection. Do not use for expression-only RNA-seq analysis or WGS variant calling.",
+              "document_digest": "979f8ea4f364b1ebad298705c137537403304732c0dff52adfcc2b5d0bc20089",
+              "declares_executable_runtime": true,
+              "source_query_id": "q1"
+            },
+            "genomics/reseq-variant-workflow": {
+              "deterministic_score": 182,
+              "matched_metadata_fields": [
+                "skill_id",
+                "name",
+                "aliases",
+                "tags",
+                "summary",
+                "inputs"
+              ],
+              "reasons": [
+                "matched skill_id terms: variant",
+                "matched name terms: variant",
+                "matched aliases terms: calling, variant",
+                "matched tags",
+                "matched tags terms: calling, indel, snp, variant",
+                "matched summary terms: calling, indel, snp, variant, wgs",
+                "matched inputs",
+                "matched inputs terms: fasta, fastq, reference",
+                "input role matched: fastq",
+                "input role matched: reference_fasta",
+                "matched tags terms: calling, read, variant",
+                "matched summary terms: calling, read, short, variant"
+              ],
+              "summary": "Route resequencing variant analysis across short-read WGS SNP/InDel, short-read SV, read-depth CNV, RNA-seq variant calling, long-read SV, and assembly-vs-assembly SyRI workflows. Use when the user asks for 重测序变异检测, SNP, InDel, SV, CNV, RNA-seq variants, long-read structural variants, or assembly-based variants and BioMind must choose the right primary downstream skill instead of running every method.",
+              "document_digest": "cfe4f0890b1d6c689b67c9901466c6bdf60b832cd3324051417080fca6994078",
+              "declares_executable_runtime": false,
+              "source_query_id": "q1"
+            },
+            "genomics/wgs-variant-calling": {
+              "deterministic_score": 168,
+              "matched_metadata_fields": [
+                "skill_id",
+                "name",
+                "aliases",
+                "summary",
+                "inputs",
+                "outputs"
+              ],
+              "reasons": [
+                "matched skill_id terms: calling, variant, wgs",
+                "matched name terms: calling, variant, wgs",
+                "matched aliases terms: calling, variant, wgs",
+                "matched summary terms: calling, fasta, fastq, gatk, snp, variant",
+                "matched inputs",
+                "matched inputs terms: fasta, reference",
+                "matched outputs terms: snp",
+                "input role matched: reference_fasta"
+              ],
+              "summary": "Generate and validate WGS resequencing variant calling workflows from FASTQ/BAM through GATK gVCF, GenomicsDBImport, joint genotyping, VCF merge/filtering, PLINK LD pruning/PCA, SNP counting, and optional ANNOVAR-style SNP annotation. Use for large or many-sample genomes where intervals must be planned from FASTA .fai; keep chromosomes/contigs at or below 500 Mb unsplit and split only larger sequences unless the user overrides the threshold.",
+              "document_digest": "f9bc8641e580602126ad80e162f57ce9152d4c7b8b89f05723b8d7036ca47b1e",
+              "declares_executable_runtime": false,
+              "source_query_id": "q1"
+            },
+            "genomics/wgs-manta-sv": {
+              "deterministic_score": 115,
+              "matched_metadata_fields": [
+                "aliases",
+                "tags",
+                "summary",
+                "inputs"
+              ],
+              "reasons": [
+                "matched aliases terms: read, short",
+                "matched tags",
+                "matched tags terms: calling, read, short, variant",
+                "matched summary terms: calling, read, short, variant",
+                "input role matched: reference_fasta"
+              ],
+              "summary": "Primary short-read paired-end WGS structural variant and indel calling with Manta from coordinate-sorted indexed BAM or CRAM files. Use as the default short-read SV skill instead of LUMPY unless the user explicitly requests LUMPY or legacy split-read evidence.",
+              "document_digest": "38428f8312c2a5e1fdc43ec18abec6bab5f97db9713c42d6ec8306946136a206",
+              "declares_executable_runtime": true,
+              "source_query_id": "q2"
+            }
+          },
+          "loaded_skill_ids": [
+            "genomics/reseq-variant-workflow",
+            "genomics/wgs-bcftools-snp-indel",
+            "genomics/wgs-gatk-snp-indel",
+            "genomics/wgs-short-read-mapping"
+          ],
+          "loaded_skill_docs": {
+            "genomics/reseq-variant-workflow": {
+              "path": "skills/genomics/reseq-variant-workflow/SKILL.md",
+              "source_path": "skills/genomics/reseq-variant-workflow/SKILL.md",
+              "sha256": "cfe4f0890b1d6c689b67c9901466c6bdf60b832cd3324051417080fca6994078",
+              "document_digest": "cfe4f0890b1d6c689b67c9901466c6bdf60b832cd3324051417080fca6994078",
+              "loaded_at_revision": 1,
+              "summary": "",
+              "safe_summary": "",
+              "full_doc_cache_reference": "skill-doc:genomics/reseq-variant-workflow:cfe4f0890b1d6c68"
+            },
+            "genomics/wgs-bcftools-snp-indel": {
+              "path": "skills/genomics/wgs-bcftools-snp-indel/SKILL.md",
+              "source_path": "skills/genomics/wgs-bcftools-snp-indel/SKILL.md",
+              "sha256": "b5a0be00067c41b55f31d41f59a8c52428430bc4efb465b464655f6d4ebbe665",
+              "document_digest": "b5a0be00067c41b55f31d41f59a8c52428430bc4efb465b464655f6d4ebbe665",
+              "loaded_at_revision": 1,
+              "summary": "",
+              "safe_summary": "",
+              "full_doc_cache_reference": "skill-doc:genomics/wgs-bcftools-snp-indel:b5a0be00067c41b5"
+            },
+            "genomics/wgs-gatk-snp-indel": {
+              "path": "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+              "source_path": "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+              "sha256": "a38b06a2d3a372aac684f6b4b821b93899e3143c93d190c172dfa8803f522092",
+              "document_digest": "a38b06a2d3a372aac684f6b4b821b93899e3143c93d190c172dfa8803f522092",
+              "loaded_at_revision": 1,
+              "summary": "",
+              "safe_summary": "",
+              "full_doc_cache_reference": "skill-doc:genomics/wgs-gatk-snp-indel:a38b06a2d3a372aa"
+            },
+            "genomics/wgs-short-read-mapping": {
+              "path": "skills/genomics/wgs-short-read-mapping/SKILL.md",
+              "source_path": "skills/genomics/wgs-short-read-mapping/SKILL.md",
+              "sha256": "6ac13d5d765e679fa5b50e8c8787dbd9c29d863df9a9ffc5e1982b33488a93ad",
+              "document_digest": "6ac13d5d765e679fa5b50e8c8787dbd9c29d863df9a9ffc5e1982b33488a93ad",
+              "loaded_at_revision": 1,
+              "summary": "",
+              "safe_summary": "",
+              "full_doc_cache_reference": "skill-doc:genomics/wgs-short-read-mapping:6ac13d5d765e679f"
+            }
+          },
+          "rejected_candidates": [
+            {
+              "skill_id": "genomics/wgs-bcftools-snp-indel",
+              "reason_code": "not_required",
+              "reason": "Documented as a lightweight alternative when GATK GVCF joint genotyping is unnecessary or unavailable. The user requests a formal standard BioMind workflow, so the higher-confidence GATK path is the appropriate primary; bcftools is not required.",
+              "decision_revision": 0,
+              "source": "consultant",
+              "status": "excluded"
+            },
+            {
+              "skill_id": "genomics/reseq-variant-workflow",
+              "reason_code": "not_required",
+              "reason": "This is a top-level workflow router, not an executable variant-calling stage. Its classification table confirms the path (paired WGS FASTQ -> wgs-short-read-mapping -> wgs-gatk-snp-indel), but the router itself does not produce the VCF outputs and should not be selected as an execution skill.",
+              "decision_revision": 0,
+              "source": "consultant",
+              "status": "excluded"
+            },
+            {
+              "skill_id": "genomics/rnaseq-variant-calling",
+              "reason_code": "input_contract_mismatch",
+              "reason": "Inputs are WGS short-read resequencing FASTQ, not RNA-seq transcriptome reads. Documented not_for states do not use for WGS variant calling.",
+              "decision_revision": 0,
+              "source": "consultant",
+              "status": "excluded"
+            },
+            {
+              "skill_id": "genomics/wgs-manta-sv",
+              "reason_code": "not_required",
+              "reason": "Target is SNP/InDel detection, not structural variants. Manta is the default short-read SV caller and is out of scope for this task.",
+              "decision_revision": 0,
+              "source": "consultant",
+              "status": "excluded"
+            }
+          ],
+          "reasoning_level": "normal",
+          "reasoning_escalation_count": 0,
+          "remaining_discovery_budget": {
+            "normal_searches": 1,
+            "catalog_expansions": 1,
+            "loaded_skill_docs": 4,
+            "reasoning_escalations": 1
+          },
+          "selected_skill_ids": [
+            "genomics/wgs-short-read-mapping",
+            "genomics/wgs-gatk-snp-indel"
+          ],
+          "pending_user_ambiguity": {},
+          "controller_feedback": []
+        },
+        "archive_telemetry": {
+          "query_count": 0,
+          "query_chars": 410,
+          "result_chars": 0,
+          "rows_returned": 0,
+          "timed_out": false,
+          "failed_open": true,
+          "busy_or_locked": false,
+          "error_type": "OptionalArchiveObservationDeferred",
+          "elapsed_ms": 0.0,
+          "deferred": true
+        }
+      },
+      "resolved_selected_skill_ids": [
+        "genomics/wgs-short-read-mapping",
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "pending_question": null,
+      "planning_handoff_attempts": [
+        {
+          "attempt_id": "handoff-a30b2aa9749921f9",
+          "committed": true,
+          "error_code": "",
+          "detail": "",
+          "recorded_at": "2026-09-08T11:48:54.736442+00:00"
+        }
+      ],
+      "pending_human_question": null
+    }
+  }
+}
