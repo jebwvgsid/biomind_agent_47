@@ -18,7 +18,7 @@ from tests.formal_generate_fixture import formalize
 from tests.test_inspection_workflow import InspectionReviewer
 
 
-@pytest.mark.parametrize('fifth,bad_shape', [(False,'parent'),(False,'unknown'),(False,'cross_scope'),(False,'cross_plan'),(False,'cross_capability'),(False,'env_collision'),(True,'env')])
+@pytest.mark.parametrize('fifth,bad_shape', [(False,'parent'),(False,'multiple'),(False,'unknown'),(False,'cross_scope'),(False,'cross_plan'),(False,'cross_capability'),(False,'env_collision'),(True,'env')])
 def test_handle_producer_actual_approval_commit_and_consumer(fifth,bad_shape):
  async def scenario():
   f=gf.Session1788681718GenerateProductionPathTests(methodName='test_adm_01_saved_candidate_reaches_fake_executor_once')
@@ -45,6 +45,9 @@ def test_handle_producer_actual_approval_commit_and_consumer(fifth,bad_shape):
     if bad_shape=='cross_plan':bad['plan_id']='foreign-plan'
     elif bad_shape=='cross_capability':bad['execution_capability_id']='foreign-capability'
     else:bad['env']={'SNPEFF_DB':'/unapproved-path'}
+   if bad_shape=='multiple':
+    bad=deepcopy(raw);bad['produced_bindings']['snpeff_db']['value']='bad-parent'
+    bad['operation']='annotate_variants';bad['binding_env']={'NOPE':{}}
    bads=[bad]
    if fifth:
     one=deepcopy(raw);one['operation']='annotate_variants';one['produced_bindings']={};one['binding_env']={'NOPE':{}}
@@ -100,6 +103,11 @@ def test_handle_producer_actual_approval_commit_and_consumer(fifth,bad_shape):
     request=json.dumps(f.provider.calls[-1],ensure_ascii=False)
     assert 'generate_validator_feedback' in request and 'allowed_handles' in request and handle in request and 'public_handle_v2' in request
     assert 'binding_input_requirements' in json.dumps(f.provider.calls[1])
+    if bad_shape=='multiple':
+     for code in ['ACTION_OPERATION_SCOPE_MISMATCH','BINDING_ENV_CONTRACT_MISMATCH','BINDING_PUBLIC_VALUE_SHAPE_INVALID']:
+      assert code in request
+     assert 'observed_type' in request
+
     await graph.ainvoke(Command(resume='y'),cfg)
    durable=load_plan_state(f.root,task)
    assert len(f.provider.calls)==(6 if fifth else 3)

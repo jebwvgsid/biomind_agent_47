@@ -15925,6 +15925,14 @@ class BioAnalystAgent:
                 derived_artifact_layout=dict(binding_contract.get("derived_artifact_layout") or {}))
             contract_ref = {**dict(contract_ref), "requirements": public_binding_requirements(frozen_input,
                 operation=fixed_operation, workspace_bindings=catalog)}
+        if frozen_input:
+            from agent_core.plan_bindings import public_binding_shape_violations
+            independent = public_binding_shape_violations(candidate, contract_ref.get("requirements") or {})
+            violations = list(violations)
+            seen = {(item.get("code") or item.get("error_code"), item.get("field_path"))
+                    for item in violations if isinstance(item, Mapping)}
+            violations.extend(item for item in independent
+                              if (item["code"], item["field_path"]) not in seen)
         normalized_violations = [
             {
                 **deepcopy(dict(item)),

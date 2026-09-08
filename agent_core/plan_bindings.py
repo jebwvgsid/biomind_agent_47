@@ -1482,3 +1482,47 @@ def binding_input_progress_facts(action, requirements):
     if isinstance(supplied, Mapping) and all(k in expected and v == expected[k] for k,v in supplied.items()):
         facts.add('binding_env')
     return facts
+
+
+def public_binding_shape_violations(candidate, requirements):
+    """Independent public checks, even when another parent cannot be decoded.
+
+    This collects feedback only. It neither normalizes nor admits an action,
+    and never pretends to validate nested formal identities below a bad parent.
+    """
+    if not isinstance(candidate, Mapping):
+        return []
+    issues = []
+    def issue(code, path, observed, message):
+        issues.append({"code": code, "field_path": path,
+            "observed_type": type(observed).__name__, "message": message,
+            "check_source": "public_binding_shape_violations"})
+    if candidate.get("operation") != requirements.get("operation"):
+        issue("ACTION_OPERATION_SCOPE_MISMATCH", "operation", candidate.get("operation"),
+              "Use the fixed invocation operation: " + str(requirements.get("operation") or ""))
+    supplied = candidate.get("binding_env", {})
+    expected = requirements.get("binding_env", {}).get("declared_mapping", {})
+    if not isinstance(supplied, Mapping) or any(key not in expected or value != expected[key] for key, value in supplied.items()):
+        issue("BINDING_ENV_CONTRACT_MISMATCH", "binding_env", supplied,
+              "The system owns the declared mapping; any supplied mapping must match it exactly.")
+    produced = candidate.get("produced_bindings", {})
+    if not isinstance(produced, Mapping):
+        issue("BINDING_PUBLIC_VALUE_SHAPE_INVALID", "produced_bindings", produced,
+              "Use the produced binding object in binding_input_requirements.")
+        return issues
+    for name, expected in requirements.get("produced_bindings", {}).items():
+        if name not in produced:
+            continue  # The full admission validator owns required-member checks.
+        row = produced[name]
+        path = "produced_bindings." + name
+        if not isinstance(row, Mapping):
+            issue("BINDING_PUBLIC_VALUE_SHAPE_INVALID", path, row, "Use the declared typed binding object.")
+            continue
+        if row.get("type") != expected.get("type"):
+            issue("BINDING_VALUE_TYPE_MISMATCH", path + ".type", row.get("type"),
+                  "Use the declared binding type: " + str(expected.get("type")))
+            continue
+        if expected.get("type") == "artifact_ref" and not isinstance(row.get("value"), Mapping):
+            issue("BINDING_PUBLIC_VALUE_SHAPE_INVALID", path + ".value", row.get("value"),
+                  "Select an allowed handle using the public value object; a path/string is not a reference.")
+    return issues
