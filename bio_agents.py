@@ -17588,6 +17588,60 @@ class BioAnalystAgent:
         self._node_invocations.consume(binding.invocation_id)
         return response
 
+    def _planner_progress(self, task_id: str, event: str, payload: Mapping[str, Any]) -> None:
+        """Observe Planner work without granting UI any workflow authority."""
+        if not getattr(self, "planner_progress_enabled", True):
+            return
+        row = {"task_id": task_id, "event": event, **dict(payload)}
+        callback = getattr(self, "planner_progress_callback", None)
+        if callback is not None:
+            try:
+                callback(event, deepcopy(row))
+            except Exception:
+                pass
+        try:
+            logger.info("Planner progress: %s", json.dumps(row, ensure_ascii=False, sort_keys=True, default=str))
+        except Exception:
+            pass
+        try:
+            ordinal = row.get("candidate_ordinal", "-")
+            phase = str(row.get("phase") or event)
+            elapsed = float(row.get("elapsed_seconds") or 0)
+            if event in {"attempt_started", "attempt_progress", "stream_active"}:
+                idle = row.get("payload_idle_seconds")
+                activity = "等待首个 payload" if idle is None else f"距真实 payload {float(idle):.1f}s"
+                receive_phase = "等待响应" if idle is None else "流式接收"
+                detail = f"{receive_phase}，正文 {int(row.get('content_char_count') or 0)} 字符，已等待 {elapsed:.1f}s，{activity}"
+            elif event == "attempt_completed":
+                detail = f"响应完整，等待解析与校验，耗时 {elapsed:.1f}s"
+            elif event == "phase_completed":
+                detail = f"{phase} 完成，耗时 {elapsed:.3f}s"
+            elif event == "candidate_started":
+                detail = f"开始；已消耗 {ordinal} 次调用，名义阈值 {row.get('nominal_call_limit', '-')}，还需重复无进展才触发停止"
+            elif event == "attempt_cancelled":
+                detail = "调用取消；不接收部分候选"
+            elif event == "attempt_failed":
+                detail = f"调用失败：{row.get('failure_type') or 'unknown'}"
+            elif event == "candidate_rejected":
+                detail = f"候选拒绝，{row.get('issue_count', 0)} 项问题；完整反馈已持久化"
+            else:
+                detail = phase
+            key = f"planner-progress:{task_id}:{ordinal}:{event}:{phase}:{row.get('attempt_id', '')}:{row.get('observation_at', '')}"
+            output.print_once(key, f"📋 Planner 候选 {ordinal}：{detail}", Fore.CYAN)
+        except Exception:
+            pass
+
+    def _planner_observed_call(self, task_id: str, observation: Mapping[str, Any], phase: str, operation: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+        started = time.monotonic()
+        self._planner_progress(task_id, "phase_started", {**dict(observation), "phase": phase})
+        try:
+            result = operation(*args, **kwargs)
+        except BaseException:
+            self._planner_progress(task_id, "phase_failed", {**dict(observation), "phase": phase, "elapsed_seconds": time.monotonic() - started})
+            raise
+        self._planner_progress(task_id, "phase_completed", {**dict(observation), "phase": phase, "elapsed_seconds": time.monotonic() - started})
+        return result
+
     async def _ainvoke_llm(
         self,
         messages: List[BaseMessage],
@@ -17825,6 +17879,15 @@ class BioAnalystAgent:
                         event,
                         exc_info=True,
                     )
+            if stage in {"planner", "planner_repair"}:
+                observed = dict(trace_metadata.get("planner_observation") or {})
+                observed.update({key: payload.get(key) for key in (
+                    "attempt_id", "attempt_ordinal", "state", "observation_at", "elapsed_seconds",
+                    "payload_idle_seconds", "content_char_count", "reasoning_char_count",
+                    "total_chunk_count", "max_payload_gap_seconds", "failure_type",
+                )})
+                self._planner_progress(task_id, event, observed)
+                return
             if stage != "generate":
                 return
             attempt_id = str(payload.get("attempt_id") or "")
@@ -17953,6 +18016,11 @@ class BioAnalystAgent:
                         envelope,
                         progress_callback=progress,
                         progress_start_fail_closed=recovery_single_attempt,
+                        observation_interval_seconds=(
+                            float(getattr(self, "planner_progress_interval_seconds", 5.0))
+                            if stage in {"planner", "planner_repair"} and getattr(self, "planner_progress_enabled", True)
+                            else 0.0
+                        ),
                     )
                     if stage == "generate" and not response_has_final_content(response):
                         attempt_record.failure_type = EMPTY_FINAL_CONTENT
@@ -38155,6 +38223,14 @@ question. Never guess a scientific or database identity.
                 durable_preplan["generated_from_task_revision"] = task_revision
             save_plan_state(self.data_path, task_id, durable_preplan)
 
+            planner_observation = {
+                "candidate_ordinal": int(planning_epoch.get("planner_calls_total") or 0),
+                "planning_epoch_id": str(planning_epoch.get("planning_epoch_id") or ""),
+                "nominal_call_limit": max_planner_calls,
+                "limit_condition": "nominal limit AND repeated structural non-progress; independent phase/receipt guards apply",
+                "repeat_count": int(active_planning_failure.get("repeat_count") or 0),
+            }
+            self._planner_progress(task_id, "candidate_started", planner_observation)
             plan_content = ""
             violations: List[Any] = []
             try:
@@ -38167,6 +38243,7 @@ question. Never guess a scientific or database identity.
                     temperature=0.1,
                     trace_metadata={
                         "call_kind": "planner_initial",
+                        "planner_observation": planner_observation,
                         "task_spec_revision": task_spec_revision(task_spec),
                         "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
                         "selected_skill_ids": selected_skills,
@@ -38214,7 +38291,7 @@ question. Never guess a scientific or database identity.
                 planner_phase_context.record_assistant_response(response)
             raw_plan_content = str(response.content or "").strip()
             try:
-                typed_planner_skill_decision = parse_typed_skill_decision(
+                typed_planner_skill_decision = self._planner_observed_call(task_id, planner_observation, "parse_skill_envelope", parse_typed_skill_decision,
                     raw_plan_content
                 )
             except SkillAccessError as exc:
@@ -38230,7 +38307,7 @@ question. Never guess a scientific or database identity.
             planner_envelope_error: Dict[str, Any] = {}
             if typed_planner_skill_decision is None:
                 try:
-                    planner_envelope = parse_planner_outcome_envelope(
+                    planner_envelope = self._planner_observed_call(task_id, planner_observation, "parse_plan_envelope", parse_planner_outcome_envelope,
                         raw_plan_content,
                         # Every live Planner response is a new candidate and
                         # therefore must use the typed 1.2.1 envelope. Legacy
@@ -38569,7 +38646,7 @@ question. Never guess a scientific or database identity.
                             candidate_ref_keys,
                             candidate_usage,
                             deterministic_issues,
-                        ) = validate_planner_candidate_deterministically(
+                        ) = self._planner_observed_call(task_id, planner_observation, "validate_wire_and_bind", validate_planner_candidate_deterministically,
                             plan_proposal,
                             candidate_scope_id=(
                                 planner_node_context.binding.candidate_scope_id
@@ -38597,7 +38674,7 @@ question. Never guess a scientific or database identity.
                             ]
                         else:
                             candidate_resource_bindings = (
-                                compile_plan_resource_bindings(
+                                self._planner_observed_call(task_id, planner_observation, "compile_resource_bindings", compile_plan_resource_bindings,
                                     plan_proposal,
                                     require_declared_references=True,
                                     candidate_scope_id=(
@@ -38613,7 +38690,7 @@ question. Never guess a scientific or database identity.
                                     },
                                 )
                             )
-                            allocation_intent = prepare_allocation_intent(
+                            allocation_intent = self._planner_observed_call(task_id, planner_observation, "normalize_allocation_intent", prepare_allocation_intent,
                                 plan_proposal,
                                 candidate_scope_id=(
                                     planner_node_context.binding.candidate_scope_id
@@ -38622,7 +38699,7 @@ question. Never guess a scientific or database identity.
                                     planning_epoch.get("planning_epoch_id") or ""
                                 ),
                             )
-                    plan_proposal = resolve_plan_proposal_handles(
+                    plan_proposal = self._planner_observed_call(task_id, planner_observation, "normalize_handles", resolve_plan_proposal_handles,
                         plan_proposal,
                         planner_node_context.binding,
                     )
@@ -38668,7 +38745,7 @@ question. Never guess a scientific or database identity.
                 })]
             if not structure_errors:
                 try:
-                    candidate_for_repair = build_plan_state(
+                    candidate_for_repair = self._planner_observed_call(task_id, planner_observation, "parse_plan_structure", build_plan_state,
                         task_id,
                         plan_content,
                         strict=True,
@@ -38735,6 +38812,7 @@ question. Never guess a scientific or database identity.
                     capabilities=planner_effect_registry,
                 )
                 save_plan_state(self.data_path, task_id, rejected_state)
+                self._planner_progress(task_id, "candidate_rejected", {**planner_observation, "issue_count": len(planner_feedback["validation_issues"])})
                 rejected_epoch = dict(
                     (rejected_state.get("task_state") or {}).get("planning_epoch")
                     or {}
@@ -38752,7 +38830,7 @@ question. Never guess a scientific or database identity.
                     "planning_epoch": rejected_epoch,
                     "next_step": "planner",
                 }
-            candidate_for_repair, renderer_normalization, violations = normalize_plan_contracts(
+            candidate_for_repair, renderer_normalization, violations = self._planner_observed_call(task_id, planner_observation, "normalize_plan_contracts", normalize_plan_contracts,
                 candidate_for_repair,
                 renderer_records=renderer_records,
                 output_contracts=canonical_output_contracts,
@@ -38766,7 +38844,7 @@ question. Never guess a scientific or database identity.
                 candidate_for_repair,
                 effect_compilation_receipt,
                 effect_compilation_issues,
-            ) = compile_plan_step_effects(
+            ) = self._planner_observed_call(task_id, planner_observation, "compile_step_effects", compile_plan_step_effects,
                 candidate_for_repair,
                 effect_capability_registry,
                 allow_legacy_untyped=False,
@@ -38783,7 +38861,7 @@ question. Never guess a scientific or database identity.
                 candidate_for_repair,
                 dataflow_compilation_receipt,
                 dataflow_compilation_issues,
-            ) = compile_plan_dataflow(
+            ) = self._planner_observed_call(task_id, planner_observation, "compile_dataflow", compile_plan_dataflow,
                 candidate_for_repair,
                 effect_capability_registry,
                 resource_bindings=candidate_resource_bindings,
@@ -38806,19 +38884,19 @@ question. Never guess a scientific or database identity.
                 selected_skills,
             )
             plan_content = render_structured_plan(candidate_for_repair)
-            violations.extend(self._skill_plan_violations(
+            violations.extend(self._planner_observed_call(task_id, planner_observation, "validate_skill_plan", self._skill_plan_violations,
                 plan_content,
                 selected_skills,
                 user_msg=task_requirement_text,
                 workflow_handoff=workflow_handoff,
             ))
-            violations.extend(self._plan_step_skill_violations(candidate_for_repair, selected_skills))
-            violations.extend(self._plan_execution_capability_violations(
+            violations.extend(self._planner_observed_call(task_id, planner_observation, "validate_step_skills", self._plan_step_skill_violations, candidate_for_repair, selected_skills))
+            violations.extend(self._planner_observed_call(task_id, planner_observation, "validate_capabilities", self._plan_execution_capability_violations,
                 candidate_for_repair,
                 selected_skills,
             ))
 
-            candidate_for_repair = derive_plan_validation_state(
+            candidate_for_repair = self._planner_observed_call(task_id, planner_observation, "validate_candidate", derive_plan_validation_state,
                 candidate_for_repair,
                 violations,
             )
@@ -38880,6 +38958,7 @@ question. Never guess a scientific or database identity.
                     capabilities=planner_effect_registry,
                 )
                 save_plan_state(self.data_path, task_id, rejected_state)
+                self._planner_progress(task_id, "candidate_rejected", {**planner_observation, "issue_count": len(planner_feedback["validation_issues"])})
                 rejected_epoch = dict(
                     (rejected_state.get("task_state") or {}).get("planning_epoch")
                     or {}
@@ -38903,7 +38982,7 @@ question. Never guess a scientific or database identity.
             candidate_plan_state = deepcopy(candidate_for_repair)
             candidate_plan_state["plan_file"] = plan_file
             bind_plan_to_task_revision(candidate_plan_state, task_revision)
-            self._plan_step_skill_violations(candidate_plan_state, selected_skills)
+            self._planner_observed_call(task_id, planner_observation, "validate_step_skills", self._plan_step_skill_violations, candidate_plan_state, selected_skills)
             candidate_plan_state["user_constraints"] = list(state.get("user_constraints", []) or [])
             candidate_plan_state["selected_skill_ids"] = list(selected_skills)
             _bind_current_task_spec_record(candidate_plan_state, task_spec)
@@ -39048,7 +39127,7 @@ question. Never guess a scientific or database identity.
                     plan_state,
                     final_effect_receipt,
                     final_effect_issues,
-                ) = compile_plan_step_effects(
+                ) = self._planner_observed_call(task_id, planner_observation, "compile_step_effects_final", compile_plan_step_effects,
                     plan_state,
                     effect_capability_registry,
                     allow_legacy_untyped=False,
@@ -39104,7 +39183,7 @@ question. Never guess a scientific or database identity.
                     plan_state,
                     final_dataflow_receipt,
                     final_dataflow_issues,
-                ) = compile_plan_dataflow(
+                ) = self._planner_observed_call(task_id, planner_observation, "compile_dataflow_final", compile_plan_dataflow,
                     plan_state,
                     effect_capability_registry,
                     resource_bindings=final_resource_bindings,

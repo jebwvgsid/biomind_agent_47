@@ -14,6 +14,7 @@ from email.utils import parsedate_to_datetime
 import hashlib
 import json
 import logging
+import math
 from pathlib import Path
 import tempfile
 import threading
@@ -195,6 +196,11 @@ class ProviderAttemptRecord:
     observed_payload_callback_count: int = 0
     reasoning_char_count: int = 0
     content_char_count: int = 0
+    observation_at: str = ""
+    elapsed_seconds: float = 0.0
+    payload_idle_seconds: Optional[float] = None
+    max_payload_gap_seconds: float = 0.0
+    activity_summary: list[Dict[str, Any]] = field(default_factory=list)
     finish_reason: str = ""
     provider_request_id: str = ""
     provider_trace_id: str = ""
@@ -284,10 +290,10 @@ class ProviderAttemptRecord:
             ),
             "time_since_last_event_seconds": _elapsed_seconds(
                 self.last_any_chunk_at,
-                self.exception_at or self.attempt_completed_at,
+                self.exception_at or self.attempt_completed_at or self.observation_at,
             ),
             "total_elapsed_seconds": _elapsed_seconds(
-                self.request_started_at, self.attempt_completed_at
+                self.request_started_at, self.attempt_completed_at or self.observation_at
             ),
         })
         return row
@@ -400,6 +406,7 @@ class ProviderStreamObserver(BaseCallbackHandler):
         self._last_reasoning: Optional[str] = None
         self._last_content: Optional[str] = None
         self._last_activity_monotonic: Optional[float] = None
+        self._max_payload_gap_seconds = 0.0
         self._total = 0
         self._reasoning = 0
         self._content = 0
@@ -495,6 +502,11 @@ class ProviderStreamObserver(BaseCallbackHandler):
             self._observed_payload_callbacks += 1
             self._first_any = self._first_any or now_iso
             self._last_any = now_iso
+            if self._last_activity_monotonic is not None:
+                self._max_payload_gap_seconds = max(
+                    self._max_payload_gap_seconds,
+                    max(0.0, now_monotonic - self._last_activity_monotonic),
+                )
             self._last_activity_monotonic = now_monotonic
             if reasoning:
                 raw = reasoning.encode("utf-8", errors="replace")
@@ -566,6 +578,7 @@ class ProviderStreamObserver(BaseCallbackHandler):
                 "last_reasoning_chunk_at": self._last_reasoning,
                 "last_content_chunk_at": self._last_content,
                 "last_activity_monotonic": self._last_activity_monotonic,
+                "max_payload_gap_seconds": round(self._max_payload_gap_seconds, 6),
                 "total_chunk_count": self._total,
                 "reasoning_chunk_count": self._reasoning,
                 "content_chunk_count": self._content,
@@ -946,7 +959,12 @@ def provider_retry_delay_seconds(
     return round(exponential * jitter, 6)
 
 
-def _apply_observer(record: ProviderAttemptRecord, observer: ProviderStreamObserver) -> None:
+def _apply_observer(
+    record: ProviderAttemptRecord,
+    observer: ProviderStreamObserver,
+    *,
+    started_monotonic: Optional[float] = None,
+) -> None:
     state = observer.snapshot()
     for key in (
         "first_any_chunk_at", "first_reasoning_chunk_at", "first_content_chunk_at",
@@ -956,9 +974,31 @@ def _apply_observer(record: ProviderAttemptRecord, observer: ProviderStreamObser
         "reasoning_char_count", "content_char_count", "finish_reason",
         "provider_request_id", "late_chunk_count", "content_sha256",
         "reasoning_sha256", "last_event_type", "completion_marker_seen",
+        "max_payload_gap_seconds",
     ):
         setattr(record, key, state[key])
     record.stream_started = bool(state["observed_payload_callback_count"])
+    if started_monotonic is not None:
+        now = time.monotonic()
+        record.observation_at = utc_now()
+        record.elapsed_seconds = round(max(0.0, now - started_monotonic), 6)
+        last_payload = state["last_activity_monotonic"]
+        record.payload_idle_seconds = (
+            round(max(0.0, now - last_payload), 6)
+            if last_payload is not None else None
+        )
+        # Bounded metadata samples preserve visible activity and open gaps.
+        # Sampling is strictly read-only with respect to the observer: it never
+        # changes the payload version, timestamps, counters or watchdog clock.
+        record.activity_summary.append({
+            "observation_at": record.observation_at,
+            "elapsed_seconds": record.elapsed_seconds,
+            "payload_idle_seconds": record.payload_idle_seconds,
+            "content_char_count": record.content_char_count,
+            "reasoning_char_count": record.reasoning_char_count,
+            "observed_payload_callback_count": record.observed_payload_callback_count,
+        })
+        record.activity_summary = record.activity_summary[-32:]
 
 
 def _emit(
@@ -977,14 +1017,22 @@ def _emit(
         if key.startswith("exception_") or key == "http_response_headers":
             payload.pop(key, None)
     payload["event"] = event
-    logger.info("PROVIDER_ATTEMPT_EVENT %s", json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    try:
+        logger.info("PROVIDER_ATTEMPT_EVENT %s", json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    except Exception:
+        # Operational logs are observers, including the initial marker. The
+        # separate callback can still require durable dispatch acceptance.
+        pass
     if callback is not None:
         try:
             callback(event, payload)
         except Exception:
             if fail_closed:
                 raise
-            logger.debug("Provider progress callback failed", exc_info=True)
+            try:
+                logger.debug("Provider progress callback failed", exc_info=True)
+            except Exception:
+                pass
 
 
 async def _cancel_and_drain(
@@ -1025,6 +1073,7 @@ async def run_provider_attempt(
     *,
     progress_callback: Optional[Callable[[str, Mapping[str, Any]], None]] = None,
     progress_start_fail_closed: bool = False,
+    observation_interval_seconds: float = 5.0,
 ) -> Tuple[Any, ProviderAttemptRecord]:
     """Run one provider dispatch with phased watchdogs and bounded cleanup."""
 
@@ -1034,6 +1083,12 @@ async def run_provider_attempt(
     record = ProviderAttemptRecord(envelope=envelope)
     activity_version = 0
     stream_announced = False
+    try:
+        observation_interval = float(observation_interval_seconds)
+    except (TypeError, ValueError):
+        observation_interval = 5.0
+    if not math.isfinite(observation_interval):
+        observation_interval = 5.0
     # Logging/output can itself be slow under a captured terminal.  Emit the
     # lifecycle marker before starting the provider clock so observer overhead
     # cannot consume the first-chunk allowance before dispatch is scheduled.
@@ -1059,6 +1114,10 @@ async def run_provider_attempt(
             retryable=False,
         ) from exc
     started_monotonic = time.monotonic()
+    next_observation = (
+        started_monotonic + observation_interval
+        if observation_interval > 0 else None
+    )
     invoke_task = asyncio.create_task(invoke(observer), name=envelope.attempt_id)
     try:
         await asyncio.sleep(0)
@@ -1080,7 +1139,7 @@ async def run_provider_attempt(
                     if total_remaining <= phase_remaining
                     else timeout_code
                 )
-                _apply_observer(record, observer)
+                _apply_observer(record, observer, started_monotonic=started_monotonic)
                 record.failure_type = selected
                 record.normalized_failure_reason = "provider_watchdog_timeout"
                 record.exception_at = utc_now()
@@ -1094,7 +1153,7 @@ async def run_provider_attempt(
                     record,
                     policy.cleanup_seconds,
                 )
-                _apply_observer(record, observer)
+                _apply_observer(record, observer, started_monotonic=started_monotonic)
                 record.attempt_completed_at = utc_now()
                 if cleanup != CLEANUP_CONFIRMED:
                     record.cleanup_failure_type = PROVIDER_CANCEL_CLEANUP_FAILED
@@ -1120,10 +1179,13 @@ async def run_provider_attempt(
                 )
 
             activity_task = asyncio.create_task(observer.wait_for_activity(activity_version))
+            wait_seconds = min(total_remaining, phase_remaining)
+            if next_observation is not None:
+                wait_seconds = min(wait_seconds, next_observation - time.monotonic())
             try:
                 done, _ = await asyncio.wait(
                     {invoke_task, activity_task},
-                    timeout=max(0.001, min(total_remaining, phase_remaining)),
+                    timeout=max(0.001, wait_seconds),
                     return_when=asyncio.FIRST_COMPLETED,
                 )
             finally:
@@ -1137,7 +1199,7 @@ async def run_provider_attempt(
                 try:
                     response = invoke_task.result()
                 except asyncio.CancelledError as exc:
-                    _apply_observer(record, observer)
+                    _apply_observer(record, observer, started_monotonic=started_monotonic)
                     observer.fence()
                     current = asyncio.current_task()
                     if current is not None and current.cancelling():
@@ -1165,7 +1227,7 @@ async def run_provider_attempt(
                         retryable=True,
                     ) from exc
                 except BaseException as exc:
-                    _apply_observer(record, observer)
+                    _apply_observer(record, observer, started_monotonic=started_monotonic)
                     observer.fence()
                     classification = inspect_provider_exception(
                         exc,
@@ -1207,7 +1269,7 @@ async def run_provider_attempt(
                     ) from exc
                 observer.complete_from_response(response)
                 observer.fence()
-                _apply_observer(record, observer)
+                _apply_observer(record, observer, started_monotonic=started_monotonic)
                 record.usage_status, record.provider_usage = (
                     _response_provider_usage(response)
                 )
@@ -1224,8 +1286,25 @@ async def run_provider_attempt(
             if activity_version and not stream_announced:
                 stream_announced = True
                 record.state = "STREAM_ACTIVE"
-                _apply_observer(record, observer)
+                _apply_observer(record, observer, started_monotonic=started_monotonic)
                 _emit(progress_callback, "stream_active", record)
+                if next_observation is not None:
+                    next_observation = time.monotonic() + observation_interval
+            elif next_observation is not None and time.monotonic() >= next_observation:
+                # An observation wake-up is not provider activity. Expired
+                # watchdogs are handled by the original branch on the next
+                # loop, before any periodic UI event can claim ongoing work.
+                now = time.monotonic()
+                last_payload = state["last_activity_monotonic"]
+                phase_deadline = (
+                    last_payload + policy.idle_seconds
+                    if last_payload is not None
+                    else started_monotonic + policy.first_chunk_seconds
+                )
+                if now < min(started_monotonic + policy.total_seconds, phase_deadline):
+                    _apply_observer(record, observer, started_monotonic=started_monotonic)
+                    _emit(progress_callback, "attempt_progress", record)
+                next_observation = time.monotonic() + observation_interval
     except asyncio.CancelledError as exc:
         cleanup = record.cleanup_result
         if not invoke_task.done():
@@ -1244,7 +1323,7 @@ async def run_provider_attempt(
                 pass
             cleanup = CLEANUP_NOT_REQUIRED
         observer.fence()
-        _apply_observer(record, observer)
+        _apply_observer(record, observer, started_monotonic=started_monotonic)
         record.cancellation_source = "caller"
         record.retryable = False
         record.normalized_failure_reason = "caller_cancelled"
