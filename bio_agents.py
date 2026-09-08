@@ -645,7 +645,9 @@ from agent_core.plan_tracker import (
     validation_issue,
 )
 from agent_core.task_spec import (
+    InputBindingContractError,
     apply_task_spec_mutation_proposal,
+    validate_input_binding_declaration,
     apply_authorized_task_spec_constraint_repair,
     apply_declarative_task_spec_rules,
     canonical_current_task_spec,
@@ -21874,7 +21876,7 @@ class BioAnalystAgent:
         payload: Mapping[str, Any],
         binding: Any,
     ) -> Dict[str, Any]:
-        """Translate the finite public mutation ABI into Controller IR.
+        """Translate the finite public mutation ABI into internal mutation IR.
 
         This is schema translation and evidence-handle resolution only.  It
         deliberately does not parse user prose, infer file roles, or invent
@@ -21944,6 +21946,8 @@ class BioAnalystAgent:
                             "path": raw.get("value"),
                             "required": bool(raw.get("required", True)),
                         }
+                        if "input_instance" in raw:
+                            value["input_instance"] = deepcopy(raw["input_instance"])
                     elif kind == "upsert_output_contract":
                         value = {
                             "role": semantic_key,
@@ -21963,6 +21967,10 @@ class BioAnalystAgent:
                             "value": raw.get("value"),
                         }
                 value = deepcopy(dict(value))
+                if kind == "upsert_input":
+                    validate_input_binding_declaration(
+                        value, field_path=f"$.task_spec_operations[{index}].input",
+                    )
                 if kind == "upsert_constraint":
                     declared_key = str(value.get("semantic_key") or "").strip().lower()
                     typed_policy = bool(
@@ -21991,6 +21999,8 @@ class BioAnalystAgent:
                 operation[field] = value
             elif kind == "remove_input" or kind == "remove_output_contract":
                 operation["role"] = raw.get("role") or raw.get("semantic_key")
+                if kind == "remove_input" and "input_instance" in raw:
+                    operation["input_instance"] = deepcopy(raw["input_instance"])
             elif kind == "remove_constraint":
                 requirement_id = raw.get("requirement_id")
                 if requirement_id:
@@ -35682,6 +35692,7 @@ question. Never guess a scientific or database identity.
                     recoverable: bool = False,
                     required_action: str = "",
                     skill_id: str = "",
+                    validation_issues: Optional[List[Dict[str, Any]]] = None,
                 ) -> Dict[str, Any]:
                     candidate_state = dict(candidate or {})
                     next_consultation = deepcopy(dict(
@@ -35691,6 +35702,8 @@ question. Never guess a scientific or database identity.
                         "code": str(code),
                         "instruction": str(instruction),
                     }
+                    if validation_issues:
+                        feedback_item["validation_issues"] = deepcopy(validation_issues)
                     if consultant_json_payload.get("requested_slots"):
                         feedback_item["slots"] = list(
                             consultant_json_payload.get("requested_slots") or []
@@ -35721,6 +35734,8 @@ question. Never guess a scientific or database identity.
                         "code": str(code),
                         "detail": str(instruction),
                     }
+                    if validation_issues:
+                        rejection_record["validation_issues"] = deepcopy(validation_issues)
                     pending_transition: Dict[str, Any] = {}
                     ledger: Dict[str, Any] = {}
                     if recoverable:
@@ -35989,6 +36004,13 @@ question. Never guess a scientific or database identity.
                         input_audit=input_resolution_result,
                         runtime_evidence=candidate_runtime_evidence,
                         project_root=str(project_root),
+                    )
+                except InputBindingContractError as exc:
+                    diagnostic = exc.to_diagnostic()
+                    return candidate_rejection(
+                        exc.code,
+                        json.dumps(diagnostic, ensure_ascii=False, sort_keys=True),
+                        validation_issues=[diagnostic],
                     )
                 except (InvocationProtocolError, ValueError) as exc:
                     return candidate_rejection(

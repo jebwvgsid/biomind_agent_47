@@ -24,6 +24,71 @@ TaskChangeType = Literal[
     "informational",
 ]
 
+class InputBindingContractError(ValueError):
+    """Typed, route-free rejection of an input declaration or its selector."""
+
+    def __init__(self, code: str, *, field_path: str, actual: Any, expected: Any) -> None:
+        self.code = str(code)
+        self.field_path = str(field_path)
+        self.actual = deepcopy(actual)
+        self.expected = deepcopy(expected)
+        super().__init__(f"{self.code}: {self.field_path}: expected {self.expected}")
+
+    def to_diagnostic(self) -> Dict[str, Any]:
+        return {
+            "code": self.code, "field_path": self.field_path,
+            "actual": deepcopy(self.actual), "expected": deepcopy(self.expected),
+            "message": str(self),
+        }
+
+    def to_dict(self) -> Dict[str, Any]:
+        return self.to_diagnostic()
+
+
+def validate_input_binding_declaration(value: Mapping[str, Any], *, field_path: str = "$.input") -> None:
+    """Validate the scalar input ABI without resolving paths or changing state."""
+    if not isinstance(value, Mapping):
+        raise InputBindingContractError(
+            "INPUT_BINDING_INVALID", field_path=field_path,
+            actual={"type": type(value).__name__}, expected="input object",
+        )
+    for key in ("path", "canonical_path", "resolved_path"):
+        if key in value and value[key] is not None and not isinstance(value[key], str):
+            raise InputBindingContractError(
+                "INPUT_BINDING_PATH_TYPE_INVALID", field_path=f"{field_path}.{key}",
+                actual={"type": type(value[key]).__name__, "value": deepcopy(value[key])},
+                expected="one scalar string path; use separate input_instance records for collection members",
+            )
+    if "input_instance" not in value:
+        return
+    instance = value["input_instance"]
+    instance_path = f"{field_path}.input_instance"
+    required = {"schema_version", "group_id", "member_id"}
+    if not isinstance(instance, Mapping) or set(instance) != required:
+        raise InputBindingContractError(
+            "INPUT_INSTANCE_INVALID", field_path=instance_path,
+            actual=deepcopy(instance), expected={"schema_version": 1, "group_id": "non-empty string", "member_id": "non-empty string"},
+        )
+    if type(instance["schema_version"]) is not int or instance["schema_version"] != 1:
+        raise InputBindingContractError(
+            "INPUT_INSTANCE_SCHEMA_UNSUPPORTED", field_path=f"{instance_path}.schema_version",
+            actual=instance["schema_version"], expected=1,
+        )
+    for key in ("group_id", "member_id"):
+        if not isinstance(instance[key], str) or not instance[key].strip():
+            raise InputBindingContractError(
+                "INPUT_INSTANCE_INVALID", field_path=f"{instance_path}.{key}",
+                actual=deepcopy(instance[key]), expected="non-empty semantic string declared by the caller",
+            )
+
+
+def _input_instance_key(value: Mapping[str, Any]) -> tuple[str, str] | None:
+    instance = value.get("input_instance")
+    if not isinstance(instance, Mapping):
+        return None
+    return (str(instance.get("group_id") or "").strip(), str(instance.get("member_id") or "").strip())
+
+
 REQUIREMENT_LEVELS = {
     "required",
     "conditional",
@@ -892,7 +957,16 @@ def normalize_input_binding(
     base_dir: str | Path | None = None,
     project_root: str | Path | None = None,
 ) -> Dict[str, Any]:
-    raw = dict(value) if isinstance(value, Mapping) else {"path": _text(value)}
+    raw = dict(value) if isinstance(value, Mapping) else {"path": value}
+    validate_input_binding_declaration(raw, field_path="$")
+    if "input_instance" in raw and not any(
+        isinstance(raw.get(key), str) and raw[key].strip()
+        for key in ("path", "canonical_path", "resolved_path")
+    ):
+        raise InputBindingContractError(
+            "INPUT_BINDING_PATH_MISSING", field_path="$.path",
+            actual=None, expected="a non-empty scalar path for this input instance",
+        )
     path, resolution_base = _resolved_binding_path(
         _text(raw.get("canonical_path") or raw.get("resolved_path") or raw.get("path")),
         base_dir=base_dir,
@@ -910,6 +984,20 @@ def normalize_input_binding(
     semantic_handle = _text(raw.get("semantic_handle")) or _artifact_semantic_handle(
         "input", role, "input"
     )
+    input_instance = None
+    if "input_instance" in raw:
+        input_instance = {
+            "schema_version": 1,
+            "group_id": raw["input_instance"]["group_id"].strip(),
+            "member_id": raw["input_instance"]["member_id"].strip(),
+        }
+        instance_digest = hashlib.sha256(json.dumps(
+            {"role": role, **input_instance}, ensure_ascii=False,
+            sort_keys=True, separators=(",", ":"),
+        ).encode("utf-8")).hexdigest()[:16]
+        # Explicit group/member semantics select the instance. The system
+        # forms a stable handle, independent of path and context list order.
+        semantic_handle = _artifact_semantic_handle("input", role, "input") + "." + instance_digest
     file_format = _text(raw.get("format") or raw.get("type") or _artifact_format(path))
     path_policy = _field_key(raw.get("path_policy")) or (
         "managed_exact" if path else "model_selectable"
@@ -918,6 +1006,7 @@ def normalize_input_binding(
         "artifact_id": artifact_id,
         "semantic_handle": semantic_handle,
         "direction": "input",
+        "input_instance": input_instance,
         "role": role,
         "format": file_format,
         "path_policy": path_policy,
@@ -1207,13 +1296,25 @@ def validate_task_spec_output_contracts(
 
 def _dedupe_input_aliases(inputs: List[Dict[str, Any]]) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Collapse only uniquely resolvable same-role aliases."""
-    grouped: Dict[tuple[str, str], List[Dict[str, Any]]] = {}
+    grouped: Dict[tuple[str, str, Any], List[Dict[str, Any]]] = {}
+    instance_paths: Dict[tuple[str, tuple[str, str]], str] = {}
     for item in inputs:
-        key = (_field_key(item.get("role")), Path(artifact_locator(item)).name.lower())
+        role = _field_key(item.get("role"))
+        instance_key = _input_instance_key(item)
+        path = artifact_locator(item)
+        if instance_key is not None:
+            prior = instance_paths.setdefault((role, instance_key), path)
+            if prior != path:
+                raise InputBindingContractError(
+                    "INPUT_INSTANCE_CONFLICT", field_path="$.inputs",
+                    actual={"role": role, "input_instance": deepcopy(item["input_instance"]), "paths": [prior, path]},
+                    expected="one path per (role, group_id, member_id); use upsert_input to replace that explicit instance",
+                )
+        key = (role, Path(path).name.lower(), instance_key)
         grouped.setdefault(key, []).append(item)
     resolved: List[Dict[str, Any]] = []
     audit: List[Dict[str, Any]] = []
-    for (role, basename), values in grouped.items():
+    for (role, basename, _instance_key), values in grouped.items():
         by_path: Dict[str, Dict[str, Any]] = {}
         for item in values:
             by_path.setdefault(artifact_locator(item), item)
@@ -2996,6 +3097,12 @@ def evaluate_requirements(requirements: Iterable[Any]) -> Dict[str, Any]:
 
 def _item_key(value: Any) -> str:
     if isinstance(value, Mapping):
+        instance_key = _input_instance_key(value)
+        if instance_key is not None and value.get("role"):
+            return "input-instance:" + json.dumps(
+                [_field_key(value["role"]), *instance_key],
+                ensure_ascii=False, separators=(",", ":"),
+            )
         if _text(value.get("requirement_id")):
             return "requirement:" + _text(value.get("requirement_id"))
         if _semantic_key(value.get("semantic_key")):
@@ -3345,7 +3452,7 @@ def apply_task_spec_mutation_proposal(
     allowed_fields = {
         "set_goal": {"op", "value", "reason", "supporting_evidence"},
         "upsert_input": {"op", "input", "reason", "supporting_evidence"},
-        "remove_input": {"op", "role", "reason", "supporting_evidence"},
+        "remove_input": {"op", "role", "input_instance", "reason", "supporting_evidence"},
         "upsert_constraint": {"op", "constraint", "reason", "supporting_evidence"},
         "remove_constraint": {
             "op", "requirement_id", "constraint_id", "reason",
@@ -3408,26 +3515,68 @@ def apply_task_spec_mutation_proposal(
             role = _field_key(operation["input"].get("role"))
             if not role:
                 raise ValueError("TASKSPEC_MUTATION_STRUCTURE_INVALID: input role is required")
+            # Validate before removing any existing row. A malformed collection
+            # is a declaration error, never a partially applied replacement.
+            normalized_input = normalize_input_binding(
+                operation["input"], source="consultant_inferred",
+                base_dir=base_dir, project_root=project_root,
+            )
+            role = _field_key(normalized_input["role"])
+            instance_key = _input_instance_key(normalized_input)
+            old_inputs = [deepcopy(dict(item)) for item in staged.get("inputs", []) or [] if isinstance(item, Mapping)]
+            same_role = [item for item in old_inputs if _field_key(item.get("role")) == role]
+            if instance_key is None and (len(same_role) > 1 or any(_input_instance_key(item) is not None for item in same_role)):
+                raise InputBindingContractError(
+                    "INPUT_INSTANCE_SELECTOR_REQUIRED", field_path="$.input.input_instance",
+                    actual={"role": role, "matching_count": len(same_role)},
+                    expected="explicit input_instance selector for this multi-instance role",
+                )
+            legacy_members = [item for item in same_role if _input_instance_key(item) is None]
+            if instance_key is not None and legacy_members:
+                raise InputBindingContractError(
+                    "INPUT_INSTANCE_LEGACY_ROLE_CONFLICT", field_path="$.input.input_instance",
+                    actual={"role": role, "legacy_count": len(legacy_members)},
+                    expected="explicitly remove the existing legacy role binding before declaring grouped members; no implicit migration",
+                )
+            matched_indexes = [index for index, item in enumerate(old_inputs) if
+                _field_key(item.get("role")) == role and _input_instance_key(item) == instance_key]
             staged["inputs"] = [
-                deepcopy(dict(item))
-                for item in staged.get("inputs", []) or []
-                if isinstance(item, Mapping) and _field_key(item.get("role")) != role
+                item for index, item in enumerate(old_inputs) if index not in matched_indexes
             ]
             staged = merge_task_spec(
                 staged,
-                {"inputs": [operation["input"]]},
+                {"inputs": [normalized_input]},
                 source="consultant_inferred",
                 reason="consultant_mutation:upsert_input",
                 increment_revision=False,
             )
+            if matched_indexes:
+                # Identical replay must not reorder unrelated rows or create a
+                # new semantic revision merely by moving a member to the end.
+                replacement = next(item for item in staged["inputs"] if
+                    _field_key(item.get("role")) == role and _input_instance_key(item) == instance_key)
+                staged["inputs"] = [item for item in staged["inputs"] if item is not replacement]
+                staged["inputs"].insert(matched_indexes[0], replacement)
         elif kind == "remove_input":
             role = _field_key(operation.get("role"))
             if not role:
                 raise ValueError("TASKSPEC_MUTATION_STRUCTURE_INVALID: input role is required")
+            if "input_instance" in operation:
+                validate_input_binding_declaration({"input_instance": operation["input_instance"]}, field_path="$")
+            instance_key = _input_instance_key(operation)
+            same_role = [item for item in staged.get("inputs", []) or [] if isinstance(item, Mapping) and _field_key(item.get("role")) == role]
+            if instance_key is None and (len(same_role) > 1 or any(_input_instance_key(item) is not None for item in same_role)):
+                raise InputBindingContractError(
+                    "INPUT_INSTANCE_SELECTOR_REQUIRED", field_path="$.input_instance",
+                    actual={"role": role, "matching_count": len(same_role)},
+                    expected="explicit input_instance selector for this multi-instance role",
+                )
             staged["inputs"] = [
                 deepcopy(dict(item))
                 for item in staged.get("inputs", []) or []
-                if isinstance(item, Mapping) and _field_key(item.get("role")) != role
+                if isinstance(item, Mapping) and not (
+                    _field_key(item.get("role")) == role and _input_instance_key(item) == instance_key
+                )
             ]
             staged["requirements"] = [
                 deepcopy(dict(item))
@@ -3435,6 +3584,7 @@ def apply_task_spec_mutation_proposal(
                 if not (
                     isinstance(item, Mapping)
                     and _semantic_key(item.get("semantic_key")) == f"required_input.{role}"
+                    and not any(_field_key(value.get("role")) == role for value in staged["inputs"])
                 )
             ]
         elif kind == "upsert_constraint":
@@ -5767,7 +5917,7 @@ def format_planner_task_contract_context(spec: Mapping[str, Any] | None) -> str:
                 "artifact_id", "semantic_handle", "direction", "role", "format", "path_policy",
                 "canonical_path", "required_basename", "validation_contract_id", "cardinality",
                 "required", "verified", "status", "source_type", "source_ref", "source_id",
-                "resolution_base", "provenance",
+                "resolution_base", "provenance", "input_instance",
             ),
         ),
         "highlighted_constraints": highlighted_constraints,

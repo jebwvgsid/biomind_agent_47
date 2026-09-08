@@ -722,6 +722,8 @@ def _semantic_artifact_rows(
                 "index": index,
                 "role": str(role),
                 "input_id": str(raw.get("input_id") or stable_id),
+                **({"input_instance": deepcopy(dict(raw["input_instance"]))}
+                   if isinstance(raw.get("input_instance"), Mapping) else {}),
                 "artifact_id": str(raw.get("artifact_id") or ""),
                 "artifact_kind": str(raw.get("artifact_kind") or raw.get("object_kind") or ""),
                 "producer_owner": str(raw.get("producer_owner") or "external_input"),
@@ -737,6 +739,8 @@ def _semantic_artifact_rows(
             "handle": handle,
             "role": str(role),
             "format": raw.get("format") or raw.get("type") or "",
+            **({"input_instance": deepcopy(dict(raw["input_instance"]))}
+               if isinstance(raw.get("input_instance"), Mapping) else {}),
             "required": bool(raw.get("required", True)),
             "verification_status": (
                 "verified"

@@ -2059,9 +2059,10 @@ set_goal, upsert_input, remove_input, upsert_constraint, remove_constraint,
 upsert_output_contract, remove_output_contract, confirm_decision,
 remove_decision, mark_ambiguity.
 
-Mutation shapes use Controller vocabulary:
+Mutation shapes use the public semantic input contract:
 - set_goal: {{"operation":"set_goal","goal":"...","supporting_evidence":["U1"]}}
 - upsert_input: {{"operation":"upsert_input","input":{{"role":"reference_fasta","path":"/data/B.fa","required":true}},"supporting_evidence":["U1"]}}
+- upsert_input (one member of a group): {{"operation":"upsert_input","input":{{"role":"paired_fastq","path":"/data/read1.fq.gz","input_instance":{{"schema_version":1,"group_id":"S1","member_id":"R1"}},"required":true}},"supporting_evidence":["U1"]}}
 - remove_input: {{"operation":"remove_input","role":"reference_fasta","supporting_evidence":["U2"]}}
 - upsert_constraint: {{"operation":"upsert_constraint","constraint":{{"value":"Preserve the user's complete, self-contained natural-language requirement.","strength":"required"}},"supporting_evidence":["U1"]}}
 - remove_constraint: {{"operation":"remove_constraint","requirement_id":"the current TaskSpec row identity","supporting_evidence":["U2"]}}
@@ -2069,6 +2070,20 @@ Mutation shapes use Controller vocabulary:
 - upsert_output_contract (file with Planner-owned filename): {{"operation":"upsert_output_contract","output_contract":{{"output_id":"report","role":"report","artifact_kind":"file","root_ref":"output_dir","path_policy":"planner_materialized","required":true}},"supporting_evidence":["U1"]}}
 - remove_output_contract: {{"operation":"remove_output_contract","role":"report","supporting_evidence":["U2"]}}
 - confirm_decision/remove_decision/mark_ambiguity follow the same typed nested-object pattern.
+
+Input paths are scalar strings: never put a list, object, or stringified list in
+path/canonical_path/resolved_path. For multiple samples or members with the same
+role, submit one upsert_input per file with input_instance schema_version=1,
+group_id and member_id. The role describes the file's purpose; the group/member
+identify its semantic instance. For two paired FASTQ samples, submit four scalar
+records: (S1,R1), (S1,R2), (S2,R1), (S2,R2). Use pairing and sample identities
+explicitly supported by the conversation or evidence; ask when they are unknown,
+and do not infer them from filename patterns. An upsert updates only the same
+(role,group_id,member_id); it does not replace all inputs of that role. A member
+removal uses remove_input with the same role and input_instance object. A role
+with grouped members requires this explicit selector. Legacy single-input roles
+may omit input_instance. Do not supply artifact IDs or semantic handles; the
+system derives their stable identities from the declared instance.
 
 For an open-world requirement, preserve its full self-contained wording in
 `value`. Do not mint a semantic namespace, category, operator, enforcement

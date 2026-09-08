@@ -778,7 +778,7 @@ def project_artifacts_for_provider(
     allowed = (
         "semantic_handle", "role", "direction", "required", "format",
         "artifact_kind", "path", "expected_path", "exists", "readable",
-        "parent_exists", "parent_writable",
+        "parent_exists", "parent_writable", "input_instance",
     )
     return [
         {key: deepcopy(row.get(key)) for key in allowed if row.get(key) not in (None, "")}
@@ -848,7 +848,7 @@ def serialize_action_capability_instructions(
                 for field in (
                     "semantic_handle", "role", "direction", "required", "format",
                     "artifact_kind", "path", "expected_path", "exists", "readable",
-                    "parent_exists", "parent_writable",
+                    "parent_exists", "parent_writable", "input_instance",
                 )
                 if row.get(field) not in (None, "")
             }

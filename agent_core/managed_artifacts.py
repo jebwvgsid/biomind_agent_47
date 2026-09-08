@@ -278,6 +278,8 @@ def _binding_from_row(
         metadata={
             "source_index": index,
             "role": str(role),
+            **({"input_instance": deepcopy(dict(raw["input_instance"]))}
+               if isinstance(raw.get("input_instance"), Mapping) else {}),
             "output_id": str(raw.get("output_id") or "") if direction == "output" else "",
             "source_type": str(raw.get("source_type") or raw.get("source") or ""),
             "source_ref": str(raw.get("source_ref") or raw.get("source_id") or ""),
@@ -789,6 +791,8 @@ def concrete_artifact_provider_view(
             "required": bool(binding.required),
             "format": str(binding.format or ""),
             "artifact_kind": str(binding.artifact_kind or ""),
+            **({"input_instance": deepcopy(dict(binding.metadata["input_instance"]))}
+               if isinstance(binding.metadata.get("input_instance"), Mapping) else {}),
         }
         if binding.direction == "input":
             exists = bool(path and path.exists())
