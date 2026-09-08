@@ -258,7 +258,13 @@ class CommitStep:
                     commit_id,
                     report.report_id,
                 )
-            return {"commit_step_outcome": replay.to_dict()}
+            result = {"commit_step_outcome": replay.to_dict()}
+            # Old receipts do not manufacture new projection authority. New
+            # receipts replay their acknowledged successor, never latest state.
+            projection = prior.get("successor_projection")
+            if isinstance(projection, Mapping):
+                result.update(dict(projection))
+            return result
 
         # A terminal PlanState owns the race regardless of which stale
         # generation the late verifier observed.  Report the semantic terminal
@@ -534,6 +540,8 @@ class CommitStep:
             "schema_version": 1,
             "request_fingerprint": request_fingerprint,
             "outcome": semantic_outcome.to_dict(),
+            "successor_projection": {"current_step_id": successor_step_id,
+                "plan_id": str(candidate.get("plan_id") or ""), "plan_version": str(candidate.get("plan_version") or "")},
         }
         task_state["typed_step_commit_receipts"] = receipts
         semantic_consumptions = dict(
@@ -564,7 +572,12 @@ class CommitStep:
                     "no_partial_mutation": True,
                 },
             )
-        return {"commit_step_outcome": semantic_outcome.to_dict()}
+        return {
+            "commit_step_outcome": semantic_outcome.to_dict(),
+            "current_step_id": successor_step_id,
+            "plan_id": str(candidate.get("plan_id") or ""),
+            "plan_version": str(candidate.get("plan_version") or ""),
+        }
 
 
 def commit_step_harness_error(exc: Exception, state: Mapping[str, Any]) -> CommitStepOutcome:

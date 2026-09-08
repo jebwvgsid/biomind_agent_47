@@ -1280,6 +1280,17 @@ class GenerateInvocationAudit:
     prompt_assembly_succeeded: bool = False
     provider_call_attempted: bool = False
     llm_invoked: bool = False
+    generate_call_id: str = field(default_factory=lambda: "generate-" + uuid.uuid4().hex)
+    scope: Dict[str, Any] = field(default_factory=dict)
+    source_ref: str = ""
+
+    def freeze_scope(self, plan_state: Mapping[str, Any], step_id: str) -> None:
+        scope = candidate_repair_scope(plan_state, task_id=str(plan_state.get("task_id") or ""), step_id=step_id)
+        scope["attempt_id"] = ""  # Generate has no execution attempt of its own.
+        if self.scope and self.scope != scope:
+            raise ValueError("GENERATE_INVOCATION_SCOPE_CHANGED")
+        self.scope = scope
+        self.source_ref = str(plan_state.get("plan_snapshot_ref") or plan_state.get("approved_plan_hash") or "")
 
     def mark_provider_call_attempted(self) -> None:
         if not self.prompt_assembly_succeeded:
@@ -1287,8 +1298,11 @@ class GenerateInvocationAudit:
         self.provider_call_attempted = True
         self.llm_invoked = True
 
-    def to_dict(self) -> Dict[str, bool]:
+    def to_dict(self) -> Dict[str, Any]:
         return {
+            "generate_call_id": self.generate_call_id,
+            "scope": deepcopy(self.scope),
+            "source_ref": self.source_ref,
             "prompt_assembly_started": bool(self.prompt_assembly_started),
             "prompt_assembly_succeeded": bool(self.prompt_assembly_succeeded),
             "provider_call_attempted": bool(self.provider_call_attempted),
@@ -16018,7 +16032,7 @@ class BioAnalystAgent:
             durable_scope = candidate_repair_scope(
                 durable,
                 task_id=task_id,
-                step_id=step_id,
+                step_id=str(durable.get("current_step_id") or ""),
             )
             if durable_scope != requested_scope:
                 primary = {
@@ -40004,9 +40018,7 @@ question. Never guess a scientific or database identity.
         # ════════════════════════════════════════════
         # Node 2: Generate
         # ════════════════════════════════════════════
-        generate_call_audit: Dict[str, GenerateInvocationAudit] = {}
-
-        async def _generate_impl(state: AgentState):
+        async def _generate_impl(state: AgentState, invocation_audit: GenerateInvocationAudit):
             output.print_node_header("generate")
             # A verified Recovery -> Generate handoff is intentionally
             # transcript-free.  Its GenerateSeed and durable task/plan state
@@ -40578,14 +40590,12 @@ question. Never guess a scientific or database identity.
                     "truncated": True,
                 })
             try:
-                invocation_audit = generate_call_audit.setdefault(
-                    str(task_id), GenerateInvocationAudit()
-                )
                 generate_approved_snapshot = load_approved_plan_snapshot(
                     self.data_path,
                     task_id,
                     state=generate_plan_state,
                 )
+                invocation_audit.freeze_scope(generate_plan_state, current_step_id)
                 execution_capability_id = str(
                     generate_step.get("execution_capability_id") or ""
                 ).strip()
@@ -41586,9 +41596,6 @@ question. Never guess a scientific or database identity.
                             recovery_cache_identity["error_fingerprint"],
                             recovery_cache_identity["repair_ordinal"],
                         )
-                    invocation_audit = generate_call_audit.setdefault(
-                        str(task_id), GenerateInvocationAudit()
-                    )
                     invocation_audit.mark_provider_call_attempted()
                     generate_retry_context_loader = None
                     if schema2_generate:
@@ -42586,7 +42593,7 @@ question. Never guess a scientific or database identity.
                 )
                 return self._candidate_admission_rejection_update(
                     task_id=task_id,
-                    plan_state=current,
+                    plan_state=generate_plan_state,
                     approved_plan_snapshot=(
                         generate_approved_snapshot
                         or load_approved_plan_snapshot(
@@ -42661,7 +42668,7 @@ question. Never guess a scientific or database identity.
                 ]
                 repeated_update = self._candidate_admission_rejection_update(
                     task_id=task_id,
-                    plan_state=repair_plan_state,
+                    plan_state=generate_plan_state,
                     approved_plan_snapshot=(
                         generate_approved_snapshot
                         or load_approved_plan_snapshot(
@@ -42816,7 +42823,7 @@ question. Never guess a scientific or database identity.
                     operation_violations = list(operation_admission.violations)
                     rejection_update = self._candidate_admission_rejection_update(
                         task_id=task_id,
-                        plan_state=load_plan_state(self.data_path, task_id),
+                        plan_state=generate_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
                         step_id=current_step_id,
                         candidate=candidate_for_repair,
@@ -42919,7 +42926,7 @@ question. Never guess a scientific or database identity.
                         }
                     rejection_update = self._candidate_admission_rejection_update(
                         task_id=task_id,
-                        plan_state=load_plan_state(self.data_path, task_id),
+                        plan_state=generate_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
                         step_id=current_step_id,
                         candidate=candidate_for_repair,
@@ -43001,7 +43008,7 @@ question. Never guess a scientific or database identity.
                         }
                     rejection_update = self._candidate_admission_rejection_update(
                         task_id=task_id,
-                        plan_state=load_plan_state(self.data_path, task_id),
+                        plan_state=generate_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
                         step_id=current_step_id,
                         candidate=candidate_for_repair,
@@ -43377,7 +43384,7 @@ question. Never guess a scientific or database identity.
                         )
                         rejection_update = self._candidate_admission_rejection_update(
                             task_id=task_id,
-                            plan_state=current_action_plan,
+                            plan_state=generate_plan_state,
                             approved_plan_snapshot=approved_action_snapshot,
                             step_id=current_action_step_id,
                             candidate=candidate_for_repair,
@@ -43588,7 +43595,7 @@ question. Never guess a scientific or database identity.
                     if exc.code == "EXTERNAL_SCRIPT_INVALID":
                         rejection_update = self._candidate_admission_rejection_update(
                             task_id=task_id,
-                            plan_state=load_plan_state(self.data_path, task_id),
+                            plan_state=generate_plan_state,
                             approved_plan_snapshot=generate_approved_snapshot,
                             step_id=current_step_id,
                             candidate=candidate_for_repair,
@@ -44333,7 +44340,7 @@ question. Never guess a scientific or database identity.
                 }
                 rejection_update = self._candidate_admission_rejection_update(
                     task_id=task_id,
-                    plan_state=current_step_state,
+                    plan_state=generate_plan_state,
                     approved_plan_snapshot=generate_approved_snapshot,
                     step_id=format_step_id,
                     candidate=receipt_candidate,
@@ -44481,12 +44488,10 @@ question. Never guess a scientific or database identity.
         async def generate(state: AgentState):
             """Lifecycle-logged boundary around every Generate return path."""
             task_id = str(state.get("task_id") or "unknown")
-            generate_call_audit[task_id] = GenerateInvocationAudit()
+            audit = GenerateInvocationAudit()
 
             def logged_early_exit(result: Dict[str, Any], entry_record: Dict[str, Any]) -> Dict[str, Any]:
-                invocation_audit = generate_call_audit.pop(
-                    task_id, GenerateInvocationAudit()
-                ).to_dict()
+                invocation_audit = audit.to_dict()
                 exit_record = {
                     "event": "generate_exit",
                     "exit_reason": str(result.get("generate_exit_reason") or result.get("next_step") or "guarded_exit"),
@@ -44598,7 +44603,7 @@ question. Never guess a scientific or database identity.
             logger.info("Generate lifecycle: task=%s %s", task_id, json.dumps(entry, ensure_ascii=False, sort_keys=True))
 
             try:
-                result = await _generate_impl(state)
+                result = await _generate_impl(state, audit)
             except GraphBubbleUp:
                 raise
             except asyncio.CancelledError:
@@ -44658,9 +44663,7 @@ question. Never guess a scientific or database identity.
                 else:
                     outcome = "GENERATED_ACTION"
             exit_reason = str(result.get("generate_exit_reason") or result.get("recovery_status") or next_node or outcome)
-            invocation_audit = generate_call_audit.pop(
-                task_id, GenerateInvocationAudit()
-            ).to_dict()
+            invocation_audit = audit.to_dict()
             exit_record = {
                 "event": "generate_exit",
                 "exit_reason": exit_reason,
@@ -44682,11 +44685,15 @@ question. Never guess a scientific or database identity.
             }
             logger.info("Generate lifecycle: task=%s %s", task_id, json.dumps(exit_record, ensure_ascii=False, sort_keys=True))
             result["generate_result"] = outcome
+            result["generate_invocation"] = invocation_audit
+            entry["generate_call_id"] = audit.generate_call_id
+            if audit.scope:
+                entry.update(current_step_id=audit.scope["step_id"], consumed_plan_id=audit.scope["plan_id"],
+                    consumed_plan_version=audit.scope["plan_version"], invocation_source_ref=audit.source_ref)
             result["generate_lifecycle"] = {"enter": entry, "exit": exit_record}
             if outcome == "BLOCKED" and str(result.get("recovery_status") or "") == "INTERNAL_PROTOCOL_ERROR":
                 output.print_ai(
-                    "Generate stopped with an explicit internal protocol failure because required current-step "
-                    "context could not fit the prompt budget. The scientific plan step was not marked blocked."
+                    "Generate stopped before execution: " + str(result.get("reason_code") or exit_reason)
                 )
             return result
 
@@ -52142,7 +52149,7 @@ question. Never guess a scientific or database identity.
                 if not cancellation_committed:
                     self.profiler.flush(task_id)
 
-    async def _finalize_managed_terminal(self, task_id, snapshot, *, exception=None):
+    async def _finalize_managed_terminal(self, task_id, snapshot, *, exception=None, include_stale_diagnostic=False):
         from agent_core.workflow.managed_stop import terminal_boundary, finalize_managed_stop, projection
         values = self._snapshot_values(snapshot)
         try:
@@ -52151,6 +52158,9 @@ question. Never guess a scientific or database identity.
                 return {}
             stop = await finalize_managed_stop(self, task_id, values, boundary)
             result = projection(stop)
+            if stop.get("resolution") == "stale_scope" and include_stale_diagnostic:
+                return {"ignored": True, "source_scope": deepcopy(stop.get("boundary", {}).get("outcome", {}).get("scope", {})),
+                    "reason": "STALE_SCOPE：迟到的停止结果已忽略；没有停止当前任务、调用总结或覆盖报告。"}
         except (asyncio.CancelledError, KeyboardInterrupt):
             raise
         except Exception as error:
@@ -52210,7 +52220,9 @@ question. Never guess a scientific or database identity.
                 from langgraph.errors import GraphBubbleUp
                 if isinstance(exc, GraphBubbleUp):
                     raise
-                typed_terminal = await self._finalize_managed_terminal(task_id, failed_snapshot, exception=exc)
+                typed_terminal = await self._finalize_managed_terminal(task_id, failed_snapshot, exception=exc, include_stale_diagnostic=True)
+                if typed_terminal.get("ignored"):
+                    return InteractiveRunResult(task_id=task_id, status="stale_result", reason=typed_terminal["reason"])
                 return self._finish_managed_terminal_result(task_id, "failed", failed_snapshot, typed_terminal, exception=exc)
             resume_initial = False
             config = {"configurable": {"thread_id": task_id}}
@@ -52226,19 +52238,21 @@ question. Never guess a scientific or database identity.
                         terminal_status,
                         snapshot,
                     )
+                terminal_values = self._snapshot_values(snapshot)
+                typed_terminal = {}
+                if terminal_status not in {"cancelled", "waiting_user", "paused_retryable"} and not getattr(snapshot, "next", ()):
+                    typed_terminal = await self._finalize_managed_terminal(task_id, snapshot, include_stale_diagnostic=True)
+                if typed_terminal.get("ignored"):
+                    return InteractiveRunResult(task_id=task_id, status="stale_result", reason=typed_terminal["reason"])
+                if typed_terminal:
+                    terminal_status = typed_terminal["status"]
+                else:
+                    typed_terminal = self._typed_inspection_terminal_projection(task_id, terminal_values) or self._typed_generate_terminal_projection(terminal_values)
                 if self.state_manager:
                     try:
                         self.state_manager.update_task_status(task_id, terminal_status)
                     except Exception:
                         pass
-                terminal_values = self._snapshot_values(snapshot)
-                typed_terminal = {}
-                if terminal_status not in {"cancelled", "waiting_user", "paused_retryable"} and not getattr(snapshot, "next", ()):
-                    typed_terminal = await self._finalize_managed_terminal(task_id, snapshot)
-                if typed_terminal:
-                    terminal_status = typed_terminal["status"]
-                else:
-                    typed_terminal = self._typed_inspection_terminal_projection(task_id, terminal_values) or self._typed_generate_terminal_projection(terminal_values)
                 if terminal_status in {"failed", "blocked"}:
                     return self._finish_managed_terminal_result(task_id, terminal_status, snapshot, typed_terminal)
                 self.profiler.finish_task(task_id, terminal_status)

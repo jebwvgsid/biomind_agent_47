@@ -254,6 +254,7 @@ class Session1788681718GenerateProductionPathTests(
         *,
         current_step_success_criteria_extra: Sequence[str] = (),
         legacy_renderer_mode: bool = False,
+        expected_outputs=(),
     ) -> dict[str, Any]:
         submission = "Check contig compatibility for the three supplied inputs."
         bootstrap, _is_continuation, _raw_ref = (
@@ -276,6 +277,7 @@ class Session1788681718GenerateProductionPathTests(
                     }
                     for item in self.plan_fixture["task_inputs"]
                 ],
+                **({"expected_outputs": deepcopy(list(expected_outputs))} if expected_outputs else {}),
             },
             source="user_explicit",
             reason="session_1788681718_offline_replay_fixture",

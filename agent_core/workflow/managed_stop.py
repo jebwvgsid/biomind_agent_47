@@ -94,6 +94,8 @@ def _scope(durable, prior_scope=None):
     ref, record, packet = _active_packet(durable)
     if not packet and prior_scope:
         ref, record, packet = _terminal_packet(durable, prior_scope)
+    if packet and str(packet.get("step_id") or "") != str(durable.get("current_step_id") or ""):
+        ref, record, packet = "", {}, {}
     current = next((row for row in _steps(durable) if row.get("step_id") == durable.get("current_step_id")), {})
     return {"task_id": str(durable.get("task_id") or ""), "plan_id": str(durable.get("plan_id") or ""),
         "plan_version": str(durable.get("plan_version") or ""), "step_id": str(durable.get("current_step_id") or ""),
@@ -124,26 +126,58 @@ def build_managed_stop(task_id, values, durable, boundary):
     outcome = boundary["outcome"]
     payload = _mapping(outcome.get("payload") or outcome.get("blocker"))
     _ref, record, packet = _active_packet(durable)
+    observed = _mapping(outcome.get("scope"))
+    fixed_scope = _scope(durable)
+    if durable.get("_load_failed"):
+        fixed_scope.update({k: str(observed.get(k) or "") for k in ("task_id", "plan_id", "plan_version", "step_id", "attempt_id")})
+    if packet and str(packet.get("step_id") or "") != fixed_scope["step_id"]:
+        record, packet = {}, {}
+    primary = _mapping(payload.get("primary_cause"))
+    latest = _mapping(payload.get("latest_failure") or primary.get("latest_failure"))
     held = _mapping(payload.get("inspection_stop"))
     if held:
+        fixed_scope = _scope(durable, held.get("scope"))
         value = deepcopy(held)
     else:
         source = _mapping(record.get("failure_source"))
-        seed = {"failure_packet": packet, "seed_id": "recovery-seed-" + str(record.get("source_fingerprint") or ""),
+        seed_packet = packet or {**fixed_scope, "attempt_ref": fixed_scope["attempt_id"],
+            "failure_type": "generated_action_contract_error" if boundary["node"] == "generate" else str(outcome.get("type")),
+            "error_code": primary.get("error_code") or payload.get("error_code") or payload.get("reason_code"),
+            "summary": primary.get("message") or primary.get("summary") or outcome.get("summary")}
+        seed = {"failure_packet": seed_packet, "seed_id": "recovery-seed-" + str(record.get("source_fingerprint") or ""),
                 "plan_spec_ref": {"plan_id": durable.get("plan_id"), "plan_version": durable.get("plan_version")}}
         episode = _mapping(payload.get("recovery_episode_facts"))
         primary = _mapping(payload.get("primary_cause"))
-        episode.setdefault("terminal_error", {"code": primary.get("error_code") or payload.get("error_code") or payload.get("reason_code") or payload.get("violation_code") or boundary["node"].upper() + "_" + str(outcome.get("type")).upper(),
+        episode.setdefault("terminal_error", {"code": payload.get("error_code") or payload.get("reason_code") or payload.get("violation_code") or boundary["node"].upper() + "_" + str(outcome.get("type")).upper(),
             "detail": payload.get("detail") or outcome.get("summary")})
         value = build_inspection_stop(seed=seed, durable=durable, source=source or outcome, episode=episode,
             archive_ref=str(payload.get("recovery_archive_ref") or ""))
-    value.update(producer=PRODUCER, status=boundary["status"], scope=_scope(durable, held.get("scope")), authority=_authority(durable),
+    value.update(producer=PRODUCER, status=boundary["status"], scope=fixed_scope, authority=_authority(durable),
         boundary=deepcopy(boundary), summary_status="IMPLEMENTED", summary_skip_reason="", summary_llm_calls=0)
     value["scope"]["task_id"] = task_id
     value["stage"] = "recovery.inspection" if value["origin"].get("failure_type") == "inspection_required" else str(boundary["node"])
     value["origin"]["source_stage"] = {"verification_outcome":"supervisor", "completion_gate_outcome":"supervisor"}.get(str(record.get("source_kind")), str(record.get("source_kind") or boundary["node"]).removesuffix("_outcome"))
     if not packet:
-        value["origin"].update(error_code=value["stop_reason"]["error_code"], summary=_safe(outcome.get("summary")))
+        value["origin"].update(error_code=primary.get("error_code") or value["stop_reason"]["error_code"],
+            summary=_safe(primary.get("message") or primary.get("summary") or outcome.get("summary")))
+    value["primary_cause"] = deepcopy(primary or value["origin"])
+    value["latest_failure"] = deepcopy(latest)
+    value["stop_reason"].update(termination_reason=str(payload.get("termination_reason") or ""),
+        budget_receipt=deepcopy(_mapping(payload.get("budget_receipt"))))
+    if boundary["node"] == "generate" and not fixed_scope["attempt_id"]:
+        value["execution"].update(step_id=fixed_scope["step_id"], attempt_id="", executed=False, returncode=None,
+            deterministic_passed=False, validation_status="not_performed", reviewer_disposition="not_performed",
+            committed=False, step_status=next((row.get("status") for row in _steps(durable) if row.get("step_id") == fixed_scope["step_id"]), "unknown"))
+    task = _mapping(durable.get("task_state"))
+    consumptions = _mapping(task.get("semantic_completion_consumptions"))
+    value["prior_completed_work"] = []
+    for receipt in _mapping(task.get("typed_step_commit_receipts")).values():
+        committed = _mapping(_mapping(receipt).get("outcome"))
+        facts = _mapping(committed.get("payload"))
+        consumed = _mapping(consumptions.get(facts.get("semantic_consumption_ref")))
+        evidence_scope = _mapping(consumed.get("scope"))
+        if facts.get("completed_step_id") != fixed_scope["step_id"] and facts.get("commit_id") == consumed.get("commit_id") and all(str(evidence_scope.get(k) or "") == fixed_scope[k] for k in ("task_id", "plan_id", "plan_version")):
+            value["prior_completed_work"].append({"step_id": facts["completed_step_id"], "commit_id": facts["commit_id"], "receipt": facts.get("receipt"), "committed": True})
     # Read held execution evidence from this invocation; never read script files.
     execution = _mapping(_mapping(values.get("execute_outcome")).get("payload"))
     raw = _mapping(execution.get("execution_record"))
@@ -178,6 +212,13 @@ def explanation(stop):
     execution = _mapping(stop.get("execution"))
     for key in ("stdout", "stderr"):
         if execution.get(key): parts.append(key + "（脚本输出，未经独立复核）：" + _safe(execution[key], 2000))
+    if stop.get("latest_failure"):
+        latest = stop["latest_failure"]
+        parts.append("末次候选错误：" + str(latest.get("error_code") or "unknown") + "；" + _safe(latest.get("message")))
+    if stop.get("prior_completed_work"):
+        parts.append("已有正式提交：" + "；".join(row["step_id"] + " (" + row["receipt"] + ")" for row in stop["prior_completed_work"]))
+    if _mapping(stop.get("stop_reason")).get("termination_reason"):
+        parts.append("停止策略：" + stop["stop_reason"]["termination_reason"] + "；修正记录：" + json.dumps(stop["stop_reason"].get("budget_receipt", {}), ensure_ascii=False))
     if stop.get("runtime"):
         parts.append("Runtime 事实：" + _safe(json.dumps(stop["runtime"], ensure_ascii=False), 4000))
     if stop.get("summary_text"):
@@ -190,6 +231,8 @@ def projection(stop):
     if not stop or stop.get("resolution") == "stale_scope": return {}
     d = {"error_code": stop["stop_reason"]["error_code"], "stage": stop.get("stage", "outer"), "error_owner": stop.get("stage", "outer").split(".")[0],
          "reason": explanation(stop), "detail": explanation(stop), "stop_id": stop["stop_id"], "origin": stop["origin"],
+         "primary_cause": stop.get("primary_cause", {}), "latest_failure": stop.get("latest_failure", {}),
+         "prior_completed_work": stop.get("prior_completed_work", []),
          "execution": stop["execution"], "inspection_failures": stop.get("inspection_failures", []), "stop_reason": stop["stop_reason"],
          "report_paths": stop["report_paths"], "report_receipts": stop["report_receipts"], "persistence_status": stop["persistence_status"],
          "summary_status": stop["summary_status"], "summary_llm_calls": stop["summary_llm_calls"],
@@ -220,15 +263,21 @@ def _save(data_path, value, *, loader, saver, claim=False):
 
 async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load_plan_state, saver=save_plan_state):
     try: durable = loader(agent.data_path, task_id)
-    except Exception: durable = {"task_id": task_id}
+    except Exception: durable = {"task_id": task_id, "_load_failed": True}
     prior = current_managed_stop(durable)
     value = build_managed_stop(task_id, values, durable, boundary)
+    if durable.get("_load_failed"):
+        value.update(persistence_status="unconfirmed", summary_status="SKIPPED", summary_skip_reason="DURABLE_SCOPE_UNCONFIRMED")
+        _secondary(value, "stop.load", "MANAGED_STOP_LOAD_FAILED")
+        value["explanation"] = explanation(value)
+        return value
     if _mapping(durable.get("task_state")).get("status") in {"completed", "cancelled"}:
         value.update(resolution="stale_scope", persistence_status="not_applied", summary_status="SKIPPED", summary_skip_reason="CURRENT_TASK_TERMINAL")
         return value
     observed_scope = _mapping(boundary.get("outcome", {}).get("scope"))
-    for key in ("task_id", "plan_id", "plan_version", "step_id"):
-        if observed_scope.get(key) and str(observed_scope[key]) != value["scope"][key]:
+    for key in ("task_id", "plan_id", "plan_version", "step_id", "task_revision", "plan_revision"):
+        current = value["scope"].get(key, value["authority"].get(key))
+        if observed_scope.get(key) and str(observed_scope[key]) != str(current):
             value.update(resolution="stale_scope", persistence_status="not_applied", summary_status="SKIPPED", summary_skip_reason="STALE_SCOPE")
             return value
     if prior:
@@ -273,7 +322,7 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
     elif policy.get("requests_allowed", True) is not True: skip = "REQUESTS_NOT_PERMITTED"
     elif float(policy.get("deadline", time.time() + 60)) - time.time() < float(policy.get("timeout_seconds", 30)): skip = "GLOBAL_DEADLINE_INSUFFICIENT"
     # Conservative reservation (UTF-8 byte bound plus maximum completion).
-    frozen = {k: value[k] for k in ("origin", "stop_reason", "execution", "inspection_failures", "stages")}
+    frozen = {k: value[k] for k in ("origin", "primary_cause", "latest_failure", "stop_reason", "execution", "inspection_failures", "stages", "prior_completed_work")}
     frozen["execution"] = {k:v for k,v in frozen["execution"].items() if k != "command_body"}
     frozen["base"] = explanation(value)
     wire = json.dumps(frozen, ensure_ascii=False)
@@ -333,7 +382,7 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
         for stage in value["stages"]:
             current = stage["step_id"] == value["scope"]["step_id"]
             observed = ("failed" if execution.get("returncode") not in (None, 0) else "succeeded" if execution.get("returncode") == 0 else "not_started_or_unknown") if current else ("completed" if stage["status"] in {"done", "passed", "completed"} else "not_started_or_unknown")
-            rows.append("\t".join((stage["step_id"],stage["status"],observed,str(bool(execution.get("committed"))) if current else "unknown", "formal verification/commit remain authoritative")))
+            rows.append("\t".join((stage["step_id"],stage["status"],observed,str(bool(execution.get("committed"))) if current else str(any(row["step_id"] == stage["step_id"] for row in value.get("prior_completed_work", []))), "formal verification/commit remain authoritative")))
         rows.append("run\t" + value["status"] + "\tstopped\tfalse\t" + value["stop_reason"]["error_code"])
         bodies["stage_status.tsv"] = "\n".join(rows) + "\n"
         bodies["report.md"] = "# BioMind managed run stop\n\nStop identity: " + value["stop_id"] + "\n\n" + explanation(value) + "\n"

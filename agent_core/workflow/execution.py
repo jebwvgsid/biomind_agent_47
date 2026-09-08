@@ -170,6 +170,10 @@ def _internal_generate_failure_payload(
     }
     if primary:
         payload["primary_cause"] = primary
+        payload["latest_failure"] = dict(primary.get("latest_failure") or primary)
+    payload["termination_reason"] = str(value.get("termination_reason") or "")
+    event = dict(value.get("candidate_rejection_event") or {})
+    payload["budget_receipt"] = {k: event[k] for k in ("repair_ordinal", "repair_limit", "event_id", "scope") if k in event}
     if secondary:
         payload["secondary_causes"] = secondary
     return payload
@@ -589,7 +593,20 @@ class TypedGenerate:
             raise TypeError("Generate must return a mapping")
         value = dict(result)
         action = dict(value.get("pending_action") or {}) if isinstance(value.get("pending_action"), Mapping) else {}
-        scope = _scope(state, action=action)
+        invocation = dict(value.get("generate_invocation") or {})
+        invocation_scope = dict(invocation.get("scope") or {})
+        scope = invocation_scope or _scope(state, action=action)
+        conflicts = {}
+        for label, other in (("action", action), ("receipt", dict(value.get("candidate_repair_receipt") or {}).get("scope") or {}),
+                             ("rejection", dict(value.get("candidate_rejection_event") or {}).get("scope") or {})):
+            for key in ("task_id", "task_revision", "plan_id", "plan_version", "plan_revision", "step_id"):
+                if invocation_scope and other.get(key) not in (None, "") and str(other[key]) != str(invocation_scope.get(key, "")):
+                    conflicts[label + "." + key] = {"expected": invocation_scope.get(key), "observed": other[key]}
+        if conflicts:
+            return {"generate_outcome": GenerateOutcome(schema_version=1, type="internal_protocol_error",
+                summary="Generate action/receipt disagrees with its fixed invocation scope.", scope=scope,
+                payload={"error_code": "GENERATE_INVOCATION_SCOPE_MISMATCH", "conflicts": conflicts,
+                         "generate_invocation": invocation, "execution_status": "not_started"}).to_dict()}
         exit_reason = str(value.get("generate_exit_reason") or "").strip().lower()
         generate_result = str(value.get("generate_result") or "").strip().upper()
         evidence_refs = tuple(
@@ -1111,6 +1128,8 @@ class TypedGenerate:
             }
             summary = "Generate returned an ambiguous legacy continuation under schema 2."
 
+        if invocation_scope:
+            payload["generate_invocation"] = invocation
         outcome = GenerateOutcome(
             schema_version=1,
             type=outcome_type,
