@@ -183,6 +183,7 @@ def _execution(durable, source, scope):
     if script == "[redacted]" or Path(script).name in {"启动.sh", "startup.py"}:
         script = ""
     return {"attempt_id": scope["attempt_id"], "step_id": scope["step_id"], "executed": executed,
+        "purpose": _code(attempt.get("purpose") or attempt.get("execution_purpose"), "UNKNOWN"),
         "returncode": rc, "deterministic_passed": deterministic,
         "validation_status": _code(process.get("validation_status") or validation.get("status"), "unknown"),
         "reviewer_disposition": _code(report.get("effective_disposition"), "inspection_required"),
@@ -201,6 +202,26 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
     error = _mapping(episode.get("terminal_error"))
     audit = _mapping(episode.get("audit"))
     receipts = episode.get("_observation_receipts") or _mapping(episode.get("_resume_state")).get("observation_receipts") or []
+    # A diagnostic result continues the same incident. Retain the original
+    # causal failure and prior tool errors from its adopted durable receipt.
+    origin_packet = packet
+    original_source_payload = payload
+    task = _mapping(durable.get("task_state"))
+    parent_ref = str(payload.get("causal_parent_packet_ref") or "")
+    seen = set()
+    while parent_ref and parent_ref not in seen:
+        seen.add(parent_ref)
+        parent_record = _mapping(_mapping(task.get("causal_failure_packets")).get(parent_ref))
+        parent = _mapping(parent_record.get("failure_packet"))
+        if not parent or parent.get("incident_id") != packet.get("incident_id") or parent.get("step_id") != packet.get("step_id"):
+            break
+        origin_packet = parent
+        original_source_payload = _mapping(_mapping(parent_record.get("failure_source")).get("payload"))
+        parent_ref = str(parent.get("supersedes_packet_ref") or "")
+    decision = str(payload.get("recovery_decision_id") or "")
+    parent_receipt = _mapping(_mapping(task.get("typed_recovery_receipts")).get(decision))
+    if parent_receipt.get("incident_id") == packet.get("incident_id") and payload.get("causal_parent_packet_ref") == parent_receipt.get("failure_packet_ref"):
+        receipts = [*parent_receipt.get("causal_observation_receipts", []), *receipts]
     failures = []
     for index, raw in enumerate(receipts):
         receipt = _mapping(raw)
@@ -211,14 +232,20 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
             "tool": _code(receipt.get("tool")), "evidence_ref": _safe(receipt.get("source_ref"), 800),
             "error_code": _code(issue.get("code"), "INSPECTION_TOOL_FAILED"),
             "detail": _safe(issue.get("detail")), "stage": "recovery.inspection"})
-    origin = {"source_stage": {"execute_outcome": "execute", "verification_outcome": "supervisor", "completion_gate_outcome": "supervisor", "commit_step_outcome": "commit_step", "install_outcome": "install_subagent"}.get(str(packet.get("source") or ""), "recovery"), "source_owner": _code(packet.get("failure_owner"), "semantic_review"),
-        "failure_id": _code(packet.get("failure_id")), "failure_type": _code(packet.get("failure_type")),
-        "error_code": _code(packet.get("error_code"), "VERIFICATION_FAILED"),
-        "summary": _safe(packet.get("summary")),
-        "concerns": [_safe(item, 1800) for item in payload.get("contract_violations") or []],
-        "evidence_refs": [_safe(item, 800) for item in packet.get("evidence_refs") or []]}
+    origin = {"source_stage": {"execute_outcome": "execute", "verification_outcome": "supervisor", "completion_gate_outcome": "supervisor", "commit_step_outcome": "commit_step", "install_outcome": "install_subagent", "install_subagent_outcome": "install_subagent"}.get(str(origin_packet.get("source") or ""), "recovery"), "source_owner": _code(origin_packet.get("failure_owner"), "semantic_review"),
+        "failure_id": _code(origin_packet.get("failure_id")), "failure_type": _code(origin_packet.get("failure_type")),
+        "error_code": _code(origin_packet.get("error_code"), "VERIFICATION_FAILED"),
+        "summary": _safe(origin_packet.get("summary")),
+        "concerns": [_safe(item, 1800) for item in original_source_payload.get("contract_violations") or []],
+        "evidence_refs": [_safe(item, 800) for item in origin_packet.get("evidence_refs") or []]}
+    origin_codes = [row.get("metadata", {}).get("return_code")
+        for row in origin_packet.get("diagnostic_facts") or []
+        if isinstance(row, Mapping) and row.get("kind") == "return_code"]
+    origin["returncode"] = next((value for value in origin_codes if type(value) is int), None)
+    origin["attempt_id"] = str(origin_packet.get("attempt_ref") or "")
+    origin["process_fact_scope"] = "original causal execution; no scientific validity inferred"
     publication_failures = [{"error_code": _code(row.get("code"), "INSPECTION_PUBLICATION_FAILED"),
-        "detail": _safe(row.get("detail")), "stage": "supervisor.inspection_publication",
+        "detail": _safe(row.get("detail")), "stage": _code(row.get("stage"), "recovery.inspection_publication"),
         "handle": _safe(row.get("handle"), 800), "source_object_id": _safe(row.get("source_object_id"), 800)}
         for row in payload.get("inspection_publication_failures") or [] if isinstance(row, Mapping)]
     if not publication_failures:
@@ -241,6 +268,7 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
             for row in receipts if isinstance(row, Mapping) and not row.get("error")],
         "task_summary": _safe(task_spec.get("goal") or task_spec.get("question") or task_spec.get("objective") or task_spec.get("user_request"), 1800),
         "stop_reason": {"error_code": reason, "detail": _safe(error.get("detail")),
+            "failure_stage": _code(error.get("failure_stage")),
             "no_progress_rounds": int(audit.get("no_progress_rounds") or 0),
             "model_turns": int(audit.get("turn_count") or 0), "tool_calls": int(audit.get("tool_call_count") or 0)},
         "resolution": "unresolved", "automatic_actions_stopped": True,

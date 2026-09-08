@@ -17,7 +17,7 @@ from agent_core.state_contract_store import StateContractStore, StateContractInt
 INSPECTION_BACKEND = "state_contract_inspection"
 INSPECTION_OBJECT_KINDS = frozenset({
     "validation", "completion_report", "semantic_decision", "step_attempt", "execution",
-    "action", "script", "task_context", "plan", "diagnostic", "parser_receipt",
+    "action", "script", "task_context", "plan", "diagnostic", "parser_receipt", "causal_history", "generation_context",
 })
 INSPECTION_SCOPE_FIELDS = (
     "task_id", "plan_id", "plan_version", "step_id", "attempt_id", "episode_id",
@@ -153,7 +153,15 @@ def assert_current_inspection_scope(
         if require_episode and active_attempt != attempt_id:
             raise InspectionEvidenceError("INSPECTION_REF_SCOPE_MISMATCH", "attempt_id")
         if not require_episode and attempts and any(value != attempt_id for value in attempts):
-            raise InspectionEvidenceError("INSPECTION_REF_SCOPE_MISMATCH", "attempt_id")
+            recovery = task.get("recovery_state") or {}
+            active = recovery.get("active_recovery") or {}
+            receipt = (task.get("typed_recovery_receipts") or {}).get(active.get("recovery_id")) or {}
+            envelope = receipt.get("execution_envelope") or {}
+            if ((receipt.get("directive") or {}).get("action") != "run_diagnostic_probe"
+                    or envelope.get("action_id") != attempt.get("action_id")
+                    or envelope.get("step_id") != scope["step_id"]
+                    or active.get("envelope_id") != receipt.get("execution_envelope_digest")):
+                raise InspectionEvidenceError("INSPECTION_REF_SCOPE_MISMATCH", "attempt_id")
     if (not step or str(step.get("status") or "") in {"done", "passed", "completed", "cancelled", "skipped"}
             or str(task.get("status") or "") in {"completed", "cancelled"}):
         raise InspectionEvidenceError("INSPECTION_EPISODE_INACTIVE")
@@ -203,7 +211,14 @@ def prepare_inspection_evidence(
     def scoped(**value: Any) -> dict[str, Any]:
         return {"schema_version": 1, "scope": scope, **value}
 
-    execution = dict(payload.get("execution_record") or state.get("execution_evidence") or {})
+    # TypedExecute deliberately clears pending_action and exposes the accepted
+    # record through ExecuteOutcome. A later Supervisor rejection does not
+    # duplicate that record in its own payload. Preserve this real graph seam
+    # before falling back to the smaller provenance attempt projection.
+    execute_payload = dict((state.get("execute_outcome") or {}).get("payload") or {})
+    execution = dict(payload.get("execution_record") or payload.get("diagnostic_record")
+        or state.get("execution_evidence") or execute_payload.get("execution_record")
+        or execute_payload.get("diagnostic_record") or {})
     if not execution and scope["attempt_id"]:
         execution = dict(((durable.get("provenance_state") or {}).get("attempts") or {}).get(scope["attempt_id"]) or {})
     execution_error = None
@@ -237,12 +252,20 @@ def prepare_inspection_evidence(
         verification_status=str(step.get("status") or "unknown"), commit_status="not_committed",
     )
     pending = dict(state.get("pending_action") or {})
+    if not pending and execution_error is None and scope["attempt_id"]:
+        provenance = durable.get("provenance_state") or {}
+        attempt = (provenance.get("attempts") or {}).get(scope["attempt_id"]) or {}
+        action_id = str(attempt.get("action_id") or "")
+        if action_id and action_id == str(execution.get("action_id") or ""):
+            accepted = (provenance.get("actions") or {}).get(action_id) or {}
+            pending = dict(accepted.get("normalized_action") or {})
     action = {key: deepcopy(pending[key]) for key in (
         "action_id", "step_id", "plan_id", "plan_version", "action_kind", "command_role", "purpose",
         "expected_step_effect", "success_checks", "inputs", "outputs", "generated_script", "approved_script",
         "generation_provenance", "recovery_execution_envelope",
     ) if key in pending}
-    if action and (str(action.get("step_id") or "") != scope["step_id"] or
+    if action and (any(str(action.get(key) or "") != scope[key]
+                      for key in ("step_id", "plan_id", "plan_version")) or
                    (execution.get("action_id") and action.get("action_id") != execution.get("action_id"))):
         action = {}
     from agent_core.plan_tracker import canonical_task_spec_for_state
@@ -250,6 +273,10 @@ def prepare_inspection_evidence(
                      accepted_consultant_handoff=deepcopy(task.get("accepted_consultant_handoff") or {}))
     scripts = {key: redact_text(str(execution[key])) for key in ("code", "generated_code", "execution_wrapper")
                if key in execution and execution_error is None}
+    if execution_error is None and execution.get("script_identities"):
+        scripts["identities"] = deepcopy(execution["script_identities"])
+    if execution_error is None and execution.get("argv"):
+        scripts["argv"] = deepcopy(execution["argv"])
     scripts["availability"] = {key: "recorded" if key in scripts else "HISTORICAL_BODY_UNAVAILABLE"
                                for key in ("code", "generated_code", "execution_wrapper")}
     objects = [
@@ -266,8 +293,94 @@ def prepare_inspection_evidence(
         ("parser_receipt", scope["attempt_id"] or "not_executed", scoped(parser_receipt=(facts.get("effect_evidence") or {}).get("parser_receipt") or {},
             availability="recorded" if (facts.get("effect_evidence") or {}).get("parser_receipt") else "HISTORICAL_BODY_UNAVAILABLE")),
     ]
+    # Current Generate's semantic input/candidate/feedback can be inspected on
+    # demand. Reuse its immutable message snapshots; do not copy System prompts
+    # or claim that a reconstructed episode is an exact historical wire call.
+    raw_episode = task.get("generate_context_episode")
+    if isinstance(raw_episode, Mapping) and raw_episode:
+        try:
+            from agent_core.workflow.generate_handoff import GenerateReasoningEpisode
+            episode = GenerateReasoningEpisode.from_mapping(raw_episode)
+            basis = episode.basis
+            from agent_core.plan_tracker import load_approved_plan_snapshot, semantic_plan_hash
+            from agent_core.task_spec import task_spec_revision, task_semantic_hash
+            approved = load_approved_plan_snapshot(data_path, scope["task_id"], state=durable)
+            task_spec = canonical_task_spec_for_state(durable)
+            expected_task = str(task_spec_revision(task_spec)) + ":" + task_semantic_hash(task_spec)
+            expected_plan = str(durable.get("plan_revision") or 0) + ":sha256:" + semantic_plan_hash(approved or durable)
+            selected_refs = (task.get("skill_access_state") or durable.get("skill_access_state") or {}).get("selected_skill_refs") or []
+            selected_revision = "sha256:" + hashlib.sha256(_canonical(selected_refs).encode()).hexdigest()
+            if (basis.task_id != scope["task_id"] or basis.plan_id != scope["plan_id"]
+                    or basis.step_id != scope["step_id"]
+                    or basis.plan_revision != expected_plan
+                    or basis.task_revision != expected_task
+                    or basis.selected_skill_revision != selected_revision):
+                raise InspectionEvidenceError("GENERATE_CONTEXT_SCOPE_MISMATCH", "current invocation basis")
+            def readable_message(message):
+                # Preserve exact content with reversible bounded chunks, so a
+                # long escaped JSON string does not exceed the line reader's
+                # budget and become impossible to paginate.
+                value = deepcopy(message.to_dict())
+                content = value["payload"].pop("content", "")
+                text = _canonical(content)
+                value["content_representation"] = "join chunks then JSON decode"
+                value["content_json_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+                value["content_chunks"] = [text[i:i + 2000] for i in range(0, len(text), 2000)]
+                return value
+            context_body = scoped(
+                representation="durable Generate episode semantic messages",
+                coverage={"system_prompt": "not_exposed", "provider_wire": "not_reconstructed",
+                    "earlier_epochs": "see original archive reference"},
+                reasoning_episode_id=episode.reasoning_episode_id,
+                context_epoch=episode.context_epoch,
+                previous_context_archive_ref=episode.previous_context_archive_ref,
+                seed=readable_message(episode.seed_message),
+                inherited_materials=[readable_message(item) for item in episode.inherited_materials
+                    if item.payload.get("type") != "system"],
+                candidate_and_feedback=[{"event_id": item.event_id, "event_kind": item.event_kind,
+                    "message": readable_message(item.message)} for item in episode.local_events
+                    if item.message.payload.get("type") != "system"],
+            )
+        except (ValueError, TypeError) as exc:
+            context_body = scoped(availability="UNAVAILABLE",
+                unavailable_reason=str(getattr(exc, "code", "") or "GENERATE_CONTEXT_INVALID"))
+        objects.append(("generation_context", str(raw_episode.get("reasoning_episode_id") or "current"), context_body))
     if payload.get("diagnostic_record"):
         objects.append(("diagnostic", scope["attempt_id"], scoped(diagnostic_record=deepcopy(payload["diagnostic_record"]))))
+    parent_ref = str(payload.get("causal_parent_packet_ref") or "")
+    if parent_ref:
+        # Publication is still under the parent CAS. Read only the current
+        # registered parent objects, verifying their original hashes/scopes.
+        decision = str(payload.get("recovery_decision_id") or "")
+        receipt = (task.get("typed_recovery_receipts") or {}).get(decision) or {}
+        parent = (task.get("causal_failure_packets") or {}).get(parent_ref) or {}
+        consumed = (task.get("consumed_failure_packet_refs") or {}).get(parent_ref) or {}
+        if (str(task.get("active_failure_packet_ref") or "") not in {"", parent_ref}
+                or (task.get("causal_failure_incident_heads") or {}).get(packet.incident_id) != parent_ref
+                or consumed.get("decision_id") != decision
+                or receipt.get("failure_packet_ref") != parent_ref
+                or receipt.get("incident_id") != packet.incident_id
+                or (receipt.get("directive") or {}).get("action") != "run_diagnostic_probe"):
+            raise InspectionEvidenceError("DIAGNOSTIC_PARENT_SCOPE_STALE", parent_ref)
+        inherited = []
+        for ref in (parent.get("inspection_publication") or {}).get("refs") or ():
+            entry = (task.get("inspection_ref_registry") or {}).get(ref) or {}
+            kind = (entry.get("scope") or {}).get("object_kind")
+            if kind not in {"execution", "script", "validation", "completion_report", "semantic_decision", "parser_receipt", "causal_history"}:
+                continue
+            row = {"ref_id": ref, "object_kind": kind, "source_digest": entry.get("digest"), "source_scope": entry.get("scope")}
+            try:
+                reader = InspectionObjectReader(data_path, scope={k: entry["scope"].get(k, "") for k in INSPECTION_SCOPE_FIELDS})
+                row["body"] = reader.read_causal_parent_body(entry, entry.get("locator") or {},
+                    durable=durable, parent_ref=parent_ref, decision_id=decision)
+            except (ValueError, OSError) as exc:
+                row["unavailable_reason"] = str(getattr(exc, "code", "") or "PARENT_EVIDENCE_READ_FAILED")
+            inherited.append(row)
+        objects.append(("causal_history", parent_ref, scoped(
+            original_failure=deepcopy(parent.get("failure_packet") or {}),
+            parent_evidence=inherited,
+            prior_tool_results=deepcopy(receipt.get("causal_observation_receipts") or []),
+            recovery_archive_ref=str(receipt.get("recovery_archive_ref") or ""))))
     store = StateContractStore(data_path, scope["task_id"])
     entries: dict[str, dict[str, Any]] = {}
     for kind, source_id, raw_body in objects:
@@ -277,6 +390,8 @@ def prepare_inspection_evidence(
             if kind in {"execution", "script", "parser_receipt"} and execution_error is not None:
                 raise execution_error
             if not body:
+                if kind in {"validation", "completion_report", "semantic_decision"} and "verification" not in str(source.get("type") or "") and str(source.get("type") or "") in {"execution_failed", "pre_execution_rejected", "diagnostic_completed", "install_failed", "installation_failed"}:
+                    raise InspectionEvidenceError("NOT_APPLICABLE_NOT_PRODUCED", kind)
                 raise InspectionEvidenceError("HISTORICAL_BODY_UNAVAILABLE", kind)
             _assert_body_scope(kind, body, scope)
             wrapper = {
@@ -370,6 +485,39 @@ class InspectionObjectReader:
     def read_body(self, entry: Mapping[str, Any], locator: Mapping[str, Any]) -> dict[str, Any]:
         """Read a size-bounded, immutable body after current durable authorization."""
         validate_inspection_descriptor(entry, self.scope)
+        self._assert_current_authority(entry, locator)
+        return self._read_verified_body(entry, locator)
+
+    def read_causal_parent_body(self, entry, locator, *, durable, parent_ref, decision_id):
+        """Publisher-only inheritance from the exact consumed diagnostic parent.
+
+        Tools call read_body and cannot supply this grant. The binder's final
+        CAS publishes these bodies under the new attempt's authorized scope.
+        """
+        from agent_core.workflow.recovery_projection import _failure_packet_from_record
+        task = durable.get("task_state") or {}
+        receipt = (task.get("typed_recovery_receipts") or {}).get(decision_id) or {}
+        record = (task.get("causal_failure_packets") or {}).get(parent_ref) or {}
+        parent = _failure_packet_from_record(parent_ref, record)
+        consumed = (task.get("consumed_failure_packet_refs") or {}).get(parent_ref) or {}
+        registered = (task.get("inspection_ref_registry") or {}).get(entry.get("ref_id"))
+        expected = inspection_scope(parent, "recovery-seed-" + str(record.get("source_fingerprint") or ""))
+        if (receipt.get("failure_packet_ref") != parent_ref
+                or (receipt.get("directive") or {}).get("action") != "run_diagnostic_probe"
+                or consumed.get("decision_id") != decision_id
+                or (task.get("causal_failure_incident_heads") or {}).get(parent.incident_id) != parent_ref
+                or str(task.get("active_failure_packet_ref") or "") not in {"", parent_ref}
+                or expected != self.scope or registered != entry or entry.get("locator") != locator
+                or entry.get("ref_id") not in (record.get("inspection_publication") or {}).get("refs", [])
+                or str(durable.get("task_id")) != parent.task_id
+                or str(durable.get("plan_id")) != parent.plan_spec_ref.plan_id
+                or str(durable.get("plan_version")) != parent.plan_spec_ref.plan_version
+                or str(durable.get("current_step_id")) != parent.step_id):
+            raise InspectionEvidenceError("DIAGNOSTIC_PARENT_SCOPE_STALE", parent_ref)
+        return self._read_verified_body(entry, locator)
+
+    def _read_verified_body(self, entry, locator):
+        validate_inspection_descriptor(entry, self.scope)
         meta = dict(entry["scope"])
         if not meta.get("readable"):
             raise InspectionEvidenceError("INSPECTION_REF_NOT_RESOLVABLE", str(meta.get("unavailable_reason") or "BODY_UNAVAILABLE"))
@@ -383,7 +531,6 @@ class InspectionObjectReader:
             raise InspectionEvidenceError("INSPECTION_BACKEND_LOCATOR_INVALID") from exc
         if entry.get("digest") != "sha256:" + digest or entry.get("ref_id") != _handle(self.scope, kind, str(meta.get("source_object_id") or ""), "sha256:" + digest):
             raise InspectionEvidenceError("INSPECTION_OBJECT_IDENTITY_MISMATCH")
-        self._assert_current_authority(entry, locator)
         path = self.store.object_root / (digest + ".json")
         # The generic store verifies the final file; also deny symlinked parent
         # directories here, before any content is read through the accessor.
@@ -422,7 +569,23 @@ class InspectionObjectReader:
                 raise ValueError()
         except (TypeError, ValueError) as exc:
             raise InspectionEvidenceError("RECOVERY_TOOL_ARGUMENT_INVALID", "inspection line range") from exc
-        lines = json.dumps(body, ensure_ascii=False, sort_keys=True, indent=2).splitlines()
+        # Only structural JSON LF is a page boundary. splitlines() also splits
+        # valid U+2028/U+0085 string contents and would corrupt reconstructed JSON.
+        lines = json.dumps(body, ensure_ascii=False, sort_keys=True, indent=2).split("\n")
+        representation = "json_pretty_lines_v1"
+        if any(len(line) + 1 > MAX_INSPECTION_READ_CHARS for line in lines):
+            # Narrowing line numbers cannot shorten one JSON string containing
+            # a whole script/stdout. Offer a reversible bounded representation
+            # of this same authorized body instead of an unusable retry hint.
+            encoded_body = _canonical(body)
+            representation = "json_chunk_envelope_v1"
+            lines = json.dumps({
+                "representation": representation,
+                "instruction": "Concatenate content_chunks, verify body_json_sha256, then JSON-decode to recover the original scoped object. Line ranges address this representation, not source file lines.",
+                "body_json_sha256": hashlib.sha256(encoded_body.encode()).hexdigest(),
+                "content_chunks": [encoded_body[index:index + 2_000]
+                                   for index in range(0, len(encoded_body), 2_000)],
+            }, ensure_ascii=False, sort_keys=True, indent=2).split("\n")
         end = min(end, start + MAX_INSPECTION_READ_LINES - 1, len(lines))
         selected, chars, actual_end = [], 0, start - 1
         for ordinal in range(start - 1, end):
@@ -442,6 +605,7 @@ class InspectionObjectReader:
             "source_object_id": meta["source_object_id"], "object_kind": kind,
             "object_revision": 1, "digest": entry["digest"], "scope": dict(self.scope),
             "content": "\n".join(selected), "format": "application/json",
+            "representation": representation,
             "start_line": start, "end_line": actual_end, "total_lines": len(lines),
             "truncated": truncated, "cursor": {"next_start_line": actual_end + 1} if actual_end < len(lines) else {},
         }

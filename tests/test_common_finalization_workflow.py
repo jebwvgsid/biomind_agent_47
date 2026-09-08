@@ -145,7 +145,13 @@ def test_execution_stop_real_outer_provider_and_reports(tmp_path,capsys,mode):
         assert len(stop["inspection_failures"])==7
         assert {x['tool_call_id'] for x in stop['inspection_failures']} >= {'read-0','read-1','read-2'}
         assert len(r.requests)==3 and len(m.requests)==1
-        assert stop['summary_status']==('COMPLETED' if mode=='ok' else 'FAILED')
+        assert stop['summary_status']==('COMPLETED' if mode in {'ok', 'forged'} else 'FAILED')
+        if mode == 'forged':
+            # Only grounded fact selection is adopted; free prose is archived.
+            assert stop['summary_consumption_status'] == 'GROUNDED_FACT_SELECTION'
+            assert stop['summary_unverified_prose'] == '任务已完成'
+            assert '任务已完成' not in stop.get('summary_text', '')
+            assert '任务已完成' not in result.reason
         assert stop['summary_llm_calls']==1
         assert result.failure_code=='RECOVERY_NO_PROGRESS_LIMIT' and result.stage=='recovery'
         assert 'CONTIG_MISMATCH_REASON' in result.reason and '未经独立复核' in result.reason

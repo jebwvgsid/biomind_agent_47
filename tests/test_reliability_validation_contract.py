@@ -61,3 +61,51 @@ def test_ambiguous_masked_claim_is_not_a_confirmed_inner_failure():
     analysis.update(status="confirmed", failed_command="bounded-validator", primary_failure={"exit_code": 2})
     result = SupervisorNode._root_cause_check_results(state)
     assert result[0].severity == "error" and not result[0].passed
+
+
+@pytest.mark.parametrize('fault', ['', 'scope', 'missing'])
+def test_real_supervisor_uses_durable_stream_and_fails_honestly_on_store_fault(tmp_path, fault):
+    import asyncio
+    from copy import deepcopy
+    from agent_core.state_contract_store import StateContractStore
+    from agent_core.workflow.verifier import TypedSupervisor
+    from tests.test_inspection_workflow import make_inspection_fixture
+
+    fixture = make_inspection_fixture(tmp_path)
+    execution = deepcopy(fixture.execution)
+    raw = str(execution.get('raw_stdout') or execution.get('stdout_summary') or '') + '\n' + 'recorded diagnostic text ' * 170
+    held = {**execution, 'schema_version': 1, 'raw_stdout': raw, 'raw_stderr': ''}
+    for key, value in [('task_id', fixture.task_id), ('plan_id', fixture.reload()['plan_id']),
+                       ('plan_version', fixture.reload()['plan_version'])]:
+        execution[key] = held[key] = value
+    if fault == 'scope':
+        held['step_id'] = 'different-step'
+    store = StateContractStore(str(tmp_path), fixture.task_id)
+    ref = store.put_object('execution.recovery_facts', held)
+    execution.update(recovery_execution_facts_ref=ref, stdout_summary='abbreviated graph projection')
+    if fault == 'missing':
+        execution['recovery_execution_facts_ref'] = 'object:sha256:' + 'f' * 64
+    calls = []
+    real = SupervisorNode(fixture.reviewer, output_dir=str(tmp_path / 'task_outputs'))
+
+    async def observed(state):
+        calls.append(deepcopy(state))
+        context = SupervisorNode._structured_execution_context(state)
+        assert context['stdout'] == raw
+        assert context['execution']['raw_stdout'] == raw
+        return await real.run(state)
+
+    result = asyncio.run(TypedSupervisor(data_path=str(tmp_path), verifier=observed).run({
+        **fixture.state, 'execution_evidence': execution,
+    }))
+    outcome = result['verification_outcome']
+    if fault:
+        assert not calls
+        assert outcome['type'] == 'harness_error'
+        assert outcome['payload']['failure_stage'] == 'supervisor.execution_evidence_read'
+        assert outcome['payload']['execution_record'].get('returncode', outcome['payload']['execution_record'].get('exit_code')) == 0
+        assert not fixture.reload()['task_state'].get('typed_step_commit_receipts')
+    else:
+        assert len(calls) == 1
+        assert outcome['type'] != 'harness_error'
+        assert outcome['payload']['validation_evidence']

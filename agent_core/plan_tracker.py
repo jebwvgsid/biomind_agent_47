@@ -4052,6 +4052,187 @@ def rollover_recovery_generation_claim_after_candidate_rejection(
     }
 
 
+
+def continue_recovery_generation_after_code_review(
+    state: PlanState, *, action: Mapping[str, Any], decision: str, guidance: str,
+) -> Dict[str, Any]:
+    """Bind explicit human feedback to one new claim in the revocation CAS.
+
+    Caller owns the actual code-review result. This is neither a mechanical
+    candidate rejection nor another Recovery repair; existing budgets survive.
+    No execution approval is issued by this continuation.
+    """
+    if not action.get("recovery_generated"):
+        return {"changed": False}
+    from agent_core.recovery import RecoveryExecutionEnvelope
+    envelope = RecoveryExecutionEnvelope.from_mapping(action.get("recovery_execution_envelope") or {})
+    task = deepcopy(dict(state.get("task_state") or {}))
+    recovery = dict(task.get("recovery_state") or {})
+    active = dict(recovery.get("active_recovery") or {})
+    claim = dict(recovery.get("generation_claim") or {})
+    pending = dict(task.get("pending_action") or {})
+    target = str(claim.get("target_generation_id") or "")
+    completion = dict(claim.get("provider_completion_cache_identity") or {})
+    approval = deepcopy(dict(action.get("action_approval_identity") or {}))
+    if decision not in {"rejected", "guidance", "edited_rejected"} or not str(guidance).strip():
+        raise ValueError("RECOVERY_APPROVAL_FEEDBACK_INVALID")
+    if (not target or claim.get("status") != "action_adopted"
+            or active.get("target_generation_id") != target
+            or active.get("target_route") != "generate"
+            or active.get("status") not in {"pending", "dispatched"}
+            or active.get("recovery_id") != envelope.recovery_decision_id
+            or claim.get("recovery_id") != envelope.recovery_decision_id
+            or active.get("envelope_id") != envelope.immutable_hash
+            or recovery.get("active_recovery_envelope") != envelope.to_dict()):
+        raise ValueError("RECOVERY_APPROVAL_CLAIM_SCOPE_MISMATCH")
+    if (any(str(action.get(key) or "") != str(state.get(current_key) or "")
+            for key, current_key in (("plan_id", "plan_id"), ("plan_version", "plan_version"), ("step_id", "current_step_id")))
+            or active.get("step_id") != state.get("current_step_id")
+            or int(active.get("plan_revision") or 0) != int(state.get("plan_revision") or 0)
+            or envelope.source_scope.get("task_id") != state.get("task_id")):
+        raise ValueError("RECOVERY_APPROVAL_SCOPE_STALE")
+    canonical_task = canonical_task_spec_for_state(state)
+    conversation = state.get("conversation_evidence") or {}
+    user_turn = max(0, int(conversation.get("user_turn_count")
+        if conversation.get("user_turn_count") is not None else conversation.get("turn_count") or 0))
+    _, step = current_plan_step_with_index(state)
+    authority = {"task_revision": task_spec_revision(canonical_task),
+        "task_semantic_hash": task_semantic_hash(canonical_task),
+        "plan_revision": int(state.get("plan_revision") or 0),
+        "authoritative_user_turn_revision": user_turn,
+        "execution_epoch": str(step.get("execution_epoch") or (state.get("runtime_state") or {}).get("execution_epoch") or "0")}
+    if any(str(completion.get(key)) != str(value) for key, value in authority.items()):
+        raise ValueError("RECOVERY_APPROVAL_AUTHORITY_STALE")
+    if any(str(action.get(key)) != str(value) for key, value in authority.items() if key != "task_semantic_hash"):
+        raise ValueError("RECOVERY_APPROVAL_AUTHORITY_STALE")
+    if (state.get("approval_record") or {}).get("approval_scope_hash") and validate_action_approval_lineage(
+            state, dict(action), task_spec_revision(canonical_task)):
+        raise ValueError("RECOVERY_APPROVAL_LINEAGE_STALE")
+    candidate_event = "generate-candidate:" + str(completion.get("provider_request_digest") or "")
+    if (action.get("action_id") != envelope.action_id or pending.get("action_id") != envelope.action_id
+            or action.get("candidate_generation_event_id") != candidate_event
+            or pending.get("candidate_generation_event_id") != candidate_event
+            or completion.get("target_generation_id") != target
+            or not approval.get("approval_identity_hash")
+            or pending.get("action_approval_identity") != approval):
+        raise ValueError("RECOVERY_APPROVAL_CANDIDATE_MISMATCH")
+    for attempt in ((state.get("provenance_state") or {}).get("attempts") or {}).values():
+        if attempt.get("action_id") == envelope.action_id and (
+                attempt.get("pid") or attempt.get("started_at") or str(attempt.get("status") or "").upper() in {"RUNNING", "SUCCEEDED"}):
+            raise ValueError("RECOVERY_APPROVAL_EXECUTION_ALREADY_STARTED")
+    receipt = {"schema_version": 1, "source": "execute.code_review",
+        "scope": {"task_id": state["task_id"], "plan_id": state["plan_id"],
+            "plan_version": state["plan_version"], "step_id": state["current_step_id"]},
+        "action_id": envelope.action_id, "candidate_event_id": candidate_event,
+        "approval_identity": approval, "decision": decision, "guidance": str(guidance),
+        "command_started": False, "parent_target_generation_id": target}
+    event_id = "approval-feedback-" + hashlib.sha256(json.dumps(
+        receipt, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode()).hexdigest()
+    next_target = "generation-" + hashlib.sha256((event_id + envelope.immutable_hash).encode()).hexdigest()[:20]
+    update_recovery_generation_claim(state, target_generation_id=target,
+        status="superseded", detail="Explicit code-review feedback; candidate remains unapproved.")
+    task = dict(state["task_state"])
+    recovery = dict(task["recovery_state"])
+    old = deepcopy(recovery["generation_claim"])
+    old.update(approval_feedback_event_id=event_id, approval_feedback=receipt)
+    active["target_generation_id"] = next_target
+    recovery.update(active_recovery=active,
+        generation_claim_history=[*recovery.get("generation_claim_history", []), old],
+        generation_claim={"schema_version": 1, "status": "issued", "target_generation_id": next_target,
+            "parent_target_generation_id": target, "recovery_id": envelope.recovery_decision_id,
+            "provider_idempotency_key": next_target,
+            "remote_delivery_semantics": claim.get("remote_delivery_semantics", "at_least_once_without_provider_idempotency"),
+            "approval_feedback_event_id": event_id, "approval_feedback": receipt, "issued_at": _now()})
+    task["recovery_state"] = recovery
+    state["task_state"] = task
+    return {"changed": True, "event_id": event_id, "target_generation_id": next_target}
+
+
+def rollover_recovery_generation_claim_after_skill_result(
+    state: PlanState, *, completion: Mapping[str, Any], continuation_id: str,
+) -> Dict[str, Any]:
+    """Adopt a real Skill result and authorize its knowledge continuation in one CAS.
+
+    This is transport continuation, not a rejected candidate or a new Recovery
+    decision. The original envelope, incident and all business budgets survive.
+    """
+    event = deepcopy(dict(completion))
+    required = ("target_generation_id", "provider_request_digest", "response_digest")
+    if any(not str(event.get(key) or "") for key in required):
+        raise ValueError("RECOVERY_SKILL_COMPLETION_IDENTITY_MISSING")
+    identity = {key: str(event[key]) for key in required}
+    event_id = "skill-completion-" + hashlib.sha256(json.dumps(
+        identity, sort_keys=True, separators=(",", ":")
+    ).encode()).hexdigest()
+    task = dict(state.get("task_state") or {})
+    recovery = dict(task.get("recovery_state") or {})
+    history = deepcopy(list(recovery.get("generation_claim_history") or []))
+    if any(item.get("skill_completion_event_id") == event_id for item in history):
+        return {"changed": False, "duplicate": True, "event_id": event_id}
+    active = dict(recovery.get("active_recovery") or {})
+    claim = dict(recovery.get("generation_claim") or {})
+    envelope = dict(recovery.get("active_recovery_envelope") or {})
+    target = identity["target_generation_id"]
+    held_identity = dict(claim.get("provider_completion_cache_identity") or {})
+    if (held_identity.get("target_generation_id") != target
+            or held_identity.get("provider_request_digest") != identity["provider_request_digest"]
+            or claim.get("provider_response_digest") != identity["response_digest"]):
+        raise ValueError("RECOVERY_SKILL_COMPLETION_RECEIPT_MISMATCH")
+    if (active.get("target_generation_id") != target
+            or claim.get("target_generation_id") != target
+            or claim.get("status") != "provider_completed"
+            or not active.get("recovery_id")
+            or claim.get("recovery_id") != active.get("recovery_id")
+            or active.get("target_route") != "generate"
+            or active.get("status") not in {"pending", "dispatched"}):
+        raise ValueError("RECOVERY_SKILL_COMPLETION_CLAIM_MISMATCH")
+    if (active.get("step_id") != state.get("current_step_id")
+            or int(active.get("plan_revision") or 0) != int(state.get("plan_revision") or 0)
+            or envelope.get("step_id") != state.get("current_step_id")
+            or not active.get("envelope_id")
+            or active["envelope_id"] != envelope.get("immutable_hash")
+            or active["recovery_id"] != (envelope.get("recovery_id") or envelope.get("recovery_decision_id"))):
+        raise ValueError("RECOVERY_SKILL_COMPLETION_SCOPE_STALE")
+    access = dict(task.get("skill_access_state") or {})
+    continuation = dict((access.get("continuations") or {}).get(continuation_id) or {})
+    result = dict((access.get("skill_tool_results") or {}).get(continuation_id) or {})
+    if (not continuation_id or not result
+            or result.get("continuation_id") != continuation_id
+            or continuation.get("status") != "served"
+            or continuation.get("caller_node") != "corrective_generate"
+            or continuation.get("current_step_id") != state.get("current_step_id")
+            or int(continuation.get("plan_revision") or 0) != int(state.get("plan_revision") or 0)
+            or result.get("status") not in {"COMPLETE", "REQUIRES_NARROWING"}):
+        raise ValueError("RECOVERY_SKILL_RESULT_NOT_SERVABLE")
+    result_digest = hashlib.sha256(json.dumps(result, sort_keys=True,
+        ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+    update_recovery_generation_claim(state, target_generation_id=target,
+        status="superseded", detail="A durable scoped Skill result authorizes knowledge continuation.")
+    task = dict(state["task_state"])
+    recovery = dict(task["recovery_state"])
+    old = deepcopy(recovery["generation_claim"])
+    old.update(skill_completion_event_id=event_id, skill_completion={**identity,
+        "continuation_id": continuation_id, "result_digest": result_digest})
+    history.append(old)
+    next_target = "generation-" + hashlib.sha256(json.dumps({
+        **identity, "envelope_id": active["envelope_id"],
+        "recovery_id": active["recovery_id"], "continuation_id": continuation_id,
+        "result_digest": result_digest,
+    }, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
+    active["target_generation_id"] = next_target
+    recovery.update(active_recovery=active, generation_claim_history=history,
+        generation_claim={"schema_version": 1, "status": "issued",
+            "target_generation_id": next_target, "parent_target_generation_id": target,
+            "recovery_id": active["recovery_id"], "provider_idempotency_key": next_target,
+            "remote_delivery_semantics": claim.get("remote_delivery_semantics", "at_least_once_without_provider_idempotency"),
+            "skill_completion_event_id": event_id, "issued_at": _now()})
+    task["recovery_state"] = recovery
+    state["task_state"] = task
+    return {"changed": True, "duplicate": False, "event_id": event_id,
+        "target_generation_id": next_target}
+
+
 def mark_step_verification_pending(
     state: PlanState,
     *,

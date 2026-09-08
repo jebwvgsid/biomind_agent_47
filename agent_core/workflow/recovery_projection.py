@@ -114,6 +114,7 @@ _COMMON_RUNTIME_PAYLOAD_FIELDS = (
     "summary",
     "decision_id",
     "incident_id",
+    "causal_parent_packet_ref", "recovery_decision_id", "diagnostic_request_digest",
     "failure_fingerprint",
     "candidate_fingerprint",
     "failure_owner",
@@ -258,6 +259,7 @@ def _compact_diagnostic(value: Any) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key in (
         "execution_id",
+        "execution_attempt_id", "recovery_decision_id", "probe_id", "evidence_fingerprint", "stdout_ref", "stderr_ref",
         "attempt_id",
         "action_id",
         "evidence_ref",
@@ -1857,8 +1859,11 @@ class CausalFailurePacketBinder:
                 "object_kind": entry["scope"]["object_kind"],
                 "code": entry["scope"]["unavailable_reason"],
                 "detail": entry["scope"]["unavailable_detail"],
-                "stage": ("execute" if source_kind == "execute_outcome" else "supervisor") + ".inspection_publication",
-            } for ref, entry in inspection_entries.items() if not entry["scope"]["readable"])
+                "stage": {"execute_outcome": "execute", "verification_outcome": "supervisor",
+                    "completion_gate_outcome": "supervisor", "commit_step_outcome": "commit_step",
+                    "install_outcome": "install_subagent", "install_subagent_outcome": "install_subagent"}.get(
+                        source_kind, source_kind.removesuffix("_outcome")) + ".inspection_publication",
+            } for ref, entry in inspection_entries.items() if not entry["scope"]["readable"] and not entry["scope"]["unavailable_reason"].startswith("NOT_APPLICABLE"))
             base_record = build_causal_failure_record(
                 source_kind, source, durable, task_id=task_id,
                 inspection_publication_failures=publication_failures,

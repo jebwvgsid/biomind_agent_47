@@ -1086,22 +1086,21 @@ class Schema2RecoveryNode:
         index = dict((durable.get("task_state") or {}).get("inspection_ref_registry") or {})
         # Same scoped reader as evidence.read. Source identities and hashes are
         # retained in the provider message and the existing phase archive.
-        remaining = 96_000
+        # Existing application token accounting/compaction owns residency.
+        # Per-object storage/reader limits remain bounded; no second silent
+        # character budget removes material when the request has capacity.
         for ref in seed.failure_packet.inspection_refs:
             entry = index.get(ref) or {}
             kind = (entry.get("scope") or {}).get("object_kind")
             if entry.get("backend") != INSPECTION_BACKEND or kind not in {
-                "execution", "script", "action", "task_context", "plan", "completion_report", "parser_receipt", "diagnostic",
+                "execution", "script", "action", "task_context", "plan", "completion_report", "parser_receipt", "diagnostic", "causal_history", "validation", "semantic_decision",
             }:
                 continue
             item = {"material_id": ref, "source_ref": ref, "retrieval_ref": ref,
                     "material_kind": "recovery_evidence", "object_kind": kind, "selected": True,
-                    "source_digest": entry.get("digest"), "coverage": "complete immutable object"}
+                    "source_digest": entry.get("digest"), "coverage": {"kind": "full"}}
             try:
                 body = _canonical(reader.read_body(entry, entry.get("locator") or {}))
-                if len(body) > remaining:
-                    raise ValueError("RECOVERY_INHERITED_BODY_CAPACITY; retrieve with evidence.read")
-                remaining -= len(body)
                 item.update(residency="exact", body=body, content_hash=_sha256_text(body))
             except (ValueError, OSError) as exc:
                 item.update(residency="externalized", summary="Body not resident; explicit scoped reader remains authoritative.",
@@ -1583,7 +1582,7 @@ class Schema2RecoveryNode:
 
     def _inspection_stop_result(
         self, *, projection: Any, durable: Mapping[str, Any],
-        episode: Mapping[str, Any], archive_ref: str = "",
+        episode: Mapping[str, Any], archive_ref: str = "", technical_error: bool | None = None,
     ) -> dict[str, Any] | None:
         """Freeze terminal episode facts; the outer owns durable/report/summary I/O."""
         if projection is None:
@@ -1595,12 +1594,16 @@ class Schema2RecoveryNode:
             seed=projection.recovery_seed, durable=durable,
             source=projection.source, episode=episode, archive_ref=archive_ref,
         )
-        # Classify the terminal event itself. Policy exhaustion is unresolved,
-        # independent of which legal producer initiated the investigation.
-        if (episode.get("terminal_error") and str(episode["terminal_error"].get("code") or "") not in {
-            "RECOVERY_NO_PROGRESS_LIMIT", "RECOVERY_TOOL_CALL_LIMIT", "RECOVERY_MODEL_TURN_LIMIT",
-            "RECOVERY_BUDGET_EXHAUSTED", "RECOVERY_NO_PROGRESS",
-        } and projection.failure_packet.failure_type != "inspection_required"):
+        # An admitted semantic stop is not an internal exception. Classify
+        # policy limits independently from the initiating failure source.
+        if technical_error is None:
+            technical_error = bool(episode.get("terminal_error")) and str(episode["terminal_error"].get("code") or "") not in {
+                "RECOVERY_NO_PROGRESS_LIMIT", "RECOVERY_TOOL_CALL_LIMIT", "RECOVERY_LLM_TURN_LIMIT",
+                "RECOVERY_TOOL_REQUEST_REPEAT_LIMIT", "RECOVERY_FIXED_CONTEXT_TOKEN_LIMIT",
+                "RECOVERY_OBSERVATION_BUDGET_EXCEEDED", "RECOVERY_OVERFLOW_EPOCH_LIMIT",
+                "RECOVERY_BUDGET_EXHAUSTED", "RECOVERY_NO_PROGRESS",
+            }
+        if technical_error:
             result = self._internal(task_id=stop["scope"]["task_id"], durable=durable,
                 code=stop["stop_reason"]["error_code"], detail=str(episode["terminal_error"].get("detail") or ""),
                 recovery_archive_ref=archive_ref)
@@ -1729,6 +1732,14 @@ class Schema2RecoveryNode:
             local_messages = []
             budget_state = {}
             linked_previous_archive_ref = ""
+            parent = (projection.source.get("payload") or {}).get("causal_parent_packet_ref")
+            decision = (projection.source.get("payload") or {}).get("recovery_decision_id")
+            if parent and decision:
+                receipt = ((durable.get("task_state") or {}).get("typed_recovery_receipts") or {}).get(decision) or {}
+                if receipt.get("failure_packet_ref") != parent or receipt.get("incident_id") != seed.failure_packet.incident_id:
+                    return fail(task_id=task_id, durable=durable, code="DIAGNOSTIC_CONTINUATION_SCOPE_INVALID")
+                budget_state = _business_resume_state(receipt.get("business_resume_state") or {})
+                linked_previous_archive_ref = str(receipt.get("recovery_archive_ref") or "")
             overflow_epoch = 0
         try:
             await self._emit_event(
@@ -2134,6 +2145,8 @@ class Schema2RecoveryNode:
                 (episode.get("audit") or {}).get("inspected_refs") or ()
             ),
             "recovery_archive_ref": archive.archive_ref,
+            "recovery_business_resume_state": _business_resume_state(episode.get("_resume_state") or {}),
+            "recovery_causal_observation_receipts": deepcopy(episode.get("_observation_receipts") or []),
         }
         try:
             await self._emit_event(
@@ -2181,9 +2194,10 @@ class Schema2RecoveryNode:
                 episode={**episode, "terminal_error": {
                     "code": str(payload.get("error_code") or payload.get("reason_code")
                                 or directive.get("reason_code") or "INSPECTION_UNRESOLVED"),
-                    "detail": str(directive.get("summary") or result.get("summary") or ""),
+                    "detail": str(payload.get("detail") or directive.get("summary") or result.get("summary") or ""),
+                    "failure_stage": str(payload.get("failure_stage") or ""),
                 }},
-                archive_ref=archive.archive_ref,
+                archive_ref=archive.archive_ref, technical_error=result.get("type") == "internal_protocol_error",
             )
             if stopped is not None:
                 return stopped

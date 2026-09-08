@@ -82,6 +82,7 @@ Evidence rules:
 - A Supervisor inspection can concern a successful execution. Distinguish method concerns, deterministic facts, inspection access failures, and the automatic stop reason.
 - Business failure_id and step_id identify the source; they are not automatically inspection handles. Use the manifest ref_id with its allowed_tools.
 - readable=false refs are source metadata only. Do not retry them as if they provided an alternative readable object; use an explicitly offered readable handle.
+- When built-in readers cannot represent an authorized object, run_diagnostic_probe requests one bounded diagnostic operation declared in the selected Skill; it returns to this investigation and never completes the main step. Unsupported operation is different from unauthorized access.
 - Never rerun a scientific command to inspect its evidence. Reading a receipt does not approve completion; revalidate through the existing typed directive.
 - If authorized evidence cannot resolve the concern, state what is known, what reads failed, and what remains unresolved. Tool errors or exhausted budgets do not prove a missing runtime dependency or a contig mismatch.
 - Do not infer missing runtime facts, scan unrelated history, or expose hidden reasoning.
@@ -105,7 +106,7 @@ Safety rules:
 - Do not copy large tool observations into the final result.
 
 Terminal output:
-Return exactly one strict RecoveryDirective JSON object and no surrounding prose. Required fields are schema_version, directive_id, task_id, action, summary, and reason_code. Optional fields are target_step_id, instruction, question, requested_slots, and evidence_refs. Allowed actions are retry_step, revise_plan, reconsult, revalidate, ask_user, and blocked. retry_step and revalidate require target_step_id. retry_step, revise_plan, and reconsult require instruction. ask_user requires question and requested_slots. All fields are semantic and route-blind."""
+Return exactly one strict RecoveryDirective JSON object and no surrounding prose. Required fields are schema_version, directive_id, task_id, action, summary, and reason_code. Optional fields are target_step_id, instruction, question, requested_slots, evidence_refs, diagnostic_operation and diagnostic_inputs. Allowed actions are retry_step, revise_plan, reconsult, revalidate, ask_user, blocked and run_diagnostic_probe. run_diagnostic_probe requires target_step_id, semantic instruction, diagnostic_operation in the form selected_skill_id#operation_id and diagnostic_inputs containing declared artifact handles. It never accepts code, paths or a request to increase limits. retry_step and revalidate require target_step_id. retry_step, revise_plan, and reconsult require instruction. ask_user requires question and requested_slots. All fields are semantic and route-blind."""
 
 
 class RecoveryAgentError(ValueError):
@@ -459,7 +460,7 @@ def recovery_tool_schemas() -> list[dict[str, Any]]:
             "content_hash": {"type": "string"},
             "coverage": {"type": "object"},
         }),
-        ("evidence_read", "Read bounded evidence through an opaque evidence ref.", {
+        ("evidence_read", "Read bounded evidence through an opaque evidence ref. Follow the returned cursor. Oversized JSON strings use json_chunk_envelope_v1: concatenate content_chunks and verify body_json_sha256 before JSON decoding; the same scope and reader limits apply.", {
             "evidence_ref": {"type": "string"}, "start_line": {"type": "integer"},
             "end_line": {"type": "integer"},
         }),
@@ -1236,9 +1237,11 @@ class RecoveryAgentLoop:
                     seed=seed,
                 )
                 encoded = _canonical(envelope)
-                projected_context_chars = _message_chars(
-                    build_provider_messages(state)
-                ) + len(encoded)
+                # Whole-context pressure belongs to the token-accounted
+                # call_model/compaction boundary.  A legacy character soft
+                # limit (or a sticky prior compaction flag) must not hide a
+                # successfully narrowed reader page from the next request.
+                # Keep the independent per-observation and cumulative limits.
                 should_externalize = bool(
                     not error
                     and self.observation_store is not None
@@ -1246,14 +1249,6 @@ class RecoveryAgentLoop:
                         len(encoded) > config.single_observation_chars
                         or observation_chars + len(encoded)
                         > config.cumulative_observation_chars
-                        or projected_context_chars >= config.local_context_soft_chars
-                        or (
-                            soft_limit_reached
-                            and len(encoded) > min(
-                                config.single_observation_chars,
-                                4_096,
-                            )
-                        )
                     )
                 )
                 if should_externalize:
@@ -1273,10 +1268,6 @@ class RecoveryAgentLoop:
                         seed=seed,
                     )
                     encoded = _canonical(envelope)
-                    soft_limit_reached = bool(
-                        soft_limit_reached
-                        or projected_context_chars >= config.local_context_soft_chars
-                    )
                 if len(encoded) > config.single_observation_chars:
                     envelope = _observation_envelope(
                         request_id=str(call["id"]),

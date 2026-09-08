@@ -1391,12 +1391,68 @@ def _candidate_flow_diagnostic(
     else:
         result.setdefault("expected_identity", artifact_ref)
         result.setdefault("observed_identity", artifact_ref)
+    if code == "PLAN_ARTIFACT_UNAVAILABLE":
+        result["legal_corrections"] = [
+            "If the consumer reads file contents, retain READ and add the exact producing step as a direct or transitive dependency.",
+            "If only an already approved path or recorded command is used, correct consumption semantics and document the exact source in existing success_criteria or targeted validation_checklist; preserve the promised delivery for Plan Review.",
+            "Array order does not create an ancestor; do not delete a necessary READ simply to silence the validator.",
+        ]
     result.setdefault("machine_evidence", {
         key: deepcopy(value)
         for key, value in row.items()
         if key not in {"message", "reason"}
     })
     return result
+
+
+def validate_planner_consumption_correction(
+    previous_candidate: Mapping[str, Any], candidate: Mapping[str, Any],
+    previous_issues: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Require reviewable semantics when removing a specifically rejected READ.
+
+    This validates an explicit change explanation, not its scientific truth.
+    Original Plan Review, producer/DAG checks and final delivery verification
+    retain their authority. Callers must establish the same planning epoch.
+    """
+    from agent_core.plan_tracker import validation_issue
+    def references(step):
+        return {str(row if isinstance(row, str) else row.get("resource_ref") or row.get("artifact_ref") or row.get("ref") or "")
+                for row in step.get("inputs") or [] if isinstance(row, (str, Mapping))}
+    def statements(plan, step):
+        local = {str(value) for value in step.get("success_criteria") or [] if isinstance(value, str)}
+        owner = str(step.get("step_id") or "")
+        global_rows = {str(row.get("description") or "") for row in plan.get("validation_checklist") or []
+                       if isinstance(row, Mapping) and owner and owner in str(row.get("description") or "")}
+        return local | global_rows
+    previous_steps = {str(row.get("step_id") or ""): row for row in previous_candidate.get("steps") or [] if isinstance(row, Mapping)}
+    steps = {str(row.get("step_id") or ""): (i, row) for i, row in enumerate(candidate.get("steps") or []) if isinstance(row, Mapping)}
+    issues, seen = [], set()
+    for raw in previous_issues:
+        if str(raw.get("code") or "") != "PLAN_ARTIFACT_UNAVAILABLE":
+            continue
+        evidence = dict(raw.get("machine_evidence") or {})
+        owner = str(raw.get("consumer_step_id") or evidence.get("consumer_step_id") or raw.get("step_id") or "")
+        resource = str(raw.get("resource_id") or evidence.get("resource_id") or "")
+        prior = previous_steps.get(owner) or {}
+        if not resource or resource not in references(prior) or (owner, resource) in seen:
+            continue
+        seen.add((owner, resource))
+        index, current = steps.get(owner, (-1, {}))
+        if resource in references(current):
+            continue
+        added = statements(candidate, current) - statements(previous_candidate, prior)
+        if current and any(resource in value for value in added):
+            continue
+        field = f"$.steps[{index}].inputs" if index >= 0 else "$.steps"
+        issues.append(validation_issue(
+            "PLAN_CONSUMPTION_CHANGE_REVIEW_REQUIRED", owner="planner", field_path=field, repair_target=field,
+            validator_id="planner_consumption_change_review", consumer_step_id=owner, resource_id=resource,
+            actual="previously declared READ removed without a new targeted review basis",
+            expected="Retain the required READ with a reachable producer, or explain in this step's success_criteria / targeted validation_checklist why content is not read and which approved source preserves the promised delivery.",
+            message=f"{owner} removed READ {resource}. A DAG pass alone does not validate this consumption change. State its source and semantic basis for original Plan Review; do not invent an execution receipt.",
+        ))
+    return issues
 
 
 def validate_planner_candidate_deterministically(

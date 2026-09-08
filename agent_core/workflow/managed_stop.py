@@ -28,7 +28,7 @@ SUMMARY_PROMPT = """优先返回 {"fact_ids": [冻结事实键]}，选择最能�
 分别说明原始失败、恢复障碍、停止条件、实际进度与未完成项。脚本的断言未经独立验证时不能作为客观数据结论。
 读取失败不证明文件不存在，预算用尽不证明依赖不存在。不得声称有未发生的查询、修复、重跑、验证或文件。
 不能调用工具、给出执行 directive、改变状态、要求内部 handle、重新规划或开始 Recovery。
-只返回 JSON {\"explanation\":\"简短说明\",\"fact_ids\":[\"origin\",\"stop_reason\"]}。
+只返回 JSON {\"fact_ids\":[\"origin\",\"stop_reason\"]}。兼容旧 explanation 字段，但自由文字只归档，不作为正式事实采用。
 解释是非权威辅助文字；程序事实面板始终保留。证据不足就说明尚未确认。"""
 
 
@@ -280,8 +280,8 @@ def build_managed_stop(task_id, values, durable, boundary):
     value.update(producer=PRODUCER, status=boundary["status"], scope=fixed_scope, authority=_authority(durable),
         boundary=deepcopy(boundary), summary_status="IMPLEMENTED", summary_skip_reason="", summary_llm_calls=0)
     value["scope"]["task_id"] = task_id
-    value["stage"] = "recovery.inspection" if value["origin"].get("failure_type") == "inspection_required" else str(boundary["node"])
-    value["origin"]["source_stage"] = {"verification_outcome":"supervisor", "completion_gate_outcome":"supervisor"}.get(str(record.get("source_kind")), str(record.get("source_kind") or boundary["node"]).removesuffix("_outcome"))
+    value["stage"] = value["stop_reason"].get("failure_stage") or payload.get("failure_stage") or ("recovery.inspection" if value["origin"].get("failure_type") == "inspection_required" else str(boundary["node"]))
+    value["origin"].setdefault("source_stage", {"verification_outcome":"supervisor", "completion_gate_outcome":"supervisor"}.get(str(record.get("source_kind")), str(record.get("source_kind") or boundary["node"]).removesuffix("_outcome")))
     if not packet:
         value["origin"].update(error_code=primary.get("error_code") or value["stop_reason"]["error_code"],
             summary=_safe(primary.get("message") or primary.get("summary") or outcome.get("summary")))
@@ -307,7 +307,7 @@ def build_managed_stop(task_id, values, durable, boundary):
     execution = _mapping(_mapping(values.get("execute_outcome")).get("payload"))
     raw = _mapping(execution.get("execution_record"))
     if raw and str(raw.get("attempt_id") or "") == value["scope"]["attempt_id"]:
-        value["execution"].update(executed=True, returncode=raw.get("returncode", raw.get("exit_code", execution.get("return_code"))),
+        value["execution"].update(executed=True, purpose=_code(raw.get("purpose") or raw.get("execution_purpose"), value["execution"].get("purpose", "UNKNOWN")), returncode=raw.get("returncode", raw.get("exit_code", execution.get("return_code"))),
             stdout=_safe(raw.get("raw_stdout") or raw.get("stdout"), 2000), stderr=_safe(raw.get("raw_stderr") or raw.get("stderr"), 2000))
         script = _safe(raw.get("code"), 32000)
         if script and script != "[redacted]" and len(str(raw.get("code") or "")) <= 32000:
@@ -337,6 +337,8 @@ def explanation(stop):
     base = base.replace("Supervisor 待核实的疑虑：", "原始起因（断言待核实）：").replace("仍需完成语义复核", "原因记录不完整")
     parts = [base, "来源阶段：" + str(origin.get("source_stage") or "unknown") + "；原始错误：" + str(origin.get("error_code") or "unknown") + "；停止阶段：" + str(stop.get("stage") or "outer") + "。"]
     execution = _mapping(stop.get("execution"))
+    if str(execution.get("purpose") or "").upper() == "DIAGNOSTIC":
+        parts.append("最近 attempt 为诊断执行；其返回码不代表主步骤完成。原始执行返回码：" + str(origin.get("returncode")) + "。")
     for key in ("stdout", "stderr"):
         if execution.get(key): parts.append(key + "（脚本输出，未经独立复核）：" + _safe(execution[key], 2000))
     if stop.get("latest_failure"):
@@ -619,7 +621,7 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
                         value.update(summary_status="COMPLETED", summary_consumption_status="GROUNDED_FACT_SELECTION",
                                      summary_selected_fact_ids=list(dict.fromkeys(parsed["fact_ids"])),
                                      summary_unverified_prose=_safe(parsed.get("explanation") or "", 4000))
-                        value["summary_text"] = "选定的已记录事实：" + "；".join(value["summary_selected_fact_ids"]) + "。事实及未确定事项见上述确定性说明。"
+                        value["summary_text"] = "\n".join("已记录 " + key + "：" + _safe(json.dumps(frozen[key], ensure_ascii=False, sort_keys=True, default=str), 1800) for key in value["summary_selected_fact_ids"])
                     except Exception as exc:
                         value["summary_status"] = "FAILED"
                         _secondary(value, "summary.facts", "SUMMARY_FACT_CONSUMPTION_FAILED", exc)
@@ -645,12 +647,12 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
         for stage in value["stages"]:
             current = stage["step_id"] == value["scope"]["step_id"]
             observed = ("failed" if execution.get("returncode") not in (None, 0) else "succeeded" if execution.get("returncode") == 0 else "not_started_or_unknown") if current else ("completed" if stage["status"] in {"done", "passed", "completed"} else "not_started_or_unknown")
-            rows.append("\t".join((stage["step_id"],stage["status"],observed,str(bool(execution.get("committed"))) if current else str(any(row["step_id"] == stage["step_id"] for row in value.get("prior_completed_work", []))), "formal verification/commit remain authoritative")))
+            rows.append("\t".join((stage["step_id"],stage["status"],observed,str(bool(execution.get("committed"))) if current else str(any(row["step_id"] == stage["step_id"] for row in value.get("prior_completed_work", []))), ("latest attempt purpose=" + str(execution.get("purpose") or "UNKNOWN") + "; primary causal returncode=" + str(value.get("origin", {}).get("returncode")) + "; formal verification/commit remain authoritative") if current else "formal verification/commit remain authoritative")))
         rows.append("run\t" + value["status"] + "\tstopped\tfalse\t" + value["stop_reason"]["error_code"])
         bodies["stage_status.tsv"] = "\n".join(rows) + "\n"
         bodies["report.md"] = "# BioMind managed run stop\n\nStop identity: " + value["stop_id"] + "\n\n" + explanation(value) + "\n"
         if value["execution"].get("command_body_available"):
-            bodies["reproduce.sh"] = "#!/bin/sh\n# Recorded failed/unverified action; not run by the reporter.\n# Stop identity: " + value["stop_id"] + "\n" + value["execution"]["command_body"] + "\n"
+            bodies["reproduce.sh"] = "#!/bin/sh\n# Latest recorded action only; not a complete workflow replay; not run by the reporter.\n# Stop identity: " + value["stop_id"] + "\n# Attempt: " + str(value["execution"].get("attempt_id") or "") + "; purpose: " + str(value["execution"].get("purpose") or "UNKNOWN") + "\n# Original causal attempt: " + str(value.get("origin", {}).get("attempt_id") or "") + "\n" + value["execution"]["command_body"] + "\n"
         for name in ("stage_status.tsv", "reproduce.sh", "report.md"):
             path = targets.get(name)
             if not path:

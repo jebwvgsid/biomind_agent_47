@@ -9,6 +9,17 @@ stage_tags: [read_mapping, bam_preparation]
 inputs: [reference_fasta, paired_fastq_sample_table, output_directory]
 outputs: [sorted_markdup_bam, bam_index, flagstat, coverage, duplicate_metrics, bam_list]
 generate:
+  diagnostic_operations:
+    - operation_id: samtools_header
+      description: Read the SAM/BAM header through the already approved samtools runtime. This does not validate every alignment.
+      read_only: true
+      argv: [samtools, view, -H, "{input:0}"]
+      limits: {max_wall_seconds: 30, max_threads: 1, max_input_bytes: 67108864, max_output_bytes: 65536, max_files: 1}
+    - operation_id: binary_prefix
+      description: Inspect at most 64 bytes with the existing od program when a built-in text reader cannot represent an approved object.
+      read_only: true
+      argv: [od, -An, -tx1, -N64, "{input:0}"]
+      limits: {max_wall_seconds: 10, max_threads: 1, max_input_bytes: 67108864, max_output_bytes: 4096, max_files: 1}
   execution_capabilities:
     - capability_id: genomics.wgs.short.read.mapping.execute
       operation: produce_files
@@ -225,3 +236,17 @@ Do not remove duplicates by default for WGS variant calling.
 - `genomics/wgs-cnvnator-cnv` - CNVnator read-depth CNV from these BAMs.
 - `genomics/rnaseq-variant-calling` - use for RNA-seq reads, not this skill.
 - `genomics/long-read-sv-sniffles2` - use for ONT/PacBio reads.
+
+## Controlled diagnostic requests
+
+If the built-in scoped reader cannot represent an authorized object, Recovery
+may select `wgs-short-read-mapping#samtools_header` or
+`wgs-short-read-mapping#binary_prefix` with a declared artifact handle. Use the
+canonical selected Skill ID shown in the manifest (including its category when
+present). Generate must emit exactly the admitted operation's argv; code edits
+require renewed admission and approval. These operations share the existing
+Recovery repair budget. They produce diagnostic evidence and return to Recovery,
+without satisfying the main step's output or observation contract. Input size,
+output, time, access and unsupported-operation failures are distinct; none means
+a file or dependency was proven absent. Larger inputs require a separately
+reviewed operation contract; a prefix result is never whole-file validation.

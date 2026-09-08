@@ -47,7 +47,8 @@ def save_correction_context(data_path: str, task_id: str, state: dict[str, Any],
                             fixed_prefix_count: int, capabilities: Mapping[str, Any],
                             response_metadata: Mapping[str, Any] | None = None,
                             call_claim: Mapping[str, Any] | None = None,
-                            remediation: Mapping[str, Any] | None = None) -> dict[str, Any]:
+                            remediation: Mapping[str, Any] | None = None,
+                            consumption_review_baselines: Sequence[Mapping[str, Any]] = ()) -> dict[str, Any]:
     integrity = deepcopy(dict(response_metadata or {}))
     if integrity:
         from agent_core.planner_recovery import attach_rejection_facts
@@ -68,6 +69,12 @@ def save_correction_context(data_path: str, task_id: str, state: dict[str, Any],
         "feedback": feedback, "messages": messages_to_dict(complete),
         "fixed_prefix_count": fixed_prefix_count,
     }
+    baselines = [deepcopy(dict(row)) for row in consumption_review_baselines]
+    read_issues = [deepcopy(row) for row in feedback["validation_issues"] if row.get("code") == "PLAN_ARTIFACT_UNAVAILABLE"]
+    if read_issues and not any(row.get("raw_candidate") == raw for row in baselines):
+        baselines.append({"raw_candidate": raw, "validation_issues": read_issues})
+    if baselines:
+        record["consumption_review_baselines"] = baselines
     if integrity:
         failure = (state.get("task_state") or {}).get("planning_failure") or {}
         record.update({"response_integrity": integrity,

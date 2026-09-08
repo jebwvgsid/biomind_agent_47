@@ -101,6 +101,22 @@ def _accepted_effect_refs(
     return list(dict.fromkeys(refs))
 
 
+def _successor_projection(projection, *, state, durable, completed_step_id):
+    """An acknowledged commit never erases a newer step's live handoff."""
+    if any(str(durable.get(key) or "") != str(projection.get(key) or "")
+           for key in ("current_step_id", "plan_id", "plan_version")):
+        return {}
+    result = {key: projection[key] for key in ("current_step_id", "plan_id", "plan_version") if key in projection}
+    for key in ("recovery_outcome", "generate_seed"):
+        if key not in projection:
+            continue
+        value = state.get(key) or {}
+        scope = value.get("scope") or value if isinstance(value, Mapping) else {}
+        if not value or str(scope.get("step_id") or "") == completed_step_id:
+            result[key] = {}
+    return result
+
+
 class CommitStep:
     """Validate and commit one verified attempt through one PlanState CAS write."""
 
@@ -263,7 +279,8 @@ class CommitStep:
             # receipts replay their acknowledged successor, never latest state.
             projection = prior.get("successor_projection")
             if isinstance(projection, Mapping):
-                result.update(dict(projection))
+                result.update(_successor_projection(projection, state=state, durable=current,
+                    completed_step_id=str(replay.payload.get("completed_step_id") or "")))
             return result
 
         # A terminal PlanState owns the race regardless of which stale
@@ -541,7 +558,11 @@ class CommitStep:
             "request_fingerprint": request_fingerprint,
             "outcome": semantic_outcome.to_dict(),
             "successor_projection": {"current_step_id": successor_step_id,
-                "plan_id": str(candidate.get("plan_id") or ""), "plan_version": str(candidate.get("plan_version") or "")},
+                "plan_id": str(candidate.get("plan_id") or ""), "plan_version": str(candidate.get("plan_version") or ""),
+                # The verified CAS consumed the completed step's Recovery
+                # instruction. Persist this projection for exact replay; a
+                # stale unrelated handoff still fails TypedGenerate admission.
+                "recovery_outcome": {}, "generate_seed": {}},
         }
         task_state["typed_step_commit_receipts"] = receipts
         semantic_consumptions = dict(
@@ -574,9 +595,8 @@ class CommitStep:
             )
         return {
             "commit_step_outcome": semantic_outcome.to_dict(),
-            "current_step_id": successor_step_id,
-            "plan_id": str(candidate.get("plan_id") or ""),
-            "plan_version": str(candidate.get("plan_version") or ""),
+            **_successor_projection(receipts[commit_id]["successor_projection"],
+                state=state, durable=candidate, completed_step_id=validation.step_id),
         }
 
 

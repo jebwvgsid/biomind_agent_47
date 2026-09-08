@@ -264,6 +264,7 @@ class RecoveryRuntime:
             "reason_code": directive.reason_code,
             "instruction": directive.instruction,
             "question": directive.question,
+            "diagnostic_operation": directive.diagnostic_operation, "diagnostic_inputs": list(directive.diagnostic_inputs),
         }
         prior_evidence = {
             str(item) for item in prior_progress.get("evidence_refs") or ()
@@ -440,6 +441,23 @@ class RecoveryRuntime:
             "outcome": outcome.to_dict(),
         }
         if outcome_type == "candidate_repair_required":
+            diagnostic_request = {}
+            if directive.action == "run_diagnostic_probe":
+                from agent_core.workflow.diagnostic_admission import admit_diagnostic_request
+                try:
+                    diagnostic_request = admit_diagnostic_request(seed=seed, durable=durable, directive=directive, data_path=self.data_path)
+                except StageContractError as exc:
+                    if exc.code in {"ARTIFACT_PERMISSION_DENIED", "ARTIFACT_NOT_FOUND", "DIAGNOSTIC_OPERATION_UNSUPPORTED", "DIAGNOSTIC_INPUT_BUDGET_EXCEEDED"}:
+                        return self._result(RecoveryOutcome(schema_version=1, type="blocked", scope=scope,
+                            summary="The requested diagnostic could not be admitted: " + exc.detail,
+                            payload={"reason_code": exc.code, "source_scope": scope,
+                                "blocked_evidence": {"decision_id": decision_id, "incident_id": incident_id,
+                                    "failure_fingerprint": failure_fingerprint},
+                                "failure_stage": "recovery.diagnostic_admission",
+                                "detail": exc.detail, "operation": directive.diagnostic_operation,
+                                "requested_refs": list(directive.diagnostic_inputs), "command_started": False,
+                                "budget_receipt": {**budget_receipt, "consumed": False}}))
+                    raise
             from pathlib import Path
             from agent_core.recovery import build_scoped_recovery_execution_envelope
             envelope = build_scoped_recovery_execution_envelope(
@@ -448,7 +466,14 @@ class RecoveryRuntime:
                 recovery_context_id=seed.seed_id, step_id=packet.step_id,
                 task_root=Path(self.data_path) / "task_outputs" / task_id,
                 objective=directive.instruction,
+                allowed_input_roots=[item["path"] for item in diagnostic_request.get("inputs", [])],
             )
+            if diagnostic_request:
+                from dataclasses import replace
+                from agent_core.recovery import RecoveryExecutionEnvelope
+                envelope = replace(envelope, scratch_capability=replace(envelope.scratch_capability, **diagnostic_request["limits"]), immutable_hash="")
+                envelope = RecoveryExecutionEnvelope.from_mapping(envelope.to_dict())
+                candidate_receipts[decision_id]["diagnostic_request"] = diagnostic_request
             candidate_task["recovery_state"] = bind_recovery_generation_authority(
                 candidate, candidate_task.get("recovery_state") or {},
                 decision_id=decision_id, envelope=envelope.to_dict(), source_attempt_id=packet.attempt_ref,
@@ -457,6 +482,7 @@ class RecoveryRuntime:
                 execution_envelope=envelope.to_dict(), execution_envelope_digest=envelope.immutable_hash,
                 generation_authority=deepcopy(candidate_task["recovery_state"]["active_recovery"]),
                 business_resume_state=deepcopy(state.get("recovery_business_resume_state") or {}),
+                causal_observation_receipts=deepcopy(state.get("recovery_causal_observation_receipts") or []),
             )
         candidate_task["typed_recovery_receipts"] = candidate_receipts
         packet_ref = str(

@@ -60,6 +60,38 @@ class TypedSupervisor:
                 or {}
             )
             verifier_state["execution_evidence"] = execution
+        if execution.get("recovery_execution_facts_ref"):
+            # Execute archives the original allowed fields before its compact
+            # graph projection. Semantic review consumes that same durable
+            # evidence, not an abbreviated stdout_summary labelled complete.
+            try:
+                from agent_core.state_contract_store import StateContractStore
+                from agent_core.workflow.inspection_evidence import read_execution_facts
+                held = read_execution_facts(StateContractStore(self.data_path, task_id),
+                    str(execution["recovery_execution_facts_ref"]))
+                current = load_plan_state(self.data_path, task_id)
+                for key in ("task_id", "plan_id", "plan_version", "step_id", "action_id", "attempt_id"):
+                    expected = execution.get(key, task_id if key == "task_id" else "")
+                    if str(held.get(key) or "") != str(expected or ""):
+                        raise ValueError("SUPERVISOR_EXECUTION_FACTS_SCOPE_MISMATCH:" + key)
+                for key, expected in (("task_id", task_id), ("plan_id", current.get("plan_id")),
+                        ("plan_version", current.get("plan_version")), ("step_id", current.get("current_step_id"))):
+                    if str(held.get(key) or "") != str(expected or ""):
+                        raise ValueError("SUPERVISOR_EXECUTION_FACTS_SCOPE_MISMATCH:" + key)
+                execution = {**execution, **{key: held[key] for key in (
+                    "code", "raw_stdout", "raw_stderr", "stdout_truncated", "stderr_truncated",
+                ) if key in held}}
+                for stream in ("stdout", "stderr"):
+                    if "raw_" + stream not in held and stream in held:
+                        execution["raw_" + stream] = str(held[stream])
+                verifier_state["execution_evidence"] = execution
+            except (ValueError, OSError, TypeError) as exc:
+                return {"verification_outcome": VerificationOutcome(schema_version=1,
+                    type="harness_error", summary="The recorded execution facts could not be safely read for verification.",
+                    scope={"task_id": task_id, **{key: str(execution.get(key) or "") for key in ("plan_id", "plan_version", "step_id", "action_id", "attempt_id")}},
+                    payload={"error_code": str(getattr(exc, "code", "") or "SUPERVISOR_EXECUTION_FACTS_READ_FAILED"),
+                        "exception_class": type(exc).__name__, "detail": str(exc),
+                        "failure_stage": "supervisor.execution_evidence_read", "execution_record": execution}).to_dict()}
         result = await self.verifier(verifier_state)
         if not isinstance(result, Mapping):
             raise TypeError("SupervisorNode.run must return a mapping")

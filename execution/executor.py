@@ -352,6 +352,7 @@ async def run_command(
     profile: bool = True,
     lifecycle_callback: Optional[Callable[..., Any]] = None,
     env: Mapping[str, str] | None = None,
+    max_output_bytes: int | None = None,
 ) -> Tuple[str, str, int]:
     """通用 Shell 命令执行器"""
     start_time = time.time()
@@ -383,6 +384,10 @@ async def run_command(
     )
     capture_limit = max(16_384, _env_int("BIOMIND_EXEC_MAX_CAPTURE_BYTES", 262_144))
     stream_output_limit = max(0, _env_int("BIOMIND_EXEC_MAX_STREAM_BYTES", 67_108_864))
+    if max_output_bytes is not None:
+        if type(max_output_bytes) is not int or max_output_bytes <= 0:
+            raise ValueError("EXECUTION_OUTPUT_LIMIT_INVALID")
+        stream_output_limit = min(stream_output_limit or max_output_bytes, max_output_bytes)
     command_class = _watchdog_command_class(command)
     stdout_log_handle = None
     stderr_log_handle = None
@@ -673,6 +678,7 @@ async def run_script_path(
     lifecycle_callback: Optional[Callable[..., Any]] = None,
     exit_status_path: str | Path | None = None,
     env: Mapping[str, str] | None = None,
+    max_output_bytes: int | None = None,
 ) -> Tuple[str, str, int]:
     """Execute one immutable saved script; never materialize a second script."""
     global _LAST_EXECUTION_METADATA
@@ -695,6 +701,7 @@ async def run_script_path(
         profile=profile,
         lifecycle_callback=lifecycle_callback,
         env=env,
+        max_output_bytes=max_output_bytes,
     )
     metadata = dict(get_last_execution_metadata())
     metadata.update({
@@ -723,6 +730,7 @@ async def run_bash_script(
     code: str,
     timeout: int = None,
     env: Mapping[str, str] | None = None,
+    max_output_bytes: int | None = None,
 ) -> Tuple[str, str, int]:
     """Compatibility API using a unique temporary script, never a fixed filename."""
     start_time = time.time()
@@ -750,6 +758,7 @@ async def run_bash_script(
             timeout=timeout,
             profile=False,
             env=env,
+            max_output_bytes=max_output_bytes,
         )
         return stdout, stderr, returncode
     except Exception as e:

@@ -1255,6 +1255,18 @@ class SkillAccessService:
             "resource_path": path.as_posix(),
         })
         cached = deepcopy(dict(state["resource_snapshots"].get(key) or {}))
+        # A cached text hash does not authorize a newly changed program path.
+        # Resolve within the selected Skill and verify the actual current bytes
+        # before exposing a usable resource location to Generate.
+        from agent_core.approved_resource_locator import open_approved_resource
+        try:
+            with open_approved_resource(resolved) as stream:
+                raw_content = stream.read(2 * 1024 * 1024 + 1)
+            if len(raw_content) > 2 * 1024 * 1024:
+                raise SkillAccessError("SKILL_RESOURCE_SIZE_LIMIT", raw)
+            current_content = raw_content.decode("utf-8")
+        except (OSError, UnicodeError) as exc:
+            raise SkillAccessError("SKILL_CONTEXT_UNAVAILABLE", f"resource={raw}: {type(exc).__name__}") from exc
         if cached:
             if _digest(str(cached.get("exact_text") or "")) != str(
                 cached.get("content_hash") or ""
@@ -1262,9 +1274,12 @@ class SkillAccessService:
                 raise SkillAccessError(
                     "SKILL_SNAPSHOT_HASH_MISMATCH", f"resource={raw}"
                 )
+            if _digest(current_content) != str(cached.get("content_hash") or ""):
+                raise SkillAccessError("SKILL_RESOURCE_CHANGED", raw)
+            cached["resource_location"] = str(resolved)
             return cached
         try:
-            content = resolved.read_bytes().decode("utf-8")
+            content = current_content
         except (OSError, UnicodeError) as exc:
             raise SkillAccessError(
                 "SKILL_CONTEXT_UNAVAILABLE", f"resource={raw}: {type(exc).__name__}"
@@ -1274,6 +1289,7 @@ class SkillAccessService:
             "snapshot_id": str(snapshot.get("snapshot_id") or ""),
             "skill_id": str(snapshot.get("skill_id") or ""),
             "resource_path": path.as_posix(),
+            "resource_location": str(resolved),
             "content_hash": _digest(content),
             "line_count": len(content.splitlines()),
             "exact_text": content,
@@ -1534,6 +1550,7 @@ class SkillAccessService:
             exact_text = _source_slice(resource_text, start_line, end_line)
             extra = {
                 "resource_path": str(resource["resource_path"]),
+                "resource_location": str(resource["resource_location"]),
                 "resource_snapshot_id": str(resource["resource_snapshot_id"]),
                 "resource_content_hash": str(resource["content_hash"]),
             }

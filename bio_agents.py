@@ -643,6 +643,7 @@ from agent_core.plan_tracker import (
     validate_renderer_action_artifacts,
     validate_action_approval_lineage,
     rollover_recovery_generation_claim_after_candidate_rejection,
+    rollover_recovery_generation_claim_after_skill_result,
     update_recovery_generation_claim,
     sync_plan_state_from_stage_status,
     task_status,
@@ -7405,6 +7406,7 @@ class BioAnalystAgent:
         expected_proposal_id: str = "",
         expected_proposal_status: str = "",
         expected_proposal_snapshot_id: str = "",
+        recovery_skill_completion: Optional[Mapping[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Persist canonical Skill state; ID lists are compatibility projections."""
         durable = load_plan_state(self.data_path, task_id)
@@ -7497,6 +7499,11 @@ class BioAnalystAgent:
         durable["skill_access_state"] = deepcopy(access)
         durable["selected_skill_refs"] = deepcopy(refs)
         durable["selected_skill_ids"] = list(selected)
+        if recovery_skill_completion and continuation_id:
+            rollover_recovery_generation_claim_after_skill_result(
+                durable, completion=recovery_skill_completion,
+                continuation_id=continuation_id,
+            )
         save_plan_state(self.data_path, task_id, durable)
         return {
             "skill_access_state": deepcopy(access),
@@ -7752,6 +7759,7 @@ class BioAnalystAgent:
         node_context: NodeContext,
         response: BaseMessage,
         selected_skill_ids: Sequence[Any] = (),
+        recovery_skill_completion: Optional[Mapping[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Serve a typed Skill decision before any action/plan parser runs."""
         service = getattr(self, "skill_access_service", None)
@@ -7802,6 +7810,19 @@ class BioAnalystAgent:
                 "pending_action": {},
                 "next_step": graph_node,
             }
+        if recovery_skill_completion:
+            history = ((durable.get("task_state") or {}).get("recovery_state") or {}).get("generation_claim_history") or []
+            if any(all(str((item.get("skill_completion") or {}).get(key) or "") == str(recovery_skill_completion.get(key) or "")
+                       for key in ("target_generation_id", "provider_request_digest", "response_digest"))
+                   and item.get("skill_completion_event_id") for item in history):
+                # Already served in the prior Skill/CAS transaction. Reassemble
+                # from its durable projection; never charge another Skill round.
+                return {"pending_action": {}, "next_step": graph_node,
+                    "generate_result": "STALE_NODE_RESULT",
+                    "generate_exit_reason": "skill_completion_already_adopted",
+                    "messages": [SystemMessage(content=json.dumps({
+                        "decision_result": "SKILL_COMPLETION_ALREADY_ADOPTED",
+                        "counts_as_failure": False}))]}
         expected_state_generation = int(
             durable.get("state_generation") or 0
         )
@@ -7972,6 +7993,7 @@ class BioAnalystAgent:
                 pending_proposal=(proposal if proposal is not None else None),
                 pending_plan_impact=pending_plan_impact,
                 expected_state_generation=expected_state_generation,
+                recovery_skill_completion=(recovery_skill_completion if continuation_id and not no_progress else None),
             )
         except StateCASConflict as exc:
             return {
@@ -12405,7 +12427,11 @@ class BioAnalystAgent:
         # Loading and saving a second copy here would advance the generation and
         # make the caller's otherwise valid snapshot stale.
         plan_state = plan_state if plan_state is not None else load_plan_state(self.data_path, task_id)
-        step = self._running_plan_step(plan_state) or {}
+        # Mechanical binding uses the durable executable cursor, including a
+        # verification-pending step with an admitted Recovery correction.
+        # A pending successor must never substitute for that current step.
+        _, step = current_plan_step_with_index(plan_state)
+        step = step or {}
         task_revision = task_spec_revision(
             canonical_task_spec_for_state(plan_state)
         )
@@ -13317,6 +13343,9 @@ class BioAnalystAgent:
             current_step_id=str((current_step or {}).get("step_id") or ""),
         )
         if action.get("managed_artifact_handles") or action.get("materialized_artifacts"):
+            if str(action.get("result_contract") or "").upper() == "DIAGNOSTIC_EVIDENCE":
+                from agent_core.workflow.diagnostic_admission import diagnostic_binding_subset
+                managed_bindings = diagnostic_binding_subset(action, plan_state, managed_bindings)
             managed_violations = validate_materialized_artifacts(action, managed_bindings)
             if managed_violations:
                 return json.dumps(
@@ -17121,22 +17150,13 @@ class BioAnalystAgent:
 
     @staticmethod
     def _running_plan_step(state: Dict[str, Any]) -> Dict[str, Any]:
-        steps = [step for step in state.get("steps", []) or [] if isinstance(step, dict)]
-        cursor = str(state.get("current_step_id") or "")
-        if cursor:
-            current = next(
-                (step for step in steps if str(step.get("step_id") or "") == cursor),
-                None,
-            )
-            if current and str(current.get("status") or "").strip().lower() in {
-                "running", "retry_pending", "repairing", "diagnosing", "ready", "pending",
-            }:
-                return current
-        for status in ("running", "retry_pending", "repairing", "diagnosing", "ready", "pending"):
-            for step in steps:
-                if str(step.get("status") or "").strip().lower() == status:
-                    return step
-        return {}
+        """Use the same durable active cursor as Generate/Execute/CommitStep.
+
+        Verification-pending remains the current step during authorized repair;
+        status scanning must not bind its action to a pending successor.
+        """
+        _, step = current_plan_step_with_index(state)
+        return step
 
     @staticmethod
     def _plan_step_is_activation_only(step: Dict[str, Any]) -> bool:
@@ -18038,6 +18058,11 @@ class BioAnalystAgent:
                 metadata.setdefault(
                     "skill_versions",
                     self._trace_skill_versions(list(metadata.get("selected_skill_ids") or [])),
+                )
+                from agent_core.runtime_identity import runtime_identity_or_unavailable
+                metadata["runtime_identity"] = runtime_identity_or_unavailable(
+                    data_path=self.data_path, task_id=task_id, stage=stage,
+                    skill_versions=metadata.get("skill_versions") or {},
                 )
                 metadata["semantic_invocation_id"] = semantic_invocation_id
                 metadata["attempt_id"] = attempt_id
@@ -38878,6 +38903,10 @@ question. Never guess a scientific or database identity.
                     fixed_prefix_count=(2 + len(planner_phase_context.inherited_messages) if planner_phase_context else 2),
                     capabilities=planner_effect_registry, response_metadata=planner_response_integrity,
                     call_claim=planner_call_claim, remediation=remediation,
+                    consumption_review_baselines=(restored_planner_context or {}).get("consumption_review_baselines") or ([{
+                        "raw_candidate": restored_planner_context.get("raw_candidate", ""),
+                        "validation_issues": (restored_planner_context.get("feedback") or {}).get("validation_issues", []),
+                    }] if restored_planner_context else ()),
                 )
                 save_plan_state(self.data_path, task_id, rejected_state)
                 failure = (rejected_state.get("task_state") or {}).get("planning_failure") or {}
@@ -39204,6 +39233,17 @@ question. Never guess a scientific or database identity.
                             require_declared_references=True,
                             capability_ids=tuple(planner_effect_registry),
                         )
+                        if not deterministic_issues and restored_planner_context:
+                            from agent_core.plan_contract import validate_planner_consumption_correction
+                            baselines = restored_planner_context.get("consumption_review_baselines") or [{
+                                "raw_candidate": restored_planner_context.get("raw_candidate") or "",
+                                "validation_issues": (restored_planner_context.get("feedback") or {}).get("validation_issues") or [],
+                            }]
+                            for baseline in baselines:
+                                if not any(row.get("code") == "PLAN_ARTIFACT_UNAVAILABLE" for row in baseline["validation_issues"]):
+                                    continue
+                                previous = parse_planner_outcome_envelope(baseline["raw_candidate"], allow_legacy_plan=False).plan_candidate_body()
+                                deterministic_issues.extend(validate_planner_consumption_correction(previous, plan_proposal, baseline["validation_issues"]))
                         if deterministic_issues:
                             structure_errors = [
                                 normalize_validation_issue(issue)
@@ -41016,6 +41056,10 @@ question. Never guess a scientific or database identity.
                     "recovery_execution_envelope": {},
                 })
             if recovery_generated:
+                typed_receipt = ((generation_plan_state.get("task_state") or {}).get("typed_recovery_receipts") or {}).get(active_recovery_id) or {}
+                diagnostic_request = typed_receipt.get("diagnostic_request") or {}
+                if diagnostic_request:
+                    state["typed_diagnostic_request"] = deepcopy(diagnostic_request)
                 recovery_store = RecoveryStateStore(self.data_path, task_id)
                 recovery_history = recovery_store.load_attempts()
                 recovery_execution_records = recovery_store.load_execution_records()
@@ -41669,6 +41713,9 @@ question. Never guess a scientific or database identity.
                         if isinstance(existing_raw, Mapping) and existing_raw
                         else None
                     )
+                    from agent_core.workflow.diagnostic_admission import public_diagnostic_request
+                    from agent_core.step_effects import observation_emission_contract
+                    approved_emission_contract = observation_emission_contract(approved_step)
                     seed_message = generate_seed_messages[0]
                     if existing_episode is None:
                         if recovery_seed:
@@ -41696,6 +41743,8 @@ question. Never guess a scientific or database identity.
                                     ),
                                     "capability_instructions": capability_instructions,
                                     "task_policy_instructions": lightweight_policy,
+                                    "diagnostic_request": public_diagnostic_request(state.get("typed_diagnostic_request") or {}),
+                                    "observation_emission_contract": deepcopy(approved_emission_contract),
                                 },
                                 inherited_materials=generate_material_messages,
                             )
@@ -41721,6 +41770,8 @@ question. Never guess a scientific or database identity.
                                 ),
                                 "capability_instructions": capability_instructions,
                                 "task_policy_instructions": lightweight_policy,
+                                "diagnostic_request": public_diagnostic_request(state.get("typed_diagnostic_request") or {}),
+                                    "observation_emission_contract": deepcopy(approved_emission_contract),
                             },
                             inherited_materials=generate_material_messages,
                         )
@@ -41752,6 +41803,23 @@ question. Never guess a scientific or database identity.
                         )
 
                     appended_events: List[GenerateEpisodeEvent] = []
+                    # TypedExecute consumes legacy messages. The actual human
+                    # code-review result therefore travels in its durable CAS
+                    # receipt and the same append-only Generate episode.
+                    approval_claim = ((generate_plan_state.get("task_state") or {}).get("recovery_state") or {}).get("generation_claim") or {}
+                    approval_feedback = approval_claim.get("approval_feedback") or {}
+                    approval_event_id = str(approval_claim.get("approval_feedback_event_id") or "")
+                    if approval_event_id and approval_feedback:
+                        if (approval_feedback.get("source") != "execute.code_review" or any(
+                            str((approval_feedback.get("scope") or {}).get(key) or "") != str(generate_plan_state.get(current_key) or "")
+                            for key, current_key in (("task_id", "task_id"), ("plan_id", "plan_id"), ("plan_version", "plan_version"), ("step_id", "current_step_id")))):
+                            raise ValueError("RECOVERY_APPROVAL_FEEDBACK_SCOPE_STALE")
+                        if approval_event_id not in {event.event_id for event in generate_episode.local_events}:
+                            appended_events.append(GenerateEpisodeEvent.from_message(
+                                event_id=approval_event_id, event_kind="human_code_review_feedback",
+                                message=HumanMessage(content=json.dumps({"kind": "code_review_feedback",
+                                    "decision": approval_feedback["decision"], "guidance": approval_feedback["guidance"],
+                                    "command_started": False}, ensure_ascii=False, sort_keys=True))))
                     if existing_episode is not None and generate_episode is existing_episode:
                         visible_feedback = {
                             key: deepcopy(value)
@@ -42202,6 +42270,23 @@ question. Never guess a scientific or database identity.
                         else 0
                     ),
                 }
+                if recovery_generated and claim_status == "provider_completed":
+                    completed_identity = dict(claim_state.get("provider_completion_cache_identity") or {})
+                    completed_digest = str(claim_state.get("provider_response_digest") or "")
+                    if completed_identity:
+                        # The completed response is already an append-only episode
+                        # event. Reassembly therefore has a different wire digest;
+                        # adopt the receipt's exact original request, not a new call.
+                        stable_current = {k: v for k, v in recovery_cache_identity.items() if k != "provider_request_digest"}
+                        stable_completed = {k: v for k, v in completed_identity.items() if k != "provider_request_digest"}
+                        prior_events = [item for item in (generate_episode.local_events if generate_episode else ())
+                            if item.event_id == "generate-candidate:" + str(completed_identity.get("provider_request_digest") or "")
+                            and item.event_kind == "candidate_response"]
+                        if (stable_current != stable_completed or len(prior_events) != 1
+                                or hashlib.sha256(str(prior_events[0].message.payload.get("content") or "").encode()).hexdigest() != completed_digest):
+                            raise RecoveryExecutionContractError("RECOVERY_PROVIDER_COMPLETION_RECEIPT_STALE",
+                                "The completed response no longer matches its scoped request and episode event.")
+                        recovery_cache_identity = completed_identity
                 cache_budgets = dict(
                     (generate_plan_state.get("task_state") or {}).get("budgets")
                     or {}
@@ -42225,6 +42310,10 @@ question. Never guess a scientific or database identity.
                     else {}
                 )
                 if cached_generate.get("raw_response"):
+                    if (recovery_generated and claim_status == "provider_completed"
+                            and claim_state.get("provider_response_digest")
+                            and hashlib.sha256(str(cached_generate["raw_response"]).encode()).hexdigest() != claim_state["provider_response_digest"]):
+                        raise RecoveryExecutionContractError("RECOVERY_PROVIDER_COMPLETION_INTEGRITY_ERROR", "Cached response bytes differ from the completion receipt.")
                     generate_response_cached = True
                     response = AIMessage(content=str(cached_generate["raw_response"]))
                     logger.info(
@@ -42501,6 +42590,7 @@ question. Never guess a scientific or database identity.
                             )
                         except SkillAccessError:
                             cache_skill_decision = {"decision": "INVALID_SKILL_DECISION"}
+                        cached_structured_action = {}
                         if cache_skill_decision is None:
                             if generate_script_protocol:
                                 try:
@@ -42519,36 +42609,39 @@ question. Never guess a scientific or database identity.
                                 cached_structured_action = self._extract_structured_action(
                                     str(response.content or "")
                                 )
-                            recovery_store.save_llm_result(
-                                recovery_context_obj.context_id,
-                                f"generate:{recovery_stage or 'RECOVERY'}",
-                                raw_response=str(response.content or ""),
-                                parsed_result={
-                                    "action_type": str(
-                                        cached_structured_action.get("type") or ""
-                                    )
-                                },
-                                cache_identity=recovery_cache_identity,
-                                candidate_fingerprint=(
-                                    managed_action_fingerprint(cached_structured_action)
-                                    if cached_structured_action
-                                    else ""
-                                ),
-                            )
+                        recovery_store.save_llm_result(
+                            recovery_context_obj.context_id,
+                            f"generate:{recovery_stage or 'RECOVERY'}",
+                            raw_response=str(response.content or ""),
+                            parsed_result={
+                                "response_kind": "skill_decision" if cache_skill_decision is not None else "action",
+                                "action_type": str(cached_structured_action.get("type") or "")
+                            },
+                            cache_identity=recovery_cache_identity,
+                            candidate_fingerprint=(
+                                managed_action_fingerprint(cached_structured_action)
+                                if cached_structured_action
+                                else ""
+                            ),
+                        )
                 if generate_episode is not None and generate_provider_request is not None:
                     candidate_event = GenerateEpisodeEvent.from_message(
                         event_id=(
                             "generate-candidate:"
-                            + generate_provider_request.request_digest
+                            + str(recovery_cache_identity.get("provider_request_digest") or generate_provider_request.request_digest)
                         ),
                         event_kind="candidate_response",
                         message=response,
                     )
-                    generate_episode = append_generate_episode_events(
-                        generate_episode,
-                        observed_basis=generate_episode.basis,
-                        events=[candidate_event],
-                    )
+                    if not (generate_response_cached and any(
+                        event.event_id == candidate_event.event_id
+                        for event in generate_episode.local_events
+                    )):
+                        generate_episode = append_generate_episode_events(
+                            generate_episode,
+                            observed_basis=generate_episode.basis,
+                            events=[candidate_event],
+                        )
                     generate_plan_state = self._persist_generate_context_episode(
                         task_id,
                         generate_episode,
@@ -42776,6 +42869,9 @@ question. Never guess a scientific or database identity.
                         status="provider_completed",
                         detail=("cache_replay" if generate_response_cached else "provider_response_complete"),
                     )
+                    completed_claim = provider_state["task_state"]["recovery_state"]["generation_claim"]
+                    completed_claim["provider_completion_cache_identity"] = deepcopy(recovery_cache_identity)
+                    completed_claim["provider_response_digest"] = hashlib.sha256(str(response.content or "").encode()).hexdigest()
                     try:
                         save_plan_state(
                             self.data_path, task_id, provider_state
@@ -42968,6 +43064,11 @@ question. Never guess a scientific or database identity.
                         ),
                         graph_node="generate",
                         decision=typed_generate_skill_decision,
+                        recovery_skill_completion=({
+                            "target_generation_id": target_generation_id,
+                            "provider_request_digest": str(recovery_cache_identity.get("provider_request_digest") or ""),
+                            "response_digest": hashlib.sha256(str(content or "").encode()).hexdigest(),
+                        } if recovery_generated else None),
                         node_context=generate_node_context,
                         response=response,
                         selected_skill_ids=(
@@ -43827,6 +43928,9 @@ question. Never guess a scientific or database identity.
                     current_step_id=current_action_step_id,
                     visible_artifacts=visible_artifacts,
                 )
+                if str(structured_action.get("result_contract") or "").upper() == "DIAGNOSTIC_EVIDENCE":
+                    from agent_core.workflow.diagnostic_admission import diagnostic_binding_subset
+                    managed_bindings = diagnostic_binding_subset(structured_action, current_action_plan, managed_bindings)
                 materialized_action, artifact_violations = validate_concrete_action_artifacts(
                     structured_action,
                     managed_bindings,
@@ -45719,8 +45823,13 @@ question. Never guess a scientific or database identity.
                 action: Mapping[str, Any],
                 *,
                 reason: str,
+                approval_feedback: Optional[Mapping[str, Any]] = None,
             ) -> bool:
-                """CAS-revoke user/policy-owned pending authority without a receipt."""
+                """CAS-revoke pending authority without charging mechanical repair.
+
+                Explicit code-review feedback can continue a Recovery claim in
+                this same transaction; policy rejection/cancellation cannot.
+                """
 
                 action_id = str(action.get("action_id") or "").strip()
                 if not action_id:
@@ -45731,6 +45840,12 @@ question. Never guess a scientific or database identity.
                     durable_pending = dict(task_state.get("pending_action") or {})
                     if str(durable_pending.get("action_id") or "") != action_id:
                         return not durable_pending
+                    if approval_feedback is not None:
+                        from agent_core.plan_tracker import continue_recovery_generation_after_code_review
+                        continue_recovery_generation_after_code_review(current, action=action,
+                            decision=str(approval_feedback.get("decision") or ""),
+                            guidance=str(approval_feedback.get("guidance") or ""))
+                        task_state = dict(current.get("task_state") or {})
                     task_state["pending_action"] = {}
                     current["task_state"] = task_state
                     current["pending_action"] = {}
@@ -45815,6 +45930,7 @@ question. Never guess a scientific or database identity.
                 if not revoke_pending_without_candidate_repair(
                     action,
                     reason=f"user_edited_action_rejected:{repair_stage}",
+                    approval_feedback={"decision": "edited_rejected", "guidance": feedback},
                 ):
                     return {
                         "messages": [SystemMessage(content=(
@@ -47369,6 +47485,7 @@ question. Never guess a scientific or database identity.
                 if not revoke_pending_without_candidate_repair(
                     pending_action,
                     reason="user_rejected_generated_action",
+                    approval_feedback={"decision": "rejected", "guidance": rejection_reason},
                 ):
                     return {
                         "messages": [SystemMessage(content=(
@@ -47449,6 +47566,7 @@ question. Never guess a scientific or database identity.
                     if not revoke_pending_without_candidate_repair(
                         pending_action,
                         reason="user_guidance_replaced_generated_action",
+                        approval_feedback={"decision": "guidance", "guidance": final_code},
                     ):
                         return {
                             "messages": [SystemMessage(content=(
@@ -47527,6 +47645,14 @@ question. Never guess a scientific or database identity.
                     ),
                 })
                 return rejected
+
+            if str(pending_action.get("result_contract") or "").upper() == "DIAGNOSTIC_EVIDENCE":
+                try:
+                    from agent_core.workflow.diagnostic_admission import validate_diagnostic_receipt_action
+                    validate_diagnostic_receipt_action(pending_action, load_plan_state(self.data_path, task_id), code=code_to_run)
+                except (ValueError, OSError) as exc:
+                    return reject_internal_prelaunch(pending_action, error_code=str(getattr(exc, "code", "") or "DIAGNOSTIC_POST_REVIEW_REJECTED"),
+                        stage="execute.diagnostic_post_review", detail=str(exc))
 
             # This is the exact approved source that the wrapper will run.
             # Keep it for direct executable-identity evidence after the process.
@@ -48206,6 +48332,9 @@ question. Never guess a scientific or database identity.
                 f": > {shlex.quote(str(stdout_path))}\n",
                 f": > {shlex.quote(str(stderr_path))}\n",
             ]
+            if str(pending_action.get("result_contract") or "").upper() == "DIAGNOSTIC_EVIDENCE":
+                file_bound = int((pending_action.get("scratch_capability") or {}).get("max_output_bytes") or 65536)
+                wrapper_parts.append("ulimit -f " + str(max(1, (file_bound + 1023) // 1024)) + "\n")
             wrapper_parts.append(
                 f"printf 'runner=%s script=%s\\n' {shlex.quote(shlex.join(approved_runner_argv[:-1]))} "
                 f"{shlex.quote(approved_ref['path'])} > {shlex.quote(trace_file)}\n"
@@ -48442,12 +48571,16 @@ question. Never guess a scientific or database identity.
                     attempt_id=attempt_id,
                 )
                 preparation_boundary["command_launch_entered"] = True
+                if diagnostic_dispatch_envelope is not None:
+                    from agent_core.workflow.diagnostic_admission import validate_diagnostic_receipt_action
+                    validate_diagnostic_receipt_action(pending_action, load_plan_state(self.data_path, task_id), code=approved_source_code)
                 execution_call = run_script_path(
                         script_file,
                         expected_sha256=executed_ref["sha256"],
                         interpreter="bash",
                         lifecycle_callback=persist_attempt_lifecycle,
                         env=effective_execution_env,
+                        **({"max_output_bytes": diagnostic_dispatch_envelope.scratch_capability.max_output_bytes} if diagnostic_dispatch_envelope is not None else {}),
                     )
                 if diagnostic_dispatch_envelope is not None:
                     stdout, stderr, returncode = await asyncio.wait_for(
@@ -48463,7 +48596,7 @@ question. Never guess a scientific or database identity.
                 diagnostic_timed_out = True
                 stdout, stderr, returncode = (
                     "",
-                    "Diagnostic execution exceeded its Controller wall-time capability.",
+                    "Diagnostic execution exceeded its approved wall-time capability; object existence is not determined by this timeout.",
                     124,
                 )
             except Exception as e:
@@ -49670,7 +49803,17 @@ question. Never guess a scientific or database identity.
                 from agent_core.context_lineage import redact_text
                 held_execution = {key: execution_evidence[key] for key in
                     ("task_id", "plan_id", "plan_version", "step_id", "attempt_id", "action_id", "execution_id", "code", "generated_code", "stdout", "stderr", "returncode", "exit_code", "execution_status", "effect_evidence", "validation", "pipeline_statuses") if key in execution_evidence}
+                held_execution["schema_version"] = 1
+                held_execution["task_id"] = task_id
+                held_execution["generated_code"] = generated_model_code
+                for stream in ("stdout", "stderr"):
+                    held_execution["raw_" + stream] = str(execution_evidence.get(stream) or "")
+                    held_execution[stream + "_truncated"] = bool(execution_evidence.get(stream + "_truncated"))
                 held_execution["execution_wrapper"] = wrapper
+                held_execution["script_identities"] = {"generated": generated_ref, "approved": approved_ref, "executed": executed_ref}
+                held_execution["timed_out"] = diagnostic_timed_out
+                held_execution["command_role"] = command_role
+                held_execution["argv"] = execution_argv
                 held_execution = {key: redact_text(value) if isinstance(value, str) else value for key, value in held_execution.items()}
                 execution_evidence["recovery_execution_facts_ref"] = StateContractStore(self.data_path, task_id).put_object("execution.recovery_facts", held_execution)
             except Exception as facts_error:

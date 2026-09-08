@@ -1054,15 +1054,17 @@ class RecoveryDirective(ImmutableStageContract):
     question: str = ""
     requested_slots: tuple[str, ...] = ()
     evidence_refs: tuple[str, ...] = ()
+    diagnostic_operation: str = ""
+    diagnostic_inputs: tuple[str, ...] = ()
 
     REQUIRED: ClassVar[frozenset[str]] = frozenset({
         "schema_version", "directive_id", "task_id", "action", "summary", "reason_code",
     })
     OPTIONAL: ClassVar[frozenset[str]] = frozenset({
-        "target_step_id", "instruction", "question", "requested_slots", "evidence_refs",
+        "target_step_id", "instruction", "question", "requested_slots", "evidence_refs", "diagnostic_operation", "diagnostic_inputs",
     })
     ALLOWED_ACTIONS: ClassVar[frozenset[str]] = frozenset({
-        "retry_step", "revise_plan", "reconsult", "revalidate", "ask_user", "blocked",
+        "retry_step", "revise_plan", "reconsult", "revalidate", "ask_user", "blocked", "run_diagnostic_probe",
     })
 
     def __post_init__(self) -> None:
@@ -1073,14 +1075,19 @@ class RecoveryDirective(ImmutableStageContract):
         if action not in self.ALLOWED_ACTIONS:
             raise StageContractError("RECOVERY_ACTION_UNKNOWN", action)
         object.__setattr__(self, "action", action)
-        for field in ("target_step_id", "instruction", "question"):
+        for field in ("target_step_id", "instruction", "question", "diagnostic_operation"):
             object.__setattr__(self, field, _optional_text(getattr(self, field)))
         object.__setattr__(self, "requested_slots", _text_tuple(self.requested_slots, "RecoveryDirective.requested_slots"))
         object.__setattr__(self, "evidence_refs", _text_tuple(self.evidence_refs, "RecoveryDirective.evidence_refs"))
-        if action in {"retry_step", "revalidate"} and not self.target_step_id:
+        if action in {"retry_step", "revalidate", "run_diagnostic_probe"} and not self.target_step_id:
             raise StageContractError("STAGE_FIELD_REQUIRED", "RecoveryDirective.target_step_id")
-        if action in {"retry_step", "revise_plan", "reconsult"} and not self.instruction:
+        if action in {"retry_step", "revise_plan", "reconsult", "run_diagnostic_probe"} and not self.instruction:
             raise StageContractError("STAGE_FIELD_REQUIRED", "RecoveryDirective.instruction")
+        object.__setattr__(self, "diagnostic_inputs", _text_tuple(self.diagnostic_inputs, "RecoveryDirective.diagnostic_inputs"))
+        if action == "run_diagnostic_probe" and (not self.diagnostic_operation or not self.diagnostic_inputs):
+            raise StageContractError("STAGE_FIELD_REQUIRED", "RecoveryDirective diagnostic_operation/diagnostic_inputs")
+        if action != "run_diagnostic_probe" and (self.diagnostic_operation or self.diagnostic_inputs):
+            raise StageContractError("STAGE_FIELD_INVALID", "diagnostic fields require run_diagnostic_probe")
         if action == "ask_user" and (not self.question or not self.requested_slots):
             raise StageContractError("STAGE_FIELD_REQUIRED", "RecoveryDirective ask_user question/requested_slots")
         _json_round_trip(self.to_dict())
@@ -1094,6 +1101,7 @@ class RecoveryDirective(ImmutableStageContract):
             target_step_id=raw.get("target_step_id", ""), instruction=raw.get("instruction", ""),
             question=raw.get("question", ""), requested_slots=tuple(raw.get("requested_slots") or ()),
             evidence_refs=tuple(raw.get("evidence_refs") or ()),
+            diagnostic_operation=raw.get("diagnostic_operation", ""), diagnostic_inputs=tuple(raw.get("diagnostic_inputs") or ()),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -1102,7 +1110,7 @@ class RecoveryDirective(ImmutableStageContract):
             "task_id": self.task_id, "action": self.action, "summary": self.summary,
             "reason_code": self.reason_code,
         }
-        for field in ("target_step_id", "instruction", "question"):
+        for field in ("target_step_id", "instruction", "question", "diagnostic_operation"):
             value = getattr(self, field)
             if value:
                 result[field] = value
@@ -1110,6 +1118,8 @@ class RecoveryDirective(ImmutableStageContract):
             result["requested_slots"] = list(self.requested_slots)
         if self.evidence_refs:
             result["evidence_refs"] = list(self.evidence_refs)
+        if self.diagnostic_inputs:
+            result["diagnostic_inputs"] = list(self.diagnostic_inputs)
         return result
 
 

@@ -1316,6 +1316,11 @@ class TypedExecute:
                     "attempt_id": attempt_id,
                     "status": str(diagnostic.get("status") or "recorded"),
                 }
+                if self.data_path and (action.get("recovery_execution_envelope") or {}).get("recovery_decision_id"):
+                    from agent_core.workflow.diagnostic_admission import diagnostic_return_lineage
+                    current = load_plan_state(self.data_path, str(state.get("task_id") or ""))
+                    payload.update(diagnostic_return_lineage(durable=current, execution=execution, action=action))
+                    payload["execution_record"] = execution
                 summary = "A bounded diagnostic command produced immutable evidence."
             elif str(state.get("task_mode") or "managed").lower() in {"readonly", "simple_execute"}:
                 outcome_type = "lightweight_completed"

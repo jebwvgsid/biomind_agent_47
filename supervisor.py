@@ -1888,13 +1888,13 @@ class SupervisorNode:
                 "command": record.command,
                 "command_role": str(evidence.get("command_role") or record.command_role),
                 "stdout_summary": str(
-                    evidence.get("stdout_summary")
-                    if evidence.get("stdout_summary") is not None
+                    evidence.get("raw_stdout") if evidence.get("raw_stdout") is not None
+                    else evidence.get("stdout_summary") if evidence.get("stdout_summary") is not None
                     else record.raw_stdout
                 ),
                 "stderr_summary": str(
-                    evidence.get("stderr_summary")
-                    if evidence.get("stderr_summary") is not None
+                    evidence.get("raw_stderr") if evidence.get("raw_stderr") is not None
+                    else evidence.get("stderr_summary") if evidence.get("stderr_summary") is not None
                     else record.raw_stderr
                 ),
             }
@@ -2300,7 +2300,7 @@ class SupervisorNode:
                                     if bool(execution.get("stdout_truncated"))
                                     else "complete_execution_evidence_field"
                                 ),
-                                "field": "execution_evidence.stdout_summary",
+                                "field": "execution_evidence.raw_stdout" if execution.get("raw_stdout") is not None else "execution_evidence.stdout_summary",
                                 "source_ref": str(execution.get("stdout_log") or ""),
                                 "upstream_truncated": bool(
                                     execution.get("stdout_truncated")
@@ -2313,7 +2313,7 @@ class SupervisorNode:
                                     if bool(execution.get("stderr_truncated"))
                                     else "complete_execution_evidence_field"
                                 ),
-                                "field": "execution_evidence.stderr_summary",
+                                "field": "execution_evidence.raw_stderr" if execution.get("raw_stderr") is not None else "execution_evidence.stderr_summary",
                                 "source_ref": str(execution.get("stderr_log") or ""),
                                 "upstream_truncated": bool(
                                     execution.get("stderr_truncated")
