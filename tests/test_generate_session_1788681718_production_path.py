@@ -255,6 +255,7 @@ class Session1788681718GenerateProductionPathTests(
         current_step_success_criteria_extra: Sequence[str] = (),
         legacy_renderer_mode: bool = False,
         expected_outputs=(),
+        candidate_repair_limit=2,
     ) -> dict[str, Any]:
         submission = "Check contig compatibility for the three supplied inputs."
         bootstrap, _is_continuation, _raw_ref = (
@@ -351,6 +352,10 @@ class Session1788681718GenerateProductionPathTests(
         )
         durable["audit_index"] = deepcopy(bootstrap.get("audit_index") or {})
         durable["selected_skill_ids"] = [SKILL_ID]
+        # Recorded legacy fixture freezes its original allowance. New-policy
+        # scenarios pass None and exercise the actual production default.
+        if candidate_repair_limit is not None:
+            durable.setdefault("task_state", {}).setdefault("budgets", {})["max_candidate_repairs_per_epoch"] = candidate_repair_limit
         durable = self.manager.bind_plan_execution_capability_contracts(
             durable,
             [SKILL_ID],

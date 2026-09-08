@@ -1795,6 +1795,20 @@ def _approved_plan_semantic_view(
     return dict(view)
 
 
+def _workspace_effect_semantics(value):
+    """Project workspace facts without copying durable attestation digests.
+
+    The durable receipt retains these hashes for verification/inspection; they
+    are control metadata, not additional semantic evidence for Generate.
+    """
+    if isinstance(value, Mapping):
+        return {key: _workspace_effect_semantics(item) for key, item in value.items()
+                if key not in {"content_hash", "snapshot_digest"}}
+    if isinstance(value, list):
+        return [_workspace_effect_semantics(item) for item in value]
+    return value
+
+
 def _accepted_execution_outcomes(
     plan_state: Mapping[str, Any],
     execution_records: Sequence[Mapping[str, Any]],
@@ -1868,6 +1882,9 @@ def _accepted_execution_outcomes(
             )
             if effect_evidence.get(field)
         }
+        if "workspace_mutations" in accepted_effects:
+            accepted_effects["workspace_mutations"] = _workspace_effect_semantics(
+                accepted_effects["workspace_mutations"])
         if accepted_effects:
             row["effect_evidence"] = accepted_effects
         reconciliation = str(raw.get("output_reconciliation_status") or "")

@@ -7,6 +7,8 @@ the schema-2 graph boundary.
 
 from __future__ import annotations
 
+from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit
+
 import asyncio
 import hashlib
 import json
@@ -300,7 +302,7 @@ class TypedGenerate:
         self,
         *,
         generator: NodeCallable,
-        repair_limit: int = 2,
+        repair_limit: int = DEFAULT_CANDIDATE_REPAIRS,
         data_path: str | None = None,
     ) -> None:
         self.generator = generator

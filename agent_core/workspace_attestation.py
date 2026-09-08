@@ -679,8 +679,13 @@ def _binding_candidates(action: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]:
     return result
 
 
-def _render_relative_template(template: str, action: Mapping[str, Any]) -> str:
+def _render_relative_template(template: str, action: Mapping[str, Any], accepted_bindings=None) -> str:
     candidates = _binding_candidates(action)
+    for name, value in dict(accepted_bindings or {}).items():
+        accepted = {"type": "string", "value": value}
+        if name in candidates and candidates[name] != accepted:
+            raise WorkspaceAttestationError("WORKSPACE_POSTCONDITION_BINDING_CONFLICT", binding_name=name)
+        candidates[name] = accepted
 
     def replace(match: re.Match[str]) -> str:
         name = match.group(1)
@@ -711,7 +716,10 @@ def prepare_mutation_intents(
     action_id: str,
     action_digest: str,
     action: Mapping[str, Any],
+    accepted_bindings: Optional[Mapping[str, str]] = None,
 ) -> list[Dict[str, Any]]:
+    # Accepted scalars must be supplied by the caller's current, scoped binder;
+    # never trust similarly named model action metadata or parse shell env.
     if admission.status not in {"passed", "not_applicable"}:
         raise WorkspaceAttestationError(
             "WORKSPACE_ADMISSION_NOT_PASSED", admission_status=admission.status
@@ -730,7 +738,7 @@ def prepare_mutation_intents(
                 )
             condition = deepcopy(dict(condition_raw))
             relative = _render_relative_template(
-                str(condition.get("relative_path") or ""), action
+                str(condition.get("relative_path") or ""), action, accepted_bindings
             )
             target = root if not relative else _safe_relative_path(root, relative)
             condition.update({

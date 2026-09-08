@@ -8,6 +8,8 @@ biology rules.
 
 from __future__ import annotations
 
+from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit
+
 import difflib
 import hashlib
 import json
@@ -4580,7 +4582,7 @@ class RecoveryPolicy:
         max_probe_attempts: int = 6,
         max_same_probe: int = 1,
         max_format_repairs: int = 1,
-        max_candidate_repairs: int = 2,
+        max_candidate_repairs: int = DEFAULT_CANDIDATE_REPAIRS,
     ):
         self.max_attempts = max_attempts
         self.max_same_fingerprint = max_same_fingerprint

@@ -44,3 +44,12 @@ def test_legacy_is_not_repaired_or_migrated():
  assert value==action and 'binding_env' not in value and receipt['protocol']=='legacy_full_v1'
  value,receipt=normalize_public_action_bindings(action,frozen={},scope={},workspace_bindings=[row])
  assert value==action and not receipt
+
+
+@pytest.mark.parametrize('field', ['task_id', 'plan_revision', 'step_id', 'execution_capability_id'])
+def test_raw_public_scope_cannot_be_lost_by_parser(field):
+ action,frozen,row=invocation()
+ public=deepcopy(action);public[field]='foreign'
+ with pytest.raises(PlanBindingError) as error:
+  normalize_public_action_bindings(action,frozen=frozen,scope={'task_id':'task-a'},workspace_bindings=[row],raw_public_candidate=public)
+ assert error.value.code=='BINDING_PUBLIC_SCOPE_MISMATCH'

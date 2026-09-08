@@ -6,6 +6,8 @@ cannot remove the approved plan or the current execution position.
 
 from __future__ import annotations
 
+from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit
+
 import json
 import hashlib
 import logging
@@ -6945,7 +6947,7 @@ def _plan_defaults(task_id: str, data_path: str | Path | None = None) -> PlanSta
                 "same_transition_count": 0,
                 "no_progress_count": 0,
                 "max_planner_calls_per_epoch": 4,
-                "max_candidate_repairs_per_epoch": 2,
+                "max_candidate_repairs_per_epoch": DEFAULT_CANDIDATE_REPAIRS,
             },
         },
         "failure": {},

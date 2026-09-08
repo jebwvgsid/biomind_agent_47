@@ -414,3 +414,78 @@ def validate_candidate_repair_receipt(
         if not isinstance(stored, Mapping) or dict(stored) != persisted_body:
             raise CandidateRepairReceiptError("CANDIDATE_REPAIR_RECEIPT_STORED_BODY_MISMATCH")
     return receipt
+
+
+def latest_candidate_repair_receipt(data_path, task_id, state, scope):
+    ledger = dict((state.get('task_state') or {}).get('candidate_repair_state') or {})
+    events = [row for row in (ledger.get('events') or {}).values() if row.get('scope') == scope]
+    last = max(events, key=lambda row: int(row.get('repair_ordinal') or 0), default={})
+    if not last:
+        return {}
+    if last.get('status') != 'repairable':
+        raise CandidateRepairReceiptError('GENERATE_REPAIR_SCOPE_STOPPED')
+    ref = last['receipt_ref']
+    body = StateContractStore(data_path, task_id).read_object(ref, expected_type=CANDIDATE_REPAIR_RECEIPT_OBJECT_TYPE)
+    return validate_candidate_repair_receipt({**body, 'receipt_ref': ref}, data_path=data_path, task_id=task_id,
+        expected_scope=scope, expected_candidate_fingerprint=last['candidate_fingerprint'], committed_repair_state=ledger)
+
+
+def claim_candidate_generation(data_path, task_id, scope, *, invocation_id, receipt_id=''):
+    """Claim the existing ledger's authorization before dispatch, via real CAS.
+
+    No second repair counter: one authorization is the initial candidate or an
+    immutable repair receipt. A known tool decision is not a semantic candidate;
+    an unknown call is never refunded. Transport retries share this claim.
+    """
+    from agent_core.plan_tracker import load_plan_state, save_plan_state, StateCASConflict
+    for _ in range(3):
+        state = load_plan_state(data_path, task_id)
+        actual = candidate_repair_scope(state, task_id=task_id, step_id=state.get('current_step_id'))
+        if actual != scope:
+            raise CandidateRepairReceiptError('CANDIDATE_GENERATION_SCOPE_STALE')
+        task = state['task_state']
+        if task.get('status') in {'completed','cancelled','failed','blocked','internal_protocol_error'}:
+            raise CandidateRepairReceiptError('CANDIDATE_GENERATION_TASK_TERMINAL')
+        receipt = latest_candidate_repair_receipt(data_path, task_id, state, scope)
+        if receipt.get('receipt_id','') != receipt_id:
+            raise CandidateRepairReceiptError('CANDIDATE_GENERATION_RECEIPT_NOT_IN_REQUEST')
+        ledger = deepcopy(dict(task.get('candidate_repair_state') or {}))
+        claims = ledger.setdefault('provider_claims', {})
+        authorization = receipt_id or 'initial:' + _digest(scope)
+        prior = [row for row in claims.values() if row['authorization'] == authorization]
+        active = [row for row in prior if row['status'] != 'noncandidate']
+        if active:
+            held = active[0]
+            if held['status'] != 'completed':
+                raise CandidateRepairReceiptError('CANDIDATE_GENERATION_OUTCOME_UNKNOWN', held['claim_id'])
+            content = StateContractStore(data_path,task_id).read_object(held['response_ref'],expected_type='generate_candidate_response')
+            return {**held,'cached_response':content['content']}
+        claim_id = 'candidate-call:' + _digest({'authorization':authorization,'continuation':len(prior)})
+        claim = {'claim_id':claim_id,'scope':deepcopy(scope),'authorization':authorization,'status':'claimed',
+            'invocation_id':invocation_id,'corrective_ordinal':int(receipt.get('repair_ordinal') or 0)}
+        claims[claim_id] = claim
+        task['candidate_repair_state'] = ledger
+        try:save_plan_state(data_path,task_id,state)
+        except StateCASConflict:continue
+        return claim
+    raise CandidateRepairReceiptError('CANDIDATE_GENERATION_CAS_CONFLICT')
+
+
+def complete_candidate_generation(data_path, task_id, claim, *, content, noncandidate=False):
+    from agent_core.plan_tracker import load_plan_state, save_plan_state, StateCASConflict
+    ref = StateContractStore(data_path,task_id).put_object('generate_candidate_response', {'content':str(content)})
+    for _ in range(3):
+        state=load_plan_state(data_path,task_id)
+        ledger=deepcopy(dict(state['task_state'].get('candidate_repair_state') or {}))
+        held=ledger.get('provider_claims',{}).get(claim['claim_id'])
+        if not held or held.get('invocation_id') != claim['invocation_id']:
+            raise CandidateRepairReceiptError('CANDIDATE_GENERATION_CLAIM_MISMATCH')
+        if held['status'] != 'claimed':
+            if held.get('response_ref')==ref:return
+            raise CandidateRepairReceiptError('CANDIDATE_GENERATION_COMPLETION_CONFLICT')
+        held.update(status='noncandidate' if noncandidate else 'completed',response_ref=ref)
+        state['task_state']['candidate_repair_state']=ledger
+        try:save_plan_state(data_path,task_id,state)
+        except StateCASConflict:continue
+        return
+    raise CandidateRepairReceiptError('CANDIDATE_GENERATION_COMPLETION_CAS_CONFLICT')

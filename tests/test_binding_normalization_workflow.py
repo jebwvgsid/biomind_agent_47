@@ -18,8 +18,8 @@ from tests.formal_generate_fixture import formalize
 from tests.test_inspection_workflow import InspectionReviewer
 
 
-@pytest.mark.parametrize('bad_shape', ['parent','unknown'])
-def test_handle_producer_actual_approval_commit_and_consumer(bad_shape):
+@pytest.mark.parametrize('fifth,bad_shape', [(False,'parent'),(False,'unknown'),(False,'cross_scope'),(False,'cross_plan'),(False,'cross_capability'),(False,'env_collision'),(True,'env')])
+def test_handle_producer_actual_approval_commit_and_consumer(fifth,bad_shape):
  async def scenario():
   f=gf.Session1788681718GenerateProductionPathTests(methodName='test_adm_01_saved_candidate_reaches_fake_executor_once')
   await f.asyncSetUp()
@@ -27,7 +27,7 @@ def test_handle_producer_actual_approval_commit_and_consumer(bad_shape):
    task='bn02-two-steps'
    f.plan_fixture['candidate']['steps'][-1]['outputs']=['output.report']
    f.plan_fixture['step_effects']['step.finalize_outputs']['produces_artifacts']=['output.report']
-   state=formalize(f,f._approved_generate_state(task,expected_outputs=[{'role':'report','path':str(f.root/'task_outputs'/task/'report.md')}]))
+   state=formalize(f,f._approved_generate_state(task,candidate_repair_limit=None,expected_outputs=[{'role':'report','path':str(f.root/'task_outputs'/task/'report.md')}]))
    vcf=f.path_by_handle['input.variant_vcf'];vcf.write_text(vcf.read_text().replace('#CHROM','##contig=<ID=chr1,length=1>\n#CHROM'))
    durable=load_plan_state(f.root,task)
    assert durable['steps'][1]['generate_binding_input_contract']['protocol']=='public_handle_v2'
@@ -38,7 +38,21 @@ def test_handle_producer_actual_approval_commit_and_consumer(bad_shape):
    raw['produced_bindings']['snpeff_db']['value']={'handle':handle};raw.pop('binding_env')
    raw['code'] += '\nprintf "config\\n" > '+configrow['canonical_path']+'\n'
    bad=deepcopy(raw);bad['produced_bindings']['snpeff_db']['value']='bad-parent' if bad_shape=='parent' else {'handle':'unknown-handle'}
-   f.provider.responses=[f.saved_response_content,json.dumps(bad),json.dumps(raw)]
+   if bad_shape=='cross_scope':
+    bad=deepcopy(raw);bad['task_id']='another-task'
+   if bad_shape in {'cross_plan','cross_capability','env_collision'}:
+    bad=deepcopy(raw)
+    if bad_shape=='cross_plan':bad['plan_id']='foreign-plan'
+    elif bad_shape=='cross_capability':bad['execution_capability_id']='foreign-capability'
+    else:bad['env']={'SNPEFF_DB':'/unapproved-path'}
+   bads=[bad]
+   if fifth:
+    one=deepcopy(raw);one['operation']='annotate_variants';one['produced_bindings']={};one['binding_env']={'NOPE':{}}
+    two=deepcopy(one);two['operation']='prepare_database'
+    three=deepcopy(two);three['produced_bindings']['genome_version']=deepcopy(raw['produced_bindings']['genome_version'])
+    four=deepcopy(three);four['produced_bindings']['snpeff_db']=deepcopy(raw['produced_bindings']['snpeff_db'])
+    bads=[one,two,three,four]
+   f.provider.responses=[f.saved_response_content,*map(json.dumps,bads),json.dumps(raw)]
    f.provider.calls.clear(); f.agent.middleware.auto_approve_safe=False
    handlers=f.agent._schema2_runtime_node_handlers;commits=[];calls=[]
    async def commit(actual):
@@ -73,18 +87,25 @@ def test_handle_producer_actual_approval_commit_and_consumer(bad_shape):
     assert len(calls)==0
     await graph.ainvoke(Command(resume='y'),cfg)
     snap=graph.get_state(cfg);pending=load_plan_state(f.root,task)['task_state']['pending_action']
+    Path(os.environ['BIOMIND_OFFLINE_RESULTS']).with_suffix('.snapshot.json').write_text(json.dumps({k:v for k,v in snap.values.items() if k.endswith('outcome')},ensure_ascii=False,default=str,indent=2))
     assert len(calls)==1 and len(commits)==1 and snap.tasks and snap.tasks[0].interrupts, {k:v for k,v in snap.values.items() if k.endswith('outcome')}
     assert not accepted_plan_binding(load_plan_state(f.root,task),'snpeff_db')
     receipt=pending['binding_normalization_receipt']
     assert receipt['raw_candidate']['produced_bindings']['snpeff_db']['value']=={'handle':handle}
     assert 'binding_env' not in receipt['raw_candidate']
+    assert receipt['schema_version']==2 and receipt['raw_public_candidate']==raw
+    assert receipt['raw_public_digest']!=receipt['raw_digest']
     assert pending['produced_bindings']['snpeff_db']['value']['binding_revision']==row['artifact_binding_revision']
     assert pending['generate_binding_resolution']['environment']['SNPEFF_DB']==str(db)
-    request=json.dumps(f.provider.calls[2],ensure_ascii=False)
+    request=json.dumps(f.provider.calls[-1],ensure_ascii=False)
     assert 'generate_validator_feedback' in request and 'allowed_handles' in request and handle in request and 'public_handle_v2' in request
     assert 'binding_input_requirements' in json.dumps(f.provider.calls[1])
     await graph.ainvoke(Command(resume='y'),cfg)
    durable=load_plan_state(f.root,task)
+   assert len(f.provider.calls)==(6 if fifth else 3)
+   claims=list(durable['task_state']['candidate_repair_state']['provider_claims'].values())
+   assert len(claims)==len(f.provider.calls) and all(row['status']=='completed' for row in claims)
+   assert sorted(row['corrective_ordinal'] for row in claims if row['scope']['step_id']=='step.prepare_database')==list(range(5 if fifth else 2))
    assert len(commits)==2 and len(calls)==2,(graph.get_state(cfg).values,commits)
    accepted=accepted_plan_binding(durable,'snpeff_db');assert accepted.value==pending['produced_bindings']['snpeff_db']['value']
    consumer={'consumed_bindings':{n:{'ref':'plan_binding:'+n} for n in ['genome_version','snpeff_db']},

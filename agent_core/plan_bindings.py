@@ -1369,7 +1369,7 @@ def public_binding_requirements(frozen, *, operation, workspace_bindings):
         "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."}
 
 
-def normalize_public_action_bindings(action, *, frozen, scope, workspace_bindings):
+def normalize_public_action_bindings(action, *, frozen, scope, workspace_bindings, raw_public_candidate=None):
     """Route-free boundary called only with approved invocation/catalog facts.
 
     This does not admit the action. The original operation, workspace, value,
@@ -1382,6 +1382,14 @@ def normalize_public_action_bindings(action, *, frozen, scope, workspace_binding
         return raw, {}
     if frozen.get("protocol") != PUBLIC_BINDING_PROTOCOL:
         raise PlanBindingError("BINDING_INPUT_PROTOCOL_UNSUPPORTED", field_path="binding_input_protocol")
+    public = raw_public_candidate if isinstance(raw_public_candidate, Mapping) else raw
+    # Public output cannot replace the fixed invocation authority, including
+    # fields the action parser deliberately omits from the executable envelope.
+    expected_scope = dict(scope)
+    expected_scope["execution_capability_id"] = frozen.get("capability_id")
+    for key in ("task_id", "task_revision", "plan_id", "plan_version", "plan_revision", "step_id", "execution_capability_id"):
+        if key in public and public[key] != expected_scope.get(key):
+            raise PlanBindingError("BINDING_PUBLIC_SCOPE_MISMATCH", field_path=key)
     declared = raw.get("binding_input_protocol", PUBLIC_BINDING_PROTOCOL)
     if declared not in (PUBLIC_BINDING_PROTOCOL, "legacy_full_v1"):
         raise PlanBindingError("BINDING_INPUT_PROTOCOL_UNSUPPORTED", field_path="binding_input_protocol")
@@ -1402,7 +1410,7 @@ def normalize_public_action_bindings(action, *, frozen, scope, workspace_binding
     legacy = declared == "legacy_full_v1" or modes == {"formal"}
     normalized = deepcopy(raw)
     if not legacy:
-        for name, candidate in values.items():
+        for name, candidate in (values.items() if isinstance(values, Mapping) else []):
             if not isinstance(candidate, Mapping) or candidate.get("type") != "artifact_ref":
                 continue  # Original validator owns shape/type violations.
             ref = candidate.get("value")
@@ -1432,6 +1440,11 @@ def normalize_public_action_bindings(action, *, frozen, scope, workspace_binding
         "catalog_digests": [row["binding_digest"] for row in workspace_bindings],
         "raw_digest": digest(raw), "normalized_digest": digest(normalized),
         "raw_candidate": raw, "normalized_candidate": deepcopy(normalized)}
+    if raw_public_candidate is not None:
+        # Preserve the public JSON object separately from the parser's action
+        # envelope. Existing v1 receipts retain their exact representation.
+        receipt.update(schema_version=2, raw_public_candidate=deepcopy(raw_public_candidate),
+            raw_public_digest=digest(raw_public_candidate), raw_representation="parsed_action_before_binding")
     receipt["receipt_id"] = "binding-normalization-" + digest(receipt)
     return normalized, receipt
 

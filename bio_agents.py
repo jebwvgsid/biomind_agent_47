@@ -10,6 +10,8 @@ bio_agents.py  ―  BioAnalyst Agent V4
 
 from __future__ import annotations
 
+from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit
+
 import asyncio
 from copy import deepcopy
 import atexit
@@ -181,6 +183,7 @@ from agent_core.workflow.candidate_repair import (
     candidate_repair_fingerprint,
     candidate_repair_rejection_event_id,
     candidate_repair_scope,
+    latest_candidate_repair_receipt, claim_candidate_generation, complete_candidate_generation,
     issue_candidate_repair_receipt,
     validate_candidate_repair_receipt,
 )
@@ -11988,7 +11991,13 @@ class BioAnalystAgent:
             == "pre_execution_candidate_admission"
         )
         if not receipt_required and not receipt_markers:
-            return projected_state
+            durable = load_plan_state(self.data_path, task_id)
+            scope = candidate_repair_scope(durable, task_id=task_id, step_id=durable.get("current_step_id"))
+            receipt = latest_candidate_repair_receipt(self.data_path, task_id, durable, scope)
+            if not receipt:
+                return projected_state
+            exact_receipt = receipt
+            format_state = dict(receipt)
         raw_receipt = exact_receipt if exact_receipt is not None else format_state
         if not isinstance(raw_receipt, Mapping) or not raw_receipt:
             raise CandidateRepairReceiptError(
@@ -15848,9 +15857,7 @@ class BioAnalystAgent:
         }
         decision = RecoveryPolicy(
             max_format_repairs=1,
-            max_candidate_repairs=int(
-                budgets.get("max_candidate_repairs_per_epoch") or 2
-            ),
+            max_candidate_repairs=candidate_repair_limit(budgets),
         ).decide(
             pre_action_evidence={
                 "valid": False,
@@ -16306,7 +16313,7 @@ class BioAnalystAgent:
             repair_limit = (
                 1
                 if repair_domain == PreActionRepairDomain.REPRESENTATION.value
-                else max(1, int(budgets.get("max_candidate_repairs_per_epoch") or 2))
+                else candidate_repair_limit(budgets)
             )
             recovery_context, policy_decision = self._managed_preaction_recovery(
                 task_id=task_id,
@@ -40598,6 +40605,7 @@ question. Never guess a scientific or database identity.
             generate_binding_contract: Dict[str, Any] = {}
             generate_frozen_binding_input: Dict[str, Any] = {}
             generate_binding_requirements: Dict[str, Any] = {}
+            candidate_provider_claim: Dict[str, Any] = {}
             capability_registry: Dict[str, Dict[str, Any]] = {}
             generate_episode: Optional[GenerateReasoningEpisode] = None
             generate_provider_request = None
@@ -40618,6 +40626,7 @@ question. Never guess a scientific or database identity.
                     state=generate_plan_state,
                 )
                 invocation_audit.freeze_scope(generate_plan_state, current_step_id)
+                generate_invocation_plan_state = deepcopy(generate_plan_state)
                 execution_capability_id = str(
                     generate_step.get("execution_capability_id") or ""
                 ).strip()
@@ -41633,7 +41642,6 @@ question. Never guess a scientific or database identity.
                             recovery_cache_identity["error_fingerprint"],
                             recovery_cache_identity["repair_ordinal"],
                         )
-                    invocation_audit.mark_provider_call_attempted()
                     generate_retry_context_loader = None
                     if schema2_generate:
                         frozen_generate_context = generate_node_context
@@ -41801,41 +41809,72 @@ question. Never guess a scientific or database identity.
                         generate_retry_context_loader = (
                             current_generate_transport_context
                         )
-                    response = await self._ainvoke_node_llm(
-                        call_msgs,
-                        node_context=generate_node_context,
-                        stage="generate",
-                        task_id=task_id,
-                        task_mode=task_mode,
-                        trace_metadata={
-                            "call_kind": "generate",
-                            "task_spec_revision": self._task_revision_for_state(dict(state)),
-                            "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
-                            "step_id": str(current_step_id or ""),
-                            "selected_skill_ids": active_skills,
-                            "component_token_counts": dict(
-                                (context_budget_report or {}).get("component_token_counts") or {}
+                    if schema2_generate and not recovery_generated:
+                        try:
+                            candidate_provider_claim = claim_candidate_generation(self.data_path, task_id,
+                                {k:v for k,v in invocation_audit.scope.items() if k != "attempt_id"},
+                                invocation_id=invocation_audit.generate_call_id,
+                                receipt_id=str((state.get("action_format_repair") or {}).get("receipt_id") or ""))
+                        except (CandidateRepairReceiptError, OSError, ValueError) as exc:
+                            code = str(getattr(exc, "code", None) or "CANDIDATE_GENERATION_CLAIM_FAILED")
+                            return {"pending_action": {}, "generate_result": "BLOCKED_INTERNAL_PROTOCOL",
+                                "generate_exit_reason": "candidate_generation_claim_failed", "recovery_status": "INTERNAL_PROTOCOL_ERROR", "reason_code": code,
+                                "primary_failure": {"error_code": code, "message": str(exc), "execution_started": False},
+                                "execution_status": "not_started", "next_step": "finish"}
+                        generate_node_context = current_generate_transport_context()
+                    if "cached_response" in candidate_provider_claim:
+                        response = AIMessage(content=candidate_provider_claim["cached_response"])
+                    else:
+                        invocation_audit.mark_provider_call_attempted()
+                        response = await self._ainvoke_node_llm(
+                            call_msgs,
+                            node_context=generate_node_context,
+                            stage="generate",
+                            task_id=task_id,
+                            task_mode=task_mode,
+                            trace_metadata={
+                                "call_kind": "generate",
+                                "task_spec_revision": self._task_revision_for_state(dict(state)),
+                                "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
+                                "step_id": str(current_step_id or ""),
+                                "selected_skill_ids": active_skills,
+                                "component_token_counts": dict(
+                                    (context_budget_report or {}).get("component_token_counts") or {}
+                                ),
+                                "truncation_manifest": list(
+                                    (context_budget_report or {}).get("truncation_manifest") or []
+                                ),
+                                "action_contract_ref": str(
+                                    Path(self.data_path) / "task_outputs" / task_id / "plan_state.json"
+                                ),
+                                "provider_context_manifest": provider_context_manifest(
+                                    generate_node_context.llm_payload
+                                ),
+                                "generate_llm_policy": dict(self.generate_llm_policy),
+                                "provider_idempotency_key": (
+                                    target_generation_id if recovery_generated else ""
+                                ),
+                            },
+                            llm_override=self.generate_llm,
+                            llm_policy=self.generate_llm_policy,
+                            generate_retry_context_loader=(
+                                generate_retry_context_loader
                             ),
-                            "truncation_manifest": list(
-                                (context_budget_report or {}).get("truncation_manifest") or []
-                            ),
-                            "action_contract_ref": str(
-                                Path(self.data_path) / "task_outputs" / task_id / "plan_state.json"
-                            ),
-                            "provider_context_manifest": provider_context_manifest(
-                                generate_node_context.llm_payload
-                            ),
-                            "generate_llm_policy": dict(self.generate_llm_policy),
-                            "provider_idempotency_key": (
-                                target_generation_id if recovery_generated else ""
-                            ),
-                        },
-                        llm_override=self.generate_llm,
-                        llm_policy=self.generate_llm_policy,
-                        generate_retry_context_loader=(
-                            generate_retry_context_loader
-                        ),
-                    )
+                        )
+                    if candidate_provider_claim and "cached_response" not in candidate_provider_claim:
+                        try:
+                            skill_decision = parse_typed_skill_decision(str(response.content or ""))
+                        except SkillAccessError:
+                            skill_decision = None
+                        try:
+                            complete_candidate_generation(self.data_path, task_id, candidate_provider_claim,
+                                content=str(response.content or ""), noncandidate=skill_decision is not None)
+                        except (CandidateRepairReceiptError, OSError, ValueError) as exc:
+                            code = str(getattr(exc, "code", None) or "CANDIDATE_GENERATION_COMPLETION_FAILED")
+                            return {"pending_action": {}, "generate_result": "BLOCKED_INTERNAL_PROTOCOL",
+                                "generate_exit_reason": "candidate_generation_completion_failed", "recovery_status": "INTERNAL_PROTOCOL_ERROR", "reason_code": code,
+                                "primary_failure": {"error_code": code, "message": str(exc), "execution_started": False},
+                                "execution_status": "not_started", "next_step": "finish"}
                     if recovery_context_obj:
                         try:
                             cache_skill_decision = parse_typed_skill_decision(
@@ -42588,12 +42627,17 @@ question. Never guess a scientific or database identity.
                 if not generate_script_protocol and provider_candidate
                 else structured_action
             )
+            if (generate_frozen_binding_input and not generate_script_protocol
+                    and isinstance(structured_parse_result.candidate, Mapping)):
+                # New public protocol repairs must retain fields omitted by the
+                # executable parser (for example a rejected foreign task_id).
+                candidate_for_repair = deepcopy(structured_parse_result.candidate)
             candidate_fingerprint = (
                 managed_action_fingerprint(candidate_for_repair)
                 if candidate_for_repair
                 else ""
             )
-            candidate_event_id = (
+            candidate_event_id = candidate_provider_claim.get("claim_id") or (
                 "generate-candidate:" + generate_provider_request.request_digest
                 if generate_provider_request is not None
                 else "generate-invocation:" + generate_node_context.binding.invocation_id
@@ -42630,7 +42674,7 @@ question. Never guess a scientific or database identity.
                 )
                 return self._candidate_admission_rejection_update(
                     task_id=task_id,
-                    plan_state=generate_plan_state,
+                    plan_state=generate_invocation_plan_state,
                     approved_plan_snapshot=(
                         generate_approved_snapshot
                         or load_approved_plan_snapshot(
@@ -42705,7 +42749,7 @@ question. Never guess a scientific or database identity.
                 ]
                 repeated_update = self._candidate_admission_rejection_update(
                     task_id=task_id,
-                    plan_state=generate_plan_state,
+                    plan_state=generate_invocation_plan_state,
                     approved_plan_snapshot=(
                         generate_approved_snapshot
                         or load_approved_plan_snapshot(
@@ -42776,10 +42820,10 @@ question. Never guess a scientific or database identity.
                 try:
                     structured_action, binding_normalization = normalize_public_action_bindings(
                         structured_action, frozen=generate_frozen_binding_input, scope=invocation_audit.scope,
-                        workspace_bindings=generate_workspace_bindings)
+                        workspace_bindings=generate_workspace_bindings, raw_public_candidate=structured_parse_result.candidate)
                 except PlanBindingError as exc:
                     return {"messages": [response], **self._candidate_admission_rejection_update(
-                        task_id=task_id, plan_state=generate_plan_state, approved_plan_snapshot=generate_approved_snapshot,
+                        task_id=task_id, plan_state=generate_invocation_plan_state, approved_plan_snapshot=generate_approved_snapshot,
                         step_id=current_step_id, candidate=candidate_for_repair, candidate_fingerprint="",
                         previous_candidate_fingerprint="", violations=[exc.to_dict()], visible_artifacts=generate_visible_artifacts,
                         repair_domain=PreActionRepairDomain.GENERATED_SEMANTIC.value, repair_stage="public_binding_normalization",
@@ -42873,7 +42917,7 @@ question. Never guess a scientific or database identity.
                     operation_violations = list(operation_admission.violations)
                     rejection_update = self._candidate_admission_rejection_update(
                         task_id=task_id,
-                        plan_state=generate_plan_state,
+                        plan_state=generate_invocation_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
                         step_id=current_step_id,
                         candidate=candidate_for_repair,
@@ -42976,7 +43020,7 @@ question. Never guess a scientific or database identity.
                         }
                     rejection_update = self._candidate_admission_rejection_update(
                         task_id=task_id,
-                        plan_state=generate_plan_state,
+                        plan_state=generate_invocation_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
                         step_id=current_step_id,
                         candidate=candidate_for_repair,
@@ -43034,6 +43078,16 @@ question. Never guess a scientific or database identity.
                         admitted_action,
                         binding_rule=selected_binding_rule,
                     )
+                    if binding_normalization.get("protocol") == "public_handle_v2":
+                        # The concrete artifact validator must see the same
+                        # checked environment that approval/prelaunch execute.
+                        # These paths come only from the scoped binder above.
+                        declared_env = dict(admitted_action.get("env") or {})
+                        for name, value in generate_binding_resolution.get("environment", {}).items():
+                            if name in declared_env and str(declared_env[name]) != str(value):
+                                raise PlanBindingError("PLAN_BINDING_ENV_COLLISION", env_name=name)
+                            declared_env[name] = value
+                        admitted_action["env"] = declared_env
                 except (PlanBindingError, WorkspaceAttestationError) as exc:
                     diagnostic = exc.to_dict()
                     code = str(diagnostic.get("code") or "BINDING_RESOLUTION_FAILED")
@@ -43060,7 +43114,7 @@ question. Never guess a scientific or database identity.
                         }
                     rejection_update = self._candidate_admission_rejection_update(
                         task_id=task_id,
-                        plan_state=generate_plan_state,
+                        plan_state=generate_invocation_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
                         step_id=current_step_id,
                         candidate=candidate_for_repair,
@@ -43436,7 +43490,7 @@ question. Never guess a scientific or database identity.
                         )
                         rejection_update = self._candidate_admission_rejection_update(
                             task_id=task_id,
-                            plan_state=generate_plan_state,
+                            plan_state=generate_invocation_plan_state,
                             approved_plan_snapshot=approved_action_snapshot,
                             step_id=current_action_step_id,
                             candidate=candidate_for_repair,
@@ -43647,7 +43701,7 @@ question. Never guess a scientific or database identity.
                     if exc.code == "EXTERNAL_SCRIPT_INVALID":
                         rejection_update = self._candidate_admission_rejection_update(
                             task_id=task_id,
-                            plan_state=generate_plan_state,
+                            plan_state=generate_invocation_plan_state,
                             approved_plan_snapshot=generate_approved_snapshot,
                             step_id=current_step_id,
                             candidate=candidate_for_repair,
@@ -44392,7 +44446,7 @@ question. Never guess a scientific or database identity.
                 }
                 rejection_update = self._candidate_admission_rejection_update(
                     task_id=task_id,
-                    plan_state=generate_plan_state,
+                    plan_state=generate_invocation_plan_state,
                     approved_plan_snapshot=generate_approved_snapshot,
                     step_id=format_step_id,
                     candidate=receipt_candidate,
@@ -45810,7 +45864,8 @@ question. Never guess a scientific or database identity.
                         scope = candidate_repair_scope(action_plan_state, task_id=task_id, step_id=pending_action["step_id"])
                         scope["attempt_id"] = ""
                         normalized, expected = normalize_public_action_bindings(held.get("raw_candidate") or {},
-                            frozen=frozen_input, scope=scope, workspace_bindings=current_workspace_bindings)
+                            frozen=frozen_input, scope=scope, workspace_bindings=current_workspace_bindings,
+                            raw_public_candidate=held.get("raw_public_candidate") if held.get("schema_version") == 2 else None)
                         if held != expected or any(pending_action.get(key) != normalized.get(key)
                             for key in ("produced_bindings", "consumed_bindings", "binding_env")):
                             raise WorkspaceAttestationError("BINDING_NORMALIZATION_RECEIPT_DRIFT", receipt_fields=[key for key in set(held) | set(expected) if held.get(key) != expected.get(key)], binding_fields=[key for key in ("produced_bindings", "consumed_bindings", "binding_env") if pending_action.get(key) != normalized.get(key)])
@@ -46372,6 +46427,12 @@ question. Never guess a scientific or database identity.
                         or ""
                     ),
                     action=pending_action,
+                    accepted_bindings={
+                        row["binding_name"]: plan_binding_resolution["environment"][row["env_name"]]
+                        for row in plan_binding_resolution.get("records", [])
+                        if row.get("value_type") == "string"
+                        and not str(row.get("binding_id") or "").startswith("candidate:")
+                    },
                 )
             except (PlanBindingError, WorkspaceAttestationError) as exc:
                 rejection_evidence = exc.to_dict()
