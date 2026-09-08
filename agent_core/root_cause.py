@@ -766,11 +766,13 @@ class RootCauseAnalyzer:
             index
             for index, line in enumerate(lines)
             if _ERROR_RE.search(line) and not _WRAPPER_ERROR_RE.search(line)
+            and not line.startswith("BIOMIND_EFFECT_EVIDENCE_JSON=")
         ]
         contextual = [lines[index] for index in contextual_indexes]
         # The last traceback/Java cause is usually more specific than its header.
         caused = [line for line in contextual if re.search(r"(?:caused by:|exception|traceback|error:|fatal:)", line, re.IGNORECASE)]
-        non_wrapper_lines = [line for line in lines if not _WRAPPER_ERROR_RE.search(line)]
+        non_wrapper_lines = [line for line in lines if not _WRAPPER_ERROR_RE.search(line)
+                             and not line.startswith("BIOMIND_EFFECT_EVIDENCE_JSON=")]
         primary = caused[-1] if caused else (contextual[0] if contextual else (non_wrapper_lines[-1] if non_wrapper_lines and _ERROR_RE.search(non_wrapper_lines[-1]) else None))
         context: List[str] = []
         for index in contextual_indexes:

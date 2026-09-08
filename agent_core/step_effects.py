@@ -39,6 +39,7 @@ PLAN_DATAFLOW_COMPILER_VERSION = 1
 PLAN_DATAFLOW_RECEIPT_SCHEMA_VERSION = 1
 PLAN_DATAFLOW_COMPILER_ID = "biomind.plan_dataflow_compiler.v1"
 STRUCTURED_EFFECT_EVIDENCE_PREFIX = "BIOMIND_EFFECT_EVIDENCE_JSON="
+STRUCTURED_EFFECT_EMISSION_VERSION = 1
 
 CANONICAL_STEP_EFFECT_FIELDS: Tuple[str, ...] = (
     "produces_artifacts",
@@ -3104,6 +3105,74 @@ def canonical_execution_effect_evidence(value: Any) -> Dict[str, Any]:
     return result
 
 
+def observation_emission_contract(effect: Any) -> Dict[str, Any]:
+    """One public definition shared by Generate, emitters and parser feedback.
+
+    The explicit approved identity is the model's choice. Invocation/provenance
+    identities belong to Execute's receipt, never to stdout supplied by code.
+    """
+    declared = canonical_step_effect(effect)
+    identities = [_identity_text(row, field="produces_observations")
+                  for row in declared["produces_observations"]]
+    return {
+        "schema_version": STRUCTURED_EFFECT_EMISSION_VERSION,
+        "prefix": STRUCTURED_EFFECT_EVIDENCE_PREFIX,
+        "approved_observation_ids": identities,
+        "examples": [emit_observation(identity, {"sample_result": "replace with actual value"})
+                     for identity in identities],
+        "rules": ["Select an explicit approved observation identity; do not infer an identity from value-only stdout.",
+                  "Negative observations are evidence, not automatic completion; approved predicates still apply.",
+                  "Execute binds task/plan/step/action/attempt and persists the parser receipt.",
+                  "Reader errors and sampling limits do not establish absence or full scientific validity."],
+    }
+
+
+def emit_observation(identity: str, value: Any) -> str:
+    if not isinstance(identity, str) or not identity.strip():
+        raise ValueError("OBSERVATION_IDENTITY_REQUIRED")
+    return STRUCTURED_EFFECT_EVIDENCE_PREFIX + json.dumps({
+        "schema_version": STRUCTURED_EFFECT_EMISSION_VERSION,
+        "produces_observations": [{"identity": identity, "value": value}],
+    }, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+
+
+def structured_effect_parse_receipt(text: Any, effect: Any) -> Dict[str, Any]:
+    """Preserve malformed/foreign claims without guessing an effect identity."""
+    raw = str(text or "")
+    declared = canonical_step_effect(effect)
+    issues: list[Dict[str, Any]] = []
+    count = 0
+    for number, line in enumerate(raw.splitlines(), 1):
+        if not line.strip().startswith(STRUCTURED_EFFECT_EVIDENCE_PREFIX):
+            continue
+        count += 1
+        field_path = f"stdout.lines[{number}]"
+        try:
+            payload = json.loads(line.strip()[len(STRUCTURED_EFFECT_EVIDENCE_PREFIX):])
+        except ValueError:
+            issues.append({"code": "EFFECT_EMISSION_JSON_INVALID", "field_path": field_path})
+            continue
+        if isinstance(payload, Mapping) and "schema_version" in payload and (
+                type(payload["schema_version"]) is not int or payload["schema_version"] != STRUCTURED_EFFECT_EMISSION_VERSION):
+            issues.append({"code": "EFFECT_EMISSION_VERSION_UNSUPPORTED", "field_path": field_path + ".schema_version"})
+            continue
+        projected = canonical_execution_effect_evidence(payload)
+        if not any(projected[field] for field in CANONICAL_STEP_EFFECT_FIELDS):
+            issues.append({"code": "EFFECT_EMISSION_IDENTITY_MISSING", "field_path": field_path,
+                           "expected": "canonical effect field and explicit approved identity"})
+        for field in CANONICAL_STEP_EFFECT_FIELDS:
+            expected = {_identity_text(row, field=field) for row in declared[field]}
+            for row in projected[field]:
+                identity = _identity_text(row, field=field)
+                if identity not in expected:
+                    issues.append({"code": "EFFECT_EMISSION_IDENTITY_UNDECLARED", "field_path": field_path + "." + field,
+                                   "actual": identity, "expected": sorted(expected)})
+    return {"schema_version": 1, "parser_id": "biomind.structured_effect_emission.v1",
+            "raw_stdout_sha256": hashlib.sha256(raw.encode()).hexdigest(),
+            "emission_count": count, "status": "rejected" if issues else "parsed",
+            "issues": issues, "emission_contract": observation_emission_contract(declared)}
+
+
 def extract_structured_effect_evidence(text: Any) -> Dict[str, Any]:
     """Read typed non-file results emitted by one executed command.
 
@@ -3128,6 +3197,9 @@ def extract_structured_effect_evidence(text: Any) -> Dict[str, Any]:
         except (TypeError, ValueError, json.JSONDecodeError):
             continue
         if not isinstance(payload, (Mapping, list, tuple)):
+            continue
+        if isinstance(payload, Mapping) and "schema_version" in payload and (
+                type(payload["schema_version"]) is not int or payload["schema_version"] != STRUCTURED_EFFECT_EMISSION_VERSION):
             continue
         projected = canonical_execution_effect_evidence(payload)
         for field in CANONICAL_STEP_EFFECT_FIELDS:

@@ -739,6 +739,7 @@ from agent_core.step_effects import (
     compile_plan_dataflow,
     compile_plan_step_effects,
     extract_structured_effect_evidence,
+    structured_effect_parse_receipt,
     validate_plan_compilation_receipt,
     validate_plan_dataflow_receipt,
 )
@@ -18412,20 +18413,9 @@ class BioAnalystAgent:
         )
 
     def _execution_validation_level(self, state: AgentState, code: str) -> str:
-        explicit = str(state.get("validation_level") or "").strip().lower()
-        if explicit in {"none", "basic", "artifact", "scientific"}:
-            return explicit
-        if state.get("active_skills") or state.get("selected_skills") or state.get("workflow_id"):
-            return "scientific"
-        plan_text = str(state.get("current_plan") or state.get("plan_progress") or "").lower()
-        code_text = str(code or "").lower()
-        analysis_terms = (
-            "analysis", "workflow", "pipeline", "qc", "align", "mapping",
-            "cluster", "differential", "tad", "variant", "fastqc", "seurat",
-        )
-        if any(term in plan_text or term in code_text for term in analysis_terms):
-            return "artifact"
-        return "basic"
+        # ResultValidator checks process/known text signals. Scientific truth
+        # belongs to scoped ValidationEvidence and CompletionReport predicates.
+        return "none" if str(state.get("validation_level") or "").lower() == "none" else "process"
 
     def _validate_execution_result(
         self,
@@ -49167,9 +49157,18 @@ question. Never guess a scientific or database identity.
                     if str(item if isinstance(item, str) else item.get("identity") or "")
                 }
 
+            effect_parser_receipt = structured_effect_parse_receipt(stdout, canonical_declared_effect)
+            effect_parser_receipt["scope"] = {
+                "task_id": task_id,
+                "plan_id": str(execution_plan_state.get("plan_id") or ""),
+                "plan_version": str(execution_plan_state.get("plan_version") or ""),
+                "step_id": str(execution_step.get("step_id") or ""),
+                "action_id": str(pending_action.get("action_id") or ""),
+                "attempt_id": str(attempt_record.get("attempt_id") or ""),
+            }
             reported_effect_claims = (
                 extract_structured_effect_evidence(stdout)
-                if returncode == 0
+                if returncode == 0 and not effect_parser_receipt["issues"]
                 else {field: [] for field in (
                     "produces_artifacts", "produces_bindings",
                     "produces_observations", "workspace_mutations",
@@ -49222,6 +49221,7 @@ question. Never guess a scientific or database identity.
                 "action_id": str(pending_action.get("action_id") or ""),
                 "attempt_id": str(attempt_record.get("attempt_id") or ""),
                 "declared_step_effect": declared_step_effect,
+                "parser_receipt": effect_parser_receipt,
                 "produces_artifacts": list(validated_formal_artifacts),
                 "produces_bindings": produced_binding_receipts,
                 "produces_observations": produced_observations,

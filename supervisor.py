@@ -1779,6 +1779,18 @@ class SupervisorNode:
         except (TypeError, ValueError):
             returncode = None
         if masked:
+            primary = analysis.get("primary_failure") or {}
+            inner_rc = primary.get("exit_code") if isinstance(primary, dict) else None
+            strong_inner_failure = bool(
+                failed_command and str(analysis.get("status") or "") == "confirmed"
+                and type(inner_rc) is int and inner_rc != 0
+            )
+            if not strong_inner_failure:
+                return [CheckResult(
+                    "RootCauseEvidenceUncertain", False, "warning",
+                    "A masked-failure hypothesis lacks a confirmed inner command and nonzero exit receipt. " + primary_error,
+                    "Inspect the approved action, raw results and observation parser receipt; do not infer data absence from this hypothesis.",
+                )]
             validation = evidence.get("validation") if isinstance(evidence, dict) else {}
             validation_passed = isinstance(validation, dict) and bool(validation.get("passed"))
             declared = {str(item) for item in evidence.get("declared_outputs", []) or [] if str(item).strip()}

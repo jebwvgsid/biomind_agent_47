@@ -2415,6 +2415,14 @@ document and keep selected/excluded decision sets disjoint.
                     )
 
         semantic_for_prompt = deepcopy(dict(semantic))
+        from agent_core.step_effects import observation_emission_contract
+        current_effect_step = focus_for_prompt.get("current_step") or {}
+        emission_contract = observation_emission_contract(current_effect_step)
+        emission_section = (
+            "\n<observation_emission_contract>\n"
+            + json.dumps(emission_contract, ensure_ascii=False, indent=2)
+            + "\n</observation_emission_contract>\n"
+        )
         if script_output_protocol:
             def strip_controller_placeholder_fields(value: Any) -> Any:
                 if isinstance(value, Mapping):
@@ -2558,6 +2566,7 @@ observation. Plain successful exit status or ordinary stdout is not effect
 evidence. Workspace mutations and explicit side effects must likewise emit the
 matching structured receipt/evidence fields required by their declared
 StepEffect.
+{emission_section}
 {corrective_rules}
 {skill_protocol}
 
@@ -2634,6 +2643,7 @@ StepEffect.
 
 Return exactly one raw JSON object and no Markdown or prose. It must be either a
 supported semantic action object or one typed Skill decision defined below.
+{emission_section}
 
 The semantic payload is non-authoritative. You may not modify the Task, Plan,
 approval, budgets, validation state, or routing. Do not return controller

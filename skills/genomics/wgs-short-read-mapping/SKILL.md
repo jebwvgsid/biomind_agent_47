@@ -113,6 +113,21 @@ Do not use this skill when:
 
 Before running, verify that FASTQ files are real project inputs, not tutorial/demo files.
 
+For an approved **prefix inspection**, use this Skill's `scripts/inspect_fastq.py`
+with the concrete script path obtained through Skill inspection, the exact bound
+input `--path`, and an explicit `--observation-id` from the current StepEffect.
+The helper uses the shared bounded inspection reader and emits the versioned
+canonical observation. It does not infer identity from a value or certify full
+gzip integrity, every read, or all mate pairs. Its record/input/decoded-byte/time
+limits and actual coverage are part of the result. A task requiring full checks
+still requires those checks; a prefix is evidence for investigation only.
+
+Do not implement nonempty FASTQ detection as `zcat | head | grep -q` under
+`pipefail`: early downstream termination can cause SIGPIPE after a valid header
+was found. Do not ignore every 141 or disable pipefail. Empty/invalid observed
+data, unsupported representation, decoding errors, and resource limits have
+different meanings. Reader failures must retain their technical errors.
+
 ## 调用的参数
 
 Required:
