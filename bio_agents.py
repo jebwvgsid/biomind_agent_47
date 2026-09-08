@@ -514,6 +514,17 @@ from agent_core.provider_attempt import (
     persist_partial_response_diagnostic,
     run_provider_attempt,
 )
+from agent_core.planner_output_policy import (
+    MODEL_PARAMETER_HASH_VERSION as PLANNER_MODEL_PARAMETER_HASH_VERSION,
+    OUTPUT_POLICY_VERSION as PLANNER_OUTPUT_POLICY_VERSION,
+    PlannerOutputPolicyError,
+    bind_planner_output_policy,
+    planner_client_output_settings,
+    planner_context_budget_policy,
+    planner_input_admission,
+    planner_output_parameter_projection,
+    resolve_planner_output_policy,
+)
 from agent_core.context_budget import (
     ContextBlock,
     ContextBudgetManager,
@@ -2514,8 +2525,10 @@ class BioAnalystAgent:
         use_llm_supervisor: bool = True,
         step_worker_backend_name: Optional[str] = None,
         step_worker_backend: Optional[StepWorkerBackend] = None,
+        planner_output_policy_settings: Optional[Mapping[str, Any]] = None,
     ):
         self.data_path = data_path
+        self.planner_output_policy_settings = deepcopy(dict(planner_output_policy_settings or {}))
         self.step_worker_backend_name = resolve_step_worker_backend_name(
             BIOMIND_STEP_WORKER_BACKEND
             if step_worker_backend_name is None
@@ -17645,6 +17658,53 @@ class BioAnalystAgent:
         self._planner_progress(task_id, "phase_completed", {**dict(observation), "phase": phase, "elapsed_seconds": time.monotonic() - started})
         return result
 
+    def _resolve_planner_output_policy(
+        self, *, recovery: bool = False, legacy_epoch: bool = False,
+        task_output_token_limit: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        base = getattr(getattr(self, "_schema2_phase_compactor", None), "policy", None) or ContextBudgetPolicy()
+        return resolve_planner_output_policy(
+            model=str(getattr(self, "llm_model_id", "") or ""),
+            endpoint=str(getattr(self, "llm_endpoint_id", "") or ""),
+            provider=str(getattr(self, "llm_provider_id", "") or ""),
+            settings=getattr(self, "planner_output_policy_settings", {}) or {},
+            task_output_token_limit=task_output_token_limit,
+            recovery=recovery, legacy_epoch=legacy_epoch,
+            existing_output_settings=planner_client_output_settings(self.llm),
+            application_context_limit=min(int(base.application_context_limit_tokens), int(getattr(self, "llm_context_limit_tokens", 200_000))),
+            existing_input_reserve=int(base.output_reserve_tokens),
+        )
+
+    def _configure_planner_output_reserve(self, phase_context: Any, policy: Mapping[str, Any]) -> None:
+        if phase_context is None or getattr(phase_context, "compaction_handler", None) is None:
+            return
+        original = getattr(phase_context.compaction_handler, "__self__", None)
+        if not isinstance(original, PhaseContextCompactor):
+            # Custom handlers retain their contract. Final provider admission
+            # below still checks the actual messages against the chosen reserve.
+            return
+        scoped = PhaseContextCompactor(
+            phase_store=original.phase_store,
+            compactor_invoke=original.compactor_invoke,
+            policy=planner_context_budget_policy(original.policy, policy),
+        )
+        scoped.estimator = original.estimator
+        phase_context.compaction_handler = scoped.prepare
+
+    def _planner_output_policy_failure_update(self, task_id: str, error: PlannerOutputPolicyError) -> Dict[str, Any]:
+        issue = error.to_diagnostic()
+        durable = load_plan_state(self.data_path, task_id)
+        epoch = dict((durable.get("task_state") or {}).get("planning_epoch") or {})
+        task = canonical_task_spec_for_state(durable) or {}
+        stopped = terminalize_planning_failure(
+            durable, planning_epoch_id=str(epoch.get("planning_epoch_id") or ""),
+            task_spec_revision_value=task_spec_revision(task),
+            terminal_diagnostic={"error_code": error.code, "error_owner": "planner_output_policy", "machine_evidence": issue},
+            fallback_validation_issues=[issue],
+        )
+        save_plan_state(self.data_path, task_id, stopped)
+        return {"messages": [SystemMessage(content=json.dumps(issue, ensure_ascii=False, sort_keys=True))], "task_status": TASK_STATUS_BLOCKED, "failure_type": error.code, "failure_owner": "planner_output_policy", "validation_issues": [issue], "pending_action": {}, "next_step": "finish"}
+
     async def _ainvoke_llm(
         self,
         messages: List[BaseMessage],
@@ -17674,6 +17734,10 @@ class BioAnalystAgent:
         )
         trace_metadata = dict(trace_metadata or {})
         provider_policy = dict(llm_policy or {})
+        planner_output_policy = (
+            deepcopy(dict(trace_metadata.get("planner_output_policy") or {}))
+            if stage in {"planner", "planner_repair"} else {}
+        )
         recovery_single_attempt = bool(
             stage in {"recovery", "terminal_summary"}
             or (
@@ -17743,6 +17807,16 @@ class BioAnalystAgent:
         trace_data_path = str(getattr(self, "data_path", "") or "")
         trace_store = ContextLineageStore(trace_data_path, task_id) if task_id and trace_data_path else None
         invocation_llm = llm_override or self.llm
+        if planner_output_policy:
+            base_compactor = getattr(self, "_schema2_phase_compactor", None)
+            base_budget = getattr(base_compactor, "policy", None) or ContextBudgetPolicy()
+            trace_metadata["planner_output_input_admission"] = planner_input_admission(
+                messages, planner_output_policy, base_policy=base_budget,
+                estimator=getattr(base_compactor, "estimator", None),
+            )
+            invocation_llm = bind_planner_output_policy(invocation_llm, planner_output_policy)
+            trace_metadata["planner_output_policy"] = deepcopy(planner_output_policy)
+            trace_metadata["model_parameter_hash_version"] = PLANNER_MODEL_PARAMETER_HASH_VERSION
         if effective_temperature is not None and hasattr(invocation_llm, "bind"):
             invocation_llm = invocation_llm.bind(
                 temperature=float(effective_temperature)
@@ -17814,6 +17888,8 @@ class BioAnalystAgent:
                     "temperature": effective_temperature,
                     "provider_policy": provider_policy,
                     "sdk_max_retries": sdk_max_retries,
+                    **({"model_parameter_hash_version": PLANNER_MODEL_PARAMETER_HASH_VERSION,
+                        "planner_output_policy": planner_output_parameter_projection(planner_output_policy)} if planner_output_policy else {}),
                 },
                 ensure_ascii=False,
                 sort_keys=True,
@@ -17888,7 +17964,9 @@ class BioAnalystAgent:
                     "attempt_id", "attempt_ordinal", "state", "observation_at", "elapsed_seconds",
                     "payload_idle_seconds", "content_char_count", "reasoning_char_count",
                     "total_chunk_count", "max_payload_gap_seconds", "failure_type",
+                    "finish_reason", "provider_usage", "usage_status", "stream_completed",
                 )})
+                observed["resolved_output_policy"] = deepcopy(planner_output_policy)
                 self._planner_progress(task_id, event, observed)
                 return
             if stage != "generate":
@@ -18229,6 +18307,25 @@ class BioAnalystAgent:
                         raise terminal_error from exc
                     raise
                 else:
+                    if stage in {"planner", "planner_repair"}:
+                        trusted_attempt = attempt_record.to_dict()
+                        scoped_metadata = {key: deepcopy(trusted_attempt.get(key)) for key in (
+                            "call_id", "attempt_id", "provider_attempt_id", "semantic_invocation_id",
+                            "provider_request_id", "finish_reason", "provider_usage", "usage_status",
+                            "state", "stream_started", "stream_completed", "completion_marker_seen",
+                        )}
+                        scoped_metadata["transport_status"] = "completed"
+                        scoped_metadata["content_status"] = (
+                            "truncated" if attempt_record.finish_reason == "length" else
+                            "normal_finish" if attempt_record.finish_reason == "stop" else
+                            "unknown" if not attempt_record.finish_reason else str(attempt_record.finish_reason)
+                        )
+                        scoped_metadata["resolved_output_policy"] = deepcopy(planner_output_policy)
+                        response.response_metadata = {
+                            **dict(getattr(response, "response_metadata", {}) or {}),
+                            "biomind_provider_attempt": scoped_metadata,
+                            "planner_output_policy": deepcopy(planner_output_policy),
+                        }
                     history.setdefault(task_id or "-", []).append(attempt_record.to_dict())
                     history[task_id or "-"] = history[task_id or "-"][-20:]
                     if trace_store and snapshot:
@@ -37891,6 +37988,7 @@ question. Never guess a scientific or database identity.
                     ),
                     planner_feedback_revision=planner_feedback_revision,
                 )
+                planning_epoch["planner_output_policy_version"] = PLANNER_OUTPUT_POLICY_VERSION
             planner_calls_total = int(
                 planning_epoch.get("planner_calls_total") or 0
             )
@@ -38214,6 +38312,14 @@ question. Never guess a scientific or database identity.
             planner_human_prompt = PromptManager.get_planner_v2_human_prompt(
                 planner_node_context.llm_payload.to_provider_dict()
             )
+            try:
+                planner_output_policy = self._resolve_planner_output_policy(
+                    legacy_epoch=not bool(planning_epoch.get("planner_output_policy_version")),
+                    task_output_token_limit=(planner_task_state.get("budgets") or {}).get("max_planner_output_tokens"),
+                )
+                self._configure_planner_output_reserve(planner_phase_context, planner_output_policy)
+            except PlannerOutputPolicyError as exc:
+                return self._planner_output_policy_failure_update(task_id, exc)
             if planner_phase_context is not None:
                 planner_llm_messages = await planner_phase_context.prepare_messages_with_compaction(
                     planner_system_prompt,
@@ -38370,6 +38476,7 @@ question. Never guess a scientific or database identity.
                         "component_chars": planner_prompt_components,
                         "prompt_component_accounting": planner_accounting,
                         "planner_budget_decision": planner_budget,
+                        "planner_output_policy": planner_output_policy,
                         "planner_correction_escalation": {
                             "triggered": planner_no_structural_progress,
                             "reason": (
@@ -38388,6 +38495,8 @@ question. Never guess a scientific or database identity.
                     llm_override=planner_correction_llm,
                     llm_policy=planner_correction_policy,
                 )
+            except PlannerOutputPolicyError as exc:
+                return self._planner_output_policy_failure_update(task_id, exc)
             except Exception as exc:
                 if is_transient_llm_failure(exc) and not is_llm_input_rejected(exc):
                     update = self._pause_retryable_llm_failure(state, task_id, "planner", exc)
