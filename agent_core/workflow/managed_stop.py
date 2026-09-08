@@ -6,18 +6,21 @@ remain authoritative. Base facts exist before any storage or provider operation.
 from __future__ import annotations
 import asyncio
 import json
+import re
 import time
 from copy import deepcopy
 from pathlib import Path
 from typing import Mapping
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import END
-from agent_core.plan_tracker import load_plan_state, save_plan_state, set_task_status
+from agent_core.plan_tracker import (load_plan_state, save_plan_state, set_task_status,
+    canonical_task_spec_for_state, plan_approval_is_current, has_materialized_plan)
 from agent_core.workflow.inspection_stop import (
     _mapping, _safe, _code, _hash, _authority, _active_packet, _steps,
     _report_targets, _report_bodies, _write_report, _secondary, _terminal_packet,
     build_inspection_stop, inspection_stop_explanation,
 )
+from agent_core.workflow.runtime_recovery_reporting import _path
 
 PRODUCER = "managed_run_stop_v1"
 SUMMARY_PROMPT = """自动执行和恢复已停止。你只能解释冻结事实，不能继续解决任务。
@@ -86,7 +89,64 @@ def terminal_boundary(values, *, exception=None):
         return {}
     if kind == "terminal" and explicit not in {"failed", "blocked", "error"}:
         return {}
-    return {"node": node, "status": "blocked" if kind in {"blocked", "runtime_recovery_stopped"} else "failed", "outcome": outcome}
+    status = explicit if kind == "terminal" and explicit in {"blocked", "failed"} else "blocked" if kind in {"blocked", "runtime_recovery_stopped"} else "failed"
+    return {"node": node, "status": status, "outcome": outcome}
+
+
+def _planning_scope(durable):
+    task = _mapping(durable.get("task_state"))
+    failure = _mapping(task.get("planning_failure"))
+    current = _mapping(durable.get("current_task"))
+    return {"task_id": str(durable.get("task_id") or ""), "plan_id": "", "plan_version": "",
+        "step_id": "", "attempt_id": "",
+        "task_revision": int(current.get("task_revision") or durable.get("task_revision") or 0),
+        "planning_epoch_id": str(_mapping(task.get("planning_epoch")).get("planning_epoch_id") or ""),
+        "failure_fingerprint": str(failure.get("failure_fingerprint") or ""),
+        "candidate_context_ref": str(failure.get("context_ref") or "")}
+
+
+def _planning_issue_summary(issues):
+    first = _mapping(next(iter(issues or []), {}))
+    return {"error_code": str(first.get("code") or "PLANNER_ORIGIN_NOT_PERSISTED"),
+        "message": _safe(first.get("message") or first.get("reason") or ""),
+        "validation_issues": deepcopy(list(issues or []))}
+
+
+def _build_planning_stop(task_id, durable, boundary, planning):
+    """Build the entire no-Plan base from typed, already held facts."""
+    planning = deepcopy(planning)
+    scope = deepcopy(_mapping(planning.get("scope")))
+    terminal = _mapping(planning.get("terminal_diagnostic"))
+    payload = _mapping(boundary["outcome"].get("payload"))
+    code = str(terminal.get("error_code") or payload.get("error_code") or payload.get("reason_code") or "PLANNER_TERMINAL_REASON_NOT_PERSISTED")
+    primary = _mapping(planning.get("primary_failure"))
+    primary_summary = _planning_issue_summary(primary.get("validation_issues"))
+    primary_summary.update(status=primary.get("status", "not_persisted"), source=deepcopy(primary))
+    latest = _planning_issue_summary(planning.get("validation_issues"))
+    latest["candidate_source"] = deepcopy(planning.get("candidate_source") or {})
+    epoch = _mapping(planning.get("planning_epoch"))
+    value = {"schema_version": 1, "producer": PRODUCER, "status": boundary["status"],
+        "scope": scope, "authority": _authority(durable), "boundary": deepcopy(boundary),
+        "planning": planning, "primary_cause": primary_summary, "latest_failure": latest,
+        "origin": {"source_stage": "planner", "source_owner": "planner", "failure_type": "planning_candidate_rejected",
+            "error_code": primary_summary["error_code"], "summary": primary_summary["message"],
+            "evidence_refs": [str(planning["primary_context_ref"])] if planning.get("primary_context_ref") else []},
+        "task_summary": _safe(planning.get("task_summary"), 1800),
+        "stage": "planner", "stop_reason": {"error_code": code, "detail": _safe(terminal.get("detail") or boundary["outcome"].get("summary")),
+            "budget_receipt": deepcopy(terminal.get("machine_evidence") or {}),
+            "model_turns": int(epoch.get("planner_calls_total") or 0), "repeat_count": int(planning.get("repeat_count") or 0)},
+        "execution": {"step_id": "", "attempt_id": "", "executed": False, "returncode": None,
+            "deterministic_passed": False, "validation_status": "not_performed", "reviewer_disposition": "not_performed",
+            "committed": False, "step_status": "not_started", "command_body_available": False},
+        "stages": [], "prior_completed_work": [], "inspection_failures": [], "publication_failures": [],
+        "resolution": "unresolved", "automatic_actions_stopped": True, "technical_classification": "planning_unresolved",
+        "summary_status": "IMPLEMENTED", "summary_skip_reason": "", "summary_llm_calls": 0,
+        "persistence_status": "unconfirmed", "reports_status": "not_attempted", "report_paths": {}, "report_receipts": {},
+        "secondary_failures": []}
+    value["scope"]["task_id"] = task_id
+    value["stop_id"] = "managed-stop:" + _hash({"scope": scope, "authority": value["authority"], "stop_reason": value["stop_reason"]})
+    value["explanation"] = explanation(value)
+    return value
 
 
 def _scope(durable, prior_scope=None):
@@ -106,6 +166,18 @@ def _scope(durable, prior_scope=None):
 def _matches(durable, stop):
     if _mapping(durable.get("task_state")).get("status") in {"completed", "cancelled"}:
         return False
+    if stop.get("planning"):
+        scope = _planning_scope(durable)
+        task = _mapping(durable.get("task_state"))
+        failure = _mapping(task.get("planning_failure"))
+        failure_current = (not failure and stop["planning"].get("source_failure_status") == "not_persisted") or (
+            failure.get("status") in {stop["planning"].get("source_failure_status"), "terminal"}
+            and str(failure.get("planning_epoch_id") or "") == scope["planning_epoch_id"]
+            and int(failure.get("task_spec_revision") or 0) == scope["task_revision"])
+        return bool(scope == stop.get("scope") and failure_current
+            and not plan_approval_is_current(durable, scope["task_revision"])
+            and has_materialized_plan(durable) == stop["planning"].get("plan_materialized")
+            and _authority(durable) == stop.get("authority"))
     actual = _scope(durable, stop.get("scope"))
     # A newly CREATED/STARTED attempt supersedes an old failure packet even
     # before another causal packet has been published.
@@ -125,6 +197,9 @@ def build_managed_stop(task_id, values, durable, boundary):
     """No reader or store is needed to construct this base."""
     outcome = boundary["outcome"]
     payload = _mapping(outcome.get("payload") or outcome.get("blocker"))
+    planning = _mapping(payload.get("planning_terminal"))
+    if boundary["node"] == "planner" and planning.get("producer") == "planner_terminal_facts_v1":
+        return _build_planning_stop(task_id, durable, boundary, planning)
     _ref, record, packet = _active_packet(durable)
     observed = _mapping(outcome.get("scope"))
     fixed_scope = _scope(durable)
@@ -205,6 +280,8 @@ def build_managed_stop(task_id, values, durable, boundary):
 
 
 def explanation(stop):
+    if stop.get("planning"):
+        return _planning_explanation(stop)
     base = inspection_stop_explanation(stop)
     origin = _mapping(stop.get("origin"))
     base = base.replace("Supervisor 待核实的疑虑：", "原始起因（断言待核实）：").replace("仍需完成语义复核", "原因记录不完整")
@@ -227,6 +304,43 @@ def explanation(stop):
     return "\n\n".join(parts)
 
 
+def _planning_explanation(stop):
+    facts = _mapping(stop.get("planning"))
+    scope = _mapping(stop.get("scope"))
+    primary = _mapping(stop.get("primary_cause"))
+    latest = _mapping(stop.get("latest_failure"))
+    reason = _mapping(stop.get("stop_reason"))
+    parts = ["规划已停止，尚未形成批准 Plan；本轮规划没有执行、验证或提交科学步骤。",
+        "原任务：" + (_safe(stop.get("task_summary"), 1800) or "当前正式 TaskSpec") + "。",
+        "停止原因：" + str(reason.get("error_code") or "UNKNOWN") + "。",
+        "最初拒绝：" + str(primary.get("error_code") or "PLANNER_ORIGIN_NOT_PERSISTED") + "；" + _safe(primary.get("message")),
+        "末次拒绝：" + str(latest.get("error_code") or "UNKNOWN") + "；" + _safe(latest.get("message")),
+        "本轮已发起 Planner 请求：" + str(reason.get("model_turns", 0)) + "；当前连续结构无进展记录：" + str(reason.get("repeat_count", 0)) + "。",
+        "任务 revision=" + str(scope.get("task_revision", "unknown")) + "；planning epoch=" + str(scope.get("planning_epoch_id") or "unknown") + "。"]
+    issues = facts.get("validation_issues") or []
+    if issues:
+        parts.append("末次完整问题清单（详细 actual/expected/来源保留在结构化停止事实中）：\n" + "\n".join(
+            "- " + str(i.get("code") or "UNKNOWN") + " / " + str(i.get("violation_code") or i.get("code") or "UNKNOWN")
+            + " @ " + str(i.get("field_path") or "$")
+            + (" [" + str(i.get("canonical_resource_id")) + "]" if i.get("canonical_resource_id") else "")
+            for i in issues if isinstance(i, Mapping)))
+    else:
+        parts.append("末次问题细节尚未持久记录；没有把未执行的检查推定为失败。")
+    parts.append("当前没有获批步骤或执行 attempt；后续科学流程尚未由本轮规划启动。预算结束或读取失败不能证明输入不兼容、资源不存在或依赖不可用。")
+    if stop.get("summary_text"):
+        parts.append("AI 辅助说明（不改变上述事实）：\n" + stop["summary_text"])
+    parts.append("总结状态：" + str(stop.get("summary_status") or "IMPLEMENTED") + ("；" + stop["summary_skip_reason"] if stop.get("summary_skip_reason") else ""))
+    if stop.get("persistence_status") != "committed":
+        parts.append("停止事实尚未确认持久化；本进程不会因此继续规划。")
+    if stop.get("report_paths"):
+        parts.append("已生成停止报告：" + "；".join(str(v) for v in stop["report_paths"].values()))
+    else:
+        parts.append("尚未确认生成报告文件。")
+    if stop.get("secondary_failures"):
+        parts.append("附加问题：" + "；".join(str(i.get("error_code") or "UNKNOWN") for i in stop["secondary_failures"]))
+    return "\n\n".join(parts)
+
+
 def projection(stop):
     if not stop or stop.get("resolution") == "stale_scope": return {}
     d = {"error_code": stop["stop_reason"]["error_code"], "stage": stop.get("stage", "outer"), "error_owner": stop.get("stage", "outer").split(".")[0],
@@ -237,6 +351,10 @@ def projection(stop):
          "report_paths": stop["report_paths"], "report_receipts": stop["report_receipts"], "persistence_status": stop["persistence_status"],
          "summary_status": stop["summary_status"], "summary_llm_calls": stop["summary_llm_calls"],
          "secondary_causes": stop["secondary_failures"]}
+    if stop.get("planning"):
+        d["planning"] = deepcopy(stop["planning"])
+        d["validation_issues"] = deepcopy(stop["planning"].get("validation_issues") or [])
+        d["scope"] = deepcopy(stop["scope"])
     if stop["report_paths"].get("report.md"): d["report_path"] = stop["report_paths"]["report.md"]
     return {"status": stop["status"], "terminal_diagnostic": d}
 
@@ -249,6 +367,12 @@ def _save(data_path, value, *, loader, saver, claim=False):
     if claim and prior.get("summary_attempted"):
         raise ValueError("SUMMARY_ALREADY_ATTEMPTED")
     set_task_status(fresh, value["status"], value["stop_reason"]["error_code"])
+    if value.get("planning") and _mapping(fresh.get("task_state")).get("planning_failure"):
+        # The typed graph already chose this legitimate terminal boundary.
+        # Closing its matching correction capsule does not decide a new route.
+        failure = fresh["task_state"]["planning_failure"]
+        failure["status"] = "terminal"
+        failure["terminal_diagnostic"] = deepcopy(value["planning"]["terminal_diagnostic"])
     if claim:
         budgets = dict(fresh["task_state"].get("budgets") or {})
         reservations = dict(budgets.get("terminal_summary_reservations") or {})
@@ -264,6 +388,8 @@ def _save(data_path, value, *, loader, saver, claim=False):
 async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load_plan_state, saver=save_plan_state):
     try: durable = loader(agent.data_path, task_id)
     except Exception: durable = {"task_id": task_id, "_load_failed": True}
+    if durable.get("load_error"):
+        durable = {"task_id": task_id, "_load_failed": True}
     prior = current_managed_stop(durable)
     value = build_managed_stop(task_id, values, durable, boundary)
     if durable.get("_load_failed"):
@@ -274,8 +400,11 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
     if _mapping(durable.get("task_state")).get("status") in {"completed", "cancelled"}:
         value.update(resolution="stale_scope", persistence_status="not_applied", summary_status="SKIPPED", summary_skip_reason="CURRENT_TASK_TERMINAL")
         return value
+    if value.get("planning") and not _matches(durable, value):
+        value.update(resolution="stale_scope", persistence_status="not_applied", summary_status="SKIPPED", summary_skip_reason="STALE_SCOPE")
+        return value
     observed_scope = _mapping(boundary.get("outcome", {}).get("scope"))
-    for key in ("task_id", "plan_id", "plan_version", "step_id", "task_revision", "plan_revision"):
+    for key in ("task_id", "plan_id", "plan_version", "step_id", "task_revision", "plan_revision", "planning_epoch_id", "failure_fingerprint", "candidate_context_ref"):
         current = value["scope"].get(key, value["authority"].get(key))
         if observed_scope.get(key) and str(observed_scope[key]) != str(current):
             value.update(resolution="stale_scope", persistence_status="not_applied", summary_status="SKIPPED", summary_skip_reason="STALE_SCOPE")
@@ -283,6 +412,21 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
     if prior:
         if prior.get("reports_status") == "finalized": return prior
         value = deepcopy(prior)
+    if value.get("planning") and value["scope"].get("candidate_context_ref"):
+        # Optional enrichment only: base contains the complete durable issues
+        # and original cause before this immutable object read can fail.
+        try:
+            from agent_core.state_contract_store import StateContractStore
+            record = StateContractStore(agent.data_path, task_id).read_object(
+                value["scope"]["candidate_context_ref"], expected_type="planner_correction_context")
+            if (record.get("task_id") != task_id
+                or record.get("planning_epoch_id") != value["scope"]["planning_epoch_id"]
+                or record.get("task_semantic_hash") != value["planning"]["task_semantic_hash"]):
+                raise ValueError("PLANNER_CONTEXT_SCOPE_MISMATCH")
+            value["planning"]["context_read_status"] = "verified"
+        except Exception as exc:
+            value["planning"]["context_read_status"] = "unavailable"
+            _secondary(value, "planning.details", "PLANNER_CONTEXT_DETAILS_UNAVAILABLE", exc)
     # Base is already constructed. Optional execution detail I/O can enrich
     # it, but cannot become a prerequisite for a truthful terminal explanation.
     raw_execution = _mapping(_mapping(values.get("execute_outcome")).get("payload")).get("execution_record") or {}
@@ -323,6 +467,15 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
     elif float(policy.get("deadline", time.time() + 60)) - time.time() < float(policy.get("timeout_seconds", 30)): skip = "GLOBAL_DEADLINE_INSUFFICIENT"
     # Conservative reservation (UTF-8 byte bound plus maximum completion).
     frozen = {k: value[k] for k in ("origin", "primary_cause", "latest_failure", "stop_reason", "execution", "inspection_failures", "stages", "prior_completed_work")}
+    if value.get("planning"):
+        # The summary gets every issue identity/location, with its exact full
+        # diagnostic retained durably in planning. Avoid duplicating the same
+        # large source analysis in origin, latest and base in a bounded call.
+        frozen["primary_cause"] = {k: v for k, v in value["primary_cause"].items() if k not in {"source", "validation_issues"}}
+        frozen["latest_failure"] = {k: v for k, v in value["latest_failure"].items() if k != "validation_issues"}
+        frozen["planning"] = {"scope": value["scope"], "no_approved_plan": True,
+            "validation_issues": [{k: i[k] for k in ("code", "violation_code", "field_path", "canonical_resource_id", "affected_step_ids", "constraint_source", "explicit_contract_source", "contract_revision") if k in i}
+                for i in value["planning"].get("validation_issues") or []]}
     frozen["execution"] = {k:v for k,v in frozen["execution"].items() if k != "command_body"}
     frozen["base"] = explanation(value)
     wire = json.dumps(frozen, ensure_ascii=False)
@@ -375,7 +528,18 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
     try: durable = _save(agent.data_path, value, loader=loader, saver=saver)
     except Exception as exc: _secondary(value, "summary.persist", "SUMMARY_RECEIPT_PERSIST_FAILED", exc)
     try:
-        targets = _report_targets(durable, Path(agent.data_path).absolute() / "task_outputs" / task_id)
+        if value.get("planning"):
+            if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,159}", str(task_id)):
+                raise ValueError("MANAGED_STOP_TASK_ID_REJECTED")
+            task_root = _path(Path(agent.data_path).absolute() / "task_outputs" / task_id)
+            targets = {name: _path(task_root / name) for name in ("report.md", "stage_status.tsv")}
+            spec = canonical_task_spec_for_state(durable)
+            inputs = {str(i.get("canonical_path") or i.get("path") or "") for i in spec.get("inputs") or [] if isinstance(i, Mapping)}
+            if any(str(target) in inputs for target in targets.values()):
+                raise ValueError("MANAGED_STOP_REPORT_INPUT_OVERLAP")
+            value["report_receipts"]["reproduce.sh"] = {"status": "skipped", "reason": "NO_EXECUTION_ATTEMPT"}
+        else:
+            targets = _report_targets(durable, Path(agent.data_path).absolute() / "task_outputs" / task_id)
         bodies = _report_bodies(value)
         rows = ["stage\tworkflow_status\texecution_status\tcommitted\tnotes"]
         execution = value["execution"]
@@ -391,7 +555,7 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
         for name in ("stage_status.tsv", "reproduce.sh", "report.md"):
             path = targets.get(name)
             if not path:
-                value["report_receipts"][name] = {"status": "skipped", "reason": "NO_APPROVED_OUTPUT"}
+                value["report_receipts"].setdefault(name, {"status": "skipped", "reason": "NO_APPROVED_OUTPUT"})
                 continue
             try:
                 if not _matches(loader(agent.data_path, task_id), value): raise ValueError("MANAGED_STOP_STALE_SCOPE")
@@ -417,6 +581,13 @@ def emergency_projection(values, error):
     boundary = _mapping(values.get("managed_run_boundary"))
     outcome = _mapping(boundary.get("outcome"))
     payload = _mapping(outcome.get("payload"))
+    planning = _mapping(payload.get("planning_terminal"))
+    if planning.get("producer") == "planner_terminal_facts_v1":
+        value = _build_planning_stop(str(_mapping(planning.get("scope")).get("task_id") or ""), {},
+            {"node": "planner", "status": payload.get("status", "failed"), "outcome": outcome}, planning)
+        value.update(summary_status="SKIPPED", summary_skip_reason="DIAGNOSTIC_INCOMPLETE")
+        _secondary(value, "stop.projection", "MANAGED_STOP_PROJECTION_FAILED", error)
+        return projection(value)
     held = _mapping(payload.get("inspection_stop"))
     reason = _mapping(held.get("stop_reason")).get("error_code") or payload.get("error_code") or payload.get("reason_code") or "MANAGED_TERMINAL_DIAGNOSTIC_INCOMPLETE"
     text = _safe(held.get("explanation"), 20000) or _safe(outcome.get("summary")) or "当前 managed run 已停止；停止诊断不完整。"

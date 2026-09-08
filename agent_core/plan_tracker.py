@@ -1277,6 +1277,23 @@ def record_planning_failure(
         "terminal_diagnostic": deepcopy(dict(terminal_diagnostic or {})),
         "updated_at": _now(),
     }
+    if same_lifecycle:
+        # Older capsules did not retain the first rejection. Do not re-label
+        # their most recent issue as the historical origin on a resumed run.
+        capsule["primary_failure"] = deepcopy(prior.get("primary_failure") or {
+            "status": "not_persisted", "reason_code": "PLANNER_ORIGIN_NOT_PERSISTED",
+        })
+        if prior.get("primary_context_ref"):
+            capsule["primary_context_ref"] = str(prior["primary_context_ref"])
+    else:
+        capsule["primary_failure"] = {
+            "status": "observed", "task_id": str(result.get("task_id") or ""),
+            "planning_epoch_id": str(planning_epoch_id or ""),
+            "task_spec_revision": int(task_spec_revision_value),
+            "attempt": max(1, attempt), "validation_source": str(validation_source),
+            "failure_fingerprint": fingerprint,
+            "validation_issues": deepcopy(issues),
+        }
     if bounded_candidate:
         capsule["previous_candidate"] = bounded_candidate
     current_plan = dict(result.get("current_plan") or {})

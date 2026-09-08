@@ -45,7 +45,17 @@ def save_correction_context(data_path: str, task_id: str, state: dict[str, Any],
         "fixed_prefix_count": fixed_prefix_count,
     }
     ref = StateContractStore(data_path, task_id).put_object("planner_correction_context", record)
-    state.setdefault("task_state", {}).setdefault("planning_failure", {})["context_ref"] = ref
+    failure = state.setdefault("task_state", {}).setdefault("planning_failure", {})
+    failure["context_ref"] = ref
+    failure["candidate_source"] = {
+        "context_ref": ref, "raw_candidate_sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(),
+        "planning_epoch_id": record["planning_epoch_id"],
+        "candidate_ordinal": int((state.get("task_state") or {}).get("planning_epoch", {}).get("planner_calls_total") or 0),
+    }
+    primary = failure.get("primary_failure") or {}
+    if primary.get("status") == "observed" and int(failure.get("attempt") or 0) == 1:
+        failure["primary_context_ref"] = ref
+        primary["candidate_source"] = deepcopy(failure["candidate_source"])
     return feedback
 
 

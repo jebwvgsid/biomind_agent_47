@@ -27,6 +27,7 @@ from agent_core.planner_loop import (
 from agent_core.plan_tracker import (
     has_materialized_plan,
     load_plan_state,
+    plan_approval_is_current,
     task_spec_is_initialized,
     task_status,
 )
@@ -791,6 +792,65 @@ class TypedPlanner(_TypedEarlyNode):
     skill_continuation_owner = "planner"
 
     def classify(self, before, state, durable):
+        outcome = self._classify(before, state, durable)
+        kind = str(outcome.get("type") or "")
+        payload = dict(outcome.get("payload") or {})
+        status = str(payload.get("status") or ("failed" if kind == "harness_error" else ""))
+        if kind not in {"terminal", "harness_error"} or status not in {"blocked", "failed"}:
+            return outcome
+        task = dict(durable.get("task_state") or {})
+        failure = dict(task.get("planning_failure") or {})
+        epoch = dict(task.get("planning_epoch") or {})
+        current_task = dict(durable.get("current_task") or {})
+        revision = int(current_task.get("task_revision") or durable.get("task_revision") or 0)
+        # This projection owns pre-execution planning stops. A stale approved
+        # plan with past attempts keeps its existing execution-aware projection.
+        if (plan_approval_is_current(durable, revision)
+            or dict(durable.get("provenance_state") or {}).get("attempts")
+            or task.get("typed_step_commit_receipts")):
+            return outcome
+        matching_failure = bool(
+            failure.get("planning_epoch_id") == epoch.get("planning_epoch_id")
+            and int(failure.get("task_spec_revision") or 0) == revision)
+        if not matching_failure:
+            failure = {}  # Old rejection facts do not supply this stop's cause.
+        terminal = deepcopy(dict(failure.get("terminal_diagnostic") or {}))
+        if kind == "harness_error":
+            terminal = {"error_code": str(payload.get("error_code") or "PLANNER_HARNESS_ERROR"),
+                        "detail": str(payload.get("detail") or ""), "error_owner": "planner"}
+        code = str(terminal.get("error_code") or payload.get("error_code") or payload.get("reason_code") or "PLANNER_TERMINAL_REASON_NOT_PERSISTED")
+        issues = deepcopy(list(failure.get("validation_issues") or []))
+        scope = {
+            "task_id": str(durable.get("task_id") or state.get("task_id") or ""),
+            "plan_id": "", "plan_version": "", "step_id": "", "attempt_id": "",
+            "task_revision": revision,
+            "planning_epoch_id": str(epoch.get("planning_epoch_id") or ""),
+            "failure_fingerprint": str(failure.get("failure_fingerprint") or ""),
+            "candidate_context_ref": str(failure.get("context_ref") or ""),
+        }
+        planning = {
+            "schema_version": 1, "producer": "planner_terminal_facts_v1",
+            "scope": scope, "task_semantic_hash": str(current_task.get("task_semantic_hash") or ""),
+            "task_summary": str(dict(current_task.get("task_spec") or {}).get("goal") or ""),
+            "no_approved_plan": True, "plan_materialized": has_materialized_plan(durable),
+            "validation_issues": issues, "source_failure_status": str(failure.get("status") or "not_persisted"),
+            "primary_failure": deepcopy(failure.get("primary_failure") or {
+                "status": "not_persisted", "reason_code": "PLANNER_ORIGIN_NOT_PERSISTED",
+            }),
+            "candidate_source": deepcopy(dict(failure.get("candidate_source") or {})),
+            "primary_context_ref": str(failure.get("primary_context_ref") or ""),
+            "terminal_diagnostic": terminal, "planning_epoch": deepcopy(epoch),
+            "validation_source": str(failure.get("validation_source") or ""),
+            "attempt": int(failure.get("attempt") or 0),
+            "repeat_count": int(failure.get("repeat_count") or 0),
+        }
+        payload.update(status=status, reason_code=code, error_code=code, planning_terminal=planning)
+        return self.contract(
+            schema_version=1, type=kind, scope=scope, payload=payload,
+            summary=f"{code}: Planner stopped without an approved Plan; this planning invocation executed no step.",
+        ).to_dict()
+
+    def _classify(self, before, state, durable):
         status = str(state.get("task_status") or task_status(durable) or "").lower()
         if status in {"blocked", "failed", "cancelled", "completed", "paused_retryable"}:
             return _outcome(self.contract, "terminal", state, durable, {

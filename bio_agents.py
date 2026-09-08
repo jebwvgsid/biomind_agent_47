@@ -33,6 +33,7 @@ import tempfile
 import threading
 import time
 import uuid
+import weakref
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Tuple
@@ -24692,21 +24693,80 @@ class BioAnalystAgent:
             component,
         )
 
-    def _commit_user_cancellation(
+    @staticmethod
+    def _cancellation_scope(durable: Mapping[str, Any], task_id: str) -> Dict[str, Any]:
+        return {
+            "task_id": task_id,
+            "task_revision": int((durable.get("current_task") or {}).get("task_revision") or 0),
+            "task_semantic_hash": str((durable.get("current_task") or {}).get("task_semantic_hash") or ""),
+            "plan_id": str(durable.get("plan_id") or ""),
+            "plan_version": str(durable.get("plan_version") or ""),
+            "step_id": str(durable.get("current_step_id") or ""),
+            "planning_epoch_id": str((durable.get("task_state") or {}).get("planning_epoch", {}).get("planning_epoch_id") or ""),
+        }
+
+    def cancel_managed_run(self, caller_task: asyncio.Task, *, task_id: str,
+                           initiator_kind: str, owner: str, reason: str,
+                           source_evidence: Mapping[str, Any]) -> bool:
+        """Trusted control-plane issuing boundary, never a model tool.
+
+        Record attribution at the actual Task.cancel call. Merely configuring
+        a deadline or supplying exception text does not establish its cause.
+        Existing interactive decisions keep their explicit user adapter below.
+        """
+        if initiator_kind not in {"user", "parent_task", "deadline", "shutdown"} or not owner or not source_evidence:
+            raise ValueError("CANCELLATION_ORIGIN_EVIDENCE_REQUIRED")
+        if not isinstance(caller_task, asyncio.Task):
+            raise TypeError("CANCELLATION_CALLER_TASK_REQUIRED")
+        if caller_task.done():
+            return False
+        if caller_task.cancelling():
+            # An earlier signal already owns cancellation. A later attributed
+            # request cannot retroactively turn an unknown signal into user.
+            return caller_task.cancel()
+        try:
+            scope = self._cancellation_scope(load_plan_state(self.data_path, task_id), task_id)
+        except Exception:
+            scope = {"task_id": task_id}  # Issuer and Task identity remain observed.
+        requests = getattr(self, "_managed_cancellation_requests", None)
+        if requests is None:
+            self._managed_cancellation_requests = weakref.WeakKeyDictionary()
+            requests = self._managed_cancellation_requests
+        requests[caller_task] = {
+            "initiator_kind": initiator_kind, "owner": owner, "reason": str(reason),
+            "source_evidence": deepcopy(dict(source_evidence)), "scope": scope,
+            "requested_at": timestamp_now(),
+        }
+        accepted = caller_task.cancel()
+        if not accepted:
+            requests.pop(caller_task, None)
+        return accepted
+
+    def _commit_user_cancellation(self, task_id: str, *, source: str, reason: str,
+                                  active_provider_ref: str = "") -> Dict[str, Any]:
+        """Adapter used only after an explicit interactive cancellation choice."""
+        return self._commit_cancellation(task_id, source=source, reason=reason,
+            active_provider_ref=active_provider_ref,
+            origin={"initiator_kind": "user", "owner": "interactive_user",
+                    "scope": {"task_id": task_id},
+                    "source_evidence": {"kind": "interactive_cancellation_choice", "source": source}})
+
+    def _commit_cancellation(
         self,
         task_id: str,
         *,
         source: str,
         reason: str,
         active_provider_ref: str = "",
+        origin: Optional[Mapping[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """Commit one idempotent user cancellation, then project it outward."""
+        """Commit observed cancellation; only an independent request identifies its owner."""
 
         normalized_task_id = str(task_id or "").strip()
         if not normalized_task_id:
             raise ValueError("CANCELLATION_TASK_ID_REQUIRED")
-        normalized_source = str(source or "user").strip()[:120] or "user"
-        normalized_reason = str(reason or "Task cancelled by user.").strip()[:800]
+        normalized_source = str(source or "unknown").strip()[:120] or "unknown"
+        normalized_reason = str(reason or "Task cancelled; initiator unknown.").strip()[:800]
         receipt_id = "cancel-" + hashlib.sha256(
             normalized_task_id.encode("utf-8")
         ).hexdigest()[:24]
@@ -24739,13 +24799,34 @@ class BioAnalystAgent:
                     "status": "not_committed_terminal_already_authoritative",
                     "authoritative_task_status": durable_status,
                 }
+            actual_scope = self._cancellation_scope(durable, normalized_task_id)
+            supplied_origin = dict(origin or {})
+            origin_scope = dict(supplied_origin.get("scope") or {})
+            recognized = supplied_origin.get("initiator_kind") in {"user", "parent_task", "deadline", "shutdown"}
+            scoped = origin_scope.get("task_id") == normalized_task_id and all(
+                not origin_scope.get(key) or origin_scope.get(key) == actual_scope.get(key)
+                for key in ("planning_epoch_id", "plan_id", "plan_version", "task_revision", "task_semantic_hash")
+            )
+            evidenced = bool(supplied_origin.get("source_evidence"))
+            attribution = supplied_origin if recognized and scoped and evidenced else {
+                "initiator_kind": "unknown", "owner": "", "source_evidence": {},
+                "attribution_reason": "No independently recorded cancellation request matches this caller and task scope.",
+            }
+            if supplied_origin and attribution["initiator_kind"] == "unknown":
+                normalized_reason = "Task cancelled; the supplied origin could not be verified for this task scope."
             receipt = {
-                "schema_version": 1,
+                "schema_version": 2,
+                "initiator_kind": attribution["initiator_kind"],
+                "owner": str(attribution.get("owner") or ""),
+                "source_evidence": deepcopy(attribution.get("source_evidence") or {}),
+                "attribution_reason": str(attribution.get("attribution_reason") or "independent_cancellation_request"),
+                "scope": actual_scope,
+                "request_scope": origin_scope,
                 "receipt_id": receipt_id,
                 "task_id": normalized_task_id,
                 "source": normalized_source,
                 "reason": normalized_reason,
-                "requested_at": timestamp_now(),
+                "requested_at": str(attribution.get("requested_at") or timestamp_now()),
                 "command_started": False,
                 "active_provider_ref": str(active_provider_ref or "")[:500],
                 "state_generation_before": int(
@@ -24774,13 +24855,18 @@ class BioAnalystAgent:
         if not canonical_committed:
             raise last_conflict or RuntimeError("CANCELLATION_CANONICAL_COMMIT_FAILED")
 
+        # Reprojection uses the committed receipt. A legacy derived user event
+        # is not independent evidence and cannot upgrade unknown attribution.
+        initiator_kind = str(receipt.get("initiator_kind") or "unknown")
+        normalized_source = str(receipt.get("source") or normalized_source)
+        normalized_reason = str(receipt.get("reason") or normalized_reason)
         try:
             ContextLineageStore(
                 self.data_path,
                 normalized_task_id,
             ).record_event(
-                "task_user_cancelled",
-                receipt,
+                "task_user_cancelled" if initiator_kind == "user" else "task_cancelled",
+                {**receipt, "initiator_kind": initiator_kind},
                 event_id=receipt_id,
             )
         except Exception:
@@ -24845,7 +24931,11 @@ class BioAnalystAgent:
                     "cancelled",
                     terminal_projection={
                         "terminal_diagnostic": {
-                            "stage": "user_cancellation",
+                            "stage": "user_cancellation" if initiator_kind == "user" else "cancellation",
+                            "initiator_kind": initiator_kind,
+                            "owner": str(receipt.get("owner") or ""),
+                            "source_evidence": deepcopy(receipt.get("source_evidence") or {}),
+                            "scope": deepcopy(receipt.get("scope") or {}),
                             "reason": normalized_reason,
                             "source": normalized_source,
                             "receipt_id": receipt_id,
@@ -24885,6 +24975,11 @@ class BioAnalystAgent:
                         "Failed to resolve profiler cancellation cleanup issue for %s",
                         normalized_task_id,
                     )
+        try:
+            label = {"user": "用户明确操作", "parent_task": "父任务", "deadline": "上层截止时间", "shutdown": "关闭流程"}.get(initiator_kind, "未确认")
+            output.print_once(f"cancelled:{receipt_id}", f"运行已取消；发起来源：{label}。", Fore.YELLOW)
+        except Exception:
+            pass
         return deepcopy(receipt)
 
     def _persist_plan_review_cancellation(self, task_id: str) -> Dict[str, Any]:
@@ -52099,6 +52194,14 @@ question. Never guess a scientific or database identity.
             if isinstance(value, Mapping) and value:
                 records.append(value)
 
+        if status == "cancelled":
+            cancellation = dict(task_state.get("cancellation_receipt") or {})
+            kind = str(cancellation.get("initiator_kind") or "unknown")
+            add_record({
+                "stage": "user_cancellation" if kind == "user" else "cancellation",
+                "reason": str(cancellation.get("reason") or "Task cancelled.") if kind != "unknown" else "Task cancelled; initiator unknown.",
+                "initiator_kind": kind,
+            })
         from agent_core.workflow.managed_stop import current_managed_stop, projection
         common = getattr(self, "_managed_terminal_results", {}).get(task_id) or projection(current_managed_stop(durable_plan))
         if status in {"failed", "blocked"}:
@@ -52191,7 +52294,7 @@ question. Never guess a scientific or database identity.
             stage = stage or str(waiting.get("stage") or "human_input")
             reason = reason or str(waiting.get("prompt") or "Waiting for user input.")
         elif status == "cancelled":
-            reason = reason or "Task cancelled by user."
+            reason = reason or "Task cancelled; initiator unknown."
         elif status == "interrupted":
             reason = reason or "Interactive execution interrupted."
 
@@ -52229,7 +52332,7 @@ question. Never guess a scientific or database identity.
                     )
                     or {}
                 )
-                self._commit_user_cancellation(
+                self._commit_cancellation(
                     task_id,
                     source=str(
                         existing_receipt.get("source")
@@ -52363,16 +52466,18 @@ question. Never guess a scientific or database identity.
                         or provider_refs[-1].get("attempt_id")
                         or ""
                     )
+                origin = (getattr(self, "_managed_cancellation_requests", None) or {}).pop(asyncio.current_task(), {})
                 try:
-                    self._commit_user_cancellation(
+                    self._commit_cancellation(
                         task_id,
                         source=(
                             "signal"
                             if isinstance(exc, KeyboardInterrupt)
                             else "asyncio_cancel"
                         ),
-                        reason="Task cancelled by user during active execution.",
+                        reason=str(origin.get("reason") or "Task cancelled at caller boundary; initiator unknown."),
                         active_provider_ref=active_provider_ref,
+                        origin=origin,
                     )
                 except Exception:
                     logger.exception(
