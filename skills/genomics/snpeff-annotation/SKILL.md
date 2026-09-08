@@ -111,6 +111,7 @@ metadata:
   generate:
     binding_contract:
       schema_version: 1
+      public_input_protocol: public_handle_v2
       operations:
         prepare_database:
           produces_bindings: [genome_version, snpeff_db]
@@ -301,8 +302,8 @@ metadata:
       - Resolve and verify the pinned snpEff JAR and Java runtime before annotation.
       - For a custom reference, create a task-local snpEff config/data directory, stage the FASTA and matching GTF/GFF3, build the database, then annotate the VCF.
       - Generate one structured executable action for the approved step and write every approved output_id at its managed path.
-      - The prepare_database action chooses one stable genome_version and explicitly declares genome_version and snpeff_db under produced_bindings; the Controller never invents either value.
-      - Use binding_env with source=produced_binding in the producer and source=accepted_binding in build_database and annotate_variants. Shell source must consume the injected environment values rather than copying the literal identifier again.
+      - The prepare_database action chooses one stable genome_version and explicitly declares genome_version and snpeff_db under produced_bindings; the model chooses semantic genome_version and a legal catalog handle; the binder supplies formal machine fields.
+      - For public_handle_v2 the system derives binding_env from required_binding_env; legacy_full_v1 must supply that exact mapping. Shell source must consume the injected environment values rather than copying the literal identifier again.
       - Declare operation metadata and consumed_bindings using exact plan_binding refs so the deterministic Skill contract can reject mismatches before Execute.
       - Validate contig-name compatibility and the ANN header; summarize ANN effects without inventing annotations.
       - Do not invoke the legacy render_snpeff_annotation_scripts.py Renderer or use its manifest as output authority.
@@ -526,3 +527,15 @@ Read `references/snpeff_config_templates.md` before creating a custom database c
 ## Extended Reference
 
 Read `references/snpeff_notes.md` when deciding between pre-built and custom databases, explaining `genome-version`, or handling GFF/GTF/GenBank build details. Read `references/snpeff_config_templates.md` for custom config and directory-layout details.
+
+
+### Versioned binding input
+
+For newly approved `public_handle_v2` invocations, keep semantic values typed,
+and choose an exact handle from `binding_input_requirements` for artifact_ref:
+`{"type":"artifact_ref","value":{"handle":"<allowed plan_handle>"}}`.
+The system fills the formal identity/kind/revision and this Skill's declared
+binding_env mapping. Ordinary env values still obey collision checks. Consumers
+use `{"ref":"plan_binding:<name>"}`; only committed bindings are available.
+Old approved snapshots retain their full-object protocol and required mapping.
+Full-object compatibility never rewrites stale revisions. Do not mix protocols.

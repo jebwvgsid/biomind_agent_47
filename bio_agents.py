@@ -786,6 +786,7 @@ from agent_core.plan_bindings import (
     accept_action_binding_candidates,
     compile_plan_resource_bindings,
     resolve_action_binding_environment,
+    normalize_public_action_bindings, public_binding_requirements, binding_input_progress_facts,
     validate_declared_binding_operation,
     validate_operation_binding_admission,
 )
@@ -15904,6 +15905,19 @@ class BioAnalystAgent:
     ) -> Dict[str, Any]:
         """CAS-commit one rejection, repair charge, and trusted receipt reference."""
 
+        fixed_step = next((row for row in approved_plan_snapshot.get("steps", []) if row.get("step_id") == step_id), {})
+        frozen_input = dict(fixed_step.get("generate_binding_input_contract") or {})
+        if frozen_input:
+            fixed_registry = self.skill_manager.get_execution_capability_registry(fixed_step.get("skill_ids") or [])
+            fixed_capability = fixed_registry.get(fixed_step.get("execution_capability_id")) or {}
+            fixed_operation = str(fixed_step.get("operation") or fixed_capability.get("operation") or "")
+            binding_contract = dict(frozen_input.get("binding_contract") or {})
+            catalog = project_current_action_workspace_bindings(plan_state=plan_state, approved_plan_snapshot=approved_plan_snapshot,
+                current_step=fixed_step, capability_contract=fixed_capability,
+                binding_rule=dict((binding_contract.get("operations") or {}).get(fixed_operation) or {}),
+                derived_artifact_layout=dict(binding_contract.get("derived_artifact_layout") or {}))
+            contract_ref = {**dict(contract_ref), "requirements": public_binding_requirements(frozen_input,
+                operation=fixed_operation, workspace_bindings=catalog)}
         normalized_violations = [
             {
                 **deepcopy(dict(item)),
@@ -16285,6 +16299,9 @@ class BioAnalystAgent:
                 or str(prior_row.get("error_fingerprint") or "")
                 != error_fingerprint
             )
+            public_valid_facts = sorted(binding_input_progress_facts(candidate, contract_ref.get("requirements") or {}))
+            if frozen_input and prior_row:
+                progress_proven = bool(set(public_valid_facts) - set(prior_row.get("public_valid_facts") or []))
             budgets = dict(task_state.get("budgets") or {})
             repair_limit = (
                 1
@@ -16463,6 +16480,7 @@ class BioAnalystAgent:
                 "repair_ordinal": repair_ordinal,
                 "repair_limit": repair_limit,
                 "progress_proven": progress_proven,
+                "public_valid_facts": public_valid_facts,
                 "validation_source": validation_source,
                 "contract_ref": deepcopy(dict(contract_ref or {})),
                 "violation_owner": str(first_violation.get("owner") or "GENERATED_ACTION"),
@@ -21327,6 +21345,8 @@ class BioAnalystAgent:
                         actual=cls._json_value_type(obj.get("operation")),
                     )
                 action["operation"] = operation
+            if "binding_input_protocol" in obj:
+                action["binding_input_protocol"] = deepcopy(obj["binding_input_protocol"])
             for binding_field in (
                 "produced_bindings", "consumed_bindings", "binding_env"
             ):
@@ -40576,6 +40596,8 @@ question. Never guess a scientific or database identity.
             recovery_semantic_action_protocol = False
             external_recovery_semantic_protocol = False
             generate_binding_contract: Dict[str, Any] = {}
+            generate_frozen_binding_input: Dict[str, Any] = {}
+            generate_binding_requirements: Dict[str, Any] = {}
             capability_registry: Dict[str, Dict[str, Any]] = {}
             generate_episode: Optional[GenerateReasoningEpisode] = None
             generate_provider_request = None
@@ -40618,6 +40640,14 @@ question. Never guess a scientific or database identity.
                         ).get("binding_contract")
                         or {}
                     )
+                approved_step = next((row for row in generate_approved_snapshot.get("steps", [])
+                    if row.get("step_id") == current_step_id), {})
+                generate_frozen_binding_input = deepcopy(dict(approved_step.get("generate_binding_input_contract") or {}))
+                if generate_frozen_binding_input:
+                    if generate_frozen_binding_input.get("capability_id") != execution_capability_id:
+                        raise PlanBindingError("BINDING_INPUT_CAPABILITY_SCOPE_MISMATCH")
+                    generate_frozen_binding_input["operation"] = str(selected_contract.get("operation") or "")
+                    generate_binding_contract = deepcopy(generate_frozen_binding_input["binding_contract"])
                 generate_runtime_resolution = resolve_action_runtime_bindings(
                     selected_skill_id=generate_selected_skill_id,
                     execution_capability_id=execution_capability_id,
@@ -40683,6 +40713,9 @@ question. Never guess a scientific or database identity.
                         ),
                     )
                 )
+                if generate_frozen_binding_input:
+                    generate_binding_requirements = public_binding_requirements(generate_frozen_binding_input,
+                        operation=str(selected_contract.get("operation") or ""), workspace_bindings=generate_workspace_bindings)
                 generate_step_action = str(
                     generate_step.get("action") or "execute"
                 ).strip().lower()
@@ -40740,6 +40773,8 @@ question. Never guess a scientific or database identity.
                             generate_workspace_bindings,
                         )
                     )
+                    if generate_binding_requirements:
+                        generate_action_provider_context["binding_input_requirements"] = generate_binding_requirements
                     capability_instructions = (
                         serialize_action_capability_instructions(
                             generate_action_provider_context,
@@ -40768,6 +40803,8 @@ question. Never guess a scientific or database identity.
                             ),
                         )
                     )
+                if generate_binding_requirements:
+                    capability_instructions += "\n<binding_input_requirements>" + json.dumps(generate_binding_requirements, ensure_ascii=False, sort_keys=True) + "</binding_input_requirements>"
                 # This is the last authority check before candidate-repair
                 # evidence becomes part of the provider-visible NodeContext.
                 # Re-read the current durable scope/ledger here; a previously
@@ -42583,7 +42620,7 @@ question. Never guess a scientific or database identity.
 
                 current = load_plan_state(self.data_path, task_id)
                 _, current_step = current_plan_step_with_index(current)
-                step_key = str((current_step or {}).get("step_id") or current_step_id or "lightweight")
+                step_key = str(invocation_audit.scope.get("step_id") or current_step_id or "lightweight")
                 candidate_value = (
                     deepcopy(candidate)
                     if candidate not in (None, "", [], {})
@@ -42736,6 +42773,19 @@ question. Never guess a scientific or database identity.
                 }
 
             if str(structured_action.get("type") or "") == "execute":
+                try:
+                    structured_action, binding_normalization = normalize_public_action_bindings(
+                        structured_action, frozen=generate_frozen_binding_input, scope=invocation_audit.scope,
+                        workspace_bindings=generate_workspace_bindings)
+                except PlanBindingError as exc:
+                    return {"messages": [response], **self._candidate_admission_rejection_update(
+                        task_id=task_id, plan_state=generate_plan_state, approved_plan_snapshot=generate_approved_snapshot,
+                        step_id=current_step_id, candidate=candidate_for_repair, candidate_fingerprint="",
+                        previous_candidate_fingerprint="", violations=[exc.to_dict()], visible_artifacts=generate_visible_artifacts,
+                        repair_domain=PreActionRepairDomain.GENERATED_SEMANTIC.value, repair_stage="public_binding_normalization",
+                        validation_source="agent_core.plan_bindings.normalize_public_action_bindings",
+                        contract_ref={"requirements": generate_binding_requirements}, exit_reason="public_binding_rejected",
+                        candidate_event_id=candidate_event_id, recovery_generated=recovery_generated)}
                 operation_admission = validate_operation_binding_admission(
                     structured_action,
                     capability_contract=dict(
@@ -42973,6 +43023,8 @@ question. Never guess a scientific or database identity.
                     or {}
                 ))
                 admitted_action = deepcopy(structured_action)
+                if binding_normalization:
+                    admitted_action["binding_normalization_receipt"] = binding_normalization
                 admitted_action["formal_workspace_bindings"] = deepcopy(
                     generate_workspace_bindings
                 )
@@ -45713,7 +45765,8 @@ question. Never guess a scientific or database identity.
                                 pending_action.get("binding_contract_rule")
                                 or {}
                             ),
-                            derived_artifact_layout={},
+                            derived_artifact_layout=dict((dict(next((row for row in approved_action_snapshot.get("steps", [])
+                                if row.get("step_id") == pending_action.get("step_id")), {}).get("generate_binding_input_contract") or {}).get("binding_contract") or {}).get("derived_artifact_layout") or {}),
                         )
                     )
                     admitted_workspace_bindings = [
@@ -45748,6 +45801,19 @@ question. Never guess a scientific or database identity.
                             admitted=admitted_authority,
                             current=current_authority,
                         )
+                    fixed_step = next((row for row in approved_action_snapshot.get("steps", [])
+                        if row.get("step_id") == pending_action.get("step_id")), {})
+                    frozen_input = deepcopy(dict(fixed_step.get("generate_binding_input_contract") or {}))
+                    if frozen_input:
+                        frozen_input["operation"] = str((pending_action.get("capability_contract") or {}).get("operation") or "")
+                        held = dict(pending_action.get("binding_normalization_receipt") or {})
+                        scope = candidate_repair_scope(action_plan_state, task_id=task_id, step_id=pending_action["step_id"])
+                        scope["attempt_id"] = ""
+                        normalized, expected = normalize_public_action_bindings(held.get("raw_candidate") or {},
+                            frozen=frozen_input, scope=scope, workspace_bindings=current_workspace_bindings)
+                        if held != expected or any(pending_action.get(key) != normalized.get(key)
+                            for key in ("produced_bindings", "consumed_bindings", "binding_env")):
+                            raise WorkspaceAttestationError("BINDING_NORMALIZATION_RECEIPT_DRIFT", receipt_fields=[key for key in set(held) | set(expected) if held.get(key) != expected.get(key)], binding_fields=[key for key in ("produced_bindings", "consumed_bindings", "binding_env") if pending_action.get(key) != normalized.get(key)])
                     candidate_without_controller_workspace = dict(
                         pending_action
                     )
@@ -45770,7 +45836,7 @@ question. Never guess a scientific or database identity.
                             "WORKSPACE_PRELAUNCH_ADMISSION_FAILED",
                             admission=execute_workspace_admission.to_dict(),
                         )
-                except WorkspaceAttestationError as exc:
+                except (WorkspaceAttestationError, PlanBindingError) as exc:
                     diagnostic = exc.to_dict()
                     return reject_internal_prelaunch(
                         pending_action,

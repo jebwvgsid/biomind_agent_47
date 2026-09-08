@@ -2667,7 +2667,8 @@ When the approved StepEffect produces semantic bindings, use the semantic
 execute action and return `produced_bindings` keyed by each exact declared
 binding identity. Every candidate value must be an object with `type` and
 `value`; supported types are string, integer, number, boolean, json, and
-artifact_ref. Binding candidates are accepted only after successful execution,
+artifact_ref. For public_handle_v2 invocations, artifact_ref value is exactly {{"handle":"one allowed plan_handle"}}; the system derives formal identity/revision and Skill binding_env. The current binding_input_requirements governs input shape and compatibility.
+Binding candidates are accepted only after successful execution,
 validation, and CommitStep. Do not invent undeclared binding identities.
 
 The runtime validates input/output coverage against concrete paths already

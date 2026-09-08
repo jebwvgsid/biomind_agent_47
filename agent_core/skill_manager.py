@@ -2229,6 +2229,18 @@ class SkillManager:
                 and str(contract.get("selected_skill_id") or "") in step_skills
             ):
                 raw["capability_contract_hash"] = capability_contract_hash(contract)
+                # Freeze only while authoring a new approval, never during
+                # Generate or reload of a previously approved invocation.
+                meta = self.get_skill_meta(str(contract.get("selected_skill_id") or ""))
+                binding = dict((meta.get("generate") or {}).get("binding_contract") or {})
+                if binding.get("public_input_protocol"):
+                    raw["generate_binding_input_contract"] = {
+                        "protocol": str(binding["public_input_protocol"]),
+                        "capability_id": capability_id,
+                        "binding_contract": deepcopy(binding),
+                    }
+                else:
+                    raw.pop("generate_binding_input_contract", None)
             else:
                 raw.pop("capability_contract_hash", None)
         return candidate

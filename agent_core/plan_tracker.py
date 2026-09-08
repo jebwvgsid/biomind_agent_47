@@ -6034,6 +6034,8 @@ def _semantic_step(step: PlanStep) -> Dict[str, Any]:
         if part.strip() and not ignored_inline_labels.match(part)
     )
     payload = {field: normalized.get(field) for field in PLAN_STEP_FIELDS if field != "status"}
+    if normalized.get("generate_binding_input_contract"):
+        payload["generate_binding_input_contract"] = deepcopy(normalized["generate_binding_input_contract"])
     payload["title"] = semantic_title
     payload["selected_skill_id"] = str(normalized.get("selected_skill_id") or "")
     if normalized.get("operation"):
@@ -8144,6 +8146,8 @@ def build_approval_projection(state: PlanState) -> Dict[str, Any]:
             "capability_contract_hash": str(
                 step.get("capability_contract_hash") or ""
             ),
+            **({"generate_binding_input_contract": deepcopy(step["generate_binding_input_contract"])}
+               if step.get("generate_binding_input_contract") else {}),
             "skill_ids": list(step.get("skill_ids") or []),
             "inputs": list(step.get("inputs") or []),
             "outputs": list(step.get("outputs") or []),

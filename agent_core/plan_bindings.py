@@ -1,6 +1,6 @@
 """Opaque, plan-scoped value transport between successful actions.
 
-The Controller owns identity, persistence, scope and exact copying.  It never
+The managed binder owns identity, persistence, scope and exact copying. It never
 derives a value from executable source and never interprets domain meaning.
 """
 
@@ -1344,3 +1344,128 @@ def validate_operation_binding_admission(
         str(binding_schema),
         binding_violations,
     )
+
+
+PUBLIC_BINDING_PROTOCOL = "public_handle_v2"
+
+
+def public_binding_requirements(frozen, *, operation, workspace_bindings):
+    """Provider description of the one frozen input contract; no authority."""
+    contract = dict(frozen.get("binding_contract") or {})
+    rule = dict((contract.get("operations") or {}).get(operation) or {})
+    types = dict(rule.get("binding_types") or {})
+    artifacts = dict(rule.get("artifact_binding_requirements") or {})
+    return {"protocol": str(frozen.get("protocol") or "legacy_full_v1"),
+        "operation": operation,
+        "produced_bindings": {name: {"type": types.get(name),
+            "value": {"handle": "one exact allowed handle"} if types.get(name) == "artifact_ref" else "model semantic value",
+            "allowed_handles": [row["plan_handle"] for row in workspace_bindings
+                if row.get("canonical_resource_id") == dict(artifacts.get(name) or {}).get("canonical_resource_id")
+                and row.get("resource_kind") == dict(artifacts.get(name) or {}).get("resource_kind")]}
+            for name in rule.get("produces_bindings", [])},
+        "consumed_bindings": {name: {"ref": "plan_binding:" + name} for name in rule.get("consumes_bindings", [])},
+        "binding_env": {"owner": "system", "declared_mapping": deepcopy(rule.get("required_binding_env") or {}),
+            "compatibility": "If supplied, every mapping must equal this declaration."},
+        "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."}
+
+
+def normalize_public_action_bindings(action, *, frozen, scope, workspace_bindings):
+    """Route-free boundary called only with approved invocation/catalog facts.
+
+    This does not admit the action. The original operation, workspace, value,
+    env, approval and prelaunch validators must still run on the result.
+    """
+    raw = deepcopy(dict(action))
+    if not frozen:
+        if raw.get("binding_input_protocol") not in (None, "legacy_full_v1"):
+            raise PlanBindingError("BINDING_INPUT_PROTOCOL_UNSUPPORTED", field_path="binding_input_protocol")
+        return raw, {}
+    if frozen.get("protocol") != PUBLIC_BINDING_PROTOCOL:
+        raise PlanBindingError("BINDING_INPUT_PROTOCOL_UNSUPPORTED", field_path="binding_input_protocol")
+    declared = raw.get("binding_input_protocol", PUBLIC_BINDING_PROTOCOL)
+    if declared not in (PUBLIC_BINDING_PROTOCOL, "legacy_full_v1"):
+        raise PlanBindingError("BINDING_INPUT_PROTOCOL_UNSUPPORTED", field_path="binding_input_protocol")
+    contract = dict(frozen.get("binding_contract") or {})
+    # Use the approved capability's operation, never a model-selected rule.
+    operation = str(frozen.get("operation") or "")
+    rule = dict((contract.get("operations") or {}).get(operation) or {})
+    values = raw.get("produced_bindings") or {}
+    modes = set()
+    if isinstance(values, Mapping):
+        for value in values.values():
+            if isinstance(value, Mapping) and value.get("type") == "artifact_ref":
+                ref = value.get("value")
+                if isinstance(ref, Mapping):
+                    modes.add("handle" if "handle" in ref else "formal")
+    if len(modes) > 1 or (declared == "legacy_full_v1" and "handle" in modes):
+        raise PlanBindingError("BINDING_INPUT_PROTOCOL_MIXED", field_path="produced_bindings")
+    legacy = declared == "legacy_full_v1" or modes == {"formal"}
+    normalized = deepcopy(raw)
+    if not legacy:
+        for name, candidate in values.items():
+            if not isinstance(candidate, Mapping) or candidate.get("type") != "artifact_ref":
+                continue  # Original validator owns shape/type violations.
+            ref = candidate.get("value")
+            if not isinstance(ref, Mapping) or "handle" not in ref:
+                continue
+            if set(ref) != {"handle"} or not isinstance(ref["handle"], str):
+                raise PlanBindingError("BINDING_INPUT_PROTOCOL_MIXED", field_path="produced_bindings."+name+".value")
+            requirement = dict((rule.get("artifact_binding_requirements") or {}).get(name) or {})
+            matches = [row for row in workspace_bindings if row.get("plan_handle") == ref["handle"]
+                and row.get("canonical_resource_id") == requirement.get("canonical_resource_id")
+                and row.get("resource_kind") == requirement.get("resource_kind")
+                and str((row.get("operation_scope") or {}).get("operation") or "") == operation]
+            if len(matches) != 1:
+                raise PlanBindingError("BINDING_HANDLE_UNKNOWN" if not matches else "BINDING_HANDLE_AMBIGUOUS",
+                    field_path="produced_bindings."+name+".value.handle", binding_name=name, handle=ref["handle"])
+            row = matches[0]
+            normalized["produced_bindings"][name]["value"] = {key: deepcopy(row[key]) for key in
+                ("canonical_resource_id", "resource_kind", "binding_revision", "plan_handle", "binding_id")}
+        supplied = raw.get("binding_env") or {}
+        required = dict(rule.get("required_binding_env") or {})
+        if not isinstance(supplied, Mapping) or any(key not in required or value != required[key] for key,value in supplied.items()):
+            raise PlanBindingError("BINDING_ENV_CONTRACT_MISMATCH", field_path="binding_env")
+        normalized["binding_env"] = deepcopy(required)
+    digest = lambda value: hashlib.sha256(_canonical(value).encode()).hexdigest()
+    receipt = {"schema_version": 1, "producer": "managed_binding_normalizer", "protocol": "legacy_full_v1" if legacy else PUBLIC_BINDING_PROTOCOL,
+        "scope": deepcopy(dict(scope)), "contract_digest": digest(frozen),
+        "catalog_digests": [row["binding_digest"] for row in workspace_bindings],
+        "raw_digest": digest(raw), "normalized_digest": digest(normalized),
+        "raw_candidate": raw, "normalized_candidate": deepcopy(normalized)}
+    receipt["receipt_id"] = "binding-normalization-" + digest(receipt)
+    return normalized, receipt
+
+
+def binding_input_progress_facts(action, requirements):
+    """Facts actually checkable at the public boundary, not text differences."""
+    if not isinstance(action, Mapping):
+        return set()
+    facts = set()
+    if action.get('operation') == requirements.get('operation'):
+        facts.add('operation')
+    produced = action.get('produced_bindings') or {}
+    if isinstance(produced, Mapping):
+        for name, expected in requirements.get('produced_bindings', {}).items():
+            row = produced.get(name)
+            if not isinstance(row, Mapping) or row.get('type') != expected.get('type'):
+                continue
+            value = row.get('value')
+            kind = expected.get('type')
+            valid = (kind == 'string' and isinstance(value, str) and bool(value.strip())
+                or kind == 'integer' and type(value) is int
+                or kind == 'number' and type(value) in (int, float)
+                or kind == 'boolean' and type(value) is bool
+                or kind == 'artifact_ref' and isinstance(value, Mapping) and set(value) == {'handle'}
+                and value.get('handle') in expected.get('allowed_handles', []))
+            if valid:
+                facts.add('produced_bindings.' + name)
+    consumed = action.get('consumed_bindings') or {}
+    if isinstance(consumed, Mapping):
+        for name, expected in requirements.get('consumed_bindings', {}).items():
+            if consumed.get(name) == expected:
+                facts.add('consumed_bindings.' + name)
+    supplied = action.get('binding_env') or {}
+    expected = requirements.get('binding_env', {}).get('declared_mapping', {})
+    if isinstance(supplied, Mapping) and all(k in expected and v == expected[k] for k,v in supplied.items()):
+        facts.add('binding_env')
+    return facts
