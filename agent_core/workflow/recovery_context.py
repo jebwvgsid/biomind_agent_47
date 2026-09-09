@@ -298,6 +298,7 @@ def archive_recovery_episode(
                 )),
             },
             "business_budget_counters": {
+                "format_correction_count": int(audit.get("format_correction_count") or 0),
                 "turn_count": int(audit.get("turn_count") or 0),
                 "tool_call_count": int(audit.get("tool_call_count") or 0),
                 "tool_request_counts": deepcopy(dict(

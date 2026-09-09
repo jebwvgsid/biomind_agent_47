@@ -505,6 +505,7 @@ def managed_action_fingerprint(action: Mapping[str, Any]) -> str:
     normalized = {
         "type": str(action.get("type") or action.get("action_type") or "").strip().lower(),
         "argv": [str(item) for item in action.get("argv", []) or []],
+        **({"skill_resource_refs": list(action["skill_resource_refs"])} if action.get("skill_resource_refs") else {}),
         "env": {
             str(key): str(value)
             for key, value in sorted(dict(action.get("env") or {}).items())

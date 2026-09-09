@@ -27,7 +27,7 @@ SUPPORTED_SCRIPT_TAGS = {
     "r": "r",
 }
 _SCRIPT_BLOCK_RE = re.compile(
-    r"[\t\r\n ]*<(?P<tag>shell|python|r)>(?P<body>.*?)</(?P=tag)>[\t\r\n ]*",
+    r"[\t\r\n ]*<(?P<tag>shell|python|r)(?: skill_resources=\"(?P<resources>[^\"<>]*)\")?>(?P<body>.*?)</(?P=tag)>[\t\r\n ]*",
     re.IGNORECASE | re.DOTALL,
 )
 _ANY_SCRIPT_TAG_RE = re.compile(r"</?[A-Za-z][A-Za-z0-9_-]*\s*>", re.IGNORECASE)
@@ -48,9 +48,13 @@ class ExecutableScriptBlock:
     language: str
     body: str
     tag: str
+    skill_resource_refs: Tuple[str, ...] = ()
 
-    def to_dict(self) -> Dict[str, str]:
-        return asdict(self)
+    def to_dict(self) -> Dict[str, Any]:
+        result = asdict(self)
+        if not self.skill_resource_refs:
+            result.pop("skill_resource_refs")
+        return result
 
 
 @dataclass(frozen=True)
@@ -101,6 +105,7 @@ def parse_executable_script_block(text: Any) -> ExecutableScriptBlock:
         language=SUPPORTED_SCRIPT_TAGS[tag],
         body=body,
         tag=tag,
+        skill_resource_refs=tuple(match.group("resources").split(";")) if match.group("resources") else (),
     )
 
 
@@ -570,6 +575,7 @@ def adapt_script_block_to_action(
         "env": env,
         "script_adapter": "script_block_v1",
         "referenced_artifact_handles": [],
+        **({"skill_resource_refs": list(block.skill_resource_refs)} if block.skill_resource_refs else {}),
     }
     return attach_recovery_execution_authority(
         action,

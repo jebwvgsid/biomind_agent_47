@@ -45,7 +45,7 @@ from agent_core.workflow.stage_contracts import (
 )
 
 
-RECOVERY_SYSTEM_PROMPT_VERSION = "recovery-agent-system-v3-inspection"
+RECOVERY_SYSTEM_PROMPT_VERSION = "recovery-agent-system-v4-submission"
 RECOVERY_SEED_NORMAL_TARGET_CHARS = 16_000
 RECOVERY_SEED_HARD_LIMIT_CHARS = 32_000
 # Compatibility-only observation projection thresholds.  They are no longer
@@ -58,6 +58,12 @@ RECOVERY_SINGLE_OBSERVATION_CHARS = 24_000
 RECOVERY_CUMULATIVE_OBSERVATION_CHARS = 96_000
 RECOVERY_ASSISTANT_CHECKPOINT_EVENT = "recovery_assistant_message_committed"
 RECOVERY_TOOL_CHECKPOINT_EVENT = "recovery_tool_observation_committed"
+RECOVERY_FEEDBACK_CHECKPOINT_EVENT = "recovery_response_feedback_committed"
+
+from agent_core.workflow.recovery_reception import (
+    PROTOCOL, SUBMIT_TOOL, MAX_CHARS, ReceptionError, strict_json,
+    directive_schema, validate_candidate, has_explicit_text_submission, decode_text,
+)
 
 # Keep this a literal, with no formatting or interpolation.  Under a fixed
 # prompt version, tool schema, model, provider, and directive schema these
@@ -106,7 +112,7 @@ Safety rules:
 - Do not copy large tool observations into the final result.
 
 Terminal output:
-Return exactly one strict RecoveryDirective JSON object and no surrounding prose. Required fields are schema_version, directive_id, task_id, action, summary, and reason_code. Optional fields are target_step_id, instruction, question, requested_slots, evidence_refs, diagnostic_operation and diagnostic_inputs. Allowed actions are retry_step, revise_plan, reconsult, revalidate, ask_user, blocked and run_diagnostic_probe. run_diagnostic_probe requires target_step_id, semantic instruction, diagnostic_operation in the form selected_skill_id#operation_id and diagnostic_inputs containing declared artifact handles. It never accepts code, paths or a request to increase limits. retry_step and revalidate require target_step_id. retry_step, revise_plan, and reconsult require instruction. ask_user requires question and requested_slots. All fields are semantic and route-blind."""
+Keep a user-facing diagnosis (facts, uncertainty, proposed correction), not hidden reasoning. Prefer assistant content plus exactly one submit_recovery_directive tool call whose arguments are the existing RecoveryDirective. If content is empty, the directive summary is the explanation. Never mix final submission with unfinished inspection tool calls. Text fallback protocol recovery-submission-v1 permits either one envelope {"protocol":"recovery-submission-v1","explanation":"...","directive":{...}} or exactly one complete fenced block labeled recovery-submission-v1, with explanation outside. An ordinary json fence is only a diagnostic candidate and must be canonically resubmitted. Existing bare RecoveryDirective JSON remains compatible. Do not emit competing submissions. Skill example paths are not verified executable locations: use skill_resource for the registered selected Skill resource and preserve its identity; never guess an installation root or assume process cwd. Required fields are schema_version, directive_id, task_id, action, summary, and reason_code. Optional fields are target_step_id, instruction, question, requested_slots, evidence_refs, diagnostic_operation and diagnostic_inputs. Allowed actions are retry_step, revise_plan, reconsult, revalidate, ask_user, blocked and run_diagnostic_probe. run_diagnostic_probe requires target_step_id, semantic instruction, diagnostic_operation in the form selected_skill_id#operation_id and diagnostic_inputs containing declared artifact handles. It never accepts code, paths or a request to increase limits. retry_step and revalidate require target_step_id. retry_step, revise_plan, and reconsult require instruction. ask_user requires question and requested_slots. All fields are semantic and route-blind."""
 
 
 class RecoveryAgentError(ValueError):
@@ -498,6 +504,10 @@ def recovery_tool_schemas() -> list[dict[str, Any]]:
                 },
             },
         })
+    result.append({"type": "function", "function": {
+        "name": SUBMIT_TOOL, "description": "Submit one RecoveryDirective candidate for existing admission. Does not execute commands. Put the user-facing explanation in assistant content or summary. Do not combine with inspection calls.",
+        "parameters": directive_schema(),
+    }})
     return result
 
 
@@ -511,6 +521,9 @@ class _RecoveryLoopState(TypedDict, total=False):
     pending_tool_calls: list[dict[str, Any]]
     directive: dict[str, Any]
     terminal_error: dict[str, Any]
+    format_correction_count: int
+    response_receipts: list[dict[str, Any]]
+    explanations: list[dict[str, Any]]
     turn_count: int
     tool_call_count: int
     tool_request_counts: dict[str, int]
@@ -530,9 +543,7 @@ class _RecoveryLoopState(TypedDict, total=False):
 
 
 def _tool_calls(message: AIMessage) -> list[dict[str, Any]]:
-    raw = list(message.tool_calls or ())
-    if not raw and isinstance(message.additional_kwargs, Mapping):
-        raw = list(message.additional_kwargs.get("tool_calls") or ())
+    raw = list((message.additional_kwargs or {}).get("tool_calls") or message.tool_calls or getattr(message, "invalid_tool_calls", ()) or ())
     result: list[dict[str, Any]] = []
     for index, item in enumerate(raw):
         if not isinstance(item, Mapping):
@@ -545,10 +556,10 @@ def _tool_calls(message: AIMessage) -> list[dict[str, Any]]:
         arguments = item.get("args", function.get("arguments", {}))
         if isinstance(arguments, str):
             try:
-                arguments = json.loads(arguments)
-            except json.JSONDecodeError as exc:
+                arguments = strict_json(arguments)
+            except ReceptionError as exc:
                 raise RecoveryAgentError(
-                    "RECOVERY_TOOL_ARGUMENT_INVALID", name
+                    exc.code, exc.detail
                 ) from exc
         if not name or not call_id or not isinstance(arguments, Mapping):
             raise RecoveryAgentError(
@@ -614,6 +625,7 @@ def recovery_boundary_messages_from_events(
         if event_kind not in {
             RECOVERY_ASSISTANT_CHECKPOINT_EVENT,
             RECOVERY_TOOL_CHECKPOINT_EVENT,
+            RECOVERY_FEEDBACK_CHECKPOINT_EVENT,
         }:
             continue
         payload = row.get("payload") if isinstance(row.get("payload"), Mapping) else row
@@ -647,13 +659,15 @@ def recovery_boundary_messages_from_events(
                     "RECOVERY_BOUNDARY_EVENT_INVALID",
                     f"{message_id} is not an assistant message",
                 )
-            restored_message: BaseMessage = AIMessage(
-                id=message_id,
-                content=deepcopy(canonical_message.get("content", "")),
-                tool_calls=deepcopy(list(
-                    canonical_message.get("tool_calls") or ()
-                )),
-            )
+            restored_calls = deepcopy(list(canonical_message.get("tool_calls") or ()))
+            if any("function" in call for call in restored_calls):
+                restored_message = AIMessage(id=message_id, content=deepcopy(canonical_message.get("content", "")))
+                restored_message = restored_message.model_copy(update={"additional_kwargs": {"tool_calls": restored_calls}})
+            else:
+                restored_message = AIMessage(id=message_id,
+                    content=deepcopy(canonical_message.get("content", "")), tool_calls=restored_calls)
+        elif event_kind == RECOVERY_FEEDBACK_CHECKPOINT_EVENT and message_type == "human":
+            restored_message = HumanMessage(id=message_id, content=deepcopy(canonical_message.get("content", "")))
         else:
             if message_type != "tool":
                 raise RecoveryAgentError(
@@ -723,16 +737,10 @@ def _content_text(message: AIMessage) -> str:
 
 
 def _directive_from_message(message: AIMessage) -> RecoveryDirective:
-    content = _content_text(message)
-    if not content:
-        raise RecoveryAgentError("RECOVERY_DIRECTIVE_MISSING")
     try:
-        raw = json.loads(content)
-    except json.JSONDecodeError as exc:
-        raise RecoveryAgentError("RECOVERY_DIRECTIVE_JSON_INVALID", str(exc)) from exc
-    try:
-        return RecoveryDirective.from_mapping(raw)
-    except StageContractError as exc:
+        raw, _, _ = decode_text(_content_text(message))
+        return validate_candidate(raw)
+    except ReceptionError as exc:
         raise RecoveryAgentError(exc.code, exc.detail) from exc
 
 
@@ -867,6 +875,10 @@ class RecoveryAgentLoop:
 
         async def call_model(state: _RecoveryLoopState) -> dict[str, Any]:
             turns = int(state.get("turn_count") or 0)
+            if int(state.get("no_progress_rounds") or 0) >= config.max_consecutive_no_progress_rounds:
+                return {"terminal_error": {"code": "RECOVERY_NO_PROGRESS_LIMIT", "detail": str(config.max_consecutive_no_progress_rounds)}}
+            if int(state.get("tool_call_count") or 0) >= config.max_total_tool_calls:
+                return {"terminal_error": {"code": "RECOVERY_TOOL_CALL_LIMIT", "detail": str(config.max_total_tool_calls)}}
             if turns >= config.max_llm_turns:
                 return {"terminal_error": {
                     "code": "RECOVERY_LLM_TURN_LIMIT",
@@ -943,6 +955,7 @@ class RecoveryAgentLoop:
                 request_ordinal = len(request_audit) + 1
                 request_record = {
                     "request_ordinal": request_ordinal,
+                    "reception_protocol": PROTOCOL,
                     "context_epoch_id": str(
                         state.get("context_epoch_id") or ""
                     ),
@@ -968,6 +981,7 @@ class RecoveryAgentLoop:
                     "request_ordinal": request_ordinal,
                     "transport_attempt_ordinal": attempts,
                     "wire_fingerprint": request_record["wire_fingerprint"],
+                    "reception_protocol": PROTOCOL,
                     "provider_message_count": len(wire),
                 }
                 await self._emit_event(
@@ -1036,6 +1050,27 @@ class RecoveryAgentLoop:
                 deep=True,
                 update={"id": f"{seed.seed_id}:assistant:{ordinal:03d}"},
             )
+            # Keep provider argument strings losslessly, including malformed
+            # JSON. SDK normalized args may already have collapsed duplicate
+            # keys. The command decoder and subsequent feedback see raw args.
+            raw_calls = list((assistant.additional_kwargs or {}).get("tool_calls") or ())
+            if not raw_calls and assistant.invalid_tool_calls:
+                raw_calls = [{"id": c["id"], "type": "function", "function": {
+                    "name": c["name"], "arguments": c["args"]}}
+                    for c in assistant.invalid_tool_calls]
+            if not raw_calls and assistant.tool_calls:
+                raw_calls = [{"id": c["id"], "type": "function", "function": {
+                    "name": c["name"], "arguments": json.dumps(c["args"], ensure_ascii=False)}}
+                    for c in assistant.tool_calls]
+            preserve_raw = bool(assistant.invalid_tool_calls)
+            for call in raw_calls:
+                try:
+                    strict_json(call["function"]["arguments"])
+                except (ReceptionError, KeyError, TypeError):
+                    preserve_raw = True
+            if preserve_raw:
+                assistant = assistant.model_copy(deep=True, update={"tool_calls": [], "invalid_tool_calls": [],
+                    "additional_kwargs": {**assistant.additional_kwargs, "tool_calls": raw_calls}})
             assistant_payload = provider_visible_payload(assistant)
             await self._emit_event(
                 RECOVERY_ASSISTANT_CHECKPOINT_EVENT,
@@ -1049,6 +1084,8 @@ class RecoveryAgentLoop:
                     "status": "committed",
                     "message_id": str(assistant.id or ""),
                     "message": assistant_payload,
+                    "raw_tool_calls": deepcopy(raw_calls),
+                    "finish_reason": str((assistant.response_metadata or {}).get("finish_reason") or "UNKNOWN"),
                     "message_sha256": hashlib.sha256(
                         _canonical(assistant_payload).encode("utf-8")
                     ).hexdigest(),
@@ -1062,7 +1099,7 @@ class RecoveryAgentLoop:
                     **deepcopy(usage),
                 })
             request_audit.append(request_record)
-            raw_response_calls = list(assistant.tool_calls or ())
+            raw_response_calls = list(assistant.tool_calls or assistant.invalid_tool_calls or ())
             if (
                 not raw_response_calls
                 and isinstance(assistant.additional_kwargs, Mapping)
@@ -1106,16 +1143,111 @@ class RecoveryAgentLoop:
                     or budget.should_compact
                 ),
             }
-            calls = _tool_calls(assistant)
-            if calls:
-                update["pending_tool_calls"] = calls
-                return update
+            content = _content_text(assistant)
+            explanations = deepcopy(list(state.get("explanations") or ()))
+            receipts = deepcopy(list(state.get("response_receipts") or ()))
+            receipt = {"protocol": PROTOCOL, "response_message_id": assistant.id,
+                "response_sha256": hashlib.sha256(_canonical(assistant_payload).encode()).hexdigest(),
+                "finish_reason": str((assistant.response_metadata or {}).get("finish_reason") or "UNKNOWN"),
+                "status": "received", "directive_adopted": False, "command_started": False}
+            if content:
+                explanations.append({"source_message_id": assistant.id, "source": "assistant.content", "text": content})
+            calls = []
+            problem = None
             try:
-                directive = _directive_from_message(assistant)
-            except RecoveryAgentError as exc:
-                update["terminal_error"] = {"code": exc.code, "detail": exc.detail}
-                return update
-            update["directive"] = directive.to_dict()
+                finish_reason = receipt["finish_reason"]
+                if finish_reason not in {"UNKNOWN", "stop", "tool_calls", "function_call"}:
+                    raise ReceptionError("RECOVERY_RESPONSE_INCOMPLETE", finish_reason)
+                if len(content) > MAX_CHARS:
+                    raise ReceptionError("RECOVERY_RESPONSE_SIZE_LIMIT")
+                calls = _tool_calls(assistant)
+                submissions = [c for c in calls if c["name"] == SUBMIT_TOOL]
+                if calls and not submissions:
+                    receipt["status"] = "investigating"
+                    update["pending_tool_calls"] = calls
+                else:
+                    if submissions:
+                        if len(submissions) != 1 or len(calls) != 1:
+                            raise ReceptionError("RECOVERY_SUBMISSION_AMBIGUOUS", "Inspect first, then submit in a separate turn; no calls executed")
+                        # Native parameters exclusively own command transport;
+                        # assistant prose is never scanned for a second action.
+                        if has_explicit_text_submission(content):
+                            raise ReceptionError("RECOVERY_SUBMISSION_AMBIGUOUS", "Native submission and explicit text envelope cannot coexist")
+                        raw = submissions[0]["args"]
+                        extra_explanation = ""
+                        receipt["transport"] = "native_tool"
+                    else:
+                        raw, extra_explanation, transport = decode_text(content)
+                        receipt.update(transport)
+                    directive = validate_candidate(raw)
+                    if content and not submissions and explanations:
+                        explanations[-1]["display_text"] = extra_explanation or directive.summary
+                    if directive.task_id != seed.failure_packet.task_id:
+                        raise ReceptionError("RECOVERY_DIRECTIVE_TASK_MISMATCH", "/task_id", stage="recovery.admission")
+                    if directive.target_step_id and directive.target_step_id != seed.failure_packet.step_id:
+                        raise ReceptionError("RECOVERY_DIRECTIVE_STEP_MISMATCH", "/target_step_id", stage="recovery.admission")
+                    declared_refs = {seed.failure_packet.source_outcome_ref, *seed.failure_packet.evidence_refs,
+                        *seed.failure_packet.inspection_refs, *seed.evidence_refs, *state.get("inspected_refs", ())}
+                    if set(directive.evidence_refs) - declared_refs:
+                        raise ReceptionError("RECOVERY_DIRECTIVE_EVIDENCE_SCOPE_INVALID", "/evidence_refs", stage="recovery.admission")
+                    if extra_explanation or not content:
+                        explanations.append({"source_message_id": assistant.id,
+                            "source": "envelope.explanation" if extra_explanation else "directive.summary",
+                            "text": extra_explanation or directive.summary})
+                    receipt.update(status="candidate_validated", candidate_sha256=hashlib.sha256(_canonical(directive.to_dict()).encode()).hexdigest())
+                    update["directive"] = directive.to_dict()
+            except (ReceptionError, RecoveryAgentError) as exc:
+                problem = exc
+                candidate_bounds = getattr(exc, "candidate", None)
+                if candidate_bounds and explanations and content:
+                    # Preserve raw content above. This is lossless framing of
+                    # the diagnostic prose, not adoption of the historical
+                    # ordinary JSON block or natural-language action parsing.
+                    explanations[-1]["display_text"] = content[:candidate_bounds["start"]] + content[candidate_bounds["end"]:]
+                receipt.update(status="not_accepted", error_code=exc.code, detail=exc.detail,
+                    stage=getattr(exc, "stage", "recovery.response_decode"), candidate=getattr(exc, "candidate", None))
+            receipts.append(receipt)
+            update.update(response_receipts=receipts, explanations=explanations)
+            await self._emit_event("recovery_response_received", {
+                **call_context, "event_id": f"{assistant.id}:reception", **receipt,
+                "explanation": explanations[-1]["text"] if explanations else "",
+            })
+            if problem or (calls and calls[0]["name"] == SUBMIT_TOOL):
+                used = int(state.get("format_correction_count") or 0)
+                can_correct = bool(problem and used < 1 and ordinal < config.max_llm_turns
+                    and int(state.get("no_progress_rounds") or 0) < config.max_consecutive_no_progress_rounds
+                    and int(state.get("tool_call_count") or 0) < config.max_total_tool_calls
+                    and problem.code != "RECOVERY_RESPONSE_INCOMPLETE")
+                feedback = {"protocol": PROTOCOL, "status": receipt["status"],
+                    "error_code": receipt.get("error_code", ""), "stage": receipt.get("stage", "recovery.admission"),
+                    "detail": receipt.get("detail", ""), "explanation_saved": bool(explanations),
+                    "directive_adopted": False, "command_started": False,
+                    "format_corrections_remaining": 1 - used if can_correct else 0,
+                    "model_turns_remaining": max(0, config.max_llm_turns - ordinal),
+                    "schema": directive_schema(),
+                    "instruction": "Submit through submit_recovery_directive or recovery-submission-v1. The original causal failure is unchanged; do not treat guessed paths as verified. Candidate validation is not execution approval."}
+                feedback_messages = []
+                # Pair every native call, even when a mixed round is rejected.
+                raw_pairs = calls or [c for c in raw_response_calls if isinstance(c, Mapping) and c.get("id")]
+                if raw_pairs:
+                    for c in raw_pairs:
+                        feedback_messages.append(ToolMessage(id=f"{assistant.id}:feedback:{c['id']}",
+                            tool_call_id=c["id"], name=str(c.get("name") or (c.get("function") or {}).get("name") or ""), content=_canonical(feedback)))
+                else:
+                    feedback_messages.append(HumanMessage(id=f"{assistant.id}:feedback", content=_canonical(feedback)))
+                for message in feedback_messages:
+                    await self._emit_event(RECOVERY_FEEDBACK_CHECKPOINT_EVENT, {
+                        **call_context, "event_id": f"{message.id}:committed", "message_id": message.id,
+                        "message": provider_visible_payload(message), "format_correction_count": used + int(can_correct),
+                    })
+                update["messages"] = [assistant, *feedback_messages]
+                if problem:
+                    update["pending_tool_calls"] = []
+                    if can_correct:
+                        update["format_correction_count"] = used + 1
+                    else:
+                        update["terminal_error"] = {"code": problem.code, "detail": problem.detail,
+                            "failure_stage": receipt["stage"], "format_correction_exhausted": used >= 1}
             return update
 
         async def run_tools(state: _RecoveryLoopState) -> dict[str, Any]:
@@ -1391,7 +1523,7 @@ class RecoveryAgentLoop:
                 or state.get("compaction_required")
             ):
                 return "finish"
-            return "tools"
+            return "tools" if state.get("pending_tool_calls") else "model"
 
         async def after_tools(state: _RecoveryLoopState) -> str:
             return "finish" if state.get("terminal_error") else "model"
@@ -1404,7 +1536,7 @@ class RecoveryAgentLoop:
         graph.add_node("tools", run_tools)
         graph.add_node("finish", finish)
         graph.add_edge(START, "model")
-        graph.add_conditional_edges("model", after_model, ["tools", "finish"])
+        graph.add_conditional_edges("model", after_model, ["tools", "model", "finish"])
         graph.add_conditional_edges("tools", after_tools, ["model", "finish"])
         graph.add_edge("finish", END)
         return graph.compile(checkpointer=False)
@@ -1470,6 +1602,9 @@ class RecoveryAgentLoop:
             "inherited_messages": inherited,
             "messages": local,
             "pending_tool_calls": [],
+            "format_correction_count": int(counters.get("format_correction_count") or 0),
+            "response_receipts": deepcopy(list(counters.get("response_receipts") or ())),
+            "explanations": deepcopy(list(counters.get("explanations") or ())),
             "turn_count": int(counters.get("turn_count") or 0),
             "tool_call_count": int(counters.get("tool_call_count") or 0),
             "tool_request_counts": deepcopy(dict(
@@ -1526,7 +1661,11 @@ class RecoveryAgentLoop:
             item for item in provider_request_audit
             if str(item.get("context_epoch_id") or "") == epoch_id
         ]
+        reception_state = {"format_correction_count": int(result.get("format_correction_count") or 0),
+            "response_receipts": deepcopy(list(result.get("response_receipts") or ())),
+            "explanations": deepcopy(list(result.get("explanations") or ()))}
         audit = {
+            **reception_state,
             "schema_version": 1,
             "prompt_version": RECOVERY_SYSTEM_PROMPT_VERSION,
             "seed_digest": recovery_seed_digest(parsed),
@@ -1567,6 +1706,7 @@ class RecoveryAgentLoop:
         }
         terminal_error = deepcopy(dict(result.get("terminal_error") or {}))
         resume_state = {
+            **reception_state,
             "turn_count": int(result.get("turn_count") or 0),
             "tool_call_count": int(result.get("tool_call_count") or 0),
             "tool_request_counts": deepcopy(dict(
@@ -1606,7 +1746,8 @@ class RecoveryAgentLoop:
                 result.get("compaction_required") or {}
             )),
             "checkpoint": {},
-            "validator_feedback": [],
+            "validator_feedback": deepcopy(reception_state["response_receipts"]),
+            "reception": reception_state,
             "audit": audit,
             "_observation_receipts": deepcopy(
                 list(result.get("observation_receipts") or ())

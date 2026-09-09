@@ -430,6 +430,9 @@ class RecoveryRuntime:
             "source_fingerprint": source_fingerprint,
             "directive_digest": directive_digest,
             "directive": directive_wire,
+            "reception": {**deepcopy(state.get("recovery_reception") or {}),
+                "admission": {"status": "admitted", "outcome_type": outcome_type,
+                    "command_started": False, "directive_id": decision_id}},
             "failure_packet_ref": failure_packet_ref,
             **({
                 "incident_id": packet.incident_id,

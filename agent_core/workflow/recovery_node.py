@@ -740,12 +740,15 @@ def _business_resume_state(
         "no_progress_rounds",
         "observation_chars",
         "transport_attempt_count",
+        "format_correction_count",
     )
     result = {
         key: int(source.get(key) or 0)
         for key in scalar_fields
     }
     result.update({
+        "explanations": deepcopy(list(source.get("explanations") or ())),
+        "response_receipts": deepcopy(list(source.get("response_receipts") or ())),
         "tool_request_counts": deepcopy(dict(
             source.get("tool_request_counts") or {}
         )),
@@ -1377,6 +1380,7 @@ class Schema2RecoveryNode:
         )
         counters = dict(source_summary.get("business_budget_counters") or {})
         for field in (
+            "format_correction_count",
             "turn_count",
             "tool_call_count",
             "no_progress_rounds",
@@ -2141,6 +2145,7 @@ class Schema2RecoveryNode:
         admitted_state = {
             **deepcopy(dict(state)),
             "recovery_directive": directive,
+            "recovery_reception": deepcopy(episode.get("reception") or {}),
             "recovery_inspected_refs": list(
                 (episode.get("audit") or {}).get("inspected_refs") or ()
             ),
@@ -2148,31 +2153,6 @@ class Schema2RecoveryNode:
             "recovery_business_resume_state": _business_resume_state(episode.get("_resume_state") or {}),
             "recovery_causal_observation_receipts": deepcopy(episode.get("_observation_receipts") or []),
         }
-        try:
-            await self._emit_event(
-                "recovery_directive_admitted",
-                {
-                    "event_id": f"recovery:{seed.seed_id}:directive:admitted",
-                    "task_id": task_id,
-                    "step_id": seed.failure_packet.step_id,
-                    "seed_id": seed.seed_id,
-                    "failure_id": seed.failure_packet.failure_id,
-                    "context_epoch_id": context_epoch_id,
-                    "overflow_epoch": overflow_epoch,
-                    "directive_id": str(directive.get("directive_id") or ""),
-                    "action": str(directive.get("action") or ""),
-                    "recovery_archive_ref": archive.archive_ref,
-                },
-            )
-        except (asyncio.CancelledError, GraphBubbleUp):
-            raise
-        except Exception as exc:
-            return fail(
-                task_id=task_id, durable=durable,
-                code=str(getattr(exc, "code", None) or "RECOVERY_EVENT_PERSISTENCE_FAILED"),
-                detail=str(getattr(exc, "detail", None) or exc),
-                recovery_archive_ref=archive.archive_ref,
-            )
         # The provider episode stays local.  Only the semantic directive and
         # bounded inspected-ref receipt reach the deterministic runtime.
         try:
@@ -2187,6 +2167,32 @@ class Schema2RecoveryNode:
                 recovery_archive_ref=archive.archive_ref,
             )
         result = dict(applied.get("recovery_outcome") or {})
+        if result.get("type") != "internal_protocol_error":
+            try:
+                await self._emit_event(
+                    "recovery_directive_admitted",
+                    {
+                        "event_id": f"recovery:{seed.seed_id}:directive:admitted",
+                        "task_id": task_id,
+                        "step_id": seed.failure_packet.step_id,
+                        "seed_id": seed.seed_id,
+                        "failure_id": seed.failure_packet.failure_id,
+                        "context_epoch_id": context_epoch_id,
+                        "overflow_epoch": overflow_epoch,
+                        "directive_id": str(directive.get("directive_id") or ""),
+                        "action": str(directive.get("action") or ""),
+                        "recovery_archive_ref": archive.archive_ref,
+                    },
+                )
+            except (asyncio.CancelledError, GraphBubbleUp):
+                raise
+            except Exception as exc:
+                return fail(
+                    task_id=task_id, durable=durable,
+                    code=str(getattr(exc, "code", None) or "RECOVERY_EVENT_PERSISTENCE_FAILED"),
+                    detail=str(getattr(exc, "detail", None) or exc),
+                    recovery_archive_ref=archive.archive_ref,
+                )
         if result.get("type") in {"blocked", "internal_protocol_error"}:
             payload = dict(result.get("payload") or {})
             stopped = self._inspection_stop_result(

@@ -3414,6 +3414,7 @@ class BioAnalystAgent:
         tool = str(bounded.get("tool") or "")
         ui_messages = {
             "recovery_started": "🩺 Recovery started.",
+            "recovery_response_received": ("模型诊断（未授予执行批准）：\n" + str(bounded.get("explanation") or "") + "\n指令状态：" + str(bounded.get("status") or "received")),
             "recovery_model_turn_started": (
                 f"⏳ Recovery model turn {ordinal} started."
             ),
@@ -12427,6 +12428,14 @@ class BioAnalystAgent:
         # Loading and saving a second copy here would advance the generation and
         # make the caller's otherwise valid snapshot stale.
         plan_state = plan_state if plan_state is not None else load_plan_state(self.data_path, task_id)
+        if bound.get("skill_resource_refs") or bound.get("formal_skill_resources"):
+            from agent_core.skill_resource_binding import bind_action_skill_resources
+            _resource_index, _resource_step = current_plan_step_with_index(plan_state)
+            _resource_access = (plan_state.get("task_state") or {}).get("skill_access_state") or {}
+            bound = bind_action_skill_resources(bound, getattr(self, "skill_access_service", None), _resource_access,
+                step_id=str((_resource_step or {}).get("step_id") or ""), cwd=os.getcwd(),
+                namespace="external" if str((bound.get("recovery_execution_envelope") or {}).get("execution_mode") or "").upper() == "EXTERNAL_HANDOFF" else "local")
+
         # Mechanical binding uses the durable executable cursor, including a
         # verification-pending step with an admitted Recovery correction.
         # A pending successor must never substitute for that current step.
@@ -12721,6 +12730,7 @@ class BioAnalystAgent:
                 action_identity=action_identity,
                 working_directory=os.getcwd(),
                 language=action_language,
+                skill_resources=bound.get("formal_skill_resources") or (),
             )
             approval_identity = build_action_approval_identity(
                 generated_script_sha256=generated_script_sha256,
@@ -41624,6 +41634,23 @@ question. Never guess a scientific or database identity.
                     approved_plan_snapshot=generate_approved_snapshot,
                     **generate_semantic_inputs,
                 )
+                from agent_core.skill_resource_binding import script_catalog, bind_skill_resources
+                _resource_catalog = script_catalog(getattr(self, "skill_access_service", None), generate_skill_access,
+                    step_id=current_step_id)
+                for _row in _resource_catalog:
+                    try:
+                        _resolved = bind_skill_resources(self.skill_access_service, generate_skill_access, [_row["handle"]],
+                            step_id=current_step_id, cwd=os.getcwd(), namespace="external" if external_recovery_bundle else "local")[0]
+                        _row.update(availability="AVAILABLE", canonical_path=_resolved["canonical_path"],
+                            registered_root=_resolved["registered_root"], cwd=_resolved["cwd"], namespace=_resolved["namespace"])
+                    except (SkillAccessError, OSError, UnicodeError) as _exc:
+                        _row.update(availability="UNRESOLVED", error_code=str(getattr(_exc, "code", type(_exc).__name__)), detail=str(_exc))
+                for _row in _resource_catalog:
+                    _row.pop("snapshot_id", None)  # Internal revision remains frozen in the binder receipt.
+                if _resource_catalog:
+                    capability_instructions += "\n<selected_skill_script_bindings>" + json.dumps(_resource_catalog, ensure_ascii=False, sort_keys=True) + "</selected_skill_script_bindings>\n" + (
+                        'Document examples are not runtime paths. To use a listed Skill script in script-block mode, explicitly declare its handle: <shell skill_resources="skill_id#scripts/file.py">...</shell> (semicolon-separated for multiple refs; python/r tags also supported). Use the supplied canonical path or environment variable; never construct an installation root or resolve it from cwd. The binder freezes the selected material before approval and rechecks it at prelaunch. An unresolved binding requires inspection/correction, not a guessed relative path. User-owned scripts remain governed by their existing authorization.'
+                    )
                 generate_seed_messages = assemble_generate_v2_messages(
                     generate_node_context.llm_payload.to_provider_dict(),
                     capability_instructions=capability_instructions,
@@ -41703,6 +41730,16 @@ question. Never guess a scientific or database identity.
                         generate_material_records,
                         epoch_id=f"generate-materials:{basis_fingerprint}",
                     )
+                    if recovery_generated and typed_receipt.get("reception"):
+                        # Original model explanations are scoped evidence, not
+                        # public control fields. Keep them lossless in the same
+                        # inherited-material channel as selected Skill bodies.
+                        generate_material_messages.append(HumanMessage(
+                            id=f"generate-recovery-explanations:{basis_fingerprint}",
+                            content="<recovery_explanations authority='unverified_diagnosis_not_execution'>" + json.dumps(
+                                [{"source": row.get("source"), "text": row.get("display_text", row.get("text", ""))}
+                                 for row in typed_receipt["reception"].get("explanations") or []], ensure_ascii=False, sort_keys=True)
+                                + "</recovery_explanations>"))
                     existing_raw = (
                         (generate_plan_state.get("task_state") or {}).get(
                             "generate_context_episode"
@@ -43538,6 +43575,14 @@ question. Never guess a scientific or database identity.
 
             if str(structured_action.get("type") or "") == "execute":
                 try:
+                    from agent_core.skill_resource_binding import bind_action_skill_resources
+                    try:
+                        structured_action = bind_action_skill_resources(structured_action,
+                            getattr(self, "skill_access_service", None), generate_skill_access,
+                            step_id=current_step_id, cwd=os.getcwd(),
+                            namespace="external" if external_recovery_bundle else "local")
+                    except (SkillAccessError, OSError, UnicodeError) as exc:
+                        raise PlanBindingError(str(getattr(exc, "code", None) or "SKILL_BINDING_UNREADABLE"), detail=str(exc)) from exc
                     structured_action, binding_normalization = normalize_public_action_bindings(
                         structured_action, frozen=generate_frozen_binding_input, scope=invocation_audit.scope,
                         workspace_bindings=generate_workspace_bindings, raw_public_candidate=structured_parse_result.candidate)
@@ -47052,6 +47097,7 @@ question. Never guess a scientific or database identity.
                         },
                         working_directory=os.getcwd(),
                         language=language,
+                        skill_resources=pending_action.get("formal_skill_resources") or (),
                     )
                     current_approval_identity = build_action_approval_identity(
                         generated_script_sha256=str(
@@ -47832,6 +47878,7 @@ question. Never guess a scientific or database identity.
                     },
                     working_directory=os.getcwd(),
                     language=language,
+                    skill_resources=pending_action.get("formal_skill_resources") or (),
                 )
                 current_approval_identity = build_action_approval_identity(
                     generated_script_sha256=str(
@@ -47898,6 +47945,19 @@ question. Never guess a scientific or database identity.
                         sort_keys=True,
                     ),
                 )
+
+            if pending_action.get("skill_resource_refs") or pending_action.get("formal_skill_resources"):
+                from agent_core.skill_resource_binding import validate_action_skill_resources
+                try:
+                    _skill_binding_state = load_plan_state(self.data_path, task_id)
+                    validate_action_skill_resources(pending_action, getattr(self, "skill_access_service", None),
+                        (_skill_binding_state.get("task_state") or {}).get("skill_access_state") or {},
+                        step_id=str(pending_action.get("step_id") or ""), cwd=os.getcwd(),
+                        namespace="external" if str((pending_action.get("recovery_execution_envelope") or {}).get("execution_mode") or "").upper() == "EXTERNAL_HANDOFF" else "local")
+                except (SkillAccessError, OSError, UnicodeError) as exc:
+                    return reject_internal_prelaunch(pending_action,
+                        error_code=str(getattr(exc, "code", None) or "SKILL_BINDING_UNREADABLE"),
+                        stage="execute.skill_resource_prelaunch", detail=str(exc))
 
             advance_preparation_boundary(
                 "execution_budget_accounting",

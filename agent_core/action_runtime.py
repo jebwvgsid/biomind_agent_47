@@ -880,6 +880,7 @@ def build_execution_policy_manifest(
     working_directory: str,
     language: str,
     policy: Optional[Mapping[str, Any]] = None,
+    skill_resources: Sequence[Mapping[str, Any]] = (),
 ) -> Dict[str, Any]:
     policy_value = {
         "stdin": "devnull",
@@ -895,6 +896,7 @@ def build_execution_policy_manifest(
         "plan_id": str(identity.get("plan_id") or ""),
         "step_id": str(identity.get("step_id") or ""),
         "working_directory": str(Path(working_directory).expanduser().resolve()),
+        **({"skill_resources": deepcopy(list(skill_resources))} if skill_resources else {}),
         "language": str(language or "Bash"),
         "scope": "current_action",
         "policy": policy_value,

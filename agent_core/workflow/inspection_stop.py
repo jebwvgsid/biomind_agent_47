@@ -282,6 +282,11 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
             "error_code": _code(row.get("error_code") or row.get("code"), "INSPECTION_SECONDARY_FAILURE"),
             **({"detail": _safe(row.get("detail"))} if row.get("detail") else {})}
             for row in episode.get("secondary_failures") or [] if isinstance(row, Mapping)]}
+    reception = _mapping(episode.get("reception"))
+    stop["model_diagnoses"] = [{"source_message_id": _safe(row.get("source_message_id"), 200),
+        "text": _safe(row.get("text"), 4000), "authority": "unverified_model_explanation"}
+        for row in reception.get("explanations", []) if isinstance(row, Mapping) and row.get("text")][-12:]
+    stop["directive_reception"] = deepcopy(reception.get("response_receipts") or [])
     identity = {key: stop[key] for key in ("scope", "authority", "origin", "inspection_failures", "publication_failures", "stop_reason", "execution", "archive_ref")}
     stop["stop_id"] = "inspection-stop:" + _hash(identity)
     stop["explanation"] = inspection_stop_explanation(stop)
@@ -313,6 +318,9 @@ def inspection_stop_explanation(stop):
         lines.append("证据交接问题：" + "；".join(_safe(row.get("error_code")) + ": " + _safe(row.get("detail")) for row in stop["publication_failures"]) + "。")
     lines.append("停止原因：" + _safe(reason.get("error_code")) + "；连续无进展轮次=" + str(reason.get("no_progress_rounds", 0)) +
         "，模型轮次=" + str(reason.get("model_turns", 0)) + "，工具调用=" + str(reason.get("tool_calls", 0)) + "。")
+    if stop.get("model_diagnoses"):
+        lines.append("模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\n" + "\n".join(
+            _safe(row.get("text"), 4000) for row in stop["model_diagnoses"]))
     lines.append("读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。")
     unfinished = [row for row in stop.get("stages") or [] if row.get("status") not in _FINISHED]
     lines.append("未完成阶段：" + ("；".join(_safe(row.get("step_id")) + "=" + _safe(row.get("status")) for row in unfinished) or "没有可确认的清单") + "。")
