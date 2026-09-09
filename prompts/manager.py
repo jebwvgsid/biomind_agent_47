@@ -2545,7 +2545,7 @@ repair attempt.
 """
             return f"""You are BioMind Generate. Write the executable script for exactly the current approved step.
 
-Return exactly one of these two alternatives:
+Return exactly one of these three alternatives:
 1. One non-empty executable block using one of these forms:
 <shell>
 ...
@@ -2560,6 +2560,18 @@ Return exactly one of these two alternatives:
 </r>
 
 2. One raw typed JSON decision under the Skill decision protocol below.
+
+3. If corrective generation cannot safely make further progress, one complete
+JSON stop declaration: {{"type":"blocked","reason":"Explain the exact rejection, the correction already tried, the remaining contradiction, and what must be checked before continuing."}}
+Use exactly these two fields and a non-empty reason of at most 8000 characters.
+This requests stopping automatic work, not completing the step. Do not emit
+<finish>, a success claim, an executable block, or prose around this JSON.
+After applying a concrete correction, if the same rejection persists and the
+visible candidate already satisfies the cited requirement, explain that conflict
+and request this stop instead of changing comments, spacing, or variable names
+just to obtain another attempt. Do not assert that the validator is defective
+or a dependency is absent without evidence. For a real correctable defect,
+continue the substantive correction within the existing bounded budget.
 
 For the executable alternative, do not return prose, Markdown fences, JSON,
 multiple blocks, or text outside the single block. For the decision alternative,
@@ -2577,6 +2589,11 @@ executable block. The runtime boundary validates but never substitutes artifact 
 Keep
 diagnostically relevant stdout and stderr visible; do not redirect them to
 /dev/null or otherwise suppress failure evidence.
+When using a declared Conda environment, put its selector immediately after
+`conda run`: `conda run -n <declared-environment> --no-capture-output python ...`.
+Use the actual approved environment and bound script, never the example token.
+Keep required interpreter options (such as `-u`) and output forwarding; this
+convention does not authorize changing environments or bypassing validation.
 
 When the approved StepEffect is observation-only, an outputless executable block
 is valid. Emit the actual typed result on stdout as exactly one

@@ -1123,6 +1123,13 @@ class TypedGenerate:
                 "terminal_receipt": str(value.get("terminal_receipt") or _fingerprint(value.get("terminal_internal_protocol_failure") or value)),
             }
             summary = "Generate recorded a durable terminal blocker."
+            if value.get("reason_code") == "GENERATE_STOP_REQUESTED":
+                explanation = str((value.get("pending_recovery_action") or {}).get("reason") or "")
+                payload.update(
+                    reason_code="GENERATE_STOP_REQUESTED",
+                    detail=explanation,
+                )
+                summary = "Generate requested a non-success stop (model explanation): " + explanation
         else:
             outcome_type = "internal_protocol_error"
             payload = {

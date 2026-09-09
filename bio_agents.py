@@ -43251,7 +43251,25 @@ question. Never guess a scientific or database identity.
             structured_action = structured_parse_result.action
             action_parse_error = deepcopy(structured_parse_result.error)
             provider_candidate = deepcopy(structured_action)
-            if generate_script_protocol:
+            # Script mode may request a non-success stop through the existing
+            # blocked action. Accept only the whole, bounded public object;
+            # never promote JSON extracted from prose or an executable block.
+            script_stop_requested = False
+            if generate_script_protocol and len(str(content or "")) <= 12000:
+                try:
+                    stop_declaration = json.loads(str(content or ""))
+                except (ValueError, TypeError):
+                    stop_declaration = None
+                script_stop_requested = bool(
+                    isinstance(stop_declaration, dict)
+                    and set(stop_declaration) == {"type", "reason"}
+                    and stop_declaration.get("type") == "blocked"
+                    and isinstance(stop_declaration.get("reason"), str)
+                    and 0 < len(stop_declaration["reason"].strip()) <= 8000
+                    and not action_parse_error
+                    and structured_action.get("type") == "blocked"
+                )
+            if generate_script_protocol and not script_stop_requested:
                 try:
                     script_block = parse_executable_script_block(content)
                     structured_action = adapt_script_block_to_action(
@@ -45077,6 +45095,7 @@ question. Never guess a scientific or database identity.
                     },
                     "generate_result": "BLOCKED",
                     "generate_exit_reason": "blocked",
+                    **({"reason_code": "GENERATE_STOP_REQUESTED"} if script_stop_requested else {}),
                     "next_step": "finish",
                 }
 
