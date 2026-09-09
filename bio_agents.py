@@ -19612,11 +19612,6 @@ class BioAnalystAgent:
             return ""
         code_text = str(code or "")
         normalized_code = code_text.replace("\\", "/")
-        code_lines = [
-            line.strip()
-            for line in code_text.splitlines()
-            if line.strip() and not line.strip().startswith("#")
-        ]
         for sid in self._selected_skill_ids(selected_skills):
             requirements = self._skill_runtime_requirements(sid)
             runner = str(requirements.get("env_runner") or "").strip()
@@ -19635,7 +19630,6 @@ class BioAnalystAgent:
                 )
             meta = self.skill_manager.get_skill_meta(sid)
             skill_dir = Path(meta.get("_skill_dir", self.skill_manager.skills_root / sid)).resolve()
-            runner_present = runner in code_text or (env and f"conda run -n {env}" in code_text)
             logical_code = re.sub(r"\\\s*\n", " ", code_text)
             for script in meta.get("_scripts", []) or []:
                 script_name = Path(script).name
@@ -19686,40 +19680,8 @@ class BioAnalystAgent:
                             "when the skill identifies this as a current-Python renderer/helper; keep the "
                             "declared analysis environment only for its tools."
                         )
-                if runner == "bash":
-                    continue
-                if mentions_script and not runner_present:
-                    return (
-                        f"Selected skill `{sid}` declares env_runner `{runner}` but the generated command "
-                        f"mentions `{script_name}` without that runner. Regenerate the command as "
-                        f"`{runner} {rel_script} ...` and do not use bare `python {rel_script}`."
-                    )
-            skill_terms = " ".join([
-                " ".join(map(str, requirements.get("packages", []) or [])),
-                " ".join(map(str, requirements.get("capabilities", []) or [])),
-                " ".join(map(str, meta.get("tags", []) or [])),
-            ]).lower()
-            managed_tools = set()
-            if any(term in skill_terms for term in ["cooler", "cool", "mcool"]):
-                managed_tools.add("cooler")
-            if any(term in skill_terms for term in ["hicexplorer", "hicfindtads", "hicdifferentialtad", "hi-c"]):
-                managed_tools.update({
-                    "hicFindTADs",
-                    "hicDifferentialTAD",
-                    "hicPlotTADs",
-                    "hicConvertFormat",
-                    "hicTransform",
-                })
-            for tool in sorted(managed_tools):
-                bare_tool_re = re.compile(rf"^(?:env\s+[^;&|]+\s+)?{re.escape(tool)}(?:\s|$)")
-                if any(bare_tool_re.search(line) for line in code_lines) and not runner_present:
-                    env_prefix = f"conda run -n {env}" if env else runner.rsplit(" ", 1)[0]
-                    return (
-                        f"Selected skill `{sid}` uses managed runtime `{env or runner}` but the generated command "
-                        f"calls bare `{tool}`. Regenerate it as `{env_prefix} {tool} ...` "
-                        f"or use `{runner} -c \"...\"` for Python-based preflight. Do not ask for code review "
-                        f"on bare `{tool}` commands."
-                    )
+            # Environment launch syntax is Generate guidance, not a substring gate.
+            # Equivalent Conda option orders must not reject an execution candidate.
             if sid == "3d-dna/calder2-subcompartment" and env and re.search(r"\bRscript\b|library\s*\(\s*CALDER", code_text, re.IGNORECASE):
                 wrong_envs = []
                 wrong_envs.extend(
