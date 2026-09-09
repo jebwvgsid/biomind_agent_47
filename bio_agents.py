@@ -41806,6 +41806,41 @@ question. Never guess a scientific or database identity.
                                 [{"source": row.get("source"), "text": row.get("display_text", row.get("text", ""))}
                                  for row in typed_receipt["reception"].get("explanations") or []], ensure_ascii=False, sort_keys=True)
                                 + "</recovery_explanations>"))
+                    if recovery_generated and typed_receipt.get("recovery_archive_ref"):
+                        # Reuse evidence already published to the accepted
+                        # Recovery episode. Read the content-addressed archive,
+                        # never paths proposed by the model or a live old script.
+                        recovery_archive = self.phase_archive_store.read(typed_receipt["recovery_archive_ref"])
+                        expected_episode = (typed_receipt.get("execution_envelope") or {}).get("recovery_context_id")
+                        if (recovery_archive.task_id != task_id or recovery_archive.phase != "recovery"
+                                or recovery_archive.metadata.get("step_id") != current_step_id
+                                or recovery_archive.metadata.get("seed_id") != expected_episode):
+                            raise RecoveryExecutionContractError("GENERATE_RECOVERY_ARCHIVE_SCOPE_MISMATCH",
+                                "Accepted Recovery archive does not match the current corrective scope")
+                        for index, material in enumerate(recovery_archive.transcript):
+                            if material.get("type") == "human" and material.get("name") == "inherited_recovery_evidence":
+                                # Decode our archived material envelope, not model
+                                # prose. Machine hashes/CAS stay internal; only
+                                # observed execution values enter Generate.
+                                content = material["content"]
+                                marker = "\n---BEGIN EXACT SOURCE BODY---\n"
+                                if marker not in content:
+                                    continue
+                                header, body = content.split(marker, 1)
+                                metadata = json.loads(header.split("\n", 1)[1])
+                                if metadata.get("object_kind") != "execution":
+                                    continue
+                                observed = json.loads(body.split("\n---END EXACT SOURCE BODY---", 1)[0])
+                                execution = observed["execution"]
+                                public_evidence = {"coverage": metadata.get("coverage"),
+                                    "claim_status": observed.get("claim_status"),
+                                    "execution": {key: execution.get(key) for key in (
+                                        "attempt_id", "action_id", "code", "raw_stdout", "raw_stderr",
+                                        "returncode", "execution_status")}}
+                                generate_material_messages.append(HumanMessage(
+                                    id=f"generate-recovery-evidence:{basis_fingerprint}:{index}",
+                                    name="recovery_execution_evidence", content="<recovery_execution_evidence>" +
+                                    json.dumps(public_evidence, ensure_ascii=False, sort_keys=True) + "</recovery_execution_evidence>"))
                     existing_raw = (
                         (generate_plan_state.get("task_state") or {}).get(
                             "generate_context_episode"

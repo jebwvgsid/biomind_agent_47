@@ -69,6 +69,18 @@ def test_checker_correction_through_approved_new_attempt(tmp_path,monkeypatch):
                 text='\n'.join(str(m.content) for m in messages)
                 assert 'integer' in text and '/resolutions/40000' in text and 'LEAF_RES' in text
                 assert HANDLE in text and str(checker) in text
+                execution_bodies=[]
+                for message in messages:
+                    if message.name=='recovery_execution_evidence':
+                        body=message.content.removeprefix('<recovery_execution_evidence>').removesuffix('</recovery_execution_evidence>')
+                        obj=json.loads(body)
+                        if 'execution' in obj:execution_bodies.append(obj['execution'])
+                assert len(execution_bodies)==1
+                observed=execution_bodies[0]
+                assert observed['code']==dispatches[1]['argv'][2]
+                assert observed['raw_stdout']=="Available resolutions in leaf.mcool:\n['/resolutions/40000']\nAvailable resolutions in bud.mcool:\n['/resolutions/40000']\n"
+                assert observed['raw_stderr']=='ERROR: resolution 40000 not found in leaf.mcool\n'
+                assert observed['returncode']==1
                 wires.append([m.model_dump() for m in messages])
                 current=load_plan_state(tmp_path,TASK)
                 approved_handles=next(step for step in current['steps'] if step['step_id']=='preflight_input_validation')['inputs']
