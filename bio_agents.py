@@ -2641,7 +2641,7 @@ class BioAnalystAgent:
             **dict(self.recovery_llm_policy or {}),
             "sdk_max_retries": 0,
             "completion_cache_enabled": False,
-            "application_max_attempts": 1,
+            "application_max_attempts": 2,
         }
         (
             self.consultant_reasoning_llm,
@@ -3464,7 +3464,7 @@ class BioAnalystAgent:
             for key in (
                 "task_id", "step_id", "seed_id", "failure_id",
                 "context_epoch_id", "overflow_epoch", "turn_ordinal",
-                "request_ordinal", "wire_fingerprint",
+                "wire_fingerprint",
             )
         }
         semantic_invocation_id = "recovery-" + hashlib.sha256(
@@ -3552,7 +3552,7 @@ class BioAnalystAgent:
                 **dict(self.recovery_llm_policy or {}),
                 "sdk_max_retries": 0,
                 "completion_cache_enabled": False,
-                "application_max_attempts": 1,
+                "application_max_attempts": min(2, max(1, int((self.recovery_llm_policy or {}).get("application_max_attempts", 2)))),
             },
             progress_callback=provider_progress,
         )
@@ -17884,6 +17884,8 @@ class BioAnalystAgent:
         )
         if stage == "terminal_summary":
             total_timeout = min(total_timeout, float(provider_policy.get("total_timeout_seconds", 30)))
+        elif stage == "recovery":
+            total_timeout = min(total_timeout, float(provider_policy.get("total_timeout_seconds", total_timeout)))
         if stage == "generate":
             timeout_policy = ProviderTimeoutPolicy(
                 first_chunk_seconds=float(
@@ -17912,7 +17914,8 @@ class BioAnalystAgent:
                     getattr(self, "llm_cancel_cleanup_timeout_seconds", min(5.0, total_timeout))
                 ),
             ).normalized()
-            max_attempts = 1
+            max_attempts = (min(2, max(1, int(provider_policy.get("application_max_attempts", 2))))
+                            if stage == "recovery" else 1)
 
         semantic_payload = {
             "stage": stage,
@@ -18047,6 +18050,27 @@ class BioAnalystAgent:
                     f"provider-attempt-{semantic_invocation_id[-12:]}-"
                     f"{attempt_ordinal}-{uuid.uuid4().hex[:8]}"
                 )
+                if stage == "recovery":
+                    if trace_store is None:
+                        raise RuntimeError("RECOVERY_TRANSPORT_DURABLE_STORE_REQUIRED")
+                    from langchain_core.messages import messages_from_dict
+                    transport_hash = hashlib.sha256((prompt_hash + model_parameter_hash + str(trace_metadata.get("wire_fingerprint", ""))).encode()).hexdigest()
+                    claim = trace_store.recovery_transport_claim(
+                        semantic_invocation_id, transport_hash, attempt_id,
+                        maximum=max_attempts, total_seconds=max(0.0, total_timeout - (time.monotonic() - started)))
+                    if claim["status"] == "backoff":
+                        remaining_wait = min(claim["deadline"] - time.time(), total_timeout - (time.monotonic() - started))
+                        await asyncio.wait_for(asyncio.sleep(max(0.0, claim["retry_not_before"] - time.time())), timeout=max(0.001, remaining_wait))
+                        claim = trace_store.recovery_transport_claim(semantic_invocation_id, transport_hash, attempt_id,
+                            maximum=max_attempts, total_seconds=max(0.0, remaining_wait))
+                    if claim["status"] == "completed":
+                        return messages_from_dict([claim["response"]])[0]
+                    attempt_ordinal = len(claim["attempts"])
+                    parent_attempt_id = (claim["attempts"][-2]["attempt_id"] if attempt_ordinal > 1 else "")
+                    remaining = min(claim["deadline"] - time.time(), total_timeout - (time.monotonic() - started))
+                    timeout_policy = ProviderTimeoutPolicy(
+                        first_chunk_seconds=max(0.001, remaining), idle_seconds=max(0.001, remaining),
+                        total_seconds=max(0.001, remaining), cleanup_seconds=timeout_policy.cleanup_seconds).normalized()
                 metadata = dict(trace_metadata or {})
                 metadata["prompt_budget_telemetry"] = prompt_telemetry
                 call_kind = str(metadata.get("call_kind") or {
@@ -18153,6 +18177,16 @@ class BioAnalystAgent:
                     return await invocation_llm.ainvoke(messages)
 
                 try:
+                    if stage == "recovery":
+                        from dataclasses import replace
+                        remaining = min(claim["deadline"] - time.time(), total_timeout - (time.monotonic() - started))
+                        if remaining <= 0:
+                            trace_store.recovery_transport_finish(semantic_invocation_id, attempt_id,
+                                failure={"code": "RECOVERY_TRANSPORT_DEADLINE_EXCEEDED", "send_started": False})
+                            raise asyncio.TimeoutError("RECOVERY_TRANSPORT_DEADLINE_EXCEEDED")
+                        envelope = replace(envelope, timeout_policy=ProviderTimeoutPolicy(
+                            first_chunk_seconds=remaining, idle_seconds=remaining,
+                            total_seconds=remaining, cleanup_seconds=timeout_policy.cleanup_seconds).normalized())
                     response, attempt_record = await run_provider_attempt(
                         invoke,
                         envelope,
@@ -18227,10 +18261,14 @@ class BioAnalystAgent:
                 except ProviderAttemptFailure as exc:
                     attempt_record = exc.record
                     can_retry = (
-                        stage == "generate"
+                        stage in {"generate", "recovery"}
                         and exc.retryable
                         and attempt_ordinal < max_attempts
                     )
+                    if stage == "recovery":
+                        from agent_core.provider_attempt import recovery_connection_retry_allowed
+                        can_retry = can_retry and recovery_connection_retry_allowed(exc)
+                        can_retry = can_retry and time.monotonic() - started < total_timeout
                     context_current = True
                     if can_retry and retry_guard is not None:
                         try:
@@ -18313,6 +18351,16 @@ class BioAnalystAgent:
                             ),
                         )
 
+                    if stage == "recovery":
+                        attempt_record.retry_budget_exhausted = bool(recovery_connection_retry_allowed(exc) and attempt_ordinal >= max_attempts)
+                        attempt_record.terminal_failure_reason = (
+                            "recovery_connection_retry_scheduled" if can_retry else
+                            "recovery_total_deadline_exceeded" if time.monotonic() - started >= total_timeout else
+                            "recovery_provider_retry_exhausted" if attempt_record.retry_budget_exhausted else
+                            "recovery_connection_retry_not_permitted")
+                        trace_store.recovery_transport_finish(
+                            semantic_invocation_id, attempt_id, failure=attempt_record.to_dict(), retry=can_retry,
+                            retry_delay=float(attempt_record.retry_delay_seconds or 0.0))
                     latest_error = terminal_error
                     history.setdefault(task_id or "-", []).append(attempt_record.to_dict())
                     history[task_id or "-"] = history[task_id or "-"][-20:]
@@ -18344,7 +18392,7 @@ class BioAnalystAgent:
                     if can_retry:
                         output.print_once(
                             f"provider:retry:{attempt_id}",
-                            f"🔁 Retrying the same Generate request once after {exc.error_code}.",
+                            f"🔁 Retrying the same {stage} request once after {exc.error_code}.",
                             Fore.YELLOW,
                         )
                         sleeper = getattr(
@@ -18352,7 +18400,12 @@ class BioAnalystAgent:
                             "_provider_retry_sleep",
                             asyncio.sleep,
                         )
-                        await sleeper(float(attempt_record.retry_delay_seconds or 0.0))
+                        delay = float(attempt_record.retry_delay_seconds or 0.0)
+                        if stage == "recovery":
+                            remaining = total_timeout - (time.monotonic() - started)
+                            await asyncio.wait_for(sleeper(delay), timeout=max(0.001, remaining))
+                        else:
+                            await sleeper(delay)
                         parent_attempt_id = attempt_id
                         continue
                     if (
@@ -18363,11 +18416,17 @@ class BioAnalystAgent:
                         # Other nodes keep their established outward SDK/HTTP
                         # exception contract. They gain attempt telemetry and
                         # cleanup, but no new controller business retry policy.
+                        if stage == "recovery":
+                            exc.__cause__.provider_attempt_record = attempt_record
                         raise exc.__cause__
                     if terminal_error is not exc:
                         raise terminal_error from exc
                     raise
                 else:
+                    if stage == "recovery":
+                        from langchain_core.messages import message_to_dict
+                        trace_store.recovery_transport_finish(
+                            semantic_invocation_id, attempt_id, response=message_to_dict(response))
                     if stage in {"planner", "planner_repair"}:
                         trusted_attempt = attempt_record.to_dict()
                         scoped_metadata = {key: deepcopy(trusted_attempt.get(key)) for key in (
@@ -18685,7 +18744,12 @@ class BioAnalystAgent:
             )
         cache_key = self._runtime_cache_key(skill_id, env)
         cached = self.runtime_status.get(task_id or "default", {}).get(cache_key)
-        env_ok, env_detail = self._verify_conda_env_presence(env)
+        presence_started = time.monotonic()
+        logger.info("Runtime inspection started: task=%s skill=%s phase=environment_presence", task_id, skill_id)
+        try:
+            env_ok, env_detail = self._verify_conda_env_presence(env)
+        finally:
+            logger.info("Runtime inspection completed: task=%s skill=%s phase=environment_presence elapsed_seconds=%.3f", task_id, skill_id, time.monotonic() - presence_started)
         if not env_ok:
             self.skill_manager.record_environment(
                 skill_id,
@@ -18720,11 +18784,13 @@ class BioAnalystAgent:
             if recent_detail is not None:
                 ok, detail = True, recent_detail
             else:
-                ok, detail = self.pm.verify_environment(
-                    env_name=env,
-                    language=requirements.get("language", ""),
-                    healthcheck=resolved_healthcheck,
-                )
+                inspection_start = time.monotonic()
+                logger.info("Runtime inspection started: task=%s skill=%s phase=environment_healthcheck", task_id, skill_id)
+                try:
+                    ok, detail = self.pm.verify_environment(
+                        env_name=env, language=requirements.get("language", ""), healthcheck=resolved_healthcheck)
+                finally:
+                    logger.info("Runtime inspection completed: task=%s skill=%s phase=environment_healthcheck elapsed_seconds=%.3f", task_id, skill_id, time.monotonic() - inspection_start)
             status = "verified" if ok else "broken"
             self.skill_manager.record_environment(
                 skill_id,
@@ -48412,8 +48478,6 @@ question. Never guess a scientific or database identity.
                 f"printf '{{\"attempt_id\":\"{attempt_id}\",\"returncode\":%s,\"finished_at\":\"%s\"}}\\n' "
                 f"\"$rc\" \"$finished_at\" > {shlex.quote(status_tmp)}\n",
                 f"mv {shlex.quote(status_tmp)} {shlex.quote(str(exit_status_path))}\n",
-                f"cat {shlex.quote(str(stdout_path))}\n",
-                f"cat {shlex.quote(str(stderr_path))} >&2\n",
                 "exit \"$rc\"\n",
             ])
             wrapper = "".join(wrapper_parts)
@@ -48640,6 +48704,7 @@ question. Never guess a scientific or database identity.
                         interpreter="bash",
                         lifecycle_callback=persist_attempt_lifecycle,
                         env=effective_execution_env,
+                        managed_log_paths={"stdout": str(stdout_path), "stderr": str(stderr_path)},
                         **({"max_output_bytes": diagnostic_dispatch_envelope.scratch_capability.max_output_bytes} if diagnostic_dispatch_envelope is not None else {}),
                     )
                 if diagnostic_dispatch_envelope is not None:
@@ -49088,6 +49153,12 @@ question. Never guess a scientific or database identity.
                     ],
                 ]))
                 validation_level = "workspace_mutation_attestation"
+            log_errors = get_last_execution_metadata().get("log_observation_errors") or []
+            if log_errors:
+                validation_result = dict(validation_result or {})
+                validation_result.update(passed=False, evidence_status="incomplete", log_observation_errors=log_errors)
+                validation_result["errors"] = [*list(validation_result.get("errors") or []), "EXECUTION_LOG_OBSERVATION_INCOMPLETE"]
+                validation_level = "execution_evidence_persistence"
             validation_failed = bool(validation_result and not validation_result.get("passed", True))
             benign_nonzero_preview = bool(
                 validation_result

@@ -1401,3 +1401,26 @@ def persist_partial_response_diagnostic(path: str | Path, record: ProviderAttemp
         temp_path = Path(handle.name)
     temp_path.replace(target)
     return target
+
+
+def recovery_connection_retry_allowed(error):
+    """Recovery-only policy: no accepted/partial payload, bounded exception chain."""
+    if error.error_code != PROVIDER_CONNECTION_FAILURE or not error.retryable:
+        return False
+    record = error.record
+    if record.observed_payload_callback_count or record.tool_call_fragment_count:
+        return False
+    current = error
+    seen = set()
+    for _ in range(16):
+        if current is None or id(current) in seen:
+            break
+        seen.add(id(current))
+        name = type(current).__name__.lower()
+        text = str(current).lower()
+        if any(x in name for x in ('invalidurl', 'unsupportedprotocol', 'localprotocol', 'ssl', 'certificate', 'authentication', 'permission', 'readerror', 'readtimeout', 'writeerror', 'writetimeout')):
+            return False
+        if any(x in text for x in ('certificate verify failed', 'invalid url', 'unknown url type')):
+            return False
+        current = current.__cause__ or current.__context__
+    return True

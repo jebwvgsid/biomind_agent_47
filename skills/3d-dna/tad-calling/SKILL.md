@@ -93,6 +93,23 @@ After the install subagent completes, re-run the verification command before run
 
 ## Agent Decision Protocol
 
+### Resolution-only validation (Generate action contract)
+
+For a step that only checks input resolution availability, use the registered
+`scripts/check_cooler_resolution.py` resource. Declare
+`skill_resources="3d-dna/tad-calling#scripts/check_cooler_resolution.py"` on the
+script block and use its binder-provided environment variable as the script path.
+Run one `conda run --no-capture-output -n hicexplore python -u` process for all
+inputs, with repeated `--input <approved-resource-handle> <approved-bound-path>`,
+`--resolution-bp <approved-positive-integer>`, and
+`--observation <exact-current-declared-observation-handle>`.
+The same query result supplies display, exact group comparison, and the existing
+structured observation emitter. Do not rewrite this query as inline Python,
+compare integers to group paths, or query again for the decision. A negative
+result exits nonzero while preserving the negative observation. Query errors do
+not mean the resolution is absent. Metadata presence does not validate the full
+matrix or its balance. This entry neither balances nor writes inputs.
+
 ### Mandatory preflight — confirm resolution and balance
 
 Before running `hicFindTADs`, do these checks:

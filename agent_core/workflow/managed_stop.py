@@ -287,6 +287,11 @@ def build_managed_stop(task_id, values, durable, boundary):
             summary=_safe(primary.get("message") or primary.get("summary") or outcome.get("summary")))
     value["primary_cause"] = deepcopy(primary or value["origin"])
     value["latest_failure"] = deepcopy(latest or value.get("latest_failure") or ((value.get("inspection_failures") or [{}])[-1]))
+    if value["stop_reason"].get("error_code") == "RECOVERY_PROVIDER_TRANSPORT_FAILED":
+        value["technical_classification"] = "recovery_provider_transport_error"
+        value["latest_failure"] = {"error_code": "RECOVERY_PROVIDER_TRANSPORT_FAILED",
+            "stage": "recovery.provider_transport", "category": "provider_transport",
+            "message": value["stop_reason"].get("detail", ""), "remote_processing_status": "UNKNOWN"}
     value["stop_reason"].update(termination_reason=str(payload.get("termination_reason") or ""),
         budget_receipt=deepcopy(_mapping(payload.get("budget_receipt"))))
     if boundary["node"] == "generate" and not fixed_scope["attempt_id"]:
@@ -329,12 +334,23 @@ def build_managed_stop(task_id, values, durable, boundary):
     return value
 
 
+def report_delivery_status(receipts):
+    """Writer lifecycle is independent from fulfilled file contracts."""
+    rows = [dict((receipts or {}).get(name) or {}) for name in ("report.md", "stage_status.tsv", "reproduce.sh")]
+    delivered = sum(row.get("status") in {"created", "reused", "unchanged"} and bool(row.get("sha256")) for row in rows)
+    return "complete" if delivered == 3 else "partial" if delivered else "failed"
+
+
 def explanation(stop):
     if stop.get("planning"):
         return _planning_explanation(stop)
     base = inspection_stop_explanation(stop)
     origin = _mapping(stop.get("origin"))
     base = base.replace("Supervisor 待核实的疑虑：", "原始起因（断言待核实）：").replace("仍需完成语义复核", "原因记录不完整")
+    base += "\n\n文件交付：" + report_delivery_status(stop.get("report_receipts")) + "；" + "；".join(
+        name + "=" + str((stop.get("report_receipts", {}).get(name) or {}).get("status", "not_attempted"))
+        + " " + str((stop.get("report_receipts", {}).get(name) or {}).get("reason", ""))
+        for name in ("report.md", "stage_status.tsv", "reproduce.sh"))
     parts = [base, "来源阶段：" + str(origin.get("source_stage") or "unknown") + "；原始错误：" + str(origin.get("error_code") or "unknown") + "；停止阶段：" + str(stop.get("stage") or "outer") + "。"]
     execution = _mapping(stop.get("execution"))
     if str(execution.get("purpose") or "").upper() == "DIAGNOSTIC":
@@ -419,7 +435,7 @@ def projection(stop):
          "primary_cause": stop.get("primary_cause", {}), "latest_failure": stop.get("latest_failure", {}),
          "prior_completed_work": stop.get("prior_completed_work", []),
          "execution": stop["execution"], "inspection_failures": stop.get("inspection_failures", []), "stop_reason": stop["stop_reason"],
-         "report_paths": stop["report_paths"], "report_receipts": stop["report_receipts"], "persistence_status": stop["persistence_status"],
+         "delivery_status": report_delivery_status(stop.get("report_receipts")), "report_paths": stop["report_paths"], "report_receipts": stop["report_receipts"], "persistence_status": stop["persistence_status"],
          "summary_status": stop["summary_status"], "summary_llm_calls": stop["summary_llm_calls"],
          "secondary_causes": stop["secondary_failures"]}
     if stop.get("planning"):
@@ -664,13 +680,14 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
                     bodies[name] = "# BioMind managed run stop\n\nStop identity: " + value["stop_id"] + "\n\n" + explanation(value) + "\n"
                 receipt = _write_report(path, bodies[name], prior_receipt=value["report_receipts"].get(name))
                 value["report_paths"][name] = str(path)
-                value["report_receipts"][name] = {**receipt, "status": "created", "stop_id": value["stop_id"]}
+                value["report_receipts"][name] = {**receipt, "status": "created", "stop_id": value["stop_id"], "task_id": task_id}
             except Exception as exc:
-                value["report_receipts"][name] = {"status": "failed", "reason": _code(getattr(exc, "code", ""), "REPORT_WRITE_FAILED")}
+                value["report_receipts"][name] = {"status": "failed", "path": str(path), "task_id": task_id, "stop_id": value["stop_id"], "reason": _code(getattr(exc, "code", ""), "REPORT_WRITE_FAILED")}
                 _secondary(value, "report." + name, value["report_receipts"][name]["reason"], exc)
     except Exception as exc:
         _secondary(value, "report.contract", "REPORT_CONTRACT_FAILED", exc)
     value["reports_status"] = "finalized"
+    value["delivery_status"] = report_delivery_status(value.get("report_receipts"))
     value["explanation"] = explanation(value)
     try: _save(agent.data_path, value, loader=loader, saver=saver)
     except Exception as exc: _secondary(value, "report.persist", "REPORT_RECEIPT_PERSIST_FAILED", exc)

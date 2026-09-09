@@ -346,6 +346,60 @@ def detect_script_language(code: str) -> str:
     return "Bash"
 
 
+async def _follow_managed_logs(paths, process, captures, progress, log_handles, limit, limit_event, errors):
+    """Observe existing wrapper logs by offset; no pipe/tee or command mutation."""
+    import stat as stat_module
+    offsets = {name: 0 for name in paths}
+    last_display = {name: 0.0 for name in paths}
+    identities = {}
+    while True:
+        exited = process.returncode is not None
+        for name, path in paths.items():
+            try:
+                descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0))
+                with os.fdopen(descriptor, "rb") as source:
+                    stat = os.fstat(source.fileno())
+                    if not stat_module.S_ISREG(stat.st_mode):
+                        raise OSError("LOG_NOT_REGULAR_FILE")
+                    identity = (stat.st_dev, stat.st_ino)
+                    if (name in identities and identities[name] != identity) or stat.st_size < offsets[name]:
+                        raise OSError("LOG_REPLACED_OR_TRUNCATED")
+                    identities[name] = identity
+                    source.seek(offsets[name])
+                    while True:
+                        chunk = source.read(65536)
+                        if not chunk:
+                            break
+                        offsets[name] += len(chunk)
+                        captures[name].feed(chunk)
+                        progress["last_output_at"] = time.monotonic()
+                        if log_handles[name] is not None:
+                            try:
+                                log_handles[name].write(chunk)
+                                log_handles[name].flush()
+                            except OSError as exc:
+                                errors.append({"stage": "execution.log_writer", "stream": name, "error": type(exc).__name__})
+                                log_handles[name] = None
+                        if limit and captures[name].total_bytes > limit:
+                            progress["output_limit_stream"] = name
+                            progress["output_limit_bytes"] = captures[name].total_bytes
+                            limit_event.set()
+                        await asyncio.sleep(0)
+                        now = time.monotonic()
+                        if now - last_display[name] >= 1.0 or exited:
+                            logger.info("Execution output stream=%s offset=%s tail=%s", name, offsets[name], chunk[-2000:].decode(errors="replace"))
+                            last_display[name] = now
+            except FileNotFoundError:
+                if exited:
+                    errors.append({"stage": "execution.log_reader", "stream": name, "error": "LOG_MISSING"})
+            except OSError as exc:
+                errors.append({"stage": "execution.log_reader", "stream": name, "error": type(exc).__name__})
+                paths = {key: value for key, value in paths.items() if key != name}
+        if exited:
+            break
+        await asyncio.sleep(0.2)
+
+
 async def run_command(
     command: str,
     timeout=None,
@@ -353,8 +407,10 @@ async def run_command(
     lifecycle_callback: Optional[Callable[..., Any]] = None,
     env: Mapping[str, str] | None = None,
     max_output_bytes: int | None = None,
+    managed_log_paths: Mapping[str, str] | None = None,
 ) -> Tuple[str, str, int]:
     """通用 Shell 命令执行器"""
+    global _LAST_EXECUTION_METADATA
     start_time = time.time()
     start_monotonic = time.monotonic()
     started_at = timestamp_now()
@@ -393,6 +449,7 @@ async def run_command(
     stderr_log_handle = None
     stdout_log_path = ""
     stderr_log_path = ""
+    log_observation_errors = []
     try:
         # 切断 stdin。遇到需要按 y/n 的地方直接报错，拒绝死等。
         popen_kwargs: Dict[str, Any] = {}
@@ -461,12 +518,22 @@ async def run_command(
         process_wait_task = asyncio.create_task(process.wait())
         output_limit_task = asyncio.create_task(output_limit_event.wait())
         pending_stream_tasks = {stdout_task, stderr_task}
+        follow_task = None
+        if managed_log_paths:
+            follow_task = asyncio.create_task(_follow_managed_logs(
+                dict(managed_log_paths), process,
+                {"stdout": stdout_capture, "stderr": stderr_capture}, progress,
+                {"stdout": stdout_log_handle, "stderr": stderr_log_handle},
+                stream_output_limit, output_limit_event, log_observation_errors))
+            pending_stream_tasks.add(follow_task)
         stderr_reason = ""
         early_health_reported = False
 
         while True:
             watched_tasks = {process_wait_task, output_limit_task, *pending_stream_tasks}
             wait_timeout = health_interval if pending_stream_tasks else min(health_interval, 0.2)
+            if wall_timeout > 0:
+                wait_timeout = min(wait_timeout, max(0.0, wall_timeout - (time.monotonic() - start_monotonic)))
             done, _ = await asyncio.wait(
                 watched_tasks,
                 timeout=wait_timeout,
@@ -549,7 +616,7 @@ async def run_command(
                 await _terminate_process_tree(process)
                 break
 
-        await asyncio.gather(stdout_task, stderr_task, return_exceptions=True)
+        await asyncio.gather(stdout_task, stderr_task, *([follow_task] if follow_task else []), return_exceptions=True)
         stdout_text = stdout_capture.text("stdout", stdout_log_path)
         stderr_text = stderr_capture.text("stderr", stderr_log_path)
         if stderr_reason:
@@ -559,6 +626,7 @@ async def run_command(
             result = stdout_text, stderr_text, process.returncode
         return result
     except asyncio.CancelledError:
+        cancellation_observed = True
         if "process" in locals():
             with contextlib.suppress(Exception):
                 # Python 3.11+ keeps a cancellation count after this exception
@@ -604,10 +672,26 @@ async def run_command(
         limit_task = locals().get("output_limit_task")
         if limit_task is not None and not limit_task.done():
             limit_task.cancel()
+        follower = locals().get("follow_task")
+        if follower is not None and not follower.done():
+            follower.cancel()
+            await asyncio.gather(follower, return_exceptions=True)
         if "process" in locals():
             _ACTIVE_PROCESS_GROUPS.discard(process.pid)
+        if locals().get("cancellation_observed"):
+            cancelled_record = {"command": command, "status": "cancelled",
+                "cancellation_source": "caller_unspecified", "started_at": started_at,
+                "finished_at": timestamp_now(), "elapsed_seconds": time.monotonic() - start_monotonic,
+                "pid": process.pid if "process" in locals() else None,
+                "process_returncode": process.returncode if "process" in locals() else None,
+                "process_reaped": bool("process" in locals() and process.returncode is not None),
+                "log_observation_errors": log_observation_errors}
+            with contextlib.suppress(Exception):
+                await _notify_lifecycle(lifecycle_callback, "PROCESS_CANCELLED", cancelled_record)
+            logger.info("Execution cancelled: %s", cancelled_record)
+        if locals().get("cancellation_observed"):
+            _LAST_EXECUTION_METADATA = cancelled_record
         if "result" in locals():
-            global _LAST_EXECUTION_METADATA
             stdout_value, stderr_value, returncode_value = result
             try:
                 command_argv = shlex.split(command, posix=True)
@@ -616,8 +700,16 @@ async def run_command(
             _LAST_EXECUTION_METADATA = {
                 "command": command,
                 "argv": command_argv,
+                "log_observation_errors": log_observation_errors,
+                "effective_timeouts": {"wall_seconds": wall_timeout, "wall_source": "argument" if timeout else policy.wall_timeout_env,
+                                       "stall_seconds": stall_timeout, "stall_source": policy.stall_timeout_env},
                 "pid": process.pid if "process" in locals() else None,
                 "returncode": returncode_value,
+                "process_returncode": process.returncode if "process" in locals() else None,
+                "observed_signal": (-process.returncode if "process" in locals() and process.returncode is not None and process.returncode < 0 else None),
+                "termination_reason": locals().get("stderr_reason", ""),
+                "process_reaped": bool("process" in locals() and process.returncode is not None),
+                "elapsed_seconds": time.monotonic() - start_monotonic,
                 "started_at": started_at,
                 "finished_at": timestamp_now(),
                 "stdout_bytes": (
@@ -679,6 +771,7 @@ async def run_script_path(
     exit_status_path: str | Path | None = None,
     env: Mapping[str, str] | None = None,
     max_output_bytes: int | None = None,
+    managed_log_paths: Mapping[str, str] | None = None,
 ) -> Tuple[str, str, int]:
     """Execute one immutable saved script; never materialize a second script."""
     global _LAST_EXECUTION_METADATA
@@ -702,6 +795,7 @@ async def run_script_path(
         lifecycle_callback=lifecycle_callback,
         env=env,
         max_output_bytes=max_output_bytes,
+        managed_log_paths=managed_log_paths,
     )
     metadata = dict(get_last_execution_metadata())
     metadata.update({
@@ -731,6 +825,7 @@ async def run_bash_script(
     timeout: int = None,
     env: Mapping[str, str] | None = None,
     max_output_bytes: int | None = None,
+    managed_log_paths: Mapping[str, str] | None = None,
 ) -> Tuple[str, str, int]:
     """Compatibility API using a unique temporary script, never a fixed filename."""
     start_time = time.time()

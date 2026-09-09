@@ -699,6 +699,53 @@ class ContextLineageStore:
         finally:
             os.close(fd)
 
+    def recovery_transport_claim(self, invocation_id, request_hash, attempt_id, *, maximum, total_seconds):
+        """Claim an outbound send using the existing atomic trace store.
+
+        In-flight claims survive crashes as UNKNOWN; they are never reset to a
+        free send. Completed responses can be consumed without another request.
+        """
+        import time
+        path = self.root / "recovery_transport" / (_safe_id(invocation_id) + ".json")
+        with self._finalize_claim_lock():
+            row = json.loads(path.read_text()) if path.exists() else {
+                "schema_version": 1, "request_hash": request_hash,
+                "maximum": maximum, "deadline": time.time() + total_seconds,
+                "attempts": [], "status": "ready"}
+            if row["request_hash"] != request_hash:
+                raise SnapshotConflictError("RECOVERY_TRANSPORT_REQUEST_CHANGED")
+            row["maximum"] = min(row["maximum"], maximum)
+            if row["status"] == "completed":
+                return row
+            if row["status"] not in {"ready", "retry_ready"}:
+                raise SnapshotConflictError("RECOVERY_TRANSPORT_RESULT_UNKNOWN_OR_TERMINAL")
+            if len(row["attempts"]) >= row["maximum"]:
+                raise SnapshotConflictError("RECOVERY_TRANSPORT_BUDGET_EXHAUSTED")
+            if time.time() >= row["deadline"]:
+                raise SnapshotConflictError("RECOVERY_TRANSPORT_DEADLINE_EXCEEDED")
+            if row.get("retry_not_before", 0) > time.time():
+                return {**row, "status": "backoff"}
+            row["attempts"].append({"attempt_id": attempt_id, "status": "dispatched_unknown"})
+            row["status"] = "in_flight"
+            _atomic_replace_json(path, row)
+            return row
+
+    def recovery_transport_finish(self, invocation_id, attempt_id, *, response=None, failure=None, retry=False, retry_delay=0.0):
+        path = self.root / "recovery_transport" / (_safe_id(invocation_id) + ".json")
+        with self._finalize_claim_lock():
+            row = json.loads(path.read_text())
+            if row["status"] != "in_flight" or row["attempts"][-1]["attempt_id"] != attempt_id:
+                raise SnapshotConflictError("RECOVERY_TRANSPORT_STALE_ATTEMPT")
+            row["attempts"][-1].update(status="completed" if response is not None else "failed", failure=failure)
+            row["status"] = "completed" if response is not None else ("retry_ready" if retry else "terminal")
+            if retry:
+                import time
+                row["retry_not_before"] = time.time() + max(0.0, retry_delay)
+            if response is not None:
+                row["response"] = response
+            _atomic_replace_json(path, row)
+            return row
+
     @contextmanager
     def _finalize_claim_lock(self):
         """Serialize durable request claims and terminal artifact commits."""

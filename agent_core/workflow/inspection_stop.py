@@ -268,11 +268,12 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
             for row in receipts if isinstance(row, Mapping) and not row.get("error")],
         "task_summary": _safe(task_spec.get("goal") or task_spec.get("question") or task_spec.get("objective") or task_spec.get("user_request"), 1800),
         "stop_reason": {"error_code": reason, "detail": _safe(error.get("detail")),
+            "transport_receipt": deepcopy(_mapping(error.get("transport_receipt"))),
             "failure_stage": _code(error.get("failure_stage")),
             "no_progress_rounds": int(audit.get("no_progress_rounds") or 0),
             "model_turns": int(audit.get("turn_count") or 0), "tool_calls": int(audit.get("tool_call_count") or 0)},
         "resolution": "unresolved", "automatic_actions_stopped": True,
-        "technical_classification": "inspection_infrastructure_error" if technical else "inspection_unresolved",
+        "technical_classification": ("recovery_provider_transport_error" if reason == "RECOVERY_PROVIDER_TRANSPORT_FAILED" else "inspection_infrastructure_error" if technical else "inspection_unresolved"),
         "execution": _execution(durable, source, scope),
         "stages": [{"step_id": _code(row.get("step_id")), "title": _safe(row.get("title"), 400),
             "status": _code(row.get("status"), "unknown")} for row in _steps(durable)],
@@ -318,6 +319,12 @@ def inspection_stop_explanation(stop):
         lines.append("证据交接问题：" + "；".join(_safe(row.get("error_code")) + ": " + _safe(row.get("detail")) for row in stop["publication_failures"]) + "。")
     lines.append("停止原因：" + _safe(reason.get("error_code")) + "；连续无进展轮次=" + str(reason.get("no_progress_rounds", 0)) +
         "，模型轮次=" + str(reason.get("model_turns", 0)) + "，工具调用=" + str(reason.get("tool_calls", 0)) + "。")
+    transport = _mapping(reason.get("transport_receipt"))
+    if transport:
+        lines.append("Recovery 请求传输：实际尝试=" + str(transport.get("attempt_ordinal")) +
+            "/" + str(transport.get("configured_max_attempts")) + "；停止依据=" +
+            _safe(transport.get("terminal_failure_reason")) + "；末次错误=" +
+            _safe(transport.get("failure_type")) + "。远端处理状态 UNKNOWN。")
     if stop.get("model_diagnoses"):
         lines.append("模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\n" + "\n".join(
             _safe(row.get("text"), 4000) for row in stop["model_diagnoses"]))

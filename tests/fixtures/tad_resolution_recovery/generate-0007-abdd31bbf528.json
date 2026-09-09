@@ -1,0 +1,5 @@
+{
+  "content": "<shell skill_resources=\"3d-dna/tad-calling#scripts/call_tads.py\">\n#!/usr/bin/env bash\nset -euo pipefail\n\n# Step: Verify hicexplore environment and tool availability\n# Run the call_tads.py --help to confirm the hicexplore environment has\n# all required dependencies (hicexplorer, cooler, matplotlib, hicFindTADs).\n\nSCRIPT=\"/public/home/liusiqi/03.毕设/Biomind_v1/skills/3d-dna/tad-calling/scripts/call_tads.py\"\n\nif [ ! -f \"$SCRIPT\" ]; then\n  echo \"ERROR: call_tads.py not found at $SCRIPT\" >&2\n  exit 1\nfi\n\nconda run -n hicexplore python \"$SCRIPT\" --help\n\nrc=$?\nif [ $rc -ne 0 ]; then\n  echo \"ERROR: call_tads.py --help failed with exit code $rc\" >&2\n  exit $rc\nfi\n\necho \"BIOMIND_EFFECT_EVIDENCE_JSON={\\\"schema_version\\\":1,\\\"produces_observations\\\":[{\\\"identity\\\":\\\"env_verified\\\",\\\"value\\\":{\\\"tool_available\\\":true,\\\"help_return_code\\\":0,\\\"script\\\":\\\"$SCRIPT\\\"}}]}\"\n</shell>",
+  "id": "lc_run--01a0841f-9bf7-7c50-a0e4-f96145c891f2",
+  "role": "assistant"
+}

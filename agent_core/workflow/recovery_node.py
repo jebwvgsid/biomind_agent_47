@@ -1606,6 +1606,7 @@ class Schema2RecoveryNode:
                 "RECOVERY_TOOL_REQUEST_REPEAT_LIMIT", "RECOVERY_FIXED_CONTEXT_TOKEN_LIMIT",
                 "RECOVERY_OBSERVATION_BUDGET_EXCEEDED", "RECOVERY_OVERFLOW_EPOCH_LIMIT",
                 "RECOVERY_BUDGET_EXHAUSTED", "RECOVERY_NO_PROGRESS",
+                "RECOVERY_PROVIDER_TRANSPORT_FAILED",
             }
         if technical_error:
             result = self._internal(task_id=stop["scope"]["task_id"], durable=durable,

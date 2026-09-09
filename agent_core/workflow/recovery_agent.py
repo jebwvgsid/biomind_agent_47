@@ -1035,7 +1035,17 @@ class RecoveryAgentLoop:
                             "error_type": type(exc).__name__,
                         },
                     )
-                    if attempts >= config.max_transport_attempts:
+                    # The production adapter owns physical sends and durable retries.
+                    # Standalone callers retain their explicit legacy transport limit.
+                    if attempts >= (1 if self.provider_invoke is not None else config.max_transport_attempts):
+                        from agent_core.provider_attempt import ProviderAttemptFailure, ProviderAttemptRecord
+                        transport_receipt = {}
+                        attempt_record = exc.record if isinstance(exc, ProviderAttemptFailure) else getattr(exc, "provider_attempt_record", None)
+                        if isinstance(attempt_record, ProviderAttemptRecord):
+                            record = attempt_record.to_dict()
+                            transport_receipt = {key: record.get(key) for key in (
+                                "attempt_id", "attempt_ordinal", "configured_max_attempts",
+                                "failure_type", "terminal_failure_reason", "retry_budget_exhausted")}
                         return {
                             "transport_attempt_count": int(state.get("transport_attempt_count") or 0) + attempts,
                             "context_budget_checks": budget_checks,
@@ -1043,6 +1053,9 @@ class RecoveryAgentLoop:
                             "provider_usage": provider_usage,
                             "terminal_error": {
                                 "code": "RECOVERY_PROVIDER_TRANSPORT_FAILED",
+                                "failure_stage": "recovery.provider_transport",
+                                "category": "provider_transport",
+                                "transport_receipt": transport_receipt,
                                 "detail": f"{type(exc).__name__}: {exc}"[:800],
                             },
                         }
