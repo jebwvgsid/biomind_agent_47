@@ -2069,7 +2069,30 @@ Mutation shapes use the public semantic input contract:
 - upsert_output_contract (directory): {{"operation":"upsert_output_contract","output_contract":{{"output_id":"output_dir","role":"output_dir","artifact_kind":"directory","path":"/data/result","required":true}},"supporting_evidence":["U1"]}}
 - upsert_output_contract (file with Planner-owned filename): {{"operation":"upsert_output_contract","output_contract":{{"output_id":"report","role":"report","artifact_kind":"file","root_ref":"output_dir","path_policy":"planner_materialized","required":true}},"supporting_evidence":["U1"]}}
 - remove_output_contract: {{"operation":"remove_output_contract","role":"report","supporting_evidence":["U2"]}}
-- confirm_decision/remove_decision/mark_ambiguity follow the same typed nested-object pattern.
+- confirm_decision (an evidence-supported analysis setting): {{"operation":"confirm_decision","decision":{{"semantic_key":"resolution_bp","value":40000}},"supporting_evidence":["<current supporting evidence handle>"]}}
+- remove_decision/mark_ambiguity use their existing typed mutation shapes.
+
+Resources and analysis settings have different roles. upsert_input declares an
+input resource (for example a file or directory); it is not a container for all
+task information. Resolution, thresholds and other analysis settings must not
+be encoded as invented paths. A numeric filename explicitly supplied as a real
+resource is still a valid resource declaration; classify by the evidence and
+meaning, not by whether the string contains only digits.
+
+Use confirm_decision only for an already-supported, confirmed setting. In the
+example above, 40000 is an integer resolution in bp, not a file path. Replace
+the evidence placeholder with the actual visible handle(s) supporting that
+setting in this invocation; never copy U1 or another example handle by default.
+Do not turn a guess, unresolved value or illustrative example into a confirmed
+fact. Preserve unresolved information and needed checks in the existing handoff
+summary/planner_feedback instructions, and use the existing ask_user action when
+a required user-owned decision is missing. Do not invent operations or fields.
+
+Keep explicitly user-declared inputs even when they have not yet been checked.
+Preserve the declared path and explain its unverified status in the existing
+handoff; do not claim exists=true or successful verification without evidence.
+An unverified input declaration is neither a confirmed available resource nor
+a reason to silently discard the user's input.
 
 Input paths are scalar strings: never put a list, object, or stringified list in
 path/canonical_path/resolved_path. For multiple samples or members with the same

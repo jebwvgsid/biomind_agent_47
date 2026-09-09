@@ -7,12 +7,12 @@ description: >
   TAD边界, TAD domains, separation score, domain length statistics, multi-sample
   TAD batch analysis, sample sheet workflows, resolution confirmation, or balance
   checks for .cool/.mcool matrices.
-version: "1.2.0"
+version: "1.2.1"
 legacy_ids: [genomics/chromatin/tad-calling, tad-calling, tad-analysis]
 tags: [TAD, TAD分析, TAD-calling, hicFindTADs, HiCExplorer, Hi-C, Micro-C, Pore-C, mcool, cool, cooler-balance, sample-sheet, multi-sample, resolution, boundaries, domains]
 task_types: [chromatin_contact_tad]
 stage_tags: [matrix_preflight, tad_calling]
-inputs: [validated_matrix_inputs, cool_matrix, mcool_matrix, sample_sheet, resolution]
+inputs: [validated_matrix_inputs, cool_matrix, mcool_matrix, sample_sheet]
 outputs: [tad_domains, tad_boundaries, tad_summary, matrix_balance_report]
 when_to_use:
   - Workflow stage is tad_calling.
@@ -33,6 +33,19 @@ runtime:
 
 This skill runs HiCExplorer `hicFindTADs` on one or many `.cool/.mcool` contact matrices, after confirming the resolution and ensuring that the cooler has usable balance weights.
 It writes native HiCExplorer outputs plus combined multi-sample tables for domains, boundaries, and domain length statistics.
+
+Resolution is a required analysis setting, not a separate file input role.
+For example, a confirmed 40kb resolution means the integer setting
+`resolution_bp=40000`, passed as `--resolution-bp 40000`; do not declare an
+input path `"40000"` to represent that setting. Consultant can preserve an
+evidence-supported setting through the existing `confirm_decision` operation
+with `decision.semantic_key="resolution_bp"` and `decision.value=40000`, citing
+the current evidence that actually confirms it. If unresolved, retain the
+uncertainty in the existing handoff and obtain confirmation before execution.
+Keep user-declared matrix paths as inputs even before inspection, with their
+unverified status explained; do not invent availability. Explicit matrix URIs
+such as `sample.mcool::/resolutions/40000` remain resource references whose
+internal group also specifies the resolution, as described below.
 
 | Output group | Files |
 |---|---|
