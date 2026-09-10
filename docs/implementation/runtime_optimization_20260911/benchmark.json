@@ -1,0 +1,340 @@
+{
+  "before": {
+    "mode": "before",
+    "cache": "ordinary warm filesystem cache; no cache flush",
+    "chain_count": 128,
+    "steps": 16,
+    "clean": {
+      "n": 5,
+      "samples_ms": [
+        18.088592,
+        13.892356,
+        13.90834,
+        13.805974,
+        14.026045
+      ],
+      "median_ms": 13.90834,
+      "min_ms": 13.805974,
+      "max_ms": 18.088592,
+      "counts": {
+        "load": 1,
+        "write": 0,
+        "verify_chain": 1,
+        "read_event": 131
+      },
+      "state_bytes": 37149,
+      "state_sha256": "03955cbb1083788d306e72d22aed9c2320c949f52730fac5c893e874f64dad95"
+    },
+    "polluted": {
+      "n": 5,
+      "samples_ms": [
+        18.43699,
+        17.780208,
+        17.670719,
+        17.742757,
+        39.092848
+      ],
+      "median_ms": 17.780208,
+      "min_ms": 17.670719,
+      "max_ms": 39.092848,
+      "counts": {
+        "load": 1,
+        "write": 1,
+        "verify_chain": 1,
+        "read_event": 132
+      },
+      "state_bytes": 38989,
+      "state_sha256": "e815e7957ad7aa8f98b6c5a73cdcbaad40767fe7e8159f5ad4e8a99036f89fe6"
+    },
+    "clean_ten_reads": {
+      "counts": {
+        "load": 10,
+        "write": 0,
+        "verify_chain": 10,
+        "read_event": 1310
+      },
+      "new_events": 0,
+      "bytes_before": 37149,
+      "bytes_after": 37149
+    },
+    "polluted_ten_reads": {
+      "counts": {
+        "load": 10,
+        "write": 10,
+        "verify_chain": 10,
+        "read_event": 1365
+      },
+      "new_events": 10,
+      "bytes_before": 38989,
+      "bytes_after": 40829
+    },
+    "validate_context": {
+      "n": 5,
+      "samples_ms": [
+        26.69707,
+        26.754204,
+        26.912432,
+        26.979282,
+        26.809703
+      ],
+      "median_ms": 26.809703,
+      "min_ms": 26.69707,
+      "max_ms": 26.979282,
+      "local_load_count": 2,
+      "scope": "production fragment; fake external boundary"
+    },
+    "context_pair": {
+      "n": 5,
+      "samples_ms": [
+        30.218245,
+        33.185516,
+        32.952995,
+        27.165734,
+        30.523897
+      ],
+      "median_ms": 30.523897,
+      "min_ms": 27.165734,
+      "max_ms": 33.185516,
+      "local_load_count": 2,
+      "scope": "production fragment; fake external boundary"
+    },
+    "post_provider_commit": {
+      "n": 5,
+      "samples_ms": [
+        72.123957,
+        29.84428,
+        29.287501,
+        29.797121,
+        30.299308
+      ],
+      "median_ms": 29.84428,
+      "min_ms": 29.287501,
+      "max_ms": 72.123957,
+      "local_load_count": 1,
+      "scope": "production fragment; fake external boundary"
+    },
+    "copy_steps": {
+      "n": 5,
+      "samples_ms": [
+        0.944473,
+        0.887585,
+        0.89414,
+        0.893176,
+        0.889664
+      ],
+      "median_ms": 0.893176,
+      "min_ms": 0.887585,
+      "max_ms": 0.944473
+    },
+    "copy_plan": {
+      "n": 5,
+      "samples_ms": [
+        2.071715,
+        2.044074,
+        2.03972,
+        2.01206,
+        2.020786
+      ],
+      "median_ms": 2.03972,
+      "min_ms": 2.01206,
+      "max_ms": 2.071715
+    },
+    "100_empty_logged_spans": {
+      "n": 5,
+      "samples_ms": [
+        37.157717,
+        1.419897,
+        1.429463,
+        1.431347,
+        1.422439
+      ],
+      "median_ms": 1.429463,
+      "min_ms": 1.419897,
+      "max_ms": 37.157717
+    }
+  },
+  "after": {
+    "mode": "after",
+    "cache": "ordinary warm filesystem cache; no cache flush",
+    "chain_count": 128,
+    "steps": 16,
+    "clean": {
+      "n": 5,
+      "samples_ms": [
+        54.379368,
+        59.662464,
+        16.212826,
+        16.365958,
+        16.389809
+      ],
+      "median_ms": 16.389809,
+      "min_ms": 16.212826,
+      "max_ms": 59.662464,
+      "counts": {
+        "load": 1,
+        "write": 0,
+        "verify_chain": 1,
+        "read_event": 128
+      },
+      "state_bytes": 37149,
+      "state_sha256": "03955cbb1083788d306e72d22aed9c2320c949f52730fac5c893e874f64dad95"
+    },
+    "polluted": {
+      "n": 5,
+      "samples_ms": [
+        21.416497,
+        20.137633,
+        19.944718,
+        20.102893,
+        35.181957
+      ],
+      "median_ms": 20.137633,
+      "min_ms": 19.944718,
+      "max_ms": 35.181957,
+      "counts": {
+        "load": 1,
+        "write": 1,
+        "verify_chain": 1,
+        "read_event": 129
+      },
+      "state_bytes": 38989,
+      "state_sha256": "e815e7957ad7aa8f98b6c5a73cdcbaad40767fe7e8159f5ad4e8a99036f89fe6"
+    },
+    "clean_ten_reads": {
+      "counts": {
+        "load": 10,
+        "write": 0,
+        "verify_chain": 10,
+        "read_event": 1280
+      },
+      "new_events": 0,
+      "bytes_before": 37149,
+      "bytes_after": 37149
+    },
+    "polluted_ten_reads": {
+      "counts": {
+        "load": 10,
+        "write": 1,
+        "verify_chain": 10,
+        "read_event": 1290
+      },
+      "new_events": 1,
+      "bytes_before": 38989,
+      "bytes_after": 37149
+    },
+    "validate_context": {
+      "n": 5,
+      "samples_ms": [
+        17.712069,
+        17.731193,
+        17.569951,
+        17.878567,
+        17.697941
+      ],
+      "median_ms": 17.712069,
+      "min_ms": 17.569951,
+      "max_ms": 17.878567,
+      "local_load_count": 1,
+      "scope": "production fragment; fake external boundary"
+    },
+    "context_pair": {
+      "n": 5,
+      "samples_ms": [
+        22.651515,
+        57.52653,
+        96.252082,
+        64.902553,
+        49.840389
+      ],
+      "median_ms": 57.52653,
+      "min_ms": 22.651515,
+      "max_ms": 96.252082,
+      "local_load_count": 1,
+      "scope": "production fragment; fake external boundary"
+    },
+    "post_provider_commit": {
+      "n": 5,
+      "samples_ms": [
+        85.984946,
+        36.106919,
+        35.77741,
+        35.614499,
+        37.16989
+      ],
+      "median_ms": 36.106919,
+      "min_ms": 35.614499,
+      "max_ms": 85.984946,
+      "local_load_count": 1,
+      "scope": "production fragment; fake external boundary"
+    },
+    "copy_steps": {
+      "n": 5,
+      "samples_ms": [
+        0.843158,
+        0.806907,
+        0.785403,
+        0.793204,
+        0.787307
+      ],
+      "median_ms": 0.793204,
+      "min_ms": 0.785403,
+      "max_ms": 0.843158
+    },
+    "copy_plan": {
+      "n": 5,
+      "samples_ms": [
+        1.849323,
+        1.831792,
+        1.830114,
+        1.818721,
+        1.839977
+      ],
+      "median_ms": 1.831792,
+      "min_ms": 1.818721,
+      "max_ms": 1.849323
+    },
+    "100_empty_logged_spans": {
+      "n": 5,
+      "samples_ms": [
+        22.655606,
+        1.392327,
+        1.401406,
+        1.40412,
+        1.396627
+      ],
+      "median_ms": 1.401406,
+      "min_ms": 1.392327,
+      "max_ms": 22.655606
+    }
+  },
+  "template": {
+    "old_observation_contract": {
+      "n": 5,
+      "samples_ms": [
+        0.127488,
+        0.073871,
+        0.063809,
+        0.061785,
+        0.060363
+      ],
+      "median_ms": 0.063809,
+      "min_ms": 0.060363,
+      "max_ms": 0.127488
+    },
+    "new_declared_template": {
+      "n": 5,
+      "samples_ms": [
+        0.591613,
+        0.538701,
+        0.539319,
+        0.531488,
+        0.535591
+      ],
+      "median_ms": 0.538701,
+      "min_ms": 0.531488,
+      "max_ms": 0.591613
+    },
+    "template_chars": 2770,
+    "scope": "template assembly only; provider token latency UNKNOWN"
+  }
+}

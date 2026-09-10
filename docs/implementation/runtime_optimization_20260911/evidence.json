@@ -1,0 +1,138 @@
+[
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/l1-tests.log",
+    "sha256": "b8d5cc307d07c365d5d9a2c1ff7a403d4160fe073f92bb0d81b084f65bd06ea4"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/l1-tests-2.log",
+    "sha256": "d877dd5655c534af309eb0b510beba7177a8b318e05e68e860e8db44320456b4"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/l1-tests-3.log",
+    "sha256": "284c8eb29ccf6720763a2d7feb07b932a14ba94f9a8f93690e09ed1cdcca2542"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/l2-tests.log",
+    "sha256": "12d19e0814c8320859826dd064d866ef19847669792fad55cba1d6b14fd6292c"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/l2-tests-2.log",
+    "sha256": "c593e0580b1a4b4b054a4195bab56983d93008da3c45038040c18a4548a5cf99"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/l2-tests-3.log",
+    "sha256": "3eb25882761bcc3e7cc5837f3b307245ec6237e866fb4cc075e7842e52a858f6"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/l2-tests-4.log",
+    "sha256": "167abff41354a795856af295a8b93cfc7457a024f9d984f388e5c484e2774cd8"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/l2-tests-final.log",
+    "sha256": "37cbbd03f41fc374fccd9579da925fae98593d0bd0f0354b019259043f694db4"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/benchmark-prepare.log",
+    "sha256": "9ea2727e42efd617d78542298ad3c6dc5d3e35f35bdc6a12788b816bc0a30aac"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/benchmark-before.log",
+    "sha256": "468e3f69d1335a360f2a9cd2d9e4c53174b95437f4ad9efe0133b624b2974a56"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/benchmark-after.log",
+    "sha256": "406c7ba59dfb4dec941a8d3ecd75ca39a21bed8870d2da95cbf81d3d54039ce8"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/benchmark-after-2.log",
+    "sha256": "39be0634f4b6fcf770b452c8aabf6627b57db778b30661fd2cc20670fd643294"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/e1-tests.log",
+    "sha256": "44d20971876ca55978bc1a27da6f32fe5ef4db6f71b92390f4538404b9ee6b4d"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/e1-tests-final.log",
+    "sha256": "08340cec5414da3ec7decad50de434186e78b4164a99310f99cf9f317e0eb505"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/e1-tests-3.log",
+    "sha256": "a41ca4c1b9a9891624619d2c323183db8cdcbfa181ff21e9651162a46cdb7a6f"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/final-targeted-tests.log",
+    "sha256": "f675524166009af08b410defdef7b38ed31809113338b89cd9daade923e3a0ad"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/benchmark-final-after.log",
+    "sha256": "73f3fa014c97a30371e54658596e1f1b8d2c91fb65036d803ab7b9b3be54649f"
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/benchmark-template.log",
+    "sha256": "bab1e165bfdf233d3b7ae7d67bdf69490c587f364f82a6e04e01750ddc8b6ffb"
+  },
+  {
+    "path": "agent_core/plan_tracker.py",
+    "sha256": "6101ce3decfe546db9672853a0c840686d34f50e5f308701839a398a98bd2804",
+    "candidate_equal": true
+  },
+  {
+    "path": "agent_core/phase_timing.py",
+    "sha256": "18b6b57c25d708e89ad8da066bb3d178bd1eaa3c629a3c04926485f24598ded5",
+    "candidate_equal": true
+  },
+  {
+    "path": "agent_core/state_contract_store.py",
+    "sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28",
+    "candidate_equal": true
+  },
+  {
+    "path": "bio_agents.py",
+    "sha256": "873312071fd0cd887093ce9a16ac8f95951dc544528cb37f289ca09f4cef6eab",
+    "candidate_equal": true
+  },
+  {
+    "path": "agent_core/step_effects.py",
+    "sha256": "d8ab59d6168327eaac8282e59186bdf629d3a23ac89070c6d65395ce8c8a3be1",
+    "candidate_equal": true
+  },
+  {
+    "path": "tests/test_runtime_optimization.py",
+    "sha256": "5ce1c5da7659d4ef98ff3c1305a44a624f0f5e40329d8664f3f59862a5999dbf",
+    "candidate_equal": true
+  },
+  {
+    "path": "tests/test_runtime_local_reads.py",
+    "sha256": "cb58ed47a0e4476785898e963fa1afa7dfdc6da2e23e860200e974a1107a17ad",
+    "candidate_equal": true
+  },
+  {
+    "path": "tests/runtime_optimization_support.py",
+    "sha256": "3543e15dbe20f2fd9a09351e6ae75ddeb8353c731fb93906c5f7035d7b44b8a7",
+    "candidate_equal": true
+  },
+  {
+    "path": "tests/runtime_optimization_benchmark.py",
+    "sha256": "c2d72c46b97b8fd66ad2b922a2f3e596fde41fae0370c1f926a8ba0e875b5afb",
+    "candidate_equal": true
+  },
+  {
+    "path": "tests/test_declared_effect_emission.py",
+    "sha256": "2dc9f265721e2d4b364e37c8cae02160dcf659b3fcd13b57997542f2b7559caf",
+    "candidate_equal": true
+  },
+  {
+    "pre_existing_status_entries": 104,
+    "pre_existing_status_entries_retained": 104,
+    "staged_paths": []
+  },
+  {
+    "path": "/tmp/biomind-runtime-opt-20260911/e1-freshness-tests.log",
+    "sha256": "f127c65cf8b3d068d2534640e35c2c990040945c5971d10c9a8b71f9a2dbab56"
+  },
+  {
+    "baseline_commit": "0de3dfad80544c90112f929fa9e1e73f73c0bd8c",
+    "benchmark_after_commit": "1655052862a9485d1356255367321cf923eaaa33",
+    "final_production_commit": "8416fdb65995c0d662d7bb7bd25b39b54f18a157"
+  }
+]
