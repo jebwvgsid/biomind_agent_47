@@ -60,6 +60,18 @@ def counters(call):
 def test_benchmark():
     mode = os.environ["OPT_BENCH_MODE"]
     ROOT.mkdir(parents=True, exist_ok=True)
+    if mode == "template":
+        from agent_core.step_effects import declared_effect_emission_contract, observation_emission_contract
+        snapshot = {"steps": [{"step_id": "a", "step_effect": {"schema_version": 1,
+            "produces_artifacts": ["artifact-a", "artifact-b"], "explicit_side_effects": [{"identity": "side-a",
+                "evidence_contract": {"required_fields": ["reference_resource_ref", "index_artifacts"]}}]}}]}
+        # Warm up source inspection once; record no cold-cache claim.
+        contract = declared_effect_emission_contract(snapshot, "a")
+        result = {"old_observation_contract": summary([measured(lambda: observation_emission_contract(snapshot["steps"][0])) for _ in range(5)]),
+                  "new_declared_template": summary([measured(lambda: declared_effect_emission_contract(snapshot, "a")) for _ in range(5)]),
+                  "template_chars": len(contract["python_template"]), "scope": "template assembly only; provider token latency UNKNOWN"}
+        (ROOT / "template.json").write_text(json.dumps(result, indent=2))
+        return
     if mode == "prepare":
         state = fixture_state(WORK)
         state["steps"] = [{**deepcopy(state["steps"][0]), "step_id": f"inspect-{i}"} for i in range(16)]

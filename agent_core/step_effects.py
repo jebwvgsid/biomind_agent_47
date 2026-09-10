@@ -23,6 +23,7 @@ untyped, empty effect at their legacy execution boundary.
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import math
 import re
@@ -3134,6 +3135,100 @@ def emit_observation(identity: str, value: Any) -> str:
         "schema_version": STRUCTURED_EFFECT_EMISSION_VERSION,
         "produces_observations": [{"identity": identity, "value": value}],
     }, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+
+
+def _emit_declared_rows(declarations, facts, prefix):
+    """Standalone serializer kernel: no filesystem, inference or execution."""
+    def reject(code, path, actual, expected):
+        raise ValueError(json.dumps({"code": code, "field_path": path,
+                                     "actual": actual, "expected": expected}, sort_keys=True))
+
+    if not isinstance(facts, dict):
+        reject("EFFECT_FACTS_REQUIRED", "$.facts", type(facts).__name__, "object")
+    unknown = sorted(set(facts) - set(declarations))
+    if unknown:
+        reject("EFFECT_FIELD_UNDECLARED", "$.facts", unknown, sorted(declarations))
+    payload = {"schema_version": 1}
+    for field, rows in declarations.items():
+        supplied = facts.get(field, {})
+        if not isinstance(supplied, dict):
+            reject("EFFECT_FACTS_REQUIRED", "$.facts." + field, type(supplied).__name__, "identity-keyed object")
+        expected = [row["identity"] for row in rows]
+        if set(supplied) != set(expected):
+            reject("EFFECT_FACT_IDENTITIES_MISMATCH", "$.facts." + field, sorted(supplied), expected)
+        emitted = []
+        for row in rows:
+            identity = row["identity"]
+            value = supplied[identity]
+            path = "$.facts." + field + "." + identity
+            if not isinstance(value, dict) or not value:
+                reject("EFFECT_FACTS_REQUIRED", path, value, "nonempty actual fact object")
+            if any(key in value for key in ("identity", "artifact_id", "effect_id", "kind", "effect_kind")):
+                reject("EFFECT_IDENTITY_OVERRIDE_FORBIDDEN", path, sorted(value), "facts without identity overrides")
+            missing = [key for key in row["required_fields"] if value.get(key) is None]
+            if field == "produces_artifacts" and not (isinstance(value.get("path"), str) and value["path"].strip()):
+                missing.append("path")
+            if missing:
+                reject("EFFECT_FACT_FIELDS_MISSING", path, sorted(value), sorted(set(missing)))
+            emitted.append({"identity": identity, **value})
+        if emitted:
+            payload[field] = emitted
+    if len(payload) == 1:
+        return ""  # no artifact/side effect declaration: fabricate nothing
+    return prefix + json.dumps(payload, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+
+
+def _declared_emission_rows(effect: Any) -> Dict[str, Any]:
+    declared = canonical_step_effect(effect)
+    return {
+        field: [{"identity": _identity_text(row, field=field),
+                 "required_fields": list((row.get("evidence_contract") or {}).get("required_fields") or [])
+                 if isinstance(row, Mapping) else []}
+                for row in declared[field]]
+        for field in ("produces_artifacts", "explicit_side_effects")
+    }
+
+
+def emit_declared_effects(effect: Any, facts: Dict[str, Any]) -> str:
+    """Serialize caller-observed facts under exact declarations, never verify them.
+
+    This helper grants no completion authority. Execute/parser/verification and
+    CommitStep still validate identities, provenance, paths and actual results.
+    """
+    return _emit_declared_rows(_declared_emission_rows(effect), facts, STRUCTURED_EFFECT_EVIDENCE_PREFIX)
+
+
+def declared_effect_emission_contract(approved_snapshot: Mapping[str, Any], step_id: str) -> Dict[str, Any]:
+    """Render exact Python from the snapshot already checked by the caller.
+
+    No implicit state load, no first-output selection, no fallback to a mutable
+    step. The snippet uses only Python's json module in the approved script.
+    """
+    from agent_core.phase_timing import phase
+
+    with phase("generate.effect_template"):
+        if not approved_snapshot:
+            return {"available": False, "reason": "approved_snapshot_missing", "python_template": ""}
+        steps = [row for row in approved_snapshot.get("steps", [])
+                 if isinstance(row, Mapping) and row.get("step_id") == step_id]
+        if len(steps) != 1:
+            raise ValueError("APPROVED_EMISSION_STEP_NOT_UNIQUE")
+        declarations = _declared_emission_rows(steps[0])
+        # Use the same tested serializer body for the standalone script. No
+        # scientific command, placeholder success, or module-path assumption.
+        code = "import json\n\n" + inspect.getsource(_emit_declared_rows)
+        code += "\n_DECLARED_EFFECT_ROWS = json.loads(" + repr(json.dumps(declarations, ensure_ascii=False)) + ")\n"
+        code += "\ndef emit_effect_evidence(actual_facts):\n"
+        code += "    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, " + repr(STRUCTURED_EFFECT_EVIDENCE_PREFIX) + ")\n"
+        return {"available": True, "schema_version": STRUCTURED_EFFECT_EMISSION_VERSION,
+                "declarations": declarations, "python_template": code,
+                "rules": [
+                    "Use this exact serializer in the approved script; do not handwrite machine identities or canonical groups.",
+                    "Supply identity-keyed actual_facts for the declared groups only, after the real checks succeed; print the returned line only then.",
+                    "Artifact facts require the actual path. Side-effect facts require every declared field. Declarations alone are not evidence.",
+                    "Historical failed scripts/stdout are diagnostic evidence; their failed machine emission must not be reused. This current template takes precedence.",
+                    "No emission or rc=0 alone grants completion; Execute, verification and CommitStep remain authoritative.",
+                ]}
 
 
 def structured_effect_parse_receipt(text: Any, effect: Any) -> Dict[str, Any]:

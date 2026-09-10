@@ -41828,8 +41828,18 @@ question. Never guess a scientific or database identity.
                         else None
                     )
                     from agent_core.workflow.diagnostic_admission import public_diagnostic_request
-                    from agent_core.step_effects import observation_emission_contract
+                    from agent_core.step_effects import observation_emission_contract, declared_effect_emission_contract
                     approved_emission_contract = observation_emission_contract(approved_step)
+                    formal_emission_template = declared_effect_emission_contract(
+                        generate_approved_snapshot, current_step_id
+                    )
+                    generate_material_messages.insert(0, HumanMessage(
+                        id="generate-effect-template:" + hashlib.sha256(
+                            (current_step_id + json.dumps(formal_emission_template, sort_keys=True)).encode("utf-8")
+                        ).hexdigest(),
+                        name="approved_effect_emission_template",
+                        content=json.dumps(formal_emission_template, ensure_ascii=False, sort_keys=True),
+                    ))
                     seed_message = generate_seed_messages[0]
                     if existing_episode is None:
                         if recovery_seed:
