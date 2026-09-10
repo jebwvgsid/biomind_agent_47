@@ -12628,8 +12628,9 @@ class BioAnalystAgent:
             and recovery_envelope.execution_purpose == "VALIDATION"
             else "primary"
             if recovery_envelope is not None
+            # A plan's probe purpose does not confer Recovery authority.
+            # Recovery roles above come from the action-bound envelope.
             else explicit_role or {
-                "probe": "diagnostic",
                 "validation": "required_validation",
                 "fallback": "fallback",
             }.get(purpose, "primary")
@@ -46827,22 +46828,23 @@ question. Never guess a scientific or database identity.
                     detail=detail,
                 )
 
-            recovery_action_type = str(
-                (state.get("pending_recovery_action") or {}).get("type")
-                or state.get("required_next_action")
-                or ""
-            ).lower()
             declared_purpose = str(pending_action.get("purpose") or "analysis").strip().lower()
             command_role = str(pending_action.get("command_role") or "").strip().lower()
             if not command_role:
-                if recovery_action_type in {"diagnostic_probe", "probe", "run_probe"} or declared_purpose == "probe":
-                    command_role = "diagnostic"
-                elif declared_purpose == "validation":
-                    command_role = "required_validation"
-                elif declared_purpose == "fallback" or recovery_action_type == "fallback":
-                    command_role = "fallback"
-                else:
-                    command_role = "primary"
+                if managed_mode:
+                    # Binding persists the current action's role together with
+                    # its revision-bound authority. Do not infer it from a
+                    # plan purpose or a previous Recovery request on resume.
+                    return reject_internal_prelaunch(
+                        pending_action,
+                        error_code="EXECUTE_ACTION_ROLE_MISSING",
+                        stage="execute.action_role_validation",
+                        detail="Current managed action has no bound command_role; command not started.",
+                    )
+                command_role = {
+                    "validation": "required_validation",
+                    "fallback": "fallback",
+                }.get(declared_purpose, "primary")
 
             action_step_purpose = str((action_step or {}).get("purpose") or "analysis").strip().lower()
             manifest_managed_action = str(pending_action.get("action_source") or "") == "manifest_runner"

@@ -285,6 +285,16 @@ def build_managed_stop(task_id, values, durable, boundary):
     if not packet:
         value["origin"].update(error_code=primary.get("error_code") or value["stop_reason"]["error_code"],
             summary=_safe(primary.get("message") or primary.get("summary") or outcome.get("summary")))
+    if (boundary["node"] == "execute" and outcome.get("type") == "harness_error"
+            and payload.get("error_code") in {
+                "DIAGNOSTIC_ACTION_CONTRACT_INVALID", "EXECUTE_ACTION_ROLE_MISSING"
+            } and payload.get("command_started") is False):
+        # This boundary rejects before launch; it is not a Recovery run.
+        value["stage"] = "execute"
+        value["stop_reason"]["failure_stage"] = "execute"
+        if not packet:
+            value["origin"].update(source_stage="execute", source_owner="internal_protocol",
+                summary=_safe(primary.get("detail") or payload.get("detail") or outcome.get("summary")))
     value["primary_cause"] = deepcopy(primary or value["origin"])
     value["latest_failure"] = deepcopy(latest or value.get("latest_failure") or ((value.get("inspection_failures") or [{}])[-1]))
     if value["stop_reason"].get("error_code") == "RECOVERY_PROVIDER_TRANSPORT_FAILED":
