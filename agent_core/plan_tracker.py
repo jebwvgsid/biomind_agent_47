@@ -36,6 +36,7 @@ from agent_core.task_spec import (
     validate_compiled_constraints,
 )
 from agent_core.state_contract_store import StateContractStore
+from agent_core.phase_timing import phase, timed_phase
 from agent_core.runtime_evidence import merge_runtime_evidence, runtime_evidence_state
 from agent_core.active_state import (
     ActiveStateInvariantError,
@@ -1641,7 +1642,11 @@ def _safe_action_payload(value: Dict[str, Any]) -> Dict[str, Any]:
     return payload
 
 
-def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, Any]]:
+@timed_phase("state.provenance_projection")
+def _provenance_artifact_definitions(
+    state: PlanState, *, step_updates: Optional[Dict[int, Dict[str, Any]]] = None,
+) -> Dict[str, Dict[str, Any]]:
+    """Read-only artifact projection; explicit enrichment is returned separately."""
     result: Dict[str, Dict[str, Any]] = {}
     task_id = str(state.get("task_id") or "default")
     task_spec = _current_task_spec(state)
@@ -1700,7 +1705,7 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
     for index, raw_step in enumerate(state.get("steps", []) or [], start=1):
         if not isinstance(raw_step, dict):
             continue
-        step = normalize_plan_step(raw_step, index)
+        step = normalize_plan_step(deepcopy(raw_step), index)
         step_id = str(step.get("step_id") or "")
         output_ids: List[str] = []
         contracts: List[Dict[str, Any]] = []
@@ -1791,7 +1796,8 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
             if typed_plan_local_output:
                 prior_output_ids = without_superseded_untyped_artifacts(prior_output_ids)
             step["output_artifact_ids"] = list(dict.fromkeys([*prior_output_ids, *output_ids]))
-            raw_step["output_artifact_ids"] = list(step["output_artifact_ids"])
+            if step_updates is not None:
+                step_updates.setdefault(index - 1, {})["output_artifact_ids"] = list(step["output_artifact_ids"])
 
     by_path = {str(item.get("path") or ""): artifact_id for artifact_id, item in result.items()}
     by_logical: Dict[str, List[str]] = {}
@@ -1800,7 +1806,7 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
     for index, raw_step in enumerate(state.get("steps", []) or [], start=1):
         if not isinstance(raw_step, dict):
             continue
-        step = normalize_plan_step(raw_step, index)
+        step = normalize_plan_step(deepcopy(raw_step), index)
         matched: List[str] = []
         for value in step.get("inputs", []) or []:
             text = str(value or "")
@@ -1832,9 +1838,12 @@ def _provenance_artifact_definitions(state: PlanState) -> Dict[str, Dict[str, An
             if typed_plan_local_input:
                 prior_input_ids = without_superseded_untyped_artifacts(prior_input_ids)
             step["input_artifact_ids"] = list(dict.fromkeys([*prior_input_ids, *matched]))
-            raw_step["input_artifact_ids"] = list(step["input_artifact_ids"])
-            raw_step["dependencies"] = list(step.get("dependencies") or [])
-            raw_step["depends_on"] = list(step.get("depends_on") or [])
+            if step_updates is not None:
+                step_updates.setdefault(index - 1, {}).update({
+                    "input_artifact_ids": list(step["input_artifact_ids"]),
+                    "dependencies": list(step.get("dependencies") or []),
+                    "depends_on": list(step.get("depends_on") or []),
+                })
     return result
 
 
@@ -1861,7 +1870,12 @@ def ensure_provenance_state(state: PlanState) -> Dict[str, Any]:
         if not any(artifact.get(key) for key in ("producer_step_id", "producer_stage_id", "producer_action_id", "producer_attempt_id")):
             artifact.setdefault("producer_status", "producer_unknown")
 
-    definitions = _provenance_artifact_definitions(state)
+    # Preserve existing artifact-link enrichment at this explicit mutation
+    # boundary, without leaking any normalizer compatibility fields.
+    step_updates: Dict[int, Dict[str, Any]] = {}
+    definitions = _provenance_artifact_definitions(state, step_updates=step_updates)
+    for index, update in step_updates.items():
+        state["steps"][index].update(update)
     for artifact_id, definition in definitions.items():
         if artifact_id in provenance["artifact_heads"]:
             head = provenance["artifact_heads"][artifact_id]
@@ -7794,6 +7808,7 @@ def _migrate_recovery_transition_lifecycle(state: PlanState) -> bool:
     return before != _lifecycle_snapshot()
 
 
+@timed_phase("state.migration")
 def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | None = None) -> Tuple[PlanState, List[str]]:
     """Apply idempotent, non-destructive lifecycle/schema migrations."""
     data = state if isinstance(state, dict) else {}
@@ -7828,6 +7843,7 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
     defaults = _plan_defaults(task_id, data_path)
     applied = list(data.get("migrations_applied") or [])
     newly_applied: List[str] = []
+    original_content = json.dumps(data, ensure_ascii=False, sort_keys=True, default=str)
     original_steps = json.dumps(data.get("steps", []), ensure_ascii=False, sort_keys=True, default=str)
     had_plan_status = bool(str(data.get("plan_status") or "").strip())
     prior_migration_version = _int(data.get("migration_version"), 0)
@@ -7943,8 +7959,6 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
     if not str(data.get("current_step_id") or ""):
         _, current = current_plan_step_with_index(data)
         data["current_step_id"] = str(current.get("step_id") or "")
-    if json.dumps(data["steps"], ensure_ascii=False, sort_keys=True, default=str) != original_steps:
-        newly_applied.append("normalize_plan_step_schema")
     previous_provenance = json.dumps(data.get("provenance_state", {}), ensure_ascii=False, sort_keys=True, default=str)
     ensure_provenance_state(data)
     if json.dumps(data.get("provenance_state", {}), ensure_ascii=False, sort_keys=True, default=str) != previous_provenance:
@@ -8050,6 +8064,8 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
         # Historical v9 rows remain readable under compatibility.source_schema_version.
         newly_applied.append("open_world_highlighted_requirements_plan_v10")
 
+    if json.dumps(data["steps"], ensure_ascii=False, sort_keys=True, default=str) != original_steps:
+        newly_applied.append("normalize_plan_step_schema")
     data["schema_version"] = PLAN_SCHEMA_VERSION
     data["plan_schema_version"] = PLAN_SCHEMA_VERSION
     data["migration_version"] = PLAN_MIGRATION_VERSION
@@ -8057,6 +8073,14 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
         if migration not in applied:
             applied.append(migration)
     data["migrations_applied"] = applied
+    # Compare the final migration result, including migration metadata. This
+    # gate is local to migration; legitimate runtime writes remain unconditional.
+    if json.dumps(data, ensure_ascii=False, sort_keys=True, default=str) == original_content:
+        return data, []
+    if not newly_applied:
+        newly_applied.append("normalize_plan_state")
+        if "normalize_plan_state" not in applied:
+            applied.append("normalize_plan_state")
     return data, newly_applied
 
 
@@ -10412,6 +10436,7 @@ def approval_applicability_v2(state: PlanState) -> Dict[str, Any]:
     return {"status": "applicable", "applicable": True}
 
 
+@timed_phase("state.canonical_projection")
 def refresh_state_contract_v2(state: PlanState) -> PlanState:
     """Compile logical V2 partitions and stop persisting writable aliases."""
     current_value = state.get("current_task")
@@ -10559,12 +10584,14 @@ def refresh_state_contract_v2(state: PlanState) -> PlanState:
     return state
 
 
+@timed_phase("state.load")
 def load_plan_state(data_path: str | Path, task_id: str) -> PlanState:
     path = plan_state_path(data_path, task_id)
     if not path.exists():
         return _plan_defaults(task_id, data_path)
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        with phase("state.read_json"):
+            data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         state = _plan_defaults(task_id, data_path)
         state["load_error"] = "invalid_plan_state_json"
@@ -10608,6 +10635,7 @@ def load_plan_state(data_path: str | Path, task_id: str) -> PlanState:
                 "reason": "canonical_task_state_corrupt",
             }
             return corrupt
+    original_load_content = json.dumps(data, ensure_ascii=False, sort_keys=True, default=str)
     _externalize_legacy_task_spec_records(data_path, task_id, data)
     try:
         data, migrations = migrate_plan_state(data, task_id, data_path)
@@ -10656,16 +10684,18 @@ def load_plan_state(data_path: str | Path, task_id: str) -> PlanState:
     if isinstance(audit_index, Mapping) and audit_index.get("audit_head"):
         try:
             audit_store = StateContractStore(data_path, task_id)
-            audit_store.verify_chain(
-                audit_index,
-                expected_generation=int(data.get("state_generation") or 0),
-            )
+            with phase("state.verify_chain"):
+                audit_store.verify_chain(
+                    audit_index,
+                    expected_generation=int(data.get("state_generation") or 0),
+                )
             raw_ref = str(audit_index.get("raw_submission_ref") or "")
             if raw_ref.startswith("object:sha256:"):
                 audit_store.read_object(raw_ref, expected_type="raw_user_submission")
             conversation = data.get("conversation_evidence")
             if isinstance(conversation, Mapping) and conversation.get("head_ref"):
-                audit_store.read_conversation_evidence(conversation)
+                with phase("state.conversation_evidence"):
+                    audit_store.read_conversation_evidence(conversation)
             approval_ref = str(data.get("approval_snapshot_ref") or "")
             if approval_ref.startswith("object:sha256:"):
                 persisted_snapshot = audit_store.read_object(
@@ -10717,7 +10747,7 @@ def load_plan_state(data_path: str | Path, task_id: str) -> PlanState:
                 "reason": "audit_chain_invalid",
             }
             data["can_generate"] = False
-    if migrations:
+    if migrations and json.dumps(data, ensure_ascii=False, sort_keys=True, default=str) != original_load_content:
         try:
             _atomic_write_plan_state(
                 path,
@@ -11600,7 +11630,8 @@ def _atomic_write_plan_state(
     path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = path.with_suffix(path.suffix + ".lock")
     with lock_path.open("a+", encoding="utf-8") as lock_handle:
-        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+        with phase("state.lock_wait"):
+            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
         current_generation = 0
         current_value: Mapping[str, Any] = {}
         if path.is_file():
@@ -11758,14 +11789,20 @@ def _atomic_write_plan_state(
         )
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                json.dump(state, handle, ensure_ascii=False, indent=2)
-                handle.flush()
-                os.fsync(handle.fileno())
-            os.replace(temporary, path)
+                with phase("state.serialize"):
+                    encoded = json.dumps(state, ensure_ascii=False, indent=2)
+                with phase("state.write"):
+                    handle.write(encoded)
+                    handle.flush()
+                with phase("state.fsync_file"):
+                    os.fsync(handle.fileno())
+            with phase("state.replace"):
+                os.replace(temporary, path)
             try:
                 directory_fd = os.open(str(path.parent), os.O_RDONLY)
                 try:
-                    os.fsync(directory_fd)
+                    with phase("state.fsync_directory"):
+                        os.fsync(directory_fd)
                 finally:
                     os.close(directory_fd)
             except OSError:
