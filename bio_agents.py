@@ -41828,7 +41828,8 @@ question. Never guess a scientific or database identity.
                         else None
                     )
                     from agent_core.workflow.diagnostic_admission import public_diagnostic_request
-                    from agent_core.step_effects import observation_emission_contract, declared_effect_emission_contract
+                    from agent_core.step_effects import (observation_emission_contract,
+                        declared_effect_emission_contract, assert_declared_emission_current)
                     approved_emission_contract = observation_emission_contract(approved_step)
                     formal_emission_template = declared_effect_emission_contract(
                         generate_approved_snapshot, current_step_id
@@ -42557,6 +42558,10 @@ question. Never guess a scientific or database identity.
                                 self.data_path,
                                 task_id,
                                 state=current_plan,
+                            )
+                            assert_declared_emission_current(
+                                formal_emission_template, current_snapshot,
+                                str(current_step.get("step_id") or ""),
                             )
                             current_approval = validate_plan_for_generate(
                                 current_plan,

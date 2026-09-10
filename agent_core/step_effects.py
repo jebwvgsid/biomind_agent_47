@@ -3221,6 +3221,7 @@ def declared_effect_emission_contract(approved_snapshot: Mapping[str, Any], step
         code += "\ndef emit_effect_evidence(actual_facts):\n"
         code += "    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, " + repr(STRUCTURED_EFFECT_EVIDENCE_PREFIX) + ")\n"
         return {"available": True, "schema_version": STRUCTURED_EFFECT_EMISSION_VERSION,
+                "step_id": step_id,
                 "declarations": declarations, "python_template": code,
                 "rules": [
                     "Use this exact serializer in the approved script; do not handwrite machine identities or canonical groups.",
@@ -3229,6 +3230,23 @@ def declared_effect_emission_contract(approved_snapshot: Mapping[str, Any], step
                     "Historical failed scripts/stdout are diagnostic evidence; their failed machine emission must not be reused. This current template takes precedence.",
                     "No emission or rc=0 alone grants completion; Execute, verification and CommitStep remain authoritative.",
                 ]}
+
+
+def assert_declared_emission_current(template: Mapping[str, Any], approved_snapshot: Mapping[str, Any], step_id: str) -> None:
+    """Reject a frozen template if the transport's fresh approved step changed.
+
+    Consume the caller's existing snapshot; do not load, regenerate messages,
+    reinterpret identities, or introduce a new retry/approval path.
+    """
+    if not approved_snapshot and not template.get("available"):
+        return
+    rows = [row for row in approved_snapshot.get("steps", [])
+            if isinstance(row, Mapping) and row.get("step_id") == step_id]
+    current = _declared_emission_rows(rows[0]) if len(rows) == 1 else None
+    if template.get("step_id") != step_id or current != template.get("declarations"):
+        raise ValueError(json.dumps({"code": "APPROVED_EFFECT_EMISSION_TEMPLATE_STALE",
+            "field_path": "$.approved_effect_emission_template.declarations",
+            "actual": template.get("declarations"), "expected": current}, sort_keys=True))
 
 
 def structured_effect_parse_receipt(text: Any, effect: Any) -> Dict[str, Any]:

@@ -157,3 +157,28 @@ def test_real_approved_snapshot_reader_uses_updated_pointer_without_extra_load(t
     state["current_approval"]["status"] = "revoked"
     with pytest.raises(ValueError, match="NOT_APPROVED"):
         load_approved_plan_snapshot(tmp_path, "approval-fixture", state=state)
+
+
+def test_transport_refresh_rejects_stale_template_before_fake_provider():
+    from agent_core.step_effects import assert_declared_emission_current
+    from runtime_optimization_support import source_tree
+    snapshot = {"steps": [{"step_id": "a", **effect(["old"])}]}
+    template = declared_effect_emission_contract(snapshot, "a")
+    callback = next(n for n in ast.walk(source_tree()) if isinstance(n, ast.FunctionDef)
+                    and n.name == "current_generate_transport_context")
+    guard = next(n for n in callback.body if isinstance(n, ast.Expr) and isinstance(n.value, ast.Call)
+                 and isinstance(n.value.func, ast.Name) and n.value.func.id == "assert_declared_emission_current")
+    scope = dict(assert_declared_emission_current=assert_declared_emission_current,
+                 formal_emission_template=template, current_snapshot=snapshot, current_step={"step_id": "a"})
+    code = compile(ast.Module(body=[guard], type_ignores=[]), "production-transport-template-guard", "exec")
+    exec(code, scope)
+    # The same existing refresh now sees a different approved declaration.
+    snapshot["steps"][0].update(effect(["new"]))
+    delivered = []
+    with pytest.raises(ValueError, match="APPROVED_EFFECT_EMISSION_TEMPLATE_STALE"):
+        exec(code, scope)
+        delivered.append("must not send old template")
+    assert not delivered
+    scope["formal_emission_template"] = declared_effect_emission_contract(snapshot, "a")
+    exec(code, scope)
+    assert scope["formal_emission_template"]["declarations"]["produces_artifacts"][0]["identity"] == "new"
