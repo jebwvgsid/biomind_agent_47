@@ -13,6 +13,7 @@ from __future__ import annotations
 from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit
 
 import asyncio
+from agent_core.phase_timing import phase, phase_started, phase_finished, timed_phase
 from copy import deepcopy
 import atexit
 from dataclasses import dataclass, field
@@ -6948,20 +6949,21 @@ class BioAnalystAgent:
         report["projection_mode"] = "compact_required_state_retry"
         return text, report
 
+    @timed_phase("generate.compat_projection")
     def _generate_task_spec_projection(
         self,
         state: AgentState,
         messages: List[BaseMessage],
     ) -> str:
         """Compatibility entrypoint backed by the V2 deterministic LLMPayload."""
-        spec = self._task_spec_for_state(dict(state), messages)
         task_id = str(state.get("task_id") or "default")
         plan_state = load_plan_state(self.data_path, task_id)
+        spec = self._task_spec_for_state(dict(state), messages, plan_state=plan_state)
         input_audit = state.get("input_audit") or (plan_state.get("task_state") or {}).get("input_audit") or {}
         if isinstance(input_audit, dict) and input_audit:
             spec = merge_task_spec_input_audit(spec, input_audit)
         _, current_step = current_plan_step_with_index(plan_state)
-        protocol = self._renderer_action_protocol(state, task_id)
+        protocol = self._renderer_action_protocol(state, task_id, plan_state=plan_state)
         context = build_node_context(
             node_type="generate",
             task_spec=spec,
@@ -7061,12 +7063,14 @@ class BioAnalystAgent:
         self,
         state: Optional[Dict[str, Any]],
         messages: Optional[List[BaseMessage]] = None,
+        *,
+        plan_state: Optional[Mapping[str, Any]] = None,
     ) -> Dict[str, Any]:
         mapping = state if isinstance(state, dict) else {}
         task_id = str(mapping.get("task_id") or mapping.get("session_id") or "")
         if not task_id:
             return {}
-        durable = load_plan_state(self.data_path, task_id)
+        durable = plan_state if plan_state is not None else load_plan_state(self.data_path, task_id)
         if durable.get("canonical_state_error"):
             raise CanonicalTaskStateError(
                 str((durable.get("canonical_state_error") or {}).get("detail") or "")
@@ -11520,9 +11524,11 @@ class BioAnalystAgent:
         self,
         state: AgentState,
         task_id: str,
+        *,
+        plan_state: Optional[Mapping[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Return the controller-owned Renderer contract for the current step."""
-        plan_state = load_plan_state(self.data_path, task_id)
+        plan_state = plan_state if plan_state is not None else load_plan_state(self.data_path, task_id)
         task_state = dict(plan_state.get("task_state") or {})
         if not (
             task_state.get("legacy_renderer_mode") is True
@@ -12360,6 +12366,7 @@ class BioAnalystAgent:
         plan_state["task_state"] = task_state
         return bound
 
+    @timed_phase("generate.commit_candidate")
     def _commit_bound_action_candidate(
         self,
         task_id: str,
@@ -12405,6 +12412,7 @@ class BioAnalystAgent:
             "GENERATE_ACTION_COMMIT_RETRY_EXHAUSTED"
         )
 
+    @timed_phase("generate.bind_candidate")
     def _bind_pending_action(
         self,
         action: Dict[str, Any],
@@ -13777,16 +13785,17 @@ class BioAnalystAgent:
             "next_step": "finish",
         }
 
+    @timed_phase("generate.validate_context")
     def _validate_generate_context(self, state: AgentState, task_id: str) -> Dict[str, Any]:
         """Use the canonical Plan validator for every managed Generate entry."""
         if str(state.get("task_mode") or "managed").lower() != "managed":
             return {"valid": True, "reason_code": "lightweight_task", "missing_fields": []}
         plan_state = load_plan_state(self.data_path, task_id)
-        validation = validate_plan_for_generate(
-            plan_state,
-            self._task_revision_for_state(dict(state)),
-        )
         task_spec = canonical_task_spec_for_state(plan_state)
+        validation = validate_plan_for_generate(
+            deepcopy(plan_state),
+            task_spec_revision(task_spec),
+        )
         if validation.get("valid") and (
             not isinstance(task_spec, dict) or not str(task_spec.get("goal") or "").strip()
         ):
@@ -40744,6 +40753,8 @@ question. Never guess a scientific or database identity.
         # Node 2: Generate
         # ════════════════════════════════════════════
         async def _generate_impl(state: AgentState, invocation_audit: GenerateInvocationAudit):
+            context_started = phase_started("generate.context_assembly", output=output,
+                                            message="正在读取并核验状态、装配上下文")
             output.print_node_header("generate")
             # A verified Recovery -> Generate handoff is intentionally
             # transcript-free.  Its GenerateSeed and durable task/plan state
@@ -41195,7 +41206,9 @@ question. Never guess a scientific or database identity.
                 "component_token_counts": {},
             }
             generate_plan_state = load_plan_state(self.data_path, task_id)
-            generate_task_spec = self._task_spec_for_state(dict(state), messages)
+            generate_task_spec = self._task_spec_for_state(
+                dict(state), messages, plan_state=generate_plan_state
+            )
             generate_task_state = dict(generate_plan_state.get("task_state") or {})
             generate_skill_access = self._prepare_durable_skill_access(
                 generate_plan_state,
@@ -42297,7 +42310,9 @@ question. Never guess a scientific or database identity.
                     "execution_started": False,
                     "next_step": "finish",
                 }
+            phase_finished("generate.context_assembly", context_started)
             generate_response_cached = False
+            candidate_started = phase_started()
             try:
                 recovery_store = RecoveryStateStore(self.data_path, task_id)
                 recovery_stage = str(
@@ -42635,41 +42650,45 @@ question. Never guess a scientific or database identity.
                         response = AIMessage(content=candidate_provider_claim["cached_response"])
                     else:
                         invocation_audit.mark_provider_call_attempted()
-                        response = await self._ainvoke_node_llm(
-                            call_msgs,
-                            node_context=generate_node_context,
-                            stage="generate",
-                            task_id=task_id,
-                            task_mode=task_mode,
-                            trace_metadata={
-                                "call_kind": "generate",
-                                "task_spec_revision": self._task_revision_for_state(dict(state)),
-                                "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
-                                "step_id": str(current_step_id or ""),
-                                "selected_skill_ids": active_skills,
-                                "component_token_counts": dict(
-                                    (context_budget_report or {}).get("component_token_counts") or {}
-                                ),
-                                "truncation_manifest": list(
-                                    (context_budget_report or {}).get("truncation_manifest") or []
-                                ),
-                                "action_contract_ref": str(
-                                    Path(self.data_path) / "task_outputs" / task_id / "plan_state.json"
-                                ),
-                                "provider_context_manifest": provider_context_manifest(
-                                    generate_node_context.llm_payload
-                                ),
-                                "generate_llm_policy": dict(self.generate_llm_policy),
-                                "provider_idempotency_key": (
-                                    target_generation_id if recovery_generated else ""
-                                ),
-                            },
-                            llm_override=self.generate_llm,
-                            llm_policy=self.generate_llm_policy,
-                            generate_retry_context_loader=(
-                                generate_retry_context_loader
+                        generate_trace_metadata = {
+                            "call_kind": "generate",
+                            "task_spec_revision": self._task_revision_for_state(dict(state)),
+                            "effective_facts_revision": str(state.get("effective_user_facts_revision") or ""),
+                            "step_id": str(current_step_id or ""),
+                            "selected_skill_ids": active_skills,
+                            "component_token_counts": dict(
+                                (context_budget_report or {}).get("component_token_counts") or {}
                             ),
-                        )
+                            "truncation_manifest": list(
+                                (context_budget_report or {}).get("truncation_manifest") or []
+                            ),
+                            "action_contract_ref": str(
+                                Path(self.data_path) / "task_outputs" / task_id / "plan_state.json"
+                            ),
+                            "provider_context_manifest": provider_context_manifest(
+                                generate_node_context.llm_payload
+                            ),
+                            "generate_llm_policy": dict(self.generate_llm_policy),
+                            "provider_idempotency_key": (
+                                target_generation_id if recovery_generated else ""
+                            ),
+                        }
+                        with phase("generate.provider_wait", output=output, message="等待模型返回"):
+                            response = await self._ainvoke_node_llm(
+                                call_msgs,
+                                node_context=generate_node_context,
+                                stage="generate",
+                                task_id=task_id,
+                                task_mode=task_mode,
+                                trace_metadata=generate_trace_metadata,
+                                llm_override=self.generate_llm,
+                                llm_policy=self.generate_llm_policy,
+                                generate_retry_context_loader=(
+                                    generate_retry_context_loader
+                                ),
+                            )
+                    candidate_started = phase_started("generate.candidate_preparation", output=output,
+                                                      message="模型返回，正在整理候选")
                     if candidate_provider_claim and "cached_response" not in candidate_provider_claim:
                         try:
                             skill_decision = parse_typed_skill_decision(str(response.content or ""))
@@ -44459,6 +44478,7 @@ question. Never guess a scientific or database identity.
                     structured_action,
                     state,
                     task_id,
+                    plan_state=deepcopy(active_plan_state),
                     persist=False,
                 )
             if (
@@ -44652,6 +44672,7 @@ question. Never guess a scientific or database identity.
                     "resume_token": external_bundle.resume_token,
                     "resume_step": "supervisor",
                 }
+                phase_finished("generate.candidate_preparation", candidate_started)
                 recovery_generation_adoption: Dict[str, Any] = {}
                 if recovery_generated:
                     try:
@@ -45361,6 +45382,7 @@ question. Never guess a scientific or database identity.
                     },
                 }
 
+            phase_finished("generate.candidate_preparation", candidate_started)
             recovery_generation_adoption: Dict[str, Any] = {}
             if not recovery_generated and structured_action:
                 structured_action = self._commit_bound_action_candidate(

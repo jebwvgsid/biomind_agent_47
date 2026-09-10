@@ -271,6 +271,9 @@ class StateContractStore:
         expected_count = max(0, int(audit_index.get("event_count") or 0))
         current = str(audit_index.get("audit_head") or "")
         seen: set[str] = set()
+        latest = dict(audit_index.get("latest_by_type") or {})
+        needed = {str(ref) for ref in latest.values()}
+        verified_latest: Dict[str, Dict[str, Any]] = {}
         count = 0
         newer_generation_before: Optional[int] = None
         head_generation_after: Optional[int] = None
@@ -279,6 +282,8 @@ class StateContractStore:
                 raise StateContractIntegrityError("AUDIT_CHAIN_CYCLE")
             seen.add(current)
             event = self.read_event(current)
+            if current in needed:
+                verified_latest[current] = event
             payload = dict(event.get("payload") or {})
             try:
                 generation_before = int(payload.get("generation_before"))
@@ -301,13 +306,13 @@ class StateContractStore:
             raise StateContractIntegrityError(
                 f"AUDIT_CHAIN_COUNT_MISMATCH: expected={expected_count}, observed={count}"
             )
-        latest = dict(audit_index.get("latest_by_type") or {})
         for event_type, event_ref in latest.items():
-            event = self.read_event(str(event_ref))
-            if str(event.get("event_type") or "") != str(event_type):
-                raise StateContractIntegrityError("AUDIT_LATEST_TYPE_MISMATCH")
+            # Membership must be established by this full verified traversal.
             if str(event_ref) not in seen:
                 raise StateContractIntegrityError("AUDIT_LATEST_NOT_IN_CHAIN")
+            event = verified_latest[str(event_ref)]
+            if str(event.get("event_type") or "") != str(event_type):
+                raise StateContractIntegrityError("AUDIT_LATEST_TYPE_MISMATCH")
         if (
             expected_generation is not None
             and head_generation_after is not None

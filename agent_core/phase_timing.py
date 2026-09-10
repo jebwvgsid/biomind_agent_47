@@ -7,8 +7,16 @@ from time import perf_counter_ns
 logger = logging.getLogger("BioMind.Performance")
 
 
-def phase_started():
-    return perf_counter_ns()
+def phase_started(stage="", *, output=None, message=""):
+    started = perf_counter_ns()
+    try:
+        if stage:
+            logger.info("phase=%s status=started", stage)
+        if output is not None and message:
+            output.print_once(f"phase:{stage}:{started}", message)
+    except Exception:
+        pass
+    return started
 
 
 def phase_finished(stage, started, *, status="completed"):
@@ -22,8 +30,8 @@ def phase_finished(stage, started, *, status="completed"):
 
 
 @contextmanager
-def phase(stage):
-    started = phase_started()
+def phase(stage, *, output=None, message=""):
+    started = phase_started(stage, output=output, message=message)
     status = "failed"
     try:
         yield
