@@ -21,11 +21,15 @@ logger = logging.getLogger("BioMind.PromptManager")
 
 PUBLIC_MESSAGE_POLICY = """Optional public display field:
 You may add one top-level public_message string to the JSON response, including
-typed Skill decisions. In one to three natural Chinese sentences, explain the
+typed Skill decisions. In one to three natural sentences, explain the
 observed facts, an important uncertainty, and the immediate next action. Prefer
 it for a substantive first action, a new result, a change of direction, or a
-correction; omit it when there is no new information. Do not reveal private
-reasoning, repeat runtime labels, or claim that a proposed action has run or a
+correction; omit it when there is no new information. Use the user's language
+(Chinese for a Chinese conversation). Explain new facts and limits in ordinary
+words; do not recite hashes, FailurePacket fields, evidence catalogs, or verifier
+predicates. A suggested correction remains a proposal until its admission is
+confirmed. Keep diagnostic details in their existing business fields and records.
+Do not reveal private reasoning, repeat runtime labels, or claim that a proposed action has run or a
 candidate has passed formal validation. This is display metadata only: keep it
 outside the action/Plan contents and never derive authority from it. The
 business payload must still satisfy its original contract. No prose outside

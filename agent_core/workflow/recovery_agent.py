@@ -19,7 +19,7 @@ from typing import Any, Callable, Mapping, Sequence, TypedDict
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, START, StateGraph
 
-from agent_core.cli_display import flush_public
+from agent_core.cli_display import flush_public, emit as emit_display
 from agent_core.plan_tracker import canonical_task_spec_for_state
 from agent_core.workflow.context_compaction import (
     ContextBudgetPolicy,
@@ -113,7 +113,7 @@ Safety rules:
 - Do not copy large tool observations into the final result.
 
 Terminal output:
-Keep a user-facing diagnosis (facts, uncertainty, proposed correction), not hidden reasoning. Prefer assistant content plus exactly one submit_recovery_directive tool call whose arguments are the existing RecoveryDirective. If content is empty, the directive summary is the explanation. Never mix final submission with unfinished inspection tool calls. Text fallback protocol recovery-submission-v1 permits either one envelope {"protocol":"recovery-submission-v1","explanation":"...","directive":{...}} or exactly one complete fenced block labeled recovery-submission-v1, with explanation outside. An ordinary json fence is only a diagnostic candidate and must be canonically resubmitted. Existing bare RecoveryDirective JSON remains compatible. Do not emit competing submissions. Skill example paths are not verified executable locations: use skill_resource for the registered selected Skill resource and preserve its identity; never guess an installation root or assume process cwd. Required fields are schema_version, directive_id, task_id, action, summary, and reason_code. Optional fields are target_step_id, instruction, question, requested_slots, evidence_refs, diagnostic_operation and diagnostic_inputs. Allowed actions are retry_step, revise_plan, reconsult, revalidate, ask_user, blocked and run_diagnostic_probe. run_diagnostic_probe requires target_step_id, semantic instruction, diagnostic_operation in the form selected_skill_id#operation_id and diagnostic_inputs containing declared artifact handles. It never accepts code, paths or a request to increase limits. retry_step and revalidate require target_step_id. retry_step, revise_plan, and reconsult require instruction. ask_user requires question and requested_slots. All fields are semantic and route-blind."""
+Keep a user-facing diagnosis (facts, uncertainty, proposed correction), not hidden reasoning. For the public assistant explanation and directive summary, use the user's language (Chinese in a Chinese conversation) and prefer one to three natural sentences with the new fact, important limit, and proposed next action. Do not copy the FailurePacket, hashes, full evidence catalog, or verifier predicates into public prose; preserve the required diagnostic facts and evidence references in their existing fields. A submitted correction is a proposal until actual admission; do not claim it has executed. These are display style preferences, never new validation or retry requirements. Prefer assistant content plus exactly one submit_recovery_directive tool call whose arguments are the existing RecoveryDirective. If content is empty, the directive summary is the explanation. Never mix final submission with unfinished inspection tool calls. Text fallback protocol recovery-submission-v1 permits either one envelope {"protocol":"recovery-submission-v1","explanation":"...","directive":{...}} or exactly one complete fenced block labeled recovery-submission-v1, with explanation outside. An ordinary json fence is only a diagnostic candidate and must be canonically resubmitted. Existing bare RecoveryDirective JSON remains compatible. Do not emit competing submissions. Skill example paths are not verified executable locations: use skill_resource for the registered selected Skill resource and preserve its identity; never guess an installation root or assume process cwd. Required fields are schema_version, directive_id, task_id, action, summary, and reason_code. Optional fields are target_step_id, instruction, question, requested_slots, evidence_refs, diagnostic_operation and diagnostic_inputs. Allowed actions are retry_step, revise_plan, reconsult, revalidate, ask_user, blocked and run_diagnostic_probe. run_diagnostic_probe requires target_step_id, semantic instruction, diagnostic_operation in the form selected_skill_id#operation_id and diagnostic_inputs containing declared artifact handles. It never accepts code, paths or a request to increase limits. retry_step and revalidate require target_step_id. retry_step, revise_plan, and reconsult require instruction. ask_user requires question and requested_slots. All fields are semantic and route-blind."""
 
 
 class RecoveryAgentError(ValueError):
@@ -1277,6 +1277,14 @@ class RecoveryAgentLoop:
                 assistant_content_public=assistant_content_public,
                 assistant_public_text=public_content,
             )
+            if receipt.get("status") == "candidate_validated" and receipt.get("transport") == "native_tool":
+                public_summary = (update.get("directive") or {}).get("summary")
+                if isinstance(public_summary, str) and public_summary.strip() and public_summary != current_explanation:
+                    if current_explanation:
+                        emit_display("details", current_explanation, source="model_public", purpose="details",
+                                     task_id=seed.failure_packet.task_id, node="recovery",
+                                     source_message_id=assistant.id)
+                    current_explanation = public_summary
             await self._emit_event("recovery_response_received", {
                 **call_context, "event_id": f"{assistant.id}:reception", **receipt,
                 "source_message_id": assistant.id,
