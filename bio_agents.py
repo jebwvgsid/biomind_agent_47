@@ -13,7 +13,8 @@ from __future__ import annotations
 from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit
 
 from agent_core.cli_display import display_print, emit as emit_display, terminal as active_terminal, interactive_terminal, emit_public, flush_public
-from agent_core.cli_activity import call_with_activity
+from agent_core.cli_review import review_display, show_review, show_review_body
+from agent_core.cli_activity import call_with_activity, resource_display_result, glob_display_result, skill_display_result
 from agent_core.public_response import project_public_json, project_generate_response, provider_response_metadata
 import asyncio
 from agent_core.phase_timing import phase, phase_started, phase_finished, timed_phase
@@ -304,6 +305,7 @@ from agent_core.consultant_continuation import (
 )
 from agent_core.human_io import (
     HumanInputUnavailable,
+    HumanInputTimeout,
     clear_waiting_state,
     load_waiting_state,
     read_pending_paste_lines,
@@ -2211,6 +2213,7 @@ class OutputRouter:
     def __init__(self):
         self._seen: set = set()
         self._last_node: str = ""
+        self.review_display = None
         self._console_lock = threading.RLock()
         self.pager_line_threshold = int(os.getenv("BIOMIND_PAGER_LINES", "35"))
         self.preview_lines = int(os.getenv("BIOMIND_PREVIEW_LINES", "20"))
@@ -2312,6 +2315,14 @@ class OutputRouter:
         header = f"\n{title}\n" if title else ""
         body = f"{header}{shown}{suffix}"
         display_print(f"{color}{body}{Style.RESET_ALL}" if color else body)
+
+    def prepare_review(self, title, content, **metadata):
+        self.review_display = review_display(title, content, **metadata)
+        show_review(self.review_display)
+
+    def show_review_details(self):
+        if self.review_display is not None:
+            show_review_body(self.review_display)
 
     def page_text(self, title: str, text: str, color: str = "", force: bool = False):
         """Display long text in a scrollable terminal pager when available."""
@@ -3442,6 +3453,27 @@ class BioAnalystAgent:
             "provider_attempt_id": str(bounded.get("provider_attempt_id") or ""),
             "epoch": str(bounded.get("context_epoch_id") or ""),
             "tool_request_id": str(bounded.get("tool_request_id") or "")}
+        if event == "recovery_tool_observation_committed":
+            observation = bounded.get("observation") or {}
+            result = observation.get("result") or {}
+            result = result if isinstance(result, Mapping) else {}
+            result_status = str(result.get("status") or "")
+            status = ("failed" if bounded.get("status") == "failed" or observation.get("error") else
+                      "partial" if bounded.get("truncated") or result_status in {"REQUIRES_NARROWING", "RECOVERY_OBSERVATION_BUDGET_EXCEEDED"} else
+                      "empty" if result_status == "NO_MATCH" else "returned")
+            suffix = {"failed": "失败", "partial": "仅返回部分结果：" + (result_status or "truncated"),
+                      "empty": "未找到结果", "returned": "已返回"}[status]
+            if status == "failed" and display_scope["tool_request_id"]:
+                display_scope["item_id"] = f"recovery-tool-failed:{display_scope['tool_request_id']}"
+            emit_display("tool_end", f"{tool} {suffix}", source="runtime_fact",
+                status=status, tool_category="search" if tool in {"evidence.glob", "skill.search"} else "read", **display_scope)
+            return
+        if event == "recovery_directive_admitted":
+            # Admission is authoritative; this text does not claim a graph node
+            # has already run. A route boundary also closes pending tool groups.
+            emit_display("message", "恢复指令已接纳：" + str(bounded.get("action") or "UNKNOWN") +
+                "；后续由现有图路由处理。", source="runtime_fact", purpose="route_change", **display_scope)
+            return
         if event == "recovery_response_received":
             emit_public(bounded.get("explanation"), **display_scope)
             emit_display("details", "Recovery response status: " + str(bounded.get("status") or "received"),
@@ -3456,8 +3488,7 @@ class BioAnalystAgent:
                 f"📡 Recovery provider stream active (turn {ordinal})."
             ),
             "recovery_tool_started": f"🔎 Recovery tool started: {tool}",
-            "recovery_tool_completed": f"✓ Recovery tool completed: {tool}",
-            "recovery_tool_failed": f"⚠ Recovery tool failed: {tool}",
+            "recovery_tool_failed": f"{tool} 失败：{bounded.get('error_code') or 'UNKNOWN'}",
             "recovery_compaction_started": "🧭 Recovery context compaction started.",
             "recovery_compaction_completed": "✓ Recovery context compaction completed.",
             "recovery_model_turn_cancelled": "⏹ Recovery model turn cancelled.",
@@ -3469,6 +3500,8 @@ class BioAnalystAgent:
         message = ui_messages.get(str(event))
         if message:
             try:
+                if event == "recovery_tool_failed" and display_scope["tool_request_id"]:
+                    display_scope["item_id"] = f"recovery-tool-failed:{display_scope['tool_request_id']}"
                 kind = ("tool_start" if event == "recovery_tool_started" else
                         "cancel" if event == "recovery_tool_cancelled" else
                         "tool_end" if event in {"recovery_tool_completed", "recovery_tool_failed"} else
@@ -7926,7 +7959,8 @@ class BioAnalystAgent:
         if kind == REQUEST_SKILL_CONTEXT:
             access, result = call_with_activity(
                 "Skill 读取", service.serve_context_request,
-                access, decision, runtime_envelope=envelope, display_scope=display_scope,
+                access, decision, runtime_envelope=envelope, display_scope={**display_scope, "tool_category": "read"},
+                display_result=skill_display_result,
             )
             active_snapshot_ids = {
                 str(item.get("snapshot_id") or "")
@@ -7967,7 +8001,8 @@ class BioAnalystAgent:
                 decision,
                 runtime_envelope=envelope,
                 input_roles=input_roles,
-                display_scope=display_scope,
+                display_scope={**display_scope, "tool_category": "search"},
+                display_result=skill_display_result,
             )
             proposal = None
         elif kind == PROPOSE_SKILL_BINDING:
@@ -25287,6 +25322,12 @@ class BioAnalystAgent:
         multiline: bool = False,
     ) -> str:
         """Collect human input with timeout and waiting-state persistence."""
+        owner = interactive_terminal()
+        if owner is not None:
+            try:
+                owner.set_context(task_id, stage, payload)
+            except Exception:
+                pass  # Display context cannot change the approval decision.
         try:
             if multiline:
                 response = safe_multiline_input(
@@ -25295,11 +25336,23 @@ class BioAnalystAgent:
                     history=False,
                 )
             else:
-                response = safe_input(
-                    prompt,
-                    timeout_seconds=self.input_timeout_seconds,
-                    history=(stage == "interactive_prompt"),
-                )
+                input_started = time.monotonic()
+                while True:
+                    remaining = self.input_timeout_seconds
+                    if remaining:
+                        from math import ceil
+                        remaining = remaining - (time.monotonic() - input_started)
+                        if remaining <= 0:
+                            raise HumanInputTimeout("terminal input timed out")
+                        # safe_input accepts integral seconds; zero means no
+                        # timeout and must never result from rounding a deadline.
+                        remaining = max(1, ceil(remaining))
+                    response = safe_input(prompt, timeout_seconds=remaining,
+                                          history=(stage == "interactive_prompt"))
+                    if stage in {"plan_review", "code_review"} and response.strip() == "/details":
+                        output.show_review_details()
+                        continue
+                    break
                 if stage == "interactive_prompt":
                     continuation_lines = read_pending_paste_lines()
                     if continuation_lines:
@@ -25347,7 +25400,10 @@ class BioAnalystAgent:
     ) -> str:
         owner = interactive_terminal()
         if owner is not None:
-            owner.set_context(task_id, stage, payload)
+            try:
+                owner.set_context(task_id, stage, payload)
+            except Exception:
+                pass  # Display context cannot change the approval decision.
             # The runtime already owns a worker thread in TUI mode. Keep its
             # original synchronous prompt/persistence boundary; UI keys run on
             # the independent terminal loop and resolve this input transport.
@@ -34889,7 +34945,8 @@ question. Never guess a scientific or database identity.
                 await flush_public()
                 try:
                     resource_observation = call_with_activity("资源读取", inspect_resource, resource, role=role,
-                        display_scope={"task_id": task_id, "node": "consultant",
+                        display_result=resource_display_result,
+                        display_scope={"task_id": task_id, "node": "consultant", "tool_category": "read",
                                        "source_message_id": str(getattr(response, "id", "") or "")})
                 except ValueError as exc:
                     resource_observation = {
@@ -34931,7 +34988,8 @@ question. Never guess a scientific or database identity.
                 await flush_public()
                 try:
                     resource_observation = call_with_activity("路径搜索", glob_resources, pattern,
-                        display_scope={"task_id": task_id, "node": "consultant",
+                        display_result=glob_display_result,
+                        display_scope={"task_id": task_id, "node": "consultant", "tool_category": "search",
                                        "source_message_id": str(getattr(response, "id", "") or "")})
                 except ValueError as exc:
                     resource_observation = {
@@ -35609,7 +35667,8 @@ question. Never guess a scientific or database identity.
                     if self.retriever:
                         await flush_public()
                         retrieved = call_with_activity("知识库搜索", self.retriever.retrieve,
-                            query, target_datasets=[target_kb], display_scope={"task_id": task_id, "node": "consultant"})
+                            query, target_datasets=[target_kb], display_result=lambda value: "returned" if value else "unknown",
+                            display_scope={"task_id": task_id, "node": "consultant", "tool_category": "search"})
                         if retrieved and retrieved.strip() and "Nothing found" not in retrieved:
                             display_print(f"{Fore.GREEN}📚 RAG: Found relevant content.{Style.RESET_ALL}", purpose='telemetry')
                             new_knowledge = retrieved
@@ -40638,11 +40697,9 @@ question. Never guess a scientific or database identity.
             # 展示计划（限制行数避免刷屏）
             wait_started = time.perf_counter()
             wait_started_at = timestamp_now()
-            display_print(f"\n{Fore.CYAN}{'='*60}")
-            display_print(f"  📋  PLAN REVIEW  |  Task: {task_id}")
-            display_print(f"{'='*60}{Style.RESET_ALL}")
-            output.page_text(f"Plan Review | Task: {task_id}", review_content, Fore.CYAN)
-            display_print(f"{'─'*60}")
+            output.prepare_review("计划审批", review_content,
+                plan_id=str(persisted_plan.get("plan_id") or "UNKNOWN"),
+                step_count=len(persisted_plan.get("steps") or []))
 
             try:
                 user_input = self._prompt_user(
@@ -45420,9 +45477,13 @@ question. Never guess a scientific or database identity.
                     try:
                         is_error = "error" in query.lower()
                         target_kb = KB_MAP.get("ERRORS" if is_error else "SOP")
-                        rag_result = self.retriever.retrieve(query, target_datasets=[target_kb]) or "No info found."
+                        rag_result = call_with_activity("知识库搜索", self.retriever.retrieve, query,
+                            target_datasets=[target_kb], display_result=lambda value: "returned" if value else "unknown",
+                            display_scope={"task_id": task_id, "node": "generate", "tool_category": "search"}) or "No info found."
                     except Exception as e:
                         rag_result = f"Search error: {e}"
+                else:
+                    emit_display("error", "知识库服务不可用；本次未派发搜索。", source="runtime_fact", task_id=task_id, node="generate")
                 if str(rag_result).startswith("Search error:"):
                     plan_progress = self._record_plan_current_evidence(task_id, "search_failed", rag_result[:1000])
                 elif self._plan_step_action_is(self._running_plan_step(load_plan_state(self.data_path, task_id)), "search"):
@@ -53588,10 +53649,11 @@ question. Never guess a scientific or database identity.
             if isinstance(payload, dict) and payload.get("type") == "code_review":
                 risk_info = payload.get("risk", {})
                 risk = risk_info.get("level") or risk_info.get("risk_level") or "MEDIUM"
-                display_print(f"\n{Fore.YELLOW}⚠️  CODE REVIEW  |  Risk: {risk}{Style.RESET_ALL}")
+
                 wait_started = time.perf_counter()
                 wait_started_at = timestamp_now()
-                output.page_text("Code Review", payload.get("content", ""), Fore.CYAN)
+                output.prepare_review("代码审批", payload.get("content", ""),
+                    language=str(payload.get("language") or "UNKNOWN"), risk=str(risk))
                 try:
                     user_response = await self._aprompt_user(
                         task_id,

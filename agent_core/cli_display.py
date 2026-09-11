@@ -27,6 +27,15 @@ def safe_text(value):
     text = _BEARER.sub(lambda match: match[1] + '[REDACTED]', text)
     return _API_KEY.sub('[REDACTED]', text)
 
+
+def safe_document(value):
+    """Preserve long multiline review copies; each complete line is sanitized.
+
+    This is never returned to approval hashing, execution or a model parser.
+    An oversized single line keeps the existing explicit omission behavior.
+    """
+    return ''.join(safe_text(line) for line in str(value).splitlines(keepends=True))
+
 import codecs
 import logging
 import sys
@@ -64,6 +73,7 @@ class DisplayTicket:
     degradation: str = ''
     purpose: str = ''
     presentation: str = 'details'
+    status: str = ''
 
     def finish(self, success, reason=''):
         if not success:
@@ -183,6 +193,42 @@ class DisplayModel:
         self.active_execution_scope = None
         self.known_execution_scopes = set()
         self.priority = ''
+        self.pending_tool_group = None
+        self.tool_receipts = set()
+
+    @staticmethod
+    def _group_scope(data):
+        return tuple(str(data.get(key, '')) for key in
+                     ('task_id', 'node', 'call_id', 'epoch', 'action_id'))
+
+    @staticmethod
+    def _receipt_identity(data):
+        identity = tuple(str(data.get(key, '')) for key in
+                         ('tool_call_id', 'tool_request_id', 'execution_attempt_id',
+                          'execution_attempt', 'pid'))
+        return (DisplayModel._group_scope(data), identity) if any(identity) else None
+
+    @staticmethod
+    def _group_text(counts):
+        labels = {'read': ('读取', '项'), 'search': ('搜索', '次'),
+                  'process': ('运行', '个脚本'), 'other': ('工具返回', '次'),
+                  'empty': ('空结果', '次')}
+        text = ' · '.join(f'{labels[k][0]} {n} {labels[k][1]}' for k, n in counts.items())
+        return text + (' · 进程已退出，正式核验中' if counts.get('process') else '')
+
+    def finalize_tools(self):
+        """Close an observed contiguous group, without timers or business facts."""
+        with self.lock:
+            group, self.pending_tool_group = self.pending_tool_group, None
+            if group is None:
+                return None
+            text = self._group_text(group['counts'])
+            ticket = DisplayTicket(next(_sequence), 'runtime_fact', 'tool_group', text,
+                                   group['scope'], {'ready': group['ready'], 'enqueued': time.monotonic()},
+                                   purpose='tool_fact', presentation='history')
+            self.items.append(ticket)
+            self.history.append(text)
+            return ticket
 
     @staticmethod
     def _activity_scope(data):
@@ -198,7 +244,7 @@ class DisplayModel:
             return False
         if scope in self.fenced_scopes:
             return False
-        new_task = has_scope and self.active_scope and scope[0] != self.active_scope[0]
+        new_task = bool(scope[0]) and self.active_scope and bool(self.active_scope[0]) and scope[0] != self.active_scope[0]
         if self.priority and not new_task and kind in {'stage', 'activity', 'tool_start', 'tool_end', 'tool_tail'}:
             return False
         execution = tuple(str(data.get(key, '')) for key in
@@ -228,7 +274,7 @@ class DisplayModel:
     def receive(self, kind, text='', **data):
         with self.lock:
             self.updates += 1
-            text = safe_text(text)
+            text = safe_document(text) if data.get('purpose') in _DETAIL_PURPOSES | {'review_view'} else safe_text(text)
             source = data.get('source', 'diagnostic' if kind == 'details' else 'runtime_fact')
             if source not in {'model_public', 'runtime_fact', 'diagnostic'}:
                 source = 'diagnostic'
@@ -239,14 +285,52 @@ class DisplayModel:
                 return None
             if key:
                 self.seen.add(key)
+            receipt = self._receipt_identity(data) if kind == 'tool_end' else None
             ticket = DisplayTicket(identity if identity is not None else next(_sequence),
                                    source, kind, text, scope,
                                    {'ready': data.get('public_ready_at', time.monotonic()),
                                     'enqueued': time.monotonic()})
             ticket.purpose = str(data.get('purpose', ''))
-            active = self._may_activate(kind, data)
+            ticket.status = str(data.get('status', ''))
             is_diagnostic = source == 'diagnostic' or ticket.purpose in _DIAGNOSTIC_PURPOSES
             status_only = ticket.purpose == 'status'
+            detail_only = (kind == 'details' or is_diagnostic or ticket.purpose in _DETAIL_PURPOSES)
+            if (detail_only and kind not in _REQUIRED and not status_only
+                    and data.get('event') not in {'attempt_fenced', 'fenced'}):
+                # A counter/parse receipt with only a task and node is not a
+                # new invocation. It must not make the actual call look stale.
+                active = False
+            else:
+                active = self._may_activate(kind, data)
+            category = data.get('tool_category', 'other')
+            category = category if category in {'read', 'search', 'process'} else 'other'
+            if data.get('status') in {'empty', 'no_match'}:
+                category = 'empty'
+            returned = (kind == 'tool_end' and receipt is not None
+                        and data.get('status') in {'returned', 'success', 'empty', 'no_match'}
+                        and data.get('tool_success', True) is not False
+                        and not data.get('partial') and not data.get('unknown')
+                        and not data.get('not_dispatched')
+                        and (data.get('tool_category') != 'process' or
+                             (data.get('returncode') == 0 and data.get('command_started') is not False)))
+            if returned:
+                # Dedupe the successful receipt only. A previous unknown or
+                # failure does not swallow a later authoritative completion.
+                if receipt in self.tool_receipts:
+                    return None
+                self.tool_receipts.add(receipt)
+            grouped = (returned and bool(data.get('task_id')) and active and not self.priority and source == 'runtime_fact'
+                       and not is_diagnostic and self.verbosity == 'compact')
+            if self.pending_tool_group is not None:
+                boundary = (kind in _REQUIRED or (kind == 'message' and not is_diagnostic)
+                            or (kind == 'tool_end' and not grouped)
+                            or (kind == 'tool_start' and self._group_scope(data) != self.pending_tool_group['key'])
+                            or (kind == 'stage' and active)
+                            or data.get('event') in {'attempt_started', 'route_changed'})
+                if grouped and self._group_scope(data) != self.pending_tool_group['key']:
+                    boundary = True
+                if boundary:
+                    self.finalize_tools()
             if (kind in {'stage', 'activity', 'tool_start', 'tool_end'} or status_only) and active and (not is_diagnostic or status_only):
                 if kind == 'stage':
                     self.stage = text
@@ -276,7 +360,7 @@ class DisplayModel:
                     self.active = text.splitlines()[0] if text else kind
                     self.last_activity = time.monotonic()
             elif ticket.purpose in _DETAIL_PURPOSES:
-                self.details.append(text[:65536])
+                self.details.append(text)
             elif kind == 'details' or is_diagnostic:
                 self.details.append(text[:65536])
                 if self.verbosity == 'verbose' and not status_only:
@@ -288,6 +372,16 @@ class DisplayModel:
                 self.history.append(text)
                 self.items.append(ticket)
                 ticket.presentation = 'status' if status_only else 'history'
+                if kind == 'tool_start' and self.verbosity == 'compact':
+                    ticket.presentation = 'status'
+                elif grouped:
+                    ticket.presentation = 'status'
+                    if self.pending_tool_group is None:
+                        self.pending_tool_group = {'key': self._group_scope(data), 'scope': scope,
+                                                   'counts': {}, 'ready': ticket.times['ready']}
+                    counts = self.pending_tool_group['counts']
+                    counts[category] = counts.get(category, 0) + 1
+                    self.active = self._group_text(counts)
                 if kind in {'result', 'cancel', 'approval'} and active:
                     self.priority = kind if kind in {'cancel', 'approval'} else ''
                     self.active = text.splitlines()[0] if text else kind
@@ -302,6 +396,8 @@ class DisplayModel:
 
     def status(self):
         with self.lock:
+            if self.verbosity == 'compact':
+                return self.active
             return f'{self.stage} · {self.active} · 距上次观测 {int(time.monotonic()-self.last_activity)} 秒'
 
 

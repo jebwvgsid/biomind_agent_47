@@ -317,7 +317,7 @@ async def _notify_lifecycle(
         scope["pid"] = payload["pid"]
     emit_display("details", f"工具事件 {event}", source="runtime_fact", **scope)
     if event == "RUNNING":
-        emit_display("tool_start", "工具进程已启动；等待执行结果", source="runtime_fact", **scope)
+        emit_display("tool_start", "工具进程已启动；等待执行结果", source="runtime_fact", tool_category="process", **scope)
     elif event == "PROCESS_EXITED":
         returncode = payload.get("returncode")
         text = ("命令 rc=0，等待正式核验" if returncode == 0 else
@@ -325,7 +325,8 @@ async def _notify_lifecycle(
         if payload.get("pid") is None:
             text = "命令未启动；等待后端处理"
         emit_display("tool_end", text, source="runtime_fact", returncode=returncode,
-                     command_started=payload.get("pid") is not None, **scope)
+                     command_started=payload.get("pid") is not None, tool_category="process",
+                     status="returned" if returncode == 0 else "unknown" if returncode is None else "failed", **scope)
     elif event == "PROCESS_CANCELLED":
         emit_display("cancel", "工具执行已取消", source="runtime_fact", **scope)
     if callback is None:
