@@ -24,6 +24,8 @@ from execution.runtime_contract import (
 )
 from execution.shell_safety import shell_safety_error
 
+from agent_core.cli_display import StreamDisplayCopy, emit as emit_display, terminal as active_terminal
+
 logger = logging.getLogger(__name__)
 
 # Shell commands run in their own process groups so tools that spawn workers can
@@ -207,9 +209,12 @@ async def _read_stream_chunks(
     if stream is None:
         return
     limit_reached = False
+    display_copy = StreamDisplayCopy(stream_name) if active_terminal() is not None else None
     while True:
         chunk = await stream.read(4096)
         if not chunk:
+            if display_copy is not None:
+                display_copy.feed(b"", final=True)
             break
         if limit_reached:
             # Keep draining until the process group is reaped so PIPE backpressure
@@ -218,6 +223,8 @@ async def _read_stream_chunks(
         capture.feed(chunk)
         if log_handle is not None:
             log_handle.write(chunk)
+        if display_copy is not None:
+            display_copy.feed(chunk)
         progress["last_output_at"] = time.monotonic()
         if output_limit > 0 and capture.total_bytes > output_limit:
             progress["output_limit_stream"] = stream_name
@@ -273,6 +280,9 @@ def get_last_execution_metadata() -> Dict[str, Any]:
 
 
 async def _notify_lifecycle(callback: Optional[Callable[..., Any]], event: str, payload: Dict[str, Any]) -> None:
+    emit_display("details", f"工具事件 {event}: {payload}")
+    if event == "RUNNING":
+        emit_display("tool_start", "工具进程已启动；等待执行结果")
     if callback is None:
         return
     result = callback(event, dict(payload))
@@ -624,6 +634,7 @@ async def run_command(
             result = stdout_text, stderr_text, 124
         else:
             result = stdout_text, stderr_text, process.returncode
+        emit_display("tool_end", "命令 rc=0，等待正式核验" if result[2] == 0 else f"命令退出 rc={result[2]}；等待后端处理")
         return result
     except asyncio.CancelledError:
         cancellation_observed = True

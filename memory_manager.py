@@ -55,11 +55,8 @@ def _msg_tokens(msg) -> int:
 
 
 def _safe_print(text: str):
-    try:
-        print(text)
-    except UnicodeEncodeError:
-        encoding = sys.stdout.encoding or "utf-8"
-        print(str(text).encode(encoding, errors="replace").decode(encoding, errors="replace"))
+    logging.getLogger("BioMind.Memory").info(text)
+
 
 
 # ─────────────────────────────────────────────────────────────

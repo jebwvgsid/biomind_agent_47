@@ -1017,6 +1017,13 @@ def _emit(
         if key.startswith("exception_") or key == "http_response_headers":
             payload.pop(key, None)
     payload["event"] = event
+    from agent_core.cli_display import emit as emit_display
+    if event in {"attempt_started", "attempt_progress", "stream_active"}:
+        emit_display("activity", "等待模型返回" if event == "attempt_started" else "已观测到 provider 活动")
+    elif event == "attempt_cancelled":
+        emit_display("cancel", f"provider 取消回执：{payload.get('cleanup_result', '未确认')}；工具与任务清理另行确认。")
+    elif event == "attempt_failed":
+        emit_display("error", f"provider attempt 失败：{payload.get('failure_code', '详情见诊断日志')}")
     try:
         logger.info("PROVIDER_ATTEMPT_EVENT %s", json.dumps(payload, ensure_ascii=False, sort_keys=True))
     except Exception:

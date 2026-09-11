@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit
 
+from agent_core.cli_display import display_print, emit as emit_display, terminal as active_terminal
 import asyncio
 from agent_core.phase_timing import phase, phase_started, phase_finished, timed_phase
 from copy import deepcopy
@@ -2215,6 +2216,8 @@ class OutputRouter:
         self.viewer_mode = os.getenv("BIOMIND_VIEWER_MODE", "inline").lower()
 
     def _pager_enabled(self) -> bool:
+        if os.getenv("BIOMIND_UI", "").lower() == "plain" or os.getenv("TERM") == "dumb":
+            return False
         if os.getenv("BIOMIND_PAGER", "1").lower() in {"0", "false", "no", "off"}:
             return False
         return bool(sys.stdin.isatty() and sys.stdout.isatty())
@@ -2257,14 +2260,14 @@ class OutputRouter:
             block.append("├" + "─" * body_width + "┤")
             block.append("│" + visible_width_slice(status, body_width).ljust(body_width) + "│")
             block.append("└" + "─" * body_width + "┘")
-            print("\n".join(block))
+            display_print("\n".join(block))
             return len(block)
 
         try:
             while True:
                 if previous_block_lines:
                     # Move cursor back above the previous block + prompt, then clear.
-                    print(f"\x1b[{previous_block_lines + 1}A\x1b[J", end="")
+                    display_print(f"\x1b[{previous_block_lines + 1}A\x1b[J", end="")
                 previous_block_lines = render()
                 # A previous subprocess or terminal UI can leave ISIG/ICANON
                 # disabled. Restore normal TTY semantics before waiting so
@@ -2306,10 +2309,16 @@ class OutputRouter:
             suffix = f"\n... [{len(lines) - self.preview_lines} more lines; set BIOMIND_PAGER=1 in a TTY to scroll]"
         header = f"\n{title}\n" if title else ""
         body = f"{header}{shown}{suffix}"
-        print(f"{color}{body}{Style.RESET_ALL}" if color else body)
+        display_print(f"{color}{body}{Style.RESET_ALL}" if color else body)
 
     def page_text(self, title: str, text: str, color: str = "", force: bool = False):
         """Display long text in a scrollable terminal pager when available."""
+        if emit_display("details", str(title) + "\n" + str(text)):
+            if title == "🤖 AI Message" and not str(text).lstrip().startswith(("{", "[")):
+                emit_display("message", str(text))
+            else:
+                emit_display("message", str(title) + "：已收录，/details 查看")
+            return
         text = text.rstrip("\n")
         line_count = len(text.splitlines())
         if not text:
@@ -2317,7 +2326,7 @@ class OutputRouter:
         if not force and line_count <= self.pager_line_threshold:
             header = f"\n{title}\n" if title else ""
             body = header + text
-            print(f"{color}{body}{Style.RESET_ALL}" if color else body)
+            display_print(f"{color}{body}{Style.RESET_ALL}" if color else body)
             return
         if not self._pager_enabled():
             self._preview_text(title, text, color)
@@ -2338,7 +2347,7 @@ class OutputRouter:
                     f.write("=" * min(80, max(20, len(title))) + "\n\n")
                 f.write(text)
                 f.write("\n")
-            print(f"{Fore.CYAN}↕ Opening scroll view ({line_count} lines). Use ↑/↓/PgUp/PgDn, q to return.{Style.RESET_ALL}")
+            display_print(f"{Fore.CYAN}↕ Opening scroll view ({line_count} lines). Use ↑/↓/PgUp/PgDn, q to return.{Style.RESET_ALL}")
             subprocess.run(["less", "-R", "-S", path])
         finally:
             try:
@@ -2347,6 +2356,8 @@ class OutputRouter:
                 pass
 
     def print_node_header(self, node: str):
+        if emit_display("stage", node):
+            return
         with self._console_lock:
             if node != self._last_node:
                 self._last_node = node
@@ -2357,17 +2368,19 @@ class OutputRouter:
                     "install_subagent": "🔧", "finish": "🏁",
                 }
                 icon = icons.get(node, "•")
-                print(f"\n{Fore.CYAN}{'─'*55}")
-                print(f"  {icon}  NODE: {node.upper()}")
-                print(f"{'─'*55}{Style.RESET_ALL}")
+                display_print(f"\n{Fore.CYAN}{'─'*55}")
+                display_print(f"  {icon}  NODE: {node.upper()}")
+                display_print(f"{'─'*55}{Style.RESET_ALL}")
 
     def print_once(self, key: str, text: str, color: str = ""):
         """相同 key 只打印一次"""
+        if key.startswith("phase:") and emit_display("activity", text):
+            return
         with self._console_lock:
             if key in self._seen:
                 return
             self._seen.add(key)
-            print(f"{color}{text}{Style.RESET_ALL}" if color else text)
+            display_print(f"{color}{text}{Style.RESET_ALL}" if color else text)
 
     def render_terminal_result(self, result: InteractiveRunResult) -> bool:
         """Render one atomic terminal block; return whether it was emitted."""
@@ -2394,7 +2407,7 @@ class OutputRouter:
                 f"  Result path: {result.result_path or '-'}",
                 f"  Trace path: {result.trace_path or '-'}",
             ]
-            print(f"\n{color}" + "\n".join(lines) + Style.RESET_ALL, flush=True)
+            display_print(f"\n{color}" + "\n".join(lines) + Style.RESET_ALL, flush=True)
             return True
 
     def print_ai(self, content: str):
@@ -2431,9 +2444,9 @@ class OutputRouter:
         if key not in self._seen:
             self._seen.add(key)
             color = Fore.GREEN if "✅" in clean else Fore.RED
-            print(f"\n{color}{'─'*50}")
+            display_print(f"\n{color}{'─'*50}")
             self.page_text("Execution Output", clean, color)
-            print(f"{'─'*50}{Style.RESET_ALL}")
+            display_print(f"{'─'*50}{Style.RESET_ALL}")
 
     def reset_for_task(self):
         with self._console_lock:
@@ -2459,16 +2472,9 @@ class VibeThinkingHandler(BaseCallbackHandler):
         if chunk and hasattr(chunk, "additional_kwargs"):
             reasoning = chunk.additional_kwargs.get("reasoning_content", "")
 
-        if reasoning:
-            if not self.is_thinking:
-                print(f"\n{Fore.LIGHTBLACK_EX}🧠 [Thinking...]{Style.RESET_ALL}", end="")
-                self.is_thinking = True
-            print(f"{Fore.LIGHTBLACK_EX}{reasoning}{Style.RESET_ALL}", end="", flush=True)
-        elif token:
-            if self.is_thinking:
-                print(f"\n{Fore.GREEN}💡 [Done thinking]{Style.RESET_ALL}\n", end="")
-                self.is_thinking = False
-            # 不在这里打印，由 OutputRouter 统一处理
+        if reasoning or token:
+            emit_display("activity", "正在接收模型回复；候选尚待校验")
+        self.is_thinking = bool(reasoning)
 
 
 # ════════════════════════════════════════════════════════════════
@@ -4436,7 +4442,7 @@ class BioAnalystAgent:
             started_at=wait_started_at,
         )
         if response.strip().lower() not in {"y", "yes"}:
-            print(f"{Fore.CYAN}Wiki ingest skipped. Run /wiki ingest later, or set BIOMIND_WIKI_INGEST_MODE=manual/auto.{Style.RESET_ALL}")
+            display_print(f"{Fore.CYAN}Wiki ingest skipped. Run /wiki ingest later, or set BIOMIND_WIKI_INGEST_MODE=manual/auto.{Style.RESET_ALL}")
             return
         succeeded, result = await self._ingest_wiki_task_with_gate(
             task_id,
@@ -25250,7 +25256,7 @@ class BioAnalystAgent:
                 except Exception:
                     pass
             restore_terminal_state()
-            print(
+            display_print(
                 f"\n{Fore.YELLOW}⏸ Waiting for user input saved to {path}. "
                 f"Resume later with /resume {task_id}.{Style.RESET_ALL}"
             )
@@ -35500,12 +35506,12 @@ question. Never guess a scientific or database identity.
                     if self.retriever:
                         retrieved = self.retriever.retrieve(query, target_datasets=[target_kb])
                         if retrieved and retrieved.strip() and "Nothing found" not in retrieved:
-                            print(f"{Fore.GREEN}📚 RAG: Found relevant content.{Style.RESET_ALL}")
+                            display_print(f"{Fore.GREEN}📚 RAG: Found relevant content.{Style.RESET_ALL}")
                             new_knowledge = retrieved
                         else:
-                            print(f"{Fore.YELLOW}📭 RAG: No results for '{query}'.{Style.RESET_ALL}")
+                            display_print(f"{Fore.YELLOW}📭 RAG: No results for '{query}'.{Style.RESET_ALL}")
                     else:
-                        print(f"{Fore.RED}🔴 RAG: Retriever not initialized.{Style.RESET_ALL}")
+                        display_print(f"{Fore.RED}🔴 RAG: Retriever not initialized.{Style.RESET_ALL}")
 
                     rag_history.append(f"--- [Search: {kb_cat}] {query} ---\n{new_knowledge}")
                     return {
@@ -40509,16 +40515,16 @@ question. Never guess a scientific or database identity.
 
             # 显示内存状态
             mem_status = self.memory_manager.status(messages)
-            print(f"\n📊 Memory: {mem_status}")
+            display_print(f"\n📊 Memory: {mem_status}")
 
             # 展示计划（限制行数避免刷屏）
             wait_started = time.perf_counter()
             wait_started_at = timestamp_now()
-            print(f"\n{Fore.CYAN}{'='*60}")
-            print(f"  📋  PLAN REVIEW  |  Task: {task_id}")
-            print(f"{'='*60}{Style.RESET_ALL}")
+            display_print(f"\n{Fore.CYAN}{'='*60}")
+            display_print(f"  📋  PLAN REVIEW  |  Task: {task_id}")
+            display_print(f"{'='*60}{Style.RESET_ALL}")
             output.page_text(f"Plan Review | Task: {task_id}", review_content, Fore.CYAN)
-            print(f"{'─'*60}")
+            display_print(f"{'─'*60}")
 
             try:
                 user_input = self._prompt_user(
@@ -40556,7 +40562,7 @@ question. Never guess a scientific or database identity.
             il = user_input.lower()
 
             if il in ["y", "yes", "approve", ""]:
-                print(f"{Fore.GREEN}✓ Plan approved. Executing...{Style.RESET_ALL}")
+                display_print(f"{Fore.GREEN}✓ Plan approved. Executing...{Style.RESET_ALL}")
                 plan_state = self._ensure_plan_tracker(task_id, plan)
                 _bind_current_task_spec_record(plan_state, task_spec)
                 plan_state["canonical_constraint_hash"] = current_constraint_hash
@@ -40601,7 +40607,7 @@ question. Never guess a scientific or database identity.
                     "next_step": "generate",
                 }
             elif il in ["q", "quit", "exit"]:
-                print(f"{Fore.MAGENTA}🛑 Task cancelled.{Style.RESET_ALL}")
+                display_print(f"{Fore.MAGENTA}🛑 Task cancelled.{Style.RESET_ALL}")
                 cancellation_receipt = self._persist_plan_review_cancellation(
                     task_id
                 )
@@ -40648,7 +40654,7 @@ question. Never guess a scientific or database identity.
                         )
                     if not feedback:
                         feedback = "Rejected. Try a different approach."
-                print(f"{Fore.CYAN}📡 Feedback captured: {feedback}{Style.RESET_ALL}")
+                display_print(f"{Fore.CYAN}📡 Feedback captured: {feedback}{Style.RESET_ALL}")
                 turns, feedback_turn_ref = self._append_semantic_conversation_turn(
                     task_id,
                     role="user",
@@ -52026,7 +52032,7 @@ question. Never guess a scientific or database identity.
             elif specified_env and (not runtime_defaults.get("env") or specified_env == runtime_defaults.get("env")):
                 target_env = specified_env
             else:
-                print(f"\n{Fore.CYAN}❓ Confirm environment for {tool_name}?{Style.RESET_ALL}")
+                display_print(f"\n{Fore.CYAN}❓ Confirm environment for {tool_name}?{Style.RESET_ALL}")
                 user_choice = interrupt({
                     "type": "env_selection",
                     "tool_name": tool_name,
@@ -52124,7 +52130,7 @@ question. Never guess a scientific or database identity.
                     f"- Create/use `{target_env}`, install the packages there, and register the environment before any tool registration.\n"
                 )
 
-            print(f"\n{Fore.CYAN}🔧 INSTALLER: {tool_name} → {target_env}{Style.RESET_ALL}")
+            display_print(f"\n{Fore.CYAN}🔧 INSTALLER: {tool_name} → {target_env}{Style.RESET_ALL}")
 
             initial_msg = INSTALLER_HANDOVER_TEMPLATE.format(
                 user_context=context_summary, rag_context="",
@@ -53111,7 +53117,7 @@ question. Never guess a scientific or database identity.
 
         if isinstance(input_data, Command):
             runner_input = input_data
-            print(f"\n🔄 Resuming: {task_id}")
+            display_print(f"\n🔄 Resuming: {task_id}")
         else:
             prompt = input_data
             project_id = self.default_project_id
@@ -53130,7 +53136,7 @@ question. Never guess a scientific or database identity.
                     )
                 else:
                     runner_input = self._build_resume_runner_state(task_id, prompt, checkpoint_values)
-                print(f"\n🔄 Resuming: {task_id}")
+                display_print(f"\n🔄 Resuming: {task_id}")
             else:
                 stable_record = self._get_or_create_stable_prompt(task_id, project_id)
                 durable_start, is_continuation, _ = self._persist_user_submission(
@@ -53186,7 +53192,7 @@ question. Never guess a scientific or database identity.
                     ),
                 }
                 if is_continuation:
-                    print(f"\n↪ Continuing: {task_id}")
+                    display_print(f"\n↪ Continuing: {task_id}")
 
         # 内存状态展示
         self.memory_manager.print_status(
@@ -53370,7 +53376,7 @@ question. Never guess a scientific or database identity.
             if isinstance(payload, dict) and payload.get("type") == "code_review":
                 risk_info = payload.get("risk", {})
                 risk = risk_info.get("level") or risk_info.get("risk_level") or "MEDIUM"
-                print(f"\n{Fore.YELLOW}⚠️  CODE REVIEW  |  Risk: {risk}{Style.RESET_ALL}")
+                display_print(f"\n{Fore.YELLOW}⚠️  CODE REVIEW  |  Risk: {risk}{Style.RESET_ALL}")
                 wait_started = time.perf_counter()
                 wait_started_at = timestamp_now()
                 output.page_text("Code Review", payload.get("content", ""), Fore.CYAN)
@@ -53409,9 +53415,9 @@ question. Never guess a scientific or database identity.
                 tool = payload.get("tool_name")
                 dflt = payload.get("default_env")
                 reason = payload.get("reason", "")
-                print(f"\n{Fore.CYAN}🔧 Install '{tool}' → env [{dflt}]?{Style.RESET_ALL}")
+                display_print(f"\n{Fore.CYAN}🔧 Install '{tool}' → env [{dflt}]?{Style.RESET_ALL}")
                 if reason:
-                    print(f"{Fore.CYAN}{reason}{Style.RESET_ALL}")
+                    display_print(f"{Fore.CYAN}{reason}{Style.RESET_ALL}")
                 wait_started = time.perf_counter()
                 wait_started_at = timestamp_now()
                 try:
@@ -53536,7 +53542,7 @@ question. Never guess a scientific or database identity.
     # ────────────────────────────────────────────────────────────
 
     async def interactive_mode(self):
-        print(f"""
+        display_print(f"""
 {Fore.CYAN}╔══════════════════════════════════════════════════╗
 ║  🧬  BioAnalyst V4  |  Interactive Mode          ║
 ╚══════════════════════════════════════════════════╝{Style.RESET_ALL}
@@ -53566,7 +53572,7 @@ Commands:
 """)
         current_session_id = f"session_{int(time.time())}"
         current_session_is_new = True
-        print(f"{Fore.GREEN}● Session: {current_session_id}{Style.RESET_ALL}")
+        display_print(f"{Fore.GREEN}● Session: {current_session_id}{Style.RESET_ALL}")
 
         DIRECT_CMDS = ['ls', 'll', 'la', 'pwd', 'whoami', 'date', 'head', 'tail',
                        'cat', 'mkdir', 'touch', 'which', 'df', 'free']
@@ -53604,7 +53610,7 @@ Commands:
                             )
                             continue
                         if control.get("action") == "completed":
-                            print(f"{Fore.GREEN}✓ Task {current_session_id} is already complete; nothing was rerun.{Style.RESET_ALL}")
+                            display_print(f"{Fore.GREEN}✓ Task {current_session_id} is already complete; nothing was rerun.{Style.RESET_ALL}")
                             continue
                         logger.info(
                             "Plain continue resolved as control event: %s",
@@ -53649,8 +53655,8 @@ Commands:
                     snap   = self._app_for_task(current_session_id).get_state(config)
                     msgs   = snap.values.get("messages", []) if snap.values else []
                     self.memory_manager.print_status(msgs)
-                    print(self.core_memory_store.status_text(self.default_project_id))
-                    print(self.task_summary_renderer.status_text(current_session_id))
+                    display_print(self.core_memory_store.status_text(self.default_project_id))
+                    display_print(self.task_summary_renderer.status_text(current_session_id))
                     output.page_text(
                         "Task Summary",
                         self.task_summary_renderer.read_task_summary(current_session_id),
@@ -53756,7 +53762,7 @@ Commands:
                     continue
 
                 if user_input == "/wiki":
-                    print(self.wiki_memory_manager.status_text(self.default_project_id))
+                    display_print(self.wiki_memory_manager.status_text(self.default_project_id))
                     output.page_text(
                         "Wiki Overview",
                         self.wiki_memory_manager.overview_file.read_text(encoding="utf-8"),
@@ -53782,7 +53788,7 @@ Commands:
                         import subprocess
                         subprocess.run(["less", str(path)])
                     else:
-                        print(f"{Fore.RED}CoT log not found: {path}{Style.RESET_ALL}")
+                        display_print(f"{Fore.RED}CoT log not found: {path}{Style.RESET_ALL}")
                     continue
 
                 if user_input.startswith("/new"):
@@ -53799,7 +53805,7 @@ Commands:
                     current_session_id = f"{name}_{int(time.time())}" if name else f"session_{int(time.time())}"
                     current_session_is_new = True
                     output.reset_for_task()
-                    print(f"{Fore.GREEN}● New session: {current_session_id}{Style.RESET_ALL}")
+                    display_print(f"{Fore.GREEN}● New session: {current_session_id}{Style.RESET_ALL}")
                     continue
 
                 if user_input == "/stop":
@@ -53829,16 +53835,16 @@ Commands:
                     current_session_id = f"session_{int(time.time())}"
                     current_session_is_new = True
                     output.reset_for_task()
-                    print(f"{Fore.GREEN}● New session: {current_session_id}{Style.RESET_ALL}")
+                    display_print(f"{Fore.GREEN}● New session: {current_session_id}{Style.RESET_ALL}")
                     continue
 
                 if user_input == "/tasks":
                     if self.state_manager:
                         tasks = self.state_manager.list_tasks(limit=15)
-                        print(f"\n{'Task ID':<32} | {'Status':<10} | {'Updated'}")
-                        print("─" * 68)
+                        display_print(f"\n{'Task ID':<32} | {'Status':<10} | {'Updated'}")
+                        display_print("─" * 68)
                         for t in tasks:
-                            print(f"{t['task_id']:<32} | {t['status']:<10} | {t['updated_at']}")
+                            display_print(f"{t['task_id']:<32} | {t['status']:<10} | {t['updated_at']}")
                     continue
 
                 if user_input.startswith("/resume "):
@@ -53906,9 +53912,9 @@ Commands:
                 if user_input == "/debug":
                     config   = {"configurable": {"thread_id": current_session_id}}
                     snapshot = self._app_for_task(current_session_id).get_state(config)
-                    print(f"Next nodes: {snapshot.next}")
+                    display_print(f"Next nodes: {snapshot.next}")
                     if snapshot.tasks and snapshot.tasks[0].interrupts:
-                        print(f"Interrupt payload: {snapshot.tasks[0].interrupts[0].value}")
+                        display_print(f"Interrupt payload: {snapshot.tasks[0].interrupts[0].value}")
                     continue
 
                 # ── Shell 直通 ────────────────────────────────
@@ -53916,9 +53922,9 @@ Commands:
                     try:
                         os.chdir(user_input[3:].strip())
                         if self.pm: self.pm.work_dir = Path(os.getcwd())
-                        print(f"📂 {os.getcwd()}")
+                        display_print(f"📂 {os.getcwd()}")
                     except Exception as e:
-                        print(f"❌ {e}")
+                        display_print(f"❌ {e}")
                     continue
 
                 cmd_parts = user_input.split()
@@ -53943,7 +53949,7 @@ Commands:
                     suggested_session_id = self._auto_task_id_for_prompt(next_input, fallback_prefix="session")
                     if suggested_session_id:
                         current_session_id = suggested_session_id
-                        print(f"{Fore.GREEN}● Task title: {current_session_id}{Style.RESET_ALL}")
+                        display_print(f"{Fore.GREEN}● Task title: {current_session_id}{Style.RESET_ALL}")
                 run_result = await self._run_agent_interrupt_loop(
                     next_input,
                     current_session_id,
@@ -53981,7 +53987,7 @@ def restore_terminal():
         restore_terminal_state()
     except Exception:
         pass
-    print("\n👋 Terminal restored.")
+    display_print("\n👋 Terminal restored.")
 
 
 def _handle_suspend(signum, frame):
@@ -54060,7 +54066,7 @@ async def main():
     command   = sys.argv[1] if len(sys.argv) > 1 else "interactive"
     data_path = str(PathManager.WORK_DIR)
 
-    print(f"""
+    display_print(f"""
 {Fore.CYAN}╔═══════════════════════════════════════════════════════╗
 ║    🧬  BioAnalyst Agent V4  –  Production System    ║
 ╚═══════════════════════════════════════════════════════╝{Style.RESET_ALL}
@@ -54081,7 +54087,7 @@ async def main():
         elif command == "demo":
             await agent.go("Explore the data in ./sample_data")
         else:
-            print(f"Unknown command: {command}")
+            display_print(f"Unknown command: {command}")
     finally:
         await agent.aclose()
 
@@ -54100,7 +54106,7 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\n👋 Bye")
+        display_print("\n👋 Bye")
     except Exception:
         import traceback
         traceback.print_exc()

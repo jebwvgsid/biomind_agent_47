@@ -2,6 +2,7 @@
 智能人工确认系统 - 严格白名单版 + 富交互UI
 """
 
+from agent_core.cli_display import display_print
 import re
 import shlex
 import sys
@@ -297,41 +298,41 @@ class RiskAnalyzer:
 class ConfirmationUI:
     @staticmethod
     def display_code_preview(code, language, step_index, total_steps, risk_analysis):
-        print(f"\n{Fore.CYAN}{'='*80}")
-        print(f"{Fore.CYAN}📋 CODE REVIEW - Step {step_index}")
-        print(f"{Fore.CYAN}{'='*80}")
+        display_print(f"\n{Fore.CYAN}{'='*80}")
+        display_print(f"{Fore.CYAN}📋 CODE REVIEW - Step {step_index}")
+        display_print(f"{Fore.CYAN}{'='*80}")
 
         risk_level = risk_analysis['risk_level']
         risk_color = ConfirmationUI._get_risk_color(risk_level)
         
-        print(f"\n{Fore.WHITE}Language: {Fore.YELLOW}{language}")
-        print(f"{Fore.WHITE}Risk Level: {risk_color}{risk_level.value.upper()}{Style.RESET_ALL}")
-        print(f"{Fore.WHITE}Risk Score: {risk_color}{risk_analysis['risk_score']:.1f}/100{Style.RESET_ALL}")
+        display_print(f"\n{Fore.WHITE}Language: {Fore.YELLOW}{language}")
+        display_print(f"{Fore.WHITE}Risk Level: {risk_color}{risk_level.value.upper()}{Style.RESET_ALL}")
+        display_print(f"{Fore.WHITE}Risk Score: {risk_color}{risk_analysis['risk_score']:.1f}/100{Style.RESET_ALL}")
         
-        print(f"\n{Fore.GREEN}{'─'*80}")
-        print(f"{Fore.GREEN}Code to Execute:")
-        print(f"{Fore.GREEN}{'─'*80}")
+        display_print(f"\n{Fore.GREEN}{'─'*80}")
+        display_print(f"{Fore.GREEN}Code to Execute:")
+        display_print(f"{Fore.GREEN}{'─'*80}")
         
         # 简单语法高亮
         highlighted = ConfirmationUI._highlight_code(code.strip(), language)
-        print(highlighted)
+        display_print(highlighted)
         
-        print(f"{Fore.GREEN}{'─'*80}")
+        display_print(f"{Fore.GREEN}{'─'*80}")
         
         if risk_analysis['risky_operations']:
-            print(f"\n{Fore.RED}⚠️  Risky / Unknown Operations:")
+            display_print(f"\n{Fore.RED}⚠️  Risky / Unknown Operations:")
             for op in risk_analysis['risky_operations']:
-                print(f"   {Fore.YELLOW}• {op}")
+                display_print(f"   {Fore.YELLOW}• {op}")
         
         if risk_analysis['safe_operations']:
-            print(f"\n{Fore.GREEN}✓ Safe Operations:")
+            display_print(f"\n{Fore.GREEN}✓ Safe Operations:")
             for op in risk_analysis['safe_operations']:
-                print(f"   {Fore.WHITE}• {op}")
+                display_print(f"   {Fore.WHITE}• {op}")
 
         if risk_analysis['recommendations']:
-            print(f"\n{Fore.CYAN}💡 Recommendations:")
+            display_print(f"\n{Fore.CYAN}💡 Recommendations:")
             for rec in risk_analysis['recommendations']:
-                print(f"   {Fore.WHITE}{rec}")
+                display_print(f"   {Fore.WHITE}{rec}")
 
     @staticmethod
     def _get_risk_color(level: RiskLevel) -> str:
@@ -357,18 +358,18 @@ class ConfirmationUI:
         prompt_color = Fore.CYAN
         enter_executes = risk_level == RiskLevel.SAFE
         if risk_level != RiskLevel.SAFE:
-             print(f"\n{Fore.YELLOW}⚠️  This operation requires confirmation.{Style.RESET_ALL}")
+             display_print(f"\n{Fore.YELLOW}⚠️  This operation requires confirmation.{Style.RESET_ALL}")
              prompt_color = Fore.YELLOW
 
         # 🌟 升级交互提示
-        print(f"\n{Fore.WHITE}Options:")
+        display_print(f"\n{Fore.WHITE}Options:")
         if enter_executes:
-            print(f"  {Fore.GREEN}[y/Enter]{Fore.WHITE} - Execute")
+            display_print(f"  {Fore.GREEN}[y/Enter]{Fore.WHITE} - Execute")
         else:
-            print(f"  {Fore.GREEN}[y]{Fore.WHITE}       - Execute")
-        print(f"  {Fore.RED}[n]{Fore.WHITE}       - Reject (Skip)")
-        print(f"  {Fore.MAGENTA}[q]{Fore.WHITE}       - Quit task")
-        print(f"  {Fore.CYAN}[任意文字]{Fore.WHITE} - 拒绝执行，并将文字作为反馈发送给 AI (例如: '用 ll 看看')")
+            display_print(f"  {Fore.GREEN}[y]{Fore.WHITE}       - Execute")
+        display_print(f"  {Fore.RED}[n]{Fore.WHITE}       - Reject (Skip)")
+        display_print(f"  {Fore.MAGENTA}[q]{Fore.WHITE}       - Quit task")
+        display_print(f"  {Fore.CYAN}[任意文字]{Fore.WHITE} - 拒绝执行，并将文字作为反馈发送给 AI (例如: '用 ll 看看')")
 
         while True:
             # 提示符改成 Action >
@@ -384,11 +385,11 @@ class ConfirmationUI:
                 if response == '':
                     if enter_executes:
                         return 'y'
-                    print(f"{Fore.YELLOW}Please type 'y' to execute this non-SAFE command, 'n' to reject, or 'q' to quit.{Style.RESET_ALL}")
+                    display_print(f"{Fore.YELLOW}Please type 'y' to execute this non-SAFE command, 'n' to reject, or 'q' to quit.{Style.RESET_ALL}")
                     continue
                 
                 if response.lower() in ['q', 'quit', 'exit', 'stop']:
-                    print(f"{Fore.RED}🛑 User requested force quit.{Style.RESET_ALL}")
+                    display_print(f"{Fore.RED}🛑 User requested force quit.{Style.RESET_ALL}")
                     raise KeyboardInterrupt
 
                 if response.lower() in ['n', 'no']:
@@ -433,7 +434,7 @@ class ConfirmationManager:
         
         # 2. 判断是否需要确认
         if not self.should_confirm(code, language, risk_analysis):
-            print(f"{Fore.GREEN}✓ Auto-approved (Risk: Safe){Style.RESET_ALL}")
+            display_print(f"{Fore.GREEN}✓ Auto-approved (Risk: Safe){Style.RESET_ALL}")
             self._record_decision(code, language, True, "auto", risk_analysis)
             return 'y' # 👈 自动批准返回 'y'
         
@@ -472,14 +473,14 @@ class ConfirmationManager:
 
     # 兼容旧接口
     def _get_user_approval(self, code: str, reason: str, level: str = "critical") -> bool:
-        print(f"Legacy confirmation request: {reason}")
+        display_print(f"Legacy confirmation request: {reason}")
         return self.request_confirmation(code, "Unknown")
 
 if __name__ == "__main__":
-    print("Testing RiskAnalyzer...")
+    display_print("Testing RiskAnalyzer...")
     try:
         # 测试调用
-        print(RiskAnalyzer.analyze("rm -rf /", "Bash"))
-        print("✅ RiskAnalyzer.analyze works correctly.")
+        display_print(RiskAnalyzer.analyze("rm -rf /", "Bash"))
+        display_print("✅ RiskAnalyzer.analyze works correctly.")
     except Exception as e:
-        print(f"❌ Failed: {e}")
+        display_print(f"❌ Failed: {e}")

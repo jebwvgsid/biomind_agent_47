@@ -30,7 +30,7 @@ class ConsoleSummary(logging.Handler):
     def emit(self, record):
         # No traceback, ANSI, multiline JSON or prompt is copied onto the screen.
         from agent_core.cli_display import safe_text
-        message = safe_text(record.getMessage()).splitlines()[0][:240]
+        message = (safe_text(record.getMessage()).splitlines() or [""])[0][:240]
         _notice(f"{record.levelname} · {record.name}: {message} · 详情见诊断日志")
 
 
