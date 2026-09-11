@@ -1,0 +1,916 @@
+{
+  "approval": {
+    "approval_timestamp": "2026-09-12T00:02:22",
+    "approved_plan_hash": "4b652b69f87995ab82352e032a5b6b0a947f41a29c15fa43c19350f6bd6efab8",
+    "approved_plan_revision": 1,
+    "current_approval": {
+      "approval_id": "approval-3954782e3a7d1557830b",
+      "approval_record_ref": "object:sha256:7e48eb1a0ea53443c9cd5dd9e9ab45d084b4104fcbe85895d4a8f981f07b23aa",
+      "plan_snapshot_ref": "object:sha256:718b01f344a2d53b761b66d7dcdfbb5fc63261e96aa1ab821f8c2082800e1d82",
+      "status": "approved"
+    },
+    "current_step_id": "00.input_check",
+    "plan_id": "plan_1c98aab2afda5dfe081b",
+    "plan_revision": 1
+  },
+  "approved_step": {
+    "capability_contract_hash": "sha256:86ae736c6738a6dc2bbac9a9a25f4a96238de606a39fb3fc96ddd3ef2b193349",
+    "execution_capability_id": "genomics.wgs.gatk.snp.indel.inspect",
+    "operation": "inspect",
+    "outputs": [
+      "plan-artifact-f060198a60d77f58de3bdc70"
+    ],
+    "purpose": "probe",
+    "step_effect": {
+      "explicit_side_effects": [],
+      "produces_artifacts": [
+        "plan-artifact-f060198a60d77f58de3bdc70"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [
+        {
+          "evidence_contract": {
+            "required_fields": [
+              "value"
+            ]
+          },
+          "identity": "validation_observation"
+        }
+      ],
+      "schema_version": 1,
+      "workspace_mutations": []
+    },
+    "step_id": "00.input_check",
+    "success_criteria": [
+      "记录 gatk/samtools/bcftools/bwa/picard 的可用性与版本；缺失项明确列出确切命令与受影响 stage。",
+      "确认 genome.fasta 是否已有 .fai 与 .dict，缺失则标记 01.ref 需要生成。",
+      "确认四个 FASTQ 可读且非空，并通过 read 头或 fastp 报告确认 S1_1/S1_2 与 S2_1/S2_2 的 R1/R2 配对方向。",
+      "若配对方向无法确认，则标记 blocked_need_user_decision 并停止后续 calling。"
+    ]
+  },
+  "audit_kind": "static historical evidence projection; not original-session replay or new execution",
+  "base": "e75b95ecce117e9128c8b9079e554f6332c0f3b1",
+  "branch": "refactor/consultant-controller-authority",
+  "cli_v1_business_blob_comparison": {
+    "agent_core/completion_gate.py": {
+      "base_blob": "67a9ef51653d10380a09b86a387f890cd9af965e",
+      "equal": true,
+      "old_blob": "67a9ef51653d10380a09b86a387f890cd9af965e"
+    },
+    "agent_core/node_context.py": {
+      "base_blob": "a4aaf4338f7b2241cd9a519c598b60e6a66deb7c",
+      "equal": true,
+      "old_blob": "a4aaf4338f7b2241cd9a519c598b60e6a66deb7c"
+    },
+    "agent_core/plan_tracker.py": {
+      "base_blob": "2f3c53786f11a28382ecbb431f9ed5b6d136ed06",
+      "equal": true,
+      "old_blob": "2f3c53786f11a28382ecbb431f9ed5b6d136ed06"
+    },
+    "agent_core/semantic_completion.py": {
+      "base_blob": "239554a1f2d005c1ffa17a9a99d0c27432f1dfeb",
+      "equal": true,
+      "old_blob": "239554a1f2d005c1ffa17a9a99d0c27432f1dfeb"
+    },
+    "agent_core/step_effects.py": {
+      "base_blob": "c3ae3b6290dd88022309bb56bd1570c9b5e9d423",
+      "equal": true,
+      "old_blob": "c3ae3b6290dd88022309bb56bd1570c9b5e9d423"
+    },
+    "agent_core/workflow/early_nodes.py": {
+      "base_blob": "655775a3d0d5bc57c5a090123e25b62cb93602e3",
+      "equal": true,
+      "old_blob": "655775a3d0d5bc57c5a090123e25b62cb93602e3"
+    },
+    "agent_core/workflow/phase_subgraph.py": {
+      "base_blob": "337b33f8046fee207ac31100d6e4bdef14fec020",
+      "equal": true,
+      "old_blob": "337b33f8046fee207ac31100d6e4bdef14fec020"
+    },
+    "agent_core/workflow/recovery_runtime.py": {
+      "base_blob": "d191d1aecc4b23ebfc5f8ed3ce222c44c7093404",
+      "equal": true,
+      "old_blob": "d191d1aecc4b23ebfc5f8ed3ce222c44c7093404"
+    },
+    "agent_core/workflow/runtime_graph.py": {
+      "base_blob": "aa39b55509b8365c8a83acfd2b90fbb89ed8ec16",
+      "equal": true,
+      "old_blob": "aa39b55509b8365c8a83acfd2b90fbb89ed8ec16"
+    }
+  },
+  "collected_artifacts": {
+    "effect_evidence_produces_artifacts": [
+      "<SESSION>/plan_artifacts/plan-artifact-f060198a60d77f58de3bdc70"
+    ],
+    "effect_evidence_status": "validated",
+    "observed_output_records": [
+      {
+        "artifact_kind": "directory",
+        "attempt_id": "attempt_04eeba760157d32fc007",
+        "content_valid": true,
+        "ctime_ns": 1789142571000000000,
+        "current_attempt_owned": true,
+        "exists": true,
+        "format": "directory",
+        "mtime_ns": 1789142571000000000,
+        "path": "<SESSION>/plan_artifacts",
+        "representation": "directory",
+        "size": 4096
+      },
+      {
+        "artifact_kind": "file",
+        "attempt_id": "attempt_04eeba760157d32fc007",
+        "content_prefix_sha256": "5f8b12b81af048613ae1e4f57b5a6916df8245f964261489f8e8953470208ad2",
+        "content_valid": true,
+        "ctime_ns": 1789142571000000000,
+        "current_attempt_owned": true,
+        "exists": true,
+        "format": "text",
+        "mtime_ns": 1789142571000000000,
+        "path": "<SESSION>/plan_artifacts/plan-artifact-f060198a60d77f58de3bdc70",
+        "representation": "plain",
+        "size": 7733
+      }
+    ],
+    "runtime_output_reconciliation": {
+      "attempt_id": "attempt_04eeba760157d32fc007",
+      "bindings": [
+        {
+          "artifact_id": "plan-artifact-f060198a60d77f58de3bdc70",
+          "attempt_id": "attempt_04eeba760157d32fc007",
+          "constraint_origin": "IMPLEMENTATION_DETAIL",
+          "content_valid": true,
+          "expected_path": "<SESSION>/plan_artifacts/plan-artifact-f060198a60d77f58de3bdc70",
+          "format": "text",
+          "format_compatibility": "unproven",
+          "observed_path": "<SESSION>/plan_artifacts/plan-artifact-f060198a60d77f58de3bdc70",
+          "realization": "expected",
+          "representation": "plain",
+          "semantic_handle": "output.plan-artifact-f060198a60d77f58de3bdc70"
+        }
+      ],
+      "exit_code": 0,
+      "fingerprint": "f1b14b946e9dfd43b4529e5b58c97e64eae35fa19bec3d49461b18cea6f4395b",
+      "observed_candidates": [
+        {
+          "artifact_kind": "directory",
+          "attempt_id": "attempt_04eeba760157d32fc007",
+          "content_valid": true,
+          "ctime_ns": 1789142571000000000,
+          "current_attempt_owned": true,
+          "exists": true,
+          "format": "directory",
+          "mtime_ns": 1789142571000000000,
+          "path": "<SESSION>/plan_artifacts",
+          "representation": "directory",
+          "size": 4096
+        },
+        {
+          "artifact_kind": "file",
+          "attempt_id": "attempt_04eeba760157d32fc007",
+          "content_prefix_sha256": "5f8b12b81af048613ae1e4f57b5a6916df8245f964261489f8e8953470208ad2",
+          "content_valid": true,
+          "ctime_ns": 1789142571000000000,
+          "current_attempt_owned": true,
+          "exists": true,
+          "format": "text",
+          "mtime_ns": 1789142571000000000,
+          "path": "<SESSION>/plan_artifacts/plan-artifact-f060198a60d77f58de3bdc70",
+          "representation": "plain",
+          "size": 7733
+        }
+      ],
+      "status": "accepted",
+      "violations": []
+    },
+    "validated_artifacts": [
+      "<SESSION>/plan_artifacts/plan-artifact-f060198a60d77f58de3bdc70"
+    ]
+  },
+  "completion": {
+    "completion_gate": {
+      "artifact_version_ids": [
+        "artifact_e387b60256f769a22354@expected"
+      ],
+      "attempt_ids": [],
+      "checked_artifacts": [
+        "artifact_e387b60256f769a22354"
+      ],
+      "classification": "step_effect_incomplete",
+      "declared_effects": {
+        "explicit_side_effects": [],
+        "produces_artifacts": [
+          "artifact_e387b60256f769a22354"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [
+          "validation_observation"
+        ],
+        "workspace_mutations": []
+      },
+      "evidence_refs": [
+        "validation_observation",
+        "attempt_04eeba760157d32fc007",
+        "validation-884618114be2546ca215",
+        "artifact_e387b60256f769a22354@expected"
+      ],
+      "feedback": "Produce and deterministically validate the missing declared effects; do not invent an artifact for a non-artifact effect. Missing declared effects: {}. Use the approved_effect_emission_template supplied to Generate with actual measured facts; rc=0 and plain echo are not effect evidence.",
+      "invalid_artifacts": [
+        "artifact_e387b60256f769a22354"
+      ],
+      "invalid_effects": {
+        "produces_artifacts": [
+          "artifact_e387b60256f769a22354"
+        ]
+      },
+      "message": "Current execution does not satisfy the approved StepEffect.",
+      "missing_artifacts": [],
+      "missing_effects": {},
+      "passed": false,
+      "plan_version": "plan_v1",
+      "reconciliation": {
+        "failed_criteria": []
+      },
+      "satisfied_effects": {
+        "produces_observations": [
+          "validation_observation"
+        ]
+      },
+      "stale_artifacts": [],
+      "unexpected_effects": {},
+      "validation_ids": [],
+      "verdict": "FAIL"
+    },
+    "deterministic_veto": true,
+    "effective_disposition": "inspection_required",
+    "observed_artifact_projection": [
+      {
+        "identity": "<SESSION>/plan_artifacts/plan-artifact-f060198a60d77f58de3bdc70",
+        "value_present": false
+      }
+    ],
+    "process_outcome": {
+      "command_role": "analysis_execution",
+      "evidence_complete": true,
+      "execution_status": "succeeded",
+      "executor_exception": "",
+      "oom_detected": false,
+      "process_signal": null,
+      "returncode": 0,
+      "returncode_passed": true,
+      "timed_out": false,
+      "validation_status": "VALID"
+    },
+    "report_id": "completion-report-0cea5af39a66049f1f660f5014925761414b75c8d5eb4a9b3f971031ccb96be1",
+    "scope": {
+      "action_id": "action_5797cea693696b64",
+      "attempt_id": "attempt_04eeba760157d32fc007",
+      "plan_id": "plan_1c98aab2afda5dfe081b",
+      "plan_version": "plan_v1",
+      "state_generation": 42,
+      "step_id": "00.input_check",
+      "task_id": "session_1789142344",
+      "validation_id": "validation-884618114be2546ca215"
+    }
+  },
+  "dependency_observation": {
+    "action_runtime_binding_count": 0,
+    "blocking_conditions": [],
+    "decision": "proceed",
+    "effective_capability_runtime_contract": {
+      "executables": {},
+      "runtime_snapshot_digest": "sha256:693bcc641082998b13de25ba60b040bd08f8431d00d745b55b8c032f1f94c2fe",
+      "status": "passed"
+    },
+    "fastq_readable_nonempty": true,
+    "missing_tools": [
+      "gatk",
+      "bcftools",
+      "picard"
+    ],
+    "pairing_status": "confirmed",
+    "probe_method": "approved.py:64 shutil.which in inherited process PATH; wrapper records envs/biomind/bin/python",
+    "target_environment_evidence": [
+      {
+        "environment_id": "bio_gatk",
+        "facts": {
+          "runtime.environment.prefix": {
+            "availability": "UNKNOWN",
+            "conclusion_complete": false,
+            "output_name": "RESOLVED_ENV_PREFIX",
+            "reason_code": "inspection_execution_error",
+            "value_kind": "directory_path"
+          }
+        },
+        "inspection": {
+          "coverage_complete": false,
+          "method_digest": "sha256:ded902b4f5b9f6f5e02a93c778489ce97e1623044b17d0356bf29b31fd265a3d",
+          "status": "execution_error"
+        },
+        "observed_at": "2026-09-11T16:01:14.000000+00:00",
+        "producer": "consultant_runtime_inspection"
+      },
+      {
+        "environment_id": "bio_gatk",
+        "facts": {
+          "runtime.environment.prefix": {
+            "availability": "UNKNOWN",
+            "conclusion_complete": false,
+            "output_name": "RESOLVED_ENV_PREFIX",
+            "reason_code": "inspection_execution_error",
+            "value_kind": "directory_path"
+          }
+        },
+        "inspection": {
+          "coverage_complete": false,
+          "method_digest": "sha256:ded902b4f5b9f6f5e02a93c778489ce97e1623044b17d0356bf29b31fd265a3d",
+          "status": "execution_error"
+        },
+        "observed_at": "2026-09-11T16:01:21.000000+00:00",
+        "producer": "consultant_runtime_inspection"
+      }
+    ],
+    "tools": [
+      {
+        "affected_stage": "step.03.variant_calling.gvcf/step.03.variant_calling.joint/step.04.filter/step.05.summary",
+        "available": "no",
+        "probe_command": "gatk --version",
+        "tool": "gatk"
+      },
+      {
+        "affected_stage": "step.01.ref/step.02.mapping",
+        "available": "yes",
+        "probe_command": "samtools --version",
+        "tool": "samtools"
+      },
+      {
+        "affected_stage": "step.05.summary",
+        "available": "no",
+        "probe_command": "bcftools --version",
+        "tool": "bcftools"
+      },
+      {
+        "affected_stage": "step.01.ref/step.02.mapping",
+        "available": "yes(probe_rc=1)",
+        "probe_command": "bwa",
+        "tool": "bwa"
+      },
+      {
+        "affected_stage": "step.02.mapping(markdup)",
+        "available": "no",
+        "probe_command": "picard --version",
+        "tool": "picard"
+      }
+    ]
+  },
+  "execution_identity": {
+    "action_id": "action_5797cea693696b64",
+    "approved_script": {
+      "created_at": "2026-09-12T00:02:48",
+      "mutation_reason": "user_approval_or_edit",
+      "parent_script_ref": {
+        "created_at": "2026-09-12T00:02:42",
+        "mutation_reason": "model_generation",
+        "parent_script_ref": {},
+        "path": "<SESSION>/scripts/plan_1c98aab2afda5dfe081b/plan_v1/00.input_check/action_5797cea693696b64/generated.py",
+        "producer": "generate",
+        "sha256": "2485883c65d4a002034d38fbaa998e5ee726b7ed4b50b0f7bc342f89c3a47884",
+        "version": "generated"
+      },
+      "path": "<SESSION>/attempts/attempt_04eeba760157d32fc007/approved.py",
+      "producer": "hitl_approval",
+      "sha256": "2485883c65d4a002034d38fbaa998e5ee726b7ed4b50b0f7bc342f89c3a47884",
+      "version": "approved"
+    },
+    "attempt_id": "attempt_04eeba760157d32fc007",
+    "code_hash": "2485883c65d4a002034d38fbaa998e5ee726b7ed4b50b0f7bc342f89c3a47884",
+    "command_role": "primary",
+    "executed_script": {
+      "created_at": "2026-09-12T00:02:49",
+      "mutation_reason": "durable_execution_wrapper",
+      "parent_script_ref": {
+        "created_at": "2026-09-12T00:02:48",
+        "mutation_reason": "user_approval_or_edit",
+        "parent_script_ref": {
+          "created_at": "2026-09-12T00:02:42",
+          "mutation_reason": "model_generation",
+          "parent_script_ref": {},
+          "path": "<SESSION>/scripts/plan_1c98aab2afda5dfe081b/plan_v1/00.input_check/action_5797cea693696b64/generated.py",
+          "producer": "generate",
+          "sha256": "2485883c65d4a002034d38fbaa998e5ee726b7ed4b50b0f7bc342f89c3a47884",
+          "version": "generated"
+        },
+        "path": "<SESSION>/attempts/attempt_04eeba760157d32fc007/approved.py",
+        "producer": "hitl_approval",
+        "sha256": "2485883c65d4a002034d38fbaa998e5ee726b7ed4b50b0f7bc342f89c3a47884",
+        "version": "approved"
+      },
+      "path": "<SESSION>/attempts/attempt_04eeba760157d32fc007/executed.sh",
+      "producer": "executor_wrapper",
+      "sha256": "0e9ed672a2d1ea3200b301b2f2b3a3a9837bd17c4c788c93cfe9b4ffaf492bb8",
+      "version": "executed"
+    },
+    "execution_id": "exec-attempt_04eeba760157d32fc007",
+    "execution_status": "succeeded",
+    "exit_code": 0,
+    "generated_script": {
+      "created_at": "2026-09-12T00:02:42",
+      "mutation_reason": "model_generation",
+      "parent_script_ref": {},
+      "path": "<SESSION>/scripts/plan_1c98aab2afda5dfe081b/plan_v1/00.input_check/action_5797cea693696b64/generated.py",
+      "producer": "generate",
+      "sha256": "2485883c65d4a002034d38fbaa998e5ee726b7ed4b50b0f7bc342f89c3a47884",
+      "version": "generated"
+    },
+    "purpose": "probe",
+    "step_id": "00.input_check"
+  },
+  "failure_packet": {
+    "action_ref": "action_5797cea693696b64",
+    "attempt_ref": "attempt_04eeba760157d32fc007",
+    "error_code": "VERIFICATION_FAILED",
+    "evidence_refs": [
+      "validation-884618114be2546ca215",
+      "completion-report-0cea5af39a66049f1f660f5014925761414b75c8d5eb4a9b3f971031ccb96be1",
+      "semantic-decision-2299520839935e9d59f17742126562561288b542dc42e9c2434ebe5a65e05802"
+    ],
+    "failure_fingerprint": "236963ff06d2d48b67f3fe75",
+    "failure_id": "failure-236963ff06d2d48b67f3fe75",
+    "failure_owner": "deterministic_predicate",
+    "failure_type": "inspection_required",
+    "source": "verification_outcome",
+    "source_outcome_ref": "outcome:sha256:70010994db695583e2a8eaedf6803a9583e68a1577dc4f99b30fce45527f1950",
+    "step_id": "00.input_check"
+  },
+  "parser_receipt": {
+    "emission_count": 1,
+    "issues": [],
+    "parser_id": "biomind.structured_effect_emission.v1",
+    "raw_stdout_sha256": "bb419fbdb6ab6178dda912e0e5a37b5ec2c92d0989b214f27af9de0ac669f74b",
+    "scope": {
+      "action_id": "action_5797cea693696b64",
+      "attempt_id": "attempt_04eeba760157d32fc007",
+      "plan_id": "plan_1c98aab2afda5dfe081b",
+      "plan_version": "plan_v1",
+      "step_id": "00.input_check",
+      "task_id": "session_1789142344"
+    },
+    "status": "parsed"
+  },
+  "path_alias": "<SESSION> is the user-authorized target session root; other home paths are <LOCAL_PATH>",
+  "provenance_attempt": {
+    "action_id": "action_5797cea693696b64",
+    "artifact_version_ids": [],
+    "attempt_id": "attempt_04eeba760157d32fc007",
+    "command_role": "primary",
+    "produced_artifact_ids": [],
+    "returncode": 0,
+    "status": "EVIDENCE_COMMITTED",
+    "step_id": "00.input_check"
+  },
+  "provenance_target": {
+    "artifact_id": "artifact_e387b60256f769a22354",
+    "artifact_type": "file",
+    "artifact_version_id": "artifact_e387b60256f769a22354@expected",
+    "consumer_stage_ids": [],
+    "consumer_step_ids": [
+      "06.reporting"
+    ],
+    "created_at": "",
+    "digest_or_signature": {},
+    "logical_artifact_id": "plan-artifact-f060198a60d77f58de3bdc70",
+    "output_id": "plan-artifact-f060198a60d77f58de3bdc70",
+    "path": "<SESSION>/plan_artifacts/plan-artifact-f060198a60d77f58de3bdc70",
+    "producer": "",
+    "producer_action_id": "",
+    "producer_attempt_id": "",
+    "producer_manifest_id": "",
+    "producer_stage_id": "",
+    "producer_step_id": "00.input_check",
+    "required": true,
+    "role": "preflight_evidence",
+    "schema_version": 1,
+    "size": 0,
+    "source": "approved_plan_artifact_ledger",
+    "status": "expected",
+    "validation_id": "",
+    "validation_status": "unknown",
+    "validator": "file_exists"
+  },
+  "raw_marker_artifact": [
+    {
+      "identity": "plan-artifact-f060198a60d77f58de3bdc70",
+      "path": "<SESSION>/plan_artifacts/plan-artifact-f060198a60d77f58de3bdc70"
+    }
+  ],
+  "reception": {
+    "format_correction_count": 0,
+    "response_receipts": [
+      {
+        "command_started": false,
+        "directive_adopted": false,
+        "finish_reason": "tool_calls",
+        "protocol": "recovery-submission-v1",
+        "response_message_id": "recovery-seed-236963ff06d2d48b67f3fe75:assistant:001",
+        "response_sha256": "285c657f8401763a5942daeb0a00bf63a6b13813d0c228da3c72e4ad8069f7c3",
+        "status": "investigating"
+      },
+      {
+        "candidate_sha256": "fa6adf7edc29de0015d3c7bdb2a45777ad008ad2eafa78d98651e230a19bd26a",
+        "command_started": false,
+        "directive_adopted": false,
+        "finish_reason": "tool_calls",
+        "protocol": "recovery-submission-v1",
+        "response_message_id": "recovery-seed-236963ff06d2d48b67f3fe75:assistant:002",
+        "response_sha256": "2eb96fbd4e646cdca53a723f0a2201a1944dc96b6e73051bb24e87d3fa7d3350",
+        "status": "candidate_validated",
+        "transport": "native_tool"
+      }
+    ]
+  },
+  "recovery_actual_tool_count": 1,
+  "recovery_directive": {
+    "action": "revise_plan",
+    "directive_id": "recovery-directive-236963ff06d2d48b67f3fe75",
+    "evidence_refs": [
+      "outcome:sha256:70010994db695583e2a8eaedf6803a9583e68a1577dc4f99b30fce45527f1950",
+      "inspection:sha256:87c076624182305590e3bd6b041dfe8e66304694df1c48f86b96a35fe569bfdd",
+      "inspection:sha256:73dfb8144804e65f694b3a0fa21a527552f7d31bbe6bd9fe3409ff250edcd04a",
+      "inspection:sha256:9ef82dc24cd3a55d8684cc3645a06a851c9e8bf1b52dbd718cffd16cd21ad5d6",
+      "inspection:sha256:2063f5cac7c8d9fa7196bc69b7261729da31be67b12f1dbccd840445b6849ab0"
+    ],
+    "instruction": "Resolve the step-effect contract drift for 00.input_check. The step is an inspect/observation-only step (execution_capability genomics.wgs.gatk.snp.indel.inspect), but its declared StepEffect lists produces_artifacts [plan-artifact-f060198a60d77f58de3bdc70] (plan.input_check_report, nonempty_file) in addition to produces_observations [validation_observation]. The deterministic completion gate rejected the attempt because the observed artifact entry had value_present=false and was classified invalid, leaving the declared artifact effect unsatisfied, while the observation effect was satisfied. Revise the step so its declared effects match the inspect capability's emission contract: either (a) declare no durable file artifact for this observation-only step and carry the preflight results solely as the validation_observation value, or (b) if a durable preflight report file is genuinely required, declare it in a way whose emission binds an actual present value that the deterministic gate accepts, and adjust downstream consumers (06.reporting currently consumes plan-artifact-f060198a60d77f58de3bdc70 as an input) accordingly. Additionally, update the observation's semantic content so that missing gatk, bcftools, and picard are recorded as explicitly blocked downstream stages (step.02 markdup, step.03 calling, step.04 filter, step.05 summary) consistent with requirement-4, rather than only appearing in missing_tools with empty blocking_conditions and decision=proceed. Do not alter the verified preflight facts themselves.",
+    "reason_code": "CONTRACT_DRIFT",
+    "schema_version": 1,
+    "summary": "Step 00.input_check failed only on the deterministic completion gate (COMPLETION_GATE_REJECTED:step_effect_incomplete, deterministic_veto=true). The declared produces_artifacts effect for plan-artifact-f060198a60d77f58de3bdc70 was observed with value_present=false and classified invalid, so the artifact effect is unsatisfied; the declared validation_observation effect was satisfied. Root cause is a contract mismatch: the step uses the observation-only inspect capability (genomics.wgs.gatk.snp.indel.inspect) yet the plan declares a durable nonempty_file artifact (plan.input_check_report) as a produced output, and the generated action emitted that artifact identity without a bound value. Correction: reconcile the step's declared artifact effect with its inspect-capability contract — either emit the declared artifact with a deterministically bound, present value, or stop declaring a durable file artifact for an observation-only inspect step and carry the preflight facts solely as validation_observation. Also record missing gatk/bcftools/picard as explicitly blocked downstream stages per requirement-4 rather than only listing them in missing_tools. The underlying preflight facts (FASTQ readable/non-empty, S1/S2 pairing confirmed, reference present, .fai present, .dict and BWA index absent) are sound and need no scientific change.",
+    "target_step_id": "00.input_check",
+    "task_id": "session_1789142344"
+  },
+  "recovery_events": [
+    {
+      "event_kind": "recovery_response_received",
+      "line": 87,
+      "payload": {
+        "command_started": false,
+        "directive_adopted": false,
+        "failure_id": "failure-236963ff06d2d48b67f3fe75",
+        "response_message_id": "recovery-seed-236963ff06d2d48b67f3fe75:assistant:001",
+        "source_message_id": "recovery-seed-236963ff06d2d48b67f3fe75:assistant:001",
+        "status": "investigating"
+      },
+      "timestamp": "2026-09-11T16:03:29.804139+00:00"
+    },
+    {
+      "event_kind": "recovery_tool_started",
+      "line": 88,
+      "payload": {
+        "failure_id": "failure-236963ff06d2d48b67f3fe75",
+        "source_message_id": "recovery-seed-236963ff06d2d48b67f3fe75:assistant:001",
+        "source_ref": "outcome:sha256:70010994db695583e2a8eaedf6803a9583e68a1577dc4f99b30fce45527f1950",
+        "tool": "failure.inspect",
+        "tool_ordinal": 1,
+        "tool_request_id": "call_00_sz6csOiqYhYnT95NEJW28513"
+      },
+      "timestamp": "2026-09-11T16:03:29.884630+00:00"
+    },
+    {
+      "event_kind": "recovery_tool_observation_committed",
+      "line": 89,
+      "payload": {
+        "failure_id": "failure-236963ff06d2d48b67f3fe75",
+        "source_message_id": "recovery-seed-236963ff06d2d48b67f3fe75:assistant:001",
+        "source_ref": "outcome:sha256:70010994db695583e2a8eaedf6803a9583e68a1577dc4f99b30fce45527f1950",
+        "status": "completed",
+        "tool": "failure.inspect",
+        "tool_ordinal": 1,
+        "tool_request_id": "call_00_sz6csOiqYhYnT95NEJW28513"
+      },
+      "timestamp": "2026-09-11T16:03:29.906451+00:00"
+    },
+    {
+      "event_kind": "recovery_tool_completed",
+      "line": 90,
+      "payload": {
+        "failure_id": "failure-236963ff06d2d48b67f3fe75",
+        "source_message_id": "recovery-seed-236963ff06d2d48b67f3fe75:assistant:001",
+        "source_ref": "outcome:sha256:70010994db695583e2a8eaedf6803a9583e68a1577dc4f99b30fce45527f1950",
+        "status": "completed",
+        "tool": "failure.inspect",
+        "tool_ordinal": 1,
+        "tool_request_id": "call_00_sz6csOiqYhYnT95NEJW28513"
+      },
+      "timestamp": "2026-09-11T16:03:29.919334+00:00"
+    },
+    {
+      "event_kind": "recovery_response_received",
+      "line": 97,
+      "payload": {
+        "candidate_sha256": "fa6adf7edc29de0015d3c7bdb2a45777ad008ad2eafa78d98651e230a19bd26a",
+        "command_started": false,
+        "directive_adopted": false,
+        "failure_id": "failure-236963ff06d2d48b67f3fe75",
+        "response_message_id": "recovery-seed-236963ff06d2d48b67f3fe75:assistant:002",
+        "source_message_id": "recovery-seed-236963ff06d2d48b67f3fe75:assistant:002",
+        "status": "candidate_validated"
+      },
+      "timestamp": "2026-09-11T16:03:40.551473+00:00"
+    },
+    {
+      "event_kind": "recovery_directive_admitted",
+      "line": 99,
+      "payload": {
+        "action": "revise_plan",
+        "directive_id": "recovery-directive-236963ff06d2d48b67f3fe75",
+        "failure_id": "failure-236963ff06d2d48b67f3fe75",
+        "recovery_archive_ref": "phase-archive:sha256:efb1f860a7847564cf5ed8dfd757fc384dc39e65010d61d67b86047c9f9c964b"
+      },
+      "timestamp": "2026-09-11T16:03:41.136716+00:00"
+    }
+  ],
+  "recovery_model_turn_count": 2,
+  "replan_epoch": {
+    "base_plan_revision": 1,
+    "candidate_repairs": 0,
+    "parent_epoch_id": "planning-epoch-55b73dfe-45e6-4b1c-ae80-0ccacd6e594e",
+    "planner_calls_total": 1,
+    "planning_epoch_id": "planning-epoch-22255a1a-0054-42ba-a337-c06f50fd74a5",
+    "start_reason": "initial_planning",
+    "status": "stale_semantic_base"
+  },
+  "replan_request": {
+    "current_focus": {
+      "allowed_operations": [
+        "create_plan",
+        "report_task_semantics_incomplete"
+      ],
+      "planning": {
+        "agent_loop": {
+          "phase": "review_accepted",
+          "progress": {
+            "identical_no_progress_count": 0,
+            "max_identical_no_progress": 2
+          },
+          "recent_observations": [],
+          "status": "completed"
+        },
+        "attempt": 1,
+        "instruction": {
+          "return_complete_plan": true
+        },
+        "mode": "create_complete_plan"
+      }
+    },
+    "literal_presence": {
+      "COMPLETION_GATE_REJECTED:step_effect_incomplete": false,
+      "CONTRACT_DRIFT": false,
+      "Resolve the step-effect contract drift": false,
+      "plan_revision_required": false,
+      "recovery-directive-236963ff06d2d48b67f3fe75": false
+    },
+    "manifest": {
+      "call_kind": "planner_initial",
+      "completed_at": "2026-09-11T16:04:01.476253+00:00",
+      "node_name": "planner",
+      "request_hash": "8035152b280b899b5d366b5991c4697620f2de336ac4982a728ae738b7c9e92e",
+      "status": "completed",
+      "timestamp": "2026-09-11T16:03:45.865739+00:00"
+    },
+    "message_count": 3,
+    "phase_seed_keys": [
+      "consultation_handoff",
+      "schema_version",
+      "selected_skill_manifest"
+    ],
+    "semantic_history_keys": [
+      "conversation",
+      "consultant_handoff",
+      "task_spec",
+      "selected_skill_refs",
+      "available_skill_headings",
+      "selected_capabilities",
+      "capabilities",
+      "approved_plan"
+    ]
+  },
+  "replan_response": {
+    "first_step": {
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.inspect",
+      "operation": "inspect",
+      "outputs": [
+        "plan.input_check_report"
+      ],
+      "produces_observations": [
+        "validation_observation"
+      ],
+      "purpose": "probe",
+      "step_id": "step.00.input_check",
+      "title": "只读 preflight：依赖、参考索引、FASTQ 可读性与配对方向确认"
+    },
+    "outcome_type": "SUBMIT_PLAN_FOR_REVIEW",
+    "step_count": 8
+  },
+  "runtime_identity": {
+    "dependencies": {
+      "PyYAML": "6.0.3",
+      "langchain-core": "1.2.7",
+      "langgraph": "1.0.7",
+      "pydantic": "2.11.7"
+    },
+    "loaded_code_identity": "214a5ef099b5a55486e9484f51d0869edfe52383ec1cb012577c9d9fba3654e5",
+    "object_ref": "object:sha256:a3765f858a865b9e14d733c0071c569922aeba444418d38f95ba127fd9cb30ef",
+    "revision": {
+      "disk_head_at_capture": "e75b95ecce117e9128c8b9079e554f6332c0f3b1",
+      "loaded_revision": "UNKNOWN",
+      "meaning": "disk_at_capture and loaded callable identities are separate; no historical revision is inferred",
+      "related_dirty_paths": [
+        "agent_core/workflow/managed_stop.py",
+        "prompts/manager.py"
+      ],
+      "related_untracked_paths": [],
+      "status": "CAPTURED"
+    },
+    "schema_version": 1,
+    "skill_versions": {
+      "genomics/wgs-gatk-snp-indel": "1.1.0"
+    },
+    "source_identity": "2c3c1e092ecb20c210348ee3c295ab78be01ccf07f514db6aa4d9a2db8720015",
+    "stage": "generate",
+    "status": "CAPTURED",
+    "task_id": "session_1789142344"
+  },
+  "same_runtime_identity_at_replan": true,
+  "selected_capability_contract": {
+    "capability_id": "genomics.wgs.gatk.snp.indel.inspect",
+    "contract_revision": "wgs-gatk-snp-indel-effects-v1",
+    "contract_source": "skills/genomics/wgs-gatk-snp-indel/SKILL.md#generate.execution_capabilities",
+    "execution_guidance": [
+      "Use for preflight or variant validation that produces no durable output file. Emit structured validation_observation evidence with a value, including an adverse value for a failed check.",
+      "Scientific success criteria and the existing verification layer judge the observation. A successful structural evidence match does not by itself validate scientific compatibility."
+    ],
+    "explicit_side_effects": [],
+    "operation": "inspect",
+    "optional_runtime_binding_ids": [],
+    "produces_artifacts": [],
+    "produces_bindings": [],
+    "produces_observations": [
+      {
+        "evidence_contract": {
+          "required_fields": [
+            "value"
+          ]
+        },
+        "observation_id": "validation_observation"
+      }
+    ],
+    "required_artifact_binding_ids": [],
+    "required_runtime_binding_ids": [],
+    "schema_version": 1,
+    "selected_skill_id": "genomics/wgs-gatk-snp-indel",
+    "workspace_mutations": []
+  },
+  "session": "session_1789142344",
+  "source_files": {
+    "attempts/attempt_04eeba760157d32fc007/approved.py": {
+      "bytes": 9595,
+      "mtime_ns": 1789142568000000000,
+      "sha256": "2485883c65d4a002034d38fbaa998e5ee726b7ed4b50b0f7bc342f89c3a47884"
+    },
+    "attempts/attempt_04eeba760157d32fc007/executed.sh": {
+      "bytes": 2136,
+      "mtime_ns": 1789142568000000000,
+      "sha256": "0e9ed672a2d1ea3200b301b2f2b3a3a9837bd17c4c788c93cfe9b4ffaf492bb8"
+    },
+    "attempts/attempt_04eeba760157d32fc007/stderr.log": {
+      "bytes": 0,
+      "mtime_ns": 1789142569000000000,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "attempts/attempt_04eeba760157d32fc007/stdout.log": {
+      "bytes": 4353,
+      "mtime_ns": 1789142571000000000,
+      "sha256": "bb419fbdb6ab6178dda912e0e5a37b5ec2c92d0989b214f27af9de0ac669f74b"
+    },
+    "context_trace/events.jsonl": {
+      "bytes": 114055,
+      "mtime_ns": 1789142621000000000,
+      "sha256": "6d78c8cea13b914858f11e94d84aa27c2ef74d249c554b7358365c1c5c5c160b"
+    },
+    "context_trace/generate-0009-3db20551d4bc/manifest.json": {
+      "bytes": 29295,
+      "mtime_ns": 1789142560000000000,
+      "sha256": "567194db25e5bded31b25c1f3dc4230f7ab3dbd0cf5bcc0e4e1bf18af8ffbf99"
+    },
+    "context_trace/planner_initial-0013-448190016045/manifest.json": {
+      "bytes": 42275,
+      "mtime_ns": 1789142641000000000,
+      "sha256": "16d3bfa3435637290fb788502ca336383aa271dd8f080858a3c7b3d8bb2f561e"
+    },
+    "context_trace/planner_initial-0013-448190016045/request.json": {
+      "bytes": 77661,
+      "mtime_ns": 1789142625000000000,
+      "sha256": "ea5a92844ab25403b32a3f80cd6b8164c65bed65ef5b559c6aab4b53bf232622"
+    },
+    "context_trace/planner_initial-0013-448190016045/response.json": {
+      "bytes": 20954,
+      "mtime_ns": 1789142641000000000,
+      "sha256": "2f3d5a2ead23355f978221de3f8ab1b01959892008162e078a773b7763e83715"
+    },
+    "executions/execution_records.jsonl": {
+      "bytes": 86296,
+      "mtime_ns": 1789142573000000000,
+      "sha256": "25035f077ab056d33b46cf11f18feccd68cd7dc2603f9b7c85f4f80c851b631c"
+    },
+    "plan_state.json": {
+      "bytes": 954334,
+      "mtime_ns": 1789142719000000000,
+      "sha256": "0b01d55c1917df16c1e6e62e1ba664b90886516543cef0369b715fcf3c9018b0"
+    },
+    "scripts/plan_1c98aab2afda5dfe081b/plan_v1/00.input_check/action_5797cea693696b64/generated.py": {
+      "bytes": 9595,
+      "mtime_ns": 1789142562000000000,
+      "sha256": "2485883c65d4a002034d38fbaa998e5ee726b7ed4b50b0f7bc342f89c3a47884"
+    },
+    "state_contract/objects/718b01f344a2d53b761b66d7dcdfbb5fc63261e96aa1ab821f8c2082800e1d82.json": {
+      "bytes": 41145,
+      "mtime_ns": 1789142525000000000,
+      "sha256": "718b01f344a2d53b761b66d7dcdfbb5fc63261e96aa1ab821f8c2082800e1d82"
+    },
+    "state_contract/objects/aa43213cdba580cdbc991d9d08d9ba56ac9760a728c7f44350c0d7ac23da576d.json": {
+      "bytes": 15398,
+      "mtime_ns": 1789142602000000000,
+      "sha256": "aa43213cdba580cdbc991d9d08d9ba56ac9760a728c7f44350c0d7ac23da576d"
+    }
+  },
+  "tail": {
+    "cancellation_receipt": {
+      "active_provider_ref": "<SESSION>/context_trace/planner_initial-0013-448190016045/manifest.json",
+      "attribution_reason": "No independently recorded cancellation request matches this caller and task scope.",
+      "command_started": false,
+      "initiator_kind": "unknown",
+      "owner": "",
+      "reason": "Task cancelled at caller boundary; initiator unknown.",
+      "receipt_id": "cancel-1c98aab2afda5dfe081b055d",
+      "request_scope": {},
+      "requested_at": "2026-09-12T00:05:19+08:00",
+      "schema_version": 2,
+      "scope": {
+        "plan_id": "plan_1c98aab2afda5dfe081b",
+        "plan_version": "plan_v1",
+        "planning_epoch_id": "planning-epoch-22255a1a-0054-42ba-a337-c06f50fd74a5",
+        "step_id": "00.input_check",
+        "task_id": "session_1789142344",
+        "task_revision": 1,
+        "task_semantic_hash": "sha256:37a31477b3c5d720675dc4b309d14d9fcdcd57331b5faba54c56a7b2786aad56"
+      },
+      "source": "asyncio_cancel",
+      "source_evidence": {},
+      "state_generation_after": 52,
+      "state_generation_before": 51,
+      "task_id": "session_1789142344"
+    },
+    "current_plan_revision": 1,
+    "current_plan_semantic_hash": "sha256:4b652b69f87995ab82352e032a5b6b0a947f41a29c15fa43c19350f6bd6efab8",
+    "execution_record_count": 1,
+    "provenance_attempt_count": 1,
+    "task_status": "cancelled",
+    "typed_step_commit_receipts_present": false
+  },
+  "typed_outcome": {
+    "scope": {
+      "action_id": "action_5797cea693696b64",
+      "attempt_id": "attempt_04eeba760157d32fc007",
+      "failure_packet_version": 1,
+      "incident_id": "incident-53eea9499aebb046fa2093aa",
+      "plan_id": "plan_1c98aab2afda5dfe081b",
+      "plan_version": "plan_v1",
+      "state_generation": 43,
+      "step_id": "00.input_check",
+      "task_id": "session_1789142344"
+    },
+    "summary": "The approved Plan contract requires revision.",
+    "type": "plan_revision_required"
+  },
+  "typed_outcome_budget": {
+    "consumed": true,
+    "failure_packet_ref": "failure-packet:sha256:23e9f6ee60a508bf6726fe6bdcb3f26b2d962c5527b6ab97f1259089fc0d4b5d",
+    "failure_packet_version": 1,
+    "incident_id": "incident-53eea9499aebb046fa2093aa",
+    "limit": 2,
+    "ordinal": 1,
+    "remaining": 1,
+    "source_fingerprint": "236963ff06d2d48b67f3fe75"
+  },
+  "typed_outcome_payload_keys": [
+    "diagnosis",
+    "contract_violations",
+    "source_scope",
+    "decision_id",
+    "budget_receipt"
+  ],
+  "unknown": [
+    "Original S1 terminal attachment not available to this subtask.",
+    "Loaded Git revision remains UNKNOWN.",
+    "Original UI mode and terminal size not independently recovered.",
+    "No evidence establishes scientific completion or availability of every downstream effective tool environment."
+  ]
+}
