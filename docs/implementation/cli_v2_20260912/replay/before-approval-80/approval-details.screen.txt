@@ -1,0 +1,24 @@
+BioMind · v2-synthetic · /tmp/biomind_cli_v2_20260912/baseline-pty-v8-source
+这是隔离合成回放。我先读取已创建的三份输入，再检查匹配结果。                   ^
+
+📋 Planner 候选 1：流式接收，正文 0 字符，已等待 0.0s，距真实 payload 0.1s
+
+📋 Planner 候选 1：流式接收，正文 37 字符，已等待 0.1s，距真实 payload 0.1s
+
+📋 Planner 候选 1：流式接收，正文 74 字符，已等待 0.2s，距真实 payload 0.1s
+
+📋 Planner 候选 1：流式接收，正文 111 字符，已等待 0.3s，距真实 payload 0.1s
+
+📋 Planner 候选 1：流式接收，正文 148 字符，已等待 0.4s，距真实 payload 0.1s
+
+📋 Planner 候选 1：流式接收，正文 185 字符，已等待 0.5s，距真实 payload 0.1s
+
+📋 Planner 候选 1：流式接收，正文 222 字符，已等待 0.6s，距真实 payload 0.1s
+
+📋 Planner 候选 1：流式接收，正文 259 字符，已等待 0.7s，距真实 payload 0.1s   v
+ · 等待用户输入 · code_review · 距上次观测 0 秒
+
+[y=run, n=reject, e:<code>=edit] >
+
+
+Enter 提交 · Ctrl+J 换行 · F2 详情 · Esc 返回 · Ctrl+C 请求取消

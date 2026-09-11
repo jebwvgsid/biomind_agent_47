@@ -1,0 +1,90 @@
+{
+  "returncode": 0,
+  "source": "e3e0091e9e80976868a179cf2aeefde6a5883124",
+  "source_signature": "b13d3430fe260cd302e886922a13797e11a1901701d6af0fe5e109b21759ae15",
+  "scenario": "approval",
+  "verbosity": "compact",
+  "initial_size": [
+    120,
+    36
+  ],
+  "resize": null,
+  "actual_pty": true,
+  "production_application": true,
+  "counts": {
+    "model_calls": 2,
+    "tool_calls": 0,
+    "executions": 0,
+    "approvals": 1,
+    "rejected": 1,
+    "cancel_requests": 1
+  },
+  "history_items": 5,
+  "permanent_logical_lines": 10,
+  "model_paragraphs": 2,
+  "tool_history_items": 0,
+  "diagnostic_items": 44,
+  "actions": [
+    {
+      "at": 9.285480976104736,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 27.374279655050486,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 27.374346239026636,
+      "action": "multiline_draft"
+    },
+    {
+      "at": 27.374349487014115,
+      "action": "F2_details"
+    },
+    {
+      "at": 29.403255104087293,
+      "action": "close_initial_details"
+    },
+    {
+      "at": 31.04386334726587,
+      "action": "approval_page_down"
+    },
+    {
+      "at": 31.04386713542044,
+      "action": "approval_Escape"
+    },
+    {
+      "at": 32.548379661049694,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 32.56993655813858,
+      "action": "approval_reject"
+    },
+    {
+      "at": 32.57373158214614,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 32.57378629408777,
+      "action": "CtrlC_cancel"
+    },
+    {
+      "at": 32.578393802046776,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 32.58549396134913,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 32.612448120024055,
+      "action": "Escape_to_input"
+    }
+  ],
+  "unsupported_vt": [],
+  "captured": true,
+  "modal_opened": true,
+  "session_route_evidence": false,
+  "replay_source_sha256": "3706a4babdff488f0e68eb7b9cdcaf68478b71eb9fc893a3668af731b217f856"
+}

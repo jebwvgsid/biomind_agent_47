@@ -1,0 +1,97 @@
+{
+  "returncode": 0,
+  "source": "6c7a2003340b824c6f03f8b261c734a570c685ae",
+  "source_signature": "81cf0bac03d1bb8948acbe5025022b18b03d523931a103249e68cd0a865dfbd1",
+  "scenario": "failure",
+  "verbosity": "compact",
+  "initial_size": [
+    42,
+    18
+  ],
+  "resize": [
+    64,
+    20
+  ],
+  "actual_pty": true,
+  "production_application": true,
+  "counts": {
+    "model_calls": 4,
+    "tool_calls": 5,
+    "executions": 1,
+    "approvals": 0,
+    "rejected": 0,
+    "cancel_requests": 0,
+    "empty_results": 1
+  },
+  "history_items": 57,
+  "permanent_logical_lines": 66,
+  "model_paragraphs": 3,
+  "tool_history_items": 12,
+  "diagnostic_items": 61,
+  "actions": [
+    {
+      "at": 6.477914774790406,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 20.694018116686493,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 20.711074449587613,
+      "action": "multiline_draft"
+    },
+    {
+      "at": 20.711076114792377,
+      "action": "F2_details"
+    },
+    {
+      "at": 22.745698165614158,
+      "resize": [
+        64,
+        20
+      ]
+    },
+    {
+      "at": 22.82947594858706,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 22.8423523157835,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 22.85065274266526,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 22.905538531951606,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 23.07339330483228,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 23.08308606268838,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 23.221320669632405,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 23.249532298650593,
+      "action": "Escape_to_input"
+    },
+    {
+      "at": 23.250135698821396,
+      "action": "cursor_position_report"
+    }
+  ],
+  "unsupported_vt": [],
+  "captured": true,
+  "modal_opened": true,
+  "session_route_evidence": false,
+  "replay_source_sha256": "3706a4babdff488f0e68eb7b9cdcaf68478b71eb9fc893a3668af731b217f856"
+}

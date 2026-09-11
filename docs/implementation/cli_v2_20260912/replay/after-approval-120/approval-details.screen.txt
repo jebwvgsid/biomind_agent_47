@@ -1,0 +1,35 @@
+这是隔离合成回放。我先读取已创建的三份输入，再检查匹配结果。
+代码审批                                                                                                               ^
+
+# 合成批准对象；拒绝前可查看完整正文
+printf "line-0\n"
+printf "line-1\n"
+printf "line-2\n"
+printf "line-3\n"
+printf "line-4\n"
+printf "line-5\n"
+printf "line-6\n"
+printf "line-7\n"
+printf "line-8\n"
+printf "line-9\n"
+printf "line-10\n"
+printf "line-11\n"
+printf "line-12\n"
+printf "line-13\n"
+printf "line-14\n"
+printf "line-15\n"
+printf "line-16\n"
+printf "line-17\n"
+
+
+
+
+
+
+
+
+
+
+
+
+

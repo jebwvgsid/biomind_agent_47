@@ -1,0 +1,6 @@
+{
+  "original_cast_sha256": "8df598b9d360b9408b15480069d9b37fcac937e735692e776b13a0d99fce2e04",
+  "replay_cast_sha256": "d789a6cb08c9d13e04dd1855f6a66fc30d6a8ea1106afcc7f4184058cb654e2b",
+  "output_bytes_events_unchanged": true,
+  "added_events": "recorded controller resize r and action markers m, from metrics.json; original recording preserved"
+}

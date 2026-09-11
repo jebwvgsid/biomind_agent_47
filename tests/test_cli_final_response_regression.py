@@ -101,7 +101,8 @@ def test_actual_supervisor_review_keeps_fact_status_and_one_existing_call(tmp_pa
             assert not any(item.source == 'model_public' for item in owner.model.items)
             assert '<validation_evidence>' not in writer.getvalue()
             if mode == 'plain':
-                assert 'Validation status: VALID' in writer.getvalue()
+                assert '局部执行检查：VALID' in writer.getvalue()
+                assert '正式完成核验与提交另行判定' in writer.getvalue()
             else:
                 assert writer.getvalue() == ''
             assert all('biomind_generate_display_v1' not in str(message.content)

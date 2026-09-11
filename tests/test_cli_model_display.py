@@ -1,5 +1,6 @@
 """Offline display contracts; synthetic text only, no business configuration."""
 import asyncio
+import concurrent.futures
 import io
 import json
 import threading
@@ -24,6 +25,31 @@ def service_cross_thread_callbacks():
     def pulse():
         loop.call_later(.001, pulse)
     pulse()
+
+
+def complete_fake_review(owner, original_prompt, *args, **kwargs):
+    """Finish the UI review before the pre-existing synthetic approval reply.
+
+    Actual keyboard approval is covered by V2 PTY replay. These graph fixtures
+    have always stubbed approval; their stub must also leave the new viewer.
+    """
+    def leave_viewer():
+        assert owner.modal and owner.review_document
+        owner.close_details()
+        owner.model.release_priority()
+    if asyncio.get_running_loop() is owner.loop:
+        leave_viewer()
+    else:
+        confirmation = concurrent.futures.Future()
+        def close_on_owner():
+            try:
+                leave_viewer()
+                confirmation.set_result(None)
+            except BaseException as exc:
+                confirmation.set_exception(exc)
+        owner.loop.call_soon_threadsafe(close_on_owner)
+        confirmation.result(timeout=2)
+    return original_prompt(*args, **kwargs)
 
 
 class Writer(io.StringIO):
@@ -127,7 +153,9 @@ def test_bounded_complete_lines_mask_synthetic_secrets_across_chunks():
 def test_public_normal_five_times_and_append_order():
     async def run():
         writer = Writer()
-        owner = PlainTerminal(writer)
+        # This fixture asserts the optional full per-event transcript. V2
+        # compact grouping has its own tests; preserve the original clock test.
+        owner = PlainTerminal(writer, verbosity='verbose')
         previous = bind_terminal(owner)
         try:
             first = emit_public('看到了 fixture-A，接下来读取。', task_id='synthetic', call_id='c1')
@@ -154,7 +182,7 @@ def test_public_timeout_retains_later_order_and_cancellation_propagates():
     async def run():
         gate = threading.Event()
         writer = Writer(gate)
-        owner = PlainTerminal(writer)
+        owner = PlainTerminal(writer, verbosity='verbose')
         previous = bind_terminal(owner)
         try:
             ticket = emit_public('已形成说明', call_id='timeout')

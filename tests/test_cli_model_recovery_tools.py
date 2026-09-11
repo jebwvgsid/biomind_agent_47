@@ -42,7 +42,7 @@ def _evidence(name, data):
     )
 
 
-async def _recovery_case(tmp_path, replies, *, enabled=True, writer=None, dispatch_hook=None):
+async def _recovery_case(tmp_path, replies, *, enabled=True, writer=None, dispatch_hook=None, verbosity='compact'):
     import bio_agents
     durable, seed = _seed_fixture()
     original_durable = deepcopy(durable)
@@ -79,7 +79,7 @@ async def _recovery_case(tmp_path, replies, *, enabled=True, writer=None, dispat
         agent._schema2_recovery_event_sink(event, payload)
 
     writer = writer or TimedWriter()
-    owner = PlainTerminal(output=writer, enabled=enabled)
+    owner = PlainTerminal(output=writer, enabled=enabled, verbosity=verbosity)
     old = bind_terminal(owner)
     try:
         result = await RecoveryAgentLoop(
@@ -115,8 +115,8 @@ def _inspection_replies():
 def test_recovery_production_loop_current_turn_order_history_and_display_modes(tmp_path):
     async def check():
         replies = _inspection_replies()
-        on = await _recovery_case(tmp_path / "on", replies)
-        off = await _recovery_case(tmp_path / "off", replies, enabled=False)
+        on = await _recovery_case(tmp_path / "on", replies, verbosity='verbose')
+        off = await _recovery_case(tmp_path / "off", replies, enabled=False, verbosity='verbose')
         result, requests, received, dispatched, ready, owner, writer = on
         public = [item for item in owner.model.items if item.source == "model_public"]
         assert [item.text for item in public] == [replies[0].content, "已读取失败证据；修正尚未执行。"]
@@ -205,7 +205,7 @@ class _HeldWriter(TimedWriter):
 def test_recovery_flush_timeout_keeps_business_order_and_call_counts(tmp_path):
     async def check():
         writer = _HeldWriter()
-        result = await _recovery_case(tmp_path, _inspection_replies(), writer=writer)
+        result = await _recovery_case(tmp_path, _inspection_replies(), writer=writer, verbosity='verbose')
         public = [item for item in result[5].model.items if item.source == "model_public"][0]
         assert public.degradation == "confirmation_timeout"
         assert public.times["degraded"] <= result[3][0]["at"] < public.times["write"]

@@ -1,0 +1,36 @@
+{
+  "requests": [
+    {
+      "response": "n",
+      "payload": {
+        "type": "code_review",
+        "msg": "⚠️ Code Execution Request (bash) | y/Enter=run, n=reject, q=quit, e:/edit:/code:=replacement; text=feedback, not code",
+        "content": "# 合成批准对象；拒绝前可查看完整正文\nprintf \"line-0\\n\"\nprintf \"line-1\\n\"\nprintf \"line-2\\n\"\nprintf \"line-3\\n\"\nprintf \"line-4\\n\"\nprintf \"line-5\\n\"\nprintf \"line-6\\n\"\nprintf \"line-7\\n\"\nprintf \"line-8\\n\"\nprintf \"line-9\\n\"\nprintf \"line-10\\n\"\nprintf \"line-11\\n\"\nprintf \"line-12\\n\"\nprintf \"line-13\\n\"\nprintf \"line-14\\n\"\nprintf \"line-15\\n\"\nprintf \"line-16\\n\"\nprintf \"line-17\\n\"\nprintf \"line-18\\n\"\nprintf \"line-19\\n\"\nprintf \"line-20\\n\"\nprintf \"line-21\\n\"\nprintf \"line-22\\n\"\nprintf \"line-23\\n\"\nprintf \"line-24\\n\"\nprintf \"line-25\\n\"\nprintf \"line-26\\n\"\nprintf \"line-27\\n\"\nprintf \"line-28\\n\"\nprintf \"line-29\\n\"\nprintf \"line-30\\n\"\nprintf \"line-31\\n\"\nprintf \"line-32\\n\"\nprintf \"line-33\\n\"\nprintf \"line-34\\n\"\nprintf \"line-35\\n\"\nprintf \"line-36\\n\"\nprintf \"line-37\\n\"\nprintf \"line-38\\n\"\nprintf \"line-39\\n\"\nprintf \"line-40\\n\"\nprintf \"line-41\\n\"\nprintf \"line-42\\n\"\nprintf \"line-43\\n\"\nprintf \"line-44\\n\"",
+        "editable_content": "# 合成批准对象；拒绝前可查看完整正文\nprintf \"line-0\\n\"\nprintf \"line-1\\n\"\nprintf \"line-2\\n\"\nprintf \"line-3\\n\"\nprintf \"line-4\\n\"\nprintf \"line-5\\n\"\nprintf \"line-6\\n\"\nprintf \"line-7\\n\"\nprintf \"line-8\\n\"\nprintf \"line-9\\n\"\nprintf \"line-10\\n\"\nprintf \"line-11\\n\"\nprintf \"line-12\\n\"\nprintf \"line-13\\n\"\nprintf \"line-14\\n\"\nprintf \"line-15\\n\"\nprintf \"line-16\\n\"\nprintf \"line-17\\n\"\nprintf \"line-18\\n\"\nprintf \"line-19\\n\"\nprintf \"line-20\\n\"\nprintf \"line-21\\n\"\nprintf \"line-22\\n\"\nprintf \"line-23\\n\"\nprintf \"line-24\\n\"\nprintf \"line-25\\n\"\nprintf \"line-26\\n\"\nprintf \"line-27\\n\"\nprintf \"line-28\\n\"\nprintf \"line-29\\n\"\nprintf \"line-30\\n\"\nprintf \"line-31\\n\"\nprintf \"line-32\\n\"\nprintf \"line-33\\n\"\nprintf \"line-34\\n\"\nprintf \"line-35\\n\"\nprintf \"line-36\\n\"\nprintf \"line-37\\n\"\nprintf \"line-38\\n\"\nprintf \"line-39\\n\"\nprintf \"line-40\\n\"\nprintf \"line-41\\n\"\nprintf \"line-42\\n\"\nprintf \"line-43\\n\"\nprintf \"line-44\\n\"",
+        "provenance": {},
+        "language": "bash",
+        "risk": {
+          "risk_level": "medium",
+          "risk_score": 50.0,
+          "risky_operations": [
+            "Unknown/Unlisted Command"
+          ],
+          "safe_operations": [],
+          "recommendations": [
+            "ℹ️ 未知命令：系统无法确认安全性"
+          ]
+        },
+        "options": [
+          "(y)es",
+          "(n)o",
+          "(e)dit"
+        ],
+        "instructions": "Plain text is feedback, not executable code. Replacement code must start with e:, edit:, or code:."
+      },
+      "code_sha256": "9d84e3f03b79a2f4e1f579f1a2217a3b3b30418604e3ee9c290dc7552481818f"
+    }
+  ],
+  "action": "reject",
+  "result": "User rejected explicitly.",
+  "executions": 0
+}

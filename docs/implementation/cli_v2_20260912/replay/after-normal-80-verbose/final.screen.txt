@@ -1,0 +1,24 @@
+Planner 候选 1：流式接收，正文 1036 字符，已等待 2.8s，距真实 payload 0.1s
+Planner 候选 1：流式接收，正文 1073 字符，已等待 2.9s，距真实 payload 0.1s
+Planner 候选 1：parse_envelope
+Planner 候选 1：parse_envelope 完成，耗时 0.000s
+Planner 候选 1：normalize_candidate
+Planner 候选 1：normalize_candidate 完成，耗时 0.000s
+Planner 候选 1：compile_plan
+Planner 候选 1：compile_plan 完成，耗时 0.000s
+读取开始
+读取已返回
+读取开始
+读取已返回
+读取开始
+读取已返回
+搜索开始
+搜索已返回
+搜索开始
+搜索已返回，未找到结果
+三份合成输入均已返回，搜索得到三个匹配项，另一项搜索返回空结果。没有调用真实模型
+或科学分析流程。
+ · 搜索已返回，未找到结果 · 距上次观测 1 秒
+中文草稿
+第二行 /tmp/合成长路径/输入文件.txt
+Enter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消

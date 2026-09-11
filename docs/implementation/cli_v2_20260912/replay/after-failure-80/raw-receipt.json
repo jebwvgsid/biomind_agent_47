@@ -1,0 +1,7 @@
+{
+  "script_sha256": "46d92b1dc01456176eb16a8fc16779705ceb05dfe0db950b4330cba65e86cff9",
+  "stdout": "checked synthetic inputs\nBIOMIND_EFFECT_EVIDENCE_JSON={\"fixture\":true}\n",
+  "stdout_sha256": "209fa2d004fa9fc2d12c87298ae9605ce299c2cf55c116d1c9d08cc1e34418b0",
+  "stderr": "",
+  "returncode": 0
+}

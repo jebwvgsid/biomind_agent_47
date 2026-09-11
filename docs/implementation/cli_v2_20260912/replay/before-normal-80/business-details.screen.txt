@@ -1,0 +1,23 @@
+📋 Planner 候选 1：流式接收，正文 925 字符，已等待 2.5s，距真实 payload 0.1s
+📋 Planner 候选 1：流式接收，正文 962 字符，已等待 2.6s，距真实 payload 0.1s
+📋 Planner 候选 1：流式接收，正文 999 字符，已等待 2.7s，距真实 payload 0.1s
+📋 Planner 候选 1：流式接收，正文 1036 字符，已等待 2.8s，距真实 payload 0.1s
+📋 Planner 候选 1：流式接收，正文 1073 字符，已等待 2.9s，距真实 payload 0.1s
+📋 Planner 候选 1：parse_envelope
+📋 Planner 候选 1：parse_envelope 完成，耗时 0.000s
+📋 Planner 候选 1：normalize_candidate
+📋 Planner 候选 1：normalize_candidate 完成，耗时 0.000s
+📋 Planner 候选 1：compile_plan
+📋 Planner 候选 1：compile_plan 完成，耗时 0.000s
+读取开始
+读取已返回
+读取开始
+读取已返回
+读取开始
+读取已返回
+搜索开始
+搜索已返回
+搜索开始
+搜索已返回
+三份合成输入均已返回，搜索得到三个匹配项，另一项搜索返回空结果。没有调用真实模型
+或科学分析流程。

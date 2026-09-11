@@ -46,7 +46,9 @@ async def recovery_scenario(root, mode):
             return super().write(value)
 
     writer = ControlledWriter()
-    owner = PlainTerminal(writer, enabled=mode != "off")
+    # Keep the original named-tool transcript assertions in explicit verbose;
+    # compact aggregation is exercised by V2 owner and production PTY fixtures.
+    owner = PlainTerminal(writer, enabled=mode != "off", verbosity='verbose')
     previous = bind_terminal(owner)
     agent = BioAnalystAgent.__new__(BioAnalystAgent)
     agent.data_path = str(root)

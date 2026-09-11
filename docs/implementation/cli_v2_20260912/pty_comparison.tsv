@@ -1,0 +1,10 @@
+scenario	width	before_lines	after_lines	reduction_percent	tool_groups	public_paragraphs	critical_public_omissions	critical_public_duplicates	same_counts	same_approval_or_raw_receipt	same_draft	returncode
+normal	80	48	3	93.75	1	2	0	0	True	True	True	0
+failure	80	66	15	77.27	2	3	0	0	True	True	True	0
+approval	80	42	10	76.19	0	2	0	0	True	True	True	0
+normal	120	48	3	93.75	1	2	0	0	True	True	True	0
+failure	120	66	15	77.27	2	3	0	0	True	True	True	0
+approval	120	42	10	76.19	0	2	0	0	True	True	True	0
+normal	42	48	3	93.75	1	2	0	0	True	True	True	0
+failure	42	66	15	77.27	2	3	0	0	True	True	True	0
+approval	42	42	10	76.19	0	2	0	0	True	True	True	0

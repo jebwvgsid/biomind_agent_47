@@ -1,0 +1,36 @@
+{
+  "base": "e75b95ecce117e9128c8b9079e554f6332c0f3b1",
+  "final_code": "11d5e9ca6843bb7d833db7c7b3b778c05c55f1a5",
+  "paths": {
+    "agent_core/workflow/runtime_graph.py": {
+      "unchanged": true,
+      "base_blob": "aa39b55509b8365c8a83acfd2b90fbb89ed8ec16",
+      "final_blob": "aa39b55509b8365c8a83acfd2b90fbb89ed8ec16"
+    },
+    "agent_core/workflow/recovery_runtime.py": {
+      "unchanged": true,
+      "base_blob": "d191d1aecc4b23ebfc5f8ed3ce222c44c7093404",
+      "final_blob": "d191d1aecc4b23ebfc5f8ed3ce222c44c7093404"
+    },
+    "agent_core/completion_gate.py": {
+      "unchanged": true,
+      "base_blob": "67a9ef51653d10380a09b86a387f890cd9af965e",
+      "final_blob": "67a9ef51653d10380a09b86a387f890cd9af965e"
+    },
+    "agent_core/plan_tracker.py": {
+      "unchanged": true,
+      "base_blob": "2f3c53786f11a28382ecbb431f9ed5b6d136ed06",
+      "final_blob": "2f3c53786f11a28382ecbb431f9ed5b6d136ed06"
+    },
+    "agent_core/step_effects.py": {
+      "unchanged": true,
+      "base_blob": "c3ae3b6290dd88022309bb56bd1570c9b5e9d423",
+      "final_blob": "c3ae3b6290dd88022309bb56bd1570c9b5e9d423"
+    },
+    "agent_core/semantic_completion.py": {
+      "unchanged": true,
+      "base_blob": "239554a1f2d005c1ffa17a9a99d0c27432f1dfeb",
+      "final_blob": "239554a1f2d005c1ffa17a9a99d0c27432f1dfeb"
+    }
+  }
+}

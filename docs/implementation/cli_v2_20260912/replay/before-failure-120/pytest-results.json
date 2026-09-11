@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/replay_cli_v2_pty.py::test_v2_real_pty_replay",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/replay_cli_v2_pty.py::test_v2_real_pty_replay",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012888014316558838,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/replay_cli_v2_pty.py::test_v2_real_pty_replay",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 21.131339700892568,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/replay_cli_v2_pty.py::test_v2_real_pty_replay",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00038349395617842674,
+    "failure": ""
+  }
+]

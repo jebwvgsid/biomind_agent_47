@@ -1,0 +1,116 @@
+{
+  "returncode": 0,
+  "source": "6c7a2003340b824c6f03f8b261c734a570c685ae",
+  "source_signature": "81cf0bac03d1bb8948acbe5025022b18b03d523931a103249e68cd0a865dfbd1",
+  "scenario": "approval",
+  "verbosity": "compact",
+  "initial_size": [
+    42,
+    18
+  ],
+  "resize": [
+    64,
+    20
+  ],
+  "actual_pty": true,
+  "production_application": true,
+  "counts": {
+    "model_calls": 2,
+    "tool_calls": 0,
+    "executions": 0,
+    "approvals": 1,
+    "rejected": 1,
+    "cancel_requests": 1
+  },
+  "history_items": 42,
+  "permanent_logical_lines": 42,
+  "model_paragraphs": 2,
+  "tool_history_items": 0,
+  "diagnostic_items": 44,
+  "actions": [
+    {
+      "at": 5.908617740031332,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 19.41344521800056,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 19.413506669923663,
+      "action": "multiline_draft"
+    },
+    {
+      "at": 19.413508193101734,
+      "action": "F2_details"
+    },
+    {
+      "at": 21.432209599297494,
+      "action": "close_initial_details"
+    },
+    {
+      "at": 22.9660348710604,
+      "resize": [
+        64,
+        20
+      ]
+    },
+    {
+      "at": 22.96638716617599,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 22.97899636393413,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 22.98112648818642,
+      "action": "approval_F2"
+    },
+    {
+      "at": 22.98329594731331,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 23.094028356019408,
+      "action": "approval_page_down"
+    },
+    {
+      "at": 23.094032485969365,
+      "action": "approval_Escape"
+    },
+    {
+      "at": 23.226351397112012,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 23.32935632718727,
+      "action": "approval_reject"
+    },
+    {
+      "at": 23.33305527595803,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 23.333109019324183,
+      "action": "CtrlC_cancel"
+    },
+    {
+      "at": 23.33799314731732,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 23.347217326052487,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 23.354642660357058,
+      "action": "Escape_to_input"
+    }
+  ],
+  "unsupported_vt": [],
+  "captured": true,
+  "modal_opened": true,
+  "session_route_evidence": false,
+  "replay_source_sha256": "3706a4babdff488f0e68eb7b9cdcaf68478b71eb9fc893a3668af731b217f856"
+}

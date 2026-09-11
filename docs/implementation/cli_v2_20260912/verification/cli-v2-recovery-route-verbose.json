@@ -1,0 +1,115 @@
+{
+  "fixture": "synthetic; no original session or executable scientific task",
+  "source": "Schema2RecoveryNode -> RecoveryAgentLoop -> RecoveryLocalToolDispatcher.failure.inspect -> RecoveryRuntime -> route_recovery_outcome",
+  "mode": "verbose",
+  "business": {
+    "provider_request_sha256": [
+      "7b7fd1adee32bb33ef2c3cb6cbdafee07985b1f6410567c0ebffc340fe6d993d",
+      "0e1f18c4e02a426d486ab243260edf38e71dcb53f135f1bd5570c04962244ed1"
+    ],
+    "provider_call_count": 2,
+    "schema_hashes": [
+      "ceeb28514e8f62907e71f2d6f81afc28037d0032092d83740a0f43990d82ce6d"
+    ],
+    "actual_dispatches": [
+      {
+        "tool": "failure.inspect",
+        "arguments": {},
+        "result_sha256": "da6c6397a78a4cc6da1a511de8a0c86614855acb413d33e5b7218c2d77b06f61"
+      }
+    ],
+    "actual_directive": {
+      "schema_version": 1,
+      "directive_id": "synthetic-v2-revise-plan",
+      "task_id": "task-recovery",
+      "action": "revise_plan",
+      "summary": "当前已批准步骤的输出约束需要修订。",
+      "reason_code": "CONTRACT_DRIFT",
+      "target_step_id": "step-1",
+      "instruction": "核对当前步骤的输出与选中能力合同，再提交计划审批。",
+      "evidence_refs": [
+        "execution-1"
+      ]
+    },
+    "directive_digest": "sha256:edbededf2c07ecccfbe8fbb8d61aae5c34b49480ba1b5db58f507b8cb3777a92",
+    "admission": {
+      "status": "admitted",
+      "outcome_type": "plan_revision_required",
+      "command_started": false,
+      "directive_id": "synthetic-v2-revise-plan"
+    },
+    "typed_outcome": {
+      "schema_version": 1,
+      "type": "plan_revision_required",
+      "summary": "The approved Plan contract requires revision.",
+      "scope": {
+        "task_id": "task-recovery",
+        "plan_id": "plan-recovery",
+        "plan_version": "plan-v1",
+        "step_id": "step-1",
+        "state_generation": 4,
+        "action_id": "action-1",
+        "attempt_id": "attempt-1",
+        "incident_id": "incident-f2573d2749a5e65ea4f63b01",
+        "failure_packet_version": 1
+      },
+      "payload": {
+        "diagnosis": "当前已批准步骤的输出约束需要修订。",
+        "contract_violations": [
+          "核对当前步骤的输出与选中能力合同，再提交计划审批。"
+        ],
+        "source_scope": {
+          "task_id": "task-recovery",
+          "plan_id": "plan-recovery",
+          "plan_version": "plan-v1",
+          "step_id": "step-1",
+          "state_generation": 4,
+          "action_id": "action-1",
+          "attempt_id": "attempt-1",
+          "incident_id": "incident-f2573d2749a5e65ea4f63b01",
+          "failure_packet_version": 1
+        },
+        "decision_id": "synthetic-v2-revise-plan",
+        "budget_receipt": {
+          "incident_id": "incident-f2573d2749a5e65ea4f63b01",
+          "ordinal": 1,
+          "limit": 2,
+          "remaining": 1,
+          "consumed": true,
+          "source_fingerprint": "849f2247695a3dec8ffb2c4d",
+          "failure_packet_ref": "failure-packet:sha256:ac6b9cd401160b06332b968b64216d76b0477b53a67da563891531c82cfb3029",
+          "failure_packet_version": 1
+        }
+      },
+      "evidence_refs": [
+        "execution-1"
+      ]
+    },
+    "budget_ledger": {
+      "incident-f2573d2749a5e65ea4f63b01": 1
+    },
+    "route_from_production_function": "planner",
+    "save_count": 1
+  },
+  "event_kinds": [
+    "recovery_started",
+    "recovery_model_turn_started",
+    "recovery_assistant_message_committed",
+    "recovery_model_turn_completed",
+    "recovery_response_received",
+    "recovery_tool_started",
+    "recovery_tool_observation_committed",
+    "recovery_tool_completed",
+    "recovery_model_turn_started",
+    "recovery_assistant_message_committed",
+    "recovery_model_turn_completed",
+    "recovery_response_received",
+    "recovery_response_feedback_committed",
+    "recovery_directive_admitted"
+  ],
+  "persisted_tool_message_sha256": "50beb8b476526130e77ef20333216a4d3bfde60f4f37411f78e281a4021bd338",
+  "persisted_tool_observation_sha256": "cb3e652371039f407ae2f2bc8aa8d09053d5e37eb79760fc2ccb522985af0315",
+  "archive_terminal_state": "directive_ready",
+  "transcript": "我先读取本次失败的现有回执。\nRecovery response status: investigating\n🔎 Recovery tool started: failure.inspect\nfailure.inspect 已返回\n当前已批准步骤的输出约束需要修订。\nRecovery response status: candidate_validated\n恢复指令已接纳：revise_plan；后续由现有图路由处理。\n",
+  "limits": "Checks accepted route selection; does not invoke Planner or prove its next provider request contains the directive."
+}

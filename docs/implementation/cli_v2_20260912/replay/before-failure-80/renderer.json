@@ -1,0 +1,890 @@
+{
+  "items": [
+    {
+      "kind": "model_public",
+      "source": "model_public",
+      "text": "这是隔离合成回放。我先读取已创建的三份输入，再检查匹配结果。",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "source_message_id": "model-1"
+      },
+      "times": {
+        "ready": 4034849.569228172,
+        "enqueued": 4034849.569324439,
+        "degraded": 4034849.646346498,
+        "write": 4034849.675008562,
+        "flush": 4034849.675174513
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 0 字符，已等待 0.0s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.162358042,
+        "enqueued": 4034852.162358291,
+        "write": 4034852.165341406,
+        "flush": 4034852.165643632
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 37 字符，已等待 0.1s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.162507754,
+        "enqueued": 4034852.162507923,
+        "write": 4034852.165683143,
+        "flush": 4034852.165697967
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 74 字符，已等待 0.2s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.162581969,
+        "enqueued": 4034852.162582176,
+        "write": 4034852.165704252,
+        "flush": 4034852.165714
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 111 字符，已等待 0.3s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.162644194,
+        "enqueued": 4034852.162644379,
+        "write": 4034852.165718903,
+        "flush": 4034852.165726438
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 148 字符，已等待 0.4s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.162715222,
+        "enqueued": 4034852.162715406,
+        "write": 4034852.165731273,
+        "flush": 4034852.165738864
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 185 字符，已等待 0.5s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.162776327,
+        "enqueued": 4034852.162776465,
+        "write": 4034852.165743644,
+        "flush": 4034852.165750505
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 222 字符，已等待 0.6s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.162828671,
+        "enqueued": 4034852.162828831,
+        "write": 4034852.165754258,
+        "flush": 4034852.165761169
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 259 字符，已等待 0.7s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.162880249,
+        "enqueued": 4034852.162880367,
+        "write": 4034852.165765444,
+        "flush": 4034852.165772458
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 296 字符，已等待 0.8s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.162930234,
+        "enqueued": 4034852.162930398,
+        "write": 4034852.165776795,
+        "flush": 4034852.165783744
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 333 字符，已等待 0.9s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.162977129,
+        "enqueued": 4034852.162977246,
+        "write": 4034852.165787572,
+        "flush": 4034852.165794666
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 370 字符，已等待 1.0s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163022536,
+        "enqueued": 4034852.163022729,
+        "write": 4034852.165798779,
+        "flush": 4034852.165805738
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 407 字符，已等待 1.1s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.16306985,
+        "enqueued": 4034852.163070013,
+        "write": 4034852.165809854,
+        "flush": 4034852.165816505
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 444 字符，已等待 1.2s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163116003,
+        "enqueued": 4034852.16311611,
+        "write": 4034852.165820478,
+        "flush": 4034852.165827313
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 481 字符，已等待 1.3s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163166815,
+        "enqueued": 4034852.163166923,
+        "write": 4034852.16583094,
+        "flush": 4034852.165837614
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 518 字符，已等待 1.4s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163214426,
+        "enqueued": 4034852.163214531,
+        "write": 4034852.165840475,
+        "flush": 4034852.165848477
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 555 字符，已等待 1.5s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163260778,
+        "enqueued": 4034852.163260968,
+        "write": 4034852.165851697,
+        "flush": 4034852.165858613
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 592 字符，已等待 1.6s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163308212,
+        "enqueued": 4034852.163308325,
+        "write": 4034852.165862247,
+        "flush": 4034852.165869103
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 629 字符，已等待 1.7s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163355665,
+        "enqueued": 4034852.163355801,
+        "write": 4034852.165872735,
+        "flush": 4034852.165879674
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 666 字符，已等待 1.8s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.16340623,
+        "enqueued": 4034852.16340635,
+        "write": 4034852.165883855,
+        "flush": 4034852.165890303
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 703 字符，已等待 1.9s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163454476,
+        "enqueued": 4034852.163454611,
+        "write": 4034852.165893646,
+        "flush": 4034852.165900541
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 740 字符，已等待 2.0s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163505772,
+        "enqueued": 4034852.163505873,
+        "write": 4034852.165903958,
+        "flush": 4034852.165911006
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 777 字符，已等待 2.1s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163553867,
+        "enqueued": 4034852.163553965,
+        "write": 4034852.165914151,
+        "flush": 4034852.165921011
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 814 字符，已等待 2.2s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163597449,
+        "enqueued": 4034852.163597609,
+        "write": 4034852.165924129,
+        "flush": 4034852.165930995
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 851 字符，已等待 2.3s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163642633,
+        "enqueued": 4034852.16364278,
+        "write": 4034852.165933894,
+        "flush": 4034852.165940409
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 888 字符，已等待 2.4s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163688447,
+        "enqueued": 4034852.163688576,
+        "write": 4034852.165943236,
+        "flush": 4034852.165949899
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 925 字符，已等待 2.5s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163733072,
+        "enqueued": 4034852.163733234,
+        "write": 4034852.16595305,
+        "flush": 4034852.165960789
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 962 字符，已等待 2.6s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163780799,
+        "enqueued": 4034852.163780969,
+        "write": 4034852.165963667,
+        "flush": 4034852.165975157
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 999 字符，已等待 2.7s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163826973,
+        "enqueued": 4034852.163827112,
+        "write": 4034852.165978209,
+        "flush": 4034852.165985017
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 1036 字符，已等待 2.8s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163873787,
+        "enqueued": 4034852.163873914,
+        "write": 4034852.165987948,
+        "flush": 4034852.165994793
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：流式接收，正文 1073 字符，已等待 2.9s，距真实 payload 0.1s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163920292,
+        "enqueued": 4034852.163920425,
+        "write": 4034852.16599761,
+        "flush": 4034852.166004378
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：parse_envelope",
+      "scope": {},
+      "times": {
+        "ready": 4034852.163965687,
+        "enqueued": 4034852.163965908,
+        "write": 4034852.166007073,
+        "flush": 4034852.166014585
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：parse_envelope 完成，耗时 0.000s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.164036216,
+        "enqueued": 4034852.164036329,
+        "write": 4034852.166017262,
+        "flush": 4034852.166025338
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：normalize_candidate",
+      "scope": {},
+      "times": {
+        "ready": 4034852.164079787,
+        "enqueued": 4034852.16407994,
+        "write": 4034852.16602894,
+        "flush": 4034852.16603612
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：normalize_candidate 完成，耗时 0.000s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.16413166,
+        "enqueued": 4034852.164131773,
+        "write": 4034852.166039499,
+        "flush": 4034852.166046744
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：compile_plan",
+      "scope": {},
+      "times": {
+        "ready": 4034852.164168648,
+        "enqueued": 4034852.164168835,
+        "write": 4034852.166049259,
+        "flush": 4034852.166056259
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：compile_plan 完成，耗时 0.000s",
+      "scope": {},
+      "times": {
+        "ready": 4034852.164211926,
+        "enqueued": 4034852.164212021,
+        "write": 4034852.166059265,
+        "flush": 4034852.166066896
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_start",
+      "source": "runtime_fact",
+      "text": "读取开始",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "tool_call_id": "read-0"
+      },
+      "times": {
+        "ready": 4034852.164982171,
+        "enqueued": 4034852.164982339,
+        "write": 4034852.171421709,
+        "flush": 4034852.171437883
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_end",
+      "source": "runtime_fact",
+      "text": "读取已返回",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "tool_call_id": "read-0"
+      },
+      "times": {
+        "ready": 4034852.165436114,
+        "enqueued": 4034852.165436446,
+        "write": 4034852.171443193,
+        "flush": 4034852.171449205
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_start",
+      "source": "runtime_fact",
+      "text": "读取开始",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "tool_call_id": "read-1"
+      },
+      "times": {
+        "ready": 4034852.166203256,
+        "enqueued": 4034852.166203654,
+        "write": 4034852.17145299,
+        "flush": 4034852.171457922
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_end",
+      "source": "runtime_fact",
+      "text": "读取已返回",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "tool_call_id": "read-1"
+      },
+      "times": {
+        "ready": 4034852.166383507,
+        "enqueued": 4034852.166383665,
+        "write": 4034852.171461976,
+        "flush": 4034852.171466682
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_start",
+      "source": "runtime_fact",
+      "text": "读取开始",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "tool_call_id": "read-2"
+      },
+      "times": {
+        "ready": 4034852.166800783,
+        "enqueued": 4034852.166800923,
+        "write": 4034852.171470611,
+        "flush": 4034852.171481037
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_end",
+      "source": "runtime_fact",
+      "text": "读取已返回",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "tool_call_id": "read-2"
+      },
+      "times": {
+        "ready": 4034852.166955463,
+        "enqueued": 4034852.166955613,
+        "write": 4034852.171484369,
+        "flush": 4034852.171489929
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_start",
+      "source": "runtime_fact",
+      "text": "搜索开始",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "tool_call_id": "search-1"
+      },
+      "times": {
+        "ready": 4034852.166986665,
+        "enqueued": 4034852.166986749,
+        "write": 4034852.171493949,
+        "flush": 4034852.171498613
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_end",
+      "source": "runtime_fact",
+      "text": "搜索已返回",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "tool_call_id": "search-1"
+      },
+      "times": {
+        "ready": 4034852.167217247,
+        "enqueued": 4034852.167217438,
+        "write": 4034852.171502493,
+        "flush": 4034852.171507809
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_start",
+      "source": "runtime_fact",
+      "text": "搜索开始",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "tool_call_id": "search-empty"
+      },
+      "times": {
+        "ready": 4034852.167320767,
+        "enqueued": 4034852.167320904,
+        "write": 4034852.171511252,
+        "flush": 4034852.171515862
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_end",
+      "source": "runtime_fact",
+      "text": "搜索已返回",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "tool_call_id": "search-empty"
+      },
+      "times": {
+        "ready": 4034852.167610335,
+        "enqueued": 4034852.167610523,
+        "write": 4034852.171519184,
+        "flush": 4034852.171523407
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "model_public",
+      "source": "model_public",
+      "text": "三份合成输入均已返回，搜索得到三个匹配项，另一项搜索返回空结果。没有调用真实模型或科学分析流程。",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "source_message_id": "model-2"
+      },
+      "times": {
+        "ready": 4034852.167711633,
+        "enqueued": 4034852.167744332,
+        "write": 4034852.171528501,
+        "flush": 4034852.171534275
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_start",
+      "source": "runtime_fact",
+      "text": "工具进程已启动；等待执行结果",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "execution_attempt_id": "attempt-1",
+        "action_id": "synthetic-execute",
+        "pid": 7
+      },
+      "times": {
+        "ready": 4034852.358112356,
+        "enqueued": 4034852.35811249,
+        "write": 4034852.360520456,
+        "flush": 4034852.360987582
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "tool_end",
+      "source": "runtime_fact",
+      "text": "命令 rc=0，等待正式核验",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "execution_attempt_id": "attempt-1",
+        "action_id": "synthetic-execute",
+        "pid": 7
+      },
+      "times": {
+        "ready": 4034852.359874602,
+        "enqueued": 4034852.359874777,
+        "write": 4034852.361004905,
+        "flush": 4034852.361018893
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "\n──────────────────────────────────────────────────",
+      "scope": {},
+      "times": {
+        "ready": 4034852.360682561,
+        "enqueued": 4034852.360682872,
+        "write": 4034852.47367396,
+        "flush": 4034852.473746997
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "Execution Output：已收录，/details 查看",
+      "scope": {},
+      "times": {
+        "ready": 4034852.360761733,
+        "enqueued": 4034852.360761805,
+        "write": 4034852.473760484,
+        "flush": 4034852.473774197
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "──────────────────────────────────────────────────",
+      "scope": {},
+      "times": {
+        "ready": 4034852.360786049,
+        "enqueued": 4034852.360786196,
+        "write": 4034852.47378069,
+        "flush": 4034852.473791566
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "\n  Validation status: VALID\n",
+      "scope": {},
+      "times": {
+        "ready": 4034852.650403672,
+        "enqueued": 4034852.650403869,
+        "write": 4034852.651782233,
+        "flush": 4034852.651833971
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "result",
+      "source": "runtime_fact",
+      "text": "运行结果：failed\nTerminal result\n  Status: failed\n  Stage: supervisor\n  Failure code: STEP_EFFECT_INCOMPLETE\n  Reason: 合成正式回执：产物证据不完整；尚未提交。\n  Result path: -\n  Trace path: -",
+      "scope": {},
+      "times": {
+        "ready": 4034852.650658661,
+        "enqueued": 4034852.650658856,
+        "write": 4034852.651867982,
+        "flush": 4034852.651880034
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "model_public",
+      "source": "model_public",
+      "text": "现有正式回执表明产物证据不完整。我建议检查产物声明；这段模型说明不决定路由。",
+      "scope": {
+        "task_id": "v2-synthetic",
+        "node": "planner",
+        "call_id": "round-1",
+        "source_message_id": "model-4"
+      },
+      "times": {
+        "ready": 4034852.650743646,
+        "enqueued": 4034852.650762763,
+        "write": 4034852.651885855,
+        "flush": 4034852.651894622
+      },
+      "presentation": "history"
+    },
+    {
+      "kind": "message",
+      "source": "runtime_fact",
+      "text": "📋 Planner 候选 1：开始；已消耗 1 次调用，名义阈值 3，还需重复无进展才触发停止",
+      "scope": {},
+      "times": {
+        "ready": 4034852.653091482,
+        "enqueued": 4034852.653091643,
+        "write": 4034852.657937795,
+        "flush": 4034852.657957727
+      },
+      "presentation": "history"
+    }
+  ],
+  "details": [
+    "这是隔离合成回放。我先读取已创建的三份输入，再检查匹配结果。",
+    "📋 Planner 候选 1：流式接收，正文 0 字符，已等待 0.0s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 37 字符，已等待 0.1s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 74 字符，已等待 0.2s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 111 字符，已等待 0.3s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 148 字符，已等待 0.4s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 185 字符，已等待 0.5s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 222 字符，已等待 0.6s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 259 字符，已等待 0.7s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 296 字符，已等待 0.8s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 333 字符，已等待 0.9s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 370 字符，已等待 1.0s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 407 字符，已等待 1.1s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 444 字符，已等待 1.2s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 481 字符，已等待 1.3s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 518 字符，已等待 1.4s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 555 字符，已等待 1.5s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 592 字符，已等待 1.6s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 629 字符，已等待 1.7s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 666 字符，已等待 1.8s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 703 字符，已等待 1.9s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 740 字符，已等待 2.0s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 777 字符，已等待 2.1s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 814 字符，已等待 2.2s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 851 字符，已等待 2.3s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 888 字符，已等待 2.4s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 925 字符，已等待 2.5s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 962 字符，已等待 2.6s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 999 字符，已等待 2.7s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 1036 字符，已等待 2.8s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：流式接收，正文 1073 字符，已等待 2.9s，距真实 payload 0.1s",
+    "📋 Planner 候选 1：parse_envelope",
+    "📋 Planner 候选 1：parse_envelope 完成，耗时 0.000s",
+    "📋 Planner 候选 1：normalize_candidate",
+    "📋 Planner 候选 1：normalize_candidate 完成，耗时 0.000s",
+    "📋 Planner 候选 1：compile_plan",
+    "📋 Planner 候选 1：compile_plan 完成，耗时 0.000s",
+    "读取开始",
+    "读取已返回",
+    "读取开始",
+    "读取已返回",
+    "读取开始",
+    "读取已返回",
+    "搜索开始",
+    "搜索已返回",
+    "搜索开始",
+    "搜索已返回",
+    "三份合成输入均已返回，搜索得到三个匹配项，另一项搜索返回空结果。没有调用真实模型或科学分析流程。",
+    "工具事件 RUNNING",
+    "工具进程已启动；等待执行结果",
+    "工具事件 PROCESS_EXITED",
+    "命令 rc=0，等待正式核验",
+    "\n──────────────────────────────────────────────────",
+    "Execution Output\nchecked synthetic inputs\nBIOMIND_EFFECT_EVIDENCE_JSON={\"fixture\":true}",
+    "Execution Output：已收录，/details 查看",
+    "──────────────────────────────────────────────────",
+    "\n  Validation status: VALID\n",
+    "运行结果：failed\nTerminal result\n  Status: failed\n  Stage: supervisor\n  Failure code: STEP_EFFECT_INCOMPLETE\n  Reason: 合成正式回执：产物证据不完整；尚未提交。\n  Result path: -\n  Trace path: -",
+    "现有正式回执表明产物证据不完整。我建议检查产物声明；这段模型说明不决定路由。",
+    "📋 Planner 候选 1：开始；已消耗 1 次调用，名义阈值 3，还需重复无进展才触发停止"
+  ],
+  "status": " · 运行结果：failed · 距上次观测 0 秒",
+  "frames": 13,
+  "draft": "中文草稿\n第二行 /tmp/合成长路径/输入文件.txt",
+  "size": [
+    80,
+    24
+  ]
+}

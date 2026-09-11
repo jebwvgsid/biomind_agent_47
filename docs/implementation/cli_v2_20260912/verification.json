@@ -1,0 +1,420 @@
+{
+  "base_head": "e75b95ecce117e9128c8b9079e554f6332c0f3b1",
+  "branch": "refactor/consultant-controller-authority",
+  "code_head": "11d5e9ca6843bb7d833db7c7b3b778c05c55f1a5",
+  "slices": [
+    {
+      "slice": "UX1",
+      "commit": "8ddf5bbb48fb1a84fe8f734be8b370134966da91",
+      "parent": "e75b95ecce117e9128c8b9079e554f6332c0f3b1",
+      "tree": "a92e19114825853ca60ee4a98ffe738ba13ff972",
+      "files": [
+        "agent_core/cli_display.py",
+        "agent_core/cli_terminal.py",
+        "agent_core/phase_timing.py",
+        "bio_agents.py",
+        "supervisor.py",
+        "tests/cli_v2_support.py",
+        "tests/export_cli_v2_fixture.py",
+        "tests/test_cli_v2_display.py",
+        "tests/test_cli_v2_integration.py"
+      ]
+    },
+    {
+      "slice": "ROUTE-AUDIT",
+      "commit": "e0e2fa136efc42a23668396d94c73e0cb20c89a8",
+      "parent": "8ddf5bbb48fb1a84fe8f734be8b370134966da91",
+      "tree": "c37feede278268a967884ee5d2d8f89e741fd23f",
+      "files": [
+        "docs/implementation/cli_v2_20260912/replan_causal_audit.md",
+        "docs/implementation/cli_v2_20260912/replan_evidence_chain.tsv",
+        "docs/implementation/cli_v2_20260912/replan_evidence_projection.json"
+      ]
+    },
+    {
+      "slice": "UX2",
+      "commit": "4b6dc2d44c2b7d2d516bb80f9700de9da3832722",
+      "parent": "e0e2fa136efc42a23668396d94c73e0cb20c89a8",
+      "tree": "bede3abdcfe91726e2cfff3ef24cb37873d73e03",
+      "files": [
+        "agent_core/cli_activity.py",
+        "agent_core/cli_display.py",
+        "agent_core/cli_review.py",
+        "agent_core/cli_terminal.py",
+        "bio_agents.py",
+        "execution/executor.py",
+        "tests/export_cli_v2_fixture.py",
+        "tests/test_cli_v2_business.py",
+        "tests/test_cli_v2_display.py",
+        "tests/test_cli_v2_output.py",
+        "tests/test_cli_v2_recovery_route.py"
+      ]
+    },
+    {
+      "slice": "UX3",
+      "commit": "7481854c80f162d1f0ea9135a81dbf16cb99ea0f",
+      "parent": "4b6dc2d44c2b7d2d516bb80f9700de9da3832722",
+      "tree": "2bb92f2ed935c0c9da5ba57f9b711400d81c47a0",
+      "files": [
+        "agent_core/workflow/recovery_agent.py",
+        "prompts/manager.py",
+        "tests/export_cli_v2_fixture.py",
+        "tests/test_cli_v2_public_style.py"
+      ]
+    },
+    {
+      "slice": "PLAIN-STAGE",
+      "commit": "11d5e9ca6843bb7d833db7c7b3b778c05c55f1a5",
+      "parent": "7481854c80f162d1f0ea9135a81dbf16cb99ea0f",
+      "tree": "e3e0091e9e80976868a179cf2aeefde6a5883124",
+      "files": [
+        "agent_core/cli_terminal.py",
+        "tests/export_cli_v2_fixture.py",
+        "tests/test_cli_v2_plain_stage.py",
+        "tests/test_cli_v2_terminal_fallback.py"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "results_directory": "/tmp/biomind_cli_v2_20260912/ux1-candidate-results",
+      "export_source": "a92e19114825853ca60ee4a98ffe738ba13ff972",
+      "export_signature": "50dda81456b24a39e4ef0593fdcaf9030980289175ff6a6b62b6dc37c9e04e46",
+      "export_file_count": 150,
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_cli_v2_20260912/ux1-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_cli_v2_20260912/ux1-candidate",
+        "-q",
+        "tests/test_cli_v2_display.py",
+        "tests/test_cli_v2_integration.py"
+      ],
+      "result_lines": [
+        "12 passed in 15.44s"
+      ],
+      "source_unchanged": true,
+      "stdout_sha256": "20eed01a060034b23ce1953b1c5f9baff824d45251ee888624136817f42b72e5",
+      "abnormal_exit": null
+    },
+    {
+      "results_directory": "/tmp/biomind_cli_v2_20260912/ux1-results",
+      "export_source": "exact_worktree",
+      "export_signature": "6b06742d6203322e5debaf4796e34331df785ce7de744a38c283768b5212ed1e",
+      "export_file_count": 148,
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_cli_v2_20260912/ux1-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_cli_v2_20260912/ux1-export",
+        "-q",
+        "tests/test_cli_v2_display.py",
+        "tests/test_cli_public_response.py",
+        "tests/test_cli_generate_integrity.py",
+        "tests/test_cli_cp_public_integration.py",
+        "tests/test_cli_generate_public_integration.py"
+      ],
+      "result_lines": [
+        "115 passed in 79.88s (0:01:19)"
+      ],
+      "source_unchanged": true,
+      "stdout_sha256": "3818ef27771baf44761b6964ddaf2d7ff21318084e686f978fda78d73cc6592f",
+      "abnormal_exit": null
+    },
+    {
+      "results_directory": "/tmp/biomind_cli_v2_20260912/ux2-candidate-results",
+      "export_source": "bede3abdcfe91726e2cfff3ef24cb37873d73e03",
+      "export_signature": "b83aae635c51f379abd7128b154852eae5f9b2fbde493a4816b03fb944e6d255",
+      "export_file_count": 154,
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_cli_v2_20260912/ux2-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_cli_v2_20260912/ux2-candidate",
+        "-q",
+        "tests/test_cli_v2_display.py",
+        "tests/test_cli_v2_integration.py",
+        "tests/test_cli_v2_output.py",
+        "tests/test_cli_v2_business.py",
+        "tests/test_cli_v2_recovery_route.py",
+        "tests/test_cli_public_response.py",
+        "tests/test_cli_generate_integrity.py"
+      ],
+      "result_lines": [
+        "150 passed in 41.95s"
+      ],
+      "source_unchanged": true,
+      "stdout_sha256": "4c609bbb62d49b1dfb33334bdf3b2637710fd8c325af4f12b73be418122562d0",
+      "abnormal_exit": null
+    },
+    {
+      "results_directory": "/tmp/biomind_cli_v2_20260912/final-candidate-results",
+      "export_source": "2bb92f2ed935c0c9da5ba57f9b711400d81c47a0",
+      "export_signature": "27a985d00180f807f10613ec9ce4437bceea581a48d2511bda120608ffe3790a",
+      "export_file_count": 155,
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_cli_v2_20260912/final-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_cli_v2_20260912/final-candidate",
+        "-q",
+        "tests/test_cli_v2_display.py",
+        "tests/test_cli_v2_integration.py",
+        "tests/test_cli_v2_output.py",
+        "tests/test_cli_v2_business.py",
+        "tests/test_cli_v2_recovery_route.py",
+        "tests/test_cli_v2_public_style.py",
+        "tests/test_cli_public_response.py",
+        "tests/test_cli_generate_integrity.py"
+      ],
+      "result_lines": [
+        "159 passed in 43.52s"
+      ],
+      "source_unchanged": true,
+      "stdout_sha256": "31b8cd57481887d555a289d6589ce0bcb798c5a044894e1ac7863b272e605792",
+      "abnormal_exit": null
+    },
+    {
+      "results_directory": "/tmp/biomind_cli_v2_20260912/fallback-final-results",
+      "export_source": "exact_worktree",
+      "export_signature": "4d085f119f847bbeeed000353032cfecbcd9888aabc1fdd553b99123adb77256",
+      "export_file_count": 157,
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_cli_v2_20260912/fallback-final/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_cli_v2_20260912/fallback-final",
+        "-q",
+        "tests/test_cli_v2_terminal_fallback.py"
+      ],
+      "result_lines": [
+        "4 passed in 0.23s"
+      ],
+      "source_unchanged": true,
+      "stdout_sha256": "b54e136dba901af84fcb080c3893ceb836c27db6be03898c3ae095895068ee34",
+      "abnormal_exit": null
+    },
+    {
+      "results_directory": "/tmp/biomind_cli_v2_20260912/legacy-final-results",
+      "export_source": "2bb92f2ed935c0c9da5ba57f9b711400d81c47a0",
+      "export_signature": "27a985d00180f807f10613ec9ce4437bceea581a48d2511bda120608ffe3790a",
+      "export_file_count": 155,
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_cli_v2_20260912/final-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_cli_v2_20260912/final-candidate",
+        "-q",
+        "tests/test_cli_model_display.py",
+        "tests/test_cli_model_recovery_tools.py",
+        "tests/test_cli_model_progress.py",
+        "tests/test_cli_model_progress_integration.py",
+        "tests/test_cli_cp_public_integration.py",
+        "tests/test_cli_generate_public_integration.py",
+        "tests/test_cli_final_response_regression.py"
+      ],
+      "result_lines": [
+        "8 failed, 41 passed in 126.42s (0:02:06)"
+      ],
+      "source_unchanged": true,
+      "stdout_sha256": "2c14c8f53ec026bdcf0bab9cdaab072c6075c9985a6d4716cfbbd7a7f98eac28",
+      "abnormal_exit": null
+    },
+    {
+      "results_directory": "/tmp/biomind_cli_v2_20260912/plain-final-candidate-results",
+      "export_source": "e3e0091e9e80976868a179cf2aeefde6a5883124",
+      "export_signature": "ec53cc55c203639e675d297694164515a7c512de9726e2b801e8da60383effbb",
+      "export_file_count": 157,
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_cli_v2_20260912/plain-final-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_cli_v2_20260912/plain-final-candidate",
+        "-q",
+        "tests/test_cli_v2_plain_stage.py",
+        "tests/test_cli_v2_terminal_fallback.py",
+        "tests/test_cli_v2_display.py"
+      ],
+      "result_lines": [
+        "31 passed in 1.57s"
+      ],
+      "source_unchanged": true,
+      "stdout_sha256": "469c7a977b9a537a469a271b164ec64a00af8db64b174840bb1a3af526f90eb2",
+      "abnormal_exit": null
+    },
+    {
+      "results_directory": "/tmp/biomind_cli_v2_20260912/bundle-candidate-results",
+      "export_source": "7164c04774838da92ee138b888b406e26019d0ef",
+      "export_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9",
+      "export_file_count": 158,
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_cli_v2_20260912/bundle-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_cli_v2_20260912/bundle-candidate",
+        "-q",
+        "tests/test_cli_v2_display.py",
+        "tests/test_cli_v2_integration.py",
+        "tests/test_cli_v2_output.py",
+        "tests/test_cli_v2_business.py",
+        "tests/test_cli_v2_recovery_route.py",
+        "tests/test_cli_v2_public_style.py",
+        "tests/test_cli_v2_terminal_fallback.py",
+        "tests/test_cli_v2_plain_stage.py",
+        "tests/test_cli_public_response.py",
+        "tests/test_cli_generate_integrity.py",
+        "tests/test_cli_model_display.py",
+        "tests/test_cli_model_recovery_tools.py",
+        "tests/test_cli_model_progress.py",
+        "tests/test_cli_model_progress_integration.py",
+        "tests/test_cli_cp_public_integration.py",
+        "tests/test_cli_generate_public_integration.py",
+        "tests/test_cli_final_response_regression.py"
+      ],
+      "result_lines": [],
+      "source_unchanged": false,
+      "stdout_sha256": "9dad75c24ba545ed598cc4669d4851bdfd2bf23183fa4b32f972806dc04ec508",
+      "abnormal_exit": {
+        "record_type": "observed incomplete captured run; not PASS",
+        "child_returncode": -11,
+        "completed_calls": 205,
+        "passed_calls": 205,
+        "started_without_teardown": [
+          "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off"
+        ],
+        "cause": "UNKNOWN; no fatal stack recovered; 70-second diagnostic stack was nonfatal watchdog sampling",
+        "source_export_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9"
+      }
+    },
+    {
+      "results_directory": "/tmp/biomind_cli_v2_20260912/bundle-v2-recheck",
+      "export_source": "7164c04774838da92ee138b888b406e26019d0ef",
+      "export_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9",
+      "export_file_count": 158,
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_cli_v2_20260912/bundle-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_cli_v2_20260912/bundle-candidate",
+        "-q",
+        "tests/test_cli_v2_display.py",
+        "tests/test_cli_v2_integration.py",
+        "tests/test_cli_v2_output.py",
+        "tests/test_cli_v2_business.py",
+        "tests/test_cli_v2_recovery_route.py",
+        "tests/test_cli_v2_public_style.py",
+        "tests/test_cli_v2_terminal_fallback.py",
+        "tests/test_cli_v2_plain_stage.py",
+        "tests/test_cli_public_response.py",
+        "tests/test_cli_generate_integrity.py"
+      ],
+      "result_lines": [
+        "166 passed in 39.77s"
+      ],
+      "source_unchanged": true,
+      "stdout_sha256": "b3f95fbeb3fee787518db9368ab946147d3334bb9f493d712c62c16b5b2067fe",
+      "abnormal_exit": null
+    },
+    {
+      "results_directory": "/tmp/biomind_cli_v2_20260912/bundle-legacy-recheck",
+      "export_source": "7164c04774838da92ee138b888b406e26019d0ef",
+      "export_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9",
+      "export_file_count": 158,
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_cli_v2_20260912/bundle-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_cli_v2_20260912/bundle-candidate",
+        "-q",
+        "tests/test_cli_model_display.py",
+        "tests/test_cli_model_recovery_tools.py",
+        "tests/test_cli_model_progress.py",
+        "tests/test_cli_model_progress_integration.py",
+        "tests/test_cli_cp_public_integration.py",
+        "tests/test_cli_generate_public_integration.py",
+        "tests/test_cli_final_response_regression.py"
+      ],
+      "result_lines": [],
+      "source_unchanged": false,
+      "stdout_sha256": "c396ececda23d80b4d29f6bf739cbf53b39b80a0ceab7ef19b5d4bfbe69d0914",
+      "abnormal_exit": {
+        "record_type": "observed incomplete captured run; not PASS",
+        "child_returncode": -11,
+        "completed_calls": 40,
+        "passed_calls": 40,
+        "started_without_teardown": [
+          "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool"
+        ],
+        "cause": "UNKNOWN; no fatal stack recovered; 70-second diagnostic stack was nonfatal watchdog sampling",
+        "source_export_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9"
+      }
+    },
+    {
+      "results_directory": "/tmp/biomind_cli_v2_20260912/bundle-legacy-faulthandler",
+      "export_source": "7164c04774838da92ee138b888b406e26019d0ef",
+      "export_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9",
+      "export_file_count": 158,
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "-X",
+        "faulthandler",
+        "/tmp/biomind_cli_v2_20260912/bundle-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_cli_v2_20260912/bundle-candidate",
+        "-q",
+        "tests/test_cli_model_display.py",
+        "tests/test_cli_model_recovery_tools.py",
+        "tests/test_cli_model_progress.py",
+        "tests/test_cli_model_progress_integration.py",
+        "tests/test_cli_cp_public_integration.py",
+        "tests/test_cli_generate_public_integration.py",
+        "tests/test_cli_final_response_regression.py",
+        "-s"
+      ],
+      "result_lines": [
+        "49 passed in 121.24s (0:02:01)"
+      ],
+      "source_unchanged": true,
+      "stdout_sha256": "e81b8e1de74d7399a6fec5da70f7f1840fb9a9fefc98b8a39f843f6460062228",
+      "abnormal_exit": null
+    }
+  ],
+  "acceptance_source_tree": "7164c04774838da92ee138b888b406e26019d0ef",
+  "acceptance_export_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9",
+  "protection": {
+    "baseline_status_count": 437,
+    "baseline_status_sha256": "06234f29f86c54456245affbe594bc967cb39e8868a306835766de895ce815a6",
+    "baseline_staged_count": 0,
+    "missing_baseline_status_rows": [],
+    "prompt_isolation": {
+      "isolated_blob": "ca4bc8005296672967423059880fe826f45d1747",
+      "original_dirty_remainder_byte_equal": true,
+      "owned_region": "PUBLIC_MESSAGE_POLICY only"
+    },
+    "scope": "Explicit allowlisted paths only; unrelated files were not staged, committed, restored, deleted or inspected for sensitive contents. Status equality is not a blanket hash claim for unread protected files."
+  },
+  "isolation": {
+    "source_export": "explicit safe .py / resource allowlist; config, original sessions, databases, startup and credentials excluded",
+    "runner": "existing committed offline guard; synthetic environment only; network denied; original files/database denied; tiny process allowlist",
+    "session_audit": "static stdlib JSON/text projections, no business loader or execution of original session",
+    "business_tests": "synthetic in-memory loaders and new guarded scratch stores only",
+    "forbidden_original_startup_read_or_execution": false,
+    "real_biomind_api_or_scientific_task_called": false,
+    "push_performed": false
+  },
+  "limits": [
+    "Two output-captured regression runs exited SIGSEGV (-11) after 205 and 40 passing calls; cause remains UNKNOWN. Same source passed 166 V2/protocol cases and 49 legacy cases with -X faulthandler -s; this does not prove the captured-mode crash repaired.",
+    "S1 terminal attachment and S4 screenshot not supplied; original UI dimensions/order remain UNKNOWN.",
+    "Runtime manifest disk HEAD is not proof of loaded Git revision.",
+    "PTY failure is a synthetic fact projection; actual original routing proof is in the separate static audit.",
+    "Fixed response display equivalence does not prove unchanged future real-model decisions after prompt wording changes.",
+    "Safe display can redact credentials/controls and omit oversized single lines; raw business evidence stays unchanged.",
+    "Legacy KB empty return conflates no match and error; display reports unknown."
+  ],
+  "additional_evidence": {
+    "business": "test_cli_v2_business.py: actual C2/P2/G2, syntax repair1, approval1, tiny process1, Commit1 equal compact/verbose/off",
+    "recovery": "test_cli_v2_recovery_route.py: actual provider2/tool1/admission1, same directive/typed outcome/budget/Planner route in all modes",
+    "public_style": "test_cli_v2_public_style.py: raw checkpoints/reception unchanged, English long summary accepted without new retry",
+    "replay": "replay_index.md; pty_comparison.tsv; replay_manifest.json"
+  }
+}

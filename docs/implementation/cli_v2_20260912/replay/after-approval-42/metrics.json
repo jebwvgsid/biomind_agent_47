@@ -1,0 +1,108 @@
+{
+  "returncode": 0,
+  "source": "e3e0091e9e80976868a179cf2aeefde6a5883124",
+  "source_signature": "b13d3430fe260cd302e886922a13797e11a1901701d6af0fe5e109b21759ae15",
+  "scenario": "approval",
+  "verbosity": "compact",
+  "initial_size": [
+    42,
+    18
+  ],
+  "resize": [
+    64,
+    20
+  ],
+  "actual_pty": true,
+  "production_application": true,
+  "counts": {
+    "model_calls": 2,
+    "tool_calls": 0,
+    "executions": 0,
+    "approvals": 1,
+    "rejected": 1,
+    "cancel_requests": 1
+  },
+  "history_items": 5,
+  "permanent_logical_lines": 10,
+  "model_paragraphs": 2,
+  "tool_history_items": 0,
+  "diagnostic_items": 44,
+  "actions": [
+    {
+      "at": 9.451022500172257,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 27.849445201922208,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 27.84950681682676,
+      "action": "multiline_draft"
+    },
+    {
+      "at": 27.849509889259934,
+      "action": "F2_details"
+    },
+    {
+      "at": 29.521601654123515,
+      "action": "close_initial_details"
+    },
+    {
+      "at": 31.067576859146357,
+      "resize": [
+        64,
+        20
+      ]
+    },
+    {
+      "at": 31.068020861130208,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 31.189943340141326,
+      "action": "approval_page_down"
+    },
+    {
+      "at": 31.189947764854878,
+      "action": "approval_Escape"
+    },
+    {
+      "at": 31.23517422005534,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 31.24153941590339,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 31.263796703889966,
+      "action": "approval_reject"
+    },
+    {
+      "at": 31.26747260801494,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 31.2675272510387,
+      "action": "CtrlC_cancel"
+    },
+    {
+      "at": 31.272092087194324,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 31.280573370866477,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 31.325700384099036,
+      "action": "Escape_to_input"
+    }
+  ],
+  "unsupported_vt": [],
+  "captured": true,
+  "modal_opened": true,
+  "session_route_evidence": false,
+  "replay_source_sha256": "3706a4babdff488f0e68eb7b9cdcaf68478b71eb9fc893a3668af731b217f856"
+}

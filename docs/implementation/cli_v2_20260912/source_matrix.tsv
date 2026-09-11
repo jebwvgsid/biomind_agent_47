@@ -1,0 +1,17 @@
+source	function_or_boundary	classification	compact_destination	preserved_authority
+bio_agents.py	BioAnalystAgent._planner_progress	telemetry plus explicit failure/stop summary	details; failures remain history	original logger and progress_callback; planner feedback and budget
+agent_core/phase_timing.py	phase_started/phase_finished	telemetry	details/diagnostic log	measured operation, exceptions, timing capture
+agent_core/provider_attempt.py	_emit (existing)	runtime activity/failure/fence	one status; error/cancel history	provider attempts, watchdog, receipt and fence unchanged
+bio_agents.py	OutputRouter.print_once	explicit purpose/kind	history/status/details by producer	no runtime text-prefix classification
+bio_agents.py	Consultant context/action/Router/Memory producers	telemetry	details	business observations, parse and memory work unchanged
+agent_core/cli_activity.py	call_with_activity and result projections	actual tool receipt	grouped return; partial/unknown/error separate	exact operation result object and exception identity
+bio_agents.py	_schema2_recovery_event_sink	durable tool checkpoint; actual directive admission	tools and admitted action	checkpoint persisted before display; existing Recovery runtime route
+execution/executor.py	_execution_event and StreamDisplayCopy	actual process and stream facts	tool group plus safe excerpt	original stdout/stderr bytes, callback, parser input and rc
+bio_agents.py	OutputRouter.print_observation	full observation display copy	summary; body in details	unchanged observation messages and evidence persistence
+supervisor.py	SupervisorNode local validation print	runtime local scope	explicit local VALID label	formal verification and CompletionGate untouched
+agent_core/cli_review.py	review_display/show_review/show_review_body	approval object display copy	compact summary; complete modal/plain fallback	original approval body, semantic hash and decision parser
+bio_agents.py	OutputRouter.prepare_review/_prompt_user/_aprompt_user	approval/details transport	/details handled locally	original waiting-state/answer; integral deadline never becomes zero
+agent_core/cli_display.py	DisplayModel.receive/finalize_tools	one existing display model	compact or verbose	UI-only receipt identities; no PlanTracker events
+agent_core/cli_terminal.py	Terminal/PlainTerminal/_flush_history/read/submit	production renderer	one status, history and details	original input decisions; actual write/flush acknowledgment
+prompts/manager.py	PUBLIC_MESSAGE_POLICY	optional public prose style	existing public_message	business payload contract and model call count unchanged
+agent_core/workflow/recovery_agent.py	RECOVERY_SYSTEM_PROMPT/call_model public selection	current validated native summary	summary in history; longer public prose in details	original assistant, provider episode, explanations, receipt and directive

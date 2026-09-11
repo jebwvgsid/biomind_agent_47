@@ -1,0 +1,22 @@
+{
+  "previous_commit": "7481854c80f162d1f0ea9135a81dbf16cb99ea0f",
+  "latest_commit": "11d5e9ca6843bb7d833db7c7b3b778c05c55f1a5",
+  "TTY_Terminal_class_equal": true,
+  "full_cli_terminal_file_equal": false,
+  "versions": {
+    "7481854c80f162d1f0ea9135a81dbf16cb99ea0f": {
+      "file_sha256": "9296ecae2ca638dc1acc85e9f5996a78153c633ce244556af1c9033404b68539",
+      "class_sha256": {
+        "PlainTerminal": "8d0b9d6bf7a6018e534910c8a43e1a55f512abad9977054c2eb6d841893d2e5a",
+        "Terminal": "8b68c69113c75748716c24107dfd362fe5286b5836494a39b9bddc2e69c7054a"
+      }
+    },
+    "11d5e9ca6843bb7d833db7c7b3b778c05c55f1a5": {
+      "file_sha256": "7476a7eb769a9a8464831c77bce4364a80de060e48247f908a01b2014e41f02b",
+      "class_sha256": {
+        "PlainTerminal": "eb6f2129a989d0d3923c0beac068be63865c7968146d0b31be2a35a876538328",
+        "Terminal": "8b68c69113c75748716c24107dfd362fe5286b5836494a39b9bddc2e69c7054a"
+      }
+    }
+  }
+}

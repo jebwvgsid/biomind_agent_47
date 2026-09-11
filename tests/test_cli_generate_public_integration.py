@@ -51,6 +51,10 @@ async def node_scenario(mode, shared_fixture, *, generate_envelope, execute_to_c
     writer = TimedWriter()
     owner = terminal_owner if terminal_owner is not None else PlainTerminal(writer, enabled=mode != 'off')
     previous_owner = bind_terminal(owner)
+    if mode == 'tty':
+        from tests.test_cli_model_display import complete_fake_review
+        original_prompt = case.agent._prompt_user
+        case.agent._prompt_user = lambda *args, **kwargs: complete_fake_review(owner, original_prompt, *args, **kwargs)
     real_inspect = bio_agents.inspect_resource
     def inspect_spy(*args, **kwargs):
         dispatches.append({'tool': 'inspect_resource', 'at': time.monotonic()})

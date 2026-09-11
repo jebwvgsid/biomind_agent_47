@@ -1,0 +1,277 @@
+{
+  "scope": "fixed fake responses; synthetic files only",
+  "method": "actual graph + syntax repair + original approval callback + tiny Bash + CommitStep",
+  "modes": {
+    "compact": {
+      "calls": {
+        "consultant": 2,
+        "planner": 2,
+        "generate": 2
+      },
+      "tools": [
+        "inspect_resource",
+        "skill_context"
+      ],
+      "graph_nodes": [
+        [
+          "triage"
+        ],
+        [
+          "consultant"
+        ],
+        [
+          "planner"
+        ],
+        [
+          "plan_review"
+        ],
+        [
+          "generate"
+        ],
+        [
+          "generate"
+        ],
+        [
+          "execute"
+        ],
+        [
+          "supervisor"
+        ],
+        [
+          "commit_step"
+        ]
+      ],
+      "approvals": 1,
+      "executions": 1,
+      "commits": 1,
+      "plan_semantic_hash": "02b6a00de6ed7220dd12993153bef727d0206d15baaaff2bcd112edec7ab0e96",
+      "approved_bytes": [
+        "/usr/bin/python3 <<'PY'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if set(supplied) != set(expected):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"validation_observation\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=')\n\nfrom pathlib import Path\nexists=Path('/tmp/biomind_cli_v2_20260912/bundle-v2-recheck/scratch/pytest-of-liusiqi/pytest-0/test_v2_compact_verbose_off_ke0/synthetic-input.txt').is_file()\nprint(emit_effect_evidence({'produces_observations':{'validation_observation':{'value':{'exists':exists}}}}))\nPY"
+      ],
+      "raw_receipts": [
+        {
+          "sha256": "afeb4d4eaa48cbe1f783cf2e6dcb336a7fccd273fa7f86207740c5655fa70ce7",
+          "emission_count": 1
+        }
+      ],
+      "repair_event_count": 1,
+      "validator_feedback": [
+        {
+          "contract_ref": {
+            "execution_started": false,
+            "protocol": "exact_executable_body"
+          },
+          "exact_error": {
+            "code": "GENERATE_SCRIPT_SYNTAX_INVALID",
+            "message": "/usr/bin/bash: line 1: syntax error near unexpected token `then'\n/usr/bin/bash: line 1: `if then'\n",
+            "stage": "script_body_validation"
+          },
+          "exact_violations": [
+            {
+              "artifact_handle": "",
+              "code": "GENERATE_SCRIPT_SYNTAX_INVALID",
+              "field_path": "script",
+              "message": "The script contains an invalid artifact reference. Use the matching concrete path from current_action_artifact_bindings directly.",
+              "owner": "GENERATED_ACTION",
+              "repair_hint": {
+                "protocol": "script_block_v1",
+                "rule": "Preserve unrelated script logic and replace only the reported artifact reference.",
+                "strategy": "use_supplied_concrete_path"
+              }
+            }
+          ],
+          "previous_candidate": {
+            "language": "bash",
+            "protocol": "script_block_v1",
+            "script": "if then\nfi"
+          },
+          "repair_instruction": "Repair the previous generated action instead of regenerating the step from scratch. Fix only the reported violation. Preserve all unrelated already-valid content. Do not introduce unrelated inputs, outputs, managed artifact handles, checks, working directories, or workflow logic. Do not re-plan the step.",
+          "repair_mode": "corrective",
+          "repair_stage": "script_body_validation",
+          "validation_source": "execution.script_validation.check_script_body"
+        }
+      ]
+    },
+    "verbose": {
+      "calls": {
+        "consultant": 2,
+        "planner": 2,
+        "generate": 2
+      },
+      "tools": [
+        "inspect_resource",
+        "skill_context"
+      ],
+      "graph_nodes": [
+        [
+          "triage"
+        ],
+        [
+          "consultant"
+        ],
+        [
+          "planner"
+        ],
+        [
+          "plan_review"
+        ],
+        [
+          "generate"
+        ],
+        [
+          "generate"
+        ],
+        [
+          "execute"
+        ],
+        [
+          "supervisor"
+        ],
+        [
+          "commit_step"
+        ]
+      ],
+      "approvals": 1,
+      "executions": 1,
+      "commits": 1,
+      "plan_semantic_hash": "02b6a00de6ed7220dd12993153bef727d0206d15baaaff2bcd112edec7ab0e96",
+      "approved_bytes": [
+        "/usr/bin/python3 <<'PY'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if set(supplied) != set(expected):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"validation_observation\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=')\n\nfrom pathlib import Path\nexists=Path('/tmp/biomind_cli_v2_20260912/bundle-v2-recheck/scratch/pytest-of-liusiqi/pytest-0/test_v2_compact_verbose_off_ke0/synthetic-input.txt').is_file()\nprint(emit_effect_evidence({'produces_observations':{'validation_observation':{'value':{'exists':exists}}}}))\nPY"
+      ],
+      "raw_receipts": [
+        {
+          "sha256": "afeb4d4eaa48cbe1f783cf2e6dcb336a7fccd273fa7f86207740c5655fa70ce7",
+          "emission_count": 1
+        }
+      ],
+      "repair_event_count": 1,
+      "validator_feedback": [
+        {
+          "contract_ref": {
+            "execution_started": false,
+            "protocol": "exact_executable_body"
+          },
+          "exact_error": {
+            "code": "GENERATE_SCRIPT_SYNTAX_INVALID",
+            "message": "/usr/bin/bash: line 1: syntax error near unexpected token `then'\n/usr/bin/bash: line 1: `if then'\n",
+            "stage": "script_body_validation"
+          },
+          "exact_violations": [
+            {
+              "artifact_handle": "",
+              "code": "GENERATE_SCRIPT_SYNTAX_INVALID",
+              "field_path": "script",
+              "message": "The script contains an invalid artifact reference. Use the matching concrete path from current_action_artifact_bindings directly.",
+              "owner": "GENERATED_ACTION",
+              "repair_hint": {
+                "protocol": "script_block_v1",
+                "rule": "Preserve unrelated script logic and replace only the reported artifact reference.",
+                "strategy": "use_supplied_concrete_path"
+              }
+            }
+          ],
+          "previous_candidate": {
+            "language": "bash",
+            "protocol": "script_block_v1",
+            "script": "if then\nfi"
+          },
+          "repair_instruction": "Repair the previous generated action instead of regenerating the step from scratch. Fix only the reported violation. Preserve all unrelated already-valid content. Do not introduce unrelated inputs, outputs, managed artifact handles, checks, working directories, or workflow logic. Do not re-plan the step.",
+          "repair_mode": "corrective",
+          "repair_stage": "script_body_validation",
+          "validation_source": "execution.script_validation.check_script_body"
+        }
+      ]
+    },
+    "off": {
+      "calls": {
+        "consultant": 2,
+        "planner": 2,
+        "generate": 2
+      },
+      "tools": [
+        "inspect_resource",
+        "skill_context"
+      ],
+      "graph_nodes": [
+        [
+          "triage"
+        ],
+        [
+          "consultant"
+        ],
+        [
+          "planner"
+        ],
+        [
+          "plan_review"
+        ],
+        [
+          "generate"
+        ],
+        [
+          "generate"
+        ],
+        [
+          "execute"
+        ],
+        [
+          "supervisor"
+        ],
+        [
+          "commit_step"
+        ]
+      ],
+      "approvals": 1,
+      "executions": 1,
+      "commits": 1,
+      "plan_semantic_hash": "02b6a00de6ed7220dd12993153bef727d0206d15baaaff2bcd112edec7ab0e96",
+      "approved_bytes": [
+        "/usr/bin/python3 <<'PY'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if set(supplied) != set(expected):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"validation_observation\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=')\n\nfrom pathlib import Path\nexists=Path('/tmp/biomind_cli_v2_20260912/bundle-v2-recheck/scratch/pytest-of-liusiqi/pytest-0/test_v2_compact_verbose_off_ke0/synthetic-input.txt').is_file()\nprint(emit_effect_evidence({'produces_observations':{'validation_observation':{'value':{'exists':exists}}}}))\nPY"
+      ],
+      "raw_receipts": [
+        {
+          "sha256": "afeb4d4eaa48cbe1f783cf2e6dcb336a7fccd273fa7f86207740c5655fa70ce7",
+          "emission_count": 1
+        }
+      ],
+      "repair_event_count": 1,
+      "validator_feedback": [
+        {
+          "contract_ref": {
+            "execution_started": false,
+            "protocol": "exact_executable_body"
+          },
+          "exact_error": {
+            "code": "GENERATE_SCRIPT_SYNTAX_INVALID",
+            "message": "/usr/bin/bash: line 1: syntax error near unexpected token `then'\n/usr/bin/bash: line 1: `if then'\n",
+            "stage": "script_body_validation"
+          },
+          "exact_violations": [
+            {
+              "artifact_handle": "",
+              "code": "GENERATE_SCRIPT_SYNTAX_INVALID",
+              "field_path": "script",
+              "message": "The script contains an invalid artifact reference. Use the matching concrete path from current_action_artifact_bindings directly.",
+              "owner": "GENERATED_ACTION",
+              "repair_hint": {
+                "protocol": "script_block_v1",
+                "rule": "Preserve unrelated script logic and replace only the reported artifact reference.",
+                "strategy": "use_supplied_concrete_path"
+              }
+            }
+          ],
+          "previous_candidate": {
+            "language": "bash",
+            "protocol": "script_block_v1",
+            "script": "if then\nfi"
+          },
+          "repair_instruction": "Repair the previous generated action instead of regenerating the step from scratch. Fix only the reported violation. Preserve all unrelated already-valid content. Do not introduce unrelated inputs, outputs, managed artifact handles, checks, working directories, or workflow logic. Do not re-plan the step.",
+          "repair_mode": "corrective",
+          "repair_stage": "script_body_validation",
+          "validation_source": "execution.script_validation.check_script_body"
+        }
+      ]
+    }
+  },
+  "equal": true
+}

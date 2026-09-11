@@ -1,0 +1,81 @@
+{
+  "returncode": 0,
+  "source": "6c7a2003340b824c6f03f8b261c734a570c685ae",
+  "source_signature": "81cf0bac03d1bb8948acbe5025022b18b03d523931a103249e68cd0a865dfbd1",
+  "scenario": "normal",
+  "verbosity": "compact",
+  "initial_size": [
+    42,
+    18
+  ],
+  "resize": [
+    64,
+    20
+  ],
+  "actual_pty": true,
+  "production_application": true,
+  "counts": {
+    "model_calls": 2,
+    "tool_calls": 5,
+    "executions": 0,
+    "approvals": 0,
+    "rejected": 0,
+    "cancel_requests": 0,
+    "empty_results": 1
+  },
+  "history_items": 48,
+  "permanent_logical_lines": 48,
+  "model_paragraphs": 2,
+  "tool_history_items": 10,
+  "diagnostic_items": 48,
+  "actions": [
+    {
+      "at": 4.79338149074465,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 22.71234684670344,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 22.729526986833662,
+      "action": "multiline_draft"
+    },
+    {
+      "at": 22.729530815966427,
+      "action": "F2_details"
+    },
+    {
+      "at": 24.764198914635926,
+      "resize": [
+        64,
+        20
+      ]
+    },
+    {
+      "at": 24.847942270804197,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 24.860789476893842,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 24.869612347800285,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 24.910050513688475,
+      "action": "Escape_to_input"
+    },
+    {
+      "at": 25.02331436984241,
+      "action": "cursor_position_report"
+    }
+  ],
+  "unsupported_vt": [],
+  "captured": true,
+  "modal_opened": true,
+  "session_route_evidence": false,
+  "replay_source_sha256": "3706a4babdff488f0e68eb7b9cdcaf68478b71eb9fc893a3668af731b217f856"
+}

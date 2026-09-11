@@ -1,0 +1,98 @@
+{
+  "returncode": 0,
+  "source": "6c7a2003340b824c6f03f8b261c734a570c685ae",
+  "source_signature": "81cf0bac03d1bb8948acbe5025022b18b03d523931a103249e68cd0a865dfbd1",
+  "scenario": "approval",
+  "verbosity": "compact",
+  "initial_size": [
+    80,
+    24
+  ],
+  "resize": null,
+  "actual_pty": true,
+  "production_application": true,
+  "counts": {
+    "model_calls": 2,
+    "tool_calls": 0,
+    "executions": 0,
+    "approvals": 1,
+    "rejected": 1,
+    "cancel_requests": 1
+  },
+  "history_items": 42,
+  "permanent_logical_lines": 42,
+  "model_paragraphs": 2,
+  "tool_history_items": 0,
+  "diagnostic_items": 44,
+  "actions": [
+    {
+      "at": 7.103613320738077,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 27.928871411830187,
+      "action": "multiline_draft"
+    },
+    {
+      "at": 27.928876203950495,
+      "action": "F2_details"
+    },
+    {
+      "at": 27.93099722173065,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 30.410217195749283,
+      "action": "close_initial_details"
+    },
+    {
+      "at": 31.935162873007357,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 31.937230528797954,
+      "action": "approval_F2"
+    },
+    {
+      "at": 31.939395031891763,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 32.0503744748421,
+      "action": "approval_page_down"
+    },
+    {
+      "at": 32.050378234125674,
+      "action": "approval_Escape"
+    },
+    {
+      "at": 33.56174565013498,
+      "action": "approval_reject"
+    },
+    {
+      "at": 33.58441594708711,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 33.58449228014797,
+      "action": "CtrlC_cancel"
+    },
+    {
+      "at": 33.589055742137134,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 33.59630168415606,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 33.75382178975269,
+      "action": "Escape_to_input"
+    }
+  ],
+  "unsupported_vt": [],
+  "captured": true,
+  "modal_opened": true,
+  "session_route_evidence": false,
+  "replay_source_sha256": "3706a4babdff488f0e68eb7b9cdcaf68478b71eb9fc893a3668af731b217f856"
+}

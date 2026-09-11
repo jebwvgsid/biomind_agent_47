@@ -1,0 +1,8 @@
+{
+  "tested_source_tree": "7164c04774838da92ee138b888b406e26019d0ef",
+  "tested_export_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9",
+  "allowlisted_source_files": 158,
+  "staged_delivery_source_equals_tested_export": true,
+  "drift": [],
+  "scope": "Git index safe source blobs only; unrelated worktree changes excluded; final artifact-only changes do not enter export"
+}

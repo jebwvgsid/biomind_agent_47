@@ -41,6 +41,10 @@ async def cp_scenario(mode, fixture, *, terminal_owner=None, terminal_writer=Non
     writer = terminal_writer if terminal_writer is not None else TimedWriter()
     owner = terminal_owner if terminal_owner is not None else PlainTerminal(writer, enabled=mode != 'off')
     previous_owner = bind_terminal(owner)
+    if mode == 'tty':
+        from tests.test_cli_model_display import complete_fake_review
+        original_prompt = case.agent._prompt_user
+        case.agent._prompt_user = lambda *args, **kwargs: complete_fake_review(owner, original_prompt, *args, **kwargs)
     real_inspect = bio_agents.inspect_resource
     def inspect_spy(*args, **kwargs):
         dispatches.append({'tool': 'inspect_resource', 'at': time.monotonic()})

@@ -1,0 +1,49 @@
+{
+  "commit": "11d5e9ca6843bb7d833db7c7b3b778c05c55f1a5",
+  "source_signature": "b13d3430fe260cd302e886922a13797e11a1901701d6af0fe5e109b21759ae15",
+  "command": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python tests/cli_v2_support.py --export /tmp/biomind_cli_v2_20260912/latest-commit-source --results /tmp/biomind_cli_v2_20260912/latest-plain-stage -q -s tests/test_cli_v2_plain_stage.py",
+  "reports": [
+    {
+      "nodeid": "tests/test_cli_v2_plain_stage.py::test_plain_stage_changes_are_once_and_ordered_after_tool_group",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.002906491979956627,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_cli_v2_plain_stage.py::test_plain_stage_does_not_bypass_fence_or_approval_priority",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0019890740513801575,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_cli_v2_plain_stage.py::test_plain_stage_display_modes_preserve_fixed_calls_and_data",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.006508230231702328,
+      "failure": ""
+    }
+  ],
+  "asserted_fixed_mode_rows": {
+    "compact": [
+      "规划阶段",
+      "固定说明",
+      "审批阶段"
+    ],
+    "verbose": [
+      "规划阶段",
+      "固定说明",
+      "审批阶段"
+    ],
+    "off": []
+  },
+  "asserted_group_order": [
+    "规划阶段",
+    "读取 2 项",
+    "生成阶段",
+    "这次只确认了两个读取结果。"
+  ],
+  "same_synthetic_calls_and_input": true,
+  "scope": "actual PlainTerminal sink; synthetic explicit events; not actual model/business graph"
+}

@@ -1,0 +1,63 @@
+{
+  "returncode": 0,
+  "source": "6c7a2003340b824c6f03f8b261c734a570c685ae",
+  "source_signature": "81cf0bac03d1bb8948acbe5025022b18b03d523931a103249e68cd0a865dfbd1",
+  "scenario": "normal",
+  "verbosity": "compact",
+  "initial_size": [
+    80,
+    24
+  ],
+  "resize": null,
+  "actual_pty": true,
+  "production_application": true,
+  "counts": {
+    "model_calls": 2,
+    "tool_calls": 5,
+    "executions": 0,
+    "approvals": 0,
+    "rejected": 0,
+    "cancel_requests": 0,
+    "empty_results": 1
+  },
+  "history_items": 48,
+  "permanent_logical_lines": 48,
+  "model_paragraphs": 2,
+  "tool_history_items": 10,
+  "diagnostic_items": 48,
+  "actions": [
+    {
+      "at": 8.7680159737356,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 29.59334929008037,
+      "action": "multiline_draft"
+    },
+    {
+      "at": 29.593354366719723,
+      "action": "F2_details"
+    },
+    {
+      "at": 29.59543296182528,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 32.08713291864842,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 32.09334097197279,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 32.12297097593546,
+      "action": "Escape_to_input"
+    }
+  ],
+  "unsupported_vt": [],
+  "captured": true,
+  "modal_opened": true,
+  "session_route_evidence": false,
+  "replay_source_sha256": "3706a4babdff488f0e68eb7b9cdcaf68478b71eb9fc893a3668af731b217f856"
+}

@@ -1,0 +1,31 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind_cli_v2_20260912/baseline-pty-v8-source/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind_cli_v2_20260912/baseline-pty-v8-source",
+    "-q",
+    "-s",
+    "tests/replay_cli_v2_pty.py::test_v2_real_pty_replay"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "/tmp/biomind-cli-deps",
+    "TERM": "xterm-256color",
+    "COLUMNS": "120",
+    "LINES": "36",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind_cli_v2_20260912/before-v8-normal-120/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind_cli_v2_20260912/before-v8-normal-120/pytest-results.json",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind_cli_v2_20260912/before-v8-normal-120",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind_cli_v2_20260912/before-v8-normal-120",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind_cli_v2_20260912/before-v8-normal-120/scratch/executor-logs",
+    "BIOMIND_V2_PTY": "1",
+    "BIOMIND_V2_SCENARIO": "normal",
+    "BIOMIND_CLI_VERBOSITY": "compact"
+  }
+}

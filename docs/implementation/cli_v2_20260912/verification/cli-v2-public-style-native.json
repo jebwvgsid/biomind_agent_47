@@ -1,0 +1,13 @@
+{
+  "fixture": "synthetic native submission; language/length are deliberately nonpreferred",
+  "provider_calls": 1,
+  "real_tool_calls": 0,
+  "format_corrections": 0,
+  "directive_unchanged": true,
+  "main_public_equals_existing_summary": true,
+  "original_public_body_in_details": true,
+  "original_body_sha256": "d6722d2de3ec4d9bdc39ac0a5f78cce94801f423e1be5ea091a8e55e85d03c51",
+  "summary_sha256": "adbee8cab632384eb0cc3653f8182c0d3796b2726991dfef23f1e3212ede0819",
+  "display_on_off_reception_equal": true,
+  "authority": "candidate validated; no directive execution or admission claimed by this loop-only fixture"
+}

@@ -1,0 +1,59 @@
+{
+  "returncode": 0,
+  "source": "e3e0091e9e80976868a179cf2aeefde6a5883124",
+  "source_signature": "b13d3430fe260cd302e886922a13797e11a1901701d6af0fe5e109b21759ae15",
+  "scenario": "normal",
+  "verbosity": "compact",
+  "initial_size": [
+    120,
+    36
+  ],
+  "resize": null,
+  "actual_pty": true,
+  "production_application": true,
+  "counts": {
+    "model_calls": 2,
+    "tool_calls": 5,
+    "executions": 0,
+    "approvals": 0,
+    "rejected": 0,
+    "cancel_requests": 0,
+    "empty_results": 1
+  },
+  "history_items": 3,
+  "permanent_logical_lines": 3,
+  "model_paragraphs": 2,
+  "tool_history_items": 0,
+  "diagnostic_items": 48,
+  "actions": [
+    {
+      "at": 12.338764761108905,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 30.42747233901173,
+      "action": "cursor_position_report"
+    },
+    {
+      "at": 30.427546378225088,
+      "action": "multiline_draft"
+    },
+    {
+      "at": 30.42755006905645,
+      "action": "F2_details"
+    },
+    {
+      "at": 32.53926200326532,
+      "action": "Escape_to_input"
+    },
+    {
+      "at": 34.09210041631013,
+      "action": "cursor_position_report"
+    }
+  ],
+  "unsupported_vt": [],
+  "captured": true,
+  "modal_opened": true,
+  "session_route_evidence": false,
+  "replay_source_sha256": "3706a4babdff488f0e68eb7b9cdcaf68478b71eb9fc893a3668af731b217f856"
+}

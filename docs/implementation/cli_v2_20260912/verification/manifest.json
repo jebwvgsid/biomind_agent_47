@@ -1,0 +1,16 @@
+{
+  "source_tree": "7164c04774838da92ee138b888b406e26019d0ef",
+  "source_export_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9",
+  "results_directory": "/tmp/biomind_cli_v2_20260912/bundle-v2-recheck",
+  "scope": "synthetic production graph, guarded tiny process and fixed model returns; no original session execution",
+  "files": {
+    "v2-business-invariants.json": "5ffc7f68b8c6a5d3e95727291df03656c20828ed7016ce47b6295fe9f8766177",
+    "cli-v2-recovery-route-compact.json": "69f4e82e3720fec449e86f9f7aa35786b8f635e7d9e6c18b5acfbdf43981aa7d",
+    "cli-v2-recovery-route-verbose.json": "07d3e08a9aeafa0f101f743cb24aea795b2df4e29bc5a624063754c9a380c897",
+    "cli-v2-recovery-route-off.json": "8b5f007d1f0128757f42746ae12ec9dcbd598be36f2ef62837e55365810093ee",
+    "cli-v2-public-style-native.json": "7279ab2b6550bd216cb0eeb73dbc643a1bcd4cfc493a67f8b2c5a79669fd7ee5"
+  },
+  "other_checks": {
+    "business_authority_blobs.json": "Git object identity for six unchanged business authority modules; outside the synthetic runtime artifact set"
+  }
+}

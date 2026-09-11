@@ -1,0 +1,48 @@
+{
+  "UX2_commit": "4b6dc2d44c2b7d2d516bb80f9700de9da3832722",
+  "files": [
+    {
+      "path": "agent_core/cli_display.py",
+      "committed_sha256": "7ceea8bfc3c33546a51ec9a3c7579421f5237c1237cfd59e35a58cdef6c5e555",
+      "recorded_sha256": "7ceea8bfc3c33546a51ec9a3c7579421f5237c1237cfd59e35a58cdef6c5e555",
+      "matches_UX2_commit": true
+    },
+    {
+      "path": "agent_core/cli_terminal.py",
+      "committed_sha256": "9296ecae2ca638dc1acc85e9f5996a78153c633ce244556af1c9033404b68539",
+      "recorded_sha256": "9296ecae2ca638dc1acc85e9f5996a78153c633ce244556af1c9033404b68539",
+      "matches_UX2_commit": true
+    },
+    {
+      "path": "agent_core/cli_activity.py",
+      "committed_sha256": "32dc70a5f66375c72ec17a927e074cfc9d911c253c0a32cf1149fa95c258a188",
+      "recorded_sha256": "32dc70a5f66375c72ec17a927e074cfc9d911c253c0a32cf1149fa95c258a188",
+      "matches_UX2_commit": true
+    },
+    {
+      "path": "agent_core/cli_review.py",
+      "committed_sha256": "34bee1f1a3cfb0a38e0424c8bdbd66f75effdc869e1bee7fd841f9585180c991",
+      "recorded_sha256": "34bee1f1a3cfb0a38e0424c8bdbd66f75effdc869e1bee7fd841f9585180c991",
+      "matches_UX2_commit": true
+    },
+    {
+      "path": "bio_agents.py",
+      "committed_sha256": "26507d18b56ef441bfa2d917164dd79227c8e98ba21f269e45a7d63d273d1165",
+      "recorded_sha256": "26507d18b56ef441bfa2d917164dd79227c8e98ba21f269e45a7d63d273d1165",
+      "matches_UX2_commit": true
+    },
+    {
+      "path": "supervisor.py",
+      "committed_sha256": "5ba180924b407a9c4b3ebb8fa9c1b78c5928326d43a576ef41ce66a74fcd7844",
+      "recorded_sha256": "5ba180924b407a9c4b3ebb8fa9c1b78c5928326d43a576ef41ce66a74fcd7844",
+      "matches_UX2_commit": true
+    }
+  ],
+  "final_after_commit": "11d5e9ca6843bb7d833db7c7b3b778c05c55f1a5",
+  "final_after_kind": "git_tree_plus_explicit_new_replay_test_overlay",
+  "final_after_tree": "e3e0091e9e80976868a179cf2aeefde6a5883124",
+  "final_overlay": {
+    "tests/replay_cli_v2_pty.py": "3706a4babdff488f0e68eb7b9cdcaf68478b71eb9fc893a3668af731b217f856"
+  },
+  "previous_exact_check_only": "exact_worktree"
+}
