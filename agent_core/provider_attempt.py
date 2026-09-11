@@ -1018,12 +1018,20 @@ def _emit(
             payload.pop(key, None)
     payload["event"] = event
     from agent_core.cli_display import emit as emit_display
+    scope = {"node": str(payload.get("node_name") or ""),
+             "call_id": str(payload.get("call_id") or ""),
+             "provider_attempt_id": str(payload.get("provider_attempt_id") or payload.get("attempt_id") or ""),
+             "event": event, "source": "runtime_fact"}
     if event in {"attempt_started", "attempt_progress", "stream_active"}:
-        emit_display("activity", "等待模型返回" if event == "attempt_started" else "已观测到 provider 活动")
+        observed = bool(payload.get("observed_payload_callback_count") or payload.get("first_content_chunk_at")
+                        or payload.get("first_reasoning_chunk_at") or payload.get("last_payload_at"))
+        emit_display("activity", "已接收模型响应活动" if observed else "等待模型返回", **scope)
     elif event == "attempt_cancelled":
-        emit_display("cancel", f"provider 取消回执：{payload.get('cleanup_result', '未确认')}；工具与任务清理另行确认。")
+        emit_display("cancel", f"provider 取消回执：{payload.get('cleanup_result', '未确认')}；工具与任务清理另行确认。", **scope)
     elif event == "attempt_failed":
-        emit_display("error", f"provider attempt 失败：{payload.get('failure_code', '详情见诊断日志')}")
+        emit_display("error", f"provider attempt 失败：{payload.get('failure_type') or 'UNKNOWN'}", **scope)
+    if event in {"attempt_completed", "attempt_cancelled", "attempt_failed"}:
+        emit_display("provider_fenced", "", **{**scope, "event": "fenced"})
     try:
         logger.info("PROVIDER_ATTEMPT_EVENT %s", json.dumps(payload, ensure_ascii=False, sort_keys=True))
     except Exception:

@@ -19,6 +19,7 @@ from typing import Any, Callable, Mapping, Sequence, TypedDict
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, START, StateGraph
 
+from agent_core.cli_display import flush_public
 from agent_core.plan_tracker import canonical_task_spec_for_state
 from agent_core.workflow.context_compaction import (
     ContextBudgetPolicy,
@@ -789,6 +790,33 @@ def _observation_envelope(
     }
 
 
+def _current_public_explanation(
+    explanations: Sequence[Mapping[str, Any]],
+    source_message_id: str,
+    *,
+    assistant_content_public: bool = False,
+    assistant_public_text: str | None = None,
+) -> str:
+    """Project this response only; the append-only reception record stays raw.
+
+    A reception-created display_text owns the display even when empty or not
+    suitable for display. Never fall back from it to the original protocol.
+    """
+    for record in reversed(explanations):
+        if record.get("source_message_id") != source_message_id:
+            continue
+        if "display_text" in record:
+            value = record["display_text"]
+        elif record.get("source") in {"envelope.explanation", "directive.summary"}:
+            value = record.get("text")
+        elif record.get("source") == "assistant.content" and assistant_content_public:
+            value = record.get("text") if assistant_public_text is None else assistant_public_text
+        else:
+            continue
+        return value if isinstance(value, str) and value.strip() else ""
+    return ""
+
+
 class RecoveryAgentLoop:
     """One LangGraph-owned, append-only Recovery invocation."""
 
@@ -1221,10 +1249,43 @@ class RecoveryAgentLoop:
                     stage=getattr(exc, "stage", "recovery.response_decode"), candidate=getattr(exc, "candidate", None))
             receipts.append(receipt)
             update.update(response_receipts=receipts, explanations=explanations)
+            # Native content and a text-only missing submission can be public
+            # prose. Structured text transport is public only through the
+            # reception-created display_text/explanation/summary projection.
+            assistant_content_public = bool(
+                content
+                and not content.lstrip().startswith(("{", "["))
+                and not has_explicit_text_submission(content)
+                and (
+                    raw_response_calls
+                    or (problem and problem.code == "RECOVERY_SUBMISSION_MISSING")
+                )
+            )
+            public_content = content
+            if not isinstance(assistant.content, str):
+                # Native providers may return typed text and reasoning blocks
+                # together. Only explicit public text blocks own this copy;
+                # the original response/reception history remains untouched.
+                public_content = "\n".join(
+                    item["text"] for item in assistant.content
+                    if isinstance(item, Mapping)
+                    and item.get("type") in {"text", "output_text"}
+                    and isinstance(item.get("text"), str)
+                )
+            current_explanation = _current_public_explanation(
+                explanations, assistant.id,
+                assistant_content_public=assistant_content_public,
+                assistant_public_text=public_content,
+            )
             await self._emit_event("recovery_response_received", {
                 **call_context, "event_id": f"{assistant.id}:reception", **receipt,
-                "explanation": explanations[-1]["text"] if explanations else "",
+                "source_message_id": assistant.id,
+                "explanation": current_explanation,
             })
+            if current_explanation and update.get("pending_tool_calls"):
+                # The terminal owner acknowledges actual write/flush. A closed
+                # sink or timeout only degrades display; cancellation propagates.
+                await flush_public(timeout=0.05)
             if problem or (calls and calls[0]["name"] == SUBMIT_TOOL):
                 used = int(state.get("format_correction_count") or 0)
                 can_correct = bool(problem and used < 1 and ordinal < config.max_llm_turns
@@ -1280,6 +1341,10 @@ class RecoveryAgentLoop:
             tool_messages: list[ToolMessage] = []
             terminal_error: dict[str, Any] = {}
             round_progress = False
+            source_assistant = next(
+                (message for message in reversed(state.get("messages") or ())
+                 if isinstance(message, AIMessage)), None,
+            )
 
             for call in calls:
                 tool = str(call["name"])
@@ -1311,6 +1376,7 @@ class RecoveryAgentLoop:
                     "context_epoch_id": str(state.get("context_epoch_id") or ""),
                     "tool_ordinal": total,
                     "tool_request_id": str(call["id"]),
+                    "source_message_id": str(getattr(source_assistant, "id", "") or ""),
                     "tool": dotted_tool,
                     "source_ref": _source_ref(arguments),
                 }

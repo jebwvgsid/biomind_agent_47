@@ -205,16 +205,18 @@ async def _read_stream_chunks(
     stream_name: str = "stream",
     output_limit: int = 0,
     output_limit_event: Optional[asyncio.Event] = None,
+    display_context: Mapping[str, Any] | None = None,
+    display_enabled: bool = True,
 ) -> None:
     if stream is None:
         return
     limit_reached = False
-    display_copy = StreamDisplayCopy(stream_name) if active_terminal() is not None else None
+    display_copy = _stream_display_copy(stream_name, display_context) if display_enabled else None
     while True:
         chunk = await stream.read(4096)
         if not chunk:
             if display_copy is not None:
-                display_copy.feed(b"", final=True)
+                _feed_display_copy(display_copy, b"", final=True)
             break
         if limit_reached:
             # Keep draining until the process group is reaped so PIPE backpressure
@@ -224,7 +226,7 @@ async def _read_stream_chunks(
         if log_handle is not None:
             log_handle.write(chunk)
         if display_copy is not None:
-            display_copy.feed(chunk)
+            _feed_display_copy(display_copy, chunk)
         progress["last_output_at"] = time.monotonic()
         if output_limit > 0 and capture.total_bytes > output_limit:
             progress["output_limit_stream"] = stream_name
@@ -279,10 +281,53 @@ def get_last_execution_metadata() -> Dict[str, Any]:
     return dict(_LAST_EXECUTION_METADATA)
 
 
-async def _notify_lifecycle(callback: Optional[Callable[..., Any]], event: str, payload: Dict[str, Any]) -> None:
-    emit_display("details", f"工具事件 {event}: {payload}")
+def _execution_display_scope(context: Mapping[str, Any] | None) -> Dict[str, Any]:
+    """Copy only runtime identity fields; never expose execution arguments."""
+    return {
+        key: value for key, value in dict(context or {}).items()
+        if key in {"task_id", "node", "call_id", "action_id", "execution_attempt_id",
+                   "execution_attempt", "pid", "tool_request_id", "tool_call_id"}
+        and isinstance(value, (str, int)) and not isinstance(value, bool)
+    }
+
+
+def _stream_display_copy(name: str, context: Mapping[str, Any] | None):
+    try:
+        if active_terminal() is not None:
+            return StreamDisplayCopy(name, **_execution_display_scope(context))
+    except Exception:
+        logger.debug("Execution display unavailable", exc_info=True)
+    return None
+
+
+def _feed_display_copy(copy, chunk: bytes, *, final: bool = False) -> None:
+    try:
+        copy.feed(chunk, final=final)
+    except Exception:
+        # Display is a copy after raw capture/log writes, never their authority.
+        logger.debug("Execution display failed", exc_info=True)
+
+
+async def _notify_lifecycle(
+    callback: Optional[Callable[..., Any]], event: str, payload: Dict[str, Any],
+    *, display_context: Mapping[str, Any] | None = None,
+) -> None:
+    scope = _execution_display_scope(display_context)
+    if payload.get("pid") is not None:
+        scope["pid"] = payload["pid"]
+    emit_display("details", f"工具事件 {event}", source="runtime_fact", **scope)
     if event == "RUNNING":
-        emit_display("tool_start", "工具进程已启动；等待执行结果")
+        emit_display("tool_start", "工具进程已启动；等待执行结果", source="runtime_fact", **scope)
+    elif event == "PROCESS_EXITED":
+        returncode = payload.get("returncode")
+        text = ("命令 rc=0，等待正式核验" if returncode == 0 else
+                f"命令退出 rc={returncode}；等待后端处理")
+        if payload.get("pid") is None:
+            text = "命令未启动；等待后端处理"
+        emit_display("tool_end", text, source="runtime_fact", returncode=returncode,
+                     command_started=payload.get("pid") is not None, **scope)
+    elif event == "PROCESS_CANCELLED":
+        emit_display("cancel", "工具执行已取消", source="runtime_fact", **scope)
     if callback is None:
         return
     result = callback(event, dict(payload))
@@ -356,12 +401,14 @@ def detect_script_language(code: str) -> str:
     return "Bash"
 
 
-async def _follow_managed_logs(paths, process, captures, progress, log_handles, limit, limit_event, errors):
+async def _follow_managed_logs(paths, process, captures, progress, log_handles, limit, limit_event, errors,
+                               *, display_context=None):
     """Observe existing wrapper logs by offset; no pipe/tee or command mutation."""
     import stat as stat_module
     offsets = {name: 0 for name in paths}
     last_display = {name: 0.0 for name in paths}
     identities = {}
+    display_copies = {name: _stream_display_copy(name, display_context) for name in paths}
     while True:
         exited = process.returncode is not None
         for name, path in paths.items():
@@ -390,6 +437,8 @@ async def _follow_managed_logs(paths, process, captures, progress, log_handles, 
                             except OSError as exc:
                                 errors.append({"stage": "execution.log_writer", "stream": name, "error": type(exc).__name__})
                                 log_handles[name] = None
+                        if display_copies[name] is not None:
+                            _feed_display_copy(display_copies[name], chunk)
                         if limit and captures[name].total_bytes > limit:
                             progress["output_limit_stream"] = name
                             progress["output_limit_bytes"] = captures[name].total_bytes
@@ -406,6 +455,9 @@ async def _follow_managed_logs(paths, process, captures, progress, log_handles, 
                 errors.append({"stage": "execution.log_reader", "stream": name, "error": type(exc).__name__})
                 paths = {key: value for key, value in paths.items() if key != name}
         if exited:
+            for copy in display_copies.values():
+                if copy is not None:
+                    _feed_display_copy(copy, b"", final=True)
             break
         await asyncio.sleep(0.2)
 
@@ -418,6 +470,7 @@ async def run_command(
     env: Mapping[str, str] | None = None,
     max_output_bytes: int | None = None,
     managed_log_paths: Mapping[str, str] | None = None,
+    display_context: Mapping[str, Any] | None = None,
 ) -> Tuple[str, str, int]:
     """通用 Shell 命令执行器"""
     global _LAST_EXECUTION_METADATA
@@ -460,6 +513,7 @@ async def run_command(
     stdout_log_path = ""
     stderr_log_path = ""
     log_observation_errors = []
+    display_scope = _execution_display_scope(display_context)
     try:
         # 切断 stdin。遇到需要按 y/n 的地方直接报错，拒绝死等。
         popen_kwargs: Dict[str, Any] = {}
@@ -478,6 +532,7 @@ async def run_command(
             **popen_kwargs,
         )
         _ACTIVE_PROCESS_GROUPS.add(process.pid)
+        display_scope["pid"] = process.pid
         try:
             pgid = os.getpgid(process.pid) if os.name != "nt" else process.pid
         except ProcessLookupError:
@@ -488,7 +543,7 @@ async def run_command(
             "pgid": pgid,
             "started_at": started_at,
             "heartbeat_at": timestamp_now(),
-        })
+        }, display_context=display_scope)
 
         stdout_capture = _BoundedStreamCapture(capture_limit)
         stderr_capture = _BoundedStreamCapture(capture_limit)
@@ -503,6 +558,8 @@ async def run_command(
         # very long lines.
         last_cpu_ticks = None
         output_limit_event = asyncio.Event()
+        # A managed wrapper owns separate full logs. Display those actual
+        # streams once; keep draining/capturing wrapper pipes unchanged.
         stdout_task = asyncio.create_task(
             _read_stream_chunks(
                 process.stdout,
@@ -512,6 +569,8 @@ async def run_command(
                 stream_name="stdout",
                 output_limit=stream_output_limit,
                 output_limit_event=output_limit_event,
+                display_context=display_scope,
+                display_enabled=not (managed_log_paths and "stdout" in managed_log_paths),
             )
         )
         stderr_task = asyncio.create_task(
@@ -523,6 +582,8 @@ async def run_command(
                 stream_name="stderr",
                 output_limit=stream_output_limit,
                 output_limit_event=output_limit_event,
+                display_context=display_scope,
+                display_enabled=not (managed_log_paths and "stderr" in managed_log_paths),
             )
         )
         process_wait_task = asyncio.create_task(process.wait())
@@ -534,7 +595,8 @@ async def run_command(
                 dict(managed_log_paths), process,
                 {"stdout": stdout_capture, "stderr": stderr_capture}, progress,
                 {"stdout": stdout_log_handle, "stderr": stderr_log_handle},
-                stream_output_limit, output_limit_event, log_observation_errors))
+                stream_output_limit, output_limit_event, log_observation_errors,
+                display_context=display_scope))
             pending_stream_tasks.add(follow_task)
         stderr_reason = ""
         early_health_reported = False
@@ -578,7 +640,7 @@ async def run_command(
                 "pid": process.pid,
                 "pgid": pgid,
                 "heartbeat_at": timestamp_now(),
-            })
+            }, display_context=display_scope)
             cpu_ticks = _collect_process_tree_cpu_ticks(process.pid)
             if cpu_ticks is not None and last_cpu_ticks is not None and cpu_ticks > last_cpu_ticks:
                 progress["last_cpu_at"] = now
@@ -634,7 +696,6 @@ async def run_command(
             result = stdout_text, stderr_text, 124
         else:
             result = stdout_text, stderr_text, process.returncode
-        emit_display("tool_end", "命令 rc=0，等待正式核验" if result[2] == 0 else f"命令退出 rc={result[2]}；等待后端处理")
         return result
     except asyncio.CancelledError:
         cancellation_observed = True
@@ -698,7 +759,8 @@ async def run_command(
                 "process_reaped": bool("process" in locals() and process.returncode is not None),
                 "log_observation_errors": log_observation_errors}
             with contextlib.suppress(Exception):
-                await _notify_lifecycle(lifecycle_callback, "PROCESS_CANCELLED", cancelled_record)
+                await _notify_lifecycle(lifecycle_callback, "PROCESS_CANCELLED", cancelled_record,
+                                        display_context=display_scope)
             logger.info("Execution cancelled: %s", cancelled_record)
         if locals().get("cancellation_observed"):
             _LAST_EXECUTION_METADATA = cancelled_record
@@ -752,7 +814,7 @@ async def run_command(
                     "heartbeat_at": timestamp_now(),
                     "stdout_path": stdout_log_path,
                     "stderr_path": stderr_log_path,
-                })
+                }, display_context=display_scope)
         if profile and "result" in locals():
             profiler = get_current_profiler()
             task_id = get_current_task_id()
@@ -783,6 +845,7 @@ async def run_script_path(
     env: Mapping[str, str] | None = None,
     max_output_bytes: int | None = None,
     managed_log_paths: Mapping[str, str] | None = None,
+    display_context: Mapping[str, Any] | None = None,
 ) -> Tuple[str, str, int]:
     """Execute one immutable saved script; never materialize a second script."""
     global _LAST_EXECUTION_METADATA
@@ -807,6 +870,7 @@ async def run_script_path(
         env=env,
         max_output_bytes=max_output_bytes,
         managed_log_paths=managed_log_paths,
+        display_context=display_context,
     )
     metadata = dict(get_last_execution_metadata())
     metadata.update({

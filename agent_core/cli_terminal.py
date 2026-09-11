@@ -10,6 +10,8 @@ import logging
 import os
 import sys
 import threading
+import queue
+import time
 
 from agent_core.cli_display import DisplayModel, bind_terminal, safe_text
 from agent_core.cli_logging import set_notice_sink
@@ -19,14 +21,82 @@ def plain_input(prompt, timeout=0):
     """Canonical plain input without readline's ANSI/bracketed-paste modes."""
     from agent_core.human_io import HumanInputEOF, HumanInputTimeout
     import select
-    sys.stdout.write(safe_text(prompt))
-    sys.stdout.flush()
+    try:
+        sys.stdout.write(safe_text(prompt))
+        sys.stdout.flush()
+    except BrokenPipeError:
+        raise HumanInputEOF('plain output closed') from None
     if timeout and not select.select([sys.stdin], [], [], timeout)[0]:
         raise HumanInputTimeout('plain input timed out')
     value = sys.stdin.readline()
     if value == '':
         raise HumanInputEOF('plain input closed')
     return value[:-1] if value.endswith('\n') else value
+
+
+class PlainTerminal:
+    """Explicit append-only owner; potentially blocking writes leave business alone."""
+    def __init__(self, output=None, *, enabled=True):
+        self.mode = 'plain' if enabled else 'off'
+        self.model = DisplayModel()
+        self.output = output if output is not None else sys.stdout
+        self.closed = False
+        self.sink_broken = False
+        self.last_ticket = None
+        self.queue = queue.Queue()
+        self.writer = threading.Thread(target=self._write_loop, name='biomind-cli-output', daemon=True)
+        if enabled:
+            self.writer.start()
+
+    def receive(self, kind, text='', **data):
+        ticket = self.model.receive(kind, text, **data)
+        if ticket is None:
+            return None
+        if kind == 'tool_tail' and data.get('display_delta'):
+            ticket.text = safe_text(data['display_delta']).rstrip('\n')
+            with self.model.lock:
+                self.model.items.append(ticket)
+                self.model.history.append(ticket.text)
+        if self.closed or self.sink_broken or self.mode == 'off':
+            ticket.finish(False, 'display_closed' if self.closed else 'display_unavailable')
+        elif ticket.source != 'diagnostic' and (kind in {'model_public', 'message', 'error', 'result', 'cancel', 'approval', 'tool_start', 'tool_end'} or (kind == 'tool_tail' and data.get('display_delta'))):
+            self.last_ticket = ticket
+            self.queue.put_nowait(ticket)
+        return ticket
+
+    def _write_loop(self):
+        while True:
+            ticket = self.queue.get()
+            if ticket is None:
+                return
+            if self.sink_broken:
+                ticket.finish(False, 'sink_closed')
+                continue
+            try:
+                self.output.write(ticket.text + '\n')
+                ticket.times['write'] = time.monotonic()
+                self.output.flush()
+                ticket.times['flush'] = time.monotonic()
+                ticket.finish(True)
+            except Exception:
+                # Never serialize arbitrary writer exceptions or retry a line
+                # whose write might already have reached the sink.
+                self.sink_broken = True
+                ticket.finish(False, 'writer_failed')
+
+    async def drain(self, timeout=0.05):
+        if self.last_ticket is None:
+            return True
+        try:
+            return await asyncio.wait_for(asyncio.shield(
+                asyncio.wrap_future(self.last_ticket.confirmation)), timeout)
+        except asyncio.TimeoutError:
+            return self.last_ticket.confirmation.done() and bool(self.last_ticket.confirmation.result())
+
+    def close(self):
+        self.closed = True
+        if self.mode != 'off':
+            self.queue.put_nowait(None)
 
 
 class Terminal:
@@ -41,6 +111,7 @@ class Terminal:
         from prompt_toolkit.layout.dimension import Dimension
         from prompt_toolkit.widgets import TextArea
         self.loop = asyncio.get_running_loop()
+        self.mode = 'tty'
         self.model = DisplayModel()
         self.pending = None
         self.context = ('', 'interactive_prompt', {})
@@ -55,6 +126,7 @@ class Terminal:
         self.history_cursor = 0
         self.history_flush = None
         self.closed = False
+        self.sink_broken = False
         self._notify_lock = threading.Lock()
         self._notify_pending = False
         self.fallback = False
@@ -110,44 +182,66 @@ class Terminal:
         self.frames += 1
 
     def receive(self, kind, text='', **data):
-        if self.closed:
-            return
-        self.model.receive(kind, text, **data)
-        if self.fallback:
-            if kind in {'message', 'error', 'result', 'cancel', 'approval', 'stage', 'tool_start', 'tool_end'}:
-                sys.stdout.write(safe_text(text) + "\n")
-                sys.stdout.flush()
-            return
+        ticket = self.model.receive(kind, text, **data)
+        if ticket is None:
+            return None
+        if self.closed or self.sink_broken:
+            ticket.finish(False, 'display_closed')
+            return ticket
         with self._notify_lock:
             if not self._notify_pending:
                 self._notify_pending = True
                 self.loop.call_soon_threadsafe(self._changed)
+        return ticket
 
     def _changed(self):
         with self._notify_lock:
             self._notify_pending = False
-        if self.closed or self.fallback:
+        if self.closed or self.sink_broken:
             return
-        if len(self.model.history) > self.history_cursor and self.history_flush is None:
+        if len(self.model.items) > self.history_cursor and self.history_flush is None:
             self.history_flush = self.loop.create_task(self._flush_history())
-        self.app.invalidate()
+            return
+        if not self.fallback:
+            self.app.invalidate()
 
     async def _flush_history(self):
         from prompt_toolkit.application import run_in_terminal
+        from prompt_toolkit.application.current import set_app
         try:
-            # Append stable history above the live inline application once.
-            await asyncio.sleep(0.1)
+            # A key paragraph is queued immediately, without the frame timer.
             with self.model.lock:
-                lines = self.model.history[self.history_cursor:]
-                self.history_cursor = len(self.model.history)
-            if lines:
+                items = self.model.items[self.history_cursor:]
+                self.history_cursor = len(self.model.items)
+            if items:
                 def append():
-                    self.app.output.write(safe_text('\n'.join(lines)) + '\n')
-                    self.app.output.flush()
-                await run_in_terminal(append)
+                    output = sys.stdout if self.fallback else self.app.output
+                    for item in items:
+                        if self.sink_broken:
+                            item.finish(False, 'sink_closed')
+                            continue
+                        try:
+                            output.write(item.text + '\n')
+                            item.times['write'] = time.monotonic()
+                            output.flush()
+                            item.times['flush'] = time.monotonic()
+                            item.finish(True)
+                        except Exception:
+                            self.sink_broken = True
+                            item.finish(False, 'writer_failed')
+                if self.fallback:
+                    await asyncio.to_thread(append)
+                else:
+                    # Calls arrive from the runtime thread's ContextVars, which
+                    # do not own prompt_toolkit's Application context.
+                    with set_app(self.app):
+                        await run_in_terminal(append, in_executor=True)
+        except Exception:
+            for item in locals().get('items', []):
+                item.finish(False, 'renderer_unavailable')
         finally:
             self.history_flush = None
-            if not self.closed and not self.fallback and len(self.model.history) > self.history_cursor:
+            if not self.closed and not self.sink_broken and len(self.model.items) > self.history_cursor:
                 self._changed()
 
     def set_context(self, task_id, stage, payload):
@@ -180,6 +274,7 @@ class Terminal:
                 self.model.details.append(json.dumps(self.context[2], ensure_ascii=False, indent=2))
             else:
                 self.cancel_requested = False
+                self.model.release_priority()
                 self.model.receive('activity', '等待输入；最近结果与取消确认见历史')
                 self.buffer.text = self.draft or self.buffer.text
                 self.draft = ''
@@ -199,6 +294,7 @@ class Terminal:
     def _resolve(self, text):
         future, self.pending = self.pending, None
         if future is not None and not future.done():
+            self.model.release_priority()
             if self.context[1] == 'interactive_prompt':
                 self.buffer.append_to_history()
             self.buffer.reset()
@@ -245,7 +341,8 @@ class Terminal:
         self._resolve(value)
 
     def show_details(self):
-        text = '\n\n'.join(self.model.details) + '\n\n工具显示尾部：\n' + self.model.tool_tail
+        tails = '\n\n'.join(str(group) + '\n' + tail for group, tail in self.model.tool_tails.items())
+        text = '\n\n'.join(self.model.details) + '\n\n工具显示尾部：\n' + tails
         if self.context[1] != 'interactive_prompt':
             text += '\n\n当前待输入对象（完整显示副本；后端仍核对授权）：\n' + json.dumps(self.context[2], ensure_ascii=False, indent=2)
         self.details_view.text = safe_text(text)
@@ -297,14 +394,33 @@ class Terminal:
 
 async def run_terminal(runtime):
     """Real CLI entry wrapper; runtime is the original async main function."""
-    if os.getenv('BIOMIND_UI', '').lower() == 'plain' or os.getenv('TERM') == 'dumb' or not (sys.stdin.isatty() and sys.stdout.isatty()):
-        await runtime()
+    mode = os.getenv('BIOMIND_UI', '').lower()
+    async def run_plain():
+        owner = PlainTerminal(enabled=mode != 'off')
+        previous = bind_terminal(owner)
+        previous_sink = set_notice_sink(lambda text: owner.receive('error', text))
+        completed = False
+        try:
+            # Entry eligibility and all input/approval behavior remain with the
+            # original runtime. This owner only gives initial plain an outlet.
+            await runtime()
+            completed = True
+        finally:
+            try:
+                if completed:
+                    await owner.drain()
+            finally:
+                owner.close()
+                bind_terminal(previous)
+                set_notice_sink(previous_sink)
+    if mode in {'plain', 'off'} or os.getenv('TERM') == 'dumb' or not (sys.stdin.isatty() and sys.stdout.isatty()):
+        await run_plain()
         return
     try:
         owner = Terminal()
     except ImportError:
         sys.stderr.write('动态界面依赖缺失；使用 plain 模式。安装 requirements-cli.txt 可启用。\n')
-        await runtime()
+        await run_plain()
         return
     previous = bind_terminal(owner)
     previous_sink = set_notice_sink(lambda text: owner.receive('error', text))

@@ -20,7 +20,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, Optional
 
-from agent_core.cli_display import terminal as active_terminal
+from agent_core.cli_display import interactive_terminal as active_terminal
 
 
 class HumanInputUnavailable(Exception):

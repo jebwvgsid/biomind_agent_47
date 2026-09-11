@@ -12,7 +12,8 @@ from __future__ import annotations
 
 from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit
 
-from agent_core.cli_display import display_print, emit as emit_display, terminal as active_terminal
+from agent_core.cli_display import display_print, emit as emit_display, terminal as active_terminal, interactive_terminal, emit_public, flush_public
+from agent_core.cli_activity import call_with_activity
 import asyncio
 from agent_core.phase_timing import phase, phase_started, phase_finished, timed_phase
 from copy import deepcopy
@@ -2313,6 +2314,10 @@ class OutputRouter:
 
     def page_text(self, title: str, text: str, color: str = "", force: bool = False):
         """Display long text in a scrollable terminal pager when available."""
+        owner = active_terminal()
+        if owner is not None and (getattr(owner, "mode", "") == "plain" or getattr(owner, "fallback", False)):
+            emit_display("message", str(title) + "\n" + str(text), source="runtime_fact")
+            return
         if emit_display("details", str(title) + "\n" + str(text)):
             if title == "🤖 AI Message" and not str(text).lstrip().startswith(("{", "[")):
                 emit_display("message", str(text))
@@ -2411,8 +2416,11 @@ class OutputRouter:
                 display_print(f"\n{color}" + "\n".join(lines) + Style.RESET_ALL, flush=True)
             return True
 
-    def print_ai(self, content: str):
+    def print_ai(self, content: str, *, source: str = "runtime_fact", item_id: str = "", **scope):
         """打印 AI 消息（过滤代码块和标签）"""
+        if source == "diagnostic":
+            emit_display("details", "业务响应已接收；正文保留在原响应记录。", source=source, **scope)
+            return
         # 不打印纯代码块（由 execute 节点负责展示）
         if any(
             tag in str(content or "").lower()
@@ -2433,17 +2441,24 @@ class OutputRouter:
         clean = re.sub(r"</?[^>]+>", "", clean).strip()
         clean = re.sub(r"```.*?```", "[code block]", clean, flags=re.DOTALL)
         if clean:
-            key = clean[:80]
-            if key not in self._seen:
-                self._seen.add(key)
-                self.page_text("🤖 AI Message", clean, Fore.WHITE)
+            if item_id:
+                if item_id in self._seen:
+                    return
+                self._seen.add(item_id)
+            if source == "model_public":
+                if active_terminal() is None:
+                    display_print(clean)
+                else:
+                    emit_public(clean, item_id=item_id, **scope)
+            elif not emit_display("message", clean, source="runtime_fact", item_id=item_id, **scope):
+                display_print(clean)
 
-    def print_observation(self, content: str):
+    def print_observation(self, content: str, *, item_id: str = "", **scope):
         """打印执行结果（只打印一次）"""
         clean = content.replace("<observation>", "").replace("</observation>", "").strip()
-        key = f"obs:{clean[:60]}"
-        if key not in self._seen:
-            self._seen.add(key)
+        if not item_id or item_id not in self._seen:
+            if item_id:
+                self._seen.add(item_id)
             color = Fore.GREEN if "✅" in clean else Fore.RED
             display_print(f"\n{color}{'─'*50}")
             self.page_text("Execution Output", clean, color)
@@ -2468,14 +2483,10 @@ class VibeThinkingHandler(BaseCallbackHandler):
         self.is_thinking = False
 
     def on_llm_new_token(self, token: str, **kwargs) -> None:
-        chunk = kwargs.get("chunk")
-        reasoning = ""
-        if chunk and hasattr(chunk, "additional_kwargs"):
-            reasoning = chunk.additional_kwargs.get("reasoning_content", "")
-
-        if reasoning or token:
-            emit_display("activity", "正在接收模型回复；候选尚待校验")
-        self.is_thinking = bool(reasoning)
+        # ProviderStreamObserver owns fenced, invocation-scoped activity.
+        # Shared model callbacks cannot safely identify late/concurrent calls.
+        # Public prose is published only at a protocol-aware complete-turn exit.
+        return None
 
 
 # ════════════════════════════════════════════════════════════════
@@ -3420,9 +3431,20 @@ class BioAnalystAgent:
             or 0
         )
         tool = str(bounded.get("tool") or "")
+        display_scope = {"task_id": task_id, "node": "recovery",
+            "item_id": f"recovery:{event_id}" if event_id else "",
+            "source_message_id": str(bounded.get("source_message_id") or bounded.get("response_message_id") or ""),
+            "call_id": str(bounded.get("call_id") or bounded.get("request_id") or ""),
+            "provider_attempt_id": str(bounded.get("provider_attempt_id") or ""),
+            "epoch": str(bounded.get("context_epoch_id") or ""),
+            "tool_request_id": str(bounded.get("tool_request_id") or "")}
+        if event == "recovery_response_received":
+            emit_public(bounded.get("explanation"), **display_scope)
+            emit_display("details", "Recovery response status: " + str(bounded.get("status") or "received"),
+                         source="diagnostic", **{**display_scope, "item_id": ""})
+            return
         ui_messages = {
             "recovery_started": "🩺 Recovery started.",
-            "recovery_response_received": ("模型诊断（未授予执行批准）：\n" + str(bounded.get("explanation") or "") + "\n指令状态：" + str(bounded.get("status") or "received")),
             "recovery_model_turn_started": (
                 f"⏳ Recovery model turn {ordinal} started."
             ),
@@ -3443,11 +3465,11 @@ class BioAnalystAgent:
         message = ui_messages.get(str(event))
         if message:
             try:
-                output.print_once(
-                    f"recovery-event:{event_id or event}:{task_id}",
-                    message,
-                    Fore.CYAN,
-                )
+                kind = ("tool_start" if event == "recovery_tool_started" else
+                        "cancel" if event == "recovery_tool_cancelled" else
+                        "tool_end" if event in {"recovery_tool_completed", "recovery_tool_failed"} else
+                        "cancel" if event.endswith("cancelled") else "activity")
+                emit_display(kind, message, source="runtime_fact", event=event, **display_scope)
             except Exception:
                 logger.warning(
                     "Failed to render Recovery UI event %s for task %s",
@@ -7342,6 +7364,8 @@ class BioAnalystAgent:
         """Use the typed Skill store for both typed and legacy document loads."""
         service = getattr(self, "skill_access_service", None)
         if service is None:
+            emit_display("tool_end", "Skill 服务不可用；未派发读取或搜索", source="runtime_fact",
+                         task_id=task_id, node=caller_node, status="unavailable")
             raise SkillAccessError(
                 "SKILL_CONTEXT_UNAVAILABLE", "SkillManager is not configured"
             )
@@ -7804,6 +7828,8 @@ class BioAnalystAgent:
             if value != bound_authority[key]
         )
         if authority_changes:
+            emit_display("tool_end", "Skill 请求授权上下文已过期；未派发", source="runtime_fact",
+                         task_id=task_id, node=caller_node, status="declined")
             return {
                 "messages": [response, SystemMessage(content=json.dumps({
                     "decision_result": "STALE_NODE_RESULT",
@@ -7887,9 +7913,14 @@ class BioAnalystAgent:
         }
         kind = str(decision.get("decision") or "").upper()
         result_material_records: List[Dict[str, Any]] = []
+        await flush_public()
+        display_scope = {"task_id": task_id, "node": caller_node,
+                         "call_id": str(node_context.binding.invocation_id),
+                         "source_message_id": str(getattr(response, "id", "") or "")}
         if kind == REQUEST_SKILL_CONTEXT:
-            access, result = service.serve_context_request(
-                access, decision, runtime_envelope=envelope,
+            access, result = call_with_activity(
+                "Skill 读取", service.serve_context_request,
+                access, decision, runtime_envelope=envelope, display_scope=display_scope,
             )
             active_snapshot_ids = {
                 str(item.get("snapshot_id") or "")
@@ -7925,16 +7956,18 @@ class BioAnalystAgent:
                 for item in task_spec.get("inputs") or []
                 if isinstance(item, Mapping)
             ]
-            access, result = service.search_skills(
-                access,
+            access, result = call_with_activity(
+                "Skill 搜索", service.search_skills, access,
                 decision,
                 runtime_envelope=envelope,
                 input_roles=input_roles,
+                display_scope=display_scope,
             )
             proposal = None
         elif kind == PROPOSE_SKILL_BINDING:
-            access, proposal = service.propose_binding(
-                access, decision, runtime_envelope=envelope,
+            access, proposal = call_with_activity(
+                "Skill 绑定提案", service.propose_binding,
+                access, decision, runtime_envelope=envelope, display_scope=display_scope,
             )
             direct_plan_impact = (
                 str(proposal.get("review_route") or "")
@@ -12335,6 +12368,8 @@ class BioAnalystAgent:
                 ),
                 producer="generate",
             )
+            emit_display("message", "候选已保存", source="runtime_fact", task_id=task_id,
+                         node="generate", action_id=str(bound["action_id"]))
             bound["generated_script"] = generated_ref
             bound["generated_script_path"] = generated_ref["path"]
             bound["generated_script_hash"] = generated_ref["sha256"]
@@ -16065,6 +16100,12 @@ class BioAnalystAgent:
             row = dict(event or {})
             status = str(row.get("status") or "internal_error")
             repair_allowed = status == "repairable"
+            emit_display("error", "候选校验拒绝（尚未执行）：" + str(row.get("reason_code") or feedback),
+                         source="runtime_fact", task_id=task_id, node="generate",
+                         item_id=f"candidate-rejected:{task_id}:{row.get('event_id') or candidate_event_id}")
+            if repair_allowed:
+                emit_display("message", "进入既有局部修正流程", source="runtime_fact", task_id=task_id,
+                             node="generate", item_id=f"candidate-repair:{task_id}:{row.get('event_id') or candidate_event_id}")
             primary_failure = deepcopy(dict(row.get("primary_failure") or {}))
             secondary_failures = deepcopy(list(row.get("secondary_failures") or []))
             result: Dict[str, Any] = {
@@ -25272,7 +25313,7 @@ class BioAnalystAgent:
         started_at: Optional[str] = None,
         multiline: bool = False,
     ) -> str:
-        owner = active_terminal()
+        owner = interactive_terminal()
         if owner is not None:
             owner.set_context(task_id, stage, payload)
             # The runtime already owns a worker thread in TUI mode. Keep its
@@ -31517,6 +31558,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
 {context}
 </read_only_context>
 """
+            public_response = True
             try:
                 response = await self._ainvoke_llm(
                     [SystemMessage(content=prompt)] + messages,
@@ -31526,6 +31568,7 @@ If the user is actually asking you to run analysis or inspect local files, say t
                 )
             except Exception as exc:
                 response = self._llm_failure_response("direct_chat", exc, task_id)
+                public_response = False
 
             content = str(response.content or "").strip()
             if re.search(r"<\s*(execute|install_tool|search|activate_batch|ask_user)\b", content, re.IGNORECASE):
@@ -31534,7 +31577,9 @@ If the user is actually asking you to run analysis or inspect local files, say t
                     "简单执行，或者交给 managed 流程处理。"
                 )
                 response = AIMessage(content=content)
-            output.print_ai(content)
+                public_response = False
+            output.print_ai(content, source="model_public" if public_response else "runtime_fact", task_id=task_id, node="direct_response",
+                            item_id=str(getattr(response, "id", "") or ""))
             await self._finalize_task_memory(
                 task_id,
                 "completed",
@@ -34796,8 +34841,11 @@ question. Never guess a scientific or database identity.
                     or content.removeprefix("INSPECT_RESOURCE").strip()
                 ).strip()
                 role = str(consultant_json_payload.get("role") or "").strip()
+                await flush_public()
                 try:
-                    resource_observation = inspect_resource(resource, role=role)
+                    resource_observation = call_with_activity("资源读取", inspect_resource, resource, role=role,
+                        display_scope={"task_id": task_id, "node": "consultant",
+                                       "source_message_id": str(getattr(response, "id", "") or "")})
                 except ValueError as exc:
                     resource_observation = {
                         "resource": resource,
@@ -34835,8 +34883,11 @@ question. Never guess a scientific or database identity.
                     or consultant_json_payload.get("path")
                     or content.removeprefix("GLOB_RESOURCE").strip()
                 ).strip()
+                await flush_public()
                 try:
-                    resource_observation = glob_resources(pattern)
+                    resource_observation = call_with_activity("路径搜索", glob_resources, pattern,
+                        display_scope={"task_id": task_id, "node": "consultant",
+                                       "source_message_id": str(getattr(response, "id", "") or "")})
                 except ValueError as exc:
                     resource_observation = {
                         "pattern": pattern,
@@ -34898,7 +34949,7 @@ question. Never guess a scientific or database identity.
                         "pending_human_question": {},
                         "next_step": "consultant",
                     }
-                output.print_ai(answer)
+                output.print_ai(answer, source="model_public", task_id=task_id, node="consultant")
                 answer_message = AIMessage(content=answer)
                 await self._finalize_task_memory(
                     task_id,
@@ -35508,18 +35559,19 @@ question. Never guess a scientific or database identity.
                 if len(parts) >= 3:
                     kb_cat, query = parts[1].upper(), parts[2]
                     target_kb = KB_MAP.get(kb_cat, KB_MAP.get("SOP"))
-                    output.print_once(f"search:{query[:30]}", f"🔍 Searching [{kb_cat}]: {query}", Fore.CYAN)
-
                     new_knowledge = "Nothing found."
                     if self.retriever:
-                        retrieved = self.retriever.retrieve(query, target_datasets=[target_kb])
+                        await flush_public()
+                        retrieved = call_with_activity("知识库搜索", self.retriever.retrieve,
+                            query, target_datasets=[target_kb], display_scope={"task_id": task_id, "node": "consultant"})
                         if retrieved and retrieved.strip() and "Nothing found" not in retrieved:
                             display_print(f"{Fore.GREEN}📚 RAG: Found relevant content.{Style.RESET_ALL}")
                             new_knowledge = retrieved
                         else:
                             display_print(f"{Fore.YELLOW}📭 RAG: No results for '{query}'.{Style.RESET_ALL}")
                     else:
-                        display_print(f"{Fore.RED}🔴 RAG: Retriever not initialized.{Style.RESET_ALL}")
+                        emit_display("tool_end", "知识库搜索不可用；未派发", source="runtime_fact",
+                                     task_id=task_id, node="consultant", status="unavailable")
 
                     rag_history.append(f"--- [Search: {kb_cat}] {query} ---\n{new_knowledge}")
                     return {
@@ -43249,7 +43301,7 @@ question. Never guess a scientific or database identity.
             )
 
             # 打印（去重）
-            output.print_ai(content)
+            output.print_ai(content, source="diagnostic")
 
             # 解析
             search_match  = re.search(r"<search>(.*?)</search>", content, re.DOTALL)
@@ -48817,6 +48869,9 @@ question. Never guess a scientific or database identity.
                         expected_sha256=executed_ref["sha256"],
                         interpreter="bash",
                         lifecycle_callback=persist_attempt_lifecycle,
+                        display_context={"task_id": task_id, "node": "execute",
+                                         "action_id": str(pending_action.get("action_id") or ""),
+                                         "execution_attempt_id": attempt_id},
                         env=effective_execution_env,
                         managed_log_paths={"stdout": str(stdout_path), "stderr": str(stderr_path)},
                         **({"max_output_bytes": diagnostic_dispatch_envelope.scratch_capability.max_output_bytes} if diagnostic_dispatch_envelope is not None else {}),
@@ -49274,6 +49329,10 @@ question. Never guess a scientific or database identity.
                 validation_result["errors"] = [*list(validation_result.get("errors") or []), "EXECUTION_LOG_OBSERVATION_INCOMPLETE"]
                 validation_level = "execution_evidence_persistence"
             validation_failed = bool(validation_result and not validation_result.get("passed", True))
+            if validation_failed:
+                emit_display("error", "执行结果核验未通过；步骤尚未提交", source="runtime_fact",
+                             task_id=task_id, node="execute", execution_attempt_id=attempt_id,
+                             action_id=str(pending_action.get("action_id") or ""))
             benign_nonzero_preview = bool(
                 validation_result
                 and validation_result.get("benign_nonzero_readonly_preview")
@@ -53252,7 +53311,7 @@ question. Never guess a scientific or database identity.
             self._messages_for_memory_status(task_id, config, runner_input)
         )
 
-        owner = active_terminal()
+        owner = interactive_terminal()
         if owner is not None:
             caller = asyncio.current_task()
             runtime_loop = asyncio.get_running_loop()
@@ -53986,7 +54045,7 @@ question. Never guess a scientific or database identity.
                     if base_cmd == "ll":
                         real_cmd = "ls -lh " + " ".join(cmd_parts[1:])
                     import subprocess
-                    owner = active_terminal()
+                    owner = interactive_terminal()
                     execute_direct = lambda: subprocess.run(real_cmd, shell=True, executable="/bin/bash")
                     if owner is not None:
                         owner.handoff(execute_direct)
@@ -54012,7 +54071,7 @@ question. Never guess a scientific or database identity.
                 current_session_is_new = False
 
             except asyncio.CancelledError:
-                if active_terminal() is None:
+                if interactive_terminal() is None:
                     raise
                 emit_display("cancel", "运行调用已返回取消；整体清理未确认。可继续编辑新输入。")
                 _reset_interrupt_signal_guard()
@@ -54098,7 +54157,7 @@ def _handle_interrupt(signum, frame):
     global _INTERRUPT_SIGNAL_ACTIVE
     global _INTERRUPT_SIGNAL_COUNT
     global _INTERRUPT_SIGNAL_STARTED_AT
-    owner = active_terminal()
+    owner = interactive_terminal()
     if owner is not None:
         owner.loop.call_soon_threadsafe(owner.request_cancel)
         return
