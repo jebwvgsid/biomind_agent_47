@@ -1,0 +1,8 @@
+{
+  "tested_head": "1e2dfd0eba5bced8fb46fe187583247c21327e45",
+  "python_files_matched": 433,
+  "mismatches": [],
+  "tests_passed": 71,
+  "pytest_exit_code": 0,
+  "source_unchanged_during_tests": true
+}

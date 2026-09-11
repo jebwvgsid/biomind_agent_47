@@ -1,0 +1,402 @@
+[
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[cancel_review]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[cancel_review]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003165849484503269,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[cancel_review]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 22.312487912829965,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[cancel_review]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003761257976293564,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_after_approval]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_after_approval]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00033767102286219597,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_after_approval]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.548984481021762,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_after_approval]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001912578009068966,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_generated_reference]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_generated_reference]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002568061463534832,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_generated_reference]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.017134650144726,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_generated_reference]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019233766943216324,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[edited_body]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[edited_body]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00026389816775918007,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[edited_body]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.4817609409801662,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[edited_body]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001798509620130062,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<script language=\"bash\">true</script>]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<script language=\"bash\">true</script>]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00027092592790722847,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<script language=\"bash\">true</script>]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00014230376109480858,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<script language=\"bash\">true</script>]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011042598634958267,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</script></shell>]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</script></shell>]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019024591892957687,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</script></shell>]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00012134667485952377,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</script></shell>]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010433606803417206,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</shell>]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</shell>]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017177918925881386,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</shell>]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00011995714157819748,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</shell>]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010180007666349411,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell>true</shell><shell>false</shell>]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell>true</shell><shell>false</shell>]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018020393326878548,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell>true</shell><shell>false</shell>]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019356557168066502,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell>true</shell><shell>false</shell>]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019921595230698586,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[cat <<'DATA'\\n<script language=\"bash\">\\u4e2d\\u6587</script>\\n<shell>literal</shell>\\nDATA\\n]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[cat <<'DATA'\\n<script language=\"bash\">\\u4e2d\\u6587</script>\\n<shell>literal</shell>\\nDATA\\n]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002583879977464676,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[cat <<'DATA'\\n<script language=\"bash\">\\u4e2d\\u6587</script>\\n<shell>literal</shell>\\nDATA\\n]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0018445267342031002,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[cat <<'DATA'\\n<script language=\"bash\">\\u4e2d\\u6587</script>\\n<shell>literal</shell>\\nDATA\\n]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013867393136024475,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[printf '%s\\\\n' '<script language=\"bash\">\\u5408\\u6cd5\\u5b57\\u7b26\\u4e32</script>'\\n]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[printf '%s\\\\n' '<script language=\"bash\">\\u5408\\u6cd5\\u5b57\\u7b26\\u4e32</script>'\\n]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002140449360013008,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[printf '%s\\\\n' '<script language=\"bash\">\\u5408\\u6cd5\\u5b57\\u7b26\\u4e32</script>'\\n]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0014605680480599403,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[printf '%s\\\\n' '<script language=\"bash\">\\u5408\\u6cd5\\u5b57\\u7b26\\u4e32</script>'\\n]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012600421905517578,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[# <script language=\"bash\">comment</script>\\nprintf 'ok\\\\n'\\n]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[# <script language=\"bash\">comment</script>\\nprintf 'ok\\\\n'\\n]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019590090960264206,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[# <script language=\"bash\">comment</script>\\nprintf 'ok\\\\n'\\n]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001562145072966814,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[# <script language=\"bash\">comment</script>\\nprintf 'ok\\\\n'\\n]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012863008305430412,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_syntax_check_does_not_execute_or_source_startup",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_syntax_check_does_not_execute_or_source_startup",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.41251816879957914,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_syntax_check_does_not_execute_or_source_startup",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0034576072357594967,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_syntax_check_does_not_execute_or_source_startup",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017948774620890617,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure0-SCRIPT_SYNTAX_CHECK_UNAVAILABLE]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure0-SCRIPT_SYNTAX_CHECK_UNAVAILABLE]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002721617929637432,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure0-SCRIPT_SYNTAX_CHECK_UNAVAILABLE]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0011847661808133125,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure0-SCRIPT_SYNTAX_CHECK_UNAVAILABLE]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001424066722393036,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure1-SCRIPT_SYNTAX_CHECK_TIMEOUT]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure1-SCRIPT_SYNTAX_CHECK_TIMEOUT]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002554459497332573,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure1-SCRIPT_SYNTAX_CHECK_TIMEOUT]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005591991357505322,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure1-SCRIPT_SYNTAX_CHECK_TIMEOUT]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012529827654361725,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_python_is_parsed_without_execution_and_r_is_explicit",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_python_is_parsed_without_execution_and_r_is_explicit",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004973793402314186,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_python_is_parsed_without_execution_and_r_is_explicit",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000329779926687479,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_python_is_parsed_without_execution_and_r_is_explicit",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001188330352306366,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_real_generate_entry_repairs_wrapper_and_syntax_with_durable_budget",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_real_generate_entry_repairs_wrapper_and_syntax_with_durable_budget",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010083289816975594,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_real_generate_entry_repairs_wrapper_and_syntax_with_durable_budget",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 5.139769969973713,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_real_generate_entry_repairs_wrapper_and_syntax_with_durable_budget",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002215118147432804,
+    "failure": ""
+  }
+]

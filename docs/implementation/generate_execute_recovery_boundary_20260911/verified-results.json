@@ -1,0 +1,1927 @@
+[
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_retry_publication_uses_new_attempt_with_stale_verification_pointer",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_retry_publication_uses_new_attempt_with_stale_verification_pointer",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.05941949877887964,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_retry_publication_uses_new_attempt_with_stale_verification_pointer",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04400903172791004,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_retry_publication_uses_new_attempt_with_stale_verification_pointer",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017357198521494865,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_bad_inspection_scope_keeps_direct_failure_and_explains_unavailable",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_bad_inspection_scope_keeps_direct_failure_and_explains_unavailable",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005533839575946331,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_bad_inspection_scope_keeps_direct_failure_and_explains_unavailable",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006777711678296328,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_bad_inspection_scope_keeps_direct_failure_and_explains_unavailable",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017577409744262695,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_candidate_stop_does_not_inherit_previous_attempt_or_rc",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_candidate_stop_does_not_inherit_previous_attempt_or_rc",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004935772158205509,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_candidate_stop_does_not_inherit_previous_attempt_or_rc",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.012203326914459467,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_candidate_stop_does_not_inherit_previous_attempt_or_rc",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013643410056829453,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_cancel_is_not_caught_by_publication_diagnostics",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_cancel_is_not_caught_by_publication_diagnostics",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005044811405241489,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_cancel_is_not_caught_by_publication_diagnostics",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0035304920747876167,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_cancel_is_not_caught_by_publication_diagnostics",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001416858285665512,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_cas_conflict_does_not_overwrite_new_durable_failure",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_cas_conflict_does_not_overwrite_new_durable_failure",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005002622492611408,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_cas_conflict_does_not_overwrite_new_durable_failure",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.010731982998549938,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_cas_conflict_does_not_overwrite_new_durable_failure",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013897614553570747,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_published_old_event_after_attempt_advance_is_diagnostic_only",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_published_old_event_after_attempt_advance_is_diagnostic_only",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000579426996409893,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_published_old_event_after_attempt_advance_is_diagnostic_only",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.4763064649887383,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_failure_boundary.py::test_published_old_event_after_attempt_advance_is_diagnostic_only",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0005257870070636272,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_history.py::test_two_attempt_source_history_wrong_reference_and_reload",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_retry_history.py::test_two_attempt_source_history_wrong_reference_and_reload",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006389310583472252,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_history.py::test_two_attempt_source_history_wrong_reference_and_reload",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.07672042306512594,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_history.py::test_two_attempt_source_history_wrong_reference_and_reload",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018273713067173958,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<script language=\"bash\">true</script>]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<script language=\"bash\">true</script>]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00026845186948776245,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<script language=\"bash\">true</script>]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00014183111488819122,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<script language=\"bash\">true</script>]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011135777458548546,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</script></shell>]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</script></shell>]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002000848762691021,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</script></shell>]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00027192290872335434,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</script></shell>]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011450424790382385,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</shell>]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</shell>]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001904512755572796,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</shell>]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00012277578935027122,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell><script language=\"bash\">true</shell>]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.875278919935226e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell>true</shell><shell>false</shell>]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell>true</shell><shell>false</shell>]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018984079360961914,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell>true</shell><shell>false</shell>]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019081421196460724,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_invalid_wrappers_cannot_be_approved[<shell>true</shell><shell>false</shell>]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012830784544348717,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[cat <<'DATA'\\n<script language=\"bash\">\\u4e2d\\u6587</script>\\n<shell>literal</shell>\\nDATA\\n]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[cat <<'DATA'\\n<script language=\"bash\">\\u4e2d\\u6587</script>\\n<shell>literal</shell>\\nDATA\\n]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019029807299375534,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[cat <<'DATA'\\n<script language=\"bash\">\\u4e2d\\u6587</script>\\n<shell>literal</shell>\\nDATA\\n]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0018676030449569225,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[cat <<'DATA'\\n<script language=\"bash\">\\u4e2d\\u6587</script>\\n<shell>literal</shell>\\nDATA\\n]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013341009616851807,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[printf '%s\\\\n' '<script language=\"bash\">\\u5408\\u6cd5\\u5b57\\u7b26\\u4e32</script>'\\n]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[printf '%s\\\\n' '<script language=\"bash\">\\u5408\\u6cd5\\u5b57\\u7b26\\u4e32</script>'\\n]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001889304257929325,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[printf '%s\\\\n' '<script language=\"bash\">\\u5408\\u6cd5\\u5b57\\u7b26\\u4e32</script>'\\n]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0016497760079801083,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[printf '%s\\\\n' '<script language=\"bash\">\\u5408\\u6cd5\\u5b57\\u7b26\\u4e32</script>'\\n]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012058904394507408,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[# <script language=\"bash\">comment</script>\\nprintf 'ok\\\\n'\\n]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[# <script language=\"bash\">comment</script>\\nprintf 'ok\\\\n'\\n]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019887695088982582,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[# <script language=\"bash\">comment</script>\\nprintf 'ok\\\\n'\\n]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0016800081357359886,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_script_data_is_not_treated_as_transport[# <script language=\"bash\">comment</script>\\nprintf 'ok\\\\n'\\n]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012426916509866714,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_syntax_check_does_not_execute_or_source_startup",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_syntax_check_does_not_execute_or_source_startup",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005805888213217258,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_syntax_check_does_not_execute_or_source_startup",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0033994237892329693,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_syntax_check_does_not_execute_or_source_startup",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002473308704793453,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure0-SCRIPT_SYNTAX_CHECK_UNAVAILABLE]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure0-SCRIPT_SYNTAX_CHECK_UNAVAILABLE]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003189542330801487,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure0-SCRIPT_SYNTAX_CHECK_UNAVAILABLE]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005974387750029564,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure0-SCRIPT_SYNTAX_CHECK_UNAVAILABLE]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013794470578432083,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure1-SCRIPT_SYNTAX_CHECK_TIMEOUT]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure1-SCRIPT_SYNTAX_CHECK_TIMEOUT]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00027368776500225067,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure1-SCRIPT_SYNTAX_CHECK_TIMEOUT]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00042190030217170715,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_checker_failure_is_not_scientific_failure[failure1-SCRIPT_SYNTAX_CHECK_TIMEOUT]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001303977333009243,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_python_is_parsed_without_execution_and_r_is_explicit",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_python_is_parsed_without_execution_and_r_is_explicit",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005461140535771847,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_python_is_parsed_without_execution_and_r_is_explicit",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000332570169121027,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_python_is_parsed_without_execution_and_r_is_explicit",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012188870459794998,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_real_generate_entry_repairs_wrapper_and_syntax_with_durable_budget",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_real_generate_entry_repairs_wrapper_and_syntax_with_durable_budget",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010381219908595085,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_real_generate_entry_repairs_wrapper_and_syntax_with_durable_budget",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 4.624667511321604,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_script_boundary.py::test_real_generate_entry_repairs_wrapper_and_syntax_with_durable_budget",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017751893028616905,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006440239958465099,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.02314262092113495,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000228141900151968,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[UNKNOWN]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[UNKNOWN]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007345331832766533,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[UNKNOWN]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.021866172086447477,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[UNKNOWN]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001538037322461605,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[value2]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[value2]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006138747557997704,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[value2]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.02244276599958539,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[value2]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014802301302552223,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00061038788408041,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.021853888873010874,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_preserves_measured_value_without_files[True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014690682291984558,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021427404135465622,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00046408921480178833,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011879205703735352,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002065710723400116,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00028019724413752556,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011017685756087303,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts2]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts2]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019449088722467422,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts2]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002804519608616829,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_observation_template_cannot_invent_facts[facts2]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001130388118326664,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_echo_and_rc_zero_cannot_satisfy_observation",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_echo_and_rc_zero_cannot_satisfy_observation",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010384712368249893,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_echo_and_rc_zero_cannot_satisfy_observation",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005414369516074657,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_echo_and_rc_zero_cannot_satisfy_observation",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010993517935276031,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_parser_keeps_malformed_identity_and_required_field_checks[BIOMIND_EFFECT_EVIDENCE_JSON={invalid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_parser_keeps_malformed_identity_and_required_field_checks[BIOMIND_EFFECT_EVIDENCE_JSON={invalid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020052585750818253,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_parser_keeps_malformed_identity_and_required_field_checks[BIOMIND_EFFECT_EVIDENCE_JSON={invalid]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00035218382254242897,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_parser_keeps_malformed_identity_and_required_field_checks[BIOMIND_EFFECT_EVIDENCE_JSON={invalid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012618396431207657,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_parser_keeps_malformed_identity_and_required_field_checks[BIOMIND_EFFECT_EVIDENCE_JSON={\"produces_observations\":[{\"identity\":\"wrong\",\"value\":true}]}]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_parser_keeps_malformed_identity_and_required_field_checks[BIOMIND_EFFECT_EVIDENCE_JSON={\"produces_observations\":[{\"identity\":\"wrong\",\"value\":true}]}]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019549578428268433,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_parser_keeps_malformed_identity_and_required_field_checks[BIOMIND_EFFECT_EVIDENCE_JSON={\"produces_observations\":[{\"identity\":\"wrong\",\"value\":true}]}]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005306117236614227,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_parser_keeps_malformed_identity_and_required_field_checks[BIOMIND_EFFECT_EVIDENCE_JSON={\"produces_observations\":[{\"identity\":\"wrong\",\"value\":true}]}]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012402934953570366,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_missing_or_null_value_cannot_satisfy_formal_contract",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_missing_or_null_value_cannot_satisfy_formal_contract",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012411782518029213,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_missing_or_null_value_cannot_satisfy_formal_contract",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0007744939066469669,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_observation_boundary.py::test_missing_or_null_value_cannot_satisfy_formal_contract",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011038500815629959,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_combined_workflow.py::test_generate_execute_recovery_observation_commit_chain[False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_combined_workflow.py::test_generate_execute_recovery_observation_commit_chain[False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002237800508737564,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_combined_workflow.py::test_generate_execute_recovery_observation_commit_chain[False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 5.713523947168142,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_combined_workflow.py::test_generate_execute_recovery_observation_commit_chain[False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001918412744998932,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_combined_workflow.py::test_generate_execute_recovery_observation_commit_chain[True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_combined_workflow.py::test_generate_execute_recovery_observation_commit_chain[True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002881120890378952,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_combined_workflow.py::test_generate_execute_recovery_observation_commit_chain[True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 6.304248487111181,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_combined_workflow.py::test_generate_execute_recovery_observation_commit_chain[True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019498495385050774,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_two_attempt_summary_keeps_primary_and_secondary_causes",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_two_attempt_summary_keeps_primary_and_secondary_causes",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006278650835156441,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_two_attempt_summary_keeps_primary_and_secondary_causes",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03613621275871992,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_two_attempt_summary_keeps_primary_and_secondary_causes",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015352899208664894,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_report_idempotence_and_foreign_content_protected",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_report_idempotence_and_foreign_content_protected",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005494332872331142,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_report_idempotence_and_foreign_content_protected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001377291977405548,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_report_idempotence_and_foreign_content_protected",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013330765068531036,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_report_publish_race_is_protected_not_generic_io",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_report_publish_race_is_protected_not_generic_io",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005047651939094067,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_report_publish_race_is_protected_not_generic_io",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0012537771835923195,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_report_publish_race_is_protected_not_generic_io",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014030560851097107,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_finalizer_report_conflict_is_secondary_and_reload_is_idempotent",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_finalizer_report_conflict_is_secondary_and_reload_is_idempotent",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005062571726739407,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_finalizer_report_conflict_is_secondary_and_reload_is_idempotent",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.05636887392029166,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_retry_summary.py::test_finalizer_report_conflict_is_secondary_and_reload_is_idempotent",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015060696750879288,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[cancel_review]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[cancel_review]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023354589939117432,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[cancel_review]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.301494742743671,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[cancel_review]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021206773817539215,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_after_approval]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_after_approval]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002820407971739769,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_after_approval]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.4135045162402093,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_after_approval]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020063482224941254,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_generated_reference]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_generated_reference]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00027850503101944923,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_generated_reference]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.2550555490888655,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_ger_reload_controls.py::test_control_and_hash_boundaries_do_not_launch[changed_generated_reference]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019626738503575325,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts0-sides0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts0-sides0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007424009963870049,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts0-sides0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0018708109855651855,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts0-sides0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016386806964874268,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts1-sides1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts1-sides1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006817611865699291,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts1-sides1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002185311634093523,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts1-sides1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016203802078962326,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts2-sides2]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts2-sides2]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000818375963717699,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts2-sides2]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0027163359336555004,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts2-sides2]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016216980293393135,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts3-sides3]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts3-sides3]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006534513086080551,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts3-sides3]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0026474380865693092,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts3-sides3]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015471410006284714,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts4-sides4]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts4-sides4]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006608692929148674,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts4-sides4]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0030837240628898144,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts4-sides4]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001645497977733612,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_original_top_level_side_effect_identity_remains_rejected",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_original_top_level_side_effect_identity_remains_rejected",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012229010462760925,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_original_top_level_side_effect_identity_remains_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000455640722066164,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_original_top_level_side_effect_identity_remains_rejected",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011956598609685898,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002287859097123146,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002562417648732662,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001337919384241104,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021896138787269592,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002217693254351616,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001240069977939129,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts2]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts2]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020845187827944756,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts2]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002155960537493229,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts2]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012685079127550125,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts3]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts3]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021335342898964882,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts3]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00021781818941235542,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts3]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012202933430671692,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts4]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts4]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021251291036605835,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts4]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002255598083138466,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts4]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012229103595018387,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts5]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts5]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00034445570781826973,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts5]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002255309373140335,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts5]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012156600132584572,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_side_effect_required_fields_and_unapproved_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_side_effect_required_fields_and_unapproved_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011969218030571938,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_side_effect_required_fields_and_unapproved_identity",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006110765971243382,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_side_effect_required_fields_and_unapproved_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011861929669976234,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_approved_revision_and_step_are_exact_not_first_artifact",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_approved_revision_and_step_are_exact_not_first_artifact",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001167571172118187,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_approved_revision_and_step_are_exact_not_first_artifact",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0013060378842055798,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_approved_revision_and_step_are_exact_not_first_artifact",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012435298413038254,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00014727003872394562,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.217582377139479,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002090507186949253,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_real_approved_snapshot_reader_uses_updated_pointer_without_extra_load",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_real_approved_snapshot_reader_uses_updated_pointer_without_extra_load",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006848908960819244,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_real_approved_snapshot_reader_uses_updated_pointer_without_extra_load",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.005005973856896162,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_real_approved_snapshot_reader_uses_updated_pointer_without_extra_load",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001593632623553276,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_transport_refresh_rejects_stale_template_before_fake_provider",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_transport_refresh_rejects_stale_template_before_fake_provider",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012586871162056923,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_transport_refresh_rejects_stale_template_before_fake_provider",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.9608344081789255,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_declared_effect_emission.py::test_transport_refresh_rejects_stale_template_before_fake_provider",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002155359834432602,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_fixture_real_store",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_fixture_real_store",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006860299035906792,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_fixture_real_store",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10000165598466992,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_fixture_real_store",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020181480795145035,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_reopen_revalidate_commit_once",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_reopen_revalidate_commit_once",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006300169043242931,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_reopen_revalidate_commit_once",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.7171456241048872,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_reopen_revalidate_commit_once",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019753817468881607,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_deterministic_veto_cannot_partially_commit[missing-observation]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_deterministic_veto_cannot_partially_commit[missing-observation]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007521347142755985,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_deterministic_veto_cannot_partially_commit[missing-observation]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.29650334594771266,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_deterministic_veto_cannot_partially_commit[missing-observation]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019875913858413696,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_deterministic_veto_cannot_partially_commit[claim-parser-conflict]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_deterministic_veto_cannot_partially_commit[claim-parser-conflict]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007578819058835506,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_deterministic_veto_cannot_partially_commit[claim-parser-conflict]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.2978353030048311,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_deterministic_veto_cannot_partially_commit[claim-parser-conflict]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021900329738855362,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_wrong_attempt_cannot_partially_commit",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_wrong_attempt_cannot_partially_commit",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006529800593852997,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_wrong_attempt_cannot_partially_commit",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.2681453959085047,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_wrong_attempt_cannot_partially_commit",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002002241089940071,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_old_report_decision_cannot_partially_commit",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_old_report_decision_cannot_partially_commit",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006328211165964603,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_old_report_decision_cannot_partially_commit",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.5881567788310349,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_old_report_decision_cannot_partially_commit",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002557458356022835,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_preserves_approved_method_requirement_and_digest",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_preserves_approved_method_requirement_and_digest",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007227472960948944,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_preserves_approved_method_requirement_and_digest",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.27582272607833147,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_preserves_approved_method_requirement_and_digest",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002155359834432602,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_resolved_candidate_deleted_control_keeps_current_cause",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_resolved_candidate_deleted_control_keeps_current_cause",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006608259864151478,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_resolved_candidate_deleted_control_keeps_current_cause",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.4846338829956949,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_workflow.py::test_inspection_resolved_candidate_deleted_control_keeps_current_cause",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001996159553527832,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_binder_versions_one_incident_and_links_exact_parent",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_binder_versions_one_incident_and_links_exact_parent",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003535877913236618,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_binder_versions_one_incident_and_links_exact_parent",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.2926850547082722,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_binder_versions_one_incident_and_links_exact_parent",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00026861997321248055,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_consumed_older_version_cannot_override_incident_head",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_consumed_older_version_cannot_override_incident_head",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002609351649880409,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_consumed_older_version_cannot_override_incident_head",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.014857379253953695,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_consumed_older_version_cannot_override_incident_head",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000214362982660532,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_exact_head_replay_is_idempotent",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_exact_head_replay_is_idempotent",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021605798974633217,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_exact_head_replay_is_idempotent",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.011449349112808704,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_exact_head_replay_is_idempotent",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002017281949520111,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_legacy_schema1_packet_keeps_its_original_wire_shape",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_legacy_schema1_packet_keeps_its_original_wire_shape",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002209697850048542,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_legacy_schema1_packet_keeps_its_original_wire_shape",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006688449997454882,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_legacy_schema1_packet_keeps_its_original_wire_shape",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014023203402757645,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_missing_lineage_parent_fails_closed",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_missing_lineage_parent_fails_closed",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020971707999706268,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_missing_lineage_parent_fails_closed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.014673321042209864,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_missing_lineage_parent_fails_closed",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021018972620368004,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_new_active_incident_supersedes_prior_active_packet_out_of_band",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_new_active_incident_supersedes_prior_active_packet_out_of_band",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021910900250077248,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_new_active_incident_supersedes_prior_active_packet_out_of_band",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01188337616622448,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_new_active_incident_supersedes_prior_active_packet_out_of_band",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002041887491941452,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_new_inspection_evidence_versions_an_unchanged_source",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_new_inspection_evidence_versions_an_unchanged_source",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021197181195020676,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_new_inspection_evidence_versions_an_unchanged_source",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01424284279346466,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_new_inspection_evidence_versions_an_unchanged_source",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002095247618854046,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_resolved_incident_remains_append_only_when_next_incident_binds",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_resolved_incident_remains_append_only_when_next_incident_binds",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002166200429201126,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_resolved_incident_remains_append_only_when_next_incident_binds",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.017149255145341158,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_resolved_incident_remains_append_only_when_next_incident_binds",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002302238717675209,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_runtime_budget_is_owned_by_packet_incident_across_versions",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_runtime_budget_is_owned_by_packet_incident_across_versions",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021026795729994774,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_runtime_budget_is_owned_by_packet_incident_across_versions",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.024771917145699263,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_failure_packet_incident_lineage.py::FailurePacketIncidentLineageTests::test_runtime_budget_is_owned_by_packet_incident_across_versions",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00026850542053580284,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_evidence.py::test_I11_durable_attempt_advance_revokes_existing_reader_and_old_seed_registry",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_inspection_evidence.py::test_I11_durable_attempt_advance_revokes_existing_reader_and_old_seed_registry",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006277440115809441,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_evidence.py::test_I11_durable_attempt_advance_revokes_existing_reader_and_old_seed_registry",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.31871304707601666,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_inspection_evidence.py::test_I11_durable_attempt_advance_revokes_existing_reader_and_old_seed_registry",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021982518956065178,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_local_preaction_convergence_v2.py::PlanLocalRealGraphTests::test_graph_c_same_malformed_representation_converges",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_local_preaction_convergence_v2.py::PlanLocalRealGraphTests::test_graph_c_same_malformed_representation_converges",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00036317575722932816,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_local_preaction_convergence_v2.py::PlanLocalRealGraphTests::test_graph_c_same_malformed_representation_converges",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.4193351101130247,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_local_preaction_convergence_v2.py::PlanLocalRealGraphTests::test_graph_c_same_malformed_representation_converges",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020502181723713875,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_local_preaction_convergence_v2.py::PlanLocalRealGraphTests::test_approval_identity_failure_stops_before_attempt_allocation",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_local_preaction_convergence_v2.py::PlanLocalRealGraphTests::test_approval_identity_failure_stops_before_attempt_allocation",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002759890630841255,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_local_preaction_convergence_v2.py::PlanLocalRealGraphTests::test_approval_identity_failure_stops_before_attempt_allocation",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.483869640622288,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_local_preaction_convergence_v2.py::PlanLocalRealGraphTests::test_approval_identity_failure_stops_before_attempt_allocation",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022721895948052406,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_display.py::test_formal_parser_receipt_is_identical_with_ui_on_off",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_display.py::test_formal_parser_receipt_is_identical_with_ui_on_off",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00014460179954767227,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_display.py::test_formal_parser_receipt_is_identical_with_ui_on_off",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009697279892861843,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_display.py::test_formal_parser_receipt_is_identical_with_ui_on_off",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022081192582845688,
+    "failure": ""
+  }
+]

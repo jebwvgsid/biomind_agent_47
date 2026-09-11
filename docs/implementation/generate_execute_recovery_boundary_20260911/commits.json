@@ -1,0 +1,76 @@
+[
+  {
+    "hash": "e7a64eb9e511c8f454070c5c18d8833fa0cc800a",
+    "title": "fix: preserve retry failure identity across inspection publication",
+    "files": [
+      "agent_core/workflow/inspection_evidence.py",
+      "agent_core/workflow/managed_stop.py",
+      "agent_core/workflow/recovery_projection.py",
+      "tests/test_ger_failure_boundary.py"
+    ]
+  },
+  {
+    "hash": "367aa2bb9d44a6fe5be7027966a1f413b1aa7e2b",
+    "title": "fix: validate exact generated script bodies before approval",
+    "files": [
+      "agent_core/controller_audit.py",
+      "agent_core/workflow/execution.py",
+      "bio_agents.py",
+      "execution/script_validation.py",
+      "tests/offline_managed_bootstrap.py",
+      "tests/test_ger_script_boundary.py"
+    ]
+  },
+  {
+    "hash": "aaf2c22cd4c013a31f2962ef4941a57f18b6955e",
+    "title": "fix: emit approved observations through the existing effect template",
+    "files": [
+      "agent_core/completion_gate.py",
+      "agent_core/step_effects.py",
+      "tests/offline_managed_bootstrap.py",
+      "tests/test_ger_combined_workflow.py",
+      "tests/test_ger_observation_boundary.py"
+    ]
+  },
+  {
+    "hash": "122437598523591bbc6fee7b36a836d8fda5aa17",
+    "title": "fix: authorize retry history and reject stale inspection replay",
+    "files": [
+      "agent_core/workflow/inspection_evidence.py",
+      "agent_core/workflow/recovery_projection.py",
+      "tests/test_ger_failure_boundary.py",
+      "tests/test_ger_retry_history.py"
+    ]
+  },
+  {
+    "hash": "1a122a388a25853f515aea88bdad00d6cccc9c9a",
+    "title": "fix: keep per-attempt terminal facts and protect report conflicts",
+    "files": [
+      "agent_core/workflow/managed_stop.py",
+      "agent_core/workflow/runtime_recovery_reporting.py",
+      "bio_agents.py",
+      "tests/test_ger_retry_summary.py"
+    ]
+  },
+  {
+    "hash": "021fe2e2db11ba0846cf16516ed2da4dfeb5b06c",
+    "title": "fix: recheck frozen approval bytes and renew approval after edits",
+    "files": [
+      "bio_agents.py",
+      "execution/script_validation.py",
+      "tests/test_ger_reload_controls.py"
+    ]
+  },
+  {
+    "hash": "1e2dfd0eba5bced8fb46fe187583247c21327e45",
+    "title": "test: isolate consecutive failure acceptance from legacy fixtures",
+    "files": [
+      "tests/ger_fixture_support.py",
+      "tests/test_ger_combined_workflow.py",
+      "tests/test_ger_failure_boundary.py",
+      "tests/test_ger_reload_controls.py",
+      "tests/test_ger_retry_summary.py",
+      "tests/test_ger_script_boundary.py"
+    ]
+  }
+]

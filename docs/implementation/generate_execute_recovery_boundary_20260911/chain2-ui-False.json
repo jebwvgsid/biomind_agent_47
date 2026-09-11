@@ -1,0 +1,541 @@
+{
+  "provider_generate_calls": 3,
+  "recovery_calls": 1,
+  "approvals": 2,
+  "executions": 2,
+  "attempts": [
+    {
+      "attempt_id": "attempt_24c5326f43c66334edaa",
+      "approved_sha256": "26200b3108795f00ae8c4a9bca62df796292b2a688fbe532e74d03b3e4749ccc",
+      "stdout_sha256": "c76cc2ba0a1466f084610c92b96b4443f275d5b172e5ddbfc30f0d3f3f6f9d86",
+      "emission_count": 0,
+      "rc": 0
+    },
+    {
+      "attempt_id": "attempt_b8c536318766d034751e",
+      "approved_sha256": "febd4c3d700883ce6d491d0fcc2a0d4556dea8cb27bda5719beb3cea6b240bcf",
+      "stdout_sha256": "afeb4d4eaa48cbe1f783cf2e6dcb336a7fccd273fa7f86207740c5655fa70ce7",
+      "emission_count": 1,
+      "rc": 0
+    }
+  ],
+  "commits": 1,
+  "next_step_status": "running",
+  "repair_events": {
+    "candidate-rejection:be24d7bfc16cfe9c0b698831": {
+      "schema_version": 1,
+      "event_id": "candidate-rejection:be24d7bfc16cfe9c0b698831",
+      "candidate_event_id": "generate-candidate:sha256:7285a639b06dddacf3f1dc5e8eae68ffb0c4b733d2b2db578d9f7e609802e18d",
+      "scope": {
+        "task_id": "ger-combined-observation",
+        "task_revision": 1,
+        "plan_id": "plan_95544908c507e0cce6ae",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct"
+      },
+      "candidate_fingerprint": "d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+      "error_fingerprint": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e",
+      "repair_stage": "script_block",
+      "repair_domain": "representation",
+      "repair_ordinal": 1,
+      "repair_limit": 1,
+      "progress_proven": true,
+      "public_valid_facts": [
+        "binding_env",
+        "operation"
+      ],
+      "validation_source": "BioAnalystAgent._extract_structured_action_result",
+      "contract_ref": {
+        "protocol": "script_block_v1",
+        "capability_id": "sequence.search.local.blast.execute"
+      },
+      "violation_owner": "GENERATED_ACTION",
+      "reason_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+      "exact_violations": [
+        {
+          "code": "GENERATE_SCRIPT_BLOCK_INVALID",
+          "owner": "GENERATED_ACTION",
+          "message": "GENERATE_SCRIPT_BLOCK_INVALID: unsupported nested executable wrapper at body start",
+          "field_path": "response",
+          "observed": "<shell><script language=\"bash\">true</script></shell>",
+          "expected": "one current-step action matching the active Generate protocol",
+          "protocol_error": {
+            "stage": "script_block",
+            "code": "GENERATE_SCRIPT_BLOCK_INVALID",
+            "message": "GENERATE_SCRIPT_BLOCK_INVALID: unsupported nested executable wrapper at body start"
+          },
+          "failure_stage": "pre_execution_candidate_admission"
+        }
+      ],
+      "status": "repairable",
+      "exit_reason": "unrecognized_action",
+      "terminal_exit_reason": "unrecognized_action_exhausted",
+      "terminal_reason_code": "",
+      "termination_reason": "",
+      "execution_status": "not_started",
+      "recovery_entered": false,
+      "outputs_produced": [],
+      "primary_failure": {
+        "error_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+        "owner": "GENERATED_ACTION",
+        "subsystem": "managed_artifacts",
+        "stage": "pre_action_contract",
+        "message": "GENERATE_SCRIPT_BLOCK_INVALID: unsupported nested executable wrapper at body start",
+        "reason": "GENERATE_SCRIPT_BLOCK_INVALID: unsupported nested executable wrapper at body start",
+        "current_step": "step-direct",
+        "fingerprint": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e",
+        "candidate_fingerprint": "d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+        "execution_started": false,
+        "repair_attempted": false,
+        "repair_exhausted": false,
+        "failure_type": "generated_action_contract_error",
+        "failure_stage": "pre_action_contract",
+        "error_owner": "GENERATED_ACTION",
+        "detail": "GENERATE_SCRIPT_BLOCK_INVALID: unsupported nested executable wrapper at body start",
+        "summary": "GENERATE_SCRIPT_BLOCK_INVALID: unsupported nested executable wrapper at body start",
+        "recorded_at": "2026-09-11T18:19:37",
+        "expected_realization": "one current-step action matching the active Generate protocol",
+        "latest_failure": {
+          "error_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "GENERATE_SCRIPT_BLOCK_INVALID: unsupported nested executable wrapper at body start",
+          "fingerprint": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e",
+          "candidate_fingerprint": "d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+          "repair_attempt_count": 0,
+          "recorded_at": "2026-09-11T18:19:37",
+          "field_path": "response",
+          "expected": "one current-step action matching the active Generate protocol"
+        },
+        "last_seen_at": "2026-09-11T18:19:37",
+        "repair_attempt_count": 0,
+        "last_candidate_fingerprint": "d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+        "last_error_fingerprint": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e"
+      },
+      "secondary_failures": [],
+      "recovery_context": {
+        "schema_version": "4",
+        "context_id": "recovery-context-98269b6aa9c822d47d620df0",
+        "task_id": "ger-combined-observation",
+        "step_id": "step-direct",
+        "action_id": "generate-candidate:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+        "attempt_id": "pre-action:1:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+        "error_class": "GENERATE_SCRIPT_BLOCK_INVALID",
+        "error_fingerprint": "73cf55df943ebd502bb0f874452cde5bcdb85687fd4775391d09488d52b8bfb9",
+        "failure_stage": "pre_action_contract",
+        "approved_plan_snapshot_id": "plan-snapshot-4b8018d88f2479b27fab622a",
+        "candidate_fingerprint": "d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+        "repair_ordinal": 1,
+        "authoritative_state_hash": "sha256:02b6a00de6ed7220dd12993153bef727d0206d15baaaff2bcd112edec7ab0e96",
+        "task_spec_summary": {},
+        "effective_user_facts": {},
+        "current_step": {
+          "action": "execute",
+          "artifacts": [],
+          "bound_outputs": [],
+          "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+          "dependencies": [],
+          "depends_on": [],
+          "execution_capability_id": "sequence.search.local.blast.execute",
+          "inputs": [],
+          "outputs": [],
+          "purpose": "analysis",
+          "renderer_id": "",
+          "renderer_invocation_contract": {},
+          "risk_level": "low",
+          "selected_skill_id": "",
+          "semantic_claims": [],
+          "semantic_constraint_ids": [],
+          "skill_ids": [
+            "sequence/search/local-blast"
+          ],
+          "step_effect": {
+            "explicit_side_effects": [],
+            "produces_artifacts": [],
+            "produces_bindings": [],
+            "produces_observations": [
+              {
+                "evidence_contract": {
+                  "required_fields": [
+                    "value"
+                  ]
+                },
+                "identity": "validation_observation"
+              }
+            ],
+            "schema_version": 1,
+            "workspace_mutations": []
+          },
+          "step_id": "step-direct",
+          "step_type": "atomic",
+          "success_criteria": [
+            "Record the actual local input existence check as a structured observation."
+          ],
+          "title": "Run one approved command",
+          "tool": "test"
+        },
+        "action_contract": {
+          "structured_candidate": {
+            "kind": "malformed_generate_response",
+            "response_sha256": "d71fbbe50a4928b6d41f4e5993f80876d78aa32c6c3d3d36c43f9710ad5bb05f",
+            "response_char_count": 52,
+            "response_excerpt": "<shell><script language=\"bash\">true</script></shell>"
+          },
+          "candidate_fingerprint": "d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b"
+        },
+        "execution": {},
+        "validation": {
+          "status": "invalid",
+          "failure_stage": "pre_action_contract",
+          "violations": [
+            {
+              "code": "GENERATE_SCRIPT_BLOCK_INVALID",
+              "owner": "GENERATED_ACTION",
+              "message": "GENERATE_SCRIPT_BLOCK_INVALID: unsupported nested executable wrapper at body start",
+              "field_path": "response",
+              "observed": "<shell><script language=\"bash\">true</script></shell>",
+              "expected": "one current-step action matching the active Generate protocol",
+              "protocol_error": {
+                "stage": "script_block",
+                "code": "GENERATE_SCRIPT_BLOCK_INVALID",
+                "message": "GENERATE_SCRIPT_BLOCK_INVALID: unsupported nested executable wrapper at body start"
+              },
+              "failure_stage": "pre_execution_candidate_admission"
+            }
+          ],
+          "repair_domain": "representation"
+        },
+        "completion": {},
+        "progress": {},
+        "runtime": {
+          "approved_plan_snapshot_id": "plan-snapshot-4b8018d88f2479b27fab622a",
+          "authoritative_state_hash": "sha256:02b6a00de6ed7220dd12993153bef727d0206d15baaaff2bcd112edec7ab0e96",
+          "repair_ordinal": 1
+        },
+        "machine_audit_findings": [],
+        "available_evidence": [],
+        "manifest": {},
+        "artifacts": [],
+        "recent_attempts": [],
+        "already_tried_strategies": [],
+        "recovery_decision": {
+          "schema_version": 5,
+          "failure_class": "SCRIPT_BUG",
+          "failure_owner": "GENERATED_ACTION",
+          "error_is_real": true,
+          "primary_execution_succeeded": false,
+          "evidence_sufficient": true,
+          "recommended_action": "FORMAT_REPAIR",
+          "rerun_required": false,
+          "consume_retry_budget": false,
+          "user_notification_required": false,
+          "reason": "The proposed action violates the current action protocol.",
+          "verdict": "repair",
+          "root_cause": "The proposed action violates the current action protocol.",
+          "failure_type": "generated_action_contract_error",
+          "confidence": 1.0,
+          "missing_evidence": [],
+          "repair_strategy": "",
+          "next_action": "FORMAT_REPAIR",
+          "requires_user_input": false,
+          "selected_hypothesis_id": null,
+          "evidence": [
+            "GENERATE_SCRIPT_BLOCK_INVALID",
+            "error_fingerprint=73cf55df943ebd502bb0f874452cde5bcdb85687fd4775391d09488d52b8bfb9",
+            "invalid_response_hash=d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b"
+          ],
+          "rejected_alternatives": [],
+          "action_type": "repair_previous_action",
+          "commands": [],
+          "patches": [],
+          "files_to_backup": [],
+          "files_to_modify": [],
+          "rerun_command": null,
+          "verification_checks": [],
+          "rollback_steps": [],
+          "expected_new_evidence": [],
+          "risk_level": "medium",
+          "violates_user_constraint": false,
+          "constraint_conflict_reason": null,
+          "evidence_assessments": [],
+          "new_hypothesis_proposals": [],
+          "recommended_probe_id": null,
+          "probe_reason": "",
+          "preferred_execution_mode": "INLINE",
+          "probe_objective": "",
+          "kind": "FORMAT_REPAIR",
+          "reason_code": "generated_action_contract_error",
+          "action_id": "generate-candidate:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+          "step_id": "step-direct",
+          "attempt_id": "pre-action:1:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+          "consume_budget": "action_format_repair_count",
+          "repair_domain": "representation",
+          "plan_patch_reason": null,
+          "blocked_evidence": [],
+          "decision_id": "recovery-8467baacdc0ad0034aca",
+          "incident_id": "incident-dfaf03ebd337138ea5da",
+          "idempotency_key": "recovery-8467baacdc0ad0034aca",
+          "decision_owner": "RecoveryPolicy",
+          "next_route": "generate",
+          "source_node": "generate",
+          "disposition": "RETRY_GENERATE",
+          "target_route": "generate",
+          "status": "pending",
+          "step_attempt": 0,
+          "trigger_event_id": "pre-action:1:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+          "trigger_node": "generate",
+          "consumed_at": "",
+          "superseded_reason": "",
+          "migration_source": "",
+          "migration_conflicts": [],
+          "task_id": "ger-combined-observation",
+          "plan_id": "plan_95544908c507e0cce6ae",
+          "plan_version": "plan_v1",
+          "failed_step_id": "",
+          "rollback_to_step_id": "",
+          "first_bad_step_id": "",
+          "invalid_artifact_ids": [],
+          "invalidate_descendants": true,
+          "affected_step_ids": [],
+          "preserve_files_for_audit": true,
+          "evidence_refs": [],
+          "machine_findings_considered": [],
+          "repair_target": "",
+          "repair_instruction": "",
+          "plan_step_id": "",
+          "manifest_id": "",
+          "failed_stage_id": "",
+          "rewind_to_stage_id": "",
+          "invalidate_stage_ids": [],
+          "missing_capability": "",
+          "missing_producer_artifact_id": "",
+          "allowed_patch_scope": [],
+          "source_failure_fingerprint": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e",
+          "recovery_context_fingerprint": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e",
+          "failed_action_id": "generate-candidate:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+          "failed_execution_attempt_id": "pre-action:1:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+          "budget_class": "action_format_repair_count",
+          "execution_purpose": "PRIMARY",
+          "completion_eligibility": true,
+          "source_scope": {
+            "task_id": "ger-combined-observation",
+            "plan_id": "plan_95544908c507e0cce6ae",
+            "plan_version": "plan_v1",
+            "step_id": "step-direct",
+            "failed_action_id": "generate-candidate:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+            "failed_execution_attempt_id": "pre-action:1:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+            "source_failure_fingerprint": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e"
+          },
+          "identity_finalized": true,
+          "identity_payload_hash": "b5f862c331e04b7807338407b14dfeedf7362a74b0adf0b3987a3b17dfc2f526",
+          "expected_state_generation": 40
+        },
+        "allowed_actions": [],
+        "log_references": [],
+        "bounded_log_excerpt": "",
+        "conflicts": [],
+        "skill_policy": {},
+        "diagnosis": {},
+        "limits": {}
+      },
+      "recovery_context_digest": "recovery-context-98269b6aa9c822d47d620df0",
+      "policy_decision": {
+        "schema_version": 5,
+        "failure_class": "SCRIPT_BUG",
+        "failure_owner": "GENERATED_ACTION",
+        "error_is_real": true,
+        "primary_execution_succeeded": false,
+        "evidence_sufficient": true,
+        "recommended_action": "FORMAT_REPAIR",
+        "rerun_required": false,
+        "consume_retry_budget": false,
+        "user_notification_required": false,
+        "reason": "The proposed action violates the current action protocol.",
+        "verdict": "repair",
+        "root_cause": "The proposed action violates the current action protocol.",
+        "failure_type": "generated_action_contract_error",
+        "confidence": 1.0,
+        "missing_evidence": [],
+        "repair_strategy": "",
+        "next_action": "FORMAT_REPAIR",
+        "requires_user_input": false,
+        "selected_hypothesis_id": null,
+        "evidence": [
+          "GENERATE_SCRIPT_BLOCK_INVALID",
+          "error_fingerprint=73cf55df943ebd502bb0f874452cde5bcdb85687fd4775391d09488d52b8bfb9",
+          "invalid_response_hash=d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b"
+        ],
+        "rejected_alternatives": [],
+        "action_type": "repair_previous_action",
+        "commands": [],
+        "patches": [],
+        "files_to_backup": [],
+        "files_to_modify": [],
+        "rerun_command": null,
+        "verification_checks": [],
+        "rollback_steps": [],
+        "expected_new_evidence": [],
+        "risk_level": "medium",
+        "violates_user_constraint": false,
+        "constraint_conflict_reason": null,
+        "evidence_assessments": [],
+        "new_hypothesis_proposals": [],
+        "recommended_probe_id": null,
+        "probe_reason": "",
+        "preferred_execution_mode": "INLINE",
+        "probe_objective": "",
+        "kind": "FORMAT_REPAIR",
+        "reason_code": "generated_action_contract_error",
+        "action_id": "generate-candidate:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+        "step_id": "step-direct",
+        "attempt_id": "pre-action:1:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+        "consume_budget": "action_format_repair_count",
+        "repair_domain": "representation",
+        "plan_patch_reason": null,
+        "blocked_evidence": [],
+        "decision_id": "recovery-8467baacdc0ad0034aca",
+        "incident_id": "incident-dfaf03ebd337138ea5da",
+        "idempotency_key": "recovery-8467baacdc0ad0034aca",
+        "decision_owner": "RecoveryPolicy",
+        "next_route": "generate",
+        "source_node": "generate",
+        "disposition": "RETRY_GENERATE",
+        "target_route": "generate",
+        "status": "pending",
+        "step_attempt": 0,
+        "trigger_event_id": "pre-action:1:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+        "trigger_node": "generate",
+        "consumed_at": "",
+        "superseded_reason": "",
+        "migration_source": "",
+        "migration_conflicts": [],
+        "task_id": "ger-combined-observation",
+        "plan_id": "plan_95544908c507e0cce6ae",
+        "plan_version": "plan_v1",
+        "failed_step_id": "",
+        "rollback_to_step_id": "",
+        "first_bad_step_id": "",
+        "invalid_artifact_ids": [],
+        "invalidate_descendants": true,
+        "affected_step_ids": [],
+        "preserve_files_for_audit": true,
+        "evidence_refs": [],
+        "machine_findings_considered": [],
+        "repair_target": "",
+        "repair_instruction": "",
+        "plan_step_id": "",
+        "manifest_id": "",
+        "failed_stage_id": "",
+        "rewind_to_stage_id": "",
+        "invalidate_stage_ids": [],
+        "missing_capability": "",
+        "missing_producer_artifact_id": "",
+        "allowed_patch_scope": [],
+        "source_failure_fingerprint": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e",
+        "recovery_context_fingerprint": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e",
+        "failed_action_id": "generate-candidate:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+        "failed_execution_attempt_id": "pre-action:1:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+        "budget_class": "action_format_repair_count",
+        "execution_purpose": "PRIMARY",
+        "completion_eligibility": true,
+        "source_scope": {
+          "task_id": "ger-combined-observation",
+          "plan_id": "plan_95544908c507e0cce6ae",
+          "plan_version": "plan_v1",
+          "step_id": "step-direct",
+          "failed_action_id": "generate-candidate:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+          "failed_execution_attempt_id": "pre-action:1:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+          "source_failure_fingerprint": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e"
+        },
+        "identity_finalized": true,
+        "identity_payload_hash": "b5f862c331e04b7807338407b14dfeedf7362a74b0adf0b3987a3b17dfc2f526",
+        "expected_state_generation": 40
+      },
+      "policy_envelope": {
+        "schema_version": 1,
+        "recovery_decision_id": "recovery-8467baacdc0ad0034aca",
+        "recovery_context_id": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e",
+        "step_id": "step-direct",
+        "action_id": "recovery_action_07bac8333f6007da",
+        "recovery_strategy": "FORMAT_REPAIR",
+        "execution_purpose": "PRIMARY",
+        "execution_mode": "INLINE",
+        "result_contract": "FORMAL_OUTPUTS",
+        "source_scope": {
+          "task_id": "ger-combined-observation",
+          "plan_id": "plan_95544908c507e0cce6ae",
+          "plan_version": "plan_v1",
+          "step_id": "step-direct",
+          "failed_action_id": "generate-candidate:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+          "failed_execution_attempt_id": "pre-action:1:d382fe5dc0d82894ff38c12731ef3537c43b0a5b521bb4e62334a638150c325b",
+          "source_failure_fingerprint": "fbbf37f7b6b9b2030e37d0c3e31a47a40317853d8e23f324405853909c105a9e"
+        },
+        "hypothesis_id": null,
+        "probe_id": null,
+        "scratch_capability": null,
+        "policy_version": "recovery-execution-policy-v1",
+        "created_from": "deterministic",
+        "immutable_hash": "420cecc181839b82f231100050055b05dbff814487807dbcf20bd185a883d3d9",
+        "completion_eligible": true
+      },
+      "recovery_generation_rollover": {
+        "changed": true,
+        "duplicate": false,
+        "prior_target_generation_id": "generation-f84a557128020e859e97",
+        "target_generation_id": "generation-f27e6feede2c192ab8e2",
+        "rejection_event_id": "candidate-rejection:be24d7bfc16cfe9c0b698831",
+        "prior_claim_status": "provider_completed",
+        "claim_status": "issued",
+        "active_recovery_status": "pending",
+        "recovery_id": "ger-retry",
+        "envelope_id": "4bd61a339f6312b1f5d1c41176216bab9034792f515c0011f2e76331a8867814"
+      },
+      "receipt_id": "candidate-repair-receipt:9c273d693ee1c135de2e9409",
+      "receipt_ref": "object:sha256:25db1c1c057fc704cb1de9ecc59c4dea9f8e8601acc40ffe236ca4064440f46a",
+      "recorded_at": "2026-09-11T18:19:37"
+    }
+  },
+  "graph_nodes": [
+    [
+      "triage"
+    ],
+    [
+      "consultant"
+    ],
+    [
+      "planner"
+    ],
+    [
+      "plan_review"
+    ],
+    [
+      "generate"
+    ],
+    [
+      "execute"
+    ],
+    [
+      "supervisor"
+    ],
+    [
+      "recovery"
+    ],
+    [
+      "generate"
+    ],
+    [
+      "generate"
+    ],
+    [
+      "execute"
+    ],
+    [
+      "supervisor"
+    ],
+    [
+      "commit_step"
+    ]
+  ]
+}

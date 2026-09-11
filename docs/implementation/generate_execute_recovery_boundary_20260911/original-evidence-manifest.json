@@ -1,0 +1,102 @@
+[
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/plan_state.json",
+    "bytes": 1357176,
+    "sha256": "f00d27efbdf3f0e2e495d211d64de851f46417342d15dc3a3acba36e0cb8e62c"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/plans/active_plan.json",
+    "bytes": 470014,
+    "sha256": "18a200a568fd49ce15b6839c825b49cad0941d380533ce6551c7d9393477585f"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/attempts/attempt_361103e36597fc7ef3a0/approved.sh",
+    "bytes": 1677,
+    "sha256": "93d4351466febeeb18fe385e8c4749b416d1b431885429b6bb7f36806f44322f"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/attempts/attempt_361103e36597fc7ef3a0/executed.sh",
+    "bytes": 2080,
+    "sha256": "6b5036a6c8f0866fd89f367a967a899a79ac24f0ae481be82dc5c9fc42de771b"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/attempts/attempt_361103e36597fc7ef3a0/stdout.log",
+    "bytes": 3729,
+    "sha256": "d08375fb040df13d86057d860ef4db1f8b90854dfef3335ead5dd92391632bf3"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/attempts/attempt_361103e36597fc7ef3a0/stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/attempts/attempt_361103e36597fc7ef3a0/exit_status.json",
+    "bytes": 103,
+    "sha256": "30c65eb9a957f0d56548bf924b065565e577b01c679f5df895fe343ccd84ddae"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/attempts/attempt_9f2ebedcfdc5c10ca67a/approved.sh",
+    "bytes": 3540,
+    "sha256": "f293751ace0189aeaffdbbfc484a5e83b18870d5e35362327d742be4f0e98778"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/attempts/attempt_9f2ebedcfdc5c10ca67a/executed.sh",
+    "bytes": 2080,
+    "sha256": "aa6d99b2617079043011f08bdef69d56dac2224fb06c129d8f407171322eb8c5"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/attempts/attempt_9f2ebedcfdc5c10ca67a/stdout.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/attempts/attempt_9f2ebedcfdc5c10ca67a/stderr.log",
+    "bytes": 396,
+    "sha256": "143b3e56c76d2baf7f089cf1b931230b1b99a7cbf7712c764e72180f1aa22c18"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/attempts/attempt_9f2ebedcfdc5c10ca67a/exit_status.json",
+    "bytes": 103,
+    "sha256": "7a445326ed3fefa50ebaa2662f0f707a27edee1ca6dee84558265d6834c40617"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/attempts/attempt_9f2ebedcfdc5c10ca67a/failure_evidence.json",
+    "bytes": 2026,
+    "sha256": "def70c1a66a796660bef395e2381f08cc893cea1b8efffdb33ee6ebe10f71fd3"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/context_trace/generate-0007-1ecd79fda1c3/request.json",
+    "bytes": 123203,
+    "sha256": "5c0878ba3f4ada1f64e5d9cee2333a3111414ead32bc4755c4dd788c704a7563"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/context_trace/generate-0007-1ecd79fda1c3/response.json",
+    "bytes": 1919,
+    "sha256": "62b1bef8facc41d52600e592f90d048bb4ecf2668076e90249a677d81fa23171"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/context_trace/generate-0013-e71e399f9756/request.json",
+    "bytes": 116100,
+    "sha256": "816f18921703e31ac46795d1b4c274f08375922cea067f1d84ffebf265430a3f"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789112763/context_trace/generate-0013-e71e399f9756/response.json",
+    "bytes": 4000,
+    "sha256": "9236b688421c5673a5b36b0cceb91a0944db36471e2b9df1438d908b3a409e2d"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/stage_status.tsv",
+    "bytes": 1937,
+    "sha256": "e161ee9d2326b6c95c19a985486287e7aee8df9cbb8e669440b8fd39950ef21d"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/reproduce.sh",
+    "bytes": 3454,
+    "sha256": "5aef1f18531a47157c20e82ce20b1b813f2b1b3f92a01cd8584b83ac0073848d"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/report.md",
+    "bytes": 3092,
+    "sha256": "56e0281f8a28b6489e425638801329371d9e90b71c3d7b8405028a97bf430153"
+  }
+]
