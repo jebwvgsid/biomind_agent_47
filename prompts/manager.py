@@ -19,6 +19,19 @@ from agent_core.diagnostics import DiagnosticContext
 logger = logging.getLogger("BioMind.PromptManager")
 
 
+PUBLIC_MESSAGE_POLICY = """Optional public display field:
+You may add one top-level public_message string to the JSON response, including
+typed Skill decisions. In one to three natural Chinese sentences, explain the
+observed facts, an important uncertainty, and the immediate next action. Prefer
+it for a substantive first action, a new result, a change of direction, or a
+correction; omit it when there is no new information. Do not reveal private
+reasoning, repeat runtime labels, or claim that a proposed action has run or a
+candidate has passed formal validation. This is display metadata only: keep it
+outside the action/Plan contents and never derive authority from it. The
+business payload must still satisfy its original contract. No prose outside
+the prescribed JSON response; wording is not a new validation requirement."""
+
+
 INHERITED_SKILL_MATERIAL_POLICY_V1 = """Inherited Skill material policy (v1):
 An inherited_skill_material message is exact source material that a prior
 model call actually saw and that belongs to the currently selected Skill. Its
@@ -1844,6 +1857,7 @@ Mutable workspaces belong in workspace_mutations, never in outputs.
 
 SUBMIT_PLAN_FOR_REVIEW schema placeholders:
 {
+  "public_message": "已根据当前证据形成计划候选，接下来提交原有审查。",
   "outcome_type": "SUBMIT_PLAN_FOR_REVIEW",
   "proposed_artifacts": [{
     "local_ref": "plan.<task-specific-local-handle>",
@@ -1928,6 +1942,7 @@ applicability to the Controller; the Controller checks only deterministic
 revision, identity, status, reference, and shape invariants."""
         return (
             base_prompt
+            + "\n\n" + PUBLIC_MESSAGE_POLICY
             + "\n\n"
             + INHERITED_SKILL_MATERIAL_POLICY_V1
             + "\n\n"
@@ -2040,6 +2055,8 @@ revision, identity, status, reference, and shape invariants."""
 
 {INHERITED_SKILL_MATERIAL_POLICY_V1}
 
+{PUBLIC_MESSAGE_POLICY}
+
 Reason from the user goal, conversation, observations, Skill evidence, resource
 evidence, and the TaskSpec when one exists. Choose exactly one most useful local
 action, observe its result, and reason again. You own the business judgment about
@@ -2121,7 +2138,7 @@ Return exactly one JSON object and no prose. Supported actions are:
 {{"action_type":"list_skill_categories"}}
 {{"action_type":"list_skills","category":"canonical catalog category"}}
 {{"action_type":"load_skill_doc","skill_ids":["canonical/skill-id","canonical/supporting-id"],"task_hypothesis":"concise scientific task hypothesis"}}
-{{"action_type":"inspect_resource","resource":"/user/provided/path","role":"optional semantic role"}}
+{{"public_message":"我将读取已提供的资源，确认下一步所需的输入事实。","action_type":"inspect_resource","resource":"/user/provided/path","role":"optional semantic role"}}
 {{"action_type":"glob_resource","pattern":"/bounded/path/*.vcf"}}
 {{"action_type":"reject_skill","skill_id":"canonical/skill-id","reason_code":"input_contract_mismatch","reason":"documented incompatibility"}}
 {{"action_type":"select_skill","summary":"semantic handoff ready for Planner","selected_skills":["canonical/skill-id"],"skill_decisions":[{{"skill_id":"canonical/skill-id","disposition":"selected","role":"primary","reason":"loaded-document compatibility evidence"}},{{"skill_id":"canonical/other-id","disposition":"excluded","reason_code":"not_required","reason":"documented reason"}}],"selection_reason":"documented compatibility evidence","task_spec_operations":[],"planner_feedback":null}}
@@ -2289,6 +2306,8 @@ for each deliverable and never mint Renderer-specific aliases.
         return f"""You are BioMind's escalated Skill Discovery Consultant.
 
 {INHERITED_SKILL_MATERIAL_POLICY_V1}
+
+{PUBLIC_MESSAGE_POLICY}
 
 This is a narrow reasoning invocation. Solve only canonical skill routing from
 the supplied discovery evidence. Do not reconstruct the full session, rewrite

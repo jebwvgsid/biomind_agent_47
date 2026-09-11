@@ -22,6 +22,7 @@ TEST_FILES = (
     "tests/cli_model_progress_support.py", "tests/export_cli_model_progress_fixture.py",
     "tests/test_cli_model_progress_integration.py", "tests/test_cli_model_recovery_tools.py",
     "tests/test_cli_model_display.py", "tests/test_cli_model_progress.py",
+    "tests/test_cli_cp_public_integration.py", "tests/test_cli_public_response.py",
 )
 RESOURCE_FILES = ("skills/sequence/search/local-blast/SKILL.md",)
 GIT_ENV = {"PATH": "/usr/bin:/bin", "LC_ALL": "C.UTF-8", "GIT_CONFIG_NOSYSTEM": "1"}

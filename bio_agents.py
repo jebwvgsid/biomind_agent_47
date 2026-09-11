@@ -14,6 +14,7 @@ from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candid
 
 from agent_core.cli_display import display_print, emit as emit_display, terminal as active_terminal, interactive_terminal, emit_public, flush_public
 from agent_core.cli_activity import call_with_activity
+from agent_core.public_response import project_public_json
 import asyncio
 from agent_core.phase_timing import phase, phase_started, phase_finished, timed_phase
 from copy import deepcopy
@@ -34604,9 +34605,16 @@ question. Never guess a scientific or database identity.
                     },
                     "next_step": "consultant",
                 }
+            consultant_display = project_public_json(raw_content)
+            consultant_business_content = consultant_display.payload
+            if consultant_display.public_message:
+                emit_public(consultant_display.public_message, task_id=task_id,
+                            node="consultant", call_id=consultant_node_context.binding.invocation_id,
+                            source_message_id=response.id)
+                await flush_public()
             try:
                 consultant_skill_decision = parse_typed_skill_decision(
-                    raw_content
+                    consultant_business_content
                 )
             except SkillAccessError as exc:
                 completed_projection = (
@@ -34671,7 +34679,7 @@ question. Never guess a scientific or database identity.
                 messages + [response],
                 {"consultant_output": raw_content[:3000]},
             )
-            consultant_json_payload = self._consultant_json_payload(raw_content)
+            consultant_json_payload = self._consultant_json_payload(consultant_business_content)
             contract_repair_audit: Dict[str, Any] = {}
             if contract_repair_state:
                 repair_result = self._apply_consultant_contract_repair(
@@ -34757,8 +34765,8 @@ question. Never guess a scientific or database identity.
                 )
                 consultant_json_command = self._consultant_command_from_json(repaired_wire)
             else:
-                consultant_json_command = self._consultant_command_from_json(raw_content)
-            content = raw_content
+                consultant_json_command = self._consultant_command_from_json(consultant_business_content)
+            content = consultant_business_content
             if consultant_json_command:
                 output.print_once(
                     f"consultant_json_action:{task_id}:{consultant_json_command.splitlines()[0][:80]}",
@@ -34949,7 +34957,8 @@ question. Never guess a scientific or database identity.
                         "pending_human_question": {},
                         "next_step": "consultant",
                     }
-                output.print_ai(answer, source="model_public", task_id=task_id, node="consultant")
+                if answer != consultant_display.public_message:
+                    output.print_ai(answer, source="model_public", task_id=task_id, node="consultant")
                 answer_message = AIMessage(content=answer)
                 await self._finalize_task_memory(
                     task_id,
@@ -38890,9 +38899,11 @@ question. Never guess a scientific or database identity.
                 response, scope=planner_call_scope, claim=planner_call_claim, policy=planner_output_policy,
             )
             planner_length_terminated = planner_response_integrity["finish_reason"] == "length"
+            planner_display = project_public_json(raw_plan_content)
+            planner_business_content = planner_display.payload
             try:
                 typed_planner_skill_decision = None if planner_length_terminated else self._planner_observed_call(task_id, planner_observation, "parse_skill_envelope", parse_typed_skill_decision,
-                    raw_plan_content
+                    planner_business_content
                 )
             except SkillAccessError as exc:
                 return {
@@ -38908,7 +38919,7 @@ question. Never guess a scientific or database identity.
             if typed_planner_skill_decision is None:
                 try:
                     planner_envelope = self._planner_observed_call(task_id, planner_observation, "parse_plan_envelope", parse_planner_outcome_envelope,
-                        raw_plan_content,
+                        planner_business_content,
                         # Every live Planner response is a new candidate and
                         # therefore must use the typed 1.2.1 envelope. Legacy
                         # persisted plans are migrated at the state-reader
@@ -39009,6 +39020,11 @@ question. Never guess a scientific or database identity.
                     },
                     "next_step": "planner",
                 }
+            if not planner_length_terminated and planner_display.public_message:
+                emit_public(planner_display.public_message, task_id=task_id,
+                            node="planner", call_id=planner_node_context.binding.invocation_id,
+                            source_message_id=response.id)
+                await flush_public()
             def persist_planner_rejection(rejected_state, candidate, remediation=None):
                 feedback = save_correction_context(
                     self.data_path, task_id, rejected_state, task_spec=task_spec,
@@ -39272,7 +39288,7 @@ question. Never guess a scientific or database identity.
                     sort_keys=True,
                 )
                 if planner_envelope is not None
-                else raw_plan_content
+                else planner_business_content
             )
             structure_errors: List[Dict[str, Any]] = (
                 [validation_issue(
