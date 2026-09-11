@@ -1,0 +1,17 @@
+{
+  "fatal-exit": {
+    "exit_code": 17,
+    "termios_restored": true,
+    "terminal_bytes": 2663
+  },
+  "plain_commands": {
+    "exit_code": 0,
+    "ansi_bytes": 0,
+    "business_dispatches": 0
+  },
+  "non_tty": {
+    "exit_code": 0,
+    "ansi_bytes": 0,
+    "output": "BioMind：非 TTY 模式不等待交互输入。请在终端运行 interactive。\n"
+  }
+}

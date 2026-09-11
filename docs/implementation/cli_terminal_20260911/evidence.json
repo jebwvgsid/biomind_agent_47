@@ -1,0 +1,61 @@
+{
+  "base_head": "94f8eccb65a9a68cf5a32e266b8dda51e71390e7",
+  "implementation_head": "08ecb7361a4514f4415455b04500d0879b6d4de7",
+  "test_head": "0b490cd3d2d4daf1032499258a7afc8080bd147f",
+  "branch": "refactor/consultant-controller-authority",
+  "original_status_entries_preserved": 104,
+  "original_tracked_diffs_preserved": 61,
+  "staged_entries": 0,
+  "ui_metrics": {
+    "paste_wait_resize": {
+      "frames": 88,
+      "history_entries": 7,
+      "updates": 588
+    },
+    "cancel": {
+      "frames": 25,
+      "history_entries": 8,
+      "updates": 47
+    },
+    "approval": {
+      "frames": 13,
+      "history_entries": 9,
+      "updates": 16
+    },
+    "exception": {
+      "frames": 10,
+      "history_entries": 6,
+      "updates": 11
+    },
+    "renderer_failure": {
+      "frames": 7,
+      "history_entries": 8,
+      "updates": 15
+    },
+    "equal_pastes": {
+      "frames": 27,
+      "history_entries": 8,
+      "updates": 47
+    },
+    "fatal_exit": {
+      "frames": 7,
+      "history_entries": 4,
+      "updates": 8
+    }
+  },
+  "ui_1000_ticks": {
+    "state_loads": 0,
+    "business_writes": 0,
+    "audit_events_added": 0
+  },
+  "raw_pipe_fixture": {
+    "bytes_per_stream": 200094,
+    "sha256_per_stream": "1692c3be74a3e388cb5771e758efeda82f6e75c903a2504b6f470b68fa78b920",
+    "byte_equality_test": "passed",
+    "formal_parser_receipt_identity_test": "passed"
+  },
+  "real_api_wgs": "NOT RUN",
+  "original_sessions": "NOT RESUMED / NOT MODIFIED",
+  "upstream_reference_candidate": "e25bedc166b54acadb505b587a387091097b2393",
+  "upstream_fixed_file_verification": "UNKNOWN: network/cache unavailable"
+}

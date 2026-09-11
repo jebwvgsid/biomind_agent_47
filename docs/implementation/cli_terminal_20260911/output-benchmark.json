@@ -1,0 +1,20 @@
+{
+  "before": {
+    "terminal_bytes": 57583,
+    "terminal_lines": 582,
+    "perf_lines": 576,
+    "file_perf_lines": 576,
+    "warnings": 1,
+    "errors": 1,
+    "fixture_records": 582
+  },
+  "after": {
+    "terminal_bytes": 130,
+    "terminal_lines": 2,
+    "perf_lines": 0,
+    "file_perf_lines": 576,
+    "warnings": 1,
+    "errors": 1,
+    "fixture_records": 582
+  }
+}

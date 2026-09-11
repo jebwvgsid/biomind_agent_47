@@ -1,0 +1,32 @@
+{
+  "approve": {
+    "exit_code": 0,
+    "termios_restored": true,
+    "terminal_bytes": 7454
+  },
+  "exception": {
+    "exit_code": 0,
+    "termios_restored": true,
+    "terminal_bytes": 3757
+  },
+  "cancel-delayed": {
+    "exit_code": 130,
+    "termios_restored": true,
+    "terminal_bytes": 4892
+  },
+  "renderer-failure": {
+    "exit_code": 0,
+    "termios_restored": true,
+    "terminal_bytes": 2981
+  },
+  "plain_commands": {
+    "exit_code": 0,
+    "ansi_bytes": 0,
+    "business_dispatches": 0
+  },
+  "non_tty": {
+    "exit_code": 0,
+    "ansi_bytes": 0,
+    "output": "BioMind：非 TTY 模式不等待交互输入。请在终端运行 interactive。\n"
+  }
+}

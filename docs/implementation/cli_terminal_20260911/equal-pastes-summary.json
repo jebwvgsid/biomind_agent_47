@@ -1,0 +1,11 @@
+{
+  "equal_pastes": {
+    "exit_code": 0,
+    "termios_restored": true,
+    "terminal_bytes": 15034,
+    "perf_lines": 0,
+    "input_exact": true,
+    "input_lines": 1,
+    "elapsed_seconds": 7.40502946311608
+  }
+}

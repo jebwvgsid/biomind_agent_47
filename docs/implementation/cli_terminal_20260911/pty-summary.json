@@ -1,0 +1,20 @@
+{
+  "paste_wait_resize": {
+    "exit_code": 0,
+    "termios_restored": true,
+    "terminal_bytes": 15181,
+    "perf_lines": 0,
+    "input_exact": true,
+    "input_lines": 210,
+    "elapsed_seconds": 39.00354043394327
+  },
+  "cancel": {
+    "exit_code": 0,
+    "termios_restored": true,
+    "terminal_bytes": 11461,
+    "perf_lines": 0,
+    "input_exact": true,
+    "input_lines": 1,
+    "elapsed_seconds": 7.002100721932948
+  }
+}
