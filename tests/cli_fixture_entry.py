@@ -98,10 +98,12 @@ class FakeAgent:
         output.print_node_header('consultant')
         emit_display('message','已检索到 7 个候选流程（fake fixture）')
         try:
-            for i in range(576 if text not in {'approve','exception','renderer-failure'} else 2):
+            for i in range(576 if text not in {'approve','exception','renderer-failure','fatal-exit'} else 2):
                 logging.getLogger('BioMind.Performance').info('phase=state.load status=completed elapsed_ns=42')
                 emit_display('activity','等待 fake provider 返回')
                 await asyncio.sleep(30/576)
+            if text=='fatal-exit':
+                raise SystemExit(17)
             if text=='exception':
                 raise RuntimeError('isolated fake runtime exception')
             if text=='renderer-failure' and owner:

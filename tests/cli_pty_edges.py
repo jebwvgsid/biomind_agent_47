@@ -3,7 +3,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];ART=Path(sys.argv[1]);ART.mkdir(parents=True,exist_ok=True)
 ENV={'PATH':'/usr/bin:/bin','TERM':'xterm-256color','PYTHONPATH':str(ROOT)+':/tmp/biomind-cli-deps','PYTHONDONTWRITEBYTECODE':'1','PYTHONUNBUFFERED':'1'}
 results={}
-for scenario in ['approve','exception','cancel-delayed','renderer-failure']:
+for scenario in (['fatal-exit'] if '--fatal-only' in sys.argv else ['approve','exception','cancel-delayed','renderer-failure']):
  folder=ART/scenario;folder.mkdir(exist_ok=True)
  master,slave=pty.openpty();fcntl.ioctl(slave,termios.TIOCSWINSZ,struct.pack('HHHH',24,100,0,0));attrs=termios.tcgetattr(slave)
  proc=subprocess.Popen([sys.executable,'-s',str(ROOT/'tests/cli_fixture_entry.py')],cwd=folder,env=ENV,stdin=slave,stdout=slave,stderr=slave,start_new_session=True)
@@ -26,7 +26,9 @@ for scenario in ['approve','exception','cancel-delayed','renderer-failure']:
   wait_for(lambda:b'Ctrl+C' in raw,45);drain(.5)
   os.write(master,scenario.encode()+b'\r')
   wait_for(lambda:(folder/'submitted.json').exists())
-  if scenario=='cancel-delayed':
+  if scenario=='fatal-exit':
+   expected=17
+  elif scenario=='cancel-delayed':
    drain(.2);os.write(master,b'\x03');drain(.3);os.write(master,b'\x03');drain(.5)
    assert (folder/'cancel_count.json').read_text()=='1'
    assert '取消仍待确认'.encode() in raw

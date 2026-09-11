@@ -16,7 +16,7 @@ ROOT=Path(__file__).resolve().parents[1]
 ART=Path(sys.argv[1]).resolve()
 ART.mkdir(parents=True,exist_ok=True)
 
-def run(name, text, *, cancel=False):
+def run(name, text, *, cancel=False, second_paste=False):
     folder=ART/name;folder.mkdir(exist_ok=True)
     master,slave=pty.openpty()
     fcntl.ioctl(slave,termios.TIOCSWINSZ,struct.pack('HHHH',24,80,0,0))
@@ -45,6 +45,9 @@ def run(name, text, *, cancel=False):
         assert b'Ctrl+C' in raw, raw.decode(errors='replace')[-3000:]
         drain(.5)
         send(b'\x1b[200~'+text.encode()+b'\x1b[201~')
+        if second_paste:
+            drain(.2);send(b'\x1b[200~'+('乙'*len(text)).encode()+b'\x1b[201~');drain(.2)
+            send(b'\x7f'*len(text))
         drain(.2);send(b'\r')
         deadline=time.monotonic()+20
         while not (folder/'submitted.json').exists() and process.poll() is None and time.monotonic()<deadline:
@@ -83,6 +86,6 @@ def run(name, text, *, cancel=False):
         os.close(master);os.close(slave)
 
 payload='\n'.join(['　中文路径 /tmp/样本\t'+str(i) if i%5 else ('/命令 !echo 不得执行' if i%10 else '') for i in range(210)])
-results={'paste_wait_resize':run('paste_wait_resize',payload),'cancel':run('cancel','取消测试',cancel=True)}
+results=({'equal_pastes':run('equal_pastes','甲'*1000,cancel=True,second_paste=True)} if '--equal-only' in sys.argv else {'paste_wait_resize':run('paste_wait_resize',payload),'cancel':run('cancel','取消测试',cancel=True)})
 (ART/'pty-summary.json').write_text(json.dumps(results,ensure_ascii=False,indent=2))
 print(json.dumps(results,ensure_ascii=False))
