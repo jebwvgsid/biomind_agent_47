@@ -126,7 +126,12 @@ def _write_report(path: Path, body: str, *, prior_receipt: Mapping[str, Any] | N
             handle.write(content)
             handle.flush()
             os.fsync(handle.fileno())
-        os.link(temporary, path.name, src_dir_fd=parent, dst_dir_fd=parent, follow_symlinks=False)
+        try:
+            os.link(temporary, path.name, src_dir_fd=parent, dst_dir_fd=parent, follow_symlinks=False)
+        except FileExistsError as exc:
+            # A concurrent publisher owns the destination. Preserve it and
+            # report the same protected-file condition as the initial check.
+            raise RuntimeReportError("RUNTIME_REPORT_EXISTING_FILE_PROTECTED") from exc
         os.unlink(temporary, dir_fd=parent)
         created = False
         os.fsync(parent)

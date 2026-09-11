@@ -243,6 +243,55 @@ def current_managed_stop(durable):
     return stop if stop.get("producer") == PRODUCER and stop.get("persistence_status") == "committed" and _matches(durable, stop) else {}
 
 
+def _associated_attempts(durable, packet):
+    """Project the current failure and its explicitly authorized retry parent.
+
+    No latest/last attempt selection; historical rc never becomes current rc.
+    """
+    task = _mapping(durable.get("task_state"))
+    attempts = _mapping(_mapping(durable.get("provenance_state")).get("attempts"))
+    rows = []
+    references = []
+    for decision, receipt in _mapping(task.get("typed_recovery_receipts")).items():
+        receipt = _mapping(receipt)
+        envelope = _mapping(receipt.get("execution_envelope"))
+        if not packet.get("action_ref") or envelope.get("action_id") != packet.get("action_ref"):
+            continue
+        parent_ref = str(receipt.get("failure_packet_ref") or "")
+        parent = _mapping(_mapping(_mapping(task.get("causal_failure_packets")).get(parent_ref)).get("failure_packet"))
+        if (parent.get("attempt_ref") and parent.get("attempt_ref") == _mapping(envelope.get("source_scope")).get("attempt_id")
+                and _mapping(receipt.get("directive")).get("action") == "retry_step"
+                and _mapping(_mapping(task.get("consumed_failure_packet_refs")).get(parent_ref)).get("decision_id") == decision
+                and receipt.get("incident_id") == parent.get("incident_id")
+                and _mapping(parent.get("plan_spec_ref")) == _mapping(packet.get("plan_spec_ref"))
+                and parent.get("task_id") == packet.get("task_id") and parent.get("step_id") == packet.get("step_id")):
+            references.append((str(parent["attempt_ref"]), "historical_diagnostic", parent_ref))
+    references.append((str(packet.get("attempt_ref") or ""), "current_failure", ""))
+    for attempt_id, purpose, reference in references:
+        if not attempt_id or any(row["attempt_id"] == attempt_id for row in rows):
+            continue
+        attempt = _mapping(attempts.get(attempt_id))
+        if (attempt.get("step_id") != packet.get("step_id") or attempt.get("plan_id") != durable.get("plan_id")
+                or attempt.get("plan_version") != durable.get("plan_version")):
+            continue
+        effect = _mapping(attempt.get("effect_evidence"))
+        parser = _mapping(effect.get("parser_receipt"))
+        causal = _mapping(_mapping(task.get("causal_failure_packets")).get(reference or task.get("active_failure_packet_ref")))
+        report = _mapping(_mapping(_mapping(causal.get("failure_source")).get("payload")).get("completion_report"))
+        gate = _mapping(report.get("completion_gate"))
+        evidence_satisfied = (gate.get("passed", "UNKNOWN")
+            if _mapping(report.get("scope")).get("attempt_id") == attempt_id else "UNKNOWN")
+        rows.append({"attempt_id": attempt_id, "action_id": attempt.get("action_id"),
+            "use": purpose, "failure_packet_ref": reference, "returncode": attempt.get("returncode"),
+            "emission_count": parser.get("emission_count"), "parser_status": parser.get("status", "UNKNOWN"),
+            "observation_count": len(effect.get("produces_observations") or []),
+            "candidate_validity": "UNKNOWN", "process_succeeded": attempt.get("returncode") == 0 if type(attempt.get("returncode")) is int else "UNKNOWN",
+            "formal_evidence_satisfied": evidence_satisfied,
+            "step_completed": False if any(row.get("step_id") == packet.get("step_id") and row.get("status") not in {"passed", "done", "completed"} for row in _steps(durable)) else "UNKNOWN",
+            "completion": "historical evidence only" if purpose == "historical_diagnostic" else "see formal verification/commit"})
+    return rows
+
+
 def build_managed_stop(task_id, values, durable, boundary):
     """No reader or store is needed to construct this base."""
     outcome = boundary["outcome"]
@@ -302,6 +351,7 @@ def build_managed_stop(task_id, values, durable, boundary):
         if not packet:
             value["origin"].update(source_stage="execute", source_owner="internal_protocol",
                 summary=_safe(primary.get("detail") or payload.get("detail") or outcome.get("summary")))
+    value["associated_attempts"] = _associated_attempts(durable, packet)
     value["primary_cause"] = deepcopy(primary or value["origin"])
     value["latest_failure"] = deepcopy(latest or value.get("latest_failure") or ((value.get("inspection_failures") or [{}])[-1]))
     if value["stop_reason"].get("error_code") == "RECOVERY_PROVIDER_TRANSPORT_FAILED":
@@ -328,7 +378,7 @@ def build_managed_stop(task_id, values, durable, boundary):
     # Read held execution evidence from this invocation; never read script files.
     execution = _mapping(_mapping(values.get("execute_outcome")).get("payload"))
     raw = _mapping(execution.get("execution_record"))
-    if raw and str(raw.get("attempt_id") or "") == value["scope"]["attempt_id"]:
+    if not no_execution and raw and str(raw.get("attempt_id") or "") == value["scope"]["attempt_id"]:
         value["execution"].update(executed=True, purpose=_code(raw.get("purpose") or raw.get("execution_purpose"), value["execution"].get("purpose", "UNKNOWN")), returncode=raw.get("returncode", raw.get("exit_code", execution.get("return_code"))),
             stdout=_safe(raw.get("raw_stdout") or raw.get("stdout"), 2000), stderr=_safe(raw.get("raw_stderr") or raw.get("stderr"), 2000))
         script = _safe(raw.get("code"), 32000)
@@ -343,8 +393,7 @@ def build_managed_stop(task_id, values, durable, boundary):
     runtime = _mapping(values.get("runtime_recovery_result") or payload.get("runtime_recovery_result"))
     if runtime:
         value["runtime"] = deepcopy(runtime)
-        value["stop_reason"]["error_code"] = runtime.get("reason_code") or value["stop_reason"]["error_code"]
-        value["origin"]["summary"] = _safe(runtime.get("explanation") or runtime.get("original_error_code"))
+        # Runtime/report diagnostics are secondary to the frozen causal failure.
     value["stop_id"] = "managed-stop:" + _hash({"scope": value["scope"], "authority": value["authority"], "boundary": boundary,
         "stop_reason": value["stop_reason"]})
     value["explanation"] = explanation(value)
@@ -370,6 +419,13 @@ def explanation(stop):
         for name in ("report.md", "stage_status.tsv", "reproduce.sh"))
     parts = [base, "来源阶段：" + str(origin.get("source_stage") or "unknown") + "；原始错误：" + str(origin.get("error_code") or "unknown") + "；停止阶段：" + str(stop.get("stage") or "outer") + "。"]
     execution = _mapping(stop.get("execution"))
+    for attempt in stop.get("associated_attempts") or []:
+        parts.append(("历史诊断 attempt：" if attempt["use"] == "historical_diagnostic" else "当前故障 attempt：")
+            + attempt["attempt_id"] + "；rc=" + str(attempt["returncode"])
+            + "；正式排放数=" + str(attempt["emission_count"])
+            + "；观测记录数=" + str(attempt["observation_count"]) + "；" + attempt["completion"])
+        parts.append("候选有效性=" + str(attempt["candidate_validity"]) + "；进程成功=" + str(attempt["process_succeeded"])
+            + "；正式证据满足=" + str(attempt["formal_evidence_satisfied"]) + "；步骤完成=" + str(attempt["step_completed"]))
     if str(execution.get("purpose") or "").upper() == "DIAGNOSTIC":
         parts.append("最近 attempt 为诊断执行；其返回码不代表主步骤完成。原始执行返回码：" + str(origin.get("returncode")) + "。")
     for key in ("stdout", "stderr"):
@@ -594,6 +650,7 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
                 for i in value["planning"].get("validation_issues") or []]}
     frozen["execution"] = {k:v for k,v in frozen["execution"].items() if k != "command_body"}
     frozen["base"] = explanation(value)
+    frozen["associated_attempts"] = deepcopy(value.get("associated_attempts") or [])
     frozen["inspection_observations"] = deepcopy(value.get("inspection_observations") or [])
     wire = json.dumps(frozen, ensure_ascii=False)
     reserve = len(wire.encode()) + 1500

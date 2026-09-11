@@ -49311,7 +49311,7 @@ question. Never guess a scientific or database identity.
                        f"{validation_block}"
                        f"{runtime_status_block}\n</observation>")
             elif effective_success and not validation_failed:
-                obs = (f"<observation>\n[{language}] ✅ Success ({duration:.1f}s)\n"
+                obs = (f"<observation>\n[{language}] ✅ Process exited successfully ({duration:.1f}s); formal verification/commit pending\n"
                        f"STDOUT:\n{stdout_obs}\n"
                        f"STDERR:\n{stderr_obs}"
                        f"{validation_block}"
@@ -49323,7 +49323,7 @@ question. Never guess a scientific or database identity.
                        f"{validation_block}"
                        f"{runtime_status_block}\n</observation>")
             else:
-                obs = (f"<observation>\n[{language}] ❌ Failed ({duration:.1f}s)\n"
+                obs = (f"<observation>\n[{language}] ❌ Process failed ({duration:.1f}s)\n"
                        f"STDOUT:\n{stdout_obs}\n"
                        f"STDERR:\n{stderr_obs}"
                        f"{validation_block}"
