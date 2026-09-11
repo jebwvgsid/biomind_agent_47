@@ -44,25 +44,36 @@ class PlainTerminal:
         self.sink_broken = False
         self.last_ticket = None
         self.history_cursor = 0
+        self.last_stage = None
         self.queue = queue.Queue()
         self.writer = threading.Thread(target=self._write_loop, name='biomind-cli-output', daemon=True)
         if enabled:
             self.writer.start()
 
     def receive(self, kind, text='', **data):
-        ticket = self.model.receive(kind, text, **data)
-        if ticket is None:
-            return None
-        if kind == 'tool_tail' and data.get('display_delta') and (self.model.verbosity == 'verbose' or data.get('purpose') == 'key_output'):
-            ticket.text = safe_text(data['display_delta']).rstrip('\n')
-            with self.model.lock:
+        with self.model.lock:
+            ticket = self.model.receive(kind, text, **data)
+            if ticket is None:
+                return None
+            if kind == 'stage' and ticket.source == 'runtime_fact' and ticket.presentation == 'status' and ticket.text.strip():
+                stage = (ticket.scope.get('task_id', ''), ticket.scope.get('node', ''), ticket.text)
+                if stage != self.last_stage:
+                    # The model has already closed any preceding tool group.
+                    # Only an accepted stage transition gains an append-only
+                    # row; fenced activity and approval priorities stay silent.
+                    self.last_stage = stage
+                    ticket.presentation = 'history'
+                    self.model.items.append(ticket)
+                    self.model.history.append(ticket.text)
+            if kind == 'tool_tail' and data.get('display_delta') and (self.model.verbosity == 'verbose' or data.get('purpose') == 'key_output'):
+                ticket.text = safe_text(data['display_delta']).rstrip('\n')
                 self.model.items.append(ticket)
                 self.model.history.append(ticket.text)
-            ticket.presentation = 'history'
-        self._queue_history()
-        if self.closed or self.sink_broken or self.mode == 'off':
-            ticket.finish(False, 'display_closed' if self.closed else 'display_unavailable')
-        return ticket
+                ticket.presentation = 'history'
+            self._queue_history()
+            if self.closed or self.sink_broken or self.mode == 'off':
+                ticket.finish(False, 'display_closed' if self.closed else 'display_unavailable')
+            return ticket
 
     def _queue_history(self):
         with self.model.lock:

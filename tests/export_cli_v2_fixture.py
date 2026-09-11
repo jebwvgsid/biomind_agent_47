@@ -8,9 +8,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import export_cli_model_progress_fixture as previous
 
 V2_FILES = (
+    'tests/test_cli_v2_plain_stage.py',
     'tests/export_cli_v2_fixture.py', 'tests/cli_v2_support.py',
     'tests/test_cli_v2_integration.py', 'tests/replay_cli_v2_pty.py',
-    'tests/test_cli_v2_display.py', 'tests/test_cli_v2_output.py','tests/test_cli_v2_business.py', 'tests/test_cli_v2_recovery_route.py', 'tests/test_cli_v2_public_style.py',
+    'tests/test_cli_v2_display.py', 'tests/test_cli_v2_output.py','tests/test_cli_v2_business.py', 'tests/test_cli_v2_recovery_route.py', 'tests/test_cli_v2_public_style.py', 'tests/test_cli_v2_terminal_fallback.py',
 )
 previous.TEST_FILES += V2_FILES
 
