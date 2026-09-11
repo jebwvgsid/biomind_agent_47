@@ -2391,7 +2391,7 @@ class SupervisorNode:
             evidence.validator_version,
             evidence.validation_duration,
         )
-        print(f"\n{Fore.CYAN}  Validation status: {evidence.status}{Style.RESET_ALL}\n")
+        print(f"局部执行检查：{evidence.status}；正式完成核验与提交另行判定。")
         summary = {
             "validation_id": evidence.validation_id,
             "status": evidence.status,
@@ -2484,7 +2484,7 @@ class SupervisorNode:
             }
 
         # ── 规则引擎检查 ─────────────────────────────────────
-        print(f"\n{Fore.CYAN}🔬 [Supervisor] Analyzing execution result...{Style.RESET_ALL}")
+        print("正在核验执行结果", purpose="status")
         rule_results = RuleEngine.run(last_code, stdout, stderr, returncode)
         rule_results.extend(self._validation_checks_from_observation(last_obs))
         rule_results.extend(self._artifact_check_results(state))

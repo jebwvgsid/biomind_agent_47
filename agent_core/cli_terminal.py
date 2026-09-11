@@ -13,7 +13,7 @@ import threading
 import queue
 import time
 
-from agent_core.cli_display import DisplayModel, bind_terminal, safe_text
+from agent_core.cli_display import DisplayModel, bind_terminal, safe_text, display_verbosity
 from agent_core.cli_logging import set_notice_sink
 
 
@@ -36,9 +36,9 @@ def plain_input(prompt, timeout=0):
 
 class PlainTerminal:
     """Explicit append-only owner; potentially blocking writes leave business alone."""
-    def __init__(self, output=None, *, enabled=True):
+    def __init__(self, output=None, *, enabled=True, verbosity='compact'):
         self.mode = 'plain' if enabled else 'off'
-        self.model = DisplayModel()
+        self.model = DisplayModel(verbosity=verbosity)
         self.output = output if output is not None else sys.stdout
         self.closed = False
         self.sink_broken = False
@@ -57,9 +57,10 @@ class PlainTerminal:
             with self.model.lock:
                 self.model.items.append(ticket)
                 self.model.history.append(ticket.text)
+            ticket.presentation = 'history'
         if self.closed or self.sink_broken or self.mode == 'off':
             ticket.finish(False, 'display_closed' if self.closed else 'display_unavailable')
-        elif ticket.source != 'diagnostic' and (kind in {'model_public', 'message', 'error', 'result', 'cancel', 'approval', 'tool_start', 'tool_end'} or (kind == 'tool_tail' and data.get('display_delta'))):
+        elif ticket.presentation == 'history':
             self.last_ticket = ticket
             self.queue.put_nowait(ticket)
         return ticket
@@ -100,7 +101,7 @@ class PlainTerminal:
 
 
 class Terminal:
-    def __init__(self):
+    def __init__(self, *, verbosity='compact'):
         from prompt_toolkit.application import Application
         from prompt_toolkit.buffer import Buffer
         from prompt_toolkit.completion import WordCompleter
@@ -112,7 +113,7 @@ class Terminal:
         from prompt_toolkit.widgets import TextArea
         self.loop = asyncio.get_running_loop()
         self.mode = 'tty'
-        self.model = DisplayModel()
+        self.model = DisplayModel(verbosity=verbosity)
         self.pending = None
         self.context = ('', 'interactive_prompt', {})
         self.draft = ''
@@ -217,6 +218,8 @@ class Terminal:
                 def append():
                     output = sys.stdout if self.fallback else self.app.output
                     for item in items:
+                        if item.presentation != 'history':
+                            continue
                         if self.sink_broken:
                             item.finish(False, 'sink_closed')
                             continue
@@ -395,8 +398,9 @@ class Terminal:
 async def run_terminal(runtime):
     """Real CLI entry wrapper; runtime is the original async main function."""
     mode = os.getenv('BIOMIND_UI', '').lower()
+    verbosity = display_verbosity(os.getenv('BIOMIND_CLI_VERBOSITY', 'compact'))
     async def run_plain():
-        owner = PlainTerminal(enabled=mode != 'off')
+        owner = PlainTerminal(enabled=mode != 'off', verbosity=verbosity)
         previous = bind_terminal(owner)
         previous_sink = set_notice_sink(lambda text: owner.receive('error', text))
         completed = False
@@ -417,7 +421,7 @@ async def run_terminal(runtime):
         await run_plain()
         return
     try:
-        owner = Terminal()
+        owner = Terminal(verbosity=verbosity)
     except ImportError:
         sys.stderr.write('动态界面依赖缺失；使用 plain 模式。安装 requirements-cli.txt 可启用。\n')
         await run_plain()

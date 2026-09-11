@@ -2378,15 +2378,14 @@ class OutputRouter:
                 display_print(f"  {icon}  NODE: {node.upper()}")
                 display_print(f"{'─'*55}{Style.RESET_ALL}")
 
-    def print_once(self, key: str, text: str, color: str = ""):
+    def print_once(self, key: str, text: str, color: str = "", *, purpose: str = "", kind: str = "message", **scope):
         """相同 key 只打印一次"""
-        if key.startswith("phase:") and emit_display("activity", text):
-            return
         with self._console_lock:
             if key in self._seen:
                 return
             self._seen.add(key)
-            display_print(f"{color}{text}{Style.RESET_ALL}" if color else text)
+            if not emit_display(kind, text, source="runtime_fact", purpose=purpose, item_id=key, **scope):
+                display_print(f"{color}{text}{Style.RESET_ALL}" if color else text, purpose=purpose)
 
     def render_terminal_result(self, result: InteractiveRunResult) -> bool:
         """Render one atomic terminal block; return whether it was emitted."""
@@ -2454,16 +2453,20 @@ class OutputRouter:
             elif not emit_display("message", clean, source="runtime_fact", item_id=item_id, **scope):
                 display_print(clean)
 
-    def print_observation(self, content: str, *, item_id: str = "", **scope):
-        """打印执行结果（只打印一次）"""
-        clean = content.replace("<observation>", "").replace("</observation>", "").strip()
-        if not item_id or item_id not in self._seen:
-            if item_id:
-                self._seen.add(item_id)
-            color = Fore.GREEN if "✅" in clean else Fore.RED
-            display_print(f"\n{color}{'─'*50}")
-            self.page_text("Execution Output", clean, color)
-            display_print(f"{'─'*50}{Style.RESET_ALL}")
+    def print_observation(self, content: str, *, item_id: str = "", summary: str = "", failed: bool = False, **scope):
+        """Keep the full observation in details; never echo machine evidence."""
+        if item_id and item_id in self._seen:
+            return
+        if item_id:
+            self._seen.add(item_id)
+        emit_display("details", str(content), source="runtime_fact", purpose="details", **scope)
+        # Do not infer success from text, checkmarks, or the model's prose.
+        if summary:
+            if not emit_display("error" if failed else "message", summary,
+                                source="runtime_fact", **scope):
+                display_print(summary)
+        elif active_terminal() is None:
+            display_print("执行输出已返回；完整结果见原执行记录。")
 
     def reset_for_task(self):
         with self._console_lock:
@@ -17757,7 +17760,23 @@ class BioAnalystAgent:
             else:
                 detail = phase
             key = f"planner-progress:{task_id}:{ordinal}:{event}:{phase}:{row.get('attempt_id', '')}:{row.get('observation_at', '')}"
-            output.print_once(key, f"📋 Planner 候选 {ordinal}：{detail}", Fore.CYAN)
+            # Diagnostic detail remains in the original logger/callback above.
+            output.print_once(key, f"Planner 候选 {ordinal}：{detail}", Fore.CYAN,
+                              purpose="telemetry", task_id=task_id, node="planner")
+            important = {"planning_stopped", "candidate_stopped", "attempt_cancelled",
+                         "attempt_failed", "length_remediation", "candidate_rejected"}
+            if event in important or (event == "attempt_completed" and
+                                      (row.get("response_integrity") or row).get("finish_reason") == "length"):
+                summary = detail
+                if event == "candidate_rejected":
+                    codes = row.get("issue_codes") or []
+                    summary = "计划候选未接纳：" + (", ".join(str(code) for code in codes[:3]) or "校验未通过；具体原因见诊断记录")
+                    summary += "；" + str(row.get("handling") or "已保存校验反馈，等待后端处理")
+                elif event == "length_remediation":
+                    summary = "输出长度补救：" + str((row.get("attempted_remediation") or {}).get("status") or "UNKNOWN")
+                output.print_once(key + ":summary", summary,
+                    kind="cancel" if event == "attempt_cancelled" else "error",
+                    task_id=task_id, node="planner")
         except Exception:
             pass
 
@@ -18103,6 +18122,8 @@ class BioAnalystAgent:
                     f"provider:{event}:{attempt_id}",
                     messages_by_event[event],
                     Fore.CYAN,
+                    purpose="status" if event != "timeout_cleanup_started" else "",
+                    kind="activity" if event != "timeout_cleanup_started" else "error",
                 )
 
         try:
@@ -24799,6 +24820,7 @@ class BioAnalystAgent:
                         f"memory_state_compacted:{task_id}:{node_name}",
                         "🗜️ Memory compressed; graph working messages were replaced with the compact state.",
                         Fore.YELLOW,
+                        purpose="telemetry",
                     )
                     result = dict(result)
                     result["messages"] = [
@@ -27127,6 +27149,7 @@ class BioAnalystAgent:
             f"consultant_finalize_v4:{task_id}",
             "✓ Consultant FINALIZE v4 compiled complete coverage without a provider call.",
             Fore.GREEN,
+            purpose="telemetry",
         )
         return {
             "messages": [AIMessage(content="FINISH\n" + summary)],
@@ -31073,6 +31096,7 @@ class BioAnalystAgent:
                 f"consultant_finalize_v2:{task_id}",
                 "✓ Consultant FINALIZE v2 compiled a hash-bound semantic contract.",
                 Fore.GREEN,
+                purpose="telemetry",
             )
             return {
                 "messages": [AIMessage(content="FINISH\n" + summary)],
@@ -31497,6 +31521,7 @@ class BioAnalystAgent:
                     f" | {decision.get('reason', '')}"
                 ),
                 Fore.CYAN,
+                purpose="telemetry",
             )
             return update
 
@@ -33037,6 +33062,7 @@ question. Never guess a scientific or database identity.
                     f"formal_upstream_audit:{task_id}",
                     "🔎 Consultant checked formal upstream artifacts before asking or blocking.",
                     Fore.CYAN,
+                    purpose="telemetry",
                 )
 
             semantic_failure_route = (
@@ -34409,6 +34435,7 @@ question. Never guess a scientific or database identity.
                 f"consultant_context_ready:{task_id}:{continuation_invocation}",
                 "🧭 Consultant context ready; evaluating the next skill-discovery step.",
                 Fore.CYAN,
+                purpose="telemetry",
             )
             try:
                 response = await self._ainvoke_node_llm(
@@ -34781,6 +34808,7 @@ question. Never guess a scientific or database identity.
                     f"consultant_json_action:{task_id}:{consultant_json_command.splitlines()[0][:80]}",
                     "• Consultant action parsed; validating...",
                     Fore.CYAN,
+                    purpose="telemetry",
                 )
                 content = consultant_json_command
             payload_action_type = self._normalize_action_type(
@@ -35163,7 +35191,7 @@ question. Never guess a scientific or database identity.
                         "completion_decision": consultation_state.get("completion_decision"),
                         "phase": consultation_state.get("phase"),
                     })
-                    output.print_observation(obs)
+                    output.print_observation(obs, summary=f"检查进程已退出 rc={ret}；业务结论仍待核验", failed=ret != 0, task_id=task_id, node="consultant")
                     if (
                         ret != 0
                         and self._looks_like_missing_runtime_dependency("\n".join([clean_code, stdout, stderr]))
@@ -35583,7 +35611,7 @@ question. Never guess a scientific or database identity.
                         retrieved = call_with_activity("知识库搜索", self.retriever.retrieve,
                             query, target_datasets=[target_kb], display_scope={"task_id": task_id, "node": "consultant"})
                         if retrieved and retrieved.strip() and "Nothing found" not in retrieved:
-                            display_print(f"{Fore.GREEN}📚 RAG: Found relevant content.{Style.RESET_ALL}")
+                            display_print(f"{Fore.GREEN}📚 RAG: Found relevant content.{Style.RESET_ALL}", purpose='telemetry')
                             new_knowledge = retrieved
                         else:
                             display_print(f"{Fore.YELLOW}📭 RAG: No results for '{query}'.{Style.RESET_ALL}")
@@ -35610,7 +35638,7 @@ question. Never guess a scientific or database identity.
                         "</consultant_validation_error>"
                     )
                     return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "consultation_state": consultation_state, "next_step": "consultant"}
-                output.print_once(f"consultant_load:{content}", f"📖 Consultant loading workflow template: {workflow_id}", Fore.CYAN)
+                output.print_once(f"consultant_load:{content}", f"📖 Consultant loading workflow template: {workflow_id}", Fore.CYAN, purpose='telemetry')
                 loaded = self.workflow_manager.load_workflow_prompt(workflow_id) if self.workflow_manager and workflow_id else ""
                 if loaded:
                     obs = f'<loaded_workflow_template workflow_id="{workflow_id}">\n{loaded}\n</loaded_workflow_template>'
@@ -35706,6 +35734,7 @@ question. Never guess a scientific or database identity.
                     f"consultant_load:{','.join(requested_ids)}",
                     "📖 Consultant loading skill docs: " + ", ".join(requested_ids),
                     Fore.CYAN,
+                    purpose="telemetry",
                 )
                 aggregate_limit = min(
                     int(CONSULTANT_SKILL_CHAR_BUDGET),
@@ -35862,7 +35891,7 @@ question. Never guess a scientific or database identity.
                         "</consultant_validation_error>"
                     )
                     return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "consultation_state": consultation_state, "next_step": "consultant"}
-                output.print_once(f"consultant_load:{content}", f"📖 Consultant loading reference: {skill_id} {ref_path}", Fore.CYAN)
+                output.print_once(f"consultant_load:{content}", f"📖 Consultant loading reference: {skill_id} {ref_path}", Fore.CYAN, purpose='telemetry')
                 loaded = self.skill_manager.load_reference(skill_id, ref_path) if self.skill_manager and skill_id and ref_path else ""
                 if loaded:
                     obs = (
@@ -35893,7 +35922,7 @@ question. Never guess a scientific or database identity.
                         "</consultant_validation_error>"
                     )
                     return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "consultation_state": consultation_state, "next_step": "consultant"}
-                output.print_once(f"consultant_load:{content}", f"📖 Consultant loading script: {skill_id} {script_path}", Fore.CYAN)
+                output.print_once(f"consultant_load:{content}", f"📖 Consultant loading script: {skill_id} {script_path}", Fore.CYAN, purpose='telemetry')
                 loaded = self.skill_manager.load_script(skill_id, script_path) if self.skill_manager and skill_id and script_path else ""
                 if loaded:
                     obs = (
@@ -37251,6 +37280,7 @@ question. Never guess a scientific or database identity.
                             f"consultant_bounded_repair:{len(validation_errors)}",
                             "✓ Consultant skill repair converged; entering versioned FINALIZE.",
                             Fore.GREEN,
+                            purpose="telemetry",
                         )
                         # The FINISH handoff is represented by the committed
                         # TaskSpec plus selected-skill/runtime projections.
@@ -37308,6 +37338,7 @@ question. Never guess a scientific or database identity.
                     "consultant_finish",
                     "✓ Consultant evidence complete; entering versioned FINALIZE.",
                     Fore.GREEN,
+                    purpose="telemetry",
                 )
                 # Fresh work advances by reference into FINALIZE v4.  Inline
                 # ``final_contract`` is retained only in the frozen v2 replay
@@ -39051,6 +39082,8 @@ question. Never guess a scientific or database identity.
                 failure = (rejected_state.get("task_state") or {}).get("planning_failure") or {}
                 self._planner_progress(task_id, "candidate_rejected", {
                     **planner_observation, "issue_count": len(feedback["validation_issues"]),
+                    "issue_codes": [str(issue.get("code") or issue.get("error_code") or "UNKNOWN") for issue in feedback["validation_issues"]],
+                    "handling": "规划已停止" if failure.get("status") == "terminal" else "校验反馈已保存，进入现有修正流程",
                     "response_integrity": planner_response_integrity,
                 })
                 if failure.get("status") == "terminal":
@@ -40600,7 +40633,7 @@ question. Never guess a scientific or database identity.
 
             # 显示内存状态
             mem_status = self.memory_manager.status(messages)
-            display_print(f"\n📊 Memory: {mem_status}")
+            display_print(f"\n📊 Memory: {mem_status}", purpose='telemetry')
 
             # 展示计划（限制行数避免刷屏）
             wait_started = time.perf_counter()
@@ -45381,7 +45414,7 @@ question. Never guess a scientific or database identity.
                         "plan_progress": plan_progress,
                         **rejection_update,
                     }
-                output.print_once(f"rag:{query[:30]}", f"🔍 Searching KB: {query}", Fore.CYAN)
+                output.print_once(f"rag:{query[:30]}", f"🔍 Searching KB: {query}", Fore.CYAN, purpose='telemetry')
                 rag_result = "No info found."
                 if self.retriever:
                     try:
@@ -48718,7 +48751,7 @@ question. Never guess a scientific or database identity.
                 attempt_id=attempt_id,
             )
             save_plan_state(self.data_path, task_id, attempt_plan_state)
-            output.print_once(f"script:{script_file}", f"💾 Script: {script_file}", Fore.GREEN)
+            output.print_once(f"script:{script_file}", f"💾 Script: {script_file}", Fore.GREEN, purpose='telemetry')
 
             advance_preparation_boundary(
                 "launch_envelope_preparation",
@@ -49454,7 +49487,13 @@ question. Never guess a scientific or database identity.
                        f"{validation_block}"
                        f"{runtime_status_block}\n</observation>")
 
-            output.print_observation(obs)
+            output.print_observation(obs, item_id=f"execution-observation:{attempt_id}",
+                summary=("执行环境检查未通过：" + str(runtime_install_redirect) if runtime_missing else
+                         "局部执行检查未通过；等待正式核验与恢复处理" if validation_failed else
+                         "进程已退出；正式核验与提交尚未确认" if effective_success else
+                         "进程执行失败；等待后端恢复处理"),
+                failed=bool(runtime_missing or validation_failed or not effective_success),
+                task_id=task_id, node="execute", execution_attempt_id=attempt_id)
             if runtime_install_blocked:
                 final_res = self._runtime_block_message(
                     runtime_install_redirect,
@@ -52406,7 +52445,9 @@ question. Never guess a scientific or database identity.
                     "runtime_status": self._runtime_status_for_task(task_id),
                 },
             )
-            output.print_observation(f"<observation>{final_res}</observation>")
+            output.print_observation(f"<observation>{final_res}</observation>",
+                summary=("运行环境安装检查已返回" if install_success else "所需运行环境安装失败，当前步骤已阻塞"),
+                failed=not install_success, task_id=task_id, node="install_subagent")
 
             return {"messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
                     "plan_progress": plan_progress,

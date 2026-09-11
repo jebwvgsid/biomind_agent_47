@@ -42,6 +42,14 @@ _SCOPE_FIELDS = ('task_id', 'node', 'call_id', 'provider_attempt_id', 'provider_
                  'source_message_id', 'epoch', 'tool_request_id', 'tool_call_id', 'stream')
 _CRITICAL = {'model_public', 'message', 'error', 'result', 'cancel', 'approval',
              'tool_start', 'tool_end'}
+_REQUIRED = {'model_public', 'error', 'result', 'cancel', 'approval'}
+_DETAIL_PURPOSES = {'details', 'approval_detail'}
+_DIAGNOSTIC_PURPOSES = {'telemetry', 'diagnostic'}
+
+
+def display_verbosity(value):
+    """A display preference, independent of business configuration or budgets."""
+    return 'verbose' if str(value).lower() == 'verbose' else 'compact'
 
 
 @dataclass
@@ -54,6 +62,8 @@ class DisplayTicket:
     times: dict = field(default_factory=dict)
     confirmation: concurrent.futures.Future = field(default_factory=concurrent.futures.Future)
     degradation: str = ''
+    purpose: str = ''
+    presentation: str = 'details'
 
     def finish(self, success, reason=''):
         if not success:
@@ -138,12 +148,13 @@ def emit(kind, text='', **data):
     return True
 
 
-def display_print(*values, sep=' ', end='\n', file=None, flush=False):
+def display_print(*values, sep=' ', end='\n', file=None, flush=False,
+                  source='runtime_fact', purpose=''):
     # Explicitly used at legacy display call sites, never patched into builtins.
     text = sep.join(str(v) for v in values)
     if file is not None and file not in (sys.stdout, sys.stderr):
         print(*values, sep=sep, end=end, file=file, flush=flush)
-    elif not emit('message', text):
+    elif not emit('message', text, source=source, purpose=purpose):
         try:
             print(safe_text(text), end=end, file=file, flush=flush)
         except BrokenPipeError:
@@ -152,7 +163,8 @@ def display_print(*values, sep=' ', end='\n', file=None, flush=False):
 
 
 class DisplayModel:
-    def __init__(self):
+    def __init__(self, *, verbosity='compact'):
+        self.verbosity = display_verbosity(verbosity)
         self.history = []
         self.items = []
         self.details = deque(maxlen=100)
@@ -231,13 +243,17 @@ class DisplayModel:
                                    source, kind, text, scope,
                                    {'ready': data.get('public_ready_at', time.monotonic()),
                                     'enqueued': time.monotonic()})
+            ticket.purpose = str(data.get('purpose', ''))
             active = self._may_activate(kind, data)
-            if kind in {'stage', 'activity', 'tool_start', 'tool_end'} and active:
+            is_diagnostic = source == 'diagnostic' or ticket.purpose in _DIAGNOSTIC_PURPOSES
+            status_only = ticket.purpose == 'status'
+            if (kind in {'stage', 'activity', 'tool_start', 'tool_end'} or status_only) and active and (not is_diagnostic or status_only):
                 if kind == 'stage':
                     self.stage = text
                     self.started = time.monotonic()
                 self.active = text
                 self.last_activity = time.monotonic()
+                ticket.presentation = 'status'
             if kind == 'tool_tail':
                 group = tuple(str(data.get(k, '')) for k in ('task_id', 'action_id', 'execution_attempt_id',
                               'execution_attempt', 'pid', 'tool_request_id', 'tool_call_id', 'stream'))
@@ -247,12 +263,31 @@ class DisplayModel:
                 if active:
                     self.tool_tail = text[-4096:]
                     self.last_activity = time.monotonic()
-            elif kind == 'details' or source == 'diagnostic':
+                ticket.presentation = 'status'
+            elif kind in _REQUIRED and ticket.purpose not in _DETAIL_PURPOSES:
+                # Severity and explicit public provenance win over a mistaken
+                # telemetry tag. Ordinary diagnostic messages never become AI.
                 self.details.append(text[:65536])
+                self.history.append(text)
+                self.items.append(ticket)
+                ticket.presentation = 'history'
+                if kind in {'result', 'cancel', 'approval'} and active:
+                    self.priority = kind if kind in {'cancel', 'approval'} else ''
+                    self.active = text.splitlines()[0] if text else kind
+                    self.last_activity = time.monotonic()
+            elif ticket.purpose in _DETAIL_PURPOSES:
+                self.details.append(text[:65536])
+            elif kind == 'details' or is_diagnostic:
+                self.details.append(text[:65536])
+                if self.verbosity == 'verbose' and not status_only:
+                    self.history.append(text)
+                    self.items.append(ticket)
+                    ticket.presentation = 'history'
             elif kind in _CRITICAL:
                 self.details.append(text[:65536])
                 self.history.append(text)
                 self.items.append(ticket)
+                ticket.presentation = 'status' if status_only else 'history'
                 if kind in {'result', 'cancel', 'approval'} and active:
                     self.priority = kind if kind in {'cancel', 'approval'} else ''
                     self.active = text.splitlines()[0] if text else kind

@@ -13,7 +13,7 @@ def phase_started(stage="", *, output=None, message=""):
         if stage:
             logger.info("phase=%s status=started", stage)
         if output is not None and message:
-            output.print_once(f"phase:{stage}:{started}", message)
+            output.print_once(f"phase:{stage}:{started}", message, purpose="telemetry")
     except Exception:
         pass
     return started
