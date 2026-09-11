@@ -3174,7 +3174,7 @@ def _emit_declared_rows(declarations, facts, prefix):
         if emitted:
             payload[field] = emitted
     if len(payload) == 1:
-        return ""  # no artifact/side effect declaration: fabricate nothing
+        return ""  # no supported declaration: fabricate nothing
     return prefix + json.dumps(payload, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
 
 
@@ -3185,7 +3185,7 @@ def _declared_emission_rows(effect: Any) -> Dict[str, Any]:
                  "required_fields": list((row.get("evidence_contract") or {}).get("required_fields") or [])
                  if isinstance(row, Mapping) else []}
                 for row in declared[field]]
-        for field in ("produces_artifacts", "explicit_side_effects")
+        for field in ("produces_artifacts", "explicit_side_effects", "produces_observations")
     }
 
 
@@ -3225,8 +3225,8 @@ def declared_effect_emission_contract(approved_snapshot: Mapping[str, Any], step
                 "declarations": declarations, "python_template": code,
                 "rules": [
                     "Use this exact serializer in the approved script; do not handwrite machine identities or canonical groups.",
-                    "Supply identity-keyed actual_facts for the declared groups only, after the real checks succeed; print the returned line only then.",
-                    "Artifact facts require the actual path. Side-effect facts require every declared field. Declarations alone are not evidence.",
+                    "Supply identity-keyed actual_facts only after performing the real checks or operations. Report failed/unknown observations faithfully; claim a successful operation only when it actually succeeded.",
+                    "Artifact facts require the actual path. Side-effect and observation facts require every declared field; observations carry the actual value, including failure or unknown. Declarations alone are not evidence.",
                     "Historical failed scripts/stdout are diagnostic evidence; their failed machine emission must not be reused. This current template takes precedence.",
                     "No emission or rc=0 alone grants completion; Execute, verification and CommitStep remain authoritative.",
                 ]}

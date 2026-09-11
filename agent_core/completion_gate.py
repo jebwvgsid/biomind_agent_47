@@ -2883,7 +2883,9 @@ class CompletionGate:
                     message="Current execution does not satisfy the approved StepEffect.",
                     feedback=(
                         "Produce and deterministically validate the missing declared effects; "
-                        "do not invent an artifact for a non-artifact effect."
+                        "do not invent an artifact for a non-artifact effect. "
+                        "Missing declared effects: " + json.dumps(provenance_evidence.missing_effects, ensure_ascii=False, sort_keys=True)
+                        + ". Use the approved_effect_emission_template supplied to Generate with actual measured facts; rc=0 and plain echo are not effect evidence."
                     ),
                     missing_artifacts=list(provenance_evidence.missing_outputs),
                     checked_artifacts=list(

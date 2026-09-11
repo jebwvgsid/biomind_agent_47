@@ -3,7 +3,7 @@
 Synthetic configuration and inert environment detection are test inputs.
 PlanTracker, CAS, compilation, approval, graph and provider wrapper stay real.
 """
-import ast,sys,os,types,json,hashlib,logging,tempfile
+import ast,sys,os,types,json,hashlib,logging,tempfile,shlex
 from pathlib import Path
 C=Path(sys.argv.pop(1)).resolve()
 if not str(C).startswith('/tmp/'):
@@ -12,7 +12,13 @@ os.chdir(C);sys.dont_write_bytecode=True
 sys.path[:]=[str(C)]+[p for p in sys.path if '/03.毕设/' not in p]
 os.environ['PYTEST_DISABLE_PLUGIN_AUTOLOAD']='1';os.environ['BIOMIND_WIKI_ENABLED']='0';os.environ['LOG_LEVEL']='CRITICAL'
 RUNROOT=Path(tempfile.mkdtemp(prefix='managed-bootstrap-',dir=os.environ['TMPDIR']))
+OFFLINE_ALLOWED_SCRIPT_PATHS=set()
 def guard(event,args):
+ if event=='subprocess.Popen' and args[1][:2]==['/bin/sh','-c'] and len(args[1])==3 and args[3]=={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'}:
+  command=shlex.split(args[1][2])
+  if len(command)==2 and command[0]=='bash' and command[1] in OFFLINE_ALLOWED_SCRIPT_PATHS and Path(command[1]).resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve()):return
+ if event=='subprocess.Popen' and len(args[1])==4 and args[1][:3]==['/bin/bash','--noprofile','--norc'] and args[1][3] in OFFLINE_ALLOWED_SCRIPT_PATHS and Path(args[1][3]).resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve()) and args[3]=={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'}:
+  return  # Explicitly registered tiny fixture; no ambient shell environment.
  if event=='subprocess.Popen' and ((args[1]==['bash','-n'] and not os.environ.get('BASH_ENV')) or (args[1] in [['/usr/bin/bash','--noprofile','--norc','-n'], ['/bin/bash','--noprofile','--norc','-n']] and args[3]=={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'})):
   return  # Parse synthetic stdin only; no script execution or filename.
  if event in {'socket.connect','socket.getaddrinfo','subprocess.Popen','os.system','os.posix_spawn'}:raise RuntimeError('OFFLINE_EXTERNAL_DENIED '+event)
