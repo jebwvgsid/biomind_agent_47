@@ -1860,6 +1860,19 @@ class CausalFailurePacketBinder:
                 # ref, change its scope, or fall back to the previous packet.
                 import logging
                 logging.getLogger(__name__).exception("Recovery inspection publication rejected")
+                pending_attempt = str(((durable.get("task_state") or {}).get("verification_pending") or {}).get("attempt_id") or "")
+                source_attempt = str(base_record["failure_packet"].get("attempt_ref") or "")
+                if (exc.code == "INSPECTION_REF_SCOPE_MISMATCH"
+                    and pending_attempt and pending_attempt != source_attempt
+                    and pending_attempt in ((durable.get("provenance_state") or {}).get("attempts") or {}) and any(
+                    isinstance(prior, Mapping) and prior.get("source_outcome_ref") == base_record["source_outcome_ref"]
+                    for prior in ((durable.get("task_state") or {}).get("causal_failure_packets") or {}).values()
+                )):
+                    # A previously published event whose attempt authority has
+                    # since advanced is a late replay. Preserve its historical
+                    # packet and the current head without republishing either.
+                    logging.getLogger(__name__).warning("RECOVERY_CAUSAL_REPLAY_SCOPE_STALE: %s", base_record["source_outcome_ref"])
+                    return {}
                 publication_failures = ({
                     "code": exc.code, "detail": exc.detail,
                     "stage": source_kind.removesuffix("_outcome") + ".inspection_publication",

@@ -56,7 +56,7 @@ def test_retry_publication_uses_new_attempt_with_stale_verification_pointer(tmp_
     task['recovery_state'] = {'active_recovery': {'recovery_id':'decision', 'envelope_id':'envelope'}}
     task['typed_recovery_receipts'] = {'decision': {
         'directive': {'action':'retry_step'}, 'execution_envelope_digest':'envelope',
-        'execution_envelope': {'action_id':'action-2', 'step_id':'step-1'},
+        'execution_envelope': {'action_id':'action-2', 'step_id':'step-1','source_scope':{'attempt_id':'attempt-1'}},
     }}
     store.save('', '', store.value)
     second = store.binder().bind({'task_id':'task-recovery'}, 'execute_outcome', source)
@@ -117,3 +117,15 @@ def test_cas_conflict_does_not_overwrite_new_durable_failure(tmp_path):
     binder=CausalFailurePacketBinder(data_path=str(tmp_path), loader=store.load, saver=conflict)
     with pytest.raises(StateCASConflict):binder.bind({'task_id':'task-recovery'},'execute_outcome',source)
     assert store.path.read_bytes()==before
+
+
+def test_published_old_event_after_attempt_advance_is_diagnostic_only(tmp_path,caplog):
+    from tests.test_inspection_evidence import _real_handoff_reader, _advance_real_attempt
+    fixture,_,_,_=_real_handoff_reader(tmp_path)
+    source=fixture.supervisor_updates[0]['verification_outcome']
+    _advance_real_attempt(fixture)
+    before=fixture.reload()
+    result=CausalFailurePacketBinder(data_path=str(tmp_path)).bind(fixture.state,'verification_outcome',source)
+    assert result=={}
+    assert fixture.reload()==before
+    assert 'RECOVERY_CAUSAL_REPLAY_SCOPE_STALE' in caplog.text

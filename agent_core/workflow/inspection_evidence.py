@@ -152,7 +152,7 @@ def assert_current_inspection_scope(
         active_attempt = str((active_record.get("failure_packet") or {}).get("attempt_ref") or "")
         if require_episode and active_attempt != attempt_id:
             raise InspectionEvidenceError("INSPECTION_REF_SCOPE_MISMATCH", "attempt_id")
-        if not require_episode and attempts and any(value != attempt_id for value in attempts):
+        if attempts and any(value != attempt_id for value in attempts):
             recovery = task.get("recovery_state") or {}
             active = recovery.get("active_recovery") or {}
             receipt = (task.get("typed_recovery_receipts") or {}).get(active.get("recovery_id")) or {}
@@ -160,7 +160,8 @@ def assert_current_inspection_scope(
             if ((receipt.get("directive") or {}).get("action") not in {"run_diagnostic_probe", "retry_step"}
                     or envelope.get("action_id") != attempt.get("action_id")
                     or envelope.get("step_id") != scope["step_id"]
-                    or active.get("envelope_id") != receipt.get("execution_envelope_digest")):
+                    or active.get("envelope_id") != receipt.get("execution_envelope_digest")
+                    or any(value != attempt_id and value != (envelope.get("source_scope") or {}).get("attempt_id") for value in attempts)):
                 raise InspectionEvidenceError("INSPECTION_REF_SCOPE_MISMATCH", "attempt_id")
     if (not step or str(step.get("status") or "") in {"done", "passed", "completed", "cancelled", "skipped"}
             or str(task.get("status") or "") in {"completed", "cancelled"}):
@@ -352,18 +353,41 @@ def prepare_inspection_evidence(
     if payload.get("diagnostic_record"):
         objects.append(("diagnostic", scope["attempt_id"], scoped(diagnostic_record=deepcopy(payload["diagnostic_record"]))))
     parent_ref = str(payload.get("causal_parent_packet_ref") or "")
+    decision = str(payload.get("recovery_decision_id") or "")
+    retry_parent = False
+    if not parent_ref and packet.action_ref:
+        # Ordinary retry outcomes do not carry the diagnostic-probe lineage
+        # fields. Resolve only their exact adopted execution envelope, never
+        # a previous successful attempt or an arbitrary same-step packet.
+        active = (task.get("recovery_state") or {}).get("active_recovery") or {}
+        decision = str(active.get("recovery_id") or "")
+        receipt = (task.get("typed_recovery_receipts") or {}).get(decision) or {}
+        envelope = receipt.get("execution_envelope") or {}
+        candidate_ref = str(receipt.get("failure_packet_ref") or "")
+        candidate = ((task.get("causal_failure_packets") or {}).get(candidate_ref) or {}).get("failure_packet") or {}
+        origin = envelope.get("source_scope") or {}
+        if ((receipt.get("directive") or {}).get("action") == "retry_step"
+                and envelope.get("action_id") == packet.action_ref
+                and envelope.get("step_id") == packet.step_id
+                and active.get("envelope_id") == receipt.get("execution_envelope_digest")
+                and candidate.get("task_id") == packet.task_id
+                and candidate.get("step_id") == packet.step_id
+                and candidate.get("attempt_ref") == origin.get("attempt_id")
+                and candidate_ref):
+            parent_ref, retry_parent = candidate_ref, True
     if parent_ref:
         # Publication is still under the parent CAS. Read only the current
         # registered parent objects, verifying their original hashes/scopes.
-        decision = str(payload.get("recovery_decision_id") or "")
         receipt = (task.get("typed_recovery_receipts") or {}).get(decision) or {}
         parent = (task.get("causal_failure_packets") or {}).get(parent_ref) or {}
+        parent_incident = (parent.get("failure_packet") or {}).get("incident_id")
         consumed = (task.get("consumed_failure_packet_refs") or {}).get(parent_ref) or {}
         if (str(task.get("active_failure_packet_ref") or "") not in {"", parent_ref}
-                or (task.get("causal_failure_incident_heads") or {}).get(packet.incident_id) != parent_ref
+                or (task.get("causal_failure_incident_heads") or {}).get(parent_incident) != parent_ref
                 or consumed.get("decision_id") != decision
                 or receipt.get("failure_packet_ref") != parent_ref
-                or receipt.get("incident_id") != packet.incident_id
+                or receipt.get("incident_id") != parent_incident
+                or (not retry_parent and parent_incident != packet.incident_id)
                 or (receipt.get("directive") or {}).get("action") not in {"run_diagnostic_probe", "retry_step"}):
             raise InspectionEvidenceError("DIAGNOSTIC_PARENT_SCOPE_STALE", parent_ref)
         inherited = []
@@ -381,6 +405,7 @@ def prepare_inspection_evidence(
                 row["unavailable_reason"] = str(getattr(exc, "code", "") or "PARENT_EVIDENCE_READ_FAILED")
             inherited.append(row)
         objects.append(("causal_history", parent_ref, scoped(
+            use="historical_diagnostic_only", formal_evidence_reuse=False,
             original_failure=deepcopy(parent.get("failure_packet") or {}),
             parent_evidence=inherited,
             prior_tool_results=deepcopy(receipt.get("causal_observation_receipts") or []),
