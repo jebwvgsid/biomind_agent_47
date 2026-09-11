@@ -36,6 +36,7 @@ from agent_core.workflow.outcomes import (
 NodeCallable = Callable[[dict[str, Any]], Awaitable[Mapping[str, Any]]]
 
 _REPAIRABLE_GENERATE_EXITS = frozenset({
+    "script_body_validation_rejected",
     "unrecognized_action",
     "binding_operation_contract_mismatch",
     "public_binding_rejected",

@@ -43591,6 +43591,17 @@ question. Never guess a scientific or database identity.
                     recovery_generated=recovery_generated,
                 )
 
+            if str(structured_action.get("type") or "") == "execute" and structured_action.get("code"):
+                from execution.script_validation import check_script_body
+                syntax = check_script_body(str(structured_action["code"]), str(structured_action.get("language") or "bash"))
+                if syntax["status"] == "invalid" or (syntax["status"] == "unavailable" and str(structured_action.get("language") or "bash").lower() in {"bash", "shell", "sh", "python", "py"}):
+                    return {"messages": [response], **reject_current_candidate(
+                        violation={"code": syntax["code"], "message": syntax["detail"],
+                            "field_path": "$.code", "syntax_check": syntax},
+                        repair_stage="script_body_validation", validation_source="execution.script_validation.check_script_body",
+                        contract_ref={"protocol": "exact_executable_body", "execution_started": False},
+                        exit_reason="script_body_validation_rejected")}
+
             active_candidate_repair = (
                 dict(state.get("action_format_repair") or {})
                 if isinstance(state.get("action_format_repair"), Mapping)
@@ -47624,6 +47635,16 @@ question. Never guess a scientific or database identity.
                     code_excerpt=code,
                 )
 
+            # Every route (including durable approval resume and legacy action
+            # bodies) checks the exact bytes that the user is about to review.
+            from execution.script_validation import check_script_body
+            syntax_receipt = check_script_body(code, language)
+            if syntax_receipt["status"] == "invalid" or (syntax_receipt["status"] == "unavailable" and language in {"Bash", "Python"}):
+                return reject_execute_candidate(pending_action,
+                    violation_code=syntax_receipt["code"], feedback=syntax_receipt["detail"],
+                    repair_stage="script_body_validation", validation_source="execution.script_validation.check_script_body",
+                    evidence={"syntax_check": syntax_receipt, "command_started": False})
+
             # Review the four provenance owners without concatenating their
             # content into one executable string.
             code_review_provenance = build_code_review_provenance(
@@ -47790,11 +47811,17 @@ question. Never guess a scientific or database identity.
                     )
                     language = detect_script_language(code_to_run)
             else:
-                code_to_run = (
-                    final_code
-                    if str(pending_action.get("script_adapter") or "") == "script_block_v1"
-                    else normalize_script_code(final_code)
-                )  # approve 的情况
+                code_to_run = code
+
+
+            final_syntax = check_script_body(code_to_run, language)
+            if final_syntax["status"] == "invalid" or (final_syntax["status"] == "unavailable" and language in {"Bash", "Python"}):
+                if user_edited_code:
+                    return reject_user_edited_action(pending_action, feedback=final_syntax["detail"],
+                        repair_stage="script_body_validation", plan_progress={}, runtime_skills=runtime_skills_state)
+                return reject_execute_candidate(pending_action, violation_code=final_syntax["code"],
+                    feedback=final_syntax["detail"], repair_stage="script_body_validation",
+                    validation_source="execution.script_validation.check_script_body", evidence={"syntax_check": final_syntax})
 
             boundary_gate = CompletionGate.validate_code_boundary(code_to_run, task_boundary_context)
             if not boundary_gate.passed:

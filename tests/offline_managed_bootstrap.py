@@ -13,7 +13,7 @@ sys.path[:]=[str(C)]+[p for p in sys.path if '/03.毕设/' not in p]
 os.environ['PYTEST_DISABLE_PLUGIN_AUTOLOAD']='1';os.environ['BIOMIND_WIKI_ENABLED']='0';os.environ['LOG_LEVEL']='CRITICAL'
 RUNROOT=Path(tempfile.mkdtemp(prefix='managed-bootstrap-',dir=os.environ['TMPDIR']))
 def guard(event,args):
- if event=='subprocess.Popen' and args[1]==['bash','-n'] and not os.environ.get('BASH_ENV'):
+ if event=='subprocess.Popen' and ((args[1]==['bash','-n'] and not os.environ.get('BASH_ENV')) or (args[1] in [['/usr/bin/bash','--noprofile','--norc','-n'], ['/bin/bash','--noprofile','--norc','-n']] and args[3]=={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'})):
   return  # Parse synthetic stdin only; no script execution or filename.
  if event in {'socket.connect','socket.getaddrinfo','subprocess.Popen','os.system','os.posix_spawn'}:raise RuntimeError('OFFLINE_EXTERNAL_DENIED '+event)
  if event=='open' and isinstance(args[0],(str,bytes)):

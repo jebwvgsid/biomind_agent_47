@@ -94,12 +94,12 @@ def parse_executable_script_block(text: Any) -> ExecutableScriptBlock:
     body = str(match.group("body") or "")
     if not body.strip():
         raise ScriptBlockError(f"{ScriptBlockError.code}: executable block is empty")
-    if _SCRIPT_BLOCK_RE.search(body) or re.search(
-        r"</?(?:shell|python|r)>", body, re.IGNORECASE
-    ):
-        raise ScriptBlockError(
-            f"{ScriptBlockError.code}: nested or multiple executable blocks are not allowed"
-        )
+    # Only an outer executable protocol is parsed here. XML-like strings and
+    # heredoc data inside a script must remain byte-for-byte unchanged. The
+    # common pre-approval syntax boundary rejects executable wrapper residue.
+    first = body.lstrip().splitlines()[0]
+    if re.match(r"</?(?:script|shell|python|r)(?:\s|>)", first, re.IGNORECASE):
+        raise ScriptBlockError(f"{ScriptBlockError.code}: unsupported nested executable wrapper at body start")
     tag = str(match.group("tag") or "").lower()
     return ExecutableScriptBlock(
         language=SUPPORTED_SCRIPT_TAGS[tag],
