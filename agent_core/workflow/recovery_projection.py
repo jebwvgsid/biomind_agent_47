@@ -37,7 +37,7 @@ from agent_core.workflow.outcomes import (
     InstallSubagentOutcome,
     VerificationOutcome,
 )
-from agent_core.workflow.inspection_evidence import prepare_inspection_evidence
+from agent_core.workflow.inspection_evidence import prepare_inspection_evidence, InspectionEvidenceError
 from agent_core.workflow.stage_contracts import (
     FailurePacket,
     PlanSpecRef,
@@ -1847,13 +1847,29 @@ class CausalFailurePacketBinder:
         # readers authorize the resulting active CAS publication, not a second
         # list of source-kind spellings.
         if is_recovery_failure_source(source_kind, source):
-            inspection_entries = prepare_inspection_evidence(
-                data_path=self.data_path, durable=durable, state=state,
-                source=source,
-                packet=FailurePacket.from_mapping(base_record["failure_packet"]),
-                episode_id="recovery-seed-" + str(base_record["source_fingerprint"]),
-            )
-            publication_failures = tuple({
+            try:
+                inspection_entries = prepare_inspection_evidence(
+                    data_path=self.data_path, durable=durable, state=state,
+                    source=source,
+                    packet=FailurePacket.from_mapping(base_record["failure_packet"]),
+                    episode_id="recovery-seed-" + str(base_record["source_fingerprint"]),
+                )
+            except InspectionEvidenceError as exc:
+                # The typed failure event remains the cause even when its
+                # inspection publication is unavailable. Do not accept a bad
+                # ref, change its scope, or fall back to the previous packet.
+                import logging
+                logging.getLogger(__name__).exception("Recovery inspection publication rejected")
+                publication_failures = ({
+                    "code": exc.code, "detail": exc.detail,
+                    "stage": source_kind.removesuffix("_outcome") + ".inspection_publication",
+                    "source_object_id": base_record["source_outcome_ref"],
+                    "expected_scope": deepcopy(dict(source.get("scope") or {})),
+                    "expected_scope_source": "triggering_typed_failure_outcome",
+                    "actual_scope_source": "durable_inspection_authority",
+                    "evidence_used": False,
+                },)
+            publication_failures += tuple({
                 "handle": ref,
                 "source_object_id": entry["scope"]["source_object_id"],
                 "object_kind": entry["scope"]["object_kind"],

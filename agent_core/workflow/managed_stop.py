@@ -253,6 +253,13 @@ def build_managed_stop(task_id, values, durable, boundary):
     _ref, record, packet = _active_packet(durable)
     observed = _mapping(outcome.get("scope"))
     fixed_scope = _scope(durable)
+    no_execution = (boundary["node"] == "generate" or (
+        boundary["node"] == "execute" and payload.get("command_started") is False))
+    if no_execution:
+        # A candidate rejection is not the earlier execution failure that
+        # motivated its generation. Keep absent execution identity absent.
+        record, packet = {}, {}
+        fixed_scope.update(attempt_id="", episode_id="")
     if durable.get("_load_failed"):
         fixed_scope.update({k: str(observed.get(k) or "") for k in ("task_id", "plan_id", "plan_version", "step_id", "attempt_id")})
     if packet and str(packet.get("step_id") or "") != fixed_scope["step_id"]:
@@ -304,7 +311,7 @@ def build_managed_stop(task_id, values, durable, boundary):
             "message": value["stop_reason"].get("detail", ""), "remote_processing_status": "UNKNOWN"}
     value["stop_reason"].update(termination_reason=str(payload.get("termination_reason") or ""),
         budget_receipt=deepcopy(_mapping(payload.get("budget_receipt"))))
-    if boundary["node"] == "generate" and not fixed_scope["attempt_id"]:
+    if no_execution:
         value["execution"].update(step_id=fixed_scope["step_id"], attempt_id="", executed=False, returncode=None,
             deterministic_passed=False, validation_status="not_performed", reviewer_disposition="not_performed",
             committed=False, step_status=next((row.get("status") for row in _steps(durable) if row.get("step_id") == fixed_scope["step_id"]), "unknown"))

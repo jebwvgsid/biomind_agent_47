@@ -157,7 +157,7 @@ def assert_current_inspection_scope(
             active = recovery.get("active_recovery") or {}
             receipt = (task.get("typed_recovery_receipts") or {}).get(active.get("recovery_id")) or {}
             envelope = receipt.get("execution_envelope") or {}
-            if ((receipt.get("directive") or {}).get("action") != "run_diagnostic_probe"
+            if ((receipt.get("directive") or {}).get("action") not in {"run_diagnostic_probe", "retry_step"}
                     or envelope.get("action_id") != attempt.get("action_id")
                     or envelope.get("step_id") != scope["step_id"]
                     or active.get("envelope_id") != receipt.get("execution_envelope_digest")):
@@ -219,6 +219,10 @@ def prepare_inspection_evidence(
     execution = dict(payload.get("execution_record") or payload.get("diagnostic_record")
         or state.get("execution_evidence") or execute_payload.get("execution_record")
         or execute_payload.get("diagnostic_record") or {})
+    if not scope["attempt_id"]:
+        # Candidate rejection has no execution. Never inherit an earlier
+        # graph state's rc, script or parser receipt to fill that absence.
+        execution = {}
     if not execution and scope["attempt_id"]:
         execution = dict(((durable.get("provenance_state") or {}).get("attempts") or {}).get(scope["attempt_id"]) or {})
     execution_error = None
@@ -360,7 +364,7 @@ def prepare_inspection_evidence(
                 or consumed.get("decision_id") != decision
                 or receipt.get("failure_packet_ref") != parent_ref
                 or receipt.get("incident_id") != packet.incident_id
-                or (receipt.get("directive") or {}).get("action") != "run_diagnostic_probe"):
+                or (receipt.get("directive") or {}).get("action") not in {"run_diagnostic_probe", "retry_step"}):
             raise InspectionEvidenceError("DIAGNOSTIC_PARENT_SCOPE_STALE", parent_ref)
         inherited = []
         for ref in (parent.get("inspection_publication") or {}).get("refs") or ():
@@ -503,7 +507,7 @@ class InspectionObjectReader:
         registered = (task.get("inspection_ref_registry") or {}).get(entry.get("ref_id"))
         expected = inspection_scope(parent, "recovery-seed-" + str(record.get("source_fingerprint") or ""))
         if (receipt.get("failure_packet_ref") != parent_ref
-                or (receipt.get("directive") or {}).get("action") != "run_diagnostic_probe"
+                or (receipt.get("directive") or {}).get("action") not in {"run_diagnostic_probe", "retry_step"}
                 or consumed.get("decision_id") != decision_id
                 or (task.get("causal_failure_incident_heads") or {}).get(parent.incident_id) != parent_ref
                 or str(task.get("active_failure_packet_ref") or "") not in {"", parent_ref}
