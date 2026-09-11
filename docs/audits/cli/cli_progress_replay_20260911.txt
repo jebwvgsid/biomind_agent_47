@@ -1,0 +1,598 @@
+BioMind CLI audit replay — 2026-09-11
+BASE=e5d814bd77b44f52aa16fc1fff92982a9aa9d729 plus recorded working-tree changes.
+All text below is synthetic/offline unless explicitly marked source-derived.
+No real model/API, old session, business state loader, scientific workflow or production modification.
+
+CURRENT_SYNTHETIC_TRANSCRIPT (exact callback / sink / renderer paths)
+fixture A: 我先核对输入与参考文件。
+fixture B: 已确认回执缺项，接下来检查失败证据。
+Both callback outputs: activity=正在接收模型回复；候选尚待校验
+Public paragraph output: NONE for both.
+
+Recovery native-style complete response fixture:
+模型诊断（未授予执行批准）：
+已确认合成回执缺少一项，接下来读取检查结果。
+指令状态：received
+This uses exact recovery event-sink AST with no-I/O lineage stub, exact OutputRouter,
+real prompt_toolkit Terminal/Application and captured output.write/flush.
+It is not an end-to-end RecoveryAgentLoop/provider run.
+
+SOURCE_DERIVED_TOOL_BOUNDARIES (labels exist; not a historical execution transcript)
+proposed action -> authority/approval check -> actual subprocess creation
+RUNNING -> 工具进程已启动；等待执行结果
+rc=0 -> 命令 rc=0，等待正式核验
+formal validation -> scoped ValidationEvidence -> CommitStep CAS -> final audit
+A script process is one observed process; internal commands are not counted as completed.
+
+TARGET_NOT_IMPLEMENTED
+模型：我先检查输入和所选Skill需要的参考文件。
+工具活动：读取已返回；本行必须来自真实运行时回执。
+模型：当前回执还缺验证结果，接下来检查执行证据。
+These target examples are invented; they do not describe an executed business task.
+
+OFFLINE_RESULTS
+26 passed in 5.46s / exit 0: 13 existing isolated CLI tests + initial 13 custom cases.
+2 passed in 2.23s / exit 0: provider misleading activity/failure-field and Recovery projection.
+1 passed in 2.06s / exit 0: initial plain mode drops emit-only tool activity.
+29 distinct pytest cases in total; defect-witness assertions are NOT target acceptance.
+Existing tests include a harmless small Python child with simultaneous stdout/stderr,
+raw capture/display separation, actual effect parser equivalence, isolated approval snapshot,
+and AST interrupt-loop fake backend; no original business runner was imported.
+A11 synthetic-secret assertion confirms missing redaction; no real credential was read.
+
+FOUR_TIMESTAMPS_JSON
+
+CASE callback_only
+[
+  {
+    "event": "first_provider_event",
+    "relative_ns": 95162819,
+    "fixture": "synthetic_content_chunks"
+  },
+  {
+    "event": "first_public_message_ready",
+    "relative_ns": 120420008,
+    "text": "已确认合成回执缺少一项，接下来读取检查结果。"
+  },
+  {
+    "event": "next_tool_dispatch",
+    "relative_ns": 145499917,
+    "fixture": "stub_no_execution"
+  }
+]
+
+CASE recovery_existing_sink
+[
+  {
+    "event": "first_provider_event",
+    "relative_ns": 6956617,
+    "fixture": "synthetic_content_chunks"
+  },
+  {
+    "event": "first_public_message_ready",
+    "relative_ns": 32162372,
+    "text": "已确认合成回执缺少一项，接下来读取检查结果。"
+  },
+  {
+    "event": "complete_response_sink",
+    "relative_ns": 57242487
+  },
+  {
+    "event": "next_tool_dispatch",
+    "relative_ns": 57312430,
+    "fixture": "stub_no_execution"
+  },
+  {
+    "event": "terminal_output_write",
+    "relative_ns": 157945450,
+    "text": "模型诊断（未授予执行批准）：\n已确认合成回执缺少一项，接下来读取检查结果。\n指令状态：received"
+  },
+  {
+    "event": "terminal_output_flush",
+    "relative_ns": 157946542
+  }
+]
+
+TRANSPORT_PROBE_RESULTS
+{"check": "wrapped_reasoning", "status": "CURRENT_BEHAVIOR_CONFIRMED", "observer_reasoning_count": 1, "vibe_display_count": 0, "reasoning_disclosed": false}
+{"check": "two_public_content_fixtures", "status": "TARGET_FAILURE_REPRODUCED", "display_events": [{"kind": "activity", "text": "正在接收模型回复；候选尚待校验"}, {"kind": "activity", "text": "正在接收模型回复；候选尚待校验"}], "model_content_forwarded": false}
+{"check": "late_old_attempt", "status": "OBSERVER_PASS_UI_FENCE_GAP", "old_observer_late_count": 1, "current_observer_content_count": 0, "shared_callback_displayed_late_placeholder": true}
+{"check": "source_identity", "bio_agents_sha256": "c29b7e2c7454964c9d05b4de77f501c3b627be452064b066410c7ec5b4f22e44", "provider_attempt_sha256": "53a866f8e9a0a3b897cb1e90b877272bf9e85d8d9e5b7e92f8690e108d19bc3a", "isolation": "AST extracted source; BaseCallbackHandler stub; no BioMind module import or SDK execution"}
+
+PROTOCOL_AND_NEXT_CONTEXT_RESULTS
+PROTOCOL_SCRIPT: PASS — unchanged executable block accepted; surrounding public prose rejected; script never executed
+PROTOCOL_PLANNER: PASS — whole JSON envelope accepted (body not validated); surrounding public prose rejected
+A12_PHASE_EXTRACTION: PASS — exact assistant preserved once; specific error becomes runtime_observation in next existing fake business request; provider_calls=2; narrator_calls=0
+A12_SCOPE: extracted production normalizer/wire builder with message stubs; no full graph, no SDK, no session/state loader, no BioMind module imports
+SOURCE_SELECTION=[{"line": 24, "names": ["SUPPORTED_SCRIPT_TAGS"], "source": "agent_core/controller_audit.py", "source_sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3"}, {"line": 29, "names": ["_SCRIPT_BLOCK_RE"], "source": "agent_core/controller_audit.py", "source_sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3"}, {"line": 33, "names": ["_ANY_SCRIPT_TAG_RE"], "source": "agent_core/controller_audit.py", "source_sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3"}, {"line": 40, "names": ["ScriptBlockError"], "source": "agent_core/controller_audit.py", "source_sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3"}, {"line": 47, "names": ["ExecutableScriptBlock"], "source": "agent_core/controller_audit.py", "source_sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3"}, {"line": 78, "names": ["parse_executable_script_block"], "source": "agent_core/controller_audit.py", "source_sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3"}, {"line": 26, "names": ["PLAN_CANDIDATE"], "source": "agent_core/plan_contract.py", "source_sha256": "6d52b45d5f59bc73ab14959339efbc0e1f43e3914993fa648000a3cc726f6a26"}, {"line": 27, "names": ["SUBMIT_PLAN_FOR_REVIEW"], "source": "agent_core/plan_contract.py", "source_sha256": "6d52b45d5f59bc73ab14959339efbc0e1f43e3914993fa648000a3cc726f6a26"}, {"line": 28, "names": ["TASKSPEC_RECONCILIATION_REQUIRED"], "source": "agent_core/plan_contract.py", "source_sha256": "6d52b45d5f59bc73ab14959339efbc0e1f43e3914993fa648000a3cc726f6a26"}, {"line": 29, "names": ["RECOGNIZED_PLANNER_OUTCOMES"], "source": "agent_core/plan_contract.py", "source_sha256": "6d52b45d5f59bc73ab14959339efbc0e1f43e3914993fa648000a3cc726f6a26"}, {"line": 97, "names": ["_SINGLE_JSON_FENCE_RE"], "source": "agent_core/plan_contract.py", "source_sha256": "6d52b45d5f59bc73ab14959339efbc0e1f43e3914993fa648000a3cc726f6a26"}, {"line": 101, "names": ["_JSON_FENCE_LINE_RE"], "source": "agent_core/plan_contract.py", "source_sha256": "6d52b45d5f59bc73ab14959339efbc0e1f43e3914993fa648000a3cc726f6a26"}, {"line": 104, "names": ["PlanContractError"], "source": "agent_core/plan_contract.py", "source_sha256": "6d52b45d5f59bc73ab14959339efbc0e1f43e3914993fa648000a3cc726f6a26"}, {"line": 108, "names": ["PlannerEnvelopeError"], "source": "agent_core/plan_contract.py", "source_sha256": "6d52b45d5f59bc73ab14959339efbc0e1f43e3914993fa648000a3cc726f6a26"}, {"line": 252, "names": ["PlannerOutcomeEnvelope"], "source": "agent_core/plan_contract.py", "source_sha256": "6d52b45d5f59bc73ab14959339efbc0e1f43e3914993fa648000a3cc726f6a26"}, {"line": 598, "names": ["normalize_planner_json_transport"], "source": "agent_core/plan_contract.py", "source_sha256": "6d52b45d5f59bc73ab14959339efbc0e1f43e3914993fa648000a3cc726f6a26"}, {"line": 642, "names": ["parse_planner_outcome_envelope"], "source": "agent_core/plan_contract.py", "source_sha256": "6d52b45d5f59bc73ab14959339efbc0e1f43e3914993fa648000a3cc726f6a26"}, {"line": 33, "names": ["ScopedContextError"], "source": "agent_core/workflow/scoped_context.py", "source_sha256": "d812ae23048fbd06a0c549d17626cb91aff8ab6570775bf998be61bc3cacbde4"}, {"line": 71, "names": ["_coerce_messages"], "source": "agent_core/workflow/scoped_context.py", "source_sha256": "d812ae23048fbd06a0c549d17626cb91aff8ab6570775bf998be61bc3cacbde4"}, {"line": 97, "names": ["_message_id"], "source": "agent_core/workflow/scoped_context.py", "source_sha256": "d812ae23048fbd06a0c549d17626cb91aff8ab6570775bf998be61bc3cacbde4"}, {"line": 318, "names": ["build_provider_messages"], "source": "agent_core/workflow/scoped_context.py", "source_sha256": "d812ae23048fbd06a0c549d17626cb91aff8ab6570775bf998be61bc3cacbde4"}, {"line": 197, "names": ["PhaseLoopError"], "source": "agent_core/workflow/phase_subgraph.py", "source_sha256": "635c381be44cf3d152b44a7a04744c79c4de591ba6ece7d33384ed5b7af21392"}, {"line": 232, "names": ["_message_copy"], "source": "agent_core/workflow/phase_subgraph.py", "source_sha256": "635c381be44cf3d152b44a7a04744c79c4de591ba6ece7d33384ed5b7af21392"}, {"line": 238, "names": ["_as_provider_observation"], "source": "agent_core/workflow/phase_subgraph.py", "source_sha256": "635c381be44cf3d152b44a7a04744c79c4de591ba6ece7d33384ed5b7af21392"}, {"line": 703, "names": ["_normalize_turn_messages"], "source": "agent_core/workflow/phase_subgraph.py", "source_sha256": "635c381be44cf3d152b44a7a04744c79c4de591ba6ece7d33384ed5b7af21392"}]
+
+REPRODUCTION
+Use a NEW isolated /tmp export. The embedded custom fixture is extraction-level
+verification of CURRENT behavior. It intentionally asserts several gaps, not repaired behavior.
+Source hashes below must match the audit version; if the working tree changed, do not
+reuse old line numbers or attribute new results to this baseline.
+
+1. Use /public/home/liusiqi/anaconda3/envs/biomind/bin/python -I to execute
+   /public/home/liusiqi/03.毕设/Biomind_v1/tests/export_cli_fixture.py NEW_TMP_REPLAY.
+   The reviewed exporter copies only an explicit safe source/test whitelist.
+2. Copy the permitted provider_attempt.py and recovery_agent.py source files into
+   NEW_TMP_REPLAY/provider_attempt_source.py and recovery_agent_source.py.
+3. Extract the delimited TEST_PROGRESS_AUDIT_PY block below verbatim to
+   NEW_TMP_REPLAY/tests/test_progress_audit.py.
+4. cd NEW_TMP_REPLAY; run:
+   PYTHONPATH=/tmp/biomind-cli-deps PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONDONTWRITEBYTECODE=1    /public/home/liusiqi/anaconda3/envs/biomind/bin/python -m pytest -q -p no:cacheprovider    tests/test_cli_logging.py tests/test_cli_display.py tests/test_cli_terminal.py tests/test_progress_audit.py
+   The current final fixture has 29 cases; the original audit ran 26+2+1 incrementally.
+   The existing /tmp/biomind-cli-deps is a local dependency cache, not downloaded in this audit.
+5. Extract TRANSPORT_PROBE_PY and PROTOCOL_OFFLINE_PY to /tmp and run python -I -B each.
+   Those two scripts statically read named safe source files from the repository, compile
+   selected AST only, use standard-library stubs and never import BioMind modules.
+
+No model clients, startup/configuration, session loader or real business runner is invoked.
+Production callbacks and business APIs are NOT equivalent to their fake fixtures.
+Actual observed user-session timing/content/SDK chunk shape remains UNKNOWN.
+
+EXPORTED_SOURCE_HASHES
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  agent_core/__init__.py
+3de2c1e33aea27ec69a440656bddcbfa266a5fa1a8c4695affb97a3ebb5d5609  agent_core/cli_display.py
+981e05b7c29d30ec536bf53e7b81291409ebd587ca9b17663765204f52a86f82  agent_core/cli_logging.py
+8ca8eb64d249b48871be8c6028ad1f9148924c7eca3b60f52149d18f5cff97d3  agent_core/cli_terminal.py
+13acac45e3465abc0517e5fbf63dcb37857851be9a73989d9f84cfe0df961249  agent_core/human_io.py
+2846a91e2f2710f8ae9f61dba221c3c74bfa6e862d8d398a437417ac6c628eaa  agent_core/step_effects.py
+c29b7e2c7454964c9d05b4de77f501c3b627be452064b066410c7ec5b4f22e44  bio_agents.py
+da2a492e1dafe2549b69bd685b94433c1b8df02c49e9ae38efbe9367cfcaea43  conftest.py
+81ac2cc01584426135df2df9ea58aec01be79bfe4eefac96eaa8884abb49a534  execution/executor.py
+d73e89dbc1c92bf51c905db447226992cebc9528d0b910791a2cf8ae1faafba5  execution/profiling.py
+fa410e2dfd8f59614c44e9de924e5e65c61a65217f989b57da6109efb1c083c2  execution/runtime_contract.py
+7cdf784a7a4510b2667aff9b3fa596430694cc5e9fdf2c28d049dc751d34648a  execution/shell_safety.py
+53a866f8e9a0a3b897cb1e90b877272bf9e85d8d9e5b7e92f8690e108d19bc3a  provider_attempt_source.py
+7e9264259265c816b625aa8afec87377ae6361fd944daf16315668e2bdcd6e4c  recovery_agent_source.py
+2505ab72edc051f00a7227a26443cc93e58a7ab4689a5223013cf68bed67cc77  tests/cli_fixture_entry.py
+01597fa7b56d49c47310b4f9954ddf9b95f27fdab2c6390c75072db26486ca43  tests/cli_output_benchmark.py
+76082cd77b5276240e3f01183fbff8f6e0e7106ded9642033aad0b3ce391e81b  tests/cli_pty_acceptance.py
+2138e8fa4e5f87daef8129d94baded81764e83a85578d2f99ffb1c9cb632b863  tests/cli_pty_edges.py
+e2d548880285c2629097e9edf61f260292cc0c010a3bfd3e732538d56f960bfe  tests/cli_pty_latency.py
+f4852e356db89172f18f77a0d639e1831d729e9ad7a4208be91061752ec344bb  tests/test_cli_display.py
+68b4963618c43bf4ef601aa3200c89c27d51a4a952e0bbde724d8bc26680f11c  tests/test_cli_logging.py
+59c70bd365b4d3c8701b690071e8add959272dd27b68031761b5e157ece8bbb6  tests/test_cli_terminal.py
+
+BEGIN_TEST_PROGRESS_AUDIT_PY
+"""Audit witnesses. Assertions verify observed defects, NOT target acceptance."""
+import ast, asyncio, io, json, logging, re, sys, threading, time, types
+from pathlib import Path
+from contextlib import redirect_stdout
+from unittest.mock import patch
+import pytest
+from agent_core import cli_display as d
+from agent_core.cli_terminal import Terminal
+from prompt_toolkit.input import create_pipe_input
+from prompt_toolkit.output import DummyOutput
+from prompt_toolkit.application import create_app_session
+
+ROOT = Path(__file__).resolve().parents[1]
+TREE = ast.parse((ROOT/'bio_agents.py').read_text())
+class Colors:
+    def __getattr__(self, key): return ''
+class Lineage:
+    def __init__(self, *args): pass
+    def record_event(self, *args, **kwargs): pass
+NS = dict(asyncio=asyncio, io=io, re=re, sys=sys, threading=threading, time=time,
+          os=types.SimpleNamespace(getenv=lambda name, default='': default),
+          Fore=Colors(), Style=Colors(), BaseCallbackHandler=object,
+          display_print=d.display_print, emit_display=d.emit,
+          deepcopy=__import__('copy').deepcopy, ContextLineageStore=Lineage,
+          logger=logging.getLogger('audit.extracted'))
+selected = [n for n in TREE.body if isinstance(n, ast.ClassDef) and n.name in {'OutputRouter','VibeThinkingHandler'}]
+agent = next(n for n in TREE.body if isinstance(n,ast.ClassDef) and n.name=='BioAnalystAgent')
+selected += [n for n in agent.body if isinstance(n,ast.FunctionDef) and n.name=='_schema2_recovery_event_sink']
+module = ast.Module(body=[ast.ImportFrom(module='__future__', names=[ast.alias(name='annotations')], level=0), *selected], type_ignores=[])
+exec(compile(ast.fix_missing_locations(module), 'EXACT_AST_FROM_EXPORTED_BIO_AGENTS', 'exec'), NS)
+Router, Handler = NS['OutputRouter'], NS['VibeThinkingHandler']
+
+def with_owner(owner, operation):
+    old=d.bind_terminal(owner)
+    try: return operation()
+    finally: d.bind_terminal(old)
+
+@pytest.mark.parametrize('text', ['我先核对输入与参考文件。','已确认回执缺项，接下来检查失败证据。'])
+def test_A1_callback_drops_distinct_public_fixture(text):
+    model=d.DisplayModel()
+    with_owner(model,lambda:Handler().on_llm_new_token(text))
+    assert model.history==[] and model.active=='正在接收模型回复；候选尚待校验'
+    assert text not in str(model.details)
+
+@pytest.mark.parametrize('mode',['callback_only','recovery_existing_sink'])
+def test_A2_four_timestamps_real_terminal(mode):
+    events=[]; t0=time.monotonic_ns()
+    def mark(event, **data): events.append({'event':event,'relative_ns':time.monotonic_ns()-t0,**data})
+    prose='已确认合成回执缺少一项，接下来读取检查结果。'
+    class Capture(DummyOutput):
+        def write(self,text):
+            if prose in text: mark('terminal_output_write',text=text.strip())
+        def flush(self): mark('terminal_output_flush')
+    async def check():
+        owner=Terminal(); old=d.bind_terminal(owner)
+        NS['output']=Router()
+        async def scenario():
+            try:
+                callback=Handler()
+                mark('first_provider_event',fixture='synthetic_content_chunks')
+                callback.on_llm_new_token(prose[:8])
+                await asyncio.sleep(.025)
+                callback.on_llm_new_token(prose[8:])
+                mark('first_public_message_ready',text=prose)
+                await asyncio.sleep(.025)
+                if mode=='recovery_existing_sink':
+                    mark('complete_response_sink')
+                    NS['_schema2_recovery_event_sink'](types.SimpleNamespace(data_path='/tmp/fake-no-io'), 'recovery_response_received', {'task_id':'synthetic-task','event_id':'synthetic-response-1','turn_ordinal':1,'explanation':prose,'status':'received'})
+                mark('next_tool_dispatch',fixture='stub_no_execution')
+                d.emit('tool_start','合成工具开始（stub）')
+                await asyncio.sleep(.25)
+            finally: owner.app.exit()
+        try:
+            await owner.app.run_async(pre_run=lambda:asyncio.create_task(scenario()))
+            if owner.history_flush: await owner.history_flush
+            return owner.model.history
+        finally: owner.closed=True; d.bind_terminal(old)
+    with create_pipe_input() as pipe, create_app_session(input=pipe,output=Capture()):
+        history=asyncio.run(check())
+    useful=[e for e in events if e['event']!='terminal_output_flush']
+    writes=[e for e in events if e['event']=='terminal_output_write']
+    if mode=='callback_only': assert not writes and history==[]
+    else:
+        assert len(writes)==1 and prose in '\n'.join(history)
+        assert writes[0]['relative_ns']>next(e['relative_ns'] for e in events if e['event']=='next_tool_dispatch')
+        flush=next(e for e in events if e['event']=='terminal_output_flush' and e['relative_ns']>=writes[0]['relative_ns'])
+        useful.append(flush)
+    (ROOT/f'timing_{mode}.json').write_text(json.dumps(useful,ensure_ascii=False,indent=2))
+
+
+def test_A3_reasoning_protocol_and_wait_boundaries():
+    model=d.DisplayModel(); cb=Handler()
+    def operation():
+        cb.on_llm_new_token('', chunk=types.SimpleNamespace(message=types.SimpleNamespace(additional_kwargs={'reasoning_content':'SYNTHETIC_PRIVATE_REASONING'})))
+        assert model.updates==0
+        cb.on_llm_new_token('', chunk=types.SimpleNamespace(additional_kwargs={'reasoning_content':'SYNTHETIC_PRIVATE_REASONING'}))
+        cb.on_llm_new_token('{"action":"read_file"}')
+    with_owner(model,operation)
+    before=model.updates
+    for _ in range(100): model.status()
+    assert model.updates==before and model.history==[]
+    assert 'SYNTHETIC_PRIVATE_REASONING' not in str(model.details)+model.status()
+    # Plain final-message route is not a general JSON privacy filter.
+    output=io.StringIO()
+    with redirect_stdout(output): with_owner(None,lambda:Router().print_ai('{"action":"read_file"}'))
+    assert '"action"' in output.getvalue()
+
+
+def test_A4_activity_is_current_slot_not_lifecycle_ledger():
+    model=d.DisplayModel()
+    for kind,text in [('tool_proposed','proposed'),('approval','approval'),('tool_start','running'),('tool_end','rc=0 waiting validation'),('error','failed'),('approval','declined'),('unknown','unknown')]: model.receive(kind,text,tool_call_id='same-id')
+    assert model.history==['approval','failed','declined']
+    assert 'tool_proposed: proposed' in model.details and 'unknown: unknown' in model.details
+    assert model.active=='declined' # rc=0 never became completed task.
+
+
+def test_A5_structured_display_does_not_mutate_payload_but_plain_exposes_json():
+    payload={'action':'read_file','path':'/tmp/synthetic'}; raw=json.dumps(payload)
+    outputs=[]
+    for owner in [None,d.DisplayModel()]:
+        capture=io.StringIO()
+        with redirect_stdout(capture): with_owner(owner,lambda:Router().print_ai(raw))
+        assert json.loads(raw)==payload
+        outputs.append(capture.getvalue() if owner is None else '\n'.join(owner.history))
+    assert raw in outputs[0] and raw not in outputs[1] and '已收录' in outputs[1]
+
+
+def test_A6_ui_failure_is_best_effort_cancel_not_swallowed():
+    class Broken:
+        def receive(self,*args,**kwargs): raise RuntimeError('synthetic renderer error')
+    assert with_owner(Broken(),lambda:d.emit('message','synthetic')) is True
+    for exception in [asyncio.CancelledError,KeyboardInterrupt]:
+        class Cancel:
+            def receive(self,*args,**kwargs): raise exception()
+        with pytest.raises(exception): with_owner(Cancel(),lambda:d.emit('message','synthetic'))
+
+
+def test_A7_cross_call_prefix_dedup_and_stale_activity():
+    model=d.DisplayModel(); router=Router(); prefix='相同前缀'*20
+    def operation():
+        router.print_ai(prefix+'本轮 A')
+        router.print_ai(prefix+'本轮 B')
+    with_owner(model,operation)
+    assert len(model.history)==1 and '本轮 B' not in model.history[0]
+    model.receive('approval','等待批准',task_id='task-B')
+    model.receive('activity','迟到 A 的活动',task_id='task-A',provider_attempt_id='old')
+    assert model.active=='迟到 A 的活动'
+    model.receive('tool_tail','A output',tool_call_id='A',stream='stdout')
+    model.receive('tool_tail','B output',tool_call_id='B',stream='stderr')
+    assert model.tool_tail=='B output'
+
+
+def test_A8_display_toggle_has_no_extra_calls_at_tested_boundary():
+    def run(owner):
+        count={'model':0,'tool':0}; payload='{"action":"read_file"}'
+        def fixture():
+            count['model']+=1; Handler().on_llm_new_token(payload)
+            count['tool']+=1; d.emit('tool_start','synthetic stub')
+            return json.loads(payload)
+        return with_owner(owner,fixture),count
+    assert run(None)==run(d.DisplayModel())==({'action':'read_file'},{'model':1,'tool':1})
+
+
+def test_A9_callback_logger_final_dedup():
+    from agent_core.cli_logging import configure_logging,set_notice_sink
+    model=d.DisplayModel(); log=logging.getLogger('audit.isolated.log'); log.handlers=[]; log.propagate=True
+    configure_logging(logging.INFO,None)
+    previous=set_notice_sink(lambda text:model.receive('error',text))
+    try:
+        def operation():
+            cb=Handler(); cb.on_llm_new_token('模型说明 fixture')
+            log.info('debug_style_info'); log.warning('synthetic warning')
+            router=Router(); router.print_ai('模型说明 fixture'); router.print_ai('模型说明 fixture')
+        with_owner(model,operation)
+        assert len(model.history)==2 and sum('模型说明 fixture' in s for s in model.history)==1
+        assert 'debug_style_info' not in str(model.history)
+    finally:set_notice_sink(previous)
+
+
+def test_A10_closed_pipe_difference_and_cancel_priority_gap():
+    class BrokenPipe:
+        def write(self,*args): raise BrokenPipeError('synthetic pipe closed')
+        def flush(self): pass
+    model=d.DisplayModel(); model.receive('cancel','取消未确认'); model.receive('activity','旧活动')
+    assert model.active=='旧活动' and model.history==['取消未确认']
+    with patch('sys.stdout',BrokenPipe()), pytest.raises(BrokenPipeError):
+        with_owner(None,lambda:d.display_print('synthetic'))
+
+
+def test_A11_synthetic_secret_not_redacted_control_chars_removed():
+    secret='SYNTHETIC_SECRET_DO_NOT_USE_9417'
+    value='token='+secret+'\x1b]0;FAKE_TITLE\x07\x1b[31m visible\x00'
+    safe=d.safe_text(value)
+    assert '\x1b' not in safe and '\x00' not in safe and 'FAKE_TITLE' not in safe
+    assert secret in safe # witness: sanitizer handles terminal controls, not credentials.
+    model=d.DisplayModel()
+    with_owner(model,lambda:d.StreamDisplayCopy('stdout').feed((value+'\n').encode()))
+    assert secret in model.tool_tail and '\x1b' not in model.tool_tail
+
+
+def test_provider_progress_without_payload_and_failure_field():
+    tree=ast.parse((ROOT/'provider_attempt_source.py').read_text())
+    fn=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='_emit')
+    ns={'json':json,'logger':logging.getLogger('audit.provider')}
+    module=ast.Module(body=[ast.ImportFrom(module='__future__',names=[ast.alias(name='annotations')],level=0),fn],type_ignores=[])
+    exec(compile(ast.fix_missing_locations(module),'EXACT_PROVIDER_EMIT','exec'),ns)
+    model=d.DisplayModel()
+    record=types.SimpleNamespace(to_dict=lambda:{'failure_type':'SyntheticFirstChunkTimeout','first_payload_at':None,'payload_event_count':0})
+    with_owner(model,lambda:ns['_emit'](None,'attempt_progress',record))
+    assert model.active=='已观测到 provider 活动'
+    with_owner(model,lambda:ns['_emit'](None,'attempt_failed',record))
+    assert model.history==['provider attempt 失败：详情见诊断日志']
+
+
+def test_recovery_event_uses_raw_or_stale_explanation_projection():
+    tree=ast.parse((ROOT/'recovery_agent_source.py').read_text())
+    call=next(n for n in ast.walk(tree) if isinstance(n,ast.Await) and isinstance(n.value,ast.Call) and isinstance(n.value.func,ast.Attribute) and n.value.func.attr=='_emit_event' and n.value.args and isinstance(n.value.args[0],ast.Constant) and n.value.args[0].value=='recovery_response_received')
+    payload=call.value.args[1]
+    expression=next(value for key,value in zip(payload.keys,payload.values) if isinstance(key,ast.Constant) and key.value=='explanation')
+    code=compile(ast.Expression(body=expression),'EXACT_RECOVERY_EXPLANATION_PROJECTION','eval')
+    assert eval(code,{'explanations':[{'text':'{"directive":"synthetic"}','display_text':'合成公开摘要'}]})=='{"directive":"synthetic"}'
+    assert eval(code,{'explanations':[{'source_message_id':'old-message','text':'上一回合说明'}]})=='上一回合说明'
+
+
+def test_plain_without_owner_drops_emit_only_tool_activity():
+    capture=io.StringIO()
+    with redirect_stdout(capture):
+        result=with_owner(None,lambda:(d.emit('tool_start','started'),d.emit('tool_end','rc=0 waiting validation'),d.emit('tool_tail','synthetic stdout')))
+    assert result==(False,False,False) and capture.getvalue()==''
+
+END_TEST_PROGRESS_AUDIT_PY
+
+BEGIN_TRANSPORT_PROBE_PY
+"""Audit-only source extraction: no BioMind imports, credentials, sessions or I/O."""
+import ast
+import asyncio
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import threading
+import time
+from types import SimpleNamespace
+
+ROOT = Path('/public/home/liusiqi/03.毕设/Biomind_v1')
+
+class BaseCallbackHandler:
+    pass
+
+def extract(path, names, namespace):
+    source = path.read_text(encoding='utf-8')
+    tree = ast.parse(source)
+    nodes = [node for node in tree.body if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in names]
+    assert {node.name for node in nodes} == set(names)
+    module = ast.Module(body=[ast.ImportFrom(module='__future__', names=[ast.alias(name='annotations')], level=0), *nodes], type_ignores=[])
+    exec(compile(ast.fix_missing_locations(module), str(path), 'exec'), namespace)
+    return hashlib.sha256(source.encode()).hexdigest()
+
+async def main():
+    display_events = []
+    ns = dict(globals(), emit_display=lambda kind, text: display_events.append({'kind': kind, 'text': text}))
+    provider_hash = extract(ROOT/'agent_core/provider_attempt.py', ['ProviderStreamObserver', 'utc_now'], ns)
+    agent_hash = extract(ROOT/'bio_agents.py', ['VibeThinkingHandler'], ns)
+    observer_type, vibe_type = ns['ProviderStreamObserver'], ns['VibeThinkingHandler']
+    vibe = vibe_type()
+    old = observer_type('fixture-attempt-old', asyncio.get_running_loop())
+    current = observer_type('fixture-attempt-current', asyncio.get_running_loop())
+    reasoning = SimpleNamespace(message=SimpleNamespace(content='', additional_kwargs={'reasoning_content':'SYNTHETIC_PRIVATE_REASONING'}))
+    old.on_llm_new_token('', chunk=reasoning)
+    vibe.on_llm_new_token('', chunk=reasoning)
+    assert old.snapshot()['reasoning_chunk_count'] == 1
+    assert not display_events
+    print(json.dumps({'check':'wrapped_reasoning', 'status':'CURRENT_BEHAVIOR_CONFIRMED', 'observer_reasoning_count':1, 'vibe_display_count':0, 'reasoning_disclosed':False}, ensure_ascii=False))
+    for text in ['我先检查合成输入 A。', '我先检查合成输入 B。']:
+        chunk = SimpleNamespace(message=SimpleNamespace(content=text, additional_kwargs={}))
+        old.on_llm_new_token(text, chunk=chunk)
+        vibe.on_llm_new_token(text, chunk=chunk)
+    assert len(display_events) == 2
+    assert display_events[0] == display_events[1]
+    assert all('合成输入' not in item['text'] for item in display_events)
+    print(json.dumps({'check':'two_public_content_fixtures', 'status':'TARGET_FAILURE_REPRODUCED', 'display_events':display_events, 'model_content_forwarded':False}, ensure_ascii=False))
+    old.fence()
+    old_count = old.snapshot()['content_chunk_count']
+    late = '已取消旧调用的合成迟到正文。'
+    old.on_llm_new_token(late, chunk=SimpleNamespace(message=SimpleNamespace(content=late, additional_kwargs={})))
+    vibe.on_llm_new_token(late, chunk=SimpleNamespace(message=SimpleNamespace(content=late, additional_kwargs={})))
+    assert old.snapshot()['content_chunk_count'] == old_count
+    assert old.snapshot()['late_chunk_count'] == 1
+    assert current.snapshot()['content_chunk_count'] == 0
+    assert len(display_events) == 3
+    print(json.dumps({'check':'late_old_attempt', 'status':'OBSERVER_PASS_UI_FENCE_GAP', 'old_observer_late_count':1, 'current_observer_content_count':0, 'shared_callback_displayed_late_placeholder':True}, ensure_ascii=False))
+    print(json.dumps({'check':'source_identity', 'bio_agents_sha256':agent_hash, 'provider_attempt_sha256':provider_hash, 'isolation':'AST extracted source; BaseCallbackHandler stub; no BioMind module import or SDK execution'}, ensure_ascii=False))
+
+if __name__ == '__main__':
+    asyncio.run(main())
+
+END_TRANSPORT_PROBE_PY
+
+BEGIN_PROTOCOL_OFFLINE_PY
+"""Isolated audit: execute selected pure production AST, never import BioMind.
+
+Only stdlib and synthetic in-memory message/provider fixtures are used. This is
+an extraction-level wiring check, not a full LangGraph or real-provider test.
+"""
+from __future__ import annotations
+
+import ast
+import copy
+import hashlib
+import json
+import re
+import sys
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+
+ROOT = Path('/public/home/liusiqi/03.毕设/Biomind_v1')
+selected = []
+
+
+def extract(relative, names, scope=None):
+    source = (ROOT / relative).read_text(encoding='utf-8')
+    tree = ast.parse(source, filename=relative)
+    items = tree.body
+    if scope:
+        items = next(n.body for n in items if isinstance(n, ast.ClassDef) and n.name == scope)
+    result = []
+    for node in items:
+        defined = {node.name} if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) else set()
+        if isinstance(node, ast.Assign):
+            defined = {n.id for n in node.targets if isinstance(n, ast.Name)}
+        if defined.intersection(names):
+            result.append(node)
+            selected.append({'source': relative, 'line': node.lineno, 'names': sorted(defined),
+                             'source_sha256': hashlib.sha256(source.encode()).hexdigest()})
+    assert set(names) <= set().union(*[
+        {n.name} if hasattr(n, 'name') else {t.id for t in n.targets if isinstance(t, ast.Name)} for n in result
+    ]), names
+    module = ast.Module(body=[ast.ImportFrom(module='__future__', names=[ast.alias(name='annotations')], level=0), *result], type_ignores=[])
+    exec(compile(ast.fix_missing_locations(module), relative, 'exec'), globals())
+
+
+deepcopy = copy.deepcopy
+extract('agent_core/controller_audit.py', {
+    'SUPPORTED_SCRIPT_TAGS', '_SCRIPT_BLOCK_RE', '_ANY_SCRIPT_TAG_RE',
+    'ScriptBlockError', 'ExecutableScriptBlock', 'parse_executable_script_block'})
+extract('agent_core/plan_contract.py', {
+    'PLAN_CANDIDATE', 'SUBMIT_PLAN_FOR_REVIEW', 'TASKSPEC_RECONCILIATION_REQUIRED',
+    'RECOGNIZED_PLANNER_OUTCOMES', '_SINGLE_JSON_FENCE_RE', '_JSON_FENCE_LINE_RE',
+    'PlanContractError', 'PlannerEnvelopeError', 'PlannerOutcomeEnvelope',
+    'normalize_planner_json_transport', 'parse_planner_outcome_envelope'})
+
+bare_script = '<shell>\nprintf audit_fixture\n</shell>'
+assert parse_executable_script_block(bare_script).body == '\nprintf audit_fixture\n'
+for fixture in ['我先检查输入。\n' + bare_script, bare_script + '\n已准备候选。']:
+    try:
+        parse_executable_script_block(fixture)
+    except ScriptBlockError as error:
+        assert 'prose outside' in str(error)
+    else:
+        raise AssertionError('mixed commentary must be rejected by current script protocol')
+print('PROTOCOL_SCRIPT: PASS — unchanged executable block accepted; surrounding public prose rejected; script never executed')
+
+bare_plan = '{"outcome_type":"SUBMIT_PLAN_FOR_REVIEW","steps":[]}'
+assert parse_planner_outcome_envelope(bare_plan).outcome_type == 'SUBMIT_PLAN_FOR_REVIEW'
+for fixture in ['我先核对所需产物。\n' + bare_plan, bare_plan + '\n规划候选尚未获准。']:
+    try:
+        parse_planner_outcome_envelope(fixture)
+    except PlannerEnvelopeError as error:
+        assert error.code == 'PLANNER_ENVELOPE_JSON_INVALID'
+    else:
+        raise AssertionError('mixed commentary must be rejected by current plan transport')
+print('PROTOCOL_PLANNER: PASS — whole JSON envelope accepted (body not validated); surrounding public prose rejected')
+
+
+class BaseMessage:
+    def __init__(self, content='', id=None, name=None, additional_kwargs=None, response_metadata=None, **kwargs):
+        self.content, self.id, self.name = content, id, name
+        self.additional_kwargs = additional_kwargs or {}
+        self.response_metadata = response_metadata or {}
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def model_copy(self, deep=False, update=None):
+        result = deepcopy(self) if deep else copy.copy(self)
+        for key, value in (update or {}).items():
+            setattr(result, key, value)
+        return result
+
+
+class AIMessage(BaseMessage): pass
+class HumanMessage(BaseMessage): pass
+class SystemMessage(BaseMessage): pass
+class RemoveMessage(BaseMessage): pass
+
+
+def convert_to_messages(messages):
+    assert all(isinstance(message, BaseMessage) for message in messages)
+    return list(messages)
+
+
+extract('agent_core/workflow/scoped_context.py', {
+    'ScopedContextError', '_coerce_messages', '_message_id', 'build_provider_messages'})
+extract('agent_core/workflow/phase_subgraph.py', {
+    'PhaseLoopError', '_message_copy', '_as_provider_observation', '_normalize_turn_messages'})
+
+class FakeProvider:
+    def __init__(self):
+        self.requests = []
+
+    def invoke(self, messages):
+        self.requests.append(deepcopy(messages))
+        return AIMessage(content='{"action_type":"inspect_resource","resource":"synthetic://input"}')
+
+
+provider = FakeProvider()
+state = {'system_message': SystemMessage(id='fixture:system', content='synthetic policy'),
+         'seed_message': HumanMessage(id='fixture:seed', content='synthetic input'),
+         'inherited_messages': [], 'messages': []}
+response = provider.invoke(build_provider_messages(state))
+error_fact = '{"code":"SYNTHETIC_RESOURCE_UNREADABLE","exists":true,"readable":false,"command_started":false}'
+context = SimpleNamespace(epoch_id='fixture:epoch', pending_provider_events=[], assistant_response=response)
+additions = _normalize_turn_messages([AIMessage(content='legacy normalized replacement'), SystemMessage(content=error_fact)],
+                                     context=context, existing_count=0)
+assert len(additions) == 2
+assert additions[0].content == response.content
+assert isinstance(additions[1], HumanMessage)
+assert additions[1].name == 'runtime_observation'
+assert additions[1].content == error_fact
+state['messages'] += additions
+provider.invoke(build_provider_messages(state))
+assert len(provider.requests) == 2
+assert provider.requests[1][-1].content == error_fact
+assert sum(m.content == response.content for m in provider.requests[1]) == 1
+print('A12_PHASE_EXTRACTION: PASS — exact assistant preserved once; specific error becomes runtime_observation in next existing fake business request; provider_calls=2; narrator_calls=0')
+print('A12_SCOPE: extracted production normalizer/wire builder with message stubs; no full graph, no SDK, no session/state loader, no BioMind module imports')
+print('SOURCE_SELECTION=' + json.dumps(selected, ensure_ascii=False, sort_keys=True))
+
+END_PROTOCOL_OFFLINE_PY
