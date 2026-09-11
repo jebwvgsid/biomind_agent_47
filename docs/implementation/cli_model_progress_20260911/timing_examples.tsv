@@ -1,0 +1,9 @@
+case	source_message_id	ready	enqueued	write	flush	dispatch	degradation	writer	ordering
+cli3-final148-tree/cli1-recovery-plain.json	recovery-seed-849f2247695a3dec8ffb2c4d:assistant:001	4025945.325222371	4025945.325251038	4025945.325412047	4025945.325417084	4025945.377774626		PlainTerminal/TimedWriter	flush <= dispatch
+cli3-final148-tree/cli1-recovery-timeout.json	recovery-seed-849f2247695a3dec8ffb2c4d:assistant:001	4025946.524184423	4025946.524211397	4025946.577780465	4025946.577784677	4025946.576774238	confirmation_timeout	PlainTerminal/TimedWriter	dispatch < write/flush (degraded)
+cli3-final148-tree/cli2-nodes-plain.json:inspect_resource	cli-consultant-1	4025947.968373248	4025947.968396956	4025947.968537876	4025947.968541937	4025948.018923214		plain actual owner	flush <= dispatch
+cli3-final148-tree/cli2-nodes-plain.json:skill_context	cli-planner-1	4025948.281841771	4025948.281867017	4025948.281977897	4025948.28197951	4025948.357582111		plain actual owner	flush <= dispatch
+cli3-final148-tree/cli2-nodes-tty.json:inspect_resource	cli-consultant-1	4025951.919917197	4025951.919944164	4025951.920453093	4025951.920456409	4025951.922596162		tty actual owner	flush <= dispatch
+cli3-final148-tree/cli2-nodes-tty.json:skill_context	cli-planner-1	4025952.141888785	4025952.141917659	4025952.142464767	4025952.142467806	4025952.1707753		tty actual owner	flush <= dispatch
+cli3-final148-tree/cli3-nodes-plain-envelope-True-invalid_wrapper.json:run_script_path	cli-generate-2	4025887.701261088	4025887.701291759	4025887.701450129	4025887.70145649	4025888.6228943		plain actual owner	flush <= dispatch
+cli3-final148-tree/cli3-nodes-tty-envelope-True-invalid_wrapper.json:run_script_path	cli-generate-2	4025900.900561456	4025900.900591361	4025900.900985944	4025900.900987092	4025901.781203572		tty actual owner	flush <= dispatch
