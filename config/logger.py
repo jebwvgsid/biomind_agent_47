@@ -49,36 +49,12 @@ class LoggingConfig:
         # 确定日志级别
         log_level = getattr(logging, level.upper(), logging.INFO)
         
-        # 日志格式
-        log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        date_format = '%Y-%m-%d %H:%M:%S'
-        
-        # 处理器列表
-        console_handler = logging.StreamHandler()
-        console_handler.addFilter(InteractiveConsoleFilter())
-        handlers = [console_handler]
-        
-        # 添加文件处理器
-        if log_to_file:
-            if log_file is None:
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                log_file = PathManager.SYSTEM_LOG_DIR / f"biomind_{timestamp}.log"
-            
-            file_handler = logging.FileHandler(log_file, encoding='utf-8')
-            file_handler.setFormatter(
-                logging.Formatter(log_format, datefmt=date_format)
-            )
-            handlers.append(file_handler)
-        
-        # 配置根日志记录器
-        logging.basicConfig(
-            level=log_level,
-            format=log_format,
-            datefmt=date_format,
-            handlers=handlers,
-            force=True  # 强制重新配置
-        )
-        
+        from agent_core.cli_logging import configure_logging
+        if log_to_file and log_file is None:
+            # Stable within the process, including repeated session initialization.
+            log_file = PathManager.SYSTEM_LOG_DIR / f"biomind_{os.getpid()}.log"
+        configure_logging(log_level, log_file if log_to_file else None)
+
         logger = logging.getLogger(__name__)
         logger.info("✓ Logging system initialized")
         logger.info(f"  Log Level: {level}")
