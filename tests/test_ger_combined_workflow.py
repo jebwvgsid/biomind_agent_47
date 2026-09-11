@@ -27,6 +27,8 @@ def test_generate_execute_recovery_observation_commit_chain(ui_enabled):
         captures=[];executions=[];approvals=[];events=[];seeds=[]
         previous_terminal=bind_terminal(DisplayModel() if ui_enabled else None)
         try:
+            from tests.ger_fixture_support import configure_protocol
+            configure_protocol(case)
             case._configure_one_step_no_output_plan()
             previous=case._planner_payload
             def plan():

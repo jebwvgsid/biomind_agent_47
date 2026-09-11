@@ -69,11 +69,13 @@ def test_real_generate_entry_repairs_wrapper_and_syntax_with_durable_budget():
         case=PlanLocalRealGraphTests(methodName='test_graph_e_malformed_script_block_repair_is_visible_to_provider')
         await case.asyncSetUp()
         try:
+            from tests.ger_fixture_support import configure_protocol, generate_until_ready_or_stopped
+            configure_protocol(case)
             def candidate(payload,ordinal):
                 if ordinal==1:return '<shell><script language="bash">true</script></shell>'
                 if ordinal==2:return "<shell>echo 'unclosed</shell>"
                 return case._script_action(payload)
-            events,captures,_=await case._run_graph('ger-wrapper-and-syntax',candidate)
+            events,captures,_=await generate_until_ready_or_stopped(case,'ger-wrapper-and-syntax',candidate)
             text=str(events)
             assert len(captures)>=3,text
             assert 'GENERATE_SCRIPT_BLOCK_INVALID' in str(captures[1])
@@ -85,4 +87,26 @@ def test_real_generate_entry_repairs_wrapper_and_syntax_with_durable_budget():
             assert len(ledger.get('events',{}))>=2
         finally:
             await case.asyncTearDown()
+    asyncio.run(run())
+
+
+def test_identical_candidate_budget_survives_durable_reload():
+    from tests.test_plan_local_preaction_convergence_v2 import PlanLocalRealGraphTests
+    from tests.ger_fixture_support import configure_protocol, generate_until_ready_or_stopped
+    from agent_core.plan_tracker import load_plan_state
+    async def run():
+        case=PlanLocalRealGraphTests(methodName='test_graph_e_malformed_script_block_repair_is_visible_to_provider')
+        await case.asyncSetUp()
+        try:
+            configure_protocol(case)
+            events,captures,_=await generate_until_ready_or_stopped(case,'ger-same-error',lambda *_:'invalid protocol')
+            assert len(captures)==2
+            assert 'GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED' in str(events)
+            assert not any('execute' in event for event in events)
+            durable=load_plan_state(str(case.root),'ger-same-error')
+            again=load_plan_state(str(case.root),'ger-same-error')
+            assert again['task_state']['candidate_repair_state']==durable['task_state']['candidate_repair_state']
+            assert durable['task_state']['candidate_repair_state']['events']
+            assert not durable['provenance_state']['attempts']
+        finally:await case.asyncTearDown()
     asyncio.run(run())

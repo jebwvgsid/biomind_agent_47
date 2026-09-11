@@ -24,7 +24,7 @@ def test_two_attempt_summary_keeps_primary_and_secondary_causes(tmp_path):
     store,first,second,source=two_attempts(tmp_path)
     boundary={'node':'recovery','status':'failed','outcome':{'type':'failed','summary':'Recovery budget exhausted',
         'payload':{'error_code':'RECOVERY_BUDGET_EXHAUSTED'}}}
-    stop=build_managed_stop('task-recovery',{'runtime_recovery_result':{'failure_code':'REPORT_WRITE_FAILED','reason':'secondary'}},store.load(),boundary)
+    stop=build_managed_stop('task-recovery',{'runtime_recovery_result':{'reason_code':'REPORT_WRITE_FAILED','explanation':'secondary report failure'}},store.load(),boundary)
     assert stop['execution']['returncode']==2 and stop['origin']['attempt_id']=='attempt-2'
     assert stop['stop_reason']['error_code']=='RECOVERY_BUDGET_EXHAUSTED'
     assert [(r['attempt_id'],r['returncode']) for r in stop['associated_attempts']]==[('attempt-1',0),('attempt-2',2)]

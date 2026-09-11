@@ -18,13 +18,19 @@ def test_control_and_hash_boundaries_do_not_launch(mode):
         await case.asyncSetUp()
         task_id='ger-boundary-'+mode
         try:
+            from tests.ger_fixture_support import configure_protocol
+            configure_protocol(case)
             case._configure_one_step_no_output_plan()
-            async def provider(_messages,*,stage,**_kwargs):
+            async def provider(_messages,*,stage,node_context=None,**_kwargs):
                 if stage=='consultant':return AIMessage(content=json.dumps(case._consultant_payload(case.root/'report.md')))
-                if stage in {'planner','planner_structure_repair','planner_repair'}:return AIMessage(content=json.dumps(case._planner_payload()))
+                if stage in {'planner','planner_structure_repair','planner_repair'}:
+                    plan=case._planner_payload()
+                    plan['steps'][0]['produces_observations']=['validation_observation']
+                    return AIMessage(content=json.dumps(plan))
                 if stage=='generate':return AIMessage(content='<shell>printf "fixture\\n"</shell>')
                 raise AssertionError(stage)
             case.agent._ainvoke_node_llm=provider
+            case.agent._ainvoke_llm=provider
             runner=case._runner_state(task_id)
             app=case.agent._app_for_task(task_id,runner)
             config={'configurable':{'thread_id':task_id},'recursion_limit':20}
@@ -33,7 +39,11 @@ def test_control_and_hash_boundaries_do_not_launch(mode):
                 async for event in stream:
                     if 'generate' in event:break
             finally:await stream.aclose()
-            state=app.get_state(config).values
+            # An updates stream yields before its checkpoint is necessarily
+            # visible. Carry the emitted Generate update into this invocation.
+            state=dict(app.get_state(config).values)
+            state.update(event.get('generate') or {})
+            assert state.get('generate_outcome',{}).get('type')=='action_ready',event
             action=state['pending_action']
             if mode=='cancel_review':
                 def cancel(*_args,**_kwargs):raise asyncio.CancelledError

@@ -129,3 +129,16 @@ def test_published_old_event_after_attempt_advance_is_diagnostic_only(tmp_path,c
     assert result=={}
     assert fixture.reload()==before
     assert 'RECOVERY_CAUSAL_REPLAY_SCOPE_STALE' in caplog.text
+
+
+@pytest.mark.parametrize('field',['task_id','step_id','episode_id'])
+def test_foreign_scope_rejected_before_authority_or_body_read(tmp_path,field):
+    store=Store(tmp_path)
+    update=store.binder().bind({'task_id':'task-recovery'},'execute_outcome',store.attempt(1,2))
+    projection=project_recovery_seed(update,store.load())
+    reader=InspectionObjectReader(str(tmp_path),scope=inspection_scope(projection.failure_packet,projection.recovery_seed.seed_id))
+    entry=deepcopy(next(iter(store.value['task_state']['inspection_ref_registry'].values())))
+    entry['scope'][field]='foreign'
+    with patch.object(reader,'_assert_current_authority',side_effect=AssertionError('must reject descriptor first')):
+        with pytest.raises(InspectionEvidenceError,match='SCOPE_MISMATCH'):
+            reader.read_body(entry,entry['locator'])
