@@ -22,7 +22,9 @@ def check_script_body(body: str, language: str, *, timeout: float = 5.0) -> dict
     if language not in {'bash','sh','shell'}:
         return {**result, 'code':'SCRIPT_SYNTAX_CHECK_UNAVAILABLE',
                 'detail':'No non-executing syntax checker is configured for this language.'}
-    interpreter = shutil.which('bash', path='/usr/bin:/bin')
+    # Resolve exactly as Execute resolves its approved Bash runner. The child
+    # still receives only the controlled environment below, never BASH_ENV.
+    interpreter = shutil.which('bash')
     if not interpreter:
         return {**result, 'code':'SCRIPT_SYNTAX_CHECK_UNAVAILABLE', 'detail':'Bash syntax checker unavailable.'}
     try:

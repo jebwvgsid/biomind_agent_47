@@ -47758,9 +47758,12 @@ question. Never guess a scientific or database identity.
                 }
 
             elif action == "edit":
+                # Managed edits supersede the reviewed candidate. Reuse the
+                # existing guidance/revocation path so Generate produces a new
+                # candidate for fresh approval, even for valid ASCII code.
                 # 判断：是直接粘贴的代码，还是指导意见？
                 # 简单策略：如果包含中文或明显的描述性词汇，视为反馈
-                if re.search(r'[\u4e00-\u9fff]', final_code) or \
+                if managed_mode or re.search(r'[\u4e00-\u9fff]', final_code) or \
                     any(keyword in final_code.lower() for keyword in ['correct', '正确', 'should', '应该', 'use', '使用']):
                     # 这是指导意见，不是代码
                     feedback_msg = f"<observation>⚠️ User provided guidance:\n{final_code}\n\nPlease regenerate code based on this feedback.</observation>"
@@ -48784,6 +48787,21 @@ question. Never guess a scientific or database identity.
                 )
             start_time = time.time()
             diagnostic_timed_out = False
+            # Approval grants these exact bytes. Recheck the source alongside
+            # the existing wrapper hash check, including approval-resume paths.
+            # A changed file is not repaired or silently normalized here.
+            try:
+                launch_source = Path(approved_ref["path"]).read_bytes()
+            except OSError as exc:
+                return reject_internal_prelaunch(pending_action,
+                    error_code="APPROVED_SCRIPT_SOURCE_UNAVAILABLE",
+                    stage="execute.approved_script_reload", detail=str(exc))
+            if (launch_source != approved_source_code.encode("utf-8")
+                    or hashlib.sha256(launch_source).hexdigest() != approved_ref["sha256"]):
+                return reject_internal_prelaunch(pending_action,
+                    error_code="APPROVED_SCRIPT_HASH_DRIFT",
+                    stage="execute.approved_script_reload",
+                    detail="Frozen script bytes changed after approval; no command was launched.")
             try:
                 advance_preparation_boundary(
                     "command_launch",
