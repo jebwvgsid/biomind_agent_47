@@ -1,0 +1,2 @@
+# Optional dynamic CLI. Missing dependency falls back to plain output.
+prompt-toolkit==3.0.52

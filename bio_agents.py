@@ -2407,7 +2407,8 @@ class OutputRouter:
                 f"  Result path: {result.result_path or '-'}",
                 f"  Trace path: {result.trace_path or '-'}",
             ]
-            display_print(f"\n{color}" + "\n".join(lines) + Style.RESET_ALL, flush=True)
+            if not emit_display("result", f"运行结果：{result.status or 'unknown'}\n" + "\n".join(lines)):
+                display_print(f"\n{color}" + "\n".join(lines) + Style.RESET_ALL, flush=True)
             return True
 
     def print_ai(self, content: str):
@@ -25271,6 +25272,13 @@ class BioAnalystAgent:
         started_at: Optional[str] = None,
         multiline: bool = False,
     ) -> str:
+        owner = active_terminal()
+        if owner is not None:
+            owner.set_context(task_id, stage, payload)
+            # The runtime already owns a worker thread in TUI mode. Keep its
+            # original synchronous prompt/persistence boundary; UI keys run on
+            # the independent terminal loop and resolve this input transport.
+            return self._prompt_user(task_id, stage, prompt, payload, started_at, multiline)
         if os.name == "posix" and sys.stdin.isatty():
             return self._prompt_user(
                 task_id,
@@ -53199,6 +53207,15 @@ question. Never guess a scientific or database identity.
             self._messages_for_memory_status(task_id, config, runner_input)
         )
 
+        owner = active_terminal()
+        if owner is not None:
+            caller = asyncio.current_task()
+            runtime_loop = asyncio.get_running_loop()
+            owner.cancel_callback = lambda: runtime_loop.call_soon_threadsafe(
+                lambda: self.cancel_managed_run(caller, task_id=task_id,
+                    initiator_kind="user", owner="interactive_user", reason="CLI Ctrl+C",
+                    source_evidence={"kind": "cli_key", "key": "Ctrl+C"}))
+            owner.force_callback = terminate_active_processes
         cancellation_committed = False
         with self.profiler.task_context(task_id):
             try:
@@ -53235,7 +53252,9 @@ question. Never guess a scientific or database identity.
                         active_provider_ref=active_provider_ref,
                         origin=origin,
                     )
+                    emit_display("cancel", "取消状态已记录；provider/子进程清理以各自回执为准，整体安全停止未确认。")
                 except Exception:
+                    emit_display("cancel", "取消状态保存未确认；详情见诊断日志。")
                     logger.exception(
                         "Canonical cancellation commit failed for task %s",
                         task_id,
@@ -53542,34 +53561,7 @@ question. Never guess a scientific or database identity.
     # ────────────────────────────────────────────────────────────
 
     async def interactive_mode(self):
-        display_print(f"""
-{Fore.CYAN}╔══════════════════════════════════════════════════╗
-║  🧬  BioAnalyst V4  |  Interactive Mode          ║
-╚══════════════════════════════════════════════════╝{Style.RESET_ALL}
-Commands:
-  /tasks              List recent tasks
-  /new [name]         New session
-  /resume <id>        Resume task
-  /memory             Show memory status
-  /memory search <q>  Search SessionArchive events
-  /memory lint        Check Core memory and optional curated-claim conflicts
-  /memory promote     Promote safe wiki index refs into Core project memory
-  /wiki               Show wiki disabled/enabled status
-  /wiki search <q>    Search wiki memory when BIOMIND_WIKI_ENABLED=true
-  /wiki ingest        Curate events only when BIOMIND_WIKI_ENABLED=true
-  /wiki ingest task   Curate current task only when BIOMIND_WIKI_ENABLED=true
-  /wiki compile       Rebuild wiki digest only when BIOMIND_WIKI_ENABLED=true
-  /wiki lint          Check wiki links only when BIOMIND_WIKI_ENABLED=true
-  /wiki page <id>     Show a wiki page only when BIOMIND_WIKI_ENABLED=true
-  /wiki review        Show pending wiki review items only when enabled
-  /task summarize [id] Render a task summary report from archive evidence
-  /paste              Enter multiline task input; finish with /end
-  /cot <id>           Open CoT log for task
-  /stop               Cancel current task
-  /debug              Inspect graph state
-  /exit               Quit
-  ![cmd]              Run shell command directly
-""")
+        display_print("BioMind · /help 帮助 · /details 详情 · /exit 退出")
         current_session_id = f"session_{int(time.time())}"
         current_session_is_new = True
         display_print(f"{Fore.GREEN}● Session: {current_session_id}{Style.RESET_ALL}")
@@ -53589,11 +53581,10 @@ Commands:
                     )
                 except HumanInputUnavailable:
                     continue
-                user_input = user_input.strip()
-                if not user_input:
+                if not user_input.strip():
                     continue
 
-                if user_input.lower() in {"继续", "继续执行", "continue", "resume"}:
+                if "\n" not in user_input and (user_input.lower() in {"继续", "继续执行", "continue", "resume"}):
                     control = self._continue_control_state(current_session_id)
                     if control.get("action") != "new_task":
                         if control.get("action") == "waiting_user":
@@ -53625,11 +53616,25 @@ Commands:
                         current_session_is_new = False
                         continue
 
+                if user_input in {"/status", "/details", "/logs"}:
+                    # Plain/fallback commands are read-only display operations,
+                    # never new model requests or state-loader calls.
+                    if user_input == "/status":
+                        display_print("当前处于输入界面；任务结果以既有正式输出为准。")
+                    else:
+                        paths = [h.baseFilename for h in logging.getLogger().handlers if isinstance(h, logging.FileHandler)]
+                        display_print("plain 诊断日志位置：\n" + "\n".join(paths or ["未配置文件日志"]))
+                    continue
+
+                if "\n" not in user_input and (user_input == "/help"):
+                    display_print("/tasks /new /resume /memory /wiki /task /paste /cot /stop /debug /exit !cmd\n/paste 以 /end 结束；BIOMIND_UI=plain 使用纯文本；LOG_LEVEL=DEBUG 仅文件诊断。")
+                    continue
+
                 # ── 系统命令 ─────────────────────────────────
-                if user_input.strip().lower() in {"/exit", "/quit", "q", "quit", "exit"}:
+                if "\n" not in user_input and (user_input.strip().lower() in {"/exit", "/quit", "q", "quit", "exit"}):
                     break
 
-                if user_input == "/paste":
+                if "\n" not in user_input and (user_input == "/paste"):
                     try:
                         user_input = await self._aprompt_user(
                             current_session_id,
@@ -53640,17 +53645,16 @@ Commands:
                         )
                     except HumanInputUnavailable:
                         continue
-                    user_input = user_input.strip()
-                    if not user_input:
+                    if not user_input.strip():
                         continue
 
-                if user_input.startswith("/memory search "):
+                if "\n" not in user_input and (user_input.startswith("/memory search ")):
                     query = user_input.split(" ", 2)[2].strip()
                     result = await self.task_summary_renderer.asearch(query, task_id=current_session_id)
                     output.page_text(f"Session Archive Search | {query}", result, Fore.CYAN)
                     continue
 
-                if user_input == "/memory":
+                if "\n" not in user_input and (user_input == "/memory"):
                     config = {"configurable": {"thread_id": current_session_id}}
                     snap   = self._app_for_task(current_session_id).get_state(config)
                     msgs   = snap.values.get("messages", []) if snap.values else []
@@ -53664,7 +53668,7 @@ Commands:
                     )
                     continue
 
-                if user_input == "/memory lint":
+                if "\n" not in user_input and (user_input == "/memory lint"):
                     wiki_lint = (
                         self.wiki_memory_manager.lint(project_id=self.default_project_id)
                         if self.wiki_enabled
@@ -53686,7 +53690,7 @@ Commands:
                     )
                     continue
 
-                if user_input == "/memory promote":
+                if "\n" not in user_input and (user_input == "/memory promote"):
                     if not self.wiki_enabled:
                         output.page_text("Memory Promote", self._wiki_disabled_message(), Fore.CYAN)
                         continue
@@ -53694,12 +53698,12 @@ Commands:
                     output.page_text("Memory Promote", result, Fore.CYAN)
                     continue
 
-                if user_input == "/wiki" or user_input.startswith("/wiki "):
+                if "\n" not in user_input and (user_input == "/wiki" or user_input.startswith("/wiki ")):
                     if not self.wiki_enabled:
                         output.page_text("Wiki Disabled", self._wiki_disabled_message(), Fore.CYAN)
                         continue
 
-                if user_input.startswith("/wiki search "):
+                if "\n" not in user_input and (user_input.startswith("/wiki search ")):
                     query = user_input.split(" ", 2)[2].strip()
                     hits = self.wiki_memory_manager.search(
                         query,
@@ -53709,7 +53713,7 @@ Commands:
                     output.page_text(f"Wiki Search | {query}", result, Fore.CYAN)
                     continue
 
-                if user_input in {"/wiki ingest", "/wiki ingest task"}:
+                if "\n" not in user_input and (user_input in {"/wiki ingest", "/wiki ingest task"}):
                     if not current_session_id:
                         output.page_text(
                             "Wiki Ingest",
@@ -53717,7 +53721,7 @@ Commands:
                             Fore.YELLOW,
                         )
                         continue
-                    if user_input == "/wiki ingest":
+                    if "\n" not in user_input and (user_input == "/wiki ingest"):
                         output.page_text(
                             "Wiki Ingest",
                             "Project-wide blind ingestion is disabled. Use /wiki ingest task so every event is bound to one completed task snapshot.",
@@ -53740,28 +53744,28 @@ Commands:
                     )
                     continue
 
-                if user_input == "/wiki compile":
+                if "\n" not in user_input and (user_input == "/wiki compile"):
                     result = self.wiki_memory_manager.compile_digest(project_id=self.default_project_id)
                     output.page_text("Wiki Compile", result, Fore.CYAN)
                     continue
 
-                if user_input == "/wiki lint":
+                if "\n" not in user_input and (user_input == "/wiki lint"):
                     result = self.wiki_memory_manager.lint(project_id=self.default_project_id)
                     output.page_text("Wiki Lint", result, Fore.CYAN)
                     continue
 
-                if user_input.startswith("/wiki page "):
+                if "\n" not in user_input and (user_input.startswith("/wiki page ")):
                     identifier = user_input.split(" ", 2)[2].strip()
                     result = self.wiki_memory_manager.read_page(identifier)
                     output.page_text(f"Wiki Page | {identifier}", result, Fore.CYAN)
                     continue
 
-                if user_input == "/wiki review":
+                if "\n" not in user_input and (user_input == "/wiki review"):
                     result = self.wiki_memory_manager.read_review_queue()
                     output.page_text("Wiki Review Queue", result, Fore.CYAN)
                     continue
 
-                if user_input == "/wiki":
+                if "\n" not in user_input and (user_input == "/wiki"):
                     display_print(self.wiki_memory_manager.status_text(self.default_project_id))
                     output.page_text(
                         "Wiki Overview",
@@ -53770,7 +53774,7 @@ Commands:
                     )
                     continue
 
-                if user_input == "/task summarize" or user_input.startswith("/task summarize "):
+                if "\n" not in user_input and (user_input == "/task summarize" or user_input.startswith("/task summarize ")):
                     parts = user_input.split(" ", 2)
                     target_task_id = parts[2].strip() if len(parts) > 2 and parts[2].strip() else current_session_id
                     path = self.task_summary_renderer.write_task_summary(target_task_id)
@@ -53781,7 +53785,7 @@ Commands:
                     )
                     continue
 
-                if user_input.startswith("/cot "):
+                if "\n" not in user_input and (user_input.startswith("/cot ")):
                     tid  = user_input.split(" ", 1)[1].strip()
                     path = Path(self.data_path) / "task_outputs" / tid / f"cot_{tid}.md"
                     if path.exists():
@@ -53791,7 +53795,7 @@ Commands:
                         display_print(f"{Fore.RED}CoT log not found: {path}{Style.RESET_ALL}")
                     continue
 
-                if user_input.startswith("/new"):
+                if "\n" not in user_input and (user_input.startswith("/new")):
                     if self.state_manager:
                         self.state_manager.update_task_status(current_session_id, "suspended")
                     self.profiler.finish_task(current_session_id, "suspended")
@@ -53808,7 +53812,7 @@ Commands:
                     display_print(f"{Fore.GREEN}● New session: {current_session_id}{Style.RESET_ALL}")
                     continue
 
-                if user_input == "/stop":
+                if "\n" not in user_input and (user_input == "/stop"):
                     self._commit_user_cancellation(
                         current_session_id,
                         source="interactive_stop",
@@ -53838,7 +53842,7 @@ Commands:
                     display_print(f"{Fore.GREEN}● New session: {current_session_id}{Style.RESET_ALL}")
                     continue
 
-                if user_input == "/tasks":
+                if "\n" not in user_input and (user_input == "/tasks"):
                     if self.state_manager:
                         tasks = self.state_manager.list_tasks(limit=15)
                         display_print(f"\n{'Task ID':<32} | {'Status':<10} | {'Updated'}")
@@ -53847,7 +53851,7 @@ Commands:
                             display_print(f"{t['task_id']:<32} | {t['status']:<10} | {t['updated_at']}")
                     continue
 
-                if user_input.startswith("/resume "):
+                if "\n" not in user_input and (user_input.startswith("/resume ")):
                     tid = user_input.split(" ", 1)[1].strip()
                     current_session_id = tid
                     current_session_is_new = False
@@ -53909,7 +53913,7 @@ Commands:
                     output.render_terminal_result(run_result)
                     continue
 
-                if user_input == "/debug":
+                if "\n" not in user_input and (user_input == "/debug"):
                     config   = {"configurable": {"thread_id": current_session_id}}
                     snapshot = self._app_for_task(current_session_id).get_state(config)
                     display_print(f"Next nodes: {snapshot.next}")
@@ -53918,7 +53922,7 @@ Commands:
                     continue
 
                 # ── Shell 直通 ────────────────────────────────
-                if user_input.startswith("cd "):
+                if "\n" not in user_input and (user_input.startswith("cd ")):
                     try:
                         os.chdir(user_input[3:].strip())
                         if self.pm: self.pm.work_dir = Path(os.getcwd())
@@ -53929,15 +53933,20 @@ Commands:
 
                 cmd_parts = user_input.split()
                 base_cmd  = cmd_parts[0] if cmd_parts else ""
-                is_direct = (user_input.startswith("!") or
-                             (base_cmd in DIRECT_CMDS and len(user_input) < 60))
+                is_direct = ("\n" not in user_input and (user_input.startswith("!") or
+                             (base_cmd in DIRECT_CMDS and len(user_input) < 60)))
 
                 if is_direct:
                     real_cmd = user_input[1:] if user_input.startswith("!") else user_input
                     if base_cmd == "ll":
                         real_cmd = "ls -lh " + " ".join(cmd_parts[1:])
                     import subprocess
-                    subprocess.run(real_cmd, shell=True, executable="/bin/bash")
+                    owner = active_terminal()
+                    execute_direct = lambda: subprocess.run(real_cmd, shell=True, executable="/bin/bash")
+                    if owner is not None:
+                        owner.handoff(execute_direct)
+                    else:
+                        execute_direct()
                     continue
 
                 # ── Agent 处理（含中断循环）────────────────────
@@ -53957,6 +53966,15 @@ Commands:
                 output.render_terminal_result(run_result)
                 current_session_is_new = False
 
+            except asyncio.CancelledError:
+                if active_terminal() is None:
+                    raise
+                emit_display("cancel", "运行调用已返回取消；整体清理未确认。可继续编辑新输入。")
+                _reset_interrupt_signal_guard()
+                current = asyncio.current_task()
+                if hasattr(current, "uncancel"):
+                    current.uncancel()
+                continue
             except KeyboardInterrupt:
                 restore_terminal_state()
                 try:
@@ -53975,7 +53993,7 @@ Commands:
                 break
             except Exception:
                 import traceback
-                traceback.print_exc()
+                logger.exception("交互命令失败")
 
 
 # ════════════════════════════════════════════════════════════════
@@ -54035,6 +54053,10 @@ def _handle_interrupt(signum, frame):
     global _INTERRUPT_SIGNAL_ACTIVE
     global _INTERRUPT_SIGNAL_COUNT
     global _INTERRUPT_SIGNAL_STARTED_AT
+    owner = active_terminal()
+    if owner is not None:
+        owner.loop.call_soon_threadsafe(owner.request_cancel)
+        return
     now = time.monotonic()
     with _INTERRUPT_SIGNAL_LOCK:
         if not _INTERRUPT_SIGNAL_ACTIVE:
@@ -54062,15 +54084,12 @@ def _handle_interrupt(signum, frame):
     raise KeyboardInterrupt
 
 
-async def main():
+async def _runtime_main():
     command   = sys.argv[1] if len(sys.argv) > 1 else "interactive"
     data_path = str(PathManager.WORK_DIR)
-
-    display_print(f"""
-{Fore.CYAN}╔═══════════════════════════════════════════════════════╗
-║    🧬  BioAnalyst Agent V4  –  Production System    ║
-╚═══════════════════════════════════════════════════════╝{Style.RESET_ALL}
-""")
+    if command == "interactive" and not sys.stdin.isatty():
+        display_print("BioMind：非 TTY 模式不等待交互输入。请在终端运行 interactive。")
+        return
 
     agent = BioAnalystAgent(
         data_path=data_path,
@@ -54090,6 +54109,11 @@ async def main():
             display_print(f"Unknown command: {command}")
     finally:
         await agent.aclose()
+
+
+async def main():
+    from agent_core.cli_terminal import run_terminal
+    await run_terminal(_runtime_main)
 
 
 if __name__ == "__main__":

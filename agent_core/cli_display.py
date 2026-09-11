@@ -115,7 +115,10 @@ class StreamDisplayCopy:
 
     def feed(self, chunk, final=False):
         decoded = self.decoder.decode(chunk, final)
-        for fragment in decoded.splitlines(keepends=True):
+        fragments = decoded.splitlines(keepends=True)
+        if final and not fragments:
+            fragments = ['']
+        for fragment in fragments:
             ended = fragment.endswith(('\n', '\r'))
             if not self.discard_line:
                 self.pending += fragment

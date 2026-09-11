@@ -20,6 +20,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, Optional
 
+from agent_core.cli_display import terminal as active_terminal
+
 
 class HumanInputUnavailable(Exception):
     """Base class for input that cannot be collected now."""
@@ -342,6 +344,8 @@ def read_pending_paste_lines(
     ``select`` with a tiny timeout so normal interactive typing remains single
     line.
     """
+    if active_terminal() is not None:
+        return []
 
     timeout = resolve_paste_grace_seconds() if grace_seconds is None else max(0.0, float(grace_seconds))
     limit = resolve_paste_max_lines() if max_lines is None else max(1, int(max_lines))
@@ -382,6 +386,11 @@ def safe_input(prompt: str, timeout_seconds: Optional[int] = None, *, history: b
     """
 
     timeout = resolve_input_timeout() if timeout_seconds is None else int(timeout_seconds)
+    if active_terminal() is not None:
+        return active_terminal().read(prompt, timeout=timeout)
+    if os.getenv("BIOMIND_UI", "").lower() == "plain" or os.getenv("TERM") == "dumb":
+        from agent_core.cli_terminal import plain_input
+        return plain_input(prompt, timeout)
     return _readline_input_with_timeout(prompt, timeout, history=history)
 
 
@@ -395,11 +404,13 @@ def safe_multiline_input(
     """Read a multiline block until a line exactly matching ``terminator``."""
 
     timeout = resolve_input_timeout() if timeout_seconds is None else int(timeout_seconds)
+    if active_terminal() is not None:
+        return active_terminal().read(prompt, timeout=timeout, multiline=True)
     end_marker = str(terminator or "/end").strip()
     lines: list[str] = []
     first_prompt = prompt
     while True:
-        line = _readline_input_with_timeout(
+        line = safe_input(
             first_prompt if not lines else "... ",
             timeout,
             history=history and not lines,
@@ -467,6 +478,8 @@ def clear_waiting_state(data_path: str | Path, task_id: str) -> None:
 
 def restore_terminal_state() -> None:
     """Best-effort terminal restore for interrupted/suspended POSIX sessions."""
+    if active_terminal() is not None:
+        return None
 
     if os.name != "posix":
         return
