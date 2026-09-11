@@ -73,3 +73,40 @@ def test_actual_sync_dispatch_preserves_results_and_errors():
         assert model.history[-1] == '读取已取消'
     finally:
         bind_terminal(previous)
+
+
+def test_actual_skill_service_unavailable_keeps_original_error_and_no_dispatch():
+    from bio_agents import BioAnalystAgent, SkillAccessError
+    agent = BioAnalystAgent.__new__(BioAnalystAgent)
+    agent.skill_access_service = None
+    model = DisplayModel(); previous = bind_terminal(model)
+    try:
+        with pytest.raises(SkillAccessError):
+            agent._load_and_persist_skill_documents('synthetic', [], task_revision=1)
+        with pytest.raises(SkillAccessError):
+            asyncio.run(agent._handle_skill_node_decision(task_id='synthetic',
+                caller_node='generate', graph_node='generate', decision={}, node_context=None, response=None))
+        assert [item.kind for item in model.items] == ['tool_end', 'tool_end']
+        assert all('未派发' in item.text for item in model.items)
+        assert all(item.source == 'runtime_fact' for item in model.items)
+    finally:
+        bind_terminal(previous)
+
+
+@pytest.mark.parametrize('mode', ['plain', 'off'])
+def test_actual_main_non_tty_refuses_before_agent_or_state_loading(monkeypatch, mode):
+    import io
+    import bio_agents
+    writer = io.StringIO()
+    monkeypatch.setattr(bio_agents.sys, 'argv', ['bio_agents.py', 'interactive'])
+    monkeypatch.setattr(bio_agents.sys, 'stdin', io.StringIO())
+    monkeypatch.setattr(bio_agents.sys, 'stdout', writer)
+    monkeypatch.setenv('BIOMIND_UI', mode)  # This process has only synthetic env.
+    def forbidden_constructor(*args, **kwargs):
+        raise AssertionError('Non-TTY interactive must not construct an agent')
+    monkeypatch.setattr(bio_agents, 'BioAnalystAgent', forbidden_constructor)
+    asyncio.run(bio_agents.main())
+    if mode == 'plain':
+        assert writer.getvalue().count('非 TTY 模式不等待交互输入') == 1
+    else:
+        assert writer.getvalue() == ''

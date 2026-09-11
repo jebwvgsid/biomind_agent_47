@@ -81,3 +81,63 @@ def project_public_json(raw: str) -> ResponseProjection:
     for begin, end in reversed(removals):
         payload = payload[:begin] + payload[end:]
     return ResponseProjection(payload, public)
+
+
+def provider_response_metadata(response) -> dict:
+    """Only provider/attempt completion facts, never fields from model text."""
+    metadata = getattr(response, "response_metadata", None)
+    metadata = metadata if isinstance(metadata, dict) else {}
+    attempt = metadata.get("biomind_provider_attempt")
+    attempt = attempt if isinstance(attempt, dict) else {}
+    values = {
+        "finish_reason": attempt.get("finish_reason") or metadata.get("finish_reason") or metadata.get("stop_reason"),
+        "completion_integrity": attempt.get("content_status") or attempt.get("completion_integrity")
+            or metadata.get("completion_integrity") or metadata.get("content_status"),
+    }
+    return {key: value for key, value in values.items() if isinstance(value, str) and value and len(value) <= 80}
+
+
+def response_incomplete(metadata: dict) -> bool:
+    return bool(
+        str(metadata.get("finish_reason") or "").lower() in {"length", "max_tokens", "content_filter"}
+        or str(metadata.get("completion_integrity") or "").lower() in
+        {"truncated", "interrupted", "incomplete", "content_filtered", "content_filter"}
+    )
+
+
+def project_generate_response(raw: str, *, script_protocol: bool,
+                              response_metadata: dict | None = None) -> ResponseProjection:
+    """Unwrap one explicit display transport before the original script parser."""
+    if response_incomplete(response_metadata or {}):
+        return ResponseProjection(raw, error="GENERATE_RESPONSE_INCOMPLETE: provider did not finish a complete response")
+    try:
+        value, members = _object_members(raw)
+    except (ValueError, TypeError, IndexError, RecursionError):
+        # A malformed JSON response cannot use a tag embedded inside its string
+        # as an alternative executable definition or a terminal answer.
+        if script_protocol and isinstance(raw, str) and raw.lstrip().startswith("{"):
+            return ResponseProjection(raw, error="GENERATE_DISPLAY_INVALID_JSON: one complete JSON response is required")
+        return ResponseProjection(raw)
+    if not script_protocol or "response_type" not in value:
+        return project_public_json(raw)
+    if value.get("response_type") != "biomind_generate_display_v1":
+        return ResponseProjection(raw, error="GENERATE_DISPLAY_TYPE_UNRECOGNIZED: unsupported response transport")
+    keys = [member[0] for member in members]
+    if keys.count("response_type") != 1 or keys.count("payload") > 1 or set(keys) - {"response_type", "public_message", "payload"}:
+        return ResponseProjection(raw, error="GENERATE_DISPLAY_CONFLICT: only one payload and the display fields are allowed")
+    payload = value.get("payload")
+    if not isinstance(payload, str) or not payload:
+        return ResponseProjection(raw, error="GENERATE_DISPLAY_PAYLOAD_REQUIRED: payload must be a non-empty script-block string")
+    public = value.get("public_message")
+    if keys.count("public_message") != 1 or not isinstance(public, str) or not public.strip():
+        public = None
+    # The envelope is exclusively a script transport. Use the existing strict
+    # parser before any legacy Skill/tag/final-answer branch can inspect it.
+    from agent_core.controller_audit import parse_executable_script_block, ScriptBlockError
+    try:
+        parse_executable_script_block(payload)
+    except ScriptBlockError as exc:
+        # The sole business payload is known even though it is invalid. Keep
+        # its malformed-candidate identity independent of optional prose.
+        return ResponseProjection(payload, public, error=str(exc))
+    return ResponseProjection(payload, public)

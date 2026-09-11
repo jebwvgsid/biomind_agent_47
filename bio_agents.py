@@ -14,7 +14,7 @@ from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candid
 
 from agent_core.cli_display import display_print, emit as emit_display, terminal as active_terminal, interactive_terminal, emit_public, flush_public
 from agent_core.cli_activity import call_with_activity
-from agent_core.public_response import project_public_json
+from agent_core.public_response import project_public_json, project_generate_response, provider_response_metadata
 import asyncio
 from agent_core.phase_timing import phase, phase_started, phase_finished, timed_phase
 from copy import deepcopy
@@ -7366,7 +7366,7 @@ class BioAnalystAgent:
         service = getattr(self, "skill_access_service", None)
         if service is None:
             emit_display("tool_end", "Skill 服务不可用；未派发读取或搜索", source="runtime_fact",
-                         task_id=task_id, node=caller_node, status="unavailable")
+                         task_id=task_id, status="unavailable")
             raise SkillAccessError(
                 "SKILL_CONTEXT_UNAVAILABLE", "SkillManager is not configured"
             )
@@ -7801,6 +7801,8 @@ class BioAnalystAgent:
         """Serve a typed Skill decision before any action/plan parser runs."""
         service = getattr(self, "skill_access_service", None)
         if service is None:
+            emit_display("tool_end", "Skill 服务不可用；未派发读取或搜索", source="runtime_fact",
+                         task_id=task_id, node=caller_node, status="unavailable")
             raise SkillAccessError(
                 "SKILL_CONTEXT_UNAVAILABLE", "SkillManager is not configured"
             )
@@ -18486,6 +18488,13 @@ class BioAnalystAgent:
                         from langchain_core.messages import message_to_dict
                         trace_store.recovery_transport_finish(
                             semantic_invocation_id, attempt_id, response=message_to_dict(response))
+                    if stage == "generate":
+                        response.response_metadata = {
+                            **dict(getattr(response, "response_metadata", {}) or {}),
+                            "biomind_provider_attempt": {
+                                "finish_reason": str(attempt_record.finish_reason or ""),
+                            },
+                        }
                     if stage in {"planner", "planner_repair"}:
                         trusted_attempt = attempt_record.to_dict()
                         scoped_metadata = {key: deepcopy(trusted_attempt.get(key)) for key in (
@@ -42524,7 +42533,8 @@ question. Never guess a scientific or database identity.
                             and hashlib.sha256(str(cached_generate["raw_response"]).encode()).hexdigest() != claim_state["provider_response_digest"]):
                         raise RecoveryExecutionContractError("RECOVERY_PROVIDER_COMPLETION_INTEGRITY_ERROR", "Cached response bytes differ from the completion receipt.")
                     generate_response_cached = True
-                    response = AIMessage(content=str(cached_generate["raw_response"]))
+                    response = AIMessage(content=str(cached_generate["raw_response"]),
+                        response_metadata=dict((cached_generate.get("parsed_result") or {}).get("response_metadata") or {}))
                     logger.info(
                         "RECOVERY_CACHE_HIT task=%s context_id=%s stage=%s step_id=%s "
                         "snapshot_id=%s candidate_fingerprint=%s error_fingerprint=%s repair_ordinal=%s",
@@ -42744,7 +42754,8 @@ question. Never guess a scientific or database identity.
                                 "execution_status": "not_started", "next_step": "finish"}
                         generate_node_context = current_generate_transport_context()
                     if "cached_response" in candidate_provider_claim:
-                        response = AIMessage(content=candidate_provider_claim["cached_response"])
+                        response = AIMessage(content=candidate_provider_claim["cached_response"],
+                            response_metadata=dict(candidate_provider_claim.get("cached_response_metadata") or {}))
                     else:
                         invocation_audit.mark_provider_call_attempted()
                         generate_trace_metadata = {
@@ -42786,14 +42797,18 @@ question. Never guess a scientific or database identity.
                             )
                     candidate_started = phase_started("generate.candidate_preparation", output=output,
                                                       message="模型返回，正在整理候选")
+                    generate_wire = project_generate_response(str(response.content or ""),
+                        script_protocol=generate_script_protocol,
+                        response_metadata=provider_response_metadata(response))
                     if candidate_provider_claim and "cached_response" not in candidate_provider_claim:
                         try:
-                            skill_decision = parse_typed_skill_decision(str(response.content or ""))
+                            skill_decision = None if generate_wire.error else parse_typed_skill_decision(generate_wire.payload)
                         except SkillAccessError:
                             skill_decision = None
                         try:
                             complete_candidate_generation(self.data_path, task_id, candidate_provider_claim,
-                                content=str(response.content or ""), noncandidate=skill_decision is not None)
+                                content=str(response.content or ""), noncandidate=skill_decision is not None,
+                                response_metadata=provider_response_metadata(response))
                         except (CandidateRepairReceiptError, OSError, ValueError) as exc:
                             code = str(getattr(exc, "code", None) or "CANDIDATE_GENERATION_COMPLETION_FAILED")
                             return {"pending_action": {}, "generate_result": "BLOCKED_INTERNAL_PROTOCOL",
@@ -42802,17 +42817,15 @@ question. Never guess a scientific or database identity.
                                 "execution_status": "not_started", "next_step": "finish"}
                     if recovery_context_obj:
                         try:
-                            cache_skill_decision = parse_typed_skill_decision(
-                                str(response.content or "")
-                            )
+                            cache_skill_decision = None if generate_wire.error else parse_typed_skill_decision(generate_wire.payload)
                         except SkillAccessError:
                             cache_skill_decision = {"decision": "INVALID_SKILL_DECISION"}
                         cached_structured_action = {}
-                        if cache_skill_decision is None:
+                        if cache_skill_decision is None and not generate_wire.error:
                             if generate_script_protocol:
                                 try:
                                     cached_structured_action = adapt_script_block_to_action(
-                                        parse_executable_script_block(str(response.content or "")),
+                                        parse_executable_script_block(generate_wire.payload),
                                         generate_artifact_environment,
                                         execution_envelope=(
                                             recovery_execution_envelope or None
@@ -42824,7 +42837,7 @@ question. Never guess a scientific or database identity.
                                     cached_structured_action = {}
                             else:
                                 cached_structured_action = self._extract_structured_action(
-                                    str(response.content or "")
+                                    generate_wire.payload
                                 )
                         recovery_store.save_llm_result(
                             recovery_context_obj.context_id,
@@ -42832,7 +42845,8 @@ question. Never guess a scientific or database identity.
                             raw_response=str(response.content or ""),
                             parsed_result={
                                 "response_kind": "skill_decision" if cache_skill_decision is not None else "action",
-                                "action_type": str(cached_structured_action.get("type") or "")
+                                "action_type": str(cached_structured_action.get("type") or ""),
+                                "response_metadata": provider_response_metadata(response),
                             },
                             cache_identity=recovery_cache_identity,
                             candidate_fingerprint=(
@@ -43253,10 +43267,18 @@ question. Never guess a scientific or database identity.
                         "generate_result": "STALE_NODE_RESULT",
                         "generate_exit_reason": "node_result_stale_discarded",
                     }
-            content   = response.content
+            generate_display = project_generate_response(str(response.content or ""),
+                script_protocol=generate_script_protocol,
+                response_metadata=provider_response_metadata(response))
+            content = generate_display.payload
+            if generate_display.public_message:
+                emit_public(generate_display.public_message, task_id=task_id,
+                            node="generate", call_id=generate_node_context.binding.invocation_id,
+                            source_message_id=response.id)
+                await flush_public()
 
             try:
-                typed_generate_skill_decision = parse_typed_skill_decision(
+                typed_generate_skill_decision = None if generate_display.error else parse_typed_skill_decision(
                     str(content or "")
                 )
             except SkillAccessError as exc:
@@ -43284,7 +43306,7 @@ question. Never guess a scientific or database identity.
                         recovery_skill_completion=({
                             "target_generation_id": target_generation_id,
                             "provider_request_digest": str(recovery_cache_identity.get("provider_request_digest") or ""),
-                            "response_digest": hashlib.sha256(str(content or "").encode()).hexdigest(),
+                            "response_digest": hashlib.sha256(str(response.content or "").encode()).hexdigest(),
                         } if recovery_generated else None),
                         node_context=generate_node_context,
                         response=response,
@@ -43319,14 +43341,21 @@ question. Never guess a scientific or database identity.
             # 打印（去重）
             output.print_ai(content, source="diagnostic")
 
-            # 解析
-            search_match  = re.search(r"<search>(.*?)</search>", content, re.DOTALL)
-            install_match = re.search(r"<install_tool.*?>.*?</install_tool>", content, re.DOTALL)
-            execute_match = re.search(r"<execute>(.*?)</execute>", content, re.DOTALL)
-            ask_user_match = re.search(r"<ask_user>(.*?)</ask_user>", content, re.DOTALL)
-            answer_match  = re.search(r"<solution>(.*?)</solution>", content, re.DOTALL)
-            activate_match = re.search(r"<activate_batch\s+batch_id=[\"']?([^\"'\s>/]+)[\"']?\s*/?>", content, re.DOTALL)
-            structured_parse_result = self._extract_structured_action_result(content)
+            # A rejected transport cannot promote tags from its raw JSON. Keep
+            # content intact for the original malformed-candidate identity.
+            parse_content = "" if generate_display.error else content
+            search_match  = re.search(r"<search>(.*?)</search>", parse_content, re.DOTALL)
+            install_match = re.search(r"<install_tool.*?>.*?</install_tool>", parse_content, re.DOTALL)
+            execute_match = re.search(r"<execute>(.*?)</execute>", parse_content, re.DOTALL)
+            ask_user_match = re.search(r"<ask_user>(.*?)</ask_user>", parse_content, re.DOTALL)
+            answer_match  = re.search(r"<solution>(.*?)</solution>", parse_content, re.DOTALL)
+            activate_match = re.search(r"<activate_batch\s+batch_id=[\"']?([^\"'\s>/]+)[\"']?\s*/?>", parse_content, re.DOTALL)
+            structured_parse_result = (StructuredActionParseResult(error={
+                "stage": "script_block" if generate_script_protocol else "action_schema",
+                "code": ScriptBlockError.code,
+                "message": generate_display.error,
+            }, raw_candidate=content) if generate_display.error
+                else self._extract_structured_action_result(content))
             structured_action = structured_parse_result.action
             action_parse_error = deepcopy(structured_parse_result.error)
             provider_candidate = deepcopy(structured_action)
@@ -43350,6 +43379,8 @@ question. Never guess a scientific or database identity.
                 )
             if generate_script_protocol and not script_stop_requested:
                 try:
+                    if generate_display.error:
+                        raise ScriptBlockError(generate_display.error)
                     script_block = parse_executable_script_block(content)
                     structured_action = adapt_script_block_to_action(
                         script_block,
@@ -44935,7 +44966,8 @@ question. Never guess a scientific or database identity.
                 or (action_type == "execute" and str(structured_action.get("code") or "").strip())
             )
             plain_final_solution = (
-                not any([search_match, install_match, execute_match, ask_user_match, activate_match])
+                not generate_display.error
+                and not any([search_match, install_match, execute_match, ask_user_match, activate_match])
                 and not structured_action
                 and self._looks_like_plain_final_solution(content)
             )

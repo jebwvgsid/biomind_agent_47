@@ -459,7 +459,14 @@ def claim_candidate_generation(data_path, task_id, scope, *, invocation_id, rece
             if held['status'] != 'completed':
                 raise CandidateRepairReceiptError('CANDIDATE_GENERATION_OUTCOME_UNKNOWN', held['claim_id'])
             content = StateContractStore(data_path,task_id).read_object(held['response_ref'],expected_type='generate_candidate_response')
-            return {**held,'cached_response':content['content']}
+            metadata = content.get('response_metadata')
+            safe_metadata = {
+                key: value for key, value in (metadata.items() if isinstance(metadata, Mapping) else ())
+                if key in {'finish_reason', 'completion_integrity'}
+                and isinstance(value, str) and value.strip() and len(value) <= 80
+            }
+            return {**held,'cached_response':content['content'],
+                    'cached_response_metadata':safe_metadata}
         claim_id = 'candidate-call:' + _digest({'authorization':authorization,'continuation':len(prior)})
         claim = {'claim_id':claim_id,'scope':deepcopy(scope),'authorization':authorization,'status':'claimed',
             'invocation_id':invocation_id,'corrective_ordinal':int(receipt.get('repair_ordinal') or 0)}
@@ -471,9 +478,20 @@ def claim_candidate_generation(data_path, task_id, scope, *, invocation_id, rece
     raise CandidateRepairReceiptError('CANDIDATE_GENERATION_CAS_CONFLICT')
 
 
-def complete_candidate_generation(data_path, task_id, claim, *, content, noncandidate=False):
+def complete_candidate_generation(data_path, task_id, claim, *, content, noncandidate=False,
+                                  response_metadata=None):
     from agent_core.plan_tracker import load_plan_state, save_plan_state, StateCASConflict
-    ref = StateContractStore(data_path,task_id).put_object('generate_candidate_response', {'content':str(content)})
+    payload = {'content':str(content)}
+    safe_metadata = {
+        key: value for key, value in (response_metadata.items() if isinstance(response_metadata, Mapping) else ())
+        if key in {'finish_reason', 'completion_integrity'}
+        and isinstance(value, str) and value.strip() and len(value) <= 80
+    }
+    if safe_metadata:
+        # Preserve known response integrity across cache replay without adding
+        # provider context or changing the original content/claim lifecycle.
+        payload['response_metadata'] = safe_metadata
+    ref = StateContractStore(data_path,task_id).put_object('generate_candidate_response', payload)
     for _ in range(3):
         state=load_plan_state(data_path,task_id)
         ledger=deepcopy(dict(state['task_state'].get('candidate_repair_state') or {}))

@@ -12,6 +12,7 @@ supervisor.py  ―  Scientific Supervisor & QA Node for BioAnalyst Agent
 from __future__ import annotations
 
 import json
+from agent_core.cli_display import display_print as print
 import hashlib
 import logging
 import os

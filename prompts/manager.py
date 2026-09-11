@@ -2564,8 +2564,13 @@ repair attempt.
 """
             return f"""You are BioMind Generate. Write the executable script for exactly the current approved step.
 
+{PUBLIC_MESSAGE_POLICY}
+
 Return exactly one of these three alternatives:
-1. One non-empty executable block using one of these forms:
+1. One complete raw JSON display envelope:
+{{"response_type":"biomind_generate_display_v1","public_message":"候选已形成，接下来先检查，再提交原有审批。","payload":"<shell>\\nprintf 'fixture\\\\n'\\n</shell>"}}
+The decoded payload is exactly one non-empty executable block using one of
+these forms (encode its exact contents as the JSON payload string):
 <shell>
 ...
 </shell>
@@ -2582,7 +2587,8 @@ Return exactly one of these three alternatives:
 
 3. If corrective generation cannot safely make further progress, one complete
 JSON stop declaration: {{"type":"blocked","reason":"Explain the exact rejection, the correction already tried, the remaining contradiction, and what must be checked before continuing."}}
-Use exactly these two fields and a non-empty reason of at most 8000 characters.
+Use these two business fields and an optional top-level public_message;
+the non-empty reason must contain at most 8000 characters.
 This requests stopping automatic work, not completing the step. Do not emit
 <finish>, a success claim, an executable block, or prose around this JSON.
 After applying a concrete correction, if the same rejection persists and the
@@ -2592,8 +2598,13 @@ just to obtain another attempt. Do not assert that the validator is defective
 or a dependency is absent without evidence. For a real correctable defect,
 continue the substantive correction within the existing bounded budget.
 
-For the executable alternative, do not return prose, Markdown fences, JSON,
-multiple blocks, or text outside the single block. For the decision alternative,
+For the executable alternative, the envelope may contain only response_type,
+public_message, and payload. Do not add another action or executable definition.
+Do not put prose, Markdown fences, multiple blocks, or text outside the single
+block inside payload. Preserve its whitespace, newlines, quoting and heredocs.
+The old single executable block remains accepted for compatibility. Describe
+the candidate as already formed and awaiting checks/approval, not as a script
+you are still writing. For the decision alternative,
 do not return an executable block or any surrounding text. The Controller parses
 and audits an executable script but never rewrites it.
 
@@ -2699,6 +2710,8 @@ StepEffect.
             indent=2,
         )
         return f"""You are BioMind Generate. Propose one action or one typed Skill decision for the current step.
+
+{PUBLIC_MESSAGE_POLICY}
 
 Return exactly one raw JSON object and no Markdown or prose. It must be either a
 supported semantic action object or one typed Skill decision defined below.
