@@ -1,0 +1,2289 @@
+{
+  "schema_version": 1,
+  "task": "Plan results V1 20260912",
+  "source": "isolated offline synthetic verification",
+  "base": "51da2f7e680aa041dd7d51364e66c3949822f03e",
+  "branch": "refactor/consultant-controller-authority",
+  "code_head": "e7f472b6aa8d41472bf6deeaed3540c6c76643d5",
+  "implementation_status": "COMPLETE",
+  "slices": [
+    {
+      "commit": "ba594513560c6c3d3b6052d732511225acf3dbcd",
+      "parent": "51da2f7e680aa041dd7d51364e66c3949822f03e",
+      "subject": "fix(planner): carry admitted Recovery revisions into current planning requests",
+      "tree": "e24d0549aafe3de2ce0ac7f50535a9642ca719e4",
+      "files": [
+        "agent_core/node_context.py",
+        "agent_core/planner_loop.py",
+        "agent_core/planner_revision.py",
+        "agent_core/workflow/recovery_runtime.py",
+        "bio_agents.py",
+        "prompts/manager.py",
+        "tests/export_plan_results_fixture.py",
+        "tests/test_plan_revision_handoff.py"
+      ]
+    },
+    {
+      "commit": "332f56f008c2c4ad781dcfdb9beb54f751c44dc1",
+      "parent": "ba594513560c6c3d3b6052d732511225acf3dbcd",
+      "subject": "fix(evidence): separate collection registration and completion facts",
+      "tree": "94996b4326edd6bfa0370604f783a13c78765e61",
+      "files": [
+        "agent_core/evidence_projection.py",
+        "agent_core/semantic_completion.py",
+        "agent_core/workflow/recovery_projection.py",
+        "bio_agents.py",
+        "tests/test_plan_results_evidence.py"
+      ]
+    },
+    {
+      "commit": "e18753c0d9c0c87cb2dd78e83bc7b3b0f2edaa2b",
+      "parent": "332f56f008c2c4ad781dcfdb9beb54f751c44dc1",
+      "subject": "feat(plan): declare required results and verify approved checks by provenance",
+      "tree": "107738700b495e36e509dd5be2a2c478c94dbddb",
+      "files": [
+        "agent_core/completion_gate.py",
+        "agent_core/execution_authority.py",
+        "agent_core/managed_artifacts.py",
+        "agent_core/node_context.py",
+        "agent_core/plan_contract.py",
+        "agent_core/plan_tracker.py",
+        "agent_core/step_effects.py",
+        "agent_core/workflow/commit_step.py",
+        "agent_core/workflow/verifier.py",
+        "bio_agents.py",
+        "prompts/manager.py",
+        "supervisor.py",
+        "tests/test_plan_result_contract_v1.py",
+        "tests/test_plan_results_managed.py"
+      ]
+    },
+    {
+      "commit": "3245b3015b0d1ed4c44652726ce45ebba1e6e270",
+      "parent": "e18753c0d9c0c87cb2dd78e83bc7b3b0f2edaa2b",
+      "subject": "fix(results): deliver committed observations and honor formal validation results",
+      "tree": "a66daa291bf538a64015d622971f99631e98a945",
+      "files": [
+        "agent_core/committed_observations.py",
+        "agent_core/node_context.py",
+        "agent_core/plan_tracker.py",
+        "agent_core/workflow/final_audit.py",
+        "bio_agents.py",
+        "skills/genomics/reseq-variant-workflow/SKILL.md",
+        "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "supervisor.py",
+        "tests/export_plan_results_fixture.py",
+        "tests/test_plan_results_managed.py",
+        "tests/test_plan_results_purpose.py"
+      ]
+    },
+    {
+      "commit": "e7f472b6aa8d41472bf6deeaed3540c6c76643d5",
+      "parent": "3245b3015b0d1ed4c44652726ce45ebba1e6e270",
+      "subject": "feat(results): resolve observed file names through scoped recovery and local approval",
+      "tree": "283ac50ffb7a1949d9bd90df03f90f4d212bfba2",
+      "files": [
+        "agent_core/managed_artifacts.py",
+        "agent_core/plan_tracker.py",
+        "agent_core/workflow/commit_step.py",
+        "agent_core/workflow/final_audit.py",
+        "agent_core/workflow/recovery_agent.py",
+        "agent_core/workflow/recovery_projection.py",
+        "agent_core/workflow/recovery_reception.py",
+        "agent_core/workflow/recovery_runtime.py",
+        "agent_core/workflow/result_resolution.py",
+        "agent_core/workflow/stage_contracts.py",
+        "agent_core/workflow/verifier.py",
+        "bio_agents.py",
+        "tests/test_plan_results_evidence.py",
+        "tests/test_plan_results_name.py"
+      ]
+    }
+  ],
+  "acceptance_runs": [
+    {
+      "export": "/tmp/biomind_plan_results_20260912/rp1-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/rp1-candidate-safe-results",
+      "source_tree": "e24d0549aafe3de2ce0ac7f50535a9642ca719e4",
+      "source_signature": "40f94a485334997739fe11b3521acb4082cdf827f1ed24208b094215aab94c94",
+      "source_files": 161,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/rp1-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/rp1-candidate",
+        "-q",
+        "tests/test_plan_revision_handoff.py",
+        "tests/test_recovery_projection.py",
+        "-k",
+        "not test_binder_persists_install_packet_for_resume and not test_completion_failure_packet_carries_step_archive_inspection_ref"
+      ],
+      "call_outcomes": {
+        "passed": 17
+      },
+      "non_call_failures": [],
+      "pytest_summary": "17 passed, 2 deselected in 13.06s",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "2b4d90d4d843b3c2b7075d8bbd1b42ef2e0690b69718ea08e551f9ec68ee49dc",
+        "stdout.txt": "714bb029b8cdbec914c103633fbd2880b7aad1c655ed26afcb8a0dc7bca24670",
+        "invocation.json": "ecf4297ea6f8c1f7e2b8b2726a26395be6f70a13fe1f3886ecab9de8f5f87f48"
+      },
+      "selected_acceptance_run": true
+    },
+    {
+      "export": "/tmp/biomind_plan_results_20260912/ev1-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/ev1-candidate-results",
+      "source_tree": "94996b4326edd6bfa0370604f783a13c78765e61",
+      "source_signature": "11c4538af5b995c6442e0b2c152a76a2c91a9a66d196b9989ef98cd718a4f8ed",
+      "source_files": 163,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/ev1-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/ev1-candidate",
+        "-q",
+        "tests/test_plan_results_evidence.py"
+      ],
+      "call_outcomes": {
+        "passed": 9
+      },
+      "non_call_failures": [],
+      "pytest_summary": "9 passed in 2.75s",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "fac2c9b731ac26f97d0952ec85aecbba73bb31677b7681e6e8d070b93f82d36b",
+        "stdout.txt": "d1147ad15541b4fe9e7c39e7bef2b2fc38c72c4b16d010c4356905085f60f6f9",
+        "invocation.json": "ec81301af0eee718f08ce8e2f4ba96733f5627cbe0e805d7473acc01745fd296"
+      },
+      "selected_acceptance_run": true
+    },
+    {
+      "export": "/tmp/biomind_plan_results_20260912/plan-purpose-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/plan-purpose-candidate-results",
+      "source_tree": "107738700b495e36e509dd5be2a2c478c94dbddb",
+      "source_signature": "45e24434ab8e380b98da5ff0388c91bcdb0dd293973fe108a874b04e1ce0489b",
+      "source_files": 169,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/plan-purpose-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/plan-purpose-candidate",
+        "-q",
+        "tests/test_plan_result_contract_v1.py",
+        "tests/test_plan_results_managed.py"
+      ],
+      "call_outcomes": {
+        "passed": 36
+      },
+      "non_call_failures": [],
+      "pytest_summary": "36 passed in 32.24s",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "4a8c73949328aaad851084ff8cf0fc0eb2d07399041c748a0ae630692b942810",
+        "stdout.txt": "87827847395860f448771f8f57717a196de803aafef889e7127c65feb83542ff",
+        "invocation.json": "dde3195d0c98166a2f1350103feaa69b083d0f1b4ddde7634d221fa14ac13eb6"
+      },
+      "selected_acceptance_run": true
+    },
+    {
+      "export": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate-results",
+      "source_tree": "a66daa291bf538a64015d622971f99631e98a945",
+      "source_signature": "693d6417903519d38bccaa80b9c533ebca2ba6d2e171988415cc691442ae5428",
+      "source_files": 172,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate",
+        "-q",
+        "tests/test_plan_results_managed.py",
+        "tests/test_plan_results_purpose.py"
+      ],
+      "call_outcomes": {
+        "passed": 23
+      },
+      "non_call_failures": [],
+      "pytest_summary": "23 passed in 56.63s",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "1338a2cbab6222bd3f71fcd76db9e6b4f3de5eef559211482502630a111d5fa0",
+        "stdout.txt": "f9cbd643d07a39f5ee9335c3a457475aacf1fb188b574212f61c047740e2ad24",
+        "invocation.json": "b510045e41fe1e8f8ad1539367b21e32c111a9f27e219d0cdc8117427d8ce6be"
+      },
+      "selected_acceptance_run": true
+    },
+    {
+      "export": "/tmp/biomind_plan_results_20260912/name-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/name-candidate-results",
+      "source_tree": "283ac50ffb7a1949d9bd90df03f90f4d212bfba2",
+      "source_signature": "4da28e8ec3a7c2491666a8adb4084a3a472415bddcc34659844124acaa25e316",
+      "source_files": 174,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/name-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/name-candidate",
+        "-q",
+        "tests/test_plan_results_name.py"
+      ],
+      "call_outcomes": {
+        "passed": 31
+      },
+      "non_call_failures": [],
+      "pytest_summary": "31 passed in 68.53s (0:01:08)",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "eae55dd75728eb9df6d5c564d95bd8849db19705f44a3d9287e794dcbf568c44",
+        "stdout.txt": "df926291006ee218482d9a0da0b96fcc7e5924f7ccd34074a068b46410884052",
+        "invocation.json": "d2e0d1f0675fd4ce6c0eb26441320d1d27e4bd98eaa88990a3f646fa9081aee7"
+      },
+      "selected_acceptance_run": true
+    },
+    {
+      "export": "/tmp/biomind_plan_results_20260912/name-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/final-contract-evidence-results",
+      "source_tree": "283ac50ffb7a1949d9bd90df03f90f4d212bfba2",
+      "source_signature": "4da28e8ec3a7c2491666a8adb4084a3a472415bddcc34659844124acaa25e316",
+      "source_files": 174,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/name-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/name-candidate",
+        "-q",
+        "tests/test_plan_result_contract_v1.py",
+        "tests/test_plan_results_evidence.py"
+      ],
+      "call_outcomes": {
+        "passed": 41
+      },
+      "non_call_failures": [],
+      "pytest_summary": "41 passed in 2.69s",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "9376614b9de2492629e8b437692dc02a2feee7bae438a345e3f405b25afd9d62",
+        "stdout.txt": "7cbcdc3be4be738a8212d2db051fb5a278a214164d19ca5531251ef003ff7aa1",
+        "invocation.json": "a3eec61897306e6da91aca1133ad82d087bc38a6c2f3aa18de24422ffcf544e7"
+      },
+      "selected_acceptance_run": true
+    },
+    {
+      "export": "/tmp/biomind_plan_results_20260912/name-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/final-managed-purpose-results",
+      "source_tree": "283ac50ffb7a1949d9bd90df03f90f4d212bfba2",
+      "source_signature": "4da28e8ec3a7c2491666a8adb4084a3a472415bddcc34659844124acaa25e316",
+      "source_files": 174,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/name-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/name-candidate",
+        "-q",
+        "tests/test_plan_results_managed.py",
+        "tests/test_plan_results_purpose.py"
+      ],
+      "call_outcomes": {
+        "passed": 23
+      },
+      "non_call_failures": [],
+      "pytest_summary": "23 passed in 68.48s (0:01:08)",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "1984e0a0fa885c911349c4229f0af19640cf37b5ad6be1b0873ccf5f3a7757ad",
+        "stdout.txt": "27c8ce2b23996607d3d51c784f9ea4c80132043ab86ca3388e1abfd08bf262f6",
+        "invocation.json": "223b87c69bcbfcc61b5a1ffdd7c86f55378c3439039b4bb1c5ebce7dbdaa283e"
+      },
+      "selected_acceptance_run": true
+    },
+    {
+      "export": "/tmp/biomind_plan_results_20260912/name-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/final-revision-results",
+      "source_tree": "283ac50ffb7a1949d9bd90df03f90f4d212bfba2",
+      "source_signature": "4da28e8ec3a7c2491666a8adb4084a3a472415bddcc34659844124acaa25e316",
+      "source_files": 174,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/name-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/name-candidate",
+        "-q",
+        "tests/test_plan_revision_handoff.py",
+        "tests/test_recovery_projection.py",
+        "-k",
+        "not test_binder_persists_install_packet_for_resume and not test_completion_failure_packet_carries_step_archive_inspection_ref"
+      ],
+      "call_outcomes": {
+        "passed": 17
+      },
+      "non_call_failures": [],
+      "pytest_summary": "17 passed, 2 deselected in 12.34s",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "f37458cbe1495d03f4b9a60b17ee81d6c127fdc60e5d40f138d473fbfcfe4dab",
+        "stdout.txt": "33015338fcd4d8476d0117d51baaca6f41390c6ceaab5e082fd960873f990b0a",
+        "invocation.json": "2fac5031ac18a644a2e4568b966c307443d7d5ccbda09fcb5bdff9f22498bc97"
+      },
+      "selected_acceptance_run": true
+    },
+    {
+      "export": "/tmp/biomind_plan_results_20260912/name-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/final-cli-cp-results",
+      "source_tree": "283ac50ffb7a1949d9bd90df03f90f4d212bfba2",
+      "source_signature": "4da28e8ec3a7c2491666a8adb4084a3a472415bddcc34659844124acaa25e316",
+      "source_files": 174,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/name-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/name-candidate",
+        "-q",
+        "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off"
+      ],
+      "call_outcomes": {
+        "passed": 1
+      },
+      "non_call_failures": [],
+      "pytest_summary": "1 passed in 22.59s",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "2c22f08ce20f4936e3013b1c259f77fa49303a452faab7f5d679dce12a4afe37",
+        "stdout.txt": "ca06d897ea2659b8c7baba26d88a90238c99423e4b4b9a4d2be35e79f30066ac",
+        "invocation.json": "83e0682645d38ed8d92b5221fd8aa53f957e2af9cd4432f684f8e6e820b85f8a"
+      },
+      "selected_acceptance_run": true
+    },
+    {
+      "export": "/tmp/biomind_plan_results_20260912/name-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/final-cli-generate-results",
+      "source_tree": "283ac50ffb7a1949d9bd90df03f90f4d212bfba2",
+      "source_signature": "4da28e8ec3a7c2491666a8adb4084a3a472415bddcc34659844124acaa25e316",
+      "source_files": 174,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/name-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/name-candidate",
+        "-q",
+        "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+        "tests/test_cli_generate_public_integration.py::test_cli3_actual_bash_syntax_failure_repairs_before_approval_or_execution",
+        "tests/test_cli_generate_public_integration.py::test_cli3_complete_json_known_length_keeps_original_candidate_repair",
+        "tests/test_cli_generate_public_integration.py::test_cli3_invalid_transport_cannot_execute_embedded_fallback_tags"
+      ],
+      "call_outcomes": {
+        "passed": 5
+      },
+      "non_call_failures": [],
+      "pytest_summary": "5 passed in 44.70s",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "0fcd097e9b65e4151aa2095901f9bcc7081f5e61bed9fef25ffa85db74783bd3",
+        "stdout.txt": "2024b60f2fd2e889378ecfffe45f7da50f33e24a02fadc6ec5c77dd5ef04f225",
+        "invocation.json": "25a021ea66de62d512a40e3e34776e2892fb3d0238e3d3a3c6c7b202210ebdfc"
+      },
+      "selected_acceptance_run": true
+    },
+    {
+      "export": "/tmp/biomind_plan_results_20260912/name-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/final-cli-recovery-results",
+      "source_tree": "283ac50ffb7a1949d9bd90df03f90f4d212bfba2",
+      "source_signature": "4da28e8ec3a7c2491666a8adb4084a3a472415bddcc34659844124acaa25e316",
+      "source_files": 174,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/name-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/name-candidate",
+        "-q",
+        "tests/test_cli_model_progress_integration.py::test_cli1_actual_recovery_loop_plain_off_and_display_failure_are_business_identical"
+      ],
+      "call_outcomes": {
+        "passed": 1
+      },
+      "non_call_failures": [],
+      "pytest_summary": "1 passed in 17.31s",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "f75494957bf050b703fffc7b682f9db6230a62823738f9ae4bb968a47a0b61a3",
+        "stdout.txt": "f8fd6484e5e58ff41cdaf914ce23abb0c8b73682b110ee436fe30e033189b93c",
+        "invocation.json": "24cccddd1afd7dbc76a47b24969a0b81d5854bc0093313557cdf452a664bb446"
+      },
+      "selected_acceptance_run": true
+    },
+    {
+      "export": "/tmp/biomind_plan_results_20260912/name-candidate",
+      "results": "/tmp/biomind_plan_results_20260912/final-stop-budget-results",
+      "source_tree": "283ac50ffb7a1949d9bd90df03f90f4d212bfba2",
+      "source_signature": "4da28e8ec3a7c2491666a8adb4084a3a472415bddcc34659844124acaa25e316",
+      "source_files": 174,
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_plan_results_20260912/name-candidate/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_plan_results_20260912/name-candidate",
+        "-q",
+        "tests/test_cli_v2_recovery_route.py::test_v2_actual_recovery_admission_budget_and_graph_route_are_display_independent",
+        "tests/test_cli_model_recovery_tools.py::test_executor_actual_cancellation_keeps_execution_identity_and_reaps",
+        "tests/test_cli_model_display.py::test_approval_cancel_cannot_be_replaced_by_late_activity"
+      ],
+      "call_outcomes": {
+        "passed": 4
+      },
+      "non_call_failures": [],
+      "pytest_summary": "4 passed in 4.76s",
+      "observed_launcher_exit_code": 0,
+      "child_source_unchanged_marker": true,
+      "parent_source_check": {
+        "status": "unchanged",
+        "mismatches": []
+      },
+      "raw_evidence_sha256": {
+        "pytest-results.json": "adbb1f0627a14ce99e7f7847a33b4125dd62c936f68a0a9e08fdf5170e749f9c",
+        "stdout.txt": "0ece5cb48cc71dc7c13ebfbe4b94181c011c0651196bb20a6af368e419315b35",
+        "invocation.json": "823789f4467d4aa66fe0e56aa863929fcfd7e2bcef76ed1d068bc2410dcb5f8d"
+      },
+      "selected_acceptance_run": true
+    }
+  ],
+  "item_status": {
+    "RP-1": "IMPLEMENTED_AND_VERIFIED",
+    "EV-1": "IMPLEMENTED_AND_VERIFIED",
+    "PLAN-1": "IMPLEMENTED_AND_VERIFIED",
+    "PURPOSE-1": "IMPLEMENTED_AND_VERIFIED",
+    "NAME-1": "IMPLEMENTED_AND_VERIFIED",
+    "CRASH": "BOUNDED_DIAGNOSIS_COMPLETE_ROOT_CAUSE_UNKNOWN_NOT_FIXED"
+  },
+  "managed_chain_evidence": {
+    "chain_c": {
+      "source": "synthetic native Recovery -> admission -> graph -> Planner -> PlanReview",
+      "evidence_file": "/tmp/biomind_plan_results_20260912/rp1-candidate-safe-results/plan-revision-handoff-off.json",
+      "sha256": "d519a1a7c4be7b160e86e3c71e3db76597740f9a1ac83cafafac9c4b305ce111",
+      "counts": {
+        "recovery_calls": 1,
+        "revision_planner_calls": 2,
+        "executions": 0,
+        "recovery_route": "planner",
+        "planner_route": "plan_review",
+        "approval_outcome": "approved_for_execution"
+      },
+      "admitted_directive": {
+        "schema_version": 1,
+        "directive_id": "synthetic-revision-1",
+        "task_id": "synthetic-plan-revision",
+        "action": "revise_plan",
+        "summary": "模型判断：当前检查输出需要修订。",
+        "reason_code": "CONTRACT_DRIFT",
+        "target_step_id": "step-direct",
+        "instruction": "保留当前已批准计划和完成进度，仅修正当前检查步骤与能力的输出矛盾。",
+        "evidence_refs": [
+          "synthetic-validation"
+        ]
+      },
+      "typed_outcome": "plan_revision_required",
+      "recorded_failure": "Formal provenance is expected despite accepted file collection.",
+      "asserted_actual_request": "Both initial revision candidate and correction contain admitted instruction, current approved Plan and recorded failure, without stale/cross-task contamination.",
+      "display_modes": [
+        "compact",
+        "verbose",
+        "off"
+      ],
+      "actual_planner_request_excerpts": [
+        {
+          "admitted_instruction": "se_current_plan\",\n        \"return_complete_plan\": true,\n        \"instruction\": \"保留当前已批准计划和完成进度，仅修正当前检查步骤与能力的输出矛盾。\",\n        \"target_step_key\": \"step-direct\",\n        \"model_diagnosis\": {\n          \"summary\": \"模型判断：当前检查输出需要修订。\",\n     ",
+          "recorded_failure": " \"PLAN\",\n          \"error_code\": \"VERIFICATION_REJECTED\",\n          \"summary\": \"Formal provenance is expected despite accepted file collection.\",\n          \"retryable\": true,\n          \"source_kind\": \"verification_outcome\",\n          \"completion_gate\": {\n        "
+        },
+        {
+          "admitted_instruction": "se_current_plan\",\n        \"return_complete_plan\": true,\n        \"instruction\": \"保留当前已批准计划和完成进度，仅修正当前检查步骤与能力的输出矛盾。\",\n        \"target_step_key\": \"step-direct\",\n        \"model_diagnosis\": {\n          \"summary\": \"模型判断：当前检查输出需要修订。\",\n     ",
+          "recorded_failure": " \"PLAN\",\n          \"error_code\": \"VERIFICATION_REJECTED\",\n          \"summary\": \"Formal provenance is expected despite accepted file collection.\",\n          \"retryable\": true,\n          \"source_kind\": \"verification_outcome\",\n          \"completion_gate\": {\n        "
+        }
+      ],
+      "all_captured_request_stages": {
+        "consultant": 1,
+        "planner": 3,
+        "generate": 1
+      }
+    },
+    "chain_a": [
+      {
+        "source": "synthetic managed production graph",
+        "mode": "compact",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 1
+        },
+        "approvals": 1,
+        "commit_count": 1,
+        "final_audit_count": 1,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate-results/plan-results-managed-compact-False-validation.json",
+        "sha256": "0ba104f255df7d465c9b8d5f8ebbfa7dd2cd7d72b298594f80cf40ca8049393b",
+        "final_outcome": "task_verified",
+        "answer": "检查两份输入的列 · checked_columns：{\"input-a.tsv\": true, \"input-b.tsv\": true}",
+        "raw_execution_sha256": "7f0b0aa79d4fc3cf6649e38ae0e8971028c6588d682465228e01e6787072e046",
+        "files_required": false
+      },
+      {
+        "source": "synthetic managed production graph",
+        "mode": "compact",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 1
+        },
+        "approvals": 1,
+        "commit_count": 1,
+        "final_audit_count": 1,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate-results/plan-results-managed-compact-True-validation.json",
+        "sha256": "e08d00b86f9775040a93be4f0d21e417efea8f9942f72926750d17ebf260f5ee",
+        "final_outcome": "task_verified",
+        "answer": "检查两份输入的列 · checked_columns：{\"input-a.tsv\": true, \"input-b.tsv\": false}",
+        "raw_execution_sha256": "7e7ef0321c16b1c204ff3e8719155b33fee63392f324b5629bdee2595c28ac7f",
+        "files_required": false
+      },
+      {
+        "source": "synthetic managed production graph",
+        "mode": "off",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 1
+        },
+        "approvals": 1,
+        "commit_count": 1,
+        "final_audit_count": 1,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate-results/plan-results-managed-off-False-probe.json",
+        "sha256": "266f5e2640ed30ad746ac40e87a791d88da8339075754d4261805e6df26bc6af",
+        "final_outcome": "task_verified",
+        "answer": "检查两份输入的列 · checked_columns：{\"input-a.tsv\": true, \"input-b.tsv\": true}",
+        "raw_execution_sha256": "897911ac6dc8ab3cfe8e8b1a87fcc0373dfdd23b7ed261aa9598c945fed16935",
+        "files_required": false
+      },
+      {
+        "source": "synthetic managed production graph",
+        "mode": "off",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 2
+        },
+        "approvals": 2,
+        "commit_count": 2,
+        "final_audit_count": 1,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate-results/plan-results-managed-off-False-validation-reporting.json",
+        "sha256": "972fceec8c7023cef520ae8cdd409271ad34cb2c30147c3618c647fb43001098",
+        "final_outcome": "task_verified",
+        "answer": "检查两份输入的列 · checked_columns：{\"input-a.tsv\": true, \"input-b.tsv\": true}\n报告已接纳的逐文件检查结论 · reporting_answer：{\"input-a.tsv\": true, \"input-b.tsv\": true}",
+        "raw_execution_sha256": "957ec76cd1205b37b8138ad831540c61e0e895bf8b88dbad25309458f48d6186",
+        "files_required": false
+      },
+      {
+        "source": "synthetic managed production graph",
+        "mode": "off",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 1
+        },
+        "approvals": 1,
+        "commit_count": 1,
+        "final_audit_count": 1,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate-results/plan-results-managed-off-False-validation.json",
+        "sha256": "4a6d5a5078d9b201593d5b7616c1b3b651b7c6d2529dc4894f10d7018695bc52",
+        "final_outcome": "task_verified",
+        "answer": "检查两份输入的列 · checked_columns：{\"input-a.tsv\": true, \"input-b.tsv\": true}",
+        "raw_execution_sha256": "fa5ec23ed7468ebb2c65fc4ad5f45612784b69610a9043423b1af0fdc345135e",
+        "files_required": false
+      },
+      {
+        "source": "synthetic managed production graph",
+        "mode": "off",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 2
+        },
+        "approvals": 2,
+        "commit_count": 2,
+        "final_audit_count": 1,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate-results/plan-results-managed-off-True-validation-reporting.json",
+        "sha256": "18a57f9bf31b49a7833604c8cefc3741dd4ff726872924c26e8825c35c5ac4df",
+        "final_outcome": "task_verified",
+        "answer": "检查两份输入的列 · checked_columns：{\"input-a.tsv\": true, \"input-b.tsv\": false}\n报告已接纳的逐文件检查结论 · reporting_answer：{\"input-a.tsv\": true, \"input-b.tsv\": false}",
+        "raw_execution_sha256": "5e8c3575e0d5cedfff186e2cd1d9e45df9d077fb2e873b279f71626d80a28841",
+        "files_required": false
+      },
+      {
+        "source": "synthetic managed production graph",
+        "mode": "off",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 1
+        },
+        "approvals": 1,
+        "commit_count": 1,
+        "final_audit_count": 1,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate-results/plan-results-managed-off-True-validation-scope.json",
+        "sha256": "c8dc9abf36e03265e1ed08f1de09417d3100becbba3c9e7fc2f0a4c2bf8db418",
+        "final_outcome": "task_verified",
+        "answer": "检查两份输入的列 · checked_columns：{\"input-a.tsv\": true, \"input-b.tsv\": false}",
+        "raw_execution_sha256": "45884024de5ce678852c35198983b4132dc8e7b75f8065c4658c1bb59229f363",
+        "files_required": false
+      },
+      {
+        "source": "synthetic managed production graph",
+        "mode": "off",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 1
+        },
+        "approvals": 1,
+        "commit_count": 1,
+        "final_audit_count": 1,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate-results/plan-results-managed-off-True-validation.json",
+        "sha256": "7d73696e19ecfd494ad717f8534124111fce47c6a1ffa13eb55e6825c0584b86",
+        "final_outcome": "task_verified",
+        "answer": "检查两份输入的列 · checked_columns：{\"input-a.tsv\": true, \"input-b.tsv\": false}",
+        "raw_execution_sha256": "0e6fecd4c9b7524073cb35995d240b2e0fa09b754379766c9ac14eeb85ef1a12",
+        "files_required": false
+      },
+      {
+        "source": "synthetic managed production graph",
+        "mode": "verbose",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 1
+        },
+        "approvals": 1,
+        "commit_count": 1,
+        "final_audit_count": 1,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate-results/plan-results-managed-verbose-False-validation.json",
+        "sha256": "b2eb5d151b7fa08482d76538bd594e20d5fa26a965ed3c3c7b8b6cc1e1a0ff87",
+        "final_outcome": "task_verified",
+        "answer": "检查两份输入的列 · checked_columns：{\"input-a.tsv\": true, \"input-b.tsv\": true}",
+        "raw_execution_sha256": "5a09d54a10c225184bb37972d9d3ba9c6ae3cf71cec0806bf47230a403549755",
+        "files_required": false
+      },
+      {
+        "source": "synthetic managed production graph",
+        "mode": "verbose",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 1
+        },
+        "approvals": 1,
+        "commit_count": 1,
+        "final_audit_count": 1,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/purpose-delivery-candidate-results/plan-results-managed-verbose-True-validation.json",
+        "sha256": "48908d8ab73704e16c5e7878832dbc0e0e65b43dddc9363c6fdf907d0a51e00b",
+        "final_outcome": "task_verified",
+        "answer": "检查两份输入的列 · checked_columns：{\"input-a.tsv\": true, \"input-b.tsv\": false}",
+        "raw_execution_sha256": "282adccbd2ccbf8340342d9de4a77d1f0ba9eff997cf79a24d06c2b29ffc48ef",
+        "files_required": false
+      }
+    ],
+    "chain_b": [
+      {
+        "source": "isolated synthetic production graph",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 2
+        },
+        "recovery_calls": 2,
+        "approvals": 2,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/name-candidate-results/name-managed-accept_actual-compact-True.json",
+        "sha256": "d4cbe068277586e7feea677f48a74c080d0908daddc71e55e488815ab81d2a3f",
+        "fixture_case": "name-managed-accept_actual-compact-True",
+        "execution_count": 2,
+        "graph_nodes": [
+          [
+            "triage"
+          ],
+          [
+            "consultant"
+          ],
+          [
+            "planner"
+          ],
+          [
+            "plan_review"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "recovery"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "final_audit"
+          ]
+        ],
+        "commit_count": 2,
+        "final_audit_count": 1,
+        "final_outcome": "task_verified",
+        "raw_processes": [
+          {
+            "returncode": 0,
+            "stdout_sha256": "644a6536d4a5655eb28493d0ff744dcb63f7ab5be17882c9f0a6f9cec2ed5672",
+            "executed_wrapper_sha256": "fbaa16526e4f1a1cb08d9743b395533a2915139cd286bbb28620ce28e39b26f5"
+          },
+          {
+            "returncode": 0,
+            "stdout_sha256": "4890d8419b5bb9d0c1b60482e96a401f7a7519c3d0e4cfd330d31856fd53ca70",
+            "executed_wrapper_sha256": "2156070b3c5f2f6a0dbe057b51ef77dfd7154d0227a40f70480d0135f886a196"
+          }
+        ],
+        "receipt_summaries": [
+          {
+            "source_attempt_id": "attempt_34f5ab4fb041803cee43",
+            "local_attempt_id": "",
+            "decision_id": "managed-name-1",
+            "registration_status": "rechecked_pending_registration",
+            "bindings": [
+              {
+                "artifact_id": "plan-artifact-443db6e1f906fd9e73125e3c",
+                "semantic_handle": "output.plan-artifact-443db6e1f906fd9e73125e3c",
+                "expected_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-w6vdilfx/task_outputs/name-managed-synthetic/plan_artifacts/plan-artifact-443db6e1f906fd9e73125e3c",
+                "observed_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-w6vdilfx/task_outputs/name-managed-synthetic/plan_artifacts/software-filtered.txt",
+                "attempt_id": "attempt_34f5ab4fb041803cee43",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "realization": "model_selected",
+                "selection_decision_id": "managed-name-1",
+                "format": "text",
+                "representation": "plain",
+                "content_valid": true,
+                "format_compatibility": "compatible"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "source": "isolated synthetic production graph",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 1
+        },
+        "recovery_calls": 2,
+        "approvals": 1,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/name-candidate-results/name-managed-accept_actual-off-False.json",
+        "sha256": "f95935a04f0838e85c6d1ac027ef7a1d3f0f347ed0a1aaed0ee040871a40712e",
+        "fixture_case": "name-managed-accept_actual-off-False",
+        "execution_count": 1,
+        "graph_nodes": [
+          [
+            "triage"
+          ],
+          [
+            "consultant"
+          ],
+          [
+            "planner"
+          ],
+          [
+            "plan_review"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "recovery"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "final_audit"
+          ]
+        ],
+        "commit_count": 1,
+        "final_audit_count": 1,
+        "final_outcome": "task_verified",
+        "raw_processes": [
+          {
+            "returncode": 0,
+            "stdout_sha256": "76206e66eee79e486bffb613d2e44b2386ed69a67903016b05f589ddbb1de625",
+            "executed_wrapper_sha256": "34e94b61ea9d2ebfaa51335ea15bea864ba5e4ce069b4dcc8a01cb133c1444ea"
+          }
+        ],
+        "receipt_summaries": [
+          {
+            "source_attempt_id": "attempt_96e1f4604ac8a0d54fd1",
+            "local_attempt_id": "",
+            "decision_id": "managed-name-1",
+            "registration_status": "rechecked_pending_registration",
+            "bindings": [
+              {
+                "artifact_id": "plan-artifact-c0e976329cc2918c0ef3e54c",
+                "semantic_handle": "output.plan-artifact-c0e976329cc2918c0ef3e54c",
+                "expected_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-52w6_axz/task_outputs/name-managed-synthetic/plan_artifacts/plan-artifact-c0e976329cc2918c0ef3e54c",
+                "observed_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-52w6_axz/task_outputs/name-managed-synthetic/plan_artifacts/software-filtered.txt",
+                "attempt_id": "attempt_96e1f4604ac8a0d54fd1",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "realization": "model_selected",
+                "selection_decision_id": "managed-name-1",
+                "format": "text",
+                "representation": "plain",
+                "content_valid": true,
+                "format_compatibility": "compatible"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "source": "isolated synthetic production graph",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 2
+        },
+        "recovery_calls": 2,
+        "approvals": 2,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/name-candidate-results/name-managed-accept_actual-off-True.json",
+        "sha256": "09f77baebc64819f08219dfbd9819db582fa9bc350532f16e218a147f2fde1b8",
+        "fixture_case": "name-managed-accept_actual-off-True",
+        "execution_count": 2,
+        "graph_nodes": [
+          [
+            "triage"
+          ],
+          [
+            "consultant"
+          ],
+          [
+            "planner"
+          ],
+          [
+            "plan_review"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "recovery"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "final_audit"
+          ]
+        ],
+        "commit_count": 2,
+        "final_audit_count": 1,
+        "final_outcome": "task_verified",
+        "raw_processes": [
+          {
+            "returncode": 0,
+            "stdout_sha256": "475f987accd90d4d208e3ffe98b8392de26ff4c727c33c750378a41e069a8bbe",
+            "executed_wrapper_sha256": "b274aa6bb4da9dee21c252289f74b8a68a25d8bd28df8cd29a04a70652fc1f43"
+          },
+          {
+            "returncode": 0,
+            "stdout_sha256": "4890d8419b5bb9d0c1b60482e96a401f7a7519c3d0e4cfd330d31856fd53ca70",
+            "executed_wrapper_sha256": "39ba4505165e3f82c26edf6760815b73c24eb81ef96894ca43c231a94ab63b46"
+          }
+        ],
+        "receipt_summaries": [
+          {
+            "source_attempt_id": "attempt_8d085a5489076d271733",
+            "local_attempt_id": "",
+            "decision_id": "managed-name-1",
+            "registration_status": "rechecked_pending_registration",
+            "bindings": [
+              {
+                "artifact_id": "plan-artifact-0b878ba9a487682ba10c943f",
+                "semantic_handle": "output.plan-artifact-0b878ba9a487682ba10c943f",
+                "expected_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-nt3j52_q/task_outputs/name-managed-synthetic/plan_artifacts/plan-artifact-0b878ba9a487682ba10c943f",
+                "observed_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-nt3j52_q/task_outputs/name-managed-synthetic/plan_artifacts/software-filtered.txt",
+                "attempt_id": "attempt_8d085a5489076d271733",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "realization": "model_selected",
+                "selection_decision_id": "managed-name-1",
+                "format": "text",
+                "representation": "plain",
+                "content_valid": true,
+                "format_compatibility": "compatible"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "source": "isolated synthetic production graph",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 2
+        },
+        "recovery_calls": 2,
+        "approvals": 2,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/name-candidate-results/name-managed-accept_actual-verbose-True.json",
+        "sha256": "3bb8855ddf2e736dad97884256fe38275147a6972818553d9e2974f8625960cc",
+        "fixture_case": "name-managed-accept_actual-verbose-True",
+        "execution_count": 2,
+        "graph_nodes": [
+          [
+            "triage"
+          ],
+          [
+            "consultant"
+          ],
+          [
+            "planner"
+          ],
+          [
+            "plan_review"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "recovery"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "final_audit"
+          ]
+        ],
+        "commit_count": 2,
+        "final_audit_count": 1,
+        "final_outcome": "task_verified",
+        "raw_processes": [
+          {
+            "returncode": 0,
+            "stdout_sha256": "d27d3cf8e2c4a48817b6a6a38b0a52b2a10b3ea9a8519b18509091c68b185588",
+            "executed_wrapper_sha256": "b310d7eeaf31123d20c579e5dbbbbadbcb05d0800a939f9f3f4683b32c5d57fe"
+          },
+          {
+            "returncode": 0,
+            "stdout_sha256": "4890d8419b5bb9d0c1b60482e96a401f7a7519c3d0e4cfd330d31856fd53ca70",
+            "executed_wrapper_sha256": "6a10fbb7ac5788c629078975cd8212d3e52f40e8b6ebc79045510027098cc6ee"
+          }
+        ],
+        "receipt_summaries": [
+          {
+            "source_attempt_id": "attempt_60a1e6120053a36c0639",
+            "local_attempt_id": "",
+            "decision_id": "managed-name-1",
+            "registration_status": "rechecked_pending_registration",
+            "bindings": [
+              {
+                "artifact_id": "plan-artifact-cf7f0e225544b627590cf7db",
+                "semantic_handle": "output.plan-artifact-cf7f0e225544b627590cf7db",
+                "expected_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-pbs2pvwj/task_outputs/name-managed-synthetic/plan_artifacts/plan-artifact-cf7f0e225544b627590cf7db",
+                "observed_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-pbs2pvwj/task_outputs/name-managed-synthetic/plan_artifacts/software-filtered.txt",
+                "attempt_id": "attempt_60a1e6120053a36c0639",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "realization": "model_selected",
+                "selection_decision_id": "managed-name-1",
+                "format": "text",
+                "representation": "plain",
+                "content_valid": true,
+                "format_compatibility": "compatible"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "source": "isolated synthetic production graph",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 2
+        },
+        "recovery_calls": 2,
+        "approvals": 3,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/name-candidate-results/name-managed-copy_to_exact-compact-True.json",
+        "sha256": "98a7405e2a29668b027fcbc96add2c11f7be433b7631d973800641fdf3196cf8",
+        "fixture_case": "name-managed-copy_to_exact-compact-True",
+        "execution_count": 3,
+        "graph_nodes": [
+          [
+            "triage"
+          ],
+          [
+            "consultant"
+          ],
+          [
+            "planner"
+          ],
+          [
+            "plan_review"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "recovery"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "final_audit"
+          ]
+        ],
+        "commit_count": 2,
+        "final_audit_count": 1,
+        "final_outcome": "task_verified",
+        "raw_processes": [
+          {
+            "returncode": 0,
+            "stdout_sha256": "0c862ffcb2a87d46d5c502b21fda6520d33371d8f8b7a5069149ce1193ad15e1",
+            "executed_wrapper_sha256": "fb0c3a1f5e78ba7880a5b500cba436ace8a1dee186211a39fef212630fd58967"
+          },
+          {
+            "returncode": 0,
+            "stdout_sha256": "99cd9d1c4767cf3f3efbdc9db00dac0358fd75690b1903a74a1ce4332c5ccb3d",
+            "executed_wrapper_sha256": "9504e203cff3653d7914b65be0c3083cb05e5463599f70b264a66c823dc7d041"
+          },
+          {
+            "returncode": 0,
+            "stdout_sha256": "4890d8419b5bb9d0c1b60482e96a401f7a7519c3d0e4cfd330d31856fd53ca70",
+            "executed_wrapper_sha256": "21348df1116fbb00b84ab1e7466999d9331a36411b627836f43de1cbb359050e"
+          }
+        ],
+        "receipt_summaries": [
+          {
+            "source_attempt_id": "attempt_c39f6f0fecc12ffc9df8",
+            "local_attempt_id": "attempt_db3b84e5644a314e5037",
+            "decision_id": "managed-name-1",
+            "registration_status": "rechecked_pending_registration",
+            "bindings": [
+              {
+                "artifact_id": "plan-artifact-0522ba049265f6ef3e413691",
+                "semantic_handle": "output.plan-artifact-0522ba049265f6ef3e413691",
+                "expected_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-0vabqer9/task_outputs/name-managed-synthetic/plan_artifacts/report.md",
+                "observed_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-0vabqer9/task_outputs/name-managed-synthetic/plan_artifacts/report.md",
+                "attempt_id": "attempt_c39f6f0fecc12ffc9df8",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "realization": "expected",
+                "format": "text",
+                "representation": "plain",
+                "content_valid": true,
+                "format_compatibility": "compatible"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "source": "isolated synthetic production graph",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 1
+        },
+        "recovery_calls": 2,
+        "approvals": 2,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/name-candidate-results/name-managed-copy_to_exact-off-False.json",
+        "sha256": "21c40350911ac81806419404f46d482611119b14e0dbcc55c85f2f86ec4b1166",
+        "fixture_case": "name-managed-copy_to_exact-off-False",
+        "execution_count": 2,
+        "graph_nodes": [
+          [
+            "triage"
+          ],
+          [
+            "consultant"
+          ],
+          [
+            "planner"
+          ],
+          [
+            "plan_review"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "recovery"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "final_audit"
+          ]
+        ],
+        "commit_count": 1,
+        "final_audit_count": 1,
+        "final_outcome": "task_verified",
+        "raw_processes": [
+          {
+            "returncode": 0,
+            "stdout_sha256": "957a1c3a15e6c946f8c41281cef35d1a4bf4b3c1de447e6936f69950e94d1817",
+            "executed_wrapper_sha256": "b5e073d9df7ec48caf5301bfd45e071920aaaba574fc89d4cd5825dd6d64fb4b"
+          },
+          {
+            "returncode": 0,
+            "stdout_sha256": "b6325fb6012cd88c3c8cb475463f7c5eccc1e6b75a2c0e81790f4bf0bc252ea4",
+            "executed_wrapper_sha256": "6e7c02b6a7176bd8dbdcfb587f4844c944d779177cff5278258cebf074002ecf"
+          }
+        ],
+        "receipt_summaries": [
+          {
+            "source_attempt_id": "attempt_8ef9e78865a365cf755b",
+            "local_attempt_id": "attempt_f2f9dd2fddb8cbdd193e",
+            "decision_id": "managed-name-1",
+            "registration_status": "rechecked_pending_registration",
+            "bindings": [
+              {
+                "artifact_id": "plan-artifact-15a52d734c98d623c1288585",
+                "semantic_handle": "output.plan-artifact-15a52d734c98d623c1288585",
+                "expected_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-zra8eqlc/task_outputs/name-managed-synthetic/plan_artifacts/report.md",
+                "observed_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-zra8eqlc/task_outputs/name-managed-synthetic/plan_artifacts/report.md",
+                "attempt_id": "attempt_8ef9e78865a365cf755b",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "realization": "expected",
+                "format": "text",
+                "representation": "plain",
+                "content_valid": true,
+                "format_compatibility": "compatible"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "source": "isolated synthetic production graph",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 2
+        },
+        "recovery_calls": 2,
+        "approvals": 3,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/name-candidate-results/name-managed-copy_to_exact-off-True.json",
+        "sha256": "b722dfa659ca83813706f9426402aed314ef1c4e108d6a7a391ac671b791b8c3",
+        "fixture_case": "name-managed-copy_to_exact-off-True",
+        "execution_count": 3,
+        "graph_nodes": [
+          [
+            "triage"
+          ],
+          [
+            "consultant"
+          ],
+          [
+            "planner"
+          ],
+          [
+            "plan_review"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "recovery"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "final_audit"
+          ]
+        ],
+        "commit_count": 2,
+        "final_audit_count": 1,
+        "final_outcome": "task_verified",
+        "raw_processes": [
+          {
+            "returncode": 0,
+            "stdout_sha256": "e9e129936c64dad0bc826075282c40e4da70f0d15f9da78c442ca9778c0fb8d9",
+            "executed_wrapper_sha256": "2bd7cd69159d5ffb5bc19f5752d9b66c8eb3fd4ce552cc5e5dec1d1a2382bc7e"
+          },
+          {
+            "returncode": 0,
+            "stdout_sha256": "a59fba3e43cbfeeae05553c0caef84bf7ce6a5368c3831c8d9bbdfe175c907b3",
+            "executed_wrapper_sha256": "12b83190d73af5c790478f63aa5ebf3566e3a8b7286b0a583fa444c566696f6a"
+          },
+          {
+            "returncode": 0,
+            "stdout_sha256": "4890d8419b5bb9d0c1b60482e96a401f7a7519c3d0e4cfd330d31856fd53ca70",
+            "executed_wrapper_sha256": "a17d08068fe601b3017127446c6f0e46a8b8659d16feddbc36a80018da123742"
+          }
+        ],
+        "receipt_summaries": [
+          {
+            "source_attempt_id": "attempt_0d2a6e1bbd5eed11ffe0",
+            "local_attempt_id": "attempt_d3544f5a346d96cd0144",
+            "decision_id": "managed-name-1",
+            "registration_status": "rechecked_pending_registration",
+            "bindings": [
+              {
+                "artifact_id": "plan-artifact-29fc8d50a669fd977b99ec51",
+                "semantic_handle": "output.plan-artifact-29fc8d50a669fd977b99ec51",
+                "expected_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-zqe4_9db/task_outputs/name-managed-synthetic/plan_artifacts/report.md",
+                "observed_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-zqe4_9db/task_outputs/name-managed-synthetic/plan_artifacts/report.md",
+                "attempt_id": "attempt_0d2a6e1bbd5eed11ffe0",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "realization": "expected",
+                "format": "text",
+                "representation": "plain",
+                "content_valid": true,
+                "format_compatibility": "compatible"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "source": "isolated synthetic production graph",
+        "calls": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 2
+        },
+        "recovery_calls": 2,
+        "approvals": 3,
+        "evidence_file": "/tmp/biomind_plan_results_20260912/name-candidate-results/name-managed-copy_to_exact-verbose-True.json",
+        "sha256": "e11be2899653e9f33847559cfb24de689827db773db9f0956c8dbf8862034979",
+        "fixture_case": "name-managed-copy_to_exact-verbose-True",
+        "execution_count": 3,
+        "graph_nodes": [
+          [
+            "triage"
+          ],
+          [
+            "consultant"
+          ],
+          [
+            "planner"
+          ],
+          [
+            "plan_review"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "recovery"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "generate"
+          ],
+          [
+            "execute"
+          ],
+          [
+            "supervisor"
+          ],
+          [
+            "commit_step"
+          ],
+          [
+            "final_audit"
+          ]
+        ],
+        "commit_count": 2,
+        "final_audit_count": 1,
+        "final_outcome": "task_verified",
+        "raw_processes": [
+          {
+            "returncode": 0,
+            "stdout_sha256": "81156b16ec59782be414615d13d1d4c27076ed381f0c685983d40c20d9ce2298",
+            "executed_wrapper_sha256": "97da26e294772141678d881cd6c6e5915dd87149bce755750f344119ed0f61e2"
+          },
+          {
+            "returncode": 0,
+            "stdout_sha256": "abf7e58fe988386f77c602335ad9cfddbe67a73469d84da32802da3b0bfd7186",
+            "executed_wrapper_sha256": "83962b2f0e5195c013eccff80870f830948646072052edc9e779f12dd3db75eb"
+          },
+          {
+            "returncode": 0,
+            "stdout_sha256": "4890d8419b5bb9d0c1b60482e96a401f7a7519c3d0e4cfd330d31856fd53ca70",
+            "executed_wrapper_sha256": "730df5144b40d0db579f5a7ec2df230ba09ee8e286fe0847159dff008bc6e675"
+          }
+        ],
+        "receipt_summaries": [
+          {
+            "source_attempt_id": "attempt_8d34cb7c01056bc085cb",
+            "local_attempt_id": "attempt_bcdf1951a10b4258ff9f",
+            "decision_id": "managed-name-1",
+            "registration_status": "rechecked_pending_registration",
+            "bindings": [
+              {
+                "artifact_id": "plan-artifact-d026d63f4bc429a35f4c5aac",
+                "semantic_handle": "output.plan-artifact-d026d63f4bc429a35f4c5aac",
+                "expected_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-x7gya2b9/task_outputs/name-managed-synthetic/plan_artifacts/report.md",
+                "observed_path": "/tmp/biomind_plan_results_20260912/name-candidate-results/scratch/biomind-plan-local-graph-x7gya2b9/task_outputs/name-managed-synthetic/plan_artifacts/report.md",
+                "attempt_id": "attempt_8d34cb7c01056bc085cb",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "realization": "expected",
+                "format": "text",
+                "representation": "plain",
+                "content_valid": true,
+                "format_compatibility": "compatible"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "chain_b_display_comparison": [
+      {
+        "operation": "accept_actual",
+        "equal": true,
+        "modes": [
+          "compact",
+          "verbose",
+          "off"
+        ],
+        "comparison": {
+          "calls": {
+            "consultant": 1,
+            "planner": 1,
+            "generate": 2
+          },
+          "recovery_calls": 2,
+          "approvals": 2,
+          "graph_nodes": [
+            [
+              "triage"
+            ],
+            [
+              "consultant"
+            ],
+            [
+              "planner"
+            ],
+            [
+              "plan_review"
+            ],
+            [
+              "generate"
+            ],
+            [
+              "execute"
+            ],
+            [
+              "recovery"
+            ],
+            [
+              "supervisor"
+            ],
+            [
+              "commit_step"
+            ],
+            [
+              "generate"
+            ],
+            [
+              "execute"
+            ],
+            [
+              "supervisor"
+            ],
+            [
+              "commit_step"
+            ],
+            [
+              "final_audit"
+            ]
+          ],
+          "processes": [
+            {
+              "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\": 1, \"produces_artifacts\": [{\"identity\": \"$APPROVED_LOGICAL_RESULT_0\", \"path\": \"$ISOLATED_ROOT/task_outputs/name-managed-synthetic/plan_artifacts/software-filtered.txt\"}]}\n",
+              "stderr": "",
+              "returncode": 0
+            },
+            {
+              "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\": 1, \"produces_observations\": [{\"identity\": \"result_rows\", \"value\": 1}]}\n",
+              "stderr": "",
+              "returncode": 0
+            }
+          ]
+        },
+        "normalization": "Comparison projection only: replace each fresh isolated root and its explicitly declared logical artifact ID. Original files remain byte-for-byte unchanged; raw stdout/wrapper hashes are recorded per run. Approval-to-script and parser-to-stdout checks run independently in every managed test."
+      },
+      {
+        "operation": "copy_to_exact",
+        "equal": true,
+        "modes": [
+          "compact",
+          "verbose",
+          "off"
+        ],
+        "comparison": {
+          "calls": {
+            "consultant": 1,
+            "planner": 1,
+            "generate": 2
+          },
+          "recovery_calls": 2,
+          "approvals": 3,
+          "graph_nodes": [
+            [
+              "triage"
+            ],
+            [
+              "consultant"
+            ],
+            [
+              "planner"
+            ],
+            [
+              "plan_review"
+            ],
+            [
+              "generate"
+            ],
+            [
+              "execute"
+            ],
+            [
+              "recovery"
+            ],
+            [
+              "generate"
+            ],
+            [
+              "execute"
+            ],
+            [
+              "supervisor"
+            ],
+            [
+              "commit_step"
+            ],
+            [
+              "generate"
+            ],
+            [
+              "execute"
+            ],
+            [
+              "supervisor"
+            ],
+            [
+              "commit_step"
+            ],
+            [
+              "final_audit"
+            ]
+          ],
+          "processes": [
+            {
+              "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\": 1, \"produces_artifacts\": [{\"identity\": \"$APPROVED_LOGICAL_RESULT_0\", \"path\": \"$ISOLATED_ROOT/task_outputs/name-managed-synthetic/plan_artifacts/software-filtered.txt\"}]}\n",
+              "stderr": "",
+              "returncode": 0
+            },
+            {
+              "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"$APPROVED_LOGICAL_RESULT_0\",\"path\":\"$ISOLATED_ROOT/task_outputs/name-managed-synthetic/plan_artifacts/report.md\"}]}\n",
+              "stderr": "",
+              "returncode": 0
+            },
+            {
+              "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\": 1, \"produces_observations\": [{\"identity\": \"result_rows\", \"value\": 1}]}\n",
+              "stderr": "",
+              "returncode": 0
+            }
+          ]
+        },
+        "normalization": "Comparison projection only: replace each fresh isolated root and its explicitly declared logical artifact ID. Original files remain byte-for-byte unchanged; raw stdout/wrapper hashes are recorded per run. Approval-to-script and parser-to-stdout checks run independently in every managed test."
+      }
+    ]
+  },
+  "crash": {
+    "status": "UNKNOWN",
+    "root_cause_confirmed": false,
+    "production_patch": null,
+    "fixture_cleanup_patch": null,
+    "frozen_source_tree": "7164c04774838da92ee138b888b406e26019d0ef",
+    "source_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9",
+    "historical_source_unchanged_false": "not_checked: missing child completion marker, not observed byte change",
+    "prior_evidence": [
+      {
+        "id": "bundle-candidate-results",
+        "returncode": -11,
+        "completed_pass_calls": 205,
+        "last_event": {
+          "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0006683310493826866,
+          "failure": ""
+        },
+        "historical_tail_hash_check": "not_checked",
+        "original_source_unchanged_false_interpretation": "completion marker absent; does not assert source bytes changed",
+        "fatal_stack_recovered": false,
+        "stdout_sha256": "9dad75c24ba545ed598cc4669d4851bdfd2bf23183fa4b32f972806dc04ec508"
+      },
+      {
+        "id": "bundle-legacy-recheck",
+        "returncode": -11,
+        "completed_pass_calls": 40,
+        "last_event": {
+          "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0007007643580436707,
+          "failure": ""
+        },
+        "historical_tail_hash_check": "not_checked",
+        "original_source_unchanged_false_interpretation": "completion marker absent; does not assert source bytes changed",
+        "fatal_stack_recovered": false,
+        "stdout_sha256": "c396ececda23d80b4d29f6bf739cbf53b39b80a0ceab7ef19b5d4bfbe69d0914"
+      }
+    ],
+    "fixed_dependency_and_guard_hashes": {
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python": "8656aa8eb5213e6eb95a7ad557417dbdd3de2ab3d80323f6dace37a5a5df8238",
+      "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py": "739e0ecbb335cfec821a39f9e225583b5911bb6e3894ef93782005f852c54263",
+      "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/faulthandler.py": "d5cec3a51b4fd3f0b7ce91544b0d41391a401bc1ac883b49f730ae59d1222dcd",
+      "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/capture.py": "12004dbff0ab7b34141ff53e33e616db2e857c695f64e640631f5abe30619145",
+      "/tmp/biomind-cli-deps/prompt_toolkit/__init__.py": "cd64ef28248bf906ff84ef28a404c7ca7bf680d766d1830203dc77a1b2c9507e",
+      "/tmp/biomind_cli_v2_20260912/bundle-candidate/tests/cli_model_progress_support.py": "05d565fc9ec1900c8fb822d14a831527590aa30e726d4ced12ff1d46b431f97e",
+      "/tmp/biomind_cli_v2_20260912/bundle-candidate/tests/offline_managed_bootstrap.py": "eddcf32cdc3fa7b4198bbdb7ea4ccdefeffec658cf027cf91466e0ab788c21b7"
+    },
+    "fixed_inputs_unchanged_after": {
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python": true,
+      "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py": true,
+      "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/faulthandler.py": true,
+      "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/capture.py": true,
+      "/tmp/biomind-cli-deps/prompt_toolkit/__init__.py": true,
+      "/tmp/biomind_cli_v2_20260912/bundle-candidate/tests/cli_model_progress_support.py": true,
+      "/tmp/biomind_cli_v2_20260912/bundle-candidate/tests/offline_managed_bootstrap.py": true
+    },
+    "runs": [
+      {
+        "mode": "capture-original",
+        "command": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/tmp/biomind_cli_v2_20260912/bundle-candidate/tests/cli_model_progress_support.py",
+          "--guarded-child",
+          "/tmp/biomind_cli_v2_20260912/bundle-candidate",
+          "-q",
+          "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+          "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+          "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+          "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool"
+        ],
+        "receipt": {
+          "returncode": -11,
+          "wall_seconds": 95.01589071797207,
+          "calls": {
+            "passed": 3,
+            "failed": 0,
+            "skipped": 0
+          },
+          "last_event": {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.0006488347426056862,
+            "failure": ""
+          },
+          "source_after": {
+            "status": "unchanged",
+            "files": 158,
+            "source_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9",
+            "changed": [],
+            "not_checked": []
+          },
+          "fatal_file_exists": false,
+          "fatal_file_bytes": null,
+          "stdout_sha256": "5685b484702c9db405665132576bce1e4a0e76d8de82ef25e63c03d3de54e9d1"
+        },
+        "completed_phases": [
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.09916240302845836,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 41.4154032911174,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.0006392300128936768,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.000660136342048645,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 4.611680092290044,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.00018975790590047836,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.0005846181884407997,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 19.340439810417593,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.00021029822528362274,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.0006488347426056862,
+            "failure": ""
+          }
+        ],
+        "fatal_log": null,
+        "evidence_sha256": {
+          "invocation.json": "4ccc7352f0c36556b643487911d9924430ea432aaa55f69b00b84c092dc98169",
+          "receipt.json": "5cb49f5f336437f94b7207cabd930996eb02986908766b39f645061c10778138",
+          "pytest-results.json": "3b5b59fd1e41785c0534c144c2b20b5c4c3fbd5161527bd404a8d310a756a776",
+          "stdout.txt": "5685b484702c9db405665132576bce1e4a0e76d8de82ef25e63c03d3de54e9d1"
+        }
+      },
+      {
+        "mode": "capture-diagnostic",
+        "command": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/tmp/biomind_plan_results_20260912/crash/diagnostic_child.py",
+          "/tmp/biomind_plan_results_20260912/crash/capture-diagnostic/fatal.txt",
+          "/tmp/biomind_cli_v2_20260912/bundle-candidate/tests/cli_model_progress_support.py",
+          "--guarded-child",
+          "/tmp/biomind_cli_v2_20260912/bundle-candidate",
+          "-q",
+          "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+          "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+          "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+          "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool"
+        ],
+        "receipt": {
+          "returncode": 0,
+          "parent_timeout": false,
+          "wall_seconds": 64.29256614204496,
+          "calls": {
+            "passed": 4,
+            "failed": 0,
+            "skipped": 0
+          },
+          "last_event": {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.00021476810798048973,
+            "failure": ""
+          },
+          "source_after": {
+            "status": "unchanged",
+            "files": 158,
+            "source_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9",
+            "changed": [],
+            "not_checked": []
+          },
+          "fatal_file_exists": true,
+          "fatal_file_bytes": 72,
+          "stdout_sha256": "a01258067701448b97aa11ce64da601e7b182521dc493cac2efb26983c7164ef"
+        },
+        "completed_phases": [
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.03247832227498293,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 21.279584230389446,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.0006889929063618183,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.0007049101404845715,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 5.023558124899864,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.00023707281798124313,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.0006356588564813137,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 18.96251499094069,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.00020063435658812523,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.0005759373307228088,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 4.697279042098671,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.00021476810798048973,
+            "failure": ""
+          }
+        ],
+        "fatal_log": "DIAGNOSTIC_DESCRIPTOR_OPEN\nFATAL_HANDLER_ENABLED_AFTER_PYTEST_CONFIGURE\n",
+        "evidence_sha256": {
+          "invocation.json": "33e158cb53d3314f4e0b115ecf7d4a4e41f873cc09cf0aa911d48ba39a98bc87",
+          "receipt.json": "49089adc8e159264e5054ec16fe3c65170805738814bd36c980850b7f348b405",
+          "pytest-results.json": "3b820fc52ff6b1a5cadb3e5256fa273c48d6425574dce860a39de6759986a0b6",
+          "stdout.txt": "a01258067701448b97aa11ce64da601e7b182521dc493cac2efb26983c7164ef"
+        }
+      },
+      {
+        "mode": "nocapture-diagnostic",
+        "command": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/tmp/biomind_plan_results_20260912/crash/diagnostic_child.py",
+          "/tmp/biomind_plan_results_20260912/crash/nocapture-diagnostic/fatal.txt",
+          "/tmp/biomind_cli_v2_20260912/bundle-candidate/tests/cli_model_progress_support.py",
+          "--guarded-child",
+          "/tmp/biomind_cli_v2_20260912/bundle-candidate",
+          "-q",
+          "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+          "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+          "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+          "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+          "-s"
+        ],
+        "receipt": {
+          "returncode": 0,
+          "parent_timeout": false,
+          "wall_seconds": 61.9117641961202,
+          "calls": {
+            "passed": 4,
+            "failed": 0,
+            "skipped": 0
+          },
+          "last_event": {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.0001679421402513981,
+            "failure": ""
+          },
+          "source_after": {
+            "status": "unchanged",
+            "files": 158,
+            "source_signature": "b1a9540392ac69d72b7c1207557701fd0db8a25da525c6bec20953011f1627a9",
+            "changed": [],
+            "not_checked": []
+          },
+          "fatal_file_exists": true,
+          "fatal_file_bytes": 72,
+          "stdout_sha256": "4f20f34c4a4b2de86a279e48c98910e6dd6765ae51b588027ec368cf6de049c4"
+        },
+        "completed_phases": [
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.0025337240658700466,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 19.98594840290025,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.0006007920019328594,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.0005875877104699612,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 4.680245442315936,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.00014758016914129257,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.0005270061083137989,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 18.421425622422248,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.00014324812218546867,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "start"
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "setup",
+            "outcome": "passed",
+            "duration": 0.0005498910322785378,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "call",
+            "outcome": "passed",
+            "duration": 4.890681860968471,
+            "failure": ""
+          },
+          {
+            "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool",
+            "phase": "teardown",
+            "outcome": "passed",
+            "duration": 0.0001679421402513981,
+            "failure": ""
+          }
+        ],
+        "fatal_log": "DIAGNOSTIC_DESCRIPTOR_OPEN\nFATAL_HANDLER_ENABLED_AFTER_PYTEST_CONFIGURE\n",
+        "evidence_sha256": {
+          "invocation.json": "828b9187c1a461014e5f548db3f5fcee0645b5de6f7ec44f10d6cea6286fa088",
+          "receipt.json": "24ab578621f6bbca1b3659d2af3d481a324953617ea8bed56d91c8e0e040c13a",
+          "pytest-results.json": "e3691f9003136a7e34aa8742862b4065c15198c071828adda6d3f0e69de2119f",
+          "stdout.txt": "4f20f34c4a4b2de86a279e48c98910e6dd6765ae51b588027ec368cf6de049c4"
+        }
+      }
+    ],
+    "independent_diagnostic_support_sha256": "56161299dde6533647607b465425ce3c475976405d446bb4414e4e336a6607f3",
+    "limitations": [
+      "Four-case reduction reproduces -11 but is not proven irreducible.",
+      "No fatal stack recovered; watchdog is nonfatal.",
+      "Diagnostic success does not establish correction of original captured-mode failure.",
+      "Unchanged fixed-input hashes cover listed dependencies and guards, not all installed transitive libraries.",
+      "This uses frozen CLI V2 source; new Plan implementation requires its own acceptance."
+    ],
+    "reproduction_support": {
+      "run_bounded.py": {
+        "sha256": "29a8e33ac899343009b903c85d006c846243e1ba777d192b7d306aced45deb4f",
+        "source": "\"\"\"Parent-only bounded CRASH follow-up; executes existing guarded export.\"\"\"\nimport argparse\nimport hashlib\nimport json\nfrom pathlib import Path\nimport subprocess\nimport time\n\nROOT = Path('/tmp/biomind_cli_v2_20260912/bundle-candidate')\nBASE = Path('/tmp/biomind_plan_results_20260912/crash')\nORIGINAL = Path('/tmp/biomind_cli_v2_20260912/bundle-legacy-recheck/invocation.json')\nTESTS = [\n    'tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off',\n    'tests/test_cli_generate_public_integration.py::test_cli3_legacy_process_fixture_preserves_existing_effect_contract',\n    'tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off',\n    'tests/test_cli_generate_public_integration.py::test_cli3_generate_skill_early_return_uses_real_context_tool',\n]\n\ndef check_source():\n    manifest = json.loads((ROOT / 'export_manifest.json').read_text())\n    changed, not_checked = [], []\n    for name, expected in manifest['files'].items():\n        try:\n            actual = hashlib.sha256((ROOT / name).read_bytes()).hexdigest()\n        except OSError as exc:\n            not_checked.append({'path': name, 'error_type': type(exc).__name__})\n        else:\n            if actual != expected:\n                changed.append(name)\n    return {'status': 'changed' if changed else ('not_checked' if not_checked else 'unchanged'),\n            'files': len(manifest['files']), 'source_signature': manifest['source_signature'],\n            'changed': changed, 'not_checked': not_checked}\n\ndef main():\n    parser = argparse.ArgumentParser()\n    parser.add_argument('mode', choices=['capture-original', 'capture-diagnostic', 'nocapture-diagnostic'])\n    args = parser.parse_args()\n    results = BASE / args.mode\n    results.mkdir()\n    scratch = results / 'scratch'\n    scratch.mkdir()\n    original = json.loads(ORIGINAL.read_text())\n    environment = dict(original['environment'])\n    for key, value in list(environment.items()):\n        environment[key] = value.replace(str(ORIGINAL.parent), str(results))\n    command = original['command'][:4] + ['-q', *TESTS]\n    if args.mode != 'capture-original':\n        command = [command[0], str(BASE / 'diagnostic_child.py'), str(results / 'fatal.txt'), *command[1:]]\n    if args.mode == 'nocapture-diagnostic':\n        command.append('-s')\n    before = check_source()\n    if before['status'] != 'unchanged':\n        raise RuntimeError(before)\n    (results / 'invocation.json').write_text(json.dumps({'command': command, 'environment': environment,\n        'source_before': before, 'purpose': 'four nearby cases in original relative order; no real provider'}, indent=2))\n    started = time.monotonic()\n    timed_out = False\n    with (results / 'stdout.txt').open('w') as stdout:\n        try:\n            proc = subprocess.run(command, cwd=ROOT, env=environment, stdout=stdout, stderr=subprocess.STDOUT, timeout=180)\n            returncode = proc.returncode\n        except subprocess.TimeoutExpired:\n            timed_out = True\n            returncode = None\n    events_file = results / 'pytest-results.json'\n    events = json.loads(events_file.read_text()) if events_file.exists() else []\n    calls = [item for item in events if item.get('phase') == 'call']\n    fatal = results / 'fatal.txt'\n    receipt = {'returncode': returncode, 'parent_timeout': timed_out, 'wall_seconds': time.monotonic() - started,\n        'calls': {outcome: sum(item['outcome'] == outcome for item in calls) for outcome in ['passed','failed','skipped']},\n        'last_event': events[-1] if events else None, 'source_after': check_source(),\n        'fatal_file_exists': fatal.exists(), 'fatal_file_bytes': fatal.stat().st_size if fatal.exists() else None,\n        'stdout_sha256': hashlib.sha256((results/'stdout.txt').read_bytes()).hexdigest()}\n    (results / 'receipt.json').write_text(json.dumps(receipt, indent=2))\n    print(json.dumps(receipt, indent=2))\n    # The receipt preserves the exact child status, including negative signals.\n    # A reproduction command must also report failure to its caller.\n    if timed_out:\n        raise SystemExit(124)\n    if returncode != 0:\n        raise SystemExit(1)\n\nif __name__ == '__main__':\n    main()\n"
+      },
+      "diagnostic_child.py": {
+        "sha256": "56161299dde6533647607b465425ce3c475976405d446bb4414e4e336a6607f3",
+        "source": "\"\"\"Diagnostic-only wrapper; original export and both audit guards unchanged.\"\"\"\nimport faulthandler\nimport builtins\nimport runpy\nimport sys\n\n# Descriptor is never closed during the child lifetime or tied to pytest capture.\nfatal_stream = open(sys.argv.pop(1), 'w', buffering=1)\nfatal_stream.write('DIAGNOSTIC_DESCRIPTOR_OPEN\\n')\nfatal_stream.flush()\n# Preserve the original bootstrap's import order; attach only when it naturally\n# imports pytest, then immediately remove this narrow import interception.\noriginal_import = builtins.__import__\ndef attach_on_pytest(name, *args, **kwargs):\n    module = original_import(name, *args, **kwargs)\n    if name == 'pytest' and hasattr(module, 'main'):\n        builtins.__import__ = original_import\n        original_main = module.main\n        class DedicatedFatalFile:\n            @module.hookimpl(trylast=True)\n            def pytest_sessionstart(self, session):\n                faulthandler.enable(file=fatal_stream, all_threads=True)\n                fatal_stream.write('FATAL_HANDLER_ENABLED_AFTER_PYTEST_CONFIGURE\\n')\n                fatal_stream.flush()\n        def instrumented_main(args=None, plugins=None):\n            return original_main(args, plugins=[*(plugins or []), DedicatedFatalFile()])\n        module.main = instrumented_main\n    return module\nbuiltins.__import__ = attach_on_pytest\nsys.argv = sys.argv[1:]\nrunpy.run_path(sys.argv[0], run_name='__main__')\n"
+      }
+    }
+  },
+  "protection": {
+    "initial_status_count": 437,
+    "initial_staged": [],
+    "initial_status_lines_absent_now": [],
+    "scope": "Only explicitly owned paths/hunks committed; original node_context hash filtering and manager HASH_OUTPUT_POLICY changes remain unstaged.",
+    "limits": "Initial status was captured for every entry; full initial byte hashes were captured for intersecting sources only, not every unrelated dirty/untracked file.",
+    "intersecting_hunk_reconstruction": {
+      "agent_core/node_context.py": {
+        "baseline_delta_applied": true,
+        "working_tree_equals_head_plus_original_delta": true,
+        "original_delta_sha256": "e1aca22d191a672894830be901975a61d1ae933cf1b5fa3b54377d3e0d9abdef",
+        "detail": ""
+      },
+      "prompts/manager.py": {
+        "baseline_delta_applied": true,
+        "working_tree_equals_head_plus_original_delta": true,
+        "original_delta_sha256": "b27b4739b4ad6e9bb6369bfa22c55f48f32da5fd144f347facbcfca49464e9cb",
+        "detail": ""
+      },
+      "agent_core/planner_context.py": {
+        "unchanged": true
+      },
+      "status": {
+        "initial_count": 437,
+        "initial_lines_missing": [],
+        "staged": []
+      }
+    }
+  },
+  "execution_limits": {
+    "real_models_api": "NOT RUN",
+    "real_wgs": "NOT RUN",
+    "original_session": "NOT RESUMED",
+    "original_business_state_loader_or_db": "NOT USED",
+    "push": "NO",
+    "secrets_and_startup_script": "NOT READ OR EXECUTED",
+    "fake_provider_limit": "Tests prove wiring, permissions and evidence lifecycle under explicit responses, not real model scientific judgment or retry probability.",
+    "old_revision_observation_reuse": "Current committed observation projection requires exact current Plan scope; cross-version scientific reuse needs existing explicit reuse authorization and is not validated here.",
+    "stability": "Capture-mode SIGSEGV cause remains UNKNOWN; diagnostic or -s PASS is not a fix."
+  },
+  "historical_iterations": [
+    {
+      "area": "RP",
+      "result": "One broad collection failed because a required fixture module was not allowlisted; two old projection tests hit hardcoded out-of-scratch paths.",
+      "handling": "Did not relax guard. Used exact safe two-test deselection shown in selected command; new actual recovery chain remained enabled."
+    },
+    {
+      "area": "PLAN/PURPOSE",
+      "result": "Initial compatibility fixture dependencies and source hash/projection mismatches were isolated, not committed; source markers verified again on exact staged trees."
+    },
+    {
+      "area": "Observation delivery",
+      "result": "Added actual terminal answer, failure-before-task-completion and mixed artifact/binding/workspace projection regressions after initial no-file gate chain passed."
+    },
+    {
+      "area": "PURPOSE",
+      "result": "Actual empty file_exists managed test found VALID_WITH_WARNINGS left artifact materialized. Fixed scoped validation propagation with individual artifact failure retained."
+    },
+    {
+      "area": "NAME",
+      "result": "Actual full graph revealed nested projection message key rejection, copy adapter whitespace, local validation lifecycle, legacy head overwrite and last-step current-scope mismatch; tests retained failure assertions while fixes were verified."
+    }
+  ],
+  "counting": "Each selected run is reported separately; overlapping parameter cases and diagnostic reruns are not summed into a unique PASS total.",
+  "artifact_validation": {
+    "result": "PASS",
+    "checks": [
+      "JSON parses; required receipt fields and all selected successful exits asserted",
+      "TSV 28 data rows have consistent five-column shape",
+      "Exactly four scoped artifact files",
+      "No private-key block or key-shaped token found in artifact text",
+      "All initial 437 status entries still present; only four owned documents added before artifact commit",
+      "Intersecting original hunks reconstruct working source exactly from final HEAD plus initial delta"
+    ]
+  }
+}
