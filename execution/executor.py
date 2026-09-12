@@ -236,7 +236,25 @@ async def _read_stream_chunks(
             limit_reached = True
 
 
-async def _terminate_process_tree(process: asyncio.subprocess.Process) -> None:
+async def _terminate_process_tree(process: asyncio.subprocess.Process, *, short_check=False) -> None:
+    if short_check and os.name != "nt":
+        # Opt-in for nested short checks. The shell leader may already have
+        # exited while a descendant still holds its pipes. Its original pgid
+        # remains the owned spawn pid, so do not rediscover it through the leader.
+        with contextlib.suppress(ProcessLookupError):
+            os.killpg(process.pid, signal.SIGTERM)
+        deadline = time.monotonic() + 1.0
+        while time.monotonic() < deadline:
+            try:
+                os.killpg(process.pid, 0)
+            except ProcessLookupError:
+                break
+            await asyncio.sleep(0.025)
+        with contextlib.suppress(ProcessLookupError):
+            os.killpg(process.pid, signal.SIGKILL)
+        with contextlib.suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(process.wait(), timeout=1.0)
+        return
     if process.returncode is not None:
         return
     if os.name != "nt":
@@ -279,6 +297,18 @@ def terminate_active_processes() -> int:
 def get_last_execution_metadata() -> Dict[str, Any]:
     """Return the latest executor metadata without changing the tuple API."""
     return dict(_LAST_EXECUTION_METADATA)
+
+
+def _short_check_cleanup_facts(pid):
+    if os.name == "nt" or pid is None:
+        return {"group_reaped": None, "group_cleanup_status": "unconfirmed"}
+    try:
+        os.killpg(pid, 0)
+    except ProcessLookupError:
+        return {"group_reaped": True, "group_cleanup_status": "confirmed_absent"}
+    except (OSError, PermissionError):
+        return {"group_reaped": None, "group_cleanup_status": "unconfirmed"}
+    return {"group_reaped": False, "group_cleanup_status": "group_still_observed"}
 
 
 def _execution_display_scope(context: Mapping[str, Any] | None) -> Dict[str, Any]:
@@ -472,6 +502,9 @@ async def run_command(
     max_output_bytes: int | None = None,
     managed_log_paths: Mapping[str, str] | None = None,
     display_context: Mapping[str, Any] | None = None,
+    capture_log_paths: Mapping[str, str] | None = None,
+    display_streams: bool = True,
+    short_check: bool = False,
 ) -> Tuple[str, str, int]:
     """通用 Shell 命令执行器"""
     global _LAST_EXECUTION_METADATA
@@ -548,11 +581,17 @@ async def run_command(
 
         stdout_capture = _BoundedStreamCapture(capture_limit)
         stderr_capture = _BoundedStreamCapture(capture_limit)
-        stdout_log_path, stderr_log_path = _execution_stream_log_paths(process.pid)
+        if capture_log_paths is not None:
+            # The caller owns a new execution-evidence directory. Exclusive
+            # creation prevents a new candidate overwriting an earlier receipt.
+            stdout_log_path = str(capture_log_paths["stdout"])
+            stderr_log_path = str(capture_log_paths["stderr"])
+        else:
+            stdout_log_path, stderr_log_path = _execution_stream_log_paths(process.pid)
         if stdout_log_path:
-            stdout_log_handle = open(stdout_log_path, "wb")
+            stdout_log_handle = open(stdout_log_path, "xb" if capture_log_paths is not None else "wb")
         if stderr_log_path:
-            stderr_log_handle = open(stderr_log_path, "wb")
+            stderr_log_handle = open(stderr_log_path, "xb" if capture_log_paths is not None else "wb")
         progress = {"last_output_at": start_monotonic, "last_cpu_at": start_monotonic}
         # Start draining PIPEs immediately. Even a short read-only command can
         # fill the pipe before process bookkeeping finishes when records contain
@@ -571,7 +610,7 @@ async def run_command(
                 output_limit=stream_output_limit,
                 output_limit_event=output_limit_event,
                 display_context=display_scope,
-                display_enabled=not (managed_log_paths and "stdout" in managed_log_paths),
+                display_enabled=display_streams and not (managed_log_paths and "stdout" in managed_log_paths),
             )
         )
         stderr_task = asyncio.create_task(
@@ -584,7 +623,7 @@ async def run_command(
                 output_limit=stream_output_limit,
                 output_limit_event=output_limit_event,
                 display_context=display_scope,
-                display_enabled=not (managed_log_paths and "stderr" in managed_log_paths),
+                display_enabled=display_streams and not (managed_log_paths and "stderr" in managed_log_paths),
             )
         )
         process_wait_task = asyncio.create_task(process.wait())
@@ -622,7 +661,8 @@ async def run_command(
                     limit=stream_output_limit,
                     observed=progress.get("output_limit_bytes") or stream_output_limit,
                 )
-                await _terminate_process_tree(process)
+                await (_terminate_process_tree(process, short_check=True) if short_check
+                       else _terminate_process_tree(process))
                 break
             if process_wait_task in done:
                 await process_wait_task
@@ -666,7 +706,8 @@ async def run_command(
                 early_health_reported = True
             if wall_timeout > 0 and now - start_monotonic >= wall_timeout:
                 stderr_reason = f"TIMEOUT after {wall_timeout:g} seconds"
-                await _terminate_process_tree(process)
+                await (_terminate_process_tree(process, short_check=True) if short_check
+                       else _terminate_process_tree(process))
                 break
             if (
                 command_class
@@ -679,14 +720,16 @@ async def run_command(
                     "by BioMind watchdog. Regenerate a bounded, local check or record a truthful blocked "
                     "state instead of retrying the same probe."
                 ).format(kind=command_class, idle=idle_for, elapsed=elapsed)
-                await _terminate_process_tree(process)
+                await (_terminate_process_tree(process, short_check=True) if short_check
+                       else _terminate_process_tree(process))
                 break
             if stall_timeout > 0 and now - last_progress_at >= stall_timeout:
                 stderr_reason = (
                     "STALLED: command showed no stdout/stderr output and no process-tree CPU progress "
                     f"for {idle_for:.1f} seconds; terminated by BioMind watchdog."
                 )
-                await _terminate_process_tree(process)
+                await (_terminate_process_tree(process, short_check=True) if short_check
+                       else _terminate_process_tree(process))
                 break
 
         await asyncio.gather(stdout_task, stderr_task, *([follow_task] if follow_task else []), return_exceptions=True)
@@ -709,7 +752,8 @@ async def run_command(
                 uncancel = getattr(current_task, "uncancel", None)
                 if callable(uncancel):
                     uncancel()
-                await _terminate_process_tree(process)
+                await (_terminate_process_tree(process, short_check=True) if short_check
+                       else _terminate_process_tree(process))
                 reader_tasks = []
                 for task_name in ("stdout_task", "stderr_task"):
                     task = locals().get(task_name)
@@ -730,7 +774,8 @@ async def run_command(
     except Exception as e:
         if "process" in locals():
             with contextlib.suppress(Exception):
-                await _terminate_process_tree(process)
+                await (_terminate_process_tree(process, short_check=True) if short_check
+                       else _terminate_process_tree(process))
         result = "", str(e), 1
         return result
     finally:
@@ -759,6 +804,8 @@ async def run_command(
                 "process_returncode": process.returncode if "process" in locals() else None,
                 "process_reaped": bool("process" in locals() and process.returncode is not None),
                 "log_observation_errors": log_observation_errors}
+            if short_check:
+                cancelled_record.update(_short_check_cleanup_facts(process.pid if "process" in locals() else None))
             with contextlib.suppress(Exception):
                 await _notify_lifecycle(lifecycle_callback, "PROCESS_CANCELLED", cancelled_record,
                                         display_context=display_scope)
@@ -806,6 +853,8 @@ async def run_command(
                 "stderr_log": stderr_log_path,
                 "stream_output_limit_bytes": stream_output_limit,
             }
+            if short_check:
+                _LAST_EXECUTION_METADATA.update(_short_check_cleanup_facts(process.pid if "process" in locals() else None))
             with contextlib.suppress(Exception):
                 await _notify_lifecycle(lifecycle_callback, "PROCESS_EXITED", {
                     "pid": process.pid if "process" in locals() else None,

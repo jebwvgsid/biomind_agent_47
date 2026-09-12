@@ -135,6 +135,27 @@ gzip integrity, every read, or all mate pairs. Its record/input/decoded-byte/tim
 limits and actual coverage are part of the result. A task requiring full checks
 still requires those checks; a prefix is evidence for investigation only.
 
+For a **new batch preflight candidate**, use this Skill's
+`scripts/inspect_fastq_batch.py` with repeated `--item LABEL BOUND_PATH`, one
+current StepEffect `--observation-id`, and a new `--evidence-dir` within the
+approved execution-log area. Resolve the concrete wrapper path through Skill
+inspection. The parent emits flushed, separate stderr progress at actual item
+and spawn/return boundaries; child stdout and stderr remain exact log files.
+It merges checked observations into one outer formal marker, never forwards
+nested markers. Include this wrapper invocation and its paths in the candidate
+before approval; do not patch a previously approved script.
+
+`--item-timeout-seconds` defaults to 60 seconds per short inspection (adjustable
+on the new approved candidate). The reader's existing `--seconds 2` limit bounds
+cooperative prefix reads; it cannot interrupt a blocked OS read. The wrapper's
+local deadline includes interpreter/inspection startup and runs only after
+approval; the outer executor's existing wall/stall policy still applies. It
+handles TERM/INT through managed process-group cancellation and preserves raw
+partial logs and UNKNOWN unfinished checks. This is not a timeout or retry
+policy for BWA, GATK or other long scientific computation. A process return is
+not a passed check; an invalid observed prefix remains adverse evidence, and
+technical failure, timeout or cancellation never certifies full-file integrity.
+
 Do not implement nonempty FASTQ detection as `zcat | head | grep -q` under
 `pipefail`: early downstream termination can cause SIGPIPE after a valid header
 was found. Do not ignore every 141 or disable pipefail. Empty/invalid observed

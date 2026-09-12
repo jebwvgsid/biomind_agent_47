@@ -33,6 +33,8 @@ from execution.runtime_contract import (
     validation_scope_contract,
 )
 
+from execution.preflight_progress import without_progress
+
 NODE_CONTEXT_SCHEMA_VERSION = 2
 # Recovery's 256k policy is explicitly measured in serialised provider-payload
 # characters.  Legacy DiagnosticContext limits use a different compatibility
@@ -222,6 +224,8 @@ def _without_control_metadata(value: Any) -> Any:
         return [_without_control_metadata(item) for item in value]
     if isinstance(value, tuple):
         return [_without_control_metadata(item) for item in value]
+    if isinstance(value, str):
+        return without_progress(value)
     return deepcopy(value)
 
 

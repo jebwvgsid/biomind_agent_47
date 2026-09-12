@@ -85,6 +85,15 @@ execution validation.
 
 ## 确认任务边界
 
+For new FASTQ preflight candidates, inspect and reuse the parent wrapper in
+`genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py`. Put its exact
+bound inputs, execution-log directory and adjustable short-check deadline in
+the candidate before approval. Do not hide four captured child checks until
+the batch ends or forward their nested effect markers. Its stderr item events
+are display facts; preserve prefix-only coverage and UNKNOWN failures. Do not
+apply its 60-second initial item limit to HaplotypeCaller or other computation,
+or modify a previously approved script.
+
 Use this skill when:
 
 - Input is coordinate-sorted, duplicate-marked WGS BAMs aligned to the same reference.

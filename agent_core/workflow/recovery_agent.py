@@ -765,7 +765,8 @@ def _observation_envelope(
     error: Mapping[str, Any] | None,
     seed: RecoverySeed,
 ) -> dict[str, Any]:
-    payload = deepcopy(dict(result or {}))
+    from execution.preflight_progress import model_copy_without_progress
+    payload = model_copy_without_progress(deepcopy(dict(result or {})))
     content_digest = hashlib.sha256(_canonical(payload).encode("utf-8")).hexdigest()
     cursor = deepcopy(payload.get("page") or payload.get("cursor") or {})
     scanned = payload.get("scanned_count")

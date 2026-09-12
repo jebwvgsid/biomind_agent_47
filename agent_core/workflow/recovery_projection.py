@@ -325,7 +325,8 @@ _TYPED_RECORD_KEYS = (
 
 def _bounded_scalar(value: Any, *, limit: int = 2048) -> Any:
     if isinstance(value, str):
-        return value[:limit]
+        from execution.preflight_progress import without_progress
+        return without_progress(value)[:limit]
     if value is None or isinstance(value, (bool, int, float)):
         return value
     return str(value)[:limit]

@@ -51,6 +51,15 @@ Do not use this workflow for de novo assembly, GWAS, population genetics after V
 
 ## 调用的参数
 
+New short-read FASTQ preflight candidates should inspect and reuse
+`genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py`: exact bound
+items, parent-level live progress, one merged formal observation, and an
+adjustable 60-second initial per-item limit, starting after approval. Keep the
+existing outer execution deadline and reader coverage limits. Preserve child
+stdout/stderr in execution logs, not repeated formal markers; timeout and
+cancelled/unstarted items remain UNKNOWN. Never extend this short-check policy
+to long scientific stages or rewrite an old approved candidate.
+
 Collect or infer these before selecting an execution skill:
 
 | Parameter | Required for |
