@@ -42,6 +42,8 @@ generate:
       workspace_mutations: []
       explicit_side_effects: []
       execution_guidance:
+        - A formal input-check Plan step may declare outputs=[] and deliver validation_observation directly. Do not require a separate 00.input_check report merely because the overall workflow produces files.
+        - Downstream reporting must consume the accepted observation from the same approved Plan and explicit predecessor dependency. Preserve the inspected scope; a prefix/header check is not full-file validation. Required final report, reproducibility script and stage status remain separate Plan results.
         - Use for preflight or variant validation that produces no durable output file. Emit structured validation_observation evidence with a value, including an adverse value for a failed check.
         - Scientific success criteria and the existing verification layer judge the observation. A successful structural evidence match does not by itself validate scientific compatibility.
 runtime:

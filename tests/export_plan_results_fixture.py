@@ -12,8 +12,15 @@ PLAN_FILES = (
     'tests/test_plan_result_contract_v1.py',
     'tests/test_plan_results_managed.py',
     'tests/test_plan_results_name.py',
+    'tests/test_plan_results_purpose.py',
+    'tests/test_runtime_recovery_reporting.py',
 )
 previous.previous.TEST_FILES += PLAN_FILES
+previous.previous.RESOURCE_FILES += (
+    'skills/genomics/reseq-variant-workflow/SKILL.md',
+    'skills/genomics/wgs-short-read-mapping/SKILL.md',
+    'skills/genomics/wgs-gatk-snp-indel/SKILL.md',
+)
 
 if __name__ == '__main__':
     previous.main()

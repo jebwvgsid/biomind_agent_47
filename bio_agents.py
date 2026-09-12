@@ -53217,6 +53217,29 @@ question. Never guess a scientific or database identity.
             if isinstance(value, Mapping) and value:
                 records.append(value)
 
+        delivered_observation = False
+        if status == "completed":
+            final_outcomes = [values.get("final_audit_outcome") or {}]
+            boundary = values.get("managed_run_boundary") or {}
+            if boundary.get("node") == "final_audit":
+                final_outcomes.append(boundary.get("outcome") or {})
+            final_outcomes.extend(
+                row.get("outcome") or {}
+                for row in (task_state.get("typed_final_audit_receipts") or {}).values()
+                if isinstance(row, Mapping)
+            )
+            for outcome in final_outcomes:
+                answer = (outcome.get("payload") or {}).get("final_response") or {}
+                scope = answer.get("scope") or {}
+                if (outcome.get("type") == "task_verified"
+                    and isinstance(answer.get("text"), str) and answer["text"].strip()
+                    and all(str(scope.get(key) or "") == str(durable_plan.get(key) or "")
+                            and str(scope.get(key) or "")
+                            for key in ("task_id", "plan_id", "plan_version"))):
+                    add_record({"stage": "finalize", "reason": answer["text"]})
+                    delivered_observation = True
+                    break
+
         if status == "cancelled":
             cancellation = dict(task_state.get("cancellation_receipt") or {})
             kind = str(cancellation.get("initiator_kind") or "unknown")
@@ -53321,7 +53344,7 @@ question. Never guess a scientific or database identity.
         elif status == "interrupted":
             reason = reason or "Interactive execution interrupted."
 
-        if not result_path and metrics_path.exists():
+        if not result_path and not delivered_observation and metrics_path.exists():
             result_path = str(metrics_path)
         return InteractiveRunResult(
             task_id=str(task_id),

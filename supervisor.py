@@ -451,6 +451,7 @@ class RuleEngine:
         command_role: str = "",
         expect_stdout: bool = False,
         ai_claim_text: str = "",
+        approved_explicit_result_plan: bool = False,
     ) -> List[CheckResult]:
         results: List[CheckResult] = []
         combined_text = stdout + "\n" + stderr
@@ -529,6 +530,15 @@ class RuleEngine:
 
         # ── Rule 4a: 空 artifact 检测 ─────────────────────────
         for artifact_name in cls._zero_size_artifact_names(combined_text):
+            if approved_explicit_result_plan:
+                results.append(CheckResult(
+                    rule="EmptyArtifactObservation",
+                    passed=False,
+                    severity="warning",
+                    message=f"Terminal evidence mentions a zero-byte file: {artifact_name}",
+                    suggestion="Apply the approved Plan artifact validator to the actual result; terminal filenames do not create required results.",
+                ))
+                continue
             if cls._empty_artifact_has_status_explanation(artifact_name, combined_text):
                 results.append(CheckResult(
                     rule="EmptyArtifactStatusCheck",
@@ -2060,11 +2070,11 @@ class SupervisorNode:
             role = "analysis_execution"
         elif role in {"diagnostic", "optional_probe"}:
             role = "probe"
-        formal_execution = False
-        if role in {"probe", "capability_probe"}:
-            from agent_core.execution_authority import is_approved_step_execution
-            authority_state = load_plan_state(self._llm_reviewer.data_path, task_id)
-            formal_execution = is_approved_step_execution(authority_state, execution)
+        from agent_core.execution_authority import is_approved_step_execution
+        from agent_core.plan_contract import plan_uses_explicit_results
+        authority_state = load_plan_state(self._llm_reviewer.data_path, task_id)
+        formal_execution = is_approved_step_execution(authority_state, execution)
+        approved_explicit_result_plan = formal_execution and plan_uses_explicit_results(authority_state)
 
         identity = ValidationEvidence.from_mapping({
             "task_id": task_id,
@@ -2093,6 +2103,7 @@ class SupervisorNode:
                 command_role=role,
                 expect_stdout=bool(execution.get("expect_stdout")),
                 ai_claim_text=str(state.get("completion_claim") or ""),
+                approved_explicit_result_plan=approved_explicit_result_plan,
             )
             rule_results.extend(self._root_cause_check_results(state))
             rule_results.extend(self._knowledge_conflict_check_results(state))

@@ -26,6 +26,7 @@ from agent_core.task_spec import (
 )
 from agent_core.plan_contract import new_candidate_scope_id
 from agent_core.planner_revision import accepted_planner_revision, planner_revision_focus
+from agent_core.committed_observations import committed_observation_outcomes
 from agent_core.step_effects import canonical_execution_effect_evidence
 from execution.runtime_contract import (
     execution_runtime_contract,
@@ -1848,6 +1849,9 @@ def _accepted_execution_outcomes(
     for raw in execution_records:
         if not isinstance(raw, Mapping):
             continue
+        if any(key in raw and str(raw.get(key) or "") != str(plan_state.get(key) or "")
+               for key in ("task_id", "plan_id", "plan_version")):
+            continue
         step_id = str(raw.get("step_id") or "")
         try:
             exit_ok = raw.get("exit_code") is None or int(raw.get("exit_code")) == 0
@@ -1860,11 +1864,20 @@ def _accepted_execution_outcomes(
             in {"succeeded", "success", "completed", "passed"}
         ):
             latest_by_step[step_id] = raw
+    committed = committed_observation_outcomes(plan_state)
+    committed_by_step = {outcome["step_id"]: outcome for outcome in committed}
     rows: List[Dict[str, Any]] = []
     for step_id, step in completed_steps.items():
         raw = latest_by_step.get(step_id)
-        if raw is None:
+        observation_outcome = committed_by_step.get(step_id)
+        if raw is not None and observation_outcome and any(
+            key in raw and str(raw.get(key) or "") != str(observation_outcome["scope"].get(key) or "")
+            for key in ("action_id", "attempt_id")
+        ):
+            raw = None
+        if raw is None and observation_outcome is None:
             continue
+        raw = raw or {}
         artifacts: List[str] = []
         candidates = list(raw.get("produced_artifact_ids") or [])
         for reconciled in raw.get("reconciled_outputs", []) or []:
@@ -1898,6 +1911,13 @@ def _accepted_execution_outcomes(
             )
             if effect_evidence.get(field)
         }
+        if (plan_state.get("task_state") or {}).get("typed_step_commit_receipts"):
+            # Typed observation authority is the exact receipt join above;
+            # caller-supplied historical execution records cannot bypass it.
+            accepted_effects.pop("produces_observations", None)
+        if observation_outcome:
+            accepted_effects["produces_observations"] = _without_control_metadata(observation_outcome["observations"])
+            row["evidence_source"] = "accepted_typed_step_commit"
         if "workspace_mutations" in accepted_effects:
             accepted_effects["workspace_mutations"] = _workspace_effect_semantics(
                 accepted_effects["workspace_mutations"])

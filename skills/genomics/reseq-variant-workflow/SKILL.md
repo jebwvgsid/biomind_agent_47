@@ -117,7 +117,21 @@ outdir/
 | Existing outputs present | overwrite risk | create new dated subdir or ask before overwrite |
 | Missing tool | dependency blocker | report exact missing command and affected stage |
 
-Never report success from logs alone. Check non-empty outputs and indexes.
+Verify each actually required scientific output and index against its format contract;
+logs or exit status alone do not prove scientific success. A valid zero-record
+result is distinct from a corrupt or unexecuted result. Do not impose a nonempty
+file requirement on an observation-only input check.
+
+In the approved Plan, 00.input_check may deliver a scoped observation with
+outputs=[] through an existing inspect capability. 05.summary may use an existing
+file-producing capability with descriptive purpose=validation. 06.reporting must
+consume accepted predecessor observations plus actual available scientific results
+and stage facts; it must not invent an intermediate check file. Retain report.md,
+reproduce.sh and the stage status table when the user requests them. A descriptive
+record_failure purpose cannot decide terminal status. If real dependency evidence
+requires stopping, use the existing authorized stop/report path to record the
+unexecuted stages and exact blocker; producing that report is not scientific
+success and does not create missing VCF or statistics.
 
 ## 相似的 skills
 

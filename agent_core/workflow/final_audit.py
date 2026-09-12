@@ -8,6 +8,7 @@ from copy import deepcopy
 from typing import Any, Awaitable, Callable, Mapping
 
 from agent_core.completion_gate import CompletionGate
+from agent_core.committed_observations import no_file_final_response
 from agent_core.plan_contract import StateCASConflict
 from agent_core.plan_tracker import (
     STEP_SUCCESS_STATUSES,
@@ -269,6 +270,16 @@ class TypedFinalAudit:
                 evidence_refs=(validation.validation_id, final_validation.validation_id),
             )
 
+        try:
+            final_response = no_file_final_response(durable)
+        except (TypeError, ValueError) as exc:
+            return self._result(
+                "task_incomplete", task_id=task_id,
+                summary="Accepted no-file results could not be delivered as a factual answer.",
+                payload={"validation_evidence": final_validation.to_dict(), "completion_gate": gate,
+                         "missing_or_stale_refs": [str(exc)], "failure_owner": "result_delivery"},
+                evidence_refs=(validation.validation_id, final_validation.validation_id, commit_id),
+            )
         terminal_receipt = "typed-task-completion:" + audit_id
         semantic_outcome = FinalAuditOutcome(
             schema_version=1,
@@ -279,6 +290,7 @@ class TypedFinalAudit:
                 "validation_evidence": final_validation.to_dict(),
                 "completion_gate": gate,
                 "terminal_receipt": terminal_receipt,
+                **({"final_response": final_response} if final_response is not None else {}),
             },
             evidence_refs=(validation.validation_id, final_validation.validation_id, commit_id),
         )

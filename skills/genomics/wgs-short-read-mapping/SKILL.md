@@ -53,6 +53,8 @@ generate:
       workspace_mutations: []
       explicit_side_effects: []
       execution_guidance:
+        - A formal input-check Plan step may declare outputs=[] and deliver validation_observation directly. Do not require a separate 00.input_check report merely because the overall workflow produces files.
+        - Downstream reporting must consume the accepted observation from the same approved Plan and explicit predecessor dependency. Preserve the inspected scope; a prefix/header check is not full-file validation. Required final report, reproducibility script and stage status remain separate Plan results.
         - Use for input, reference, or BAM checks that produce no durable output file. Emit structured validation_observation evidence with a value, including an adverse value when the check fails.
         - Scientific success criteria and the existing verification layer judge the observation; the action claim alone does not establish success.
     - capability_id: genomics.wgs.short.read.mapping.prepare_reference

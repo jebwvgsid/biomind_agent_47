@@ -2673,6 +2673,7 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
         result = deepcopy(attempt)
 
     elif event == "execution_finished":
+        from .plan_contract import plan_uses_explicit_results
         attempt_id = str(value.get("attempt_id") or "")
         attempt = provenance["attempts"].get(attempt_id)
         if not isinstance(attempt, dict):
@@ -2762,7 +2763,9 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             )
             # An approved effect may produce a formal artifact regardless of
             # its descriptive purpose. Recovery diagnostics have no such grant.
-            allow_probe = bool(definition.get("allow_probe_producer")) and not temporary_diagnostic
+            allow_probe = (not plan_uses_explicit_results(state)
+                           and bool(definition.get("allow_probe_producer"))
+                           and not temporary_diagnostic)
             if path not in produced_paths or not changed or (is_probe and not allow_probe):
                 continue
             version_id = f"{artifact_id}@{attempt_id}"
@@ -2801,6 +2804,7 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
         }
 
     elif event == "validation_recorded":
+        from .plan_contract import plan_uses_explicit_results
         attempt_id = str(value.get("attempt_id") or "")
         attempt = provenance["attempts"].get(attempt_id)
         if not isinstance(attempt, dict):
@@ -2826,7 +2830,21 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                 continue
             artifact["validation_id"] = validation_id
             artifact["validation_status"] = status
-            if status in {"valid", "passed", "pass"}:
+            accepted_with_warnings = (
+                plan_uses_explicit_results(state)
+                and status == "valid_with_warnings"
+                and not any(
+                    isinstance(check, Mapping) and check.get("satisfied") is False
+                    and str(check.get("path") or check.get("target") or "") == str(artifact.get("path") or "")
+                    for check in validation.get("artifact_results", []) or []
+                )
+            )
+            if accepted_with_warnings:
+                # The validation record retains its warning status; this
+                # artifact's acceptance is separately consumed by downstream
+                # bindings and must use their established valid status.
+                artifact["validation_status"] = "valid"
+            if status in {"valid", "passed", "pass"} or accepted_with_warnings:
                 artifact["status"] = "valid"
             elif status in {"invalid", "failed", "fail"}:
                 artifact["status"] = "invalid"
