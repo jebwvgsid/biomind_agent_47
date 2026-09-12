@@ -1,0 +1,264 @@
+{
+  "session": "session_1789215658",
+  "access": "stdlib static JSON projection only; no restore or business loader",
+  "sources": {
+    "plan_state.json": "6af228d4f6774410019cfb41772453fbf87505805f119bed30d7ed7de86cbb46",
+    "run_metrics.json": "c6bd17fa3f7845523e8d2897274b883e243830304f70e81c7434f437bb26f632"
+  },
+  "state_updated_at": "2026-09-12T20:57:37",
+  "metrics_updated_at": "2026-09-12T20:23:54+08:00",
+  "task_revision": 2,
+  "generated_from_task_revision": 1,
+  "plan_version": "plan_v1",
+  "plan_id": "plan_cb5b08f5a2fdc22c3ca9",
+  "approved_task_revision": 2,
+  "submission": {
+    "schema_version": 1,
+    "protocol_version": 1,
+    "submission_id": "plan-submission-80059f2714c0276c95ac",
+    "action_type": "submit_plan_for_review",
+    "agent_initiated": true,
+    "status": "accepted",
+    "task_id": "session_1789215658",
+    "plan_id": "plan_cb5b08f5a2fdc22c3ca9",
+    "plan_version": "plan_v1",
+    "plan_revision": 1,
+    "plan_semantic_hash": "a0df82f5c7648521c0d9894b79209964ce0cb48e8b6bc0d98e5f60cd5f3ae712",
+    "plan_snapshot_ref": "object:sha256:df44092067a8224085c941106b1ad1e731ffc44643df9dc5fd835a34da12c318",
+    "submitted_at": "2026-09-12T12:22:57.886664+00:00",
+    "review_receipt_id": "plan-review-95478f85179847dd8197",
+    "approval_id": "approval-b212dc216e4ccfeaf4a9",
+    "reviewed_at": "2026-09-12T12:23:55.045702+00:00"
+  },
+  "acceptance": {
+    "schema_version": 1,
+    "protocol_version": 1,
+    "review_receipt_id": "plan-review-95478f85179847dd8197",
+    "status": "accepted",
+    "submission_id": "plan-submission-80059f2714c0276c95ac",
+    "approval_id": "approval-b212dc216e4ccfeaf4a9",
+    "review_event_id": "review-2c8d81eea65edc6927fc",
+    "task_id": "session_1789215658",
+    "plan_id": "plan_cb5b08f5a2fdc22c3ca9",
+    "plan_version": "plan_v1",
+    "plan_revision": 1,
+    "plan_semantic_hash": "a0df82f5c7648521c0d9894b79209964ce0cb48e8b6bc0d98e5f60cd5f3ae712",
+    "plan_snapshot_ref": "object:sha256:df44092067a8224085c941106b1ad1e731ffc44643df9dc5fd835a34da12c318",
+    "accepted_at": "2026-09-12T12:23:55.045702+00:00"
+  },
+  "failure": {
+    "status": "unresolved",
+    "task_spec_revision": 2,
+    "planning_epoch_id": "planning-epoch-9259282d-5c5c-4f56-be64-fc45bc20dc2e",
+    "updated_at": "2026-09-12T20:23:53",
+    "validation_issues": [
+      {
+        "code": "PLAN_STRUCTURE_INVALID",
+        "violation_code": "PLAN_STRUCTURE_INVALID",
+        "message": "must equal managed_exact or model_selectable",
+        "severity": "error",
+        "disposition": "PROTOCOL_INVALID",
+        "field_path": "$.task_output_materializations[0].path_policy",
+        "repair_target": "$.task_output_materializations[0].path_policy",
+        "machine_evidence": {
+          "field_path": "$.task_output_materializations[0].path_policy",
+          "code": "PLAN_STRUCTURE_INVALID",
+          "expected_type": "managed_exact or model_selectable",
+          "received_type": "string",
+          "received_excerpt": "\"planner_materialized\"",
+          "validator_id": "structured_plan_schema",
+          "violation_code": "PLAN_STRUCTURE_INVALID"
+        },
+        "expected_type": "managed_exact or model_selectable",
+        "received_type": "string",
+        "received_excerpt": "\"planner_materialized\"",
+        "validator_id": "structured_plan_schema",
+        "affected_step_ids": [],
+        "affected_artifact": {},
+        "affected_output": {}
+      },
+      {
+        "code": "PLAN_STRUCTURE_INVALID",
+        "violation_code": "PLAN_STRUCTURE_INVALID",
+        "message": "must equal managed_exact or model_selectable",
+        "severity": "error",
+        "disposition": "PROTOCOL_INVALID",
+        "field_path": "$.task_output_materializations[1].path_policy",
+        "repair_target": "$.task_output_materializations[1].path_policy",
+        "machine_evidence": {
+          "field_path": "$.task_output_materializations[1].path_policy",
+          "code": "PLAN_STRUCTURE_INVALID",
+          "expected_type": "managed_exact or model_selectable",
+          "received_type": "string",
+          "received_excerpt": "\"planner_materialized\"",
+          "validator_id": "structured_plan_schema",
+          "violation_code": "PLAN_STRUCTURE_INVALID"
+        },
+        "expected_type": "managed_exact or model_selectable",
+        "received_type": "string",
+        "received_excerpt": "\"planner_materialized\"",
+        "validator_id": "structured_plan_schema",
+        "affected_step_ids": [],
+        "affected_artifact": {},
+        "affected_output": {}
+      },
+      {
+        "code": "PLAN_STRUCTURE_INVALID",
+        "violation_code": "PLAN_STRUCTURE_INVALID",
+        "message": "must equal managed_exact or model_selectable",
+        "severity": "error",
+        "disposition": "PROTOCOL_INVALID",
+        "field_path": "$.task_output_materializations[2].path_policy",
+        "repair_target": "$.task_output_materializations[2].path_policy",
+        "machine_evidence": {
+          "field_path": "$.task_output_materializations[2].path_policy",
+          "code": "PLAN_STRUCTURE_INVALID",
+          "expected_type": "managed_exact or model_selectable",
+          "received_type": "string",
+          "received_excerpt": "\"planner_materialized\"",
+          "validator_id": "structured_plan_schema",
+          "violation_code": "PLAN_STRUCTURE_INVALID"
+        },
+        "expected_type": "managed_exact or model_selectable",
+        "received_type": "string",
+        "received_excerpt": "\"planner_materialized\"",
+        "validator_id": "structured_plan_schema",
+        "affected_step_ids": [],
+        "affected_artifact": {},
+        "affected_output": {}
+      },
+      {
+        "code": "PLAN_STRUCTURE_INVALID",
+        "violation_code": "PLAN_STRUCTURE_INVALID",
+        "message": "must equal managed_exact or model_selectable",
+        "severity": "error",
+        "disposition": "PROTOCOL_INVALID",
+        "field_path": "$.task_output_materializations[3].path_policy",
+        "repair_target": "$.task_output_materializations[3].path_policy",
+        "machine_evidence": {
+          "field_path": "$.task_output_materializations[3].path_policy",
+          "code": "PLAN_STRUCTURE_INVALID",
+          "expected_type": "managed_exact or model_selectable",
+          "received_type": "string",
+          "received_excerpt": "\"planner_materialized\"",
+          "validator_id": "structured_plan_schema",
+          "violation_code": "PLAN_STRUCTURE_INVALID"
+        },
+        "expected_type": "managed_exact or model_selectable",
+        "received_type": "string",
+        "received_excerpt": "\"planner_materialized\"",
+        "validator_id": "structured_plan_schema",
+        "affected_step_ids": [],
+        "affected_artifact": {},
+        "affected_output": {}
+      },
+      {
+        "code": "PLAN_STRUCTURE_INVALID",
+        "violation_code": "PLAN_STRUCTURE_INVALID",
+        "message": "must equal managed_exact or model_selectable",
+        "severity": "error",
+        "disposition": "PROTOCOL_INVALID",
+        "field_path": "$.task_output_materializations[4].path_policy",
+        "repair_target": "$.task_output_materializations[4].path_policy",
+        "machine_evidence": {
+          "field_path": "$.task_output_materializations[4].path_policy",
+          "code": "PLAN_STRUCTURE_INVALID",
+          "expected_type": "managed_exact or model_selectable",
+          "received_type": "string",
+          "received_excerpt": "\"planner_materialized\"",
+          "validator_id": "structured_plan_schema",
+          "violation_code": "PLAN_STRUCTURE_INVALID"
+        },
+        "expected_type": "managed_exact or model_selectable",
+        "received_type": "string",
+        "received_excerpt": "\"planner_materialized\"",
+        "validator_id": "structured_plan_schema",
+        "affected_step_ids": [],
+        "affected_artifact": {},
+        "affected_output": {}
+      },
+      {
+        "code": "PLAN_STRUCTURE_INVALID",
+        "violation_code": "PLAN_STRUCTURE_INVALID",
+        "message": "must equal managed_exact or model_selectable",
+        "severity": "error",
+        "disposition": "PROTOCOL_INVALID",
+        "field_path": "$.task_output_materializations[5].path_policy",
+        "repair_target": "$.task_output_materializations[5].path_policy",
+        "machine_evidence": {
+          "field_path": "$.task_output_materializations[5].path_policy",
+          "code": "PLAN_STRUCTURE_INVALID",
+          "expected_type": "managed_exact or model_selectable",
+          "received_type": "string",
+          "received_excerpt": "\"planner_materialized\"",
+          "validator_id": "structured_plan_schema",
+          "violation_code": "PLAN_STRUCTURE_INVALID"
+        },
+        "expected_type": "managed_exact or model_selectable",
+        "received_type": "string",
+        "received_excerpt": "\"planner_materialized\"",
+        "validator_id": "structured_plan_schema",
+        "affected_step_ids": [],
+        "affected_artifact": {},
+        "affected_output": {}
+      }
+    ]
+  },
+  "actions": [
+    {
+      "action_id": "action_db98fe33bf9e9081",
+      "status": "revoked",
+      "execution_started": false,
+      "revocation_reason": "stale_execution_result_discarded:before_execution_policy_preflight",
+      "revoked_at": "2026-09-12T20:24:07"
+    }
+  ],
+  "historical_paste_cause": "UNKNOWN: no original raw input event stream",
+  "metrics_summary": {
+    "total_wall_seconds": 119.637,
+    "agent_active_seconds_excluding_human_wait": 119.469,
+    "human_confirmation_wait_seconds": 0.168,
+    "command_execution_seconds": 0,
+    "successful_command_execution_seconds": 0,
+    "llm_call_seconds": 88.119,
+    "install_or_repair_seconds_estimate": 0.0,
+    "analysis_planning_overhead_seconds": 119.469,
+    "llm_calls": 9,
+    "commands": 0,
+    "successful_commands": 0,
+    "failed_commands": 0,
+    "manual_confirmations": 2,
+    "auto_confirmations": 0,
+    "correction_count": 0,
+    "max_retry_count": 0,
+    "manual_feedback_or_rejection_count": 1,
+    "node_seconds": {
+      "triage": 2.682,
+      "consultant": 51.046,
+      "planner": 60.642,
+      "plan_review": 1.491
+    },
+    "tokens": {
+      "prompt_tokens": 205040,
+      "completion_tokens": 21502,
+      "total_tokens": 226542,
+      "reasoning_tokens": null,
+      "contains_estimates": false,
+      "prompt_cache_hit_tokens": 109568,
+      "prompt_cache_miss_tokens": 95472,
+      "prompt_cache_usage_reported_calls": 9,
+      "cache_metric_status": "reported",
+      "prompt_cache_hit_rate": 0.534374
+    }
+  },
+  "actual_old_request": {
+    "relative_path": "context_trace/planner_initial-0009-079416c839ce/request.json",
+    "sha256": "567a3a429a54720eb2183d3e5d79d2a97dde1a34ba43e614bf0562970b705e82",
+    "snippets": [
+      {
+        "role": "system",
+        "excerpt": "For path_policy=planner_materialized, keep the TaskSpec output handle in\nstep.outputs and provide one safe relative filename in task_output_materializations.\nFor existing outp"
+      }
+    ]
+  }
+}

@@ -1,0 +1,2 @@
+evidence/pty/**/*.pty -text -diff
+evidence/pty/**/*.screen.txt -text -diff

@@ -1,0 +1,65 @@
+{
+  "base": "51834d36531b641efb1c70ac3ad756a64b9a1d09",
+  "production_head": "0a30cc3311c185b05383d49c5d3673c88b4ee7b1",
+  "branch": "refactor/consultant-controller-authority",
+  "commits": [
+    {
+      "commit": "c9ffdce614e8bd6366a396404275ffd744d1e743",
+      "tree": "1a54d2edd0cb2da1c1d0dcb3a5539f5fe6ab8d8f",
+      "files": [
+        "agent_core/plan_contract.py",
+        "prompts/manager.py",
+        "tests/export_planner_boundary_fixture.py",
+        "tests/test_planner_boundary.py"
+      ]
+    },
+    {
+      "commit": "f52b15f3489c4c7bdb318866c9db9a246cfae051",
+      "tree": "d895986e1dae90b2ed0f44d28cd7ab94c3a383ba",
+      "files": [
+        "agent_core/plan_tracker.py",
+        "agent_core/planner_loop.py",
+        "agent_core/workflow/early_nodes.py",
+        "bio_agents.py",
+        "tests/test_planner_boundary.py",
+        "tests/test_planner_lifecycle_boundary.py"
+      ]
+    },
+    {
+      "commit": "025922d856c72e86f9cd9a6f2ac7e8b92248a442",
+      "tree": "2e94f236b0398a88c981a97ff8f22deabe1a4573",
+      "files": [
+        "agent_core/planner_loop.py",
+        "tests/test_planner_lifecycle_boundary.py"
+      ]
+    },
+    {
+      "commit": "61e751b4114fa1ebe203c8ff2ccf8194dc057f0e",
+      "tree": "a701e068b1400a1c0069906d7e8a89b6d86f97b4",
+      "files": [
+        "agent_core/cli_plain.py",
+        "agent_core/human_io.py",
+        "bio_agents.py",
+        "tests/replay_input_boundary_pty.py",
+        "tests/test_approval_owner_lifecycle.py",
+        "tests/test_input_boundary.py"
+      ]
+    },
+    {
+      "commit": "0a30cc3311c185b05383d49c5d3673c88b4ee7b1",
+      "tree": "b76f92cb9add6acc9a4e56218351b99dc0483284",
+      "files": [
+        "agent_core/cli_plain.py",
+        "agent_core/cli_terminal.py",
+        "tests/replay_input_boundary_pty.py",
+        "tests/test_input_boundary.py"
+      ]
+    }
+  ],
+  "original_worktree_entries": 437,
+  "unrelated_status_preserved": true,
+  "index_initially_empty": true,
+  "scope": "exact commit-tree exports only; original dirty sources excluded from test trees",
+  "source_session_access": "stdlib static projection, no business loader",
+  "real_model_api_wgs_original_session_restore": "NOT RUN"
+}

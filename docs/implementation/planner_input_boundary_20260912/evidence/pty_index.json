@@ -1,0 +1,158 @@
+[
+  {
+    "path": "pty/biomind-input-before2-pty",
+    "passed": false,
+    "exit": 0,
+    "checks": {
+      "task_complete": false,
+      "pending_execution_zero": false,
+      "pending_no_decision": false,
+      "model_calls_zero": true,
+      "execution_count": false,
+      "exit_zero": true
+    }
+  },
+  {
+    "path": "pty/biomind-input4-tty",
+    "passed": true,
+    "exit": 0,
+    "checks": {
+      "task_complete": true,
+      "pending_execution_zero": true,
+      "pending_no_decision": true,
+      "model_calls_zero": true,
+      "execution_count": true,
+      "exit_zero": true
+    }
+  },
+  {
+    "path": "pty/biomind-input4-crlf",
+    "passed": true,
+    "exit": 0,
+    "checks": {
+      "task_complete": true,
+      "pending_execution_zero": true,
+      "pending_no_decision": true,
+      "model_calls_zero": true,
+      "execution_count": true,
+      "exit_zero": true
+    }
+  },
+  {
+    "path": "pty/biomind-input4-explicit",
+    "passed": true,
+    "exit": 0,
+    "checks": {
+      "task_complete": true,
+      "pending_execution_zero": true,
+      "pending_no_decision": true,
+      "model_calls_zero": true,
+      "execution_count": true,
+      "exit_zero": true
+    }
+  },
+  {
+    "path": "pty/biomind-input4-eof",
+    "passed": true,
+    "exit": 0,
+    "checks": {
+      "task_complete": true,
+      "pending_execution_zero": true,
+      "pending_no_decision": true,
+      "model_calls_zero": true,
+      "execution_count": true,
+      "exit_zero": true
+    }
+  },
+  {
+    "path": "pty/biomind-input4-feedback",
+    "passed": true,
+    "exit": 0,
+    "checks": {
+      "task_complete": true,
+      "pending_execution_zero": true,
+      "pending_no_decision": true,
+      "model_calls_zero": true,
+      "execution_count": true,
+      "exit_zero": true
+    }
+  },
+  {
+    "path": "pty/biomind-input4-enter",
+    "passed": true,
+    "exit": 0,
+    "checks": {
+      "task_complete": true,
+      "pending_execution_zero": true,
+      "pending_no_decision": true,
+      "model_calls_zero": true,
+      "execution_count": true,
+      "exit_zero": true
+    }
+  },
+  {
+    "path": "pty/biomind-input4-details",
+    "passed": true,
+    "exit": 0,
+    "checks": {
+      "task_complete": true,
+      "pending_execution_zero": true,
+      "pending_no_decision": true,
+      "model_calls_zero": true,
+      "execution_count": true,
+      "exit_zero": true
+    }
+  },
+  {
+    "path": "pty/biomind-input5-tty-cancel",
+    "passed": true,
+    "exit": 0,
+    "checks": {
+      "task_complete": true,
+      "pending_execution_zero": true,
+      "pending_no_decision": true,
+      "model_calls_zero": true,
+      "execution_count": true,
+      "exit_zero": true
+    }
+  },
+  {
+    "path": "pty/biomind-input6-tty-details",
+    "passed": true,
+    "exit": 0,
+    "checks": {
+      "task_complete": true,
+      "pending_execution_zero": true,
+      "pending_no_decision": true,
+      "model_calls_zero": true,
+      "execution_count": true,
+      "exit_zero": true
+    }
+  },
+  {
+    "path": "pty/biomind-inputblank2-plain",
+    "passed": true,
+    "exit": 0,
+    "checks": {
+      "task_complete": true,
+      "pending_execution_zero": true,
+      "pending_no_decision": true,
+      "model_calls_zero": true,
+      "execution_count": true,
+      "exit_zero": true
+    }
+  },
+  {
+    "path": "pty/biomind-inputblank2-tty",
+    "passed": true,
+    "exit": 0,
+    "checks": {
+      "task_complete": true,
+      "pending_execution_zero": true,
+      "pending_no_decision": true,
+      "model_calls_zero": true,
+      "execution_count": true,
+      "exit_zero": true
+    }
+  }
+]

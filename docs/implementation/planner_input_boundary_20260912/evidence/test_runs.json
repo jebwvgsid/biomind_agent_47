@@ -1,0 +1,475 @@
+[
+  {
+    "results_path": "/tmp/biomind-pf1-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-pf1-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-pf1-export",
+      "-q",
+      "tests/test_planner_boundary.py",
+      "tests/test_plan_revision_handoff.py",
+      "tests/test_plan_result_contract_v1.py"
+    ],
+    "passed": 34,
+    "failed": 1,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_plan_result_contract_v1.py::test_task_output_binding_uses_approved_plan_result_declaration",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001682201400399208,
+      "failure": ""
+    },
+    "pytest_results_sha256": "22d29b39673578a6486543e28ae5122dbfaeca8450fd545eff8390b416c13ac9",
+    "stdout_sha256": "d4b44bc8a27939350cbe988f314e8d9286fae650c249ce41c0460cd6873ab028",
+    "exit": 1
+  },
+  {
+    "results_path": "/tmp/biomind-pf1b-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-pf1b-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-pf1b-export",
+      "-q",
+      "tests/test_planner_boundary.py",
+      "tests/test_plan_revision_handoff.py",
+      "tests/test_plan_result_contract_v1.py"
+    ],
+    "passed": 35,
+    "failed": 0,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_plan_result_contract_v1.py::test_task_output_binding_uses_approved_plan_result_declaration",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001682010479271412,
+      "failure": ""
+    },
+    "pytest_results_sha256": "afd1dbc0813a9da33285a5e074bace714a72a116e83110195ffb05a85cbfc968",
+    "stdout_sha256": "99600774b0450972dd94efedb0acaeee0a150675fbbbffb6034c9a789f04dc5f",
+    "exit": 0
+  },
+  {
+    "results_path": "/tmp/biomind-life0-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-life0-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-life0-export",
+      "-q",
+      "tests/test_planner_boundary.py",
+      "tests/test_plan_revision_handoff.py",
+      "tests/test_plan_results_purpose.py"
+    ],
+    "passed": 17,
+    "failed": 1,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_plan_results_purpose.py::test_warning_acceptance_preserves_individual_artifact_failure_and_downstream_visibility[True]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00016853399574756622,
+      "failure": ""
+    },
+    "pytest_results_sha256": "8d8be45ea5ef1052d6e26ead32841a1645991dcedabb3cdc2a78e5c7dff42e32",
+    "stdout_sha256": "1b653089564d70d380ccfcf51457136bce7dc8cfc917c494598acc1c5a72e1b0",
+    "exit": 1
+  },
+  {
+    "results_path": "/tmp/biomind-life1-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-life1-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-life1-export",
+      "-q",
+      "tests/test_planner_boundary.py"
+    ],
+    "passed": 1,
+    "failed": 1,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_planner_boundary.py::test_final_provider_messages_one_local_correction_for_six_fields",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00046418700367212296,
+      "failure": ""
+    },
+    "pytest_results_sha256": "9e53a950c2d37a867b408be66b0b8973303316a6e08a6f8cf1d642c7a27685ee",
+    "stdout_sha256": "ddea6773ee2c3715cf29a8fb51eeb05c474424454594db41404e625a8675a5a5",
+    "exit": 1
+  },
+  {
+    "results_path": "/tmp/biomind-life2-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-life2-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-life2-export",
+      "-q",
+      "tests/test_planner_boundary.py",
+      "tests/test_planner_lifecycle_boundary.py"
+    ],
+    "passed": 2,
+    "failed": 2,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00021616509184241295,
+      "failure": ""
+    },
+    "pytest_results_sha256": "f385830a5e581087e5d2768f1eceb2affb9079a4e604d334fb5405d612408f49",
+    "stdout_sha256": "1fd61d769668c9f6f4fae0f2c29ac80c8e86343116dc7462a15966d36b49f180",
+    "exit": 1
+  },
+  {
+    "results_path": "/tmp/biomind-life3-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-life3-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-life3-export",
+      "-q",
+      "tests/test_planner_lifecycle_boundary.py"
+    ],
+    "passed": 1,
+    "failed": 1,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0002160118892788887,
+      "failure": ""
+    },
+    "pytest_results_sha256": "182518a1e9dcc76bf2cd7e467ed0ce28488f3d0c3badd25609f7a3898a480cf1",
+    "stdout_sha256": "5bf3ebc18206f4db33c9eaf733b7c538cc17bde3e3e2e77581da9f5bed4d41bb",
+    "exit": 1
+  },
+  {
+    "results_path": "/tmp/biomind-life4-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-life4-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-life4-export",
+      "-q",
+      "tests/test_planner_boundary.py",
+      "tests/test_planner_lifecycle_boundary.py",
+      "tests/test_plan_revision_handoff.py",
+      "tests/test_plan_results_purpose.py",
+      "tests/test_consultant_skill_handoff.py",
+      "tests/test_consultant_stop_resume.py"
+    ],
+    "passed": 38,
+    "failed": 0,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_consultant_stop_resume.py::test_missing_prompt_toolkit_falls_back_without_repeating_runtime",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001998143270611763,
+      "failure": ""
+    },
+    "pytest_results_sha256": "42c68909906f5a0869106bed47f621c216be77291c5ead618e40a0ad4bfd7995",
+    "stdout_sha256": "1b1190e266e742858e56c16805f6be963c981a80db5dfe92a75207836d443eb6",
+    "exit": 0
+  },
+  {
+    "results_path": "/tmp/biomind-life5-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-life5-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-life5-export",
+      "-q",
+      "tests/test_planner_boundary.py",
+      "tests/test_planner_lifecycle_boundary.py",
+      "tests/test_plan_revision_handoff.py",
+      "tests/test_plan_results_purpose.py",
+      "tests/test_consultant_skill_handoff.py",
+      "tests/test_consultant_stop_resume.py"
+    ],
+    "passed": 40,
+    "failed": 0,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_consultant_stop_resume.py::test_missing_prompt_toolkit_falls_back_without_repeating_runtime",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00020024925470352173,
+      "failure": ""
+    },
+    "pytest_results_sha256": "49b9e055ffd2b8c73b421ee01bc4b3c4573cdbe7ac6ebf425c8dacd9f0547459",
+    "stdout_sha256": "728f17bd27ee441c0cf7a3416291cc93ba08287e8e5df05e7c2a5f0204c0faea",
+    "exit": 0
+  },
+  {
+    "results_path": "/tmp/biomind-life6-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-life6-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-life6-export",
+      "-q",
+      "tests/test_planner_boundary.py",
+      "tests/test_planner_lifecycle_boundary.py",
+      "tests/test_plan_revision_handoff.py"
+    ],
+    "passed": 3,
+    "failed": 4,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_plan_revision_handoff.py::test_r1_r2_r3_actual_admission_reaches_planner_and_correction_with_scope_isolation",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00018830597400665283,
+      "failure": ""
+    },
+    "pytest_results_sha256": "d8434cb0908db0ea9d9cbaa100a5e9e549c6270846d8e948b05ce8900d0e0bc0",
+    "stdout_sha256": "23db47dcd96939d12bd144c32971c8a570d2bed0206e6a62b881db8766e7b2d1",
+    "exit": 1
+  },
+  {
+    "results_path": "/tmp/biomind-life7-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-life7-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-life7-export",
+      "-q",
+      "tests/test_planner_boundary.py",
+      "tests/test_planner_lifecycle_boundary.py",
+      "tests/test_plan_revision_handoff.py"
+    ],
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_plan_revision_handoff.py::test_r1_r2_r3_actual_admission_reaches_planner_and_correction_with_scope_isolation",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00017602229490876198,
+      "failure": ""
+    },
+    "pytest_results_sha256": "4697d97bbe622118d0c51cd68486ef437b13a0cd08d412875fdf2b1e93365364",
+    "stdout_sha256": "529f3ffb300846e923443c0e1440383e547b8f8312a90c4a9496acc831783aaf",
+    "exit": 0
+  },
+  {
+    "results_path": "/tmp/biomind-input2-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-input2-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-input2-export",
+      "-q",
+      "tests/test_input_boundary.py",
+      "tests/test_approval_owner_lifecycle.py",
+      "tests/test_approval_visibility.py",
+      "tests/test_cli_v2_terminal_fallback.py"
+    ],
+    "passed": 42,
+    "failed": 1,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-verbose]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00018642796203494072,
+      "failure": ""
+    },
+    "pytest_results_sha256": "422dbd563bf123671342d50398020f63336a6f4e0fea0b7314bff896af76f8fe",
+    "stdout_sha256": "4bac5545615c4e8ca627f23e54350d653746f9519a7dab42dbf1ac119efee240",
+    "exit": 1
+  },
+  {
+    "results_path": "/tmp/biomind-input3-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-input3-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-input3-export",
+      "-q",
+      "tests/test_input_boundary.py",
+      "tests/test_approval_owner_lifecycle.py",
+      "tests/test_approval_visibility.py",
+      "tests/test_cli_v2_terminal_fallback.py"
+    ],
+    "passed": 43,
+    "failed": 0,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-verbose]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00019162287935614586,
+      "failure": ""
+    },
+    "pytest_results_sha256": "1ba742dd3ea8e174eb0e8e1f4e17605ba67d5b68a931aadfabe176395f9eac99",
+    "stdout_sha256": "a5a473a55a0ee1afdc7f9b63552eea01c56163e7674cf2ed1924baf453552dc3",
+    "exit": 0
+  },
+  {
+    "results_path": "/tmp/biomind-input4-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-input4-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-input4-export",
+      "-q",
+      "tests/test_input_boundary.py",
+      "tests/test_approval_owner_lifecycle.py",
+      "tests/test_approval_visibility.py",
+      "tests/test_cli_v2_terminal_fallback.py"
+    ],
+    "passed": 44,
+    "failed": 0,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-verbose]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00018113385885953903,
+      "failure": ""
+    },
+    "pytest_results_sha256": "2c7539106639bc216751266a455555f3b66cda08763de53bca8fbee4f4ac81a0",
+    "stdout_sha256": "a84bde5fffabd591c9dcb3f75b61c3879a24a14b702abd0e190aec6340ea9844",
+    "exit": 0
+  },
+  {
+    "results_path": "/tmp/biomind-inputblank-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-inputblank-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-inputblank-export",
+      "-q",
+      "tests/test_input_boundary.py",
+      "tests/test_approval_owner_lifecycle.py",
+      "tests/test_approval_visibility.py",
+      "tests/test_cli_v2_terminal_fallback.py"
+    ],
+    "passed": 41,
+    "failed": 6,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-verbose]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00019252486526966095,
+      "failure": ""
+    },
+    "pytest_results_sha256": "6404d5b836d45b2d8406381c384121e1c6f07db7d5915d7c87f705a996db47a8",
+    "stdout_sha256": "ba1a054599b58bf35c47b0d02fc1adbca66a61a4aae59aa513482e76686170dc",
+    "exit": 1
+  },
+  {
+    "results_path": "/tmp/biomind-inputblank2-results",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-inputblank2-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-inputblank2-export",
+      "-q",
+      "tests/test_input_boundary.py",
+      "tests/test_approval_owner_lifecycle.py",
+      "tests/test_approval_visibility.py",
+      "tests/test_cli_v2_terminal_fallback.py"
+    ],
+    "passed": 47,
+    "failed": 0,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-verbose]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001800074242055416,
+      "failure": ""
+    },
+    "pytest_results_sha256": "13e834c8408c05403f6010cfcbfb98cad0530fc374fa1d6aa1653c88e4e911dd",
+    "stdout_sha256": "5d089626a111eb79b4a85afd5df67445b8c8ebf987c53cc5a9d393f085c2e6e8",
+    "exit": 0
+  },
+  {
+    "results_path": "/tmp/biomind-input5-regressions",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-input5-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-input5-export",
+      "-q",
+      "tests/test_plan_results_name.py",
+      "tests/test_plan_results_evidence.py",
+      "tests/test_plan_results_managed.py"
+    ],
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0007723500020802021,
+      "failure": ""
+    },
+    "pytest_results_sha256": "fe48d8095bd39b0e3c8a86f40cf63150ab9c4d6cc62b01f3b92696a6edb1be60",
+    "stdout_sha256": "7e6ff852f88ec394cee5e63dd42118d6a82edce59c6dc182e3d923dec8673048",
+    "exit": -11,
+    "limitation": "SIGSEGV after 21 completed cases; remaining cases not completed in this invocation; native cause UNKNOWN"
+  },
+  {
+    "results_path": "/tmp/biomind-boundary-crash-base-result",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-boundary-crash-base/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-boundary-crash-base",
+      "-q",
+      "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]"
+    ],
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0002688700333237648,
+      "failure": ""
+    },
+    "pytest_results_sha256": "0c051c030dcd90e85c5bebd34eb014876fd5d33726d6452b68b96f95a790fa23",
+    "stdout_sha256": "18704b55b64af3bbb6e2503b5068ad4af2af4b6553b85495a8a1d0364853f3a9",
+    "exit": 0
+  },
+  {
+    "results_path": "/tmp/biomind-boundary-crash-candidate-result",
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-input5-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind-input5-export",
+      "-q",
+      "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+      "tests/test_plan_results_evidence.py",
+      "tests/test_plan_results_managed.py"
+    ],
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "last_record": {
+      "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00022980431094765663,
+      "failure": ""
+    },
+    "pytest_results_sha256": "dc45ce778694be00b2770aedf5d19170e9c7e09bf14e0229cd5374d1f0c0a495",
+    "stdout_sha256": "a6273186c17d9b9ae517549ba4463eddcd48c4a31287df5aa1b2c2d8d7bb1c66",
+    "exit": 0
+  }
+]

@@ -1,0 +1,104 @@
+{
+  "sha256": {
+    "README.md": "54d16732492410a6118dd3699ab68b890537d6d799952908331be8bae8f4ce9c",
+    "evidence/build.json": "924736ca15237efd613309bba9161162bbd01dd6d8fda6d6c80883321a3590b0",
+    "evidence/life1_provider_messages.json": "3e84d801661232cec14e9d909207583a1cd6f1c534b779d0e63dd90784102f95",
+    "evidence/lifecycle.json": "7fcac5f8aec132399310651490ce8ae7f10098c8d25ab4f4487c97d0de47cbed",
+    "evidence/native_crash_pytest_results.json": "fe48d8095bd39b0e3c8a86f40cf63150ab9c4d6cc62b01f3b92696a6edb1be60",
+    "evidence/pf1_provider_messages.json": "ab2c65049247c643e0740abc91e7ca861948a97b60490c892fd5d9c19fe9f9c6",
+    "evidence/pty/biomind-input-before2-pty/raw.pty": "7f90dcce1cc96343bc8e95a072176d66a94af109e315798a87b4815c26bd2eec",
+    "evidence/pty/biomind-input-before2-pty/result.json": "eb9eb5895f50713d45c75559b46b7a8e7034f1aceb82979649caaa33b04d6428",
+    "evidence/pty/biomind-input4-crlf/pending.screen.txt": "badeb04a0dbea7735254a2452712fd1a6336bad5e9a8ef44a7d18bdab568cada",
+    "evidence/pty/biomind-input4-crlf/raw.pty": "5a5443311042cf0f22484a350529d1c710e238507bab18c7582c55b446341509",
+    "evidence/pty/biomind-input4-crlf/result.json": "fa10871febcd9fd289b867f31af8670b49019dd26158fcf77f9129580d12ae45",
+    "evidence/pty/biomind-input4-details/pending.screen.txt": "789eee1597784fdc0cc848776a91afc194bf74d54494955b458662d27e21c349",
+    "evidence/pty/biomind-input4-details/raw.pty": "f4e1084bdb1973e5b6f5ff097081f9701235903912f3643d57861c4b2e719e5e",
+    "evidence/pty/biomind-input4-details/result.json": "17f50fcd51651f8a11eaf4f0c6a30ea8e2ffc1e22a011f26db43893bd28f2752",
+    "evidence/pty/biomind-input4-enter/pending.screen.txt": "03d699a850420dd283fcb4f5428648e43d46ddc0d24e1ee81071c0eaf5251589",
+    "evidence/pty/biomind-input4-enter/raw.pty": "0a43228082ac96aca2ae672240e12aae32dfa8f83773fc2af7ba7aa8a7d6d616",
+    "evidence/pty/biomind-input4-enter/result.json": "88c58d122f771f6effc983c1827922b4501623a21cb0476d13bec47b6ef7c131",
+    "evidence/pty/biomind-input4-eof/pending.screen.txt": "03d699a850420dd283fcb4f5428648e43d46ddc0d24e1ee81071c0eaf5251589",
+    "evidence/pty/biomind-input4-eof/raw.pty": "0c3a838247e0bd5d679a41586b191d3d5168e15c586d5fb9a244df7ebf0af40d",
+    "evidence/pty/biomind-input4-eof/result.json": "001246ba388eed0a5c62a8595e0dd4b94f1d5a2259cf9aa3f4be3c5d608a801c",
+    "evidence/pty/biomind-input4-explicit/pending.screen.txt": "97cd2141ae0afac8de9d2a16a6ac6b9e76a43d14666e5f8342a68a3de99e25ff",
+    "evidence/pty/biomind-input4-explicit/raw.pty": "251f18fb4784354a62298329b11742f486aaf00046d196ea57df43d3027a972a",
+    "evidence/pty/biomind-input4-explicit/result.json": "cc7a0921a465bce0fd89103c56d8dcd348f038a28f81b9f877c1fc64f719c5f2",
+    "evidence/pty/biomind-input4-feedback/pending.screen.txt": "03d699a850420dd283fcb4f5428648e43d46ddc0d24e1ee81071c0eaf5251589",
+    "evidence/pty/biomind-input4-feedback/raw.pty": "e2815d09723d9c56e7dd859f116f826ac15476b7252abac0d754dcf2916e2379",
+    "evidence/pty/biomind-input4-feedback/result.json": "ca13783ba1865f171f545658ca9b3831970bc23ae3dd0aa1a6a8bc9c4bd08586",
+    "evidence/pty/biomind-input4-tty/pending.screen.txt": "5065af9b884a2922d596ba6923d3cceb996992f067c5617bdb3c6695f02039a4",
+    "evidence/pty/biomind-input4-tty/raw.pty": "d0e829ae5a061bb8a287126110e2d2cf6d60338e19b054b5c42c1d7151fde4a7",
+    "evidence/pty/biomind-input4-tty/result.json": "316d5b684bd89982b8474a5d0bba888a1f7fffee63561f3e1f10807dc2d4ae82",
+    "evidence/pty/biomind-input5-tty-cancel/pending.screen.txt": "5065af9b884a2922d596ba6923d3cceb996992f067c5617bdb3c6695f02039a4",
+    "evidence/pty/biomind-input5-tty-cancel/raw.pty": "85b5f08ddf12c51f430cfa98fab12a6f905ebfc6f9020e6ff10054578f9e4cb0",
+    "evidence/pty/biomind-input5-tty-cancel/result.json": "85262a9661016b35e05e59aa2545e2d87bef1f8ba83a51f3a8fa30d47a35adcf",
+    "evidence/pty/biomind-input6-tty-details/pending.screen.txt": "5065af9b884a2922d596ba6923d3cceb996992f067c5617bdb3c6695f02039a4",
+    "evidence/pty/biomind-input6-tty-details/raw.pty": "3a23c939f59eb5b722cd0af3121fd80e334809478024e22b4533bb91de83d715",
+    "evidence/pty/biomind-input6-tty-details/result.json": "4e381ae57fbfe01927aea16336fa40fb1d4e319bd244d51a577e4409756844da",
+    "evidence/pty/biomind-inputblank2-plain/pending.screen.txt": "3687009328607a3768762b965abc636e9a8787365e0763e7c239a81659eb2217",
+    "evidence/pty/biomind-inputblank2-plain/raw.pty": "16b90ec1082ce001b868dd9c66ae89187d94817fc0b5b17177c2bd8bc75472ac",
+    "evidence/pty/biomind-inputblank2-plain/result.json": "00fb80108d233f9dea13118a1c04756f7f1e19923c6a4ede6c170a909444bbfd",
+    "evidence/pty/biomind-inputblank2-tty/pending.screen.txt": "10b0b4d77e2fd43ee9eb58f60515b435fa92dfb7e5c2c35b7602c9b1f98e663e",
+    "evidence/pty/biomind-inputblank2-tty/raw.pty": "777c3e971a8fbfc46b4545d034bbbd39a1648eadc1f446f59f2465e2f270e281",
+    "evidence/pty/biomind-inputblank2-tty/result.json": "3b7830e254f9bc86abc0052c3a4861ebb3a05e84166c46d78eea7d09e3cdce74",
+    "evidence/pty_index.json": "c18ae33702752f5083a3d82677ba0d96112a81fcc8913648e9826532b9c109ab",
+    "evidence/session_projection.json": "a23ef32f5646d18d0462227ffb0dd63ab0b1e3bf8a7a6cdd8c1aef554677e005",
+    "evidence/test_runs.json": "002e53e9a171d04ef917ffd7a67c76781fab53c8fdfedb21ae039225a8b909eb",
+    "verify_evidence.py": "f8567b0e886e08da5dee161005b30a260c9e2081cbea9fdbd2d99a4ac8a0161c",
+    ".gitattributes": "ac719c45a7dfe84cd7a80a2021f096ecebbcc22c1a90af6e53d755d5eb415a7e"
+  },
+  "source_commit_trees": [
+    {
+      "commit": "c9ffdce614e8bd6366a396404275ffd744d1e743",
+      "tree": "1a54d2edd0cb2da1c1d0dcb3a5539f5fe6ab8d8f",
+      "files": [
+        "agent_core/plan_contract.py",
+        "prompts/manager.py",
+        "tests/export_planner_boundary_fixture.py",
+        "tests/test_planner_boundary.py"
+      ]
+    },
+    {
+      "commit": "f52b15f3489c4c7bdb318866c9db9a246cfae051",
+      "tree": "d895986e1dae90b2ed0f44d28cd7ab94c3a383ba",
+      "files": [
+        "agent_core/plan_tracker.py",
+        "agent_core/planner_loop.py",
+        "agent_core/workflow/early_nodes.py",
+        "bio_agents.py",
+        "tests/test_planner_boundary.py",
+        "tests/test_planner_lifecycle_boundary.py"
+      ]
+    },
+    {
+      "commit": "025922d856c72e86f9cd9a6f2ac7e8b92248a442",
+      "tree": "2e94f236b0398a88c981a97ff8f22deabe1a4573",
+      "files": [
+        "agent_core/planner_loop.py",
+        "tests/test_planner_lifecycle_boundary.py"
+      ]
+    },
+    {
+      "commit": "61e751b4114fa1ebe203c8ff2ccf8194dc057f0e",
+      "tree": "a701e068b1400a1c0069906d7e8a89b6d86f97b4",
+      "files": [
+        "agent_core/cli_plain.py",
+        "agent_core/human_io.py",
+        "bio_agents.py",
+        "tests/replay_input_boundary_pty.py",
+        "tests/test_approval_owner_lifecycle.py",
+        "tests/test_input_boundary.py"
+      ]
+    },
+    {
+      "commit": "0a30cc3311c185b05383d49c5d3673c88b4ee7b1",
+      "tree": "b76f92cb9add6acc9a4e56218351b99dc0483284",
+      "files": [
+        "agent_core/cli_plain.py",
+        "agent_core/cli_terminal.py",
+        "tests/replay_input_boundary_pty.py",
+        "tests/test_input_boundary.py"
+      ]
+    }
+  ]
+}
