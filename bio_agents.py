@@ -5615,7 +5615,11 @@ class BioAnalystAgent:
             durable, require_agent_initiated=True
         )
 
-        if status in {TASK_STATUS_COMPLETED, TASK_STATUS_CANCELLED, TASK_STATUS_BLOCKED, TASK_STATUS_FAILED}:
+        from agent_core.workflow.consultant_resume import legacy_handoff_stop
+        if (legacy_handoff_stop(durable) and not pending_question and not pending_action
+                and not waiting and not runtime_request):
+            semantic, reason = "consultation_ready", "legacy_consultant_handoff_retry"
+        elif status in {TASK_STATUS_COMPLETED, TASK_STATUS_CANCELLED, TASK_STATUS_BLOCKED, TASK_STATUS_FAILED}:
             semantic, reason = "terminal", f"task_{status}"
         elif recovery_phase in {"blocked", "exhausted"} or recovery_status in {"blocked", "exhausted"}:
             semantic, reason = "terminal", "recovery_budget_terminal"
@@ -6368,7 +6372,7 @@ class BioAnalystAgent:
         if workflow_routing_schema_version(durable) == WORKFLOW_ROUTING_SCHEMA_TYPED:
             semantic = self._resolve_schema2_resume_state(task_id)
             if semantic.type == "terminal":
-                return {"action": "completed", "resume_state": semantic.to_dict()}
+                return {"action": "completed" if semantic.payload.get("status") == "completed" else "terminal", "resume_state": semantic.to_dict()}
             if semantic.type == "awaiting_user_input":
                 return {
                     "action": "waiting_user",
@@ -31687,6 +31691,12 @@ If the user is actually asking you to run analysis or inspect local files, say t
             task_id = state.get("task_id", "default")
 
             durable_consultant_state = load_plan_state(self.data_path, task_id)
+            from agent_core.workflow.consultant_resume import enter_consultant
+            entered = enter_consultant(durable_consultant_state)
+            if entered != durable_consultant_state:
+                save_plan_state(self.data_path, task_id, entered)
+                durable_consultant_state = entered
+                getattr(self, "_managed_terminal_results", {}).pop(task_id, None)
             pending_impact_question = dict(
                 (durable_consultant_state.get("task_state") or {}).get(
                     "pending_plan_impact_review"
@@ -34619,7 +34629,14 @@ question. Never guess a scientific or database identity.
                     messages + [response],
                     {"reason": failure_summary, "plan_progress": plan_progress},
                 )
-                return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
+                return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish",
+                    "consultation_state": consultation_state,
+                    "terminal_diagnostic": {
+                        "source_node": "consultant", "error_code": "CONSULTANT_PROVIDER_FAILED",
+                        "detail": failure_summary,
+                        "consultant_invocation_id": str((durable_consultant_state.get("task_state", {}).get(
+                            "consultant_invocation") or {}).get("invocation_id") or ""),
+                    }}
             if consultant_phase_context is not None:
                 consultant_phase_context.record_assistant_response(response)
             raw_content = str(response.content or "").strip()
@@ -53118,6 +53135,10 @@ question. Never guess a scientific or database identity.
         boundary = terminal_boundary(values)
         if boundary:
             return str(boundary["status"])
+        if values.get("pending_human_question") and any(
+            getattr(task, "interrupts", ()) for task in getattr(snapshot, "tasks", ())
+        ):
+            return "waiting_user"
         if values.get("managed_run_boundary") and not getattr(snapshot, "next", ()):
             observed = values["managed_run_boundary"]
             kind = (observed.get("outcome") or {}).get("type")
@@ -53260,6 +53281,11 @@ question. Never guess a scientific or database identity.
             if isinstance(value, Mapping) and value:
                 records.append(value)
 
+        if status == "waiting_user":
+            pending = dict(values.get("pending_human_question") or task_state.get("pending_question") or {})
+            if pending.get("question"):
+                add_record({"stage": str(pending.get("stage") or "human_input"),
+                            "reason": str(pending["question"])})
         delivered_observation = False
         if status == "completed":
             final_outcomes = [values.get("final_audit_outcome") or {}]
@@ -53925,6 +53951,11 @@ question. Never guess a scientific or database identity.
                                 ),
                                 Fore.YELLOW,
                             )
+                            continue
+                        if control.get("action") == "terminal":
+                            resume_facts = control.get("resume_state") or {}
+                            display_print("任务仍处于停止状态；本次未重新执行。" + json.dumps(
+                                resume_facts.get("payload") or {}, ensure_ascii=False))
                             continue
                         if control.get("action") == "completed":
                             display_print(f"{Fore.GREEN}✓ Task {current_session_id} is already complete; nothing was rerun.{Style.RESET_ALL}")

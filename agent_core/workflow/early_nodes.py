@@ -669,8 +669,16 @@ class TypedConsultant(_TypedEarlyNode):
             status in {"blocked", "failed", "cancelled", "completed"}
             or contract_status.startswith("blocked_")
         ) and disposition != ConsultationDisposition.ANSWER_READY.value:
+            diagnostic = dict(state.get("terminal_diagnostic") or {})
+            invocation_id = str((task_state.get("consultant_invocation") or {}).get("invocation_id") or "")
+            current_provider_failure = (
+                diagnostic.get("source_node") == "consultant"
+                and diagnostic.get("error_code") == "CONSULTANT_PROVIDER_FAILED"
+                and invocation_id and diagnostic.get("consultant_invocation_id") == invocation_id
+            )
             return _outcome(self.contract, "terminal", state, durable, {
-                "status": status or "blocked", "reason_code": contract_status or "consultation_terminal",
+                "status": status or "blocked", "reason_code": diagnostic["error_code"] if current_provider_failure else contract_status or "consultation_terminal",
+                **({"error_code": diagnostic["error_code"], "detail": str(diagnostic.get("detail") or "")} if current_provider_failure else {}),
             }, "Consultation reached a terminal business state.")
         if disposition == ConsultationDisposition.PLANNING_READY.value:
             return _outcome(self.contract, "planning_ready", state, durable, {

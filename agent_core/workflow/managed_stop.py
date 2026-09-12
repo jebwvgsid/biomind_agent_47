@@ -228,6 +228,10 @@ def _matches(durable, stop):
             and not plan_approval_is_current(durable, scope["task_revision"])
             and has_materialized_plan(durable) == stop["planning"].get("plan_materialized")
             and _authority(durable) == stop.get("authority"))
+    if _mapping(stop.get("boundary")).get("node") == "consultant":
+        invocation = _mapping(_mapping(durable.get("task_state")).get("consultant_invocation"))
+        if str(stop.get("consultant_invocation_id") or "") != str(invocation.get("invocation_id") or ""):
+            return False
     actual = _scope(durable, stop.get("scope"))
     # A newly CREATED/STARTED attempt supersedes an old failure packet even
     # before another causal packet has been published.
@@ -394,7 +398,9 @@ def build_managed_stop(task_id, values, durable, boundary):
     if runtime:
         value["runtime"] = deepcopy(runtime)
         # Runtime/report diagnostics are secondary to the frozen causal failure.
-    value["stop_id"] = "managed-stop:" + _hash({"scope": value["scope"], "authority": value["authority"], "boundary": boundary,
+    if boundary["node"] == "consultant":
+        value["consultant_invocation_id"] = str(_mapping(task.get("consultant_invocation")).get("invocation_id") or "")
+    value["stop_id"] = "managed-stop:" + _hash({**({"consultant_invocation_id": value["consultant_invocation_id"]} if "consultant_invocation_id" in value else {}), "scope": value["scope"], "authority": value["authority"], "boundary": boundary,
         "stop_reason": value["stop_reason"]})
     value["explanation"] = explanation(value)
     return value
@@ -542,6 +548,9 @@ def _save(data_path, value, *, loader, saver, claim=False):
         reservations[value["stop_id"]] = int(value.get("summary_reserved_tokens") or 0)
         budgets["terminal_summary_reservations"] = reservations
         fresh["task_state"]["budgets"] = budgets
+    historical = _mapping(fresh["task_state"].get("managed_run_stop"))
+    if historical.get("stop_id") and historical["stop_id"] != value["stop_id"]:
+        fresh["task_state"].setdefault("managed_run_stop_history", {})[historical["stop_id"]] = deepcopy(historical)
     fresh["task_state"]["managed_run_stop"] = deepcopy(value)
     saver(data_path, value["scope"]["task_id"], fresh)
     return fresh
