@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-cli-deploy-fatal-20260912/diagnostic-original/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-cli-deploy-fatal-20260912/diagnostic-original",
+    "-q",
+    "tests/test_cli_fatal_outlet.py"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "/tmp/biomind-cli-deps",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-cli-deploy-fatal-20260912/fatal-outlet-selftest/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-cli-deploy-fatal-20260912/fatal-outlet-selftest/pytest-results.json",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-cli-deploy-fatal-20260912/fatal-outlet-selftest",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-cli-deploy-fatal-20260912/fatal-outlet-selftest",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-cli-deploy-fatal-20260912/fatal-outlet-selftest/scratch/executor-logs",
+    "BIOMIND_OFFLINE_FATAL_FILE": "/tmp/biomind-cli-deploy-fatal-20260912/fatal-outlet-selftest/fatal.txt",
+    "BIOMIND_OFFLINE_FATAL_SELFTEST": "1"
+  }
+}

@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011250004172325134,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 18.575951488222927,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00025411834940314293,
+    "failure": ""
+  }
+]

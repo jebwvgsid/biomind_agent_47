@@ -1,0 +1,111 @@
+{
+  "style-after-normal-cache": {
+    "sgr_codes": [
+      [
+        0
+      ],
+      [
+        0,
+        32,
+        1
+      ],
+      [
+        0,
+        36
+      ]
+    ],
+    "ansi_sha256": "137a14af6b00d315c492658ac74ea8e8d341f7a16d6ebee73577f9c558e16a65",
+    "checks_passed": true
+  },
+  "style-after-error-cache": {
+    "sgr_codes": [
+      [
+        0
+      ],
+      [
+        0,
+        31,
+        1
+      ],
+      [
+        0,
+        32,
+        1
+      ],
+      [
+        0,
+        33,
+        1
+      ],
+      [
+        0,
+        36
+      ]
+    ],
+    "ansi_sha256": "27ba354263b60fe39d6f9645da7c95303fb332b899fd62c6deca867f83712b3e",
+    "checks_passed": true
+  },
+  "style-after-no-color-cache": {
+    "sgr_codes": [
+      [
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "ansi_sha256": "5eaa11e23d163e2c35f9932415ce257f93255baec3cfce888a601b8d22156874",
+    "checks_passed": true
+  },
+  "approval-after-details-cache": {
+    "sgr_codes": [
+      [
+        0
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        31,
+        1
+      ],
+      [
+        0,
+        32,
+        1
+      ],
+      [
+        0,
+        33,
+        1
+      ],
+      [
+        0,
+        36
+      ],
+      [
+        0,
+        48,
+        5,
+        238
+      ],
+      [
+        0,
+        48,
+        5,
+        248
+      ],
+      [
+        1
+      ],
+      [
+        32
+      ]
+    ],
+    "ansi_sha256": "45b80cb463e5594ae1ccded67758782e60d3eebbb6dfeb35f3f16fd3c6475f66",
+    "checks_passed": true
+  }
+}

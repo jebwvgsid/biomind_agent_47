@@ -1,0 +1,33 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-cli-deploy-fatal-20260912/visual-before/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-cli-deploy-fatal-20260912/visual-before",
+    "-q",
+    "-s",
+    "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "/tmp/biomind-cli-deps",
+    "TERM": "xterm-256color",
+    "COLUMNS": "42",
+    "LINES": "24",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-cli-deploy-fatal-20260912/approval-before-details/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-cli-deploy-fatal-20260912/approval-before-details/pytest-results.json",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-cli-deploy-fatal-20260912/approval-before-details",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-cli-deploy-fatal-20260912/approval-before-details",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-cli-deploy-fatal-20260912/approval-before-details/scratch/executor-logs",
+    "BIOMIND_APPROVAL_PTY": "1",
+    "BIOMIND_APPROVAL_SCENARIO": "details",
+    "BIOMIND_UI": "tty",
+    "BIOMIND_CLI_VERBOSITY": "compact",
+    "BIOMIND_APPROVAL_DELAY_WRITER": "0"
+  }
+}

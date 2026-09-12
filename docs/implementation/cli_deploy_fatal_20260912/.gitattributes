@@ -1,0 +1,4 @@
+*.ansi -text -diff
+*.raw -text -diff
+*.pty -text -diff
+*.cast -text -diff

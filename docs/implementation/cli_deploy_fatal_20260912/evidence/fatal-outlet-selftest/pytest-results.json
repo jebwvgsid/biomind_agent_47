@@ -1,0 +1,13 @@
+[
+  {
+    "nodeid": "tests/test_cli_fatal_outlet.py::test_synthetic_fatal_outlet",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_fatal_outlet.py::test_synthetic_fatal_outlet",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001418651081621647,
+    "failure": ""
+  }
+]

@@ -1,0 +1,5 @@
+{"version": 2, "width": 80, "height": 24, "title": "Actual production Terminal; dependency source isolated-cache"}
+[0.11889082891866565, "o", "动态界面依赖缺失；使用 plain 模式。安装 requirements-cli.txt 可启用。\r\n"]
+[0.11926733888685703, "o", "合成公开说明：先读取小文件，再报告真实返回。\r\n"]
+[0.1219163159839809, "o", "读取小文件已返回\r\n"]
+[0.12193771358579397, "o", "合成公开结论：文件读取已返回；未运行科学计算。\r\n"]

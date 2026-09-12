@@ -1,0 +1,7 @@
+{
+  "diagnostics_complete_before_install": true,
+  "target_runs": 2,
+  "third_run": "NOT RUN; no new fatal evidence",
+  "recorded_at": "2026-09-12T15:54:48.445990+00:00",
+  "installed_at_this_point": false
+}

@@ -1,0 +1,26 @@
+{
+  "returncode": -11,
+  "error": null,
+  "selftest": true,
+  "elapsed_seconds": 15.944248931016773,
+  "source": "9b7616c0ed9ebb42d3f8d346b22f592fa0f4b219 + opt-in persistent fatal diagnostics",
+  "source_signature": "dac9a6057974d75a98cac0b946c1289dad1a3592456bf58b6a93ca83727a6ded",
+  "call_passed": 0,
+  "call_failed": 0,
+  "last_events": [
+    {
+      "nodeid": "tests/test_cli_fatal_outlet.py::test_synthetic_fatal_outlet",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_cli_fatal_outlet.py::test_synthetic_fatal_outlet",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0001418651081621647,
+      "failure": ""
+    }
+  ],
+  "fatal_stack_present": true,
+  "fatal_sha256": "6868851fbe6b80e22958559b96d407f6a6a12db0a55e807cfbf7a3db6ea46aa8",
+  "parent_source_drift": []
+}

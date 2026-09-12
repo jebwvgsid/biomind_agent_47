@@ -1,0 +1,23 @@
+ca
+完整输入、输出、约束及执行作用范围见详情；
+摘要不能确认全部副作用。
+工作目录与实际写入目标以完整执行定义为准；
+无法从现有审批字段可靠概括，需查看完整代码
+。
+/details 或 F2 查看完整对象；查看/返回不代
+表批准。
+× synthetic recoverable notification; appr
+oval remains pending
+›
+✓ 命令 rc=0，等待正式核验
+
+
+
+
+
+
+
+
+
+
+

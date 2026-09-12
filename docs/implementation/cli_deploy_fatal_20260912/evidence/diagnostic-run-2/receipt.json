@@ -1,0 +1,40 @@
+{
+  "returncode": 0,
+  "error": null,
+  "selftest": false,
+  "elapsed_seconds": 115.89864395931363,
+  "source": "9b7616c0ed9ebb42d3f8d346b22f592fa0f4b219 + opt-in persistent fatal diagnostics",
+  "source_signature": "dac9a6057974d75a98cac0b946c1289dad1a3592456bf58b6a93ca83727a6ded",
+  "call_passed": 48,
+  "call_failed": 0,
+  "last_events": [
+    {
+      "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006057089194655418,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 2.5446239761076868,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00027918489649891853,
+      "failure": ""
+    }
+  ],
+  "fatal_stack_present": false,
+  "fatal_sha256": "ce445e364185cf4448da002eebdd41a16fdf95a26698418c88bbabe72f1c9598",
+  "parent_source_drift": []
+}

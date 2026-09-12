@@ -1,0 +1,21 @@
+[
+  {
+    "path": "/public/home/liusiqi/03.\u6bd5\u8bbe/biomind-cli-wheels-20260912/prompt_toolkit-3.0.52-py3-none-any.whl",
+    "sha256": "9aac639a3bbd33284347de5ad8d68ecc044b91a762dc39b7c21095fcd6a19955",
+    "size": 391431,
+    "requires": [
+      "Requires-Python: >=3.8",
+      "Requires-Dist: wcwidth"
+    ],
+    "wheel": "Wheel-Version: 1.0\nGenerator: setuptools (80.9.0)\nRoot-Is-Purelib: true\nTag: py3-none-any\n\n"
+  },
+  {
+    "path": "/public/home/liusiqi/03.\u6bd5\u8bbe/biomind-cli-wheels-20260912/wcwidth-0.2.13-py2.py3-none-any.whl",
+    "sha256": "3da69048e4540d84af32131829ff948f1e022c1c6bdb8d6102117aac784f6859",
+    "size": 34166,
+    "requires": [
+      "Requires-Dist: backports.functools-lru-cache >=1.2.1 ; python_version < \"3.2\""
+    ],
+    "wheel": "Wheel-Version: 1.0\nGenerator: bdist_wheel (0.41.2)\nRoot-Is-Purelib: true\nTag: py2-none-any\nTag: py3-none-any\n\n"
+  }
+]

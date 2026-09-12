@@ -1,0 +1,16 @@
+{
+  "normal": {
+    "actions_unchanged": true,
+    "model_calls": 0,
+    "tool_calls": 1,
+    "actual_ANSI_and_output_attributes_verified": true,
+    "dependency_source": "isolated-cache; not deployment"
+  },
+  "error": {
+    "actions_unchanged": true,
+    "model_calls": 0,
+    "tool_calls": 2,
+    "actual_ANSI_and_output_attributes_verified": true,
+    "dependency_source": "isolated-cache; not deployment"
+  }
+}

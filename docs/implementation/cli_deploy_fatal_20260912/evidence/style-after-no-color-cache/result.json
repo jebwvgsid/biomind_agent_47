@@ -1,0 +1,44 @@
+{
+  "case": "no-color",
+  "dependency_source": "isolated-cache",
+  "deployment_evidence": false,
+  "source": "2e2d9a22d9649bc02f6b62cbb1b3ad064c0bc080",
+  "source_signature": "297de074af4361a626f8ea7a205567d8fd217d741c7aa557174025367fb13503",
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "-I",
+    "-S",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/tests/replay_cli_deployment.py",
+    "--child",
+    "/tmp/biomind-cli-deploy-fatal-20260912/candidate",
+    "/tmp/biomind-cli-deploy-fatal-20260912/style-after-no-color-cache",
+    "no-color",
+    "isolated-cache"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "TERM": "xterm-256color",
+    "BIOMIND_UI": "",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PROMPT_TOOLKIT_COLOR_DEPTH": "DEPTH_1_BIT"
+  },
+  "returncode": 0,
+  "checks": {
+    "exit_zero": true,
+    "owner": true,
+    "runtime_once": true,
+    "model_calls_zero": true,
+    "real_small_read": true,
+    "dependency_source_explicit": true
+  },
+  "passed": true,
+  "expected_owner": "Terminal",
+  "actual_owner": "Terminal",
+  "ansi_sha256": "5eaa11e23d163e2c35f9932415ce257f93255baec3cfce888a601b8d22156874",
+  "initial_size": [
+    42,
+    24
+  ],
+  "source_unchanged": true
+}

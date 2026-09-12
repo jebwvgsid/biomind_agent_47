@@ -1,0 +1,43 @@
+FATAL_OUTLET {"phase": "sessionstart_after_configure", "pid": 4, "fd": 4, "enabled": true, "mode": "0600", "capture": "fd", "pytest_faulthandler_plugin": true, "watchdog": "original bootstrap 70s; separate pre-existing destination", "core_limit": [0, 0]}
+Fatal Python error: Segmentation fault
+
+Current thread 0x000015330f2d5440 (most recent call first):
+  File "/tmp/biomind-cli-deploy-fatal-20260912/diagnostic-original/tests/test_cli_fatal_outlet.py", line 12 in test_synthetic_fatal_outlet
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/python.py", line 167 in pytest_pyfunc_call
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/python.py", line 1707 in runtest
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/runner.py", line 184 in pytest_runtest_call
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/runner.py", line 250 in <lambda>
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/runner.py", line 361 in from_call
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/runner.py", line 249 in call_and_report
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/runner.py", line 139 in runtestprotocol
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/runner.py", line 118 in pytest_runtest_protocol
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/main.py", line 408 in pytest_runtestloop
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/main.py", line 384 in _main
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/main.py", line 330 in wrap_session
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/main.py", line 377 in pytest_cmdline_main
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/config/__init__.py", line 229 in _main
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/_pytest/config/__init__.py", line 201 in main
+  File "/tmp/biomind-cli-deploy-fatal-20260912/diagnostic-original/tests/offline_managed_bootstrap.py", line 111 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 98 in _run_module_code
+  File "<frozen runpy>", line 287 in run_path
+  File "/tmp/biomind-cli-deploy-fatal-20260912/diagnostic-original/tests/cli_model_progress_support.py", line 120 in guarded_child
+  File "/tmp/biomind-cli-deploy-fatal-20260912/diagnostic-original/tests/cli_model_progress_support.py", line 125 in main
+  File "/tmp/biomind-cli-deploy-fatal-20260912/diagnostic-original/tests/cli_model_progress_support.py", line 135 in <module>
+
+Extension modules: _brotli, zstandard.backend_c, simplejson._speedups, yaml._yaml (total: 4)

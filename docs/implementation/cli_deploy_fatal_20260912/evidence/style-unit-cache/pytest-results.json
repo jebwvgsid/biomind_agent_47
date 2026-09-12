@@ -1,0 +1,752 @@
+[
+  {
+    "nodeid": "tests/test_cli_semantic_styles.py::test_public_completion_claim_does_not_get_a_tool_success_marker",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_semantic_styles.py::test_public_completion_claim_does_not_get_a_tool_success_marker",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017686886712908745,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_semantic_styles.py::test_public_completion_claim_does_not_get_a_tool_success_marker",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003132452256977558,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_semantic_styles.py::test_public_completion_claim_does_not_get_a_tool_success_marker",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012535229325294495,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_semantic_styles.py::test_long_error_body_is_neutral_and_ansi_tool_text_is_still_sanitized",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_semantic_styles.py::test_long_error_body_is_neutral_and_ansi_tool_text_is_still_sanitized",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010761385783553123,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_semantic_styles.py::test_long_error_body_is_neutral_and_ansi_tool_text_is_still_sanitized",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006940830498933792,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_semantic_styles.py::test_long_error_body_is_neutral_and_ansi_tool_text_is_still_sanitized",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.834719821810722e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[compact]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[compact]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000248888973146677,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[compact]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008783834055066109,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[compact]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010662199929356575,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[verbose]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[verbose]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002039605751633644,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[verbose]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0010485569946467876,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[verbose]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010723667219281197,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[compact]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[compact]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018866406753659248,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[compact]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00350756524130702,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[compact]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012305984273552895,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[verbose]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[verbose]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019270973280072212,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[verbose]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0031298953108489513,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[verbose]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011715991422533989,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_details_and_verbose_redact_only_synthetic_secrets",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_details_and_verbose_redact_only_synthetic_secrets",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012181978672742844,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_details_and_verbose_redact_only_synthetic_secrets",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00018354039639234543,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_details_and_verbose_redact_only_synthetic_secrets",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.52891243994236e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-compact-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-compact-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00032406626269221306,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-compact-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019617569632828236,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-compact-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014794990420341492,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-verbose-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-verbose-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003258190117776394,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-verbose-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0017884108237922192,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-verbose-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014572730287909508,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[off-verbose-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[off-verbose-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00031830184161663055,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[off-verbose-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000686420127749443,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[off-verbose-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013302918523550034,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_groups_count_receipts_not_targets_and_stop_at_public",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_groups_count_receipts_not_targets_and_stop_at_public",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.67150554060936e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_groups_count_receipts_not_targets_and_stop_at_public",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00043094391003251076,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_groups_count_receipts_not_targets_and_stop_at_public",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.160814806818962e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_scopeless_diagnostics_do_not_retire_current_model_tool_round",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_scopeless_diagnostics_do_not_retire_current_model_tool_round",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.381212294101715e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_scopeless_diagnostics_do_not_retire_current_model_tool_round",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009229378774762154,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_scopeless_diagnostics_do_not_retire_current_model_tool_round",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.77981835603714e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[failed]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[failed]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019847508519887924,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[failed]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002903686836361885,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[failed]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001020217314362526,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[unknown]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[unknown]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001855478622019291,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[unknown]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000272196251899004,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[unknown]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010357610881328583,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[partial]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[partial]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018282420933246613,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[partial]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00029331399127840996,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[partial]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010286318138241768,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[cancelled]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[cancelled]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001841881312429905,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[cancelled]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00038377707824110985,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[cancelled]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011095032095909119,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[not_dispatched]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[not_dispatched]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001895190216600895,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[not_dispatched]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003053690306842327,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[not_dispatched]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010519195348024368,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_old_tool_return_keeps_receipt_without_replacing_approval",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_old_tool_return_keeps_receipt_without_replacing_approval",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.763101115822792e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_old_tool_return_keeps_receipt_without_replacing_approval",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000288291834294796,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_old_tool_return_keeps_receipt_without_replacing_approval",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.636487811803818e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_process_group_only_asserts_exit_and_keeps_failure",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_process_group_only_asserts_exit_and_keeps_failure",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.356020018458366e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_process_group_only_asserts_exit_and_keeps_failure",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00030055688694119453,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_process_group_only_asserts_exit_and_keeps_failure",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.275414049625397e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_final_group_and_long_review_are_available",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_final_group_and_long_review_are_available",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.403517469763756e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_final_group_and_long_review_are_available",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0254716076888144,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_final_group_and_long_review_are_available",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011518318206071854,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_long_documents_and_narrow_chinese_columns",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_long_documents_and_narrow_chinese_columns",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.999517351388931e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_long_documents_and_narrow_chinese_columns",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.02941841632127762,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_long_documents_and_narrow_chinese_columns",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010911980643868446,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_terminal_modal_keeps_pending_and_draft_until_close",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_terminal_modal_keeps_pending_and_draft_until_close",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.939027950167656e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_terminal_modal_keeps_pending_and_draft_until_close",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.18852393003180623,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_terminal_modal_keeps_pending_and_draft_until_close",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014825304970145226,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_group_boundary_still_flushes_public_before_next_real_dispatch",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_group_boundary_still_flushes_public_before_next_real_dispatch",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010793888941407204,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_group_boundary_still_flushes_public_before_next_real_dispatch",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019017611630260944,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_group_boundary_still_flushes_public_before_next_real_dispatch",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011384394019842148,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_twenty_column_approval_keeps_full_prompt_in_details",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_twenty_column_approval_keeps_full_prompt_in_details",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010525574907660484,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_twenty_column_approval_keeps_full_prompt_in_details",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.24324898794293404,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_twenty_column_approval_keeps_full_prompt_in_details",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017179083079099655,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_logs_lists_synthetic_handler_path_without_reading_body",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_logs_lists_synthetic_handler_path_without_reading_body",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0021413560025393963,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_logs_lists_synthetic_handler_path_without_reading_body",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0062210881151258945,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_logs_lists_synthetic_handler_path_without_reading_body",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014416221529245377,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_output_attributes_reset_before_following_public",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_output_attributes_reset_before_following_public",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010639196261763573,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_output_attributes_reset_before_following_public",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006197177805006504,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_output_attributes_reset_before_following_public",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012194085866212845,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[False-compact]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[False-compact]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00032640760764479637,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[False-compact]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001977565698325634,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[False-compact]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014215800911188126,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[False-verbose]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[False-verbose]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002867276780307293,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[False-verbose]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001917277928441763,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[False-verbose]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013498170301318169,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-compact]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-compact]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002784803509712219,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-compact]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0020095021463930607,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-compact]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014342321082949638,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-verbose]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-verbose]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002807038836181164,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-verbose]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019089067354798317,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-verbose]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015770690515637398,
+    "failure": ""
+  }
+]

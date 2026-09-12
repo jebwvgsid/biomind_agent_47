@@ -1,0 +1,2 @@
+FATAL_OUTLET {"phase": "sessionstart_after_configure", "pid": 3, "fd": 4, "enabled": true, "mode": "0600", "capture": "fd", "pytest_faulthandler_plugin": true, "watchdog": "original bootstrap 70s; separate pre-existing destination", "core_limit": [0, 0]}
+FATAL_OUTLET {"phase": "after_unconfigure", "pid": 3, "fd": 4, "enabled": true, "mode": "0600", "capture": "fd", "pytest_faulthandler_plugin": true, "watchdog": "original bootstrap 70s; separate pre-existing destination", "core_limit": [0, 0]}

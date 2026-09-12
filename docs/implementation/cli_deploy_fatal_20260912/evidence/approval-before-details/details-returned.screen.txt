@@ -1,0 +1,23 @@
+ca
+完整输入、输出、约束及执行作用范围见详情；
+摘要不能确认全部副作用。
+工作目录与实际写入目标以完整执行定义为准；
+无法从现有审批字段可靠概括，需查看完整代码
+。
+/details 或 F2 查看完整对象；查看/返回不代
+表批准。
+synthetic recoverable notification; approv
+al remains pending
+等待代码审批 · 当前候选尚未执行
+[y/Enter=run, n=reject, q=quit, e:=edit] >
+
+
+draft-feedback
+
+
+
+
+
+Enter/y 批准 · n 拒绝 · q 退出 · F2 详情
+
+
