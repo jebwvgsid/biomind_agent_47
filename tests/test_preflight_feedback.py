@@ -85,6 +85,11 @@ def test_four_real_checks_progress_visible_before_return_capture_stays_private(t
             assert progress.records[-1]['event'] == 'process_started'
             assert progress.records[-1]['completed'] == 0
             assert 'S0' in owner.model.status()
+            await owner.drain(timeout=1)
+            if mode != 'off':
+                assert '检查进程已启动 S0' in writer.getvalue()
+            else:
+                assert writer.getvalue() == ''
             release.touch()
             result = await task
             await owner.drain(timeout=1)

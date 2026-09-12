@@ -443,7 +443,7 @@ class StreamDisplayCopy:
                 from execution.preflight_progress import parse_progress, progress_text
                 preflight = parse_progress(text) if self.name == 'stderr' else None
                 if preflight is not None:
-                    emit('activity', progress_text(preflight), **self.scope)
+                    emit('activity', progress_text(preflight), purpose='preflight_progress', **self.scope)
                 # Only display filtering; never returned to a parser or writer.
                 if not self.discard_line and not any(marker in text.lower() for marker in ('biomind_', '<observation', '<effect', '<validation_result')):
                     shown = safe_text(text)

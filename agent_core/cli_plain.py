@@ -75,6 +75,12 @@ class PlainTerminal:
             ticket = self.model.receive(kind, text, **data)
             if ticket is None:
                 return None
+            if kind == 'activity' and data.get('purpose') == 'preflight_progress':
+                # Plain has no live status area. Each actual item boundary is
+                # a compact line, still fenced by any pending human approval.
+                ticket.presentation = 'history'
+                self.model.items.append(ticket)
+                self.model.history.append(ticket.text)
             if (kind == 'stage' and ticket.source == 'runtime_fact'
                     and ticket.presentation == 'status' and ticket.text.strip()):
                 stage = (ticket.scope.get('task_id', ''), ticket.scope.get('node', ''), ticket.text)
