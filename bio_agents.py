@@ -25364,10 +25364,6 @@ class BioAnalystAgent:
                         output.show_review_details()
                         continue
                     break
-                if stage == "interactive_prompt":
-                    continuation_lines = read_pending_paste_lines()
-                    if continuation_lines:
-                        response = "\n".join([response, *continuation_lines])
             clear_waiting_state(self.data_path, task_id)
             return response
         except HumanInputUnavailable as exc:

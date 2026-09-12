@@ -185,11 +185,12 @@ def test_plain_writer_failure_never_enables_input(monkeypatch):
 def test_plain_paste_keeps_details_text_inside_feedback(monkeypatch):
     import agent_core.human_io as human
     owner, stdin, result, thread = begin(monkeypatch)
-    monkeypatch.setattr(human, 'read_pending_paste_lines', lambda **kwargs: ['/details', 'y'])
     try:
         thread.start()
         stdin.called.get(timeout=2)
-        stdin.values.put('feedback\n')
+        stdin.values.put('\x1b[200~feedback\n')
+        stdin.values.put('/details\n')
+        stdin.values.put('y\x1b[201~\n')
         assert result.get(timeout=2) == ('value', 'feedback\n/details\ny')
         assert 'CODE-449' not in owner.output.getvalue()
     finally:

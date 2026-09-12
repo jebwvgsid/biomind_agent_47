@@ -385,6 +385,33 @@ def read_pending_paste_lines(
     return lines
 
 
+@contextmanager
+def terminal_line_framing():
+    """Preserve CR/LF distinctions while the single plain reader owns the TTY.
+
+    Canonical editing/echo stay enabled. CR is an explicit record delimiter;
+    the reader normalizes CRLF as one ending. TCSANOW never flushes input.
+    """
+    saved = None
+    try:
+        if sys.stdin.isatty():
+            import termios
+            fd = sys.stdin.fileno()
+            saved = termios.tcgetattr(fd)
+            current = list(saved)
+            current[6] = list(saved[6])
+            current[0] &= ~(termios.ICRNL | termios.INLCR | termios.IGNCR)
+            current[6][termios.VEOL] = b'\r'
+            termios.tcsetattr(fd, termios.TCSANOW, current)
+        yield
+    finally:
+        if saved is not None:
+            try:
+                termios.tcsetattr(fd, termios.TCSANOW, saved)
+            except (OSError, termios.error):
+                pass  # A disconnected terminal cannot be restored.
+
+
 def safe_input(prompt: str, timeout_seconds: Optional[int] = None, *, history: bool = True) -> str:
     """Read one line from stdin with POSIX timeout support.
 

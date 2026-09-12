@@ -38,6 +38,7 @@ class PlainTerminal:
         self._sequence = 0
         self._closed_input = threading.Event()
         self._read_ahead = b''
+        self._skip_lf = False
         self.queue = queue.Queue()
         # Off suppresses ordinary display, never the required human channel.
         self.writer = threading.Thread(target=self._write_loop,
@@ -231,6 +232,8 @@ class PlainTerminal:
                 raise HumanInputEOF('plain input cancelled')
 
         check_cancelled()
+        self._line_bytes = 0
+        self._prefix_bytes = 0
         try:
             fd = sys.stdin.fileno()
         except (AttributeError, OSError, ValueError):
@@ -241,8 +244,19 @@ class PlainTerminal:
             tty = sys.stdin.isatty()
             while True:
                 check_cancelled()
-                if not tty and b'\n' in self._read_ahead:
-                    line, self._read_ahead = self._read_ahead.split(b'\n', 1)
+                if self._skip_lf and self._read_ahead:
+                    if self._read_ahead.startswith(b'\n'):
+                        self._read_ahead = self._read_ahead[1:]
+                        self._line_bytes += 1
+                        self._prefix_bytes += 1
+                    self._skip_lf = False
+                endings = [i for i in (self._read_ahead.find(b'\n'), self._read_ahead.find(b'\r')) if i >= 0]
+                if endings:
+                    end = min(endings)
+                    line, ending = self._read_ahead[:end], self._read_ahead[end:end+1]
+                    self._read_ahead = self._read_ahead[end+1:]
+                    self._skip_lf = ending == b'\r'
+                    self._line_bytes += end + 1
                     return decode_terminal_bytes(line)
                 remaining = max(0, deadline - time.monotonic()) if deadline else None
                 if deadline is not None and remaining <= 0:
@@ -259,14 +273,9 @@ class PlainTerminal:
                     raise HumanInputEOF('plain input channel is unavailable') from None
                 check_cancelled()
                 if not raw:
-                    if self._read_ahead:
-                        value, self._read_ahead = self._read_ahead, b''
-                        return decode_terminal_bytes(value)
-                    raise HumanInputEOF('plain input closed')
-                if tty:
-                    # Canonical TTY read returns one line/EOF-delimited record.
-                    # No TextIOWrapper prefetch can hide pasted follow-up lines.
-                    return decode_terminal_bytes(raw).rstrip('\n')
+                    # Partial bytes without a submission delimiter are not a
+                    # decision, including a trailing y followed by EOF.
+                    raise HumanInputEOF('plain input closed before submission')
                 self._read_ahead += raw
         try:
             value = sys.stdin.readline()
@@ -276,7 +285,9 @@ class PlainTerminal:
             raise HumanInputEOF('plain input channel is unavailable') from None
         if value == '':
             raise HumanInputEOF('plain input closed')
-        return value[:-1] if value.endswith('\n') else value
+        if not value.endswith(('\n', '\r')):
+            raise HumanInputEOF('plain input closed before submission')
+        return value.removesuffix('\n').removesuffix('\r')
 
     def read(self, prompt, timeout=0, multiline=False, cancelled=None):
         from agent_core.human_io import HumanInputEOF, HumanInputTimeout, HumanInputUnavailable
@@ -302,7 +313,25 @@ class PlainTerminal:
             # already queued finite batch remains ahead of the presentation.
             self.pending = request
             self._event(request, 'request_created')
+        from agent_core.human_io import terminal_line_framing
+        input_mode = terminal_line_framing()
         try:
+            input_mode.__enter__()
+            # Known bytes that predate this approval presentation have no
+            # decision ownership. Retain them as drafts, never authorize from
+            # them. This is a byte boundary, not a timing/paste guess or drain.
+            queued_before_review = 0
+            if context[1] in {'plan_review', 'code_review'}:
+                queued_before_review = len(self._read_ahead)
+                try:
+                    import array
+                    import fcntl
+                    import termios
+                    pending_bytes = array.array('i', [0])
+                    fcntl.ioctl(sys.stdin.fileno(), termios.FIONREAD, pending_bytes, True)
+                    queued_before_review += pending_bytes[0]
+                except (AttributeError, OSError, ValueError, ImportError):
+                    pass  # Non-FD inputs have no kernel pre-presentation queue.
             self._await_written(self._control(request, self._presentation(request)))
             self._event(request, 'input_ready')
             deadline = time.monotonic() + timeout if timeout else None
@@ -312,13 +341,28 @@ class PlainTerminal:
                 if deadline is not None and remaining <= 0:
                     raise HumanInputTimeout('plain input timed out')
                 value = self._read_line(remaining, cancelled=cancelled)
-                # Existing bounded paste collection, with no global stdin
-                # clearing or newline replay into a second approval.
-                from agent_core.human_io import read_pending_paste_lines
-                continuation = read_pending_paste_lines(
-                    grace_seconds=0.08, max_lines=2000, owned_read=True)
-                if continuation:
-                    value = '\n'.join([value, *continuation])
+                predates_review = queued_before_review > self._prefix_bytes
+                queued_before_review = max(0, queued_before_review - self._line_bytes)
+                # A declared bracketed paste is one transaction, regardless
+                # of chunk timing. The line ending after its closing marker
+                # submits this transaction and is consumed exactly once.
+                if '\x1b[200~' in value:
+                    prefix, pasted = value.split('\x1b[200~', 1)
+                    while '\x1b[201~' not in pasted:
+                        remaining = max(0, deadline - time.monotonic()) if deadline is not None else 0
+                        if deadline is not None and remaining <= 0:
+                            raise HumanInputTimeout('plain paste timed out before submission')
+                        pasted += '\n' + self._read_line(remaining, cancelled=cancelled)
+                        queued_before_review = max(0, queued_before_review - self._line_bytes)
+                    body, suffix = pasted.split('\x1b[201~', 1)
+                    value = prefix + body + suffix
+                if predates_review:
+                    self.model.history.append('审批前已到达的输入草稿：' + safe_document(repr(value)))
+                    self._event(request, 'draft_retained')
+                    self._await_written(self._control(request,
+                        '审批前已到达的输入已保留为草稿，未作为决定：' + safe_document(repr(value))
+                        + '\n请在当前审批提示下另行提交决定。\n' + request['prompt'], phase='draft'))
+                    continue
                 if value == '/details' and not multiline:
                     self._await_written(self._control(
                         request, self._presentation(request, details=True), phase='details'))
@@ -334,6 +378,7 @@ class PlainTerminal:
                 self._event(request, 'decision_received')
                 return value
         finally:
+            input_mode.__exit__(None, None, None)
             with self.model.lock:
                 request['closed'] = True
                 if self.pending is request:
