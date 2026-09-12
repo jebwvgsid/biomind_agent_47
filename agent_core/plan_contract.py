@@ -630,7 +630,7 @@ def structured_plan_candidate_diagnostics(
                 not isinstance(contract["path_policy"], str)
                 or contract["path_policy"] not in PLAN_RESULT_PATH_POLICIES
             ):
-                diagnostics.append({"field_path": field_path + ".path_policy", "message": "must equal managed_exact or model_selectable"})
+                diagnostics.append({"field_path": field_path + ".path_policy", "message": "must equal " + " or ".join(sorted(PLAN_RESULT_PATH_POLICIES))})
             if field_path.endswith(".artifact_contract") and "path" in contract:
                 raw_path = contract["path"]
                 path = PurePosixPath(raw_path) if isinstance(raw_path, str) else None

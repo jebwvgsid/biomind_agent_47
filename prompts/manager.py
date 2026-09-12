@@ -1926,8 +1926,15 @@ SUBMIT_PLAN_FOR_REVIEW schema placeholders:
 }
 
 Omit proposed_artifacts and task_output_materializations when they are not needed.
-For path_policy=planner_materialized, keep the TaskSpec output handle in
-step.outputs and provide one safe relative filename in task_output_materializations.
+Current Plan result path_policy values are: __PLAN_RESULT_PATH_POLICIES__.
+For managed_exact, preserve the declared safe relative path under the managed root.
+For model_selectable, the generated action may select the actual result filename;
+retain the semantic output handle and validate the accepted result evidence.
+A legacy TaskSpec may say planner_materialized: that describes TaskSpec ownership,
+not a valid Plan result policy. Select the Plan policy from the actual path
+obligation; never translate that legacy value by an unconditional alias.
+Keep existing TaskSpec output handles in step.outputs and declare the Plan result
+in task_output_materializations.
 For existing output handles, declare necessity and path policy in the Plan
 materialization row, including when reusing an existing exact path. This is a Plan
 declaration, not a TaskSpec rewrite. A readonly check may use outputs=[] with its
@@ -1986,6 +1993,10 @@ Consultant. REJECT_PROPOSAL requires an evidence-grounded reason.
 Planner owns the semantic impact judgment. Do not delegate semantic
 applicability to the Controller; the Controller checks only deterministic
 revision, identity, status, reference, and shape invariants."""
+        from agent_core.plan_contract import PLAN_RESULT_PATH_POLICIES
+        base_prompt = base_prompt.replace(
+            "__PLAN_RESULT_PATH_POLICIES__", ", ".join(sorted(PLAN_RESULT_PATH_POLICIES))
+        ).replace("managed_exact|model_selectable", "|".join(sorted(PLAN_RESULT_PATH_POLICIES)))
         return (
             base_prompt
             + "\n\n" + PUBLIC_MESSAGE_POLICY
@@ -2650,7 +2661,11 @@ Do not put prose, Markdown fences, multiple blocks, or text outside the single
 block inside payload. Preserve its whitespace, newlines, quoting and heredocs.
 The old single executable block remains accepted for compatibility. Describe
 the candidate as already formed and awaiting checks/approval, not as a script
-you are still writing. For the decision alternative,
+you are still writing. Generating this candidate does not run its tools. Use
+future tense for its checks; do not say inputs passed or were inspected from the
+script text alone. Earlier observed evidence may be cited with its original scope,
+without presenting it as the result of this unexecuted candidate.
+For the decision alternative,
 do not return an executable block or any surrounding text. The Controller parses
 and audits an executable script but never rewrites it.
 
