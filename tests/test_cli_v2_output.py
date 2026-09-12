@@ -36,8 +36,12 @@ def test_v2_details_never_enter_approval_or_feedback(mode, answer):
             assert payload==snapshot
             if mode!='off':
                 text=writer.getvalue()
-                assert text.count('合成测试')==4000  # initial full fallback and explicit details
-                assert '需查看完整代码' in text and payload['hash'] in text
+                # This transport test mocks safe_input; presentation now belongs
+                # to the real read owner (covered by the kernel-PTY tests).
+                # Only the explicitly requested complete detail is written here.
+                assert text.count('合成测试')==2000
+                assert owner.review.body == original
+                assert '需查看完整代码' in owner.review.summary and payload['hash'] in owner.review.summary
                 assert '只读' not in text
         finally:bind_terminal(previous);owner.close()
     asyncio.run(scenario())

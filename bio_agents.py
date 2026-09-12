@@ -25321,13 +25321,11 @@ class BioAnalystAgent:
         multiline: bool = False,
     ) -> str:
         """Collect human input with timeout and waiting-state persistence."""
-        owner = interactive_terminal()
-        if owner is not None:
-            try:
-                owner.set_context(task_id, stage, payload)
-            except Exception:
-                pass  # Display context cannot change the approval decision.
+        from agent_core.cli_display import input_terminal
+        owner = input_terminal()
         try:
+            if owner is not None:
+                owner.set_context(task_id, stage, payload)
             if multiline:
                 response = safe_multiline_input(
                     prompt,

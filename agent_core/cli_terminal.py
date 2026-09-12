@@ -10,11 +10,13 @@ import logging
 import os
 import sys
 import threading
-import queue
 import time
+import hashlib
+from collections import deque
 
 from agent_core.cli_display import DisplayModel, bind_terminal, safe_text, safe_document, display_verbosity
 from agent_core.cli_logging import set_notice_sink
+from agent_core.cli_plain import PlainTerminal
 
 
 def plain_input(prompt, timeout=0):
@@ -34,103 +36,10 @@ def plain_input(prompt, timeout=0):
     return value[:-1] if value.endswith('\n') else value
 
 
-class PlainTerminal:
-    """Explicit append-only owner; potentially blocking writes leave business alone."""
-    def __init__(self, output=None, *, enabled=True, verbosity='compact'):
-        self.mode = 'plain' if enabled else 'off'
-        self.model = DisplayModel(verbosity=verbosity)
-        self.output = output if output is not None else sys.stdout
-        self.closed = False
-        self.sink_broken = False
-        self.last_ticket = None
-        self.history_cursor = 0
-        self.last_stage = None
-        self.queue = queue.Queue()
-        self.writer = threading.Thread(target=self._write_loop, name='biomind-cli-output', daemon=True)
-        if enabled:
-            self.writer.start()
 
-    def receive(self, kind, text='', **data):
-        with self.model.lock:
-            ticket = self.model.receive(kind, text, **data)
-            if ticket is None:
-                return None
-            if kind == 'stage' and ticket.source == 'runtime_fact' and ticket.presentation == 'status' and ticket.text.strip():
-                stage = (ticket.scope.get('task_id', ''), ticket.scope.get('node', ''), ticket.text)
-                if stage != self.last_stage:
-                    # The model has already closed any preceding tool group.
-                    # Only an accepted stage transition gains an append-only
-                    # row; fenced activity and approval priorities stay silent.
-                    self.last_stage = stage
-                    ticket.presentation = 'history'
-                    self.model.items.append(ticket)
-                    self.model.history.append(ticket.text)
-            if kind == 'tool_tail' and data.get('display_delta') and (self.model.verbosity == 'verbose' or data.get('purpose') == 'key_output'):
-                ticket.text = safe_text(data['display_delta']).rstrip('\n')
-                self.model.items.append(ticket)
-                self.model.history.append(ticket.text)
-                ticket.presentation = 'history'
-            self._queue_history()
-            if self.closed or self.sink_broken or self.mode == 'off':
-                ticket.finish(False, 'display_closed' if self.closed else 'display_unavailable')
-            return ticket
 
-    def _queue_history(self):
-        with self.model.lock:
-            items = self.model.items[self.history_cursor:]
-            self.history_cursor = len(self.model.items)
-            for ticket in items:
-                if ticket.presentation != 'history':
-                    continue
-                if self.closed or self.sink_broken or self.mode == 'off':
-                    ticket.finish(False, 'display_unavailable')
-                else:
-                    self.last_ticket = ticket
-                    self.queue.put_nowait(ticket)
-
-    def finish_tools(self):
-        self.model.finalize_tools()
-        self._queue_history()
-
-    def show_details(self, text=None, title=''):
-        body = text if text is not None else '\n\n'.join(self.model.details)
-        return self.receive('message', (title + '\n' if title else '') + body, purpose='review_view')
-
-    def _write_loop(self):
-        while True:
-            ticket = self.queue.get()
-            if ticket is None:
-                return
-            if self.sink_broken:
-                ticket.finish(False, 'sink_closed')
-                continue
-            try:
-                self.output.write(ticket.text + '\n')
-                ticket.times['write'] = time.monotonic()
-                self.output.flush()
-                ticket.times['flush'] = time.monotonic()
-                ticket.finish(True)
-            except Exception:
-                # Never serialize arbitrary writer exceptions or retry a line
-                # whose write might already have reached the sink.
-                self.sink_broken = True
-                ticket.finish(False, 'writer_failed')
-
-    async def drain(self, timeout=0.05):
-        self.finish_tools()
-        if self.last_ticket is None:
-            return True
-        try:
-            return await asyncio.wait_for(asyncio.shield(
-                asyncio.wrap_future(self.last_ticket.confirmation)), timeout)
-        except asyncio.TimeoutError:
-            return self.last_ticket.confirmation.done() and bool(self.last_ticket.confirmation.result())
-
-    def close(self):
-        self.finish_tools()
-        self.closed = True
-        if self.mode != 'off':
-            self.queue.put_nowait(None)
+class _PlainInputHandoff(Exception):
+    """Internal worker handoff, never an approval result."""
 
 
 class Terminal:
@@ -148,6 +57,13 @@ class Terminal:
         self.mode = 'tty'
         self.model = DisplayModel(verbosity=verbosity)
         self.pending = None
+        self.input_ready = False
+        self.presentation = None
+        self.presentation_timeout = 5.0
+        self.approval_events = deque(maxlen=256)
+        self._request_serial = 0
+        self.plain_owner = None
+        self.writer_unavailable = False
         self.context = ('', 'interactive_prompt', {})
         self.draft = ''
         self.prompt_text = ''
@@ -193,6 +109,9 @@ class Terminal:
                 self.app.exit(result='force')
             elif self.pending is not None and self.context[1] == 'interactive_prompt':
                 self._resolve('/exit')
+            elif self.pending is not None:
+                from agent_core.human_io import HumanInputEOF
+                self._fail_read(HumanInputEOF('approval input closed'))
 
         @keys.add('escape')
         def close_details(event):
@@ -241,18 +160,53 @@ class Terminal:
 
     def status_line(self):
         text = self.model.status()
+        if self.pending is not None and self.context[1] in {'plan_review', 'code_review'}:
+            label = '代码' if self.context[1] == 'code_review' else '计划'
+            text = f'等待{label}审批 · 当前候选尚未执行'
         if self.modal:
             count = sum(item.presentation == 'history' for item in self.model.items[self.modal_history_cursor:])
-            text = '浏览中' + (f' · {count} 条新消息' if count else '') + ' · Esc 返回输入'
+            text = ('仍待审批' if self.pending is not None else '浏览中') + (f' · {count} 条新消息' if count else '') + ' · Esc 返回；查看不代表批准'
         return self.fit_columns(text, self.app.output.get_size().columns)
 
     def input_hint(self):
-        text = ('↑↓ / PgUp PgDn 浏览 · Esc 返回' if self.modal else
+        text = ('↑↓ / PgUp PgDn 浏览 · Esc 返回；Enter 不批准' if self.modal else
                 'Enter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消')
+        if not self.modal and self.pending is not None and self.context[1] in {'plan_review', 'code_review'}:
+            text = 'Enter/y 批准 · n 拒绝 · q 退出 · F2 详情'
         return self.fit_columns(text, self.app.output.get_size().columns)
 
     def _rendered(self):
         self.frames += 1
+        request = self.presentation
+        if (request is not None and self.pending is request['future']
+                and request.get('batch_complete') and not self.input_ready
+                and not self.app._running_in_terminal and not self.fallback):
+            self._approval_event('frame_rendered', request)
+            self.input_ready = True
+            request['ready'].set()
+            self._approval_event('input_ready', request)
+
+    def _approval_event(self, phase, request):
+        event = {'phase': phase, 'monotonic': time.monotonic(),
+                 **{key: request[key] for key in ('request_id', 'task_id', 'stage', 'review_hash', 'action_id')}}
+        self.approval_events.append(event)
+        logging.getLogger(__name__).info('approval_ui %s', json.dumps(event, ensure_ascii=False))
+
+    def prepare_review(self, view):
+        # Display copy only. Approval hashing/parsing continues to use the
+        # original backend payload, never this sanitized document.
+        if self.pending is not None and not self.pending.done():
+            from agent_core.human_io import HumanInputUnavailable
+            raise HumanInputUnavailable('cannot replace a pending approval view')
+        if self.plain_owner is not None:
+            self.plain_owner.prepare_review(view)
+        self.review_document = safe_document(view.body)
+        self.review_display = view
+        self.review_title = safe_text(view.title)
+        self.review_prompt = ''
+        self.review_hash = hashlib.sha256(view.body.encode('utf-8')).hexdigest()
+        if self.plain_owner is None:
+            self.receive('approval', view.summary, source='runtime_fact')
 
     @staticmethod
     def item_attributes(item):
@@ -279,6 +233,8 @@ class Terminal:
             output.reset_attributes()
 
     def receive(self, kind, text='', **data):
+        if self.plain_owner is not None:
+            return self.plain_owner.receive(kind, text, **data)
         ticket = self.model.receive(kind, text, **data)
         if ticket is None:
             return None
@@ -294,7 +250,7 @@ class Terminal:
     def _changed(self):
         with self._notify_lock:
             self._notify_pending = False
-        if self.closed or self.sink_broken:
+        if self.closed or self.sink_broken or self.plain_owner is not None:
             return
         if self.modal and not self.fallback:
             self.app.invalidate()
@@ -305,17 +261,20 @@ class Terminal:
         if not self.fallback:
             self.app.invalidate()
 
-    async def _flush_history(self):
+    async def _flush_history(self, until=None):
         from prompt_toolkit.application import run_in_terminal
         from prompt_toolkit.application.current import set_app
+        if self.plain_owner is not None:
+            return
         try:
             if self.modal and not self.fallback:
                 return
             # A key paragraph is queued immediately, without the frame timer.
             with self.model.lock:
                 first_index = self.history_cursor
-                items = self.model.items[self.history_cursor:]
-                self.history_cursor = len(self.model.items)
+                end = len(self.model.items) if until is None else min(until, len(self.model.items))
+                items = self.model.items[self.history_cursor:end]
+                self.history_cursor = end
             if items:
                 def append():
                     output = sys.stdout if self.fallback else self.app.output
@@ -328,6 +287,14 @@ class Terminal:
                                 self.history_cursor = min(self.history_cursor, first_index + index)
                             return
                         if item.presentation != 'history':
+                            continue
+                        request = self.presentation
+                        if (request is not None and self.pending is request['future']
+                                and first_index + index >= request['boundary']
+                                and item.kind not in {'error', 'cancel'}):
+                            # Keep the full classified history/diagnostic copy,
+                            # while the current approval owns the input area.
+                            item.finish(False, 'held_during_approval')
                             continue
                         if self.sink_broken:
                             item.finish(False, 'sink_closed')
@@ -362,25 +329,45 @@ class Terminal:
 
     def set_context(self, task_id, stage, payload):
         from copy import deepcopy
+        from agent_core.human_io import HumanInputUnavailable
+        if self.pending is not None and not self.pending.done():
+            raise HumanInputUnavailable('another terminal input request is already pending')
         self.context = (str(task_id), str(stage), deepcopy(dict(payload or {})))
+        if self.plain_owner is not None:
+            self.plain_owner.set_context(task_id, stage, payload)
 
     def read(self, prompt, timeout=0, multiline=False):
         from agent_core.human_io import HumanInputEOF, HumanInputTimeout, _readline_input_with_timeout
         if self.fallback:
-            if not multiline:
-                return plain_input(prompt, timeout)
-            lines = []
-            while True:
-                line = plain_input(prompt if not lines else '... ', timeout)
-                if line == '/end':
-                    return '\n'.join(lines)
-                lines.append(line)
+            if self.plain_owner is None:
+                raise HumanInputEOF('plain input handoff is not ready')
+            return self.plain_owner.read(prompt, timeout=timeout, multiline=multiline)
         future = concurrent.futures.Future()
         def open_prompt():
-            if self.closed:
-                future.set_exception(HumanInputEOF('terminal closed'))
+            from agent_core.human_io import HumanInputUnavailable
+            if future.done():
+                return
+            # Application can detach after the worker's initial mode check
+            # but before this callback runs. Do not orphan a new TTY Future.
+            if self.fallback:
+                future.set_exception(_PlainInputHandoff())
+                return
+            if self.closed or self.pending is not None:
+                future.set_exception(HumanInputUnavailable('terminal closed or another input request is pending'))
                 return
             self.pending = future
+            self.input_ready = False
+            self._request_serial += 1
+            payload = self.context[2]
+            provenance = payload.get('provenance') or {}
+            self.presentation = request = {
+                'future': future, 'ready': asyncio.Event(), 'request_id': self._request_serial,
+                'task_id': self.context[0], 'stage': self.context[1],
+                'review_hash': getattr(self, 'review_hash', ''),
+                'action_id': str(payload.get('action_id') or provenance.get('action_id') or ''),
+                'boundary': len(self.model.items), 'batch_complete': False,
+            }
+            self._approval_event('request_created', request)
             self.paste_mode = multiline
             self.prompt_text = safe_text(prompt)
             if self.context[1] != 'interactive_prompt':
@@ -402,10 +389,15 @@ class Terminal:
                 self.model.receive('activity', '等待输入；最近结果与取消确认见历史')
                 self.buffer.text = self.draft or self.buffer.text
                 self.draft = ''
-            self.app.invalidate()
+            self.loop.create_task(self._present_input(request))
         self.loop.call_soon_threadsafe(open_prompt)
         try:
             return future.result(timeout=timeout or None)
+        except _PlainInputHandoff:
+            from agent_core.human_io import HumanInputUnavailable
+            if self.plain_owner is None:
+                raise HumanInputUnavailable('plain input handoff is unavailable') from None
+            return self.plain_owner.read(prompt, timeout=timeout, multiline=multiline)
         except concurrent.futures.TimeoutError:
             future.cancel()
             raise HumanInputTimeout('terminal input timed out')
@@ -413,11 +405,64 @@ class Terminal:
             def cleanup():
                 if self.pending is future:
                     self.pending = None
+                    self.input_ready = False
+                    self.presentation = None
             self.loop.call_soon_threadsafe(cleanup)
 
-    def _resolve(self, text):
-        future, self.pending = self.pending, None
-        if future is not None and not future.done():
+    async def _present_input(self, request):
+        from agent_core.human_io import HumanInputUnavailable
+        self._approval_event('presentation_started', request)
+        async def present():
+            previous = self.history_flush
+            if previous is not None:
+                await asyncio.shield(previous)
+            if self.history_cursor < request['boundary']:
+                await self._flush_history(until=request['boundary'])
+            if self.pending is not request['future']:
+                return
+            if self.sink_broken:
+                raise HumanInputUnavailable('approval output channel is unavailable')
+            request['batch_complete'] = True
+            self.app.invalidate()
+            await request['ready'].wait()
+        try:
+            await asyncio.wait_for(present(), timeout=self.presentation_timeout)
+        except (Exception, asyncio.CancelledError) as exc:
+            if self.fallback:
+                return
+            if self.pending is not request['future'] or request['future'].done():
+                return
+            if self.app.is_running:
+                # The original Future survives Application teardown. The
+                # existing entry wrapper hands it to one plain owner next.
+                self.app.exit(result='plain')
+            else:
+                self._fail_read(HumanInputUnavailable('approval presentation unavailable: ' + type(exc).__name__),
+                                expected=request['future'])
+
+    def _fail_read(self, exc, expected=None):
+        future = self.pending
+        if future is None or (expected is not None and future is not expected):
+            return
+        self.pending = None
+        self.input_ready = False
+        self.presentation = None
+        self.model.release_priority()
+        if not future.done():
+            future.set_exception(exc)
+        self.app.invalidate()
+
+    def _resolve(self, text, expected=None, *, cancelling=False):
+        future = self.pending
+        if (future is not None and not future.done()
+                and (expected is None or future is expected)
+                and (self.input_ready or cancelling)):
+            request = self.presentation
+            self.pending = None
+            self.input_ready = False
+            self.presentation = None
+            if request is not None:
+                self._approval_event('decision_received', request)
             self.model.release_priority()
             if self.context[1] == 'interactive_prompt':
                 self.buffer.append_to_history()
@@ -432,6 +477,7 @@ class Terminal:
         if value == '/details' and not self.paste_mode:
             # This command is UI-only even inside approval. Keep the exact
             # pending Future, context and local draft; no backend read cycle.
+            self.buffer.reset()
             self.show_details()
             return
         # UI commands only on single-line top-level input, never inside a paste
@@ -487,10 +533,16 @@ class Terminal:
         self._on_owner_loop(show)
 
     def show_details(self, text=None, title=''):
+        if self.plain_owner is not None:
+            return self.plain_owner.show_details(text=text, title=title)
         if text is not None:
             # A review remains available after later telemetry fills the
             # bounded diagnostics deque. It is only a sanitized display copy.
             document = safe_document(str(text))
+            if (self.pending is not None and not self.pending.done()
+                    and self.review_document and document != self.review_document):
+                from agent_core.human_io import HumanInputUnavailable
+                raise HumanInputUnavailable('cannot replace a pending approval detail')
             if document != self.review_document:
                 self.review_prompt = ''
             self.review_document = document
@@ -536,7 +588,7 @@ class Terminal:
                 self.buffer.reset()
                 self.receive('message', '已清空输入；/exit 退出。')
             else:
-                self._resolve('q')
+                self._resolve('q', cancelling=True)
             return
         self.cancel_requested = True
         self.receive('cancel', '已请求取消，正在等待执行端确认；provider/子进程/保存均未确认。')
@@ -546,10 +598,55 @@ class Terminal:
     def cancel_read(self):
         from agent_core.human_io import HumanInputEOF
         def close():
-            if self.pending is not None and not self.pending.done():
-                self.pending.set_exception(HumanInputEOF('input cancelled'))
-            self.pending = None
+            self._fail_read(HumanInputEOF('input cancelled'))
         self.loop.call_soon_threadsafe(close)
+
+    async def use_plain(self):
+        """Transfer the existing pending read after Application detached stdin."""
+        from agent_core.cli_plain import PlainTerminal
+        from agent_core.cli_review import ReviewDisplay
+        if self.history_flush is not None:
+            try:
+                await asyncio.wait_for(asyncio.shield(self.history_flush), self.presentation_timeout)
+            except (Exception, asyncio.CancelledError):
+                # A concurrent writer with unknown completion cannot safely be
+                # replaced. Preserve the undecided request as unavailable.
+                from agent_core.human_io import HumanInputUnavailable
+                self.sink_broken = True
+                self.writer_unavailable = True
+                self.fallback = True
+                self._fail_read(HumanInputUnavailable('previous terminal writer did not finish'))
+                logging.getLogger(__name__).error('approval output unavailable; previous writer cleanup unconfirmed')
+                return
+        self.fallback = True
+        plain = PlainTerminal(verbosity=self.model.verbosity)
+        self.plain_owner = plain
+        plain.model = self.model
+        plain.history_cursor = self.history_cursor
+        plain.set_context(*self.context)
+        if self.review_document:
+            plain.prepare_review(getattr(self, 'review_display', None) or
+                ReviewDisplay(self.review_title, self.review_document,
+                    self.review_title + '\n界面已降级；仍需决定。/details 查看完整对象。'))
+        future = self.pending
+        request = self.presentation
+        if request is not None:
+            request['ready'].set()
+        if future is not None and not future.done():
+            try:
+                response = await asyncio.to_thread(plain.read, self.prompt_text,
+                                                   multiline=self.paste_mode,
+                                                   cancelled=lambda: self.pending is not future or future.done() or self.closed)
+                if self.pending is future and not future.done():
+                    if request is not None:
+                        self._approval_event('decision_received', request)
+                    self.pending = None
+                    self.presentation = None
+                    self.input_ready = False
+                    future.set_result(response)
+            except BaseException as exc:
+                if self.pending is future:
+                    self._fail_read(exc, expected=future)
 
     def handoff(self, call):
         from prompt_toolkit.application import run_in_terminal
@@ -623,22 +720,15 @@ async def run_terminal(runtime):
         if result == "plain":
             # Application has restored terminal modes. Keep the same worker and
             # pending human request; do not cancel or recreate the business run.
-            owner.fallback = True
-            sys.stderr.write("终端显示已降级 plain；原业务继续，未发起重试或取消。\n")
-            if owner.pending is not None and not owner.pending.done():
-                from agent_core.human_io import _readline_input_with_timeout, HumanInputUnavailable
-                future = owner.pending
-                try:
-                    response = plain_input(owner.prompt_text)
-                    future.set_result(response)
-                except HumanInputUnavailable as exc:
-                    future.set_exception(exc)
+            await owner.use_plain()
             while not done.done():
                 await asyncio.sleep(0.05)
-        if owner.history_flush is not None:
+        if owner.history_flush is not None and not owner.writer_unavailable:
             await owner.history_flush
         owner.model.finalize_tools()
-        if owner.history_cursor < len(owner.model.items):
+        if owner.plain_owner is not None:
+            await owner.plain_owner.drain()
+        elif not owner.writer_unavailable and owner.history_cursor < len(owner.model.items):
             # No interactive reader remains after Application returns. Flush
             # the final real tool group before restoring the display owner.
             owner.modal = False
@@ -655,6 +745,8 @@ async def run_terminal(runtime):
         owner.closed = True
         owner.loop.set_exception_handler(previous_handler)
         owner.cancel_read()
+        if owner.plain_owner is not None:
+            owner.plain_owner.close()
         timer.cancel()
         bind_terminal(previous)
         set_notice_sink(previous_sink)

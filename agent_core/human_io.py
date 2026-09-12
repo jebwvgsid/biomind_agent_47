@@ -20,7 +20,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, Optional
 
-from agent_core.cli_display import interactive_terminal as active_terminal
+from agent_core.cli_display import interactive_terminal as active_terminal, input_terminal
 
 
 class HumanInputUnavailable(Exception):
@@ -336,6 +336,7 @@ def read_pending_paste_lines(
     *,
     grace_seconds: Optional[float] = None,
     max_lines: Optional[int] = None,
+    owned_read: bool = False,
 ) -> list[str]:
     """Drain complete lines that are already pending after a multiline paste.
 
@@ -344,12 +345,13 @@ def read_pending_paste_lines(
     ``select`` with a tiny timeout so normal interactive typing remains single
     line.
     """
-    if active_terminal() is not None:
+    if active_terminal() is not None and not owned_read:
         return []
 
     timeout = resolve_paste_grace_seconds() if grace_seconds is None else max(0.0, float(grace_seconds))
     limit = resolve_paste_max_lines() if max_lines is None else max(1, int(max_lines))
-    if timeout <= 0 or not _can_read_pending_terminal_lines():
+    if timeout <= 0 or not (_can_read_pending_terminal_lines()
+                            or (owned_read and os.name == 'posix' and sys.stdin.isatty())):
         return []
 
     try:
@@ -368,7 +370,15 @@ def read_pending_paste_lines(
         if not ready:
             break
         try:
-            lines.append(_read_terminal_line_text())
+            if owned_read:
+                # The owner reads one canonical TTY record directly. Avoid a
+                # TextIO prefetch hiding another pasted line from select.
+                raw_line = os.read(sys.stdin.fileno(), 65536)
+                if not raw_line:
+                    break
+                lines.append(decode_terminal_bytes(raw_line).rstrip('\n'))
+            else:
+                lines.append(_read_terminal_line_text())
         except HumanInputUnavailable:
             break
         deadline = time.monotonic() + min(timeout, 0.02)
@@ -386,8 +396,8 @@ def safe_input(prompt: str, timeout_seconds: Optional[int] = None, *, history: b
     """
 
     timeout = resolve_input_timeout() if timeout_seconds is None else int(timeout_seconds)
-    if active_terminal() is not None:
-        return active_terminal().read(prompt, timeout=timeout)
+    if input_terminal() is not None:
+        return input_terminal().read(prompt, timeout=timeout)
     if os.getenv("BIOMIND_UI", "").lower() == "plain" or os.getenv("TERM") == "dumb":
         from agent_core.cli_terminal import plain_input
         return plain_input(prompt, timeout)
@@ -404,8 +414,8 @@ def safe_multiline_input(
     """Read a multiline block until a line exactly matching ``terminator``."""
 
     timeout = resolve_input_timeout() if timeout_seconds is None else int(timeout_seconds)
-    if active_terminal() is not None:
-        return active_terminal().read(prompt, timeout=timeout, multiline=True)
+    if input_terminal() is not None:
+        return input_terminal().read(prompt, timeout=timeout, multiline=True)
     end_marker = str(terminator or "/end").strip()
     lines: list[str] = []
     first_prompt = prompt

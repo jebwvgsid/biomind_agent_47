@@ -227,9 +227,9 @@ def test_v2_actual_terminal_modal_keeps_pending_and_draft_until_close():
         service_writer_callbacks(asyncio.get_running_loop())
         with create_pipe_input() as pipe, create_app_session(input=pipe, output=DummyOutput()):
             owner = Terminal()
+            owner.set_context('fixture', 'code_approval', {'body': 'exact candidate'})
             owner.pending = Future()
             pending = owner.pending
-            owner.set_context('fixture', 'code_approval', {'body': 'exact candidate'})
             owner.buffer.text = '未提交的中文草稿\n第二行'
             body = '完整审批代码行\n' * 12000 + 'END_OF_APPROVAL\n'
             await asyncio.to_thread(owner.show_details, body, '完整候选')
@@ -256,7 +256,7 @@ def test_v2_actual_terminal_modal_keeps_pending_and_draft_until_close():
             owner.buffer.text = '/details'
             owner.submit()
             assert owner.modal and owner.pending is pending and not pending.done()
-            assert owner.buffer.text == '/details'
+            assert owner.buffer.text == ''  # consumed UI command, never backend feedback
             assert 'END_OF_APPROVAL' in owner.details_view.text
             assert owner.details_view.text.count('完整审批代码行') == 12000
             owner.close_details()
@@ -303,6 +303,7 @@ def test_v2_twenty_column_approval_keeps_full_prompt_in_details():
             owner.set_context('fixture', 'code_review', {'content': 'original candidate'})
             owner.show_details(text='完整候选首行\nprint("fixture")\n', title='代码审批')
             prompt = '[y/Enter=run, n=reject, q=quit, e:<code>=edit, text=feedback；中文完整选择] > '
+            application = asyncio.create_task(owner.app.run_async())
             response = asyncio.create_task(asyncio.to_thread(owner.read, prompt, 1))
             for _ in range(100):
                 if owner.pending is not None:
@@ -316,9 +317,16 @@ def test_v2_twenty_column_approval_keeps_full_prompt_in_details():
             owner.show_details()
             assert prompt in owner.details_view.text and not pending.done()
             owner.close_details()
+            for _ in range(200):
+                if owner.input_ready:
+                    break
+                await asyncio.sleep(.001)
+            assert owner.input_ready  # real Application frame, before accepting a decision
             owner._resolve('n')
             assert await response == 'n'
             owner.closed = True
+            owner.app.exit()
+            await application
     asyncio.run(scenario())
 
 

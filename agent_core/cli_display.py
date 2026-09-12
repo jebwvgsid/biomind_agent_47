@@ -140,6 +140,15 @@ def interactive_terminal():
     return _terminal if getattr(_terminal, 'mode', None) == 'tty' else None
 
 
+def input_terminal():
+    """Return the same owner that presents this terminal's human request.
+
+    Unlike the Application-only accessor, plain/off can coordinate an actual
+    approval read without becoming a TTY or changing signal/runtime policy.
+    """
+    return _terminal if callable(getattr(_terminal, 'read', None)) else None
+
+
 def bind_terminal(value):
     global _terminal
     old, _terminal = _terminal, value

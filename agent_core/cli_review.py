@@ -20,7 +20,7 @@ def review_display(title, content, *, language='', risk='', plan_id='', step_cou
     if language:
         fields.append(f'语言 {language} · 风险检查 {risk or "UNKNOWN"}')
     fields.append('审批显示正文 SHA-256: ' + identity)
-    fields.append('完整输入、输出、约束及执行作用范围见下方详情；摘要不能确认全部副作用。')
+    fields.append('完整输入、输出、约束及执行作用范围见详情；摘要不能确认全部副作用。')
     if language:
         fields.append('工作目录与实际写入目标以完整执行定义为准；无法从现有审批字段可靠概括，需查看完整代码。')
     fields.append('/details 或 F2 查看完整对象；查看/返回不代表批准。')
@@ -28,11 +28,21 @@ def review_display(title, content, *, language='', risk='', plan_id='', step_cou
 
 
 def show_review(view):
-    """Fallback to the full body where a trustworthy scope summary is absent."""
+    """Present and retain the exact review copy through one input owner."""
+    owner = terminal()
+    if owner is None:
+        from .cli_plain import PlainTerminal
+        from .cli_display import bind_terminal
+        owner = PlainTerminal()
+        bind_terminal(owner)
+    if callable(getattr(owner, 'prepare_review', None)):
+        owner.prepare_review(view)
+        return
+    # Compatibility for display-only consumers. Production owners implement
+    # prepare_review/read and never use an emit ticket as an approval ack.
     emit('details', view.body, source='runtime_fact', purpose='approval_detail')
     if not emit('approval', view.summary, source='runtime_fact'):
         display_print(view.summary)
-    owner = terminal()
     if owner is not None and getattr(owner, 'mode', '') == 'tty' and not getattr(owner, 'fallback', False):
         # Queue modal on the existing owner loop. The full object is available
         # before its unchanged approval transport accepts a response.
@@ -46,6 +56,9 @@ def show_review(view):
 
 def show_review_body(view):
     owner = terminal()
+    if callable(getattr(owner, 'prepare_review', None)):
+        owner.show_details(text=view.body, title=view.title)
+        return
     if owner is not None and getattr(owner, 'mode', '') == 'tty' and not getattr(owner, 'fallback', False):
         try:
             owner.show_details(text=view.body, title=view.title)

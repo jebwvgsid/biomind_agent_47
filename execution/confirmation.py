@@ -439,6 +439,12 @@ class ConfirmationManager:
             return 'y' # 👈 自动批准返回 'y'
         
         # 3. 显示预览并请求确认
+        # Legacy confirmations have their own risk-dependent Enter semantics.
+        # Do not inherit a previous managed code-review display scope.
+        from agent_core.cli_display import input_terminal
+        owner = input_terminal()
+        if owner is not None:
+            owner.set_context('', 'legacy_confirmation', {})
         if self.config.show_code_preview:
             ConfirmationUI.display_code_preview(code, language, step_index, total_steps, risk_analysis)
         
