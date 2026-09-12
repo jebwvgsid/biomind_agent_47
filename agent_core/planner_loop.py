@@ -288,8 +288,7 @@ def _receipt_matches_plan(
         and str(value.get("planner_claim_id") or "") == scope["planner_claim_id"]
         and str(value.get("planning_epoch_id") or "") == scope["planning_epoch_id"]
         and str(value.get("candidate_scope_id") or "") == scope["candidate_scope_id"]
-        and
-        str(value.get("submission_id") or "")
+        and str(value.get("submission_id") or "")
         and value.get("agent_initiated") is True
         and str(value.get("action_type") or "") == "submit_plan_for_review"
         and int(value.get("protocol_version") or 0)
@@ -326,6 +325,11 @@ def record_plan_review_submission(
             scope = plan_review_candidate_scope(updated)
     if not scope["eligible"]:
         raise ValueError("PLAN_REVIEW_CANDIDATE_SCOPE_STALE")
+    prior = dict(task_state.get("plan_review_submission") or {})
+    if (_receipt_matches_plan(prior, updated) and
+            (prior.get("status") == "pending_review" or
+             plan_review_acceptance_readiness(updated)["ready"])):
+        return updated  # Same producer/candidate re-delivery is not a new review.
     scope.pop("eligible")
     seed = {**identity, **scope, "nonce": uuid.uuid4().hex}
     receipt = {

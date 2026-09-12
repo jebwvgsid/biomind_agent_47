@@ -21,7 +21,7 @@ async def lifecycle_flow(mode='compact', stale_approval=False, stale_provider=Fa
     from agent_core.cli_terminal import PlainTerminal
     from agent_core.plan_tracker import load_plan_state, save_plan_state, record_planning_failure
     from agent_core.planner_loop import (plan_review_submission_readiness, classify_planner_lifecycle,
-        plan_review_acceptance_readiness, record_plan_review_acceptance)
+        plan_review_acceptance_readiness, record_plan_review_acceptance, record_plan_review_submission)
     service_writer_callbacks(asyncio.get_running_loop())
     case=PlanLocalRealGraphTests(methodName='test_graph_e_malformed_script_block_repair_is_visible_to_provider')
     await case.asyncSetUp(); configure_protocol(case); case._configure_one_step_no_output_plan()
@@ -40,6 +40,25 @@ async def lifecycle_flow(mode='compact', stale_approval=False, stale_provider=Fa
         if stage=='planner_plan_impact_review':
             durable=load_plan_state(case.root,task_id)
             pending=durable['task_state']['pending_plan_impact_review']
+            states['after_feedback_before_impact']=deepcopy(durable)
+            assert durable['current_task']['task_revision']==2
+            assert durable['generated_from_task_revision']==1
+            assert not plan_review_submission_readiness(durable)['ready']
+            # Exercise the same rejection producer on the real feedback state,
+            # before the current HEAD's required impact call materializes v2.
+            from agent_core.plan_contract import structured_plan_candidate_diagnostics
+            bad=case._planner_payload();bad['metadata']['result_contract_version']=1
+            bad['task_output_materializations']=[{'output_ref':f'output.synthetic{i}',
+                'path':f'synthetic{i}.txt','required':True,'path_policy':'planner_materialized'} for i in range(6)]
+            diagnostics=structured_plan_candidate_diagnostics({k:v for k,v in bad.items() if k!='outcome_type'})
+            assert len(diagnostics)==6
+            rejected=record_planning_failure(durable,validation_issues=diagnostics,
+                planning_epoch_id=durable['task_state']['planning_epoch']['planning_epoch_id'],
+                task_spec_revision_value=2,validation_source='planner_candidate_admission',candidate=bad)
+            assert not plan_review_submission_readiness(rejected)['ready']
+            assert not plan_review_acceptance_readiness(rejected)['ready']
+            assert rejected['task_state']['plan_review_submission']==durable['task_state']['plan_review_submission']
+            states['revision2_rejection_on_real_feedback_state']=rejected
             plan=case._planner_payload();plan['steps'][0]['produces_observations']=['approved_command_succeeded']
             return AIMessage(content=json.dumps({'decision':'FULL_REPLAN',
                 'base_task_revision':pending['base_task_revision'],
@@ -151,6 +170,7 @@ async def lifecycle_flow(mode='compact', stale_approval=False, stale_provider=Fa
             assert reviews[0]['submission_id']!=reviews[1]['submission_id']
             assert reviews[0]['task_revision']==1 and reviews[1]['task_revision']==2
             assert record_plan_review_acceptance(durable)==durable
+            assert record_plan_review_submission(durable)==durable
             # Production checkpoint state was made by the graph. Re-delivering
             # review cannot acquire another human approval or execute again.
             checkpoint=dict(app.get_state(config).values)
