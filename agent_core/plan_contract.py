@@ -14,6 +14,7 @@ import uuid
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import PurePosixPath
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 
@@ -56,6 +57,8 @@ LEGACY_STRUCTURED_PLAN_SCHEMA_VERSION = 1
 LEGACY_STRUCTURED_PLAN_CONTRACT = "structured_plan_v1"
 STRUCTURED_PLAN_SCHEMA_VERSION = 2
 STRUCTURED_PLAN_CONTRACT = "structured_plan_v2"
+PLAN_RESULT_CONTRACT_VERSION = 1
+PLAN_RESULT_PATH_POLICIES = frozenset({"managed_exact", "model_selectable"})
 STRUCTURED_PLAN_REQUIRED_TOP_LEVEL_FIELDS = frozenset({
     "steps",
     "validation_checklist",
@@ -99,6 +102,58 @@ _SINGLE_JSON_FENCE_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 _JSON_FENCE_LINE_RE = re.compile(r"(?m)^[ \t]*```")
+
+
+def plan_uses_explicit_results(value: Mapping[str, Any]) -> bool:
+    """Opt in through approved Plan metadata, never by a missing result field.
+
+    Existing approved schema-2 Plans keep their original defaults and hashes.
+    The marker is part of the existing Plan document, not another task contract.
+    """
+    document = value.get("plan_document")
+    document = document if isinstance(document, Mapping) else value
+    metadata = document.get("metadata")
+    return bool(
+        isinstance(metadata, Mapping)
+        and type(metadata.get("result_contract_version")) is int
+        and metadata["result_contract_version"] == PLAN_RESULT_CONTRACT_VERSION
+    )
+
+
+def plan_result_contracts(value: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """Read-only view of result declarations in the sole approved Plan.
+
+    Keys are exact Plan handles/allocated identities.  Neither prose nor
+    physical filenames create a result or upgrade its necessity.
+    """
+    explicit = plan_uses_explicit_results(value)
+    rows: Dict[str, Dict[str, Any]] = {}
+    allocation = dict(value.get("artifact_allocation_mapping") or {})
+    allocated = dict(allocation.get("local_to_authoritative") or {})
+    for raw in value.get("proposed_artifacts", []) or []:
+        if not isinstance(raw, Mapping) or not str(raw.get("local_ref") or ""):
+            continue
+        contract = dict(raw.get("artifact_contract") or {})
+        ref = str(allocated.get(str(raw["local_ref"])) or raw["local_ref"])
+        rows[ref] = {
+            **contract,
+            "required": bool(contract.get("required", not explicit)),
+            "description": str((raw.get("semantic_view") or {}).get("description") or ""),
+        }
+    for ref, raw in dict(value.get("plan_artifacts") or {}).items():
+        if not isinstance(raw, Mapping):
+            continue
+        rows[str(ref)] = {
+            **dict(raw),
+            "required": bool(raw.get("required", not explicit)),
+        }
+    for raw in value.get("task_output_materializations", []) or []:
+        if not isinstance(raw, Mapping):
+            continue
+        ref = str(raw.get("output_ref") or raw.get("output_id") or "")
+        if ref:
+            rows[ref] = {**dict(raw), "required": bool(raw.get("required", not explicit))}
+    return rows
 
 
 class PlanContractError(ValueError):
@@ -510,6 +565,13 @@ def structured_plan_candidate_diagnostics(
                 "field_path": "$.metadata.planner_contract",
                 "message": f"must equal {expected_contract}",
             })
+        if "result_contract_version" in metadata and (
+            legacy_schema or not plan_uses_explicit_results(payload)
+        ):
+            diagnostics.append({
+                "field_path": "$.metadata.result_contract_version",
+                "message": "must equal 1 on structured_plan_v2",
+            })
 
     if "proposed_artifacts" in payload and not isinstance(
         payload.get("proposed_artifacts"), list
@@ -533,7 +595,11 @@ def structured_plan_candidate_diagnostics(
                         "message": "must be an object",
                     })
                     continue
-                unexpected = set(row) - {"output_ref", "path"}
+                result_fields = {"required", "path_policy", "validator", "description", "source_refs"}
+                unexpected = set(row) - (
+                    {"output_ref", "path"}
+                    | (result_fields if plan_uses_explicit_results(payload) else set())
+                )
                 if unexpected:
                     diagnostics.append({
                         "field_path": f"$.task_output_materializations[{index}]",
@@ -545,6 +611,33 @@ def structured_plan_candidate_diagnostics(
                             "field_path": f"$.task_output_materializations[{index}].{field}",
                             "message": "must be a non-empty string",
                         })
+    if plan_uses_explicit_results(payload):
+        result_rows = [
+            (f"$.proposed_artifacts[{index}].artifact_contract", raw.get("artifact_contract"))
+            for index, raw in enumerate(payload.get("proposed_artifacts") if isinstance(payload.get("proposed_artifacts"), list) else [])
+            if isinstance(raw, Mapping)
+        ] + [
+            (f"$.task_output_materializations[{index}]", raw)
+            for index, raw in enumerate(materializations if isinstance(materializations, list) else [])
+            if isinstance(raw, Mapping)
+        ]
+        for field_path, contract in result_rows:
+            if not isinstance(contract, Mapping):
+                continue
+            if "required" in contract and type(contract["required"]) is not bool:
+                diagnostics.append({"field_path": field_path + ".required", "message": "must be a boolean"})
+            if "path_policy" in contract and (
+                not isinstance(contract["path_policy"], str)
+                or contract["path_policy"] not in PLAN_RESULT_PATH_POLICIES
+            ):
+                diagnostics.append({"field_path": field_path + ".path_policy", "message": "must equal managed_exact or model_selectable"})
+            if field_path.endswith(".artifact_contract") and "path" in contract:
+                raw_path = contract["path"]
+                path = PurePosixPath(raw_path) if isinstance(raw_path, str) else None
+                if (path is None or not str(raw_path).strip() or path.is_absolute()
+                        or ".." in path.parts or str(path) == "."
+                        or contract.get("path_policy") != "managed_exact"):
+                    diagnostics.append({"field_path": field_path + ".path", "message": "must be a safe relative path under the existing managed root with managed_exact policy"})
     for diagnostic in diagnostics:
         field_path = str(diagnostic.get("field_path") or "$")
         present, received = _wire_value_at_path(payload, field_path)
@@ -1171,6 +1264,11 @@ def planner_candidate_body_from_state(state: Mapping[str, Any]) -> Dict[str, Any
     if "task_output_materializations" in state:
         candidate["task_output_materializations"] = [
             {
+                **({
+                    key: deepcopy(item[key])
+                    for key in ("required", "path_policy", "validator", "description", "source_refs")
+                    if key in item
+                } if plan_uses_explicit_results(state) else {}),
                 "output_ref": str(
                     item.get("output_ref") or item.get("output_id") or ""
                 ),
@@ -1572,6 +1670,7 @@ def prepare_allocation_intent(
             "ALLOCATION_OWNER_MISSING", "$", "candidate scope and PlanningEpoch are required"
         )
     declarations: List[Dict[str, Any]] = []
+    exact_paths: set[str] = set()
     for index, raw in enumerate(candidate.get("proposed_artifacts", []) or []):
         if not isinstance(raw, Mapping):
             raise PlannerCandidateError(
@@ -1660,6 +1759,16 @@ def prepare_allocation_intent(
                     },
                 },
             )
+        if plan_uses_explicit_results(candidate) and "path" in contract:
+            path_text = contract.get("path")
+            path = PurePosixPath(path_text) if isinstance(path_text, str) else None
+            if (path is None or not str(path_text).strip() or path.is_absolute()
+                    or ".." in path.parts or str(path) == "."
+                    or contract.get("path_policy") != "managed_exact"):
+                raise PlannerCandidateError("PLAN_RESULT_PATH_INVALID", f"$.proposed_artifacts[{index}].artifact_contract.path", "Expected a safe relative managed_exact result path.")
+            if str(path) in exact_paths:
+                raise PlannerCandidateError("PLAN_RESULT_PATH_DUPLICATE", f"$.proposed_artifacts[{index}].artifact_contract.path", "Two distinct logical results cannot allocate the same physical path.")
+            exact_paths.add(str(path))
         declarations.append({
             "local_ref": local_ref,
             "artifact_ref": ArtifactRefKey.candidate_local(
@@ -1675,6 +1784,8 @@ def prepare_allocation_intent(
         "planning_epoch_id": str(planning_epoch_id),
         "declarations": declarations,
         "status": "prepared",
+        **({"result_contract_version": PLAN_RESULT_CONTRACT_VERSION}
+           if plan_uses_explicit_results(candidate) else {}),
     }
 
 
@@ -1701,6 +1812,11 @@ def promote_allocation_intent(
         resource_binding = dict(declaration.get("resource_binding") or {})
         object_kind = str(contract.get("object_kind") or "")
         canonical_path = f"{str(managed_root).rstrip('/')}/{logical_id}"
+        if (intent.get("result_contract_version") == PLAN_RESULT_CONTRACT_VERSION
+                and contract.get("path_policy") == "managed_exact" and contract.get("path")):
+            # The allocation root is the existing caller-authorized root.
+            # A Plan basename cannot select a different directory authority.
+            canonical_path = str(PurePosixPath(managed_root) / str(contract["path"]))
         mapping[local_ref] = logical_id
         bindings[logical_id] = {
             "logical_artifact_id": logical_id,
@@ -1725,6 +1841,14 @@ def promote_allocation_intent(
             "candidate_scope_id": scope,
             "local_ref": local_ref,
         }
+        if intent.get("result_contract_version") == PLAN_RESULT_CONTRACT_VERSION:
+            bindings[logical_id].update({
+                "required": bool(contract.get("required", False)),
+                "path_policy": str(contract.get("path_policy") or "model_selectable"),
+                **{key: deepcopy(contract[key]) for key in (
+                    "validation_contract_id", "source_refs",
+                ) if key in contract},
+            })
     return mapping, bindings
 
 

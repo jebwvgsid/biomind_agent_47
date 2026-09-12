@@ -2207,6 +2207,11 @@ def compile_plan_dataflow(
 
     edges: list[Dict[str, Any]] = []
     dataflow_issues: list[Dict[str, Any]] = [*binding_issues, *dependency_issues]
+    from .plan_contract import plan_result_contracts, plan_uses_explicit_results
+    result_contracts = (
+        plan_result_contracts(source_plan)
+        if plan_uses_explicit_results(source_plan) else {}
+    )
     for step_index, raw_step in enumerate(compiled_plan.get("steps", []) or []):
         if not isinstance(raw_step, Mapping):
             continue
@@ -2215,6 +2220,20 @@ def compile_plan_dataflow(
         for field, effect_kind in (("inputs", "READ"), ("outputs", "PRODUCE")):
             for ref_index, raw_ref in enumerate(step.get(field, []) or []):
                 resource_ref = str(raw_ref or "")
+                declared_result = result_contracts.get(resource_ref)
+                if effect_kind == "READ" and declared_result is not None and not declared_result["required"]:
+                    dataflow_issues.append(_dataflow_issue(
+                        "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+                        plan_state=compiled_plan,
+                        resource_ref=resource_ref,
+                        consumer_step=step_id,
+                        field_path=f"$.steps[{step_index}].inputs[{ref_index}]",
+                        affected_fields=["inputs", "proposed_artifacts", "task_output_materializations"],
+                        actual_facts={"required": False, "consumer_step_id": step_id},
+                        required_condition="A hard input requires a necessary producer result or a different explicit dependency.",
+                        message="Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+                        affected_step_ids=[step_id],
+                    ))
                 binding = _binding_for_ref(resource_ref, compiled_bindings)
                 field_path = f"$.steps[{step_index}].{field}[{ref_index}]"
                 if not binding:

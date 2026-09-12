@@ -285,6 +285,8 @@ def _binding_from_row(
             "source_ref": str(raw.get("source_ref") or raw.get("source_id") or ""),
             "declared_path_policy": str(raw.get("declared_path_policy") or raw.get("path_policy") or ""),
             "materialization_origin": str(raw.get("materialization_origin") or ""),
+            **({"result_contract_version": raw["result_contract_version"]}
+               if "result_contract_version" in raw else {}),
             "user_visible": bool(raw.get("user_visible", False)),
         },
         artifact_kind=str(raw.get("artifact_kind") or raw.get("object_kind") or ""),
@@ -533,6 +535,11 @@ def build_managed_artifact_bindings(
     visible_artifacts: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> Dict[str, ManagedArtifactBinding]:
     """Compile the approved current-step artifact set into managed bindings."""
+    from agent_core.plan_contract import plan_result_contracts, plan_uses_explicit_results
+    explicit_results = plan_uses_explicit_results(
+        plan_state or approved_plan_snapshot or {}
+    )
+    result_contracts = plan_result_contracts(plan_state or approved_plan_snapshot or {})
     result: Dict[str, ManagedArtifactBinding] = {}
     visible = {
         str(key): deepcopy(dict(value))
@@ -627,7 +634,7 @@ def build_managed_artifact_bindings(
                     binding_row["semantic_handle"] = (
                         f"{direction}.{_slug(role, f'artifact_{index}')}"
                     )
-            if declared_direction == "output" and not _canonical_path(binding_row):
+            if declared_direction == "output":
                 materialized = next((
                     materializations.get(str(ref))
                     for ref in (
@@ -637,14 +644,38 @@ def build_managed_artifact_bindings(
                     )
                     if materializations.get(str(ref)) is not None
                 ), None)
-                if materialized is not None:
+                if materialized is not None and (
+                    explicit_results or not _canonical_path(binding_row)
+                ):
                     binding_row.update({
                         "canonical_path": str(materialized.get("canonical_path") or materialized.get("path") or ""),
                         "filename": Path(str(materialized.get("path") or "")).name,
-                        "path_policy": MANAGED_EXACT,
+                        "path_policy": (str(materialized.get("path_policy") or MODEL_SELECTABLE)
+                                        if explicit_results else MANAGED_EXACT),
                         "declared_path_policy": str(raw.get("path_policy") or ""),
                         "materialization_origin": str(materialized.get("origin") or ""),
                     })
+                # An existing output handle supplies container/path authority.
+                # Its historical TaskSpec default cannot override necessity or
+                # acceptance policy chosen in the approved result Plan.
+                if explicit_results and str(raw.get("role") or "") != "output_dir":
+                    declaration = next((
+                        result_contracts[str(ref)]
+                        for ref in (
+                            raw.get("artifact_id"), raw.get("output_id"),
+                            raw.get("semantic_handle"),
+                        ) if str(ref or "") in result_contracts
+                    ), {})
+                    binding_row["required"] = bool(declaration.get("required", False))
+                    binding_row["result_contract_version"] = 1
+                    if declaration:
+                        binding_row["path_policy"] = str(
+                            declaration.get("path_policy") or MODEL_SELECTABLE
+                        )
+                        binding_row["relocatable"] = binding_row["path_policy"] == MODEL_SELECTABLE
+                        validator = declaration.get("validation_contract_id") or declaration.get("validator")
+                        if validator:
+                            binding_row["validation_contract_id"] = str(validator)
             logical_identity = str(
                 binding_row.get("artifact_id")
                 or binding_row.get("input_id" if declared_direction == "input" else "output_id")
@@ -709,14 +740,14 @@ def build_managed_artifact_bindings(
             semantic_handle=f"{direction}.{artifact_id}",
             direction=direction,
             format=str(semantic_view.get("format") or ""),
-            path_policy=MANAGED_EXACT,
+            path_policy=str(ledger_entry.get("path_policy") or MANAGED_EXACT),
             canonical_path=canonical_path,
             required_basename=Path(canonical_path).name if canonical_path else "",
             producer_owner="approved_plan",
             producer_step_id=str(visible_row.get("producer_step_id") or ""),
-            relocatable=False,
+            relocatable=str(ledger_entry.get("path_policy") or MANAGED_EXACT) == MODEL_SELECTABLE,
             validation_contract_id=validation_contract_id,
-            required=True,
+            required=bool(ledger_entry.get("required", True)),
             aliases=tuple(
                 str(value)
                 for value in visible_row.get("aliases", []) or []
@@ -730,6 +761,7 @@ def build_managed_artifact_bindings(
                 ),
                 "source_type": str(ledger_entry.get("source_type") or ""),
                 "declared_path_policy": str(ledger_entry.get("path_policy") or MANAGED_EXACT),
+                "result_contract_version": 1 if explicit_results else 0,
             },
             artifact_kind=artifact_kind,
             source_authority="approved_plan_snapshot",
@@ -1012,6 +1044,8 @@ def validate_concrete_action_artifacts(
             "format": bindings[handle].format,
             "validation_contract_id": bindings[handle].validation_contract_id,
             "required": bindings[handle].required,
+            "path_policy": bindings[handle].path_policy,
+            "result_contract_version": bindings[handle].metadata.get("result_contract_version", 0),
             "constraint_origin": bindings[handle].constraint_origin,
             "accepted_representations": list(bindings[handle].accepted_representations),
             "source_authority": bindings[handle].source_authority,
@@ -1621,6 +1655,8 @@ def materialize_managed_action(
             "format": bindings[handle].format,
             "validation_contract_id": bindings[handle].validation_contract_id,
             "required": bindings[handle].required,
+            "path_policy": bindings[handle].path_policy,
+            "result_contract_version": bindings[handle].metadata.get("result_contract_version", 0),
             "constraint_origin": bindings[handle].constraint_origin,
             "accepted_representations": list(bindings[handle].accepted_representations),
             "source_authority": bindings[handle].source_authority,
@@ -1960,6 +1996,7 @@ def reconcile_runtime_outputs(
             (item for item in in_scope if _canonical_path({"path": item.get("path")}) == expected_path),
             None,
         )
+        explicit_results = contract.get("result_contract_version") == 1
         if exact is not None:
             observed_path = _canonical_path({"path": exact.get("path")})
             observed_kind = str(exact.get("artifact_kind") or "").strip().lower()
@@ -1982,7 +2019,12 @@ def reconcile_runtime_outputs(
                     "observed_artifact_kind": observed_kind,
                 })
                 continue
-            if not bool(exact.get("content_valid", False)):
+            explicitly_empty_file = (
+                explicit_results and contract.get("validation_contract_id") == "file_exists"
+                and expected_kind == "file" and expected_format in {"", "file", "text"}
+                and exact.get("size") == 0 and exact.get("exists") is True
+            )
+            if not bool(exact.get("content_valid", False)) and not explicitly_empty_file:
                 result["violations"].append({
                     "code": "OBSERVED_ARTIFACT_CONTENT_INVALID",
                     "owner": "ARTIFACT_CONTRACT",
@@ -2041,6 +2083,8 @@ def reconcile_runtime_outputs(
                 candidate["format_compatibility"] = relation
                 eligible.append(candidate)
         if not eligible:
+            if explicit_results and not physical_candidates and not bool(contract.get("required", False)):
+                continue
             if physical_candidates:
                 content_invalid = all(
                     not bool(item.get("content_valid", False))

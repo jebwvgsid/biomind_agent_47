@@ -1940,8 +1940,9 @@ class SupervisorNode:
         state: Dict[str, Any],
         *,
         command_role: str,
+        formal_execution: bool = False,
     ) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-        if command_role in {"probe", "diagnostic", "optional_probe", "capability_probe"}:
+        if command_role in {"probe", "diagnostic", "optional_probe", "capability_probe"} and not formal_execution:
             return [], []
         checks = self._verification_checks_from_state(state)
         if not checks:
@@ -2059,6 +2060,11 @@ class SupervisorNode:
             role = "analysis_execution"
         elif role in {"diagnostic", "optional_probe"}:
             role = "probe"
+        formal_execution = False
+        if role in {"probe", "capability_probe"}:
+            from agent_core.execution_authority import is_approved_step_execution
+            authority_state = load_plan_state(self._llm_reviewer.data_path, task_id)
+            formal_execution = is_approved_step_execution(authority_state, execution)
 
         identity = ValidationEvidence.from_mapping({
             "task_id": task_id,
@@ -2154,6 +2160,7 @@ class SupervisorNode:
             artifact_results, criteria_results = self._structured_artifact_results(
                 state,
                 command_role=role,
+                formal_execution=formal_execution,
             )
             manifest_results = self._manifest_validation_results(execution, role)
             errors = [row.message for row in rule_results if not row.passed and row.severity == "error"]
@@ -2222,7 +2229,7 @@ class SupervisorNode:
             advisory_conflict = False
             scientific_checks: List[Dict[str, Any]] = []
             validation_level = str(state.get("validation_level") or "").lower()
-            if self.use_llm_review and role not in {"probe", "capability_probe"} and validation_level in {"scientific", "artifact"}:
+            if self.use_llm_review and (formal_execution or role not in {"probe", "capability_probe"}) and validation_level in {"scientific", "artifact"}:
                 try:
                     review_plan_state = load_plan_state(
                         self._llm_reviewer.data_path, task_id

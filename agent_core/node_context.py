@@ -1766,6 +1766,9 @@ def _approved_plan_semantic_view(
                 "materialization_policy_id": str(
                     raw.get("materialization_policy_id") or ""
                 ),
+                **{key: deepcopy(raw[key]) for key in (
+                    "required", "path_policy", "validation_contract_id", "source_refs",
+                ) if key in raw},
             },
         })
     if approved_artifacts:
@@ -1795,7 +1798,7 @@ def _approved_plan_semantic_view(
         row = {
             str(key): deepcopy(value)
             for key, value in raw.items()
-            if str(key) in {"output_ref", "path"}
+            if str(key) in {"output_ref", "path", "required", "path_policy", "description", "source_refs", "validation_contract_id"}
             and value not in (None, "", [], {})
         }
         if row:
@@ -1803,6 +1806,8 @@ def _approved_plan_semantic_view(
     if materializations:
         _project_step_semantic_references(materializations, handle_map)
         view["task_output_materializations"] = materializations
+    if (snapshot.get("metadata") or {}).get("result_contract_version") == 1:
+        view["result_contract_version"] = 1
     return dict(view)
 
 

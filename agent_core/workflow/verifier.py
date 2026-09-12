@@ -6,6 +6,7 @@ from copy import deepcopy
 from typing import Any, Awaitable, Callable, Mapping
 
 from agent_core.completion_gate import CompletionGate
+from agent_core.execution_authority import is_approved_step_execution, is_recovery_diagnostic_execution
 from agent_core.plan_tracker import load_plan_state, record_provenance_event
 from agent_core.recovery import ValidationEvidence, ValidationStatus
 from agent_core.semantic_completion import (
@@ -122,7 +123,10 @@ class TypedSupervisor:
         producer_report = deepcopy(dict(result.get("completion_report") or {}))
         semantic_refs: list[str] = []
         role = str(validation.command_role or execution.get("command_role") or "").lower()
-        if role in {"probe", "diagnostic", "optional_probe", "capability_probe"}:
+        if is_recovery_diagnostic_execution(durable, execution) or (
+            role in {"probe", "diagnostic", "optional_probe", "capability_probe"}
+            and not is_approved_step_execution(durable, execution)
+        ):
             outcome_type = "diagnostic_evidence_recorded"
             payload = {
                 "diagnostic_record": execution,

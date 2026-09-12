@@ -833,6 +833,7 @@ from agent_core.workspace_attestation import (
 from agent_core.state_contract_store import StateContractStore
 from agent_core.planner_revision import accepted_planner_revision
 from agent_core.evidence_projection import artifact_effect_evidence
+from agent_core.execution_authority import is_approved_step_execution, is_recovery_diagnostic_execution
 from agent_core.planner_context import save_correction_context, load_correction_context, restore_correction_messages
 from agent_core.plan_bindings import planner_resource_requirements
 from agent_core.completion_gate import CompletionGate
@@ -13381,26 +13382,13 @@ class BioAnalystAgent:
 
     @staticmethod
     def _pending_action_purpose(action: Dict[str, Any], step: Dict[str, Any]) -> str:
-        """Classify action intent so helper success cannot complete analysis work."""
+        """Preserve declared descriptive purpose; execution authority is separate."""
         explicit = str(action.get("purpose") or "").strip().lower()
         action_type = str(action.get("type") or "").strip().lower()
         if action_type == "install_tool":
             return "install"
         if action_type == "ask_user":
             return "user_input"
-        code = str(action.get("code") or "")
-        lower = code.lower()
-        read_only = bool(
-            BioAnalystAgent._is_readonly_capability_probe(code)
-            or re.search(
-                r"\b(?:ls|find|grep|rg|head|tail|cat|sed|awk|less|more|stat|file|test|command\s+-v|which|type)\b",
-                lower,
-            )
-        )
-        writes_output = bool(re.search(r"(?:^|\s)(?:>|>>|tee\s|cp\s|mv\s)|\s-o\s+\S+", lower))
-        if read_only and not writes_output:
-            step_purpose = str(step.get("purpose") or "").strip().lower()
-            return "validation" if explicit == "validation" or step_purpose == "validation" else "probe"
         if explicit in {"analysis", "probe", "validation", "record_failure", "install", "user_input"}:
             return explicit
         step_purpose = str(step.get("purpose") or "").strip().lower()
@@ -50806,7 +50794,7 @@ question. Never guess a scientific or database identity.
                     f"RecoveryPolicy interpreted ValidationEvidence {validation.validation_id} as "
                     f"{decision.kind}; Supervisor supplied facts only."
                 )))
-            elif command_role in {"probe", "diagnostic", "optional_probe", "capability_probe"}:
+            elif (is_recovery_diagnostic_execution(plan_state, execution) or (not is_approved_step_execution(plan_state, execution) and command_role in {"probe", "diagnostic", "optional_probe", "capability_probe"})):
                 decision = commit_policy()
                 update["completion_gate_result"] = {
                     "passed": False,
@@ -50895,7 +50883,7 @@ question. Never guess a scientific or database identity.
                             else "manifest_action_completed"
                         ),
                     }
-                elif "recovery_decision" not in update and not self._execution_purpose_completes_step(
+                elif "recovery_decision" not in update and not is_approved_step_execution(plan_state, execution) and not self._execution_purpose_completes_step(
                     current_step,
                     execution_purpose,
                 ):
@@ -51065,7 +51053,7 @@ question. Never guess a scientific or database identity.
                         "It did not invoke the Renderer, consume Renderer invocation budget, run the formal Renderer "
                         "artifact gate, or complete the composite step."
                     )))
-                elif not renderer_controlled and not self._execution_purpose_completes_step(
+                elif not renderer_controlled and not is_approved_step_execution(plan_state, execution) and not self._execution_purpose_completes_step(
                     current_plan_step,
                     execution_purpose,
                 ):

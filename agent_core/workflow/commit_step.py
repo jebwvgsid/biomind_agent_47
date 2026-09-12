@@ -8,6 +8,7 @@ from copy import deepcopy
 from typing import Any, Callable, Mapping
 
 from agent_core.completion_gate import CompletionGate
+from agent_core.execution_authority import is_approved_step_execution, is_recovery_diagnostic_execution
 from agent_core.plan_bindings import PlanBindingError, accept_action_binding_candidates
 from agent_core.plan_contract import StateCASConflict
 from agent_core.plan_tracker import (
@@ -362,7 +363,10 @@ class CommitStep:
         }:
             return self._rejected(task_id, "VALIDATION_STATUS_INELIGIBLE", validation.status, validation.validation_id)
         role = str(validation.command_role or "").lower()
-        if role in {"probe", "diagnostic", "optional_probe", "capability_probe"}:
+        if is_recovery_diagnostic_execution(current, validation.to_dict()) or (
+            role in {"probe", "diagnostic", "optional_probe", "capability_probe"}
+            and not is_approved_step_execution(current, validation.to_dict())
+        ):
             return self._rejected(task_id, "PROBE_COMPLETION_FORBIDDEN", role, validation.validation_id)
 
         provenance = dict(current.get("provenance_state") or {})
@@ -377,9 +381,11 @@ class CommitStep:
         ):
             if str(attempt.get(key) or "") != str(expected or ""):
                 return self._rejected(task_id, "EXECUTION_ATTEMPT_SCOPE_MISMATCH", key, validation.attempt_id)
-        if str(attempt.get("command_role") or "").lower() in {
-            "probe", "diagnostic", "optional_probe", "capability_probe"
-        }:
+        if is_recovery_diagnostic_execution(current, attempt) or (
+            str(attempt.get("command_role") or "").lower() in {
+                "probe", "diagnostic", "optional_probe", "capability_probe"
+            } and not is_approved_step_execution(current, attempt)
+        ):
             return self._rejected(task_id, "PROBE_COMPLETION_FORBIDDEN", "attempt.command_role", validation.attempt_id)
         if str(attempt.get("status") or "").upper() not in {
             ATTEMPT_EVIDENCE_COMMITTED, ATTEMPT_VALIDATED, ATTEMPT_VALIDATION_PASSED

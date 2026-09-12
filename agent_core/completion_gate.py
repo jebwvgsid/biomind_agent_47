@@ -45,6 +45,7 @@ from .step_effects import (
     canonical_step_effect,
     match_step_effect_evidence,
 )
+from .plan_contract import plan_result_contracts, plan_uses_explicit_results
 
 
 ARTIFACT_RE = re.compile(
@@ -324,7 +325,13 @@ _INELIGIBLE_EFFECT_ROLES = {
 }
 
 
-def _completion_eligible_effect_role(value: Mapping[str, Any]) -> bool:
+def _completion_eligible_effect_role(value: Mapping[str, Any], plan_state: Optional[Mapping[str, Any]] = None) -> bool:
+    if plan_state is not None:
+        from .execution_authority import is_approved_step_execution, is_recovery_diagnostic_execution
+        if is_recovery_diagnostic_execution(plan_state, value):
+            return False
+        if is_approved_step_execution(plan_state, value):
+            return True
     return str(value.get("command_role") or "").strip().lower() not in (
         _INELIGIBLE_EFFECT_ROLES
     )
@@ -555,7 +562,7 @@ def _current_effect_sources(
     attempt_success = bool(selected_attempt) and (
         explicit_returncode == 0
         or (explicit_returncode is None and attempt_status in _ELIGIBLE_EFFECT_ATTEMPT_STATUSES)
-    ) and _completion_eligible_effect_role(selected_attempt)
+    ) and _completion_eligible_effect_role(selected_attempt, plan_state)
 
     sources: List[Tuple[Dict[str, Any], bool]] = []
     refs: List[str] = []
@@ -580,7 +587,7 @@ def _current_effect_sources(
             continue
         status = str(row.get("status") or "").strip().lower()
         valid = status in {"valid", "valid_with_warnings", "pass", "passed", "success", "succeeded"} and (
-            _completion_eligible_effect_role(row)
+            _completion_eligible_effect_role(row, plan_state)
             and attempt_success
         )
         sources.append((payload, valid))
@@ -593,7 +600,7 @@ def _current_effect_sources(
                 status = str(top_validation.get("status") or "").strip().lower()
                 sources.append((payload, status in {
                     "valid", "valid_with_warnings", "pass", "passed", "success", "succeeded",
-                } and _completion_eligible_effect_role(top_validation) and attempt_success))
+                } and _completion_eligible_effect_role(top_validation, plan_state) and attempt_success))
                 refs.append(str(top_validation.get("validation_id") or ""))
 
     if selected_attempt and top_execution and str(top_execution.get("step_id") or step_id) == step_id:
@@ -604,7 +611,7 @@ def _current_effect_sources(
                 sources.append((
                     payload,
                     returncode == 0
-                    and _completion_eligible_effect_role(top_execution)
+                    and _completion_eligible_effect_role(top_execution, plan_state)
                     and attempt_success,
                 ))
                 refs.append(str(top_execution.get("execution_id") or top_execution.get("attempt_id") or ""))
@@ -2046,6 +2053,25 @@ def _non_task_output_files(output_root: Path) -> List[Path]:
 
 
 def _expected_artifacts_from_final_plan(plan_state: Dict[str, Any], current_plan: str) -> List[str]:
+    if plan_uses_explicit_results(plan_state):
+        provenance = ensure_provenance_state(plan_state)
+        contracts = plan_result_contracts(plan_state)
+        realized = {
+            str(row.get("logical_artifact_id") or ""): str(row.get("path") or "")
+            for version in dict(provenance.get("artifact_heads") or {}).values()
+            for row in [dict((provenance.get("artifacts") or {}).get(str(version)) or {})]
+            if str(row.get("status") or "") == "valid"
+        }
+        paths = []
+        for ref, contract in contracts.items():
+            if not contract.get("required"):
+                continue
+            predicted = str(contract.get("canonical_path") or contract.get("path") or "")
+            actual = realized.get(ref, "")
+            path = predicted if contract.get("path_policy") == "managed_exact" else actual
+            if path and path not in paths:
+                paths.append(path)
+        return paths
     snippets: List[str] = []
     canonical_artifacts: List[str] = []
     superseded_artifacts: set[str] = set()
@@ -2524,6 +2550,15 @@ class CompletionGate:
             artifact_id = str(artifact_id)
             version_id = str(provenance.get("artifact_heads", {}).get(artifact_id) or "")
             artifact = provenance.get("artifacts", {}).get(version_id, {})
+            if plan_uses_explicit_results(plan_state):
+                logical_id = str(artifact.get("logical_artifact_id") or artifact_id)
+                contract = plan_result_contracts(plan_state).get(logical_id)
+                if contract is not None and not contract.get("required"):
+                    # Optional absence is not a failed must-result.  Execution
+                    # failures/cancellation remain governed by execution receipt
+                    # and step state; this does not convert them into success.
+                    if not artifact or str(artifact.get("status") or "expected") in {"expected", "missing"}:
+                        continue
             if not artifact:
                 missing.append(artifact_id)
                 continue
@@ -2536,12 +2571,27 @@ class CompletionGate:
             try:
                 physical_valid = physical_path.exists() and (
                     physical_path.is_dir()
-                    or (physical_path.is_file() and physical_path.stat().st_size > 0)
+                    or (physical_path.is_file() and (
+                        physical_path.stat().st_size > 0
+                        or (
+                            plan_uses_explicit_results(plan_state)
+                            and str(artifact.get("validator") or artifact.get("validation_contract_id") or "") == "file_exists"
+                        )
+                    ))
                 )
             except OSError:
                 physical_valid = False
             if status == "valid" and not physical_valid:
                 invalid.append(artifact_id)
+            if status == "valid" and plan_uses_explicit_results(plan_state):
+                contract = plan_result_contracts(plan_state).get(
+                    str(artifact.get("logical_artifact_id") or artifact_id), {}
+                )
+                if contract.get("path_policy") == "managed_exact":
+                    expected_path = Path(str(contract.get("canonical_path") or contract.get("path") or ""))
+                    if not expected_path.is_absolute() or expected_path.resolve() != physical_path.resolve():
+                        invalid.append(artifact_id)
+                        failed_criteria.append("exact_result_path_mismatch:" + str(artifact.get("logical_artifact_id") or artifact_id))
             if str(artifact.get("producer_attempt_id") or ""):
                 attempts.append(str(artifact["producer_attempt_id"]))
             if version_id:
@@ -2549,6 +2599,22 @@ class CompletionGate:
             if str(artifact.get("validation_id") or ""):
                 validations.append(str(artifact["validation_id"]))
         renderer = dict(step.get("renderer_execution") or {})
+        if plan_uses_explicit_results(plan_state):
+            if str(step.get("status") or "").lower() in {"failed", "blocked", "cancelled", "canceled", "rejected"}:
+                failed_criteria.append("step_execution_not_successful")
+            latest_attempt_id = str(step.get("last_attempt_id") or step.get("current_attempt_id") or "")
+            latest_attempt = dict(provenance.get("attempts", {}).get(latest_attempt_id) or {})
+            if not latest_attempt:
+                matching = [dict(row) for row in provenance.get("attempts", {}).values()
+                            if isinstance(row, Mapping) and str(row.get("step_id") or "") == str(step_id)]
+                latest_attempt = matching[-1] if matching else {}
+            returncode = latest_attempt.get("returncode")
+            if not latest_attempt or (
+                returncode is not None and returncode != 0
+            ) or (
+                returncode is None and str(latest_attempt.get("status") or "").upper() not in _ELIGIBLE_EFFECT_ATTEMPT_STATUSES
+            ):
+                failed_criteria.append("latest_attempt_not_successful")
         satisfied_effects: Dict[str, List[str]] = {}
         missing_effects: Dict[str, List[str]] = {}
         unexpected_effects: Dict[str, List[str]] = {}
@@ -2576,10 +2642,19 @@ class CompletionGate:
             unexpected_effects.update(non_artifact_unexpected)
             invalid_effects.update(non_artifact_invalid)
             declared_artifacts = set(declared_effects["produces_artifacts"])
+            optional_absent = set()
+            if plan_uses_explicit_results(plan_state):
+                contracts = plan_result_contracts(plan_state)
+                for artifact_id in declared_artifacts:
+                    row = dict(provenance.get("artifacts", {}).get(
+                        provenance.get("artifact_heads", {}).get(artifact_id, ""), {}) or {})
+                    contract = contracts.get(str(row.get("logical_artifact_id") or artifact_id))
+                    if contract is not None and not contract.get("required") and str(row.get("status") or "expected") in {"expected", "missing"}:
+                        optional_absent.add(artifact_id)
             missing_artifacts = declared_artifacts & set(missing)
             invalid_artifacts = declared_artifacts & set(invalid)
             stale_artifacts = declared_artifacts & set(stale)
-            satisfied_artifacts = declared_artifacts - missing_artifacts - invalid_artifacts - stale_artifacts
+            satisfied_artifacts = declared_artifacts - missing_artifacts - invalid_artifacts - stale_artifacts - optional_absent
             if satisfied_artifacts:
                 satisfied_effects["produces_artifacts"] = sorted(satisfied_artifacts)
             if missing_artifacts:
@@ -2634,6 +2709,8 @@ class CompletionGate:
             if status == "waiting_upstream":
                 waiting.append(step_id)
             if status not in STEP_SUCCESS_STATUSES:
+                unfinished.append(step_id)
+            elif plan_uses_explicit_results(plan_state) and not CompletionGate.validate_step_evidence(plan_state, step_id).completion_satisfied:
                 unfinished.append(step_id)
         stale = []
         invalid = []
@@ -3207,6 +3284,49 @@ class CompletionGate:
                 stale_artifacts=list(task_evidence.stale_artifacts),
                 invalid_artifacts=list(task_evidence.invalid_artifacts),
                 plan_version=task_evidence.plan_version,
+            )
+        if plan_uses_explicit_results(plan_state):
+            # The approved Plan is the result authority.  Typed evidence proves
+            # observations and files alike; legacy TaskSpec/report heuristics
+            # cannot add a file to an explicit empty outputs collection.
+            if not _steps(plan_state) or task_evidence.unfinished_steps:
+                return GateResult(
+                    False,
+                    message="The approved Plan still has incomplete results or steps.",
+                    feedback="Complete or resolve the recorded step evidence: " + ", ".join(task_evidence.unfinished_steps),
+                    classification="plan_result_incomplete",
+                )
+            provenance = ensure_provenance_state(plan_state)
+            versions_by_logical = {
+                str(row.get("logical_artifact_id") or ""): row
+                for version in dict(provenance.get("artifact_heads") or {}).values()
+                for row in [dict((provenance.get("artifacts") or {}).get(str(version)) or {})]
+            }
+            missing_results = [
+                ref for ref, contract in plan_result_contracts(plan_state).items()
+                if contract.get("required")
+                and str(versions_by_logical.get(ref, {}).get("status") or "") != "valid"
+            ]
+            if missing_results:
+                return GateResult(
+                    False,
+                    message="Required Plan results have no accepted artifact version.",
+                    feedback="Inspect collection and registration for these exact logical results: " + ", ".join(missing_results),
+                    classification="plan_result_registration_incomplete",
+                    missing_artifacts=missing_results,
+                )
+            if require_supervisor_evidence and not _supervisor_acceptance_evidence(plan_state):
+                return GateResult(
+                    False,
+                    message="The result review has not accepted the completed Plan.",
+                    feedback="Use the existing result review before delivering the final answer.",
+                    classification="plan_result_review_missing",
+                )
+            return GateResult(
+                True,
+                message="Validated evidence satisfies the approved Plan results.",
+                checked_artifacts=_expected_artifacts_from_final_plan(plan_state, ""),
+                classification="plan_result_evidence_satisfied",
             )
         if _legacy_renderer_completion_enabled(plan_state):
             renderer_gate = _validate_renderer_execution_state(plan_state)

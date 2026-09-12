@@ -6,6 +6,8 @@ cannot remove the approved plan or the current execution position.
 
 from __future__ import annotations
 
+from agent_core.execution_authority import is_approved_step_execution, is_recovery_diagnostic_execution
+
 from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit
 
 import json
@@ -1648,6 +1650,9 @@ def _provenance_artifact_definitions(
 ) -> Dict[str, Dict[str, Any]]:
     """Read-only artifact projection; explicit enrichment is returned separately."""
     result: Dict[str, Dict[str, Any]] = {}
+    from .plan_contract import plan_uses_explicit_results, plan_result_contracts
+    explicit_results = plan_uses_explicit_results(state)
+    result_contracts = plan_result_contracts(state) if explicit_results else {}
     task_id = str(state.get("task_id") or "default")
     task_spec = _current_task_spec(state)
     task_outputs = [
@@ -1730,12 +1735,13 @@ def _provenance_artifact_definitions(
                         ),
                         "path": path,
                         "artifact_type": object_kind,
-                        "required": True,
-                        "validator": (
+                        "required": bool(plan_local.get("required", not explicit_results)),
+                        "path_policy": str(plan_local.get("path_policy") or "managed_exact"),
+                        "validator": str(plan_local.get("validation_contract_id") or (
                             "directory_exists"
                             if object_kind == "directory"
                             else "file_exists"
-                        ),
+                        )),
                         "source": "approved_plan_artifact_ledger",
                     }, producer_step_id=step_id, source="approved_plan_artifact_ledger"))
                 continue
@@ -1746,6 +1752,7 @@ def _provenance_artifact_definitions(
                 or materialized_by_ref.get(output_id)
                 or {}
             )
+            approved_result = result_contracts.get(logical_artifact_id) or result_contracts.get(ref) or {}
             path = str(
                 task_output.get("canonical_path")
                 or materialized.get("canonical_path")
@@ -1759,7 +1766,8 @@ def _provenance_artifact_definitions(
                     "role": str(task_output.get("role") or output_id),
                     "path": path,
                     "artifact_type": str(task_output.get("artifact_kind") or "file"),
-                    "required": bool(task_output.get("required", True)),
+                    "required": bool(approved_result.get("required", False)) if explicit_results else bool(task_output.get("required", True)),
+                    "path_policy": str(approved_result.get("path_policy") or task_output.get("path_policy") or "managed_exact"),
                     "validator": str(
                         task_output.get("validation_contract_id")
                         or (
@@ -1768,9 +1776,9 @@ def _provenance_artifact_definitions(
                             else "nonempty_file"
                         )
                     ),
-                    "source": "task_spec_output_contract",
+                    "source": "approved_plan_result" if explicit_results else "task_spec_output_contract",
                 }, producer_step_id=step_id, source="task_spec_output_contract"))
-        if not contracts:
+        if not contracts and not explicit_results:
             contracts = step_artifact_contracts(step)
         for contract in contracts:
             path = _artifact_path(contract)
@@ -2673,7 +2681,9 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
         action = dict(provenance["actions"].get(str(attempt.get("action_id") or "")) or {})
         role = str(execution.get("command_role") or attempt.get("command_role") or action.get("command_role") or "primary").lower()
         purpose = str(execution.get("purpose") or "").lower()
-        is_probe = role in {"diagnostic", "optional_probe"} or purpose in {"probe", "diagnostic"}
+        temporary_diagnostic = is_recovery_diagnostic_execution(state, execution, action=action.get("normalized_action") or action)
+        approved_execution = is_approved_step_execution(state, {**execution, "attempt_id": attempt_id}, action=action.get("normalized_action") or action)
+        is_probe = temporary_diagnostic or (not approved_execution and (role in {"diagnostic", "optional_probe"} or purpose in {"probe", "diagnostic"}))
         attempt.update({
             "execution_record_id": str(execution.get("execution_id") or f"exec-{attempt_id}"),
             "executed_script_path": str(execution.get("script_path") or execution.get("script_file") or attempt.get("executed_script_path") or ""),
@@ -2750,7 +2760,9 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                     or after != before
                 )
             )
-            allow_probe = bool(definition.get("allow_probe_producer"))
+            # An approved effect may produce a formal artifact regardless of
+            # its descriptive purpose. Recovery diagnostics have no such grant.
+            allow_probe = bool(definition.get("allow_probe_producer")) and not temporary_diagnostic
             if path not in produced_paths or not changed or (is_probe and not allow_probe):
                 continue
             version_id = f"{artifact_id}@{attempt_id}"
@@ -5712,7 +5724,7 @@ def normalize_plan_step(
         dict_keys=("path", "description", "role"),
     )
     step["outputs"] = _string_list(
-        step.get("outputs") if step.get("outputs") not in (None, "", []) else (step.get("output_contracts") or parsed.get("outputs")),
+        step.get("outputs") if isinstance(step.get("outputs"), list) else (step.get("output_contracts") or parsed.get("outputs")),
         dict_keys=("path", "description", "role"),
     )
     step["produces_bindings"] = _typed_effect_list(step.get("produces_bindings"))
@@ -9118,6 +9130,13 @@ def validate_output_contracts(
     canonical_output_dir: str | Path = "",
 ) -> List[Dict[str, Any]]:
     """Validate exact required coverage and single materializable ownership."""
+    from .plan_contract import plan_result_contracts, plan_uses_explicit_results
+    explicit_results = plan_uses_explicit_results(state)
+    if explicit_results:
+        output_contracts = [
+            {**row, "artifact_id": ref}
+            for ref, row in plan_result_contracts(state).items()
+        ]
     output_dir = str(canonical_output_dir or _canonical_output_dir(output_contracts))
     task_spec = _current_task_spec(state)
     legacy_renderer_mode = bool(
@@ -9127,7 +9146,7 @@ def validate_output_contracts(
     )
     artifact_bindings = {
         str(item.get("artifact_id") or item.get("output_id") or ""): dict(item)
-        for item in task_spec.get("output_contracts") or output_contracts or []
+        for item in (output_contracts if explicit_results else task_spec.get("output_contracts") or output_contracts or [])
         if isinstance(item, Mapping)
         and str(item.get("artifact_id") or item.get("output_id") or "")
     }
@@ -9141,7 +9160,7 @@ def validate_output_contracts(
             artifact_ref = dict(row.get("artifact_ref") or {})
             if (
                 str(row.get("relation") or "") != "produce"
-                or str(artifact_ref.get("kind") or "") != "authoritative"
+                or (str(artifact_ref.get("kind") or "") != "authoritative" and not explicit_results)
             ):
                 continue
             identity = str(artifact_ref.get("identity") or "")
@@ -9242,6 +9261,8 @@ def normalize_task_output_materializations(
 ) -> Tuple[PlanState, List[Dict[str, Any]]]:
     """Validate Planner-owned filenames without creating another output identity."""
     candidate = deepcopy(state)
+    from .plan_contract import plan_uses_explicit_results
+    explicit_results = plan_uses_explicit_results(candidate)
     spec = dict(task_spec or _current_task_spec(candidate))
     contracts = [
         dict(row) for row in spec.get("output_contracts", []) or []
@@ -9417,12 +9438,18 @@ def normalize_task_output_materializations(
             "path": path_text,
             "canonical_path": canonical_path,
             "origin": "planner",
+            **({
+                "required": bool(raw.get("required", False)),
+                "path_policy": str(raw.get("path_policy") or "model_selectable"),
+                **{key: deepcopy(raw[key]) for key in ("validator", "description", "source_refs") if key in raw},
+            } if explicit_results else {}),
         })
 
     for contract in contracts:
         output_id = str(contract.get("output_id") or contract.get("artifact_id") or "")
         if (
-            bool(contract.get("required", True))
+            not explicit_results
+            and bool(contract.get("required", True))
             and str(contract.get("artifact_kind") or "file").lower() == "file"
             and not str(contract.get("canonical_path") or "").strip()
             and str(contract.get("path_policy") or "") == "planner_materialized"
@@ -9858,6 +9885,9 @@ def normalize_plan_output_count_criteria(
 ) -> PlanState:
     """Remove stale machine-generated output counts from review criteria."""
     candidate = deepcopy(state)
+    from .plan_contract import plan_uses_explicit_results
+    if plan_uses_explicit_results(candidate):
+        return candidate
     required_count = sum(
         1 for item in output_contracts or []
         if isinstance(item, dict)

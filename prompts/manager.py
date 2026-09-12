@@ -1496,7 +1496,7 @@ Legacy `- [ ] Step N:` records remain parser-compatible, but emit the canonical
 stable-ID form above for every new plan.
 The checklist order MUST match Section 2 and should be executable one step at a time.
 `Skills:` is mandatory on every checklist item. Use `Skills: []` only for an intentional no-skill control, user-question, or finalization step; never omit the field.
-`Purpose:` describes what a successful command proves and is distinct from `Action:` routing. Use `validation` for a step whose completion criterion is verification itself; use `probe` only when its evidence cannot complete the current business step.
+`Purpose:` describes the action and is distinct from routing or completion authority. Approved verification and observation steps may complete after their declared effects are verified. Temporary Recovery diagnostics remain separate from completion of the original failed business step.
 `Action: SEARCH` is knowledge-base retrieval only. It can never prove that a local file, directory, executable, or artifact exists, is non-empty, readable, writable, or compatible. Plan such read-only filesystem checks as `Action: EXECUTE` with `Purpose: validation` so they produce real execution evidence.
 
 ## Section 4: Validation Checklist
@@ -1819,11 +1819,23 @@ During a full replan, preserve every completed step's step identity, typed
 inputs, typed outputs, artifact identities, and dependency identities. You may
 rewrite prose and may restructure failed steps and the pending suffix.
 
-Artifact namespace is closed: input.* consumes TaskSpec inputs, output.* produces
-TaskSpec outputs, and plan.* names candidate-local intermediates. A TaskSpec output
-must be used directly in step.outputs and MUST NOT be redeclared in
-proposed_artifacts. Each required TaskSpec output has exactly one producer.
-proposed_artifacts is only for new plan-local intermediates and each declaration
+The approved Plan is the single execution definition of required results. Decide
+necessity from the original user request, accepted clarifications, selected Skill
+and actual downstream needs. Preserve explicit user deliverables and names.
+Declare metadata.result_contract_version=1. In each Plan artifact_contract or
+task_output_materializations row, set required=true only for a necessary result;
+new omitted required defaults to false. Omit unnecessary auxiliary files. An input,
+EXECUTE action, title, success_criteria path or template does not create a file duty.
+A mandatory consumer of an optional artifact is a candidate contradiction: decide
+whether to make that result necessary or change the dependency/effect; do not
+silently assume that an optional file exists. Original user text remains an
+independent requirement source for self-check and the existing Plan Review.
+
+Artifact namespace is closed: input.* consumes existing inputs, output.* reuses
+existing output handles, and plan.* names Plan-owned intermediate or final results.
+Use an existing output handle directly in step.outputs; do not redeclare it as
+proposed_artifacts or invent another writable TaskSpec. Each required Plan result
+has exactly one producer. proposed_artifacts declares new Plan-owned results, and each declaration
 has local_ref=plan.<task-specific-local-handle>, an object semantic_view, and an
 artifact_contract with object_kind=file|directory, lifecycle=plan_local, and
 materialization_policy_id=managed_intermediate_v1. Inputs consume; outputs produce;
@@ -1844,6 +1856,18 @@ Wrong-domain, stale or unregistered references are rejected, never silently rena
 Never infer aliases from basename, suffix, path, role prose or similar spelling.
 Old approved snapshots retain their original reader semantics; new candidates
 must satisfy this current admission contract.
+
+Use path_policy=managed_exact for a user-specified delivery name; use
+model_selectable when the logical result is required but its final filename may
+be selected from actual authorized outputs. On a new plan.* artifact_contract,
+path is an optional safe relative path under the existing managed allocation root;
+it does not authorize another directory. For a user-specified output directory,
+reuse its approved output handle and task_output_materializations. Do not change
+an exact user name merely to make a candidate pass. Description belongs in the
+existing semantic_view; source_refs may identify relevant user/Skill evidence.
+Purpose is descriptive. A formally approved probe, validation or record_failure
+step is verified against its declared effects and real execution provenance.
+Temporary Recovery diagnostics cannot complete an unrelated failed business step.
 
 Every step must declare an interpretable effect, but it does not need to write
 a file. `outputs` describes only immutable-artifact production. Use `operation`
@@ -1873,7 +1897,7 @@ SUBMIT_PLAN_FOR_REVIEW schema placeholders:
   "proposed_artifacts": [{
     "local_ref": "plan.<task-specific-local-handle>",
     "semantic_view": {"role": "<task-specific-role>", "format": "<format>", "description": "<description>"},
-    "artifact_contract": {"object_kind": "file|directory", "lifecycle": "plan_local", "resource_kind": "immutable_artifact|mutable_workspace", "materialization_policy_id": "managed_intermediate_v1"}
+    "artifact_contract": {"object_kind": "file|directory", "lifecycle": "plan_local", "resource_kind": "immutable_artifact|mutable_workspace", "materialization_policy_id": "managed_intermediate_v1", "required": true, "path_policy": "managed_exact|model_selectable", "source_refs": ["<relevant-user-or-skill-reference>"]}
   }],
   "steps": [{
     "step_id": "<task-specific-step-id>",
@@ -1897,13 +1921,24 @@ SUBMIT_PLAN_FOR_REVIEW schema placeholders:
     "risk_level": "low|medium|high"
   }],
   "validation_checklist": [{"check_id": "<task-specific-check-id>", "description": "<semantic-self-check>"}],
-  "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2", "resource_contract_version": 2},
-  "task_output_materializations": [{"output_ref": "<existing-output-handle>", "path": "<safe-relative-filename>"}]
+  "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2", "resource_contract_version": 2, "result_contract_version": 1},
+  "task_output_materializations": [{"output_ref": "<existing-output-handle>", "path": "<safe-relative-filename>", "required": true, "path_policy": "managed_exact|model_selectable", "description": "<result-necessity>"}]
 }
 
 Omit proposed_artifacts and task_output_materializations when they are not needed.
 For path_policy=planner_materialized, keep the TaskSpec output handle in
 step.outputs and provide one safe relative filename in task_output_materializations.
+For existing output handles, declare necessity and path policy in the Plan
+materialization row, including when reusing an existing exact path. This is a Plan
+declaration, not a TaskSpec rewrite. A readonly check may use outputs=[] with its
+actual observation effect; negative findings may complete an inspection request
+without authorizing subsequent analysis. A later reporting step must consume the
+same accepted, scoped observation through the execution history and explicit
+control dependency, not an invented intermediate file. Preserve requested final
+reports, reproducibility scripts, statistics and stage status. If a real dependency
+blocks computation, use the existing authorized stop/report path to state what
+was and was not executed; do not invent scientific results or call it scientific
+success merely because failure reporting completed.
 For every execute step, select exactly one execution_capability_id enumerated
 by that step's selected Skill and use its canonical operation/effect contract.
 Never invent capability, effect, or runtime binding IDs. Omit optional effect
@@ -2635,6 +2670,13 @@ When using a declared Conda environment, put its selector immediately after
 Use the actual approved environment and bound script, never the example token.
 Keep required interpreter options (such as `-u`) and output forwarding; this
 convention does not authorize changing environments or bypassing validation.
+
+Use accepted_execution_outcomes for declared upstream inspection facts. Preserve
+their source step, actual values and scope; do not recreate an inspection report
+file or silently rescan arbitrary session data. A false observation is a finding,
+not permission to start downstream scientific computation. A record_failure label
+alone says nothing about the task's terminal status. Report an existing blocked
+condition truthfully while preserving actual user-required failure deliverables.
 
 When the approved StepEffect is observation-only, an outputless executable block
 is valid. Emit the actual typed result on stdout as exactly one
