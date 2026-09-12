@@ -74,6 +74,11 @@ def directive_schema():
                   for name in RecoveryDirective.REQUIRED | RecoveryDirective.OPTIONAL}
     properties["schema_version"] = {"type": "integer", "enum": [1]}
     properties["action"] = {"type": "string", "enum": sorted(RecoveryDirective.ALLOWED_ACTIONS)}
+    properties["result_selections"] = {"type": "array", "maxItems": 32, "items": {
+        "type": "object", "required": ["artifact_id", "observed_path", "operation"],
+        "properties": {"artifact_id": {"type": "string"}, "observed_path": {"type": "string"},
+                       "operation": {"type": "string", "enum": ["accept_actual", "copy_to_exact"]}},
+        "additionalProperties": False}}
     return {"type": "object", "properties": properties, "required": sorted(RecoveryDirective.REQUIRED), "additionalProperties": False}
 
 
@@ -93,7 +98,8 @@ def validate_candidate(raw):
         if spec is None:
             continue  # The existing contract supplies the unknown-field error.
         kind = spec["type"]
-        valid = (isinstance(value, str) if kind == "string" else
+        valid = (isinstance(value, list) and all(isinstance(x, Mapping) for x in value) if key == "result_selections" else
+                 isinstance(value, str) if kind == "string" else
                  type(value) is int if kind == "integer" else
                  isinstance(value, list) and all(isinstance(x, str) for x in value))
         if not valid:

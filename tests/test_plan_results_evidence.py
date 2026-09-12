@@ -233,6 +233,10 @@ def test_recorded_output_candidates_and_contracts_reach_existing_recovery_seed()
         "path": "/synthetic/output/tool-result.vcf", "attempt_id": "attempt-1",
         "current_attempt_owned": True, "content_valid": True, "format": "vcf",
     }]
+    execution["runtime_output_reconciliation"] = {"status": "rejected", "violations": [{
+        "code": "OUTPUT_PATH_MISMATCH", "message": "Recorded filename differs from the contract.",
+        "expected_path": "/synthetic/output/hint.vcf", "observed_path": "/synthetic/output/tool-result.vcf",
+    }]}
     original = deepcopy(source)
     record = build_causal_failure_record("execute_outcome", source, durable, task_id="task-recovery")
     durable["task_state"]["causal_failure_packets"] = {record["packet_ref"]: record}
@@ -246,6 +250,8 @@ def test_recorded_output_candidates_and_contracts_reach_existing_recovery_seed()
     assert result["declared_results"][0]["required"] is True
     assert result["observed_candidates"][0]["path"] == "/synthetic/output/tool-result.vcf"
     assert result["scope"]["attempt_id"] == "attempt-1"
+    assert result["reconciliation"]["violations"][0]["detail"] == "Recorded filename differs from the contract."
+    assert "message" not in result["reconciliation"]["violations"][0]
     assert "DO_NOT_PROJECT_SCRIPT" not in json.dumps(fact)
     assert "large raw output" not in json.dumps(fact)
     assert source == original

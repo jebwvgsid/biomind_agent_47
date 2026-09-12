@@ -1943,6 +1943,7 @@ def reconcile_runtime_outputs(
     *,
     attempt_id: str,
     exit_code: int,
+    admitted_selections: Sequence[Mapping[str, Any]] = (),
 ) -> Dict[str, Any]:
     """Reconcile logical outputs to attempt-owned physical realizations."""
     contracts = [dict(item) for item in output_contracts or [] if isinstance(item, Mapping)]
@@ -1997,6 +1998,22 @@ def reconcile_runtime_outputs(
             None,
         )
         explicit_results = contract.get("result_contract_version") == 1
+        selected = [row for row in admitted_selections
+                    if isinstance(row, Mapping) and str(row.get("artifact_id") or "") == logical_id
+                    and str(row.get("source_attempt_id") or "") == str(attempt_id)]
+        if explicit_results and exact is None and selected:
+            if len(selected) != 1 or str(contract.get("path_policy") or "") != MODEL_SELECTABLE:
+                result["violations"].append({"code": "RESULT_SELECTION_CONTRACT_INVALID",
+                    "owner": "ARTIFACT_CONTRACT", "route": "recovery", "logical_artifact": logical_id,
+                    "message": "The admitted location does not satisfy this exact result contract."})
+                continue
+            chosen_path = str(selected[0].get("observed_path") or "")
+            exact = next((row for row in in_scope if str(row.get("path") or "") == chosen_path), None)
+            if exact is None:
+                result["violations"].append({"code": "RESULT_SELECTION_CANDIDATE_MISSING",
+                    "owner": "ARTIFACT_CONTRACT", "route": "recovery", "logical_artifact": logical_id,
+                    "message": "The explicitly selected current-attempt candidate is no longer available."})
+                continue
         if exact is not None:
             observed_path = _canonical_path({"path": exact.get("path")})
             observed_kind = str(exact.get("artifact_kind") or "").strip().lower()
@@ -2021,7 +2038,7 @@ def reconcile_runtime_outputs(
                 continue
             explicitly_empty_file = (
                 explicit_results and contract.get("validation_contract_id") == "file_exists"
-                and expected_kind == "file" and expected_format in {"", "file", "text"}
+                and expected_kind == "file" and expected_format in {"", "file", "text", "data", "output"}
                 and exact.get("size") == 0 and exact.get("exists") is True
             )
             if not bool(exact.get("content_valid", False)) and not explicitly_empty_file:
@@ -2060,7 +2077,9 @@ def reconcile_runtime_outputs(
                 "observed_path": observed_path,
                 "attempt_id": str(attempt_id or ""),
                 "constraint_origin": constraint_origin,
-                "realization": "expected",
+                "realization": "model_selected" if observed_path != expected_path else "expected",
+                **({"selection_decision_id": selected[0].get("decision_id", "")}
+                   if selected and observed_path != expected_path else {}),
                 "format": str(exact.get("format") or expected_format),
                 "representation": str(exact.get("representation") or ""),
                 "content_valid": True,
@@ -2126,6 +2145,16 @@ def reconcile_runtime_outputs(
                 "constraint_origin": constraint_origin,
                 "observed_candidates": [str(item.get("path") or "") for item in candidates],
             })
+            continue
+        if explicit_results:
+            if not eligible and not bool(contract.get("required", False)):
+                continue
+            result["violations"].append({"code": "OUTPUT_SELECTION_REQUIRED",
+                "owner": "ARTIFACT_CONTRACT", "route": "recovery", "logical_artifact": logical_id,
+                "expected_realization": expected_path,
+                "observed_candidates": [str(row.get("path") or "") for row in eligible],
+                "path_policy": str(contract.get("path_policy") or ""),
+                "message": "Current-attempt results require an explicit evidence-based selection by the existing reviewer/Recovery round; no filename or format guess was adopted."})
             continue
         if len(eligible) != 1:
             result["violations"].append({

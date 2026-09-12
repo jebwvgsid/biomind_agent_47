@@ -136,9 +136,6 @@ class TypedFinalAudit:
             return self._entry_rejected(task_id, "FINAL_AUDIT_PLAN_COMPLETE_RECEIPT_REQUIRED", observed_scope)
         if verification.type not in {"verified", "verified_with_warnings"}:
             return self._entry_rejected(task_id, "FINAL_AUDIT_VERIFICATION_REQUIRED", observed_scope)
-        if execution_outcome.type != "execution_succeeded":
-            return self._entry_rejected(task_id, "FINAL_AUDIT_SUCCESSFUL_EXECUTION_REQUIRED", observed_scope)
-
         commit_payload = dict(commit.to_dict().get("payload") or {})
         verification_scope = dict(verification.scope)
         verification_payload = dict(verification.to_dict().get("payload") or {})
@@ -147,6 +144,24 @@ class TypedFinalAudit:
         validation = ValidationEvidence.from_mapping(
             dict(verification_payload.get("validation_evidence") or {})
         )
+        resolution_ref = str(verification_payload.get("result_resolution_ref") or "")
+        if resolution_ref:
+            from agent_core.workflow.result_resolution import read_committed_result_resolution
+            try:
+                request, receipt, reviewed_execution = read_committed_result_resolution(
+                    durable, resolution_ref, commit, data_path=self.data_path)
+                if (not request or not receipt or request["source_attempt_id"] != validation.attempt_id
+                        or request["source_action_id"] != validation.action_id
+                        or str(execution.get("attempt_id") or "") != str(receipt["local_attempt_id"] or receipt["source_attempt_id"])):
+                    raise ValueError("FINAL_AUDIT_RESULT_RESOLUTION_SCOPE_MISMATCH")
+                execution = reviewed_execution
+                if execution.get("returncode") != 0 or execution.get("execution_status") != "succeeded":
+                    raise ValueError("FINAL_AUDIT_RESULT_RESOLUTION_PROCESS_FAILED")
+            except (ValueError, OSError, TypeError) as exc:
+                return self._entry_rejected(task_id, "FINAL_AUDIT_RESULT_RESOLUTION_REJECTED", {
+                    **observed_scope, "detail": str(exc)})
+        elif execution_outcome.type != "execution_succeeded":
+            return self._entry_rejected(task_id, "FINAL_AUDIT_SUCCESSFUL_EXECUTION_REQUIRED", observed_scope)
         expected_scope = {
             "task_id": str(durable.get("task_id") or task_id),
             "plan_id": str(durable.get("plan_id") or ""),

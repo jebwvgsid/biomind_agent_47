@@ -1302,8 +1302,21 @@ def _diagnostic_facts(
                     realizations[target + "_omitted"] = len(rows) - 12
         reconciliation = execution.get("runtime_output_reconciliation")
         if isinstance(reconciliation, Mapping):
-            realizations["reconciliation"] = {key: _bounded_fact_value(reconciliation[key]) for key in
-                ("status", "violations") if key in reconciliation}
+            reconciliation_facts = {}
+            if "status" in reconciliation:
+                reconciliation_facts["status"] = _bounded_scalar(reconciliation["status"])
+            violations = reconciliation.get("violations")
+            if isinstance(violations, (list, tuple)):
+                reconciliation_facts["violations"] = [
+                    {**{key: _bounded_fact_value(raw[key]) for key in
+                        ("code", "artifact_id", "path", "expected_path", "observed_path", "severity", "detail") if key in raw},
+                     **({"detail": _bounded_scalar(raw["message"], limit=1200)}
+                        if "message" in raw and "detail" not in raw else {})}
+                    for raw in violations[:12] if isinstance(raw, Mapping)
+                ]
+                if len(violations) > 12:
+                    reconciliation_facts["violations_omitted"] = len(violations) - 12
+            realizations["reconciliation"] = reconciliation_facts
         add_fact(kind="result_realizations", summary="Recorded result contracts and current execution output candidates.",
                  metadata={"result_realizations": realizations})
     status = payload.get("status")

@@ -6831,6 +6831,15 @@ def migrate_execution_provenance(state: PlanState, execution_records: List[Dict[
                 definition = dict(provenance.get("artifacts", {}).get(head) or {})
                 if str(definition.get("path") or "") not in produced_paths:
                     continue
+                resolution_ref = str(definition.get("result_resolution_ref") or "")
+                resolution_receipt = ((state.get("task_state") or {}).get("result_resolution_receipts") or {}).get(resolution_ref) or {}
+                if (resolution_receipt and definition.get("producer_attempt_id") == resolution_receipt.get("source_attempt_id")
+                        and attempt_id in {resolution_receipt.get("source_attempt_id"), resolution_receipt.get("local_attempt_id")}):
+                    # The current realization was registered and independently
+                    # verified after these original execution records. Replaying
+                    # their legacy import must not replace its computational
+                    # origin with the later local materialization attempt.
+                    continue
                 version_id = f"{artifact_id}@{attempt_id}"
                 signature = _artifact_signature(definition.get("path"))
                 provenance["artifacts"].setdefault(version_id, {

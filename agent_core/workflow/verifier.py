@@ -7,7 +7,7 @@ from typing import Any, Awaitable, Callable, Mapping
 
 from agent_core.completion_gate import CompletionGate
 from agent_core.execution_authority import is_approved_step_execution, is_recovery_diagnostic_execution
-from agent_core.plan_tracker import load_plan_state, record_provenance_event
+from agent_core.plan_tracker import load_plan_state, record_provenance_event, save_plan_state
 from agent_core.recovery import ValidationEvidence, ValidationStatus
 from agent_core.semantic_completion import (
     COMPLETION_ACCEPTED,
@@ -93,6 +93,49 @@ class TypedSupervisor:
                     payload={"error_code": str(getattr(exc, "code", "") or "SUPERVISOR_EXECUTION_FACTS_READ_FAILED"),
                         "exception_class": type(exc).__name__, "detail": str(exc),
                         "failure_stage": "supervisor.execution_evidence_read", "execution_record": execution}).to_dict()}
+        # A Recovery choice changes the registered realization only after a
+        # fresh mechanical check. The original execution/approval/stdout stay
+        # in its admitted receipt; the normal verifier owns validity.
+        recovery = state.get("recovery_outcome") or {}
+        decision_id = str(execution.get("recovery_decision_id") or "")
+        if recovery.get("type") == "revalidation_required":
+            decision_id = str((recovery.get("payload") or {}).get("decision_id") or decision_id)
+        if decision_id:
+            from agent_core.workflow.result_resolution import (
+                get_result_resolution_request, result_resolution_reconciliation, register_result_resolution,
+            )
+            try:
+                result_state = load_plan_state(self.data_path, task_id)
+                request = get_result_resolution_request(result_state, decision_id)
+                if request:
+                    receipt = result_resolution_reconciliation(request,
+                        execution if request["operation"] == "copy_to_exact" else None)
+                    if request["operation"] == "copy_to_exact":
+                        # The organization attempt keeps its own deterministic
+                        # validation. It cannot silently remain the latest
+                        # unverified attempt when the source step is committed.
+                        local_result = await self.verifier({**verifier_state, "validation_evidence": {}})
+                        local_validation = ValidationEvidence.from_mapping(dict(local_result.get("validation_evidence") or {}))
+                        if (local_validation.attempt_id != receipt["local_attempt_id"]
+                                or local_validation.status not in {ValidationStatus.VALID.value, ValidationStatus.VALID_WITH_WARNINGS.value}):
+                            raise ValueError("RESULT_LOCAL_ORGANIZATION_VALIDATION_FAILED:" + str(local_validation.errors))
+                        result_state = load_plan_state(self.data_path, task_id)
+                        record_provenance_event(result_state, "validation_recorded", {
+                            "attempt_id": local_validation.attempt_id,
+                            "validation": local_validation.to_dict(),
+                            "validation_evidence_ref": local_validation.validation_id})
+                    execution = register_result_resolution(result_state, request, receipt, data_path=self.data_path)
+                    save_plan_state(self.data_path, task_id, result_state)
+                    verifier_state.update(execution_evidence=execution, validation_evidence={},
+                        reconciliation_evidence={"result_resolution_receipt": receipt,
+                            "reason": "Explicit current-result choice; independent deterministic revalidation required."})
+            except (ValueError, OSError, TypeError) as exc:
+                return {"verification_outcome": VerificationOutcome(schema_version=1,
+                    type="incomplete_evidence", summary="The selected result could not be safely registered and reverified.",
+                    scope={"task_id": task_id, **{key: str(execution.get(key) or "") for key in ("plan_id", "plan_version", "step_id", "action_id", "attempt_id")}},
+                    payload={"missing_evidence": [str(getattr(exc, "code", "") or "RESULT_RESOLUTION_REVALIDATION_FAILED")],
+                        "error_code": str(getattr(exc, "code", "") or "RESULT_RESOLUTION_REVALIDATION_FAILED"),
+                        "detail": str(exc), "execution_record": execution}).to_dict()}
         result = await self.verifier(verifier_state)
         if not isinstance(result, Mapping):
             raise TypeError("SupervisorNode.run must return a mapping")
@@ -268,6 +311,11 @@ class TypedSupervisor:
         if producer_report and "completion_report" not in payload:
             payload["completion_report"] = producer_report
             payload["semantic_decision"] = deepcopy(producer_report.get("effective_decision") or {})
+
+        if execution.get("result_resolution_receipt"):
+            payload["result_resolution_ref"] = str(execution["result_resolution_receipt"]["decision_id"])
+            payload["result_resolution_source_attempt_id"] = str(execution["result_resolution_receipt"]["source_attempt_id"])
+            payload["result_resolution_local_attempt_id"] = str(execution["result_resolution_receipt"]["local_attempt_id"])
 
         outcome = VerificationOutcome(
             schema_version=1,

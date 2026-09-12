@@ -405,6 +405,39 @@ class CommitStep:
                 or execute_payload.get("diagnostic_record")
                 or {}
             )
+        local_attempt_to_complete = ""
+        resolution_ref = str(verification_payload.get("result_resolution_ref") or "")
+        if resolution_ref:
+            from agent_core.workflow.result_resolution import get_result_resolution_request, register_result_resolution
+            try:
+                request = get_result_resolution_request(current, resolution_ref)
+                receipt = (current.get("task_state") or {}).get("result_resolution_receipts", {}).get(resolution_ref)
+                if (not request or not receipt
+                        or request["source_attempt_id"] != validation.attempt_id
+                        or request["source_action_id"] != validation.action_id
+                        or verification_payload.get("result_resolution_source_attempt_id") != receipt["source_attempt_id"]
+                        or verification_payload.get("result_resolution_local_attempt_id") != receipt["local_attempt_id"]):
+                    raise ValueError("RESULT_RESOLUTION_COMMIT_SCOPE_MISMATCH")
+                # Recompute the verified view from the durable typed receipt;
+                # keep graph execution/action records as original local facts.
+                execution = register_result_resolution(deepcopy(current), request, receipt, data_path=self.data_path)
+                action = dict((current.get("provenance_state") or {}).get("actions", {}).get(validation.action_id) or {})
+                local_attempt_to_complete = str(receipt.get("local_attempt_id") or "")
+                if local_attempt_to_complete:
+                    local = provenance.get("attempts", {}).get(local_attempt_to_complete) or {}
+                    local_check = provenance.get("validations", {}).get(local.get("validation_evidence_ref")) or {}
+                    if (local.get("status") != ATTEMPT_VALIDATION_PASSED
+                            or local.get("plan_id") != expected_scope["plan_id"]
+                            or local.get("plan_version") != expected_scope["plan_version"]
+                            or local.get("step_id") != validation.step_id
+                            or local_check.get("attempt_id") != local_attempt_to_complete
+                            or local_check.get("action_id") != local.get("action_id")
+                            or local_check.get("step_id") != validation.step_id
+                            or local_check.get("task_id") != task_id
+                            or str(local_check.get("status") or "").upper() not in {ValidationStatus.VALID.value, ValidationStatus.VALID_WITH_WARNINGS.value}):
+                        raise ValueError("RESULT_LOCAL_ORGANIZATION_VALIDATION_NOT_CONSUMABLE")
+            except (ValueError, OSError, TypeError) as exc:
+                return self._rejected(task_id, "RESULT_RESOLUTION_COMMIT_REJECTED", str(exc), validation.validation_id)
         if action and str(action.get("action_id") or "") != validation.action_id:
             return self._rejected(task_id, "ACTION_SCOPE_MISMATCH", "pending_action.action_id", validation.validation_id)
         if execution:
@@ -523,6 +556,13 @@ class CommitStep:
         committed_attempt = (candidate_provenance.get("attempts") or {}).get(validation.attempt_id)
         if isinstance(committed_attempt, dict):
             committed_attempt["status"] = ATTEMPT_COMPLETED
+        if local_attempt_to_complete:
+            # Consume both independently validated attempts in this one CAS;
+            # only the source step above advances the Plan once.
+            local_committed = candidate_provenance["attempts"][local_attempt_to_complete]
+            local_committed["status"] = ATTEMPT_COMPLETED
+            local_committed["completion_commit_ref"] = commit_id
+            local_committed["computational_source_attempt_id"] = validation.attempt_id
         successor_step_id = str(candidate.get("current_step_id") or "")
         outcome_type = "next_step_ready" if successor_step_id else "plan_complete"
         accepted_effect_refs = _accepted_effect_refs(validation.effect_results, gate)

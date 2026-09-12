@@ -831,9 +831,9 @@ from agent_core.workspace_attestation import (
     validate_workspace_action_admission,
 )
 from agent_core.state_contract_store import StateContractStore
-from agent_core.planner_revision import accepted_planner_revision
 from agent_core.evidence_projection import artifact_effect_evidence
 from agent_core.execution_authority import is_approved_step_execution, is_recovery_diagnostic_execution
+from agent_core.planner_revision import accepted_planner_revision
 from agent_core.planner_context import save_correction_context, load_correction_context, restore_correction_messages
 from agent_core.plan_bindings import planner_resource_requirements
 from agent_core.completion_gate import CompletionGate
@@ -12676,6 +12676,16 @@ class BioAnalystAgent:
                     "step_id": step_id,
                 },
             )
+        action_step_effect = deepcopy(dict(step.get("step_effect") or {}))
+        if recovery_envelope is not None:
+            from agent_core.workflow.result_resolution import get_result_resolution_request
+            local_result_request = get_result_resolution_request(plan_state, recovery_envelope.recovery_decision_id)
+            if local_result_request.get("operation") == "copy_to_exact":
+                # This action only organizes selected existing files. Its
+                # emitter cannot claim the original computation/observations.
+                from agent_core.step_effects import canonical_step_effect
+                action_step_effect = canonical_step_effect({"produces_artifacts": [
+                    row["artifact_id"] for row in local_result_request["selections"]]})
         fingerprint_input = json.dumps(
             {
                 "type": bound.get("type"),
@@ -12692,9 +12702,7 @@ class BioAnalystAgent:
                 "plan_id": plan_id,
                 "execution_epoch": execution_epoch,
                 "execution_capability_id": execution_capability_id,
-                "expected_step_effect": deepcopy(
-                    dict(step.get("step_effect") or {})
-                ),
+                "expected_step_effect": deepcopy(action_step_effect),
                 "capability_contract_hash": str(
                     preliminary_resolution.get("capability_contract_hash") or ""
                 ),
@@ -12761,9 +12769,7 @@ class BioAnalystAgent:
                 "purpose": purpose,
                 "command_role": command_role,
                 "expected_outputs": expected_outputs,
-                "expected_step_effect": deepcopy(
-                    dict(step.get("step_effect") or {})
-                ),
+                "expected_step_effect": deepcopy(action_step_effect),
                 "expected_evidence": list(bound.get("success_checks") or step.get("success_criteria") or []),
             }
         )
@@ -42844,7 +42850,18 @@ question. Never guess a scientific or database identity.
                                 "primary_failure": {"error_code": code, "message": str(exc), "execution_started": False},
                                 "execution_status": "not_started", "next_step": "finish"}
                         generate_node_context = current_generate_transport_context()
-                    if "cached_response" in candidate_provider_claim:
+                    from agent_core.workflow.result_resolution import get_result_resolution_request
+                    local_result_request = get_result_resolution_request(
+                        load_plan_state(self.data_path, task_id), active_recovery_id) if recovery_generated else {}
+                    if local_result_request.get("operation") == "copy_to_exact":
+                        # Recovery has already selected exact observed files.
+                        # Feed its mechanically admitted script through the
+                        # existing adapter, approval and execution boundaries.
+                        # No provider invocation or fresh computation occurs.
+                        local_code = local_result_request["approved_code"]
+                        response = AIMessage(content=("<shell>\n" + local_code + "</shell>")
+                            if generate_script_protocol else json.dumps({"type": "execute", "language": "bash", "code": local_code}))
+                    elif "cached_response" in candidate_provider_claim:
                         response = AIMessage(content=candidate_provider_claim["cached_response"],
                             response_metadata=dict(candidate_provider_claim.get("cached_response_metadata") or {}))
                     else:
@@ -46699,6 +46716,17 @@ question. Never guess a scientific or database identity.
                     phase="before_execute_preflight",
                 )
 
+            from agent_core.workflow.result_resolution import get_result_resolution_request, validate_result_organization_action
+            try:
+                local_result_request = get_result_resolution_request(prestart_plan_state,
+                    str(captured_pending_action.get("recovery_decision_id") or ""))
+                if local_result_request.get("operation") == "copy_to_exact":
+                    validate_result_organization_action(captured_pending_action, prestart_plan_state)
+            except (ValueError, OSError) as exc:
+                return reject_internal_prelaunch(captured_pending_action,
+                    error_code=str(getattr(exc, "code", "") or "RESULT_ORGANIZATION_PREFLIGHT_REJECTED"),
+                    stage="execute.result_organization_preflight", detail=str(exc))
+
             stale_reason = self._stale_plan_task_revision_reason(state, task_id)
             if stale_reason:
                 return stale_pending_action_update(
@@ -48060,6 +48088,17 @@ question. Never guess a scientific or database identity.
                     return reject_internal_prelaunch(pending_action, error_code=str(getattr(exc, "code", "") or "DIAGNOSTIC_POST_REVIEW_REJECTED"),
                         stage="execute.diagnostic_post_review", detail=str(exc))
 
+            try:
+                local_result_state = load_plan_state(self.data_path, task_id)
+                local_result_request = get_result_resolution_request(local_result_state,
+                    str(pending_action.get("recovery_decision_id") or ""))
+                if local_result_request.get("operation") == "copy_to_exact":
+                    validate_result_organization_action(pending_action, local_result_state, code=code_to_run)
+            except (ValueError, OSError) as exc:
+                return reject_internal_prelaunch(pending_action,
+                    error_code=str(getattr(exc, "code", "") or "RESULT_ORGANIZATION_POST_REVIEW_REJECTED"),
+                    stage="execute.result_organization_post_review", detail=str(exc))
+
             # This is the exact approved source that the wrapper will run.
             # Keep it for direct executable-identity evidence after the process.
             approved_source_code = code_to_run
@@ -49316,6 +49355,7 @@ question. Never guess a scientific or database identity.
                     stderr,
                     returncode,
                 )
+            validation_before_output_reconciliation = deepcopy(validation_result)
             managed_output_snapshot_after = capture_managed_output_snapshot(
                 managed_output_contracts
             )
@@ -49891,6 +49931,7 @@ question. Never guess a scientific or database identity.
                 "signal": -returncode if returncode < 0 else None,
                 "language": language,
                 "validation": validation_result,
+                "validation_before_output_reconciliation": validation_before_output_reconciliation,
                 "trace_file": trace_file or None,
                 "trace_text": trace_text,
                 "pipeline_statuses": pipeline_statuses,

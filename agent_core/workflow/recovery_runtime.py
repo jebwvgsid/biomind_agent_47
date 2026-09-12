@@ -60,7 +60,7 @@ def _full_hash(value: Any) -> str:
 class RecoveryRuntime:
     """Admit one semantic directive and persist one route-blind receipt."""
 
-    BUDGETED_ACTIONS = frozenset({"retry_step", "revise_plan", "run_diagnostic_probe"})
+    BUDGETED_ACTIONS = frozenset({"retry_step", "revise_plan", "run_diagnostic_probe", "organize_result"})
 
     def __init__(
         self,
@@ -238,6 +238,15 @@ class RecoveryRuntime:
             )
 
         ledger = dict(task_state.get("typed_recovery_budget") or {})
+        result_resolution_request = {}
+        if directive.result_selections:
+            from agent_core.workflow.result_resolution import admit_result_resolution
+            try:
+                result_resolution_request = admit_result_resolution(
+                    seed=seed, durable=durable, directive=directive, state=state)
+            except StageContractError as exc:
+                return self._internal(scope, exc.code, {"detail": exc.detail,
+                    "command_started": False, "directive_id": decision_id})
         consumed_before = int(ledger.get(incident_id) or 0)
         consumes_budget = directive.action in self.BUDGETED_ACTIONS
         budget_receipt = {
@@ -265,6 +274,8 @@ class RecoveryRuntime:
             "instruction": directive.instruction,
             "question": directive.question,
             "diagnostic_operation": directive.diagnostic_operation, "diagnostic_inputs": list(directive.diagnostic_inputs),
+            **({"result_selections": directive.to_dict()["result_selections"]}
+               if directive.result_selections else {}),
         }
         prior_evidence = {
             str(item) for item in prior_progress.get("evidence_refs") or ()
@@ -310,7 +321,7 @@ class RecoveryRuntime:
                     "ordinal": consumed_before,
                 },
             }
-        elif directive.action in {"retry_step", "run_diagnostic_probe"}:
+        elif directive.action in {"retry_step", "run_diagnostic_probe", "organize_result"}:
             outcome_type = "candidate_repair_required"
             payload = {
                 "diagnosis": directive.summary,
@@ -442,6 +453,8 @@ class RecoveryRuntime:
             "recovery_archive_ref": str(state.get("recovery_archive_ref") or ""),
             "outcome_digest": _full_hash(outcome.to_dict()),
             "outcome": outcome.to_dict(),
+            **({"result_resolution_request": result_resolution_request}
+               if result_resolution_request else {}),
         }
         if outcome_type == "plan_revision_required":
             # Point to the existing admitted body; this is not a second Plan
@@ -477,7 +490,10 @@ class RecoveryRuntime:
                 recovery_context_id=seed.seed_id, step_id=packet.step_id,
                 task_root=Path(self.data_path) / "task_outputs" / task_id,
                 objective=directive.instruction,
-                allowed_input_roots=[item["path"] for item in diagnostic_request.get("inputs", [])],
+                allowed_input_roots=(
+                    [item["observed_path"] for item in result_resolution_request["selections"]]
+                    if directive.action == "organize_result" else
+                    [item["path"] for item in diagnostic_request.get("inputs", [])]),
             )
             if diagnostic_request:
                 from dataclasses import replace

@@ -1056,15 +1056,16 @@ class RecoveryDirective(ImmutableStageContract):
     evidence_refs: tuple[str, ...] = ()
     diagnostic_operation: str = ""
     diagnostic_inputs: tuple[str, ...] = ()
+    result_selections: tuple[Mapping[str, Any], ...] = ()
 
     REQUIRED: ClassVar[frozenset[str]] = frozenset({
         "schema_version", "directive_id", "task_id", "action", "summary", "reason_code",
     })
     OPTIONAL: ClassVar[frozenset[str]] = frozenset({
-        "target_step_id", "instruction", "question", "requested_slots", "evidence_refs", "diagnostic_operation", "diagnostic_inputs",
+        "target_step_id", "instruction", "question", "requested_slots", "evidence_refs", "diagnostic_operation", "diagnostic_inputs", "result_selections",
     })
     ALLOWED_ACTIONS: ClassVar[frozenset[str]] = frozenset({
-        "retry_step", "revise_plan", "reconsult", "revalidate", "ask_user", "blocked", "run_diagnostic_probe",
+        "retry_step", "revise_plan", "reconsult", "revalidate", "ask_user", "blocked", "run_diagnostic_probe", "organize_result",
     })
 
     def __post_init__(self) -> None:
@@ -1079,9 +1080,9 @@ class RecoveryDirective(ImmutableStageContract):
             object.__setattr__(self, field, _optional_text(getattr(self, field)))
         object.__setattr__(self, "requested_slots", _text_tuple(self.requested_slots, "RecoveryDirective.requested_slots"))
         object.__setattr__(self, "evidence_refs", _text_tuple(self.evidence_refs, "RecoveryDirective.evidence_refs"))
-        if action in {"retry_step", "revalidate", "run_diagnostic_probe"} and not self.target_step_id:
+        if action in {"retry_step", "revalidate", "run_diagnostic_probe", "organize_result"} and not self.target_step_id:
             raise StageContractError("STAGE_FIELD_REQUIRED", "RecoveryDirective.target_step_id")
-        if action in {"retry_step", "revise_plan", "reconsult", "run_diagnostic_probe"} and not self.instruction:
+        if action in {"retry_step", "revise_plan", "reconsult", "run_diagnostic_probe", "organize_result"} and not self.instruction:
             raise StageContractError("STAGE_FIELD_REQUIRED", "RecoveryDirective.instruction")
         object.__setattr__(self, "diagnostic_inputs", _text_tuple(self.diagnostic_inputs, "RecoveryDirective.diagnostic_inputs"))
         if action == "run_diagnostic_probe" and (not self.diagnostic_operation or not self.diagnostic_inputs):
@@ -1090,6 +1091,25 @@ class RecoveryDirective(ImmutableStageContract):
             raise StageContractError("STAGE_FIELD_INVALID", "diagnostic fields require run_diagnostic_probe")
         if action == "ask_user" and (not self.question or not self.requested_slots):
             raise StageContractError("STAGE_FIELD_REQUIRED", "RecoveryDirective ask_user question/requested_slots")
+        selections = []
+        seen = set()
+        if not isinstance(self.result_selections, (list, tuple)) or len(self.result_selections) > 32:
+            raise StageContractError("STAGE_FIELD_INVALID", "RecoveryDirective.result_selections")
+        for raw in self.result_selections:
+            row = _validate_fields(raw, contract_name="RecoveryDirective.result_selections",
+                                   required=frozenset({"artifact_id", "observed_path", "operation"}))
+            row = {key: _required_text(value, "RecoveryDirective.result_selections." + key)
+                   for key, value in row.items()}
+            allowed = "accept_actual" if action == "revalidate" else "copy_to_exact"
+            if action not in {"revalidate", "organize_result"} or row["operation"] != allowed:
+                raise StageContractError("RESULT_SELECTION_ACTION_INVALID", action)
+            if row["artifact_id"] in seen:
+                raise StageContractError("RESULT_SELECTION_DUPLICATE", row["artifact_id"])
+            seen.add(row["artifact_id"])
+            selections.append(_freeze_json(row))
+        if action == "organize_result" and not selections:
+            raise StageContractError("STAGE_FIELD_REQUIRED", "RecoveryDirective.result_selections")
+        object.__setattr__(self, "result_selections", tuple(selections))
         _json_round_trip(self.to_dict())
 
     @classmethod
@@ -1102,6 +1122,7 @@ class RecoveryDirective(ImmutableStageContract):
             question=raw.get("question", ""), requested_slots=tuple(raw.get("requested_slots") or ()),
             evidence_refs=tuple(raw.get("evidence_refs") or ()),
             diagnostic_operation=raw.get("diagnostic_operation", ""), diagnostic_inputs=tuple(raw.get("diagnostic_inputs") or ()),
+            result_selections=raw.get("result_selections", ()),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -1120,6 +1141,8 @@ class RecoveryDirective(ImmutableStageContract):
             result["evidence_refs"] = list(self.evidence_refs)
         if self.diagnostic_inputs:
             result["diagnostic_inputs"] = list(self.diagnostic_inputs)
+        if self.result_selections:
+            result["result_selections"] = [_thaw_json(row) for row in self.result_selections]
         return result
 
 
