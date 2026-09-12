@@ -1,0 +1,2644 @@
+{
+  "synthetic_replay": true,
+  "historical_356_seconds_video": false,
+  "source_boundary": "Only allowlisted Git/source exports plus strict offline guard; no original session or real API/scientific process.",
+  "baseline": [
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-baseline-code",
+      "scenario": "approve",
+      "mode": "plain",
+      "verbosity": "compact",
+      "tree": "2936081ff418963e36f09e73f11047be47b0eef8",
+      "source_signature": "cbd004ad2d9ed0afaf7871130c98b8aa8bd282b4b9d0a6b2d0c1c06cc1909031",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "old_last_screen_prompt_lost": true,
+          "executed_original_approved_bytes": true,
+          "real_process_succeeded": true,
+          "actual_spawn_and_exit_receipts": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 1,
+      "routes": [
+        "execute"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": null,
+          "at": 4083960.013079232
+        }
+      },
+      "approval_events": [],
+      "execution_receipts": [
+        {
+          "script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "stdout": "approval-fixture-executed\n",
+          "stderr": "",
+          "returncode": 0,
+          "lifecycle": [
+            {
+              "args": [
+                "RUNNING",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "started_at": "2026-09-12T14:40:50+08:00",
+                  "heartbeat_at": "2026-09-12T14:40:50+08:00"
+                }
+              ],
+              "kwargs": {}
+            },
+            {
+              "args": [
+                "PROCESS_EXITED",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "returncode": 0,
+                  "finished_at": "2026-09-12T14:40:50+08:00",
+                  "heartbeat_at": "2026-09-12T14:40:50+08:00",
+                  "stdout_path": "",
+                  "stderr_path": ""
+                }
+              ],
+              "kwargs": {}
+            }
+          ]
+        }
+      ],
+      "input_exception": null,
+      "production_raw_sha256": "0edd841454da6c5923fe2839b2ca473c6172c4c347419ba15d718b6c4ca124ac",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-baseline-v2/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-baseline-v2",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-baseline-plan-v3",
+      "scenario": "plan",
+      "mode": "plain",
+      "verbosity": "compact",
+      "tree": "2936081ff418963e36f09e73f11047be47b0eef8",
+      "source_signature": "6485720ab0f13bef6470018595b1c91649792ada58f1a1f88f2f841b3037f214",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "old_last_screen_prompt_lost": true,
+          "actual_fifteen_step_plan_review": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 2,
+      "approval_requests": 1,
+      "executions": 0,
+      "routes": [
+        "approved_for_execution"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": null,
+          "at": 4084169.238860009
+        }
+      },
+      "approval_events": [],
+      "execution_receipts": [],
+      "input_exception": null,
+      "production_raw_sha256": "8206790531c116ba47d22f178f50f28c950c0da38787acb3e5b16b98bce9e0cf",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-baseline-v3/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-baseline-v3",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    }
+  ],
+  "exact_tree_pty": [
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-details",
+      "scenario": "details",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "executed_original_approved_bytes": true,
+          "real_process_succeeded": true,
+          "actual_spawn_and_exit_receipts": true,
+          "details_keep_same_unresolved_future": true,
+          "details_show_actual_body": true,
+          "details_keep_draft": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 1,
+      "routes": [
+        "execute"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 23056505650064,
+          "at": 4084804.728218719
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084798.271354869,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084798.277023904,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084798.280369847,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084798.28040332,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084804.728908628,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [
+        {
+          "script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "stdout": "approval-fixture-executed\n",
+          "stderr": "",
+          "returncode": 0,
+          "lifecycle": [
+            {
+              "args": [
+                "RUNNING",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "started_at": "2026-09-12T14:54:55+08:00",
+                  "heartbeat_at": "2026-09-12T14:54:55+08:00"
+                }
+              ],
+              "kwargs": {}
+            },
+            {
+              "args": [
+                "PROCESS_EXITED",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "returncode": 0,
+                  "finished_at": "2026-09-12T14:54:55+08:00",
+                  "heartbeat_at": "2026-09-12T14:54:55+08:00",
+                  "stdout_path": "",
+                  "stderr_path": ""
+                }
+              ],
+              "kwargs": {}
+            }
+          ]
+        }
+      ],
+      "input_exception": null,
+      "production_raw_sha256": "4eee182485ac6c70bd2b73701a4d8b3968a5de0302c385a30a1e5109215c8499",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-plain-approve",
+      "scenario": "approve",
+      "mode": "plain",
+      "verbosity": "compact",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "executed_original_approved_bytes": true,
+          "real_process_succeeded": true,
+          "actual_spawn_and_exit_receipts": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 1,
+      "routes": [
+        "execute"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 23411956089536,
+          "at": 4084798.387169947
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084798.224031657,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084798.224300512,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_written",
+          "monotonic": 4084798.224394799,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084798.224467789,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084798.46767112,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [
+        {
+          "script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "stdout": "approval-fixture-executed\n",
+          "stderr": "",
+          "returncode": 0,
+          "lifecycle": [
+            {
+              "args": [
+                "RUNNING",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "started_at": "2026-09-12T14:54:48+08:00",
+                  "heartbeat_at": "2026-09-12T14:54:48+08:00"
+                }
+              ],
+              "kwargs": {}
+            },
+            {
+              "args": [
+                "PROCESS_EXITED",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "returncode": 0,
+                  "finished_at": "2026-09-12T14:54:48+08:00",
+                  "heartbeat_at": "2026-09-12T14:54:48+08:00",
+                  "stdout_path": "",
+                  "stderr_path": ""
+                }
+              ],
+              "kwargs": {}
+            }
+          ]
+        }
+      ],
+      "input_exception": null,
+      "production_raw_sha256": "d14825b53b443d6630669fd6a53c96b1e70050282f9826a4656e146eec9ad4af",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-off-approve",
+      "scenario": "approve",
+      "mode": "off",
+      "verbosity": "compact",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "executed_original_approved_bytes": true,
+          "real_process_succeeded": true,
+          "actual_spawn_and_exit_receipts": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 1,
+      "routes": [
+        "execute"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 22562803816576,
+          "at": 4084798.315869765
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084798.152728697,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084798.15297138,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_written",
+          "monotonic": 4084798.153060871,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084798.153135222,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084798.396338151,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [
+        {
+          "script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "stdout": "approval-fixture-executed\n",
+          "stderr": "",
+          "returncode": 0,
+          "lifecycle": [
+            {
+              "args": [
+                "RUNNING",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "started_at": "2026-09-12T14:54:48+08:00",
+                  "heartbeat_at": "2026-09-12T14:54:48+08:00"
+                }
+              ],
+              "kwargs": {}
+            },
+            {
+              "args": [
+                "PROCESS_EXITED",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "returncode": 0,
+                  "finished_at": "2026-09-12T14:54:48+08:00",
+                  "heartbeat_at": "2026-09-12T14:54:48+08:00",
+                  "stdout_path": "",
+                  "stderr_path": ""
+                }
+              ],
+              "kwargs": {}
+            }
+          ]
+        }
+      ],
+      "input_exception": null,
+      "production_raw_sha256": "8581aedc3bfaf9185e2c0b20f71777b08a730ea12f1bc62a85694c025baeda0a",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-paste",
+      "scenario": "paste",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "paste_is_one_feedback_decision": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 0,
+      "routes": [
+        "reject"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 22558165210304,
+          "at": 4084798.535003338
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084798.258588927,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084798.264326093,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084798.267761113,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084798.267795368,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084798.536307819,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [],
+      "input_exception": null,
+      "production_raw_sha256": "e7438486bbe067526abc2863f2f6b2a2e72206bd06ea126ff239d7ca0f63eca4",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-y",
+      "scenario": "y",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "executed_original_approved_bytes": true,
+          "real_process_succeeded": true,
+          "actual_spawn_and_exit_receipts": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 1,
+      "routes": [
+        "execute"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 23161872302496,
+          "at": 4084831.494827204
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084831.232274803,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084831.238025321,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084831.270404852,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084831.270443933,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084831.496072012,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [
+        {
+          "script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "stdout": "approval-fixture-executed\n",
+          "stderr": "",
+          "returncode": 0,
+          "lifecycle": [
+            {
+              "args": [
+                "RUNNING",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "started_at": "2026-09-12T14:55:21+08:00",
+                  "heartbeat_at": "2026-09-12T14:55:21+08:00"
+                }
+              ],
+              "kwargs": {}
+            },
+            {
+              "args": [
+                "PROCESS_EXITED",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "returncode": 0,
+                  "finished_at": "2026-09-12T14:55:21+08:00",
+                  "heartbeat_at": "2026-09-12T14:55:21+08:00",
+                  "stdout_path": "",
+                  "stderr_path": ""
+                }
+              ],
+              "kwargs": {}
+            }
+          ]
+        }
+      ],
+      "input_exception": null,
+      "production_raw_sha256": "d79b9b058bf5c19ea0bfa62b1f15780b4e279209162cfd8bebc17d500d5facc4",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-quit",
+      "scenario": "quit",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 0,
+      "routes": [
+        "quit"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 22511580349408,
+          "at": 4084831.491602118
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084831.229750974,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084831.235562044,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084831.269298904,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084831.269339907,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084831.492826782,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [],
+      "input_exception": null,
+      "production_raw_sha256": "4de5946dd54cee3abec3edb495204399218e5979b69ff47bb86fd0fa785ee80b",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-sequential",
+      "scenario": "sequential",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "executed_original_approved_bytes": true,
+          "real_process_succeeded": true,
+          "actual_spawn_and_exit_receipts": true,
+          "actual_fifteen_step_plan_review": true,
+          "two_distinct_approval_requests": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true,
+          "lifecycle_order_2": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 2,
+      "approval_requests": 2,
+      "executions": 1,
+      "routes": [
+        "approved_for_execution",
+        "execute"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 23126129334736,
+          "at": 4084833.032850082
+        },
+        "before-decision-1": {
+          "executions": 0,
+          "pending_identity": 23126142550240,
+          "at": 4084833.57154968
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084832.777518094,
+          "request_id": 1,
+          "task_id": "approval-plan-synthetic",
+          "stage": "plan_review",
+          "review_hash": "8468aa71e5ee294b34233d824538cf1a411ca87b6b276e94debc28217d2fd145",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084832.779566728,
+          "request_id": 1,
+          "task_id": "approval-plan-synthetic",
+          "stage": "plan_review",
+          "review_hash": "8468aa71e5ee294b34233d824538cf1a411ca87b6b276e94debc28217d2fd145",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084832.81400928,
+          "request_id": 1,
+          "task_id": "approval-plan-synthetic",
+          "stage": "plan_review",
+          "review_hash": "8468aa71e5ee294b34233d824538cf1a411ca87b6b276e94debc28217d2fd145",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084832.814045111,
+          "request_id": 1,
+          "task_id": "approval-plan-synthetic",
+          "stage": "plan_review",
+          "review_hash": "8468aa71e5ee294b34233d824538cf1a411ca87b6b276e94debc28217d2fd145",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084833.034620745,
+          "request_id": 1,
+          "task_id": "approval-plan-synthetic",
+          "stage": "plan_review",
+          "review_hash": "8468aa71e5ee294b34233d824538cf1a411ca87b6b276e94debc28217d2fd145",
+          "action_id": ""
+        },
+        {
+          "phase": "request_created",
+          "monotonic": 4084833.31083715,
+          "request_id": 2,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084833.316360027,
+          "request_id": 2,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084833.420263191,
+          "request_id": 2,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084833.420304607,
+          "request_id": 2,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084833.573330066,
+          "request_id": 2,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [
+        {
+          "script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "stdout": "approval-fixture-executed\n",
+          "stderr": "",
+          "returncode": 0,
+          "lifecycle": [
+            {
+              "args": [
+                "RUNNING",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "started_at": "2026-09-12T14:55:23+08:00",
+                  "heartbeat_at": "2026-09-12T14:55:23+08:00"
+                }
+              ],
+              "kwargs": {}
+            },
+            {
+              "args": [
+                "PROCESS_EXITED",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "returncode": 0,
+                  "finished_at": "2026-09-12T14:55:23+08:00",
+                  "heartbeat_at": "2026-09-12T14:55:23+08:00",
+                  "stdout_path": "",
+                  "stderr_path": ""
+                }
+              ],
+              "kwargs": {}
+            }
+          ]
+        }
+      ],
+      "input_exception": null,
+      "production_raw_sha256": "83dd97a527245da8ada384127fc698c227b27b095321673296b67b454584b821",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-plain-approve-bounded",
+      "scenario": "approve",
+      "mode": "plain",
+      "verbosity": "verbose",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "executed_original_approved_bytes": true,
+          "real_process_succeeded": true,
+          "actual_spawn_and_exit_receipts": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 1,
+      "routes": [
+        "execute"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 22990416010560,
+          "at": 4084831.35758028
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084831.145116827,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084831.148400474,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_written",
+          "monotonic": 4084831.169696764,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084831.169796142,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084831.438083079,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [
+        {
+          "script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "stdout": "approval-fixture-executed\n",
+          "stderr": "",
+          "returncode": 0,
+          "lifecycle": [
+            {
+              "args": [
+                "RUNNING",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "started_at": "2026-09-12T14:55:21+08:00",
+                  "heartbeat_at": "2026-09-12T14:55:21+08:00"
+                }
+              ],
+              "kwargs": {}
+            },
+            {
+              "args": [
+                "PROCESS_EXITED",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "returncode": 0,
+                  "finished_at": "2026-09-12T14:55:21+08:00",
+                  "heartbeat_at": "2026-09-12T14:55:21+08:00",
+                  "stdout_path": "",
+                  "stderr_path": ""
+                }
+              ],
+              "kwargs": {}
+            }
+          ]
+        }
+      ],
+      "input_exception": null,
+      "production_raw_sha256": "9065d88d6a02971e35f3b579a6bdb5a8ffff96c35faa4371713dbba177210d16",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-edit",
+      "scenario": "edit",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "executed_original_approved_bytes": true,
+          "real_process_succeeded": true,
+          "actual_spawn_and_exit_receipts": true,
+          "edited_body_gets_fresh_approval": true,
+          "stale_callback_cannot_complete_new_request": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true,
+          "lifecycle_order_2": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 2,
+      "executions": 1,
+      "routes": [
+        "review_edited_candidate",
+        "execute"
+      ],
+      "pending": {
+        "before-decision-1": {
+          "executions": 0,
+          "pending_identity": 23038927088112,
+          "at": 4084914.687367384
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084914.25893506,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084914.264615361,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084914.297861696,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084914.297898269,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084914.526384069,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "request_created",
+          "monotonic": 4084914.530535221,
+          "request_id": 2,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "58242d839806ba521ccfa9a895aa5ebb7339ac7256ff1dd85b150fd916fb58a3",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084914.532234191,
+          "request_id": 2,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "58242d839806ba521ccfa9a895aa5ebb7339ac7256ff1dd85b150fd916fb58a3",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084914.534017358,
+          "request_id": 2,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "58242d839806ba521ccfa9a895aa5ebb7339ac7256ff1dd85b150fd916fb58a3",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084914.534048098,
+          "request_id": 2,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "58242d839806ba521ccfa9a895aa5ebb7339ac7256ff1dd85b150fd916fb58a3",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084914.688067247,
+          "request_id": 2,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "58242d839806ba521ccfa9a895aa5ebb7339ac7256ff1dd85b150fd916fb58a3",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [
+        {
+          "script_sha256": "58242d839806ba521ccfa9a895aa5ebb7339ac7256ff1dd85b150fd916fb58a3",
+          "stdout": "edited-fixture-executed",
+          "stderr": "",
+          "returncode": 0,
+          "lifecycle": [
+            {
+              "args": [
+                "RUNNING",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "started_at": "2026-09-12T14:56:45+08:00",
+                  "heartbeat_at": "2026-09-12T14:56:45+08:00"
+                }
+              ],
+              "kwargs": {}
+            },
+            {
+              "args": [
+                "PROCESS_EXITED",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "returncode": 0,
+                  "finished_at": "2026-09-12T14:56:45+08:00",
+                  "heartbeat_at": "2026-09-12T14:56:45+08:00",
+                  "stdout_path": "",
+                  "stderr_path": ""
+                }
+              ],
+              "kwargs": {}
+            }
+          ]
+        }
+      ],
+      "input_exception": null,
+      "production_raw_sha256": "2ac468058baf0c457b022dc1ec94e12fbdd9412528d0600132215929f6c49aa6",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-eof",
+      "scenario": "eof",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "eof_not_empty_approval": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 0,
+      "routes": [
+        "waiting_user"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 22947183294032,
+          "at": 4084914.522016338
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084914.259009732,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084914.264698277,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084914.297973321,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084914.298011981,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [],
+      "input_exception": "HumanInputEOF",
+      "production_raw_sha256": "6cff830f25db4920e4f5be5225cce5fa716c4a6befa230a33fdd66a2207c9464",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-cancel",
+      "scenario": "cancel",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 0,
+      "routes": [
+        "quit"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 23451970374352,
+          "at": 4084914.521360638
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084914.259143973,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084914.265026798,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084914.297756542,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084914.297794102,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084914.522093141,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [],
+      "input_exception": null,
+      "production_raw_sha256": "5e04ae414713839a029ed3863a58ca52e92252b96a199cd59b3317b3f9394929",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-approve-resize",
+      "scenario": "approve",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "c6d24c71da3bbfe89f20600791fe3f613ef3d332",
+      "source_signature": "6be07340d9eaa8e964a5c382f626ad280ad39f9efdd91e42e3268c350dcf2da6",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "executed_original_approved_bytes": true,
+          "real_process_succeeded": true,
+          "actual_spawn_and_exit_receipts": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true
+        }
+      },
+      "size": [
+        120,
+        36
+      ],
+      "resize": [
+        40,
+        15
+      ],
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 1,
+      "routes": [
+        "execute"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 22795565423296,
+          "at": 4084914.79141186
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084914.260080957,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084914.265873284,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084914.270548114,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084914.270585661,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084914.792185859,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [
+        {
+          "script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "stdout": "approval-fixture-executed\n",
+          "stderr": "",
+          "returncode": 0,
+          "lifecycle": [
+            {
+              "args": [
+                "RUNNING",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "started_at": "2026-09-12T14:56:45+08:00",
+                  "heartbeat_at": "2026-09-12T14:56:45+08:00"
+                }
+              ],
+              "kwargs": {}
+            },
+            {
+              "args": [
+                "PROCESS_EXITED",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "returncode": 0,
+                  "finished_at": "2026-09-12T14:56:45+08:00",
+                  "heartbeat_at": "2026-09-12T14:56:45+08:00",
+                  "stdout_path": "",
+                  "stderr_path": ""
+                }
+              ],
+              "kwargs": {}
+            }
+          ]
+        }
+      ],
+      "input_exception": null,
+      "production_raw_sha256": "d0bf37a9e22b873280872f7aa00c5d12101035c8071452ff3b0e613149f27a2a",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-exact-1",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    }
+  ],
+  "final_representative": {
+    "directory": "/tmp/biomind_approval_preflight_20260912/ap-final-tty-details",
+    "scenario": "details",
+    "mode": "tty",
+    "verbosity": "compact",
+    "tree": "20a037b818cfa1cdbf99977d5e898e6719e02e2d",
+    "source_signature": "1dacf1f1d81d22ca8f7ff015a9b9eea999b662468cf89bff559ec13a125924d9",
+    "returncode": 0,
+    "source_unchanged": true,
+    "assertions": {
+      "passed": true,
+      "checks": {
+        "child_completed": true,
+        "source_unchanged": true,
+        "kernel_pty_and_production_input": true,
+        "vt_decoder_has_no_unknown_operations": true,
+        "no_unexpected_model_calls": true,
+        "execution_count": true,
+        "undecided_execution_zero": true,
+        "last_screen_prompt_visible": true,
+        "waiting_state_visible": true,
+        "executed_original_approved_bytes": true,
+        "real_process_succeeded": true,
+        "actual_spawn_and_exit_receipts": true,
+        "details_keep_same_unresolved_future": true,
+        "details_show_actual_body": true,
+        "details_keep_draft": true,
+        "production_monotonic_lifecycle": true,
+        "lifecycle_order_1": true
+      }
+    },
+    "size": [
+      80,
+      24
+    ],
+    "resize": null,
+    "model_calls": 0,
+    "approval_requests": 1,
+    "executions": 1,
+    "routes": [
+      "execute"
+    ],
+    "pending": {
+      "before-decision-0": {
+        "executions": 0,
+        "pending_identity": 22704864512624,
+        "at": 4085029.373816879
+      }
+    },
+    "approval_events": [
+      {
+        "phase": "request_created",
+        "monotonic": 4085022.921907878,
+        "request_id": 1,
+        "task_id": "approval-synthetic",
+        "stage": "code_review",
+        "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+        "action_id": ""
+      },
+      {
+        "phase": "presentation_started",
+        "monotonic": 4085022.92770839,
+        "request_id": 1,
+        "task_id": "approval-synthetic",
+        "stage": "code_review",
+        "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+        "action_id": ""
+      },
+      {
+        "phase": "frame_rendered",
+        "monotonic": 4085022.960110264,
+        "request_id": 1,
+        "task_id": "approval-synthetic",
+        "stage": "code_review",
+        "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+        "action_id": ""
+      },
+      {
+        "phase": "input_ready",
+        "monotonic": 4085022.960147202,
+        "request_id": 1,
+        "task_id": "approval-synthetic",
+        "stage": "code_review",
+        "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+        "action_id": ""
+      },
+      {
+        "phase": "decision_received",
+        "monotonic": 4085029.374483084,
+        "request_id": 1,
+        "task_id": "approval-synthetic",
+        "stage": "code_review",
+        "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+        "action_id": ""
+      }
+    ],
+    "execution_receipts": [
+      {
+        "script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+        "stdout": "approval-fixture-executed\n",
+        "stderr": "",
+        "returncode": 0,
+        "lifecycle": [
+          {
+            "args": [
+              "RUNNING",
+              {
+                "pid": 7,
+                "pgid": 7,
+                "started_at": "2026-09-12T14:58:39+08:00",
+                "heartbeat_at": "2026-09-12T14:58:39+08:00"
+              }
+            ],
+            "kwargs": {}
+          },
+          {
+            "args": [
+              "PROCESS_EXITED",
+              {
+                "pid": 7,
+                "pgid": 7,
+                "returncode": 0,
+                "finished_at": "2026-09-12T14:58:39+08:00",
+                "heartbeat_at": "2026-09-12T14:58:39+08:00",
+                "stdout_path": "",
+                "stderr_path": ""
+              }
+            ],
+            "kwargs": {}
+          }
+        ]
+      }
+    ],
+    "input_exception": null,
+    "production_raw_sha256": "0ae0ad6c954cf40cb5140144d1db7fa081e5bb78c2655e2656f2094509e99282",
+    "replay_command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind_approval_preflight_20260912/ap-final-export/tests/cli_model_progress_support.py",
+      "--guarded-child",
+      "/tmp/biomind_approval_preflight_20260912/ap-final-export",
+      "-q",
+      "-s",
+      "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+    ]
+  },
+  "final_tree_delta_scope": [
+    "Pending display replacement rejected without changing original input future",
+    "Plain display view consumed after review and cancellation wakeup refined",
+    "Legacy confirmation context bound without parser/policy change",
+    "Additional owner lifecycle tests"
+  ],
+  "additional_worktree_cases": [
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-v4-tty-reject",
+      "scenario": "reject",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "exact_worktree",
+      "source_signature": "af1cf5cd01f9c66f5b7f1ead248d8cc2928f2646c2f3b2953934f44578261e41",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 0,
+      "routes": [
+        "reject"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 22454636278512,
+          "at": 4084474.524549985
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084474.246678513,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084474.252432077,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084474.256173283,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084474.256210457,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084474.525668542,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [],
+      "input_exception": null,
+      "production_raw_sha256": "01b79d60d2f212ab330c25dd0af4c2d4996d3095a5646eff6d6be8ded36dc534",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-working-v4/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-working-v4",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-v4-tty-feedback",
+      "scenario": "feedback",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "exact_worktree",
+      "source_signature": "af1cf5cd01f9c66f5b7f1ead248d8cc2928f2646c2f3b2953934f44578261e41",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "waiting_state_visible": true,
+          "production_monotonic_lifecycle": true,
+          "lifecycle_order_1": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 0,
+      "routes": [
+        "reject"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": 23219713817584,
+          "at": 4084474.517639993
+        }
+      },
+      "approval_events": [
+        {
+          "phase": "request_created",
+          "monotonic": 4084474.255384009,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "presentation_started",
+          "monotonic": 4084474.261186214,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "frame_rendered",
+          "monotonic": 4084474.294149556,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "input_ready",
+          "monotonic": 4084474.294187103,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        },
+        {
+          "phase": "decision_received",
+          "monotonic": 4084474.523088722,
+          "request_id": 1,
+          "task_id": "approval-synthetic",
+          "stage": "code_review",
+          "review_hash": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "action_id": ""
+        }
+      ],
+      "execution_receipts": [],
+      "input_exception": null,
+      "production_raw_sha256": "ddf1cbd281edfe18021cb1b1e93ce7166716d6aaa4c1444faf3d029be82d5752",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-working-v4/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-working-v4",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-v5-none-approve",
+      "scenario": "approve",
+      "mode": "none",
+      "verbosity": "compact",
+      "tree": "exact_worktree",
+      "source_signature": "199f558497b08f7446400c7fa72de9438457dad0d37c35703fe09c26cce60a78",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "undecided_execution_zero": true,
+          "last_screen_prompt_visible": true,
+          "executed_original_approved_bytes": true,
+          "real_process_succeeded": true,
+          "actual_spawn_and_exit_receipts": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 1,
+      "executions": 1,
+      "routes": [
+        "execute"
+      ],
+      "pending": {
+        "before-decision-0": {
+          "executions": 0,
+          "pending_identity": null,
+          "at": 4084633.072083016
+        }
+      },
+      "approval_events": [],
+      "execution_receipts": [
+        {
+          "script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca",
+          "stdout": "approval-fixture-executed\n",
+          "stderr": "",
+          "returncode": 0,
+          "lifecycle": [
+            {
+              "args": [
+                "RUNNING",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "started_at": "2026-09-12T14:52:03+08:00",
+                  "heartbeat_at": "2026-09-12T14:52:03+08:00"
+                }
+              ],
+              "kwargs": {}
+            },
+            {
+              "args": [
+                "PROCESS_EXITED",
+                {
+                  "pid": 7,
+                  "pgid": 7,
+                  "returncode": 0,
+                  "finished_at": "2026-09-12T14:52:03+08:00",
+                  "heartbeat_at": "2026-09-12T14:52:03+08:00",
+                  "stdout_path": "",
+                  "stderr_path": ""
+                }
+              ],
+              "kwargs": {}
+            }
+          ]
+        }
+      ],
+      "input_exception": null,
+      "production_raw_sha256": "ef74da394550cef31233d4bd93eef20366a400903fe354b2cf4fb153e74eea15",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-working-v5/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-working-v5",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-v5-tty-auto",
+      "scenario": "auto",
+      "mode": "tty",
+      "verbosity": "compact",
+      "tree": "exact_worktree",
+      "source_signature": "199f558497b08f7446400c7fa72de9438457dad0d37c35703fe09c26cce60a78",
+      "returncode": 0,
+      "source_unchanged": true,
+      "assertions": {
+        "passed": true,
+        "checks": {
+          "child_completed": true,
+          "source_unchanged": true,
+          "kernel_pty_and_production_input": true,
+          "vt_decoder_has_no_unknown_operations": true,
+          "no_unexpected_model_calls": true,
+          "execution_count": true,
+          "executed_original_approved_bytes": true,
+          "real_process_succeeded": true,
+          "actual_spawn_and_exit_receipts": true
+        }
+      },
+      "size": [
+        80,
+        24
+      ],
+      "resize": null,
+      "model_calls": 0,
+      "approval_requests": 0,
+      "executions": 1,
+      "routes": [
+        "execute"
+      ],
+      "pending": {},
+      "approval_events": [],
+      "execution_receipts": [
+        {
+          "script_sha256": "8e10af0b7b7a397c91e8ca1fb4c9db81112fd10b3d2db98d3e2e48ba644bc158",
+          "stdout": "approval-fixture-executed\n",
+          "stderr": "",
+          "returncode": 0,
+          "lifecycle": [
+            {
+              "args": [
+                "RUNNING",
+                {
+                  "pid": 6,
+                  "pgid": 6,
+                  "started_at": "2026-09-12T14:52:03+08:00",
+                  "heartbeat_at": "2026-09-12T14:52:03+08:00"
+                }
+              ],
+              "kwargs": {}
+            },
+            {
+              "args": [
+                "PROCESS_EXITED",
+                {
+                  "pid": 6,
+                  "pgid": 6,
+                  "returncode": 0,
+                  "finished_at": "2026-09-12T14:52:03+08:00",
+                  "heartbeat_at": "2026-09-12T14:52:03+08:00",
+                  "stdout_path": "",
+                  "stderr_path": ""
+                }
+              ],
+              "kwargs": {}
+            }
+          ]
+        }
+      ],
+      "input_exception": null,
+      "production_raw_sha256": "861e6cee21bcf84a827af4fd40caba06f05ad60e0d038836012bd4fcbc368b1e",
+      "replay_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind_approval_preflight_20260912/ap-working-v5/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind_approval_preflight_20260912/ap-working-v5",
+        "-q",
+        "-s",
+        "tests/replay_approval_visibility_pty.py::test_production_approval_pty_child"
+      ]
+    }
+  ],
+  "a12_equivalence": [
+    {
+      "baseline": "ap-baseline-code",
+      "after": "ap-exact1-tty-details",
+      "checks": {
+        "entire_approval_request_payload": true,
+        "approved_script_bytes_sha256": true,
+        "raw_stdout": true,
+        "raw_stderr": true,
+        "returncode": true,
+        "model_calls": true,
+        "route": true
+      },
+      "passed": true,
+      "approved_script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca"
+    },
+    {
+      "baseline": "ap-baseline-code",
+      "after": "ap-exact1-plain-approve",
+      "checks": {
+        "entire_approval_request_payload": true,
+        "approved_script_bytes_sha256": true,
+        "raw_stdout": true,
+        "raw_stderr": true,
+        "returncode": true,
+        "model_calls": true,
+        "route": true
+      },
+      "passed": true,
+      "approved_script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca"
+    },
+    {
+      "baseline": "ap-baseline-code",
+      "after": "ap-exact1-off-approve",
+      "checks": {
+        "entire_approval_request_payload": true,
+        "approved_script_bytes_sha256": true,
+        "raw_stdout": true,
+        "raw_stderr": true,
+        "returncode": true,
+        "model_calls": true,
+        "route": true
+      },
+      "passed": true,
+      "approved_script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca"
+    },
+    {
+      "baseline": "ap-baseline-code",
+      "after": "ap-exact1-plain-approve-bounded",
+      "checks": {
+        "entire_approval_request_payload": true,
+        "approved_script_bytes_sha256": true,
+        "raw_stdout": true,
+        "raw_stderr": true,
+        "returncode": true,
+        "model_calls": true,
+        "route": true
+      },
+      "passed": true,
+      "approved_script_sha256": "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca"
+    }
+  ],
+  "matrix": [
+    {
+      "id": "A01",
+      "evidence": [
+        "ap-baseline-plan-v3",
+        "ap-exact1-tty-sequential"
+      ],
+      "scope": "Actual 15-step Planner/PlanReview and production human input; delayed baseline writer loses prompt."
+    },
+    {
+      "id": "A02",
+      "evidence": [
+        "ap-baseline-code",
+        "ap-exact1-tty-details"
+      ],
+      "scope": "432-line approved script plus 500 ordinary events, late provider activity and urgent notification; final screen and zero pending executions."
+    },
+    {
+      "id": "A03",
+      "evidence": [
+        "ap-exact1-tty-y",
+        "ap-exact1-plain-approve",
+        "ap-exact1-off-approve"
+      ],
+      "scope": "Original y and empty Enter; one real process, exact script bytes."
+    },
+    {
+      "id": "A04",
+      "evidence": [
+        "ap-exact1-tty-quit",
+        "ap-v4-tty-reject",
+        "ap-v4-tty-feedback"
+      ],
+      "scope": "Original q/rejection/text feedback; zero processes, no provider calls."
+    },
+    {
+      "id": "A05",
+      "evidence": [
+        "ap-exact1-tty-details"
+      ],
+      "scope": "Actual /details/F2/Ctrl+O; real submit receipts prove modal Enter keeps future unresolved; Esc restores draft and input."
+    },
+    {
+      "id": "A06",
+      "evidence": [
+        "ap-exact1-tty-edit"
+      ],
+      "scope": "Two real review payloads; stale Future callback cannot resolve next candidate. Fixed replacement candidate supplied by harness, not a claim about a new Generate model call."
+    },
+    {
+      "id": "A07",
+      "evidence": [
+        "ap-exact1-tty-sequential",
+        "ap-exact1-tty-paste"
+      ],
+      "scope": "Actual Plan Review followed by code review; one response per candidate. Bracketed multiline including /details stays one feedback response."
+    },
+    {
+      "id": "A08",
+      "evidence": [
+        "ap-exact1-tty-eof",
+        "ap-exact1-tty-cancel"
+      ],
+      "scope": "TTY Ctrl+D raises HumanInputEOF; Ctrl+C preserves quit semantics; zero preapproval processes. Pipe/fallback cases supplied by owner lifecycle tests."
+    },
+    {
+      "id": "A09",
+      "evidence": [
+        "ap-exact1-off-approve",
+        "ap-v5-none-approve"
+      ],
+      "scope": "off still asks, no-owner synchronous full body precedes prompt. No-owner replay has no concurrent owner events; forced fallback covered separately."
+    },
+    {
+      "id": "A10",
+      "evidence": [
+        "ap-exact1-tty-details",
+        "ap-exact1-tty-approve-resize"
+      ],
+      "scope": "Kernel PTYs at 80x24 and 120x36 resized to 40x15, final prompt visible."
+    },
+    {
+      "id": "A11",
+      "evidence": [
+        "ap-exact1-plain-approve-bounded"
+      ],
+      "scope": "Event barrier delays a finite display batch; prompt follows batch. Broken writer and forced Application fallback covered in owner lifecycle tests."
+    },
+    {
+      "id": "A12",
+      "evidence": [
+        "ap-exact1-tty-details",
+        "ap-exact1-plain-approve",
+        "ap-exact1-off-approve",
+        "ap-exact1-plain-approve-bounded"
+      ],
+      "scope": "Entire old/new code-review payload, approved bytes, raw stdout/stderr/rc, call counts and route compare equal."
+    },
+    {
+      "id": "A13",
+      "evidence": [
+        "ap-v5-tty-auto",
+        "ap-parser-v4"
+      ],
+      "scope": "Existing safe auto branch has zero approval requests, one process; unknown/manual branch still asks. Parser tests covered separately in final exact-tree run."
+    }
+  ],
+  "minimal_artifacts": [
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-baseline-code/terminal.ansi",
+      "bytes": 40827,
+      "sha256": "40f6a89d8cb53a1d8cad0dd1d00c931ea9a171d0195f9f5c7fa32f1be0979e0a"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-baseline-code/before-body-release.screen.txt",
+      "bytes": 1891,
+      "sha256": "16ef3ba05a039f9f0081e750366d1bf566e11faa393e15fd9ffd9b156f8598f0"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-baseline-code/after-background.screen.txt",
+      "bytes": 1007,
+      "sha256": "08a58f78aef8d863a83310a4adb91116c76572dfebda61637973c9e83cb27695"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-baseline-plan-v3/terminal.ansi",
+      "bytes": 49566,
+      "sha256": "081a852a2d4e7546e86c732436c8671598eb8f9fc2d6e7fabb46e253d03ae434"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-baseline-plan-v3/before-body-release.screen.txt",
+      "bytes": 1815,
+      "sha256": "892abd2ec694f32635d8085f045b2242ba1ec80cbc83559b4e084d7e4be4451a"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-baseline-plan-v3/after-background.screen.txt",
+      "bytes": 1007,
+      "sha256": "08a58f78aef8d863a83310a4adb91116c76572dfebda61637973c9e83cb27695"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-final-tty-details/terminal.ansi",
+      "bytes": 9142,
+      "sha256": "db7ddf2b0a7909d2c7aa3be20f4afc48e85343d1b55285c0bd3fa39f068f3193"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-final-tty-details/after-background.screen.txt",
+      "bytes": 656,
+      "sha256": "b1a21eb617f5a27ddb8bb180bf1108744cb1be2c2a6ce05b9b295d7217f57b24"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-final-tty-details/details-0.screen.txt",
+      "bytes": 1199,
+      "sha256": "658fc894b50119730e9e9b4ecc17b89a0096b99ae80b13a795efc442df64cf9f"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-final-tty-details/details-returned.screen.txt",
+      "bytes": 670,
+      "sha256": "64b6619271c02a001d7107bf544fd35566c62a686a690fc2081a8720d5c2c6b9"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-exact1-plain-approve-bounded/terminal.ansi",
+      "bytes": 19183,
+      "sha256": "17451591698a251f3ae918adc8f80ec160776cc349987fcef2969cdaa075a482"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-exact1-plain-approve-bounded/before-body-release.screen.txt",
+      "bytes": 23,
+      "sha256": "6e0ce65031e802f83e9c1e92b66a459ada9f1f5f6522ba6c8d8198228fd219c3"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-exact1-plain-approve-bounded/after-background.screen.txt",
+      "bytes": 1070,
+      "sha256": "597d92ccd0f1ffdfee436377696f1a5094cd358b13ca4943903ae242b1fc97c1"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-sequential/terminal.ansi",
+      "bytes": 5646,
+      "sha256": "f2f2f929bcbc90293d7004d6a54bf2f5ba07d472d195275db2f13ede5ee97658"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-sequential/after-background.screen.txt",
+      "bytes": 761,
+      "sha256": "b7c29adf36affda6f0773b607b772497b3cd99ecca297d7e43a391f55730beaf"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-sequential/before-decision-1.screen.txt",
+      "bytes": 1226,
+      "sha256": "52a68cc8457a4c5e847450ee56426a9d4d6aa72eb0edd8941eabda12b8106a90"
+    },
+    {
+      "path": "/tmp/biomind_approval_preflight_20260912/ap-exact1-tty-approve-resize/after-resize.screen.txt",
+      "bytes": 458,
+      "sha256": "425754437980462fc6f3f55f045ba017564e35f4a93782008ddb8bb04cf345a3"
+    }
+  ],
+  "old_ansi_slice_provenance": [
+    {
+      "source": "/tmp/biomind_approval_preflight_20260912/ap-baseline-code/terminal.raw",
+      "start_byte": 4071,
+      "end_byte_exclusive": 44898,
+      "artifact": "/tmp/biomind_approval_preflight_20260912/ap-baseline-code/terminal.ansi",
+      "sha256": "40f6a89d8cb53a1d8cad0dd1d00c931ea9a171d0195f9f5c7fa32f1be0979e0a"
+    },
+    {
+      "source": "/tmp/biomind_approval_preflight_20260912/ap-baseline-plan-v3/terminal.raw",
+      "start_byte": 0,
+      "end_byte_exclusive": 49566,
+      "artifact": "/tmp/biomind_approval_preflight_20260912/ap-baseline-plan-v3/terminal.ansi",
+      "sha256": "081a852a2d4e7546e86c732436c8671598eb8f9fc2d6e7fabb46e253d03ae434"
+    }
+  ],
+  "development_failures": [
+    {
+      "directories": [
+        "ap-v2-plain-compact",
+        "ap-v2-plain-verbose"
+      ],
+      "result": "harness deadline -15, no approval/process",
+      "cause": "Production notice epoch discarded first legitimate post-prompt Enter",
+      "resolution": "Fixed by single writer restoring prompt without clearing/discarding canonical input; single Enter passes exact-tree replay."
+    },
+    {
+      "directory": "ap-v3-tty-details",
+      "result": "Replay returned rc0 but failed new machine assertions",
+      "cause": "Harness sent duplicate Enter/Esc using stale frame, second Enter reached approval",
+      "resolution": "Use production submit consumption receipts and new rendered frame before each modal action; exact-tree details passes all assertions."
+    },
+    {
+      "directories": [
+        "ap-baseline-plan",
+        "ap-plan-debug"
+      ],
+      "cause": "Initial synthetic fixture used normalized numerical step IDs with invalid dependencies",
+      "resolution": "Stable letter IDs produce actual 15-step PlanReview; final baseline ap-baseline-plan-v3."
+    }
+  ],
+  "limits": [
+    "Keys are injected by harness; no claim that a human read the view.",
+    "No identification of all physical host TTY type-ahead timing; program callbacks and pasted response ownership are checked.",
+    "The no-owner replay checks synchronous full-body ordering; active writer concurrency is checked with TTY/plain/off owners.",
+    "Full managed edit→Generate business path is not recreated by this transport fixture; existing route remains source-reviewed and unchanged.",
+    "PTY pytest uses -s to expose the real terminal; this is not offered as a fix for the prior unrelated capture SIGSEGV."
+  ]
+}

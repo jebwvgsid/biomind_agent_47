@@ -1,0 +1,1203 @@
+{
+  "schema_version": 1,
+  "kind": "synthetic_offline_selected_receipts",
+  "baseline_head": "53ff7dba6716d30fd5bbe3a508fa9aef5ba0b4d3",
+  "branch": "refactor/consultant-controller-authority",
+  "frozen_source_signature": "9afb707cfdba9a75299fa8ca08c8cf34aa9b902ebc94975e3f923c4c00d4fed9",
+  "exported_files": 181,
+  "source_unchanged": true,
+  "test": {
+    "command": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python tests/cli_v2_support.py --export /tmp/biomind_approval_preflight_20260912/obs-candidate-6 --results /tmp/biomind_approval_preflight_20260912/obs-results-6 -q tests/test_preflight_feedback.py",
+    "passed": 14,
+    "failed": 0,
+    "elapsed_seconds": 3.64,
+    "source_unchanged": true
+  },
+  "owned_files": [
+    "execution/preflight.py",
+    "execution/preflight_progress.py",
+    "execution/executor.py",
+    "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+    "agent_core/cli_display.py",
+    "agent_core/node_context.py",
+    "agent_core/workflow/recovery_agent.py",
+    "agent_core/workflow/recovery_projection.py",
+    "skills/genomics/wgs-short-read-mapping/SKILL.md",
+    "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+    "skills/genomics/reseq-variant-workflow/SKILL.md",
+    "tests/test_preflight_feedback.py",
+    "tests/export_preflight_feedback_fixture.py"
+  ],
+  "selection_policy": "Only small whitelist fields from new offline synthetic receipts; no real session logs, raw large streams, environment/config or credentials copied. PIDs, scratch paths and verbose command bodies omitted.",
+  "four_modes": {
+    "compact": {
+      "status": "returned",
+      "total": 4,
+      "returned": 4,
+      "passed": 4,
+      "unstarted": 0,
+      "timeout_seconds": 3.0,
+      "timeout_source": "explicit_item_timeout",
+      "checks": [
+        {
+          "label": "S0",
+          "index": 1,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        },
+        {
+          "label": "S1",
+          "index": 2,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        },
+        {
+          "label": "S2",
+          "index": 3,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        },
+        {
+          "label": "S3",
+          "index": 4,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        }
+      ],
+      "events": [
+        {
+          "event": "item_started",
+          "item": "S0",
+          "index": 1,
+          "total": 4,
+          "completed": 0,
+          "passed": 0
+        },
+        {
+          "event": "process_started",
+          "item": "S0",
+          "index": 1,
+          "total": 4,
+          "completed": 0,
+          "passed": 0
+        },
+        {
+          "event": "item_returned",
+          "item": "S0",
+          "index": 1,
+          "total": 4,
+          "completed": 1,
+          "passed": 1,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S1",
+          "index": 2,
+          "total": 4,
+          "completed": 1,
+          "passed": 1
+        },
+        {
+          "event": "process_started",
+          "item": "S1",
+          "index": 2,
+          "total": 4,
+          "completed": 1,
+          "passed": 1
+        },
+        {
+          "event": "item_returned",
+          "item": "S1",
+          "index": 2,
+          "total": 4,
+          "completed": 2,
+          "passed": 2,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S2",
+          "index": 3,
+          "total": 4,
+          "completed": 2,
+          "passed": 2
+        },
+        {
+          "event": "process_started",
+          "item": "S2",
+          "index": 3,
+          "total": 4,
+          "completed": 2,
+          "passed": 2
+        },
+        {
+          "event": "item_returned",
+          "item": "S2",
+          "index": 3,
+          "total": 4,
+          "completed": 3,
+          "passed": 3,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S3",
+          "index": 4,
+          "total": 4,
+          "completed": 3,
+          "passed": 3
+        },
+        {
+          "event": "process_started",
+          "item": "S3",
+          "index": 4,
+          "total": 4,
+          "completed": 3,
+          "passed": 3
+        },
+        {
+          "event": "item_returned",
+          "item": "S3",
+          "index": 4,
+          "total": 4,
+          "completed": 4,
+          "passed": 4,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "summary",
+          "item": "",
+          "index": 4,
+          "total": 4,
+          "completed": 4,
+          "passed": 4,
+          "status": "returned"
+        }
+      ]
+    },
+    "verbose": {
+      "status": "returned",
+      "total": 4,
+      "returned": 4,
+      "passed": 4,
+      "unstarted": 0,
+      "timeout_seconds": 3.0,
+      "timeout_source": "explicit_item_timeout",
+      "checks": [
+        {
+          "label": "S0",
+          "index": 1,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        },
+        {
+          "label": "S1",
+          "index": 2,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        },
+        {
+          "label": "S2",
+          "index": 3,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        },
+        {
+          "label": "S3",
+          "index": 4,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        }
+      ],
+      "events": [
+        {
+          "event": "item_started",
+          "item": "S0",
+          "index": 1,
+          "total": 4,
+          "completed": 0,
+          "passed": 0
+        },
+        {
+          "event": "process_started",
+          "item": "S0",
+          "index": 1,
+          "total": 4,
+          "completed": 0,
+          "passed": 0
+        },
+        {
+          "event": "item_returned",
+          "item": "S0",
+          "index": 1,
+          "total": 4,
+          "completed": 1,
+          "passed": 1,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S1",
+          "index": 2,
+          "total": 4,
+          "completed": 1,
+          "passed": 1
+        },
+        {
+          "event": "process_started",
+          "item": "S1",
+          "index": 2,
+          "total": 4,
+          "completed": 1,
+          "passed": 1
+        },
+        {
+          "event": "item_returned",
+          "item": "S1",
+          "index": 2,
+          "total": 4,
+          "completed": 2,
+          "passed": 2,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S2",
+          "index": 3,
+          "total": 4,
+          "completed": 2,
+          "passed": 2
+        },
+        {
+          "event": "process_started",
+          "item": "S2",
+          "index": 3,
+          "total": 4,
+          "completed": 2,
+          "passed": 2
+        },
+        {
+          "event": "item_returned",
+          "item": "S2",
+          "index": 3,
+          "total": 4,
+          "completed": 3,
+          "passed": 3,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S3",
+          "index": 4,
+          "total": 4,
+          "completed": 3,
+          "passed": 3
+        },
+        {
+          "event": "process_started",
+          "item": "S3",
+          "index": 4,
+          "total": 4,
+          "completed": 3,
+          "passed": 3
+        },
+        {
+          "event": "item_returned",
+          "item": "S3",
+          "index": 4,
+          "total": 4,
+          "completed": 4,
+          "passed": 4,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "summary",
+          "item": "",
+          "index": 4,
+          "total": 4,
+          "completed": 4,
+          "passed": 4,
+          "status": "returned"
+        }
+      ]
+    },
+    "off": {
+      "status": "returned",
+      "total": 4,
+      "returned": 4,
+      "passed": 4,
+      "unstarted": 0,
+      "timeout_seconds": 3.0,
+      "timeout_source": "explicit_item_timeout",
+      "checks": [
+        {
+          "label": "S0",
+          "index": 1,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        },
+        {
+          "label": "S1",
+          "index": 2,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        },
+        {
+          "label": "S2",
+          "index": 3,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        },
+        {
+          "label": "S3",
+          "index": 4,
+          "status": "returned",
+          "passed": true,
+          "returncode": 0,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "returncode": 0,
+            "process_returncode": 0,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent",
+            "termination_reason": "",
+            "stdout_bytes": 164,
+            "stderr_bytes": 0,
+            "stdout_truncated": false,
+            "stderr_truncated": false
+          }
+        }
+      ],
+      "events": [
+        {
+          "event": "item_started",
+          "item": "S0",
+          "index": 1,
+          "total": 4,
+          "completed": 0,
+          "passed": 0
+        },
+        {
+          "event": "process_started",
+          "item": "S0",
+          "index": 1,
+          "total": 4,
+          "completed": 0,
+          "passed": 0
+        },
+        {
+          "event": "item_returned",
+          "item": "S0",
+          "index": 1,
+          "total": 4,
+          "completed": 1,
+          "passed": 1,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S1",
+          "index": 2,
+          "total": 4,
+          "completed": 1,
+          "passed": 1
+        },
+        {
+          "event": "process_started",
+          "item": "S1",
+          "index": 2,
+          "total": 4,
+          "completed": 1,
+          "passed": 1
+        },
+        {
+          "event": "item_returned",
+          "item": "S1",
+          "index": 2,
+          "total": 4,
+          "completed": 2,
+          "passed": 2,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S2",
+          "index": 3,
+          "total": 4,
+          "completed": 2,
+          "passed": 2
+        },
+        {
+          "event": "process_started",
+          "item": "S2",
+          "index": 3,
+          "total": 4,
+          "completed": 2,
+          "passed": 2
+        },
+        {
+          "event": "item_returned",
+          "item": "S2",
+          "index": 3,
+          "total": 4,
+          "completed": 3,
+          "passed": 3,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S3",
+          "index": 4,
+          "total": 4,
+          "completed": 3,
+          "passed": 3
+        },
+        {
+          "event": "process_started",
+          "item": "S3",
+          "index": 4,
+          "total": 4,
+          "completed": 3,
+          "passed": 3
+        },
+        {
+          "event": "item_returned",
+          "item": "S3",
+          "index": 4,
+          "total": 4,
+          "completed": 4,
+          "passed": 4,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "summary",
+          "item": "",
+          "index": 4,
+          "total": 4,
+          "completed": 4,
+          "passed": 4,
+          "status": "returned"
+        }
+      ]
+    }
+  },
+  "local_timeout": {
+    "status": "timeout",
+    "total": 3,
+    "returned": 1,
+    "passed": 0,
+    "unstarted": 1,
+    "timeout_seconds": 0.2,
+    "timeout_source": "explicit_item_timeout",
+    "checks": [
+      {
+        "label": "first",
+        "index": 1,
+        "status": "returned",
+        "passed": false,
+        "returncode": 0,
+        "scope": "synthetic_prefix",
+        "execution": {
+          "returncode": 0,
+          "process_returncode": 0,
+          "process_reaped": true,
+          "group_reaped": true,
+          "group_cleanup_status": "confirmed_absent",
+          "termination_reason": "",
+          "stdout_bytes": 4,
+          "stderr_bytes": 0,
+          "stdout_truncated": false,
+          "stderr_truncated": false
+        }
+      },
+      {
+        "label": "blocked",
+        "index": 2,
+        "status": "timeout",
+        "passed": false,
+        "returncode": 124,
+        "scope": "synthetic_prefix",
+        "execution": {
+          "returncode": 124,
+          "process_returncode": 130,
+          "process_reaped": true,
+          "group_reaped": true,
+          "group_cleanup_status": "confirmed_absent",
+          "termination_reason": "TIMEOUT after 0.2 seconds",
+          "stdout_bytes": 0,
+          "stderr_bytes": 0,
+          "stdout_truncated": false,
+          "stderr_truncated": false
+        }
+      }
+    ],
+    "events": [
+      {
+        "event": "item_started",
+        "item": "first",
+        "index": 1,
+        "total": 3,
+        "completed": 0,
+        "passed": 0
+      },
+      {
+        "event": "process_started",
+        "item": "first",
+        "index": 1,
+        "total": 3,
+        "completed": 0,
+        "passed": 0
+      },
+      {
+        "event": "item_returned",
+        "item": "first",
+        "index": 1,
+        "total": 3,
+        "completed": 1,
+        "passed": 0,
+        "returncode": 0,
+        "check_status": "returned"
+      },
+      {
+        "event": "item_started",
+        "item": "blocked",
+        "index": 2,
+        "total": 3,
+        "completed": 1,
+        "passed": 0
+      },
+      {
+        "event": "process_started",
+        "item": "blocked",
+        "index": 2,
+        "total": 3,
+        "completed": 1,
+        "passed": 0
+      },
+      {
+        "event": "item_timeout",
+        "item": "blocked",
+        "index": 2,
+        "total": 3,
+        "completed": 1,
+        "passed": 0,
+        "process_reaped": true
+      },
+      {
+        "event": "summary",
+        "item": "",
+        "index": 2,
+        "total": 3,
+        "completed": 1,
+        "passed": 0,
+        "status": "timeout"
+      }
+    ]
+  },
+  "direct_cancel": {
+    "status": "cancelled",
+    "total": 1,
+    "returned": 0,
+    "passed": 0,
+    "unstarted": 0,
+    "timeout_seconds": 10.0,
+    "timeout_source": "explicit_item_timeout",
+    "checks": [
+      {
+        "label": "nested",
+        "index": 1,
+        "status": "cancelled",
+        "passed": false,
+        "scope": "synthetic_prefix",
+        "execution": {
+          "process_returncode": 130,
+          "process_reaped": true,
+          "group_reaped": true,
+          "group_cleanup_status": "confirmed_absent"
+        }
+      }
+    ],
+    "events": [
+      {
+        "event": "item_started",
+        "item": "nested",
+        "index": 1,
+        "total": 1,
+        "completed": 0,
+        "passed": 0
+      },
+      {
+        "event": "process_started",
+        "item": "nested",
+        "index": 1,
+        "total": 1,
+        "completed": 0,
+        "passed": 0
+      },
+      {
+        "event": "item_cancelled",
+        "item": "nested",
+        "index": 1,
+        "total": 1,
+        "completed": 0,
+        "passed": 0,
+        "process_reaped": true
+      },
+      {
+        "event": "summary",
+        "item": "",
+        "index": 1,
+        "total": 1,
+        "completed": 0,
+        "passed": 0,
+        "status": "cancelled"
+      }
+    ]
+  },
+  "outer_cancel": {
+    "wrapper": {
+      "status": "cancelled",
+      "total": 1,
+      "returned": 0,
+      "passed": 0,
+      "unstarted": 0,
+      "timeout_seconds": 10.0,
+      "timeout_source": "explicit_item_timeout",
+      "checks": [
+        {
+          "label": "inner",
+          "index": 1,
+          "status": "cancelled",
+          "passed": false,
+          "scope": "synthetic_prefix",
+          "execution": {
+            "process_returncode": 130,
+            "process_reaped": true,
+            "group_reaped": true,
+            "group_cleanup_status": "confirmed_absent"
+          }
+        }
+      ],
+      "events": [
+        {
+          "event": "item_started",
+          "item": "inner",
+          "index": 1,
+          "total": 1,
+          "completed": 0,
+          "passed": 0
+        },
+        {
+          "event": "process_started",
+          "item": "inner",
+          "index": 1,
+          "total": 1,
+          "completed": 0,
+          "passed": 0
+        },
+        {
+          "event": "item_cancelled",
+          "item": "inner",
+          "index": 1,
+          "total": 1,
+          "completed": 0,
+          "passed": 0,
+          "process_reaped": true
+        },
+        {
+          "event": "summary",
+          "item": "",
+          "index": 1,
+          "total": 1,
+          "completed": 0,
+          "passed": 0,
+          "status": "cancelled"
+        }
+      ]
+    },
+    "outer": {
+      "status": "cancelled",
+      "process_reaped": true,
+      "process_returncode": 130
+    }
+  },
+  "large_streams": {
+    "status": "returned",
+    "total": 1,
+    "returned": 1,
+    "passed": 0,
+    "unstarted": 0,
+    "timeout_seconds": 5.0,
+    "timeout_source": "explicit_item_timeout",
+    "checks": [
+      {
+        "label": "large",
+        "index": 1,
+        "status": "returned",
+        "passed": false,
+        "returncode": 0,
+        "scope": "synthetic_prefix",
+        "execution": {
+          "returncode": 0,
+          "process_returncode": 0,
+          "process_reaped": true,
+          "group_reaped": true,
+          "group_cleanup_status": "confirmed_absent",
+          "termination_reason": "",
+          "stdout_bytes": 300000,
+          "stderr_bytes": 350000,
+          "stdout_truncated": true,
+          "stderr_truncated": true
+        }
+      }
+    ],
+    "events": [
+      {
+        "event": "item_started",
+        "item": "large",
+        "index": 1,
+        "total": 1,
+        "completed": 0,
+        "passed": 0
+      },
+      {
+        "event": "process_started",
+        "item": "large",
+        "index": 1,
+        "total": 1,
+        "completed": 0,
+        "passed": 0
+      },
+      {
+        "event": "item_returned",
+        "item": "large",
+        "index": 1,
+        "total": 1,
+        "completed": 1,
+        "passed": 0,
+        "returncode": 0,
+        "check_status": "returned"
+      },
+      {
+        "event": "summary",
+        "item": "",
+        "index": 1,
+        "total": 1,
+        "completed": 1,
+        "passed": 0,
+        "status": "returned"
+      }
+    ]
+  },
+  "real_batch_cli": {
+    "returncode": 0,
+    "outer_formal_marker_count": 1,
+    "status": "returned",
+    "scope": "fastq_prefix_only",
+    "full_file_validated": false,
+    "total": 4,
+    "returned": 4,
+    "passed": 3,
+    "unstarted": 0,
+    "checks": [
+      {
+        "label": "item-0",
+        "passed": true,
+        "prefix": {
+          "status": "observed",
+          "operation": "fastq_prefix",
+          "checked_records": 1,
+          "prefix_valid": true,
+          "full_scientific_validation": false,
+          "stop_reason": "eof",
+          "limits": {
+            "input_bytes": 1048576,
+            "decoded_bytes": 65536,
+            "line_bytes": 16384,
+            "records": 32,
+            "lines": 120,
+            "seconds": 2.0
+          }
+        }
+      },
+      {
+        "label": "item-1",
+        "passed": true,
+        "prefix": {
+          "status": "observed",
+          "operation": "fastq_prefix",
+          "checked_records": 1,
+          "prefix_valid": true,
+          "full_scientific_validation": false,
+          "stop_reason": "eof",
+          "limits": {
+            "input_bytes": 1048576,
+            "decoded_bytes": 65536,
+            "line_bytes": 16384,
+            "records": 32,
+            "lines": 120,
+            "seconds": 2.0
+          }
+        }
+      },
+      {
+        "label": "item-2",
+        "passed": false,
+        "prefix": {
+          "status": "observed",
+          "operation": "fastq_prefix",
+          "checked_records": 0,
+          "prefix_valid": false,
+          "full_scientific_validation": false,
+          "stop_reason": "incomplete_fastq_record",
+          "limits": {
+            "input_bytes": 1048576,
+            "decoded_bytes": 65536,
+            "line_bytes": 16384,
+            "records": 32,
+            "lines": 120,
+            "seconds": 2.0
+          }
+        }
+      },
+      {
+        "label": "item-3",
+        "passed": true,
+        "prefix": {
+          "status": "observed",
+          "operation": "fastq_prefix",
+          "checked_records": 1,
+          "prefix_valid": true,
+          "full_scientific_validation": false,
+          "stop_reason": "eof",
+          "limits": {
+            "input_bytes": 1048576,
+            "decoded_bytes": 65536,
+            "line_bytes": 16384,
+            "records": 32,
+            "lines": 120,
+            "seconds": 2.0
+          }
+        }
+      }
+    ]
+  },
+  "actual_model_tool_messages": {
+    "same_directive_all_modes": true,
+    "per_mode": [
+      {
+        "llm_turns": 3,
+        "tool_calls": [
+          "failure.inspect",
+          "step.inspect"
+        ],
+        "added_narration_calls": 0
+      },
+      {
+        "llm_turns": 3,
+        "tool_calls": [
+          "failure.inspect",
+          "step.inspect"
+        ],
+        "added_narration_calls": 0
+      },
+      {
+        "llm_turns": 3,
+        "tool_calls": [
+          "failure.inspect",
+          "step.inspect"
+        ],
+        "added_narration_calls": 0
+      }
+    ],
+    "original_dispatcher_raw_source_unchanged": true,
+    "formal_marker_preserved": true
+  },
+  "additional_regression": {
+    "test_files": [
+      "tests/test_cli_model_progress.py",
+      "tests/test_cli_model_display.py"
+    ],
+    "old_head_results": "obs-prior-baseline-regression",
+    "current_results": "obs-current-regression",
+    "both": {
+      "passed": 20,
+      "failed": 1,
+      "elapsed_seconds": 6.57,
+      "source_unchanged": true
+    },
+    "failure": "test_context_local_confirmation_has_no_cross_call_wait: outer flush_public(timeout=0) False; unchanged in old HEAD and current exact test order"
+  },
+  "development_attempts": [
+    {
+      "results": "obs-results-1",
+      "status": "pre-test syntax failure; bracket corrected; no tests ran"
+    },
+    {
+      "results": "obs-results-2",
+      "passed": 7,
+      "failed": 3,
+      "reason": "synthetic printf format lacked quoted newline, corrupting fixture-only child JSON; corrected"
+    },
+    {
+      "results": "obs-results-3",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "results": "obs-results-4",
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "results": "obs-results-5",
+      "passed": 33,
+      "failed": 1,
+      "reason": "existing combined display ContextVar test failure, baseline confirmed"
+    }
+  ],
+  "source_receipt_digests": [
+    {
+      "name": "preflight-four-compact.json",
+      "sha256": "ab66f62fd49eef26f5fa2ed3acb85b143dc9d8f9a0d3e8c1acddd55f2827e8c4"
+    },
+    {
+      "name": "preflight-four-verbose.json",
+      "sha256": "e2a2be8f7456c5eec72bf90d620f65bc25f91dbac24d3ebd96c8cdc937dfe966"
+    },
+    {
+      "name": "preflight-four-off.json",
+      "sha256": "6c4775925790a22d62732e30b4a59ff92a2b3f4f59790c6ba87efb97f6e2e11a"
+    },
+    {
+      "name": "preflight-timeout.json",
+      "sha256": "ba61889ab6e17544f896367609ee6a88031186331407759d813c4c0a9effebef"
+    },
+    {
+      "name": "preflight-cancel.json",
+      "sha256": "76a41f5addb5303d118d39be2ce1d57a8fbc2249754e3607846abfd9f4201340"
+    },
+    {
+      "name": "preflight-large-streams.json",
+      "sha256": "d935dc0d00f800ef6ff0b83256e5d8c81228a0143ccb5d122640940b6facda56"
+    },
+    {
+      "name": "preflight-batch-cli.json",
+      "sha256": "ab750bb66c57d7e2a799ed5963178c08afc89627d748acb162c36a9084b22695"
+    },
+    {
+      "name": "preflight-outer-cancel.json",
+      "sha256": "073cc893bf3617a319e4199297b4cac56050b603be70d75d1307953f72a7c811"
+    },
+    {
+      "name": "preflight-recovery-tool-messages.json",
+      "sha256": "9c1bdd896e90b46f565fc4bcf753366f8e42c039fc2ebbfebd3ed3dec74e3260"
+    }
+  ],
+  "limitations": [
+    "No real WGS/API/session resumed; all FASTQ inputs are tiny synthetic prefixes.",
+    "Group disappearance is confirmed only for controlled test descendants. Kernel uninterruptible I/O or descendants escaping managed process groups cannot be promised reaped; metadata retains unconfirmed state.",
+    "O07 component test gates invocation before local deadline; AP production approval-to-spawn tests are a separate root-owned acceptance component.",
+    "Existing cross-test ContextVar flush_public failure remains reproduced on both old HEAD and current; not changed as part of OBS.",
+    "Stream-limit behavior is inherited: an explicit output-limit termination can stop preserving bytes beyond the existing limit; tested 300000+350000 byte streams remain byte-exact."
+  ],
+  "final_validation": {
+    "base_slice_commit": "132b11667930315e5f605fd08073f8f700e2b82d",
+    "plain_followup_commit": "07eae17c544479444f2dfe4e531845e3f36b2f31",
+    "result": "17 passed in 3.92s; includes 14 OBS plus 3 existing plain tests",
+    "source_tree": "2834bd3c449c12ef621d4566f4ded0f30b79c13e",
+    "source_unchanged": true,
+    "plain_progress_verification": "Writer contains actual process-start label while first child is still blocked; off output remains empty. Earlier 14 checks proved display state but omitted this writer assertion."
+  },
+  "final_plain_display": {
+    "compact": {
+      "display": "开始检查 S0 · 已返回 0/4 · 范围内通过 0\n检查进程已启动 S0 · 已返回 0/4 · 范围内通过 0\n命令 rc=0，等待正式核验\n检查已返回 S0 · 已返回 1/4 · 范围内通过 1\n开始检查 S1 · 已返回 1/4 · 范围内通过 1\n检查进程已启动 S1 · 已返回 1/4 · 范围内通过 1\n命令 rc=0，等待正式核验\n检查已返回 S1 · 已返回 2/4 · 范围内通过 2\n开始检查 S2 · 已返回 2/4 · 范围内通过 2\n检查进程已启动 S2 · 已返回 2/4 · 范围内通过 2\n命令 rc=0，等待正式核验\n检查已返回 S2 · 已返回 3/4 · 范围内通过 3\n开始检查 S3 · 已返回 3/4 · 范围内通过 3\n检查进程已启动 S3 · 已返回 3/4 · 范围内通过 3\n命令 rc=0，等待正式核验\n检查已返回 S3 · 已返回 4/4 · 范围内通过 4\n短预检收尾 · 已返回 4/4 · 范围内通过 4\n",
+      "last_status": "短预检收尾 · 已返回 4/4 · 范围内通过 4",
+      "model_calls": 0,
+      "returned": 4,
+      "passed": 4
+    },
+    "verbose": {
+      "display": "开始检查 S0 · 已返回 0/4 · 范围内通过 0\n工具事件 RUNNING\n工具进程已启动；等待执行结果\n检查进程已启动 S0 · 已返回 0/4 · 范围内通过 0\n工具事件 PROCESS_EXITED\n命令 rc=0，等待正式核验\n检查已返回 S0 · 已返回 1/4 · 范围内通过 1\n开始检查 S1 · 已返回 1/4 · 范围内通过 1\n工具事件 RUNNING\n工具进程已启动；等待执行结果\n检查进程已启动 S1 · 已返回 1/4 · 范围内通过 1\n工具事件 PROCESS_EXITED\n命令 rc=0，等待正式核验\n检查已返回 S1 · 已返回 2/4 · 范围内通过 2\n开始检查 S2 · 已返回 2/4 · 范围内通过 2\n工具事件 RUNNING\n工具进程已启动；等待执行结果\n检查进程已启动 S2 · 已返回 2/4 · 范围内通过 2\n工具事件 HEARTBEAT\n工具事件 PROCESS_EXITED\n命令 rc=0，等待正式核验\n检查已返回 S2 · 已返回 3/4 · 范围内通过 3\n开始检查 S3 · 已返回 3/4 · 范围内通过 3\n工具事件 RUNNING\n工具进程已启动；等待执行结果\n检查进程已启动 S3 · 已返回 3/4 · 范围内通过 3\n工具事件 HEARTBEAT\n工具事件 PROCESS_EXITED\n命令 rc=0，等待正式核验\n检查已返回 S3 · 已返回 4/4 · 范围内通过 4\n短预检收尾 · 已返回 4/4 · 范围内通过 4\n",
+      "last_status": " · 短预检收尾 · 已返回 4/4 · 范围内通过 4 · 距上次观测 0 秒",
+      "model_calls": 0,
+      "returned": 4,
+      "passed": 4
+    },
+    "off": {
+      "display": "",
+      "last_status": "短预检收尾 · 已返回 4/4 · 范围内通过 4",
+      "model_calls": 0,
+      "returned": 4,
+      "passed": 4
+    }
+  }
+}

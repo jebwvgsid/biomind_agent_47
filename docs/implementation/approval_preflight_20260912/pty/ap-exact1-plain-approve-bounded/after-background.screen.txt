@@ -1,0 +1,24 @@
+# body-line-413 synthetic review context
+# body-line-414 synthetic review context
+# body-line-415 synthetic review context
+# body-line-416 synthetic review context
+# body-line-417 synthetic review context
+# body-line-418 synthetic review context
+# body-line-419 synthetic review context
+# body-line-420 synthetic review context
+# body-line-421 synthetic review context
+# body-line-422 synthetic review context
+# body-line-423 synthetic review context
+# body-line-424 synthetic review context
+# body-line-425 synthetic review context
+# body-line-426 synthetic review context
+# body-line-427 synthetic review context
+# body-line-428 synthetic review context
+# body-line-429 synthetic review context
+printf 'approval-fixture-executed\n'
+/details 查看完整对象；查看详情不构成批准。
+等待代码审批 · 当前候选尚未执行
+[y/Enter=run, n=reject, q=quit, e:=edit] >
+synthetic recoverable notification; approval remains pending
+提示已恢复；已键入内容仍保留，当前对象未变，仍待决定。
+[y/Enter=run, n=reject, q=quit, e:=edit] >

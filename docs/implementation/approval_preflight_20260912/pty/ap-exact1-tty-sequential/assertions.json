@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "checks": {
+    "child_completed": true,
+    "source_unchanged": true,
+    "kernel_pty_and_production_input": true,
+    "vt_decoder_has_no_unknown_operations": true,
+    "no_unexpected_model_calls": true,
+    "execution_count": true,
+    "undecided_execution_zero": true,
+    "last_screen_prompt_visible": true,
+    "waiting_state_visible": true,
+    "executed_original_approved_bytes": true,
+    "real_process_succeeded": true,
+    "actual_spawn_and_exit_receipts": true,
+    "actual_fifteen_step_plan_review": true,
+    "two_distinct_approval_requests": true,
+    "production_monotonic_lifecycle": true,
+    "lifecycle_order_1": true,
+    "lifecycle_order_2": true
+  }
+}

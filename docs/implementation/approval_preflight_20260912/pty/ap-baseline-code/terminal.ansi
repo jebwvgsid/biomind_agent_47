@@ -1,0 +1,945 @@
+[y/Enter=run, n=reject, q=quit, e:=edit] > [0m代码审批
+语言 Bash · 风险检查 medium
+审批显示正文 SHA-256: eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca
+完整输入、输出、约束及执行作用范围见下方详情；摘要不能确认全部副作用。
+工作目录与实际写入目标以完整执行定义为准；无法从现有审批字段可靠概括，需查看完整代码。
+/details 或 F2 查看完整对象；查看/返回不代表批准。
+代码审批
+# Synthetic approved candidate; no scientific input
+# body-line-000 synthetic review context
+# body-line-001 synthetic review context
+# body-line-002 synthetic review context
+# body-line-003 synthetic review context
+# body-line-004 synthetic review context
+# body-line-005 synthetic review context
+# body-line-006 synthetic review context
+# body-line-007 synthetic review context
+# body-line-008 synthetic review context
+# body-line-009 synthetic review context
+# body-line-010 synthetic review context
+# body-line-011 synthetic review context
+# body-line-012 synthetic review context
+# body-line-013 synthetic review context
+# body-line-014 synthetic review context
+# body-line-015 synthetic review context
+# body-line-016 synthetic review context
+# body-line-017 synthetic review context
+# body-line-018 synthetic review context
+# body-line-019 synthetic review context
+# body-line-020 synthetic review context
+# body-line-021 synthetic review context
+# body-line-022 synthetic review context
+# body-line-023 synthetic review context
+# body-line-024 synthetic review context
+# body-line-025 synthetic review context
+# body-line-026 synthetic review context
+# body-line-027 synthetic review context
+# body-line-028 synthetic review context
+# body-line-029 synthetic review context
+# body-line-030 synthetic review context
+# body-line-031 synthetic review context
+# body-line-032 synthetic review context
+# body-line-033 synthetic review context
+# body-line-034 synthetic review context
+# body-line-035 synthetic review context
+# body-line-036 synthetic review context
+# body-line-037 synthetic review context
+# body-line-038 synthetic review context
+# body-line-039 synthetic review context
+# body-line-040 synthetic review context
+# body-line-041 synthetic review context
+# body-line-042 synthetic review context
+# body-line-043 synthetic review context
+# body-line-044 synthetic review context
+# body-line-045 synthetic review context
+# body-line-046 synthetic review context
+# body-line-047 synthetic review context
+# body-line-048 synthetic review context
+# body-line-049 synthetic review context
+# body-line-050 synthetic review context
+# body-line-051 synthetic review context
+# body-line-052 synthetic review context
+# body-line-053 synthetic review context
+# body-line-054 synthetic review context
+# body-line-055 synthetic review context
+# body-line-056 synthetic review context
+# body-line-057 synthetic review context
+# body-line-058 synthetic review context
+# body-line-059 synthetic review context
+# body-line-060 synthetic review context
+# body-line-061 synthetic review context
+# body-line-062 synthetic review context
+# body-line-063 synthetic review context
+# body-line-064 synthetic review context
+# body-line-065 synthetic review context
+# body-line-066 synthetic review context
+# body-line-067 synthetic review context
+# body-line-068 synthetic review context
+# body-line-069 synthetic review context
+# body-line-070 synthetic review context
+# body-line-071 synthetic review context
+# body-line-072 synthetic review context
+# body-line-073 synthetic review context
+# body-line-074 synthetic review context
+# body-line-075 synthetic review context
+# body-line-076 synthetic review context
+# body-line-077 synthetic review context
+# body-line-078 synthetic review context
+# body-line-079 synthetic review context
+# body-line-080 synthetic review context
+# body-line-081 synthetic review context
+# body-line-082 synthetic review context
+# body-line-083 synthetic review context
+# body-line-084 synthetic review context
+# body-line-085 synthetic review context
+# body-line-086 synthetic review context
+# body-line-087 synthetic review context
+# body-line-088 synthetic review context
+# body-line-089 synthetic review context
+# body-line-090 synthetic review context
+# body-line-091 synthetic review context
+# body-line-092 synthetic review context
+# body-line-093 synthetic review context
+# body-line-094 synthetic review context
+# body-line-095 synthetic review context
+# body-line-096 synthetic review context
+# body-line-097 synthetic review context
+# body-line-098 synthetic review context
+# body-line-099 synthetic review context
+# body-line-100 synthetic review context
+# body-line-101 synthetic review context
+# body-line-102 synthetic review context
+# body-line-103 synthetic review context
+# body-line-104 synthetic review context
+# body-line-105 synthetic review context
+# body-line-106 synthetic review context
+# body-line-107 synthetic review context
+# body-line-108 synthetic review context
+# body-line-109 synthetic review context
+# body-line-110 synthetic review context
+# body-line-111 synthetic review context
+# body-line-112 synthetic review context
+# body-line-113 synthetic review context
+# body-line-114 synthetic review context
+# body-line-115 synthetic review context
+# body-line-116 synthetic review context
+# body-line-117 synthetic review context
+# body-line-118 synthetic review context
+# body-line-119 synthetic review context
+# body-line-120 synthetic review context
+# body-line-121 synthetic review context
+# body-line-122 synthetic review context
+# body-line-123 synthetic review context
+# body-line-124 synthetic review context
+# body-line-125 synthetic review context
+# body-line-126 synthetic review context
+# body-line-127 synthetic review context
+# body-line-128 synthetic review context
+# body-line-129 synthetic review context
+# body-line-130 synthetic review context
+# body-line-131 synthetic review context
+# body-line-132 synthetic review context
+# body-line-133 synthetic review context
+# body-line-134 synthetic review context
+# body-line-135 synthetic review context
+# body-line-136 synthetic review context
+# body-line-137 synthetic review context
+# body-line-138 synthetic review context
+# body-line-139 synthetic review context
+# body-line-140 synthetic review context
+# body-line-141 synthetic review context
+# body-line-142 synthetic review context
+# body-line-143 synthetic review context
+# body-line-144 synthetic review context
+# body-line-145 synthetic review context
+# body-line-146 synthetic review context
+# body-line-147 synthetic review context
+# body-line-148 synthetic review context
+# body-line-149 synthetic review context
+# body-line-150 synthetic review context
+# body-line-151 synthetic review context
+# body-line-152 synthetic review context
+# body-line-153 synthetic review context
+# body-line-154 synthetic review context
+# body-line-155 synthetic review context
+# body-line-156 synthetic review context
+# body-line-157 synthetic review context
+# body-line-158 synthetic review context
+# body-line-159 synthetic review context
+# body-line-160 synthetic review context
+# body-line-161 synthetic review context
+# body-line-162 synthetic review context
+# body-line-163 synthetic review context
+# body-line-164 synthetic review context
+# body-line-165 synthetic review context
+# body-line-166 synthetic review context
+# body-line-167 synthetic review context
+# body-line-168 synthetic review context
+# body-line-169 synthetic review context
+# body-line-170 synthetic review context
+# body-line-171 synthetic review context
+# body-line-172 synthetic review context
+# body-line-173 synthetic review context
+# body-line-174 synthetic review context
+# body-line-175 synthetic review context
+# body-line-176 synthetic review context
+# body-line-177 synthetic review context
+# body-line-178 synthetic review context
+# body-line-179 synthetic review context
+# body-line-180 synthetic review context
+# body-line-181 synthetic review context
+# body-line-182 synthetic review context
+# body-line-183 synthetic review context
+# body-line-184 synthetic review context
+# body-line-185 synthetic review context
+# body-line-186 synthetic review context
+# body-line-187 synthetic review context
+# body-line-188 synthetic review context
+# body-line-189 synthetic review context
+# body-line-190 synthetic review context
+# body-line-191 synthetic review context
+# body-line-192 synthetic review context
+# body-line-193 synthetic review context
+# body-line-194 synthetic review context
+# body-line-195 synthetic review context
+# body-line-196 synthetic review context
+# body-line-197 synthetic review context
+# body-line-198 synthetic review context
+# body-line-199 synthetic review context
+# body-line-200 synthetic review context
+# body-line-201 synthetic review context
+# body-line-202 synthetic review context
+# body-line-203 synthetic review context
+# body-line-204 synthetic review context
+# body-line-205 synthetic review context
+# body-line-206 synthetic review context
+# body-line-207 synthetic review context
+# body-line-208 synthetic review context
+# body-line-209 synthetic review context
+# body-line-210 synthetic review context
+# body-line-211 synthetic review context
+# body-line-212 synthetic review context
+# body-line-213 synthetic review context
+# body-line-214 synthetic review context
+# body-line-215 synthetic review context
+# body-line-216 synthetic review context
+# body-line-217 synthetic review context
+# body-line-218 synthetic review context
+# body-line-219 synthetic review context
+# body-line-220 synthetic review context
+# body-line-221 synthetic review context
+# body-line-222 synthetic review context
+# body-line-223 synthetic review context
+# body-line-224 synthetic review context
+# body-line-225 synthetic review context
+# body-line-226 synthetic review context
+# body-line-227 synthetic review context
+# body-line-228 synthetic review context
+# body-line-229 synthetic review context
+# body-line-230 synthetic review context
+# body-line-231 synthetic review context
+# body-line-232 synthetic review context
+# body-line-233 synthetic review context
+# body-line-234 synthetic review context
+# body-line-235 synthetic review context
+# body-line-236 synthetic review context
+# body-line-237 synthetic review context
+# body-line-238 synthetic review context
+# body-line-239 synthetic review context
+# body-line-240 synthetic review context
+# body-line-241 synthetic review context
+# body-line-242 synthetic review context
+# body-line-243 synthetic review context
+# body-line-244 synthetic review context
+# body-line-245 synthetic review context
+# body-line-246 synthetic review context
+# body-line-247 synthetic review context
+# body-line-248 synthetic review context
+# body-line-249 synthetic review context
+# body-line-250 synthetic review context
+# body-line-251 synthetic review context
+# body-line-252 synthetic review context
+# body-line-253 synthetic review context
+# body-line-254 synthetic review context
+# body-line-255 synthetic review context
+# body-line-256 synthetic review context
+# body-line-257 synthetic review context
+# body-line-258 synthetic review context
+# body-line-259 synthetic review context
+# body-line-260 synthetic review context
+# body-line-261 synthetic review context
+# body-line-262 synthetic review context
+# body-line-263 synthetic review context
+# body-line-264 synthetic review context
+# body-line-265 synthetic review context
+# body-line-266 synthetic review context
+# body-line-267 synthetic review context
+# body-line-268 synthetic review context
+# body-line-269 synthetic review context
+# body-line-270 synthetic review context
+# body-line-271 synthetic review context
+# body-line-272 synthetic review context
+# body-line-273 synthetic review context
+# body-line-274 synthetic review context
+# body-line-275 synthetic review context
+# body-line-276 synthetic review context
+# body-line-277 synthetic review context
+# body-line-278 synthetic review context
+# body-line-279 synthetic review context
+# body-line-280 synthetic review context
+# body-line-281 synthetic review context
+# body-line-282 synthetic review context
+# body-line-283 synthetic review context
+# body-line-284 synthetic review context
+# body-line-285 synthetic review context
+# body-line-286 synthetic review context
+# body-line-287 synthetic review context
+# body-line-288 synthetic review context
+# body-line-289 synthetic review context
+# body-line-290 synthetic review context
+# body-line-291 synthetic review context
+# body-line-292 synthetic review context
+# body-line-293 synthetic review context
+# body-line-294 synthetic review context
+# body-line-295 synthetic review context
+# body-line-296 synthetic review context
+# body-line-297 synthetic review context
+# body-line-298 synthetic review context
+# body-line-299 synthetic review context
+# body-line-300 synthetic review context
+# body-line-301 synthetic review context
+# body-line-302 synthetic review context
+# body-line-303 synthetic review context
+# body-line-304 synthetic review context
+# body-line-305 synthetic review context
+# body-line-306 synthetic review context
+# body-line-307 synthetic review context
+# body-line-308 synthetic review context
+# body-line-309 synthetic review context
+# body-line-310 synthetic review context
+# body-line-311 synthetic review context
+# body-line-312 synthetic review context
+# body-line-313 synthetic review context
+# body-line-314 synthetic review context
+# body-line-315 synthetic review context
+# body-line-316 synthetic review context
+# body-line-317 synthetic review context
+# body-line-318 synthetic review context
+# body-line-319 synthetic review context
+# body-line-320 synthetic review context
+# body-line-321 synthetic review context
+# body-line-322 synthetic review context
+# body-line-323 synthetic review context
+# body-line-324 synthetic review context
+# body-line-325 synthetic review context
+# body-line-326 synthetic review context
+# body-line-327 synthetic review context
+# body-line-328 synthetic review context
+# body-line-329 synthetic review context
+# body-line-330 synthetic review context
+# body-line-331 synthetic review context
+# body-line-332 synthetic review context
+# body-line-333 synthetic review context
+# body-line-334 synthetic review context
+# body-line-335 synthetic review context
+# body-line-336 synthetic review context
+# body-line-337 synthetic review context
+# body-line-338 synthetic review context
+# body-line-339 synthetic review context
+# body-line-340 synthetic review context
+# body-line-341 synthetic review context
+# body-line-342 synthetic review context
+# body-line-343 synthetic review context
+# body-line-344 synthetic review context
+# body-line-345 synthetic review context
+# body-line-346 synthetic review context
+# body-line-347 synthetic review context
+# body-line-348 synthetic review context
+# body-line-349 synthetic review context
+# body-line-350 synthetic review context
+# body-line-351 synthetic review context
+# body-line-352 synthetic review context
+# body-line-353 synthetic review context
+# body-line-354 synthetic review context
+# body-line-355 synthetic review context
+# body-line-356 synthetic review context
+# body-line-357 synthetic review context
+# body-line-358 synthetic review context
+# body-line-359 synthetic review context
+# body-line-360 synthetic review context
+# body-line-361 synthetic review context
+# body-line-362 synthetic review context
+# body-line-363 synthetic review context
+# body-line-364 synthetic review context
+# body-line-365 synthetic review context
+# body-line-366 synthetic review context
+# body-line-367 synthetic review context
+# body-line-368 synthetic review context
+# body-line-369 synthetic review context
+# body-line-370 synthetic review context
+# body-line-371 synthetic review context
+# body-line-372 synthetic review context
+# body-line-373 synthetic review context
+# body-line-374 synthetic review context
+# body-line-375 synthetic review context
+# body-line-376 synthetic review context
+# body-line-377 synthetic review context
+# body-line-378 synthetic review context
+# body-line-379 synthetic review context
+# body-line-380 synthetic review context
+# body-line-381 synthetic review context
+# body-line-382 synthetic review context
+# body-line-383 synthetic review context
+# body-line-384 synthetic review context
+# body-line-385 synthetic review context
+# body-line-386 synthetic review context
+# body-line-387 synthetic review context
+# body-line-388 synthetic review context
+# body-line-389 synthetic review context
+# body-line-390 synthetic review context
+# body-line-391 synthetic review context
+# body-line-392 synthetic review context
+# body-line-393 synthetic review context
+# body-line-394 synthetic review context
+# body-line-395 synthetic review context
+# body-line-396 synthetic review context
+# body-line-397 synthetic review context
+# body-line-398 synthetic review context
+# body-line-399 synthetic review context
+# body-line-400 synthetic review context
+# body-line-401 synthetic review context
+# body-line-402 synthetic review context
+# body-line-403 synthetic review context
+# body-line-404 synthetic review context
+# body-line-405 synthetic review context
+# body-line-406 synthetic review context
+# body-line-407 synthetic review context
+# body-line-408 synthetic review context
+# body-line-409 synthetic review context
+# body-line-410 synthetic review context
+# body-line-411 synthetic review context
+# body-line-412 synthetic review context
+# body-line-413 synthetic review context
+# body-line-414 synthetic review context
+# body-line-415 synthetic review context
+# body-line-416 synthetic review context
+# body-line-417 synthetic review context
+# body-line-418 synthetic review context
+# body-line-419 synthetic review context
+# body-line-420 synthetic review context
+# body-line-421 synthetic review context
+# body-line-422 synthetic review context
+# body-line-423 synthetic review context
+# body-line-424 synthetic review context
+# body-line-425 synthetic review context
+# body-line-426 synthetic review context
+# body-line-427 synthetic review context
+# body-line-428 synthetic review context
+# body-line-429 synthetic review context
+printf 'approval-fixture-executed\n'
+background-000 ordinary synthetic activity
+background-001 ordinary synthetic activity
+background-002 ordinary synthetic activity
+background-003 ordinary synthetic activity
+background-004 ordinary synthetic activity
+background-005 ordinary synthetic activity
+background-006 ordinary synthetic activity
+background-007 ordinary synthetic activity
+background-008 ordinary synthetic activity
+background-009 ordinary synthetic activity
+background-010 ordinary synthetic activity
+background-011 ordinary synthetic activity
+background-012 ordinary synthetic activity
+background-013 ordinary synthetic activity
+background-014 ordinary synthetic activity
+background-015 ordinary synthetic activity
+background-016 ordinary synthetic activity
+background-017 ordinary synthetic activity
+background-018 ordinary synthetic activity
+background-019 ordinary synthetic activity
+background-020 ordinary synthetic activity
+background-021 ordinary synthetic activity
+background-022 ordinary synthetic activity
+background-023 ordinary synthetic activity
+background-024 ordinary synthetic activity
+background-025 ordinary synthetic activity
+background-026 ordinary synthetic activity
+background-027 ordinary synthetic activity
+background-028 ordinary synthetic activity
+background-029 ordinary synthetic activity
+background-030 ordinary synthetic activity
+background-031 ordinary synthetic activity
+background-032 ordinary synthetic activity
+background-033 ordinary synthetic activity
+background-034 ordinary synthetic activity
+background-035 ordinary synthetic activity
+background-036 ordinary synthetic activity
+background-037 ordinary synthetic activity
+background-038 ordinary synthetic activity
+background-039 ordinary synthetic activity
+background-040 ordinary synthetic activity
+background-041 ordinary synthetic activity
+background-042 ordinary synthetic activity
+background-043 ordinary synthetic activity
+background-044 ordinary synthetic activity
+background-045 ordinary synthetic activity
+background-046 ordinary synthetic activity
+background-047 ordinary synthetic activity
+background-048 ordinary synthetic activity
+background-049 ordinary synthetic activity
+background-050 ordinary synthetic activity
+background-051 ordinary synthetic activity
+background-052 ordinary synthetic activity
+background-053 ordinary synthetic activity
+background-054 ordinary synthetic activity
+background-055 ordinary synthetic activity
+background-056 ordinary synthetic activity
+background-057 ordinary synthetic activity
+background-058 ordinary synthetic activity
+background-059 ordinary synthetic activity
+background-060 ordinary synthetic activity
+background-061 ordinary synthetic activity
+background-062 ordinary synthetic activity
+background-063 ordinary synthetic activity
+background-064 ordinary synthetic activity
+background-065 ordinary synthetic activity
+background-066 ordinary synthetic activity
+background-067 ordinary synthetic activity
+background-068 ordinary synthetic activity
+background-069 ordinary synthetic activity
+background-070 ordinary synthetic activity
+background-071 ordinary synthetic activity
+background-072 ordinary synthetic activity
+background-073 ordinary synthetic activity
+background-074 ordinary synthetic activity
+background-075 ordinary synthetic activity
+background-076 ordinary synthetic activity
+background-077 ordinary synthetic activity
+background-078 ordinary synthetic activity
+background-079 ordinary synthetic activity
+background-080 ordinary synthetic activity
+background-081 ordinary synthetic activity
+background-082 ordinary synthetic activity
+background-083 ordinary synthetic activity
+background-084 ordinary synthetic activity
+background-085 ordinary synthetic activity
+background-086 ordinary synthetic activity
+background-087 ordinary synthetic activity
+background-088 ordinary synthetic activity
+background-089 ordinary synthetic activity
+background-090 ordinary synthetic activity
+background-091 ordinary synthetic activity
+background-092 ordinary synthetic activity
+background-093 ordinary synthetic activity
+background-094 ordinary synthetic activity
+background-095 ordinary synthetic activity
+background-096 ordinary synthetic activity
+background-097 ordinary synthetic activity
+background-098 ordinary synthetic activity
+background-099 ordinary synthetic activity
+background-100 ordinary synthetic activity
+background-101 ordinary synthetic activity
+background-102 ordinary synthetic activity
+background-103 ordinary synthetic activity
+background-104 ordinary synthetic activity
+background-105 ordinary synthetic activity
+background-106 ordinary synthetic activity
+background-107 ordinary synthetic activity
+background-108 ordinary synthetic activity
+background-109 ordinary synthetic activity
+background-110 ordinary synthetic activity
+background-111 ordinary synthetic activity
+background-112 ordinary synthetic activity
+background-113 ordinary synthetic activity
+background-114 ordinary synthetic activity
+background-115 ordinary synthetic activity
+background-116 ordinary synthetic activity
+background-117 ordinary synthetic activity
+background-118 ordinary synthetic activity
+background-119 ordinary synthetic activity
+background-120 ordinary synthetic activity
+background-121 ordinary synthetic activity
+background-122 ordinary synthetic activity
+background-123 ordinary synthetic activity
+background-124 ordinary synthetic activity
+background-125 ordinary synthetic activity
+background-126 ordinary synthetic activity
+background-127 ordinary synthetic activity
+background-128 ordinary synthetic activity
+background-129 ordinary synthetic activity
+background-130 ordinary synthetic activity
+background-131 ordinary synthetic activity
+background-132 ordinary synthetic activity
+background-133 ordinary synthetic activity
+background-134 ordinary synthetic activity
+background-135 ordinary synthetic activity
+background-136 ordinary synthetic activity
+background-137 ordinary synthetic activity
+background-138 ordinary synthetic activity
+background-139 ordinary synthetic activity
+background-140 ordinary synthetic activity
+background-141 ordinary synthetic activity
+background-142 ordinary synthetic activity
+background-143 ordinary synthetic activity
+background-144 ordinary synthetic activity
+background-145 ordinary synthetic activity
+background-146 ordinary synthetic activity
+background-147 ordinary synthetic activity
+background-148 ordinary synthetic activity
+background-149 ordinary synthetic activity
+background-150 ordinary synthetic activity
+background-151 ordinary synthetic activity
+background-152 ordinary synthetic activity
+background-153 ordinary synthetic activity
+background-154 ordinary synthetic activity
+background-155 ordinary synthetic activity
+background-156 ordinary synthetic activity
+background-157 ordinary synthetic activity
+background-158 ordinary synthetic activity
+background-159 ordinary synthetic activity
+background-160 ordinary synthetic activity
+background-161 ordinary synthetic activity
+background-162 ordinary synthetic activity
+background-163 ordinary synthetic activity
+background-164 ordinary synthetic activity
+background-165 ordinary synthetic activity
+background-166 ordinary synthetic activity
+background-167 ordinary synthetic activity
+background-168 ordinary synthetic activity
+background-169 ordinary synthetic activity
+background-170 ordinary synthetic activity
+background-171 ordinary synthetic activity
+background-172 ordinary synthetic activity
+background-173 ordinary synthetic activity
+background-174 ordinary synthetic activity
+background-175 ordinary synthetic activity
+background-176 ordinary synthetic activity
+background-177 ordinary synthetic activity
+background-178 ordinary synthetic activity
+background-179 ordinary synthetic activity
+background-180 ordinary synthetic activity
+background-181 ordinary synthetic activity
+background-182 ordinary synthetic activity
+background-183 ordinary synthetic activity
+background-184 ordinary synthetic activity
+background-185 ordinary synthetic activity
+background-186 ordinary synthetic activity
+background-187 ordinary synthetic activity
+background-188 ordinary synthetic activity
+background-189 ordinary synthetic activity
+background-190 ordinary synthetic activity
+background-191 ordinary synthetic activity
+background-192 ordinary synthetic activity
+background-193 ordinary synthetic activity
+background-194 ordinary synthetic activity
+background-195 ordinary synthetic activity
+background-196 ordinary synthetic activity
+background-197 ordinary synthetic activity
+background-198 ordinary synthetic activity
+background-199 ordinary synthetic activity
+background-200 ordinary synthetic activity
+background-201 ordinary synthetic activity
+background-202 ordinary synthetic activity
+background-203 ordinary synthetic activity
+background-204 ordinary synthetic activity
+background-205 ordinary synthetic activity
+background-206 ordinary synthetic activity
+background-207 ordinary synthetic activity
+background-208 ordinary synthetic activity
+background-209 ordinary synthetic activity
+background-210 ordinary synthetic activity
+background-211 ordinary synthetic activity
+background-212 ordinary synthetic activity
+background-213 ordinary synthetic activity
+background-214 ordinary synthetic activity
+background-215 ordinary synthetic activity
+background-216 ordinary synthetic activity
+background-217 ordinary synthetic activity
+background-218 ordinary synthetic activity
+background-219 ordinary synthetic activity
+background-220 ordinary synthetic activity
+background-221 ordinary synthetic activity
+background-222 ordinary synthetic activity
+background-223 ordinary synthetic activity
+background-224 ordinary synthetic activity
+background-225 ordinary synthetic activity
+background-226 ordinary synthetic activity
+background-227 ordinary synthetic activity
+background-228 ordinary synthetic activity
+background-229 ordinary synthetic activity
+background-230 ordinary synthetic activity
+background-231 ordinary synthetic activity
+background-232 ordinary synthetic activity
+background-233 ordinary synthetic activity
+background-234 ordinary synthetic activity
+background-235 ordinary synthetic activity
+background-236 ordinary synthetic activity
+background-237 ordinary synthetic activity
+background-238 ordinary synthetic activity
+background-239 ordinary synthetic activity
+background-240 ordinary synthetic activity
+background-241 ordinary synthetic activity
+background-242 ordinary synthetic activity
+background-243 ordinary synthetic activity
+background-244 ordinary synthetic activity
+background-245 ordinary synthetic activity
+background-246 ordinary synthetic activity
+background-247 ordinary synthetic activity
+background-248 ordinary synthetic activity
+background-249 ordinary synthetic activity
+background-250 ordinary synthetic activity
+background-251 ordinary synthetic activity
+background-252 ordinary synthetic activity
+background-253 ordinary synthetic activity
+background-254 ordinary synthetic activity
+background-255 ordinary synthetic activity
+background-256 ordinary synthetic activity
+background-257 ordinary synthetic activity
+background-258 ordinary synthetic activity
+background-259 ordinary synthetic activity
+background-260 ordinary synthetic activity
+background-261 ordinary synthetic activity
+background-262 ordinary synthetic activity
+background-263 ordinary synthetic activity
+background-264 ordinary synthetic activity
+background-265 ordinary synthetic activity
+background-266 ordinary synthetic activity
+background-267 ordinary synthetic activity
+background-268 ordinary synthetic activity
+background-269 ordinary synthetic activity
+background-270 ordinary synthetic activity
+background-271 ordinary synthetic activity
+background-272 ordinary synthetic activity
+background-273 ordinary synthetic activity
+background-274 ordinary synthetic activity
+background-275 ordinary synthetic activity
+background-276 ordinary synthetic activity
+background-277 ordinary synthetic activity
+background-278 ordinary synthetic activity
+background-279 ordinary synthetic activity
+background-280 ordinary synthetic activity
+background-281 ordinary synthetic activity
+background-282 ordinary synthetic activity
+background-283 ordinary synthetic activity
+background-284 ordinary synthetic activity
+background-285 ordinary synthetic activity
+background-286 ordinary synthetic activity
+background-287 ordinary synthetic activity
+background-288 ordinary synthetic activity
+background-289 ordinary synthetic activity
+background-290 ordinary synthetic activity
+background-291 ordinary synthetic activity
+background-292 ordinary synthetic activity
+background-293 ordinary synthetic activity
+background-294 ordinary synthetic activity
+background-295 ordinary synthetic activity
+background-296 ordinary synthetic activity
+background-297 ordinary synthetic activity
+background-298 ordinary synthetic activity
+background-299 ordinary synthetic activity
+background-300 ordinary synthetic activity
+background-301 ordinary synthetic activity
+background-302 ordinary synthetic activity
+background-303 ordinary synthetic activity
+background-304 ordinary synthetic activity
+background-305 ordinary synthetic activity
+background-306 ordinary synthetic activity
+background-307 ordinary synthetic activity
+background-308 ordinary synthetic activity
+background-309 ordinary synthetic activity
+background-310 ordinary synthetic activity
+background-311 ordinary synthetic activity
+background-312 ordinary synthetic activity
+background-313 ordinary synthetic activity
+background-314 ordinary synthetic activity
+background-315 ordinary synthetic activity
+background-316 ordinary synthetic activity
+background-317 ordinary synthetic activity
+background-318 ordinary synthetic activity
+background-319 ordinary synthetic activity
+background-320 ordinary synthetic activity
+background-321 ordinary synthetic activity
+background-322 ordinary synthetic activity
+background-323 ordinary synthetic activity
+background-324 ordinary synthetic activity
+background-325 ordinary synthetic activity
+background-326 ordinary synthetic activity
+background-327 ordinary synthetic activity
+background-328 ordinary synthetic activity
+background-329 ordinary synthetic activity
+background-330 ordinary synthetic activity
+background-331 ordinary synthetic activity
+background-332 ordinary synthetic activity
+background-333 ordinary synthetic activity
+background-334 ordinary synthetic activity
+background-335 ordinary synthetic activity
+background-336 ordinary synthetic activity
+background-337 ordinary synthetic activity
+background-338 ordinary synthetic activity
+background-339 ordinary synthetic activity
+background-340 ordinary synthetic activity
+background-341 ordinary synthetic activity
+background-342 ordinary synthetic activity
+background-343 ordinary synthetic activity
+background-344 ordinary synthetic activity
+background-345 ordinary synthetic activity
+background-346 ordinary synthetic activity
+background-347 ordinary synthetic activity
+background-348 ordinary synthetic activity
+background-349 ordinary synthetic activity
+background-350 ordinary synthetic activity
+background-351 ordinary synthetic activity
+background-352 ordinary synthetic activity
+background-353 ordinary synthetic activity
+background-354 ordinary synthetic activity
+background-355 ordinary synthetic activity
+background-356 ordinary synthetic activity
+background-357 ordinary synthetic activity
+background-358 ordinary synthetic activity
+background-359 ordinary synthetic activity
+background-360 ordinary synthetic activity
+background-361 ordinary synthetic activity
+background-362 ordinary synthetic activity
+background-363 ordinary synthetic activity
+background-364 ordinary synthetic activity
+background-365 ordinary synthetic activity
+background-366 ordinary synthetic activity
+background-367 ordinary synthetic activity
+background-368 ordinary synthetic activity
+background-369 ordinary synthetic activity
+background-370 ordinary synthetic activity
+background-371 ordinary synthetic activity
+background-372 ordinary synthetic activity
+background-373 ordinary synthetic activity
+background-374 ordinary synthetic activity
+background-375 ordinary synthetic activity
+background-376 ordinary synthetic activity
+background-377 ordinary synthetic activity
+background-378 ordinary synthetic activity
+background-379 ordinary synthetic activity
+background-380 ordinary synthetic activity
+background-381 ordinary synthetic activity
+background-382 ordinary synthetic activity
+background-383 ordinary synthetic activity
+background-384 ordinary synthetic activity
+background-385 ordinary synthetic activity
+background-386 ordinary synthetic activity
+background-387 ordinary synthetic activity
+background-388 ordinary synthetic activity
+background-389 ordinary synthetic activity
+background-390 ordinary synthetic activity
+background-391 ordinary synthetic activity
+background-392 ordinary synthetic activity
+background-393 ordinary synthetic activity
+background-394 ordinary synthetic activity
+background-395 ordinary synthetic activity
+background-396 ordinary synthetic activity
+background-397 ordinary synthetic activity
+background-398 ordinary synthetic activity
+background-399 ordinary synthetic activity
+background-400 ordinary synthetic activity
+background-401 ordinary synthetic activity
+background-402 ordinary synthetic activity
+background-403 ordinary synthetic activity
+background-404 ordinary synthetic activity
+background-405 ordinary synthetic activity
+background-406 ordinary synthetic activity
+background-407 ordinary synthetic activity
+background-408 ordinary synthetic activity
+background-409 ordinary synthetic activity
+background-410 ordinary synthetic activity
+background-411 ordinary synthetic activity
+background-412 ordinary synthetic activity
+background-413 ordinary synthetic activity
+background-414 ordinary synthetic activity
+background-415 ordinary synthetic activity
+background-416 ordinary synthetic activity
+background-417 ordinary synthetic activity
+background-418 ordinary synthetic activity
+background-419 ordinary synthetic activity
+background-420 ordinary synthetic activity
+background-421 ordinary synthetic activity
+background-422 ordinary synthetic activity
+background-423 ordinary synthetic activity
+background-424 ordinary synthetic activity
+background-425 ordinary synthetic activity
+background-426 ordinary synthetic activity
+background-427 ordinary synthetic activity
+background-428 ordinary synthetic activity
+background-429 ordinary synthetic activity
+background-430 ordinary synthetic activity
+background-431 ordinary synthetic activity
+background-432 ordinary synthetic activity
+background-433 ordinary synthetic activity
+background-434 ordinary synthetic activity
+background-435 ordinary synthetic activity
+background-436 ordinary synthetic activity
+background-437 ordinary synthetic activity
+background-438 ordinary synthetic activity
+background-439 ordinary synthetic activity
+background-440 ordinary synthetic activity
+background-441 ordinary synthetic activity
+background-442 ordinary synthetic activity
+background-443 ordinary synthetic activity
+background-444 ordinary synthetic activity
+background-445 ordinary synthetic activity
+background-446 ordinary synthetic activity
+background-447 ordinary synthetic activity
+background-448 ordinary synthetic activity
+background-449 ordinary synthetic activity
+background-450 ordinary synthetic activity
+background-451 ordinary synthetic activity
+background-452 ordinary synthetic activity
+background-453 ordinary synthetic activity
+background-454 ordinary synthetic activity
+background-455 ordinary synthetic activity
+background-456 ordinary synthetic activity
+background-457 ordinary synthetic activity
+background-458 ordinary synthetic activity
+background-459 ordinary synthetic activity
+background-460 ordinary synthetic activity
+background-461 ordinary synthetic activity
+background-462 ordinary synthetic activity
+background-463 ordinary synthetic activity
+background-464 ordinary synthetic activity
+background-465 ordinary synthetic activity
+background-466 ordinary synthetic activity
+background-467 ordinary synthetic activity
+background-468 ordinary synthetic activity
+background-469 ordinary synthetic activity
+background-470 ordinary synthetic activity
+background-471 ordinary synthetic activity
+background-472 ordinary synthetic activity
+background-473 ordinary synthetic activity
+background-474 ordinary synthetic activity
+background-475 ordinary synthetic activity
+background-476 ordinary synthetic activity
+background-477 ordinary synthetic activity
+background-478 ordinary synthetic activity
+background-479 ordinary synthetic activity
+background-480 ordinary synthetic activity
+background-481 ordinary synthetic activity
+background-482 ordinary synthetic activity
+background-483 ordinary synthetic activity
+background-484 ordinary synthetic activity
+background-485 ordinary synthetic activity
+background-486 ordinary synthetic activity
+background-487 ordinary synthetic activity
+background-488 ordinary synthetic activity
+background-489 ordinary synthetic activity
+background-490 ordinary synthetic activity
+background-491 ordinary synthetic activity
+background-492 ordinary synthetic activity
+background-493 ordinary synthetic activity
+background-494 ordinary synthetic activity
+background-495 ordinary synthetic activity
+background-496 ordinary synthetic activity
+background-497 ordinary synthetic activity
+background-498 ordinary synthetic activity
+background-499 ordinary synthetic activity
+synthetic recoverable notification; approval remains pending
+
+命令 rc=0，等待正式核验
+[32m.[0m
+[32m[32m[1m1 passed[0m[32m in 16.14s[0m[0m
+

@@ -1,0 +1,14 @@
+case	evidence	scope
+A01	ap-baseline-plan-v3,ap-exact1-tty-sequential	Actual 15-step Planner/PlanReview and production human input; delayed baseline writer loses prompt.
+A02	ap-baseline-code,ap-exact1-tty-details	432-line approved script plus 500 ordinary events, late provider activity and urgent notification; final screen and zero pending executions.
+A03	ap-exact1-tty-y,ap-exact1-plain-approve,ap-exact1-off-approve	Original y and empty Enter; one real process, exact script bytes.
+A04	ap-exact1-tty-quit,ap-v4-tty-reject,ap-v4-tty-feedback	Original q/rejection/text feedback; zero processes, no provider calls.
+A05	ap-exact1-tty-details	Actual /details/F2/Ctrl+O; real submit receipts prove modal Enter keeps future unresolved; Esc restores draft and input.
+A06	ap-exact1-tty-edit	Two real review payloads; stale Future callback cannot resolve next candidate. Fixed replacement candidate supplied by harness, not a claim about a new Generate model call.
+A07	ap-exact1-tty-sequential,ap-exact1-tty-paste	Actual Plan Review followed by code review; one response per candidate. Bracketed multiline including /details stays one feedback response.
+A08	ap-exact1-tty-eof,ap-exact1-tty-cancel	TTY Ctrl+D raises HumanInputEOF; Ctrl+C preserves quit semantics; zero preapproval processes. Pipe/fallback cases supplied by owner lifecycle tests.
+A09	ap-exact1-off-approve,ap-v5-none-approve	off still asks, no-owner synchronous full body precedes prompt. No-owner replay has no concurrent owner events; forced fallback covered separately.
+A10	ap-exact1-tty-details,ap-exact1-tty-approve-resize	Kernel PTYs at 80x24 and 120x36 resized to 40x15, final prompt visible.
+A11	ap-exact1-plain-approve-bounded	Event barrier delays a finite display batch; prompt follows batch. Broken writer and forced Application fallback covered in owner lifecycle tests.
+A12	ap-exact1-tty-details,ap-exact1-plain-approve,ap-exact1-off-approve,ap-exact1-plain-approve-bounded	Entire old/new code-review payload, approved bytes, raw stdout/stderr/rc, call counts and route compare equal.
+A13	ap-v5-tty-auto,ap-parser-v4	Existing safe auto branch has zero approval requests, one process; unknown/manual branch still asks. Parser tests covered separately in final exact-tree run.

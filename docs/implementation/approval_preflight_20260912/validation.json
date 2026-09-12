@@ -1,0 +1,737 @@
+{
+  "base": "53ff7dba6716d30fd5bbe3a508fa9aef5ba0b4d3",
+  "commits": [
+    {
+      "commit": "48033960176591f94a9a9b9c1187a998b0fbe35a",
+      "parent": "53ff7dba6716d30fd5bbe3a508fa9aef5ba0b4d3",
+      "tree": "20a037b818cfa1cdbf99977d5e898e6719e02e2d",
+      "files": [
+        "agent_core/cli_display.py",
+        "agent_core/cli_plain.py",
+        "agent_core/cli_review.py",
+        "agent_core/cli_terminal.py",
+        "agent_core/human_io.py",
+        "bio_agents.py",
+        "execution/confirmation.py",
+        "tests/export_approval_preflight_fixture.py",
+        "tests/replay_approval_visibility_pty.py",
+        "tests/test_approval_owner_lifecycle.py",
+        "tests/test_approval_visibility.py",
+        "tests/test_cli_v2_display.py",
+        "tests/test_cli_v2_output.py"
+      ]
+    },
+    {
+      "commit": "132b11667930315e5f605fd08073f8f700e2b82d",
+      "parent": "48033960176591f94a9a9b9c1187a998b0fbe35a",
+      "tree": "f2378f450411116eab533298bd2ce5ce259789c8",
+      "files": [
+        "agent_core/cli_display.py",
+        "agent_core/node_context.py",
+        "agent_core/workflow/recovery_agent.py",
+        "agent_core/workflow/recovery_projection.py",
+        "execution/executor.py",
+        "execution/preflight.py",
+        "execution/preflight_progress.py",
+        "skills/genomics/reseq-variant-workflow/SKILL.md",
+        "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "tests/export_preflight_feedback_fixture.py",
+        "tests/test_preflight_feedback.py"
+      ]
+    },
+    {
+      "commit": "07eae17c544479444f2dfe4e531845e3f36b2f31",
+      "parent": "132b11667930315e5f605fd08073f8f700e2b82d",
+      "tree": "2834bd3c449c12ef621d4566f4ded0f30b79c13e",
+      "files": [
+        "agent_core/cli_display.py",
+        "agent_core/cli_plain.py",
+        "tests/test_preflight_feedback.py"
+      ]
+    }
+  ],
+  "test_runs": [
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/ap-final-tests",
+      "invocation": {
+        "command": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/tmp/biomind_approval_preflight_20260912/ap-final-export/tests/cli_model_progress_support.py",
+          "--guarded-child",
+          "/tmp/biomind_approval_preflight_20260912/ap-final-export",
+          "-q",
+          "tests/test_approval_visibility.py",
+          "tests/test_approval_owner_lifecycle.py",
+          "tests/test_cli_v2_display.py",
+          "tests/test_cli_v2_output.py",
+          "tests/test_cli_v2_plain_stage.py",
+          "tests/test_cli_v2_terminal_fallback.py"
+        ],
+        "environment": {
+          "PATH": "/usr/bin:/bin",
+          "LC_ALL": "C.UTF-8",
+          "PYTHONPATH": "/tmp/biomind-cli-deps",
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+          "TMPDIR": "/tmp/biomind_approval_preflight_20260912/ap-final-tests/scratch",
+          "BIOMIND_WIKI_ENABLED": "0",
+          "LOG_LEVEL": "CRITICAL",
+          "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind_approval_preflight_20260912/ap-final-tests/pytest-results.json",
+          "BIOMIND_GER_ARTIFACTS": "/tmp/biomind_approval_preflight_20260912/ap-final-tests",
+          "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind_approval_preflight_20260912/ap-final-tests",
+          "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind_approval_preflight_20260912/ap-final-tests/scratch/executor-logs"
+        }
+      },
+      "source": "20a037b818cfa1cdbf99977d5e898e6719e02e2d",
+      "source_signature": "1dacf1f1d81d22ca8f7ff015a9b9eea999b662468cf89bff559ec13a125924d9",
+      "source_unchanged": true,
+      "passed": 83,
+      "calls": [
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[-approve]",
+          "outcome": "passed",
+          "duration": 1.4201739327982068
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[   -approve]",
+          "outcome": "passed",
+          "duration": 0.00013755960389971733
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[y-approve]",
+          "outcome": "passed",
+          "duration": 0.00011747563257813454
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[yes-approve]",
+          "outcome": "passed",
+          "duration": 0.00017192121595144272
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[n-reject]",
+          "outcome": "passed",
+          "duration": 0.00011498015373945236
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[n: keep the current input-reject]",
+          "outcome": "passed",
+          "duration": 0.00011521298438310623
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[q-quit]",
+          "outcome": "passed",
+          "duration": 0.00016395002603530884
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[e: printf edited-edit]",
+          "outcome": "passed",
+          "duration": 0.00024435482919216156
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[edit: printf edited-edit]",
+          "outcome": "passed",
+          "duration": 0.00013522198423743248
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[please use the current scope-reject]",
+          "outcome": "passed",
+          "duration": 0.00012431107461452484
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[this is pasted feedback\\n/details\\nkeep the original files-reject]",
+          "outcome": "passed",
+          "duration": 0.00012269522994756699
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[None-reject]",
+          "outcome": "passed",
+          "duration": 0.00012592598795890808
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_existing_safe_automatic_approval_and_unknown_manual_scope",
+          "outcome": "passed",
+          "duration": 0.0028640017844736576
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_pending_is_last_and_late_output_cannot_execute[True]",
+          "outcome": "passed",
+          "duration": 0.024287511594593525
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_pending_is_last_and_late_output_cannot_execute[False]",
+          "outcome": "passed",
+          "duration": 0.00951279466971755
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_finite_prior_writer_batch_precedes_input",
+          "outcome": "passed",
+          "duration": 0.0030901539139449596
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_details_is_same_request_and_does_not_decide",
+          "outcome": "passed",
+          "duration": 0.00313173932954669
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_second_reader_and_stale_context_are_rejected",
+          "outcome": "passed",
+          "duration": 0.0031439238227903843
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_eof_is_not_empty_enter",
+          "outcome": "passed",
+          "duration": 0.0019850051030516624
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_urgent_output_preserves_input_for_same_request",
+          "outcome": "passed",
+          "duration": 0.002186691854149103
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_writer_failure_never_enables_input",
+          "outcome": "passed",
+          "duration": 0.0017896867357194424
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_paste_keeps_details_text_inside_feedback",
+          "outcome": "passed",
+          "duration": 0.001774895004928112
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_legacy_non_safe_enter_keeps_its_original_rule",
+          "outcome": "passed",
+          "duration": 0.0033677127212285995
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_real_pipe_wait_is_cancellable_without_a_human_deadline[predicate]",
+          "outcome": "passed",
+          "duration": 0.10077510122209787
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_real_pipe_wait_is_cancellable_without_a_human_deadline[close]",
+          "outcome": "passed",
+          "duration": 0.10083094518631697
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_unfinished_tty_writer_cannot_create_a_competing_plain_writer",
+          "outcome": "passed",
+          "duration": 0.12113762134686112
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_pending_tty_view_cannot_be_replaced_by_late_review_or_detail",
+          "outcome": "passed",
+          "duration": 0.0044645508751273155
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_queued_tty_read_moves_once_to_already_cancelled_plain_owner",
+          "outcome": "passed",
+          "duration": 0.040437249932438135
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[y]",
+          "outcome": "passed",
+          "duration": 0.26289342576637864
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[n]",
+          "outcome": "passed",
+          "duration": 0.25461016688495874
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[eof]",
+          "outcome": "passed",
+          "duration": 0.17520359437912703
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[compact]",
+          "outcome": "passed",
+          "duration": 0.0009155292063951492
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[verbose]",
+          "outcome": "passed",
+          "duration": 0.001225602813065052
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[compact]",
+          "outcome": "passed",
+          "duration": 0.0030059712007641792
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[verbose]",
+          "outcome": "passed",
+          "duration": 0.0029415800236165524
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_details_and_verbose_redact_only_synthetic_secrets",
+          "outcome": "passed",
+          "duration": 0.00019753677770495415
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-compact-False]",
+          "outcome": "passed",
+          "duration": 0.0020573646761476994
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-verbose-True]",
+          "outcome": "passed",
+          "duration": 0.0018620910122990608
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[off-verbose-False]",
+          "outcome": "passed",
+          "duration": 0.0007601338438689709
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_groups_count_receipts_not_targets_and_stop_at_public",
+          "outcome": "passed",
+          "duration": 0.00045315781608223915
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_scopeless_diagnostics_do_not_retire_current_model_tool_round",
+          "outcome": "passed",
+          "duration": 0.0009378180839121342
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[failed]",
+          "outcome": "passed",
+          "duration": 0.0003144768998026848
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[unknown]",
+          "outcome": "passed",
+          "duration": 0.0003154510632157326
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[partial]",
+          "outcome": "passed",
+          "duration": 0.00031259702518582344
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[cancelled]",
+          "outcome": "passed",
+          "duration": 0.0004268917255103588
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[not_dispatched]",
+          "outcome": "passed",
+          "duration": 0.00031511159613728523
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_old_tool_return_keeps_receipt_without_replacing_approval",
+          "outcome": "passed",
+          "duration": 0.0003165476955473423
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_process_group_only_asserts_exit_and_keeps_failure",
+          "outcome": "passed",
+          "duration": 0.00034516723826527596
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_final_group_and_long_review_are_available",
+          "outcome": "passed",
+          "duration": 0.027193692978471518
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_long_documents_and_narrow_chinese_columns",
+          "outcome": "passed",
+          "duration": 0.030331924092024565
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_terminal_modal_keeps_pending_and_draft_until_close",
+          "outcome": "passed",
+          "duration": 0.151674869004637
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_group_boundary_still_flushes_public_before_next_real_dispatch",
+          "outcome": "passed",
+          "duration": 0.0020406837575137615
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_twenty_column_approval_keeps_full_prompt_in_details",
+          "outcome": "passed",
+          "duration": 0.11012330558151007
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_logs_lists_synthetic_handler_path_without_reading_body",
+          "outcome": "passed",
+          "duration": 0.005161376670002937
+        },
+        {
+          "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_output_attributes_reset_before_following_public",
+          "outcome": "passed",
+          "duration": 0.005800228100270033
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[y-compact]",
+          "outcome": "passed",
+          "duration": 2.920230381190777
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[y-verbose]",
+          "outcome": "passed",
+          "duration": 0.016303077340126038
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[y-off]",
+          "outcome": "passed",
+          "duration": 0.015464415308088064
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[n-compact]",
+          "outcome": "passed",
+          "duration": 0.01635527703911066
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[n-verbose]",
+          "outcome": "passed",
+          "duration": 0.016464431770145893
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[n-off]",
+          "outcome": "passed",
+          "duration": 0.014982835855334997
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[q-compact]",
+          "outcome": "passed",
+          "duration": 0.01665798807516694
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[q-verbose]",
+          "outcome": "passed",
+          "duration": 0.016202927567064762
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[q-off]",
+          "outcome": "passed",
+          "duration": 0.015395771246403456
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[e:print(\"replacement\")-compact]",
+          "outcome": "passed",
+          "duration": 0.01622506882995367
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[e:print(\"replacement\")-verbose]",
+          "outcome": "passed",
+          "duration": 0.01662378991022706
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[e:print(\"replacement\")-off]",
+          "outcome": "passed",
+          "duration": 0.015055586118251085
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[please revise-compact]",
+          "outcome": "passed",
+          "duration": 0.016549715772271156
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[please revise-verbose]",
+          "outcome": "passed",
+          "duration": 0.01621543988585472
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_details_never_enter_approval_or_feedback[please revise-off]",
+          "outcome": "passed",
+          "duration": 0.015368268825113773
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_tool_classification_never_mutates_returned_observation",
+          "outcome": "passed",
+          "duration": 0.0006510969251394272
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_stdout_chunks_and_final_observation_leave_raw_identical[compact]",
+          "outcome": "passed",
+          "duration": 0.0019866027869284153
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_stdout_chunks_and_final_observation_leave_raw_identical[verbose]",
+          "outcome": "passed",
+          "duration": 0.0029896660707890987
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_recovery_checkpoint_does_not_count_budget_projection_as_success",
+          "outcome": "passed",
+          "duration": 0.00045847799628973007
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_one_second_approval_timeout_is_never_rounded_to_unbounded",
+          "outcome": "passed",
+          "duration": 0.0012449580244719982
+        },
+        {
+          "nodeid": "tests/test_cli_v2_output.py::test_v2_broken_review_modal_falls_back_to_full_body",
+          "outcome": "passed",
+          "duration": 0.000787070021033287
+        },
+        {
+          "nodeid": "tests/test_cli_v2_plain_stage.py::test_plain_stage_changes_are_once_and_ordered_after_tool_group",
+          "outcome": "passed",
+          "duration": 0.0023777559399604797
+        },
+        {
+          "nodeid": "tests/test_cli_v2_plain_stage.py::test_plain_stage_does_not_bypass_fence_or_approval_priority",
+          "outcome": "passed",
+          "duration": 0.002040511928498745
+        },
+        {
+          "nodeid": "tests/test_cli_v2_plain_stage.py::test_plain_stage_display_modes_preserve_fixed_calls_and_data",
+          "outcome": "passed",
+          "duration": 0.006610183045268059
+        },
+        {
+          "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[False-compact]",
+          "outcome": "passed",
+          "duration": 0.0018547270447015762
+        },
+        {
+          "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[False-verbose]",
+          "outcome": "passed",
+          "duration": 0.0019767996855080128
+        },
+        {
+          "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-compact]",
+          "outcome": "passed",
+          "duration": 0.0018707788549363613
+        },
+        {
+          "nodeid": "tests/test_cli_v2_terminal_fallback.py::test_v2_term_dumb_and_broken_pipe_preserve_runtime_and_add_no_ansi[True-verbose]",
+          "outcome": "passed",
+          "duration": 0.0018244003877043724
+        }
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/obs-final-tests",
+      "invocation": {
+        "command": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/tmp/biomind_approval_preflight_20260912/obs-final-export/tests/cli_model_progress_support.py",
+          "--guarded-child",
+          "/tmp/biomind_approval_preflight_20260912/obs-final-export",
+          "-q",
+          "tests/test_preflight_feedback.py"
+        ],
+        "environment": {
+          "PATH": "/usr/bin:/bin",
+          "LC_ALL": "C.UTF-8",
+          "PYTHONPATH": "/tmp/biomind-cli-deps",
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+          "TMPDIR": "/tmp/biomind_approval_preflight_20260912/obs-final-tests/scratch",
+          "BIOMIND_WIKI_ENABLED": "0",
+          "LOG_LEVEL": "CRITICAL",
+          "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind_approval_preflight_20260912/obs-final-tests/pytest-results.json",
+          "BIOMIND_GER_ARTIFACTS": "/tmp/biomind_approval_preflight_20260912/obs-final-tests",
+          "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind_approval_preflight_20260912/obs-final-tests",
+          "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind_approval_preflight_20260912/obs-final-tests/scratch/executor-logs"
+        }
+      },
+      "source": "f2378f450411116eab533298bd2ce5ce259789c8",
+      "source_signature": "0bf6406ed9692d9478595c39c29ac5f30a27399cc927da0066e8dcd6a6d4808c",
+      "source_unchanged": true,
+      "passed": 14,
+      "calls": [
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_four_real_checks_progress_visible_before_return_capture_stays_private[compact]",
+          "outcome": "passed",
+          "duration": 0.1312110461294651
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_four_real_checks_progress_visible_before_return_capture_stays_private[verbose]",
+          "outcome": "passed",
+          "duration": 0.02188048278912902
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_four_real_checks_progress_visible_before_return_capture_stays_private[off]",
+          "outcome": "passed",
+          "duration": 0.018897938076406717
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_local_timeout_keeps_partial_results_and_cleans_nested_child",
+          "outcome": "passed",
+          "duration": 0.2337833601050079
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_cancel_current_check_reaps_nested_group_and_preserves_partial_raw",
+          "outcome": "passed",
+          "duration": 0.04127025092020631
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_large_simultaneous_streams_are_fully_archived_and_display_bounded",
+          "outcome": "passed",
+          "duration": 0.008740143850445747
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_actual_new_batch_cli_merges_one_outer_observation_preserves_prefix_scope",
+          "outcome": "passed",
+          "duration": 1.6105080940760672
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_progress_excluded_only_from_model_copies_and_preserved_in_raw",
+          "outcome": "passed",
+          "duration": 1.6052397317253053
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_failure_is_returned_without_scientific_pass_or_retry[exit]",
+          "outcome": "passed",
+          "duration": 0.005288164597004652
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_failure_is_returned_without_scientific_pass_or_retry[exit124]",
+          "outcome": "passed",
+          "duration": 0.0049324179999530315
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_failure_is_returned_without_scientific_pass_or_retry[parse]",
+          "outcome": "passed",
+          "duration": 0.004538281820714474
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_outer_executor_cancel_reaches_wrapper_owned_nested_process_group",
+          "outcome": "passed",
+          "duration": 0.46810898603871465
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_deadline_begins_at_call_not_candidate_construction_or_approval_wait",
+          "outcome": "passed",
+          "duration": 0.2055064677260816
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_actual_recovery_tool_message_excludes_progress_without_new_model_calls",
+          "outcome": "passed",
+          "duration": 0.17896313685923815
+        }
+      ]
+    },
+    {
+      "directory": "/tmp/biomind_approval_preflight_20260912/obs-plain-final-tests",
+      "invocation": {
+        "command": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/tmp/biomind_approval_preflight_20260912/obs-plain-final-export/tests/cli_model_progress_support.py",
+          "--guarded-child",
+          "/tmp/biomind_approval_preflight_20260912/obs-plain-final-export",
+          "-q",
+          "tests/test_preflight_feedback.py",
+          "tests/test_cli_v2_plain_stage.py"
+        ],
+        "environment": {
+          "PATH": "/usr/bin:/bin",
+          "LC_ALL": "C.UTF-8",
+          "PYTHONPATH": "/tmp/biomind-cli-deps",
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+          "TMPDIR": "/tmp/biomind_approval_preflight_20260912/obs-plain-final-tests/scratch",
+          "BIOMIND_WIKI_ENABLED": "0",
+          "LOG_LEVEL": "CRITICAL",
+          "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind_approval_preflight_20260912/obs-plain-final-tests/pytest-results.json",
+          "BIOMIND_GER_ARTIFACTS": "/tmp/biomind_approval_preflight_20260912/obs-plain-final-tests",
+          "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind_approval_preflight_20260912/obs-plain-final-tests",
+          "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind_approval_preflight_20260912/obs-plain-final-tests/scratch/executor-logs"
+        }
+      },
+      "source": "2834bd3c449c12ef621d4566f4ded0f30b79c13e",
+      "source_signature": "8301fd094a7368467001d89717f42a1611b8f0e9e739e3daa2387c0545b9b163",
+      "source_unchanged": true,
+      "passed": 17,
+      "calls": [
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_four_real_checks_progress_visible_before_return_capture_stays_private[compact]",
+          "outcome": "passed",
+          "duration": 0.02226014109328389
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_four_real_checks_progress_visible_before_return_capture_stays_private[verbose]",
+          "outcome": "passed",
+          "duration": 0.020064021926373243
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_four_real_checks_progress_visible_before_return_capture_stays_private[off]",
+          "outcome": "passed",
+          "duration": 0.018996582832187414
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_local_timeout_keeps_partial_results_and_cleans_nested_child",
+          "outcome": "passed",
+          "duration": 0.232944767922163
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_cancel_current_check_reaps_nested_group_and_preserves_partial_raw",
+          "outcome": "passed",
+          "duration": 0.04135192604735494
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_large_simultaneous_streams_are_fully_archived_and_display_bounded",
+          "outcome": "passed",
+          "duration": 0.008565517142415047
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_actual_new_batch_cli_merges_one_outer_observation_preserves_prefix_scope",
+          "outcome": "passed",
+          "duration": 0.7651214716024697
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_progress_excluded_only_from_model_copies_and_preserved_in_raw",
+          "outcome": "passed",
+          "duration": 1.621036373078823
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_failure_is_returned_without_scientific_pass_or_retry[exit]",
+          "outcome": "passed",
+          "duration": 0.005074399057775736
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_failure_is_returned_without_scientific_pass_or_retry[exit124]",
+          "outcome": "passed",
+          "duration": 0.006237308029085398
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_failure_is_returned_without_scientific_pass_or_retry[parse]",
+          "outcome": "passed",
+          "duration": 0.004826542921364307
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_outer_executor_cancel_reaches_wrapper_owned_nested_process_group",
+          "outcome": "passed",
+          "duration": 0.40637015691027045
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_deadline_begins_at_call_not_candidate_construction_or_approval_wait",
+          "outcome": "passed",
+          "duration": 0.20528313610702753
+        },
+        {
+          "nodeid": "tests/test_preflight_feedback.py::test_actual_recovery_tool_message_excludes_progress_without_new_model_calls",
+          "outcome": "passed",
+          "duration": 0.15915533201768994
+        },
+        {
+          "nodeid": "tests/test_cli_v2_plain_stage.py::test_plain_stage_changes_are_once_and_ordered_after_tool_group",
+          "outcome": "passed",
+          "duration": 0.0023598778061568737
+        },
+        {
+          "nodeid": "tests/test_cli_v2_plain_stage.py::test_plain_stage_does_not_bypass_fence_or_approval_priority",
+          "outcome": "passed",
+          "duration": 0.001865980215370655
+        },
+        {
+          "nodeid": "tests/test_cli_v2_plain_stage.py::test_plain_stage_display_modes_preserve_fixed_calls_and_data",
+          "outcome": "passed",
+          "duration": 0.006927443202584982
+        }
+      ]
+    }
+  ],
+  "initial_regression": {
+    "passed": 53,
+    "failed": 12,
+    "reason": "Old test expectations conflicted with explicit-details, immutable pending scope and presentation handshake; updated clean test files, then 83 passed."
+  }
+}

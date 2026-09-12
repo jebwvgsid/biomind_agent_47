@@ -1,0 +1,24 @@
+代码审批
+语言 Bash · 风险检查 medium
+审批显示正文 SHA-256: eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835
+c72fca
+完整输入、输出、约束及执行作用范围见详情；摘要不能确认全部副作用。
+工作目录与实际写入目标以完整执行定义为准；无法从现有审批字段可靠概括，需查看完整
+代码。
+/details 或 F2 查看完整对象；查看/返回不代表批准。
+synthetic recoverable notification; approval remains pending
+代码审批                                                                       ^
+
+# Synthetic approved candidate; no scientific input
+# body-line-000 synthetic review context
+# body-line-001 synthetic review context
+# body-line-002 synthetic review context
+# body-line-003 synthetic review context
+# body-line-004 synthetic review context
+# body-line-005 synthetic review context
+# body-line-006 synthetic review context
+# body-line-007 synthetic review context
+# body-line-008 synthetic review context
+# body-line-009 synthetic review context                                       v
+仍待审批 · Esc 返回；查看不代表批准
+↑↓ / PgUp PgDn 浏览 · Esc 返回；Enter 不批准

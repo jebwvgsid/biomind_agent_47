@@ -1,0 +1,675 @@
+SOURCE_IDENTITY b0d20b0ba5f2aab92e35eec8f8080d1de73e06d5db3145beff5f2c0722e4ea5f
+SYNTHETIC_CONFIG {"ANACONDA_ROOT": null, "BIOMIND_MEMORY_DIR": "/tmp/biomind_approval_preflight_20260912/ap-baseline-plan-v3/scratch/managed-bootstrap-kef71dy1/memory", "BIOMIND_STEP_WORKER_BACKEND": "legacy", "BIOMIND_WIKI_DIR": "/tmp/biomind_approval_preflight_20260912/ap-baseline-plan-v3/scratch/managed-bootstrap-kef71dy1/wiki", "BIOMIND_WIKI_ENABLED": false, "BIOMIND_WIKI_INGEST_MODE": "off", "BIO_SOFTWARE_ROOT": null, "BIO_SOURCE_INSTALL_DIR": null, "CONSULTANT_CANDIDATE_SKILL_LIMIT": 10, "CONSULTANT_DISCOVERY_REASONING_EFFORT": "low", "CONSULTANT_DISCOVERY_THINKING_ENABLED": false, "CONSULTANT_FINALIZE_BUDGET_POLICY_VERSION": 1, "CONSULTANT_FINALIZE_CONTEXT_LIMIT_TOKENS": 1, "CONSULTANT_FINALIZE_ESTIMATED_MICROUSD_PER_TOKEN": 1, "CONSULTANT_FINALIZE_MAX_BATCH_ITEMS": 1, "CONSULTANT_FINALIZE_MAX_CREATED_BATCHES": 1, "CONSULTANT_FINALIZE_MAX_OUTPUT_TOKENS": 1, "CONSULTANT_FINALIZE_MAX_PROVIDER_CALLS": 1, "CONSULTANT_FINALIZE_MAX_REPARTITION_DEPTH": 1, "CONSULTANT_FINALIZE_MAX_RESOLUTION_ITEMS": 1, "CONSULTANT_FINALIZE_MAX_TOTAL_COMPLETION_TOKENS": 1, "CONSULTANT_FINALIZE_MAX_TOTAL_ESTIMATED_COST_MICROUSD": 1, "CONSULTANT_FINALIZE_MAX_WALL_TIME_MS": 1, "CONSULTANT_FINALIZE_OUTPUT_HEADROOM_TOKENS": 1, "CONSULTANT_FINALIZE_PER_CALL_TIMEOUT_MS": 1, "CONSULTANT_FINALIZE_PROVIDER_OUTPUT_CAP_TOKENS": 1, "CONSULTANT_HISTORY_MAX_MESSAGES": 100, "CONSULTANT_HISTORY_TOKEN_BUDGET": 30000, "CONSULTANT_RESERVED_HEADROOM_TOKENS": 16000, "CONSULTANT_SKILL_TOKEN_BUDGET": 40000, "DEEPSEEK_TEMPERATURE": 0.0, "DEFAULT_PROJECT_ID": "offline", "ENABLE_COMMAND_TRACE": 1, "ENABLE_PIPESTATUS_CAPTURE": 1, "ENABLE_PROGRESS_DETECTOR": 1, "ENABLE_RECOVERY_PATCHING": 1, "ENABLE_ROOT_CAUSE_ANALYZER": false, "GENERATE_PROVIDER_MAX_ATTEMPTS": 3, "GENERATE_PROVIDER_RETRY_BASE_SECONDS": 0, "GENERATE_PROVIDER_RETRY_CAP_SECONDS": 0, "GENERATE_REASONING_EFFORT": "low", "GENERATE_THINKING_ENABLED": false, "KB_MAP": {}, "LLM_API_KEY": "", "LLM_BASE_URL": "https://offline.invalid/v1", "LLM_CANCEL_CLEANUP_TIMEOUT_SECONDS": 1, "LLM_DEFAULT_MODEL": "offline-model", "LLM_FIRST_CHUNK_TIMEOUT_SECONDS": 10, "LLM_MAX_HISTORY_CHARS": 500000, "LLM_MAX_HISTORY_MESSAGES": 100, "LLM_MAX_RETRIES": 0, "LLM_READONLY_TIMEOUT_SECONDS": 30, "LLM_STEP_CONTEXT_CHARS": 500000, "LLM_STEP_CONTEXT_MESSAGES": 100, "LLM_STEP_EPHEMERAL_CHARS": 50000, "LLM_STEP_PLAN_CHARS": 100000, "LLM_STEP_SKILL_DOC_CHARS": 200000, "LLM_STREAM_IDLE_TIMEOUT_SECONDS": 10, "LLM_TIMEOUT_SECONDS": 30, "LLM_TOTAL_TIMEOUT_SECONDS": 30, "MAX_CONSULTANT_IDENTICAL_NO_PROGRESS_TRANSITIONS": 1, "MAX_SKILL_BINDING_PROPOSALS_PER_STEP": 4, "MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION": 4, "MAX_SKILL_SEARCH_ROUNDS_PER_STEP": 4, "PLANNER_COMPRESSION_TOKEN_RATIO": 0.75, "PLANNER_CORRECTION_REASONING_EFFORT": "low", "PLANNER_CORRECTION_THINKING_ENABLED": false, "PLANNER_HARD_TOKEN_RATIO": 0.95, "PLANNER_NOMINAL_CHAR_BUDGET": 500000, "PLANNER_RESERVED_HEADROOM_TOKENS": 16000, "PLANNER_SOFT_TOKEN_RATIO": 0.6, "RAGFLOW_ADDRESS": "https://offline.invalid", "RAGFLOW_API_KEY": "", "RECOVERY_REASONING_EFFORT": "low", "RECOVERY_THINKING_ENABLED": false, "RERANK_MODEL_ID": "offline", "ROOT_CAUSE_TIMEOUT_SECONDS": 1, "SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS": 200000, "SCHEMA2_CONTEXT_COMPACTION_ENABLED": false, "SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS": 2048, "SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS": 16000, "SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS": 2048, "SESSION_ARCHIVE_OBSERVATION_QUEUE_SIZE": 1024, "SESSION_ARCHIVE_SHUTDOWN_DRAIN_SECONDS": 1, "SESSION_ARCHIVE_WRITER_BACKOFF_SECONDS": 0.01, "SESSION_ARCHIVE_WRITER_BUSY_TIMEOUT_SECONDS": 1, "SESSION_ARCHIVE_WRITER_MAX_ATTEMPTS": 3, "SKILLS_DIR": "/tmp/biomind_approval_preflight_20260912/ap-baseline-v3/skills", "SKILL_CONTEXT_MAX_REQUESTS_PER_ROUND": 4, "SKILL_EXCERPT_MAX_CHARS": 24000, "SKILL_FULL_READ_MAX_CHARS": 200000, "WIKI_EMBEDDING_API_KEY": "", "WIKI_EMBEDDING_BASE_URL": "", "WIKI_EMBEDDING_DIMENSIONS": 1, "WIKI_EMBEDDING_ENABLED": false, "WIKI_EMBEDDING_MODEL": "offline"}
+🏭 Software Repository: /tmp/biomind_approval_preflight_20260912/ap-baseline-plan-v3/scratch/biomind-plan-local-graph-q4p_n5pw[0m
+[0m📂 Source Install Path (Default): /tmp/biomind_approval_preflight_20260912/ap-baseline-plan-v3/scratch/biomind-plan-local-graph-q4p_n5pw/source_tools[0m
+[0mtriage
+consultant
+planner
+plan_review
+计划审批
+计划 plan_7836a2fa426054f22ba7 · 步骤数 15
+审批显示正文 SHA-256: 8468aa71e5ee294b34233d824538cf1a411ca87b6b276e94debc28217d2fd145
+完整输入、输出、约束及执行作用范围见下方详情；摘要不能确认全部副作用。
+/details 或 F2 查看完整对象；查看/返回不代表批准。
+计划审批
+## Plan Identity
+- Plan ID: `plan_7836a2fa426054f22ba7`
+- Plan Version: `plan_v1`
+- Parent Version: `none`
+- Semantic Hash: `b79636104417f44608ee735bbb0f5da70d9aabfdc578f35a67642d7f05ad054c`
+- Approval Scope: `cf395466715c34815b99c08fea11baf3e036480935cc196ba702110501d85006`
+- Execution Cursor: `none`
+- Next Executable Step: `step-inspect-a`
+- Changed Stable Step IDs: `none`
+
+## Highlighted Constraints
+- none
+
+## Effective Plan
+
+### [step-inspect-a] Synthetic check 00
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `none`
+- Success criteria: `fixed requirement 0-0: preserve approved scope and synthetic facts; fixed requirement 0-1: preserve approved scope and synthetic facts; fixed requirement 0-2: preserve approved scope and synthetic facts; fixed requirement 0-3: preserve approved scope and synthetic facts; fixed requirement 0-4: preserve approved scope and synthetic facts; fixed requirement 0-5: preserve approved scope and synthetic facts; fixed requirement 0-6: preserve approved scope and synthetic facts; fixed requirement 0-7: preserve approved scope and synthetic facts; fixed requirement 0-8: preserve approved scope and synthetic facts; fixed requirement 0-9: preserve approved scope and synthetic facts; fixed requirement 0-10: preserve approved scope and synthetic facts; fixed requirement 0-11: preserve approved scope and synthetic facts; fixed requirement 0-12: preserve approved scope and synthetic facts; fixed requirement 0-13: preserve approved scope and synthetic facts; fixed requirement 0-14: preserve approved scope and synthetic facts; fixed requirement 0-15: preserve approved scope and synthetic facts; fixed requirement 0-16: preserve approved scope and synthetic facts; fixed requirement 0-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-b] Synthetic check 01
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-a`
+- Success criteria: `fixed requirement 1-0: preserve approved scope and synthetic facts; fixed requirement 1-1: preserve approved scope and synthetic facts; fixed requirement 1-2: preserve approved scope and synthetic facts; fixed requirement 1-3: preserve approved scope and synthetic facts; fixed requirement 1-4: preserve approved scope and synthetic facts; fixed requirement 1-5: preserve approved scope and synthetic facts; fixed requirement 1-6: preserve approved scope and synthetic facts; fixed requirement 1-7: preserve approved scope and synthetic facts; fixed requirement 1-8: preserve approved scope and synthetic facts; fixed requirement 1-9: preserve approved scope and synthetic facts; fixed requirement 1-10: preserve approved scope and synthetic facts; fixed requirement 1-11: preserve approved scope and synthetic facts; fixed requirement 1-12: preserve approved scope and synthetic facts; fixed requirement 1-13: preserve approved scope and synthetic facts; fixed requirement 1-14: preserve approved scope and synthetic facts; fixed requirement 1-15: preserve approved scope and synthetic facts; fixed requirement 1-16: preserve approved scope and synthetic facts; fixed requirement 1-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-c] Synthetic check 02
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-b`
+- Success criteria: `fixed requirement 2-0: preserve approved scope and synthetic facts; fixed requirement 2-1: preserve approved scope and synthetic facts; fixed requirement 2-2: preserve approved scope and synthetic facts; fixed requirement 2-3: preserve approved scope and synthetic facts; fixed requirement 2-4: preserve approved scope and synthetic facts; fixed requirement 2-5: preserve approved scope and synthetic facts; fixed requirement 2-6: preserve approved scope and synthetic facts; fixed requirement 2-7: preserve approved scope and synthetic facts; fixed requirement 2-8: preserve approved scope and synthetic facts; fixed requirement 2-9: preserve approved scope and synthetic facts; fixed requirement 2-10: preserve approved scope and synthetic facts; fixed requirement 2-11: preserve approved scope and synthetic facts; fixed requirement 2-12: preserve approved scope and synthetic facts; fixed requirement 2-13: preserve approved scope and synthetic facts; fixed requirement 2-14: preserve approved scope and synthetic facts; fixed requirement 2-15: preserve approved scope and synthetic facts; fixed requirement 2-16: preserve approved scope and synthetic facts; fixed requirement 2-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-d] Synthetic check 03
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-c`
+- Success criteria: `fixed requirement 3-0: preserve approved scope and synthetic facts; fixed requirement 3-1: preserve approved scope and synthetic facts; fixed requirement 3-2: preserve approved scope and synthetic facts; fixed requirement 3-3: preserve approved scope and synthetic facts; fixed requirement 3-4: preserve approved scope and synthetic facts; fixed requirement 3-5: preserve approved scope and synthetic facts; fixed requirement 3-6: preserve approved scope and synthetic facts; fixed requirement 3-7: preserve approved scope and synthetic facts; fixed requirement 3-8: preserve approved scope and synthetic facts; fixed requirement 3-9: preserve approved scope and synthetic facts; fixed requirement 3-10: preserve approved scope and synthetic facts; fixed requirement 3-11: preserve approved scope and synthetic facts; fixed requirement 3-12: preserve approved scope and synthetic facts; fixed requirement 3-13: preserve approved scope and synthetic facts; fixed requirement 3-14: preserve approved scope and synthetic facts; fixed requirement 3-15: preserve approved scope and synthetic facts; fixed requirement 3-16: preserve approved scope and synthetic facts; fixed requirement 3-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-e] Synthetic check 04
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-d`
+- Success criteria: `fixed requirement 4-0: preserve approved scope and synthetic facts; fixed requirement 4-1: preserve approved scope and synthetic facts; fixed requirement 4-2: preserve approved scope and synthetic facts; fixed requirement 4-3: preserve approved scope and synthetic facts; fixed requirement 4-4: preserve approved scope and synthetic facts; fixed requirement 4-5: preserve approved scope and synthetic facts; fixed requirement 4-6: preserve approved scope and synthetic facts; fixed requirement 4-7: preserve approved scope and synthetic facts; fixed requirement 4-8: preserve approved scope and synthetic facts; fixed requirement 4-9: preserve approved scope and synthetic facts; fixed requirement 4-10: preserve approved scope and synthetic facts; fixed requirement 4-11: preserve approved scope and synthetic facts; fixed requirement 4-12: preserve approved scope and synthetic facts; fixed requirement 4-13: preserve approved scope and synthetic facts; fixed requirement 4-14: preserve approved scope and synthetic facts; fixed requirement 4-15: preserve approved scope and synthetic facts; fixed requirement 4-16: preserve approved scope and synthetic facts; fixed requirement 4-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-f] Synthetic check 05
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-e`
+- Success criteria: `fixed requirement 5-0: preserve approved scope and synthetic facts; fixed requirement 5-1: preserve approved scope and synthetic facts; fixed requirement 5-2: preserve approved scope and synthetic facts; fixed requirement 5-3: preserve approved scope and synthetic facts; fixed requirement 5-4: preserve approved scope and synthetic facts; fixed requirement 5-5: preserve approved scope and synthetic facts; fixed requirement 5-6: preserve approved scope and synthetic facts; fixed requirement 5-7: preserve approved scope and synthetic facts; fixed requirement 5-8: preserve approved scope and synthetic facts; fixed requirement 5-9: preserve approved scope and synthetic facts; fixed requirement 5-10: preserve approved scope and synthetic facts; fixed requirement 5-11: preserve approved scope and synthetic facts; fixed requirement 5-12: preserve approved scope and synthetic facts; fixed requirement 5-13: preserve approved scope and synthetic facts; fixed requirement 5-14: preserve approved scope and synthetic facts; fixed requirement 5-15: preserve approved scope and synthetic facts; fixed requirement 5-16: preserve approved scope and synthetic facts; fixed requirement 5-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-g] Synthetic check 06
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-f`
+- Success criteria: `fixed requirement 6-0: preserve approved scope and synthetic facts; fixed requirement 6-1: preserve approved scope and synthetic facts; fixed requirement 6-2: preserve approved scope and synthetic facts; fixed requirement 6-3: preserve approved scope and synthetic facts; fixed requirement 6-4: preserve approved scope and synthetic facts; fixed requirement 6-5: preserve approved scope and synthetic facts; fixed requirement 6-6: preserve approved scope and synthetic facts; fixed requirement 6-7: preserve approved scope and synthetic facts; fixed requirement 6-8: preserve approved scope and synthetic facts; fixed requirement 6-9: preserve approved scope and synthetic facts; fixed requirement 6-10: preserve approved scope and synthetic facts; fixed requirement 6-11: preserve approved scope and synthetic facts; fixed requirement 6-12: preserve approved scope and synthetic facts; fixed requirement 6-13: preserve approved scope and synthetic facts; fixed requirement 6-14: preserve approved scope and synthetic facts; fixed requirement 6-15: preserve approved scope and synthetic facts; fixed requirement 6-16: preserve approved scope and synthetic facts; fixed requirement 6-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-h] Synthetic check 07
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-g`
+- Success criteria: `fixed requirement 7-0: preserve approved scope and synthetic facts; fixed requirement 7-1: preserve approved scope and synthetic facts; fixed requirement 7-2: preserve approved scope and synthetic facts; fixed requirement 7-3: preserve approved scope and synthetic facts; fixed requirement 7-4: preserve approved scope and synthetic facts; fixed requirement 7-5: preserve approved scope and synthetic facts; fixed requirement 7-6: preserve approved scope and synthetic facts; fixed requirement 7-7: preserve approved scope and synthetic facts; fixed requirement 7-8: preserve approved scope and synthetic facts; fixed requirement 7-9: preserve approved scope and synthetic facts; fixed requirement 7-10: preserve approved scope and synthetic facts; fixed requirement 7-11: preserve approved scope and synthetic facts; fixed requirement 7-12: preserve approved scope and synthetic facts; fixed requirement 7-13: preserve approved scope and synthetic facts; fixed requirement 7-14: preserve approved scope and synthetic facts; fixed requirement 7-15: preserve approved scope and synthetic facts; fixed requirement 7-16: preserve approved scope and synthetic facts; fixed requirement 7-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-i] Synthetic check 08
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-h`
+- Success criteria: `fixed requirement 8-0: preserve approved scope and synthetic facts; fixed requirement 8-1: preserve approved scope and synthetic facts; fixed requirement 8-2: preserve approved scope and synthetic facts; fixed requirement 8-3: preserve approved scope and synthetic facts; fixed requirement 8-4: preserve approved scope and synthetic facts; fixed requirement 8-5: preserve approved scope and synthetic facts; fixed requirement 8-6: preserve approved scope and synthetic facts; fixed requirement 8-7: preserve approved scope and synthetic facts; fixed requirement 8-8: preserve approved scope and synthetic facts; fixed requirement 8-9: preserve approved scope and synthetic facts; fixed requirement 8-10: preserve approved scope and synthetic facts; fixed requirement 8-11: preserve approved scope and synthetic facts; fixed requirement 8-12: preserve approved scope and synthetic facts; fixed requirement 8-13: preserve approved scope and synthetic facts; fixed requirement 8-14: preserve approved scope and synthetic facts; fixed requirement 8-15: preserve approved scope and synthetic facts; fixed requirement 8-16: preserve approved scope and synthetic facts; fixed requirement 8-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-j] Synthetic check 09
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-i`
+- Success criteria: `fixed requirement 9-0: preserve approved scope and synthetic facts; fixed requirement 9-1: preserve approved scope and synthetic facts; fixed requirement 9-2: preserve approved scope and synthetic facts; fixed requirement 9-3: preserve approved scope and synthetic facts; fixed requirement 9-4: preserve approved scope and synthetic facts; fixed requirement 9-5: preserve approved scope and synthetic facts; fixed requirement 9-6: preserve approved scope and synthetic facts; fixed requirement 9-7: preserve approved scope and synthetic facts; fixed requirement 9-8: preserve approved scope and synthetic facts; fixed requirement 9-9: preserve approved scope and synthetic facts; fixed requirement 9-10: preserve approved scope and synthetic facts; fixed requirement 9-11: preserve approved scope and synthetic facts; fixed requirement 9-12: preserve approved scope and synthetic facts; fixed requirement 9-13: preserve approved scope and synthetic facts; fixed requirement 9-14: preserve approved scope and synthetic facts; fixed requirement 9-15: preserve approved scope and synthetic facts; fixed requirement 9-16: preserve approved scope and synthetic facts; fixed requirement 9-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-k] Synthetic check 10
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-j`
+- Success criteria: `fixed requirement 10-0: preserve approved scope and synthetic facts; fixed requirement 10-1: preserve approved scope and synthetic facts; fixed requirement 10-2: preserve approved scope and synthetic facts; fixed requirement 10-3: preserve approved scope and synthetic facts; fixed requirement 10-4: preserve approved scope and synthetic facts; fixed requirement 10-5: preserve approved scope and synthetic facts; fixed requirement 10-6: preserve approved scope and synthetic facts; fixed requirement 10-7: preserve approved scope and synthetic facts; fixed requirement 10-8: preserve approved scope and synthetic facts; fixed requirement 10-9: preserve approved scope and synthetic facts; fixed requirement 10-10: preserve approved scope and synthetic facts; fixed requirement 10-11: preserve approved scope and synthetic facts; fixed requirement 10-12: preserve approved scope and synthetic facts; fixed requirement 10-13: preserve approved scope and synthetic facts; fixed requirement 10-14: preserve approved scope and synthetic facts; fixed requirement 10-15: preserve approved scope and synthetic facts; fixed requirement 10-16: preserve approved scope and synthetic facts; fixed requirement 10-17: preserve approved scope and synthetic facts`
+
+Approve? [y/n/q] or type feedback > 
+[0m### [step-inspect-l] Synthetic check 11
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-k`
+- Success criteria: `fixed requirement 11-0: preserve approved scope and synthetic facts; fixed requirement 11-1: preserve approved scope and synthetic facts; fixed requirement 11-2: preserve approved scope and synthetic facts; fixed requirement 11-3: preserve approved scope and synthetic facts; fixed requirement 11-4: preserve approved scope and synthetic facts; fixed requirement 11-5: preserve approved scope and synthetic facts; fixed requirement 11-6: preserve approved scope and synthetic facts; fixed requirement 11-7: preserve approved scope and synthetic facts; fixed requirement 11-8: preserve approved scope and synthetic facts; fixed requirement 11-9: preserve approved scope and synthetic facts; fixed requirement 11-10: preserve approved scope and synthetic facts; fixed requirement 11-11: preserve approved scope and synthetic facts; fixed requirement 11-12: preserve approved scope and synthetic facts; fixed requirement 11-13: preserve approved scope and synthetic facts; fixed requirement 11-14: preserve approved scope and synthetic facts; fixed requirement 11-15: preserve approved scope and synthetic facts; fixed requirement 11-16: preserve approved scope and synthetic facts; fixed requirement 11-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-m] Synthetic check 12
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-l`
+- Success criteria: `fixed requirement 12-0: preserve approved scope and synthetic facts; fixed requirement 12-1: preserve approved scope and synthetic facts; fixed requirement 12-2: preserve approved scope and synthetic facts; fixed requirement 12-3: preserve approved scope and synthetic facts; fixed requirement 12-4: preserve approved scope and synthetic facts; fixed requirement 12-5: preserve approved scope and synthetic facts; fixed requirement 12-6: preserve approved scope and synthetic facts; fixed requirement 12-7: preserve approved scope and synthetic facts; fixed requirement 12-8: preserve approved scope and synthetic facts; fixed requirement 12-9: preserve approved scope and synthetic facts; fixed requirement 12-10: preserve approved scope and synthetic facts; fixed requirement 12-11: preserve approved scope and synthetic facts; fixed requirement 12-12: preserve approved scope and synthetic facts; fixed requirement 12-13: preserve approved scope and synthetic facts; fixed requirement 12-14: preserve approved scope and synthetic facts; fixed requirement 12-15: preserve approved scope and synthetic facts; fixed requirement 12-16: preserve approved scope and synthetic facts; fixed requirement 12-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-n] Synthetic check 13
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-m`
+- Success criteria: `fixed requirement 13-0: preserve approved scope and synthetic facts; fixed requirement 13-1: preserve approved scope and synthetic facts; fixed requirement 13-2: preserve approved scope and synthetic facts; fixed requirement 13-3: preserve approved scope and synthetic facts; fixed requirement 13-4: preserve approved scope and synthetic facts; fixed requirement 13-5: preserve approved scope and synthetic facts; fixed requirement 13-6: preserve approved scope and synthetic facts; fixed requirement 13-7: preserve approved scope and synthetic facts; fixed requirement 13-8: preserve approved scope and synthetic facts; fixed requirement 13-9: preserve approved scope and synthetic facts; fixed requirement 13-10: preserve approved scope and synthetic facts; fixed requirement 13-11: preserve approved scope and synthetic facts; fixed requirement 13-12: preserve approved scope and synthetic facts; fixed requirement 13-13: preserve approved scope and synthetic facts; fixed requirement 13-14: preserve approved scope and synthetic facts; fixed requirement 13-15: preserve approved scope and synthetic facts; fixed requirement 13-16: preserve approved scope and synthetic facts; fixed requirement 13-17: preserve approved scope and synthetic facts`
+
+### [step-inspect-o] Synthetic check 14
+- Action: `EXECUTE`
+- Purpose: `analysis`
+- Skills: `sequence/search/local-blast`
+- Inputs: `none`
+- Outputs: `none`
+- Depends on: `step-inspect-n`
+- Success criteria: `fixed requirement 14-0: preserve approved scope and synthetic facts; fixed requirement 14-1: preserve approved scope and synthetic facts; fixed requirement 14-2: preserve approved scope and synthetic facts; fixed requirement 14-3: preserve approved scope and synthetic facts; fixed requirement 14-4: preserve approved scope and synthetic facts; fixed requirement 14-5: preserve approved scope and synthetic facts; fixed requirement 14-6: preserve approved scope and synthetic facts; fixed requirement 14-7: preserve approved scope and synthetic facts; fixed requirement 14-8: preserve approved scope and synthetic facts; fixed requirement 14-9: preserve approved scope and synthetic facts; fixed requirement 14-10: preserve approved scope and synthetic facts; fixed requirement 14-11: preserve approved scope and synthetic facts; fixed requirement 14-12: preserve approved scope and synthetic facts; fixed requirement 14-13: preserve approved scope and synthetic facts; fixed requirement 14-14: preserve approved scope and synthetic facts; fixed requirement 14-15: preserve approved scope and synthetic facts; fixed requirement 14-16: preserve approved scope and synthetic facts; fixed requirement 14-17: preserve approved scope and synthetic facts`
+
+## Cross-step Artifact Review
+- Does a later step use a file or directory built/generated by an earlier step?
+- If yes, is the same explicit artifact present in producer outputs and consumer inputs?
+- Is any cross-step state carried only through mktemp, shell variables, cwd assumptions, or prose?
+background-000 ordinary synthetic activity
+background-001 ordinary synthetic activity
+background-002 ordinary synthetic activity
+background-003 ordinary synthetic activity
+background-004 ordinary synthetic activity
+background-005 ordinary synthetic activity
+background-006 ordinary synthetic activity
+background-007 ordinary synthetic activity
+background-008 ordinary synthetic activity
+background-009 ordinary synthetic activity
+background-010 ordinary synthetic activity
+background-011 ordinary synthetic activity
+background-012 ordinary synthetic activity
+background-013 ordinary synthetic activity
+background-014 ordinary synthetic activity
+background-015 ordinary synthetic activity
+background-016 ordinary synthetic activity
+background-017 ordinary synthetic activity
+background-018 ordinary synthetic activity
+background-019 ordinary synthetic activity
+background-020 ordinary synthetic activity
+background-021 ordinary synthetic activity
+background-022 ordinary synthetic activity
+background-023 ordinary synthetic activity
+background-024 ordinary synthetic activity
+background-025 ordinary synthetic activity
+background-026 ordinary synthetic activity
+background-027 ordinary synthetic activity
+background-028 ordinary synthetic activity
+background-029 ordinary synthetic activity
+background-030 ordinary synthetic activity
+background-031 ordinary synthetic activity
+background-032 ordinary synthetic activity
+background-033 ordinary synthetic activity
+background-034 ordinary synthetic activity
+background-035 ordinary synthetic activity
+background-036 ordinary synthetic activity
+background-037 ordinary synthetic activity
+background-038 ordinary synthetic activity
+background-039 ordinary synthetic activity
+background-040 ordinary synthetic activity
+background-041 ordinary synthetic activity
+background-042 ordinary synthetic activity
+background-043 ordinary synthetic activity
+background-044 ordinary synthetic activity
+background-045 ordinary synthetic activity
+background-046 ordinary synthetic activity
+background-047 ordinary synthetic activity
+background-048 ordinary synthetic activity
+background-049 ordinary synthetic activity
+background-050 ordinary synthetic activity
+background-051 ordinary synthetic activity
+background-052 ordinary synthetic activity
+background-053 ordinary synthetic activity
+background-054 ordinary synthetic activity
+background-055 ordinary synthetic activity
+background-056 ordinary synthetic activity
+background-057 ordinary synthetic activity
+background-058 ordinary synthetic activity
+background-059 ordinary synthetic activity
+background-060 ordinary synthetic activity
+background-061 ordinary synthetic activity
+background-062 ordinary synthetic activity
+background-063 ordinary synthetic activity
+background-064 ordinary synthetic activity
+background-065 ordinary synthetic activity
+background-066 ordinary synthetic activity
+background-067 ordinary synthetic activity
+background-068 ordinary synthetic activity
+background-069 ordinary synthetic activity
+background-070 ordinary synthetic activity
+background-071 ordinary synthetic activity
+background-072 ordinary synthetic activity
+background-073 ordinary synthetic activity
+background-074 ordinary synthetic activity
+background-075 ordinary synthetic activity
+background-076 ordinary synthetic activity
+background-077 ordinary synthetic activity
+background-078 ordinary synthetic activity
+background-079 ordinary synthetic activity
+background-080 ordinary synthetic activity
+background-081 ordinary synthetic activity
+background-082 ordinary synthetic activity
+background-083 ordinary synthetic activity
+background-084 ordinary synthetic activity
+background-085 ordinary synthetic activity
+background-086 ordinary synthetic activity
+background-087 ordinary synthetic activity
+background-088 ordinary synthetic activity
+background-089 ordinary synthetic activity
+background-090 ordinary synthetic activity
+background-091 ordinary synthetic activity
+background-092 ordinary synthetic activity
+background-093 ordinary synthetic activity
+background-094 ordinary synthetic activity
+background-095 ordinary synthetic activity
+background-096 ordinary synthetic activity
+background-097 ordinary synthetic activity
+background-098 ordinary synthetic activity
+background-099 ordinary synthetic activity
+background-100 ordinary synthetic activity
+background-101 ordinary synthetic activity
+background-102 ordinary synthetic activity
+background-103 ordinary synthetic activity
+background-104 ordinary synthetic activity
+background-105 ordinary synthetic activity
+background-106 ordinary synthetic activity
+background-107 ordinary synthetic activity
+background-108 ordinary synthetic activity
+background-109 ordinary synthetic activity
+background-110 ordinary synthetic activity
+background-111 ordinary synthetic activity
+background-112 ordinary synthetic activity
+background-113 ordinary synthetic activity
+background-114 ordinary synthetic activity
+background-115 ordinary synthetic activity
+background-116 ordinary synthetic activity
+background-117 ordinary synthetic activity
+background-118 ordinary synthetic activity
+background-119 ordinary synthetic activity
+background-120 ordinary synthetic activity
+background-121 ordinary synthetic activity
+background-122 ordinary synthetic activity
+background-123 ordinary synthetic activity
+background-124 ordinary synthetic activity
+background-125 ordinary synthetic activity
+background-126 ordinary synthetic activity
+background-127 ordinary synthetic activity
+background-128 ordinary synthetic activity
+background-129 ordinary synthetic activity
+background-130 ordinary synthetic activity
+background-131 ordinary synthetic activity
+background-132 ordinary synthetic activity
+background-133 ordinary synthetic activity
+background-134 ordinary synthetic activity
+background-135 ordinary synthetic activity
+background-136 ordinary synthetic activity
+background-137 ordinary synthetic activity
+background-138 ordinary synthetic activity
+background-139 ordinary synthetic activity
+background-140 ordinary synthetic activity
+background-141 ordinary synthetic activity
+background-142 ordinary synthetic activity
+background-143 ordinary synthetic activity
+background-144 ordinary synthetic activity
+background-145 ordinary synthetic activity
+background-146 ordinary synthetic activity
+background-147 ordinary synthetic activity
+background-148 ordinary synthetic activity
+background-149 ordinary synthetic activity
+background-150 ordinary synthetic activity
+background-151 ordinary synthetic activity
+background-152 ordinary synthetic activity
+background-153 ordinary synthetic activity
+background-154 ordinary synthetic activity
+background-155 ordinary synthetic activity
+background-156 ordinary synthetic activity
+background-157 ordinary synthetic activity
+background-158 ordinary synthetic activity
+background-159 ordinary synthetic activity
+background-160 ordinary synthetic activity
+background-161 ordinary synthetic activity
+background-162 ordinary synthetic activity
+background-163 ordinary synthetic activity
+background-164 ordinary synthetic activity
+background-165 ordinary synthetic activity
+background-166 ordinary synthetic activity
+background-167 ordinary synthetic activity
+background-168 ordinary synthetic activity
+background-169 ordinary synthetic activity
+background-170 ordinary synthetic activity
+background-171 ordinary synthetic activity
+background-172 ordinary synthetic activity
+background-173 ordinary synthetic activity
+background-174 ordinary synthetic activity
+background-175 ordinary synthetic activity
+background-176 ordinary synthetic activity
+background-177 ordinary synthetic activity
+background-178 ordinary synthetic activity
+background-179 ordinary synthetic activity
+background-180 ordinary synthetic activity
+background-181 ordinary synthetic activity
+background-182 ordinary synthetic activity
+background-183 ordinary synthetic activity
+background-184 ordinary synthetic activity
+background-185 ordinary synthetic activity
+background-186 ordinary synthetic activity
+background-187 ordinary synthetic activity
+background-188 ordinary synthetic activity
+background-189 ordinary synthetic activity
+background-190 ordinary synthetic activity
+background-191 ordinary synthetic activity
+background-192 ordinary synthetic activity
+background-193 ordinary synthetic activity
+background-194 ordinary synthetic activity
+background-195 ordinary synthetic activity
+background-196 ordinary synthetic activity
+background-197 ordinary synthetic activity
+background-198 ordinary synthetic activity
+background-199 ordinary synthetic activity
+background-200 ordinary synthetic activity
+background-201 ordinary synthetic activity
+background-202 ordinary synthetic activity
+background-203 ordinary synthetic activity
+background-204 ordinary synthetic activity
+background-205 ordinary synthetic activity
+background-206 ordinary synthetic activity
+background-207 ordinary synthetic activity
+background-208 ordinary synthetic activity
+background-209 ordinary synthetic activity
+background-210 ordinary synthetic activity
+background-211 ordinary synthetic activity
+background-212 ordinary synthetic activity
+background-213 ordinary synthetic activity
+background-214 ordinary synthetic activity
+background-215 ordinary synthetic activity
+background-216 ordinary synthetic activity
+background-217 ordinary synthetic activity
+background-218 ordinary synthetic activity
+background-219 ordinary synthetic activity
+background-220 ordinary synthetic activity
+background-221 ordinary synthetic activity
+background-222 ordinary synthetic activity
+background-223 ordinary synthetic activity
+background-224 ordinary synthetic activity
+background-225 ordinary synthetic activity
+background-226 ordinary synthetic activity
+background-227 ordinary synthetic activity
+background-228 ordinary synthetic activity
+background-229 ordinary synthetic activity
+background-230 ordinary synthetic activity
+background-231 ordinary synthetic activity
+background-232 ordinary synthetic activity
+background-233 ordinary synthetic activity
+background-234 ordinary synthetic activity
+background-235 ordinary synthetic activity
+background-236 ordinary synthetic activity
+background-237 ordinary synthetic activity
+background-238 ordinary synthetic activity
+background-239 ordinary synthetic activity
+background-240 ordinary synthetic activity
+background-241 ordinary synthetic activity
+background-242 ordinary synthetic activity
+background-243 ordinary synthetic activity
+background-244 ordinary synthetic activity
+background-245 ordinary synthetic activity
+background-246 ordinary synthetic activity
+background-247 ordinary synthetic activity
+background-248 ordinary synthetic activity
+background-249 ordinary synthetic activity
+background-250 ordinary synthetic activity
+background-251 ordinary synthetic activity
+background-252 ordinary synthetic activity
+background-253 ordinary synthetic activity
+background-254 ordinary synthetic activity
+background-255 ordinary synthetic activity
+background-256 ordinary synthetic activity
+background-257 ordinary synthetic activity
+background-258 ordinary synthetic activity
+background-259 ordinary synthetic activity
+background-260 ordinary synthetic activity
+background-261 ordinary synthetic activity
+background-262 ordinary synthetic activity
+background-263 ordinary synthetic activity
+background-264 ordinary synthetic activity
+background-265 ordinary synthetic activity
+background-266 ordinary synthetic activity
+background-267 ordinary synthetic activity
+background-268 ordinary synthetic activity
+background-269 ordinary synthetic activity
+background-270 ordinary synthetic activity
+background-271 ordinary synthetic activity
+background-272 ordinary synthetic activity
+background-273 ordinary synthetic activity
+background-274 ordinary synthetic activity
+background-275 ordinary synthetic activity
+background-276 ordinary synthetic activity
+background-277 ordinary synthetic activity
+background-278 ordinary synthetic activity
+background-279 ordinary synthetic activity
+background-280 ordinary synthetic activity
+background-281 ordinary synthetic activity
+background-282 ordinary synthetic activity
+background-283 ordinary synthetic activity
+background-284 ordinary synthetic activity
+background-285 ordinary synthetic activity
+background-286 ordinary synthetic activity
+background-287 ordinary synthetic activity
+background-288 ordinary synthetic activity
+background-289 ordinary synthetic activity
+background-290 ordinary synthetic activity
+background-291 ordinary synthetic activity
+background-292 ordinary synthetic activity
+background-293 ordinary synthetic activity
+background-294 ordinary synthetic activity
+background-295 ordinary synthetic activity
+background-296 ordinary synthetic activity
+background-297 ordinary synthetic activity
+background-298 ordinary synthetic activity
+background-299 ordinary synthetic activity
+background-300 ordinary synthetic activity
+background-301 ordinary synthetic activity
+background-302 ordinary synthetic activity
+background-303 ordinary synthetic activity
+background-304 ordinary synthetic activity
+background-305 ordinary synthetic activity
+background-306 ordinary synthetic activity
+background-307 ordinary synthetic activity
+background-308 ordinary synthetic activity
+background-309 ordinary synthetic activity
+background-310 ordinary synthetic activity
+background-311 ordinary synthetic activity
+background-312 ordinary synthetic activity
+background-313 ordinary synthetic activity
+background-314 ordinary synthetic activity
+background-315 ordinary synthetic activity
+background-316 ordinary synthetic activity
+background-317 ordinary synthetic activity
+background-318 ordinary synthetic activity
+background-319 ordinary synthetic activity
+background-320 ordinary synthetic activity
+background-321 ordinary synthetic activity
+background-322 ordinary synthetic activity
+background-323 ordinary synthetic activity
+background-324 ordinary synthetic activity
+background-325 ordinary synthetic activity
+background-326 ordinary synthetic activity
+background-327 ordinary synthetic activity
+background-328 ordinary synthetic activity
+background-329 ordinary synthetic activity
+background-330 ordinary synthetic activity
+background-331 ordinary synthetic activity
+background-332 ordinary synthetic activity
+background-333 ordinary synthetic activity
+background-334 ordinary synthetic activity
+background-335 ordinary synthetic activity
+background-336 ordinary synthetic activity
+background-337 ordinary synthetic activity
+background-338 ordinary synthetic activity
+background-339 ordinary synthetic activity
+background-340 ordinary synthetic activity
+background-341 ordinary synthetic activity
+background-342 ordinary synthetic activity
+background-343 ordinary synthetic activity
+background-344 ordinary synthetic activity
+background-345 ordinary synthetic activity
+background-346 ordinary synthetic activity
+background-347 ordinary synthetic activity
+background-348 ordinary synthetic activity
+background-349 ordinary synthetic activity
+background-350 ordinary synthetic activity
+background-351 ordinary synthetic activity
+background-352 ordinary synthetic activity
+background-353 ordinary synthetic activity
+background-354 ordinary synthetic activity
+background-355 ordinary synthetic activity
+background-356 ordinary synthetic activity
+background-357 ordinary synthetic activity
+background-358 ordinary synthetic activity
+background-359 ordinary synthetic activity
+background-360 ordinary synthetic activity
+background-361 ordinary synthetic activity
+background-362 ordinary synthetic activity
+background-363 ordinary synthetic activity
+background-364 ordinary synthetic activity
+background-365 ordinary synthetic activity
+background-366 ordinary synthetic activity
+background-367 ordinary synthetic activity
+background-368 ordinary synthetic activity
+background-369 ordinary synthetic activity
+background-370 ordinary synthetic activity
+background-371 ordinary synthetic activity
+background-372 ordinary synthetic activity
+background-373 ordinary synthetic activity
+background-374 ordinary synthetic activity
+background-375 ordinary synthetic activity
+background-376 ordinary synthetic activity
+background-377 ordinary synthetic activity
+background-378 ordinary synthetic activity
+background-379 ordinary synthetic activity
+background-380 ordinary synthetic activity
+background-381 ordinary synthetic activity
+background-382 ordinary synthetic activity
+background-383 ordinary synthetic activity
+background-384 ordinary synthetic activity
+background-385 ordinary synthetic activity
+background-386 ordinary synthetic activity
+background-387 ordinary synthetic activity
+background-388 ordinary synthetic activity
+background-389 ordinary synthetic activity
+background-390 ordinary synthetic activity
+background-391 ordinary synthetic activity
+background-392 ordinary synthetic activity
+background-393 ordinary synthetic activity
+background-394 ordinary synthetic activity
+background-395 ordinary synthetic activity
+background-396 ordinary synthetic activity
+background-397 ordinary synthetic activity
+background-398 ordinary synthetic activity
+background-399 ordinary synthetic activity
+background-400 ordinary synthetic activity
+background-401 ordinary synthetic activity
+background-402 ordinary synthetic activity
+background-403 ordinary synthetic activity
+background-404 ordinary synthetic activity
+background-405 ordinary synthetic activity
+background-406 ordinary synthetic activity
+background-407 ordinary synthetic activity
+background-408 ordinary synthetic activity
+background-409 ordinary synthetic activity
+background-410 ordinary synthetic activity
+background-411 ordinary synthetic activity
+background-412 ordinary synthetic activity
+background-413 ordinary synthetic activity
+background-414 ordinary synthetic activity
+background-415 ordinary synthetic activity
+background-416 ordinary synthetic activity
+background-417 ordinary synthetic activity
+background-418 ordinary synthetic activity
+background-419 ordinary synthetic activity
+background-420 ordinary synthetic activity
+background-421 ordinary synthetic activity
+background-422 ordinary synthetic activity
+background-423 ordinary synthetic activity
+background-424 ordinary synthetic activity
+background-425 ordinary synthetic activity
+background-426 ordinary synthetic activity
+background-427 ordinary synthetic activity
+background-428 ordinary synthetic activity
+background-429 ordinary synthetic activity
+background-430 ordinary synthetic activity
+background-431 ordinary synthetic activity
+background-432 ordinary synthetic activity
+background-433 ordinary synthetic activity
+background-434 ordinary synthetic activity
+background-435 ordinary synthetic activity
+background-436 ordinary synthetic activity
+background-437 ordinary synthetic activity
+background-438 ordinary synthetic activity
+background-439 ordinary synthetic activity
+background-440 ordinary synthetic activity
+background-441 ordinary synthetic activity
+background-442 ordinary synthetic activity
+background-443 ordinary synthetic activity
+background-444 ordinary synthetic activity
+background-445 ordinary synthetic activity
+background-446 ordinary synthetic activity
+background-447 ordinary synthetic activity
+background-448 ordinary synthetic activity
+background-449 ordinary synthetic activity
+background-450 ordinary synthetic activity
+background-451 ordinary synthetic activity
+background-452 ordinary synthetic activity
+background-453 ordinary synthetic activity
+background-454 ordinary synthetic activity
+background-455 ordinary synthetic activity
+background-456 ordinary synthetic activity
+background-457 ordinary synthetic activity
+background-458 ordinary synthetic activity
+background-459 ordinary synthetic activity
+background-460 ordinary synthetic activity
+background-461 ordinary synthetic activity
+background-462 ordinary synthetic activity
+background-463 ordinary synthetic activity
+background-464 ordinary synthetic activity
+background-465 ordinary synthetic activity
+background-466 ordinary synthetic activity
+background-467 ordinary synthetic activity
+background-468 ordinary synthetic activity
+background-469 ordinary synthetic activity
+background-470 ordinary synthetic activity
+background-471 ordinary synthetic activity
+background-472 ordinary synthetic activity
+background-473 ordinary synthetic activity
+background-474 ordinary synthetic activity
+background-475 ordinary synthetic activity
+background-476 ordinary synthetic activity
+background-477 ordinary synthetic activity
+background-478 ordinary synthetic activity
+background-479 ordinary synthetic activity
+background-480 ordinary synthetic activity
+background-481 ordinary synthetic activity
+background-482 ordinary synthetic activity
+background-483 ordinary synthetic activity
+background-484 ordinary synthetic activity
+background-485 ordinary synthetic activity
+background-486 ordinary synthetic activity
+background-487 ordinary synthetic activity
+background-488 ordinary synthetic activity
+background-489 ordinary synthetic activity
+background-490 ordinary synthetic activity
+background-491 ordinary synthetic activity
+background-492 ordinary synthetic activity
+background-493 ordinary synthetic activity
+background-494 ordinary synthetic activity
+background-495 ordinary synthetic activity
+background-496 ordinary synthetic activity
+background-497 ordinary synthetic activity
+background-498 ordinary synthetic activity
+background-499 ordinary synthetic activity
+synthetic recoverable notification; approval remains pending
+y
+✓ Plan approved. Executing...
+[32m.[0m
+[32m[32m[1m1 passed[0m[32m in 6.58s[0m[0m
+

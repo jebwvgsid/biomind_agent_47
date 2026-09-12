@@ -1,0 +1,3 @@
+# Preserve terminal evidence bytes, including CR and prompt trailing spaces.
+*.ansi -text -diff -whitespace
+*.screen.txt -text -whitespace

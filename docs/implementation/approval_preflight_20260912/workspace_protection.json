@@ -1,0 +1,13 @@
+{
+  "base": "53ff7dba6716d30fd5bbe3a508fa9aef5ba0b4d3",
+  "production_head": "07eae17c544479444f2dfe4e531845e3f36b2f31",
+  "branch": "refactor/consultant-controller-authority",
+  "original_status_count": 437,
+  "remaining_status_count": 437,
+  "original_status_entries_identical": true,
+  "staged_empty": true,
+  "prompts_manager_sha256_unchanged": true,
+  "middleware_sha256_unchanged": true,
+  "original_node_context_hunks_committed": false,
+  "scope_note": "Status equality is not a hash proof for every original untracked file. Only explicit task paths were written; no cleanup/stash/reset was used."
+}

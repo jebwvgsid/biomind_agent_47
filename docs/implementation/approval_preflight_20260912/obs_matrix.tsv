@@ -1,0 +1,9 @@
+编号	生产实现	实际离线证据	结果	解释边界
+O01	run_checks；StreamDisplayCopy.feed	compact/verbose/off各4个真实小检查；首项spawn后屏障未放行时已有当前项/0已返回；compact/verbose writer有逐项文字，off隐藏普通输出；三种事件顺序相同	PASS	状态来自父级边界；没有猜测读取到哪个record
+O02	capture_log_paths；inspect_fastq_batch	实际父级脚本调用4个合成FASTQ检查；outer stdout只有1个正式marker；每个child原始stdout各保存1个marker	PASS	不把显示副本交给parser；不转发嵌套stdout
+O03	run_command短检查期限	0.2秒可控sleep超时；此前结果保留、后项未启动；父子受控PID确认不存在	PASS	自然exit124不是本地deadline；默认60秒仅新短检查
+O04	with_signal_cleanup；原executor进程组	直接cancel及外层executor取消→真实wrapper→嵌套sleep均回收；receipt分别有requested/cancelled及group_reaped	PASS	未承诺不可中断I/O或逃离process group的后代
+O05	现有双管道排空与专用full log	stdout 300000字节、stderr 350000字节逐字节相等；父级进度文本有界	PASS	保留既有输出上限策略，不宣称越过上限的无限日志
+O06	assess_prefix精确identity/范围核验	3个有效前缀+1个负观察；exit17、自然exit124、parse错误不计通过且无重试	PASS	只检查前缀；未完成为UNKNOWN
+O07	调用内计算local deadline	等待0.2秒期间0执行/无目录；释放门闩后0.15秒local deadline仍通过	PASS_COMPONENT	该门闩不是生产审批；AP真实审批→spawn另验
+O08	纯进度模型副本过滤	实际RecoveryAgentLoop下轮ToolMessage无专用进度、保留错误与正式marker；3模式均原3模型调用/2工具调用、directive相同	PASS	新增旁白调用0；raw dispatcher数据未变
