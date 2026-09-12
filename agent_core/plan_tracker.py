@@ -1309,6 +1309,13 @@ def record_planning_failure(
             or 0
         )
     task_state["planning_failure"] = capsule
+    # Keep prior Plan/submission/approval records, but publish this producer's
+    # current rejection. Omitted success fields must not select an old receipt.
+    from agent_core.planner_loop import new_planner_loop_state
+    loop = dict(task_state.get("planner_loop") or new_planner_loop_state(str(result.get("task_id") or "default")))
+    loop.update({"phase": "candidate_rejected", "status": "active",
+                 "agent_disposition": "continue", "updated_at": _now()})
+    task_state["planner_loop"] = loop
     epoch = dict(task_state.get("planning_epoch") or {})
     if (
         not terminal

@@ -56,7 +56,7 @@ async def protocol_flow():
                 events.append(event)
                 if 'planner' in event:break
         finally:await stream.aclose()
-        artifact('pf1-protocol.json',{'requests':requests,'counts':counts,'events':events})
+        artifact('pf1-protocol.json',{'requests':requests,'counts':counts,'events':events,'durable':load_plan_state(case.root,task_id)})
         assert counts=={'consultant':1,'planner':2,'generate':0},counts
         assert events[-1]['planner']['planner_outcome']['type']=='plan_review_ready',events[-1]
         planner=[r for r in requests if r['stage']=='planner']

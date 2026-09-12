@@ -5625,7 +5625,10 @@ class BioAnalystAgent:
             semantic, reason = "terminal", "recovery_budget_terminal"
             status = TASK_STATUS_BLOCKED
         elif str(waiting.get("stage") or "") in {"plan_review", "plan_review_feedback"}:
-            semantic, reason = "plan_review_pending", "human_plan_review_pending"
+            if plan_review_submission_readiness(durable)["ready"]:
+                semantic, reason = "plan_review_pending", "human_plan_review_pending"
+            else:
+                semantic, reason = "planning_ready", "current_candidate_not_reviewable"
         elif str(waiting.get("stage") or "") in {"install_subagent", "env_selection"}:
             semantic, reason = "installation_pending", "installation_approval_pending"
         elif pending_question or self._business_waiting_state(waiting):
@@ -5647,10 +5650,12 @@ class BioAnalystAgent:
             "done", "passed", "skipped", "skipped_upstream_blocked", "cancelled"
         }:
             semantic, reason = "final_audit_pending", "all_plan_steps_terminal"
-        elif validation.get("valid"):
+        elif validation.get("valid") and plan_review_acceptance_readiness(durable)["ready"]:
             semantic, reason = "step_execution_ready", "approved_plan_ready"
-        elif steps and validation.get("reason_code") == "plan_not_approved":
+        elif steps and plan_review_submission_readiness(durable)["ready"]:
             semantic, reason = "plan_review_pending", "plan_requires_approval"
+        elif steps and not plan_review_acceptance_readiness(durable)["ready"]:
+            semantic, reason = "planning_ready", "current_candidate_not_reviewable"
         elif planning_readiness["ready"]:
             semantic, reason = "planning_ready", str(planning_readiness["reason_code"])
         elif not task_spec_is_initialized(task_spec):
@@ -7818,11 +7823,15 @@ class BioAnalystAgent:
     def _commit_plan_review_submission(
         self,
         task_id: str,
+        *, expected_claim_id: str, expected_identity: Mapping[str, Any],
     ) -> Dict[str, Any]:
         """Commit the explicit Planner submission against the saved Plan identity."""
         last_conflict: Optional[BaseException] = None
         for _ in range(3):
             durable = load_plan_state(self.data_path, task_id)
+            claim = ((durable.get("task_state") or {}).get("planning_epoch") or {}).get("call_claim") or {}
+            if claim.get("claim_id") != expected_claim_id or plan_identity(durable) != expected_identity:
+                raise ValueError("PLAN_REVIEW_SUBMISSION_STALE_CALL")
             submitted = record_plan_review_submission(durable)
             try:
                 save_plan_state(self.data_path, task_id, submitted)
@@ -40210,7 +40219,7 @@ question. Never guess a scientific or database identity.
                 == WORKFLOW_ROUTING_SCHEMA_TYPED
             ):
                 try:
-                    plan_state = self._commit_plan_review_submission(task_id)
+                    plan_state = self._commit_plan_review_submission(task_id, expected_claim_id=planner_call_claim["claim_id"], expected_identity=plan_identity(plan_state))
                 except (StateCASConflict, ValueError) as exc:
                     return {
                         "messages": [SystemMessage(content=json.dumps({
@@ -40763,8 +40772,22 @@ question. Never guess a scientific or database identity.
             il = user_input.lower()
 
             if il in ["y", "yes", "approve", ""]:
-                display_print(f"{Fore.GREEN}✓ Plan approved. Executing...{Style.RESET_ALL}")
-                plan_state = self._ensure_plan_tracker(task_id, plan)
+                plan_state = load_plan_state(self.data_path, task_id)
+                current_submission = plan_review_submission_readiness(plan_state)
+                if schema2_review and (
+                    not current_submission["ready"]
+                    or current_submission["submission_id"] != submission_readiness["submission_id"]
+                ):
+                    display_print("任务或候选已更新，本次输入未批准旧计划；需要处理当前计划。")
+                    return {"messages": [SystemMessage(content="PLAN_REVIEW_INPUT_STALE")],
+                            "validation_issues": [{"code": "PLAN_REVIEW_INPUT_STALE",
+                                "field_path": "$.task_state.plan_review_submission",
+                                "expected": submission_readiness["receipt"],
+                                "actual": current_submission["receipt"],
+                                "severity": "error", "owner": "planner"}],
+                            "pending_action": {}, "next_step": "planner"}
+                if not schema2_review:
+                    plan_state = self._ensure_plan_tracker(task_id, plan)
                 _bind_current_task_spec_record(plan_state, task_spec)
                 plan_state["canonical_constraint_hash"] = current_constraint_hash
                 plan_state["knowledge_claim_set_hash"] = current_claim_hash
@@ -40785,7 +40808,15 @@ question. Never guess a scientific or database identity.
                 )
                 if schema2_review:
                     plan_state = record_plan_review_acceptance(plan_state)
-                plan_progress = self._persist_plan_tracker(task_id, plan_state) if plan_state.get("steps") else render_plan_progress(plan_state)
+                try:
+                    plan_progress = self._persist_plan_tracker(task_id, plan_state) if plan_state.get("steps") else render_plan_progress(plan_state)
+                except StateCASConflict:
+                    return {"messages": [SystemMessage(content="PLAN_REVIEW_INPUT_STALE")],
+                            "validation_issues": [{"code": "PLAN_REVIEW_INPUT_STALE",
+                                "field_path": "$.task_state.plan_review_submission",
+                                "severity": "error", "owner": "planner"}],
+                            "pending_action": {}, "next_step": "planner"}
+                display_print(f"{Fore.GREEN}✓ Plan approved. Preparing the current step...{Style.RESET_ALL}")
                 approval_event = SystemMessage(
                     content=(
                         "<control_event type=\"plan_approved\" "

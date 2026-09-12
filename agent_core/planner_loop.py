@@ -238,13 +238,57 @@ def _plan_identity(state: Mapping[str, Any]) -> Dict[str, Any]:
     }
 
 
+def plan_review_candidate_scope(plan_state: Mapping[str, Any]) -> Dict[str, Any]:
+    """Read current review eligibility from existing task and call identities.
+
+    Receipts remain historical facts. A newly claimed/rejected call is not a
+    selection of the previous successful Plan, even within the same revision.
+    """
+    state = dict(plan_state or {})
+    task = dict(state.get("task_state") or {})
+    current = dict(state.get("current_plan") or {})
+    revision = int((state.get("current_task") or {}).get("task_revision")
+                   or state.get("task_revision") or 0)
+    generated = int(state.get("generated_from_task_revision")
+                    or current.get("generated_from_task_revision")
+                    or (current.get("plan_spec") or {}).get("generated_from_task_revision") or 0)
+    epoch = dict(task.get("planning_epoch") or {})
+    claim = dict(epoch.get("call_claim") or {})
+    loop = dict(task.get("planner_loop") or {})
+    eligible = bool(
+        generated == revision
+        and str(task.get("status") or "") not in {"cancelled", "failed", "blocked"}
+        and str(loop.get("phase") or "") not in {"candidate_rejected", "invalid"}
+        and (not claim or (
+            claim.get("status") == "result_recorded"
+            and claim.get("outcome") == "candidate_ready_for_review"
+            and int((claim.get("scope") or {}).get("task_revision") or 0) == revision
+            and (claim.get("scope") or {}).get("planning_epoch_id") == epoch.get("planning_epoch_id")
+        ))
+    )
+    return {"eligible": eligible, "task_revision": revision,
+            "generated_from_task_revision": generated,
+            "authoritative_user_turn_revision": int((state.get("conversation_evidence") or {}).get("user_turn_count") or 0),
+            "planner_claim_id": str(claim.get("claim_id") or ""),
+            "planning_epoch_id": str(epoch.get("planning_epoch_id") or ""),
+            "candidate_scope_id": str((claim.get("scope") or {}).get("candidate_scope_id") or "")}
+
+
 def _receipt_matches_plan(
     receipt: Mapping[str, Any] | None,
     state: Mapping[str, Any],
 ) -> bool:
     value = dict(receipt or {})
     identity = _plan_identity(state)
+    scope = plan_review_candidate_scope(state)
     return bool(
+        scope["eligible"]
+        and int(value.get("task_revision") or 0) == scope["task_revision"]
+        and int(value.get("authoritative_user_turn_revision") or 0) == scope["authoritative_user_turn_revision"]
+        and str(value.get("planner_claim_id") or "") == scope["planner_claim_id"]
+        and str(value.get("planning_epoch_id") or "") == scope["planning_epoch_id"]
+        and str(value.get("candidate_scope_id") or "") == scope["candidate_scope_id"]
+        and
         str(value.get("submission_id") or "")
         and value.get("agent_initiated") is True
         and str(value.get("action_type") or "") == "submit_plan_for_review"
@@ -268,7 +312,22 @@ def record_plan_review_submission(
     identity = _plan_identity(updated)
     if not updated.get("steps") or identity["plan_revision"] <= 0:
         raise ValueError("PLAN_REVIEW_SUBMISSION_CANDIDATE_INVALID")
-    seed = {**identity, "nonce": uuid.uuid4().hex}
+    scope = plan_review_candidate_scope(updated)
+    # A successful newly compiled candidate clears the prior rejection below;
+    # the claim outcome, not a historical receipt, authorizes this submission.
+    task_state = dict(updated.get("task_state") or {})
+    loop = dict(task_state.get("planner_loop") or {})
+    if loop.get("phase") == "candidate_rejected":
+        failure = dict(task_state.get("planning_failure") or {})
+        if failure.get("status") == "resolved":
+            loop["phase"] = "reasoning"
+            task_state["planner_loop"] = loop
+            updated["task_state"] = task_state
+            scope = plan_review_candidate_scope(updated)
+    if not scope["eligible"]:
+        raise ValueError("PLAN_REVIEW_CANDIDATE_SCOPE_STALE")
+    scope.pop("eligible")
+    seed = {**identity, **scope, "nonce": uuid.uuid4().hex}
     receipt = {
         "schema_version": 1,
         "protocol_version": PLANNER_REVIEW_PROTOCOL_VERSION,
@@ -279,6 +338,7 @@ def record_plan_review_submission(
         "agent_initiated": True,
         "status": "pending_review",
         **identity,
+        **scope,
         "submitted_at": _now(),
     }
     task_state = dict(updated.get("task_state") or {})
@@ -436,7 +496,9 @@ def record_plan_review_acceptance(
     task_state = dict(updated.get("task_state") or {})
     submission = dict(task_state.get("plan_review_submission") or {})
     approval = dict(updated.get("approval_record") or {})
-    if not _receipt_matches_plan(submission, updated):
+    if plan_review_acceptance_readiness(updated)["ready"]:
+        return updated  # Re-delivery of this accepted receipt is idempotent.
+    if not plan_review_submission_readiness(updated)["ready"]:
         raise ValueError("PLAN_REVIEW_SUBMISSION_MISSING_OR_STALE")
     if str(approval.get("status") or "") not in {"approved", "accepted"}:
         raise ValueError("PLAN_REVIEW_APPROVAL_RECEIPT_INVALID")

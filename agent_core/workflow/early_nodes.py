@@ -21,6 +21,7 @@ from agent_core.planner_loop import (
     PlannerDisposition,
     classify_planner_lifecycle,
     plan_review_acceptance_readiness,
+    plan_review_candidate_scope,
     plan_review_submission_readiness,
     review_evidence_from_issues,
 )
@@ -986,6 +987,23 @@ class TypedPlanReview(_TypedEarlyNode):
         self.execution_backend = str(execution_backend or "legacy")
 
     def classify(self, before, state, durable):
+        scope = plan_review_candidate_scope(durable)
+        task = dict(durable.get("task_state") or {})
+        stale_receipt = bool(task.get("plan_review_submission") and
+                             not plan_review_submission_readiness(durable)["identity_matches"])
+        if ((not scope["eligible"] or stale_receipt)
+                and not task.get("pending_review_classification")
+                and task_status(durable) not in {"blocked", "failed", "cancelled", "completed"}):
+            issues = [{"code": "PLAN_REVIEW_CANDIDATE_SCOPE_STALE",
+                       "field_path": "$.task_state.plan_review_submission",
+                       "expected": {"task_revision": scope["task_revision"],
+                                    "planner_claim_id": scope["planner_claim_id"]},
+                       "actual": dict((durable.get("task_state") or {}).get("plan_review_submission") or {}),
+                       "severity": "error", "owner": "planner"}]
+            return _outcome(self.contract, "revision_required", state, durable, {
+                "validation_issues": issues,
+                "reason_code": "current_candidate_not_reviewable",
+            }, "The current task/candidate has no eligible review submission; the historical Plan is retained.")
         waiting = load_waiting_state(
             self.data_path, str(state.get("task_id") or "default")
         )
