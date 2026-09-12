@@ -443,6 +443,14 @@ class RecoveryRuntime:
             "outcome_digest": _full_hash(outcome.to_dict()),
             "outcome": outcome.to_dict(),
         }
+        if outcome_type == "plan_revision_required":
+            # Point to the existing admitted body; this is not a second Plan
+            # or a new semantic directive. Planner reads it until scope moves.
+            candidate_task["planner_revision_request"] = {
+                "decision_id": decision_id,
+                **{key: str(durable.get(key) or "") for key in
+                   ("task_id", "plan_id", "plan_version", "current_step_id")},
+            }
         if outcome_type == "candidate_repair_required":
             diagnostic_request = {}
             if directive.action == "run_diagnostic_probe":

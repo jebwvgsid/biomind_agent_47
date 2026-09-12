@@ -25,6 +25,7 @@ from agent_core.task_spec import (
     task_semantic_hash,
 )
 from agent_core.plan_contract import new_candidate_scope_id
+from agent_core.planner_revision import accepted_planner_revision, planner_revision_focus
 from agent_core.step_effects import canonical_execution_effect_evidence
 from execution.runtime_contract import (
     execution_runtime_contract,
@@ -2519,6 +2520,13 @@ def build_node_context(
                     "attempt": 1,
                     "instruction": {"return_complete_plan": True},
                 }
+            revision = accepted_planner_revision(plan)
+            if revision:
+                current_focus["planning"]["revision"] = _without_control_metadata(
+                    planner_revision_focus(revision)
+                )
+                if current_focus["planning"].get("mode") == "create_complete_plan":
+                    current_focus["planning"]["mode"] = "revise_current_plan"
             planner_loop = dict(
                 (plan.get("task_state") or {}).get("planner_loop") or {}
             )

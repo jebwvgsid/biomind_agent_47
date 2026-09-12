@@ -1776,7 +1776,7 @@ Read-only skill-resolution input JSON:
         base_prompt = """You are the BioMind Planner.
 
 Return exactly one complete raw JSON object and no Markdown or prose. Output is
-mode-dependent. In create_complete_plan or correct_previous_plan mode, return
+mode-dependent. In create_complete_plan, revise_current_plan, or correct_previous_plan mode, return
 SUBMIT_PLAN_FOR_REVIEW, TASKSPEC_RECONCILIATION_REQUIRED, REQUEST_SKILL_CONTEXT,
 SEARCH_SKILLS, or PROPOSE_SKILL_BINDING. Semantic delta and nested repair
 responses are unsupported. PLAN_CANDIDATE is a legacy schema-1 response and is
@@ -1789,6 +1789,13 @@ blocking correction objective. Satisfy every required_postcondition before
 returning. When convergence.no_structural_progress is true, changes outside the
 reported affected_fields do not count as a correction; revise the affected
 structure and self-check it against every blocking violation.
+
+When current_focus.planning.revision is present, apply its instruction to the
+current approved Plan and preserve it through candidate correction. Its
+recorded_failure_facts are recorded observations; model_diagnosis is the
+Recovery model's assessment, not a proven fact. Return a complete review
+candidate. Admission of a revision request does not mean its candidate has
+been reviewed or approved. Preserve completed work and the user goal.
 
 Operate as a local agent loop: reason from the compact context, request Skill or
 resource evidence when needed, treat each tool result as an observation, reason

@@ -831,6 +831,7 @@ from agent_core.workspace_attestation import (
     validate_workspace_action_admission,
 )
 from agent_core.state_contract_store import StateContractStore
+from agent_core.planner_revision import accepted_planner_revision
 from agent_core.planner_context import save_correction_context, load_correction_context, restore_correction_messages
 from agent_core.plan_bindings import planner_resource_requirements
 from agent_core.completion_gate import CompletionGate
@@ -3220,6 +3221,9 @@ class BioAnalystAgent:
                     ),
                 })
             elif phase_name == "planner":
+                revision = accepted_planner_revision(durable)
+                if revision:
+                    common["planner_revision_decision_ref"] = revision["decision_id"]
                 accepted = dict(
                     task_state.get("accepted_consultant_handoff") or {}
                 )
@@ -38212,6 +38216,8 @@ question. Never guess a scientific or database identity.
                     planner_task_state["accepted_consultant_handoff"] = (
                         legacy_handoff
                     )
+            planner_revision = accepted_planner_revision(planner_source_state)
+            revision_decision_id = str(planner_revision.get("decision_id") or "")
             prior_epoch = dict(planner_task_state.get("planning_epoch") or {})
             committed_plan = dict(planner_source_state.get("current_plan") or {})
             base_snapshot_id = str(committed_plan.get("plan_snapshot_ref") or "")
@@ -38229,7 +38235,7 @@ question. Never guess a scientific or database identity.
                 base_plan_snapshot_id=base_snapshot_id,
                 base_plan_semantic_identity=base_plan_semantic_identity,
                 planner_feedback_revision=planner_feedback_revision,
-            ):
+            ) and str(prior_epoch.get("recovery_revision_decision_id") or "") == revision_decision_id:
                 planning_epoch = deepcopy(prior_epoch)
             else:
                 prior_identity = str(
@@ -38265,6 +38271,12 @@ question. Never guess a scientific or database identity.
                     ),
                     planner_feedback_revision=planner_feedback_revision,
                 )
+                if revision_decision_id:
+                    planning_epoch["recovery_revision_decision_id"] = revision_decision_id
+                    planning_epoch["start_reason"] = "accepted_plan_revision"
+                    # A new context prefix does not refund already consumed calls.
+                    for counter in ("planner_calls_total", "candidate_repairs", "stale_redispatches"):
+                        planning_epoch[counter] = int(prior_epoch.get(counter) or 0)
                 planning_epoch["planner_output_policy_version"] = PLANNER_OUTPUT_POLICY_VERSION
                 planning_epoch["planner_response_protocol_version"] = 2
 

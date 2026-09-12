@@ -536,8 +536,19 @@ def classify_planner_lifecycle(
             "disposition": PlannerDisposition.CONSULTATION_REQUIRED.value,
             "reason_code": "TASKSPEC_RECONCILIATION_REQUIRED",
         }
+    # An admitted Recovery revision starts work against the approved Plan.
+    # Keep its historical approval, but do not mistake that old acceptance
+    # for the outcome of the current revision/candidate-repair invocation.
+    from agent_core.planner_revision import accepted_planner_revision
+    revision = accepted_planner_revision(state)
+    revision_in_progress = bool(
+        revision
+        and str((task_state.get("planning_epoch") or {}).get(
+            "recovery_revision_decision_id") or "")
+        == str(revision.get("decision_id") or "")
+    )
     accepted = plan_review_acceptance_readiness(state)
-    if accepted["ready"]:
+    if accepted["ready"] and not revision_in_progress:
         return {
             "disposition": PlannerDisposition.REVIEW_ACCEPTED.value,
             "reason_code": accepted["reason_code"],
