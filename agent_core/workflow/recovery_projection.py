@@ -510,6 +510,48 @@ def _compact_effect_presence(value: Any) -> dict[str, Any]:
     for key in ("declared", "observed", "missing", "unexpected", "invalid"):
         if value.get(key) not in (None, "", [], {}):
             result[key] = _bounded_fact_value(value[key])
+    collection = value.get("file_collection")
+    if isinstance(collection, Mapping):
+        result["file_collection"] = {
+            key: _bounded_scalar(collection[key], limit=512)
+            for key in ("source", "accepted_set_status", "reconciliation_status", "authority")
+            if key in collection
+        }
+        for key in ("accepted", "observed_candidates", "reconciliation_violations"):
+            if isinstance(collection.get(key), (list, tuple)):
+                # Preserve an explicit [] and the typed identity/path fields.
+                result["file_collection"][key] = [
+                    _bounded_fact_value(row) for row in collection[key][:12]
+                ]
+                if len(collection[key]) > 12:
+                    result["file_collection"][key + "_omitted"] = len(collection[key]) - 12
+    registration = value.get("formal_registration")
+    if isinstance(registration, (list, tuple)):
+        result["formal_registration"] = [_bounded_fact_value(row) for row in registration[:12]]
+        if len(registration) > 12:
+            result["formal_registration_omitted"] = len(registration) - 12
+    return result
+
+
+def _compact_runtime_observations(value: Any) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        return {}
+    result = {key: _bounded_fact_value(value[key]) for key in
+              ("status", "reason_code", "authority", "invalid_record_codes") if key in value}
+    records = value.get("records")
+    if not isinstance(records, (list, tuple)):
+        return result
+    result["records"] = []
+    for raw in records[:12]:
+        if not isinstance(raw, Mapping):
+            continue
+        row = {key: _bounded_fact_value(raw[key]) for key in (
+            "evidence_id", "source_ref", "scope", "observed_at", "expires_at",
+            "inspection", "facts", "supersedes",
+        ) if key in raw}
+        result["records"].append(row)
+    if len(records) > 12:
+        result["records_omitted"] = len(records) - 12
     return result
 
 
@@ -549,6 +591,9 @@ def _compact_completion_report(value: Any) -> dict[str, Any]:
             )
             if process.get(key) not in (None, "", [], {})
         }
+        runtime = _compact_runtime_observations(process.get("runtime_observations"))
+        if runtime:
+            result["process_outcome"]["runtime_observations"] = runtime
     presence = _compact_effect_presence(value.get("effect_presence"))
     if presence:
         result["effect_presence"] = presence
@@ -1200,6 +1245,8 @@ def _diagnostic_facts(
         ):
             if key in metadata and key not in compact:
                 compact[key] = deepcopy(metadata[key])
+        if kind == "result_realizations" and isinstance(metadata.get("result_realizations"), Mapping):
+            compact["result_realizations"] = deepcopy(dict(metadata["result_realizations"]))
         identity = {
             "kind": str(kind or "typed_failure"),
             "summary": str(summary or "Typed failure fact.")[:1000],
@@ -1229,6 +1276,36 @@ def _diagnostic_facts(
             summary=f"Process return code: {return_code}",
             metadata={"return_code": return_code},
         )
+    action = execution.get("action_contract")
+    action = dict(action) if isinstance(action, Mapping) else {}
+    contracts = action.get("controller_output_bindings")
+    candidates = execution.get("observed_output_records")
+    if isinstance(contracts, (list, tuple)) or isinstance(candidates, (list, tuple)):
+        realizations = {
+            "source": "current_execution_record",
+            "scope": {key: _bounded_scalar(execution[key], limit=512) for key in
+                      ("task_id", "plan_id", "plan_version", "step_id", "action_id", "attempt_id", "execution_id")
+                      if key in execution},
+            "authority": "recorded_contracts_and_observations; no_correspondence_or_acceptance_inferred",
+        }
+        for target, rows, fields in (
+            ("declared_results", contracts, ("artifact_id", "semantic_handle", "role", "description", "required",
+                "expected_path", "path", "constraint_origin", "path_policy", "output_root", "artifact_kind", "format", "validation_contract_id")),
+            ("input_bindings", action.get("controller_input_bindings"), ("artifact_id", "semantic_handle", "role", "path", "canonical_path", "format")),
+            ("observed_candidates", candidates, ("path", "attempt_id", "current_attempt_owned", "exists",
+                "artifact_kind", "format", "representation", "size", "content_valid", "content_prefix_sha256")),
+        ):
+            if isinstance(rows, (list, tuple)):
+                realizations[target] = [{key: _bounded_fact_value(raw[key]) for key in fields if key in raw}
+                    for raw in rows[:12] if isinstance(raw, Mapping)]
+                if len(rows) > 12:
+                    realizations[target + "_omitted"] = len(rows) - 12
+        reconciliation = execution.get("runtime_output_reconciliation")
+        if isinstance(reconciliation, Mapping):
+            realizations["reconciliation"] = {key: _bounded_fact_value(reconciliation[key]) for key in
+                ("status", "violations") if key in reconciliation}
+        add_fact(kind="result_realizations", summary="Recorded result contracts and current execution output candidates.",
+                 metadata={"result_realizations": realizations})
     status = payload.get("status")
     if status not in (None, ""):
         add_fact(

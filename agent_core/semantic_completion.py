@@ -26,6 +26,11 @@ from agent_core.step_effects import (
     canonical_step_effect,
 )
 from agent_core.workspace_attestation import validate_runtime_mutation_receipt
+from agent_core.evidence_projection import (
+    artifact_collection_facts,
+    artifact_registration_facts,
+    runtime_observation_facts,
+)
 
 
 SEMANTIC_COMPLETION_SCHEMA_VERSION = 1
@@ -1208,9 +1213,11 @@ def _derive_report_facts(
     }
 
     declared: Dict[str, list[str]] = {key: [] for key in _EFFECT_FIELDS}
+    step: Mapping[str, Any] = {}
     try:
         scope = completion_scope(plan_state, validation)
-        effect = canonical_step_effect(_current_step(plan_state, scope["step_id"]))
+        step = _current_step(plan_state, scope["step_id"])
+        effect = canonical_step_effect(step)
     except (SemanticCompletionError, StepEffectProtocolError):
         effect = {}
     for key in _EFFECT_FIELDS:
@@ -1225,11 +1232,47 @@ def _derive_report_facts(
         execution,
         validation.get("effect_results") or {},
     ])
+    collection = artifact_collection_facts(execution)
+    path_links = {
+        str(item["path"]): str(item["identity"])
+        for item in collection["accepted"]
+        if item.get("path") and item.get("identity")
+    }
+    identity_paths: Dict[str, set[str]] = {}
+    for path, identity in path_links.items():
+        identity_paths.setdefault(identity, set()).add(path)
+    known_paths = {
+        str(item["path"])
+        for item in [*collection["accepted"], *collection["observed_candidates"]]
+        if item.get("path")
+    }
     observed: Dict[str, list[Dict[str, Any]]] = {key: [] for key in _EFFECT_FIELDS}
     for key in _EFFECT_FIELDS:
         for raw in observed_envelope.get(key, ()) or ():
             item = dict(raw) if isinstance(raw, Mapping) else {"identity": str(raw)}
             row: Dict[str, Any] = {"identity": _effect_identity(item)}
+            if key == "produces_artifacts":
+                path = str(item.get("path") or item.get("observed_path") or "")
+                # The legacy canonical effect reader accepts path as an ID
+                # alias and consequently removes it from typed rows. Restore
+                # only the exact link preserved in the collection record.
+                linked_paths = identity_paths.get(row["identity"], set())
+                if not path and len(linked_paths) == 1:
+                    path = next(iter(linked_paths))
+                if not path and row["identity"] not in declared[key] and (
+                    row["identity"] in known_paths or not isinstance(raw, Mapping)
+                ):
+                    path = row["identity"]
+                    row["identity"] = path_links.get(path, "")
+                if path:
+                    row["path"] = path
+                row["identity_status"] = "recorded" if row["identity"] else "unknown"
+                # Files are checked by collection/provenance, not by the
+                # observation value protocol. A path-only historical record
+                # is unknown identity evidence, never a missing-value error.
+                if (row["identity"] or path) and row not in observed[key]:
+                    observed[key].append(row)
+                continue
             if "value" in item:
                 row.update({
                     "value_present": True,
@@ -1246,7 +1289,18 @@ def _derive_report_facts(
         "missing": deepcopy(dict(completion_gate.get("missing_effects") or {})),
         "unexpected": deepcopy(dict(completion_gate.get("unexpected_effects") or {})),
         "invalid": deepcopy(dict(completion_gate.get("invalid_effects") or {})),
+        "file_collection": collection,
+        "formal_registration": artifact_registration_facts(
+            plan_state, logical_ids=declared["produces_artifacts"],
+            provenance_ids=list(step.get("output_artifact_ids") or []),
+        ),
+        "completion_verification_source": "completion_gate_and_predicate_results",
     }
+    process_outcome["runtime_observations"] = runtime_observation_facts(
+        dict(plan_state.get("task_state") or {}),
+        task_id=str(plan_state.get("task_id") or ""),
+        skill_ids=list(step.get("selected_skill_ids") or step.get("skill_ids") or []),
+    )
 
     receipt_findings: list[Dict[str, Any]] = []
     findings: list[Dict[str, Any]] = []
@@ -1282,7 +1336,7 @@ def _derive_report_facts(
             "expected": deepcopy(row.get("expected")),
             "evidence_refs": evidence_refs,
             "affected_resource": str(row.get("observation_id") or ""),
-            "affected_field": "value",
+            "affected_field": "passed" if nature == "completion_gate" else "value",
             "status": str(row.get("status") or ""),
             "disposition": str(row.get("disposition") or ""),
             "confidence_or_unknown_reason": (

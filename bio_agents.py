@@ -832,6 +832,7 @@ from agent_core.workspace_attestation import (
 )
 from agent_core.state_contract_store import StateContractStore
 from agent_core.planner_revision import accepted_planner_revision
+from agent_core.evidence_projection import artifact_effect_evidence
 from agent_core.planner_context import save_correction_context, load_correction_context, restore_correction_messages
 from agent_core.plan_bindings import planner_resource_requirements
 from agent_core.completion_gate import CompletionGate
@@ -49830,7 +49831,11 @@ question. Never guess a scientific or database identity.
                 "attempt_id": str(attempt_record.get("attempt_id") or ""),
                 "declared_step_effect": declared_step_effect,
                 "parser_receipt": effect_parser_receipt,
-                "produces_artifacts": list(validated_formal_artifacts),
+                "produces_artifacts": artifact_effect_evidence(
+                    validated_formal_artifacts,
+                    claims=structured_effect_evidence.get("produces_artifacts", ()),
+                    bindings=reconciled_outputs,
+                ),
                 "produces_bindings": produced_binding_receipts,
                 "produces_observations": produced_observations,
                 "workspace_mutations": workspace_mutation_receipts,
