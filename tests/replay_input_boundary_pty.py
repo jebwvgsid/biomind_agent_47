@@ -90,6 +90,11 @@ def record(source,root,mode='plain',framing='bracketed',ending='lf',decision='y'
             if pending and not submitted and time.monotonic()-pending>.5:
                 snapshot={'task':read('input-task.json'),'business':b,'frame':frame,'screen':screen.text()}
                 (root/'pending.screen.txt').write_text(screen.text())
+                if decision=='blank-paste':
+                    if not details:
+                        send(b'\x1b[200~\n\n\x1b[201~\r');details=True;continue
+                    if '空白粘贴' not in text and '空白粘贴' not in screen.text():continue
+                    assert b.get('decisions')==[] and b.get('executions')==[]
                 if decision=='details':
                     if not details:
                         send(b'/details\r');details=True;continue
@@ -105,7 +110,7 @@ def record(source,root,mode='plain',framing='bracketed',ending='lf',decision='y'
                 submitted=True
                 if decision=='eof':send(b'\x04')
                 elif decision=='cancel':send(b'\x03')
-                else:send((TASK.split('\n')[1] if decision=='feedback' else '' if decision=='enter' else 'y' if decision=='details' else decision).encode()+b'\r')
+                else:send((TASK.split('\n')[1] if decision=='feedback' else '' if decision=='enter' else 'y' if decision in {'details','blank-paste'} else decision).encode()+b'\r')
             if read('phase.json').get('phase')=='business_done' or (root/'child-error.json').exists():
                 (root/'finish').write_text('finish')
             if child.poll() is not None:break
@@ -117,7 +122,7 @@ def record(source,root,mode='plain',framing='bracketed',ending='lf',decision='y'
         'pending_execution_zero':snapshot.get('business',{}).get('executions')==[],
         'pending_no_decision':snapshot.get('business',{}).get('decisions')==[],
         'model_calls_zero':b.get('model_calls')==0,
-        'execution_count':len(b.get('executions',[]))==(1 if decision in {'y','enter','details'} else 0),
+        'execution_count':len(b.get('executions',[]))==(1 if decision in {'y','enter','details','blank-paste'} else 0),
         'exit_zero':child.returncode==0}
     result={'source_tree':manifest['source'],'replay_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'mode':mode,'framing':framing,'ending':ending,'decision':decision,'command':command,'exit':child.returncode,
         'checks':checks,'passed':all(checks.values()),'pending':snapshot,'business':b,'task':actual,'sent':sent}

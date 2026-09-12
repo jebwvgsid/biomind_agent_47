@@ -346,7 +346,8 @@ class PlainTerminal:
                 # A declared bracketed paste is one transaction, regardless
                 # of chunk timing. The line ending after its closing marker
                 # submits this transaction and is consumed exactly once.
-                if '\x1b[200~' in value:
+                framed = '\x1b[200~' in value
+                if framed:
                     prefix, pasted = value.split('\x1b[200~', 1)
                     while '\x1b[201~' not in pasted:
                         remaining = max(0, deadline - time.monotonic()) if deadline is not None else 0
@@ -356,11 +357,12 @@ class PlainTerminal:
                         queued_before_review = max(0, queued_before_review - self._line_bytes)
                     body, suffix = pasted.split('\x1b[201~', 1)
                     value = prefix + body + suffix
-                if predates_review:
-                    self.model.history.append('审批前已到达的输入草稿：' + safe_document(repr(value)))
+                blank_paste = framed and not value.strip() and context[1] in {'plan_review', 'code_review'}
+                if predates_review or blank_paste:
+                    self.model.history.append('未提交的审批输入草稿：' + safe_document(repr(value)))
                     self._event(request, 'draft_retained')
                     self._await_written(self._control(request,
-                        '审批前已到达的输入已保留为草稿，未作为决定：' + safe_document(repr(value))
+                        ('空白粘贴' if blank_paste else '审批前已到达的输入') + '已保留为草稿，未作为决定：' + safe_document(repr(value))
                         + '\n请在当前审批提示下另行提交决定。\n' + request['prompt'], phase='draft'))
                     continue
                 if value == '/details' and not multiline:

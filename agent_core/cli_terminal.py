@@ -49,6 +49,7 @@ class Terminal:
         from prompt_toolkit.completion import WordCompleter
         from prompt_toolkit.filters import Condition
         from prompt_toolkit.key_binding import KeyBindings
+        from prompt_toolkit.keys import Keys
         from prompt_toolkit.layout import Layout, HSplit, Window, ConditionalContainer
         from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
         from prompt_toolkit.layout.dimension import Dimension
@@ -68,6 +69,7 @@ class Terminal:
         self.draft = ''
         self.prompt_text = ''
         self.paste_mode = False
+        self._blank_paste_request = None
         self.modal = False
         self.modal_history_cursor = 0
         self.review_document = ''
@@ -89,6 +91,13 @@ class Terminal:
         self.details_view = TextArea(read_only=True, scrollbar=True, wrap_lines=True,
                                      height=Dimension(min=3, preferred=12, max=24))
         keys = KeyBindings()
+
+        @keys.add(Keys.BracketedPaste)
+        def paste(event):
+            data = event.data.replace('\r\n', '\n').replace('\r', '\n')
+            if not data.strip() and self.pending is not None:
+                self._blank_paste_request = self.pending
+            event.current_buffer.insert_text(data)
 
         @keys.add('enter')
         def submit(event):
@@ -474,7 +483,15 @@ class Terminal:
         if self.modal:
             return
         value = self.buffer.text
-        if value == '/details' and not self.paste_mode:
+        if (self.context[1] in {'plan_review', 'code_review'} and self.pending is not None
+                and self._blank_paste_request is self.pending and not value.strip()):
+            self._blank_paste_request = None
+            self.model.history.append('未提交的空白粘贴草稿：' + repr(value))
+            self.buffer.reset()
+            self.prompt_text = self.prompt_text.split('\n空白粘贴', 1)[0] + '\n空白粘贴未作为批准；请另行提交决定。'
+            self.app.invalidate()
+            return
+        if value == '/details'  and not self.paste_mode:
             # This command is UI-only even inside approval. Keep the exact
             # pending Future, context and local draft; no backend read cycle.
             self.buffer.reset()

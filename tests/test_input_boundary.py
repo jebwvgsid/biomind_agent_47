@@ -79,3 +79,14 @@ def test_preexisting_pipe_tail_is_retained_and_cannot_approve(monkeypatch):
         os.write(w,b'y\n')
         assert result.get(timeout=3)=='y'
     finally:owner.close();os.close(w);thread.join(timeout=3);stdin.close()
+
+
+@pytest.mark.parametrize('body',['','\n\n','  '])
+def test_blank_paste_is_not_the_explicit_empty_approval(body):
+    owner=PlainTerminal(io.StringIO(),enabled=False)
+    with patch('sys.stdin',io.StringIO('\x1b[200~'+body+'\x1b[201~\ny\n')):
+        try:
+            owner.set_context('synthetic','code_review',{})
+            assert owner.read('Approve > ')=='y'
+            assert any(e['phase']=='draft_retained' for e in owner.approval_events)
+        finally:owner.close()
