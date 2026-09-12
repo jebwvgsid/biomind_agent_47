@@ -277,6 +277,7 @@ from agent_core.consultation_state import (
     record_execution_observation,
     record_consultant_answer,
     record_consultant_tool_observation,
+    close_consultant_skill_turn,
     record_planning_handoff_attempt,
     route_runtime_preflight,
     seed_structured_evidence,
@@ -34718,7 +34719,7 @@ question. Never guess a scientific or database identity.
                     **exc.to_dict(),
                     "counts_as_failure": False,
                 }
-                return {
+                return close_consultant_skill_turn(consultation_state, {}, {
                     **completed_projection,
                     "messages": [response, SystemMessage(content=json.dumps(
                         rejected, ensure_ascii=False, sort_keys=True,
@@ -34726,10 +34727,10 @@ question. Never guess a scientific or database identity.
                     "skill_decision_result": rejected,
                     "pending_action": {},
                     "next_step": "consultant",
-                }
+                })
             if consultant_skill_decision is not None:
                 try:
-                    return await self._handle_skill_node_decision(
+                    skill_update = await self._handle_skill_node_decision(
                         task_id=task_id,
                         caller_node="consultant",
                         graph_node="consultant",
@@ -34744,20 +34745,23 @@ question. Never guess a scientific or database identity.
                             or []
                         ),
                     )
+                    return close_consultant_skill_turn(
+                        consultation_state, consultant_skill_decision, skill_update
+                    )
                 except SkillAccessError as exc:
                     rejected = {
                         "decision_result": "SKILL_DECISION_REJECTED",
                         **exc.to_dict(),
                         "counts_as_failure": False,
                     }
-                    return {
+                    return close_consultant_skill_turn(consultation_state, consultant_skill_decision, {
                         "messages": [response, SystemMessage(content=json.dumps(
                             rejected, ensure_ascii=False, sort_keys=True,
                         ))],
                         "skill_decision_result": rejected,
                         "pending_action": {},
                         "next_step": "consultant",
-                    }
+                    })
             if current_consultant_continuation_id:
                 self._complete_durable_skill_continuation(
                     task_id, caller_node="consultant"

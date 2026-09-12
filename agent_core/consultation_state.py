@@ -1936,6 +1936,26 @@ def glob_resources(pattern: str, *, limit: int = 50) -> Dict[str, Any]:
     }
 
 
+def close_consultant_skill_turn(
+    state: Mapping[str, Any], decision: Mapping[str, Any], update: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Consultant owns its lifecycle; the shared Skill service owns its result.
+
+    Preserve only the explicit service delta and this invocation's local state.
+    Rejected requests are observations of rejection, never successful searches.
+    Stale returns have no adopted observation and keep their typed stale route.
+    """
+    closed = dict(update)
+    observation = dict(update.get("skill_decision_result") or {})
+    if observation and not update.get("stale_node_result"):
+        state = record_consultant_tool_observation(
+            state, action_type=str(decision.get("decision") or "skill_decision_rejected"),
+            action=decision, observation=observation,
+        )
+    closed["consultation_state"] = deepcopy(dict(state))
+    return closed
+
+
 def record_consultant_tool_observation(
     state: Mapping[str, Any],
     *,
