@@ -8,6 +8,7 @@ import concurrent.futures
 import json
 import logging
 import os
+import re
 import sys
 import threading
 import time
@@ -140,9 +141,9 @@ class Terminal:
 
         layout = HSplit([
             ConditionalContainer(self.details_view, Condition(lambda: self.modal)),
-            Window(FormattedTextControl(self.status_line), height=1, wrap_lines=False),
+            Window(FormattedTextControl(self.status_fragments), height=1, wrap_lines=False),
             ConditionalContainer(Window(FormattedTextControl(lambda: '\n'.join(self.model.tool_tail.splitlines()[-2:])), height=2, wrap_lines=True), Condition(lambda: self.model.verbosity == 'verbose' and bool(self.model.tool_tail))),
-            ConditionalContainer(Window(FormattedTextControl(lambda: self.prompt_text), height=Dimension(min=1, max=3), wrap_lines=True), Condition(lambda: bool(self.prompt_text) and not self.modal)),
+            ConditionalContainer(Window(FormattedTextControl(self.prompt_fragments), height=Dimension(min=1, max=3), wrap_lines=True), Condition(lambda: bool(self.prompt_text) and not self.modal)),
             ConditionalContainer(Window(self.input_control, height=Dimension(min=1, max=6), wrap_lines=True), Condition(lambda: not self.modal)),
             Window(FormattedTextControl(self.input_hint), height=1, wrap_lines=False),
         ])
@@ -184,6 +185,16 @@ class Terminal:
             text = 'Enter/y 批准 · n 拒绝 · q 退出 · F2 详情'
         return self.fit_columns(text, self.app.output.get_size().columns)
 
+    def _approval_style(self):
+        return ('ansiyellow bold' if self.pending is not None
+                and self.context[1] in {'plan_review', 'code_review'} else '')
+
+    def status_fragments(self):
+        return [(self._approval_style(), self.status_line())]
+
+    def prompt_fragments(self):
+        return [(self._approval_style(), self.prompt_text)]
+
     def _rendered(self):
         self.frames += 1
         request = self.presentation
@@ -220,14 +231,39 @@ class Terminal:
     @staticmethod
     def item_attributes(item):
         from prompt_toolkit.styles import DEFAULT_ATTRS
-        if item.kind == 'error' or (item.kind == 'tool_end' and item.status == 'failed'):
-            return DEFAULT_ATTRS._replace(color='ansired')
-        if (item.kind in {'cancel', 'approval'} or
-                (item.kind == 'tool_end' and item.status in {'cancelled', 'partial', 'unknown', 'not_dispatched'})):
-            return DEFAULT_ATTRS._replace(color='ansiyellow')
-        if item.kind in {'tool_start', 'tool_end', 'tool_group'} or item.source == 'diagnostic':
+        if item.kind == 'approval':
+            return DEFAULT_ATTRS._replace(color='ansiyellow', bold=True)
+        if item.kind in {'tool_start', 'tool_end', 'tool_group'}:
+            return DEFAULT_ATTRS._replace(color='ansicyan')
+        if item.source == 'diagnostic':
             return DEFAULT_ATTRS._replace(dim=True)
         return DEFAULT_ATTRS
+
+    @classmethod
+    def item_fragments(cls, item):
+        """Style display copies only; receipt status and original text stay intact."""
+        from prompt_toolkit.styles import DEFAULT_ATTRS
+        normal = DEFAULT_ATTRS
+        marker = None
+        if item.kind == 'error' or (item.kind == 'tool_end' and item.status == 'failed'):
+            marker = ('× ', normal._replace(color='ansired', bold=True))
+        elif item.kind == 'cancel' or (item.kind == 'tool_end' and item.status in {'cancelled', 'partial', 'unknown', 'not_dispatched'}):
+            marker = ('! ', normal._replace(color='ansiyellow', bold=True))
+        elif item.kind == 'tool_end' and item.status == 'returned':
+            # Tool return, not Plan completion; the unchanged body retains that distinction.
+            marker = ('✓ ', normal._replace(color='ansigreen', bold=True))
+        fragments = [marker] if marker else []
+        attrs = normal if item.kind in {'error', 'cancel'} or (marker and item.status != 'returned') else cls.item_attributes(item)
+        if item.kind in {'tool_start', 'tool_end', 'tool_group'}:
+            # Paths are dimmed only in the display copy. Never parse them as bindings.
+            parts = re.split(r'((?<!\S)(?:/|\.{1,2}/)\S+)', item.text + '\n')
+            fragments.extend((part, normal._replace(dim=True) if index % 2 else attrs)
+                             for index, part in enumerate(parts) if part)
+        else:
+            fragments.append((item.text + '\n', attrs))
+        if item.kind == 'model_public':
+            fragments.append(('\n', normal))
+        return fragments
 
     def _write_item(self, output, item):
         if self.fallback:
@@ -235,9 +271,10 @@ class Terminal:
             return
         # ANSI palette entries follow the host theme. The default foreground
         # remains untouched for public paragraphs, and each item resets itself.
-        output.set_attributes(self.item_attributes(item), self.app.color_depth)
         try:
-            output.write(item.text + '\n')
+            for text, attributes in self.item_fragments(item):
+                output.set_attributes(attributes, self.app.color_depth)
+                output.write(text)
         finally:
             output.reset_attributes()
 
