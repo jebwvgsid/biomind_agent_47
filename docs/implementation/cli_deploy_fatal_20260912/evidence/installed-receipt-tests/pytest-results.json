@@ -1,0 +1,302 @@
+[
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002711210399866104,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00020782416686415672,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012789200991392136,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019416073337197304,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0001896871253848076,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001040319912135601,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[3]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[3]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001782560721039772,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[3]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00017956038936972618,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_one_process_lifetime_preserves_all_heartbeats[3]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001007826067507267,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017064809799194336,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 9.694276377558708e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.815573528409004e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001617451198399067,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 9.937630966305733e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.128125384449959e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows2]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows2]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017523905262351036,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows2]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00010081706568598747,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows2]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.929707109928131e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows3]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows3]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002348260022699833,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows3]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00011646794155240059,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows3]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.554298594594002e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows4]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows4]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016221916303038597,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows4]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00010185502469539642,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows4]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.962815627455711e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows5]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows5]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016791000962257385,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows5]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00010094884783029556,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows5]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.523417636752129e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows6]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows6]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017859134823083878,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows6]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00011197943240404129,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows6]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.144796058535576e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows7]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows7]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016497401520609856,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows7]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 9.995000436902046e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows7]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.372876957058907e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows8]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows8]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001687547191977501,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows8]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00014786934480071068,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cli_deployment_receipts.py::test_incomplete_duplicate_foreign_or_failed_process_receipts_are_rejected[rows8]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010787323117256165,
+    "failure": ""
+  }
+]

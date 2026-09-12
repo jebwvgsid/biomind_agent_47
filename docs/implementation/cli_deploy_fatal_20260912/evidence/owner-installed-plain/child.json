@@ -1,0 +1,24 @@
+{
+  "dependency_source": "installed",
+  "executable": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "case": "plain",
+  "runtime_calls": 1,
+  "model_calls": 0,
+  "tool_calls": 1,
+  "actions": [
+    {
+      "action": "read",
+      "result": "synthetic content\n"
+    },
+    {
+      "action": "finish",
+      "result": "synthetic-only"
+    }
+  ],
+  "cache_on_path": false,
+  "modules": {},
+  "history_writes": [],
+  "owner": "PlainTerminal",
+  "stdin_tty": true,
+  "stdout_tty": true
+}

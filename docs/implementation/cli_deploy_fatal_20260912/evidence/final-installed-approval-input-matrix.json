@@ -1,0 +1,113 @@
+[
+  {
+    "name": "final-installed-approval-off-approve",
+    "command": [
+      "python",
+      "tests/replay_approval_visibility_pty.py",
+      "--export",
+      "/tmp/biomind-cli-deploy-fatal-20260912/candidate-final",
+      "--results",
+      "/tmp/biomind-cli-deploy-fatal-20260912/final-installed-approval-off-approve",
+      "--mode",
+      "off",
+      "--scenario",
+      "approve",
+      "--cols",
+      "42",
+      "--installed-cli",
+      "--assert-fixed"
+    ],
+    "driver_rc": 0,
+    "passed": true
+  },
+  {
+    "name": "final-installed-input-tty-blank-paste",
+    "command": [
+      "python",
+      "tests/replay_input_boundary_pty.py",
+      "/tmp/biomind-cli-deploy-fatal-20260912/candidate-final",
+      "/tmp/biomind-cli-deploy-fatal-20260912/final-installed-input-tty-blank-paste",
+      "--mode",
+      "tty",
+      "--decision",
+      "blank-paste",
+      "--ending",
+      "lf",
+      "--installed-cli"
+    ],
+    "driver_rc": 0,
+    "passed": true
+  },
+  {
+    "name": "final-installed-input-tty-feedback",
+    "command": [
+      "python",
+      "tests/replay_input_boundary_pty.py",
+      "/tmp/biomind-cli-deploy-fatal-20260912/candidate-final",
+      "/tmp/biomind-cli-deploy-fatal-20260912/final-installed-input-tty-feedback",
+      "--mode",
+      "tty",
+      "--decision",
+      "feedback",
+      "--ending",
+      "lf",
+      "--installed-cli"
+    ],
+    "driver_rc": 0,
+    "passed": true
+  },
+  {
+    "name": "final-installed-input-tty-enter",
+    "command": [
+      "python",
+      "tests/replay_input_boundary_pty.py",
+      "/tmp/biomind-cli-deploy-fatal-20260912/candidate-final",
+      "/tmp/biomind-cli-deploy-fatal-20260912/final-installed-input-tty-enter",
+      "--mode",
+      "tty",
+      "--decision",
+      "enter",
+      "--ending",
+      "crlf",
+      "--installed-cli"
+    ],
+    "driver_rc": 0,
+    "passed": true
+  },
+  {
+    "name": "final-installed-input-tty-eof",
+    "command": [
+      "python",
+      "tests/replay_input_boundary_pty.py",
+      "/tmp/biomind-cli-deploy-fatal-20260912/candidate-final",
+      "/tmp/biomind-cli-deploy-fatal-20260912/final-installed-input-tty-eof",
+      "--mode",
+      "tty",
+      "--decision",
+      "eof",
+      "--ending",
+      "lf",
+      "--installed-cli"
+    ],
+    "driver_rc": 0,
+    "passed": true
+  },
+  {
+    "name": "final-installed-input-tty-cancel",
+    "command": [
+      "python",
+      "tests/replay_input_boundary_pty.py",
+      "/tmp/biomind-cli-deploy-fatal-20260912/candidate-final",
+      "/tmp/biomind-cli-deploy-fatal-20260912/final-installed-input-tty-cancel",
+      "--mode",
+      "tty",
+      "--decision",
+      "cancel",
+      "--ending",
+      "lf",
+      "--installed-cli"
+    ],
+    "driver_rc": 0,
+    "passed": true
+  }
+]

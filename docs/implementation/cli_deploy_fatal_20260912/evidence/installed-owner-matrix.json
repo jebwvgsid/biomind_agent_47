@@ -1,0 +1,50 @@
+[
+  {
+    "case": "normal",
+    "driver_rc": 0,
+    "passed": true,
+    "owner": "Terminal"
+  },
+  {
+    "case": "error",
+    "driver_rc": 0,
+    "passed": true,
+    "owner": "Terminal"
+  },
+  {
+    "case": "no-color",
+    "driver_rc": 0,
+    "passed": true,
+    "owner": "Terminal"
+  },
+  {
+    "case": "plain",
+    "driver_rc": 0,
+    "passed": true,
+    "owner": "PlainTerminal"
+  },
+  {
+    "case": "off",
+    "driver_rc": 0,
+    "passed": true,
+    "owner": "PlainTerminal"
+  },
+  {
+    "case": "pipe",
+    "driver_rc": 0,
+    "passed": true,
+    "owner": "PlainTerminal"
+  },
+  {
+    "case": "dumb",
+    "driver_rc": 0,
+    "passed": true,
+    "owner": "PlainTerminal"
+  },
+  {
+    "case": "missing",
+    "driver_rc": 0,
+    "passed": true,
+    "owner": "PlainTerminal"
+  }
+]

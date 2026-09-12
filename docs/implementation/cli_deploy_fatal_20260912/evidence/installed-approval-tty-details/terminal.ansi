@@ -1,0 +1,142 @@
+[2J[H[?12l[?25h[6n[?2004h[?1l[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0m等待输入[0m
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl[41C…[A[?7h[0m[?12l[?25h[?25l[?7l[0m [0m
+[0m [0m[K[0m
+
+
+
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl[41C…[0m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[0m [22A[?7h[0m[?12l[?25h[A[J[0m[?7h[?1000l[?1015l[?1006l[?1003l[?2004l[0;33;1m代码审批
+语言 Bash · 风险检查 medium
+审批显示正文 SHA-256: eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca
+完整输入、输出、约束及执行作用范围见详情；摘要不能确认全部副作用。
+工作目录与实际写入目标以完整执行定义为准；无法从现有审批字段可靠概括，需查看完整代码。
+/details 或 F2 查看完整对象；查看/返回不代表批准。
+[0m[6n[?2004h[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0;33;1m等待代码审批 · 当前候选尚未执行[0m
+[0;33;1m[y/Enter=run, n=reject, q=quit, e:=edit] [41C>[0m
+[0;33;1m [0m
+[0m [0m
+[0mEnter/y 批准 · n 拒绝 · q 退出 · F2 详情[40D[A[?7h[0m[?12l[?25h[3A[J[0m[?7h[?1000l[?1015l[?1006l[?1003l[?2004l[0;31;1m× [0msynthetic recoverable notification; approval remains pending
+[0m[6n[?2004h[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0;33;1m等待代码审批 · 当前候选尚未执行[0m
+[0;33;1m[y/Enter=run, n=reject, q=quit, e:=edit] [41C>[0m
+[0;33;1m [0m
+[0m [0m
+[0mEnter/y 批准 · n 拒绝 · q 退出 · F2 详情[40D[A[?7h[0m[?12l[?25h[?25l[?7l[A[0;33;1m [0m
+[0m [0m
+[0m [0m[K[0m
+
+
+
+[0m [0m
+[0mEnter/y 批准 · n 拒绝 · q 退出 · F2 详情[40D[5A[?7h[0m[?12l[?25h[?25l[?7l[4A[0m代码审批                                 [41C[0;1m^[0m
+[0m                                         [41C[0;48;5;238m [0m
+[0m# Synthetic approved candidate; no scient[41C[0;48;5;238m [0m
+[0mific input                               [41C[0;48;5;248m [0m
+[0m# body-line-000 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-001 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-002 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-003 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-004 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-005 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-006 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-007 synthetic review context [41C[0;1mv[0m
+[0;33;1m仍待审批 · Esc 返回；查看不代表批准[0m
+[0m↑↓ / PgUp PgDn 浏览 · Esc 返回；Enter 不…[13A[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[0;33;1m等待代码审批 · 当前候选尚未执行[0m[K[0m
+[0;33;1m[y/Enter=run, n=reject, q=quit, e:=edit] [41C>[0m
+[0;33;1m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0mEnter/y 批准 · n 拒绝 · q 退出 · F2 详情[0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[9A[?7h[0m[?12l[?25h[?25l[?7l[4A[0m代码审批                                 [41C[0;1m^[0m
+[0m                                         [41C[0;48;5;238m [0m
+[0m# Synthetic approved candidate; no scient[41C[0;48;5;238m [0m
+[0mific input                               [41C[0;48;5;248m [0m
+[0m# body-line-000 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-001 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-002 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-003 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-004 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-005 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-006 synthetic review context [41C[0;48;5;248m [0m
+[0m# body-line-007 synthetic review context [41C[0;1mv[0m
+[0;33;1m仍待审批 · Esc 返回；查看不代表批准[0m
+[0m↑↓ / PgUp PgDn 浏览 · Esc 返回；Enter 不…[13A[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[0;33;1m等待代码审批 · 当前候选尚未执行[0m[K[0m
+[0;33;1m[y/Enter=run, n=reject, q=quit, e:=edit] [41C>[0m
+[0;33;1m [0m[K[0m
+[0m [0m[K[0m
+[0mdraft-feedback[0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0mEnter/y 批准 · n 拒绝 · q 退出 · F2 详情[0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[9A[13C[?7h[0m[?12l[?25h[?25l[?7l[4A[14D[0m对话历史                                 [41C[0;1m^[0m
+[0m                                         [41C[0;48;5;238m [0m
+[0m代码审批                                 [41C[0;48;5;238m [0m
+[0m语言 Bash · 风险检查 medium              [41C[0;48;5;248m [0m
+[0m审批显示正文 SHA-256: eba70a9e8f257d56f7b[41C[0;48;5;248m [0m
+[0md1c70a1f7c5dc802d3b586713cbf43aa9ed0835c7[41C[0;48;5;248m [0m
+[0m2fca                                     [41C[0;48;5;248m [0m
+[0m完整输入、输出、约束及执行作用范围见详情 [41C[0;48;5;248m [0m
+[0m；摘要不能确认全部副作用。               [41C[0;48;5;248m [0m
+[0m工作目录与实际写入目标以完整执行定义为准 [41C[0;48;5;248m [0m
+[0m；无法从现有审批字段可靠概括，需查看完整 [41C[0;48;5;248m [0m
+[0m代码。                                   [41C[0;1mv[0m
+[0;33;1m仍待审批 · Esc 返回；查看不代表批准[0m
+[0m↑↓ / PgUp PgDn 浏览 · Esc 返回；Enter 不…[13A[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[0;33;1m等待代码审批 · 当前候选尚未执行[0m[K[0m
+[0;33;1m[y/Enter=run, n=reject, q=quit, e:=edit] [41C>[0m
+[0;33;1m [0m[K[0m
+[0m [0m[K[0m
+[0mdraft-feedback[0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0mEnter/y 批准 · n 拒绝 · q 退出 · F2 详情[0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[0m
+[0m [0m[K[9A[13C[?7h[0m[?12l[?25h[?25l[?7l[14D[0m [0m[K[?7h[0m[?12l[?25h[4A[J[0m[?7h[?1000l[?1015l[?1006l[?1003l[?2004l[0m› 
+[0m[6n[?2004h[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0m代码审批[0m
+[0m运行中可编辑本地草稿；尚未提交[0m
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl[41C…[A[?7h[0m[?12l[?25h[2A[J[0m[?7h[?1000l[?1015l[?1006l[?1003l[?2004l[6n[?2004h[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0m命令 rc=0，等待正式核验[0m
+[0m运行中可编辑本地草稿；尚未提交[0m
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl[41C…[A[?7h[0m[?12l[?25h[2A[J[0m[?7h[?1000l[?1015l[?1006l[?1003l[?2004l[0;32;1m✓ [0;36m命令 rc=0，等待正式核验
+[0m[6n[?2004h[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0m命令 rc=0，等待正式核验[0m
+[0m运行中可编辑本地草稿；尚未提交[0m
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl[41C…[A[?7h[0m[?12l[?25h[?25l[?7l[2A[0m[J[0m命令 rc=0，等待正式核验[0m
+[0m运行中可编辑本地草稿；尚未提交[0m
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl[41C…[0m
+[J[?7h[0m[?12l[?25h[?1000l[?1015l[?1006l[?1003l[?2004l[32m.[0m
+[32m[32m[1m1 passed[0m[32m in 17.42s[0m[0m
+

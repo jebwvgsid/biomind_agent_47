@@ -1,0 +1,2230 @@
+{
+  "dependency_source": "installed",
+  "executable": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "case": "error",
+  "runtime_calls": 1,
+  "model_calls": 0,
+  "tool_calls": 2,
+  "actions": [
+    {
+      "action": "read",
+      "result": "synthetic content\n"
+    },
+    {
+      "action": "failed-check",
+      "result": "ValueError"
+    },
+    {
+      "action": "finish",
+      "result": "synthetic-only"
+    }
+  ],
+  "cache_on_path": false,
+  "modules": {
+    "prompt_toolkit": {
+      "file": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/prompt_toolkit/__init__.py",
+      "version": "3.0.52",
+      "sha256": "cd64ef28248bf906ff84ef28a404c7ca7bf680d766d1830203dc77a1b2c9507e"
+    },
+    "wcwidth": {
+      "file": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages/wcwidth/__init__.py",
+      "version": "0.2.13",
+      "sha256": "79c671dd456892d66e02f6ad1ba35eb41c9516010d90a97d86d9a4d196ac4e60"
+    }
+  },
+  "history_writes": [
+    {
+      "text": "等",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "待",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "输",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "入",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "E",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "n",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "e",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "提",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "交",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "C",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "l",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "+",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "J",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "换",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "行",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "F",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "2",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "详",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "情",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "C",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "l",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "…",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "合成公开说明：先读取小文件，再报告真实返回。\n",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "等",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "待",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "输",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "入",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "E",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "n",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "e",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "提",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "交",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "C",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "l",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "+",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "J",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "换",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "行",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "F",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "2",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "详",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "情",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "C",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "l",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "…",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "读取小文件已返回\n",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": true
+      }
+    },
+    {
+      "text": "检查合成缺项失败：ValueError\n",
+      "attrs": {
+        "color": "ansired",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "合成错误：输入缺项。\n详细说明保留原文，不代表已经修复。\n",
+      "attrs": {
+        "color": "ansired",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "合成取消：尚未派发执行。\n",
+      "attrs": {
+        "color": "ansiyellow",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "合成公开结论：文件读取已返回；未运行科学计算。\n",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "合",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "成",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "取",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "消",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "：",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "尚",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "未",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "派",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "发",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "执",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "行",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "。",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "E",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "n",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "e",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "提",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "交",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "C",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "l",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "+",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "J",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "换",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "行",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "F",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "2",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "详",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "情",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "C",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "l",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "…",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "合",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "成",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "取",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "消",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "：",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "尚",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "未",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "派",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "发",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "执",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "行",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "。",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "E",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "n",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "e",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "提",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "交",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "C",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "l",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "+",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "J",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "换",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "行",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "F",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "2",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "详",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "情",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "·",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "C",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "t",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "r",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "l",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    },
+    {
+      "text": "…",
+      "attrs": {
+        "color": "",
+        "bgcolor": "",
+        "bold": false,
+        "underline": false,
+        "strike": false,
+        "italic": false,
+        "blink": false,
+        "reverse": false,
+        "hidden": false,
+        "dim": false
+      }
+    }
+  ],
+  "owner": "Terminal",
+  "stdin_tty": true,
+  "stdout_tty": true
+}

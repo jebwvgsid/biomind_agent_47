@@ -1,0 +1,582 @@
+{
+  "sortedcontainers": {
+    "version": "2.4.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "zipp": {
+    "version": "4.1.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "anyio": {
+    "version": "4.10.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "httpx-sse": {
+    "version": "0.4.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "msgpack": {
+    "version": "1.1.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "markupsafe": {
+    "version": "3.0.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "biopython": {
+    "version": "1.87",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "zstandard": {
+    "version": "0.23.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "scikit-learn": {
+    "version": "1.8.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "jinja2": {
+    "version": "3.1.6",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "demes": {
+    "version": "0.2.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "requests": {
+    "version": "2.32.5",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langgraph-checkpoint": {
+    "version": "2.1.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "aiosignal": {
+    "version": "1.4.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "idna": {
+    "version": "3.10",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "distro": {
+    "version": "1.9.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "cloudpickle": {
+    "version": "3.1.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "xyzservices": {
+    "version": "2026.3.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "hpack": {
+    "version": "4.1.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "jsonpatch": {
+    "version": "1.33",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "importlib-metadata": {
+    "version": "9.0.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "httpcore": {
+    "version": "1.0.9",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pyvcf3": {
+    "version": "1.0.4",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "ruamel.yaml.clib": {
+    "version": "0.2.15",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "cytoolz": {
+    "version": "1.1.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "urllib3": {
+    "version": "2.5.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "distributed": {
+    "version": "2026.3.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pyfaidx": {
+    "version": "0.9.0.4",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "aiohappyeyeballs": {
+    "version": "2.6.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "typing-inspect": {
+    "version": "0.9.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pydantic-settings": {
+    "version": "2.12.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "aiohttp": {
+    "version": "3.13.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langchain": {
+    "version": "1.2.7",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "s3transfer": {
+    "version": "0.18.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pygments": {
+    "version": "2.20.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "tomli": {
+    "version": "2.4.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "hyperframe": {
+    "version": "6.1.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "certifi": {
+    "version": "2026.5.20",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "click": {
+    "version": "8.4.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "threadpoolctl": {
+    "version": "3.6.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "httpx": {
+    "version": "0.28.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "xxhash": {
+    "version": "3.6.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "numpy": {
+    "version": "2.4.6",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "brotli": {
+    "version": "1.2.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "jsonschema-specifications": {
+    "version": "2025.9.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "cooler": {
+    "version": "0.10.4",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "tiktoken": {
+    "version": "0.12.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "propcache": {
+    "version": "0.4.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "mypy-extensions": {
+    "version": "1.1.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "frozenlist": {
+    "version": "1.8.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langchain-classic": {
+    "version": "1.0.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langgraph": {
+    "version": "1.0.7",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "jmespath": {
+    "version": "1.1.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "awscli": {
+    "version": "1.45.19",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "iniconfig": {
+    "version": "2.3.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pluggy": {
+    "version": "1.6.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "zict": {
+    "version": "3.0.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "sniffio": {
+    "version": "1.3.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pycparser": {
+    "version": "2.22",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "packaging": {
+    "version": "25.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "asciitree": {
+    "version": "0.3.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "tenacity": {
+    "version": "9.1.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pytz": {
+    "version": "2025.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "python-dotenv": {
+    "version": "1.1.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "annotated-types": {
+    "version": "0.7.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "rpds-py": {
+    "version": "2026.5.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "jiter": {
+    "version": "0.12.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "cffi": {
+    "version": "2.0.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "bokeh": {
+    "version": "3.9.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "jsonschema": {
+    "version": "4.26.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "requests-toolbelt": {
+    "version": "1.0.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "multidict": {
+    "version": "6.7.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "marshmallow": {
+    "version": "3.26.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "sqlalchemy": {
+    "version": "2.0.46",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "openai": {
+    "version": "2.15.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "fsspec": {
+    "version": "2026.4.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "tblib": {
+    "version": "3.2.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "typing-extensions": {
+    "version": "4.14.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "narwhals": {
+    "version": "2.21.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "dill": {
+    "version": "0.4.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "charset-normalizer": {
+    "version": "3.4.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "python-dateutil": {
+    "version": "2.9.0.post0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "h2": {
+    "version": "4.2.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "contourpy": {
+    "version": "1.3.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "dask": {
+    "version": "2026.3.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "referencing": {
+    "version": "0.37.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "tskit": {
+    "version": "1.0.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "yarl": {
+    "version": "1.22.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "dataclasses-json": {
+    "version": "0.6.7",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langchain-openai": {
+    "version": "1.1.7",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langgraph-prebuilt": {
+    "version": "1.0.7",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pytest": {
+    "version": "9.1.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "prompt-toolkit": {
+    "version": "3.0.52",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "setuptools": {
+    "version": "80.9.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pip": {
+    "version": "25.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "toolz": {
+    "version": "1.1.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "six": {
+    "version": "1.17.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pysocks": {
+    "version": "1.7.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "tzdata": {
+    "version": "2025.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "newick": {
+    "version": "1.11.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "partd": {
+    "version": "1.4.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "exceptiongroup": {
+    "version": "1.3.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "typing-inspection": {
+    "version": "0.4.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pyyaml": {
+    "version": "6.0.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pillow": {
+    "version": "12.1.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "psutil": {
+    "version": "7.2.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "regex": {
+    "version": "2026.1.15",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langsmith": {
+    "version": "0.3.45",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pyasn1": {
+    "version": "0.6.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "docutils": {
+    "version": "0.19",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "rsa": {
+    "version": "4.7.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "wheel": {
+    "version": "0.45.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "cached-property": {
+    "version": "1.5.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "locket": {
+    "version": "1.0.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "tqdm": {
+    "version": "4.67.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "h11": {
+    "version": "0.16.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pysam": {
+    "version": "0.23.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pypairix": {
+    "version": "0.3.8",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "orjson": {
+    "version": "3.11.5",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "ormsgpack": {
+    "version": "1.12.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "tornado": {
+    "version": "6.5.6",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pydantic": {
+    "version": "2.11.7",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "msprime": {
+    "version": "1.4.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "uuid-utils": {
+    "version": "0.14.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "attrs": {
+    "version": "25.4.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langchain-core": {
+    "version": "1.2.7",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langchain-community": {
+    "version": "0.4.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "botocore": {
+    "version": "1.43.19",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "jsonpointer": {
+    "version": "3.0.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "colorama": {
+    "version": "0.4.6",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "joblib": {
+    "version": "1.5.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langchain-protocol": {
+    "version": "0.0.16",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "lz4": {
+    "version": "4.4.5",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pyarrow": {
+    "version": "23.0.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "simplejson": {
+    "version": "4.1.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "multiprocess": {
+    "version": "0.70.19",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pydantic-core": {
+    "version": "2.33.2",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "greenlet": {
+    "version": "3.3.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "scipy": {
+    "version": "1.17.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "pandas": {
+    "version": "3.0.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "h5py": {
+    "version": "3.16.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "ruamel.yaml": {
+    "version": "0.19.1",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langgraph-sdk": {
+    "version": "0.3.3",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "langchain-text-splitters": {
+    "version": "1.1.0",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  },
+  "wcwidth": {
+    "version": "0.2.13",
+    "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+  }
+}

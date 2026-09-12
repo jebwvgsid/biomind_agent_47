@@ -1,0 +1,15 @@
+[2J[H代码审批
+语言 Bash · 风险检查 medium
+审批显示正文 SHA-256: eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca
+完整输入、输出、约束及执行作用范围见详情；摘要不能确认全部副作用。
+工作目录与实际写入目标以完整执行定义为准；无法从现有审批字段可靠概括，需查看完整代码。
+/details 查看完整对象；查看/返回不代表批准。
+/details 查看完整对象；查看详情不构成批准。
+等待代码审批 · 当前候选尚未执行
+[y/Enter=run, n=reject, q=quit, e:=edit] > 
+synthetic recoverable notification; approval remains pending
+提示已恢复；已键入内容仍保留，当前对象未变，仍待决定。
+[y/Enter=run, n=reject, q=quit, e:=edit] > ^M命令 rc=0，等待正式核验
+[32m.[0m
+[32m[32m[1m1 passed[0m[32m in 3.60s[0m[0m
+

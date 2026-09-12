@@ -1,0 +1,43 @@
+{
+  "case": "pipe",
+  "dependency_source": "installed",
+  "deployment_evidence": true,
+  "source": "2e2d9a22d9649bc02f6b62cbb1b3ad064c0bc080",
+  "source_signature": "297de074af4361a626f8ea7a205567d8fd217d741c7aa557174025367fb13503",
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "-I",
+    "-S",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/tests/replay_cli_deployment.py",
+    "--child",
+    "/tmp/biomind-cli-deploy-fatal-20260912/candidate",
+    "/tmp/biomind-cli-deploy-fatal-20260912/owner-installed-pipe",
+    "pipe",
+    "installed"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "TERM": "xterm-256color",
+    "BIOMIND_UI": "",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "returncode": 0,
+  "checks": {
+    "exit_zero": true,
+    "owner": true,
+    "runtime_once": true,
+    "model_calls_zero": true,
+    "real_small_read": true,
+    "dependency_source_explicit": true
+  },
+  "passed": true,
+  "expected_owner": "PlainTerminal",
+  "actual_owner": "PlainTerminal",
+  "ansi_sha256": "f5a653ecd03e55f31f0e511a83f6ef7e31a12a5568b2d50c9311b222867a3898",
+  "initial_size": [
+    42,
+    24
+  ],
+  "source_unchanged": true
+}

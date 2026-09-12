@@ -1,0 +1,16 @@
+{
+  "mode": "install",
+  "returncode": 0,
+  "changed": {
+    "prompt-toolkit": {
+      "version": "3.0.52",
+      "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+    },
+    "wcwidth": {
+      "version": "0.2.13",
+      "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages"
+    }
+  },
+  "removed": [],
+  "completed_at": "2026-09-12T16:33:56.177474+00:00"
+}

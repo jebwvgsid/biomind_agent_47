@@ -1,0 +1,4 @@
+{"version": 2, "width": 42, "height": 24, "title": "Actual production Terminal; dependency source installed"}
+[0.12869610311463475, "o", "合成公开说明：先读取小文件，再报告真实返回。\r\n"]
+[0.1313573601655662, "o", "读取小文件已返回\r\n"]
+[0.1313808960840106, "o", "合成公开结论：文件读取已返回；未运行科学计算。\r\n"]

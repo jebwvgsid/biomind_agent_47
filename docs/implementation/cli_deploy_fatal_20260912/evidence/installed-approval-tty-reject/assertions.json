@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "checks": {
+    "child_completed": true,
+    "source_unchanged": true,
+    "kernel_pty_and_production_input": true,
+    "vt_decoder_has_no_unknown_operations": true,
+    "no_unexpected_model_calls": true,
+    "execution_count": true,
+    "undecided_execution_zero": true,
+    "last_screen_prompt_visible": true,
+    "waiting_state_visible": true,
+    "production_monotonic_lifecycle": true,
+    "lifecycle_order_1": true
+  }
+}

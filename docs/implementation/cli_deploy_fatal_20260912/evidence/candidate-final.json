@@ -1,0 +1,14 @@
+{
+  "tree": "278d251240cbdd7b68cfd4882d5e512532c21114",
+  "files": [
+    "agent_core/cli_terminal.py",
+    "tests/test_cli_v2_display.py",
+    "tests/test_cli_semantic_styles.py",
+    "tests/replay_cli_deployment.py",
+    "tests/replay_approval_visibility_pty.py",
+    "tests/replay_input_boundary_pty.py",
+    "tests/cli_model_progress_support.py",
+    "tests/export_cli_deployment_fixture.py",
+    "tests/test_cli_deployment_receipts.py"
+  ]
+}

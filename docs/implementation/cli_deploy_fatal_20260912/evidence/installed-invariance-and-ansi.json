@@ -1,0 +1,164 @@
+{
+  "passed": true,
+  "source": "Actual installed packages; real production output and kernel PTY",
+  "comparisons": [
+    {
+      "case": "normal",
+      "checks": {
+        "actions": true,
+        "runtime_calls": true,
+        "tool_calls": true,
+        "model_calls": true,
+        "actual_modules_same": true,
+        "both_no_cache": true,
+        "both_dynamic": true
+      },
+      "counts": {
+        "runtime_calls": 1,
+        "tool_calls": 1,
+        "model_calls": 0
+      },
+      "actions": [
+        {
+          "action": "read",
+          "result": "synthetic content\n"
+        },
+        {
+          "action": "finish",
+          "result": "synthetic-only"
+        }
+      ]
+    },
+    {
+      "case": "error",
+      "checks": {
+        "actions": true,
+        "runtime_calls": true,
+        "tool_calls": true,
+        "model_calls": true,
+        "actual_modules_same": true,
+        "both_no_cache": true,
+        "both_dynamic": true
+      },
+      "counts": {
+        "runtime_calls": 1,
+        "tool_calls": 2,
+        "model_calls": 0
+      },
+      "actions": [
+        {
+          "action": "read",
+          "result": "synthetic content\n"
+        },
+        {
+          "action": "failed-check",
+          "result": "ValueError"
+        },
+        {
+          "action": "finish",
+          "result": "synthetic-only"
+        }
+      ]
+    },
+    {
+      "case": "no-color",
+      "same_normal_actions_counts": {
+        "actions": true,
+        "runtime_calls": true,
+        "tool_calls": true,
+        "model_calls": true
+      }
+    },
+    {
+      "case": "plain",
+      "same_normal_actions_counts": {
+        "actions": true,
+        "runtime_calls": true,
+        "tool_calls": true,
+        "model_calls": true
+      }
+    },
+    {
+      "case": "off",
+      "same_normal_actions_counts": {
+        "actions": true,
+        "runtime_calls": true,
+        "tool_calls": true,
+        "model_calls": true
+      }
+    },
+    {
+      "case": "pipe",
+      "same_normal_actions_counts": {
+        "actions": true,
+        "runtime_calls": true,
+        "tool_calls": true,
+        "model_calls": true
+      }
+    },
+    {
+      "case": "dumb",
+      "same_normal_actions_counts": {
+        "actions": true,
+        "runtime_calls": true,
+        "tool_calls": true,
+        "model_calls": true
+      }
+    },
+    {
+      "case": "missing",
+      "same_normal_actions_counts": {
+        "actions": true,
+        "runtime_calls": true,
+        "tool_calls": true,
+        "model_calls": true
+      }
+    }
+  ],
+  "ansi": [
+    {
+      "run": "owner-installed-normal",
+      "sgr_codes": [
+        "0",
+        "0;32;1",
+        "0;36"
+      ],
+      "sha256": "84caef58237a6d39d256fd37451637744eb3a6aeb5969e0a4d05542962306dae"
+    },
+    {
+      "run": "owner-installed-error",
+      "sgr_codes": [
+        "0",
+        "0;31;1",
+        "0;32;1",
+        "0;33;1",
+        "0;36"
+      ],
+      "sha256": "77997a8a00c5c94d1a0a6e93dae7f68aa163edddfc996ea999e08e93e908978e"
+    },
+    {
+      "run": "owner-installed-no-color",
+      "sgr_codes": [
+        "0",
+        "0;1"
+      ],
+      "sha256": "048f5c49aadbbe09aa3e48c06640c89c256bfeea66dba37738a3ee4961fe7180"
+    },
+    {
+      "run": "installed-approval-tty-details",
+      "sgr_codes": [
+        "0",
+        "0;1",
+        "0;31;1",
+        "0;32;1",
+        "0;33;1",
+        "0;36",
+        "0;48;5;238",
+        "0;48;5;248",
+        "1",
+        "32"
+      ],
+      "sha256": "62915a0de04bb7fefbae154b4c333fb9079e7b0b17e64fec0722654fb5f24375"
+    }
+  ]
+}

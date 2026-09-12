@@ -1,0 +1,86 @@
+[
+  {
+    "name": "installed-approval-tty-details",
+    "command": [
+      "python",
+      "tests/replay_approval_visibility_pty.py",
+      "--export",
+      "/tmp/biomind-cli-deploy-fatal-20260912/candidate",
+      "--results",
+      "/tmp/biomind-cli-deploy-fatal-20260912/installed-approval-tty-details",
+      "--mode",
+      "tty",
+      "--scenario",
+      "details",
+      "--cols",
+      "42",
+      "--installed-cli",
+      "--assert-fixed"
+    ],
+    "driver_rc": 0,
+    "passed": true
+  },
+  {
+    "name": "installed-approval-tty-reject",
+    "command": [
+      "python",
+      "tests/replay_approval_visibility_pty.py",
+      "--export",
+      "/tmp/biomind-cli-deploy-fatal-20260912/candidate",
+      "--results",
+      "/tmp/biomind-cli-deploy-fatal-20260912/installed-approval-tty-reject",
+      "--mode",
+      "tty",
+      "--scenario",
+      "reject",
+      "--cols",
+      "42",
+      "--installed-cli",
+      "--assert-fixed"
+    ],
+    "driver_rc": 0,
+    "passed": true
+  },
+  {
+    "name": "installed-approval-plain-approve",
+    "command": [
+      "python",
+      "tests/replay_approval_visibility_pty.py",
+      "--export",
+      "/tmp/biomind-cli-deploy-fatal-20260912/candidate",
+      "--results",
+      "/tmp/biomind-cli-deploy-fatal-20260912/installed-approval-plain-approve",
+      "--mode",
+      "plain",
+      "--scenario",
+      "approve",
+      "--cols",
+      "42",
+      "--installed-cli",
+      "--assert-fixed"
+    ],
+    "driver_rc": 0,
+    "passed": true
+  },
+  {
+    "name": "installed-approval-off-approve",
+    "command": [
+      "python",
+      "tests/replay_approval_visibility_pty.py",
+      "--export",
+      "/tmp/biomind-cli-deploy-fatal-20260912/candidate",
+      "--results",
+      "/tmp/biomind-cli-deploy-fatal-20260912/installed-approval-off-approve",
+      "--mode",
+      "off",
+      "--scenario",
+      "approve",
+      "--cols",
+      "42",
+      "--installed-cli",
+      "--assert-fixed"
+    ],
+    "driver_rc": 1,
+    "passed": false
+  }
+]

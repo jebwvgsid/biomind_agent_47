@@ -1,0 +1,13 @@
+{
+  "old_source": "2e2d9a22d9649bc02f6b62cbb1b3ad064c0bc080",
+  "final_source": "278d251240cbdd7b68cfd4882d5e512532c21114",
+  "production_byte_identical": true,
+  "changed": [
+    "tests/export_cli_deployment_fixture.py",
+    "tests/replay_approval_visibility_pty.py"
+  ],
+  "added": [
+    "tests/test_cli_deployment_receipts.py"
+  ],
+  "reason": "Only PTY process lifetime receipt validation and its export/test changed; no production change after 73 tests and owner matrix."
+}

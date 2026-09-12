@@ -1,0 +1,24 @@
+{
+  "executable": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "pip_args": [
+    "--isolated",
+    "--disable-pip-version-check",
+    "--no-cache-dir",
+    "install",
+    "--no-index",
+    "--only-binary=:all:",
+    "--no-compile",
+    "--report",
+    "/public/home/liusiqi/03.\u6bd5\u8bbe/biomind-cli-wheels-20260912/deployment/install-report.json",
+    "/public/home/liusiqi/03.\u6bd5\u8bbe/biomind-cli-wheels-20260912/prompt_toolkit-3.0.52-py3-none-any.whl",
+    "/public/home/liusiqi/03.\u6bd5\u8bbe/biomind-cli-wheels-20260912/wcwidth-0.2.13-py2.py3-none-any.whl"
+  ],
+  "pip_version": "25.2",
+  "network": "forbidden by audit hook",
+  "config": "PIP_CONFIG_FILE=/dev/null; pip config reads denied",
+  "began_at": "2026-09-12T16:33:55.019349+00:00",
+  "expected_wheels": {
+    "prompt_toolkit-3.0.52-py3-none-any.whl": "9aac639a3bbd33284347de5ad8d68ecc044b91a762dc39b7c21095fcd6a19955",
+    "wcwidth-0.2.13-py2.py3-none-any.whl": "3da69048e4540d84af32131829ff948f1e022c1c6bdb8d6102117aac784f6859"
+  }
+}

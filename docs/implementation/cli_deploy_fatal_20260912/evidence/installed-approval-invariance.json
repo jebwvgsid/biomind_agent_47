@@ -1,0 +1,220 @@
+{
+  "passed": true,
+  "approval_object_routes_and_real_execution_preserved": true,
+  "scope": "Heartbeat count, pid and timestamps may differ across separate harmless processes; all original lifecycle receipts retained.",
+  "cases": [
+    {
+      "run": "installed-approval-tty-details",
+      "pending_executions": 0,
+      "executions": 1,
+      "model_calls": 0,
+      "routes": [
+        "execute"
+      ],
+      "approved_sha256": [
+        "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca"
+      ],
+      "passed": true,
+      "checks": {
+        "child_completed": true,
+        "source_unchanged": true,
+        "kernel_pty_and_production_input": true,
+        "vt_decoder_has_no_unknown_operations": true,
+        "no_unexpected_model_calls": true,
+        "execution_count": true,
+        "undecided_execution_zero": true,
+        "last_screen_prompt_visible": true,
+        "waiting_state_visible": true,
+        "executed_original_approved_bytes": true,
+        "real_process_succeeded": true,
+        "actual_spawn_and_exit_receipts": true,
+        "details_keep_same_unresolved_future": true,
+        "details_show_actual_body": true,
+        "details_keep_draft": true,
+        "production_monotonic_lifecycle": true,
+        "lifecycle_order_1": true
+      }
+    },
+    {
+      "run": "installed-approval-tty-reject",
+      "pending_executions": 0,
+      "executions": 0,
+      "model_calls": 0,
+      "routes": [
+        "reject"
+      ],
+      "approved_sha256": [],
+      "passed": true,
+      "checks": {
+        "child_completed": true,
+        "source_unchanged": true,
+        "kernel_pty_and_production_input": true,
+        "vt_decoder_has_no_unknown_operations": true,
+        "no_unexpected_model_calls": true,
+        "execution_count": true,
+        "undecided_execution_zero": true,
+        "last_screen_prompt_visible": true,
+        "waiting_state_visible": true,
+        "production_monotonic_lifecycle": true,
+        "lifecycle_order_1": true
+      }
+    },
+    {
+      "run": "installed-approval-plain-approve",
+      "pending_executions": 0,
+      "executions": 1,
+      "model_calls": 0,
+      "routes": [
+        "execute"
+      ],
+      "approved_sha256": [
+        "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca"
+      ],
+      "passed": true,
+      "checks": {
+        "child_completed": true,
+        "source_unchanged": true,
+        "kernel_pty_and_production_input": true,
+        "vt_decoder_has_no_unknown_operations": true,
+        "no_unexpected_model_calls": true,
+        "execution_count": true,
+        "undecided_execution_zero": true,
+        "last_screen_prompt_visible": true,
+        "waiting_state_visible": true,
+        "executed_original_approved_bytes": true,
+        "real_process_succeeded": true,
+        "actual_spawn_and_exit_receipts": true,
+        "production_monotonic_lifecycle": true,
+        "lifecycle_order_1": true
+      }
+    },
+    {
+      "run": "final-installed-approval-off-approve",
+      "pending_executions": 0,
+      "executions": 1,
+      "model_calls": 0,
+      "routes": [
+        "execute"
+      ],
+      "approved_sha256": [
+        "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca"
+      ],
+      "passed": true,
+      "checks": {
+        "child_completed": true,
+        "source_unchanged": true,
+        "kernel_pty_and_production_input": true,
+        "vt_decoder_has_no_unknown_operations": true,
+        "no_unexpected_model_calls": true,
+        "execution_count": true,
+        "undecided_execution_zero": true,
+        "last_screen_prompt_visible": true,
+        "waiting_state_visible": true,
+        "executed_original_approved_bytes": true,
+        "real_process_succeeded": true,
+        "actual_spawn_and_exit_receipts": true,
+        "production_monotonic_lifecycle": true,
+        "lifecycle_order_1": true
+      }
+    },
+    {
+      "run": "final-installed-input-tty-blank-paste",
+      "pending_executions": 0,
+      "executions": 1,
+      "model_calls": 0,
+      "routes": [
+        "execute"
+      ],
+      "approved_sha256": [
+        "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca"
+      ],
+      "passed": true,
+      "checks": {
+        "task_complete": true,
+        "pending_execution_zero": true,
+        "pending_no_decision": true,
+        "model_calls_zero": true,
+        "execution_count": true,
+        "exit_zero": true
+      }
+    },
+    {
+      "run": "final-installed-input-tty-feedback",
+      "pending_executions": 0,
+      "executions": 0,
+      "model_calls": 0,
+      "routes": [
+        "reject"
+      ],
+      "approved_sha256": [],
+      "passed": true,
+      "checks": {
+        "task_complete": true,
+        "pending_execution_zero": true,
+        "pending_no_decision": true,
+        "model_calls_zero": true,
+        "execution_count": true,
+        "exit_zero": true
+      }
+    },
+    {
+      "run": "final-installed-input-tty-enter",
+      "pending_executions": 0,
+      "executions": 1,
+      "model_calls": 0,
+      "routes": [
+        "execute"
+      ],
+      "approved_sha256": [
+        "eba70a9e8f257d56f7bd1c70a1f7c5dc802d3b586713cbf43aa9ed0835c72fca"
+      ],
+      "passed": true,
+      "checks": {
+        "task_complete": true,
+        "pending_execution_zero": true,
+        "pending_no_decision": true,
+        "model_calls_zero": true,
+        "execution_count": true,
+        "exit_zero": true
+      }
+    },
+    {
+      "run": "final-installed-input-tty-eof",
+      "pending_executions": 0,
+      "executions": 0,
+      "model_calls": 0,
+      "routes": [
+        "waiting_user"
+      ],
+      "approved_sha256": [],
+      "passed": true,
+      "checks": {
+        "task_complete": true,
+        "pending_execution_zero": true,
+        "pending_no_decision": true,
+        "model_calls_zero": true,
+        "execution_count": true,
+        "exit_zero": true
+      }
+    },
+    {
+      "run": "final-installed-input-tty-cancel",
+      "pending_executions": 0,
+      "executions": 0,
+      "model_calls": 0,
+      "routes": [
+        "quit"
+      ],
+      "approved_sha256": [],
+      "passed": true,
+      "checks": {
+        "task_complete": true,
+        "pending_execution_zero": true,
+        "pending_no_decision": true,
+        "model_calls_zero": true,
+        "execution_count": true,
+        "exit_zero": true
+      }
+    }
+  ]
+}

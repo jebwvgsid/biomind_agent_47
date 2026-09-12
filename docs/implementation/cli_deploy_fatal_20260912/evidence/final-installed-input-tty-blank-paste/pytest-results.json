@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/replay_input_boundary_pty.py::test_input_boundary_pty_child",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/replay_input_boundary_pty.py::test_input_boundary_pty_child",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011683208867907524,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/replay_input_boundary_pty.py::test_input_boundary_pty_child",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 4.314064975827932,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/replay_input_boundary_pty.py::test_input_boundary_pty_child",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002329489216208458,
+    "failure": ""
+  }
+]
