@@ -104,7 +104,11 @@ class Reporter:
   result_path.write_text(json.dumps(reports,indent=2))
 import faulthandler
 faulthandler.dump_traceback_later(70,repeat=False)
-code=pytest.main(sys.argv[1:],plugins=[Reporter()])
+plugins=[Reporter()]
+if os.environ.get('BIOMIND_OFFLINE_FATAL_FILE'):
+ from tests.cli_fatal_plugin import PersistentFatal
+ plugins.append(PersistentFatal(Path(os.environ['BIOMIND_OFFLINE_FATAL_FILE'])))
+code=pytest.main(sys.argv[1:],plugins=plugins)
 faulthandler.cancel_dump_traceback_later()
 os.write(1, ('\nPYTEST_EXIT_CODE='+str(code)+'\nRESULTS='+str(result_path)+'\n').encode())
 after={str(p.relative_to(C)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(C.rglob('*.py'))}

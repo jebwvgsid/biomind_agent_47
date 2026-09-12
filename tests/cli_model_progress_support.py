@@ -36,7 +36,8 @@ class TimedWriter(io.StringIO):
         return super().flush()
 
 
-def launch(export_root: Path, results: Path, tests: list[str]) -> int:
+def launch(export_root: Path, results: Path, tests: list[str], *,
+           fatal_diagnostics: bool = False, fatal_selftest: bool = False) -> int:
     export_root = export_root.resolve()
     results = results.resolve()
     if not export_root.is_relative_to(Path("/tmp")) or not results.is_relative_to(Path("/tmp")):
@@ -60,6 +61,12 @@ def launch(export_root: Path, results: Path, tests: list[str]) -> int:
         "BIOMIND_CLI_PROGRESS_ARTIFACTS": str(results),
         "BIOMIND_EXEC_LOG_DIR": str(scratch / "executor-logs"),
     }
+    if fatal_diagnostics:
+        environment["BIOMIND_OFFLINE_FATAL_FILE"] = str(results / "fatal.txt")
+    if fatal_selftest:
+        if not fatal_diagnostics:
+            raise ValueError("Fatal self-test requires the persistent diagnostic outlet")
+        environment["BIOMIND_OFFLINE_FATAL_SELFTEST"] = "1"
     command = [PYTHON, str(export_root / "tests" / "cli_model_progress_support.py"),
                "--guarded-child", str(export_root), *tests]
     (results / "invocation.json").write_text(json.dumps({"command": command, "environment": environment}, indent=2))
