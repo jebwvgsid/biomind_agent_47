@@ -52,6 +52,8 @@ async def production_reviews(owner, root, scenario):
     records = {'synthetic': True, 'scenario': scenario, 'model_calls': 0,
                'requests': [], 'decisions': [], 'executions': [], 'timings': [],
                'routes': [], 'background_events': 0}
+    records['cli_dependencies'] = {name: {'file': str(module.__file__), 'version': getattr(module, '__version__', None)}
+        for name in ('prompt_toolkit', 'wcwidth') if (module := sys.modules.get(name)) is not None}
     def event(name, **data):
         records['timings'].append({'event': name, 'at': time.monotonic(), **data})
         atomic_json(root / 'business.json', records)
@@ -267,13 +269,13 @@ def test_production_approval_pty_child():
 
 
 def record(source, root, *, scenario='approve', mode='tty', verbosity='compact', cols=80, rows=24,
-           old_race=False, resize=None):
+           old_race=False, resize=None, installed_cli=False):
     source=Path(source).resolve();root=Path(root).resolve()
     assert source.is_relative_to(Path('/tmp')) and root.is_relative_to(Path('/tmp'))
     manifest=json.loads((source/'export_manifest.json').read_text())
     assert all(hashlib.sha256((source/n).read_bytes()).hexdigest()==d for n,d in manifest['files'].items())
     root.mkdir(parents=True,exist_ok=False);(root/'scratch').mkdir()
-    env={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8','PYTHONPATH':DEPS,'TERM':'xterm-256color',
+    env={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8','PYTHONPATH':'' if installed_cli else DEPS,'TERM':'xterm-256color',
          'COLUMNS':str(cols),'LINES':str(rows),'PYTHONDONTWRITEBYTECODE':'1','PYTEST_DISABLE_PLUGIN_AUTOLOAD':'1',
          'TMPDIR':str(root/'scratch'),'BIOMIND_WIKI_ENABLED':'0','LOG_LEVEL':'CRITICAL',
          'BIOMIND_OFFLINE_RESULTS':str(root/'pytest-results.json'),'BIOMIND_CLI_PROGRESS_ARTIFACTS':str(root),
@@ -383,7 +385,7 @@ def record(source, root, *, scenario='approve', mode='tty', verbosity='compact',
     (root/'terminal.ansi').write_bytes(raw[max(0,begin):end if end>=0 else None])
     unchanged=all(hashlib.sha256((source/n).read_bytes()).hexdigest()==d for n,d in manifest['files'].items())
     result={'returncode':returncode,'actual_kernel_pty':True,'production_input':True,'scenario':scenario,
-            'mode':mode,'verbosity':verbosity,'source':manifest['source'],'source_signature':manifest['source_signature'],
+            'installed_cli':installed_cli,'mode':mode,'verbosity':verbosity,'source':manifest['source'],'source_signature':manifest['source_signature'],
             'source_unchanged':unchanged,'initial_size':[cols,rows],'resize':resize,'old_writer_barrier':old_race,
             'actions':actions,'frames':frames,'business':read('business.json'),'error':read('child-error.json'),
             'unsupported_vt':sorted(set(screen.unknown)), 'complete':'completed' in seen,
@@ -391,6 +393,21 @@ def record(source, root, *, scenario='approve', mode='tty', verbosity='compact',
     atomic_json(root/'result.json',result);atomic_json(root/'invocation.json',{'command':command,'environment':env})
     print(json.dumps({k:v for k,v in result.items() if k not in {'actions','frames','business'}},ensure_ascii=False))
     return result
+
+
+def process_lifecycle_is_complete(rows):
+    """One real process lifetime may contain scheduler-dependent heartbeats."""
+    args = [row.get('args', []) for row in rows]
+    if len(args) < 2 or any(len(row) != 2 or not isinstance(row[1], dict) for row in args):
+        return False
+    if args[0][0] != 'RUNNING' or args[-1][0] != 'PROCESS_EXITED':
+        return False
+    if any(row[0] != 'HEARTBEAT' for row in args[1:-1]):
+        return False
+    pid, pgid = args[0][1].get('pid'), args[0][1].get('pgid')
+    return (pid is not None and pgid is not None
+            and all(row[1].get('pid') == pid and row[1].get('pgid') == pgid for row in args)
+            and args[-1][1].get('returncode') == 0)
 
 
 def validate_result(result, *, fixed=True):
@@ -419,8 +436,7 @@ def validate_result(result, *, fixed=True):
         checks['executed_original_approved_bytes']=execution['script_sha256']==hashlib.sha256(expected_code.encode()).hexdigest()
         checks['real_process_succeeded']=execution['returncode']==0 and execution['stdout']==(
             'edited-fixture-executed' if scenario=='edit' else 'approval-fixture-executed\n')
-        lifecycle=[row['args'][0] for row in execution['lifecycle']]
-        checks['actual_spawn_and_exit_receipts']=lifecycle==['RUNNING','PROCESS_EXITED']
+        checks['actual_spawn_and_exit_receipts']=process_lifecycle_is_complete(execution['lifecycle'])
     if scenario in {'plan','sequential'}:
         checks['actual_fifteen_step_plan_review']=b.get('plan_review_outcome',{}).get('type')=='approved_for_execution' and b['requests'][0]['steps']==15
     if scenario=='sequential':
@@ -453,6 +469,7 @@ def main():
     p=argparse.ArgumentParser();p.add_argument('--export',type=Path);p.add_argument('--results',type=Path)
     p.add_argument('--validate-result',type=Path);p.add_argument('--assert-fixed',action='store_true')
     p.add_argument('--mode',default='tty',choices=['tty','plain','off','none']);p.add_argument('--scenario',default='approve')
+    p.add_argument('--installed-cli',action='store_true')
     p.add_argument('--verbosity',default='compact');p.add_argument('--old-race',action='store_true')
     p.add_argument('--cols',type=int,default=80);p.add_argument('--rows',type=int,default=24);p.add_argument('--resize')
     a=p.parse_args()
@@ -461,7 +478,7 @@ def main():
         print(json.dumps(value,ensure_ascii=False));raise SystemExit(0 if value['passed'] else 1)
     if a.export is None or a.results is None:p.error('--export and --results are required for replay')
     value=record(a.export,a.results,scenario=a.scenario,mode=a.mode,verbosity=a.verbosity,
-        old_race=a.old_race,cols=a.cols,rows=a.rows,resize=tuple(map(int,a.resize.split('x'))) if a.resize else None)
+        installed_cli=a.installed_cli,old_race=a.old_race,cols=a.cols,rows=a.rows,resize=tuple(map(int,a.resize.split('x'))) if a.resize else None)
     if a.assert_fixed:
         assertions=validate_result(value,fixed=True);atomic_json(a.results/'assertions.json',assertions)
         if not assertions['passed']:print(json.dumps(assertions,ensure_ascii=False));raise SystemExit(1)

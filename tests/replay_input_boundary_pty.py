@@ -40,14 +40,14 @@ def test_input_boundary_pty_child():
     finally:replay.production_reviews=original
 
 
-def record(source,root,mode='plain',framing='bracketed',ending='lf',decision='y'):
+def record(source,root,mode='plain',framing='bracketed',ending='lf',decision='y',installed_cli=False):
     from tests.replay_cli_v2_pty import VTTextScreen, PYTHON, DEPS
     source=Path(source).resolve();root=Path(root).resolve()
     assert source.is_relative_to(Path('/tmp')) and root.is_relative_to(Path('/tmp'))
     manifest=json.loads((source/'export_manifest.json').read_text())
     assert all(hashlib.sha256((source/f).read_bytes()).hexdigest()==v for f,v in manifest['files'].items())
     root.mkdir(exist_ok=False);(root/'scratch').mkdir()
-    env={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8','PYTHONPATH':DEPS if mode=='tty' else '',
+    env={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8','PYTHONPATH':DEPS if mode=='tty' and not installed_cli else '',
         'TERM':'xterm-256color','PYTHONDONTWRITEBYTECODE':'1','PYTEST_DISABLE_PLUGIN_AUTOLOAD':'1',
         'TMPDIR':str(root/'scratch'),'BIOMIND_WIKI_ENABLED':'0','LOG_LEVEL':'CRITICAL',
         'BIOMIND_OFFLINE_RESULTS':str(root/'pytest-results.json'),'BIOMIND_CLI_PROGRESS_ARTIFACTS':str(root),
@@ -124,12 +124,12 @@ def record(source,root,mode='plain',framing='bracketed',ending='lf',decision='y'
         'model_calls_zero':b.get('model_calls')==0,
         'execution_count':len(b.get('executions',[]))==(1 if decision in {'y','enter','details','blank-paste'} else 0),
         'exit_zero':child.returncode==0}
-    result={'source_tree':manifest['source'],'replay_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'mode':mode,'framing':framing,'ending':ending,'decision':decision,'command':command,'exit':child.returncode,
+    result={'source_tree':manifest['source'],'replay_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'installed_cli':installed_cli,'mode':mode,'framing':framing,'ending':ending,'decision':decision,'command':command,'exit':child.returncode,
         'checks':checks,'passed':all(checks.values()),'pending':snapshot,'business':b,'task':actual,'sent':sent}
     (root/'raw.pty').write_bytes(raw);(root/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2,default=str))
     return {k:result[k] for k in ('passed','checks','exit')}
 
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('source');p.add_argument('results');p.add_argument('--mode',default='plain');p.add_argument('--framing',default='bracketed');p.add_argument('--ending',default='lf');p.add_argument('--decision',default='y');a=p.parse_args()
-    print(json.dumps(record(a.source,a.results,a.mode,a.framing,a.ending,a.decision)))
+    p=argparse.ArgumentParser();p.add_argument('source');p.add_argument('results');p.add_argument('--mode',default='plain');p.add_argument('--framing',default='bracketed');p.add_argument('--ending',default='lf');p.add_argument('--decision',default='y');p.add_argument('--installed-cli',action='store_true');a=p.parse_args()
+    print(json.dumps(record(a.source,a.results,a.mode,a.framing,a.ending,a.decision,a.installed_cli)))

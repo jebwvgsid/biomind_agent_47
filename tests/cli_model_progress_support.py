@@ -37,7 +37,8 @@ class TimedWriter(io.StringIO):
 
 
 def launch(export_root: Path, results: Path, tests: list[str], *,
-           fatal_diagnostics: bool = False, fatal_selftest: bool = False) -> int:
+           fatal_diagnostics: bool = False, fatal_selftest: bool = False,
+           installed_cli: bool = False) -> int:
     export_root = export_root.resolve()
     results = results.resolve()
     if not export_root.is_relative_to(Path("/tmp")) or not results.is_relative_to(Path("/tmp")):
@@ -53,7 +54,7 @@ def launch(export_root: Path, results: Path, tests: list[str], *,
     scratch = results / "scratch"
     scratch.mkdir(exist_ok=True)
     environment = {
-        "PATH": "/usr/bin:/bin", "LC_ALL": "C.UTF-8", "PYTHONPATH": DEPS,
+        "PATH": "/usr/bin:/bin", "LC_ALL": "C.UTF-8", "PYTHONPATH": "" if installed_cli else DEPS,
         "PYTHONDONTWRITEBYTECODE": "1", "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
         "TMPDIR": str(scratch), "BIOMIND_WIKI_ENABLED": "0", "LOG_LEVEL": "CRITICAL",
         "BIOMIND_OFFLINE_RESULTS": str(results / "pytest-results.json"),
@@ -127,8 +128,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--export", dest="export_root", type=Path, required=True)
     parser.add_argument("--results", type=Path, required=True)
+    parser.add_argument("--installed-cli", action="store_true")
     args, tests = parser.parse_known_args()
-    raise SystemExit(launch(args.export_root, args.results, tests or ["-q", "tests/test_cli_model_progress_integration.py"]))
+    raise SystemExit(launch(args.export_root, args.results, tests or ["-q", "tests/test_cli_model_progress_integration.py"], installed_cli=args.installed_cli))
 
 
 if __name__ == "__main__":

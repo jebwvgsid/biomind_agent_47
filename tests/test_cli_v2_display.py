@@ -391,10 +391,15 @@ def test_v2_actual_output_attributes_reset_before_following_public():
             public = owner.model.receive('model_public', 'ordinary public paragraph', source='model_public')
             await owner._flush_history()
             by_text = dict(output.writes)
-            assert by_text['read result\n'].dim is True
-            assert by_text['actual failure\n'].color == 'ansired'
+            assert by_text['read result\n'].color == 'ansicyan'
+            assert by_text['read result\n'].dim is False
+            assert by_text['✓ '].color == 'ansigreen'
+            assert by_text['× '].color == 'ansired'
+            assert by_text['actual failure\n'] == DEFAULT_ATTRS
             assert by_text['approval required\n'].color == 'ansiyellow'
-            assert by_text['cancel requested\n'].color == 'ansiyellow'
+            assert by_text['approval required\n'].bold is True
+            assert by_text['! '].color == 'ansiyellow'
+            assert by_text['cancel requested\n'] == DEFAULT_ATTRS
             assert by_text['ordinary public paragraph\n'] == DEFAULT_ATTRS
             assert output.current == DEFAULT_ATTRS and output.resets >= 5
             assert public.confirmation.result() is True
