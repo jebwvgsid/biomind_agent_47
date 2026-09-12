@@ -1,0 +1,40 @@
+{
+  "consultant-handoff-PROPOSE_SKILL_BINDING-52ad96cc.json": {
+    "sha256": "25e7ee8e2bf4e9cb5f7cb0aead8eaf21840871433c59c45c2ac80fc2357b3d25",
+    "bytes": 103961,
+    "source": "synthetic guarded production-path fixture"
+  },
+  "consultant-handoff-REQUEST_SKILL_CONTEXT-02405f6d.json": {
+    "sha256": "3762845dab1c19734db0d3636e76c2498b71e7136a3dd9e0142d75dc79d655a3",
+    "bytes": 139911,
+    "source": "synthetic guarded production-path fixture"
+  },
+  "consultant-handoff-SEARCH_SKILLS-7f68c2e6.json": {
+    "sha256": "ae7c3f6714713af7991a1887f2c654555243825a164bb25e7755db3bc8cc2706",
+    "bytes": 102757,
+    "source": "synthetic guarded production-path fixture"
+  },
+  "consultant-handoff-SEARCH_SKILLS-bd49395c.json": {
+    "sha256": "73b50df29485dc969a47403a00ef5c9e10f19c5b8b5afcc441bce05b345d7f9b",
+    "bytes": 146710,
+    "source": "synthetic guarded production-path fixture"
+  },
+  "consultant-production-continue-new-failure.json": {
+    "sha256": "dced01e2e19ba1d338d330dddd695c3caf9ca892eed5657bbbffc411f78dc3d7",
+    "bytes": 98130,
+    "source": "synthetic guarded production-path fixture"
+  },
+  "consultant-production-continue-waiting-user.json": {
+    "sha256": "72ee6566f539cab5b77d1bdf29a90a7f67f1efe61f2c5d604ce4b60535a27e9c",
+    "bytes": 91502,
+    "source": "synthetic guarded production-path fixture"
+  },
+  "pytest-results.json": {
+    "sha256": "313589fa07bfe374359b8192207e5c64877deb5e4712d6f276bd2ee0738745f6",
+    "bytes": 41065
+  },
+  "invocation.json": {
+    "sha256": "a218fe1f42f2daf10018a4649f9a29789eaff849db27c3bc05ce400b7c98df9e",
+    "bytes": 1075
+  }
+}

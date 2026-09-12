@@ -1,0 +1,95 @@
+{
+  "implementation_commits": [
+    "d81937351bf6913bee9ebabc6d6673608ff9f82f",
+    "050d21f5d943d9c957c53e39d1a179ccf24c49d9"
+  ],
+  "source_tree": "c615d47c6b1afe825eed83f9f313a034eae13398",
+  "final_passed": 46,
+  "final_failed": 0,
+  "slice1_passed": 7,
+  "final_elapsed_seconds": 39.02,
+  "legacy_cli_baseline": {
+    "head": "86c26122e9ed17f72546e979c3261bccd27b77bf",
+    "passed": 6,
+    "failed": [
+      {
+        "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+        "signature": "TTY review fixture asserts owner.modal while the production approval owner is not modal"
+      },
+      {
+        "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+        "signature": "TTY review fixture asserts owner.modal while the production approval owner is not modal"
+      }
+    ]
+  },
+  "legacy_cli_with_slice1": {
+    "passed": 13,
+    "failed": [
+      {
+        "nodeid": "tests/test_cli_cp_public_integration.py::test_cli2_actual_consultant_planner_local_turns_tty_plain_off",
+        "signature": "TTY review fixture asserts owner.modal while the production approval owner is not modal"
+      },
+      {
+        "nodeid": "tests/test_cli_generate_public_integration.py::test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_plain_off",
+        "signature": "TTY review fixture asserts owner.modal while the production approval owner is not modal"
+      }
+    ]
+  },
+  "purpose_regression_calls": [
+    {
+      "case": "plan-results-stage-purpose-record_failure-False.json",
+      "calls": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2
+      },
+      "executions": 2,
+      "commits": 2,
+      "scope": "isolated tiny TSV and report only"
+    },
+    {
+      "case": "plan-results-stage-purpose-validation-False.json",
+      "calls": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2
+      },
+      "executions": 2,
+      "commits": 2,
+      "scope": "isolated tiny TSV and report only"
+    },
+    {
+      "case": "plan-results-stage-purpose-validation-True.json",
+      "calls": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2
+      },
+      "executions": 2,
+      "commits": 2,
+      "scope": "isolated tiny TSV and report only"
+    }
+  ],
+  "interpreter": {
+    "path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "version": "3.12.12",
+    "prompt_toolkit_installed": false,
+    "requirement": "prompt-toolkit==3.0.52",
+    "changes_to_real_environment": false
+  },
+  "limits": [
+    "Attachment named in latest message was not found in exposed attachments; implemented explicit inline requirements.",
+    "No original database or session was loaded or resumed; no real provider/API or WGS was run.",
+    "Consultant acceptance execution count is zero; existing PURPOSE regression executes six harmless scratch-only script processes.",
+    "Two legacy TTY approval fixture failures reproduce unchanged at baseline."
+  ],
+  "workspace": {
+    "baseline_head": "86c26122e9ed17f72546e979c3261bccd27b77bf",
+    "branch": "refactor/consultant-controller-authority",
+    "original_status_entries": 437,
+    "status_entries_excluding_this_report_unchanged": true,
+    "original_status_sha256": "27d1e4fe9727fa401eb805465d9ef713f0718e86c4a54fa97c783eaa7780c069",
+    "index_empty": true,
+    "intersecting_preexisting_change": "agent_core/workflow/managed_stop.py: two explanation wording hunks retained unstaged; excluded from tested/committed trees"
+  }
+}

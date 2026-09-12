@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-resume-final/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-resume-final",
+    "-q",
+    "tests/test_consultant_stop_resume.py",
+    "tests/test_consultant_skill_handoff.py",
+    "tests/test_cli_v2_terminal_fallback.py",
+    "tests/test_plan_results_evidence.py",
+    "tests/test_plan_results_purpose.py"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "/tmp/biomind-cli-deps",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-resume-final-results/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-resume-final-results/pytest-results.json",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-resume-final-results",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-resume-final-results",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-resume-final-results/scratch/executor-logs"
+  }
+}
