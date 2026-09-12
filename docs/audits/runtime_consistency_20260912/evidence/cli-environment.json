@@ -1,0 +1,55 @@
+{
+  "executable": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "version": "3.12.12 | packaged by conda-forge | (main, Oct 22 2025, 23:25:55) [GCC 14.3.0]",
+  "site_packages": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages",
+  "isolated": true,
+  "site_disabled": true,
+  "distributions": {
+    "prompt-toolkit": [],
+    "wcwidth": [],
+    "rich": [],
+    "pytest": [
+      {
+        "name": "pytest",
+        "version": "9.1.1",
+        "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages",
+        "installer": "conda\n",
+        "requires": [
+          "colorama>=0.4; sys_platform == \"win32\"",
+          "exceptiongroup>=1; python_version < \"3.11\"",
+          "iniconfig>=1.0.1",
+          "packaging>=22",
+          "pluggy<2,>=1.5",
+          "pygments>=2.7.2",
+          "tomli>=1; python_version < \"3.11\"",
+          "argcomplete; extra == \"dev\"",
+          "attrs>=19.2; extra == \"dev\"",
+          "hypothesis>=3.56; extra == \"dev\"",
+          "mock; extra == \"dev\"",
+          "requests; extra == \"dev\"",
+          "setuptools; extra == \"dev\"",
+          "xmlschema; extra == \"dev\""
+        ]
+      }
+    ],
+    "langchain-core": [
+      {
+        "name": "langchain-core",
+        "version": "1.2.7",
+        "location": "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/site-packages",
+        "installer": "pip\n",
+        "requires": [
+          "jsonpatch<2.0.0,>=1.33.0",
+          "langsmith<1.0.0,>=0.3.45",
+          "packaging<26.0.0,>=23.2.0",
+          "pydantic<3.0.0,>=2.7.4",
+          "pyyaml<7.0.0,>=5.3.0",
+          "tenacity!=8.4.0,<10.0.0,>=8.1.0",
+          "typing-extensions<5.0.0,>=4.7.0",
+          "uuid-utils<1.0,>=0.12.0"
+        ]
+      }
+    ]
+  },
+  "prompt_toolkit_spec": "None"
+}

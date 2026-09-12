@@ -1,0 +1,110 @@
+[
+  {
+    "path": "bio_agents.py",
+    "head_sha256": "930351ad7f0cc8c95f4c18db3eda17c22d9600a99571c796c1e18d9de80afe03",
+    "worktree_sha256": "930351ad7f0cc8c95f4c18db3eda17c22d9600a99571c796c1e18d9de80afe03",
+    "dirty": false
+  },
+  {
+    "path": "agent_core/plan_contract.py",
+    "head_sha256": "dd8dbe19645486f391a61266ede4e8d8bf3964b1926bb918a7e8df139fd2d0e1",
+    "worktree_sha256": "dd8dbe19645486f391a61266ede4e8d8bf3964b1926bb918a7e8df139fd2d0e1",
+    "dirty": false
+  },
+  {
+    "path": "agent_core/planner_loop.py",
+    "head_sha256": "75f5a5b4dc282d663d03a80836aedb926285b12f48017298c599177c209d8649",
+    "worktree_sha256": "75f5a5b4dc282d663d03a80836aedb926285b12f48017298c599177c209d8649",
+    "dirty": false
+  },
+  {
+    "path": "agent_core/plan_tracker.py",
+    "head_sha256": "b9d800f06ee62012183f3e8800e9fda7585d21e697400f0338bc22878c6b90f9",
+    "worktree_sha256": "b9d800f06ee62012183f3e8800e9fda7585d21e697400f0338bc22878c6b90f9",
+    "dirty": false
+  },
+  {
+    "path": "agent_core/node_context.py",
+    "head_sha256": "9e4de84db915a1739facc22e27b2832ada562403342deb06f0f950196c411f03",
+    "worktree_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+    "dirty": true
+  },
+  {
+    "path": "agent_core/planner_context.py",
+    "head_sha256": "7df73992997946936c43275af713736eda860cdc0c99063904ca187665c28d2d",
+    "worktree_sha256": "febb7b3a772b6532f0a0bffb83d6fde1fc67ff831ea7e4b3d05633690a40fa46",
+    "dirty": true
+  },
+  {
+    "path": "agent_core/provider_message_safety.py",
+    "head_sha256": "be8d5353de52a247a48164a8d12a95c32999616aac81e961cf90ab4ba80edf2a",
+    "worktree_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38",
+    "dirty": true
+  },
+  {
+    "path": "prompts/manager.py",
+    "head_sha256": "bc30eb0d3b8035e74bc449871e3429842f5be4ddb5829ec5f7beb2963a78990f",
+    "worktree_sha256": "1b0bed78adc750d0dfb7ff0e39040bf395b963541f610c2cae25cecfe5c475a2",
+    "dirty": true
+  },
+  {
+    "path": "agent_core/human_io.py",
+    "head_sha256": "54ebb9f1fd67daa01175d1201a0a5acf9fbe55e73976f79ddb3aeb5a8ecebdd2",
+    "worktree_sha256": "54ebb9f1fd67daa01175d1201a0a5acf9fbe55e73976f79ddb3aeb5a8ecebdd2",
+    "dirty": false
+  },
+  {
+    "path": "agent_core/cli_plain.py",
+    "head_sha256": "798b83d83fc775d0811c8335c9a7a2f614a4f08c8427940f5bf40742848afbc6",
+    "worktree_sha256": "798b83d83fc775d0811c8335c9a7a2f614a4f08c8427940f5bf40742848afbc6",
+    "dirty": false
+  },
+  {
+    "path": "agent_core/cli_terminal.py",
+    "head_sha256": "cdcc2185e22f0b88906383b3256f078d239f1b668f4655390693dcb57581ded2",
+    "worktree_sha256": "cdcc2185e22f0b88906383b3256f078d239f1b668f4655390693dcb57581ded2",
+    "dirty": false
+  },
+  {
+    "path": "agent_core/cli_display.py",
+    "head_sha256": "b97c1fc5fc34b0be058db84f20b0170aafcbd95dae22ea888014aa238a81f52d",
+    "worktree_sha256": "b97c1fc5fc34b0be058db84f20b0170aafcbd95dae22ea888014aa238a81f52d",
+    "dirty": false
+  },
+  {
+    "path": "requirements-cli.txt",
+    "head_sha256": "ebdda2435895622a762265912c08003f84f8f2d3a8344a8f333ccc98fce14e02",
+    "worktree_sha256": "ebdda2435895622a762265912c08003f84f8f2d3a8344a8f333ccc98fce14e02",
+    "dirty": false
+  },
+  {
+    "path": "agent_core/workflow/managed_stop.py",
+    "head_sha256": "9eb039f9a4ac0fd7f283c5dbb08b485dd90a15ad45807ca5558319007bbf0ac3",
+    "worktree_sha256": "efc58228de12539182acd348923955fb89c514e74ca0b5b749ff184af92d8414",
+    "dirty": true
+  },
+  {
+    "path": "agent_core/workflow/typed_node.py",
+    "head_sha256": "41a87dee3256ecb4f1dfc7bca05b91279413e32ea548882db82b38b67f57b1c2",
+    "worktree_sha256": "41a87dee3256ecb4f1dfc7bca05b91279413e32ea548882db82b38b67f57b1c2",
+    "dirty": false
+  },
+  {
+    "path": "agent_core/workflow/phase_subgraph.py",
+    "head_sha256": "635c381be44cf3d152b44a7a04744c79c4de591ba6ece7d33384ed5b7af21392",
+    "worktree_sha256": "635c381be44cf3d152b44a7a04744c79c4de591ba6ece7d33384ed5b7af21392",
+    "dirty": false
+  },
+  {
+    "path": "execution/executor.py",
+    "head_sha256": "89f11c155d2ff79f99d2e639e52e65c25197477e52646dee58b954a18b94be1a",
+    "worktree_sha256": "89f11c155d2ff79f99d2e639e52e65c25197477e52646dee58b954a18b94be1a",
+    "dirty": false
+  },
+  {
+    "path": "execution/runtime_contract.py",
+    "head_sha256": "fa410e2dfd8f59614c44e9de924e5e65c61a65217f989b57da6109efb1c083c2",
+    "worktree_sha256": "fa410e2dfd8f59614c44e9de924e5e65c61a65217f989b57da6109efb1c083c2",
+    "dirty": false
+  }
+]

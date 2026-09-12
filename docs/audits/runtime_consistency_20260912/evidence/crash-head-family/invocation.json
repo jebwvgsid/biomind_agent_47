@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-runtime-audit-20260912/head/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-runtime-audit-20260912/head",
+    "-q",
+    "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "/tmp/biomind-cli-deps",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-runtime-audit-20260912/crash-head-family/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-runtime-audit-20260912/crash-head-family/pytest-results.json",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-head-family",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-head-family",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-runtime-audit-20260912/crash-head-family/scratch/executor-logs"
+  }
+}

@@ -1,0 +1,212 @@
+{
+  "messages-head": {
+    "protocol_counts": {
+      "consultant": 1,
+      "planner": 2,
+      "generate": 0
+    },
+    "hash_output_policy_present": false,
+    "initial_system_sha256": "09e0b0f41681c32cf9bb352dac7a88471817f339d534ca123539918a1b6af33d",
+    "correction_feedback": [
+      {
+        "message_role": "human",
+        "root_keys": [
+          "code",
+          "correction_budget",
+          "requirements",
+          "response_completion",
+          "validation_issues"
+        ],
+        "issue_count": 6,
+        "issue_keys": [
+          "affected_artifact",
+          "affected_output",
+          "affected_step_ids",
+          "code",
+          "disposition",
+          "expected_type",
+          "field_path",
+          "machine_evidence",
+          "message",
+          "received_excerpt",
+          "received_type",
+          "repair_target",
+          "severity",
+          "validator_id",
+          "violation_code"
+        ],
+        "content_sha256": "96e6cc526c4bca5d63f23304b95c58c775e075f63c7751c0ee042bfa1c3d0836"
+      }
+    ],
+    "lifecycles": {
+      "life1-compact-False-True-False.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 2,
+          "generate": 0,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 0,
+        "reviews": 1
+      },
+      "life1-verbose-False-False-False.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 3,
+          "generate": 1,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 1,
+        "reviews": 2
+      },
+      "life1-compact-False-False-False.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 3,
+          "generate": 1,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 1,
+        "reviews": 2
+      },
+      "life1-compact-True-False-False.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 3,
+          "generate": 0,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 0,
+        "reviews": 2
+      },
+      "life1-off-False-False-False.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 3,
+          "generate": 1,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 1,
+        "reviews": 2
+      },
+      "life1-compact-False-False-True.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 3,
+          "generate": 1,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 0,
+        "reviews": 2
+      }
+    }
+  },
+  "messages-dirty": {
+    "protocol_counts": {
+      "consultant": 1,
+      "planner": 2,
+      "generate": 0
+    },
+    "hash_output_policy_present": true,
+    "initial_system_sha256": "8cd4080ea6b231d886ed7885091e0df93ff23f238d84338940164ef52265a364",
+    "correction_feedback": [
+      {
+        "message_role": "human",
+        "root_keys": [
+          "code",
+          "correction_budget",
+          "requirements",
+          "response_completion",
+          "validation_issues"
+        ],
+        "issue_count": 6,
+        "issue_keys": [
+          "affected_artifact",
+          "affected_output",
+          "affected_step_ids",
+          "code",
+          "disposition",
+          "expected_type",
+          "field_path",
+          "machine_evidence",
+          "message",
+          "received_excerpt",
+          "received_type",
+          "repair_target",
+          "severity",
+          "validator_id",
+          "violation_code"
+        ],
+        "content_sha256": "52f4277eae00d44a7609668fee2e4ea4b6b2939dc914ef731ba404b0720bcc0b"
+      }
+    ],
+    "lifecycles": {
+      "life1-compact-False-True-False.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 2,
+          "generate": 0,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 0,
+        "reviews": 1
+      },
+      "life1-verbose-False-False-False.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 3,
+          "generate": 1,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 1,
+        "reviews": 2
+      },
+      "life1-compact-False-False-False.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 3,
+          "generate": 1,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 1,
+        "reviews": 2
+      },
+      "life1-compact-True-False-False.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 3,
+          "generate": 0,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 0,
+        "reviews": 2
+      },
+      "life1-off-False-False-False.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 3,
+          "generate": 1,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 1,
+        "reviews": 2
+      },
+      "life1-compact-False-False-True.json": {
+        "counts": {
+          "consultant": 2,
+          "planner": 3,
+          "generate": 1,
+          "planner_plan_impact_review": 1
+        },
+        "executions": 0,
+        "reviews": 2
+      }
+    }
+  },
+  "observed_feedback_difference": {
+    "path": "$.response_completion.parser_diagnostic.source",
+    "head_present": true,
+    "dirty_present": false,
+    "validation_issue_count_unchanged": 6
+  }
+}

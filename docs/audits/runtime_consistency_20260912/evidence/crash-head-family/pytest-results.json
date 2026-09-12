@@ -1,0 +1,202 @@
+[
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-compact-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-compact-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.04010756965726614,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-compact-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 8.057734905276448,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-compact-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00027111778035759926,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-verbose-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-verbose-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008652941323816776,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-verbose-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 7.165908321738243,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-verbose-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00025116419419646263,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008105961605906487,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 7.027243675664067,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022859126329421997,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-compact-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-compact-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007866891101002693,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-compact-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 12.00556494295597,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-compact-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002850671298801899,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008458639495074749,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 11.503500069025904,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002225227653980255,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007315902039408684,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 11.851661460939795,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022458238527178764,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007951860316097736,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.2873342847451568,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000231041107326746,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007718331180512905,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 7.149276313837618,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002585151232779026,
+    "failure": ""
+  }
+]

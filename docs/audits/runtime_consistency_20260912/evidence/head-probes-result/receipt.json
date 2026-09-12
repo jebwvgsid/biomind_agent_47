@@ -1,0 +1,38 @@
+{
+  "returncode": 0,
+  "error": null,
+  "elapsed_seconds": 28.602951432112604,
+  "capture": "pytest default (no -s)",
+  "source": "57fd6885ee5ef5ab160a0a67921de2b8c69c910b",
+  "source_signature": "c2a40061e310c22d137dcf3caff8dcfb3d123a809020f3aff75a69439a6470c6",
+  "parent_source_drift": [],
+  "call_passed": 2,
+  "call_failed": 0,
+  "last_events": [
+    {
+      "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.16404338087886572,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 1.3970440039411187,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00024333829060196877,
+      "failure": ""
+    }
+  ]
+}

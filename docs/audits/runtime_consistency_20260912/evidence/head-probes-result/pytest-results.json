@@ -1,0 +1,52 @@
+[
+  {
+    "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00013731885701417923,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 15.08813935983926,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003320155665278435,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.16404338087886572,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.3970440039411187,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00024333829060196877,
+    "failure": ""
+  }
+]

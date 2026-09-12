@@ -1,0 +1,38 @@
+{
+  "returncode": -11,
+  "error": null,
+  "elapsed_seconds": 82.38085807487369,
+  "capture": "pytest default (no -s)",
+  "source": "9b7616c0ed9ebb42d3f8d346b22f592fa0f4b219",
+  "source_signature": "b6644e9ff6a3bbe1ecd911f8fdd3147a558aee3faf65941f919316899ceb67d5",
+  "parent_source_drift": [],
+  "call_passed": 19,
+  "call_failed": 0,
+  "last_events": [
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 11.611785154789686,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00023194681853055954,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0008029825985431671,
+      "failure": ""
+    }
+  ]
+}

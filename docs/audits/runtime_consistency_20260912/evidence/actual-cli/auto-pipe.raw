@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/public/home/liusiqi/03.毕设/Biomind_v1/docs/audits/runtime_consistency_20260912/probe_cli_environment.py", line 42, in <module>
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/tmp/biomind-runtime-audit-20260912/head/agent_core/cli_terminal.py", line 704, in run_terminal
+    await run_plain()
+  File "/tmp/biomind-runtime-audit-20260912/head/agent_core/cli_terminal.py", line 693, in run_plain
+    await runtime()
+          ^^^^^^^^^
+TypeError: 'coroutine' object is not callable
+sys:1: RuntimeWarning: coroutine 'runtime' was never awaited

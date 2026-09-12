@@ -1,0 +1,56 @@
+{
+  "executable": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "modules": [
+    {
+      "module": "bio_agents",
+      "file": "/tmp/biomind-runtime-audit-20260912/head-probes/bio_agents.py",
+      "sha256": "930351ad7f0cc8c95f4c18db3eda17c22d9600a99571c796c1e18d9de80afe03"
+    },
+    {
+      "module": "prompts.manager",
+      "file": "/tmp/biomind-runtime-audit-20260912/head-probes/prompts/manager.py",
+      "sha256": "bc30eb0d3b8035e74bc449871e3429842f5be4ddb5829ec5f7beb2963a78990f"
+    },
+    {
+      "module": "agent_core.plan_contract",
+      "file": "/tmp/biomind-runtime-audit-20260912/head-probes/agent_core/plan_contract.py",
+      "sha256": "dd8dbe19645486f391a61266ede4e8d8bf3964b1926bb918a7e8df139fd2d0e1"
+    },
+    {
+      "module": "agent_core.planner_loop",
+      "file": "/tmp/biomind-runtime-audit-20260912/head-probes/agent_core/planner_loop.py",
+      "sha256": "75f5a5b4dc282d663d03a80836aedb926285b12f48017298c599177c209d8649"
+    },
+    {
+      "module": "agent_core.planner_context",
+      "file": "/tmp/biomind-runtime-audit-20260912/head-probes/agent_core/planner_context.py",
+      "sha256": "7df73992997946936c43275af713736eda860cdc0c99063904ca187665c28d2d"
+    },
+    {
+      "module": "agent_core.node_context",
+      "file": "/tmp/biomind-runtime-audit-20260912/head-probes/agent_core/node_context.py",
+      "sha256": "9e4de84db915a1739facc22e27b2832ada562403342deb06f0f950196c411f03"
+    },
+    {
+      "module": "agent_core.provider_message_safety",
+      "file": "/tmp/biomind-runtime-audit-20260912/head-probes/agent_core/provider_message_safety.py",
+      "sha256": "be8d5353de52a247a48164a8d12a95c32999616aac81e961cf90ab4ba80edf2a"
+    },
+    {
+      "module": "agent_core.human_io",
+      "file": "/tmp/biomind-runtime-audit-20260912/head-probes/agent_core/human_io.py",
+      "sha256": "54ebb9f1fd67daa01175d1201a0a5acf9fbe55e73976f79ddb3aeb5a8ecebdd2"
+    },
+    {
+      "module": "agent_core.cli_terminal",
+      "file": "/tmp/biomind-runtime-audit-20260912/head-probes/agent_core/cli_terminal.py",
+      "sha256": "cdcc2185e22f0b88906383b3256f078d239f1b668f4655390693dcb57581ded2"
+    },
+    {
+      "module": "agent_core.cli_plain",
+      "file": "/tmp/biomind-runtime-audit-20260912/head-probes/agent_core/cli_plain.py",
+      "sha256": "798b83d83fc775d0811c8335c9a7a2f614a4f08c8427940f5bf40742848afbc6"
+    }
+  ],
+  "fresh_process": true
+}

@@ -1,0 +1,1202 @@
+[
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[accept_actual]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[accept_actual]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.027292504906654358,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[accept_actual]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.2587487041018903,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[accept_actual]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002410002052783966,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[copy_to_exact]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[copy_to_exact]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007711830548942089,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[copy_to_exact]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.27567889727652073,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[copy_to_exact]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021714577451348305,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[old_attempt]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[old_attempt]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006699538789689541,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[old_attempt]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.008576186839491129,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[old_attempt]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015875604003667831,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_logical]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_logical]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005956580862402916,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_logical]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.008394431788474321,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_logical]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015133200213313103,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[outside]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[outside]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005931109189987183,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[outside]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.008374270051717758,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[outside]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016450975090265274,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[changed_content]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[changed_content]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005905390717089176,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[changed_content]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009071793872863054,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[changed_content]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015356112271547318,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[exact_accept]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[exact_accept]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005879816599190235,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[exact_accept]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.008628112263977528,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[exact_accept]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001605306752026081,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[target_conflict]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[target_conflict]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005935188382863998,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[target_conflict]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00904691917821765,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[target_conflict]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015322724357247353,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[input_path]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[input_path]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005795746110379696,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[input_path]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.008349183946847916,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[input_path]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014736130833625793,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_format]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_format]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000585509929805994,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_format]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009403402917087078,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_format]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001537618227303028,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[scientific_failure]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[scientific_failure]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006130407564342022,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[scientific_failure]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.008194428868591785,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[scientific_failure]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015315786004066467,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_schema_is_typed_and_cannot_carry_code_or_route",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_schema_is_typed_and_cannot_carry_code_or_route",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005148001946508884,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_schema_is_typed_and_cannot_carry_code_or_route",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004125610925257206,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_name_schema_is_typed_and_cannot_carry_code_or_route",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014350935816764832,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_new_reconciliation_never_guesses_unique_or_ambiguous_name",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_new_reconciliation_never_guesses_unique_or_ambiguous_name",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005021919496357441,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_new_reconciliation_never_guesses_unique_or_ambiguous_name",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.005239310208708048,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_new_reconciliation_never_guesses_unique_or_ambiguous_name",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014013517647981644,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_exact_name_with_bad_content_and_nonzero_exit_stays_failure",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_exact_name_with_bad_content_and_nonzero_exit_stays_failure",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005023153498768806,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_exact_name_with_bad_content_and_nonzero_exit_stays_failure",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0062372819520533085,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_exact_name_with_bad_content_and_nonzero_exit_stays_failure",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014305906370282173,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-compact-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-compact-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006839330308139324,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-compact-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 7.501487506087869,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-compact-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000231216661632061,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-verbose-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-verbose-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007824921049177647,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-verbose-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 7.175654200837016,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-verbose-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002146032638847828,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007396540604531765,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 6.995257182978094,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00023729680106043816,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-compact-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-compact-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008270498365163803,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-compact-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 12.383114967029542,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-compact-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022793235257267952,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000802250113338232,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 11.59171321708709,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002475813962519169,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008199550211429596,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 12.36561416182667,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00026747724041342735,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008295979350805283,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.324363328050822,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00023827888071537018,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008307876996695995,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 6.855417146813124,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00023251725360751152,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[text-accept_actual]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[text-accept_actual]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007303468883037567,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[text-accept_actual]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01009863568469882,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[text-accept_actual]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016279472038149834,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[text-copy_to_exact]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[text-copy_to_exact]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006543360650539398,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[text-copy_to_exact]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.017510334961116314,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[text-copy_to_exact]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016781780868768692,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[file-accept_actual]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[file-accept_actual]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006879349239170551,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[file-accept_actual]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009605965111404657,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[file-accept_actual]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001577557995915413,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[file-copy_to_exact]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[file-copy_to_exact]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006799008697271347,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[file-copy_to_exact]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01752946199849248,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[file-copy_to_exact]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001758430153131485,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[data-accept_actual]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[data-accept_actual]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006555067375302315,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[data-accept_actual]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009655103087425232,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[data-accept_actual]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015469826757907867,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[data-copy_to_exact]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[data-copy_to_exact]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006393240764737129,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[data-copy_to_exact]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.017249320168048143,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[data-copy_to_exact]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015699909999966621,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[output-accept_actual]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[output-accept_actual]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006470158696174622,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[output-accept_actual]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009616020135581493,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[output-accept_actual]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015580374747514725,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[output-copy_to_exact]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[output-copy_to_exact]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006497851572930813,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[output-copy_to_exact]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.018366409931331873,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[output-copy_to_exact]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018446799367666245,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_local_copy_conflict_and_response_loss_never_overwrite_or_register_early",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_local_copy_conflict_and_response_loss_never_overwrite_or_register_early",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005603330209851265,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_local_copy_conflict_and_response_loss_never_overwrite_or_register_early",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.040306394919753075,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_name.py::test_local_copy_conflict_and_response_loss_never_overwrite_or_register_early",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020622601732611656,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e1_actual_marker_collection_registration_and_gate_stay_distinct",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e1_actual_marker_collection_registration_and_gate_stay_distinct",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006499211303889751,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e1_actual_marker_collection_registration_and_gate_stay_distinct",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009194760117679834,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e1_actual_marker_collection_registration_and_gate_stay_distinct",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015001976862549782,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_explicit_empty_or_unknown_acceptance_never_uses_disk_candidates[accepted0-known]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_explicit_empty_or_unknown_acceptance_never_uses_disk_candidates[accepted0-known]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006517381407320499,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_explicit_empty_or_unknown_acceptance_never_uses_disk_candidates[accepted0-known]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0011900849640369415,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_explicit_empty_or_unknown_acceptance_never_uses_disk_candidates[accepted0-known]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000158664770424366,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_explicit_empty_or_unknown_acceptance_never_uses_disk_candidates[None-unknown]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_explicit_empty_or_unknown_acceptance_never_uses_disk_candidates[None-unknown]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006624218076467514,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_explicit_empty_or_unknown_acceptance_never_uses_disk_candidates[None-unknown]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0011867419816553593,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_explicit_empty_or_unknown_acceptance_never_uses_disk_candidates[None-unknown]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014380598440766335,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_path_is_not_identity_and_conflicting_explicit_links_are_unknown",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_path_is_not_identity_and_conflicting_explicit_links_are_unknown",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000504590105265379,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_path_is_not_identity_and_conflicting_explicit_links_are_unknown",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00020263995975255966,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e2_path_is_not_identity_and_conflicting_explicit_links_are_unknown",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001208907924592495,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005612028762698174,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004470829386264086,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014987308531999588,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006013917736709118,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004351114854216576,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014649098739027977,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation2]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation2]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006040968000888824,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation2]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0042795841582119465,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e3_observation_value_protocol_is_preserved[observation2]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001494106836616993,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e4_runtime_scope_unknown_and_raw_observations_reach_actual_reviewer",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e4_runtime_scope_unknown_and_raw_observations_reach_actual_reviewer",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005132239311933517,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e4_runtime_scope_unknown_and_raw_observations_reach_actual_reviewer",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.32648265874013305,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_e4_runtime_scope_unknown_and_raw_observations_reach_actual_reviewer",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002355966717004776,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_recorded_output_candidates_and_contracts_reach_existing_recovery_seed",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_recorded_output_candidates_and_contracts_reach_existing_recovery_seed",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00013702362775802612,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_recorded_output_candidates_and_contracts_reach_existing_recovery_seed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.005932399071753025,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_evidence.py::test_recorded_output_candidates_and_contracts_reach_existing_recovery_seed",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001369146630167961,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_managed_no_file_check_to_commit_and_formal_task_end_across_display_modes[False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_managed_no_file_check_to_commit_and_formal_task_end_across_display_modes[False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006932462565600872,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_managed_no_file_check_to_commit_and_formal_task_end_across_display_modes[False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 8.99405864207074,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_managed_no_file_check_to_commit_and_formal_task_end_across_display_modes[False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00027015991508960724,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_managed_no_file_check_to_commit_and_formal_task_end_across_display_modes[True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_managed_no_file_check_to_commit_and_formal_task_end_across_display_modes[True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008133770897984505,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_managed_no_file_check_to_commit_and_formal_task_end_across_display_modes[True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 8.382922366727144,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_managed_no_file_check_to_commit_and_formal_task_end_across_display_modes[True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002492722123861313,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_omitted_user_delivery_is_visible_and_existing_review_prevents_false_completion",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_omitted_user_delivery_is_visible_and_existing_review_prevents_false_completion",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000668930821120739,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_omitted_user_delivery_is_visible_and_existing_review_prevents_false_completion",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.773651862051338,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_omitted_user_delivery_is_visible_and_existing_review_prevents_false_completion",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021663494408130646,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_formal_probe_step_keeps_original_approval_and_commits_its_observation",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_formal_probe_step_keeps_original_approval_and_commits_its_observation",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006755078211426735,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_formal_probe_step_keeps_original_approval_and_commits_its_observation",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.120923859067261,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_formal_probe_step_keeps_original_approval_and_commits_its_observation",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002501322887837887,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_answer_construction_failure_does_not_commit_task_completion",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_answer_construction_failure_does_not_commit_task_completion",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007047518156468868,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_answer_construction_failure_does_not_commit_task_completion",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.9950081817805767,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_answer_construction_failure_does_not_commit_task_completion",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022372230887413025,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_committed_observations_reach_next_reporting_generate_request[False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_committed_observations_reach_next_reporting_generate_request[False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000728983897715807,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_committed_observations_reach_next_reporting_generate_request[False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 6.01969978492707,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_committed_observations_reach_next_reporting_generate_request[False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00027956394478678703,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_committed_observations_reach_next_reporting_generate_request[True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_committed_observations_reach_next_reporting_generate_request[True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008394746109843254,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_committed_observations_reach_next_reporting_generate_request[True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 6.454408091958612,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_committed_observations_reach_next_reporting_generate_request[True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002788989804685116,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006797900423407555,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.934697085991502,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003008609637618065,
+    "failure": ""
+  }
+]

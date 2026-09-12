@@ -1,0 +1,597 @@
+[
+  {
+    "returncode": 0,
+    "error": null,
+    "elapsed_seconds": 95.78578975005075,
+    "capture": "pytest default (no -s)",
+    "source": "57fd6885ee5ef5ab160a0a67921de2b8c69c910b",
+    "source_signature": "7030b3f57d44c15a0bc630d32d0893ef37bbf51ff935a9e0c49688ff0622d3d2",
+    "parent_source_drift": [],
+    "call_passed": 8,
+    "call_failed": 0,
+    "last_events": [
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "start"
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "setup",
+        "outcome": "passed",
+        "duration": 0.0007718331180512905,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 7.149276313837618,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "teardown",
+        "outcome": "passed",
+        "duration": 0.0002585151232779026,
+        "failure": ""
+      }
+    ],
+    "label": "crash-head-family",
+    "invocation": {
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-runtime-audit-20260912/head/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-runtime-audit-20260912/head",
+        "-q",
+        "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "PYTHONPATH": "/tmp/biomind-cli-deps",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "TMPDIR": "/tmp/biomind-runtime-audit-20260912/crash-head-family/scratch",
+        "BIOMIND_WIKI_ENABLED": "0",
+        "LOG_LEVEL": "CRITICAL",
+        "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-runtime-audit-20260912/crash-head-family/pytest-results.json",
+        "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-head-family",
+        "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-head-family",
+        "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-runtime-audit-20260912/crash-head-family/scratch/executor-logs"
+      }
+    }
+  },
+  {
+    "returncode": 0,
+    "error": null,
+    "elapsed_seconds": 137.8516230857931,
+    "capture": "pytest default (no -s)",
+    "source": "57fd6885ee5ef5ab160a0a67921de2b8c69c910b",
+    "source_signature": "7030b3f57d44c15a0bc630d32d0893ef37bbf51ff935a9e0c49688ff0622d3d2",
+    "parent_source_drift": [],
+    "call_passed": 48,
+    "call_failed": 0,
+    "last_events": [
+      {
+        "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+        "phase": "start"
+      },
+      {
+        "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+        "phase": "setup",
+        "outcome": "passed",
+        "duration": 0.0006797900423407555,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 2.934697085991502,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+        "phase": "teardown",
+        "outcome": "passed",
+        "duration": 0.0003008609637618065,
+        "failure": ""
+      }
+    ],
+    "label": "crash-head-full",
+    "invocation": {
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-runtime-audit-20260912/head/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-runtime-audit-20260912/head",
+        "-q",
+        "tests/test_plan_results_name.py",
+        "tests/test_plan_results_evidence.py",
+        "tests/test_plan_results_managed.py"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "PYTHONPATH": "/tmp/biomind-cli-deps",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "TMPDIR": "/tmp/biomind-runtime-audit-20260912/crash-head-full/scratch",
+        "BIOMIND_WIKI_ENABLED": "0",
+        "LOG_LEVEL": "CRITICAL",
+        "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-runtime-audit-20260912/crash-head-full/pytest-results.json",
+        "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-head-full",
+        "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-head-full",
+        "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-runtime-audit-20260912/crash-head-full/scratch/executor-logs"
+      }
+    }
+  },
+  {
+    "returncode": 0,
+    "error": null,
+    "elapsed_seconds": 95.98309104098007,
+    "capture": "pytest default (no -s)",
+    "source": "9b7616c0ed9ebb42d3f8d346b22f592fa0f4b219",
+    "source_signature": "b6644e9ff6a3bbe1ecd911f8fdd3147a558aee3faf65941f919316899ceb67d5",
+    "parent_source_drift": [],
+    "call_passed": 8,
+    "call_failed": 0,
+    "last_events": [
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "start"
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "setup",
+        "outcome": "passed",
+        "duration": 0.0007504546083509922,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 7.434355285950005,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "teardown",
+        "outcome": "passed",
+        "duration": 0.00025402801111340523,
+        "failure": ""
+      }
+    ],
+    "label": "crash-original-family",
+    "invocation": {
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-input5-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-input5-export",
+        "-q",
+        "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "PYTHONPATH": "/tmp/biomind-cli-deps",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "TMPDIR": "/tmp/biomind-runtime-audit-20260912/crash-original-family/scratch",
+        "BIOMIND_WIKI_ENABLED": "0",
+        "LOG_LEVEL": "CRITICAL",
+        "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-runtime-audit-20260912/crash-original-family/pytest-results.json",
+        "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-original-family",
+        "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-original-family",
+        "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-runtime-audit-20260912/crash-original-family/scratch/executor-logs"
+      }
+    }
+  },
+  {
+    "returncode": -11,
+    "error": null,
+    "elapsed_seconds": 82.38085807487369,
+    "capture": "pytest default (no -s)",
+    "source": "9b7616c0ed9ebb42d3f8d346b22f592fa0f4b219",
+    "source_signature": "b6644e9ff6a3bbe1ecd911f8fdd3147a558aee3faf65941f919316899ceb67d5",
+    "parent_source_drift": [],
+    "call_passed": 19,
+    "call_failed": 0,
+    "last_events": [
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 11.611785154789686,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+        "phase": "teardown",
+        "outcome": "passed",
+        "duration": 0.00023194681853055954,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+        "phase": "start"
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+        "phase": "setup",
+        "outcome": "passed",
+        "duration": 0.0008029825985431671,
+        "failure": ""
+      }
+    ],
+    "label": "crash-original-full",
+    "invocation": {
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-input5-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-input5-export",
+        "-q",
+        "tests/test_plan_results_name.py",
+        "tests/test_plan_results_evidence.py",
+        "tests/test_plan_results_managed.py"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "PYTHONPATH": "/tmp/biomind-cli-deps",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "TMPDIR": "/tmp/biomind-runtime-audit-20260912/crash-original-full/scratch",
+        "BIOMIND_WIKI_ENABLED": "0",
+        "LOG_LEVEL": "CRITICAL",
+        "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-runtime-audit-20260912/crash-original-full/pytest-results.json",
+        "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-original-full",
+        "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-original-full",
+        "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-runtime-audit-20260912/crash-original-full/scratch/executor-logs"
+      }
+    }
+  },
+  {
+    "returncode": 0,
+    "error": null,
+    "elapsed_seconds": 94.84001663327217,
+    "capture": "pytest default (no -s)",
+    "source": "9b7616c0ed9ebb42d3f8d346b22f592fa0f4b219",
+    "source_signature": "b6644e9ff6a3bbe1ecd911f8fdd3147a558aee3faf65941f919316899ceb67d5",
+    "parent_source_drift": [],
+    "call_passed": 22,
+    "call_failed": 0,
+    "last_events": [
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "start"
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "setup",
+        "outcome": "passed",
+        "duration": 0.0007602660916745663,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 6.780942237004638,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "teardown",
+        "outcome": "passed",
+        "duration": 0.0003375299274921417,
+        "failure": ""
+      }
+    ],
+    "label": "crash-original-prefix",
+    "invocation": {
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-input5-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-input5-export",
+        "-q",
+        "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[accept_actual]",
+        "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[copy_to_exact]",
+        "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[old_attempt]",
+        "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_logical]",
+        "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[outside]",
+        "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[changed_content]",
+        "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[exact_accept]",
+        "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[target_conflict]",
+        "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[input_path]",
+        "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_format]",
+        "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[scientific_failure]",
+        "tests/test_plan_results_name.py::test_name_schema_is_typed_and_cannot_carry_code_or_route",
+        "tests/test_plan_results_name.py::test_new_reconciliation_never_guesses_unique_or_ambiguous_name",
+        "tests/test_plan_results_name.py::test_exact_name_with_bad_content_and_nonzero_exit_stays_failure",
+        "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-compact-True]",
+        "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-verbose-True]",
+        "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-True]",
+        "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-compact-True]",
+        "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+        "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+        "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-False]",
+        "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "PYTHONPATH": "/tmp/biomind-cli-deps",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "TMPDIR": "/tmp/biomind-runtime-audit-20260912/crash-original-prefix/scratch",
+        "BIOMIND_WIKI_ENABLED": "0",
+        "LOG_LEVEL": "CRITICAL",
+        "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-runtime-audit-20260912/crash-original-prefix/pytest-results.json",
+        "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-original-prefix",
+        "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-original-prefix",
+        "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-runtime-audit-20260912/crash-original-prefix/scratch/executor-logs"
+      }
+    }
+  },
+  {
+    "returncode": 0,
+    "error": null,
+    "elapsed_seconds": 96.43566974578425,
+    "capture": "pytest default (no -s)",
+    "source": "157ea34c8b45e7e5d3316caa12b6c83a3feb8a0d",
+    "source_signature": "21064e7f999c2d507fc22d44c13ba178a8f697659787c3158ed1b10ff040db3d",
+    "parent_source_drift": [],
+    "call_passed": 8,
+    "call_failed": 0,
+    "last_events": [
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "start"
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "setup",
+        "outcome": "passed",
+        "duration": 0.0007174061611294746,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 6.806609230581671,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+        "phase": "teardown",
+        "outcome": "passed",
+        "duration": 0.00024016201496124268,
+        "failure": ""
+      }
+    ],
+    "label": "crash-prepatch-family",
+    "invocation": {
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-runtime-audit-20260912/pre-patch/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-runtime-audit-20260912/pre-patch",
+        "-q",
+        "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "PYTHONPATH": "/tmp/biomind-cli-deps",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "TMPDIR": "/tmp/biomind-runtime-audit-20260912/crash-prepatch-family/scratch",
+        "BIOMIND_WIKI_ENABLED": "0",
+        "LOG_LEVEL": "CRITICAL",
+        "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-runtime-audit-20260912/crash-prepatch-family/pytest-results.json",
+        "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-prepatch-family",
+        "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/crash-prepatch-family",
+        "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-runtime-audit-20260912/crash-prepatch-family/scratch/executor-logs"
+      }
+    }
+  },
+  {
+    "returncode": 0,
+    "error": null,
+    "elapsed_seconds": 28.602951432112604,
+    "capture": "pytest default (no -s)",
+    "source": "57fd6885ee5ef5ab160a0a67921de2b8c69c910b",
+    "source_signature": "c2a40061e310c22d137dcf3caff8dcfb3d123a809020f3aff75a69439a6470c6",
+    "parent_source_drift": [],
+    "call_passed": 2,
+    "call_failed": 0,
+    "last_events": [
+      {
+        "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+        "phase": "start"
+      },
+      {
+        "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+        "phase": "setup",
+        "outcome": "passed",
+        "duration": 0.16404338087886572,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 1.3970440039411187,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_runtime_audit_probes.py::test_small_pending_command_and_timeout",
+        "phase": "teardown",
+        "outcome": "passed",
+        "duration": 0.00024333829060196877,
+        "failure": ""
+      }
+    ],
+    "label": "head-probes-result",
+    "invocation": {
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-runtime-audit-20260912/head-probes/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-runtime-audit-20260912/head-probes",
+        "-q",
+        "tests/test_runtime_audit_probes.py"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "PYTHONPATH": "/tmp/biomind-cli-deps",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "TMPDIR": "/tmp/biomind-runtime-audit-20260912/head-probes-result/scratch",
+        "BIOMIND_WIKI_ENABLED": "0",
+        "LOG_LEVEL": "CRITICAL",
+        "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-runtime-audit-20260912/head-probes-result/pytest-results.json",
+        "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/head-probes-result",
+        "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/head-probes-result",
+        "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-runtime-audit-20260912/head-probes-result/scratch/executor-logs"
+      }
+    }
+  },
+  {
+    "returncode": 0,
+    "error": null,
+    "elapsed_seconds": 51.92826332896948,
+    "capture": "pytest default (no -s)",
+    "source": "35781fdff9e974076390c4cc3f79c4ae7c8c97a4 + five authorized dirty files (not full worktree)",
+    "source_signature": "ce9a4e4aa8f58b6ca1573d735d9e1d6e130c624bf96b582e1f1daf1640eee1ea",
+    "parent_source_drift": [],
+    "call_passed": 7,
+    "call_failed": 0,
+    "last_events": [
+      {
+        "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+        "phase": "start"
+      },
+      {
+        "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+        "phase": "setup",
+        "outcome": "passed",
+        "duration": 0.00013900687918066978,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0.005193592049181461,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+        "phase": "teardown",
+        "outcome": "passed",
+        "duration": 0.00015175901353359222,
+        "failure": ""
+      }
+    ],
+    "label": "messages-dirty",
+    "invocation": {
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes",
+        "-q",
+        "tests/test_planner_boundary.py",
+        "tests/test_planner_lifecycle_boundary.py",
+        "tests/test_runtime_audit_probes.py::test_loaded_modules"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "PYTHONPATH": "/tmp/biomind-cli-deps",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "TMPDIR": "/tmp/biomind-runtime-audit-20260912/messages-dirty/scratch",
+        "BIOMIND_WIKI_ENABLED": "0",
+        "LOG_LEVEL": "CRITICAL",
+        "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-runtime-audit-20260912/messages-dirty/pytest-results.json",
+        "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/messages-dirty",
+        "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/messages-dirty",
+        "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-runtime-audit-20260912/messages-dirty/scratch/executor-logs"
+      }
+    }
+  },
+  {
+    "returncode": 0,
+    "error": null,
+    "elapsed_seconds": 51.480874641332775,
+    "capture": "pytest default (no -s)",
+    "source": "57fd6885ee5ef5ab160a0a67921de2b8c69c910b",
+    "source_signature": "7030b3f57d44c15a0bc630d32d0893ef37bbf51ff935a9e0c49688ff0622d3d2",
+    "parent_source_drift": [],
+    "call_passed": 6,
+    "call_failed": 0,
+    "last_events": [
+      {
+        "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+        "phase": "start"
+      },
+      {
+        "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+        "phase": "setup",
+        "outcome": "passed",
+        "duration": 0.00011729495599865913,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 3.5747048929333687,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+        "phase": "teardown",
+        "outcome": "passed",
+        "duration": 0.00016382429748773575,
+        "failure": ""
+      }
+    ],
+    "label": "messages-head",
+    "invocation": {
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-runtime-audit-20260912/head/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-runtime-audit-20260912/head",
+        "-q",
+        "tests/test_planner_boundary.py",
+        "tests/test_planner_lifecycle_boundary.py"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "PYTHONPATH": "/tmp/biomind-cli-deps",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "TMPDIR": "/tmp/biomind-runtime-audit-20260912/messages-head/scratch",
+        "BIOMIND_WIKI_ENABLED": "0",
+        "LOG_LEVEL": "CRITICAL",
+        "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-runtime-audit-20260912/messages-head/pytest-results.json",
+        "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/messages-head",
+        "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/messages-head",
+        "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-runtime-audit-20260912/messages-head/scratch/executor-logs"
+      }
+    }
+  }
+]

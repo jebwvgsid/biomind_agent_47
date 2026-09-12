@@ -1,0 +1,38 @@
+{
+  "returncode": 0,
+  "error": null,
+  "elapsed_seconds": 137.8516230857931,
+  "capture": "pytest default (no -s)",
+  "source": "57fd6885ee5ef5ab160a0a67921de2b8c69c910b",
+  "source_signature": "7030b3f57d44c15a0bc630d32d0893ef37bbf51ff935a9e0c49688ff0622d3d2",
+  "parent_source_drift": [],
+  "call_passed": 48,
+  "call_failed": 0,
+  "last_events": [
+    {
+      "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006797900423407555,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 2.934697085991502,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_plan_results_managed.py::test_only_current_committed_observations_can_be_delivered",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0003008609637618065,
+      "failure": ""
+    }
+  ]
+}

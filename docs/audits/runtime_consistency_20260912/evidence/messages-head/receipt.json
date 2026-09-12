@@ -1,0 +1,38 @@
+{
+  "returncode": 0,
+  "error": null,
+  "elapsed_seconds": 51.480874641332775,
+  "capture": "pytest default (no -s)",
+  "source": "57fd6885ee5ef5ab160a0a67921de2b8c69c910b",
+  "source_signature": "7030b3f57d44c15a0bc630d32d0893ef37bbf51ff935a9e0c49688ff0622d3d2",
+  "parent_source_drift": [],
+  "call_passed": 6,
+  "call_failed": 0,
+  "last_events": [
+    {
+      "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00011729495599865913,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 3.5747048929333687,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00016382429748773575,
+      "failure": ""
+    }
+  ]
+}

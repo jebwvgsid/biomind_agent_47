@@ -1,0 +1,154 @@
+{
+  "normal": {
+    "elapsed": 0.8687231349758804,
+    "result": [
+      "begin\nend\n",
+      "",
+      0
+    ],
+    "events": [
+      {
+        "at": 4114022.822187423,
+        "args": [
+          "RUNNING",
+          {
+            "pid": 5,
+            "pgid": 5,
+            "started_at": "2026-09-12T23:01:53+08:00",
+            "heartbeat_at": "2026-09-12T23:01:53+08:00"
+          }
+        ],
+        "kwargs": {}
+      },
+      {
+        "at": 4114023.022964609,
+        "args": [
+          "HEARTBEAT",
+          {
+            "pid": 5,
+            "pgid": 5,
+            "heartbeat_at": "2026-09-12T23:01:53+08:00"
+          }
+        ],
+        "kwargs": {}
+      },
+      {
+        "at": 4114023.223832978,
+        "args": [
+          "HEARTBEAT",
+          {
+            "pid": 5,
+            "pgid": 5,
+            "heartbeat_at": "2026-09-12T23:01:53+08:00"
+          }
+        ],
+        "kwargs": {}
+      },
+      {
+        "at": 4114023.425496066,
+        "args": [
+          "HEARTBEAT",
+          {
+            "pid": 5,
+            "pgid": 5,
+            "heartbeat_at": "2026-09-12T23:01:53+08:00"
+          }
+        ],
+        "kwargs": {}
+      },
+      {
+        "at": 4114023.625969901,
+        "args": [
+          "PROCESS_EXITED",
+          {
+            "pid": 5,
+            "pgid": 5,
+            "returncode": 0,
+            "finished_at": "2026-09-12T23:01:54+08:00",
+            "heartbeat_at": "2026-09-12T23:01:54+08:00",
+            "stdout_path": "",
+            "stderr_path": ""
+          }
+        ],
+        "kwargs": {}
+      }
+    ],
+    "metadata": {
+      "command": "bash /tmp/biomind-runtime-audit-20260912/head-probes-result/scratch/pytest-of-liusiqi/pytest-0/test_small_pending_command_and0/finite.sh",
+      "argv": [
+        "bash",
+        "/tmp/biomind-runtime-audit-20260912/head-probes-result/scratch/pytest-of-liusiqi/pytest-0/test_small_pending_command_and0/finite.sh"
+      ],
+      "log_observation_errors": [],
+      "effective_timeouts": {
+        "wall_seconds": 3.0,
+        "wall_source": "argument",
+        "stall_seconds": 600.0,
+        "stall_source": "BIOMIND_EXEC_STALL_TIMEOUT_SECONDS"
+      },
+      "pid": 5,
+      "returncode": 0,
+      "process_returncode": 0,
+      "observed_signal": null,
+      "termination_reason": "",
+      "process_reaped": true,
+      "elapsed_seconds": 0.853451119735837,
+      "started_at": "2026-09-12T23:01:53+08:00",
+      "finished_at": "2026-09-12T23:01:54+08:00",
+      "stdout_bytes": 10,
+      "stderr_bytes": 0,
+      "stdout_projected_bytes": 10,
+      "stderr_projected_bytes": 0,
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "stdout_log": "",
+      "stderr_log": "",
+      "stream_output_limit_bytes": 67108864
+    },
+    "pending_at_0_3s": true
+  },
+  "deadline": {
+    "elapsed": 0.45163511019200087,
+    "result": [
+      "",
+      "TIMEOUT after 0.4 seconds",
+      124
+    ],
+    "metadata": {
+      "command": "bash /tmp/biomind-runtime-audit-20260912/head-probes-result/scratch/pytest-of-liusiqi/pytest-0/test_small_pending_command_and0/deadline.sh",
+      "argv": [
+        "bash",
+        "/tmp/biomind-runtime-audit-20260912/head-probes-result/scratch/pytest-of-liusiqi/pytest-0/test_small_pending_command_and0/deadline.sh"
+      ],
+      "log_observation_errors": [],
+      "effective_timeouts": {
+        "wall_seconds": 0.4,
+        "wall_source": "argument",
+        "stall_seconds": 600.0,
+        "stall_source": "BIOMIND_EXEC_STALL_TIMEOUT_SECONDS"
+      },
+      "pid": 8,
+      "returncode": 124,
+      "process_returncode": -15,
+      "observed_signal": 15,
+      "termination_reason": "TIMEOUT after 0.4 seconds",
+      "process_reaped": true,
+      "elapsed_seconds": 0.45149011304602027,
+      "started_at": "2026-09-12T23:01:54+08:00",
+      "finished_at": "2026-09-12T23:01:54+08:00",
+      "stdout_bytes": 0,
+      "stderr_bytes": 0,
+      "stdout_projected_bytes": 0,
+      "stderr_projected_bytes": 25,
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "stdout_log": "",
+      "stderr_log": "",
+      "stream_output_limit_bytes": 67108864
+    }
+  },
+  "model_calls": 0,
+  "command_invocations": 2,
+  "cpu_metrics": "guard denies /proc; UNKNOWN",
+  "not_a_long_scientific_run": true
+}

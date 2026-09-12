@@ -1,0 +1,38 @@
+{
+  "returncode": 0,
+  "error": null,
+  "elapsed_seconds": 51.92826332896948,
+  "capture": "pytest default (no -s)",
+  "source": "35781fdff9e974076390c4cc3f79c4ae7c8c97a4 + five authorized dirty files (not full worktree)",
+  "source_signature": "ce9a4e4aa8f58b6ca1573d735d9e1d6e130c624bf96b582e1f1daf1640eee1ea",
+  "parent_source_drift": [],
+  "call_passed": 7,
+  "call_failed": 0,
+  "last_events": [
+    {
+      "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00013900687918066978,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.005193592049181461,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_runtime_audit_probes.py::test_loaded_modules",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00015175901353359222,
+      "failure": ""
+    }
+  ]
+}

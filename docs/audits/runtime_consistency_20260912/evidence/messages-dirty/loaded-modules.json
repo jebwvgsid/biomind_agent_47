@@ -1,0 +1,56 @@
+{
+  "executable": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "modules": [
+    {
+      "module": "bio_agents",
+      "file": "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/bio_agents.py",
+      "sha256": "930351ad7f0cc8c95f4c18db3eda17c22d9600a99571c796c1e18d9de80afe03"
+    },
+    {
+      "module": "prompts.manager",
+      "file": "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/prompts/manager.py",
+      "sha256": "1b0bed78adc750d0dfb7ff0e39040bf395b963541f610c2cae25cecfe5c475a2"
+    },
+    {
+      "module": "agent_core.plan_contract",
+      "file": "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/agent_core/plan_contract.py",
+      "sha256": "dd8dbe19645486f391a61266ede4e8d8bf3964b1926bb918a7e8df139fd2d0e1"
+    },
+    {
+      "module": "agent_core.planner_loop",
+      "file": "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/agent_core/planner_loop.py",
+      "sha256": "75f5a5b4dc282d663d03a80836aedb926285b12f48017298c599177c209d8649"
+    },
+    {
+      "module": "agent_core.planner_context",
+      "file": "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/agent_core/planner_context.py",
+      "sha256": "febb7b3a772b6532f0a0bffb83d6fde1fc67ff831ea7e4b3d05633690a40fa46"
+    },
+    {
+      "module": "agent_core.node_context",
+      "file": "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/agent_core/node_context.py",
+      "sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2"
+    },
+    {
+      "module": "agent_core.provider_message_safety",
+      "file": "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/agent_core/provider_message_safety.py",
+      "sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38"
+    },
+    {
+      "module": "agent_core.human_io",
+      "file": "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/agent_core/human_io.py",
+      "sha256": "54ebb9f1fd67daa01175d1201a0a5acf9fbe55e73976f79ddb3aeb5a8ecebdd2"
+    },
+    {
+      "module": "agent_core.cli_terminal",
+      "file": "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/agent_core/cli_terminal.py",
+      "sha256": "cdcc2185e22f0b88906383b3256f078d239f1b668f4655390693dcb57581ded2"
+    },
+    {
+      "module": "agent_core.cli_plain",
+      "file": "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/agent_core/cli_plain.py",
+      "sha256": "798b83d83fc775d0811c8335c9a7a2f614a4f08c8427940f5bf40742848afbc6"
+    }
+  ],
+  "fresh_process": true
+}

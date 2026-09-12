@@ -1,0 +1,110 @@
+[
+  {
+    "label": "auto-pty",
+    "returncode": 0,
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "-I",
+      "-S",
+      "/public/home/liusiqi/03.毕设/Biomind_v1/docs/audits/runtime_consistency_20260912/probe_cli_environment.py",
+      "--child",
+      "/tmp/biomind-runtime-audit-20260912/head"
+    ],
+    "environment": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "TERM": "xterm-256color",
+      "BIOMIND_UI": "",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "receipt": {
+      "executable": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "python": "3.12.12",
+      "owner": "PlainTerminal",
+      "stdin_tty": true,
+      "stdout_tty": true,
+      "synthetic_mode": "",
+      "synthetic_term": "xterm-256color",
+      "prompt_toolkit_spec": "None",
+      "module": "/tmp/biomind-runtime-audit-20260912/head/agent_core/cli_display.py",
+      "module_sha256": "b97c1fc5fc34b0be058db84f20b0170aafcbd95dae22ea888014aa238a81f52d",
+      "cache_on_path": false,
+      "runtime_calls": 1,
+      "model_calls": 0,
+      "commands": 0
+    },
+    "missing_notice": true
+  },
+  {
+    "label": "forced-plain-pty",
+    "returncode": 0,
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "-I",
+      "-S",
+      "/public/home/liusiqi/03.毕设/Biomind_v1/docs/audits/runtime_consistency_20260912/probe_cli_environment.py",
+      "--child",
+      "/tmp/biomind-runtime-audit-20260912/head"
+    ],
+    "environment": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "TERM": "xterm-256color",
+      "BIOMIND_UI": "plain",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "receipt": {
+      "executable": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "python": "3.12.12",
+      "owner": "PlainTerminal",
+      "stdin_tty": true,
+      "stdout_tty": true,
+      "synthetic_mode": "plain",
+      "synthetic_term": "xterm-256color",
+      "prompt_toolkit_spec": "None",
+      "module": "/tmp/biomind-runtime-audit-20260912/head/agent_core/cli_display.py",
+      "module_sha256": "b97c1fc5fc34b0be058db84f20b0170aafcbd95dae22ea888014aa238a81f52d",
+      "cache_on_path": false,
+      "runtime_calls": 1,
+      "model_calls": 0,
+      "commands": 0
+    },
+    "missing_notice": false
+  },
+  {
+    "label": "auto-pipe",
+    "returncode": 0,
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "-I",
+      "-S",
+      "/public/home/liusiqi/03.毕设/Biomind_v1/docs/audits/runtime_consistency_20260912/probe_cli_environment.py",
+      "--child",
+      "/tmp/biomind-runtime-audit-20260912/head"
+    ],
+    "environment": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "TERM": "xterm-256color",
+      "BIOMIND_UI": "",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "receipt": {
+      "executable": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "python": "3.12.12",
+      "owner": "PlainTerminal",
+      "stdin_tty": false,
+      "stdout_tty": false,
+      "synthetic_mode": "",
+      "synthetic_term": "xterm-256color",
+      "prompt_toolkit_spec": "None",
+      "module": "/tmp/biomind-runtime-audit-20260912/head/agent_core/cli_display.py",
+      "module_sha256": "b97c1fc5fc34b0be058db84f20b0170aafcbd95dae22ea888014aa238a81f52d",
+      "cache_on_path": false,
+      "runtime_calls": 1,
+      "model_calls": 0,
+      "commands": 0
+    },
+    "missing_notice": false
+  }
+]

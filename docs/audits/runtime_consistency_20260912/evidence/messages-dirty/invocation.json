@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-runtime-audit-20260912/scoped-dirty-probes",
+    "-q",
+    "tests/test_planner_boundary.py",
+    "tests/test_planner_lifecycle_boundary.py",
+    "tests/test_runtime_audit_probes.py::test_loaded_modules"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "/tmp/biomind-cli-deps",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-runtime-audit-20260912/messages-dirty/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-runtime-audit-20260912/messages-dirty/pytest-results.json",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/messages-dirty",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-runtime-audit-20260912/messages-dirty",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-runtime-audit-20260912/messages-dirty/scratch/executor-logs"
+  }
+}
