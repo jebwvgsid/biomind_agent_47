@@ -1,0 +1,4065 @@
+{
+  "completed_at": "2026-09-13T15:04:39.477614+00:00",
+  "baseline_head": "6cd529f5a6e91f2a87bd4ac77ec321cad19445ee",
+  "code_head": "c010126c0d8f8ae4d1858aa33b5fd29d27b71759",
+  "commits": [
+    {
+      "slice": "REC-DISPLAY",
+      "hash": "968246a013c287112757fe4b268ab9db88af4e3c",
+      "parent": "6cd529f5a6e91f2a87bd4ac77ec321cad19445ee",
+      "tree": "1bc23c4469247966ae114cdccbe5da38c1416344",
+      "files": [
+        "agent_core/workflow/recovery_agent.py",
+        "bio_agents.py",
+        "tests/export_preflight_implementation.py",
+        "tests/test_recovery_public_rejection.py"
+      ]
+    },
+    {
+      "slice": "PF-TYPE/RESULT",
+      "hash": "82742907ff4eb160b69d7c16435a506322be337e",
+      "parent": "968246a013c287112757fe4b268ab9db88af4e3c",
+      "tree": "6edfdb19ed4ded68238fa030981d387ffc50d78a",
+      "files": [
+        "agent_core/inspection_readers.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py",
+        "tests/test_preflight_types.py"
+      ]
+    },
+    {
+      "slice": "PF-DIR",
+      "hash": "c010126c0d8f8ae4d1858aa33b5fd29d27b71759",
+      "parent": "82742907ff4eb160b69d7c16435a506322be337e",
+      "tree": "c4aa3a55296bc915b5c9d312d54b693218979ce5",
+      "files": [
+        "agent_core/action_runtime.py",
+        "agent_core/recovery.py",
+        "bio_agents.py",
+        "execution/preflight.py",
+        "tests/offline_managed_bootstrap.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_preflight_mapping_commit.py"
+      ]
+    }
+  ],
+  "push": false,
+  "original_status_count": 437,
+  "original_status_sha256": "27d1e4fe9727fa401eb805465d9ef713f0718e86c4a54fa97c783eaa7780c069",
+  "original_status_preserved": true,
+  "protected_five_sha256": {
+    "prompts/manager.py": "1b0bed78adc750d0dfb7ff0e39040bf395b963541f610c2cae25cecfe5c475a2",
+    "agent_core/node_context.py": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+    "agent_core/planner_context.py": "febb7b3a772b6532f0a0bffb83d6fde1fc67ff831ea7e4b3d05633690a40fa46",
+    "agent_core/provider_message_safety.py": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38",
+    "agent_core/workflow/managed_stop.py": "efc58228de12539182acd348923955fb89c514e74ca0b5b749ff184af92d8414"
+  },
+  "final_source": {
+    "tree": "c4aa3a55296bc915b5c9d312d54b693218979ce5",
+    "signature": "e8a176d3ab6c80468c2e95ae54cc44e696bb01cbdbb8cea967d8aadbbf799eaf",
+    "overlay": [
+      "prompts/manager.py",
+      "agent_core/node_context.py",
+      "agent_core/planner_context.py",
+      "agent_core/provider_message_safety.py",
+      "agent_core/workflow/managed_stop.py"
+    ],
+    "owned_file_sha256": {
+      "agent_core/action_runtime.py": "ca17f31c6f119405606932bfa9d26777240d53cb8d31fa4844d1ae2df08c2110",
+      "agent_core/inspection_readers.py": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d",
+      "agent_core/recovery.py": "d201a16a2503f8663a451dc863b3d889dd80feb21c04d44939daa535e1b2e933",
+      "agent_core/workflow/recovery_agent.py": "5c772d76f50e4df81af60c7c01389eb2abfe67167db249ea1e4767cc21cfdaf1",
+      "bio_agents.py": "ee7336aa6493990f1fabc2e1b784089ef617c99b1c2f08f7bac37b80cee8fe6f",
+      "execution/preflight.py": "78ee0aa4b319a6d223c1214e0f13c0bee1eea0b4df3634efcde8ed5e9d83741e",
+      "skills/genomics/wgs-short-read-mapping/SKILL.md": "5ecbf99e5574bb4021537a3b20f12bf1eed0c5ed672ef96b4f7ab4bcf45a09ca",
+      "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py": "1cbfb2a45bf0dcd3d06784fade31d7822bf3d374a81c80545493e168bbc1eced",
+      "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py": "a3fb0858570e7dbd925c008b747581c9b6393091c9ac2f52d099e84cc5e442ec",
+      "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py": "171bc36e21edcf073c47f8c0a96faaa9fe6723e01a73aaf0b5578463de16a02a",
+      "tests/export_preflight_implementation.py": "82031fb489f8c72fc0c1e013d18a5a278a622cb391a747bb725775dce49a9a47",
+      "tests/offline_managed_bootstrap.py": "3b36f35c75601166c4e350b4bedcc60989a746c409d72bf7b37c3e2a182150f5",
+      "tests/test_preflight_directory.py": "d6a616f7c39259e361facd8c1ae42ed843e66c400ea8253d529abdfb3992c92a",
+      "tests/test_preflight_mapping_commit.py": "7dce14c3a2518865e21f002cf9369cac0b5712726f2d722099513f2d7b3e2cd8",
+      "tests/test_preflight_types.py": "ca931c42c3e5496de826c4430c999ce917847f5c164aeb8d8c7d00520ebad957",
+      "tests/test_recovery_public_rejection.py": "aba090340a78148adc24c28f6586d08152cff37282537650c939540b66b7407a"
+    }
+  },
+  "final_result": {
+    "returncode": 0,
+    "passed": 14,
+    "capture": "fd",
+    "fatal_outlet": [
+      {
+        "phase": "sessionstart_after_configure",
+        "pid": 223,
+        "fd": 4,
+        "enabled": true,
+        "mode": "0600",
+        "capture": "fd",
+        "pytest_faulthandler_plugin": true,
+        "watchdog": "original bootstrap 70s; separate pre-existing destination",
+        "core_limit": [
+          0,
+          0
+        ]
+      },
+      {
+        "phase": "after_unconfigure",
+        "pid": 223,
+        "fd": 4,
+        "enabled": true,
+        "mode": "0600",
+        "capture": "fd",
+        "pytest_faulthandler_plugin": true,
+        "watchdog": "original bootstrap 70s; separate pre-existing destination",
+        "core_limit": [
+          0,
+          0
+        ]
+      }
+    ],
+    "fatal_file_classification": "FATAL_OUTLET lifecycle metadata only; no fatal traceback"
+  },
+  "final_suite_counts": {
+    "real_BioMind_API": 0,
+    "real_models": 0,
+    "BWA_GATK": 0,
+    "added_narrator": 0,
+    "fake_graph_consultant": 4,
+    "fake_graph_planner": 4,
+    "fake_graph_generate": 6,
+    "fake_graph_recovery": 2,
+    "fake_component_recovery": 9,
+    "component_readonly_tool_stubs": 4,
+    "graph_script_approvals": 5,
+    "graph_plan_approvals": 4,
+    "graph_attempts": 5,
+    "graph_commits": 3,
+    "graph_recovery_format_corrections": 1,
+    "graph_generate_format_corrections": 1,
+    "batch_wrapper_processes": 14,
+    "nested_reader_processes": 40,
+    "standalone_reader_processes": 5,
+    "duplicate_Execute_deliveries": 4,
+    "duplicate_extra_approvals": 0,
+    "duplicate_extra_processes": 0,
+    "duplicate_extra_execution_records": 0
+  },
+  "mapping_scenarios": {
+    "compact": {
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "recovery_calls": 0,
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "execute",
+        "supervisor",
+        "commit_step"
+      ],
+      "script_approvals": 1,
+      "plan_approvals": 1,
+      "formal_commit_count": 1,
+      "formal_commits": {
+        "commit-step-3bc4503a1c3a6b3ebdb3af2a": {
+          "schema_version": 1,
+          "request_fingerprint": "3bc4503a1c3a6b3ebdb3af2a3a48d0f6f91ebd4ad35f379959e31f4800b53314",
+          "outcome_type": "plan_complete",
+          "scope": {
+            "task_id": "new-mapping-preflight-compact"
+          },
+          "full_receipt_sha256": "b7ede9db9f582d727f3c1170c796b0da3f9feb73578415731178b147d33db406"
+        }
+      },
+      "executions": [
+        {
+          "returncode": 0,
+          "approved_sha256": "7b4e7c5654aabfd3d92cc1d34f9c9935ec704edf2fe6e999669ecf8e4edbd99d",
+          "wrapper_sha256": "e505fdf8be077189968e647b985739ad3c01c7aacc13be0c4cebf767c2da3a02",
+          "binding": {
+            "action_id": "action_894bf651e013f4e2",
+            "approved_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts",
+            "attempt_id": "attempt_4d84a6653f7f930db986",
+            "canonical_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts/attempt_4d84a6653f7f930db986/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:7267ae424c6d32596eb0446ee31a8912fb44980c763a6c37c9749ec52d245c34",
+            "purpose": "internal_execution_evidence"
+          },
+          "stdout_sha256": "896bae75a0902a405e7a93785ee5bd59654111031657a715a61822b38ac326a3",
+          "stderr_sha256": "b250f4e5aad4154d1747e3a9c4ed72fd40f8b937eb5e0b1252f5ff3873797e3f",
+          "observation": [
+            {
+              "schema_version": 1,
+              "produces_observations": [
+                {
+                  "identity": "validation_observation",
+                  "value": {
+                    "status": "returned",
+                    "total": 5,
+                    "returned": 5,
+                    "passed": 5,
+                    "unstarted": 0,
+                    "scope": "fastq_prefix_and_fasta_header",
+                    "full_file_validated": false,
+                    "checks": [
+                      {
+                        "label": "S0",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts/attempt_4d84a6653f7f930db986/preflight/item-001.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts/attempt_4d84a6653f7f930db986/preflight/item-001.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S1",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts/attempt_4d84a6653f7f930db986/preflight/item-002.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts/attempt_4d84a6653f7f930db986/preflight/item-002.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S2",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts/attempt_4d84a6653f7f930db986/preflight/item-003.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts/attempt_4d84a6653f7f930db986/preflight/item-003.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S3",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts/attempt_4d84a6653f7f930db986/preflight/item-004.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts/attempt_4d84a6653f7f930db986/preflight/item-004.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "reference",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fasta_header_and_first_sequence_byte",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fasta_header",
+                            "representation": "plain",
+                            "status": "observed",
+                            "error": null,
+                            "scope": "fasta_header_and_first_sequence_byte",
+                            "prefix_valid": true,
+                            "full_file_validated": false,
+                            "checked_headers": 1,
+                            "header_bytes": 4,
+                            "sequence_bytes": 1,
+                            "scanned_input_bytes": 6,
+                            "stop_reason": "header_and_first_sequence_byte",
+                            "limits": {
+                              "input_bytes": 8192,
+                              "header_bytes": 4096,
+                              "decoded_bytes": 65536,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fasta_header_and_first_sequence_byte"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts/attempt_4d84a6653f7f930db986/preflight/item-005.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-vkviivc4/task_outputs/new-mapping-preflight-compact/attempts/attempt_4d84a6653f7f930db986/preflight/item-005.stderr.log"
+                        },
+                        "returncode": 0
+                      }
+                    ],
+                    "unstarted_checks": [],
+                    "all_checks_passed": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "duplicate_deliveries": [
+        {
+          "ordinal": 1,
+          "new_processes": 0,
+          "new_approvals": 0,
+          "outcome_type": "execution_succeeded"
+        },
+        {
+          "ordinal": 2,
+          "new_processes": 0,
+          "new_approvals": 0,
+          "outcome_type": "execution_succeeded"
+        }
+      ],
+      "raw_synthetic_receipt_sha256": "3d40de29a3e4a74a8074868207f5a553eb7f70f0638ea6736311c1355261f4dd"
+    },
+    "off": {
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "recovery_calls": 0,
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "execute",
+        "supervisor",
+        "commit_step"
+      ],
+      "script_approvals": 1,
+      "plan_approvals": 1,
+      "formal_commit_count": 1,
+      "formal_commits": {
+        "commit-step-c2c7b9fafeebc9424bd98f06": {
+          "schema_version": 1,
+          "request_fingerprint": "c2c7b9fafeebc9424bd98f06dacd168e68832ddee615a17cdb5d841b923f9cac",
+          "outcome_type": "plan_complete",
+          "scope": {
+            "task_id": "new-mapping-preflight-off"
+          },
+          "full_receipt_sha256": "6740e04b2d3c6a013a291060541ca99c0345a6b7b5a967e970afe8f406b7f931"
+        }
+      },
+      "executions": [
+        {
+          "returncode": 0,
+          "approved_sha256": "35ccd7269be00b277580d4adeb35dd5e1331b4a6cdcee6a7087de44daf3576da",
+          "wrapper_sha256": "4325b480015b44e3807405c9103b8c4554074bce01c4b32b101e266b6387d75b",
+          "binding": {
+            "action_id": "action_24c500d10ad63901",
+            "approved_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts",
+            "attempt_id": "attempt_2108db7ddb6ad59cd95d",
+            "canonical_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts/attempt_2108db7ddb6ad59cd95d/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:6c645dfacea0a4b4562b0d2b5443cf9ff45d82b6f84f8bcdb075dfcab7e27490",
+            "purpose": "internal_execution_evidence"
+          },
+          "stdout_sha256": "c6ad5cf3c37370b737d6bb868e1d9b4debffa1d11a8815745ffcefe55d97214c",
+          "stderr_sha256": "b5fc781940c747bae316ce0bcd9c3b040d8caa2bb16381c3e5d493414e3c9e92",
+          "observation": [
+            {
+              "schema_version": 1,
+              "produces_observations": [
+                {
+                  "identity": "validation_observation",
+                  "value": {
+                    "status": "returned",
+                    "total": 5,
+                    "returned": 5,
+                    "passed": 5,
+                    "unstarted": 0,
+                    "scope": "fastq_prefix_and_fasta_header",
+                    "full_file_validated": false,
+                    "checks": [
+                      {
+                        "label": "S0",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts/attempt_2108db7ddb6ad59cd95d/preflight/item-001.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts/attempt_2108db7ddb6ad59cd95d/preflight/item-001.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S1",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts/attempt_2108db7ddb6ad59cd95d/preflight/item-002.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts/attempt_2108db7ddb6ad59cd95d/preflight/item-002.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S2",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts/attempt_2108db7ddb6ad59cd95d/preflight/item-003.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts/attempt_2108db7ddb6ad59cd95d/preflight/item-003.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S3",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts/attempt_2108db7ddb6ad59cd95d/preflight/item-004.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts/attempt_2108db7ddb6ad59cd95d/preflight/item-004.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "reference",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fasta_header_and_first_sequence_byte",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fasta_header",
+                            "representation": "plain",
+                            "status": "observed",
+                            "error": null,
+                            "scope": "fasta_header_and_first_sequence_byte",
+                            "prefix_valid": true,
+                            "full_file_validated": false,
+                            "checked_headers": 1,
+                            "header_bytes": 4,
+                            "sequence_bytes": 1,
+                            "scanned_input_bytes": 6,
+                            "stop_reason": "header_and_first_sequence_byte",
+                            "limits": {
+                              "input_bytes": 8192,
+                              "header_bytes": 4096,
+                              "decoded_bytes": 65536,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fasta_header_and_first_sequence_byte"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts/attempt_2108db7ddb6ad59cd95d/preflight/item-005.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-tx5g3clk/task_outputs/new-mapping-preflight-off/attempts/attempt_2108db7ddb6ad59cd95d/preflight/item-005.stderr.log"
+                        },
+                        "returncode": 0
+                      }
+                    ],
+                    "unstarted_checks": [],
+                    "all_checks_passed": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "duplicate_deliveries": [
+        {
+          "ordinal": 1,
+          "new_processes": 0,
+          "new_approvals": 0,
+          "outcome_type": "execution_succeeded"
+        },
+        {
+          "ordinal": 2,
+          "new_processes": 0,
+          "new_approvals": 0,
+          "outcome_type": "execution_succeeded"
+        }
+      ],
+      "raw_synthetic_receipt_sha256": "2dc2ef2e679e3da5cdfd0be002a715f41db632ad88c8b6faa55b27eebe8323e6"
+    },
+    "compact-retry": {
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 3
+      },
+      "recovery_calls": 2,
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "execute",
+        "recovery",
+        "generate",
+        "generate",
+        "execute",
+        "supervisor",
+        "commit_step"
+      ],
+      "script_approvals": 2,
+      "plan_approvals": 1,
+      "formal_commit_count": 1,
+      "formal_commits": {
+        "commit-step-aee19954636468919741b88f": {
+          "schema_version": 1,
+          "request_fingerprint": "aee19954636468919741b88f7d20a7e6bb227e8f1fb6ecd9d3ffc592fcbd2ffa",
+          "outcome_type": "plan_complete",
+          "scope": {
+            "task_id": "new-mapping-preflight-compact-retry"
+          },
+          "full_receipt_sha256": "e454cb81db93402781aff165a4c41310f4c779f62a8cb975db00b2d74b8422d2"
+        }
+      },
+      "executions": [
+        {
+          "returncode": 2,
+          "approved_sha256": "0f4a511dc209b30e4aae61a29fe3ef98c9cab1fa4ba244b9e3fbfc13f4ed01b6",
+          "wrapper_sha256": "1d988bbe5ee73e6233ec9beeacbb142705aa8cac10b85366ee5c1a24f1b98897",
+          "binding": {
+            "action_id": "action_37b8510ced1b71e6",
+            "approved_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts",
+            "attempt_id": "attempt_fd8d06dd9155b31153ca",
+            "canonical_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_fd8d06dd9155b31153ca/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:ac74141ee699777c0f49b5feadf72f61dbb8cc2ba3c1055ff4a8ebb38c977449",
+            "purpose": "internal_execution_evidence"
+          },
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "aee50796c40d485a81eb93d1f84f0c77ffae4084a035904522eb8fd7773a5629",
+          "observation": []
+        },
+        {
+          "returncode": 0,
+          "approved_sha256": "949b1e983babe52bb8005d00bbe3b774b2da50e7c60ed7ee5dba8d492a52e485",
+          "wrapper_sha256": "cef5be689f83ce21f9b75d7ce2b405409c27e18e88a35197634a2ec5166f81bb",
+          "binding": {
+            "action_id": "recovery_action_e03b59f3984aa9d6",
+            "approved_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts",
+            "attempt_id": "attempt_6d19b59bb6f671b826d3",
+            "canonical_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_6d19b59bb6f671b826d3/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:c80231dbd26d3e1b365450e1c873cc0bda54db3c88cb193312a81d9966591d0f",
+            "purpose": "internal_execution_evidence"
+          },
+          "stdout_sha256": "a7806e8606b61c22d142207aab78545a6ab2e31f6b9a9a5086d9101e474b7cf5",
+          "stderr_sha256": "16cb17b68bcb11d0ced869c393650b2d415c9c130a40750fe4545899078269e8",
+          "observation": [
+            {
+              "schema_version": 1,
+              "produces_observations": [
+                {
+                  "identity": "validation_observation",
+                  "value": {
+                    "status": "returned",
+                    "total": 5,
+                    "returned": 5,
+                    "passed": 5,
+                    "unstarted": 0,
+                    "scope": "fastq_prefix_and_fasta_header",
+                    "full_file_validated": false,
+                    "checks": [
+                      {
+                        "label": "S0",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_6d19b59bb6f671b826d3/preflight/item-001.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_6d19b59bb6f671b826d3/preflight/item-001.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S1",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_6d19b59bb6f671b826d3/preflight/item-002.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_6d19b59bb6f671b826d3/preflight/item-002.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S2",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_6d19b59bb6f671b826d3/preflight/item-003.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_6d19b59bb6f671b826d3/preflight/item-003.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S3",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_6d19b59bb6f671b826d3/preflight/item-004.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_6d19b59bb6f671b826d3/preflight/item-004.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "reference",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fasta_header_and_first_sequence_byte",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fasta_header",
+                            "representation": "plain",
+                            "status": "observed",
+                            "error": null,
+                            "scope": "fasta_header_and_first_sequence_byte",
+                            "prefix_valid": true,
+                            "full_file_validated": false,
+                            "checked_headers": 1,
+                            "header_bytes": 4,
+                            "sequence_bytes": 1,
+                            "scanned_input_bytes": 6,
+                            "stop_reason": "header_and_first_sequence_byte",
+                            "limits": {
+                              "input_bytes": 8192,
+                              "header_bytes": 4096,
+                              "decoded_bytes": 65536,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fasta_header_and_first_sequence_byte"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_6d19b59bb6f671b826d3/preflight/item-005.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-x90r5638/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_6d19b59bb6f671b826d3/preflight/item-005.stderr.log"
+                        },
+                        "returncode": 0
+                      }
+                    ],
+                    "unstarted_checks": [],
+                    "all_checks_passed": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "duplicate_deliveries": [],
+      "raw_synthetic_receipt_sha256": "442a3593e43cf107a47abc5ea754f73aebec63d552b86fb9cbb0eeb672d86367"
+    },
+    "compact-adverse": {
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "recovery_calls": 0,
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "execute"
+      ],
+      "script_approvals": 1,
+      "plan_approvals": 1,
+      "formal_commit_count": 0,
+      "formal_commits": {},
+      "executions": [
+        {
+          "returncode": 2,
+          "approved_sha256": "74f34bac0857bf2535a54967787b67563b1189c44634535f80873112b8f14a1d",
+          "wrapper_sha256": "29a3ac5707a519457d04ec7779c430272f22f62819d4f3fed7fbd4d7590694ba",
+          "binding": {
+            "action_id": "action_a069fa1424d3c44f",
+            "approved_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts",
+            "attempt_id": "attempt_5133df0259050736c59e",
+            "canonical_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_5133df0259050736c59e/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:9e49f07e586263d81e3a0ecaa6d633765a190dbf1b51320a7afefa7f7b5aad8b",
+            "purpose": "internal_execution_evidence"
+          },
+          "stdout_sha256": "79e54b90beae0a26d3d971916d2188c8a4278a768b8242d75b00c5901cf39bcd",
+          "stderr_sha256": "8bab595f4fa1e81c29b5e0ed4e923240fe174ac91a3abc7e9bc2b6c9a7ce860f",
+          "observation": [
+            {
+              "schema_version": 1,
+              "produces_observations": [
+                {
+                  "identity": "validation_observation",
+                  "value": {
+                    "status": "returned",
+                    "total": 5,
+                    "returned": 5,
+                    "passed": 4,
+                    "unstarted": 0,
+                    "scope": "fastq_prefix_and_fasta_header",
+                    "full_file_validated": false,
+                    "checks": [
+                      {
+                        "label": "S0",
+                        "status": "returned",
+                        "passed": false,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": false,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "plain",
+                            "content_sha256": "92dd81a84fc7f3733ce4912c26c6a58325b098b4b7ff5d34a4211e174cdc828e",
+                            "checked_records": 0,
+                            "returned_lines": 2,
+                            "scanned_input_bytes": 16,
+                            "decoded_bytes": 16,
+                            "stop_reason": "incomplete_fastq_record",
+                            "eof": true,
+                            "full_compression_verified": false,
+                            "full_scientific_validation": false,
+                            "prefix_valid": false,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_5133df0259050736c59e/preflight/item-001.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_5133df0259050736c59e/preflight/item-001.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S1",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_5133df0259050736c59e/preflight/item-002.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_5133df0259050736c59e/preflight/item-002.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S2",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_5133df0259050736c59e/preflight/item-003.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_5133df0259050736c59e/preflight/item-003.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "S3",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fastq_prefix_only",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fastq_prefix",
+                            "status": "observed",
+                            "error": null,
+                            "representation": "gzip",
+                            "content_sha256": "68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5",
+                            "checked_records": 1,
+                            "returned_lines": 4,
+                            "scanned_input_bytes": 35,
+                            "decoded_bytes": 17,
+                            "stop_reason": "eof",
+                            "eof": true,
+                            "full_compression_verified": true,
+                            "full_scientific_validation": false,
+                            "prefix_valid": true,
+                            "limits": {
+                              "input_bytes": 1048576,
+                              "decoded_bytes": 65536,
+                              "line_bytes": 16384,
+                              "records": 32,
+                              "lines": 120,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fastq_prefix_only"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_5133df0259050736c59e/preflight/item-004.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_5133df0259050736c59e/preflight/item-004.stderr.log"
+                        },
+                        "returncode": 0
+                      },
+                      {
+                        "label": "reference",
+                        "status": "returned",
+                        "passed": true,
+                        "scope": "fasta_header_and_first_sequence_byte",
+                        "finding": {
+                          "passed": true,
+                          "value": {
+                            "schema_version": 1,
+                            "operation": "fasta_header",
+                            "representation": "plain",
+                            "status": "observed",
+                            "error": null,
+                            "scope": "fasta_header_and_first_sequence_byte",
+                            "prefix_valid": true,
+                            "full_file_validated": false,
+                            "checked_headers": 1,
+                            "header_bytes": 4,
+                            "sequence_bytes": 1,
+                            "scanned_input_bytes": 6,
+                            "stop_reason": "header_and_first_sequence_byte",
+                            "limits": {
+                              "input_bytes": 8192,
+                              "header_bytes": 4096,
+                              "decoded_bytes": 65536,
+                              "seconds": 2.0
+                            }
+                          },
+                          "scope": "fasta_header_and_first_sequence_byte"
+                        },
+                        "raw": {
+                          "stdout": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_5133df0259050736c59e/preflight/item-005.stdout.log",
+                          "stderr": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/biomind-plan-local-graph-7eppif_v/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_5133df0259050736c59e/preflight/item-005.stderr.log"
+                        },
+                        "returncode": 0
+                      }
+                    ],
+                    "unstarted_checks": [],
+                    "all_checks_passed": false
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "duplicate_deliveries": [],
+      "raw_synthetic_receipt_sha256": "db69c424ae9f48deebc1ae49f42f4e60cd1f5b5068aa6af048cb2f5473065d4c"
+    }
+  },
+  "typed_process_cases": [
+    {
+      "case": "good",
+      "entrypoint": "inspect_wgs_inputs.py",
+      "returncode": 0,
+      "observation_count": 1,
+      "scope": "fastq_prefix_and_fasta_header",
+      "status": "returned",
+      "total": 5,
+      "returned": 5,
+      "passed": 5,
+      "unstarted": 0,
+      "all_checks_passed": true,
+      "stderr_sha256": "7c5c6e0cb9a2d730e596f91b47afe378a60e9c39ebe21d8c22ce2f9b85c367a7"
+    },
+    {
+      "case": "short",
+      "entrypoint": "inspect_fasta_header.py",
+      "returncode": 0,
+      "observation_count": 1,
+      "scope": "fasta_header_and_first_sequence_byte",
+      "status": "observed",
+      "total": null,
+      "returned": null,
+      "passed": null,
+      "unstarted": null,
+      "all_checks_passed": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "case": "long",
+      "entrypoint": "inspect_fasta_header.py",
+      "returncode": 0,
+      "observation_count": 1,
+      "scope": "fasta_header_and_first_sequence_byte",
+      "status": "observed",
+      "total": null,
+      "returned": null,
+      "passed": null,
+      "unstarted": null,
+      "all_checks_passed": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "case": "over_header",
+      "entrypoint": "inspect_fasta_header.py",
+      "returncode": 2,
+      "observation_count": 0,
+      "scope": null,
+      "status": null,
+      "total": null,
+      "returned": null,
+      "passed": null,
+      "unstarted": null,
+      "all_checks_passed": null,
+      "stderr_sha256": "f776d42aafb9541b3904e0b58a0c5d0dbf142de1d14fe7a9dd0382aaf48d0d76"
+    },
+    {
+      "case": "missing",
+      "entrypoint": "inspect_fasta_header.py",
+      "returncode": 2,
+      "observation_count": 0,
+      "scope": null,
+      "status": null,
+      "total": null,
+      "returned": null,
+      "passed": null,
+      "unstarted": null,
+      "all_checks_passed": null,
+      "stderr_sha256": "4065831f93de7090ebdb9cc677368a4a6a9ea78d25a6d44eddfb8a07393e7420"
+    },
+    {
+      "case": "unreadable",
+      "entrypoint": "inspect_fasta_header.py",
+      "returncode": 2,
+      "observation_count": 0,
+      "scope": null,
+      "status": null,
+      "total": null,
+      "returned": null,
+      "passed": null,
+      "unstarted": null,
+      "all_checks_passed": null,
+      "stderr_sha256": "6f4a8bb594d5ffa7b7df899b0089278c471d60e03cbf76a80311901930abba60"
+    },
+    {
+      "case": "wrong_short",
+      "entrypoint": "inspect_wgs_inputs.py",
+      "returncode": 2,
+      "observation_count": 1,
+      "scope": "fastq_prefix_and_fasta_header",
+      "status": "returned",
+      "total": 6,
+      "returned": 6,
+      "passed": 5,
+      "unstarted": 0,
+      "all_checks_passed": false,
+      "stderr_sha256": "3445555ccc563261d419450c72965e530e60bbb31d9f321b9a8eb8b0465e0771"
+    },
+    {
+      "case": "wrong_long",
+      "entrypoint": "inspect_wgs_inputs.py",
+      "returncode": 2,
+      "observation_count": 1,
+      "scope": "fastq_prefix_and_fasta_header",
+      "status": "incomplete",
+      "total": 6,
+      "returned": 5,
+      "passed": 4,
+      "unstarted": 1,
+      "all_checks_passed": false,
+      "stderr_sha256": "24db57e0f3d548bdad734ae5a9007d65559775c4345f2bea7d5ec25efa9c93bd"
+    },
+    {
+      "case": "technical_failure",
+      "entrypoint": "inspect_wgs_inputs.py",
+      "returncode": 2,
+      "observation_count": 1,
+      "scope": "fastq_prefix_and_fasta_header",
+      "status": "incomplete",
+      "total": 5,
+      "returned": 3,
+      "passed": 2,
+      "unstarted": 2,
+      "all_checks_passed": false,
+      "stderr_sha256": "13a11abc4f01006daf254abaa92945c5cca69d38108d1f509dba8b5bd5296c67"
+    },
+    {
+      "case": "two_args",
+      "entrypoint": "inspect_fastq_batch.py",
+      "returncode": 0,
+      "observation_count": 1,
+      "scope": "fastq_prefix_only",
+      "status": "returned",
+      "total": 1,
+      "returned": 1,
+      "passed": 1,
+      "unstarted": 0,
+      "all_checks_passed": null,
+      "stderr_sha256": "634d20ae7bdca28a9bea6fed9e4561070d85b62ed03aae268758920f2ffe61fe"
+    },
+    {
+      "case": "joined",
+      "entrypoint": "inspect_fastq_batch.py",
+      "returncode": 2,
+      "observation_count": 0,
+      "scope": null,
+      "status": null,
+      "total": null,
+      "returned": null,
+      "passed": null,
+      "unstarted": null,
+      "all_checks_passed": null,
+      "stderr_sha256": "42256722ab7a077ef78d0b06415b4d4b16f47791ee4c92483d8fe693cc10e403"
+    }
+  ],
+  "display_equivalence": {
+    "mapping_counts_routes_and_observations_equal_after_explicit_fixture_root_and_bound_attempt_leaf_relocation": true,
+    "mapping_approved_body_equal_after_only_fixture_root_relocation": true,
+    "recovery_actual_provider_message_lists_equal": true,
+    "recovery_directive_equal": true,
+    "recovery_budget_counters_equal": true,
+    "raw_native_content_in_main_or_details": false,
+    "original_raw_assistant_in_next_request": true,
+    "Generate_unverified_recovery_explanations_preserved": true
+  },
+  "directory_policy": {
+    "first": {
+      "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+      "approved_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/attempts",
+      "leaf_rule": "current_attempt/preflight",
+      "creator": "helper",
+      "purpose": "internal_execution_evidence",
+      "attempt_id": "attempt_1",
+      "canonical_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/attempts/attempt_1/preflight",
+      "action_id": "a",
+      "policy_manifest_hash": "sha256:cc1947c27879937763b63d92e5f56e5408b00a4d9af8b8f2e4267954310e4831"
+    },
+    "second": {
+      "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+      "approved_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/attempts",
+      "leaf_rule": "current_attempt/preflight",
+      "creator": "helper",
+      "purpose": "internal_execution_evidence",
+      "attempt_id": "attempt_2",
+      "canonical_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/attempts/attempt_2/preflight",
+      "action_id": "a",
+      "policy_manifest_hash": "sha256:cc1947c27879937763b63d92e5f56e5408b00a4d9af8b8f2e4267954310e4831"
+    },
+    "policy": {
+      "schema_version": 1,
+      "action_id": "a",
+      "plan_id": "p",
+      "step_id": "preflight",
+      "working_directory": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0",
+      "skill_resources": [
+        {
+          "schema_version": 1,
+          "source": "selected_skill_registry",
+          "handle": "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py",
+          "skill_id": "genomics/wgs-short-read-mapping",
+          "snapshot_id": "skill-snapshot-4cf08762e7cb44e811bd",
+          "skill_content_hash": "5ecbf99e5574bb4021537a3b20f12bf1eed0c5ed672ef96b4f7ab4bcf45a09ca",
+          "relative_path": "scripts/inspect_wgs_inputs.py",
+          "registered_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/registry/genomics/wgs-short-read-mapping",
+          "canonical_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/registry/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py",
+          "content_hash": "171bc36e21edcf073c47f8c0a96faaa9fe6723e01a73aaf0b5578463de16a02a",
+          "resource_snapshot_id": "skill-resource-171bc36e21edcf07",
+          "environment_variable": "BIOMIND_SKILL_A363F1D9157F7CFC",
+          "cwd": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0",
+          "namespace": "local",
+          "step_id": "preflight",
+          "readable": true,
+          "executable_bit_required": false,
+          "binding_digest": "7e13a7bd986cd458563899c92f6209aeab2c178a0f857df9d2d04be26a329556"
+        },
+        {
+          "schema_version": 1,
+          "source": "selected_skill_registry",
+          "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py",
+          "skill_id": "genomics/wgs-short-read-mapping",
+          "snapshot_id": "skill-snapshot-4cf08762e7cb44e811bd",
+          "skill_content_hash": "5ecbf99e5574bb4021537a3b20f12bf1eed0c5ed672ef96b4f7ab4bcf45a09ca",
+          "relative_path": "scripts/inspect_fastq.py",
+          "registered_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/registry/genomics/wgs-short-read-mapping",
+          "canonical_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/registry/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+          "content_hash": "6c74374f6daad34daa911c45f9fadd8e763603939f88d9993f9748a3d53c1dc6",
+          "resource_snapshot_id": "skill-resource-6c74374f6daad34d",
+          "environment_variable": "BIOMIND_SKILL_65E610938C636F7D",
+          "cwd": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0",
+          "namespace": "local",
+          "step_id": "preflight",
+          "readable": true,
+          "executable_bit_required": false,
+          "binding_digest": "dcbc70c36a04f695a3b60186e9ef57c702c55de371d2086c6fe4d006caf1aba8"
+        },
+        {
+          "schema_version": 1,
+          "source": "selected_skill_registry",
+          "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fasta_header.py",
+          "skill_id": "genomics/wgs-short-read-mapping",
+          "snapshot_id": "skill-snapshot-4cf08762e7cb44e811bd",
+          "skill_content_hash": "5ecbf99e5574bb4021537a3b20f12bf1eed0c5ed672ef96b4f7ab4bcf45a09ca",
+          "relative_path": "scripts/inspect_fasta_header.py",
+          "registered_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/registry/genomics/wgs-short-read-mapping",
+          "canonical_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/registry/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+          "content_hash": "1cbfb2a45bf0dcd3d06784fade31d7822bf3d374a81c80545493e168bbc1eced",
+          "resource_snapshot_id": "skill-resource-1cbfb2a45bf0dcd3",
+          "environment_variable": "BIOMIND_SKILL_4BBEBEE4916B4D2D",
+          "cwd": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0",
+          "namespace": "local",
+          "step_id": "preflight",
+          "readable": true,
+          "executable_bit_required": false,
+          "binding_digest": "7003232a89234eebaeb9509497e547abcd8263f5e7d8f48e40f1de3c1d8cb1ac"
+        },
+        {
+          "schema_version": 1,
+          "source": "selected_skill_registry",
+          "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
+          "skill_id": "genomics/wgs-short-read-mapping",
+          "snapshot_id": "skill-snapshot-4cf08762e7cb44e811bd",
+          "skill_content_hash": "5ecbf99e5574bb4021537a3b20f12bf1eed0c5ed672ef96b4f7ab4bcf45a09ca",
+          "relative_path": "scripts/inspect_fastq_batch.py",
+          "registered_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/registry/genomics/wgs-short-read-mapping",
+          "canonical_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/registry/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+          "content_hash": "a3fb0858570e7dbd925c008b747581c9b6393091c9ac2f52d099e84cc5e442ec",
+          "resource_snapshot_id": "skill-resource-a3fb0858570e7dbd",
+          "environment_variable": "BIOMIND_SKILL_ECD588FCA5ADDFE0",
+          "cwd": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0",
+          "namespace": "local",
+          "step_id": "preflight",
+          "readable": true,
+          "executable_bit_required": false,
+          "binding_digest": "9876336af7fac94d8489417f487656c382a0e6d28d83731000bcbfc10df607e4"
+        }
+      ],
+      "language": "Bash",
+      "scope": "current_action",
+      "policy": {
+        "stdin": "devnull",
+        "process_group": "isolated",
+        "shell_errexit": false,
+        "shell_pipefail": true
+      },
+      "evidence_binding": {
+        "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+        "approved_root": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2/scratch/pytest-of-liusiqi/pytest-0/test_attempt_paths_and_policy_0/attempts",
+        "leaf_rule": "current_attempt/preflight",
+        "creator": "helper",
+        "purpose": "internal_execution_evidence"
+      },
+      "manifest_hash": "sha256:cc1947c27879937763b63d92e5f56e5408b00a4d9af8b8f2e4267954310e4831"
+    },
+    "old_evidence_unchanged": true,
+    "model_attempt_ids": 0
+  },
+  "test_ledger": [
+    {
+      "run": "types-1",
+      "returncode": 0,
+      "note": "Two typed reader cases passed.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/export-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/export-1",
+        "-q",
+        "tests/test_preflight_types.py"
+      ],
+      "source_tree": "994d557d89b007e634393fd20e29d20985f4ecba",
+      "source_signature": "08f8879a9eb0f5375cdc8abceefb974ba49e0a81e92904b6db1a04f549089df9",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/inspection_readers.py",
+        "agent_core/action_runtime.py",
+        "agent_core/workflow/recovery_agent.py",
+        "execution/preflight.py",
+        "bio_agents.py",
+        "tests/offline_managed_bootstrap.py",
+        "tests/export_preflight_implementation.py",
+        "tests/test_preflight_types.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+      ],
+      "manifest_sha256": "be95ddc74c0e31bdfc2708a302139830d7519e3dc38e52836989f22c6f72f631",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/types-1",
+      "phases": [
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00016656238585710526
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.002552279271185398
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0001251688227057457
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.08465335331857204
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.155343641526997
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00018242280930280685
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1137,
+          "sha256": "0247358d92b9f6503ab24fb0fa16ddd326667afb94f13a97c72d5a6b05fbe185"
+        },
+        "stdout.txt": {
+          "bytes": 6735,
+          "sha256": "63f9581f292135df6befe1d0cd83c9d6c87d1d4b65c92242b976cac5d0522048"
+        },
+        "pytest-results.json": {
+          "bytes": 1423,
+          "sha256": "cc7eb3a816f375f29b2651f4325d0df218c225bb22b6e689bc9c3a5f48d7192e"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "beb28bede7c2869ad766a508de53abe929355efbfabebdec401d41a5a5ea4eea"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "22eb416e8e5b413af49bb464a018862a1bf510a28f73120119186e5b8943db30"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "mapping-1",
+      "returncode": 1,
+      "note": "New fake Plan missing validation_checklist/metadata; no Generate or execution.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/export-2/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/export-2",
+        "-q",
+        "-x",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "source_tree": "994d557d89b007e634393fd20e29d20985f4ecba",
+      "source_signature": "dfed489b119b43cef35b0c53de7d8df55fda8dda93e44548e6ab86361cb603b3",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/inspection_readers.py",
+        "agent_core/action_runtime.py",
+        "agent_core/workflow/recovery_agent.py",
+        "execution/preflight.py",
+        "bio_agents.py",
+        "tests/offline_managed_bootstrap.py",
+        "tests/export_preflight_implementation.py",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_mapping_commit.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+      ],
+      "manifest_sha256": "0c35a35112afd91397086d454e33401461ffd16b662ef5aee1892588660ce0cc",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/mapping-1",
+      "phases": [
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0002825697883963585
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 42.93988809734583,
+          "failure_sha256": "a3a739cfe94edd4b5c973e7ed62dc20c072aa540a6f87bdfc3396fc2ba6ce392"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00040929950773715973
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1168,
+          "sha256": "dbe34354dfee93a69e70b4a6876874ed670e758a4a44717fe069963cbba7d71c"
+        },
+        "stdout.txt": {
+          "bytes": 30918,
+          "sha256": "bcdc8206ba0a502f9c80092d643dc5d1e9ea01cb5a8b3ab3754ab9e860213463"
+        },
+        "pytest-results.json": {
+          "bytes": 10607,
+          "sha256": "4502b4ef689a0f562d69d08d7f76de6cfd1ff02a88c8b98f8ee0d0d53243040e"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "76d0e3356e034ac804eb64c9a9c13e4caff86acdea69c4098bd8313ea40499f5"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "33c0852eff8ccc57da36450111dae04dc8fc413d4fb6456e98460571b4fb51c9"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "target-2",
+      "returncode": 1,
+      "note": "Raw assistant content preserved; test mistakenly compared the existing stripped explanation to unstripped fixture.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/export-3/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/export-3",
+        "-q",
+        "-x",
+        "tests/test_recovery_public_rejection.py",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "source_tree": "994d557d89b007e634393fd20e29d20985f4ecba",
+      "source_signature": "2413155356e0674c2fdb33770541de70e47c868b492873c43e18993c5ec7dc8e",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/inspection_readers.py",
+        "agent_core/action_runtime.py",
+        "agent_core/workflow/recovery_agent.py",
+        "execution/preflight.py",
+        "bio_agents.py",
+        "tests/offline_managed_bootstrap.py",
+        "tests/export_preflight_implementation.py",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_mapping_commit.py",
+        "tests/test_recovery_public_rejection.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+      ],
+      "manifest_sha256": "7e15713991c54f95ed0daaf7cc26eccfb3efeff6fe6f0e54276e8e8c8359b064",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/target-2",
+      "phases": [
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.02543764654546976
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 3.5751014202833176,
+          "failure_sha256": "559a7d85b44da2521ae7fde33ff7926fd91693263c3893ed3ca776049d2f185a"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0003181109204888344
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1209,
+          "sha256": "3e23bf7a3bd6ca6e2bb53ec384bcee5678156b47ed3cc3f0f7a5d5d0a91b4b91"
+        },
+        "stdout.txt": {
+          "bytes": 28480,
+          "sha256": "2b50bf269d968f1504da294f7826a370dab28337301578d4665c1f366313240d"
+        },
+        "pytest-results.json": {
+          "bytes": 8631,
+          "sha256": "b36de454e184b4885b73c08370e11b8902abdd07affef44d32384827266c59b4"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "8274f68bd21c8a727148dfa547d2517d607c84464404208dc61181196524f939"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "6a4b45fed401731fd2f015da6612d7c2b8cefdf6a2a7c76e0aa08a67ae963e6a"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "mapping-2",
+      "returncode": 1,
+      "note": "New fake Plan missing batch_id/workflow_stage_ids; no execution.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/export-4/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/export-4",
+        "-q",
+        "-x",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "source_tree": "994d557d89b007e634393fd20e29d20985f4ecba",
+      "source_signature": "754fee6a84fbf9c3984eae99f4a99543a527dd198a33902bc2308fd9cf03d00e",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/inspection_readers.py",
+        "agent_core/action_runtime.py",
+        "agent_core/workflow/recovery_agent.py",
+        "execution/preflight.py",
+        "bio_agents.py",
+        "tests/offline_managed_bootstrap.py",
+        "tests/export_preflight_implementation.py",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_mapping_commit.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_recovery_public_rejection.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+      ],
+      "manifest_sha256": "81c20be45734dc1f6afc7a3db39b5147a94fbef0130f4d16847ae9ea0d9b53a1",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/mapping-2",
+      "phases": [
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0002782391384243965
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 6.02285523340106,
+          "failure_sha256": "4695e031c73dfd94f4b6291c57366e3f38e0d813c32346317f15850ded3bef7e"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00039781443774700165
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1168,
+          "sha256": "5b426564179840819a8ef174df0b0347ea436bec8cd77b2d52915b03c1a0a3d6"
+        },
+        "stdout.txt": {
+          "bytes": 31160,
+          "sha256": "5e1e0b7b3a9afaa1b0fbf740038d4ba849b4a2ab8e216d95df2e247407c47360"
+        },
+        "pytest-results.json": {
+          "bytes": 10908,
+          "sha256": "cb95929af7575bf79597acc2867445a9a495df225cecba61f447dda6c7f503fa"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "76d0e3356e034ac804eb64c9a9c13e4caff86acdea69c4098bd8313ea40499f5"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "33c0852eff8ccc57da36450111dae04dc8fc413d4fb6456e98460571b4fb51c9"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "target-3",
+      "returncode": 1,
+      "note": "Status and summary shared an item ID, suppressing the summary; fixed production sink. Fake Plan used internal input IDs instead of public handles.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/export-5/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/export-5",
+        "-q",
+        "tests/test_recovery_public_rejection.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "source_tree": "994d557d89b007e634393fd20e29d20985f4ecba",
+      "source_signature": "de3813d7a67a11c36d8df75627e72be18a50ac49c5ac8e9f3c985f0e3a8d6d62",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/inspection_readers.py",
+        "agent_core/action_runtime.py",
+        "agent_core/workflow/recovery_agent.py",
+        "execution/preflight.py",
+        "bio_agents.py",
+        "tests/offline_managed_bootstrap.py",
+        "tests/export_preflight_implementation.py",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_mapping_commit.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_recovery_public_rejection.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+      ],
+      "manifest_sha256": "b182c68f9dd64e11411a68a3d3648978bd49e86490120cadee381d567fe488d1",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/target-3",
+      "phases": [
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.027563861571252346
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 3.9277422688901424,
+          "failure_sha256": "982655b227ddbf800022b45ea7eb2269eec53378bbafe5d4d669b086fdbcc55c"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00035791750997304916
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0007695797830820084
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.10408651921898127
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00018136296421289444
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005477983504533768
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.04159465804696083
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00014655757695436478
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.000583314336836338
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.09364372212439775
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0001531960442662239
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0006083333864808083
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.09300440922379494
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00015410687774419785
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005576787516474724
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.07415683101862669
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00015199929475784302
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0004895366728305817
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 1.6936722816899419
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00021991413086652756
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00029029324650764465
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 1.0587860560044646,
+          "failure_sha256": "4f4eb3b19e18147d3e2a195cbde3cae796c1e0caccc6e0d1137339c1259bce64"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.000244874507188797
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0002947309985756874
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 1.0278094056993723,
+          "failure_sha256": "1270628ed43f913cef8b2b54c0e19338234982c2294a50c0d94e9eb8e36d7775"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00025603175163269043
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1240,
+          "sha256": "61985fa73b689d6de1091076f4aee0f880df0379fd2db2566c6df74a27db4a32"
+        },
+        "stdout.txt": {
+          "bytes": 52080,
+          "sha256": "82358941d10c5fd2f22383c5a965f6bfd218c2e88451367c09bfdc9579e624d5"
+        },
+        "pytest-results.json": {
+          "bytes": 37747,
+          "sha256": "12083db4bd5ef790a67ab4bfc4e8dae0b34a5503922912995cc3df027ee2f79d"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "76d0e3356e034ac804eb64c9a9c13e4caff86acdea69c4098bd8313ea40499f5"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "33c0852eff8ccc57da36450111dae04dc8fc413d4fb6456e98460571b4fb51c9"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "target-4",
+      "returncode": 1,
+      "note": "Recovery display cases passed; original subprocess guard denied precise bound environment on shell branch; explicit per-script environment grant added.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/export-6/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/export-6",
+        "-q",
+        "-x",
+        "tests/test_recovery_public_rejection.py",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "source_tree": "994d557d89b007e634393fd20e29d20985f4ecba",
+      "source_signature": "8976024a0787609c540ae00893e916448bcd884a1ae82b77aa8ec01e47e989fb",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/inspection_readers.py",
+        "agent_core/action_runtime.py",
+        "agent_core/workflow/recovery_agent.py",
+        "execution/preflight.py",
+        "bio_agents.py",
+        "tests/offline_managed_bootstrap.py",
+        "tests/export_preflight_implementation.py",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_mapping_commit.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_recovery_public_rejection.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+      ],
+      "manifest_sha256": "0ef36fbc826c563b41f48f1e71f855ea65080da765db5a840f2e5f36349e93b4",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/target-4",
+      "phases": [
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.002717692404985428
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 3.8888313192874193
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00035001058131456375
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0007249852642416954
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.10682770237326622
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00018774345517158508
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00024694763123989105
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 4.320506035350263,
+          "failure_sha256": "35fbdff6abc6f6f03e43986fb6960eb36a8499fdd0ca42339b805784a04d0ce7"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00022719521075487137
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1209,
+          "sha256": "3bd9676d93434684c773856b8c0ed9a27e769a1ea0db22b8ffb1dd883d44f228"
+        },
+        "stdout.txt": {
+          "bytes": 31859,
+          "sha256": "f39c6a8d1be7dee161eeae96748a7d86865ac6206769c117fc6fdfcaff68f620"
+        },
+        "pytest-results.json": {
+          "bytes": 12702,
+          "sha256": "6617f0bfe0bb714d0029c8ec1426b2b7bf06078770fc95151f66bb0cf5c4540f"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "76d0e3356e034ac804eb64c9a9c13e4caff86acdea69c4098bd8313ea40499f5"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "33c0852eff8ccc57da36450111dae04dc8fc413d4fb6456e98460571b4fb51c9"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "mapping-3",
+      "returncode": 1,
+      "note": "Two real mapping commits passed; retry fake expected different argparse wording than its new bad argv.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/export-7/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/export-7",
+        "-q",
+        "-x",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "source_tree": "994d557d89b007e634393fd20e29d20985f4ecba",
+      "source_signature": "d2d6e8609c54cfbe3badab48414d77fb77178780c17b7eded0a91306723c7f26",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/inspection_readers.py",
+        "agent_core/action_runtime.py",
+        "agent_core/workflow/recovery_agent.py",
+        "execution/preflight.py",
+        "bio_agents.py",
+        "tests/offline_managed_bootstrap.py",
+        "tests/export_preflight_implementation.py",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_mapping_commit.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_recovery_public_rejection.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+      ],
+      "manifest_sha256": "9c0df96b882acc93cabd63da92ac423588eec882decd1081500f27594d9185af",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/mapping-3",
+      "phases": [
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00028947368264198303
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 12.923404145985842
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0006496552377939224
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00030049122869968414
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.382743748836219
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00018129590898752213
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00011602044105529785
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 4.3037040065974,
+          "failure_sha256": "be28ce64c025d52ada22a115dfe740ec8bbed9733eb4a74f8595f90277439a4b"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00019755307585000992
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1168,
+          "sha256": "e9b6a7e254714e4824d08059cd437a8ef9d136b57e564ef8f4b77f3ad28dcf43"
+        },
+        "stdout.txt": {
+          "bytes": 34707,
+          "sha256": "e5265e94b5aa6d941091c9c20786c328a324fb47d032856d558e657a2e7819d0"
+        },
+        "pytest-results.json": {
+          "bytes": 16010,
+          "sha256": "d1e53431943ea597e0d456dcd1cf84c6fa986e846d88f281a26aee5f5e5ba6fb"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "76d0e3356e034ac804eb64c9a9c13e4caff86acdea69c4098bd8313ea40499f5"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "33c0852eff8ccc57da36450111dae04dc8fc413d4fb6456e98460571b4fb51c9"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "mapping-4",
+      "returncode": 1,
+      "note": "Duplicate delivery fixture incorrectly assumed global pending_action instead of the actual typed Generate checkpoint.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/export-8/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/export-8",
+        "-q",
+        "-x",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "source_tree": "994d557d89b007e634393fd20e29d20985f4ecba",
+      "source_signature": "9b388108f8272752884e213ef4ac33a511b645f9a3e80957915d8437ae913fb2",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/inspection_readers.py",
+        "agent_core/action_runtime.py",
+        "agent_core/workflow/recovery_agent.py",
+        "execution/preflight.py",
+        "bio_agents.py",
+        "tests/offline_managed_bootstrap.py",
+        "tests/export_preflight_implementation.py",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_mapping_commit.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_recovery_public_rejection.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+      ],
+      "manifest_sha256": "adec81b3d316f0902f1ea28990e33d739934b18e7a6464d563118e6a1939b071",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/mapping-4",
+      "phases": [
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00027699582278728485
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 19.45852225087583,
+          "failure_sha256": "bda3205fe62105eabf07d6a9d99d1b8ceca5b96cce7b51dd9ac28a47aea6c9eb"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00041262805461883545
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1168,
+          "sha256": "3aeb5f6bee912ad81e55cba13fa818a2ef29c2106c910440015e110f77bfe694"
+        },
+        "stdout.txt": {
+          "bytes": 35622,
+          "sha256": "a39f0fc23e92141582ed75b5a5546422d3f37b04ce143e252936218a094c1113"
+        },
+        "pytest-results.json": {
+          "bytes": 15217,
+          "sha256": "e8198caef2c9f94b30b1f831f592970d940aa2effcd0ce766745519ccaffce3a"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "76d0e3356e034ac804eb64c9a9c13e4caff86acdea69c4098bd8313ea40499f5"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "33c0852eff8ccc57da36450111dae04dc8fc413d4fb6456e98460571b4fb51c9"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "mapping-5",
+      "returncode": 0,
+      "note": "Real mapping positive compact/off, duplicate delivery and repair-to-commit passed.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/export-9/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/export-9",
+        "-q",
+        "-x",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "source_tree": "994d557d89b007e634393fd20e29d20985f4ecba",
+      "source_signature": "05d18281d0238d402b7498e95629e23ead24beb4a82a4c18af74b7f94f026f8f",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/inspection_readers.py",
+        "agent_core/action_runtime.py",
+        "agent_core/workflow/recovery_agent.py",
+        "execution/preflight.py",
+        "bio_agents.py",
+        "tests/offline_managed_bootstrap.py",
+        "tests/export_preflight_implementation.py",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_mapping_commit.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_recovery_public_rejection.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+      ],
+      "manifest_sha256": "d38b3e8d7729385c73ecb42d708c9ac7604eaea6ee8e2099db575f0cce189e8a",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/mapping-5",
+      "phases": [
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0002864738926291466
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 10.661746234633029
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0009600110352039337
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00035234447568655014
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 6.434393842704594
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00022076629102230072
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0001207226887345314
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 12.979171203449368
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00018117669969797134
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1168,
+          "sha256": "286ab822bbdf4173705d35ddd146ca84c24a6906e9b1ac969809c4ffc292fff1"
+        },
+        "stdout.txt": {
+          "bytes": 21030,
+          "sha256": "a2f37cb43c8435bf4f27ddadc9495512e4f9d45271e2338d1c5a18875676bb35"
+        },
+        "pytest-results.json": {
+          "bytes": 2424,
+          "sha256": "96affb60d43e720ebbeba0e4a1c1e9f650fd02b5c1e6dd38bcf449025ffe0de9"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "b5698361ea00e138c6ef52c5308805fb1029f55b2f6454d8fdf163269185f148"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "0691891a703b18f5b9b00a039614eae9b0dd260ec8f0bbafd5037bad57167b50"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "full-1",
+      "returncode": 0,
+      "note": "First full 14 target cases passed.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/export-10/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/export-10",
+        "-q",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_recovery_public_rejection.py",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "source_tree": "994d557d89b007e634393fd20e29d20985f4ecba",
+      "source_signature": "798c67682eca795925b7b642c58a92add143ebb7152d4457bbd049c136cb9180",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/inspection_readers.py",
+        "agent_core/action_runtime.py",
+        "agent_core/recovery.py",
+        "agent_core/workflow/recovery_agent.py",
+        "execution/preflight.py",
+        "bio_agents.py",
+        "tests/offline_managed_bootstrap.py",
+        "tests/export_preflight_implementation.py",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_mapping_commit.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_recovery_public_rejection.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+        "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+      ],
+      "manifest_sha256": "8a4157aa362ae679acd2c5fcd52c19065d4527a9fefa17757587468b784d108d",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/full-1",
+      "phases": [
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0001797722652554512
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0027672387659549713
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0001266971230506897
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.08803075179457664
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.209591958671808
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00018215645104646683
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0006035491824150085
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.04659505933523178
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00015218183398246765
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005860105156898499
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0944996327161789
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00016131531447172165
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0006545865908265114
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.11548253335058689
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0001523597165942192
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005932068452239037
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.07469950895756483
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0001447172835469246
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005153622478246689
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 1.0818279506638646
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00018035713583230972
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0006690863519906998
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.105088813230395
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00036235246807336807
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0007246248424053192
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.10437439475208521
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00018682889640331268
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005448656156659126
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.035693198442459106
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0001475876197218895
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00023344624787569046
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.762357173487544
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00020165182650089264
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0002861851826310158
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 5.221256015822291
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00022379867732524872
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00012754835188388824
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 15.933341930620372
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0001813247799873352
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00012682843953371048
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 6.982088819146156
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0002271672710776329
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1267,
+          "sha256": "91736fd1595ff823b3389d2691c6b82c6bdc113f2952126472fe67a3599f379a"
+        },
+        "stdout.txt": {
+          "bytes": 22052,
+          "sha256": "2ec9331e946fc65dc02aeb3613b1bc03f98bf8b033f9e77a217aa8b4bed44a3d"
+        },
+        "pytest-results.json": {
+          "bytes": 10939,
+          "sha256": "01163a485022751926c45063e1473e42367d06103fa3b25ba59bced8ed02ddec"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "76d0e3356e034ac804eb64c9a9c13e4caff86acdea69c4098bd8313ea40499f5"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "33c0852eff8ccc57da36450111dae04dc8fc413d4fb6456e98460571b4fb51c9"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "rec-tree-check",
+      "returncode": 0,
+      "note": "REC proposed tree: three new display cases plus existing four-mode tool/progress regression passed.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/rec-tree-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/rec-tree-export",
+        "-q",
+        "tests/test_recovery_public_rejection.py",
+        "tests/test_cli_model_progress_integration.py::test_cli1_actual_recovery_loop_plain_off_and_display_failure_are_business_identical"
+      ],
+      "source_tree": "1bc23c4469247966ae114cdccbe5da38c1416344",
+      "source_signature": "cfbb55007995978da32afc70e814c2f689a7386ac2c17888b7a4720673ff7943",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py"
+      ],
+      "manifest_sha256": "58a27142c408b21c9ed610e958e6d3da90668ab2ae963121d0e7b9abb99e5e79",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/rec-tree-check",
+      "phases": [
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.07994159776717424
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 6.322019329294562
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0004043523222208023
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0007929820567369461
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.1035645054653287
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00019435491412878036
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005611497908830643
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.03660900238901377
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00015211571007966995
+        },
+        {
+          "nodeid": "tests/test_cli_model_progress_integration.py::test_cli1_actual_recovery_loop_plain_off_and_display_failure_are_business_identical",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_cli_model_progress_integration.py::test_cli1_actual_recovery_loop_plain_off_and_display_failure_are_business_identical",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005058683454990387
+        },
+        {
+          "nodeid": "tests/test_cli_model_progress_integration.py::test_cli1_actual_recovery_loop_plain_off_and_display_failure_are_business_identical",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.44514638278633356
+        },
+        {
+          "nodeid": "tests/test_cli_model_progress_integration.py::test_cli1_actual_recovery_loop_plain_off_and_display_failure_are_business_identical",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0002258969470858574
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1340,
+          "sha256": "c70506261689bc88eeb77b618cc1485ab56ed762c10d9f32b80c2e8a39f30398"
+        },
+        "stdout.txt": {
+          "bytes": 21304,
+          "sha256": "ef6d2f25c4dee3ec682254877440b67858ee47726064ae82c677059e743a87d8"
+        },
+        "pytest-results.json": {
+          "bytes": 3359,
+          "sha256": "d18b14b190bda79a224b667c7fb6444ed498c7c4e8b5401ddc74d82e8e559ce4"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "3277ef5b531e1aeb16d9f92d1738334816a7dee0cfb87f08b723b0bf6897c262"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "2766a7ac2934295af3debc15be8723a6a8ed51f70df128c8064751492745de7c"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "type-tree-check",
+      "returncode": 0,
+      "note": "TYPE proposed tree: two new cases plus unchanged real-batch audit witness passed.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/type-tree-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/type-tree-export",
+        "-q",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_recovery_audit.py::test_real_batch_parameter_directory_and_fasta_counterexamples"
+      ],
+      "source_tree": "6edfdb19ed4ded68238fa030981d387ffc50d78a",
+      "source_signature": "97d6b0b679d296907a83e6ee5d81c0c59a3d9899236d4e809a12890cf247ece8",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py"
+      ],
+      "manifest_sha256": "3f63694d2deda18a777ab9c77b631a13eb91554226ca0c0d807e09a77b1ec824",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/type-tree-check",
+      "phases": [
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0001564444974064827
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.002747439779341221
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00012809224426746368
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.002488519065082073
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.5676138158887625
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00016069132834672928
+        },
+        {
+          "nodeid": "tests/test_preflight_recovery_audit.py::test_real_batch_parameter_directory_and_fasta_counterexamples",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_recovery_audit.py::test_real_batch_parameter_directory_and_fasta_counterexamples",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005542514845728874
+        },
+        {
+          "nodeid": "tests/test_preflight_recovery_audit.py::test_real_batch_parameter_directory_and_fasta_counterexamples",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.2077464666217566
+        },
+        {
+          "nodeid": "tests/test_preflight_recovery_audit.py::test_real_batch_parameter_directory_and_fasta_counterexamples",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00016950629651546478
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1310,
+          "sha256": "574eb981aef74a141caa4ed60c064c7e2e8b29a7b6c9df4bbbf45cde9a97d2d4"
+        },
+        "stdout.txt": {
+          "bytes": 7082,
+          "sha256": "733c69a0aa778dd6b345f4b754c4f971d4d166d6e61480ea7cc798a522c4b6ad"
+        },
+        "pytest-results.json": {
+          "bytes": 2270,
+          "sha256": "e877f280d22fef360b88e04dc06f3c69b430f259e12a373d46d28e088e094fdd"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "f4c6cd136cd23945e0dc13bb32e00b4698734dd2eb8b03c01a03cfa87d622517"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "2e374514a532fc7248080f4e57188972dae9bd9893f5cf88836730650073a443"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "dir-tree-check",
+      "returncode": 1,
+      "note": "11 passed; 3 positive graph cases reached CommitStep but the newly added test expected done instead of the existing validation-purpose passed; adverse passed.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/dir-tree-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/dir-tree-export",
+        "-q",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_recovery_public_rejection.py",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "source_tree": "469c278da52a83b4331bd7f808081182d8f54117",
+      "source_signature": "66e9f046449db5e6dc42d5e6a05553bff0c5ef426d7ef7aca901cc16017c425b",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py"
+      ],
+      "manifest_sha256": "b7497abc93e957f31f63eb527cf26e0d230a48f09d358244cad7f6da6703e198",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check",
+      "phases": [
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00015833135694265366
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0027348818257451057
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00012295041233301163
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.03798346221446991
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.268251482397318
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00019742082804441452
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0006394693627953529
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.06733507104218006
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00013875216245651245
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005886098369956017
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.09566876199096441
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00014215055853128433
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0006146235391497612
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.09586836863309145
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00014205090701580048
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.000599701888859272
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.07639043219387531
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00014052074402570724
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0004896549507975578
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 1.1172546483576298
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00020429491996765137
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0007099062204360962
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 10.593088171444833
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0003706216812133789
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0007610488682985306
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.10565641149878502
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00020554661750793457
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005924208089709282
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.03650809731334448
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0001572147011756897
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0002500740811228752
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 5.0400862311944366,
+          "failure_sha256": "2b09dc6cb0c355b5bb15db3fbaf60fc01876354ac39465f39b95a57c89883e78"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0002252468839287758
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00029858946800231934
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 4.687245761975646,
+          "failure_sha256": "7c549de44ea27471b568a28e4fa4ae0992f22f0bf188537789a41df45752232a"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0002137245610356331
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00013812072575092316
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "call",
+          "outcome": "failed",
+          "duration": 13.026193564757705,
+          "failure_sha256": "0bb45793c381e74673a254f892e10b5f631d4ceae1f74e3c514f3317158650e1"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00020874571055173874
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00014952849596738815
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.37871048040688
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0002132495865225792
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1327,
+          "sha256": "90c56946270284653498dd572d137e3bd5fb74b94a95679ff0d5ccac36e27c2f"
+        },
+        "stdout.txt": {
+          "bytes": 76012,
+          "sha256": "07fb1889591c845a5cf2cfa1ca2c5de6d28767188ed38e2e6ca9af0e083a74a6"
+        },
+        "pytest-results.json": {
+          "bytes": 64198,
+          "sha256": "bdfd7974b6686dcc1f3c05d24d6f003ef05860d8f09e7cb4a704e2bf6d39278c"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "218ea84e9782422eb5f159812c93f3d4f5491c9fddcba29681169e0174357375"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "f63fe33ec892a67e0ddfd7813c0f6ca952fe607868fc38224db859412491b887"
+        }
+      },
+      "native_fatal_marker_observed": false
+    },
+    {
+      "run": "dir-tree-check-2",
+      "returncode": 0,
+      "note": "Final proposed tree: all 14 cases passed with exact validation-purpose passed status and formal commit receipt.",
+      "actual_child_command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-preflight-implementation-20260913/dir-tree-export-2/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-preflight-implementation-20260913/dir-tree-export-2",
+        "-q",
+        "tests/test_preflight_types.py",
+        "tests/test_preflight_directory.py",
+        "tests/test_recovery_public_rejection.py",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "source_tree": "c4aa3a55296bc915b5c9d312d54b693218979ce5",
+      "source_signature": "e8a176d3ab6c80468c2e95ae54cc44e696bb01cbdbb8cea967d8aadbbf799eaf",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py"
+      ],
+      "manifest_sha256": "1616854b04544a7c8e137dbf63b7aec53e53f82ef7d5d25a7e9494c3036fdccc",
+      "results_path": "/tmp/biomind-preflight-implementation-20260913/dir-tree-check-2",
+      "phases": [
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00016954261809587479
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0027443738654255867
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_fasta_bounded_header_cases",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00013521313667297363
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.10466247145086527
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 5.519307387061417
+        },
+        {
+          "nodeid": "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00018960144370794296
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0006261738017201424
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.06736193690449
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00014991406351327896
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005744500085711479
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.09397080354392529
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0001391824334859848
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0006092069670557976
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.09478325303643942
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00014233775436878204
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005714502185583115
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.07461399678140879
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0001460779458284378
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005094921216368675
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 1.0577386040240526
+        },
+        {
+          "nodeid": "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00018927454948425293
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0006916699931025505
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 16.474488659761846
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00035431794822216034
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0007097264751791954
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.10222723335027695
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00015883799642324448
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0005171438679099083
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0352860689163208
+        },
+        {
+          "nodeid": "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00014105252921581268
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00022593233734369278
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 5.020395238883793
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00019054580479860306
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.0002576243132352829
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 8.440519964322448
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00020711775869131088
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00012535136193037033
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 13.675059924833477
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.00017531495541334152
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "start"
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration": 0.00012509245425462723
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.294510207138956
+        },
+        {
+          "nodeid": "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration": 0.0002372460439801216
+        }
+      ],
+      "retained_files": {
+        "invocation.json": {
+          "bytes": 1343,
+          "sha256": "a0725ad07b8f367a20cfcdae68d219390ce4ccf6c03c3bf90c4ceb0ee43793cf"
+        },
+        "stdout.txt": {
+          "bytes": 23258,
+          "sha256": "6ac19efd226c43a3ce42ebbdee56088617ee34c4c4d0d77c866c45e3f8933443"
+        },
+        "pytest-results.json": {
+          "bytes": 10940,
+          "sha256": "061d2b763198066fb827fa19993d8e5798214d95197a8189e719758e6531f635"
+        },
+        "fatal.txt": {
+          "bytes": 503,
+          "sha256": "3277ef5b531e1aeb16d9f92d1738334816a7dee0cfb87f08b723b0bf6897c262"
+        },
+        "fatal-outlet.json": {
+          "bytes": 601,
+          "sha256": "2766a7ac2934295af3debc15be8723a6a8ed51f70df128c8064751492745de7c"
+        }
+      },
+      "native_fatal_marker_observed": false
+    }
+  ],
+  "limits": [
+    "Original WGS/session/input/database not restored or read.",
+    "No proof of real-model generation stability or whole-file scientific validity.",
+    "Old SIGSEGV, historical loaded revision and whole-task cleanup remain unresolved; no original crash matrix rerun."
+  ]
+}
