@@ -1,0 +1,1834 @@
+{
+  "session_id": "session_1789266028",
+  "attempts": [
+    {
+      "execution_id": "exec-attempt_78354904d83db1c42d6f",
+      "plan_id": "plan_ece29181c77a978618ee",
+      "plan_version": "plan_v1",
+      "step_id": "step-00-input-preflight",
+      "action_id": "action_e247d4d249aa0727",
+      "attempt_id": "attempt_78354904d83db1c42d6f",
+      "started_at": "2026-09-13T10:34:21",
+      "finished_at": "2026-09-13T10:34:27",
+      "duration_seconds": 6.222,
+      "exit_code": 2,
+      "execution_status": "failed",
+      "command": "bash '/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_78354904d83db1c42d6f/executed.sh'",
+      "approved_code": "\nset -u\n\nEVIDENCE_DIR=\"/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/BM-REMAIN-WGS-005/medium/00.input_check\"\nmkdir -p \"${EVIDENCE_DIR}\"\n\npython \"$BIOMIND_SKILL_ECD588FCA5ADDFE0\" \\\n  --observation-id validation_observation \\\n  --evidence-dir \"${EVIDENCE_DIR}\" \\\n  --item-timeout-seconds 60 \\\n  --item \"S1_R1 /public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz\" \\\n  --item \"S1_R2 /public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz\" \\\n  --item \"S2_R1 /public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz\" \\\n  --item \"S2_R2 /public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz\" \\\n  --item \"reference_fasta /public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta\"\n",
+      "script_identities": {
+        "generated_script": {
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/scripts/plan_ece29181c77a978618ee/plan_v1/step-00-input-preflight/action_e247d4d249aa0727/generated.sh",
+          "sha256": "1ef088c54b727b574f48b32f2422b68c1eeb546b0035775a67aadb0c25ce770e",
+          "producer": "generate",
+          "mutation_reason": "model_generation"
+        },
+        "approved_script": {
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_78354904d83db1c42d6f/approved.sh",
+          "sha256": "1ef088c54b727b574f48b32f2422b68c1eeb546b0035775a67aadb0c25ce770e",
+          "producer": "hitl_approval",
+          "mutation_reason": "user_approval_or_edit"
+        },
+        "executed_script": {
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_78354904d83db1c42d6f/executed.sh",
+          "sha256": "de7253830ef4dec6b9b366fbd2e7ab6682ea8efe2708868aa78791cf81c01707",
+          "producer": "executor_wrapper",
+          "mutation_reason": "durable_execution_wrapper"
+        }
+      },
+      "execution_wrapper_sha256": "de7253830ef4dec6b9b366fbd2e7ab6682ea8efe2708868aa78791cf81c01707",
+      "generated_equals_approved": true,
+      "evidence_dir": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/BM-REMAIN-WGS-005/medium/00.input_check",
+      "directory_under_user_output_root": false,
+      "caller_precreates_leaf": true,
+      "shell_form": "LABEL and PATH joined in one quoted word",
+      "argv_limit": "Historical batch argv was not independently captured; shell text, parser and per-item receipts are separate evidence.",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "42256722ab7a077ef78d0b06415b4d4b16f47791ee4c92483d8fe693cc10e403",
+      "exit_status": {
+        "attempt_id": "attempt_78354904d83db1c42d6f",
+        "returncode": 2,
+        "finished_at": "2026-09-13T10:34:27+08:00"
+      },
+      "skill_binding": [
+        {
+          "binding_digest": "72fc79ef0c9390c5ceb32609eec89c9e208073a05895000492ae1c7aa59a070e",
+          "canonical_path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+          "content_hash": "86030299f95e1a464699480278f179d2b19463256681f64c95357329a9483160",
+          "cwd": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs",
+          "environment_variable": "BIOMIND_SKILL_ECD588FCA5ADDFE0",
+          "executable_bit_required": false,
+          "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
+          "namespace": "local",
+          "readable": true,
+          "registered_root": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping",
+          "relative_path": "scripts/inspect_fastq_batch.py",
+          "resource_snapshot_id": "skill-resource-86030299f95e1a46",
+          "schema_version": 1,
+          "skill_content_hash": "ba98eafa29838eaf7f9da4eee7a93f6948436225722bc1ff6ebdfb14580f1cfa",
+          "skill_id": "genomics/wgs-short-read-mapping",
+          "snapshot_id": "skill-snapshot-db7850875a317dbdd050",
+          "source": "selected_skill_registry",
+          "step_id": "step-00-input-preflight"
+        }
+      ],
+      "execution_policy": {
+        "process_group": "isolated",
+        "shell_errexit": false,
+        "shell_pipefail": true,
+        "stdin": "devnull"
+      },
+      "command_trace": "runner=/usr/bin/bash -o pipefail script=/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_78354904d83db1c42d6f/approved.sh\nreturncode=2\n",
+      "parser_receipt": {
+        "parser_id": "biomind.structured_effect_emission.v1",
+        "raw_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "emission_count": 0,
+        "status": "parsed",
+        "issues": [],
+        "scope": {
+          "task_id": "session_1789266028",
+          "plan_id": "plan_ece29181c77a978618ee",
+          "plan_version": "plan_v1",
+          "step_id": "step-00-input-preflight",
+          "action_id": "action_e247d4d249aa0727",
+          "attempt_id": "attempt_78354904d83db1c42d6f"
+        }
+      },
+      "effect_status": "failed",
+      "raw_stderr": "usage: inspect_fastq_batch.py [-h] --item LABEL BOUND_PATH --observation-id\n                              OBSERVATION_ID --evidence-dir EVIDENCE_DIR\n                              [--item-timeout-seconds ITEM_TIMEOUT_SECONDS]\n                              [--records RECORDS] [--input-bytes INPUT_BYTES]\n                              [--decoded-bytes DECODED_BYTES]\n                              [--seconds SECONDS]\ninspect_fastq_batch.py: error: argument --item: expected 2 arguments\n"
+    },
+    {
+      "execution_id": "exec-attempt_ba5be193655765231699",
+      "plan_id": "plan_ece29181c77a978618ee",
+      "plan_version": "plan_v1",
+      "step_id": "step-00-input-preflight",
+      "action_id": "recovery_action_35e94a3a5ca4c321",
+      "attempt_id": "attempt_ba5be193655765231699",
+      "started_at": "2026-09-13T10:35:57",
+      "finished_at": "2026-09-13T10:36:04",
+      "duration_seconds": 6.134,
+      "exit_code": 1,
+      "execution_status": "failed",
+      "command": "bash '/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_ba5be193655765231699/executed.sh'",
+      "approved_code": "\nset -u\n\nEVIDENCE_DIR=\"/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/BM-REMAIN-WGS-005/medium/00.input_check\"\nmkdir -p \"${EVIDENCE_DIR}\"\n\npython \"$BIOMIND_SKILL_ECD588FCA5ADDFE0\" \\\n  --observation-id validation_observation \\\n  --evidence-dir \"${EVIDENCE_DIR}\" \\\n  --item-timeout-seconds 60 \\\n  --item S1_R1 \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz\" \\\n  --item S1_R2 \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz\" \\\n  --item S2_R1 \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz\" \\\n  --item S2_R2 \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz\" \\\n  --item reference_fasta \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta\"\n",
+      "script_identities": {
+        "generated_script": {
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/scripts/plan_ece29181c77a978618ee/plan_v1/step-00-input-preflight/recovery_action_35e94a3a5ca4c321/generated.revision-1.sh",
+          "sha256": "42ccb7349320e60508c1b586921b4eb398627489dd90dfe6dae2edce5a821c1d",
+          "producer": "generate",
+          "mutation_reason": "candidate_repair_payload_revision_1"
+        },
+        "approved_script": {
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_ba5be193655765231699/approved.sh",
+          "sha256": "42ccb7349320e60508c1b586921b4eb398627489dd90dfe6dae2edce5a821c1d",
+          "producer": "hitl_approval",
+          "mutation_reason": "user_approval_or_edit"
+        },
+        "executed_script": {
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_ba5be193655765231699/executed.sh",
+          "sha256": "0cc863571ef2fc44537441663a3f6c8a72bc364ca6ef06547b66d54ad891a57b",
+          "producer": "executor_wrapper",
+          "mutation_reason": "durable_execution_wrapper"
+        }
+      },
+      "execution_wrapper_sha256": "0cc863571ef2fc44537441663a3f6c8a72bc364ca6ef06547b66d54ad891a57b",
+      "generated_equals_approved": true,
+      "evidence_dir": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/BM-REMAIN-WGS-005/medium/00.input_check",
+      "directory_under_user_output_root": false,
+      "caller_precreates_leaf": true,
+      "shell_form": "LABEL and PATH separate words",
+      "argv_limit": "Historical batch argv was not independently captured; shell text, parser and per-item receipts are separate evidence.",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "0487e12451ea55a374a28ebfaebe62a37c4d3a8ebab735cd5f4d23c4bb7b9e1b",
+      "exit_status": {
+        "attempt_id": "attempt_ba5be193655765231699",
+        "returncode": 1,
+        "finished_at": "2026-09-13T10:36:04+08:00"
+      },
+      "skill_binding": [
+        {
+          "binding_digest": "72fc79ef0c9390c5ceb32609eec89c9e208073a05895000492ae1c7aa59a070e",
+          "canonical_path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+          "content_hash": "86030299f95e1a464699480278f179d2b19463256681f64c95357329a9483160",
+          "cwd": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs",
+          "environment_variable": "BIOMIND_SKILL_ECD588FCA5ADDFE0",
+          "executable_bit_required": false,
+          "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
+          "namespace": "local",
+          "readable": true,
+          "registered_root": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping",
+          "relative_path": "scripts/inspect_fastq_batch.py",
+          "resource_snapshot_id": "skill-resource-86030299f95e1a46",
+          "schema_version": 1,
+          "skill_content_hash": "ba98eafa29838eaf7f9da4eee7a93f6948436225722bc1ff6ebdfb14580f1cfa",
+          "skill_id": "genomics/wgs-short-read-mapping",
+          "snapshot_id": "skill-snapshot-db7850875a317dbdd050",
+          "source": "selected_skill_registry",
+          "step_id": "step-00-input-preflight"
+        }
+      ],
+      "execution_policy": {
+        "process_group": "isolated",
+        "shell_errexit": false,
+        "shell_pipefail": true,
+        "stdin": "devnull"
+      },
+      "command_trace": "runner=/usr/bin/bash -o pipefail script=/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_ba5be193655765231699/approved.sh\nreturncode=1\n",
+      "parser_receipt": {
+        "parser_id": "biomind.structured_effect_emission.v1",
+        "raw_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "emission_count": 0,
+        "status": "parsed",
+        "issues": [],
+        "scope": {
+          "task_id": "session_1789266028",
+          "plan_id": "plan_ece29181c77a978618ee",
+          "plan_version": "plan_v1",
+          "step_id": "step-00-input-preflight",
+          "action_id": "recovery_action_35e94a3a5ca4c321",
+          "attempt_id": "attempt_ba5be193655765231699"
+        }
+      },
+      "effect_status": "failed",
+      "raw_stderr": "Traceback (most recent call last):\n  File \"/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py\", line 77, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py\", line 61, in main\n    result = asyncio.run(with_signal_cleanup(run_checks(rows, evidence_dir=args.evidence_dir,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py\", line 195, in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n  File \"/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py\", line 691, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/public/home/liusiqi/03.毕设/Biomind_v1/execution/preflight.py\", line 149, in with_signal_cleanup\n    return await task\n           ^^^^^^^^^^\n  File \"/public/home/liusiqi/03.毕设/Biomind_v1/execution/preflight.py\", line 46, in run_checks\n    directory.mkdir(parents=True, exist_ok=False)\n  File \"/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py\", line 1311, in mkdir\n    os.mkdir(self, mode)\nFileExistsError: [Errno 17] File exists: '/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/BM-REMAIN-WGS-005/medium/00.input_check'\n"
+    },
+    {
+      "execution_id": "exec-attempt_05babb68ee8a678c96dd",
+      "plan_id": "plan_ece29181c77a978618ee",
+      "plan_version": "plan_v1",
+      "step_id": "step-00-input-preflight",
+      "action_id": "recovery_action_cdacf04377dd1f62",
+      "attempt_id": "attempt_05babb68ee8a678c96dd",
+      "started_at": "2026-09-13T10:37:12",
+      "finished_at": "2026-09-13T10:37:20",
+      "duration_seconds": 6.727,
+      "exit_code": 2,
+      "execution_status": "failed",
+      "command": "bash '/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_05babb68ee8a678c96dd/executed.sh'",
+      "approved_code": "\nset -u\n\nEVIDENCE_DIR=\"/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699\"\n\npython \"$BIOMIND_SKILL_ECD588FCA5ADDFE0\" \\\n  --observation-id validation_observation \\\n  --evidence-dir \"${EVIDENCE_DIR}\" \\\n  --item-timeout-seconds 60 \\\n  --item S1_R1 \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz\" \\\n  --item S1_R2 \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz\" \\\n  --item S2_R1 \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz\" \\\n  --item S2_R2 \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz\" \\\n  --item reference_fasta \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta\"\n",
+      "script_identities": {
+        "generated_script": {
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/scripts/plan_ece29181c77a978618ee/plan_v1/step-00-input-preflight/recovery_action_cdacf04377dd1f62/generated.sh",
+          "sha256": "3717b1199a961e147c699b1bac88bd1ac3a6feb143325ce7a9fde4a4ca529856",
+          "producer": "generate",
+          "mutation_reason": "model_generation"
+        },
+        "approved_script": {
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_05babb68ee8a678c96dd/approved.sh",
+          "sha256": "3717b1199a961e147c699b1bac88bd1ac3a6feb143325ce7a9fde4a4ca529856",
+          "producer": "hitl_approval",
+          "mutation_reason": "user_approval_or_edit"
+        },
+        "executed_script": {
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_05babb68ee8a678c96dd/executed.sh",
+          "sha256": "2bdd0f7a100308bfbcf5b022f4f270a142d677de63a0ef4a7f6d136d6a81f0f7",
+          "producer": "executor_wrapper",
+          "mutation_reason": "durable_execution_wrapper"
+        }
+      },
+      "execution_wrapper_sha256": "2bdd0f7a100308bfbcf5b022f4f270a142d677de63a0ef4a7f6d136d6a81f0f7",
+      "generated_equals_approved": true,
+      "evidence_dir": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699",
+      "directory_under_user_output_root": true,
+      "caller_precreates_leaf": false,
+      "shell_form": "LABEL and PATH separate words",
+      "argv_limit": "Historical batch argv was not independently captured; shell text, parser and per-item receipts are separate evidence.",
+      "stdout_sha256": "50924e14fa71fb77aee120338884c52281c468cbfa3a2b1b6e304cbc001b54e9",
+      "stderr_sha256": "9b3dff63e97e515c43def3283a94f00f1a57131502e42d776605d4ae0afad214",
+      "exit_status": {
+        "attempt_id": "attempt_05babb68ee8a678c96dd",
+        "returncode": 2,
+        "finished_at": "2026-09-13T10:37:19+08:00"
+      },
+      "skill_binding": [
+        {
+          "binding_digest": "72fc79ef0c9390c5ceb32609eec89c9e208073a05895000492ae1c7aa59a070e",
+          "canonical_path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+          "content_hash": "86030299f95e1a464699480278f179d2b19463256681f64c95357329a9483160",
+          "cwd": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs",
+          "environment_variable": "BIOMIND_SKILL_ECD588FCA5ADDFE0",
+          "executable_bit_required": false,
+          "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
+          "namespace": "local",
+          "readable": true,
+          "registered_root": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping",
+          "relative_path": "scripts/inspect_fastq_batch.py",
+          "resource_snapshot_id": "skill-resource-86030299f95e1a46",
+          "schema_version": 1,
+          "skill_content_hash": "ba98eafa29838eaf7f9da4eee7a93f6948436225722bc1ff6ebdfb14580f1cfa",
+          "skill_id": "genomics/wgs-short-read-mapping",
+          "snapshot_id": "skill-snapshot-db7850875a317dbdd050",
+          "source": "selected_skill_registry",
+          "step_id": "step-00-input-preflight"
+        }
+      ],
+      "execution_policy": {
+        "process_group": "isolated",
+        "shell_errexit": false,
+        "shell_pipefail": true,
+        "stdin": "devnull"
+      },
+      "command_trace": "runner=/usr/bin/bash -o pipefail script=/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_05babb68ee8a678c96dd/approved.sh\nreturncode=2\n",
+      "parser_receipt": {
+        "parser_id": "biomind.structured_effect_emission.v1",
+        "raw_stdout_sha256": "50924e14fa71fb77aee120338884c52281c468cbfa3a2b1b6e304cbc001b54e9",
+        "emission_count": 1,
+        "status": "parsed",
+        "issues": [],
+        "scope": {
+          "task_id": "session_1789266028",
+          "plan_id": "plan_ece29181c77a978618ee",
+          "plan_version": "plan_v1",
+          "step_id": "step-00-input-preflight",
+          "action_id": "recovery_action_cdacf04377dd1f62",
+          "attempt_id": "attempt_05babb68ee8a678c96dd"
+        }
+      },
+      "effect_status": "failed",
+      "observation": {
+        "status": "incomplete",
+        "scope": "fastq_prefix_only",
+        "full_file_validated": false,
+        "total": 5,
+        "returned": 5,
+        "passed": 4,
+        "unstarted": 0
+      },
+      "checks": [
+        {
+          "label": "S1_R1",
+          "returncode": 0,
+          "status": "returned",
+          "passed": true,
+          "raw": {
+            "stdout": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699/item-001.stdout.log",
+            "stderr": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699/item-001.stderr.log"
+          }
+        },
+        {
+          "label": "S1_R2",
+          "returncode": 0,
+          "status": "returned",
+          "passed": true,
+          "raw": {
+            "stdout": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699/item-002.stdout.log",
+            "stderr": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699/item-002.stderr.log"
+          }
+        },
+        {
+          "label": "S2_R1",
+          "returncode": 0,
+          "status": "returned",
+          "passed": true,
+          "raw": {
+            "stdout": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699/item-003.stdout.log",
+            "stderr": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699/item-003.stderr.log"
+          }
+        },
+        {
+          "label": "S2_R2",
+          "returncode": 0,
+          "status": "returned",
+          "passed": true,
+          "raw": {
+            "stdout": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699/item-004.stdout.log",
+            "stderr": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699/item-004.stderr.log"
+          }
+        },
+        {
+          "label": "reference_fasta",
+          "returncode": 2,
+          "status": "error",
+          "passed": false,
+          "raw": {
+            "stdout": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699/item-005.stdout.log",
+            "stderr": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699/item-005.stderr.log"
+          }
+        }
+      ],
+      "nested_error": {
+        "schema_version": 1,
+        "operation": "fastq_prefix",
+        "status": "error",
+        "error": {
+          "code": "READ_LINE_LIMIT",
+          "type": "InspectionReadError",
+          "detail": "record representation exceeds limit"
+        },
+        "representation": "plain",
+        "content_sha256": "b92f9f7e94420cfde88423b3ce1d6a77d5a71b1e143605df41f8989b7512e471",
+        "checked_records": 0,
+        "returned_lines": 1,
+        "scanned_input_bytes": 16391,
+        "decoded_bytes": 16391,
+        "stop_reason": "READ_LINE_LIMIT",
+        "eof": false,
+        "full_compression_verified": false,
+        "full_scientific_validation": false,
+        "prefix_valid": null,
+        "limits": {
+          "input_bytes": 1048576,
+          "decoded_bytes": 65536,
+          "line_bytes": 16384,
+          "records": 32,
+          "lines": 120,
+          "seconds": 2.0
+        }
+      },
+      "outer_progress": [
+        {
+          "event": "item_started",
+          "item": "S1_R1",
+          "index": 1,
+          "total": 5,
+          "completed": 0,
+          "passed": 0
+        },
+        {
+          "event": "process_started",
+          "item": "S1_R1",
+          "index": 1,
+          "total": 5,
+          "completed": 0,
+          "passed": 0
+        },
+        {
+          "event": "item_returned",
+          "item": "S1_R1",
+          "index": 1,
+          "total": 5,
+          "completed": 1,
+          "passed": 1,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S1_R2",
+          "index": 2,
+          "total": 5,
+          "completed": 1,
+          "passed": 1
+        },
+        {
+          "event": "process_started",
+          "item": "S1_R2",
+          "index": 2,
+          "total": 5,
+          "completed": 1,
+          "passed": 1
+        },
+        {
+          "event": "item_returned",
+          "item": "S1_R2",
+          "index": 2,
+          "total": 5,
+          "completed": 2,
+          "passed": 2,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S2_R1",
+          "index": 3,
+          "total": 5,
+          "completed": 2,
+          "passed": 2
+        },
+        {
+          "event": "process_started",
+          "item": "S2_R1",
+          "index": 3,
+          "total": 5,
+          "completed": 2,
+          "passed": 2
+        },
+        {
+          "event": "item_returned",
+          "item": "S2_R1",
+          "index": 3,
+          "total": 5,
+          "completed": 3,
+          "passed": 3,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "S2_R2",
+          "index": 4,
+          "total": 5,
+          "completed": 3,
+          "passed": 3
+        },
+        {
+          "event": "process_started",
+          "item": "S2_R2",
+          "index": 4,
+          "total": 5,
+          "completed": 3,
+          "passed": 3
+        },
+        {
+          "event": "item_returned",
+          "item": "S2_R2",
+          "index": 4,
+          "total": 5,
+          "completed": 4,
+          "passed": 4,
+          "returncode": 0,
+          "check_status": "returned"
+        },
+        {
+          "event": "item_started",
+          "item": "reference_fasta",
+          "index": 5,
+          "total": 5,
+          "completed": 4,
+          "passed": 4
+        },
+        {
+          "event": "process_started",
+          "item": "reference_fasta",
+          "index": 5,
+          "total": 5,
+          "completed": 4,
+          "passed": 4
+        },
+        {
+          "event": "item_returned",
+          "item": "reference_fasta",
+          "index": 5,
+          "total": 5,
+          "completed": 5,
+          "passed": 4,
+          "returncode": 2,
+          "check_status": "error"
+        },
+        {
+          "event": "item_error",
+          "item": "reference_fasta",
+          "index": 5,
+          "total": 5,
+          "completed": 5,
+          "passed": 4,
+          "returncode": 2
+        },
+        {
+          "event": "summary",
+          "item": "",
+          "index": 5,
+          "total": 5,
+          "completed": 5,
+          "passed": 4,
+          "status": "incomplete"
+        }
+      ]
+    }
+  ],
+  "repairs": [
+    {
+      "directive_id": "recovery-directive-765758077c3b3cd34f230d28-1",
+      "directive": {
+        "schema_version": 1,
+        "directive_id": "recovery-directive-765758077c3b3cd34f230d28-1",
+        "task_id": "session_1789266028",
+        "action": "retry_step",
+        "summary": "输入预检脚本把 --item 的标签与路径合并为单个参数，导致 inspect_fastq_batch.py 参数解析失败（returncode 2，无任何 observation 产生）。重跑该步骤时按 --item LABEL BOUND_PATH 两参数形式传入五个输入，其余绑定与观察契约不变。",
+        "reason_code": "SCRIPT_BUG_ARGUMENT_SHAPE",
+        "target_step_id": "step-00-input-preflight",
+        "instruction": "在同一 Plan（plan_ece29181c77a978618ee / plan_v1）下重跑 step-00-input-preflight 的只读输入预检。重新生成脚本时，保持调用 wgs-short-read-mapping 的 inspect_fastq_batch.py 包装器、--observation-id validation_observation、--evidence-dir 与 --item-timeout-seconds 不变，但把每个条目改为两个独立参数：--item S1_R1 <artifact-f45ed785f84d81e9cfab 绑定路径>、--item S1_R2 <artifact-2faee33f0d19e7f0dab4>、--item S2_R1 <artifact-431c5cce92b5b261677e>、--item S2_R2 <artifact-97f64b37bb55399a6d4e>、--item reference_fasta <artifact-a9a97d180ef458548099>，标签与路径不得再合并为单个字符串。不改变步骤的 inspect 能力、outputs=[]、produces_observations=validation_observation 与成功判据；前缀检查仅作前缀证据，不宣称全文件完整性，任一输入缺失或前缀无效仍如实记为 adverse。新脚本须按既有流程重新审批后执行。",
+        "evidence_refs": [
+          "inspection:sha256:512daea03487e928e19387dc67cb7edd6cde34d951d60e8979570e0890c8188f",
+          "inspection:sha256:22380c0c423b0ad3b3daf6e6b16bed1169493e659a5625d2af332884fedf831a",
+          "inspection:sha256:d05536decb6b6768886b132f6203318c1ad92f721eb6bd315a0f17565b08f592",
+          "outcome:sha256:f5b54166cf446d6ddfa5436e7f99afa7747b767621513f91e09a62f080e77d28"
+        ]
+      },
+      "admission": {
+        "status": "admitted",
+        "outcome_type": "candidate_repair_required",
+        "command_started": false,
+        "directive_id": "recovery-directive-765758077c3b3cd34f230d28-1"
+      },
+      "outcome": {
+        "schema_version": 1,
+        "type": "candidate_repair_required",
+        "summary": "A bounded changed candidate is required.",
+        "scope": {
+          "task_id": "session_1789266028",
+          "plan_id": "plan_ece29181c77a978618ee",
+          "plan_version": "plan_v1",
+          "step_id": "step-00-input-preflight",
+          "state_generation": 45,
+          "action_id": "action_e247d4d249aa0727",
+          "attempt_id": "attempt_78354904d83db1c42d6f",
+          "incident_id": "incident-1261287943c0eea50ce41a0c",
+          "failure_packet_version": 1
+        },
+        "payload": {
+          "diagnosis": "输入预检脚本把 --item 的标签与路径合并为单个参数，导致 inspect_fastq_batch.py 参数解析失败（returncode 2，无任何 observation 产生）。重跑该步骤时按 --item LABEL BOUND_PATH 两参数形式传入五个输入，其余绑定与观察契约不变。",
+          "failure_owner": "GENERATED_ACTION",
+          "strategy": "semantic_directive:retry_step",
+          "repair_instruction": "在同一 Plan（plan_ece29181c77a978618ee / plan_v1）下重跑 step-00-input-preflight 的只读输入预检。重新生成脚本时，保持调用 wgs-short-read-mapping 的 inspect_fastq_batch.py 包装器、--observation-id validation_observation、--evidence-dir 与 --item-timeout-seconds 不变，但把每个条目改为两个独立参数：--item S1_R1 <artifact-f45ed785f84d81e9cfab 绑定路径>、--item S1_R2 <artifact-2faee33f0d19e7f0dab4>、--item S2_R1 <artifact-431c5cce92b5b261677e>、--item S2_R2 <artifact-97f64b37bb55399a6d4e>、--item reference_fasta <artifact-a9a97d180ef458548099>，标签与路径不得再合并为单个字符串。不改变步骤的 inspect 能力、outputs=[]、produces_observations=validation_observation 与成功判据；前缀检查仅作前缀证据，不宣称全文件完整性，任一输入缺失或前缀无效仍如实记为 adverse。新脚本须按既有流程重新审批后执行。",
+          "source_scope": {
+            "task_id": "session_1789266028",
+            "plan_id": "plan_ece29181c77a978618ee",
+            "plan_version": "plan_v1",
+            "step_id": "step-00-input-preflight",
+            "state_generation": 45,
+            "action_id": "action_e247d4d249aa0727",
+            "attempt_id": "attempt_78354904d83db1c42d6f",
+            "incident_id": "incident-1261287943c0eea50ce41a0c",
+            "failure_packet_version": 1
+          },
+          "decision_id": "recovery-directive-765758077c3b3cd34f230d28-1",
+          "incident_id": "incident-1261287943c0eea50ce41a0c",
+          "failure_fingerprint": "e04760b46391c73bf62c",
+          "budget_receipt": {
+            "incident_id": "incident-1261287943c0eea50ce41a0c",
+            "ordinal": 1,
+            "limit": 2,
+            "remaining": 1,
+            "consumed": true,
+            "source_fingerprint": "765758077c3b3cd34f230d28",
+            "failure_packet_ref": "failure-packet:sha256:1ba0ae10b953dd0bb27c4ef006cf851699eb4e4b4df36577ccf26c254273e275",
+            "failure_packet_version": 1
+          }
+        },
+        "evidence_refs": [
+          "inspection:sha256:512daea03487e928e19387dc67cb7edd6cde34d951d60e8979570e0890c8188f",
+          "inspection:sha256:22380c0c423b0ad3b3daf6e6b16bed1169493e659a5625d2af332884fedf831a",
+          "inspection:sha256:d05536decb6b6768886b132f6203318c1ad92f721eb6bd315a0f17565b08f592",
+          "outcome:sha256:f5b54166cf446d6ddfa5436e7f99afa7747b767621513f91e09a62f080e77d28"
+        ]
+      },
+      "response_receipts": [
+        {
+          "protocol": "recovery-submission-v1",
+          "response_message_id": "recovery-seed-765758077c3b3cd34f230d28:assistant:001",
+          "response_sha256": "139c96937d29c74ef72c9008c1856fea354c03f843f51d5c2cb272734d563692",
+          "finish_reason": "tool_calls",
+          "status": "investigating",
+          "directive_adopted": false,
+          "command_started": false
+        },
+        {
+          "protocol": "recovery-submission-v1",
+          "response_message_id": "recovery-seed-765758077c3b3cd34f230d28:assistant:002",
+          "response_sha256": "060813f9fd1c6c6c24321ec42e473cf40c3403513088b497e7cce2d1c406533a",
+          "finish_reason": "tool_calls",
+          "status": "candidate_validated",
+          "directive_adopted": false,
+          "command_started": false,
+          "transport": "native_tool",
+          "candidate_sha256": "656d14ddd2eca3c13d9c29583477b3f8fc6cf9ff02209b6d7486209a5223fe03"
+        }
+      ],
+      "failure_packet_ref": "failure-packet:sha256:1ba0ae10b953dd0bb27c4ef006cf851699eb4e4b4df36577ccf26c254273e275",
+      "recovery_archive_ref": "phase-archive:sha256:29d25664967384d19e44435ebad3812bb029db2b64c7f97840c6602225a6e06b"
+    },
+    {
+      "directive_id": "recovery-directive-a868a6f0d66f1f4fd19dcad6-1",
+      "directive": {
+        "schema_version": 1,
+        "directive_id": "recovery-directive-a868a6f0d66f1f4fd19dcad6-1",
+        "task_id": "session_1789266028",
+        "action": "retry_step",
+        "summary": "输入预检脚本复用了上一轮已存在的证据目录，且自身先 mkdir -p 预创建，导致批量预检包装器 run_checks 以 exist_ok=False 再次创建时抛出 FileExistsError（返回码 1）。需重生成该动作：改用本轮唯一、尚不存在的 --evidence-dir（位于已批准执行日志区），并移除对证据目录的预创建，保留已修正的 --item LABEL BOUND_PATH 分离参数形式与绑定输入路径。",
+        "reason_code": "SCRIPT_BUG",
+        "target_step_id": "step-00-input-preflight",
+        "instruction": "重生成 step-00-input-preflight 的只读输入预检动作。保留已修正的批量包装器调用形式：--observation-id validation_observation、--item-timeout-seconds 60，以及每个 --item 使用两个独立参数（LABEL 与 BOUND_PATH，如 --item S1_R1 \"<S1_1.fq.gz 绑定路径>\"），绑定路径仍为四个 FASTQ 与 genome.fasta 的已批准输入。关键修正：不要复用上一轮 attempt 已存在的固定证据目录，也不要由脚本自身 mkdir -p 预创建该目录；改为传入一个本轮唯一、调用时尚不存在的 --evidence-dir（位于已批准的执行日志区），由包装器自行创建。不要修改已批准脚本，也不要改变科学范围或输出契约。",
+        "evidence_refs": [
+          "inspection:sha256:01623160dd5bcefb9745bd9e55d994fcfbec71f7b81da6b082a7874557f0f299",
+          "inspection:sha256:30e31030a5dee1ba2d4506bbc3ab4dcecc132a281c0d248b89d1a187b4830ad5",
+          "inspection:sha256:8f87ecb839173c9bb4bd9f99be00df5ee26fee3a227eba811e69c51c9f8f184f",
+          "inspection:sha256:9c11964c048f31e9e0c2be6d5492d817498b0c4ef9129cd398aaaa9603205abc"
+        ]
+      },
+      "admission": {
+        "status": "admitted",
+        "outcome_type": "candidate_repair_required",
+        "command_started": false,
+        "directive_id": "recovery-directive-a868a6f0d66f1f4fd19dcad6-1"
+      },
+      "outcome": {
+        "schema_version": 1,
+        "type": "candidate_repair_required",
+        "summary": "A bounded changed candidate is required.",
+        "scope": {
+          "task_id": "session_1789266028",
+          "plan_id": "plan_ece29181c77a978618ee",
+          "plan_version": "plan_v1",
+          "step_id": "step-00-input-preflight",
+          "state_generation": 75,
+          "action_id": "recovery_action_35e94a3a5ca4c321",
+          "attempt_id": "attempt_ba5be193655765231699",
+          "incident_id": "incident-54307e443571ec3f1775666f",
+          "failure_packet_version": 1
+        },
+        "payload": {
+          "diagnosis": "输入预检脚本复用了上一轮已存在的证据目录，且自身先 mkdir -p 预创建，导致批量预检包装器 run_checks 以 exist_ok=False 再次创建时抛出 FileExistsError（返回码 1）。需重生成该动作：改用本轮唯一、尚不存在的 --evidence-dir（位于已批准执行日志区），并移除对证据目录的预创建，保留已修正的 --item LABEL BOUND_PATH 分离参数形式与绑定输入路径。",
+          "failure_owner": "GENERATED_ACTION",
+          "strategy": "semantic_directive:retry_step",
+          "repair_instruction": "重生成 step-00-input-preflight 的只读输入预检动作。保留已修正的批量包装器调用形式：--observation-id validation_observation、--item-timeout-seconds 60，以及每个 --item 使用两个独立参数（LABEL 与 BOUND_PATH，如 --item S1_R1 \"<S1_1.fq.gz 绑定路径>\"），绑定路径仍为四个 FASTQ 与 genome.fasta 的已批准输入。关键修正：不要复用上一轮 attempt 已存在的固定证据目录，也不要由脚本自身 mkdir -p 预创建该目录；改为传入一个本轮唯一、调用时尚不存在的 --evidence-dir（位于已批准的执行日志区），由包装器自行创建。不要修改已批准脚本，也不要改变科学范围或输出契约。",
+          "source_scope": {
+            "task_id": "session_1789266028",
+            "plan_id": "plan_ece29181c77a978618ee",
+            "plan_version": "plan_v1",
+            "step_id": "step-00-input-preflight",
+            "state_generation": 75,
+            "action_id": "recovery_action_35e94a3a5ca4c321",
+            "attempt_id": "attempt_ba5be193655765231699",
+            "incident_id": "incident-54307e443571ec3f1775666f",
+            "failure_packet_version": 1
+          },
+          "decision_id": "recovery-directive-a868a6f0d66f1f4fd19dcad6-1",
+          "incident_id": "incident-54307e443571ec3f1775666f",
+          "failure_fingerprint": "161d5b4b50f585b1f1b8",
+          "budget_receipt": {
+            "incident_id": "incident-54307e443571ec3f1775666f",
+            "ordinal": 1,
+            "limit": 2,
+            "remaining": 1,
+            "consumed": true,
+            "source_fingerprint": "a868a6f0d66f1f4fd19dcad6",
+            "failure_packet_ref": "failure-packet:sha256:8aa0684b3de067880c3beee08b9ef2aee1728a96d02bb526ccc508dba29bc906",
+            "failure_packet_version": 1
+          }
+        },
+        "evidence_refs": [
+          "inspection:sha256:01623160dd5bcefb9745bd9e55d994fcfbec71f7b81da6b082a7874557f0f299",
+          "inspection:sha256:30e31030a5dee1ba2d4506bbc3ab4dcecc132a281c0d248b89d1a187b4830ad5",
+          "inspection:sha256:8f87ecb839173c9bb4bd9f99be00df5ee26fee3a227eba811e69c51c9f8f184f",
+          "inspection:sha256:9c11964c048f31e9e0c2be6d5492d817498b0c4ef9129cd398aaaa9603205abc"
+        ]
+      },
+      "response_receipts": [
+        {
+          "protocol": "recovery-submission-v1",
+          "response_message_id": "recovery-seed-a868a6f0d66f1f4fd19dcad6:assistant:001",
+          "response_sha256": "63a76232a8e9a85cad79a96dc9b9ad3a224d8345ae2baba5fba08fd06043b5c7",
+          "finish_reason": "tool_calls",
+          "status": "not_accepted",
+          "directive_adopted": false,
+          "command_started": false,
+          "transport": "native_tool",
+          "error_code": "STAGE_FIELD_REQUIRED",
+          "detail": "RecoveryDirective: schema_version",
+          "stage": "recovery.schema",
+          "candidate": null
+        },
+        {
+          "protocol": "recovery-submission-v1",
+          "response_message_id": "recovery-seed-a868a6f0d66f1f4fd19dcad6:assistant:002",
+          "response_sha256": "3062cb96fa6d5270a448835d0d348d1cab083e106bff85188122d61253b7be42",
+          "finish_reason": "tool_calls",
+          "status": "candidate_validated",
+          "directive_adopted": false,
+          "command_started": false,
+          "transport": "native_tool",
+          "candidate_sha256": "ef663c807500a71f05fcee22c253318ffe68db33e4b8c857a9965eeb9878e951"
+        }
+      ],
+      "failure_packet_ref": "failure-packet:sha256:8aa0684b3de067880c3beee08b9ef2aee1728a96d02bb526ccc508dba29bc906",
+      "recovery_archive_ref": "phase-archive:sha256:5f1c4630671215a1f75ac379937010d51a339c955d99fc4137a48c2cc7817113"
+    }
+  ],
+  "generate_messages": {
+    "generate-0009-b50cc719fd74": {
+      "request_sha256": "6dcc76386bf2bf2cebb4bdba46e895d6239648024c05afad9f87688665f5f433",
+      "response_sha256": "51f85746b4647807dfcc77ada458caae013e65213dc26b82c03cd71bca5f661e",
+      "runtime_identity": {
+        "dependencies": {
+          "PyYAML": "6.0.3",
+          "langchain-core": "1.2.7",
+          "langgraph": "1.0.7",
+          "pydantic": "2.11.7"
+        },
+        "loaded_code_identity": "189dd2bc05c35a6229571ac8c2043ef9e9479150122e01b68f45b60d993bc717",
+        "object_ref": "object:sha256:11d76eff7b442c8ced614c070474cf73b9a79fbf5ffc5e2829e9eafbcef0bc10",
+        "revision": {
+          "disk_head_at_capture": "2e6eb7a09a61ce14b5304763215faa4e0b7e3624",
+          "loaded_revision": "UNKNOWN",
+          "meaning": "disk_at_capture and loaded callable identities are separate; no historical revision is inferred",
+          "related_dirty_paths": [
+            "agent_core/workflow/managed_stop.py",
+            "prompts/manager.py"
+          ],
+          "related_untracked_paths": [],
+          "status": "CAPTURED"
+        },
+        "schema_version": 1,
+        "skill_versions": {
+          "genomics/wgs-short-read-mapping": "1.1.0"
+        },
+        "source_identity": "a08a906e07de9b56a050eff0c1f8f2be7dc6b7c0fc8c783db96e61b02b04c7da",
+        "stage": "generate",
+        "status": "CAPTURED",
+        "task_id": "session_1789266028"
+      },
+      "selected_skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "messages": [
+        {
+          "index": 0,
+          "role": "system",
+          "name": null,
+          "chars": 777,
+          "content_sha256": "ab0558c5258ef08975959e7145d87f1bf6eff347665edc487bac8f73fb66b5f0",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 1,
+          "role": "human",
+          "name": null,
+          "chars": 68549,
+          "content_sha256": "9b37a6ab28e871af34573a8ce94f773617cadd660b6ba80a6c86586bf972a466",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": true,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 2,
+          "role": "human",
+          "name": "approved_effect_emission_template",
+          "chars": 3871,
+          "content_sha256": "9f602ee05059974bce11caa0551e97fc5d320a2bdb09853a3ee9e3fb8ef63488",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 3,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 12930,
+          "content_sha256": "e285cf2f0bb805853ecf0a988a2ca49066c5701689210a2b5017d332c4aa031d",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 4,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 15650,
+          "content_sha256": "b2a972cfe6f8ec449113367cb0eeb1a8423860ed92577cd65c609a35645cd693",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        }
+      ],
+      "display_envelope_metadata": {
+        "response_type": "biomind_generate_display_v1",
+        "public_chars": 105,
+        "public_sha256": "c517b2c60cf6e1b301f584800e2d696e17a1d717b44ceea890cd9e09db6b1573"
+      },
+      "response_script_body_sha256": "1ef088c54b727b574f48b32f2422b68c1eeb546b0035775a67aadb0c25ce770e",
+      "matches_approved_after_edge_whitespace_normalization": [
+        "attempt_78354904d83db1c42d6f"
+      ],
+      "prose_outside_block_chars": 0
+    },
+    "generate-0012-8d977fac31bc": {
+      "request_sha256": "36c556a4ee3add13abeb0756c55404761c380a2959d4c48db4607b2f048d1f39",
+      "response_sha256": "003cb9b975af3e2b64873388d1f9d7d65ef57529313fc8c0f98d6767717e2931",
+      "runtime_identity": {
+        "dependencies": {
+          "PyYAML": "6.0.3",
+          "langchain-core": "1.2.7",
+          "langgraph": "1.0.7",
+          "pydantic": "2.11.7"
+        },
+        "loaded_code_identity": "189dd2bc05c35a6229571ac8c2043ef9e9479150122e01b68f45b60d993bc717",
+        "object_ref": "object:sha256:11d76eff7b442c8ced614c070474cf73b9a79fbf5ffc5e2829e9eafbcef0bc10",
+        "revision": {
+          "disk_head_at_capture": "2e6eb7a09a61ce14b5304763215faa4e0b7e3624",
+          "loaded_revision": "UNKNOWN",
+          "meaning": "disk_at_capture and loaded callable identities are separate; no historical revision is inferred",
+          "related_dirty_paths": [
+            "agent_core/workflow/managed_stop.py",
+            "prompts/manager.py"
+          ],
+          "related_untracked_paths": [],
+          "status": "CAPTURED"
+        },
+        "schema_version": 1,
+        "skill_versions": {
+          "genomics/wgs-short-read-mapping": "1.1.0"
+        },
+        "source_identity": "a08a906e07de9b56a050eff0c1f8f2be7dc6b7c0fc8c783db96e61b02b04c7da",
+        "stage": "generate",
+        "status": "CAPTURED",
+        "task_id": "session_1789266028"
+      },
+      "selected_skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "messages": [
+        {
+          "index": 0,
+          "role": "system",
+          "name": null,
+          "chars": 777,
+          "content_sha256": "ab0558c5258ef08975959e7145d87f1bf6eff347665edc487bac8f73fb66b5f0",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 1,
+          "role": "human",
+          "name": null,
+          "chars": 45987,
+          "content_sha256": "749b847830bcf4a5d45381b32b0d8f1a7d12f54168f78a179ff6f4d21d92e52c",
+          "directive_instructions_present": [
+            "recovery-directive-765758077c3b3cd34f230d28-1"
+          ],
+          "relative_authorized_root_visible": true,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 2,
+          "role": "human",
+          "name": "approved_effect_emission_template",
+          "chars": 3871,
+          "content_sha256": "9f602ee05059974bce11caa0551e97fc5d320a2bdb09853a3ee9e3fb8ef63488",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 3,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 12930,
+          "content_sha256": "e285cf2f0bb805853ecf0a988a2ca49066c5701689210a2b5017d332c4aa031d",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 4,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 15650,
+          "content_sha256": "b2a972cfe6f8ec449113367cb0eeb1a8423860ed92577cd65c609a35645cd693",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 5,
+          "role": "human",
+          "name": null,
+          "chars": 1105,
+          "content_sha256": "669e414081605a6cc1d4d004a857efd2c914994a474d2050ce26e2ffe15e3025",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 6,
+          "role": "human",
+          "name": "recovery_execution_evidence",
+          "chars": 1748,
+          "content_sha256": "745cf395f25292531dd391bd4f9b1f2e327e44c515e54ffb2fcd09f3225a0147",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        }
+      ],
+      "display_envelope_metadata": null,
+      "response_script_body_sha256": "42ccb7349320e60508c1b586921b4eb398627489dd90dfe6dae2edce5a821c1d",
+      "matches_approved_after_edge_whitespace_normalization": [
+        "attempt_ba5be193655765231699"
+      ],
+      "prose_outside_block_chars": 176
+    },
+    "generate-0013-ace12cccc970": {
+      "request_sha256": "65953467f9e98c3d54e5843f51d45349071c31124dc2881926ee7a838439b6cd",
+      "response_sha256": "39b0d170706203ea3493217e82908450951bcb348fc4a533ae0a17a559d4e9f8",
+      "runtime_identity": {
+        "dependencies": {
+          "PyYAML": "6.0.3",
+          "langchain-core": "1.2.7",
+          "langgraph": "1.0.7",
+          "pydantic": "2.11.7"
+        },
+        "loaded_code_identity": "189dd2bc05c35a6229571ac8c2043ef9e9479150122e01b68f45b60d993bc717",
+        "object_ref": "object:sha256:11d76eff7b442c8ced614c070474cf73b9a79fbf5ffc5e2829e9eafbcef0bc10",
+        "revision": {
+          "disk_head_at_capture": "2e6eb7a09a61ce14b5304763215faa4e0b7e3624",
+          "loaded_revision": "UNKNOWN",
+          "meaning": "disk_at_capture and loaded callable identities are separate; no historical revision is inferred",
+          "related_dirty_paths": [
+            "agent_core/workflow/managed_stop.py",
+            "prompts/manager.py"
+          ],
+          "related_untracked_paths": [],
+          "status": "CAPTURED"
+        },
+        "schema_version": 1,
+        "skill_versions": {
+          "genomics/wgs-short-read-mapping": "1.1.0"
+        },
+        "source_identity": "a08a906e07de9b56a050eff0c1f8f2be7dc6b7c0fc8c783db96e61b02b04c7da",
+        "stage": "generate",
+        "status": "CAPTURED",
+        "task_id": "session_1789266028"
+      },
+      "selected_skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "messages": [
+        {
+          "index": 0,
+          "role": "system",
+          "name": null,
+          "chars": 777,
+          "content_sha256": "ab0558c5258ef08975959e7145d87f1bf6eff347665edc487bac8f73fb66b5f0",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 1,
+          "role": "human",
+          "name": null,
+          "chars": 45987,
+          "content_sha256": "749b847830bcf4a5d45381b32b0d8f1a7d12f54168f78a179ff6f4d21d92e52c",
+          "directive_instructions_present": [
+            "recovery-directive-765758077c3b3cd34f230d28-1"
+          ],
+          "relative_authorized_root_visible": true,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 2,
+          "role": "human",
+          "name": "approved_effect_emission_template",
+          "chars": 3871,
+          "content_sha256": "9f602ee05059974bce11caa0551e97fc5d320a2bdb09853a3ee9e3fb8ef63488",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 3,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 12930,
+          "content_sha256": "e285cf2f0bb805853ecf0a988a2ca49066c5701689210a2b5017d332c4aa031d",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 4,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 15650,
+          "content_sha256": "b2a972cfe6f8ec449113367cb0eeb1a8423860ed92577cd65c609a35645cd693",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 5,
+          "role": "human",
+          "name": null,
+          "chars": 1105,
+          "content_sha256": "669e414081605a6cc1d4d004a857efd2c914994a474d2050ce26e2ffe15e3025",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 6,
+          "role": "human",
+          "name": "recovery_execution_evidence",
+          "chars": 1748,
+          "content_sha256": "745cf395f25292531dd391bd4f9b1f2e327e44c515e54ffb2fcd09f3225a0147",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 7,
+          "role": "assistant",
+          "name": null,
+          "chars": 1137,
+          "content_sha256": "92776f1f8982a38df4df266fd3df9c85c9aea1d436c537e719540715b51a7583",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 8,
+          "role": "human",
+          "name": null,
+          "chars": 4388,
+          "content_sha256": "e62b783870ee6bc01debe6ef4202339a4c181df378f0b1b30cf2a643ff712412",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        }
+      ],
+      "display_envelope_metadata": null,
+      "response_script_body_sha256": "42ccb7349320e60508c1b586921b4eb398627489dd90dfe6dae2edce5a821c1d",
+      "matches_approved_after_edge_whitespace_normalization": [
+        "attempt_ba5be193655765231699"
+      ],
+      "prose_outside_block_chars": 0
+    },
+    "generate-0016-bb42c9ce9c75": {
+      "request_sha256": "4a77a829b393719a8434195e9591400b652247a766523f5ccfe75c978b3374bf",
+      "response_sha256": "fad1f30f5fabf3979d6e8784a962b9b2b3c878407cb6f82fb0e8b29deff965a1",
+      "runtime_identity": {
+        "dependencies": {
+          "PyYAML": "6.0.3",
+          "langchain-core": "1.2.7",
+          "langgraph": "1.0.7",
+          "pydantic": "2.11.7"
+        },
+        "loaded_code_identity": "189dd2bc05c35a6229571ac8c2043ef9e9479150122e01b68f45b60d993bc717",
+        "object_ref": "object:sha256:11d76eff7b442c8ced614c070474cf73b9a79fbf5ffc5e2829e9eafbcef0bc10",
+        "revision": {
+          "disk_head_at_capture": "2e6eb7a09a61ce14b5304763215faa4e0b7e3624",
+          "loaded_revision": "UNKNOWN",
+          "meaning": "disk_at_capture and loaded callable identities are separate; no historical revision is inferred",
+          "related_dirty_paths": [
+            "agent_core/workflow/managed_stop.py",
+            "prompts/manager.py"
+          ],
+          "related_untracked_paths": [],
+          "status": "CAPTURED"
+        },
+        "schema_version": 1,
+        "skill_versions": {
+          "genomics/wgs-short-read-mapping": "1.1.0"
+        },
+        "source_identity": "a08a906e07de9b56a050eff0c1f8f2be7dc6b7c0fc8c783db96e61b02b04c7da",
+        "stage": "generate",
+        "status": "CAPTURED",
+        "task_id": "session_1789266028"
+      },
+      "selected_skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "messages": [
+        {
+          "index": 0,
+          "role": "system",
+          "name": null,
+          "chars": 777,
+          "content_sha256": "ab0558c5258ef08975959e7145d87f1bf6eff347665edc487bac8f73fb66b5f0",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 1,
+          "role": "human",
+          "name": null,
+          "chars": 50803,
+          "content_sha256": "9ab7425b056d0de6cb716e9877384bde1debc208f9c2d0453241b4dc36972617",
+          "directive_instructions_present": [
+            "recovery-directive-a868a6f0d66f1f4fd19dcad6-1"
+          ],
+          "relative_authorized_root_visible": true,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 2,
+          "role": "human",
+          "name": "approved_effect_emission_template",
+          "chars": 3871,
+          "content_sha256": "9f602ee05059974bce11caa0551e97fc5d320a2bdb09853a3ee9e3fb8ef63488",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 3,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 12930,
+          "content_sha256": "e285cf2f0bb805853ecf0a988a2ca49066c5701689210a2b5017d332c4aa031d",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 4,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 15650,
+          "content_sha256": "b2a972cfe6f8ec449113367cb0eeb1a8423860ed92577cd65c609a35645cd693",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        },
+        {
+          "index": 5,
+          "role": "human",
+          "name": null,
+          "chars": 10245,
+          "content_sha256": "9c20208ad90b141342d154be6b793f445105d054b8b344a0f5b8553c8361f685",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": true,
+          "correct_absolute_root_visible": true
+        },
+        {
+          "index": 6,
+          "role": "human",
+          "name": "recovery_execution_evidence",
+          "chars": 2965,
+          "content_sha256": "3826f6fdff06fca48003cf54ea3e504e910cb630becc0902877a4cd7e2d6e230",
+          "directive_instructions_present": [],
+          "relative_authorized_root_visible": false,
+          "correct_absolute_root_visible": false
+        }
+      ],
+      "display_envelope_metadata": null,
+      "response_script_body_sha256": "3717b1199a961e147c699b1bac88bd1ac3a6feb143325ce7a9fde4a4ca529856",
+      "matches_approved_after_edge_whitespace_normalization": [
+        "attempt_05babb68ee8a678c96dd"
+      ],
+      "prose_outside_block_chars": 0
+    }
+  },
+  "format_correction": {
+    "prior_messages_byte_value_equal": true,
+    "prior_count": 7,
+    "corrected_count": 9,
+    "exact_error": {
+      "code": "GENERATE_SCRIPT_BLOCK_INVALID",
+      "message": "GENERATE_SCRIPT_BLOCK_INVALID: prose outside the executable block is not allowed",
+      "stage": "script_block"
+    },
+    "no_execution_for_invalid_response": true
+  },
+  "skill": {
+    "owner": "recovery",
+    "request": {
+      "args": {
+        "query": "inspect_fastq_batch --item LABEL BOUND_PATH",
+        "skill_id": "genomics/wgs-short-read-mapping"
+      },
+      "id": "call_01_XltYnURTQVANoLENbYLC7164",
+      "name": "skill_search",
+      "type": "tool_call"
+    },
+    "next_provider_result": {
+      "content_sha256": "dace05cd6e642d33cf5f42f4cc519807832876cf0cfd6c67d894250956fc97d6",
+      "cursor": {},
+      "error": {},
+      "plan_id": "plan_ece29181c77a978618ee",
+      "request_id": "call_01_XltYnURTQVANoLENbYLC7164",
+      "result": {
+        "cache_hit": true,
+        "continuation_id": "continuation-08598827aea8073138bb",
+        "decision_result": "SKILL_CONTEXT_RESULT",
+        "request_id": "skill-context-request-05eecc8f848f4d963c11",
+        "results": [
+          {
+            "content_hash": "5004c1e2d1f58315ae1d62bb72873e538ef0194ea35b94d1907e676537b45770",
+            "end_line": 150,
+            "exact_text": "\nFor a **new batch preflight candidate**, use this Skill's\n`scripts/inspect_fastq_batch.py` with repeated `--item LABEL BOUND_PATH`, one\ncurrent StepEffect `--observation-id`, and a new `--evidence-dir` within the\napproved execution-log area. Resolve the concrete wrapper path through Skill\ninspection. The parent emits flushed, separate stderr progress at actual item\nand spawn/return boundaries; child stdout and stderr remain exact log files.\nIt merges checked observations into one outer formal marker, never forwards\nnested markers. Include this wrapper invocation and its paths in the candidate\nbefore approval; do not patch a previously approved script.\n\n`--item-timeout-seconds` defaults to 60 seconds per short inspection (adjustable\non the new approved candidate). The reader's existing `--seconds 2` limit bounds\ncooperative prefix reads; it cannot interrupt a blocked OS read. The wrapper's",
+            "excerpt_id": "skill-excerpt-2648f3bb7a00ca67a488",
+            "matched_ranges": [
+              {
+                "end_line": 150,
+                "start_line": 137
+              }
+            ],
+            "operation": "search",
+            "query": "inspect_fastq_batch --item LABEL BOUND_PATH",
+            "request_id": "skill-context-request-05eecc8f848f4d963c11",
+            "request_spec": {
+              "operation": "search",
+              "query": "inspect_fastq_batch --item LABEL BOUND_PATH",
+              "skill_id": "genomics/wgs-short-read-mapping"
+            },
+            "skill_id": "genomics/wgs-short-read-mapping",
+            "snapshot_id": "skill-snapshot-db7850875a317dbdd050",
+            "start_line": 137
+          }
+        ],
+        "status": "COMPLETE",
+        "tool": "skill.search"
+      },
+      "scanned_count": 1,
+      "schema_version": 1,
+      "source_ref": "genomics/wgs-short-read-mapping",
+      "step_id": "step-00-input-preflight",
+      "task_id": "session_1789266028",
+      "tool": "skill.search",
+      "truncated": false
+    },
+    "events": [
+      {
+        "event_id": "recovery_recovery-seed-765758077c3b3cd34f230d28_recovery-seed-765758077c3b3cd34f230d28_context-epoch_0_tool_call_00_6CwrEHOh97Et0RjiDVln5391_started",
+        "event_kind": "recovery_tool_started",
+        "payload": {
+          "context_epoch_id": "recovery-seed-765758077c3b3cd34f230d28:context-epoch:0",
+          "failure_id": "failure-765758077c3b3cd34f230d28",
+          "plan_id": "plan_ece29181c77a978618ee",
+          "seed_id": "recovery-seed-765758077c3b3cd34f230d28",
+          "source_message_id": "recovery-seed-765758077c3b3cd34f230d28:assistant:001",
+          "source_ref": "outcome:sha256:f5b54166cf446d6ddfa5436e7f99afa7747b767621513f91e09a62f080e77d28",
+          "step_id": "step-00-input-preflight",
+          "task_id": "session_1789266028",
+          "tool": "failure.inspect",
+          "tool_ordinal": 1,
+          "tool_request_id": "call_00_6CwrEHOh97Et0RjiDVln5391"
+        },
+        "redaction_manifest": [],
+        "schema_version": 1,
+        "task_id": "session_1789266028",
+        "timestamp": "2026-09-13T02:34:38.040597+00:00"
+      },
+      {
+        "event_id": "recovery_recovery-seed-765758077c3b3cd34f230d28_recovery-seed-765758077c3b3cd34f230d28_context-epoch_0_tool_call_00_6CwrEHOh97Et0RjiDVln5391_completed",
+        "event_kind": "recovery_tool_completed",
+        "payload": {
+          "content_sha256": "cfcfd13a8c5bbaba81f73c141d486e2102c21d7b69d109bfaa57430ab1bad251",
+          "context_epoch_id": "recovery-seed-765758077c3b3cd34f230d28:context-epoch:0",
+          "failure_id": "failure-765758077c3b3cd34f230d28",
+          "observation_event_id": "recovery:recovery-seed-765758077c3b3cd34f230d28:recovery-seed-765758077c3b3cd34f230d28:context-epoch:0:tool:call_00_6CwrEHOh97Et0RjiDVln5391:observation",
+          "plan_id": "plan_ece29181c77a978618ee",
+          "seed_id": "recovery-seed-765758077c3b3cd34f230d28",
+          "source_message_id": "recovery-seed-765758077c3b3cd34f230d28:assistant:001",
+          "source_ref": "outcome:sha256:f5b54166cf446d6ddfa5436e7f99afa7747b767621513f91e09a62f080e77d28",
+          "status": "completed",
+          "step_id": "step-00-input-preflight",
+          "task_id": "session_1789266028",
+          "tool": "failure.inspect",
+          "tool_ordinal": 1,
+          "tool_request_id": "call_00_6CwrEHOh97Et0RjiDVln5391"
+        },
+        "redaction_manifest": [],
+        "schema_version": 1,
+        "task_id": "session_1789266028",
+        "timestamp": "2026-09-13T02:34:38.123969+00:00"
+      },
+      {
+        "event_id": "recovery_recovery-seed-765758077c3b3cd34f230d28_recovery-seed-765758077c3b3cd34f230d28_context-epoch_0_tool_call_01_XltYnURTQVANoLENbYLC7164_started",
+        "event_kind": "recovery_tool_started",
+        "payload": {
+          "context_epoch_id": "recovery-seed-765758077c3b3cd34f230d28:context-epoch:0",
+          "failure_id": "failure-765758077c3b3cd34f230d28",
+          "plan_id": "plan_ece29181c77a978618ee",
+          "seed_id": "recovery-seed-765758077c3b3cd34f230d28",
+          "source_message_id": "recovery-seed-765758077c3b3cd34f230d28:assistant:001",
+          "source_ref": "genomics/wgs-short-read-mapping",
+          "step_id": "step-00-input-preflight",
+          "task_id": "session_1789266028",
+          "tool": "skill.search",
+          "tool_ordinal": 2,
+          "tool_request_id": "call_01_XltYnURTQVANoLENbYLC7164"
+        },
+        "redaction_manifest": [],
+        "schema_version": 1,
+        "task_id": "session_1789266028",
+        "timestamp": "2026-09-13T02:34:38.134901+00:00"
+      },
+      {
+        "event_id": "recovery_recovery-seed-765758077c3b3cd34f230d28_recovery-seed-765758077c3b3cd34f230d28_context-epoch_0_tool_call_01_XltYnURTQVANoLENbYLC7164_completed",
+        "event_kind": "recovery_tool_completed",
+        "payload": {
+          "content_sha256": "dace05cd6e642d33cf5f42f4cc519807832876cf0cfd6c67d894250956fc97d6",
+          "context_epoch_id": "recovery-seed-765758077c3b3cd34f230d28:context-epoch:0",
+          "failure_id": "failure-765758077c3b3cd34f230d28",
+          "observation_event_id": "recovery:recovery-seed-765758077c3b3cd34f230d28:recovery-seed-765758077c3b3cd34f230d28:context-epoch:0:tool:call_01_XltYnURTQVANoLENbYLC7164:observation",
+          "plan_id": "plan_ece29181c77a978618ee",
+          "seed_id": "recovery-seed-765758077c3b3cd34f230d28",
+          "source_message_id": "recovery-seed-765758077c3b3cd34f230d28:assistant:001",
+          "source_ref": "genomics/wgs-short-read-mapping",
+          "status": "completed",
+          "step_id": "step-00-input-preflight",
+          "task_id": "session_1789266028",
+          "tool": "skill.search",
+          "tool_ordinal": 2,
+          "tool_request_id": "call_01_XltYnURTQVANoLENbYLC7164"
+        },
+        "redaction_manifest": [],
+        "schema_version": 1,
+        "task_id": "session_1789266028",
+        "timestamp": "2026-09-13T02:34:38.687877+00:00"
+      },
+      {
+        "event_id": "recovery_recovery-seed-765758077c3b3cd34f230d28_directive_admitted",
+        "event_kind": "recovery_directive_admitted",
+        "payload": {
+          "action": "retry_step",
+          "context_epoch_id": "recovery-seed-765758077c3b3cd34f230d28:context-epoch:0",
+          "directive_id": "recovery-directive-765758077c3b3cd34f230d28-1",
+          "failure_id": "failure-765758077c3b3cd34f230d28",
+          "overflow_epoch": 0,
+          "recovery_archive_ref": "phase-archive:sha256:29d25664967384d19e44435ebad3812bb029db2b64c7f97840c6602225a6e06b",
+          "seed_id": "recovery-seed-765758077c3b3cd34f230d28",
+          "step_id": "step-00-input-preflight",
+          "task_id": "session_1789266028"
+        },
+        "redaction_manifest": [],
+        "schema_version": 1,
+        "task_id": "session_1789266028",
+        "timestamp": "2026-09-13T02:34:50.494975+00:00"
+      },
+      {
+        "event_id": "recovery_recovery-seed-a868a6f0d66f1f4fd19dcad6_directive_admitted",
+        "event_kind": "recovery_directive_admitted",
+        "payload": {
+          "action": "retry_step",
+          "context_epoch_id": "recovery-seed-a868a6f0d66f1f4fd19dcad6:context-epoch:0",
+          "directive_id": "recovery-directive-a868a6f0d66f1f4fd19dcad6-1",
+          "failure_id": "failure-a868a6f0d66f1f4fd19dcad6",
+          "overflow_epoch": 0,
+          "recovery_archive_ref": "phase-archive:sha256:5f1c4630671215a1f75ac379937010d51a339c955d99fc4137a48c2cc7817113",
+          "seed_id": "recovery-seed-a868a6f0d66f1f4fd19dcad6",
+          "step_id": "step-00-input-preflight",
+          "task_id": "session_1789266028"
+        },
+        "redaction_manifest": [],
+        "schema_version": 1,
+        "task_id": "session_1789266028",
+        "timestamp": "2026-09-13T02:36:42.621569+00:00"
+      }
+    ],
+    "plan_id": "plan_ece29181c77a978618ee",
+    "plan_version": "plan_v1",
+    "final_selected_skill_ids": [
+      "genomics/wgs-short-read-mapping",
+      "genomics/wgs-gatk-snp-indel"
+    ]
+  },
+  "display_provenance": {
+    "content_chars": 9803,
+    "content_sha256": "6a0a16ccb651d54904462b4ae85465057927772a8202cbfeb8935167cb2b504c",
+    "response_keys": [
+      "content",
+      "id",
+      "role",
+      "tool_calls"
+    ],
+    "public_event_source_message_id": "recovery-seed-a868a6f0d66f1f4fd19dcad6:assistant:001",
+    "event_explanation_equals_content": true,
+    "status": "not_accepted",
+    "error_code": "STAGE_FIELD_REQUIRED",
+    "provider_attempt": {
+      "content_char_count": 9803,
+      "reasoning_char_count": 0,
+      "content_chunk_count": 2754,
+      "attempt_id": "provider-attempt-3d3c1272438b-1-7c66c456",
+      "call_id": "recovery_turn-0014-2e89c1c7257c",
+      "finish_reason": "tool_calls"
+    },
+    "raw_prose_intentionally_not_exported": true
+  },
+  "runtime_revision": {
+    "disk_head_at_capture": "2e6eb7a09a61ce14b5304763215faa4e0b7e3624",
+    "loaded_revision": "UNKNOWN",
+    "meaning": "disk_at_capture and loaded callable identities are separate; no historical revision is inferred",
+    "related_dirty_paths": [
+      "agent_core/workflow/managed_stop.py",
+      "prompts/manager.py"
+    ],
+    "related_untracked_paths": [],
+    "status": "CAPTURED"
+  },
+  "source_comparison": [
+    {
+      "file": "bio_agents.py",
+      "current_sha256": "930351ad7f0cc8c95f4c18db3eda17c22d9600a99571c796c1e18d9de80afe03",
+      "captured_sha256": "930351ad7f0cc8c95f4c18db3eda17c22d9600a99571c796c1e18d9de80afe03",
+      "matches_captured": true
+    },
+    {
+      "file": "prompts/manager.py",
+      "current_sha256": "1b0bed78adc750d0dfb7ff0e39040bf395b963541f610c2cae25cecfe5c475a2",
+      "captured_sha256": "1b0bed78adc750d0dfb7ff0e39040bf395b963541f610c2cae25cecfe5c475a2",
+      "matches_captured": true
+    },
+    {
+      "file": "agent_core/workflow/recovery_agent.py",
+      "current_sha256": "c7fc3f8f3ee0b44fe1225c46aa247b8cd08cea586af0ae2ca19e5c4fe047f475",
+      "captured_sha256": "c7fc3f8f3ee0b44fe1225c46aa247b8cd08cea586af0ae2ca19e5c4fe047f475",
+      "matches_captured": true
+    },
+    {
+      "file": "agent_core/workflow/generate_handoff.py",
+      "current_sha256": "574f4021c5e9fec4027730babd98ff36f92c85e1b23bd7a630a143cada80fbcc",
+      "captured_sha256": null,
+      "matches_captured": null
+    },
+    {
+      "file": "agent_core/inspection_readers.py",
+      "current_sha256": "795c2f3f32867031cc79d9b67e2e2a11f0c5b76bb713809293371e36f51a8b91",
+      "captured_sha256": "795c2f3f32867031cc79d9b67e2e2a11f0c5b76bb713809293371e36f51a8b91",
+      "matches_captured": true
+    },
+    {
+      "file": "execution/preflight.py",
+      "current_sha256": "5551d734b6cec522ae182755dadeb2598411effa30b1a016046c41662a1ed113",
+      "captured_sha256": null,
+      "matches_captured": null
+    }
+  ],
+  "trace_call_directory_names": [
+    "consultant-0002-a93e0c5a5a93",
+    "consultant-0003-daf20cef59e6",
+    "consultant-0004-66e0553f428c",
+    "consultant-0005-e262877cf732",
+    "consultant-0006-7f3b7e3631dd",
+    "finalize_protocol",
+    "generate-0009-b50cc719fd74",
+    "generate-0012-8d977fac31bc",
+    "generate-0013-ace12cccc970",
+    "generate-0016-bb42c9ce9c75",
+    "planner_initial-0007-37af220c43a7",
+    "planner_initial-0008-25efd8b76f87",
+    "recovery_transport",
+    "recovery_turn-0010-15951f85526b",
+    "recovery_turn-0011-a29bb41e7438",
+    "recovery_turn-0014-2e89c1c7257c",
+    "recovery_turn-0015-d207e061f9ae",
+    "recovery_turn-0017-88ea10059dd6",
+    "task_router-0001-ff7fd7e72c3f"
+  ],
+  "preflight_step": {
+    "step_id": "step-00-input-preflight",
+    "title": "只读输入预检：确认 4 个 FASTQ 与 genome.fasta 存在且为有效 gzip/FASTQ 前缀",
+    "purpose": "validation",
+    "inputs": [
+      "artifact-f45ed785f84d81e9cfab",
+      "artifact-2faee33f0d19e7f0dab4",
+      "artifact-431c5cce92b5b261677e",
+      "artifact-97f64b37bb55399a6d4e",
+      "artifact-a9a97d180ef458548099"
+    ],
+    "outputs": [],
+    "success_criteria": [
+      "对每个输入记录存在性、gzip 可解码前缀与 FASTQ 记录头（@ 开头、四行结构）的观察值，前缀检查不宣称全文件完整性。",
+      "genome.fasta 记录存在性、FASTA 头（> 开头）与可读性观察值。",
+      "任一输入缺失或前缀无效时，观察值如实记录为 adverse，并在后续 stage_status.tsv 中标记对应 stage_blocked。"
+    ],
+    "produces_observations": [
+      {
+        "identity": "validation_observation",
+        "evidence_contract": {
+          "required_fields": [
+            "value"
+          ]
+        }
+      }
+    ],
+    "skill_ids": [
+      "genomics/wgs-short-read-mapping"
+    ],
+    "execution_capability_id": "genomics.wgs.short.read.mapping.inspect"
+  },
+  "authorization": {
+    "output_root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium",
+    "internal_attempt_log_root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts",
+    "plan_approval": {
+      "schema_version": 1,
+      "plan_contract_version": "1.2.1",
+      "minimum_reader_version": "1.2.1",
+      "approval_id": "approval-509ba3c1e5b9a5b0b78a",
+      "plan_snapshot_id": "plan-snapshot-ef49d27d04ad7748624ba6ee",
+      "plan_snapshot_ref": "object:sha256:a30b633da978618dcb901bbad038038f169085e907d335d7fe10976c84f2f0b8",
+      "status": "approved",
+      "task_id": "session_1789266028",
+      "approved_plan_id": "plan_ece29181c77a978618ee",
+      "approved_plan_version": "plan_v1",
+      "approved_plan_semantic_hash": "9da94251c2603c138e4a98608bf37288fb614317ce258157e5c48b98f4f43fd8",
+      "approved_at": "2026-09-13T10:33:46",
+      "created_at": "2026-09-13T10:23:05",
+      "decided_at": "2026-09-13T10:33:46",
+      "decision_source": "human_plan_review",
+      "approval_source": "human_plan_review",
+      "review_event_id": "review-e711d09dd3898a84bbf5",
+      "approval_scope_hash": "474c773a5bc2d8c5fa77029821cc6f52062fe70c4ab0e580733a5cdeee3b8f37",
+      "approval_scope": {
+        "task_hash": "6ce91bb15677154d2a73e42ecd718b213c38375578c19e439351f07e3af413a2",
+        "task_revision": "1",
+        "plan_id": "plan_ece29181c77a978618ee",
+        "plan_version": "plan_v1",
+        "plan_hash": "9da94251c2603c138e4a98608bf37288fb614317ce258157e5c48b98f4f43fd8",
+        "task_spec_hash": "2ff1248cf7e5a319a19202bfa0005d2848d12e6f433b0029f83b95c52b9447f1",
+        "canonical_constraint_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "claim_set_hash": "f561fee72221412dfcded5d494c6313a9095ebc88f6611e13cc21873b54a3fb4",
+        "input_bindings_hash": "019b37c52a0a3706423236d0adc43e667f9576f1e1ff01264e839d025570a207",
+        "renderer_invocation_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "selected_skills_hash": "e1935c7a85b6c4471ff82934904811e0f167a409529e4d0da6552e6bcb35817e",
+        "projection_hash": "97c6aea31b323f08b7c29079b63b769c846731091b4ddffe4ff7a9438e7ddbaf",
+        "projection_version": "2",
+        "approval_scope_hash": "474c773a5bc2d8c5fa77029821cc6f52062fe70c4ab0e580733a5cdeee3b8f37"
+      },
+      "projection_hash": "97c6aea31b323f08b7c29079b63b769c846731091b4ddffe4ff7a9438e7ddbaf",
+      "canonical_constraint_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "claim_set_hash": "f561fee72221412dfcded5d494c6313a9095ebc88f6611e13cc21873b54a3fb4"
+    },
+    "input_bindings": [
+      {
+        "artifact_id": "artifact-f45ed785f84d81e9cfab",
+        "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz",
+        "role": "paired_fastq"
+      },
+      {
+        "artifact_id": "artifact-2faee33f0d19e7f0dab4",
+        "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz",
+        "role": "paired_fastq"
+      },
+      {
+        "artifact_id": "artifact-431c5cce92b5b261677e",
+        "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz",
+        "role": "paired_fastq"
+      },
+      {
+        "artifact_id": "artifact-97f64b37bb55399a6d4e",
+        "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz",
+        "role": "paired_fastq"
+      },
+      {
+        "artifact_id": "artifact-a9a97d180ef458548099",
+        "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta",
+        "role": "reference_fasta"
+      }
+    ]
+  },
+  "sources": {
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/plan_state.json": {
+      "bytes": 1559097,
+      "sha256": "8fddad2d89fd00a681df9e29bac7a75f04c2722a7ff049298538534a83ebd2e1"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/plans/active_plan.json": {
+      "bytes": 564328,
+      "sha256": "160526154c450c32da511d0d051a8c386eac923d02affd5cbe264b6f027deabe"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/executions/execution_records.jsonl": {
+      "bytes": 128400,
+      "sha256": "86d7d9a0293ae980434064373091dbfe2993d5f76ac4fe0068003f24eded42d9"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_78354904d83db1c42d6f/approved.sh": {
+      "bytes": 937,
+      "sha256": "1ef088c54b727b574f48b32f2422b68c1eeb546b0035775a67aadb0c25ce770e"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_78354904d83db1c42d6f/executed.sh": {
+      "bytes": 2080,
+      "sha256": "de7253830ef4dec6b9b366fbd2e7ab6682ea8efe2708868aa78791cf81c01707"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_78354904d83db1c42d6f/stderr.log": {
+      "bytes": 484,
+      "sha256": "42256722ab7a077ef78d0b06415b4d4b16f47791ee4c92483d8fe693cc10e403"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_78354904d83db1c42d6f/stdout.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_78354904d83db1c42d6f/execution_policy_manifest.json": {
+      "bytes": 1762,
+      "sha256": "7215eef9030cd084d99d8031de7719d108f14ff7e49f04bd88aba3e61e05c114"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/scripts/plan_ece29181c77a978618ee/plan_v1/step-00-input-preflight/action_e247d4d249aa0727/generated.sh": {
+      "bytes": 937,
+      "sha256": "1ef088c54b727b574f48b32f2422b68c1eeb546b0035775a67aadb0c25ce770e"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_78354904d83db1c42d6f/exit_status.json": {
+      "bytes": 103,
+      "sha256": "406d864a94ffc273ec74fb0ccb34a9dfab81ffb54307b1b75a5b9ea73cdb9e00"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_78354904d83db1c42d6f/command_trace.log": {
+      "bytes": 206,
+      "sha256": "a91b4968eafcf8b8fa283b091bdb0fc2d95afabf605394f48448407bc13959fe"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_ba5be193655765231699/approved.sh": {
+      "bytes": 937,
+      "sha256": "42ccb7349320e60508c1b586921b4eb398627489dd90dfe6dae2edce5a821c1d"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_ba5be193655765231699/executed.sh": {
+      "bytes": 2080,
+      "sha256": "0cc863571ef2fc44537441663a3f6c8a72bc364ca6ef06547b66d54ad891a57b"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_ba5be193655765231699/stderr.log": {
+      "bytes": 1679,
+      "sha256": "0487e12451ea55a374a28ebfaebe62a37c4d3a8ebab735cd5f4d23c4bb7b9e1b"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_ba5be193655765231699/stdout.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_ba5be193655765231699/execution_policy_manifest.json": {
+      "bytes": 1771,
+      "sha256": "446aa2ba5d285b01e540d4552ee09c717e24ebcb06080ceaa25056cbd77fb20f"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/scripts/plan_ece29181c77a978618ee/plan_v1/step-00-input-preflight/recovery_action_35e94a3a5ca4c321/generated.revision-1.sh": {
+      "bytes": 937,
+      "sha256": "42ccb7349320e60508c1b586921b4eb398627489dd90dfe6dae2edce5a821c1d"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_ba5be193655765231699/exit_status.json": {
+      "bytes": 103,
+      "sha256": "7e50b0845516496d9f135fc15c36c97c075104179df79a651a0408b5175e3537"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_ba5be193655765231699/command_trace.log": {
+      "bytes": 206,
+      "sha256": "1972e55b41200a6b12ce464e407b994f46902f745c6293387644d432a6e6c5ab"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_05babb68ee8a678c96dd/approved.sh": {
+      "bytes": 954,
+      "sha256": "3717b1199a961e147c699b1bac88bd1ac3a6feb143325ce7a9fde4a4ca529856"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_05babb68ee8a678c96dd/executed.sh": {
+      "bytes": 2080,
+      "sha256": "2bdd0f7a100308bfbcf5b022f4f270a142d677de63a0ef4a7f6d136d6a81f0f7"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_05babb68ee8a678c96dd/stderr.log": {
+      "bytes": 3110,
+      "sha256": "9b3dff63e97e515c43def3283a94f00f1a57131502e42d776605d4ae0afad214"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_05babb68ee8a678c96dd/stdout.log": {
+      "bytes": 4984,
+      "sha256": "50924e14fa71fb77aee120338884c52281c468cbfa3a2b1b6e304cbc001b54e9"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_05babb68ee8a678c96dd/execution_policy_manifest.json": {
+      "bytes": 1771,
+      "sha256": "5606deec6f89a80bcf6ca125fe4604b8aeb5f19d8fa6f99b44adfc6a000335e6"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/scripts/plan_ece29181c77a978618ee/plan_v1/step-00-input-preflight/recovery_action_cdacf04377dd1f62/generated.sh": {
+      "bytes": 954,
+      "sha256": "3717b1199a961e147c699b1bac88bd1ac3a6feb143325ce7a9fde4a4ca529856"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_05babb68ee8a678c96dd/exit_status.json": {
+      "bytes": 103,
+      "sha256": "057ef12fd4d6e05667aef618df56ebeb2fe367fc12052354adb80e5966e3ff94"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/attempts/attempt_05babb68ee8a678c96dd/command_trace.log": {
+      "bytes": 206,
+      "sha256": "e923f63bf1dd8ab0ec383568cfa9aa5ceb9577add67c324ebd61dd46b871f208"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/logs/00.input_check.attempt_ba5be193655765231699/item-005.stderr.log": {
+      "bytes": 667,
+      "sha256": "784a061a6598301630b8d87a32a8a98605b9d4180368aa190f77b72136394444"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0009-b50cc719fd74/request.json": {
+      "bytes": 113902,
+      "sha256": "6dcc76386bf2bf2cebb4bdba46e895d6239648024c05afad9f87688665f5f433"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0009-b50cc719fd74/response.json": {
+      "bytes": 1581,
+      "sha256": "51f85746b4647807dfcc77ada458caae013e65213dc26b82c03cd71bca5f661e"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0009-b50cc719fd74/manifest.json": {
+      "bytes": 31627,
+      "sha256": "32eb56514afb0fea651be71cf68f4d4e74f94054626dc4b61104911f02aac8d3"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0012-8d977fac31bc/request.json": {
+      "bytes": 94283,
+      "sha256": "36c556a4ee3add13abeb0756c55404761c380a2959d4c48db4607b2f048d1f39"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0012-8d977fac31bc/response.json": {
+      "bytes": 1355,
+      "sha256": "003cb9b975af3e2b64873388d1f9d7d65ef57529313fc8c0f98d6767717e2931"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0012-8d977fac31bc/manifest.json": {
+      "bytes": 31684,
+      "sha256": "c5c1894d3df28cd973935d66322e6b1e2d7243c6b908166a67dd6547eac3e0b1"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0013-ace12cccc970/request.json": {
+      "bytes": 100597,
+      "sha256": "65953467f9e98c3d54e5843f51d45349071c31124dc2881926ee7a838439b6cd"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0013-ace12cccc970/response.json": {
+      "bytes": 1175,
+      "sha256": "39b0d170706203ea3493217e82908450951bcb348fc4a533ae0a17a559d4e9f8"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0013-ace12cccc970/manifest.json": {
+      "bytes": 31686,
+      "sha256": "a88093e630c0fe5faf98492837e3c6c08592fcc8b2cf9eeb9a7684398ab3936c"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0016-bb42c9ce9c75/request.json": {
+      "bytes": 110439,
+      "sha256": "4a77a829b393719a8434195e9591400b652247a766523f5ccfe75c978b3374bf"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0016-bb42c9ce9c75/response.json": {
+      "bytes": 1189,
+      "sha256": "fad1f30f5fabf3979d6e8784a962b9b2b3c878407cb6f82fb0e8b29deff965a1"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/generate-0016-bb42c9ce9c75/manifest.json": {
+      "bytes": 31685,
+      "sha256": "fc4fefbd50595cd633467e89a87ba38ac4b400dca504d301ff734829f95a0bbf"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/events.jsonl": {
+      "bytes": 178138,
+      "sha256": "523904df129c265dedc3456b734e13b1b7863969ac01a79624d74551bc7204f8"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/recovery_turn-0010-15951f85526b/response.json": {
+      "bytes": 751,
+      "sha256": "4bd385da1a903e639ba7e7f68e98912079f4e4f091ed3b558e76da8b7327c3f5"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/recovery_turn-0011-a29bb41e7438/request.json": {
+      "bytes": 354185,
+      "sha256": "42cbb970e9f0d8ddc49ee09abe3e816dd9167fc26dc5858e5b75d6ccccdcd1d1"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/recovery_turn-0014-2e89c1c7257c/response.json": {
+      "bytes": 12761,
+      "sha256": "febc01ccf107a222e0b1d4db7f4119c46e2f5043d52fdc65bf3de4fdcd60ac53"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/context_trace/recovery_turn-0014-2e89c1c7257c/manifest.json": {
+      "bytes": 10116,
+      "sha256": "e13a72943920f1382aa624b093928dd2d01eb045e4dd381b2874de2ca46361a8"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789266028/state_contract/objects/11d76eff7b442c8ced614c070474cf73b9a79fbf5ffc5e2829e9eafbcef0bc10.json": {
+      "bytes": 5413859,
+      "sha256": "11d76eff7b442c8ced614c070474cf73b9a79fbf5ffc5e2829e9eafbcef0bc10"
+    },
+    "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py": {
+      "bytes": 2672998,
+      "sha256": "930351ad7f0cc8c95f4c18db3eda17c22d9600a99571c796c1e18d9de80afe03"
+    },
+    "/public/home/liusiqi/03.毕设/Biomind_v1/prompts/manager.py": {
+      "bytes": 146378,
+      "sha256": "1b0bed78adc750d0dfb7ff0e39040bf395b963541f610c2cae25cecfe5c475a2"
+    },
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_agent.py": {
+      "bytes": 92207,
+      "sha256": "c7fc3f8f3ee0b44fe1225c46aa247b8cd08cea586af0ae2ca19e5c4fe047f475"
+    },
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/generate_handoff.py": {
+      "bytes": 40678,
+      "sha256": "574f4021c5e9fec4027730babd98ff36f92c85e1b23bd7a630a143cada80fbcc"
+    },
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/inspection_readers.py": {
+      "bytes": 8046,
+      "sha256": "795c2f3f32867031cc79d9b67e2e2a11f0c5b76bb713809293371e36f51a8b91"
+    },
+    "/public/home/liusiqi/03.毕设/Biomind_v1/execution/preflight.py": {
+      "bytes": 6994,
+      "sha256": "5551d734b6cec522ae182755dadeb2598411effa30b1a016046c41662a1ed113"
+    },
+    "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/SKILL.md": {
+      "bytes": 15052,
+      "sha256": "ba98eafa29838eaf7f9da4eee7a93f6948436225722bc1ff6ebdfb14580f1cfa"
+    },
+    "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py": {
+      "bytes": 2160,
+      "sha256": "6c74374f6daad34daa911c45f9fadd8e763603939f88d9993f9748a3d53c1dc6"
+    },
+    "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py": {
+      "bytes": 4040,
+      "sha256": "86030299f95e1a464699480278f179d2b19463256681f64c95357329a9483160"
+    }
+  },
+  "limits": [
+    "No historical inner batch OS argv capture.",
+    "No original data or runtime environment values read; no live process inspection.",
+    "No raw model reasoning/prose copied; provenance is hashes, lengths, fields and events."
+  ]
+}
