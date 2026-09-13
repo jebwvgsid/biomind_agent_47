@@ -1562,6 +1562,7 @@ class ExecutionRecord:
     generated_script: Dict[str, Any] = field(default_factory=dict)
     approved_script: Dict[str, Any] = field(default_factory=dict)
     executed_script: Dict[str, Any] = field(default_factory=dict)
+    preflight_evidence_binding: Dict[str, Any] = field(default_factory=dict)
     working_directory: str = ""
     environment: str = ""
     started_at: str = ""
@@ -1730,6 +1731,7 @@ class ExecutionRecord:
             generated_script=_redact_mapping(data.get("generated_script") or {}),
             approved_script=_redact_mapping(data.get("approved_script") or {}),
             executed_script=_redact_mapping(data.get("executed_script") or {}),
+            preflight_evidence_binding=_redact_mapping(data.get("preflight_evidence_binding") or {}),
             working_directory=str(data.get("working_directory") or data.get("cwd") or ""),
             environment=str(data.get("environment") or data.get("environment_name") or ""),
             started_at=str(data.get("started_at") or ""),

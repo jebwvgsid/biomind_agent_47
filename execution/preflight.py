@@ -43,6 +43,16 @@ async def run_checks(checks, *, evidence_dir, timeout_seconds=None,
                 or any(not isinstance(arg, str) or "\0" in arg for arg in row["argv"])):
             raise ValueError("PREFLIGHT_ITEM_INVALID")
     directory = Path(evidence_dir)
+    # Only the exact runtime-resolved leaf is usable when this action opted in
+    # through the approved policy. Standalone legacy callers retain their API.
+    import os
+    bound_leaf = os.environ.get("BIOMIND_PREFLIGHT_EVIDENCE_DIR")
+    if bound_leaf:
+        from agent_core.approved_resource_locator import approved_resource_locator
+        actual = approved_resource_locator({"canonical_path": str(directory)})["path"]
+        expected = approved_resource_locator({"canonical_path": bound_leaf})["path"]
+        if actual != expected:
+            raise ValueError("PREFLIGHT_EVIDENCE_BINDING_DRIFT")
     directory.mkdir(parents=True, exist_ok=False)
     stream = sys.stderr if progress_stream is None else progress_stream
     results, events = [], []

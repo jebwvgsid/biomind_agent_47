@@ -881,6 +881,7 @@ def build_execution_policy_manifest(
     language: str,
     policy: Optional[Mapping[str, Any]] = None,
     skill_resources: Sequence[Mapping[str, Any]] = (),
+    evidence_root: str = "",
 ) -> Dict[str, Any]:
     policy_value = {
         "stdin": "devnull",
@@ -901,8 +902,45 @@ def build_execution_policy_manifest(
         "scope": "current_action",
         "policy": policy_value,
     }
+    if evidence_root and any(row.get("handle") in {
+        "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
+        "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py",
+    } for row in skill_resources):
+        from agent_core.approved_resource_locator import approved_resource_locator
+        root = approved_resource_locator({"canonical_path": evidence_root})["path"]
+        manifest["evidence_binding"] = {"environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "approved_root": root, "leaf_rule": "current_attempt/preflight",
+            "creator": "helper", "purpose": "internal_execution_evidence"}
     manifest["manifest_hash"] = _manifest_hash(manifest)
     return manifest
+
+
+def resolve_preflight_evidence_binding(manifest, *, approved_root, attempt_id, action_environment):
+    """Resolve the approved policy to the existing attempt; never create a leaf.
+
+    This is execution-policy materialization, not a user path or Plan binder.
+    The original body and approval digest remain unchanged.
+    """
+    binding = manifest.get("evidence_binding")
+    if not binding:
+        return {}
+    validate_manifest_hash(manifest)
+    from agent_core.approved_resource_locator import approved_resource_locator
+    root = approved_resource_locator({"canonical_path": str(approved_root)})["path"]
+    if binding != {"environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "approved_root": root, "leaf_rule": "current_attempt/preflight",
+            "creator": "helper", "purpose": "internal_execution_evidence"}:
+        raise ActionRuntimeContractError("PREFLIGHT_EVIDENCE_BINDING_DRIFT")
+    if binding["environment_variable"] in action_environment:
+        raise ActionRuntimeContractError("PREFLIGHT_EVIDENCE_ENV_RESERVED")
+    if not str(attempt_id).startswith("attempt_") or Path(attempt_id).name != attempt_id:
+        raise ActionRuntimeContractError("PREFLIGHT_ATTEMPT_ID_INVALID")
+    leaf = Path(root) / attempt_id / "preflight"
+    checked = approved_resource_locator({"canonical_path": str(leaf)})["path"]
+    if Path(checked).exists():
+        raise ActionRuntimeContractError("PREFLIGHT_EVIDENCE_ALREADY_EXISTS")
+    return {**binding, "attempt_id": attempt_id, "canonical_path": checked,
+            "action_id": manifest["action_id"], "policy_manifest_hash": manifest["manifest_hash"]}
 
 
 def build_action_approval_identity(

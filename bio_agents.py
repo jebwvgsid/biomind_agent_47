@@ -12852,7 +12852,10 @@ class BioAnalystAgent:
                 working_directory=os.getcwd(),
                 language=action_language,
                 skill_resources=bound.get("formal_skill_resources") or (),
+                evidence_root=str(Path(self.data_path) / "task_outputs" / task_id / "attempts"),
             )
+            if policy_manifest.get("evidence_binding") and "BIOMIND_PREFLIGHT_EVIDENCE_DIR" in (bound.get("env") or {}):
+                raise ActionRuntimeContractError("PREFLIGHT_EVIDENCE_ENV_RESERVED")
             approval_identity = build_action_approval_identity(
                 generated_script_sha256=generated_script_sha256,
                 capability_contract_hash_value=str(
@@ -41930,6 +41933,16 @@ question. Never guess a scientific or database identity.
                     capability_instructions += "\n<selected_skill_script_bindings>" + json.dumps(_resource_catalog, ensure_ascii=False, sort_keys=True) + "</selected_skill_script_bindings>\n" + (
                         'Document examples are not runtime paths. To use a listed Skill script in script-block mode, explicitly declare its handle: <shell skill_resources="skill_id#scripts/file.py">...</shell> (semicolon-separated for multiple refs; python/r tags also supported). Use the supplied canonical path or environment variable; never construct an installation root or resolve it from cwd. The binder freezes the selected material before approval and rechecks it at prelaunch. An unresolved binding requires inspection/correction, not a guessed relative path. User-owned scripts remain governed by their existing authorization.'
                     )
+                if any(row["handle"] in {
+                    "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
+                    "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py",
+                } for row in _resource_catalog):
+                    capability_instructions += "\n<preflight_evidence_binding>" + json.dumps({
+                        "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+                        "approved_root": str(Path(self.data_path) / "task_outputs" / task_id / "attempts"),
+                        "resolution": "current actual attempt, after approval; helper alone creates the nonexistent leaf",
+                        "usage": 'Pass --evidence-dir "$BIOMIND_PREFLIGHT_EVIDENCE_DIR"; do not assign it, mkdir it, or copy an old path/attempt ID.',
+                    }, ensure_ascii=False) + "</preflight_evidence_binding>\n"
                 generate_seed_messages = assemble_generate_v2_messages(
                     generate_node_context.llm_payload.to_provider_dict(),
                     capability_instructions=capability_instructions,
@@ -47417,6 +47430,7 @@ question. Never guess a scientific or database identity.
             current_runtime_manifest: Dict[str, Any] = {}
             current_artifact_manifest: Dict[str, Any] = {}
             current_policy_manifest: Dict[str, Any] = {}
+            preflight_evidence_binding: Dict[str, Any] = {}
             current_approval_identity: Dict[str, Any] = {}
             prepared_mutation_intents: List[Dict[str, Any]] = []
             controller_identity_env = {
@@ -47516,6 +47530,7 @@ question. Never guess a scientific or database identity.
                         working_directory=os.getcwd(),
                         language=language,
                         skill_resources=pending_action.get("formal_skill_resources") or (),
+                        evidence_root=str(Path(self.data_path) / "task_outputs" / task_id / "attempts"),
                     )
                     current_approval_identity = build_action_approval_identity(
                         generated_script_sha256=str(
@@ -48327,6 +48342,7 @@ question. Never guess a scientific or database identity.
                     working_directory=os.getcwd(),
                     language=language,
                     skill_resources=pending_action.get("formal_skill_resources") or (),
+                    evidence_root=str(Path(self.data_path) / "task_outputs" / task_id / "attempts"),
                 )
                 current_approval_identity = build_action_approval_identity(
                     generated_script_sha256=str(
@@ -48537,7 +48553,21 @@ question. Never guess a scientific or database identity.
             attempt_dir = (
                 Path(self.data_path) / "task_outputs" / task_id / "attempts" / attempt_id
             )
+            from agent_core.action_runtime import resolve_preflight_evidence_binding
+            try:
+                preflight_evidence_binding = resolve_preflight_evidence_binding(
+                    current_policy_manifest,
+                    approved_root=Path(self.data_path) / "task_outputs" / task_id / "attempts",
+                    attempt_id=attempt_id, action_environment=pending_action.get("env") or {})
+            except (ActionRuntimeContractError, ValueError) as exc:
+                return reject_internal_prelaunch(pending_action,
+                    error_code=getattr(exc, "code", "PREFLIGHT_EVIDENCE_PATH_DENIED"),
+                    stage="execute.preflight_evidence_binding", detail=str(exc))
             attempt_dir.mkdir(parents=True, exist_ok=True)
+            if preflight_evidence_binding:
+                effective_execution_env[preflight_evidence_binding["environment_variable"]] = preflight_evidence_binding["canonical_path"]
+                (attempt_dir / "preflight_evidence_binding.json").write_text(
+                    json.dumps(preflight_evidence_binding, ensure_ascii=False, sort_keys=True) + "\n")
             mutation_journal_path = attempt_dir / "mutation_intent.json"
             try:
                 expected_mutation_intent_ids = [
@@ -49969,6 +49999,7 @@ question. Never guess a scientific or database identity.
                 "generated_script_path": str(generated_ref.get("path") or ""),
                 "generated_script": generated_ref,
                 "approved_script": approved_ref,
+                "preflight_evidence_binding": preflight_evidence_binding,
                 "executed_script": executed_ref,
                 "cwd": os.getcwd(),
                 "started_at": started_at,
